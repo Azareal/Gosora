@@ -35,7 +35,7 @@ func init_database(err error) {
 	if(dbpassword != ""){
 		dbpassword = ":" + dbpassword
 	}
-	db, err = sql.Open("mysql",dbuser + dbpassword + "@tcp(127.0.0.1:3306)/" + dbname)
+	db, err = sql.Open("mysql",dbuser + dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +51,6 @@ func init_database(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = get_session_stmt // Bug fix, compiler isn't recognising this despite it being used, probably because it's hidden behind if statements
 	
 	log.Print("Preparing create_topic statement.")
 	create_topic_stmt, err = db.Prepare("INSERT INTO topics(title,createdAt,lastReplyAt,createdBy) VALUES(?,?,0,?)")
@@ -150,7 +149,7 @@ func main(){
 	http.HandleFunc("/topic/edit/submit/", route_edit_topic) //POST
 	
 	// Custom Pages
-	http.HandleFunc("/pages/:name/", route_custom_page)
+	http.HandleFunc("/pages/", route_custom_page)
 	
 	// Accounts
 	http.HandleFunc("/accounts/login/", route_login)

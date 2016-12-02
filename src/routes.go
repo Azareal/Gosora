@@ -27,7 +27,7 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 
 func route_custom_page(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
-	name := r.URL.Path[len("/edit/"):]
+	name := r.URL.Path[len("/pages/"):]
 	
 	val, ok := custom_pages[name];
 	if ok {
@@ -594,16 +594,17 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	_, err = update_session_stmt.Exec(session, user.ID)
+	_, err = update_session_stmt.Exec(session, uid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
 	log.Print("Successful Login")
-	cookie := http.Cookie{"uid",strconv.Itoa(uid),"/","",time.Now(),"",0,true,false,"",[]string{}}
+	log.Print("Session: " + session)
+	cookie := http.Cookie{Name: "uid",Value: strconv.Itoa(uid),Path: "/",MaxAge: year}
 	http.SetCookie(w,&cookie)
-	cookie = http.Cookie{"session",session,"/","",time.Now(),"",0,true,false,"",[]string{}}
+	cookie = http.Cookie{Name: "session",Value: session,Path: "/",MaxAge: year}
 	http.SetCookie(w,&cookie)
 	http.Redirect(w,r, "/", http.StatusSeeOther)
 }
@@ -697,9 +698,9 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	cookie := http.Cookie{"uid",strconv.FormatInt(lastId, 10),"/","",time.Now(),"",0,true,false,"",[]string{}}
+	cookie := http.Cookie{Name: "uid",Value: strconv.FormatInt(lastId, 10),Path: "/",MaxAge: year}
 	http.SetCookie(w,&cookie)
-	cookie = http.Cookie{"session",session,"/","",time.Now(),"",0,true,false,"",[]string{}}
+	cookie = http.Cookie{Name: "session",Value: session,Path: "/",MaxAge: year}
 	http.SetCookie(w,&cookie)
 	http.Redirect(w,r, "/", http.StatusSeeOther)
 }
