@@ -1,0 +1,202 @@
+body
+{
+	font-family: arial;
+}
+
+ul
+{
+	border: 1px solid #ccc;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	padding-left: 0px;
+	padding-right: 0px;
+	height: 18px;
+	list-style-type: none;
+}
+
+li
+{
+	float: left;
+	padding-left: 10px;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+li a
+{
+	text-decoration: none;
+	color: #515151;
+}
+
+li a:hover
+{
+	color: #7a7a7a;
+}
+
+li:not(:last-child)
+{
+	border-right: 1px solid #ccc;
+	padding-right: 10px;
+}
+
+.container
+{
+	width: 90%;
+	padding: 0px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.rowblock
+{
+	border: 1px solid #ccc;
+	width: 100%;
+	padding: 0px;
+	padding-top: 0px;
+}
+.rowblock:empty
+{
+	display: none;
+}
+
+.rowitem
+{
+	width: 99%;
+	padding-left: 8px;
+	padding-right: 8px;
+	padding-top: 17px;
+	padding-bottom: 12px;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+.rowitem.passive
+{
+	font-weight: normal;
+	text-transform: none;
+}
+
+.rowitem:not(:last-child)/*:not(:only-child)*/
+{
+	border-bottom: 1px dotted #ccc;
+}
+
+.rowitem a
+{
+	text-decoration: none;
+	color: black;
+}
+
+.rowitem a:hover
+{
+	color: silver;
+}
+
+.formrow
+{
+	/*height: 40px;*/
+	width: 100%;
+}
+
+/*Clearfix*/
+.formrow:before,
+.formrow:after {
+  content: " ";
+  display: table;
+}
+
+.formrow:after {
+  clear: both;
+}
+
+.formrow:not(:last-child)
+{
+	border-bottom: 1px dotted #ccc;
+}
+
+.formitem
+{
+	float: left;
+	padding-left: 8px;
+	padding-right: 8px;
+	padding-top: 13px;
+	padding-bottom: 8px;
+	font-weight: bold;
+}
+
+.formitem:first-child
+{
+	font-weight: bold;
+}
+
+.formitem:not(:last-child)
+{
+	border-right: 1px dotted #ccc;
+}
+
+.formitem.invisible_border
+{
+	border: none;
+}
+
+/* Mostly for textareas */
+.formitem:only-child
+{
+	width: 97%;
+}
+.formitem textarea
+{
+	width: 100%;
+	height: 100px;
+}
+.formitem:has-child()
+{
+	margin: 0 auto;
+	float: none;
+}
+
+button
+{
+	background: white;
+	border: 1px solid #8e8e8e;
+}
+
+/* Topics */
+.topic_status
+{
+	text-transform: none;
+	margin-left: 8px;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	background-color: #E8E8E8; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
+	color: #505050; /* 80,80,80 */
+	border-radius: 2px;
+}
+
+.topic_status:empty
+{
+	display: none;
+}
+
+.show_on_edit
+{
+	display: none;
+}
+
+.alert_success
+{
+	display: block;
+	padding: 3px;
+	border: 1px solid A2FC00;
+	background-color: DAF7A6;
+}
+
+.alert_error
+{
+	display: block;
+	padding: 3px;
+	border: 1px solid #FF004B;
+	background-color: #FEB7CC;
+}
