@@ -4,7 +4,11 @@ import "log"
 import "fmt"
 import "strconv"
 import "bytes"
+import "regexp"
+import "strings"
 import "time"
+import "io"
+import "os"
 import "net/http"
 import "html"
 import "database/sql"
@@ -110,6 +114,8 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		replyCreatedAt string
 		replyLastEdit int
 		replyLastEditBy int
+		replyAvatar string
+		replyHasAvatar bool
 		is_closed bool
 		sticky bool
 		
@@ -160,7 +166,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 	// Get the replies..
 	//rows, err := db.Query("select rid, content, createdBy, createdAt from replies where tid = ?", tid)
-	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.name from replies left join users ON replies.createdBy = users.uid where tid = ?", tid)
+	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name from replies left join users ON replies.createdBy = users.uid where tid = ?", tid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -168,12 +174,22 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	defer rows.Close()
 	
 	for rows.Next() {
-		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyCreatedByName)
+		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
 		}
-		replyList[currentID] = Reply{rid,tid,replyContent,replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy}
+		
+		if replyAvatar != "" {
+			replyHasAvatar = true
+			if replyAvatar[0] == '.' {
+				replyAvatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + replyAvatar
+			}
+		} else {
+			replyHasAvatar = false
+		}
+		
+		replyList[currentID] = Reply{rid,tid,replyContent,replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyHasAvatar}
 		currentID++
 	}
 	err = rows.Err()
@@ -515,7 +531,115 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	pi := Page{"Edit Password","account-own-edit-success",user,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-success.html", pi)
 }
+
+func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Loggedin {
+		errmsg := "You need to login to edit your own account."
+		pi := Page{"Error","error",user,tList,errmsg}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		http.Error(w,errpage,500)
+		return
+	}
 	
+	pi := Page{"Edit Avatar","account-own-edit-avatar",user,tList,0}
+	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
+}
+
+func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request) {
+	if r.ContentLength > int64(max_request_size) {
+		http.Error(w, "request too large", http.StatusExpectationFailed)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, int64(max_request_size))
+	
+	user := SessionCheck(w,r)
+	if !user.Loggedin {
+		errmsg := "You need to login to edit your own account."
+		pi := Page{"Error","error",user,tList,errmsg}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		http.Error(w,errpage,500)
+		return
+	}
+	
+	err := r.ParseMultipartForm(int64(max_request_size))
+	if  err != nil {
+		LocalError("Upload failed", w, r, user)
+		return
+	}
+	
+	var filename string = ""
+	var ext string
+	for _, fheaders := range r.MultipartForm.File {
+		for _, hdr := range fheaders {
+			infile, err := hdr.Open();
+			if err != nil {
+				LocalError("Upload failed", w, r, user)
+				return
+			}
+			defer infile.Close()
+			
+			// We don't want multiple files
+			if filename != "" {
+				if filename != hdr.Filename {
+					os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
+					LocalError("You may only upload one avatar", w, r, user)
+					return
+				}
+			} else {
+				filename = hdr.Filename
+			}
+			
+			if ext == "" {
+				extarr := strings.Split(hdr.Filename,".")
+				if len(extarr) < 2 {
+					LocalError("Bad file", w, r, user)
+					return
+				}
+				ext = extarr[len(extarr) - 1]
+				
+				reg, err := regexp.Compile("[^A-Za-z0-9]+")
+				if err != nil {
+					LocalError("Bad file extension", w, r, user)
+					return
+				}
+				ext = reg.ReplaceAllString(ext,"")
+				ext = strings.ToLower(ext)
+			}
+			
+			outfile, err := os.Create("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext);
+			if  err != nil {
+				LocalError("Upload failed [File Creation Failed]", w, r, user)
+				return
+			}
+			defer outfile.Close()
+			
+			_, err = io.Copy(outfile, infile);
+			if  err != nil {
+				LocalError("Upload failed [Copy Failed]", w, r, user)
+				return
+			}
+		}
+	}
+	
+	_, err = set_avatar_stmt.Exec("." + ext, strconv.Itoa(user.ID))
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	user.HasAvatar = true
+	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
+	
+	pi := Page{"Edit Avatar","account-own-edit-avatar-success",user,tList,0}
+	templates.ExecuteTemplate(w,"account-own-edit-avatar-success.html", pi)
+}
 func route_logout(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
 	if !user.Loggedin {

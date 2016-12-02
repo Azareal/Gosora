@@ -17,21 +17,22 @@
 	</form>
 </div>
 <div class="rowblock">
-	<div class="rowitem passive editable_parent" style="border-bottom: none;">
+	<div class="rowitem passive editable_parent" style="border-bottom: none;{{ if .CurrentUser.HasAvatar }}background-image: url({{ .CurrentUser.Avatar }});background-position: left;background-repeat: no-repeat;background-size: 128px;padding-left: 136px;{{end}}">
 		<span class="hide_on_edit topic_content">{{index .Something "content"}}</span>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{index .Something "content"}}</textarea>
 		<br /><br />
 		<a class="topic_status" style="padding-left: 0px;margin-left: 0px;">{{index .Something "createdByName"}}<a/>
 	</div>
 </div><br />
-<div class="rowblock">
-	{{range $index, $element := .ItemList}}<div class="rowitem passive deletable_block editable_parent">
+<div class="rowblock" style="overflow: hidden;">
+	{{range $index, $element := .ItemList}}
+	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.HasAvatar }}background-image: url({{ $element.Avatar }});background-position: left;background-repeat: no-repeat;background-size: 128px;padding-left: 136px;{{end}}">
 		<span class="editable_block">{{$element.Content}}</span>
 		<br /><br />
 		<a class="topic_status" style="padding-left: 0px;margin-left: 0px;">{{$element.CreatedByName}}<a/>
 		<a href="/reply/edit/submit/{{$element.ID}}/"><button class="topic_status edit_item">Edit</button></a>
 		<a href="/reply/delete/submit/{{$element.ID}}/"><button class="topic_status delete_item">Delete</button></a>
-	</div>{{end}}
+	</div>{{ end }}
 </div>
 <div class="rowblock">
 	<form action="/reply/create/" method="post">

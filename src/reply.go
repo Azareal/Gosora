@@ -10,5 +10,6 @@ type Reply struct
 	CreatedAt string
 	LastEdit int
 	LastEditBy int
+	Avatar string
+	HasAvatar bool
 }
-

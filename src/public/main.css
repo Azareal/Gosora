@@ -59,6 +59,31 @@ li:not(:last-child)
 	display: none;
 }
 
+.colblock_left
+{
+	border: 1px solid #ccc;
+	padding: 0px;
+	padding-top: 0px;
+	width: 30%;
+	float: left;
+}
+.colblock_right
+{
+	border: 1px solid #ccc;
+	padding: 0px;
+	padding-top: 0px;
+	width: 65%;
+	overflow: hidden;
+}
+.colblock_left:empty
+{
+	display: none;
+}
+.colblock_right:empty
+{
+	display: none;
+}
+
 .rowitem
 {
 	width: 99%;
@@ -69,25 +94,55 @@ li:not(:last-child)
 	font-weight: bold;
 	text-transform: uppercase;
 }
-
 .rowitem.passive
 {
 	font-weight: normal;
 	text-transform: none;
 }
-
 .rowitem:not(:last-child)/*:not(:only-child)*/
 {
 	border-bottom: 1px dotted #ccc;
 }
-
 .rowitem a
 {
 	text-decoration: none;
 	color: black;
 }
-
 .rowitem a:hover
+{
+	color: silver;
+}
+
+.col_left
+{
+	width: 30%;
+	float: left;
+}
+.col_right
+{
+	width: 69%;
+	overflow: hidden;
+}
+.colitem
+{
+	padding-left: 8px;
+	padding-right: 8px;
+	padding-top: 17px;
+	padding-bottom: 12px;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+.colitem.passive
+{
+	font-weight: normal;
+	text-transform: none;
+}
+.colitem a
+{
+	text-decoration: none;
+	color: black;
+}
+.colitem a:hover
 {
 	color: silver;
 }

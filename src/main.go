@@ -13,6 +13,8 @@ const hour int = 60 * 60
 const day int = hour * 24
 const month int = day * 30
 const year int = day * 365
+const kilobyte int = 1024
+const megabyte int = 1024 * 1024
 const saltLength int = 32
 const sessionLength int = 80
 var db *sql.DB
@@ -27,6 +29,7 @@ var update_session_stmt *sql.Stmt
 var logout_stmt *sql.Stmt
 var set_password_stmt *sql.Stmt
 var get_password_stmt *sql.Stmt
+var set_avatar_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 var custom_pages map[string]string = make(map[string]string)
@@ -48,7 +51,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_session statement.")
-	get_session_stmt, err = db.Prepare("SELECT `uid`, `name`, `group`, `is_super_admin`, `session` FROM `users` WHERE `uid` = ? AND `session` = ? AND `session` <> ''")
+	get_session_stmt, err = db.Prepare("SELECT `uid`, `name`, `group`, `is_super_admin`, `session`, `avatar` FROM `users` WHERE `uid` = ? AND `session` = ? AND `session` <> ''")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,6 +116,12 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing set_avatar statement.")
+	set_avatar_stmt, err = db.Prepare("UPDATE users SET avatar = ? WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	// Add an admin version of register_stmt with more flexibility
 	// create_account_stmt, err = db.Prepare("INSERT INTO 
 	
@@ -122,7 +131,7 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
-	log.Print("Preparing get_session statement.")
+	log.Print("Preparing username_exists statement.")
 	username_exists_stmt, err = db.Prepare("SELECT `name` FROM `users` WHERE `name` = ?")
 	if err != nil {
 		log.Fatal(err)
@@ -140,8 +149,10 @@ func main(){
 	}
 	
 	// In a directory to stop it clashing with the other paths
-	fs := http.FileServer(http.Dir("./public"))
-	http.Handle("/static/", http.StripPrefix("/static/",fs))
+	fs_p := http.FileServer(http.Dir("./public"))
+	http.Handle("/static/", http.StripPrefix("/static/",fs_p))
+	fs_u := http.FileServer(http.Dir("./uploads"))
+	http.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))
 	
 	http.HandleFunc("/overview/", route_overview)
 	http.HandleFunc("/topics/create/", route_topic_create)
@@ -170,6 +181,8 @@ func main(){
 	//http.HandleFunc("/user/edit/", route_logout)
 	http.HandleFunc("/user/edit/critical/", route_account_own_edit_critical) // Password & Email
 	http.HandleFunc("/user/edit/critical/submit/", route_account_own_edit_critical_submit)
+	http.HandleFunc("/user/edit/avatar/", route_account_own_edit_avatar) // Password & Email
+	http.HandleFunc("/user/edit/avatar/submit/", route_account_own_edit_avatar_submit)
 	//http.HandleFunc("/user/:id/edit/", route_logout)
 	//http.HandleFunc("/user/:id/ban/", route_logout)
 	http.HandleFunc("/", route_topics)

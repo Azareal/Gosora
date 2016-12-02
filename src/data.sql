@@ -10,6 +10,7 @@ CREATE TABLE `users`(
 	`createdAt` datetime not null,
 	`lastActiveAt` datetime not null,
 	`session` varchar(200) DEFAULT '',
+	`avatar` varchar(20) DEFAULT '',
 	primary key(`uid`)
 );
 
