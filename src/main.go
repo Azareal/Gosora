@@ -32,13 +32,10 @@ var custom_pages map[string]string = make(map[string]string)
 var templates = template.Must(template.ParseGlob("templates/*"))
 
 func init_database(err error) {
-	user := "root"
-	password := "password"
-	if(password != ""){
-		password = ":" + password
+	if(dbpassword != ""){
+		dbpassword = ":" + dbpassword
 	}
-	dbname := "grosolo"
-	db, err = sql.Open("mysql",user + password + "@tcp(127.0.0.1:3306)/" + dbname)
+	db, err = sql.Open("mysql",dbuser + dbpassword + "@tcp(127.0.0.1:3306)/" + dbname)
 	if err != nil {
 		log.Fatal(err)
 	}

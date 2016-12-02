@@ -21,10 +21,15 @@ go install github.com/go-sql-driver/mysql
 
 go install golang.org/x/crypto/bcrypt
 
-go run errors.go main.go pages.go post.go routes.go topic.go user.go utils.go
+Tweak the config.go file and put your database details in there.
 
 
-The last command is run whenever you want to start-up an instance of the software.
+# Run the program
+
+go run errors.go main.go pages.go post.go routes.go topic.go user.go utils.go config.go
+
+Alternatively, you could run the run.bat batch file on Windows.
+
 
 # TO-DO
 
@@ -34,6 +39,8 @@ Oh my, you caught me right at the start of this project. There's nothing to see 
 More moderation features.
 
 Fix the login system. It broke during the switch in frameworks.
+
+Fix the bug where errors are sent off in raw HTML rather than formatted HTML.
 
 Add an alert system.
 
