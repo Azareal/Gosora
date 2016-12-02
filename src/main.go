@@ -26,6 +26,7 @@ var login_stmt *sql.Stmt
 var update_session_stmt *sql.Stmt
 var logout_stmt *sql.Stmt
 var set_password_stmt *sql.Stmt
+var get_password_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 var custom_pages map[string]string = make(map[string]string)
@@ -65,7 +66,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing edit_topic statement.")
-	edit_topic_stmt, err = db.Prepare("UPDATE topics SET title = ? WHERE tid = ?")
+	edit_topic_stmt, err = db.Prepare("UPDATE topics SET title = ?, content = ?, is_closed = ? WHERE tid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,6 +103,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing set_password statement.")
 	set_password_stmt, err = db.Prepare("UPDATE users SET password = ?, salt = ? WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing get_password statement.")
+	get_password_stmt, err = db.Prepare("SELECT `password`, `salt` FROM `users` WHERE `uid` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

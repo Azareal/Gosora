@@ -7,7 +7,6 @@ import "bytes"
 import "time"
 import "net/http"
 import "html"
-//import "html/template"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 import "golang.org/x/crypto/bcrypt"
@@ -202,10 +201,10 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	err := r.ParseForm()
-    if err != nil {
-        LocalError("Bad Form", w, r, user)
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
 		return          
-    }
+	}
 	success := 1
 	
 	res, err := create_topic_stmt.Exec(html.EscapeString(r.PostFormValue("topic-name")),html.EscapeString(r.PostFormValue("topic-content")),int32(time.Now().Unix()),user.ID)
@@ -244,10 +243,10 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	err := r.ParseForm()
-    if err != nil {
-        LocalError("Bad Form", w, r, user)
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
 		return          
-    }
+	}
 	
 	success := 1
 	tid, err = strconv.Atoi(r.PostFormValue("tid"))
@@ -288,10 +287,10 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
 	err := r.ParseForm()
-    if err != nil {
-        LocalError("Bad Form", w, r, user)
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
 		return          
-    }
+	}
 	is_js := r.PostFormValue("js")
 	if is_js == "" {
 		is_js = "0"
@@ -311,8 +310,14 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	
 	topic_name := r.PostFormValue("topic_name")
 	topic_status := r.PostFormValue("topic_status")
+	var is_closed bool
+	if topic_status == "closed" {
+		is_closed = true
+	} else {
+		is_closed = false
+	}
 	topic_content := html.EscapeString(r.PostFormValue("topic_content"))
-	_, err = edit_topic_stmt.Exec(topic_name, topic_status, topic_content, tid)
+	_, err = edit_topic_stmt.Exec(topic_name, topic_content, is_closed, tid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,user,is_js)
 		return
@@ -328,10 +333,10 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
 	err := r.ParseForm()
-    if err != nil {
-        LocalError("Bad Form", w, r, user)
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
 		return          
-    }
+	}
 	
 	is_js := r.PostFormValue("js")
 	if is_js == "" {
@@ -374,10 +379,10 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
 	err := r.ParseForm()
-    if err != nil {
-        LocalError("Bad Form", w, r, user)
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
 		return          
-    }
+	}
 	
 	is_js := r.PostFormValue("is_js")
 	if is_js == "" {
@@ -450,19 +455,65 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	}
 	
 	err := r.ParseForm()
-    if err != nil {
-        LocalError("Bad Form", w, r, user)
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
 		return          
-    }
+	}
 	
-	//current_password, err := strconv.Atoi(r.PostFormValue("account-current-password"))
-	//new_password, err := strconv.Atoi(r.PostFormValue("account-new-password"))
-	//confirm_password, err := strconv.Atoi(r.PostFormValue("account-confirm-password"))
+	var real_password string
+	var salt string
+	current_password := r.PostFormValue("account-current-password")
+	new_password := r.PostFormValue("account-new-password")
+	confirm_password := r.PostFormValue("account-confirm-password")
 	
+	err = get_password_stmt.QueryRow(user.ID).Scan(&real_password, &salt)
+	if err == sql.ErrNoRows {
+		pi := Page{"Error","error",user,tList,"Your account doesn't exist."}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		http.Error(w,errpage,500)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
 	
+	current_password = current_password + salt
+	err = bcrypt.CompareHashAndPassword([]byte(real_password), []byte(current_password))
+	if err == bcrypt.ErrMismatchedHashAndPassword {
+		pi := Page{"Error","error",user,tList,"That's not the correct password."}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		http.Error(w,errpage,500)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	if new_password != confirm_password {
+		pi := Page{"Error","error",user,tList,"The two passwords don't match."}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		http.Error(w,errpage,500)
+		return
+	}
+	SetPassword(user.ID, new_password)
 	
-	pi := Page{"Edit Password","account-own-edit",user,tList,0}
-	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
+	// Log the user out as a safety precaution
+	_, err = logout_stmt.Exec(user.ID)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	pi := Page{"Edit Password","account-own-edit-success",user,tList,0}
+	templates.ExecuteTemplate(w,"account-own-edit-success.html", pi)
 }
 	
 func route_logout(w http.ResponseWriter, r *http.Request) {
@@ -517,10 +568,10 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	err := r.ParseForm()
-    if err != nil {
-        LocalError("Bad Form", w, r, user)
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
 		return          
-    }
+	}
 	
 	var uid int
 	var real_password string
@@ -629,10 +680,10 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
 	err := r.ParseForm()
-    if err != nil {
-        LocalError("Bad Form", w, r, user)
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
 		return          
-    }
+	}
 	
 	username := html.EscapeString(r.PostFormValue("username"))
 	password := r.PostFormValue("password")
