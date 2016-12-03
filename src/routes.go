@@ -21,6 +21,9 @@ var tList map[int]interface{}
 // GET functions
 func route_overview(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
+	NoPermissions(w, r, user)
+	return
+	
 	pi := Page{"Overview","overview",user,tList,0}
 	err := templates.ExecuteTemplate(w,"overview.html", pi)
     if err != nil {
@@ -43,7 +46,8 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,404)
+		w.WriteHeader(404)
+		fmt.Fprintln(w,errpage)
 	}
 }
 	
@@ -143,7 +147,8 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,404)
+		w.WriteHeader(404)
+		fmt.Fprintln(w,errpage)
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
@@ -236,7 +241,8 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 	} else {
 		http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId, 10), http.StatusSeeOther)
 	}
@@ -268,7 +274,8 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -285,7 +292,8 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 	} else {
 		http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	}
@@ -519,7 +527,8 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -536,7 +545,8 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -559,7 +569,8 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
@@ -574,7 +585,8 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
@@ -586,7 +598,8 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	SetPassword(user.ID, new_password)
@@ -611,7 +624,8 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -634,7 +648,8 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -719,7 +734,8 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -736,7 +752,8 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -767,7 +784,8 @@ func route_logout(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -788,7 +806,8 @@ func route_login(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -805,7 +824,8 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -832,7 +852,8 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
@@ -848,7 +869,8 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 			var b bytes.Buffer
 			templates.ExecuteTemplate(&b,"error.html", pi)
 			errpage := b.String()
-			http.Error(w,errpage,500)
+			w.WriteHeader(500)
+			fmt.Fprintln(w,errpage)
 			return
 		}
 		
@@ -873,7 +895,8 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 			var b bytes.Buffer
 			templates.ExecuteTemplate(&b,"error.html", pi)
 			errpage := b.String()
-			http.Error(w,errpage,500)
+			w.WriteHeader(500)
+			fmt.Fprintln(w,errpage)
 			return
 		} else if err != nil {
 			InternalError(err,w,r,user)
@@ -911,7 +934,8 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -940,7 +964,8 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	
@@ -956,7 +981,8 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 		return
 	}
 	

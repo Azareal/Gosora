@@ -1,4 +1,5 @@
 package main
+import "fmt"
 import "log"
 import "bytes"
 import "net/http"
@@ -9,7 +10,8 @@ func InternalError(err error, w http.ResponseWriter, r *http.Request, user User)
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
-	http.Error(w,errpage,500)
+	w.WriteHeader(500)
+	fmt.Fprintln(w,errpage)
 }
 
 func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, user User, is_js string) {
@@ -20,7 +22,8 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, user Us
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 	} else {
 		http.Error(w,"{'errmsg': '" + errmsg + "'}",500)
 	}
@@ -31,7 +34,8 @@ func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
-	http.Error(w,errpage,500)
+	w.WriteHeader(500)
+	fmt.Fprintln(w,errpage)
 }
 
 func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
@@ -41,7 +45,8 @@ func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
-	http.Error(w,errpage,401)
+	w.WriteHeader(401)
+	fmt.Fprintln(w,errpage)
 }
 
 func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, is_js string) {
@@ -50,7 +55,8 @@ func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user U
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 	} else {
 		http.Error(w,"{'errmsg': '" + errmsg + "'}",500)
 	}
@@ -62,7 +68,8 @@ func NoPermissions(w http.ResponseWriter, r *http.Request, user User) {
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
-	http.Error(w,errpage,403)
+	w.WriteHeader(403)
+	fmt.Fprintln(w,errpage)
 }
 
 func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
@@ -72,7 +79,8 @@ func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, is_js s
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,403)
+		w.WriteHeader(403)
+		fmt.Fprintln(w,errpage)
 	} else {
 		http.Error(w,"{'errmsg': '" + errmsg + "'}",403)
 	}
@@ -85,7 +93,8 @@ func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, is_js s
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,401)
+		w.WriteHeader(401)
+		fmt.Fprintln(w,errpage)
 	} else {
 		http.Error(w,"{'errmsg': '" + errmsg + "'}",401)
 	}
@@ -97,7 +106,8 @@ func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.Response
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		http.Error(w,errpage,500)
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
 	} else {
 		http.Error(w,"{'errmsg': '" + errmsg + "'}",500)
 	}
