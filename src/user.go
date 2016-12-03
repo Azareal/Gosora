@@ -64,7 +64,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 	// Is this session valid..?
 	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar)
 	if err == sql.ErrNoRows {
-		log.Print("Couldn't find the user session")
+		//log.Print("Couldn't find the user session")
 		return user
 	} else if err != nil {
 		log.Print(err)

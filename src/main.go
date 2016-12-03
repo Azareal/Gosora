@@ -21,6 +21,7 @@ var db *sql.DB
 var get_session_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
 var create_reply_stmt *sql.Stmt
+var update_forum_cache_stmt *sql.Stmt
 var edit_topic_stmt *sql.Stmt
 var edit_reply_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
@@ -68,6 +69,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing create_reply statement.")
 	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_forum_cache statement.")
+	update_forum_cache_stmt, err = db.Prepare("UPDATE forums SET lastTopic = ?, lastTopicID = ?, lastReplyer = ?, lastReplyerID = ?, lastTopicTime = NOW() WHERE fid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -185,6 +192,8 @@ func main(){
 	http.HandleFunc("/overview/", route_overview)
 	http.HandleFunc("/topics/create/", route_topic_create)
 	http.HandleFunc("/topics/", route_topics)
+	http.HandleFunc("/forums/", route_forums)
+	http.HandleFunc("/forum/", route_forum)
 	http.HandleFunc("/topic/create/submit/", route_create_topic) //POST
 	http.HandleFunc("/topic/", route_topic_id)
 	http.HandleFunc("/reply/create/", route_create_reply) //POST

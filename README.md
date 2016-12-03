@@ -33,7 +33,7 @@ Set the password column of your user account in the database to what you want yo
 
 # Run the program
 
-go run errors.go main.go pages.go reply.go routes.go topic.go user.go utils.go config.go
+go run errors.go main.go pages.go reply.go routes.go topic.go user.go utils.go forum.go config.go
 
 Alternatively, you could run the run.bat batch file on Windows.
 
@@ -44,8 +44,6 @@ Oh my, you caught me right at the start of this project. There's nothing to see 
 
 
 More moderation features.
-
-Fix the bug where errors are sent off in raw HTML rather than formatted HTML.
 
 Fix the custom pages.
 
@@ -64,3 +62,7 @@ Add a plugin system.
 Revamp the system for serving static files to make it much faster.
 
 Tweak the CSS to make it responsive.
+
+Add a forum cache.
+
+Add a group cache.

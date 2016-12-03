@@ -21,9 +21,6 @@ var tList map[int]interface{}
 // GET functions
 func route_overview(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
-	NoPermissions(w, r, user)
-	return
-	
 	pi := Page{"Overview","overview",user,tList,0}
 	err := templates.ExecuteTemplate(w,"overview.html", pi)
     if err != nil {
@@ -105,6 +102,129 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 	pi := Page{"Topic List","topics",user,topicList,0}
 	err = templates.ExecuteTemplate(w,"topics.html", pi)
+	if err != nil {
+        InternalError(err, w, r, user)
+    }
+}
+
+func route_forum(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	var(
+		topicList map[int]interface{}
+		currentID int
+		fname string
+		
+		tid int
+		title string
+		content string
+		createdBy int
+		is_closed bool
+		sticky bool
+		createdAt string
+		parentID int
+		status string
+		name string
+		avatar string
+	)
+	topicList = make(map[int]interface{})
+	currentID = 0
+	
+	fid, err := strconv.Atoi(r.URL.Path[len("/forum/"):])
+	if err != nil {
+		LocalError("The provided ForumID is not a valid number.",w,r,user)
+		return
+	}
+	
+	err = db.QueryRow("select name from forums where fid = ?", fid).Scan(&fname)
+	if err == sql.ErrNoRows {
+		pi := Page{"Error","error",user,tList,"The requested forum doesn't exist."}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		w.WriteHeader(404)
+		fmt.Fprintln(w,errpage)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC", fid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		err := rows.Scan(&tid, &title, &content, &createdBy, &is_closed, &sticky, &createdAt, &parentID, &name, &avatar)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		if is_closed {
+			status = "closed"
+		} else {
+			status = "open"
+		}
+		if avatar != "" && avatar[0] == '.' {
+			avatar = "/uploads/avatar_" + strconv.Itoa(createdBy) + avatar
+		}
+		
+		topicList[currentID] = TopicUser{tid, title, content, createdBy, is_closed, sticky, createdAt,parentID, status, name, avatar}
+		currentID++
+	}
+	err = rows.Err()
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	pi := Page{fname,"forum",user,topicList,0}
+	err = templates.ExecuteTemplate(w,"forum.html", pi)
+	if err != nil {
+        InternalError(err, w, r, user)
+    }
+}
+
+func route_forums(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	var forumList map[int]interface{}
+	forumList = make(map[int]interface{})
+	currentID := 0
+	
+	rows, err := db.Query("select fid, name, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime from forums")
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		forum := Forum{0,"","",0,"",0,""}
+		err := rows.Scan(&forum.ID, &forum.Name, &forum.LastTopic,&forum.LastTopicID,&forum.LastReplyer,&forum.LastReplyerID,&forum.LastTopicTime)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		forumList[currentID] = forum
+		currentID++
+	}
+	err = rows.Err()
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	pi := Page{"Forum List","forums",user,forumList,0}
+	err = templates.ExecuteTemplate(w,"forums.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
     }
@@ -221,8 +341,9 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		return          
 	}
 	success := 1
+	topic_name := html.EscapeString(r.PostFormValue("topic-name"))
 	
-	res, err := create_topic_stmt.Exec(html.EscapeString(r.PostFormValue("topic-name")),html.EscapeString(r.PostFormValue("topic-content")),parse_message(html.EscapeString(r.PostFormValue("topic-content"))),user.ID)
+	res, err := create_topic_stmt.Exec(topic_name,html.EscapeString(r.PostFormValue("topic-content")),parse_message(html.EscapeString(r.PostFormValue("topic-content"))),user.ID)
 	if err != nil {
 		log.Print(err)
 		success = 0
@@ -232,6 +353,12 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 		success = 0
+	}
+	
+	_, err = update_forum_cache_stmt.Exec(topic_name, lastId, user.Name, user.ID, 1)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
 	}
 	
 	if success != 1 {
@@ -249,7 +376,6 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_create_reply(w http.ResponseWriter, r *http.Request) {
-	var tid int
 	user := SessionCheck(w,r)
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
@@ -263,7 +389,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	success := 1
-	tid, err = strconv.Atoi(r.PostFormValue("tid"))
+	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
 		log.Print(err)
 		success = 0
@@ -283,6 +409,22 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 		success = 0
+	}
+	
+	var topic_name string
+	err = db.QueryRow("select title from topics where tid = ?", tid).Scan(&topic_name)
+	if err == sql.ErrNoRows {
+		log.Print(err)
+		success = 0
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	_, err = update_forum_cache_stmt.Exec(topic_name, tid, user.Name, user.ID, 1)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
 	}
 	
 	if success != 1 {
