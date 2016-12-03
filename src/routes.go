@@ -62,11 +62,13 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		createdAt string
 		parentID int
 		status string
+		name string
+		avatar string
 	)
 	topicList = make(map[int]interface{})
 	currentID = 0
 	
-	rows, err := db.Query("select tid, title, content, createdBy, is_closed, sticky, createdAt, parentID from topics")
+	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid")
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -74,7 +76,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	defer rows.Close()
 	
 	for rows.Next() {
-		err := rows.Scan(&tid, &title, &content, &createdBy, &is_closed, &sticky, &createdAt, &parentID)
+		err := rows.Scan(&tid, &title, &content, &createdBy, &is_closed, &sticky, &createdAt, &parentID, &name, &avatar)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
@@ -85,7 +87,11 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		} else {
 			status = "open"
 		}
-		topicList[currentID] = Topic{tid, title, content, createdBy, is_closed, sticky, createdAt,parentID, status}
+		if avatar != "" && avatar[0] == '.' {
+			avatar = "/uploads/avatar_" + strconv.Itoa(createdBy) + avatar
+		}
+		
+		topicList[currentID] = TopicUser{tid, title, content, createdBy, is_closed, sticky, createdAt,parentID, status, name, avatar}
 		currentID++
 	}
 	err = rows.Err()
@@ -174,7 +180,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 			replyAvatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + replyAvatar
 		}
 		
-		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(strings.Replace(replyContent,"\n","<br>",-1)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar}
+		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar}
 		currentID++
 	}
 	err = rows.Err()
@@ -211,7 +217,7 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	success := 1
 	
-	res, err := create_topic_stmt.Exec(html.EscapeString(r.PostFormValue("topic-name")),html.EscapeString(r.PostFormValue("topic-content")),strings.Replace(html.EscapeString(r.PostFormValue("topic-content")),"\n","<br>",-1),user.ID)
+	res, err := create_topic_stmt.Exec(html.EscapeString(r.PostFormValue("topic-name")),html.EscapeString(r.PostFormValue("topic-content")),parse_message(html.EscapeString(r.PostFormValue("topic-content"))),user.ID)
 	if err != nil {
 		log.Print(err)
 		success = 0
@@ -266,7 +272,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	_, err = create_reply_stmt.Exec(tid,html.EscapeString(r.PostFormValue("reply-content")),strings.Replace(html.EscapeString(r.PostFormValue("reply-content")),"\n","<br>",-1),user.ID)
+	_, err = create_reply_stmt.Exec(tid,html.EscapeString(r.PostFormValue("reply-content")),parse_message(html.EscapeString(r.PostFormValue("reply-content"))),user.ID)
 	if err != nil {
 		log.Print(err)
 		success = 0
@@ -311,14 +317,17 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	
 	topic_name := r.PostFormValue("topic_name")
 	topic_status := r.PostFormValue("topic_status")
+	//log.Print(topic_name)
+	//log.Print(topic_status)
 	var is_closed bool
 	if topic_status == "closed" {
 		is_closed = true
 	} else {
 		is_closed = false
 	}
-	topic_content := html.EscapeString(r.PostFormValue("topic-content"))
-	_, err = edit_topic_stmt.Exec(topic_name, topic_content, strings.Replace(topic_content,"\n","<br>",-1), is_closed, tid)
+	topic_content := html.EscapeString(r.PostFormValue("topic_content"))
+	//log.Print(topic_content)
+	_, err = edit_topic_stmt.Exec(topic_name, topic_content, parse_message(topic_content), is_closed, tid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,user,is_js)
 		return
@@ -356,7 +365,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	content := html.EscapeString(r.PostFormValue("edit_item"))
-	_, err = edit_reply_stmt.Exec(content, strings.Replace(content,"\n","<br>",-1), rid)
+	_, err = edit_reply_stmt.Exec(content, parse_message(content), rid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -624,6 +633,55 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 	pi := Page{"Edit Avatar","account-own-edit-avatar-success",user,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar-success.html", pi)
 }
+
+func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Loggedin {
+		errmsg := "You need to login to edit your own account."
+		pi := Page{"Error","error",user,tList,errmsg}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		http.Error(w,errpage,500)
+		return
+	}
+	
+	pi := Page{"Edit Username","account-own-edit-username",user,tList,user.Name}
+	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
+}
+
+func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Loggedin {
+		errmsg := "You need to login to edit your own account."
+		pi := Page{"Error","error",user,tList,errmsg}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		http.Error(w,errpage,500)
+		return
+	}
+	
+	err := r.ParseForm()
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
+		return          
+	}
+	
+	new_username := html.EscapeString(r.PostFormValue("account-new-username"))
+	_, err = set_username_stmt.Exec(new_username, strconv.Itoa(user.ID))
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	user.Name = new_username
+	
+	pi := Page{"Edit Username","account-own-edit-username",user,tList,user.Name}
+	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
+}
+
 func route_logout(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
 	if !user.Loggedin {

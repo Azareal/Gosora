@@ -30,6 +30,7 @@ var logout_stmt *sql.Stmt
 var set_password_stmt *sql.Stmt
 var get_password_stmt *sql.Stmt
 var set_avatar_stmt *sql.Stmt
+var set_username_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 var custom_pages map[string]string = make(map[string]string)
@@ -122,6 +123,12 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing set_username statement.")
+	set_username_stmt, err = db.Prepare("UPDATE users SET name = ? WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	// Add an admin version of register_stmt with more flexibility
 	// create_account_stmt, err = db.Prepare("INSERT INTO 
 	
@@ -183,9 +190,11 @@ func main(){
 	http.HandleFunc("/user/edit/critical/submit/", route_account_own_edit_critical_submit)
 	http.HandleFunc("/user/edit/avatar/", route_account_own_edit_avatar)
 	http.HandleFunc("/user/edit/avatar/submit/", route_account_own_edit_avatar_submit)
+	http.HandleFunc("/user/edit/username/", route_account_own_edit_username)
+	http.HandleFunc("/user/edit/username/submit/", route_account_own_edit_username_submit)
 	//http.HandleFunc("/user/:id/edit/", route_logout)
 	//http.HandleFunc("/user/:id/ban/", route_logout)
-	http.HandleFunc("/", route_topics)
+	http.HandleFunc("/", default_route)
 	
 	defer db.Close()
     http.ListenAndServe(":8080", nil)

@@ -38,3 +38,7 @@ func add_custom_page(path string, f os.FileInfo, err error) error {
 	custom_pages[name] = string(custom_page)
 	return nil
 }
+
+func parse_message(msg string) string {
+	return strings.Replace(msg,"\n","<br>",-1)
+}

@@ -9,3 +9,6 @@ var dbport = "3306" // You probably won't need to change this
 
 // Limiters
 var max_request_size = 5 * megabyte
+
+// Misc
+var default_route = route_topics

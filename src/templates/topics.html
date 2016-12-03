@@ -3,8 +3,8 @@
 	<div class="rowitem"><a>Topic List</a></div>
 </div>
 <div class="rowblock">
-	{{range .ItemList}}<div class="rowitem">
-		<a href="/topic/{{.ID}}">{{.Title}}</a> <span class="topic_status topic_status_{{.Status}}"></span>
+	{{range .ItemList}}<div class="rowitem passive"{{ if .Avatar }} style="background-image: url({{ .Avatar }});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;"{{end}}>
+		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="topic_status topic_status_closed">closed</span>{{else}}<span class="topic_status topic_status_open">open</span>{{end}}
 	</div>{{end}}
 </div>
 {{template "footer.html" . }}
