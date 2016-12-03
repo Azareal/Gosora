@@ -63,7 +63,7 @@ $(document).ready(function(){
 		event.preventDefault();
 		var block_parent = $(this).closest('.editable_parent');
 		var block = block_parent.find('.editable_block').eq(0);
-		block.html("<textarea style='width: 100%;' name='edit_item'>" + block.html() + "</textarea><br /><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit' type='submit'>Update</button></a>");
+		block.html("<textarea style='width: 99%;' name='edit_item'>" + block.html() + "</textarea><br /><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit' type='submit'>Update</button></a>");
 		
 		$(".submit_edit").click(function(event)
 		{

@@ -57,25 +57,25 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("INSERT INTO topics(title,createdAt,lastReplyAt,createdBy) VALUES(?,?,0,?)")
+	create_topic_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing create_reply statement.")
-	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,createdAt,createdBy) VALUES(?,?,?,?)")
+	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing edit_topic statement.")
-	edit_topic_stmt, err = db.Prepare("UPDATE topics SET title = ?, content = ?, is_closed = ? WHERE tid = ?")
+	edit_topic_stmt, err = db.Prepare("UPDATE topics SET title = ?, content = ?, parsed_content = ?, is_closed = ? WHERE tid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing edit_reply statement.")
-	edit_reply_stmt, err = db.Prepare("UPDATE replies SET content = ? WHERE rid = ?")
+	edit_reply_stmt, err = db.Prepare("UPDATE replies SET content = ?, parsed_content = ? WHERE rid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -181,7 +181,7 @@ func main(){
 	//http.HandleFunc("/user/edit/", route_logout)
 	http.HandleFunc("/user/edit/critical/", route_account_own_edit_critical) // Password & Email
 	http.HandleFunc("/user/edit/critical/submit/", route_account_own_edit_critical_submit)
-	http.HandleFunc("/user/edit/avatar/", route_account_own_edit_avatar) // Password & Email
+	http.HandleFunc("/user/edit/avatar/", route_account_own_edit_avatar)
 	http.HandleFunc("/user/edit/avatar/submit/", route_account_own_edit_avatar_submit)
 	//http.HandleFunc("/user/:id/edit/", route_logout)
 	//http.HandleFunc("/user/:id/ban/", route_logout)

@@ -1,13 +1,13 @@
 {{template "header.html" . }}
 <div class="rowblock">
-	<form action='/topic/edit/submit/{{index .Something "tid"}}/' method="post">
+	<form action='/topic/edit/submit/{{.Something.ID}}' method="post">
 		<div class="rowitem">
-			<a class='topic_name hide_on_edit'>{{index .Something "title"}}</a> 
-			<span class='topic_status topic_status_e topic_status_{{index .Something "status"}} hide_on_edit'>{{index .Something "status"}}</span> 
-			<a href='/topic/edit/{{index .Something "ID"}}/' class="topic_status hide_on_edit open_edit">Edit</a>
-			<a href='/topic/delete/{{index .Something "ID"}}/' class="topic_status">Delete</a>
+			<a class='topic_name hide_on_edit'>{{.Something.Title}}</a> 
+			<span class='topic_status topic_status_e topic_status_{{.Something.Status}} hide_on_edit'>{{.Something.Status}}</span> 
+			<a href='/topic/edit/{{.Something.ID}}' class="topic_status hide_on_edit open_edit">Edit</a>
+			<a href='/topic/delete/{{.Something.ID}}' class="topic_status">Delete</a>
 			
-			<input class='show_on_edit topic_name_input' name="topic_name" value='{{index .Something "title"}}' type="text" />
+			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Something.Title}}' type="text" />
 			<select name="topic_status" class='show_on_edit topic_status_input'>
 				<option>closed</option>
 				<option>open</option>
@@ -17,26 +17,26 @@
 	</form>
 </div>
 <div class="rowblock">
-	<div class="rowitem passive editable_parent" style="border-bottom: none;{{ if .CurrentUser.HasAvatar }}background-image: url({{ .CurrentUser.Avatar }});background-position: left;background-repeat: no-repeat;background-size: 128px;padding-left: 136px;{{end}}">
-		<span class="hide_on_edit topic_content">{{index .Something "content"}}</span>
-		<textarea name="topic_content" class="show_on_edit topic_content_input">{{index .Something "content"}}</textarea>
+	<div class="rowitem passive editable_parent" style="border-bottom: none;{{ if .Something.Avatar }}background-image: url({{ .Something.Avatar }});background-position: left;background-repeat: no-repeat;background-size: 128px;padding-left: 136px;{{end}}">
+		<span class="hide_on_edit topic_content">{{.Something.Content}}</span>
+		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Something.Content}}</textarea>
 		<br /><br />
-		<a class="topic_status" style="padding-left: 0px;margin-left: 0px;">{{index .Something "createdByName"}}<a/>
+		<a class="topic_status" style="padding-left: 0px;margin-left: 0px;">{{.Something.CreatedByName}}<a/>
 	</div>
 </div><br />
 <div class="rowblock" style="overflow: hidden;">
 	{{range $index, $element := .ItemList}}
-	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.HasAvatar }}background-image: url({{ $element.Avatar }});background-position: left;background-repeat: no-repeat;background-size: 128px;padding-left: 136px;{{end}}">
-		<span class="editable_block">{{$element.Content}}</span>
+	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.Avatar }}background-image: url({{ $element.Avatar }});background-position: left;background-repeat: no-repeat;background-size: 128px;padding-left: 136px;{{end}}">
+		<span class="editable_block">{{$element.ContentHtml}}</span>
 		<br /><br />
 		<a class="topic_status" style="padding-left: 0px;margin-left: 0px;">{{$element.CreatedByName}}<a/>
-		<a href="/reply/edit/submit/{{$element.ID}}/"><button class="topic_status edit_item">Edit</button></a>
-		<a href="/reply/delete/submit/{{$element.ID}}/"><button class="topic_status delete_item">Delete</button></a>
+		<a href="/reply/edit/submit/{{$element.ID}}"><button class="topic_status edit_item">Edit</button></a>
+		<a href="/reply/delete/submit/{{$element.ID}}"><button class="topic_status delete_item">Delete</button></a>
 	</div>{{ end }}
 </div>
 <div class="rowblock">
 	<form action="/reply/create/" method="post">
-		<input name="tid" value='{{index .Something "tid"}}' type="hidden" />
+		<input name="tid" value='{{.Something.ID}}' type="hidden" />
 		<div class="formrow">
 			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
 		</div>

@@ -1,3 +1,9 @@
+* {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
 body
 {
 	font-family: arial;
@@ -10,7 +16,7 @@ ul
 	padding-bottom: 5px;
 	padding-left: 0px;
 	padding-right: 0px;
-	height: 18px;
+	height: 28px;
 	list-style-type: none;
 }
 
@@ -74,6 +80,7 @@ li:not(:last-child)
 	padding-top: 0px;
 	width: 65%;
 	overflow: hidden;
+	word-wrap: break-word;
 }
 .colblock_left:empty
 {

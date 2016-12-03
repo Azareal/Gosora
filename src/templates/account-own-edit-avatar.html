@@ -1,8 +1,8 @@
 {{template "header.html" . }}
 <div class="colblock_left">
 	<div class="rowitem"><a>My Account</a></div>
-	<div class="rowitem passive"><a href="/user/edit/critical/">Edit Password</a></div>
 	<div class="rowitem passive"><a href="/user/edit/avatar/">Edit Avatar</a></div>
+	<div class="rowitem passive"><a href="/user/edit/critical/">Edit Password</a></div>
 	<div class="rowitem passive"><a>Coming Soon</a></div>
 	<div class="rowitem passive"><a>Coming Soon</a></div>
 	<div class="rowitem passive"><a>Coming Soon</a></div>
@@ -10,7 +10,7 @@
 <div class="colblock_right">
 	<div class="rowitem"><a>Edit Avatar</a></div>
 </div>
-{{ if .CurrentUser.HasAvatar }}
+{{ if .CurrentUser.Avatar }}
 <div class="colblock_right">
 	<div class="rowitem"><img src="{{.CurrentUser.Avatar}}" height="128px" max-width="128px" /></div>
 </div>

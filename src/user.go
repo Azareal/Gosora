@@ -16,7 +16,6 @@ type User struct
 	Session string
 	Loggedin bool
 	Avatar string
-	HasAvatar bool
 }
 
 func SetPassword(uid int, password string) (error) {
@@ -39,7 +38,7 @@ func SetPassword(uid int, password string) (error) {
 }
 
 func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
-	user := User{0,"",0,false,false,"",false,"",false}
+	user := User{0,"",0,false,false,"",false,""}
 	var err error
 	var cookie *http.Cookie
 	
@@ -59,8 +58,8 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 		return user
 	}
 	user.Session = cookie.Value
-	log.Print("ID: " + user.Name)
-	log.Print("Session: " + user.Session)
+	//log.Print("ID: " + user.Name)
+	//log.Print("Session: " + user.Session)
 	
 	// Is this session valid..?
 	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar)
@@ -72,14 +71,11 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 		return user
 	}
 	user.Is_Admin = user.Is_Super_Admin
-	if user.Avatar != "" {
-		user.HasAvatar = true
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
+	if user.Avatar != "" && user.Avatar[0] == '.' {
+		user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 	}
 	user.Loggedin = true
-	log.Print("Logged in")
+	/*log.Print("Logged in")
 	log.Print("ID: " + strconv.Itoa(user.ID))
 	log.Print("Group: " + strconv.Itoa(user.Group))
 	log.Print("Name: " + user.Name)
@@ -92,7 +88,6 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 		log.Print("Is_Admin: true")
 	} else {
 		log.Print("Is_Admin: false")
-	}
-	log.Print("Session: " + user.Session)
+	}*/
 	return user
 }

@@ -6,11 +6,11 @@ import "strconv"
 import "bytes"
 import "regexp"
 import "strings"
-import "time"
 import "io"
 import "os"
 import "net/http"
 import "html"
+import "html/template"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 import "golang.org/x/crypto/bcrypt"
@@ -94,20 +94,18 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	pi := Page{"Topic List","topics",user,topicList,0}
-	templates.ExecuteTemplate(w,"topics.html", pi)
+	err = templates.ExecuteTemplate(w,"topics.html", pi)
+	if err != nil {
+        InternalError(err, w, r, user)
+    }
 }
 	
 func route_topic_id(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
 	var(
-		tid int
+		err error
 		rid int
-		parentID int
-		title string
 		content string
-		createdBy int
-		createdByName string
-		createdAt string
 		replyContent string
 		replyCreatedBy int
 		replyCreatedByName string
@@ -115,17 +113,15 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		replyLastEdit int
 		replyLastEditBy int
 		replyAvatar string
-		replyHasAvatar bool
-		is_closed bool
-		sticky bool
 		
 		currentID int
 		replyList map[int]interface{}
 	)
 	replyList = make(map[int]interface{})
 	currentID = 0
+	topic := TopicUser{0,"","",0,false,false,"",0,"","",""}
 	
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/"):])
+	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
 		return
@@ -133,7 +129,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 	// Get the topic..
 	//err = db.QueryRow("select title, content, createdBy, status, is_closed from topics where tid = ?", tid).Scan(&title, &content, &createdBy, &status, &is_closed)
-	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name from topics left join users ON topics.createdBy = users.uid where tid = ?", tid).Scan(&title, &content, &createdBy, &createdAt, &is_closed, &sticky, &parentID, &createdByName)
+	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar)
 	if err == sql.ErrNoRows {
 		errmsg := "The requested topic doesn't exist."
 		pi := Page{"Error","error",user,tList,errmsg}
@@ -148,25 +144,19 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var tdata map[string]string
-	tdata = make(map[string]string)
-	tdata["tid"] = strconv.Itoa(tid)
-	tdata["title"] = title
-	tdata["content"] = content
-	tdata["createdBy"] = string(createdBy)
-	tdata["createdAt"] = string(createdAt)
-	tdata["parentID"] = string(parentID)
-	if is_closed {
-		tdata["status"] = "closed"
+	topic.Content = template.HTML(content)
+	if topic.Is_Closed {
+		topic.Status = "closed"
 	} else {
-		tdata["status"] = "open"
+		topic.Status = "open"
 	}
-	//tdata["sticky"] = sticky
-	tdata["createdByName"] = createdByName
+	if topic.Avatar != "" && topic.Avatar[0] == '.' {
+		topic.Avatar = "/uploads/avatar_" + strconv.Itoa(topic.CreatedBy) + topic.Avatar
+	}
 	
 	// Get the replies..
 	//rows, err := db.Query("select rid, content, createdBy, createdAt from replies where tid = ?", tid)
-	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name from replies left join users ON replies.createdBy = users.uid where tid = ?", tid)
+	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name from replies left join users ON replies.createdBy = users.uid where tid = ?", topic.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -180,16 +170,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 			return
 		}
 		
-		if replyAvatar != "" {
-			replyHasAvatar = true
-			if replyAvatar[0] == '.' {
-				replyAvatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + replyAvatar
-			}
-		} else {
-			replyHasAvatar = false
+		if replyAvatar != "" && replyAvatar[0] == '.' {
+			replyAvatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + replyAvatar
 		}
 		
-		replyList[currentID] = Reply{rid,tid,replyContent,replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyHasAvatar}
+		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(strings.Replace(replyContent,"\n","<br>",-1)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar}
 		currentID++
 	}
 	err = rows.Err()
@@ -198,8 +183,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{title,"topic",user,replyList,tdata}
-	templates.ExecuteTemplate(w,"topic.html", pi)
+	pi := Page{topic.Title,"topic",user,replyList,topic}
+	err = templates.ExecuteTemplate(w,"topic.html", pi)
+	if err != nil {
+        InternalError(err, w, r, user)
+    }
 }
 	
 func route_topic_create(w http.ResponseWriter, r *http.Request){
@@ -223,7 +211,7 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	success := 1
 	
-	res, err := create_topic_stmt.Exec(html.EscapeString(r.PostFormValue("topic-name")),html.EscapeString(r.PostFormValue("topic-content")),int32(time.Now().Unix()),user.ID)
+	res, err := create_topic_stmt.Exec(html.EscapeString(r.PostFormValue("topic-name")),html.EscapeString(r.PostFormValue("topic-content")),strings.Replace(html.EscapeString(r.PostFormValue("topic-content")),"\n","<br>",-1),user.ID)
 	if err != nil {
 		log.Print(err)
 		success = 0
@@ -250,8 +238,6 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 
 func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	var tid int
-	
-	
 	user := SessionCheck(w,r)
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
@@ -279,9 +265,8 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		http.Error(w,errpage,500)
 		return
 	}
-	//log.Println("A reply is being created")
 	
-	_, err = create_reply_stmt.Exec(tid,html.EscapeString(r.PostFormValue("reply-content")),int32(time.Now().Unix()),user.ID)
+	_, err = create_reply_stmt.Exec(tid,html.EscapeString(r.PostFormValue("reply-content")),strings.Replace(html.EscapeString(r.PostFormValue("reply-content")),"\n","<br>",-1),user.ID)
 	if err != nil {
 		log.Print(err)
 		success = 0
@@ -332,8 +317,8 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	} else {
 		is_closed = false
 	}
-	topic_content := html.EscapeString(r.PostFormValue("topic_content"))
-	_, err = edit_topic_stmt.Exec(topic_name, topic_content, is_closed, tid)
+	topic_content := html.EscapeString(r.PostFormValue("topic-content"))
+	_, err = edit_topic_stmt.Exec(topic_name, topic_content, strings.Replace(topic_content,"\n","<br>",-1), is_closed, tid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,user,is_js)
 		return
@@ -371,7 +356,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	content := html.EscapeString(r.PostFormValue("edit_item"))
-	_, err = edit_reply_stmt.Exec(content, rid)
+	_, err = edit_reply_stmt.Exec(content, strings.Replace(content,"\n","<br>",-1), rid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -634,7 +619,6 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 	
-	user.HasAvatar = true
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
 	
 	pi := Page{"Edit Avatar","account-own-edit-avatar-success",user,tList,0}
