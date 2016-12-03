@@ -1,16 +1,17 @@
 {{template "header.html" . }}
 <div class="rowblock">
 	<form action='/topic/edit/submit/{{.Something.ID}}' method="post">
-		<div class="rowitem">
+		<div class="rowitem"{{ if .Something.Sticky }}style="background-color: #FFFFEA;"{{end}}>
 			<a class='topic_name hide_on_edit'>{{.Something.Title}}</a> 
 			<span class='topic_status topic_status_e topic_status_{{.Something.Status}} hide_on_edit'>{{.Something.Status}}</span> 
-			<a href='/topic/edit/{{.Something.ID}}' class="topic_status hide_on_edit open_edit">Edit</a>
-			<a href='/topic/delete/{{.Something.ID}}' class="topic_status">Delete</a>
+			<a href='/topic/edit/{{.Something.ID}}' class="username hide_on_edit open_edit" style="font-weight: normal;">Edit</a>
+			<a href='/topic/delete/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Delete</a>
+			{{ if .Something.Sticky }}<a href='/topic/unstick/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Pin</a>{{end}}
 			
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Something.Title}}' type="text" />
 			<select name="topic_status" class='show_on_edit topic_status_input'>
-				<option>closed</option>
 				<option>open</option>
+				<option>closed</option>
 			</select>
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
 		</div>
@@ -21,7 +22,7 @@
 		<span class="hide_on_edit topic_content">{{.Something.Content}}</span>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Something.Content}}</textarea>
 		<br /><br />
-		<a class="topic_status" style="padding-left: 0px;margin-left: 0px;">{{.Something.CreatedByName}}<a/>
+		<a class="username">{{.Something.CreatedByName}}<a/>
 	</div>
 </div><br />
 <div class="rowblock" style="overflow: hidden;">
@@ -29,9 +30,9 @@
 	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.Avatar }}background-image: url({{ $element.Avatar }});background-position: left;background-repeat: no-repeat;background-size: 128px;padding-left: 136px;{{end}}">
 		<span class="editable_block">{{$element.ContentHtml}}</span>
 		<br /><br />
-		<a class="topic_status" style="padding-left: 0px;margin-left: 0px;">{{$element.CreatedByName}}<a/>
-		<a href="/reply/edit/submit/{{$element.ID}}"><button class="topic_status edit_item">Edit</button></a>
-		<a href="/reply/delete/submit/{{$element.ID}}"><button class="topic_status delete_item">Delete</button></a>
+		<a class="username">{{$element.CreatedByName}}<a/>
+		<a href="/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
+		<a href="/reply/delete/submit/{{$element.ID}}"><button class="username delete_item">Delete</button></a>
 	</div>{{ end }}
 </div>
 <div class="rowblock">

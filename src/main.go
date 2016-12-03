@@ -24,6 +24,9 @@ var create_reply_stmt *sql.Stmt
 var edit_topic_stmt *sql.Stmt
 var edit_reply_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
+var delete_topic_stmt *sql.Stmt
+var stick_topic_stmt *sql.Stmt
+var unstick_topic_stmt *sql.Stmt
 var login_stmt *sql.Stmt
 var update_session_stmt *sql.Stmt
 var logout_stmt *sql.Stmt
@@ -83,6 +86,24 @@ func init_database(err error) {
 	
 	log.Print("Preparing delete_reply statement.")
 	delete_reply_stmt, err = db.Prepare("DELETE FROM replies WHERE rid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing delete_topic statement.")
+	delete_topic_stmt, err = db.Prepare("DELETE FROM topics WHERE tid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing stick_topic statement.")
+	stick_topic_stmt, err = db.Prepare("UPDATE topics SET sticky = 1 WHERE tid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing unstick_topic statement.")
+	unstick_topic_stmt, err = db.Prepare("UPDATE topics SET sticky = 0 WHERE tid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -172,6 +193,9 @@ func main(){
 	http.HandleFunc("/reply/edit/submit/", route_reply_edit_submit) //POST
 	http.HandleFunc("/reply/delete/submit/", route_reply_delete_submit) //POST
 	http.HandleFunc("/topic/edit/submit/", route_edit_topic) //POST
+	http.HandleFunc("/topic/delete/submit/", route_delete_topic)
+	http.HandleFunc("/topic/stick/submit/", route_stick_topic)
+	http.HandleFunc("/topic/unstick/submit/", route_unstick_topic)
 	
 	// Custom Pages
 	http.HandleFunc("/pages/", route_custom_page)

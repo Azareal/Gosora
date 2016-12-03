@@ -93,7 +93,7 @@ li:not(:last-child)
 
 .rowitem
 {
-	width: 99%;
+	width: 100%;
 	padding-left: 8px;
 	padding-right: 8px;
 	padding-top: 17px;
@@ -240,6 +240,21 @@ button
 .topic_status:empty
 {
 	display: none;
+}
+
+.username
+{
+	text-transform: none;
+	margin-left: 0px;
+	padding-left: 4px;
+	padding-right: 4px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	color: #505050; /* 80,80,80 */
+	border-style: dotted;
+	border-color: #505050; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
+	border-width: 1px;
+	font-size: 15px;
 }
 
 .show_on_edit

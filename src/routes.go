@@ -68,7 +68,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	topicList = make(map[int]interface{})
 	currentID = 0
 	
-	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid")
+	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -338,6 +338,82 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprintf(w,"{'success': '1'}")
 	}
+}
+
+func route_delete_topic(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
+	if err != nil {
+		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		return
+	}
+	
+	err = db.QueryRow("SELECT tid from topics where tid = ?", tid).Scan(&tid)
+	if err == sql.ErrNoRows {
+		LocalError("The topic you tried to delete doesn't exist.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	_, err = delete_topic_stmt.Exec(tid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	log.Print("The topic '" + strconv.Itoa(tid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
+	
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func route_stick_topic(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/stick/submit/"):])
+	if err != nil {
+		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		return
+	}
+	
+	_, err = stick_topic_stmt.Exec(tid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
+}
+
+func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unstick/submit/"):])
+	if err != nil {
+		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		return
+	}
+	
+	_, err = unstick_topic_stmt.Exec(tid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 }
 
 func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {

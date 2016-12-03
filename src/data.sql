@@ -10,6 +10,7 @@ CREATE TABLE `users`(
 	`createdAt` datetime not null,
 	`lastActiveAt` datetime not null,
 	`session` varchar(200) DEFAULT '',
+	`email` varchar(200) DEFAULT '',
 	`avatar` varchar(20) DEFAULT '',
 	primary key(`uid`)
 );
@@ -19,6 +20,7 @@ CREATE TABLE `users_groups`(
 	`name` varchar(100) not null,
 	`permissions` text not null,
 	`is_admin` tinyint DEFAULT 0 not null,
+	`is_banned` tinyint DEFAULT 0 not null,
 	primary key(`gid`)
 );
 
