@@ -1,4 +1,5 @@
 package main
+import "html/template"
 
 type Topic struct
 {
@@ -27,4 +28,5 @@ type TopicUser struct
 	
 	CreatedByName string
 	Avatar string
+	Css template.CSS
 }

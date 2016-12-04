@@ -251,10 +251,16 @@ button
 	padding-top: 2px;
 	padding-bottom: 2px;
 	color: #505050; /* 80,80,80 */
+	background-color: #FFFFFF;
 	border-style: dotted;
 	border-color: #505050; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
 	border-width: 1px;
 	font-size: 15px;
+}
+button.username
+{
+	position: relative;
+	top: -0.25px;
 }
 
 .show_on_edit

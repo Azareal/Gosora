@@ -17,6 +17,7 @@ const kilobyte int = 1024
 const megabyte int = 1024 * 1024
 const saltLength int = 32
 const sessionLength int = 80
+
 var db *sql.DB
 var get_session_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
@@ -37,8 +38,12 @@ var set_avatar_stmt *sql.Stmt
 var set_username_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
+
 var custom_pages map[string]string = make(map[string]string)
 var templates = template.Must(template.ParseGlob("templates/*"))
+var no_css_tmpl = template.CSS("")
+var staff_css_tmpl = template.CSS(staff_css)
+var groups map[int]Group = make(map[int]Group)
 
 func init_database(err error) {
 	if(dbpassword != ""){
@@ -161,13 +166,33 @@ func init_database(err error) {
 	// create_account_stmt, err = db.Prepare("INSERT INTO 
 	
 	log.Print("Preparing register statement.")
-	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`password`,`salt`,`group`,`is_super_admin`,`session`) VALUES(?,?,?,0,0,?)")
+	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`password`,`salt`,`group`,`is_super_admin`,`session`) VALUES(?,?,?,2,0,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing username_exists statement.")
 	username_exists_stmt, err = db.Prepare("SELECT `name` FROM `users` WHERE `name` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Loading the usergroups.")
+	rows, err := db.Query("select gid,name,permissions,is_admin,is_banned from users_groups")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		group := Group{0,"","",false,false}
+		err := rows.Scan(&group.ID, &group.Name, &group.Permissions, &group.Is_Admin, &group.Is_Banned)
+		if err != nil {
+			log.Fatal(err)
+		}
+		groups[group.ID] = group
+	}
+	err = rows.Err()
 	if err != nil {
 		log.Fatal(err)
 	}

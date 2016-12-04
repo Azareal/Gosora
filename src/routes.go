@@ -92,7 +92,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			avatar = "/uploads/avatar_" + strconv.Itoa(createdBy) + avatar
 		}
 		
-		topicList[currentID] = TopicUser{tid, title, content, createdBy, is_closed, sticky, createdAt,parentID, status, name, avatar}
+		topicList[currentID] = TopicUser{tid, title, content, createdBy, is_closed, sticky, createdAt,parentID, status, name, avatar, ""}
 		currentID++
 	}
 	err = rows.Err()
@@ -173,7 +173,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 			avatar = "/uploads/avatar_" + strconv.Itoa(createdBy) + avatar
 		}
 		
-		topicList[currentID] = TopicUser{tid, title, content, createdBy, is_closed, sticky, createdAt,parentID, status, name, avatar}
+		topicList[currentID] = TopicUser{tid, title, content, createdBy, is_closed, sticky, createdAt,parentID, status, name, avatar, ""}
 		currentID++
 	}
 	err = rows.Err()
@@ -243,13 +243,16 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		replyLastEdit int
 		replyLastEditBy int
 		replyAvatar string
+		replyCss template.CSS
+		is_super_admin bool
+		group int
 		
 		currentID int
 		replyList map[int]interface{}
 	)
 	replyList = make(map[int]interface{})
 	currentID = 0
-	topic := TopicUser{0,"","",0,false,false,"",0,"","",""}
+	topic := TopicUser{0,"","",0,false,false,"",0,"","","",no_css_tmpl}
 	
 	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
@@ -259,7 +262,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 	// Get the topic..
 	//err = db.QueryRow("select title, content, createdBy, status, is_closed from topics where tid = ?", tid).Scan(&title, &content, &createdBy, &status, &is_closed)
-	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar)
+	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar, users.is_super_admin, users.group from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group)
 	if err == sql.ErrNoRows {
 		errmsg := "The requested topic doesn't exist."
 		pi := Page{"Error","error",user,tList,errmsg}
@@ -275,7 +278,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	topic.Content = template.HTML(content)
+	topic.Content = template.HTML(parse_message(content))
 	if topic.Is_Closed {
 		topic.Status = "closed"
 	} else {
@@ -284,10 +287,13 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	if topic.Avatar != "" && topic.Avatar[0] == '.' {
 		topic.Avatar = "/uploads/avatar_" + strconv.Itoa(topic.CreatedBy) + topic.Avatar
 	}
+	if is_super_admin || groups[group].Is_Admin {
+		topic.Css = staff_css_tmpl
+	}
 	
 	// Get the replies..
 	//rows, err := db.Query("select rid, content, createdBy, createdAt from replies where tid = ?", tid)
-	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name from replies left join users ON replies.createdBy = users.uid where tid = ?", topic.ID)
+	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group from replies left join users ON replies.createdBy = users.uid where tid = ?", topic.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -295,17 +301,22 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	defer rows.Close()
 	
 	for rows.Next() {
-		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName)
+		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &is_super_admin, &group)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
 		}
 		
+		if is_super_admin || groups[group].Is_Admin {
+			replyCss = staff_css_tmpl
+		} else {
+			replyCss = no_css_tmpl
+		}
 		if replyAvatar != "" && replyAvatar[0] == '.' {
-			replyAvatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + replyAvatar
+			replyAvatar = "/uploads/avatar_" + strconv.Itoa(replyCreatedBy) + replyAvatar
 		}
 		
-		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar}
+		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss}
 		currentID++
 	}
 	err = rows.Err()
