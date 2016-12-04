@@ -13,6 +13,7 @@ type User struct
 	Group int
 	Is_Admin bool
 	Is_Super_Admin bool
+	Is_Banned bool
 	Session string
 	Loggedin bool
 	Avatar string
@@ -38,7 +39,7 @@ func SetPassword(uid int, password string) (error) {
 }
 
 func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
-	user := User{0,"",0,false,false,"",false,""}
+	user := User{0,"",0,false,false,false,"",false,""}
 	var err error
 	var cookie *http.Cookie
 	
@@ -64,13 +65,13 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 	// Is this session valid..?
 	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar)
 	if err == sql.ErrNoRows {
-		//log.Print("Couldn't find the user session")
 		return user
 	} else if err != nil {
 		log.Print(err)
 		return user
 	}
-	user.Is_Admin = user.Is_Super_Admin
+	user.Is_Admin = (user.Is_Super_Admin || groups[user.Group].Is_Admin)
+	user.Is_Banned = groups[user.Group].Is_Banned
 	if user.Avatar != "" && user.Avatar[0] == '.' {
 		user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 	}

@@ -16,6 +16,7 @@
 			</select>
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
 			{{end}}
+			<a href='/topic/report/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Report</a>
 		</div>
 	</form>
 </div>
@@ -35,8 +36,10 @@
 		<a class="username">{{$element.CreatedByName}}</a>
 		{{if $.CurrentUser.Is_Admin}}<a href="/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
 		<a href="/reply/delete/submit/{{$element.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
+		<a href="/reply/report/submit/{{$element.ID}}"><button class="username report_item">Report</button></a>
 	</div>{{ end }}
 </div>
+{{if not .CurrentUser.Is_Banned}}
 <div class="rowblock">
 	<form action="/reply/create/" method="post">
 		<input name="tid" value='{{.Something.ID}}' type="hidden" />
@@ -48,4 +51,5 @@
 		</div>
 	</form>
 </div>
+{{end}}
 {{template "footer.html" . }}

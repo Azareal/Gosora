@@ -209,10 +209,15 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 			return
 		}
 		
-		forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
-		if err != nil {
-			InternalError(err,w,r,user)
-			return
+		if forum.LastTopicID != 0 {
+			forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
+			if err != nil {
+				InternalError(err,w,r,user)
+				return
+			}
+		} else {
+			forum.LastTopic = "None"
+			forum.LastTopicTime = ""
 		}
 		
 		forumList[currentID] = forum
@@ -334,6 +339,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 func route_topic_create(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
+	if user.Is_Banned {
+		Banned(w,r,user)
+		return
+	}
+	
 	pi := Page{"Create Topic","create-topic",user,tList,0}
 	templates.ExecuteTemplate(w,"create-topic.html", pi)
 }
@@ -343,6 +353,10 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
+		return
+	}
+	if user.Is_Banned {
+		Banned(w,r,user)
 		return
 	}
 	
@@ -390,6 +404,10 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
+		return
+	}
+	if user.Is_Banned {
+		Banned(w,r,user)
 		return
 	}
 	
@@ -466,6 +484,10 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	
 	if !user.Is_Admin {
 		NoPermissionsJSQ(w,r,user,is_js)
+		return
+	}
+	if user.Is_Banned {
+		BannedJSQ(w,r,user,is_js)
 		return
 	}
 	
@@ -1175,4 +1197,64 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	cookie = http.Cookie{Name: "session",Value: session,Path: "/",MaxAge: year}
 	http.SetCookie(w,&cookie)
 	http.Redirect(w,r, "/", http.StatusSeeOther)
+}
+
+func route_panel_forums(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	var forumList map[int]interface{}
+	forumList = make(map[int]interface{})
+	currentID := 0
+	
+	rows, err := db.Query("select fid, name from forums")
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		forum := ForumSimple{0,""}
+		err := rows.Scan(&forum.ID, &forum.Name)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		forumList[currentID] = forum
+		currentID++
+	}
+	err = rows.Err()
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	pi := Page{"Forum Manager","panel-forums",user,forumList,0}
+	templates.ExecuteTemplate(w,"panel-forums.html", pi)
+}
+
+func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	err := r.ParseForm()
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
+		return          
+	}
+	
+	_, err = create_forum_stmt.Exec(r.PostFormValue("forum-name"))
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	http.Redirect(w,r, "/panel/forums/", http.StatusSeeOther)
 }

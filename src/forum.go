@@ -10,3 +10,9 @@ type Forum struct
 	LastReplyerID int
 	LastTopicTime string
 }
+
+type ForumSimple struct
+{
+	ID int
+	Name string
+}

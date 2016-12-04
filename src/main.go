@@ -39,6 +39,8 @@ var set_username_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 
+var create_forum_stmt *sql.Stmt
+
 var custom_pages map[string]string = make(map[string]string)
 var templates = template.Must(template.ParseGlob("templates/*"))
 var no_css_tmpl = template.CSS("")
@@ -177,6 +179,12 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing create_forum statement.")
+	create_forum_stmt, err = db.Prepare("INSERT INTO forums(name) VALUES(?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Loading the usergroups.")
 	rows, err := db.Query("select gid,name,permissions,is_admin,is_banned from users_groups")
 	if err != nil {
@@ -252,6 +260,11 @@ func main(){
 	http.HandleFunc("/user/edit/username/submit/", route_account_own_edit_username_submit)
 	//http.HandleFunc("/user/:id/edit/", route_logout)
 	//http.HandleFunc("/user/:id/ban/", route_logout)
+	
+	// Admin
+	http.HandleFunc("/panel/forums/", route_panel_forums)
+	http.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
+	
 	http.HandleFunc("/", default_route)
 	
 	defer db.Close()

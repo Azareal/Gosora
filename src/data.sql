@@ -61,6 +61,14 @@ CREATE TABLE `replies`(
 	primary key(`rid`)
 );
 
+CREATE TABLE `replies_reports` (
+	`rid` int not null AUTO_INCREMENT,
+	`reportedBy` int not null,
+	`reportedContent` text not null,
+	`resolved` tinyint DEFAULT 0 not null,
+	primary key(`rid`)
+);
+
 INSERT INTO users(`name`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`) 
 VALUES ('Admin',1,1,NOW(),NOW());
 INSERT INTO users_groups(`name`,`permissions`,`is_admin`) VALUES ('Administrator','{}',1);

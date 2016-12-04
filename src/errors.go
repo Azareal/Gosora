@@ -86,6 +86,30 @@ func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, is_js s
 	}
 }
 
+func Banned(w http.ResponseWriter, r *http.Request, user User) {
+	errmsg := "You have been banned, thus you do not permission to do that."
+	pi := Page{"Local Error","error",user,tList,errmsg}
+	var b bytes.Buffer
+	templates.ExecuteTemplate(&b,"error.html", pi)
+	errpage := b.String()
+	w.WriteHeader(403)
+	fmt.Fprintln(w,errpage)
+}
+
+func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
+	errmsg := "You have been banned from this site."
+	if is_js == "0" {
+		pi := Page{"Local Error","error",user,tList,errmsg}
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		w.WriteHeader(403)
+		fmt.Fprintln(w,errpage)
+	} else {
+		http.Error(w,"{'errmsg': '" + errmsg + "'}",403)
+	}
+}
+
 func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
 	errmsg := "You need to login to do that."
 	if is_js == "0" {
