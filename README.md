@@ -13,9 +13,11 @@ Custom Pages
 
 # Dependencies
 
-Go. The programming language this program is written in, and the compiler which it requires. You will need to install this.
+Go. The programming language this program is written in, and the compiler which it requires. You will need to install this. https://golang.org/doc/install
 
 MySQL Database. You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well, and is much faster than MySQL.
+If you're curious about how to install this, you might want to try the WNMP or XAMPP bundles on Windows.
+Instructions on how to do so on Linux: https://downloads.mariadb.org/mariadb/repositories/
 
 
 # Installation Instructions
