@@ -1,0 +1,55 @@
+{{template "header.html" . }}
+<div class="rowblock">
+	<form action='/topic/edit/submit/{{.Something.ID}}' method="post">
+		<div class="rowitem"{{ if .Something.Sticky }}style="background-color: #FFFFEA;"{{end}}>
+			<a class='topic_name hide_on_edit'>{{.Something.Title}}</a> 
+			<span class='topic_status topic_status_e topic_status_{{.Something.Status}} hide_on_edit'>{{.Something.Status}}</span> 
+			{{if .CurrentUser.Is_Admin}}
+			<a href='/topic/edit/{{.Something.ID}}' class="username hide_on_edit open_edit" style="font-weight: normal;">Edit</a>
+			<a href='/topic/delete/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Delete</a>
+			{{ if .Something.Sticky }}<a href='/topic/unstick/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Pin</a>{{end}}
+			
+			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Something.Title}}' type="text" />
+			<select name="topic_status" class='show_on_edit topic_status_input'>
+				<option>open</option>
+				<option>closed</option>
+			</select>
+			<button name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
+			{{end}}
+			<a href='/topic/report/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Report</a>
+		</div>
+	</form>
+</div>
+<div class="rowblock">
+	<div class="rowitem passive editable_parent" style="border-bottom: none;{{ if .Something.Avatar }}background-image: url({{ .Something.Avatar }}), url(/static/white-dot.jpg);background-position: top left;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Something.Css}}{{end}}">
+		<span class="hide_on_edit topic_content">{{.Something.Content}}</span>
+		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Something.Content}}</textarea>
+		<br /><br />
+		<a class="username">{{.Something.CreatedByName}}<a/>
+	</div>
+</div><br />
+<div class="rowblock" style="overflow: hidden;">
+	{{range $index, $element := .ItemList}}
+	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.Avatar }}background-image: url({{$element.Avatar}}), url(/static/white-dot.jpg);background-position: top left;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{$element.Css}}{{end}}">
+		<span class="editable_block">{{$element.ContentHtml}}</span>
+		<br /><br />
+		<a class="username">{{$element.CreatedByName}}</a>
+		{{if $.CurrentUser.Is_Admin}}<a href="/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
+		<a href="/reply/delete/submit/{{$element.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
+		<a href="/reply/report/submit/{{$element.ID}}"><button class="username report_item">Report</button></a>
+	</div>{{ end }}
+</div>
+{{if not .CurrentUser.Is_Banned}}
+<div class="rowblock">
+	<form action="/reply/create/" method="post">
+		<input name="tid" value='{{.Something.ID}}' type="hidden" />
+		<div class="formrow">
+			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</div></div>
+		</div>
+	</form>
+</div>
+{{end}}
+{{template "footer.html" . }}

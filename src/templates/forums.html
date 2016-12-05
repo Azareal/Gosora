@@ -1,8 +1,0 @@
-{{template "header.html" . }}
-<div class="rowblock">
-	{{range .ItemList}}<div class="rowitem">
-		<a href="/forum/{{.ID}}" style="font-size: 20px;position:relative;top: -2px;font-weight: normal;text-transform: none;">{{.Name}}</a>
-		<a href="/topic/{{.LastTopicID}}" style="font-weight: normal;text-transform: none;float: right;">{{.LastTopic}} <small style="font-size: 12px;">{{.LastTopicTime}}</small></a>
-	</div>{{end}}
-</div>
-{{template "footer.html" . }}

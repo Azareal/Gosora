@@ -1,0 +1,16 @@
+<div class="nav">
+	<ul>
+		<li class="menu_overview"><a href="/">Overview</a></li>
+		<li class="menu_forums"><a href="/forums/">Forums</a></li>
+		<li class="menu_topics"><a href="/">Topics</a></li>
+		<li class="menu_create_topic"><a href="/topics/create/">Create Topic</a></li>
+		{{ if .CurrentUser.Loggedin }}
+		<li class="menu_account"><a href="/user/edit/critical/">My Account</a></li>
+		<li class="menu_account"><a href="/panel/forums/">Panel</a></li>
+		<li class="menu_logout"><a href="/accounts/logout?session={{.CurrentUser.Session}}">Logout</a></li>
+		{{ else }}
+		<li class="menu_register"><a href="/accounts/create/">Register</a></li>
+		<li class="menu_login"><a href="/accounts/login/">Login</a></li>
+		{{ end }}
+	</ul>
+</div>

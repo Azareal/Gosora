@@ -33,7 +33,7 @@ Set the password column of your user account in the database to what you want yo
 
 # Run the program
 
-go run errors.go main.go pages.go reply.go routes.go topic.go user.go utils.go forum.go group.go config.go
+go run errors.go main.go pages.go reply.go routes.go topic.go user.go utils.go forum.go group.go files.go config.go
 
 Alternatively, you could run the run.bat batch file on Windows.
 
@@ -64,5 +64,3 @@ Revamp the system for serving static files to make it much faster.
 Tweak the CSS to make it responsive.
 
 Add a forum cache.
-
-Cache the static files in memory.
