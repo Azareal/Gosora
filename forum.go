@@ -4,6 +4,7 @@ type Forum struct
 {
 	ID int
 	Name string
+	Active bool
 	LastTopic string
 	LastTopicID int
 	LastReplyer string

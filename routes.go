@@ -1,5 +1,6 @@
 package main
 
+import "errors"
 import "log"
 import "fmt"
 import "strconv"
@@ -58,14 +59,7 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 		pi := Page{"Page","page",user,tList,val}
 		templates.ExecuteTemplate(w,"custom_page.html", pi)
 	} else {
-		errmsg := "The requested page doesn't exist."
-		pi := Page{"Error","error",user,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(404)
-		fmt.Fprintln(w,errpage)
+		NotFound(w,r,user)
 	}
 }
 	
@@ -133,7 +127,6 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	var(
 		topicList map[int]interface{}
 		currentID int
-		fname string
 		
 		tid int
 		title string
@@ -156,18 +149,9 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	err = db.QueryRow("select name from forums where fid = ?", fid).Scan(&fname)
-	if err == sql.ErrNoRows {
-		pi := Page{"Error","error",user,tList,"The requested forum doesn't exist."}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(404)
-		fmt.Fprintln(w,errpage)
-		return
-	} else if err != nil {
-		InternalError(err,w,r,user)
+	_, ok := forums[fid]
+	if !ok {
+		NotFound(w,r,user)
 		return
 	}
 	
@@ -202,7 +186,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r,user)
 		return
 	}
-	pi := Page{fname,"forum",user,topicList,0}
+	pi := Page{forums[fid].Name,"forum",user,topicList,0}
 	err = templates.ExecuteTemplate(w,"forum.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
@@ -211,46 +195,23 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 
 func route_forums(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
-	var forumList map[int]interface{}
-	forumList = make(map[int]interface{})
+	var forumList map[int]interface{} = make(map[int]interface{})
 	currentID := 0
 	
-	rows, err := db.Query("select fid, name, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime from forums")
-	if err != nil {
-		InternalError(err,w,r,user)
-		return
+	for _, forum := range forums {
+		if forum.Active {
+			forumList[currentID] = forum
+			currentID++
+		}
 	}
-	defer rows.Close()
 	
-	for rows.Next() {
-		forum := Forum{0,"","",0,"",0,""}
-		err := rows.Scan(&forum.ID, &forum.Name, &forum.LastTopic,&forum.LastTopicID,&forum.LastReplyer,&forum.LastReplyerID,&forum.LastTopicTime)
-		if err != nil {
-			InternalError(err,w,r,user)
-			return
-		}
-		
-		if forum.LastTopicID != 0 {
-			forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
-			if err != nil {
-				InternalError(err,w,r,user)
-				return
-			}
-		} else {
-			forum.LastTopic = "None"
-			forum.LastTopicTime = ""
-		}
-		
-		forumList[currentID] = forum
-		currentID++
-	}
-	err = rows.Err()
-	if err != nil {
-		InternalError(err,w,r,user)
+	if len(forums) == 0 {
+		InternalError(errors.New("No forums"),w,r,user)
 		return
 	}
+	
 	pi := Page{"Forum List","forums",user,forumList,0}
-	err = templates.ExecuteTemplate(w,"forums.html", pi)
+	err := templates.ExecuteTemplate(w,"forums.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
     }
@@ -290,14 +251,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	//err = db.QueryRow("select title, content, createdBy, status, is_closed from topics where tid = ?", tid).Scan(&title, &content, &createdBy, &status, &is_closed)
 	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar, users.is_super_admin, users.group from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group)
 	if err == sql.ErrNoRows {
-		errmsg := "The requested topic doesn't exist."
-		pi := Page{"Error","error",user,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(404)
-		fmt.Fprintln(w,errpage)
+		NotFound(w,r,user)
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
@@ -1036,9 +990,9 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	var salt string
 	var session string
 	username := html.EscapeString(r.PostFormValue("username"))
-	log.Print("Username: " + username)
+	//log.Print("Username: " + username)
 	password := r.PostFormValue("password")
-	log.Print("Password: " + password)
+	//log.Print("Password: " + password)
 	
 	err = login_stmt.QueryRow(username).Scan(&uid, &username, &real_password, &salt)
 	if err == sql.ErrNoRows {
@@ -1112,8 +1066,8 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	log.Print("Successful Login")
-	log.Print("Session: " + session)
+	//log.Print("Successful Login")
+	//log.Print("Session: " + session)
 	cookie := http.Cookie{Name: "uid",Value: strconv.Itoa(uid),Path: "/",MaxAge: year}
 	http.SetCookie(w,&cookie)
 	cookie = http.Cookie{Name: "session",Value: session,Path: "/",MaxAge: year}
@@ -1230,28 +1184,11 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	var forumList map[int]interface{} = make(map[int]interface{})
 	currentID := 0
 	
-	rows, err := db.Query("select fid, name from forums")
-	if err != nil {
-		InternalError(err,w,r,user)
-		return
-	}
-	defer rows.Close()
-	
-	for rows.Next() {
-		forum := ForumSimple{0,""}
-		err := rows.Scan(&forum.ID, &forum.Name)
-		if err != nil {
-			InternalError(err,w,r,user)
-			return
+	for _, forum := range forums {
+		if forum.ID > -1 {
+			forumList[currentID] = forum
+			currentID++
 		}
-		
-		forumList[currentID] = forum
-		currentID++
-	}
-	err = rows.Err()
-	if err != nil {
-		InternalError(err,w,r,user)
-		return
 	}
 	
 	pi := Page{"Forum Manager","panel-forums",user,forumList,0}
@@ -1264,17 +1201,135 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
+	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
 		return          
 	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
 	
-	_, err = create_forum_stmt.Exec(r.PostFormValue("forum-name"))
+	fname := r.PostFormValue("forum-name")
+	res, err := create_forum_stmt.Exec(fname)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
-	http.Redirect(w,r, "/panel/forums/", http.StatusSeeOther)
+	lastId, err := res.LastInsertId()
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	forums[int(lastId)] = Forum{int(lastId),fname,true,"",0,"",0,""}
+	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
+}
+
+func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	fid, err := strconv.Atoi(r.URL.Path[len("/panel/forums/delete/"):])
+	if err != nil {
+		LocalError("The provided Forum ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	_, ok := forums[fid];
+    if !ok {
+		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
+		return
+	}
+	
+	confirm_msg := "Are you sure you want to delete the '" + forums[fid].Name + "' forum?"
+	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
+	
+	pi := Page{"Delete Forum","panel-forums-delete",user,tList,yousure}
+	templates.ExecuteTemplate(w,"areyousure.html", pi)
+}
+
+func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	fid, err := strconv.Atoi(r.URL.Path[len("/panel/forums/delete/submit/"):])
+	if err != nil {
+		LocalError("The provided Forum ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	_, ok := forums[fid];
+    if !ok {
+		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
+		return
+	}
+	
+	_, err = delete_forum_stmt.Exec(fid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	// Remove this forum from the forum cache
+	delete(forums,fid);
+	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
+}
+
+func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	err := r.ParseForm()
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
+		return          
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	fid, err := strconv.Atoi(r.URL.Path[len("/panel/forums/edit/submit/"):])
+	if err != nil {
+		LocalError("The provided Forum ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	forum_name := r.PostFormValue("edit_item")
+	
+	forum, ok := forums[fid];
+    if !ok {
+		LocalError("The forum you're trying to edit doesn't exist.",w,r,user)
+		return
+	}
+	
+	_, err = update_forum_stmt.Exec(forum_name, fid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	forum.Name = forum_name
+	forums[fid] = forum
+	
+	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }

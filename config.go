@@ -13,3 +13,4 @@ var max_request_size = 5 * megabyte
 // Misc
 var default_route = route_topics
 var staff_css = "background-color: #ffeaff;background-position: left;"
+var uncategorised_forum_visible = true

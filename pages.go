@@ -21,6 +21,12 @@ type PageSimple struct
 	Something interface{}
 }
 
+type AreYouSure struct
+{
+	URL string
+	Message string
+}
+
 func add_custom_page(path string, f os.FileInfo, err error) error {
 	if err != nil {
 		return err

@@ -42,12 +42,15 @@ var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 
 var create_forum_stmt *sql.Stmt
+var delete_forum_stmt *sql.Stmt
+var update_forum_stmt *sql.Stmt
 
 var custom_pages map[string]string = make(map[string]string)
 var templates = template.Must(template.ParseGlob("templates/*"))
 var no_css_tmpl = template.CSS("")
 var staff_css_tmpl = template.CSS(staff_css)
 var groups map[int]Group = make(map[int]Group)
+var forums map[int]Forum = make(map[int]Forum)
 var static_files map[string]SFile = make(map[string]SFile)
 
 func init_database(err error) {
@@ -188,8 +191,20 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing delete_forum statement.")
+	delete_forum_stmt, err = db.Prepare("DELETE FROM forums WHERE fid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_forum statement.")
+	update_forum_stmt, err = db.Prepare("UPDATE forums SET name = ? WHERE fid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Loading the usergroups.")
-	rows, err := db.Query("select gid,name,permissions,is_admin,is_banned from users_groups")
+	rows, err := db.Query("SELECT gid,name,permissions,is_admin,is_banned FROM users_groups")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -207,6 +222,42 @@ func init_database(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	
+	log.Print("Loading the forums.")
+	rows, err = db.Query("SELECT fid, name, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		forum := Forum{0,"",true,"",0,"",0,""}
+		err := rows.Scan(&forum.ID, &forum.Name, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		if forum.LastTopicID != 0 {
+			forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			forum.LastTopic = "None"
+			forum.LastTopicTime = ""
+		}
+		
+		forums[forum.ID] = forum
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Adding the uncategorised forum")
+	forums[0] = Forum{0,"Uncategorised",uncategorised_forum_visible,"",0,"",0,""}
+	log.Print("Adding the reports forum")
+	forums[-1] = Forum{-1,"Reports",false,"",0,"",0,""}
 }
 
 func main(){
@@ -288,6 +339,9 @@ func main(){
 	// Admin
 	http.HandleFunc("/panel/forums/", route_panel_forums)
 	http.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
+	http.HandleFunc("/panel/forums/delete/", route_panel_forums_delete)
+	http.HandleFunc("/panel/forums/delete/submit/", route_panel_forums_delete_submit)
+	http.HandleFunc("/panel/forums/edit/submit/", route_panel_forums_edit_submit)
 	
 	http.HandleFunc("/", default_route)
 	

@@ -1,0 +1,10 @@
+{{template "header.html" . }}
+<div class="rowblock">
+	<div class="rowitem"><a>Are you sure?</a></div>
+</div>
+<div class="rowblock">
+	<div class="rowitem passive">{{.Something.Message}}<br /><br />
+		<a class="username" href="{{.Something.URL}}?session={{.CurrentUser.Session}}">Continue</a>
+	</div>
+</div>
+{{template "footer.html" . }}

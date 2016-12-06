@@ -120,6 +120,26 @@ func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, is_js s
 	}
 }
 
+func SecurityError(w http.ResponseWriter, r *http.Request, user User) {
+	errmsg := "There was a security issue with your request."
+	pi := Page{"Security Error","error",user,tList,errmsg}
+	var b bytes.Buffer
+	templates.ExecuteTemplate(&b,"error.html", pi)
+	errpage := b.String()
+	w.WriteHeader(403)
+	fmt.Fprintln(w,errpage)
+}
+
+func NotFound(w http.ResponseWriter, r *http.Request, user User) {
+	errmsg := "The requested page doesn't exist."
+	pi := Page{"Not Found","error",user,tList,errmsg}
+	var b bytes.Buffer
+	templates.ExecuteTemplate(&b,"error.html", pi)
+	errpage := b.String()
+	w.WriteHeader(404)
+	fmt.Fprintln(w,errpage)
+}
+
 func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User, is_js string) {
 	if is_js == "0" {
 		pi := Page{errtitle,"error",user,tList,errmsg}

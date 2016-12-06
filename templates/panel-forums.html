@@ -5,18 +5,24 @@
 	<div class="rowitem passive"><a>Coming Soon</a></div>
 	<div class="rowitem passive"><a>Coming Soon</a></div>
 	<div class="rowitem passive"><a>Coming Soon</a></div>
-	<div class="rowitem passive"><a>Coming Soon</a></div>
+	<div class="rowitem passive"><a href="/forum/-1">Reports</a></div>
 </div>
 <div class="colblock_right">
 	{{range .ItemList}}
-	<div class="rowitem"><a style="font-size: 20px;position:relative;top: -2px;font-weight: normal;text-transform: none;">{{.Name}}</a></div>
+	<div class="rowitem editable_parent" style="font-weight: normal;">
+		<a class="editable_block" style="font-size: 20px;position:relative;top: -2px;text-transform: none;">{{.Name}}</a>
+		<span style="float: right;">
+			<a href="/panel/forums/edit/submit/{{.ID}}" class="username edit_field">Edit</a>
+			<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Delete</a>
+		</span>
+	</div>
 	{{end}}
 </div><br />
 <div class="colblock_right">
 	<div class="rowitem"><a>Add Forum</a></div>
 </div>
 <div class="colblock_right">
-	<form action="/panel/forums/create/" method="post">
+	<form action="/panel/forums/create/?session={{.CurrentUser.Session}}" method="post">
 		<div class="formrow">
 			<div class="formitem"><a>Forum Name</a></div>
 			<div class="formitem"><input name="forum-name" type="text" /></div>
