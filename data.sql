@@ -21,12 +21,14 @@ CREATE TABLE `users_groups`(
 	`permissions` text not null,
 	`is_admin` tinyint DEFAULT 0 not null,
 	`is_banned` tinyint DEFAULT 0 not null,
+	`tag` varchar(50) DEFAULT '' not null,
 	primary key(`gid`)
 );
 
 CREATE TABLE `forums`(
 	`fid` int not null AUTO_INCREMENT,
 	`name` varchar(100) not null,
+	`active` tinyint DEFAULT 1 not null,
 	`lastTopic` varchar(100) DEFAULT '' not null,
 	`lastTopicID` int DEFAULT 0 not null,
 	`lastReplyer` varchar(100) DEFAULT '' not null,
@@ -61,17 +63,29 @@ CREATE TABLE `replies`(
 	primary key(`rid`)
 );
 
-CREATE TABLE `replies_reports` (
+CREATE TABLE `users_replies`(
+	`rid` int not null AUTO_INCREMENT,
+	`uid` int not null,
+	`content` text not null,
+	`parsed_content` text not null,
+	`createdAt` datetime not null,
+	`createdBy` int not null,
+	`lastEdit` int not null,
+	`lastEditBy` int not null,
+	primary key(`rid`)
+);
+
+/*CREATE TABLE `replies_reports` (
 	`rid` int not null AUTO_INCREMENT,
 	`reportedBy` int not null,
 	`reportedContent` text not null,
 	`resolved` tinyint DEFAULT 0 not null,
 	primary key(`rid`)
-);
+);*/
 
 INSERT INTO users(`name`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`) 
 VALUES ('Admin',1,1,NOW(),NOW());
-INSERT INTO users_groups(`name`,`permissions`,`is_admin`) VALUES ('Administrator','{}',1);
+INSERT INTO users_groups(`name`,`permissions`,`is_admin`,`tag`) VALUES ('Admin','{}',1,"Admin");
 INSERT INTO users_groups(`name`,`permissions`) VALUES ('Member','{}');
 INSERT INTO forums(`name`,`lastTopicTime`) VALUES ('General',NOW());
 INSERT INTO topics(`title`,`content`,`createdAt`,`lastReplyAt`,`createdBy`,`parentID`) 

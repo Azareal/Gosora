@@ -14,4 +14,6 @@ type Reply struct
 	LastEditBy int
 	Avatar string
 	Css template.CSS
+	ContentLines int
+	Tag string
 }

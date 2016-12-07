@@ -1,5 +1,6 @@
 package main
 import "log"
+import "strings"
 import "strconv"
 import "net/http"
 import "golang.org/x/crypto/bcrypt"
@@ -72,8 +73,12 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 	}
 	user.Is_Admin = (user.Is_Super_Admin || groups[user.Group].Is_Admin)
 	user.Is_Banned = groups[user.Group].Is_Banned
-	if user.Avatar != "" && user.Avatar[0] == '.' {
-		user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Loggedin = true
 	/*log.Print("Logged in")

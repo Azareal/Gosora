@@ -61,8 +61,8 @@ Add a settings system.
 
 Add a plugin system.
 
-Revamp the system for serving static files to make it much faster.
-
 Tweak the CSS to make it responsive.
 
-Add a forum cache.
+Nest the moderation routes to possibly speed routing up a little...?
+
+Add a friend system.

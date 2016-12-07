@@ -7,4 +7,5 @@ type Group struct
 	Permissions string
 	Is_Admin bool
 	Is_Banned bool
+	Tag string
 }

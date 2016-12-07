@@ -29,4 +29,6 @@ type TopicUser struct
 	CreatedByName string
 	Avatar string
 	Css template.CSS
+	ContentLines int
+	Tag string
 }

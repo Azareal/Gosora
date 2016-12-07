@@ -40,6 +40,9 @@ var set_avatar_stmt *sql.Stmt
 var set_username_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
+var create_profile_reply_stmt *sql.Stmt
+var edit_profile_reply_stmt *sql.Stmt
+var delete_profile_reply_stmt *sql.Stmt
 
 var create_forum_stmt *sql.Stmt
 var delete_forum_stmt *sql.Stmt
@@ -185,6 +188,24 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing create_profile_reply statement.")
+	create_profile_reply_stmt, err = db.Prepare("INSERT INTO users_replies(uid,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing edit_profile_reply statement.")
+	edit_profile_reply_stmt, err = db.Prepare("UPDATE users_replies SET content = ?, parsed_content = ? WHERE rid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing delete_profile_reply statement.")
+	delete_profile_reply_stmt, err = db.Prepare("DELETE FROM users_replies WHERE rid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Preparing create_forum statement.")
 	create_forum_stmt, err = db.Prepare("INSERT INTO forums(name) VALUES(?)")
 	if err != nil {
@@ -204,15 +225,15 @@ func init_database(err error) {
 	}
 	
 	log.Print("Loading the usergroups.")
-	rows, err := db.Query("SELECT gid,name,permissions,is_admin,is_banned FROM users_groups")
+	rows, err := db.Query("SELECT gid,name,permissions,is_admin,is_banned,tag FROM users_groups")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 	
 	for rows.Next() {
-		group := Group{0,"","",false,false}
-		err := rows.Scan(&group.ID, &group.Name, &group.Permissions, &group.Is_Admin, &group.Is_Banned)
+		group := Group{0,"","",false,false,""}
+		err := rows.Scan(&group.ID, &group.Name, &group.Permissions, &group.Is_Admin, &group.Is_Banned, &group.Tag)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -224,7 +245,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Loading the forums.")
-	rows, err = db.Query("SELECT fid, name, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums")
+	rows, err = db.Query("SELECT fid, name, active, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -232,7 +253,7 @@ func init_database(err error) {
 	
 	for rows.Next() {
 		forum := Forum{0,"",true,"",0,"",0,""}
-		err := rows.Scan(&forum.ID, &forum.Name, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+		err := rows.Scan(&forum.ID, &forum.Name, &forum.Active, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -333,6 +354,10 @@ func main(){
 	http.HandleFunc("/user/edit/avatar/submit/", route_account_own_edit_avatar_submit)
 	http.HandleFunc("/user/edit/username/", route_account_own_edit_username)
 	http.HandleFunc("/user/edit/username/submit/", route_account_own_edit_username_submit)
+	http.HandleFunc("/user/", route_profile)
+	http.HandleFunc("/profile/reply/create/", route_profile_reply_create)
+	http.HandleFunc("/profile/reply/edit/submit/", route_profile_reply_edit_submit)
+	http.HandleFunc("/profile/reply/delete/submit/", route_profile_reply_delete_submit)
 	//http.HandleFunc("/user/:id/edit/", route_logout)
 	//http.HandleFunc("/user/:id/ban/", route_logout)
 	

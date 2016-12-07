@@ -16,4 +16,5 @@ type ForumSimple struct
 {
 	ID int
 	Name string
+	Active bool
 }
