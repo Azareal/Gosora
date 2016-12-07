@@ -12,6 +12,8 @@ type User struct
 	ID int
 	Name string
 	Group int
+	Is_Mod bool
+	Is_Super_Mod bool
 	Is_Admin bool
 	Is_Super_Admin bool
 	Is_Banned bool
@@ -40,7 +42,7 @@ func SetPassword(uid int, password string) (error) {
 }
 
 func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
-	user := User{0,"",0,false,false,false,"",false,""}
+	user := User{0,"",0,false,false,false,false,false,"",false,""}
 	var err error
 	var cookie *http.Cookie
 	
@@ -60,8 +62,6 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 		return user
 	}
 	user.Session = cookie.Value
-	//log.Print("ID: " + user.Name)
-	//log.Print("Session: " + user.Session)
 	
 	// Is this session valid..?
 	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar)
@@ -71,7 +71,9 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 		log.Print(err)
 		return user
 	}
-	user.Is_Admin = (user.Is_Super_Admin || groups[user.Group].Is_Admin)
+	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin
+	user.Is_Super_Mod = groups[user.Group].Is_Mod || user.Is_Admin
+	user.Is_Mod = user.Is_Super_Mod
 	user.Is_Banned = groups[user.Group].Is_Banned
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -81,19 +83,5 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Loggedin = true
-	/*log.Print("Logged in")
-	log.Print("ID: " + strconv.Itoa(user.ID))
-	log.Print("Group: " + strconv.Itoa(user.Group))
-	log.Print("Name: " + user.Name)
-	if user.Loggedin {
-		log.Print("Loggedin: true")
-	} else {
-		log.Print("Loggedin: false")
-	}
-	if user.Is_Admin {
-		log.Print("Is_Admin: true")
-	} else {
-		log.Print("Is_Admin: false")
-	}*/
 	return user
 }

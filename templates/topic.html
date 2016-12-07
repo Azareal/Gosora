@@ -4,7 +4,7 @@
 		<div class="rowitem"{{ if .Something.Sticky }}style="background-color: #FFFFEA;"{{end}}>
 			<a class='topic_name hide_on_edit'>{{.Something.Title}}</a> 
 			<span class='topic_status topic_status_e topic_status_{{.Something.Status}} hide_on_edit'>{{.Something.Status}}</span> 
-			{{if .CurrentUser.Is_Admin}}
+			{{if .CurrentUser.Is_Mod}}
 			<a href='/topic/edit/{{.Something.ID}}' class="username hide_on_edit open_edit" style="font-weight: normal;">Edit</a>
 			<a href='/topic/delete/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Delete</a>
 			{{ if .Something.Sticky }}<a href='/topic/unstick/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Pin</a>{{end}}
@@ -21,7 +21,7 @@
 	</form>
 </div>
 <div class="rowblock">
-	<div class="rowitem passive editable_parent" style="border-bottom: none;{{ if .Something.Avatar }}background-image: url({{ .Something.Avatar }}), url(/static/white-dot.jpg);background-position: 0px {{if le .Something.ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;background-attachment: scroll;padding-left: 136px;{{.Something.Css}}{{end}}">
+	<div class="rowitem passive editable_parent" style="border-bottom: none;{{ if .Something.Avatar }}background-image: url({{ .Something.Avatar }}), url(/static/white-dot.jpg);background-position: 0px {{if le .Something.ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Something.Css}}{{end}}">
 		<span class="hide_on_edit topic_content">{{.Something.Content}}</span>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Something.Content}}</textarea>
 		<br /><br />
@@ -31,11 +31,11 @@
 </div><br />
 <div class="rowblock" style="overflow: hidden;">
 	{{range $index, $element := .ItemList}}
-	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.Avatar }}background-image: url({{$element.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le $element.ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;background-attachment: scroll;padding-left: 136px;{{$element.Css}}{{end}}">
+	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.Avatar }}background-image: url({{$element.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le $element.ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{$element.Css}}{{end}}">
 		<span class="editable_block">{{$element.ContentHtml}}</span>
 		<br /><br />
 		<a href="/user/{{$element.CreatedBy}}" class="username">{{$element.CreatedByName}}</a>
-		{{if $.CurrentUser.Is_Admin}}<a href="/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
+		{{if $.CurrentUser.Is_Mod}}<a href="/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
 		<a href="/reply/delete/submit/{{$element.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
 		<a href="/reply/report/submit/{{$element.ID}}"><button class="username report_item">Report</button></a>
 		{{if $element.Tag}}<a class="username" style="float: right;">{{$element.Tag}}</a>{{end}}

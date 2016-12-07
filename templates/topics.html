@@ -7,4 +7,9 @@
 		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="topic_status topic_status_closed">closed</span>{{else}}<span class="topic_status topic_status_open">open</span>{{end}}
 	</div>{{end}}
 </div>
+{{if .Something}}
+<div class="rowblock">
+	<div class="rowitem passive">{{.Something}}</div>
+</div>
+{{end}}
 {{template "footer.html" . }}

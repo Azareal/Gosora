@@ -119,7 +119,15 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r,user)
 		return
 	}
-	pi := Page{"Topic List","topics",user,topicList,0}
+	
+	var msg string
+	if len(topicList) == 0 {
+		msg = "There aren't any topics yet."
+	} else {
+		msg = ""
+	}
+	
+	pi := Page{"Topic List","topics",user,topicList,msg}
 	err = templates.ExecuteTemplate(w,"topics.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
@@ -194,7 +202,15 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r,user)
 		return
 	}
-	pi := Page{forums[fid].Name,"forum",user,topicList,0}
+	
+	var msg string
+	if len(topicList) == 0 {
+		msg = "There aren't any topics in this forum yet."
+	} else {
+		msg = ""
+	}
+	
+	pi := Page{forums[fid].Name,"forum",user,topicList,msg}
 	err = templates.ExecuteTemplate(w,"forum.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
@@ -283,7 +299,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	} else {
 		topic.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topic.CreatedBy),1)
 	}
-	if is_super_admin || groups[group].Is_Admin {
+	if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
 		topic.Css = staff_css_tmpl
 	}
 	if groups[group].Tag != "" {
@@ -309,7 +325,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		}
 		
 		replyLines = strings.Count(replyContent,"\n")
-		if is_super_admin || groups[group].Is_Admin {
+		if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
 			replyCss = staff_css_tmpl
 		} else {
 			replyCss = no_css_tmpl
@@ -367,24 +383,32 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	replyList = make(map[int]interface{})
 	currentID = 0
 	
-	puser := User{0,"",0,false,false,false,"",false,""}
+	puser := User{0,"",0,false,false,false,false,false,"",false,""}
 	puser.ID, err = strconv.Atoi(r.URL.Path[len("/user/"):])
 	if err != nil {
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
 		return
 	}
 	
-	// Fetch the user data
-	err = db.QueryRow("SELECT `name`, `group`, `is_super_admin`, `avatar` FROM `users` WHERE `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar)
-	if err == sql.ErrNoRows {
-		NotFound(w,r,user)
-		return
-	} else if err != nil {
-		InternalError(err,w,r,user)
-		return
+	if puser.ID == user.ID {
+		user.Is_Mod = true
+		puser = user
+	} else {
+		// Fetch the user data
+		err = db.QueryRow("SELECT `name`, `group`, `is_super_admin`, `avatar` FROM `users` WHERE `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar)
+		if err == sql.ErrNoRows {
+			NotFound(w,r,user)
+			return
+		} else if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		puser.Is_Admin = puser.Is_Super_Admin || groups[puser.Group].Is_Admin
+		puser.Is_Super_Mod = puser.Is_Admin || groups[puser.Group].Is_Mod
+		puser.Is_Mod = puser.Is_Super_Mod
 	}
 	
-	puser.Is_Admin = puser.Is_Super_Admin
 	if puser.Avatar != "" {
 		if puser.Avatar[0] == '.' {
 			puser.Avatar = "/uploads/avatar_" + strconv.Itoa(puser.ID) + puser.Avatar
@@ -409,7 +433,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		}
 		
 		replyLines = strings.Count(replyContent,"\n")
-		if is_super_admin || groups[group].Is_Admin {
+		if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
 			replyCss = staff_css_tmpl
 		} else {
 			replyCss = no_css_tmpl

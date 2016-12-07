@@ -5,7 +5,8 @@
 		<li class="menu_topics"><a href="/">Topics</a></li>
 		<li class="menu_create_topic"><a href="/topics/create/">Create Topic</a></li>
 		{{ if .CurrentUser.Loggedin }}
-		<li class="menu_account"><a href="/user/edit/critical/">My Account</a></li>
+		<li class="menu_account"><a href="/user/edit/critical/">Account</a></li>
+		<li class="menu_account"><a href="/user/{{.CurrentUser.ID}}">Profile</a></li>
 		{{ if .CurrentUser.Is_Admin}}<li class="menu_account"><a href="/panel/forums/">Panel</a></li>{{end}}
 		<li class="menu_logout"><a href="/accounts/logout?session={{.CurrentUser.Session}}">Logout</a></li>
 		{{ else }}

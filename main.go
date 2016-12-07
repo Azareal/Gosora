@@ -225,15 +225,15 @@ func init_database(err error) {
 	}
 	
 	log.Print("Loading the usergroups.")
-	rows, err := db.Query("SELECT gid,name,permissions,is_admin,is_banned,tag FROM users_groups")
+	rows, err := db.Query("SELECT gid,name,permissions,is_mod,is_admin,is_banned,tag FROM users_groups")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 	
 	for rows.Next() {
-		group := Group{0,"","",false,false,""}
-		err := rows.Scan(&group.ID, &group.Name, &group.Permissions, &group.Is_Admin, &group.Is_Banned, &group.Tag)
+		group := Group{0,"","",false,false,false,""}
+		err := rows.Scan(&group.ID, &group.Name, &group.Permissions, &group.Is_Mod, &group.Is_Admin, &group.Is_Banned, &group.Tag)
 		if err != nil {
 			log.Fatal(err)
 		}

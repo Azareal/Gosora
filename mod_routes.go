@@ -20,7 +20,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 	
-	if !user.Is_Admin {
+	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
@@ -62,7 +62,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 
 func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
-	if !user.Is_Admin {
+	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -94,7 +94,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 
 func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
-	if !user.Is_Admin {
+	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -116,7 +116,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 
 func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 	user := SessionCheck(w,r)
-	if !user.Is_Admin {
+	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -149,7 +149,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 	
-	if !user.Is_Admin {
+	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
@@ -195,7 +195,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 	
-	if !user.Is_Admin {
+	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
@@ -243,27 +243,27 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 	
-	if !user.Is_Admin {
-		NoPermissionsJSQ(w,r,user,is_js)
-		return
-	}
-	
 	rid, err := strconv.Atoi(r.URL.Path[len("/profile/reply/edit/submit/"):])
 	if err != nil {
 		LocalError("The provided Reply ID is not a valid number.",w,r,user)
 		return
 	}
 	
-	content := html.EscapeString(r.PostFormValue("edit_item"))
-	_, err = edit_profile_reply_stmt.Exec(content, parse_message(content), rid)
+	// Get the Reply ID..
+	var uid int
+	err = db.QueryRow("select uid from users_replies where rid = ?", rid).Scan(&uid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
-	// Get the Reply ID..
-	var uid int
-	err = db.QueryRow("select tid from users_replies where rid = ?", rid).Scan(&uid)
+	if user.ID != uid && !user.Is_Mod && !user.Is_Admin {
+		NoPermissionsJSQ(w,r,user,is_js)
+		return
+	}
+	
+	content := html.EscapeString(r.PostFormValue("edit_item"))
+	_, err = edit_profile_reply_stmt.Exec(content, parse_message(content), rid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -289,11 +289,6 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 	
-	if !user.Is_Admin {
-		NoPermissionsJSQ(w,r,user,is_js)
-		return
-	}
-	
 	rid, err := strconv.Atoi(r.URL.Path[len("/profile/reply/delete/submit/"):])
 	if err != nil {
 		LocalErrorJSQ("The provided Reply ID is not a valid number.",w,r,user,is_js)
@@ -307,6 +302,11 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if err != nil {
 		InternalErrorJSQ(err,w,r,user,is_js)
+		return
+	}
+	
+	if user.ID != uid && !user.Is_Mod && !user.Is_Admin {
+		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
 	
