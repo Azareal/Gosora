@@ -10,6 +10,12 @@ Basic Forum Functionality
 
 Custom Pages
 
+Emojis
+
+In-memory static file, forum and group caches.
+
+A profile system including profile comments and moderation tools for the profile owner.
+
 
 # Dependencies
 
@@ -25,9 +31,11 @@ Instructions on how to do so on Linux: https://downloads.mariadb.org/mariadb/rep
 **Run the following commands:**
 
 go get github.com/go-sql-driver/mysql
+
 go install github.com/go-sql-driver/mysql
 
 go get golang.org/x/crypto/bcrypt
+
 go install golang.org/x/crypto/bcrypt
 
 Tweak the config.go file and put your database details in there. Import data.sql into the same database. Comment out the first line (put /* and */ around it), if you've already made a database, and don't want the script to generate it for you.

@@ -73,6 +73,6 @@ func preparse_message(msg string) string {
 func parse_message(msg string) string {
 	msg = strings.Replace(msg,":)","😀",-1)
 	msg = strings.Replace(msg,":D","😃",-1)
-	//msg = shortcode_to_unicode(msg)
+	msg = strings.Replace(msg,":P","😛",-1)
 	return strings.Replace(msg,"\n","<br>",-1)
 }
