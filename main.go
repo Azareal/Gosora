@@ -6,7 +6,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"mime"
+	"strings"
+	"strconv"
 	"path/filepath"
+	"os"
 	"io/ioutil"
 	"html/template"
 )
@@ -40,6 +43,7 @@ var set_avatar_stmt *sql.Stmt
 var set_username_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
+var change_group_stmt *sql.Stmt
 var create_profile_reply_stmt *sql.Stmt
 var edit_profile_reply_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
@@ -48,8 +52,8 @@ var create_forum_stmt *sql.Stmt
 var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
 
-var custom_pages map[string]string = make(map[string]string)
 var templates = template.Must(template.ParseGlob("templates/*"))
+var custom_pages = template.Must(template.ParseGlob("pages/*"))
 var no_css_tmpl = template.CSS("")
 var staff_css_tmpl = template.CSS(staff_css)
 var groups map[int]Group = make(map[int]Group)
@@ -60,7 +64,7 @@ func init_database(err error) {
 	if(dbpassword != ""){
 		dbpassword = ":" + dbpassword
 	}
-	db, err = sql.Open("mysql",dbuser + dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname)
+	db, err = sql.Open("mysql",dbuser + dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname + "?collation=utf8mb4_general_ci")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -177,13 +181,19 @@ func init_database(err error) {
 	// create_account_stmt, err = db.Prepare("INSERT INTO 
 	
 	log.Print("Preparing register statement.")
-	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`password`,`salt`,`group`,`is_super_admin`,`session`) VALUES(?,?,?,2,0,?)")
+	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`password`,`salt`,`group`,`is_super_admin`,`session`) VALUES(?,?,?," + strconv.Itoa(default_group) + ",0,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing username_exists statement.")
 	username_exists_stmt, err = db.Prepare("SELECT `name` FROM `users` WHERE `name` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing change_group statement.")
+	change_group_stmt, err = db.Prepare("UPDATE `users` SET `group` = ? WHERE `uid` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -285,30 +295,30 @@ func main(){
 	var err error
 	init_database(err);
 	
-	log.Print("Loading the custom pages.")
-	err = filepath.Walk("pages/", add_custom_page)
-	if err != nil {
-		log.Fatal(err)
-	}
-	
 	log.Print("Loading the static files.")
-	files, err := ioutil.ReadDir("./public")
-	if err != nil {
-		log.Fatal(err)
-	}
-	
-	for _, f := range files {
+	err = filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
-			continue
-		}
-		data, err := ioutil.ReadFile("./public/" + f.Name())
-		if err != nil {
-			log.Fatal(err)
+			return nil
 		}
 		
-		log.Print("Added the '" + f.Name() + "' static file.")
-		static_files["/static/" + f.Name()] = SFile{data,0,int64(len(data)),mime.TypeByExtension(filepath.Ext(f.Name())),f,f.ModTime().UTC().Format(http.TimeFormat)}
+		path = strings.Replace(path,"\\","/",-1)
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		
+		path = strings.TrimPrefix(path,"public/")
+		log.Print("Added the '" + path + "' static file.")
+		static_files["/static/" + path] = SFile{data,0,int64(len(data)),mime.TypeByExtension(filepath.Ext("/public/" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
+	
+	//parse_map["grinning"] = []byte("😀")
+	//parse_map["grin"] = []byte("😁")
+	//parse_map["joy"] = []byte("😂")
 	
 	// In a directory to stop it clashing with the other paths
 	http.HandleFunc("/static/", route_static)
@@ -359,7 +369,9 @@ func main(){
 	http.HandleFunc("/profile/reply/edit/submit/", route_profile_reply_edit_submit)
 	http.HandleFunc("/profile/reply/delete/submit/", route_profile_reply_delete_submit)
 	//http.HandleFunc("/user/:id/edit/", route_logout)
-	//http.HandleFunc("/user/:id/ban/", route_logout)
+	http.HandleFunc("/users/ban/", route_ban)
+	http.HandleFunc("/users/ban/submit/", route_ban_submit)
+	http.HandleFunc("/users/unban/", route_unban)
 	
 	// Admin
 	http.HandleFunc("/panel/forums/", route_panel_forums)

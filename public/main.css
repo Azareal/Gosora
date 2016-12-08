@@ -9,6 +9,25 @@ body
 	font-family: arial;
 }
 
+@font-face {
+	font-family: 'EmojiFont';
+	src: url('https://github.com/Ranks/emojione/raw/master/assets/fonts/emojione-svg.woff2') format('woff2'),
+	url('https://github.com/Ranks/emojione/raw/master/assets/fonts/emojione-svg.woff') format('woff'), local("arial");
+}
+
+@supports (-ms-ime-align:auto) {
+.user_content
+{
+	font-family: EmojiFont, arial;
+}
+}
+@-moz-document url-prefix() {
+.user_content
+{
+	font-family: EmojiFont, arial;
+}
+}
+
 ul
 {
 	border: 1px solid #ccc;

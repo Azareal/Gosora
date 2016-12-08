@@ -47,7 +47,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	topic_content := html.EscapeString(r.PostFormValue("topic_content"))
-	_, err = edit_topic_stmt.Exec(topic_name, topic_content, parse_message(topic_content), is_closed, tid)
+	_, err = edit_topic_stmt.Exec(topic_name, preparse_message(topic_content), parse_message(html.EscapeString(preparse_message(topic_content))), is_closed, tid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,user,is_js)
 		return
@@ -160,7 +160,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	content := html.EscapeString(r.PostFormValue("edit_item"))
+	content := html.EscapeString(preparse_message(r.PostFormValue("edit_item")))
 	_, err = edit_reply_stmt.Exec(content, parse_message(content), rid)
 	if err != nil {
 		InternalError(err,w,r,user)
@@ -262,7 +262,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	content := html.EscapeString(r.PostFormValue("edit_item"))
+	content := html.EscapeString(preparse_message(r.PostFormValue("edit_item")))
 	_, err = edit_profile_reply_stmt.Exec(content, parse_message(content), rid)
 	if err != nil {
 		InternalError(err,w,r,user)
@@ -322,6 +322,127 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprintf(w,"{'success': '1'}")
 	}
+}
+
+func route_ban(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Mod && !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	uid, err := strconv.Atoi(r.URL.Path[len("/users/ban/"):])
+	if err != nil {
+		LocalError("The provided User ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	var uname string
+	err = db.QueryRow("SELECT name from users where uid = ?", uid).Scan(&uname)
+	if err == sql.ErrNoRows {
+		LocalError("The user you're trying to ban no longer exists.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	confirm_msg := "Are you sure you want to ban '" + uname + "'?"
+	yousure := AreYouSure{"/users/ban/submit/" + strconv.Itoa(uid),confirm_msg}
+	
+	pi := Page{"Ban User","ban-user",user,tList,yousure}
+	templates.ExecuteTemplate(w,"areyousure.html", pi)
+}
+
+func route_ban_submit(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Mod && !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	uid, err := strconv.Atoi(r.URL.Path[len("/users/ban/submit/"):])
+	if err != nil {
+		LocalError("The provided User ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	var group int
+	var is_super_admin bool
+	err = db.QueryRow("SELECT `group`, `is_super_admin` from `users` where `uid` = ?", uid).Scan(&group, &is_super_admin)
+	if err == sql.ErrNoRows {
+		LocalError("The user you're trying to ban no longer exists.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	if is_super_admin || groups[group].Is_Admin || groups[group].Is_Mod {
+		LocalError("You may not ban another staff member.",w,r,user)
+		return
+	}
+	if uid == user.ID {
+		LocalError("You may not ban yourself.",w,r,user)
+		return
+	}
+	if uid == -2 {
+		LocalError("You may not ban me. Fine, I will offer up some guidance unto thee. Come to my lair, young one. /arcane-tower/",w,r,user)
+		return
+	}
+	
+	if groups[group].Is_Banned {
+		LocalError("The user you're trying to unban is already banned.",w,r,user)
+		return
+	}
+	
+	_, err = change_group_stmt.Exec(4, uid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
+}
+
+func route_unban(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Mod && !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	uid, err := strconv.Atoi(r.URL.Path[len("/users/unban/"):])
+	if err != nil {
+		LocalError("The provided User ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	var uname string
+	var group int
+	err = db.QueryRow("SELECT `name`, `group` from users where `uid` = ?", uid).Scan(&uname, &group)
+	if err == sql.ErrNoRows {
+		LocalError("The user you're trying to unban no longer exists.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	if !groups[group].Is_Banned {
+		LocalError("The user you're trying to unban isn't banned.",w,r,user)
+		return
+	}
+	
+	_, err = change_group_stmt.Exec(default_group, uid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
 func route_panel_forums(w http.ResponseWriter, r *http.Request){

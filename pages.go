@@ -1,9 +1,6 @@
 package main
 import "strings"
-import "os"
-import "log"
-import "io/ioutil"
-import "path/filepath"
+//import "regexp"
 
 type Page struct
 {
@@ -27,31 +24,55 @@ type AreYouSure struct
 	Message string
 }
 
-func add_custom_page(path string, f os.FileInfo, err error) error {
-	if err != nil {
-		return err
-	}
-	
-	// Is this a directory..?
-	fileInfo, err := os.Stat(path)
-    is_dir := fileInfo.IsDir()
-	if err != nil {
-		return err
-	}
-	if is_dir {
-		return err
-	}
-	
-	custom_page, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	log.Print("Loaded the '" + path + "' page.")
-	name := strings.TrimSuffix(path, filepath.Ext(path))
-	custom_pages[name] = string(custom_page)
-	return nil
+func shortcode_to_unicode(msg string) string {
+	//re := regexp.MustCompile(":(.):")
+	msg = strings.Replace(msg,":grinning:","😀",-1)
+	msg = strings.Replace(msg,":grin:","😁",-1)
+	msg = strings.Replace(msg,":joy:","😂",-1)
+	msg = strings.Replace(msg,":rofl:","🤣",-1)
+	msg = strings.Replace(msg,":smiley:","😃",-1)
+	msg = strings.Replace(msg,":smile:","😄",-1)
+	msg = strings.Replace(msg,":sweat_smile:","😅",-1)
+	msg = strings.Replace(msg,":laughing:","😆",-1)
+	msg = strings.Replace(msg,":satisfied:","😆",-1)
+	msg = strings.Replace(msg,":wink:","😉",-1)
+	msg = strings.Replace(msg,":blush:","😊",-1)
+	msg = strings.Replace(msg,":yum:","😋",-1)
+	msg = strings.Replace(msg,":sunglasses:","😎",-1)
+	msg = strings.Replace(msg,":heart_eyes:","😍",-1)
+	msg = strings.Replace(msg,":kissing_heart:","😘",-1)
+	msg = strings.Replace(msg,":kissing:","😗",-1)
+	msg = strings.Replace(msg,":kissing_smiling_eyes:","😙",-1)
+	msg = strings.Replace(msg,":kissing_closed_eyes:","😚",-1)
+	msg = strings.Replace(msg,":relaxed:","☺️",-1)
+	msg = strings.Replace(msg,":slight_smile:","🙂",-1)
+	msg = strings.Replace(msg,":hugging:","🤗",-1)
+	msg = strings.Replace(msg,":thinking:","🤔",-1)
+	msg = strings.Replace(msg,":neutral_face:","😐",-1)
+	msg = strings.Replace(msg,":expressionless:","😑",-1)
+	msg = strings.Replace(msg,":no_mouth:","😶",-1)
+	msg = strings.Replace(msg,":rolling_eyes:","🙄",-1)
+	msg = strings.Replace(msg,":smirk:","😏",-1)
+	msg = strings.Replace(msg,":persevere:","😣",-1)
+	msg = strings.Replace(msg,":disappointed_relieved:","😥",-1)
+	msg = strings.Replace(msg,":open_mouth:","😮",-1)
+	msg = strings.Replace(msg,":zipper_mouth:","🤐",-1)
+	msg = strings.Replace(msg,":hushed:","😯",-1)
+	msg = strings.Replace(msg,":sleepy:","😪",-1)
+	msg = strings.Replace(msg,":tired_face:","😫",-1)
+	msg = strings.Replace(msg,":sleeping:","😴",-1)
+	msg = strings.Replace(msg,":relieved:","😌",-1)
+	msg = strings.Replace(msg,":nerd:","🤓",-1)
+	return strings.Replace(msg,":stuck_out_tongue:","😛",-1)
+}
+
+func preparse_message(msg string) string {
+	return shortcode_to_unicode(msg)
 }
 
 func parse_message(msg string) string {
+	msg = strings.Replace(msg,":)","😀",-1)
+	msg = strings.Replace(msg,":D","😃",-1)
+	//msg = shortcode_to_unicode(msg)
 	return strings.Replace(msg,"\n","<br>",-1)
 }

@@ -4,7 +4,9 @@
 	<div class="rowitem">{{.Something.Name}}</div>
 	<div class="rowitem passive">
 		<a class="username">Add Friend</a>
-		{{if (.CurrentUser.Is_Super_Mod) and not (.Something.Is_Super_Mod) }}<a class="username">Ban</a>{{end}}
+		{{if (.CurrentUser.Is_Super_Mod) and not (.Something.Is_Super_Mod) }}
+		{{if .Something.Is_Banned }}<a href="/users/unban/{{.Something.ID}}" class="username">Unban</a>{{else}}<a href="/users/ban/{{.Something.ID}}" class="username">Ban</a>{{end}}
+		{{end}}
 		<a class="username">Report</a>
 	</div>
 </div>
@@ -14,7 +16,7 @@
 <div class="colblock_right" style="overflow: hidden;">
 	{{range $index, $element := .ItemList}}
 	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.Avatar }}background-image: url({{$element.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le $element.ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{$element.Css}}{{end}}">
-		<span class="editable_block">{{$element.ContentHtml}}</span>
+		<span class="editable_block user_content">{{$element.ContentHtml}}</span>
 		<br /><br />
 		<a href="/user/{{$element.CreatedBy}}" class="username">{{$element.CreatedByName}}</a>
 		{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
@@ -31,7 +33,7 @@
 			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</div></div>
+			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
 		</div>
 	</form>
 </div>

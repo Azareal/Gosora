@@ -24,14 +24,17 @@ Instructions on how to do so on Linux: https://downloads.mariadb.org/mariadb/rep
 
 **Run the following commands:**
 
+go get github.com/go-sql-driver/mysql
 go install github.com/go-sql-driver/mysql
 
+go get golang.org/x/crypto/bcrypt
 go install golang.org/x/crypto/bcrypt
 
 Tweak the config.go file and put your database details in there. Import data.sql into the same database. Comment out the first line (put /* and */ around it), if you've already made a database, and don't want the script to generate it for you.
 
 Set the password column of your user account in the database to what you want your password to be. The system will encrypt your password when you login for the first time.
 
+Add -u after go get to update those libraries, if you've already got them installed.
 
 # Run the program
 

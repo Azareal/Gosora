@@ -54,11 +54,9 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
 	name := r.URL.Path[len("/pages/"):]
 	
-	val, ok := custom_pages[name];
-	if ok {
-		pi := Page{"Page","page",user,tList,val}
-		templates.ExecuteTemplate(w,"custom_page.html", pi)
-	} else {
+	pi := Page{"Page","page",user,tList,0}
+	err := custom_pages.ExecuteTemplate(w,name, pi)
+	if err != nil {
 		NotFound(w,r,user)
 	}
 }
@@ -407,6 +405,10 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		puser.Is_Admin = puser.Is_Super_Admin || groups[puser.Group].Is_Admin
 		puser.Is_Super_Mod = puser.Is_Admin || groups[puser.Group].Is_Mod
 		puser.Is_Mod = puser.Is_Super_Mod
+		puser.Is_Banned = groups[puser.Group].Is_Banned
+		if puser.Is_Banned && puser.Is_Super_Mod {
+			puser.Is_Banned = false
+		}
 	}
 	
 	if puser.Avatar != "" {
@@ -500,7 +502,7 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	success := 1
 	topic_name := html.EscapeString(r.PostFormValue("topic-name"))
 	
-	res, err := create_topic_stmt.Exec(topic_name,html.EscapeString(r.PostFormValue("topic-content")),parse_message(html.EscapeString(r.PostFormValue("topic-content"))),user.ID)
+	res, err := create_topic_stmt.Exec(topic_name,html.EscapeString(preparse_message(r.PostFormValue("topic-content"))),parse_message(html.EscapeString(preparse_message(r.PostFormValue("topic-content")))),user.ID)
 	if err != nil {
 		log.Print(err)
 		success = 0
@@ -566,7 +568,9 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	_, err = create_reply_stmt.Exec(tid,html.EscapeString(r.PostFormValue("reply-content")),parse_message(html.EscapeString(r.PostFormValue("reply-content"))),user.ID)
+	content := preparse_message(html.EscapeString(r.PostFormValue("reply-content")))
+	log.Print(content)
+	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),user.ID)
 	if err != nil {
 		log.Print(err)
 		success = 0
@@ -636,7 +640,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	_, err = create_profile_reply_stmt.Exec(uid,html.EscapeString(r.PostFormValue("reply-content")),parse_message(html.EscapeString(r.PostFormValue("reply-content"))),user.ID)
+	_, err = create_profile_reply_stmt.Exec(uid,html.EscapeString(preparse_message(r.PostFormValue("reply-content"))),parse_message(html.EscapeString(preparse_message(r.PostFormValue("reply-content")))),user.ID)
 	if err != nil {
 		log.Print(err)
 		success = 0

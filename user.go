@@ -71,10 +71,15 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 		log.Print(err)
 		return user
 	}
+	
 	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin
 	user.Is_Super_Mod = groups[user.Group].Is_Mod || user.Is_Admin
 	user.Is_Mod = user.Is_Super_Mod
 	user.Is_Banned = groups[user.Group].Is_Banned
+	if user.Is_Banned && user.Is_Super_Mod {
+		user.Is_Banned = false
+	}
+	
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
