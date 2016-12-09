@@ -20,6 +20,9 @@ type User struct
 	Session string
 	Loggedin bool
 	Avatar string
+	Message string
+	URLPrefix string
+	URLName string
 }
 
 func SetPassword(uid int, password string) (error) {
@@ -42,7 +45,7 @@ func SetPassword(uid int, password string) (error) {
 }
 
 func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
-	user := User{0,"",0,false,false,false,false,false,"",false,""}
+	user := User{0,"",0,false,false,false,false,false,"",false,"","","",""}
 	var err error
 	var cookie *http.Cookie
 	
@@ -64,7 +67,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 	user.Session = cookie.Value
 	
 	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar)
+	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
 	if err == sql.ErrNoRows {
 		return user
 	} else if err != nil {
@@ -76,6 +79,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 	user.Is_Super_Mod = groups[user.Group].Is_Mod || user.Is_Admin
 	user.Is_Mod = user.Is_Super_Mod
 	user.Is_Banned = groups[user.Group].Is_Banned
+	user.Loggedin = !user.Is_Banned || user.Is_Super_Mod
 	if user.Is_Banned && user.Is_Super_Mod {
 		user.Is_Banned = false
 	}
@@ -87,6 +91,5 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
-	user.Loggedin = true
 	return user
 }

@@ -91,6 +91,7 @@ li:not(:last-child)
 	padding-top: 0px;
 	width: 30%;
 	float: left;
+	margin-right: 8px;
 }
 .colblock_right
 {

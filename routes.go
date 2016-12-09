@@ -52,10 +52,10 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 
 func route_custom_page(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
-	name := r.URL.Path[len("/pages/"):]
 	
+	name := r.URL.Path[len("/pages/"):]
 	pi := Page{"Page","page",user,tList,0}
-	err := custom_pages.ExecuteTemplate(w,name, pi)
+	err := custom_pages.ExecuteTemplate(w,name,pi)
 	if err != nil {
 		NotFound(w,r,user)
 	}
@@ -109,7 +109,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(createdBy),1)
 		}
 		
-		topicList[currentID] = TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,""}
+		topicList[currentID] = TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,"","","",""}
 		currentID++
 	}
 	err = rows.Err()
@@ -192,7 +192,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 			avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(createdBy),1)
 		}
 		
-		topicList[currentID] = TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,""}
+		topicList[currentID] = TopicUser{tid,title,content,createdBy,is_closed,sticky,createdAt,parentID,status,name,avatar,"",0,"","","",""}
 		currentID++
 	}
 	err = rows.Err()
@@ -243,6 +243,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
 	var(
 		err error
+		ok bool
 		rid int
 		content string
 		replyContent string
@@ -255,6 +256,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		replyCss template.CSS
 		replyLines int
 		replyTag string
+		replyURL string
+		replyURLPrefix string
+		replyURLName string
 		is_super_admin bool
 		group int
 		
@@ -263,7 +267,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	)
 	replyList = make(map[int]interface{})
 	currentID = 0
-	topic := TopicUser{0,"","",0,false,false,"",0,"","","",no_css_tmpl,0,""}
+	topic := TopicUser{0,"","",0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
 	
 	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
@@ -272,8 +276,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	
 	// Get the topic..
-	//err = db.QueryRow("select title, content, createdBy, status, is_closed from topics where tid = ?", tid).Scan(&title, &content, &createdBy, &status, &is_closed)
-	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar, users.is_super_admin, users.group from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group)
+	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar, users.is_super_admin, users.group, users.url_prefix, users.url_name from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group, &topic.URLPrefix, &topic.URLName)
 	if err == sql.ErrNoRows {
 		NotFound(w,r,user)
 		return
@@ -305,10 +308,19 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	} else {
 		topic.Tag = ""
 	}
+	if settings["url_tags"] == false {
+		topic.URLName = ""
+	} else {
+		topic.URL, ok = external_sites[topic.URLPrefix]
+		if !ok {
+			topic.URL = topic.URLName
+		} else {
+			topic.URL = replyURL + topic.URLName
+		}
+	}
 	
 	// Get the replies..
-	//rows, err := db.Query("select rid, content, createdBy, createdAt from replies where tid = ?", tid)
-	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group from replies left join users ON replies.createdBy = users.uid where tid = ?", topic.ID)
+	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name from replies left join users ON replies.createdBy = users.uid where tid = ?", topic.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -316,7 +328,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	defer rows.Close()
 	
 	for rows.Next() {
-		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &is_super_admin, &group)
+		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &is_super_admin, &group, &replyURLPrefix, &replyURLName)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
@@ -340,8 +352,18 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		} else {
 			replyTag = ""
 		}
+		if settings["url_tags"] == false {
+			replyURLName = ""
+		} else {
+			replyURL, ok = external_sites[replyURLPrefix]
+			if !ok {
+				replyURL = replyURLName
+			} else {
+				replyURL = replyURL + replyURLName
+			}
+		}
 		
-		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag}
+		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,replyURL,replyURLPrefix,replyURLName}
 		currentID++
 	}
 	err = rows.Err()
@@ -381,7 +403,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	replyList = make(map[int]interface{})
 	currentID = 0
 	
-	puser := User{0,"",0,false,false,false,false,false,"",false,""}
+	puser := User{0,"",0,false,false,false,false,false,"",false,"","","",""}
 	puser.ID, err = strconv.Atoi(r.URL.Path[len("/user/"):])
 	if err != nil {
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
@@ -393,7 +415,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		puser = user
 	} else {
 		// Fetch the user data
-		err = db.QueryRow("SELECT `name`, `group`, `is_super_admin`, `avatar` FROM `users` WHERE `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar)
+		err = db.QueryRow("SELECT `name`, `group`, `is_super_admin`, `avatar`, `message`, `url_prefix`, `url_name` FROM `users` WHERE `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName)
 		if err == sql.ErrNoRows {
 			NotFound(w,r,user)
 			return
@@ -455,7 +477,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 			replyTag = ""
 		}
 		
-		replyList[currentID] = Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag}
+		replyList[currentID] = Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","",""}
 		currentID++
 	}
 	err = rows.Err()
@@ -918,7 +940,7 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 	new_username := html.EscapeString(r.PostFormValue("account-new-username"))
 	_, err = set_username_stmt.Exec(new_username, strconv.Itoa(user.ID))
 	if err != nil {
-		InternalError(err,w,r,user)
+		LocalError("Unable to change the username. Does someone else already have this name?",w,r,user)
 		return
 	}
 	user.Name = new_username

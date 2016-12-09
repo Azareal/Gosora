@@ -604,3 +604,94 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
+
+func route_panel_settings(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	var settingList map[string]interface{} = make(map[string]interface{})
+	for name, content := range settings {
+		settingList[name] = content
+	}
+	
+	pi := Page{"Setting Manager","panel-settings",user,tList,settingList}
+	templates.ExecuteTemplate(w,"panel-settings.html", pi)
+}
+
+func route_panel_setting(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	setting := Setting{"","",""}
+	setting.Name = r.URL.Path[len("/panel/settings/edit/"):]
+	
+	err := db.QueryRow("SELECT content, type from settings where name = ?", setting.Name).Scan(&setting.Content, &setting.Type)
+	if err == sql.ErrNoRows {
+		LocalError("The setting you want to edit doesn't exist.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	pi := Page{"Edit Setting","panel-setting",user,tList,setting}
+	templates.ExecuteTemplate(w,"panel-setting.html", pi)
+}
+
+func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	err := r.ParseForm()
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
+		return          
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	var stype string
+	sname := r.URL.Path[len("/panel/settings/edit/submit/"):]
+	scontent := r.PostFormValue("setting-value")
+	
+	err = db.QueryRow("SELECT name, type from settings where name = ?", sname).Scan(&sname, &stype)
+	if err == sql.ErrNoRows {
+		LocalError("The setting you want to edit doesn't exist.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	if stype == "bool" {
+		if scontent == "on" || scontent == "1" {
+			scontent = "1"
+		} else {
+			scontent = "0"
+		}
+	}
+	
+	_, err = update_setting_stmt.Exec(scontent, sname)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	errmsg := parseSetting(sname, scontent, stype)
+	if errmsg != "" {
+		LocalError(errmsg,w,r,user)
+		return
+	}
+	http.Redirect(w,r,"/panel/settings/",http.StatusSeeOther)
+}

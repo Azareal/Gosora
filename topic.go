@@ -31,4 +31,7 @@ type TopicUser struct
 	Css template.CSS
 	ContentLines int
 	Tag string
+	URL string
+	URLPrefix string
+	URLName string
 }

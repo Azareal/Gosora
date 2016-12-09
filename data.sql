@@ -12,7 +12,11 @@ CREATE TABLE `users`(
 	`session` varchar(200) DEFAULT '' not null,
 	`email` varchar(200) DEFAULT '' not null,
 	`avatar` varchar(20) DEFAULT '' not null,
-	primary key(`uid`)
+	`message` text not null,
+	`url_prefix` varchar(20) DEFAULT '' not null,
+	`url_name` varchar(100) DEFAULT '' not null,
+	primary key(`uid`),
+	unique(`name`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
 CREATE TABLE `users_groups`(
@@ -76,16 +80,17 @@ CREATE TABLE `users_replies`(
 	primary key(`rid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
-/*CREATE TABLE `replies_reports` (
-	`rid` int not null AUTO_INCREMENT,
-	`reportedBy` int not null,
-	`reportedContent` text not null,
-	`resolved` tinyint DEFAULT 0 not null,
-	primary key(`rid`)
-);*/
+CREATE TABLE `settings`(
+	`name` varchar(200) not null,
+	`content` varchar(250) not null,
+	`type` varchar(50) not null,
+	unique(`name`)
+);
 
-INSERT INTO users(`name`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`) 
-VALUES ('Admin',1,1,NOW(),NOW());
+INSERT INTO settings(`name`,`content`,`type`) VALUES ('url_tags','1','bool');
+
+INSERT INTO users(`name`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`,`message`) 
+VALUES ('Admin',1,1,NOW(),NOW(),'');
 
 INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{}',1,1,"Admin");
 INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`tag`) VALUES ('Moderator','{}',1,"Mod");

@@ -2,19 +2,22 @@
 <div class="colblock_left">
 	<div class="rowitem"><a>Control Panel</a></div>
 	<div class="rowitem passive"><a href="/panel/forums/">Forums</a></div>
-	<div class="rowitem passive"><a>Coming Soon</a></div>
+	<div class="rowitem passive"><a href="/panel/settings/">Settings</a></div>
 	<div class="rowitem passive"><a>Coming Soon</a></div>
 	<div class="rowitem passive"><a>Coming Soon</a></div>
 	<div class="rowitem passive"><a href="/forum/-1">Reports</a></div>
 </div>
 <div class="colblock_right">
+	<div class="rowitem"><a>Forums</a></div>
+</div>
+<div class="colblock_right">
 	{{range .ItemList}}
 	<div class="rowitem editable_parent" style="font-weight: normal;">
 		<a class="editable_block" style="font-size: 20px;position:relative;top: -2px;text-transform: none;">{{.Name}}</a>
-		<span style="float: right;">
+		{{if not (eq .ID 0)}}<span style="float: right;">
 			<a href="/panel/forums/edit/submit/{{.ID}}" class="username edit_field">Edit</a>
 			<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Delete</a>
-		</span>
+		</span>{{end}}
 	</div>
 	{{end}}
 </div><br />

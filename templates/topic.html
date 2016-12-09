@@ -26,7 +26,8 @@
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Something.Content}}</textarea>
 		<br /><br />
 		<a href="/user/{{.Something.CreatedBy}}" class="username">{{.Something.CreatedByName}}</a>
-		{{if .Something.Tag}}<a class="username" style="float: right;">{{.Something.Tag}}</a>{{end}}
+		{{if .Something.Tag}}<a class="username" style="float: right;">{{.Something.Tag}}</a>{{else if .Something.URLName}}<a href="{{.Something.URL}}" class="username" style="color: #505050;float: right;">{{.Something.URLName}}</a>
+		<a class="username" style="color: #505050;float: right;border-right: 0;">{{.Something.URLPrefix}}</a>{{end}}
 	</div>
 </div><br />
 <div class="rowblock" style="overflow: hidden;">
@@ -38,7 +39,8 @@
 		{{if $.CurrentUser.Is_Mod}}<a href="/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
 		<a href="/reply/delete/submit/{{$element.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
 		<a href="/reply/report/submit/{{$element.ID}}"><button class="username report_item">Report</button></a>
-		{{if $element.Tag}}<a class="username" style="float: right;">{{$element.Tag}}</a>{{end}}
+		{{if $element.Tag}}<a class="username" style="float: right;">{{$element.Tag}}</a>{{else if $element.URLName}}<a href="{{$element.URL}}" class="username" style="color: #505050;float: right;" rel="nofollow">{{$element.URLName}}</a>
+		<a class="username" style="color: #505050;float: right;border-right: 0;">{{$element.URLPrefix}}</a>{{end}}
 	</div>{{end}}
 </div>
 {{if not .CurrentUser.Is_Banned}}
