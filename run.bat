@@ -1,3 +1,3 @@
 go build
-grosolo.exe
+gosora.exe
 pause

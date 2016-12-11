@@ -1,0 +1,28 @@
+{{template "header.html" . }}
+<div class="colblock_left">
+	<div class="rowitem"><a>Control Panel</a></div>
+	<div class="rowitem passive"><a href="/panel/forums/">Forums</a></div>
+	<div class="rowitem passive"><a href="/panel/settings/">Settings</a></div>
+	<div class="rowitem passive"><a href="/panel/plugins/">Plugins</a></div>
+	<div class="rowitem passive"><a>Coming Soon</a></div>
+	<div class="rowitem passive"><a>Coming Soon</a></div>
+	<div class="rowitem passive"><a>Coming Soon</a></div>
+	<div class="rowitem passive"><a href="/forum/-1">Reports</a></div>
+</div>
+<div class="colblock_right">
+	<div class="rowitem"><a>Plugins</a></div>
+</div>
+<div class="colblock_right">
+	{{range .ItemList}}
+	<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
+		<a {{if .URL}}href="{{.URL}}" {{end}}class="editable_block" style="font-size: 20px;position:relative;top: -2px;">{{.Name}}</a><br />
+		<small style="margin-left: 2px;">Author: {{.Author}}</small>
+		<span style="float: right;">
+			{{if .Settings}}<a href="/panel/settings/" class="username">Settings</a>{{end}}
+			{{if .Active}}<a href="/panel/plugins/deactivate/{{.UName}}?session={{$.CurrentUser.Session}}" class="username">Deactivate</a>
+			{{else}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="username">Activate</a>{{end}}
+		</span>
+	</div>
+	{{end}}
+</div>
+{{template "footer.html" . }}

@@ -4,7 +4,7 @@ package main
 var dbhost = "127.0.0.1"
 var dbuser = "root"
 var dbpassword = "password"
-var dbname = "grosolo"
+var dbname = "gosora"
 var dbport = "3306" // You probably won't need to change this
 
 // Limiters

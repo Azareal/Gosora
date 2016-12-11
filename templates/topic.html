@@ -3,20 +3,21 @@
 	<form action='/topic/edit/submit/{{.Something.ID}}' method="post">
 		<div class="rowitem"{{ if .Something.Sticky }} style="background-color: #FFFFEA;"{{end}}>
 			<a class='topic_name hide_on_edit'>{{.Something.Title}}</a> 
-			<span class='topic_status topic_status_e topic_status_{{.Something.Status}} hide_on_edit'>{{.Something.Status}}</span> 
+			<span class='username topic_status_e topic_status_{{.Something.Status}} hide_on_edit' style="font-weight:normal;float: right;">{{.Something.Status}}</span> 
+			<span class="username" style="border-right: 0;font-weight: normal;float: right;">Status</span>
 			{{if .CurrentUser.Is_Mod}}
-			<a href='/topic/edit/{{.Something.ID}}' class="username hide_on_edit open_edit" style="font-weight: normal;">Edit</a>
+			<a href='/topic/edit/{{.Something.ID}}' class="username hide_on_edit open_edit" style="font-weight: normal;margin-left: 6px;">Edit</a>
 			<a href='/topic/delete/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Delete</a>
 			{{ if .Something.Sticky }}<a href='/topic/unstick/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Pin</a>{{end}}
 			
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Something.Title}}' type="text" />
-			<select name="topic_status" class='show_on_edit topic_status_input'>
+			<select name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
 				<option>open</option>
 				<option>closed</option>
 			</select>
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
 			{{end}}
-			<a href='/topic/report/submit/{{.Something.ID}}' class="username" style="font-weight: normal;">Report</a>
+			<a href="/report/submit/{{.Something.ID}}?session={{.CurrentUser.Session}}&type=topic" class="username report_item" style="font-weight: normal;">Report</a>
 		</div>
 	</form>
 </div>
@@ -38,7 +39,7 @@
 		<a href="/user/{{$element.CreatedBy}}" class="username">{{$element.CreatedByName}}</a>
 		{{if $.CurrentUser.Is_Mod}}<a href="/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
 		<a href="/reply/delete/submit/{{$element.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
-		<a href="/reply/report/submit/{{$element.ID}}"><button class="username report_item">Report</button></a>
+		<a href="/report/submit/{{$element.ID}}?session={{$.CurrentUser.Session}}&type=reply"><button class="username report_item">Report</button></a>
 		{{if $element.Tag}}<a class="username" style="float: right;">{{$element.Tag}}</a>{{else if $element.URLName}}<a href="{{$element.URL}}" class="username" style="color: #505050;float: right;" rel="nofollow">{{$element.URLName}}</a>
 		<a class="username" style="color: #505050;float: right;border-right: 0;">{{$element.URLPrefix}}</a>{{end}}
 	</div>{{end}}

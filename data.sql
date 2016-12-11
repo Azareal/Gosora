@@ -53,6 +53,7 @@ CREATE TABLE `topics`(
 	`is_closed` tinyint DEFAULT 0 not null,
 	`sticky` tinyint DEFAULT 0 not null,
 	`parentID` int DEFAULT 1 not null,
+	`data` varchar(200) DEFAULT '' not null,
 	primary key(`tid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
@@ -85,6 +86,12 @@ CREATE TABLE `settings`(
 	`content` varchar(250) not null,
 	`type` varchar(50) not null,
 	unique(`name`)
+);
+
+CREATE TABLE `plugins`(
+	`uname` varchar(200) not null,
+	`active` tinyint DEFAULT 0 not null,
+	unique(`uname`)
 );
 
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('url_tags','1','bool');

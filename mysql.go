@@ -1,3 +1,4 @@
+/* Copyright Azareal 2016 - 2017 */
 package main
 
 import "database/sql"
@@ -8,6 +9,7 @@ import "log"
 var db *sql.DB
 var get_session_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
+var create_report_stmt *sql.Stmt
 var create_reply_stmt *sql.Stmt
 var update_forum_cache_stmt *sql.Stmt
 var edit_topic_stmt *sql.Stmt
@@ -34,6 +36,7 @@ var create_forum_stmt *sql.Stmt
 var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
+var add_plugin_stmt *sql.Stmt
 
 func init_database(err error) {
 	if(dbpassword != ""){
@@ -58,6 +61,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing create_topic statement.")
 	create_topic_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing create_report statement.")
+	create_report_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,createdBy,data,parentID) VALUES(?,?,?,NOW(),?,?,-1)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -215,6 +224,12 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing add_plugin statement.")
+	add_plugin_stmt, err = db.Prepare("INSERT INTO plugins(uname,active) VALUES(?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Loading the usergroups.")
 	rows, err := db.Query("SELECT gid,name,permissions,is_mod,is_admin,is_banned,tag FROM users_groups")
 	if err != nil {
@@ -290,6 +305,29 @@ func init_database(err error) {
 		if errmsg != "" {
 			log.Fatal(err)
 		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Loading the plugins.")
+	rows, err = db.Query("SELECT uname, active FROM plugins")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	var uname string
+	var active bool
+	for rows.Next() {
+		err := rows.Scan(&uname, &active)
+		if err != nil {
+			log.Fatal(err)
+		}
+		plugin := plugins[uname]
+		plugin.Active = active
+		plugins[uname] = plugin
 	}
 	err = rows.Err()
 	if err != nil {

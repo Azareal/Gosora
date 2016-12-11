@@ -1,3 +1,4 @@
+/* Copyright Azareal 2016 - 2017 */
 package main
 
 import "errors"
@@ -110,6 +111,10 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		}
 		
 		topicList[currentID] = TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,"","","",""}
+		
+		if hooks["trow_assign"] != nil {
+			topicList[currentID] = run_hook("trow_assign", topicList[currentID])
+		}
 		currentID++
 	}
 	err = rows.Err()
@@ -193,6 +198,10 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		}
 		
 		topicList[currentID] = TopicUser{tid,title,content,createdBy,is_closed,sticky,createdAt,parentID,status,name,avatar,"",0,"","","",""}
+		
+		if hooks["trow_assign"] != nil {
+			topicList[currentID] = run_hook("trow_assign", topicList[currentID])
+		}
 		currentID++
 	}
 	err = rows.Err()
@@ -364,6 +373,10 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		}
 		
 		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,replyURL,replyURLPrefix,replyURLName}
+		
+		if hooks["rrow_assign"] != nil {
+			replyList[currentID] = run_hook("rrow_assign", replyList[currentID])
+		}
 		currentID++
 	}
 	err = rows.Err()
@@ -689,6 +702,128 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w,errpage)
 	} else {
 		http.Redirect(w, r, "/user/" + strconv.Itoa(uid), http.StatusSeeOther)
+	}
+}
+
+func route_report_submit(w http.ResponseWriter, r *http.Request) {
+	user := SessionCheck(w,r)
+	if !user.Loggedin {
+		LoginRequired(w,r,user)
+		return
+	}
+	if user.Is_Banned {
+		Banned(w,r,user)
+		return
+	}
+	
+	err := r.ParseForm()
+	if err != nil {
+		LocalError("Bad Form", w, r, user)
+		return
+	}
+	
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	item_id, err := strconv.Atoi(r.URL.Path[len("/report/submit/"):])
+	if err != nil {
+		LocalError("Bad ID", w, r, user)
+		return
+	}
+	
+	item_type := r.FormValue("type")
+	success := 1
+	
+	var tid int
+	var title string
+	var content string
+	var data string
+	if item_type == "reply" {
+		err = db.QueryRow("select tid, content from replies where rid = ?", item_id).Scan(&tid, &content)
+		if err == sql.ErrNoRows {
+			LocalError("We were unable to find the reported post", w, r, user)
+			return
+		} else if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		err = db.QueryRow("select title, data from topics where tid = ?", tid).Scan(&title,&data)
+		if err == sql.ErrNoRows {
+			LocalError("We were unable to find the topic which the reported post is supposed to be in", w, r, user)
+			return
+		} else if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(tid) + "'>" + title + "</a>"
+	} else if item_type == "topic" {
+		err = db.QueryRow("select title, content from topics where tid = ?", item_id).Scan(&title,&content)
+		if err == sql.ErrNoRows {
+			NotFound(w,r,user)
+			return
+		} else if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(item_id) + "'>" + title + "</a>"
+	} else {
+		// Don't try to guess the type
+		LocalError("Unknown type", w, r, user)
+		return  
+	}
+	
+	var count int
+	rows, err := db.Query("select count(*) as count from topics where data = ? and data != '' and parentID = -1", item_type + "_" + strconv.Itoa(item_id))
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	for rows.Next() {
+		err = rows.Scan(&count)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+	}
+	
+	if count != 0 {
+		LocalError("Someone has already reported this!", w, r, user)
+		return
+	}
+	
+	title = "Report: " + title
+	res, err := create_report_stmt.Exec(title,content,content,user.ID,item_type + "_" + strconv.Itoa(item_id))
+	if err != nil {
+		log.Print(err)
+		success = 0
+	}
+	
+	lastId, err := res.LastInsertId()
+	if err != nil {
+		log.Print(err)
+		success = 0
+	}
+	
+	_, err = update_forum_cache_stmt.Exec(title, lastId, user.Name, user.ID, 1)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	if success != 1 {
+		errmsg := "Unable to create the report"
+		pi := Page{"Error","error",user,tList,errmsg}
+		
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		errpage := b.String()
+		w.WriteHeader(500)
+		fmt.Fprintln(w,errpage)
+	} else {
+		http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId, 10), http.StatusSeeOther)
 	}
 }
 

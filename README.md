@@ -1,8 +1,10 @@
-# Grosolo
+# Gosora
 
 A super fast forum software written in Go.
 
-The initial code-base was forked from one of my side projects, and converted from the web framework it was using.
+The initial code-base was forked from one of my side projects, but has now gone far beyond that.
+
+Discord Server: https://discord.gg/eyYvtTf
 
 
 # Features
@@ -15,6 +17,8 @@ Emojis
 In-memory static file, forum and group caches.
 
 A profile system including profile comments and moderation tools for the profile owner.
+
+A plugin system.
 
 
 # Dependencies
@@ -46,9 +50,31 @@ Add -u after go get to update those libraries, if you've already got them instal
 
 # Run the program
 
-go run errors.go main.go pages.go reply.go routes.go topic.go user.go utils.go forum.go group.go files.go config.go
+*Linux*
+
+cd to the directory / folder the code is in.
+
+go build
+
+./gosora
+
+
+*Windows*
+
+Open up cmd.exe
+
+cd to the directory / folder the code is in. E.g. cd /Users/Blah/Documents/gosora
+
+go build
+
+./gosora.exe
+
 
 Alternatively, you could run the run.bat batch file on Windows.
+
+We're also looking into ways to distribute ready made executables for Windows. While this is not a complicated endeavour, the configuration settings currently get built with the rest of the program for speed, and we will likely have to change this.
+
+With the introduction of the new settings system, we will begin moving some of the less critical settings out of the configuration file, and will likely have a config.xml or config.ini in the future to store the critical settings in.
 
 
 # TO-DO
@@ -64,11 +90,7 @@ Add emails as a requirement for registration and add a simple anti-spam measure.
 
 Add an alert system.
 
-Add a report feature.
-
 Add a complex permissions system.
-
-Add a settings system.
 
 Add a plugin system.
 
@@ -77,3 +99,5 @@ Tweak the CSS to make it responsive.
 Nest the moderation routes to possibly speed routing up a little...?
 
 Add a friend system.
+
+Add more administration features.

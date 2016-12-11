@@ -1,8 +1,10 @@
+/* Copyright Azareal 2016 - 2017 */
 package main
 
 import (
 	"net/http"
 	"log"
+	//"fmt"
 	"mime"
 	"strings"
 	"path/filepath"
@@ -56,6 +58,17 @@ func main(){
 	}
 	
 	external_sites["YT"] = "https://www.youtube.com/"
+	hooks["trow_assign"] = nil
+	hooks["rrow_assign"] = nil
+	//fmt.Println(plugins)
+	
+	for name, body := range plugins {
+		log.Print("Added plugin " + name)
+		if body.Active {
+			log.Print("Initialised plugin " + name)
+			plugins[name].Init()
+		}
+	}
 	
 	// In a directory to stop it clashing with the other paths
 	http.HandleFunc("/static/", route_static)
@@ -77,6 +90,7 @@ func main(){
 	//http.HandleFunc("/reply/delete/", route_reply_delete)
 	http.HandleFunc("/reply/edit/submit/", route_reply_edit_submit)
 	http.HandleFunc("/reply/delete/submit/", route_reply_delete_submit)
+	http.HandleFunc("/report/submit/", route_report_submit)
 	http.HandleFunc("/topic/edit/submit/", route_edit_topic)
 	http.HandleFunc("/topic/delete/submit/", route_delete_topic)
 	http.HandleFunc("/topic/stick/submit/", route_stick_topic)
@@ -119,6 +133,9 @@ func main(){
 	http.HandleFunc("/panel/settings/", route_panel_settings)
 	http.HandleFunc("/panel/settings/edit/", route_panel_setting)
 	http.HandleFunc("/panel/settings/edit/submit/", route_panel_setting_edit)
+	http.HandleFunc("/panel/plugins/", route_panel_plugins)
+	http.HandleFunc("/panel/plugins/activate/", route_panel_plugins_activate)
+	//http.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)
 	
 	http.HandleFunc("/", default_route)
 	

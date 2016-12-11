@@ -695,3 +695,65 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w,r,"/panel/settings/",http.StatusSeeOther)
 }
+
+func route_panel_plugins(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	var pluginList map[int]interface{} = make(map[int]interface{})
+	currentID := 0
+	
+	for _, plugin := range plugins {
+		pluginList[currentID] = plugin
+		currentID++
+	}
+	
+	pi := Page{"Plugin Manager","panel-plugins",user,pluginList,0}
+	templates.ExecuteTemplate(w,"panel-plugins.html", pi)
+}
+
+func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	uname := r.URL.Path[len("/panel/plugins/activate/"):]
+	
+	plugin, ok := plugins[uname]
+	if !ok {
+		LocalError("The plugin isn't registered in the system",w,r,user)
+		return
+	}
+	
+	var active bool
+	err := db.QueryRow("SELECT active from plugins where uname = ?", uname).Scan(&active)
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	has_plugin := err != sql.ErrNoRows
+	if has_plugin {
+		if active {
+			LocalError("The plugin is already active",w,r,user)
+			return
+		}
+	} else {
+		_, err := add_plugin_stmt.Exec(uname,1)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+	}
+	
+	plugin.Active = true
+	plugins[uname] = plugin
+	plugins[uname].Init()
+	
+	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
+}
