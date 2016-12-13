@@ -63,10 +63,15 @@ func shortcode_to_unicode(msg string) string {
 	msg = strings.Replace(msg,":sleeping:","😴",-1)
 	msg = strings.Replace(msg,":relieved:","😌",-1)
 	msg = strings.Replace(msg,":nerd:","🤓",-1)
-	return strings.Replace(msg,":stuck_out_tongue:","😛",-1)
+	msg = strings.Replace(msg,":stuck_out_tongue:","😛",-1)
+	return msg
 }
 
 func preparse_message(msg string) string {
+	if hooks["preparse_preassign"] != nil {
+		out := run_hook("preparse_preassign", msg)
+		msg = out.(string)
+	}
 	return shortcode_to_unicode(msg)
 }
 
@@ -74,5 +79,10 @@ func parse_message(msg string) string {
 	msg = strings.Replace(msg,":)","😀",-1)
 	msg = strings.Replace(msg,":D","😃",-1)
 	msg = strings.Replace(msg,":P","😛",-1)
-	return strings.Replace(msg,"\n","<br>",-1)
+	msg = strings.Replace(msg,"\n","<br>",-1)
+	if hooks["parse_assign"] != nil {
+		out := run_hook("parse_assign", msg)
+		msg = out.(string)
+	}
+	return msg
 }

@@ -1,0 +1,29 @@
+{{template "header.html" . }}
+<div class="colblock_left">
+	<div class="rowitem"><a>Control Panel</a></div>
+	<div class="rowitem passive"><a href="/panel/forums/">Forums</a></div>
+	<div class="rowitem passive"><a href="/panel/settings/">Settings</a></div>
+	<div class="rowitem passive"><a href="/panel/plugins/">Plugins</a></div>
+	<div class="rowitem passive"><a href="/panel/users/">Users</a></div>
+	<div class="rowitem passive"><a href="/panel/groups/">Groups</a></div>
+	<div class="rowitem passive"><a>Coming Soon</a></div>
+	<div class="rowitem passive"><a>Coming Soon</a></div>
+	<div class="rowitem passive"><a>Coming Soon</a></div>
+	<div class="rowitem passive"><a href="/forum/-1">Reports</a></div>
+</div>
+<div class="colblock_right">
+	<div class="rowitem"><a>Users</a></div>
+</div>
+<div class="colblock_right">
+	{{range .ItemList}}
+	<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
+		<a href="/user/{{.ID}}" class="editable_block" style="font-size: 20px;position:relative;top: -2px;">{{.Name}}</a>
+		{{if .Tag}}<span class="username" style="margin-left 4px;{{if (.Is_Super_Mod) and (.Active)}}float: right;{{end}}">{{.Tag}}</span>{{end}}
+		<span style="float: right;">
+			{{if .Is_Banned}}<a href="/users/unban/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Unban</a>{{else if not .Is_Super_Mod}}<a href="/users/ban/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Ban</a>{{end}}
+			{{if not .Active}}<a href="/users/activate/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Activate</a>{{end}}
+		</span>
+	</div>
+	{{end}}
+</div>
+{{template "footer.html" . }}

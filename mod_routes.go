@@ -2,6 +2,7 @@ package main
 
 import "log"
 import "fmt"
+import "strings"
 import "strconv"
 import "net/http"
 import "html"
@@ -723,7 +724,6 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 	}
 	
 	uname := r.URL.Path[len("/panel/plugins/activate/"):]
-	
 	plugin, ok := plugins[uname]
 	if !ok {
 		LocalError("The plugin isn't registered in the system",w,r,user)
@@ -743,6 +743,11 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 			LocalError("The plugin is already active",w,r,user)
 			return
 		}
+		_, err = update_plugin_stmt.Exec(1, uname)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
 	} else {
 		_, err := add_plugin_stmt.Exec(uname,1)
 		if err != nil {
@@ -756,4 +761,108 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 	plugins[uname].Init()
 	
 	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
+}
+
+func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	uname := r.URL.Path[len("/panel/plugins/deactivate/"):]
+	plugin, ok := plugins[uname]
+	if !ok {
+		LocalError("The plugin isn't registered in the system",w,r,user)
+		return
+	}
+	
+	var active bool
+	err := db.QueryRow("SELECT active from plugins where uname = ?", uname).Scan(&active)
+	if err == sql.ErrNoRows {
+		LocalError("The plugin you're trying to deactivate isn't active",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	if !active {
+		LocalError("The plugin you're trying to deactivate isn't active",w,r,user)
+		return
+	}
+	_, err = update_plugin_stmt.Exec(0, uname)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	plugin.Active = false
+	plugins[uname] = plugin
+	plugins[uname].Deactivate()
+	
+	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
+}
+
+func route_panel_users(w http.ResponseWriter, r *http.Request){
+	user := SessionCheck(w,r)
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	var userList map[int]interface{} = make(map[int]interface{})
+	currentID := 0
+	
+	rows, err := db.Query("SELECT `uid`, `name`, `group`, `active`, `is_super_admin`, `avatar` FROM users")
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		puser := User{0,"",0,false,false,false,false,false,false,"",false,"","","","",""}
+		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.Is_Super_Admin, &puser.Avatar)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		puser.Is_Admin = puser.Is_Super_Admin || groups[puser.Group].Is_Admin
+		puser.Is_Super_Mod = puser.Is_Admin || groups[puser.Group].Is_Mod
+		puser.Is_Mod = puser.Is_Super_Mod
+		puser.Is_Banned = groups[puser.Group].Is_Banned
+		if puser.Is_Banned && puser.Is_Super_Mod {
+			puser.Is_Banned = false
+		}
+		
+		if puser.Avatar != "" {
+			if puser.Avatar[0] == '.' {
+				puser.Avatar = "/uploads/avatar_" + strconv.Itoa(puser.ID) + puser.Avatar
+			}
+		} else {
+			puser.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(puser.ID),1)
+		}
+		
+		if groups[puser.Group].Tag != "" {
+			puser.Tag = groups[puser.Group].Tag
+		} else {
+			puser.Tag = ""
+		}
+		
+		userList[currentID] = puser
+		currentID++
+	}
+	err = rows.Err()
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	pi := Page{"User Manager","panel-users",user,userList,0}
+	err = templates.ExecuteTemplate(w,"panel-users.html", pi)
+	if err != nil {
+		InternalError(err, w, r, user)
+	}
 }

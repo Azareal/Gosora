@@ -6,6 +6,7 @@ CREATE TABLE `users`(
 	`password` varchar(100) not null,
 	`salt` varchar(80) DEFAULT '' not null,
 	`group` int not null,
+	`active` tinyint DEFAULT 0 not null,
 	`is_super_admin` tinyint(1) not null,
 	`createdAt` datetime not null,
 	`lastActiveAt` datetime not null,
@@ -99,7 +100,7 @@ INSERT INTO settings(`name`,`content`,`type`) VALUES ('url_tags','1','bool');
 INSERT INTO users(`name`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`,`message`) 
 VALUES ('Admin',1,1,NOW(),NOW(),'');
 
-INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{}',1,1,"Admin");
+INSERT INTO users_groups(`name`,`permissions`,`active`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{}',1,1,1,"Admin");
 INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`tag`) VALUES ('Moderator','{}',1,"Mod");
 INSERT INTO users_groups(`name`,`permissions`) VALUES ('Member','{}');
 INSERT INTO users_groups(`name`,`permissions`,`is_banned`) VALUES ('Banned','{}',1);

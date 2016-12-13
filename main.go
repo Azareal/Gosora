@@ -135,7 +135,8 @@ func main(){
 	http.HandleFunc("/panel/settings/edit/submit/", route_panel_setting_edit)
 	http.HandleFunc("/panel/plugins/", route_panel_plugins)
 	http.HandleFunc("/panel/plugins/activate/", route_panel_plugins_activate)
-	//http.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)
+	http.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)
+	http.HandleFunc("/panel/users/", route_panel_users)
 	
 	http.HandleFunc("/", default_route)
 	

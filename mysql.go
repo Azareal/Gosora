@@ -37,6 +37,7 @@ var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
 var add_plugin_stmt *sql.Stmt
+var update_plugin_stmt *sql.Stmt
 
 func init_database(err error) {
 	if(dbpassword != ""){
@@ -226,6 +227,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing add_plugin statement.")
 	add_plugin_stmt, err = db.Prepare("INSERT INTO plugins(uname,active) VALUES(?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_plugin statement.")
+	update_plugin_stmt, err = db.Prepare("UPDATE plugins SET active = ? WHERE uname = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -55,10 +55,13 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 	user := SessionCheck(w,r)
 	
 	name := r.URL.Path[len("/pages/"):]
+	if custom_pages.Lookup(name) == nil {
+		NotFound(w,r,user)
+	}
 	pi := Page{"Page","page",user,tList,0}
 	err := custom_pages.ExecuteTemplate(w,name,pi)
 	if err != nil {
-		NotFound(w,r,user)
+		InternalError(err, w, r, user)
 	}
 }
 	
@@ -416,7 +419,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	replyList = make(map[int]interface{})
 	currentID = 0
 	
-	puser := User{0,"",0,false,false,false,false,false,"",false,"","","",""}
+	puser := User{0,"",0,false,false,false,false,false,false,"",false,"","","","",""}
 	puser.ID, err = strconv.Atoi(r.URL.Path[len("/user/"):])
 	if err != nil {
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
@@ -444,6 +447,12 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		if puser.Is_Banned && puser.Is_Super_Mod {
 			puser.Is_Banned = false
 		}
+	}
+	
+	if groups[puser.Group].Tag != "" {
+			puser.Tag = groups[puser.Group].Tag
+	} else {
+		puser.Tag = ""
 	}
 	
 	if puser.Avatar != "" {
@@ -721,11 +730,11 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form", w, r, user)
 		return
 	}
-	
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
 	}
+	
 	item_id, err := strconv.Atoi(r.URL.Path[len("/report/submit/"):])
 	if err != nil {
 		LocalError("Bad ID", w, r, user)
@@ -758,6 +767,25 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(tid) + "'>" + title + "</a>"
+	} else if item_type == "user-reply" {
+		err = db.QueryRow("select uid, content from users_replies where rid = ?", item_id).Scan(&tid, &content)
+		if err == sql.ErrNoRows {
+			LocalError("We were unable to find the reported post", w, r, user)
+			return
+		} else if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		err = db.QueryRow("select name from users where uid = ?", tid).Scan(&title)
+		if err == sql.ErrNoRows {
+			LocalError("We were unable to find the profile which the reported post is supposed to be on", w, r, user)
+			return
+		} else if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		content = content + "<br><br>Original Post: <a href='/user/" + strconv.Itoa(tid) + "'>" + title + "</a>"
 	} else if item_type == "topic" {
 		err = db.QueryRow("select title, content from topics where tid = ?", item_id).Scan(&title,&content)
 		if err == sql.ErrNoRows {
@@ -769,6 +797,11 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		}
 		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(item_id) + "'>" + title + "</a>"
 	} else {
+		if vhooks["report_preassign"] != nil {
+			run_hook_v("report_preassign", &item_id, &item_type)
+			return
+		}
+		
 		// Don't try to guess the type
 		LocalError("Unknown type", w, r, user)
 		return  
@@ -780,7 +813,6 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	
 	for rows.Next() {
 		err = rows.Scan(&count)
 		if err != nil {

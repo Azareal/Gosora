@@ -12,6 +12,7 @@ type User struct
 	ID int
 	Name string
 	Group int
+	Active bool
 	Is_Mod bool
 	Is_Super_Mod bool
 	Is_Admin bool
@@ -23,6 +24,7 @@ type User struct
 	Message string
 	URLPrefix string
 	URLName string
+	Tag string
 }
 
 func SetPassword(uid int, password string) (error) {
@@ -45,7 +47,7 @@ func SetPassword(uid int, password string) (error) {
 }
 
 func SessionCheck(w http.ResponseWriter, r *http.Request) (User) {
-	user := User{0,"",0,false,false,false,false,false,"",false,"","","",""}
+	user := User{0,"",0,false,false,false,false,false,false,"",false,"","","","",""}
 	var err error
 	var cookie *http.Cookie
 	
