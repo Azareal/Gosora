@@ -23,7 +23,7 @@ const saltLength int = 32
 const sessionLength int = 80
 
 var templates = template.Must(template.ParseGlob("templates/*"))
-var custom_pages = template.Must(template.ParseGlob("pages/*"))
+//var custom_pages = template.Must(template.ParseGlob("pages/*"))
 var no_css_tmpl = template.CSS("")
 var staff_css_tmpl = template.CSS(staff_css)
 var settings map[string]interface{} = make(map[string]interface{})
@@ -31,9 +31,52 @@ var external_sites map[string]string = make(map[string]string)
 var groups map[int]Group = make(map[int]Group)
 var forums map[int]Forum = make(map[int]Forum)
 var static_files map[string]SFile = make(map[string]SFile)
+var ctemplates map[string]func(Page)string = make(map[string]func(Page)string)
+
+func compile_templates() {
+	var c CTemplateSet
+	user := User{0,"",0,false,false,false,false,false,false,"",false,"","","","",""}
+	var noticeList map[int]string = make(map[int]string)
+	noticeList[0] = "test"
+	
+	log.Print("Compiling the templates")
+	
+	topic := TopicUser{0,"",template.HTML(""),0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
+	var replyList map[int]interface{} = make(map[int]interface{})
+	replyList[0] = Reply{0,0,"",template.HTML(""),0,"","",0,0,"",no_css_tmpl,0,"","","",""}
+	var varList map[string]VarItem = make(map[string]VarItem)
+	varList["extra_data"] = VarItem{"extra_data","tmpl_topic_vars.Something.(TopicUser)","TopicUser"}
+	
+	pi := Page{"Title","name",user,noticeList,replyList,topic}
+	topic_id := c.compile_template("topic.html","templates/","Page", pi, varList)
+	
+	varList = make(map[string]VarItem)
+	varList["extra_data"] = VarItem{"extra_data","tmpl_profile_vars.Something.(User)","User"}
+	pi = Page{"Title","name",user,noticeList,replyList,user}
+	profile := c.compile_template("profile.html","templates/","Page", pi, varList)
+	
+	log.Print("Writing the templates")
+	write_template("topic", topic_id)
+	write_template("profile", profile)
+}
+
+func write_template(name string, content string) {
+	f, err := os.Create("./template_" + name + ".go")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	_, err = f.WriteString(content)
+	if err != nil {
+		log.Fatal(err)
+	}
+	f.Sync()
+	f.Close()
+}
 
 func main(){
 	var err error
+	compile_templates()
 	init_database(err);
 	
 	log.Print("Loading the static files.")
@@ -60,7 +103,7 @@ func main(){
 	external_sites["YT"] = "https://www.youtube.com/"
 	hooks["trow_assign"] = nil
 	hooks["rrow_assign"] = nil
-	//fmt.Println(plugins)
+	templates.ParseGlob("pages/*")
 	
 	for name, body := range plugins {
 		log.Print("Added plugin " + name)

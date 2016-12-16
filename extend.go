@@ -13,9 +13,10 @@ type Plugin struct
 	URL string
 	Settings string
 	Active bool
+	Tag string
 	Type string
 	Init func()
-	Activate func()
+	Activate func()error
 	Deactivate func()
 }
 
@@ -31,6 +32,18 @@ func run_hook(name string, data interface{}) interface{} {
 	return hooks[name](data)
 }
 
-func run_hook_v(name string, data ...interface{}) {
-	vhooks[name](data...)
+func add_vhook(name string, handler func(...interface{}) interface{}) {
+	vhooks[name] = handler
+}
+
+func remove_vhook(name string) {
+	delete(vhooks, name)
+}
+
+func run_vhook(name string, data ...interface{}) interface{} {
+	return vhooks[name](data...)
+}
+
+func run_vhook_noreturn(name string, data ...interface{}) {
+	_ = vhooks[name](data...)
 }

@@ -7,7 +7,7 @@ var bold *regexp.Regexp
 var italic *regexp.Regexp
 
 func init() {
-	plugins["markdown"] = Plugin{"markdown","Markdown","Azareal","http://github.com/Azareal","",false,"",init_markdown,nil,deactivate_markdown}
+	plugins["markdown"] = Plugin{"markdown","Markdown","Azareal","http://github.com/Azareal","",false,"","",init_markdown,nil,deactivate_markdown}
 }
 
 func init_markdown() {

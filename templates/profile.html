@@ -16,15 +16,15 @@
 	<div class="rowitem"><a>Comments</a></div>
 </div>
 <div class="colblock_right" style="overflow: hidden;">
-	{{range $index, $element := .ItemList}}
-	<div class="rowitem passive deletable_block editable_parent" style="{{ if $element.Avatar }}background-image: url({{$element.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le $element.ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{$element.Css}}{{end}}">
-		<span class="editable_block user_content">{{$element.ContentHtml}}</span>
+	{{range .ItemList}}
+	<div class="rowitem passive deletable_block editable_parent" style="{{ if .Avatar }}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Css}}{{end}}">
+		<span class="editable_block user_content">{{.ContentHtml}}</span>
 		<br /><br />
-		<a href="/user/{{$element.CreatedBy}}" class="username">{{$element.CreatedByName}}</a>
-		{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{$element.ID}}"><button class="username edit_item">Edit</button></a>
-		<a href="/profile/reply/delete/submit/{{$element.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
-		<a href="/report/submit/{{$element.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item">Report</button></a>
-		{{ if $element.Tag }}<a class="username" style="float: right;">{{$element.Tag}}</a>{{end}}
+		<a href="/user/{{.CreatedBy}}" class="username">{{.CreatedByName}}</a>
+		{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}"><button class="username edit_item">Edit</button></a>
+		<a href="/profile/reply/delete/submit/{{.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
+		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item">Report</button></a>
+		{{ if .Tag }}<a class="username" style="float: right;">{{.Tag}}</a>{{end}}
 	</div>{{end}}
 </div>
 {{if not .CurrentUser.Is_Banned}}

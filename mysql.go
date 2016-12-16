@@ -166,7 +166,7 @@ func init_database(err error) {
 	// create_account_stmt, err = db.Prepare("INSERT INTO 
 	
 	log.Print("Preparing register statement.")
-	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`password`,`salt`,`group`,`is_super_admin`,`session`,`message`) VALUES(?,?,?," + strconv.Itoa(default_group) + ",0,?,'')")
+	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`email`,`password`,`salt`,`group`,`is_super_admin`,`session`,`message`) VALUES(?,?,?,?," + strconv.Itoa(default_group) + ",0,?,'')")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -332,7 +332,13 @@ func init_database(err error) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		plugin := plugins[uname]
+		
+		// Was the plugin deleted at some point?
+		plugin, ok := plugins[uname]
+		if !ok {
+			continue
+		}
+		
 		plugin.Active = active
 		plugins[uname] = plugin
 	}

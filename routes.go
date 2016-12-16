@@ -20,6 +20,7 @@ import "golang.org/x/crypto/bcrypt"
 
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList map[int]interface{}
+var nList map[int]string
 
 // GET functions
 func route_static(w http.ResponseWriter, r *http.Request){
@@ -43,8 +44,12 @@ func route_fstatic(w http.ResponseWriter, r *http.Request){
 }
 
 func route_overview(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
-	pi := Page{"Overview","overview",user,tList,0}
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
+	pi := Page{"Overview","overview",user,noticeList,tList,0}
 	err := templates.ExecuteTemplate(w,"overview.html", pi)
     if err != nil {
         InternalError(err, w, r, user)
@@ -52,21 +57,28 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 }
 
 func route_custom_page(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
 	
 	name := r.URL.Path[len("/pages/"):]
-	if custom_pages.Lookup(name) == nil {
+	if templates.Lookup("page_" + name) == nil {
 		NotFound(w,r,user)
 	}
-	pi := Page{"Page","page",user,tList,0}
-	err := custom_pages.ExecuteTemplate(w,name,pi)
+	pi := Page{"Page","page",user,noticeList,tList,0}
+	err := templates.ExecuteTemplate(w,"page_" + name,pi)
 	if err != nil {
 		InternalError(err, w, r, user)
 	}
 }
 	
 func route_topics(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	var(
 		topicList map[int]interface{}
 		currentID int
@@ -133,7 +145,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		msg = ""
 	}
 	
-	pi := Page{"Topic List","topics",user,topicList,msg}
+	pi := Page{"Topic List","topics",user,noticeList,topicList,msg}
 	err = templates.ExecuteTemplate(w,"topics.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
@@ -141,7 +153,11 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 }
 
 func route_forum(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	var(
 		topicList map[int]interface{}
 		currentID int
@@ -167,7 +183,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	_, ok := forums[fid]
+	_, ok = forums[fid]
 	if !ok {
 		NotFound(w,r,user)
 		return
@@ -220,7 +236,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		msg = ""
 	}
 	
-	pi := Page{forums[fid].Name,"forum",user,topicList,msg}
+	pi := Page{forums[fid].Name,"forum",user,noticeList,topicList,msg}
 	err = templates.ExecuteTemplate(w,"forum.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
@@ -228,7 +244,11 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 }
 
 func route_forums(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	var forumList map[int]interface{} = make(map[int]interface{})
 	currentID := 0
 	
@@ -244,7 +264,7 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{"Forum List","forums",user,forumList,0}
+	pi := Page{"Forum List","forums",user,noticeList,forumList,0}
 	err := templates.ExecuteTemplate(w,"forums.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
@@ -252,10 +272,13 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 }
 	
 func route_topic_id(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	var(
 		err error
-		ok bool
 		rid int
 		content string
 		replyContent string
@@ -388,15 +411,23 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{topic.Title,"topic",user,replyList,topic}
-	err = templates.ExecuteTemplate(w,"topic.html", pi)
-	if err != nil {
-        InternalError(err, w, r, user)
-    }
+	pi := Page{topic.Title,"topic",user,noticeList,replyList,topic}
+	if ctemplates["topic"] != nil {
+		w.Write([]byte(ctemplates["topic"](pi)))
+	} else {
+		err = templates.ExecuteTemplate(w,"topic.html", pi)
+		if err != nil {
+			InternalError(err, w, r, user)
+		}
+	}
 }
 
 func route_profile(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	var(
 		err error
 		rid int
@@ -508,7 +539,8 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{puser.Name + "'s Profile","profile",user,replyList,puser}
+	pi := Page{puser.Name + "'s Profile","profile",user,noticeList,replyList,puser}
+	//w.Write([]byte(template_profile(pi)))
 	err = templates.ExecuteTemplate(w,"profile.html", pi)
 	if err != nil {
         InternalError(err, w, r, user)
@@ -516,19 +548,27 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 }
 
 func route_topic_create(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if user.Is_Banned {
 		Banned(w,r,user)
 		return
 	}
 	
-	pi := Page{"Create Topic","create-topic",user,tList,0}
+	pi := Page{"Create Topic","create-topic",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"create-topic.html", pi)
 }
 	
 // POST functions. Authorised users only.
 func route_create_topic(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
 		return
@@ -566,7 +606,7 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	
 	if success != 1 {
 		errmsg := "Unable to create the topic"
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -579,7 +619,11 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_create_reply(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
 		return
@@ -602,7 +646,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		success = 0
 		
 		errmsg := "Unable to create the reply"
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -638,7 +682,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	
 	if success != 1 {
 		errmsg := "Unable to create the reply"
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -651,7 +695,11 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
 		return
@@ -674,7 +722,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 		success = 0
 		
 		errmsg := "Unable to create the reply"
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -702,7 +750,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 	
 	if success != 1 {
 		errmsg := "Unable to create the reply"
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -715,7 +763,11 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_report_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
 		return
@@ -798,7 +850,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(item_id) + "'>" + title + "</a>"
 	} else {
 		if vhooks["report_preassign"] != nil {
-			run_hook_v("report_preassign", &item_id, &item_type)
+			run_vhook_noreturn("report_preassign", &item_id, &item_type)
 			return
 		}
 		
@@ -813,6 +865,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
+	
 	for rows.Next() {
 		err = rows.Scan(&count)
 		if err != nil {
@@ -820,7 +873,6 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	
 	if count != 0 {
 		LocalError("Someone has already reported this!", w, r, user)
 		return
@@ -847,7 +899,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	
 	if success != 1 {
 		errmsg := "Unable to create the report"
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -860,10 +912,14 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -873,15 +929,19 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	pi := Page{"Edit Password","account-own-edit",user,tList,0}
+	pi := Page{"Edit Password","account-own-edit",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
 func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -905,7 +965,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	
 	err = get_password_stmt.QueryRow(user.ID).Scan(&real_password, &salt)
 	if err == sql.ErrNoRows {
-		pi := Page{"Error","error",user,tList,"Your account doesn't exist."}
+		pi := Page{"Error","error",user,nList,tList,"Your account doesn't exist."}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -921,7 +981,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	current_password = current_password + salt
 	err = bcrypt.CompareHashAndPassword([]byte(real_password), []byte(current_password))
 	if err == bcrypt.ErrMismatchedHashAndPassword {
-		pi := Page{"Error","error",user,tList,"That's not the correct password."}
+		pi := Page{"Error","error",user,nList,tList,"That's not the correct password."}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -934,7 +994,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if new_password != confirm_password {
-		pi := Page{"Error","error",user,tList,"The two passwords don't match."}
+		pi := Page{"Error","error",user,nList,tList,"The two passwords don't match."}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -952,15 +1012,19 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	
-	pi := Page{"Edit Password","account-own-edit-success",user,tList,0}
+	pi := Page{"Edit Password","account-own-edit-success",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-success.html", pi)
 }
 
 func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -970,7 +1034,7 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	pi := Page{"Edit Avatar","account-own-edit-avatar",user,tList,0}
+	pi := Page{"Edit Avatar","account-own-edit-avatar",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
 
@@ -981,10 +1045,13 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(max_request_size))
 	
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
 	if !user.Loggedin {
 		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1061,16 +1128,21 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 	}
 	
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
+	noticeList[len(noticeList)] = "Your avatar was successfully updated"
 	
-	pi := Page{"Edit Avatar","account-own-edit-avatar-success",user,tList,0}
-	templates.ExecuteTemplate(w,"account-own-edit-avatar-success.html", pi)
+	pi := Page{"Edit Avatar","account-own-edit-avatar",user,noticeList,tList,0}
+	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
 
 func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1080,15 +1152,19 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	pi := Page{"Edit Username","account-own-edit-username",user,tList,user.Name}
+	pi := Page{"Edit Username","account-own-edit-username",user,noticeList,tList,user.Name}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
 }
 
 func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1112,15 +1188,19 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 	}
 	user.Name = new_username
 	
-	pi := Page{"Edit Username","account-own-edit-username",user,tList,user.Name}
+	pi := Page{"Edit Username","account-own-edit-username",user,noticeList,tList,user.Name}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
 }
 
 func route_logout(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Loggedin {
 		errmsg := "You can't logout without logging in first."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1139,10 +1219,14 @@ func route_logout(w http.ResponseWriter, r *http.Request) {
 }
 	
 func route_login(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if user.Loggedin {
 		errmsg := "You're already logged in."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1152,15 +1236,19 @@ func route_login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	pi := Page{"Login","login",user,tList,0}
+	pi := Page{"Login","login",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"login.html", pi)
 }
 
 func route_login_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if user.Loggedin {
 		errmsg := "You're already logged in."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1186,7 +1274,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	err = login_stmt.QueryRow(username).Scan(&uid, &username, &real_password, &salt)
 	if err == sql.ErrNoRows {
 		errmsg := "That username doesn't exist."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1203,7 +1291,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	if salt == "" {
 		if password != real_password {
 			errmsg := "That's not the correct password."
-			pi := Page{"Error","error",user,tList,errmsg}
+			pi := Page{"Error","error",user,nList,tList,errmsg}
 			
 			var b bytes.Buffer
 			templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1225,7 +1313,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		err := bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password))
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			errmsg := "That's not the correct password."
-			pi := Page{"Error","error",user,tList,errmsg}
+			pi := Page{"Error","error",user,nList,tList,errmsg}
 			
 			var b bytes.Buffer
 			templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1259,10 +1347,14 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_register(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if user.Loggedin {
 		errmsg := "You're already logged in."
-		pi := Page{"Error","error",user,tList,errmsg}
+		pi := Page{"Error","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1272,12 +1364,16 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	pi := Page{"Registration","register",user,tList,0}
+	pi := Page{"Registration","register",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"register.html", pi)
 }
 
 func route_register_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -1285,14 +1381,33 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	username := html.EscapeString(r.PostFormValue("username"))
+	if username == "" {
+		LocalError("You didn't put in a username.", w, r, user)
+		return  
+	}
+	
+	email := html.EscapeString(r.PostFormValue("email"))
+	if email == "" {
+		LocalError("You didn't put in an email.", w, r, user)
+		return  
+	}
 	password := r.PostFormValue("password")
+	if password == "" {
+		LocalError("You didn't put in a password.", w, r, user)
+		return  
+	}
+	if password == "test" || password == "123456" || password == "123" || password == "password" {
+		LocalError("Your password is too weak.", w, r, user)
+		return  
+	}
+	
 	confirm_password := r.PostFormValue("confirm_password")
 	log.Print("Registration Attempt! Username: " + username)
 	
 	// Do the two inputted passwords match..?
 	if password != confirm_password {
 		errmsg := "The two passwords don't match."
-		pi := Page{"Password Mismatch","error",user,tList,errmsg}
+		pi := Page{"Password Mismatch","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1309,7 +1424,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if err != sql.ErrNoRows {
 		errmsg := "This username isn't available. Try another."
-		pi := Page{"Username Taken","error",user,tList,errmsg}
+		pi := Page{"Username Taken","error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -1338,7 +1453,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	res, err := register_stmt.Exec(username,string(hashed_password),salt,session)
+	res, err := register_stmt.Exec(username,email,string(hashed_password),salt,session)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return

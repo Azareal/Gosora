@@ -2,7 +2,7 @@ package main
 import "html/template"
 
 func init() {
-	plugins["helloworld"] = Plugin{"helloworld","Hello World","Azareal","http://github.com/Azareal","",false,"",init_helloworld,nil,deactivate_helloworld}
+	plugins["helloworld"] = Plugin{"helloworld","Hello World","Azareal","http://github.com/Azareal","",false,"","",init_helloworld,nil,deactivate_helloworld}
 }
 
 // init_helloworld is separate from init() as we don't want the plugin to run if the plugin is disabled

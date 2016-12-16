@@ -15,6 +15,12 @@ var default_route = route_topics
 var default_group = 3
 var staff_css = " background-color: #ffeaff;"
 var uncategorised_forum_visible = true
+var enable_emails = false
+var site_email = ""
+var smtp_server = ""
 var siteurl = "localhost:8080"
 var noavatar = "https://api.adorable.io/avatars/285/{id}@" + siteurl + ".png"
 var items_per_page = 50
+
+// Developer flag
+var debug = true

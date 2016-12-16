@@ -7,6 +7,7 @@ type Page struct
 	Title string
 	Name string
 	CurrentUser User
+	NoticeList map[int]string
 	ItemList map[int]interface{}
 	Something interface{}
 }

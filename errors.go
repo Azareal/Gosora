@@ -6,7 +6,7 @@ import "net/http"
 
 func InternalError(err error, w http.ResponseWriter, r *http.Request, user User) {
 	log.Fatal(err)
-	pi := Page{"Internal Server Error","error",user,tList,"A problem has occured in the system."}
+	pi := Page{"Internal Server Error","error",user,nList,tList,"A problem has occured in the system."}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
@@ -18,7 +18,7 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, user Us
 	log.Fatal(err)
 	errmsg := "A problem has occured in the system."
 	if is_js == "0" {
-		pi := Page{"Internal Server Error","error",user,tList,errmsg}
+		pi := Page{"Internal Server Error","error",user,nList,tList,errmsg}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
@@ -30,7 +30,7 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, user Us
 }
 
 func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) {
-	pi := Page{"Local Error","error",user,tList,errmsg}
+	pi := Page{"Local Error","error",user,nList,tList,errmsg}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
@@ -39,7 +39,7 @@ func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User
 }
 
 func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
-	pi := Page{"Local Error","error",user,tList,"You need to login to do that."}
+	pi := Page{"Local Error","error",user,nList,tList,"You need to login to do that."}
 	
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
@@ -50,7 +50,7 @@ func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
 
 func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, is_js string) {
 	if is_js == "0" {
-		pi := Page{"Local Error","error",user,tList,errmsg}
+		pi := Page{"Local Error","error",user,nList,tList,errmsg}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
@@ -63,7 +63,7 @@ func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user U
 
 func NoPermissions(w http.ResponseWriter, r *http.Request, user User) {
 	errmsg := "You don't have permission to do that."
-	pi := Page{"Local Error","error",user,tList,errmsg}
+	pi := Page{"Local Error","error",user,nList,tList,errmsg}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
@@ -74,7 +74,7 @@ func NoPermissions(w http.ResponseWriter, r *http.Request, user User) {
 func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
 	errmsg := "You don't have permission to do that."
 	if is_js == "0" {
-		pi := Page{"Local Error","error",user,tList,errmsg}
+		pi := Page{"Local Error","error",user,nList,tList,errmsg}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
@@ -86,7 +86,7 @@ func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, is_js s
 }
 
 func Banned(w http.ResponseWriter, r *http.Request, user User) {
-	pi := Page{"Banned","error",user,tList,"You have been banned from this site."}
+	pi := Page{"Banned","error",user,nList,tList,"You have been banned from this site."}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
@@ -96,7 +96,7 @@ func Banned(w http.ResponseWriter, r *http.Request, user User) {
 
 func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
 	if is_js == "0" {
-		pi := Page{"Banned","error",user,tList,"You have been banned from this site."}
+		pi := Page{"Banned","error",user,nList,tList,"You have been banned from this site."}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
@@ -109,7 +109,7 @@ func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) 
 
 func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
 	if is_js == "0" {
-		pi := Page{"Local Error","error",user,tList,"You need to login to do that."}
+		pi := Page{"Local Error","error",user,nList,tList,"You need to login to do that."}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
@@ -122,7 +122,7 @@ func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, is_js s
 
 func SecurityError(w http.ResponseWriter, r *http.Request, user User) {
 	errmsg := "There was a security issue with your request."
-	pi := Page{"Security Error","error",user,tList,errmsg}
+	pi := Page{"Security Error","error",user,nList,tList,errmsg}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
@@ -132,7 +132,7 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) {
 
 func NotFound(w http.ResponseWriter, r *http.Request, user User) {
 	errmsg := "The requested page doesn't exist."
-	pi := Page{"Not Found","error",user,tList,errmsg}
+	pi := Page{"Not Found","error",user,nList,tList,errmsg}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
@@ -142,7 +142,7 @@ func NotFound(w http.ResponseWriter, r *http.Request, user User) {
 
 func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User, is_js string) {
 	if is_js == "0" {
-		pi := Page{errtitle,"error",user,tList,errmsg}
+		pi := Page{errtitle,"error",user,nList,tList,errmsg}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()

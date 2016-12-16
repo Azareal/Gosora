@@ -10,7 +10,11 @@ import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
 func route_edit_topic(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -62,7 +66,11 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_delete_topic(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -88,13 +96,17 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	log.Print("The topic '" + strconv.Itoa(tid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
 	
+	log.Print("The topic '" + strconv.Itoa(tid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func route_stick_topic(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -116,7 +128,11 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -138,7 +154,11 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -184,7 +204,11 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -232,7 +256,11 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -278,7 +306,11 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -326,7 +358,11 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_ban(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -351,12 +387,16 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 	confirm_msg := "Are you sure you want to ban '" + uname + "'?"
 	yousure := AreYouSure{"/users/ban/submit/" + strconv.Itoa(uid),confirm_msg}
 	
-	pi := Page{"Ban User","ban-user",user,tList,yousure}
+	pi := Page{"Ban User","ban-user",user,noticeList,tList,yousure}
 	templates.ExecuteTemplate(w,"areyousure.html", pi)
 }
 
 func route_ban_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -410,7 +450,11 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_unban(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -447,7 +491,11 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_panel_forums(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -463,12 +511,16 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	pi := Page{"Forum Manager","panel-forums",user,forumList,0}
+	pi := Page{"Forum Manager","panel-forums",user,noticeList,forumList,0}
 	templates.ExecuteTemplate(w,"panel-forums.html", pi)
 }
 
 func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -502,7 +554,11 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 }
 
 func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -517,7 +573,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	_, ok := forums[fid];
+	_, ok = forums[fid];
     if !ok {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
@@ -526,12 +582,16 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 	confirm_msg := "Are you sure you want to delete the '" + forums[fid].Name + "' forum?"
 	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
 	
-	pi := Page{"Delete Forum","panel-forums-delete",user,tList,yousure}
+	pi := Page{"Delete Forum","panel-forums-delete",user,noticeList,tList,yousure}
 	templates.ExecuteTemplate(w,"areyousure.html", pi)
 }
 
 func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -547,7 +607,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	_, ok := forums[fid];
+	_, ok = forums[fid];
     if !ok {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
@@ -565,7 +625,11 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -607,7 +671,11 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_panel_settings(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -618,12 +686,16 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 		settingList[name] = content
 	}
 	
-	pi := Page{"Setting Manager","panel-settings",user,tList,settingList}
+	pi := Page{"Setting Manager","panel-settings",user, noticeList,tList,settingList}
 	templates.ExecuteTemplate(w,"panel-settings.html", pi)
 }
 
 func route_panel_setting(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -641,12 +713,16 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{"Edit Setting","panel-setting",user,tList,setting}
+	pi := Page{"Edit Setting","panel-setting",user,noticeList,tList,setting}
 	templates.ExecuteTemplate(w,"panel-setting.html", pi)
 }
 
 func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -698,7 +774,11 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_panel_plugins(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -712,12 +792,16 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 		currentID++
 	}
 	
-	pi := Page{"Plugin Manager","panel-plugins",user,pluginList,0}
+	pi := Page{"Plugin Manager","panel-plugins",user,noticeList,pluginList,0}
 	templates.ExecuteTemplate(w,"panel-plugins.html", pi)
 }
 
 func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -735,6 +819,14 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r,user)
 		return
+	}
+	
+	if plugins[uname].Activate != nil {
+		err = plugins[uname].Activate()
+		if err != nil {
+			LocalError(err.Error(),w,r,user)
+			return
+		}
 	}
 	
 	has_plugin := err != sql.ErrNoRows
@@ -756,15 +848,19 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
+	log.Print("Activating plugin '" + plugin.Name + "'")
 	plugin.Active = true
 	plugins[uname] = plugin
 	plugins[uname].Init()
-	
 	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
 }
 
 func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -805,7 +901,11 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
 }
 
 func route_panel_users(w http.ResponseWriter, r *http.Request){
-	user := SessionCheck(w,r)
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -860,7 +960,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{"User Manager","panel-users",user,userList,0}
+	pi := Page{"User Manager","panel-users",user,noticeList,userList,0}
 	err = templates.ExecuteTemplate(w,"panel-users.html", pi)
 	if err != nil {
 		InternalError(err, w, r, user)
