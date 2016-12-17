@@ -8,6 +8,7 @@ import (
 	"mime"
 	"strings"
 	"path/filepath"
+	"io"
 	"io/ioutil"
 	"os"
 	"html/template"
@@ -31,7 +32,7 @@ var external_sites map[string]string = make(map[string]string)
 var groups map[int]Group = make(map[int]Group)
 var forums map[int]Forum = make(map[int]Forum)
 var static_files map[string]SFile = make(map[string]SFile)
-var ctemplates map[string]func(Page)string = make(map[string]func(Page)string)
+var ctemplates map[string]func(Page,io.Writer) = make(map[string]func(Page,io.Writer))
 
 func compile_templates() {
 	var c CTemplateSet

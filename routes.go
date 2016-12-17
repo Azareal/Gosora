@@ -413,7 +413,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 	pi := Page{topic.Title,"topic",user,noticeList,replyList,topic}
 	if ctemplates["topic"] != nil {
-		w.Write([]byte(ctemplates["topic"](pi)))
+		ctemplates["topic"](pi,w)
 	} else {
 		err = templates.ExecuteTemplate(w,"topic.html", pi)
 		if err != nil {

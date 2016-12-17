@@ -2,6 +2,7 @@ package main
 import "log"
 import "fmt"
 import "strings"
+import "strconv"
 import "reflect"
 import "path/filepath"
 import "io/ioutil"
@@ -29,6 +30,9 @@ type CTemplateSet struct
 	importMap map[string]string
 	varList map[string]VarItem
 	localVars map[string]map[string]VarItemReflect
+	stats map[string]int
+	pVarList string
+	pVarPosition int
 	//tempVars map[string]string
 	doImports bool
 	expectsInt interface{}
@@ -48,8 +52,12 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	c.funcMap["lt"] = true
 	c.funcMap["ne"] = true
 	c.importMap = make(map[string]string)
+	c.importMap["io"] = "io"
 	c.importMap["strconv"] = "strconv"
 	c.varList = varList
+	//c.pVarList = ""
+	//c.pVarPosition = 0
+	c.stats = make(map[string]int)
 	c.expectsInt = expectsInt
 	holdreflect := reflect.ValueOf(expectsInt)
 	
@@ -108,7 +116,16 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 		varString += "var " + varItem.Name + " " + varItem.Type + " = " + varItem.Destination + "\n"
 	}
 	
-	out = "package main\n" + importList + "\nfunc init() {\nctemplates[\"" + fname + "\"] = template_" + fname + "\n}\n\nfunc template_" + fname + "(tmpl_" + fname + "_vars " + expects + ") (tmpl string) {\n" + varString + out + "return tmpl\n}\n"
+	out = "package main\n" + importList + c.pVarList + "\nfunc init() {\nctemplates[\"" + fname + "\"] = template_" + fname + "\n}\n\nfunc template_" + fname + "(tmpl_" + fname + "_vars " + expects + ", w io.Writer) {\n" + varString + out + "}\n"
+	
+	out = strings.Replace(out,`))
+w.Write([]byte(`," + ",-1)
+	out = strings.Replace(out,"` + `","",-1)
+	
+	for index, count := range c.stats {
+		fmt.Println(index + ": " + strconv.Itoa(count))
+	}
+	
 	if debug {
 		fmt.Println("Output!")
 		fmt.Println(out)
@@ -210,7 +227,7 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 			}
 			return c.compile_subtemplate(varholder, holdreflect, node)
 		case *parse.TextNode:
-			return "tmpl += `" + string(node.Text) + "`\n"
+			return "w.Write([]byte(`" + string(node.Text) + "`))\n"
 		default:
 			panic("Unknown Node in main switch")
 	}
@@ -246,8 +263,12 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 				cur = cur.FieldByName(id)
 				if cur.Kind() == reflect.Interface {
 					cur = cur.Elem()
-					if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
-						varbit = "string(" + varbit + "." + id + ")"
+					/*if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
+						varbit = "string(" + varbit + "." + id + ")"*/
+					//if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
+					if cur.Type().PkgPath() != "main" {
+						c.importMap["html/template"] = "html/template"
+						varbit += "." + id + ".(" + strings.TrimPrefix(cur.Type().PkgPath(),"html/") + "." + cur.Type().Name() + ")"
 					} else {
 						varbit += "." + id + ".(" + cur.Type().Name() + ")"
 					}
@@ -283,7 +304,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 			}
 			
 			out, _ = c.compile_if_varsub(n.String(), varholder, template_name, holdreflect)
-			return "tmpl += " + out + "\n"
+			return "w.Write([]byte(" + out + "))\n"
 		case *parse.StringNode:
 			return n.Quoted
 		default:
@@ -445,30 +466,6 @@ func (c *CTemplateSet) compile_reflectswitch(varholder string, holdreflect refle
 				fmt.Println(node.Args)
 			}
 			return "", outVal
-		/*case *parse.IdentifierNode:
-			fmt.Println("Identifier Node: ")
-			fmt.Println(node)
-			fmt.Println(node.Args)
-			
-			ArgLoop:
-			for pos, id := range node.Args {
-				fmt.Println(id)
-				switch id.String() {
-					case "not":
-						out += "!"
-					case "or":
-						out += " || "
-					case "and":
-						out += " && "
-					case "le":
-						out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, holdreflect) + " <= " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, holdreflect)
-						break ArgLoop
-					default:
-						fmt.Println("Variable!")
-						out += c.compile_if_varsub_n(id.String(), varholder, holdreflect)
-				}
-			}
-			return out*/
 		case *parse.DotNode:
 			return varholder, holdreflect
 		case *parse.NilNode:
@@ -551,6 +548,14 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 			out = strings.Replace(out, varItem.Destination, varItem.Name, 1)
 		}
 	}
+	
+	_, ok := c.stats[out]
+	if ok {
+		c.stats[out]++
+	} else {
+		c.stats[out] = 1
+	}
+	
 	return out, cur
 }
 
@@ -578,23 +583,30 @@ func (c *CTemplateSet) compile_varsub(varname string, val reflect.Value) string 
 		}
 	}
 	
+	_, ok := c.stats[varname]
+	if ok {
+		c.stats[varname]++
+	} else {
+		c.stats[varname] = 1
+	}
+	
 	if val.Kind() == reflect.Interface {
 		val = val.Elem()
 	}
 	
 	switch val.Kind() {
 		case reflect.Int:
-			return "tmpl += strconv.Itoa(" + varname + ")\n"
+			return "w.Write([]byte(strconv.Itoa(" + varname + ")))\n"
 		case reflect.Bool:
-			return "if " + varname + " {\ntmpl += \"true\"} else {\ntmpl += \"false\"\n}\n"
+			return "if " + varname + " {\nw.Write([]byte(\"true\"))} else {\nw.Write([]byte(\"false\"))\n}\n"
 		case reflect.String:
-			if val.Type().Name() != "string" {
-				return "tmpl += string(" + varname + ")\n"
+			if val.Type().Name() != "string" && !strings.HasPrefix(varname,"string(") {
+				return "w.Write([]byte(string(" + varname + ")))\n"
 			} else {
-				return "tmpl += " + varname + "\n"
+				return "w.Write([]byte(" + varname + "))\n"
 			}
 		case reflect.Int64:
-			return "tmpl += strconv.FormatInt(" + varname + ", 10)"
+			return "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))"
 		default:
 			fmt.Println("Unknown Kind: ")
 			fmt.Println(val.Kind())
