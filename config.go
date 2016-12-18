@@ -23,4 +23,4 @@ var noavatar = "https://api.adorable.io/avatars/285/{id}@" + siteurl + ".png"
 var items_per_page = 50
 
 // Developer flag
-var debug = true
+var debug = false

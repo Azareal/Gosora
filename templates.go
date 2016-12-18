@@ -33,6 +33,9 @@ type CTemplateSet struct
 	stats map[string]int
 	pVarList string
 	pVarPosition int
+	previousNode parse.NodeType
+	currentNode parse.NodeType
+	nextNode parse.NodeType
 	//tempVars map[string]string
 	doImports bool
 	expectsInt interface{}
@@ -97,9 +100,16 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 		fmt.Println(subtree.Root)
 	}
 	
-	for _, node := range subtree.Root.Nodes {
+	treeLength := len(subtree.Root.Nodes)
+	for index, node := range subtree.Root.Nodes {
 		if debug {
 			fmt.Println("Node: " + node.String())
+		}
+		
+		c.previousNode = c.currentNode
+		c.currentNode = node.Type()
+		if treeLength != (index + 1) {
+			c.nextNode = subtree.Root.Nodes[index + 1].Type()
 		}
 		out += c.compile_switch(varholder, holdreflect, fname, node)
 	}
@@ -125,6 +135,7 @@ w.Write([]byte(`," + ",-1)
 	for index, count := range c.stats {
 		fmt.Println(index + ": " + strconv.Itoa(count))
 	}
+	fmt.Println(" ")
 	
 	if debug {
 		fmt.Println("Output!")
@@ -163,6 +174,9 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 				expr += c.compile_varswitch(varholder, holdreflect, template_name, cmd)
 			}
 			
+			c.previousNode = c.currentNode
+			c.currentNode = parse.NodeList
+			c.nextNode = -1
 			if node.ElseList == nil {
 				if debug {
 					fmt.Println("Branch 1")
@@ -211,6 +225,10 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 					}
 					
 					out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compile_switch("item", item, template_name, node.List) + "}\n}"
+				case reflect.Slice:
+					item := outVal.Index(0)
+					
+					out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compile_switch("item", item, template_name, node.List) + "}\n}"
 				case reflect.Invalid:
 					return ""
 			}
@@ -227,6 +245,9 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 			}
 			return c.compile_subtemplate(varholder, holdreflect, node)
 		case *parse.TextNode:
+			c.previousNode = c.currentNode
+			c.currentNode = node.Type()
+			c.nextNode = 0
 			return "w.Write([]byte(`" + string(node.Text) + "`))\n"
 		default:
 			panic("Unknown Node in main switch")
@@ -266,7 +287,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 					/*if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
 						varbit = "string(" + varbit + "." + id + ")"*/
 					//if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
-					if cur.Type().PkgPath() != "main" {
+					if cur.Type().PkgPath() != "main" && cur.Type().PkgPath() != "" {
 						c.importMap["html/template"] = "html/template"
 						varbit += "." + id + ".(" + strings.TrimPrefix(cur.Type().PkgPath(),"html/") + "." + cur.Type().Name() + ")"
 					} else {
@@ -364,42 +385,9 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 			if debug {
 				fmt.Println("Pipe Node!")
 				fmt.Println(n)
-			}
-			
-			/*for _, cmd := range n.Cmds {
-				if debug {
-					fmt.Println("Pipe Bit: ")
-					fmt.Println(cmd)
-				}
-				out += c.compile_if_varsub_n(n.String(), varholder, template_name, holdreflect)
-			}*/
-			
-			if debug {
 				fmt.Println("Args: ")
 				fmt.Println(node.Args)
 			}
-			
-			/*argcopy := node.Args[1:]
-			for _, arg := range argcopy {
-				if debug {
-					fmt.Println("Pipe Arg: ")
-					fmt.Println(arg)
-					fmt.Println(reflect.ValueOf(arg).Elem().Type().Name())
-					fmt.Println(reflect.ValueOf(arg).Kind())
-				}
-				
-				switch arg.(type) {
-					case *parse.IdentifierNode:
-						out += c.compile_identswitch(varholder, holdreflect, template_name, node)
-						break
-					case *parse.PipeNode:
-						break
-						//out += c.compile_if_varsub_n(a.String(), varholder, template_name, holdreflect)
-					default:
-						panic("Unknown Pipe Arg type! Did Mario get stuck in the pipes again?")
-				}
-				//out += c.compile_varswitch(arg.String(), holdreflect, template_name, arg)
-			}*/
 			out += c.compile_identswitch(varholder, holdreflect, template_name, node)
 			
 			if debug {
@@ -663,9 +651,16 @@ func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect refle
 	c.localVars[fname] = make(map[string]VarItemReflect)
 	c.localVars[fname]["."] = VarItemReflect{".",varholder,holdreflect}
 	
-	for _, node := range subtree.Root.Nodes {
+	treeLength := len(subtree.Root.Nodes)
+	for index, node := range subtree.Root.Nodes {
 		if debug {
 			fmt.Println("Node: " + node.String())
+		}
+		
+		c.previousNode = c.currentNode
+		c.currentNode = node.Type()
+		if treeLength != (index + 1) {
+			c.nextNode = subtree.Root.Nodes[index + 1].Type()
 		}
 		out += c.compile_switch(varholder, holdreflect, fname, node)
 	}

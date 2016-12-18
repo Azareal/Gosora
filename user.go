@@ -47,6 +47,8 @@ func SetPassword(uid int, password string) (error) {
 }
 
 func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList map[int]string, success bool) {
+	noticeList = make(map[int]string)
+	
 	// Are there any session cookies..?
 	// Assign it to user.name to avoid having to create a temporary variable for the type conversion
 	cookie, err := r.Cookie("uid")
@@ -83,7 +85,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	}
 	
 	if user.Is_Banned {
-		noticeList[0] = "You have been banned. Your ability to post has been revoked."
+		noticeList[0] = "Your account has been suspended. Some of your permissions may have been revoked."
 	}
 	
 	if user.Avatar != "" {

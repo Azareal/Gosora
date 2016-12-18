@@ -23,31 +23,36 @@ w.Write([]byte(`<!doctype html>
 	<body>
 		<div class="container">
 <div class="nav">
+	<div class="move_left">
+	<div class="move_right">
 	<ul>
-		<li class="menu_overview"><a href="/">Overview</a></li>
-		<li class="menu_forums"><a href="/forums/">Forums</a></li>
-		<li class="menu_topics"><a href="/">Topics</a></li>
-		<li class="menu_create_topic"><a href="/topics/create/">Create Topic</a></li>
+		<li class="menu_left menu_overview"><a href="/">Overview</a></li>
+		<li class="menu_left menu_forums"><a href="/forums/">Forums</a></li>
+		<li class="menu_left menu_topics"><a href="/">Topics</a></li>
+		<li class="menu_left menu_create_topic"><a href="/topics/create/">Create Topic</a></li>
 		`))
 if tmpl_topic_vars.CurrentUser.Loggedin {
 w.Write([]byte(`
-		<li class="menu_account"><a href="/user/edit/critical/">Account</a></li>
-		<li class="menu_account"><a href="/user/` + strconv.Itoa(tmpl_topic_vars.CurrentUser.ID) + `">Profile</a></li>
+		<li class="menu_left menu_account"><a href="/user/edit/critical/">Account</a></li>
+		<li class="menu_left menu_account"><a href="/user/` + strconv.Itoa(tmpl_topic_vars.CurrentUser.ID) + `">Profile</a></li>
 		`))
 if tmpl_topic_vars.CurrentUser.Is_Super_Mod {
-w.Write([]byte(`<li class="menu_account"><a href="/panel/forums/">Panel</a></li>`))
+w.Write([]byte(`<li class="menu_left menu_account"><a href="/panel/forums/">Panel</a></li>`))
 }
 w.Write([]byte(`
-		<li class="menu_logout"><a href="/accounts/logout?session=` + tmpl_topic_vars.CurrentUser.Session + `">Logout</a></li>
+		<li class="menu_left menu_logout"><a href="/accounts/logout?session=` + tmpl_topic_vars.CurrentUser.Session + `">Logout</a></li>
 		`))
 } else {
 w.Write([]byte(`
-		<li class="menu_register"><a href="/accounts/create/">Register</a></li>
-		<li class="menu_login"><a href="/accounts/login/">Login</a></li>
+		<li class="menu_left menu_register"><a href="/accounts/create/">Register</a></li>
+		<li class="menu_left menu_login"><a href="/accounts/login/">Login</a></li>
 		`))
 }
 w.Write([]byte(`
 	</ul>
+	</div>
+	</div>
+	<div style="clear: both;"></div>
 </div>
 `))
 if len(tmpl_topic_vars.NoticeList) != 0 {
@@ -158,7 +163,7 @@ w.Write([]byte(`
 w.Write([]byte(`
 </div>
 `))
-if !tmpl_topic_vars.CurrentUser.Is_Banned {
+if !tmpl_topic_vars.CurrentUser.Is_Banned && tmpl_topic_vars.CurrentUser.Loggedin {
 w.Write([]byte(`
 <div class="rowblock">
 	<form action="/reply/create/" method="post">

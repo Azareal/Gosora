@@ -19,7 +19,7 @@ import _ "github.com/go-sql-driver/mysql"
 import "golang.org/x/crypto/bcrypt"
 
 // A blank list to fill out that parameter in Page for routes which don't use it
-var tList map[int]interface{}
+var tList []interface{}
 var nList map[int]string
 
 // GET functions
@@ -80,7 +80,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 	
 	var(
-		topicList map[int]interface{}
+		topicList []interface{}
 		currentID int
 		
 		tid int
@@ -95,8 +95,6 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		name string
 		avatar string
 	)
-	topicList = make(map[int]interface{})
-	currentID = 0
 	
 	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	if err != nil {
@@ -125,12 +123,11 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(createdBy),1)
 		}
 		
-		topicList[currentID] = TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,"","","",""}
+		topicList = append(topicList, TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,"","","",""})
 		
 		if hooks["trow_assign"] != nil {
 			topicList[currentID] = run_hook("trow_assign", topicList[currentID])
 		}
-		currentID++
 	}
 	err = rows.Err()
 	if err != nil {
@@ -146,10 +143,14 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{"Topic List","topics",user,noticeList,topicList,msg}
-	err = templates.ExecuteTemplate(w,"topics.html", pi)
-	if err != nil {
-        InternalError(err, w, r, user)
-    }
+	if ctemplates["topics"] != nil {
+		ctemplates["topics"](pi,w)
+	} else {
+		err = templates.ExecuteTemplate(w,"topics.html", pi)
+		if err != nil {
+			InternalError(err, w, r, user)
+		}
+	}
 }
 
 func route_forum(w http.ResponseWriter, r *http.Request){
@@ -159,7 +160,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	}
 	
 	var(
-		topicList map[int]interface{}
+		topicList []interface{}
 		currentID int
 		
 		tid int
@@ -174,8 +175,6 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		name string
 		avatar string
 	)
-	topicList = make(map[int]interface{})
-	currentID = 0
 	
 	fid, err := strconv.Atoi(r.URL.Path[len("/forum/"):])
 	if err != nil {
@@ -216,12 +215,11 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 			avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(createdBy),1)
 		}
 		
-		topicList[currentID] = TopicUser{tid,title,content,createdBy,is_closed,sticky,createdAt,parentID,status,name,avatar,"",0,"","","",""}
+		topicList = append(topicList, TopicUser{tid,title,content,createdBy,is_closed,sticky,createdAt,parentID,status,name,avatar,"",0,"","","",""})
 		
 		if hooks["trow_assign"] != nil {
 			topicList[currentID] = run_hook("trow_assign", topicList[currentID])
 		}
-		currentID++
 	}
 	err = rows.Err()
 	if err != nil {
@@ -237,10 +235,14 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{forums[fid].Name,"forum",user,noticeList,topicList,msg}
-	err = templates.ExecuteTemplate(w,"forum.html", pi)
-	if err != nil {
-        InternalError(err, w, r, user)
-    }
+	if ctemplates["forum"] != nil {
+		ctemplates["forum"](pi,w)
+	} else {
+		err = templates.ExecuteTemplate(w,"forum.html", pi)
+		if err != nil {
+			InternalError(err, w, r, user)
+		}
+	}
 }
 
 func route_forums(w http.ResponseWriter, r *http.Request){
@@ -249,13 +251,10 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var forumList map[int]interface{} = make(map[int]interface{})
-	currentID := 0
-	
+	var forumList []interface{}
 	for _, forum := range forums {
 		if forum.Active {
-			forumList[currentID] = forum
-			currentID++
+			forumList = append(forumList, forum)
 		}
 	}
 	
@@ -265,10 +264,14 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{"Forum List","forums",user,noticeList,forumList,0}
-	err := templates.ExecuteTemplate(w,"forums.html", pi)
-	if err != nil {
-        InternalError(err, w, r, user)
-    }
+	if ctemplates["forums"] != nil {
+		ctemplates["forums"](pi,w)
+	} else {
+		err := templates.ExecuteTemplate(w,"forums.html", pi)
+		if err != nil {
+			InternalError(err, w, r, user)
+		}
+	}
 }
 	
 func route_topic_id(w http.ResponseWriter, r *http.Request){
@@ -297,11 +300,8 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		is_super_admin bool
 		group int
 		
-		currentID int
-		replyList map[int]interface{}
+		replyList []interface{}
 	)
-	replyList = make(map[int]interface{})
-	currentID = 0
 	topic := TopicUser{0,"","",0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
 	
 	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
@@ -398,12 +398,12 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 			}
 		}
 		
-		replyList[currentID] = Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,replyURL,replyURLPrefix,replyURLName}
+		replyItem := Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,replyURL,replyURLPrefix,replyURLName}
 		
 		if hooks["rrow_assign"] != nil {
-			replyList[currentID] = run_hook("rrow_assign", replyList[currentID])
+			replyItem = run_hook("rrow_assign", replyItem).(Reply)
 		}
-		currentID++
+		replyList = append(replyList, replyItem)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -444,11 +444,8 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		is_super_admin bool
 		group int
 		
-		currentID int
-		replyList map[int]interface{}
+		replyList []interface{}
 	)
-	replyList = make(map[int]interface{})
-	currentID = 0
 	
 	puser := User{0,"",0,false,false,false,false,false,false,"",false,"","","","",""}
 	puser.ID, err = strconv.Atoi(r.URL.Path[len("/user/"):])
@@ -530,8 +527,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 			replyTag = ""
 		}
 		
-		replyList[currentID] = Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","",""}
-		currentID++
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","",""})
 	}
 	err = rows.Err()
 	if err != nil {
@@ -540,11 +536,14 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{puser.Name + "'s Profile","profile",user,noticeList,replyList,puser}
-	//w.Write([]byte(template_profile(pi)))
-	err = templates.ExecuteTemplate(w,"profile.html", pi)
-	if err != nil {
-        InternalError(err, w, r, user)
-    }
+	if ctemplates["profile"] != nil {
+		ctemplates["profile"](pi,w)
+	} else {
+		err = templates.ExecuteTemplate(w,"profile.html", pi)
+		if err != nil {
+			InternalError(err, w, r, user)
+		}
+	}
 }
 
 func route_topic_create(w http.ResponseWriter, r *http.Request){

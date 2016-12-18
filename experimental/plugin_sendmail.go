@@ -14,7 +14,7 @@ func init() {
 }
 
 func init_sendmail() {
-	add_vhook("email_send_intercept", send_sendmail)
+	add_hook("email_send_intercept", send_sendmail)
 }
 
 // Sendmail is only available on Linux

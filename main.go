@@ -43,22 +43,43 @@ func compile_templates() {
 	log.Print("Compiling the templates")
 	
 	topic := TopicUser{0,"",template.HTML(""),0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
-	var replyList map[int]interface{} = make(map[int]interface{})
-	replyList[0] = Reply{0,0,"",template.HTML(""),0,"","",0,0,"",no_css_tmpl,0,"","","",""}
+	var replyList []interface{}
+	replyList = append(replyList, Reply{0,0,"",template.HTML(""),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
 	var varList map[string]VarItem = make(map[string]VarItem)
 	varList["extra_data"] = VarItem{"extra_data","tmpl_topic_vars.Something.(TopicUser)","TopicUser"}
 	
 	pi := Page{"Title","name",user,noticeList,replyList,topic}
-	topic_id := c.compile_template("topic.html","templates/","Page", pi, varList)
+	topic_id_tmpl := c.compile_template("topic.html","templates/","Page", pi, varList)
 	
 	varList = make(map[string]VarItem)
 	varList["extra_data"] = VarItem{"extra_data","tmpl_profile_vars.Something.(User)","User"}
 	pi = Page{"Title","name",user,noticeList,replyList,user}
-	profile := c.compile_template("profile.html","templates/","Page", pi, varList)
+	profile_tmpl := c.compile_template("profile.html","templates/","Page", pi, varList)
+	
+	var forumList []interface{}
+	for _, forum := range forums {
+		if forum.Active {
+			forumList = append(forumList, forum)
+		}
+	}
+	varList = make(map[string]VarItem)
+	pi = Page{"Forum List","forums",user,noticeList,forumList,0}
+	forums_tmpl := c.compile_template("forums.html","templates/","Page", pi, varList)
+	
+	var topicList []interface{}
+	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"",1,"open","Admin","","",0,"","","",""})
+	pi = Page{"Topic List","topics",user,noticeList,topicList,""}
+	topics_tmpl := c.compile_template("topics.html","templates/","Page", pi, varList)
+	
+	pi = Page{"General Forum","forum",user,noticeList,topicList,"There aren't any topics in this forum yet."}
+	forum_tmpl := c.compile_template("forum.html","templates/","Page", pi, varList)
 	
 	log.Print("Writing the templates")
-	write_template("topic", topic_id)
-	write_template("profile", profile)
+	write_template("topic", topic_id_tmpl)
+	write_template("profile", profile_tmpl)
+	write_template("forums", forums_tmpl)
+	write_template("topics", topics_tmpl)
+	write_template("forum", forum_tmpl)
 }
 
 func write_template(name string, content string) {
@@ -77,8 +98,8 @@ func write_template(name string, content string) {
 
 func main(){
 	var err error
-	compile_templates()
 	init_database(err);
+	compile_templates()
 	
 	log.Print("Loading the static files.")
 	err = filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
@@ -167,6 +188,7 @@ func main(){
 	http.HandleFunc("/users/ban/", route_ban)
 	http.HandleFunc("/users/ban/submit/", route_ban_submit)
 	http.HandleFunc("/users/unban/", route_unban)
+	http.HandleFunc("/users/activate/", route_activate)
 	
 	// Admin
 	http.HandleFunc("/panel/forums/", route_panel_forums)

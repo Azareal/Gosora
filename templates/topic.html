@@ -44,7 +44,7 @@
 		<a class="username" style="color: #505050;float: right;border-right: 0;">{{.URLPrefix}}</a>{{end}}
 	</div>{{end}}
 </div>
-{{if not .CurrentUser.Is_Banned}}
+{{if not (.CurrentUser.Is_Banned) and (.CurrentUser.Loggedin)}}
 <div class="rowblock">
 	<form action="/reply/create/" method="post">
 		<input name="tid" value='{{.Something.ID}}' type="hidden" />

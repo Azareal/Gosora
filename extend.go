@@ -20,8 +20,19 @@ type Plugin struct
 	Deactivate func()
 }
 
-func add_hook(name string, handler func(interface{})interface{}) {
+/*func add_hook(name string, handler func(interface{})interface{}) {
 	hooks[name] = handler
+}*/
+
+func add_hook(name string, handler interface{}) {
+	switch h := handler.(type) {
+		case func(interface{})interface{}:
+			hooks[name] = h
+		case func(...interface{}) interface{}:
+			vhooks[name] = h
+		default:
+			panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
+	}
 }
 
 func remove_hook(name string) {
@@ -30,10 +41,6 @@ func remove_hook(name string) {
 
 func run_hook(name string, data interface{}) interface{} {
 	return hooks[name](data)
-}
-
-func add_vhook(name string, handler func(...interface{}) interface{}) {
-	vhooks[name] = handler
 }
 
 func remove_vhook(name string) {

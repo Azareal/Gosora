@@ -8,6 +8,17 @@ type Page struct
 	Name string
 	CurrentUser User
 	NoticeList map[int]string
+	ItemList []interface{}
+	Something interface{}
+}
+
+/* For testing maps versus slices */
+type Page2 struct
+{
+	Title string
+	Name string
+	CurrentUser User
+	NoticeList map[int]string
 	ItemList map[int]interface{}
 	Something interface{}
 }

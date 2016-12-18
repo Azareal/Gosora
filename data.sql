@@ -11,6 +11,7 @@ CREATE TABLE `users`(
 	`createdAt` datetime not null,
 	`lastActiveAt` datetime not null,
 	`session` varchar(200) DEFAULT '' not null,
+	`last_ip` varchar(200) DEFAULT '0.0.0.0.0' not null,
 	`email` varchar(200) DEFAULT '' not null,
 	`avatar` varchar(20) DEFAULT '' not null,
 	`message` text not null,
@@ -54,6 +55,7 @@ CREATE TABLE `topics`(
 	`is_closed` tinyint DEFAULT 0 not null,
 	`sticky` tinyint DEFAULT 0 not null,
 	`parentID` int DEFAULT 1 not null,
+	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
 	`data` varchar(200) DEFAULT '' not null,
 	primary key(`tid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
@@ -67,6 +69,7 @@ CREATE TABLE `replies`(
 	`createdBy` int not null,
 	`lastEdit` int not null,
 	`lastEditBy` int not null,
+	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
 	primary key(`rid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 

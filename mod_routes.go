@@ -454,7 +454,6 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if !user.Is_Mod && !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
@@ -490,6 +489,46 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
+func route_activate(w http.ResponseWriter, r *http.Request) {
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Mod && !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	uid, err := strconv.Atoi(r.URL.Path[len("/users/activate/"):])
+	if err != nil {
+		LocalError("The provided User ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	var uname string
+	var active bool
+	err = db.QueryRow("SELECT `name`, `active` from users where `uid` = ?", uid).Scan(&uname, &active)
+	if err == sql.ErrNoRows {
+		LocalError("The account you're trying to activate no longer exists.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	if active {
+		LocalError("The account you're trying to activate has already been activated.",w,r,user)
+		return
+	}
+	
+	_, err = activate_user_stmt.Exec(uid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
+}
+
 func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
@@ -501,13 +540,10 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var forumList map[int]interface{} = make(map[int]interface{})
-	currentID := 0
-	
+	var forumList []interface{}
 	for _, forum := range forums {
 		if forum.ID > -1 {
-			forumList[currentID] = forum
-			currentID++
+			forumList = append(forumList, forum)
 		}
 	}
 	
@@ -778,18 +814,14 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
 	if !user.Is_Admin {
 		NoPermissions(w,r,user)
 		return
 	}
 	
-	var pluginList map[int]interface{} = make(map[int]interface{})
-	currentID := 0
-	
+	var pluginList []interface{}
 	for _, plugin := range plugins {
-		pluginList[currentID] = plugin
-		currentID++
+		pluginList = append(pluginList, plugin)
 	}
 	
 	pi := Page{"Plugin Manager","panel-plugins",user,noticeList,pluginList,0}
@@ -911,9 +943,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var userList map[int]interface{} = make(map[int]interface{})
-	currentID := 0
-	
+	var userList []interface{}
 	rows, err := db.Query("SELECT `uid`, `name`, `group`, `active`, `is_super_admin`, `avatar` FROM users")
 	if err != nil {
 		InternalError(err,w,r,user)
@@ -951,8 +981,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 			puser.Tag = ""
 		}
 		
-		userList[currentID] = puser
-		currentID++
+		userList = append(userList, puser)
 	}
 	err = rows.Err()
 	if err != nil {

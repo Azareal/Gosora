@@ -28,6 +28,7 @@ var set_username_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 var change_group_stmt *sql.Stmt
+var activate_user_stmt *sql.Stmt
 var create_profile_reply_stmt *sql.Stmt
 var edit_profile_reply_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
@@ -179,6 +180,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing change_group statement.")
 	change_group_stmt, err = db.Prepare("UPDATE `users` SET `group` = ? WHERE `uid` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing activate_user statement.")
+	activate_user_stmt, err = db.Prepare("UPDATE users SET active = 1 WHERE uid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -18,12 +18,14 @@ In-memory static file, forum and group caches.
 
 A profile system including profile comments and moderation tools for the profile owner.
 
+A template engine which compiles templates down into machine code. Over ten times faster than html/templates.
+
 A plugin system.
 
 
 # Dependencies
 
-Go. The programming language this program is written in, and the compiler which it requires. You will need to install this. https://golang.org/doc/install
+Go 1.7. The programming language this program is written in, and the compiler which it requires. You will need to install this. https://golang.org/doc/install
 
 MySQL Database. You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well, and is much faster than MySQL.
 If you're curious about how to install this, you might want to try the WNMP or XAMPP bundles on Windows.
