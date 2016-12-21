@@ -13,6 +13,7 @@ var max_request_size = 5 * megabyte
 // Misc
 var default_route = route_topics
 var default_group = 3
+var activation_group = 5
 var staff_css = " background-color: #ffeaff;"
 var uncategorised_forum_visible = true
 var enable_emails = false

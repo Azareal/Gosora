@@ -126,7 +126,7 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 		varString += "var " + varItem.Name + " " + varItem.Type + " = " + varItem.Destination + "\n"
 	}
 	
-	out = "package main\n" + importList + c.pVarList + "\nfunc init() {\nctemplates[\"" + fname + "\"] = template_" + fname + "\n}\n\nfunc template_" + fname + "(tmpl_" + fname + "_vars " + expects + ", w io.Writer) {\n" + varString + out + "}\n"
+	out = "package main\n" + importList + c.pVarList + "\nfunc init() {\ntemplate_" + fname +"_handle = template_" + fname + "\n}\n\nfunc template_" + fname + "(tmpl_" + fname + "_vars " + expects + ", w io.Writer) {\n" + varString + out + "}\n"
 	
 	out = strings.Replace(out,`))
 w.Write([]byte(`," + ",-1)
@@ -224,7 +224,11 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 						item = outVal.MapIndex(key)
 					}
 					
-					out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compile_switch("item", item, template_name, node.List) + "}\n}"
+					if node.ElseList != nil {
+						out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compile_switch("item", item, template_name, node.List) + "}\n} else {\n" + c.compile_switch("item", item, template_name, node.ElseList) + "}\n"
+					} else {
+						out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compile_switch("item", item, template_name, node.List) + "}\n}"
+					}
 				case reflect.Slice:
 					item := outVal.Index(0)
 					

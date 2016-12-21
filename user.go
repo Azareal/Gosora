@@ -1,5 +1,4 @@
 package main
-//import "log"
 import "strings"
 import "strconv"
 import "net/http"
@@ -18,6 +17,7 @@ type User struct
 	Is_Admin bool
 	Is_Super_Admin bool
 	Is_Banned bool
+	Perms Perms
 	Session string
 	Loggedin bool
 	Avatar string
@@ -53,15 +53,18 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	// Assign it to user.name to avoid having to create a temporary variable for the type conversion
 	cookie, err := r.Cookie("uid")
 	if err != nil {
+		user.Perms = GuestPerms
 		return user, noticeList, true
 	}
 	user.Name = cookie.Value
 	user.ID, err = strconv.Atoi(user.Name)
 	if err != nil {
+		user.Perms = GuestPerms
 		return user, noticeList, true
 	}
 	cookie, err = r.Cookie("session")
 	if err != nil {
+		user.Perms = GuestPerms
 		return user, noticeList, true
 	}
 	user.Session = cookie.Value
@@ -84,6 +87,12 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 		user.Is_Banned = false
 	}
 	
+	if user.Is_Super_Admin {
+		user.Perms = AllPerms
+	} else {
+		user.Perms = groups[user.Group].Perms
+	}
+	
 	if user.Is_Banned {
 		noticeList[0] = "Your account has been suspended. Some of your permissions may have been revoked."
 	}
@@ -103,15 +112,18 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 	// Assign it to user.name to avoid having to create a temporary variable for the type conversion
 	cookie, err := r.Cookie("uid")
 	if err != nil {
+		user.Perms = GuestPerms
 		return user, true
 	}
 	user.Name = cookie.Value
 	user.ID, err = strconv.Atoi(user.Name)
 	if err != nil {
+		user.Perms = GuestPerms
 		return user, true
 	}
 	cookie, err = r.Cookie("session")
 	if err != nil {
+		user.Perms = GuestPerms
 		return user, true
 	}
 	user.Session = cookie.Value
@@ -132,6 +144,12 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 	user.Loggedin = !user.Is_Banned || user.Is_Super_Mod
 	if user.Is_Banned && user.Is_Super_Mod {
 		user.Is_Banned = false
+	}
+	
+	if user.Is_Super_Admin {
+		user.Perms = AllPerms
+	} else {
+		user.Perms = groups[user.Group].Perms
 	}
 	
 	if user.Avatar != "" {

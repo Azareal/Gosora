@@ -24,13 +24,8 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	if is_js == "" {
 		is_js = "0"
 	}
-	
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.ViewTopic || !user.Perms.EditTopic {
 		NoPermissionsJSQ(w,r,user,is_js)
-		return
-	}
-	if user.Is_Banned {
-		BannedJSQ(w,r,user,is_js)
 		return
 	}
 	
@@ -70,8 +65,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.ViewTopic || !user.Perms.DeleteTopic {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -106,8 +100,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -123,7 +116,6 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	
 	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 }
 
@@ -132,8 +124,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -149,7 +140,6 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	
 	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 }
 
@@ -169,8 +159,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "" {
 		is_js = "0"
 	}
-	
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.ViewTopic || !user.Perms.EditReply {
 		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
@@ -214,13 +203,12 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form", w, r, user)
 		return          
 	}
-	
 	is_js := r.PostFormValue("is_js")
 	if is_js == "" {
 		is_js = "0"
 	}
 	
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
 		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
@@ -266,7 +254,6 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form", w, r, user)
 		return          
 	}
-	
 	is_js := r.PostFormValue("js")
 	if is_js == "" {
 		is_js = "0"
@@ -286,7 +273,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if user.ID != uid && !user.Is_Mod && !user.Is_Admin {
+	if user.ID != uid && !user.Perms.EditReply {
 		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
@@ -338,7 +325,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if user.ID != uid && !user.Is_Mod && !user.Is_Admin {
+	if user.ID != uid && !user.Perms.DeleteReply {
 		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
@@ -363,7 +350,7 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.BanUsers {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -397,7 +384,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.BanUsers {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -454,7 +441,7 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.BanUsers {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -494,7 +481,7 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !user.Is_Mod && !user.Is_Admin {
+	if !user.Perms.ActivateUsers {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -526,6 +513,12 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
+	
+	_, err = change_group_stmt.Exec(default_group, uid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
@@ -534,8 +527,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -556,8 +548,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -594,11 +585,11 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
+	
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
@@ -627,11 +618,11 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
+	
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
@@ -665,8 +656,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -711,15 +701,51 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
 	
 	var settingList map[string]interface{} = make(map[string]interface{})
-	for name, content := range settings {
-		settingList[name] = content
+	rows, err := db.Query("SELECT name, content, type FROM settings")
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	defer rows.Close()
+	
+	var sname string
+	var scontent string
+	var stype string
+	for rows.Next() {
+		err := rows.Scan(&sname, &scontent, &stype)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		if stype == "list" {
+			llist := settingLabels[sname]
+			labels := strings.Split(llist,",")
+			conv, err := strconv.Atoi(scontent)
+			if err != nil {
+				LocalError("The setting '" + sname + "' can't be converted to an integer",w,r,user)
+				return
+			}
+			scontent = labels[conv - 1]
+		} else if stype == "bool" {
+			if scontent == "1" {
+				scontent = "Yes"
+			} else {
+				scontent = "No"
+			}
+		}
+		settingList[sname] = scontent
+	}
+	err = rows.Err()
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
 	}
 	
 	pi := Page{"Setting Manager","panel-settings",user, noticeList,tList,settingList}
@@ -731,13 +757,12 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
 	
-	setting := Setting{"","",""}
+	setting := Setting{"","","",""}
 	setting.Name = r.URL.Path[len("/panel/settings/edit/"):]
 	
 	err := db.QueryRow("SELECT content, type from settings where name = ?", setting.Name).Scan(&setting.Content, &setting.Type)
@@ -749,7 +774,31 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{"Edit Setting","panel-setting",user,noticeList,tList,setting}
+	var itemList []interface{}
+	if setting.Type == "list" {
+		llist, ok := settingLabels[setting.Name]
+		if !ok {
+			LocalError("The labels for this setting don't exist",w,r,user)
+			return
+		}
+		
+		conv, err := strconv.Atoi(setting.Content)
+		if err != nil {
+			LocalError("The value of this setting couldn't be converted to an integer",w,r,user)
+			return
+		}
+		
+		labels := strings.Split(llist,",")
+		for index, label := range labels {
+			itemList = append(itemList, SettingLabel{
+				Label: label,
+				Value: index + 1,
+				Selected: conv == (index + 1),
+			})
+		}
+	}
+	
+	pi := Page{"Edit Setting","panel-setting",user,noticeList,itemList,setting}
 	templates.ExecuteTemplate(w,"panel-setting.html", pi)
 }
 
@@ -758,8 +807,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -775,10 +823,11 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	var stype string
+	var sconstraints string
 	sname := r.URL.Path[len("/panel/settings/edit/submit/"):]
 	scontent := r.PostFormValue("setting-value")
 	
-	err = db.QueryRow("SELECT name, type from settings where name = ?", sname).Scan(&sname, &stype)
+	err = db.QueryRow("SELECT name, type, constraints from settings where name = ?", sname).Scan(&sname, &stype, &sconstraints)
 	if err == sql.ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
@@ -801,7 +850,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	errmsg := parseSetting(sname, scontent, stype)
+	errmsg := parseSetting(sname, scontent, stype, sconstraints)
 	if errmsg != "" {
 		LocalError(errmsg,w,r,user)
 		return
@@ -814,7 +863,7 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Is_Admin {
+	if !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -833,8 +882,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -892,8 +940,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -937,8 +984,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if !user.Is_Admin {
+	if !user.Is_Super_Mod {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -952,7 +998,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	defer rows.Close()
 	
 	for rows.Next() {
-		puser := User{0,"",0,false,false,false,false,false,false,"",false,"","","","",""}
+		puser := User{ID: 0,}
 		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.Is_Super_Admin, &puser.Avatar)
 		if err != nil {
 			InternalError(err,w,r,user)
@@ -994,4 +1040,8 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		InternalError(err, w, r, user)
 	}
+}
+
+func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
+	
 }

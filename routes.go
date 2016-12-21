@@ -1,7 +1,6 @@
 /* Copyright Azareal 2016 - 2017 */
 package main
 
-import "errors"
 import "log"
 import "fmt"
 import "strconv"
@@ -78,11 +77,14 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
+	// I'll have to find a solution which doesn't involve shutting down all of the routes for a user, if they don't have ANY permissions
+	/*if !user.Perms.ViewTopic {
+		NoPermissions(w,r,user)
+		return
+	}*/
 	
 	var(
 		topicList []interface{}
-		currentID int
-		
 		tid int
 		title string
 		content string
@@ -123,11 +125,11 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(createdBy),1)
 		}
 		
-		topicList = append(topicList, TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,"","","",""})
-		
+		topicItem := TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,"","","",""}
 		if hooks["trow_assign"] != nil {
-			topicList[currentID] = run_hook("trow_assign", topicList[currentID])
+			topicItem = run_hook("trow_assign", topicItem).(TopicUser)
 		}
+		topicList = append(topicList, topicItem)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -135,16 +137,9 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var msg string
-	if len(topicList) == 0 {
-		msg = "There aren't any topics yet."
-	} else {
-		msg = ""
-	}
-	
-	pi := Page{"Topic List","topics",user,noticeList,topicList,msg}
-	if ctemplates["topics"] != nil {
-		ctemplates["topics"](pi,w)
+	pi := Page{"Topic List","topics",user,noticeList,topicList,0}
+	if template_topics_handle != nil {
+		template_topics_handle(pi,w)
 	} else {
 		err = templates.ExecuteTemplate(w,"topics.html", pi)
 		if err != nil {
@@ -161,8 +156,6 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	
 	var(
 		topicList []interface{}
-		currentID int
-		
 		tid int
 		title string
 		content string
@@ -185,6 +178,10 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	_, ok = forums[fid]
 	if !ok {
 		NotFound(w,r,user)
+		return
+	}
+	if !user.Perms.ViewTopic {
+		NoPermissions(w,r,user)
 		return
 	}
 	
@@ -215,11 +212,11 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 			avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(createdBy),1)
 		}
 		
-		topicList = append(topicList, TopicUser{tid,title,content,createdBy,is_closed,sticky,createdAt,parentID,status,name,avatar,"",0,"","","",""})
-		
+		topicItem := TopicUser{tid,title,content,createdBy,is_closed,sticky,createdAt,parentID,status,name,avatar,"",0,"","","",""}
 		if hooks["trow_assign"] != nil {
-			topicList[currentID] = run_hook("trow_assign", topicList[currentID])
+			topicItem = run_hook("trow_assign", topicItem).(TopicUser)
 		}
+		topicList = append(topicList, topicItem)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -227,16 +224,9 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var msg string
-	if len(topicList) == 0 {
-		msg = "There aren't any topics in this forum yet."
-	} else {
-		msg = ""
-	}
-	
-	pi := Page{forums[fid].Name,"forum",user,noticeList,topicList,msg}
-	if ctemplates["forum"] != nil {
-		ctemplates["forum"](pi,w)
+	pi := Page{forums[fid].Name,"forum",user,noticeList,topicList,0}
+	if template_forum_handle != nil {
+		template_forum_handle(pi,w)
 	} else {
 		err = templates.ExecuteTemplate(w,"forum.html", pi)
 		if err != nil {
@@ -258,14 +248,9 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	if len(forums) == 0 {
-		InternalError(errors.New("No forums"),w,r,user)
-		return
-	}
-	
 	pi := Page{"Forum List","forums",user,noticeList,forumList,0}
-	if ctemplates["forums"] != nil {
-		ctemplates["forums"](pi,w)
+	if template_forums_handle != nil {
+		template_forums_handle(pi,w)
 	} else {
 		err := templates.ExecuteTemplate(w,"forums.html", pi)
 		if err != nil {
@@ -300,13 +285,17 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		is_super_admin bool
 		group int
 		
-		replyList []interface{}
+		replyList []Reply
 	)
 	topic := TopicUser{0,"","",0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
 	
 	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		return
+	}
+	if !user.Perms.ViewTopic {
+		NoPermissions(w,r,user)
 		return
 	}
 	
@@ -411,11 +400,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{topic.Title,"topic",user,noticeList,replyList,topic}
-	if ctemplates["topic"] != nil {
-		ctemplates["topic"](pi,w)
+	tpage := TopicPage{topic.Title,"topic",user,noticeList,replyList,topic,0}
+	if template_topic_handle != nil {
+		template_topic_handle(tpage,w)
 	} else {
-		err = templates.ExecuteTemplate(w,"topic.html", pi)
+		err = templates.ExecuteTemplate(w,"topic.html", tpage)
 		if err != nil {
 			InternalError(err, w, r, user)
 		}
@@ -447,7 +436,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		replyList []interface{}
 	)
 	
-	puser := User{0,"",0,false,false,false,false,false,false,"",false,"","","","",""}
+	puser := User{ID: 0,}
 	puser.ID, err = strconv.Atoi(r.URL.Path[len("/user/"):])
 	if err != nil {
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
@@ -536,8 +525,8 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{puser.Name + "'s Profile","profile",user,noticeList,replyList,puser}
-	if ctemplates["profile"] != nil {
-		ctemplates["profile"](pi,w)
+	if template_profile_handle != nil {
+		template_profile_handle(pi,w)
 	} else {
 		err = templates.ExecuteTemplate(w,"profile.html", pi)
 		if err != nil {
@@ -551,9 +540,8 @@ func route_topic_create(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	if user.Is_Banned {
-		Banned(w,r,user)
+	if !user.Loggedin || !user.Perms.CreateTopic {
+		NoPermissions(w,r,user)
 		return
 	}
 	
@@ -567,13 +555,8 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Loggedin {
-		LoginRequired(w,r,user)
-		return
-	}
-	if user.Is_Banned {
-		Banned(w,r,user)
+	if !user.Loggedin || !user.Perms.CreateTopic {
+		NoPermissions(w,r,user)
 		return
 	}
 	
@@ -622,13 +605,8 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Loggedin {
-		LoginRequired(w,r,user)
-		return
-	}
-	if user.Is_Banned {
-		Banned(w,r,user)
+	if !user.Loggedin || !user.Perms.CreateReply {
+		NoPermissions(w,r,user)
 		return
 	}
 	
@@ -698,13 +676,8 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
-	if !user.Loggedin {
-		LoginRequired(w,r,user)
-		return
-	}
-	if user.Is_Banned {
-		Banned(w,r,user)
+	if !user.Loggedin || !user.Perms.CreateReply {
+		NoPermissions(w,r,user)
 		return
 	}
 	
@@ -1452,7 +1425,17 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	res, err := register_stmt.Exec(username,email,string(hashed_password),salt,session)
+	var active int
+	var group int
+	if settings["activation_type"] == 1 {
+		active = 1
+		group = default_group
+	} else {
+		active = 0
+		group = activation_group
+	}
+	
+	res, err := register_stmt.Exec(username,email,string(hashed_password),salt,group,session,active)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return

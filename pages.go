@@ -12,15 +12,15 @@ type Page struct
 	Something interface{}
 }
 
-/* For testing maps versus slices */
-type Page2 struct
+type TopicPage struct
 {
 	Title string
 	Name string
 	CurrentUser User
 	NoticeList map[int]string
-	ItemList map[int]interface{}
-	Something interface{}
+	ItemList []Reply
+	Topic TopicUser
+	ExtData interface{}
 }
 
 type PageSimple struct

@@ -7,11 +7,7 @@
 		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="username topic_status_e topic_status_closed" style="float: right;">closed</span>
 		{{else}}<span class="username topic_status_e topic_status_open" style="float: right;">open</span>{{end}}
 		<span class="username" style="border-right: 0;float: right;">Status</span>
-	</div>{{end}}
+	</div>
+	{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.</div>{{end}}
 </div>
-{{if .Something}}
-<div class="rowblock">
-	<div class="rowitem passive">{{.Something}}</div>
-</div>
-{{end}}
 {{template "footer.html" . }}

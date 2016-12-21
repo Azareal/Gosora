@@ -20,7 +20,16 @@
 			<div class="formitem"><a>Setting Name</a></div>
 			<div class="formitem">{{.Something.Name}}</div>
 		</div>
-		{{if eq .Something.Type "bool"}}
+		{{if eq .Something.Type "list"}}
+		<div class="formrow">
+			<div class="formitem"><a>Setting Value</a></div>
+			<div class="formitem">
+				<select name="setting-value">
+				{{range .ItemList}}<option{{if .Selected}} selected{{end}} value="{{.Value}}">{{.Label}}</option>{{end}}
+				</select>
+			</div>
+		</div>
+		{{else if eq .Something.Type "bool"}}
 		<div class="formrow">
 			<div class="formitem"><a>Setting Value</a></div>
 			<div class="formitem"><input name="setting-value" type="checkbox"{{if eq .Something.Content "1"}} checked{{end}} /></div>

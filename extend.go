@@ -35,7 +35,7 @@ func add_hook(name string, handler interface{}) {
 	}
 }
 
-func remove_hook(name string) {
+func remove_hook(name string/*, plugin string */) {
 	delete(hooks, name)
 }
 

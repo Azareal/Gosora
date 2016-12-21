@@ -3,7 +3,7 @@ import "io"
 import "strconv"
 
 func init() {
-ctemplates["forums"] = template_forums
+template_forums_handle = template_forums
 }
 
 func template_forums(tmpl_forums_vars Page, w io.Writer) {
@@ -66,8 +66,11 @@ for _, item := range tmpl_forums_vars.ItemList {
 w.Write([]byte(`<div class="rowitem">
 		<a href="/forum/` + strconv.Itoa(item.(Forum).ID) + `" style="font-size: 20px;position:relative;top: -2px;font-weight: normal;text-transform: none;">` + item.(Forum).Name + `</a>
 		<a href="/topic/` + strconv.Itoa(item.(Forum).LastTopicID) + `" style="font-weight: normal;text-transform: none;float: right;">` + item.(Forum).LastTopic + ` <small style="font-size: 12px;">` + item.(Forum).LastTopicTime + `</small></a>
-	</div>`))
+	</div>
+	`))
 }
+} else {
+w.Write([]byte(`<div class="rowitem passive">You don't have access to any forums.</div>`))
 }
 w.Write([]byte(`
 </div>

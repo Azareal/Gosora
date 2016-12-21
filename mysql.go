@@ -3,8 +3,9 @@ package main
 
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
-import "strconv"
 import "log"
+import "fmt"
+import "encoding/json"
 
 var db *sql.DB
 var get_session_stmt *sql.Stmt
@@ -167,7 +168,7 @@ func init_database(err error) {
 	// create_account_stmt, err = db.Prepare("INSERT INTO 
 	
 	log.Print("Preparing register statement.")
-	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`email`,`password`,`salt`,`group`,`is_super_admin`,`session`,`message`) VALUES(?,?,?,?," + strconv.Itoa(default_group) + ",0,?,'')")
+	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`email`,`password`,`salt`,`group`,`is_super_admin`,`session`,`active`,`message`) VALUES(?,?,?,?,?,0,?,?,'')")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -252,11 +253,21 @@ func init_database(err error) {
 	defer rows.Close()
 	
 	for rows.Next() {
-		group := Group{0,"","",false,false,false,""}
-		err := rows.Scan(&group.ID, &group.Name, &group.Permissions, &group.Is_Mod, &group.Is_Admin, &group.Is_Banned, &group.Tag)
+		group := Group{ID: 0,}
+		err := rows.Scan(&group.ID, &group.Name, &group.PermissionsText, &group.Is_Mod, &group.Is_Admin, &group.Is_Banned, &group.Tag)
 		if err != nil {
 			log.Fatal(err)
 		}
+		
+		err = json.Unmarshal(group.PermissionsText, &group.Perms)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		fmt.Println(group.Name + ": ")
+		fmt.Printf("%+v\n", group.Perms)
+		
+		group.Perms.ExtData = make(map[string]bool)
 		groups[group.ID] = group
 	}
 	err = rows.Err()
@@ -301,7 +312,7 @@ func init_database(err error) {
 	forums[-1] = Forum{-1,"Reports",false,"",0,"",0,""}
 	
 	log.Print("Loading the settings.")
-	rows, err = db.Query("SELECT name, content, type FROM settings")
+	rows, err = db.Query("SELECT name, content, type, constraints FROM settings")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -310,12 +321,13 @@ func init_database(err error) {
 	var sname string
 	var scontent string
 	var stype string
+	var sconstraints string
 	for rows.Next() {
-		err := rows.Scan(&sname, &scontent, &stype)
+		err := rows.Scan(&sname, &scontent, &stype, &sconstraints)
 		if err != nil {
 			log.Fatal(err)
 		}
-		errmsg := parseSetting(sname, scontent, stype)
+		errmsg := parseSetting(sname, scontent, stype, sconstraints)
 		if errmsg != "" {
 			log.Fatal(err)
 		}

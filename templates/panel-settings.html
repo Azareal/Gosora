@@ -16,9 +16,9 @@
 </div>
 <div class="colblock_right">
 	{{ range $key, $value := .Something }}
-	<div class="rowitem editable_parent" style="font-weight: normal;">
-		<a href="/panel/settings/edit/{{$key}}" class="editable_block" style="font-size: 20px;position:relative;top: -2px;text-transform: none;">{{$key}}</a>
-		<a style="float: right;text-transform: lowercase;">{{$value}}</a>
+	<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
+		<a href="/panel/settings/edit/{{$key}}" class="editable_block" style="font-size: 20px;position:relative;top: -2px;">{{$key}}</a>
+		<a style="float: right;">{{$value}}</a>
 	</div>
 	{{end}}
 </div>

@@ -4,11 +4,10 @@ import "strconv"
 import "html/template"
 
 func init() {
-ctemplates["topic"] = template_topic
+template_topic_handle = template_topic
 }
 
-func template_topic(tmpl_topic_vars Page, w io.Writer) {
-var extra_data TopicUser = tmpl_topic_vars.Something.(TopicUser)
+func template_topic(tmpl_topic_vars TopicPage, w io.Writer) {
 w.Write([]byte(`<!doctype html>
 <html lang="en">
 	<head>
@@ -62,29 +61,29 @@ w.Write([]byte(`<div class="alert">` + item + `</div>`))
 }
 w.Write([]byte(`
 <div class="rowblock">
-	<form action='/topic/edit/submit/` + strconv.Itoa(extra_data.ID) + `' method="post">
+	<form action='/topic/edit/submit/` + strconv.Itoa(tmpl_topic_vars.Topic.ID) + `' method="post">
 		<div class="rowitem"`))
-if extra_data.Sticky {
+if tmpl_topic_vars.Topic.Sticky {
 w.Write([]byte(` style="background-color: #FFFFEA;"`))
 }
 w.Write([]byte(`>
-			<a class='topic_name hide_on_edit'>` + extra_data.Title + `</a> 
-			<span class='username topic_status_e topic_status_` + extra_data.Status + ` hide_on_edit' style="font-weight:normal;float: right;">` + extra_data.Status + `</span> 
+			<a class='topic_name hide_on_edit'>` + tmpl_topic_vars.Topic.Title + `</a> 
+			<span class='username topic_status_e topic_status_` + tmpl_topic_vars.Topic.Status + ` hide_on_edit' style="font-weight:normal;float: right;">` + tmpl_topic_vars.Topic.Status + `</span> 
 			<span class="username" style="border-right: 0;font-weight: normal;float: right;">Status</span>
 			`))
 if tmpl_topic_vars.CurrentUser.Is_Mod {
 w.Write([]byte(`
-			<a href='/topic/edit/` + strconv.Itoa(extra_data.ID) + `' class="username hide_on_edit open_edit" style="font-weight: normal;margin-left: 6px;">Edit</a>
-			<a href='/topic/delete/submit/` + strconv.Itoa(extra_data.ID) + `' class="username" style="font-weight: normal;">Delete</a>
+			<a href='/topic/edit/` + strconv.Itoa(tmpl_topic_vars.Topic.ID) + `' class="username hide_on_edit open_edit" style="font-weight: normal;margin-left: 6px;">Edit</a>
+			<a href='/topic/delete/submit/` + strconv.Itoa(tmpl_topic_vars.Topic.ID) + `' class="username" style="font-weight: normal;">Delete</a>
 			`))
-if extra_data.Sticky {
-w.Write([]byte(`<a href='/topic/unstick/submit/` + strconv.Itoa(extra_data.ID) + `' class="username" style="font-weight: normal;">Unpin</a>`))
+if tmpl_topic_vars.Topic.Sticky {
+w.Write([]byte(`<a href='/topic/unstick/submit/` + strconv.Itoa(tmpl_topic_vars.Topic.ID) + `' class="username" style="font-weight: normal;">Unpin</a>`))
 } else {
-w.Write([]byte(`<a href='/topic/stick/submit/` + strconv.Itoa(extra_data.ID) + `' class="username" style="font-weight: normal;">Pin</a>`))
+w.Write([]byte(`<a href='/topic/stick/submit/` + strconv.Itoa(tmpl_topic_vars.Topic.ID) + `' class="username" style="font-weight: normal;">Pin</a>`))
 }
 w.Write([]byte(`
 			
-			<input class='show_on_edit topic_name_input' name="topic_name" value='` + extra_data.Title + `' type="text" />
+			<input class='show_on_edit topic_name_input' name="topic_name" value='` + tmpl_topic_vars.Topic.Title + `' type="text" />
 			<select name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
 				<option>open</option>
 				<option>closed</option>
@@ -93,31 +92,31 @@ w.Write([]byte(`
 			`))
 }
 w.Write([]byte(`
-			<a href="/report/submit/` + strconv.Itoa(extra_data.ID) + `?session=` + tmpl_topic_vars.CurrentUser.Session + `&type=topic" class="username report_item" style="font-weight: normal;">Report</a>
+			<a href="/report/submit/` + strconv.Itoa(tmpl_topic_vars.Topic.ID) + `?session=` + tmpl_topic_vars.CurrentUser.Session + `&type=topic" class="username report_item" style="font-weight: normal;">Report</a>
 		</div>
 	</form>
 </div>
 <div class="rowblock">
 	<div class="rowitem passive editable_parent" style="border-bottom: none;`))
-if extra_data.Avatar != "" {
-w.Write([]byte(`background-image: url(` + extra_data.Avatar + `), url(/static/white-dot.jpg);background-position: 0px `))
-if extra_data.ContentLines <= 5 {
+if tmpl_topic_vars.Topic.Avatar != "" {
+w.Write([]byte(`background-image: url(` + tmpl_topic_vars.Topic.Avatar + `), url(/static/white-dot.jpg);background-position: 0px `))
+if tmpl_topic_vars.Topic.ContentLines <= 5 {
 w.Write([]byte(`-1`))
 }
-w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;` + string(extra_data.Css)))
+w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;` + string(tmpl_topic_vars.Topic.Css)))
 }
 w.Write([]byte(`">
-		<span class="hide_on_edit topic_content user_content">` + string(extra_data.Content.(template.HTML)) + `</span>
-		<textarea name="topic_content" class="show_on_edit topic_content_input">` + string(extra_data.Content.(template.HTML)) + `</textarea>
+		<span class="hide_on_edit topic_content user_content">` + string(tmpl_topic_vars.Topic.Content.(template.HTML)) + `</span>
+		<textarea name="topic_content" class="show_on_edit topic_content_input">` + string(tmpl_topic_vars.Topic.Content.(template.HTML)) + `</textarea>
 		<br /><br />
-		<a href="/user/` + strconv.Itoa(extra_data.CreatedBy) + `" class="username">` + extra_data.CreatedByName + `</a>
+		<a href="/user/` + strconv.Itoa(tmpl_topic_vars.Topic.CreatedBy) + `" class="username">` + tmpl_topic_vars.Topic.CreatedByName + `</a>
 		`))
-if extra_data.Tag != "" {
-w.Write([]byte(`<a class="username" style="float: right;">` + extra_data.Tag + `</a>`))
+if tmpl_topic_vars.Topic.Tag != "" {
+w.Write([]byte(`<a class="username" style="float: right;">` + tmpl_topic_vars.Topic.Tag + `</a>`))
 } else {
-if extra_data.URLName != "" {
-w.Write([]byte(`<a href="` + extra_data.URL + `" class="username" style="color: #505050;float: right;">` + extra_data.URLName + `</a>
-		<a class="username" style="color: #505050;float: right;border-right: 0;">` + extra_data.URLPrefix + `</a>`))
+if tmpl_topic_vars.Topic.URLName != "" {
+w.Write([]byte(`<a href="` + tmpl_topic_vars.Topic.URL + `" class="username" style="color: #505050;float: right;">` + tmpl_topic_vars.Topic.URLName + `</a>
+		<a class="username" style="color: #505050;float: right;border-right: 0;">` + tmpl_topic_vars.Topic.URLPrefix + `</a>`))
 }
 }
 w.Write([]byte(`
@@ -129,31 +128,35 @@ if len(tmpl_topic_vars.ItemList) != 0 {
 for _, item := range tmpl_topic_vars.ItemList {
 w.Write([]byte(`
 	<div class="rowitem passive deletable_block editable_parent" style="`))
-if item.(Reply).Avatar != "" {
-w.Write([]byte(`background-image: url(` + item.(Reply).Avatar + `), url(/static/white-dot.jpg);background-position: 0px `))
-if item.(Reply).ContentLines <= 5 {
+if item.Avatar != "" {
+w.Write([]byte(`background-image: url(` + item.Avatar + `), url(/static/white-dot.jpg);background-position: 0px `))
+if item.ContentLines <= 5 {
 w.Write([]byte(`-1`))
 }
-w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;` + string(item.(Reply).Css)))
+w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;` + string(item.Css)))
 }
 w.Write([]byte(`">
-		<span class="editable_block user_content">` + string(item.(Reply).ContentHtml) + `</span>
+		<span class="editable_block user_content">` + string(item.ContentHtml) + `</span>
 		<br /><br />
-		<a href="/user/` + strconv.Itoa(item.(Reply).CreatedBy) + `" class="username">` + item.(Reply).CreatedByName + `</a>
+		<a href="/user/` + strconv.Itoa(item.CreatedBy) + `" class="username">` + item.CreatedByName + `</a>
 		`))
-if tmpl_topic_vars.CurrentUser.Is_Mod {
-w.Write([]byte(`<a href="/reply/edit/submit/` + strconv.Itoa(item.(Reply).ID) + `"><button class="username edit_item">Edit</button></a>
-		<a href="/reply/delete/submit/` + strconv.Itoa(item.(Reply).ID) + `"><button class="username delete_item">Delete</button></a>`))
+if tmpl_topic_vars.CurrentUser.Perms.EditReply {
+w.Write([]byte(`<a href="/reply/edit/submit/` + strconv.Itoa(item.ID) + `"><button class="username edit_item">Edit</button></a>`))
 }
 w.Write([]byte(`
-		<a href="/report/submit/` + strconv.Itoa(item.(Reply).ID) + `?session=` + tmpl_topic_vars.CurrentUser.Session + `&type=reply"><button class="username report_item">Report</button></a>
 		`))
-if item.(Reply).Tag != "" {
-w.Write([]byte(`<a class="username" style="float: right;">` + item.(Reply).Tag + `</a>`))
+if tmpl_topic_vars.CurrentUser.Perms.DeleteReply {
+w.Write([]byte(`<a href="/reply/delete/submit/` + strconv.Itoa(item.ID) + `"><button class="username delete_item">Delete</button></a>`))
+}
+w.Write([]byte(`
+		<a href="/report/submit/` + strconv.Itoa(item.ID) + `?session=` + tmpl_topic_vars.CurrentUser.Session + `&type=reply"><button class="username report_item">Report</button></a>
+		`))
+if item.Tag != "" {
+w.Write([]byte(`<a class="username" style="float: right;">` + item.Tag + `</a>`))
 } else {
-if item.(Reply).URLName != "" {
-w.Write([]byte(`<a href="` + item.(Reply).URL + `" class="username" style="color: #505050;float: right;" rel="nofollow">` + item.(Reply).URLName + `</a>
-		<a class="username" style="color: #505050;float: right;border-right: 0;">` + item.(Reply).URLPrefix + `</a>`))
+if item.URLName != "" {
+w.Write([]byte(`<a href="` + item.URL + `" class="username" style="color: #505050;float: right;" rel="nofollow">` + item.URLName + `</a>
+		<a class="username" style="color: #505050;float: right;border-right: 0;">` + item.URLPrefix + `</a>`))
 }
 }
 w.Write([]byte(`
@@ -163,11 +166,11 @@ w.Write([]byte(`
 w.Write([]byte(`
 </div>
 `))
-if !tmpl_topic_vars.CurrentUser.Is_Banned && tmpl_topic_vars.CurrentUser.Loggedin {
+if tmpl_topic_vars.CurrentUser.Perms.CreateReply {
 w.Write([]byte(`
 <div class="rowblock">
 	<form action="/reply/create/" method="post">
-		<input name="tid" value='` + strconv.Itoa(extra_data.ID) + `' type="hidden" />
+		<input name="tid" value='` + strconv.Itoa(tmpl_topic_vars.Topic.ID) + `' type="hidden" />
 		<div class="formrow">
 			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
 		</div>

@@ -1,9 +1,9 @@
 package main
-import "strconv"
 import "io"
+import "strconv"
 
 func init() {
-ctemplates["forum"] = template_forum
+template_forum_handle = template_forum
 }
 
 func template_forum(tmpl_forum_vars Page, w io.Writer) {
@@ -83,20 +83,14 @@ w.Write([]byte(`<span class="username topic_status_e topic_status_open" style="f
 }
 w.Write([]byte(`
 		<span class="username" style="border-right: 0;float: right;">Status</span>
-	</div>`))
+	</div>
+	`))
 }
+} else {
+w.Write([]byte(`<div class="rowitem passive">There aren't any topics in this forum yet.</div>`))
 }
 w.Write([]byte(`
 </div>
-`))
-if tmpl_forum_vars.Something.(string) != "" {
-w.Write([]byte(`
-<div class="rowblock">
-	<div class="rowitem passive">` + tmpl_forum_vars.Something.(string) + `</div>
-</div>
-`))
-}
-w.Write([]byte(`
 			<!--<link rel="stylesheet" href="https://use.fontawesome.com/8670aa03ca.css">-->
 		</div>
 	</body>

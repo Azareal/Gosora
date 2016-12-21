@@ -4,7 +4,6 @@ package main
 import (
 	"net/http"
 	"log"
-	//"fmt"
 	"mime"
 	"strings"
 	"path/filepath"
@@ -24,7 +23,6 @@ const saltLength int = 32
 const sessionLength int = 80
 
 var templates = template.Must(template.ParseGlob("templates/*"))
-//var custom_pages = template.Must(template.ParseGlob("pages/*"))
 var no_css_tmpl = template.CSS("")
 var staff_css_tmpl = template.CSS(staff_css)
 var settings map[string]interface{} = make(map[string]interface{})
@@ -32,29 +30,33 @@ var external_sites map[string]string = make(map[string]string)
 var groups map[int]Group = make(map[int]Group)
 var forums map[int]Forum = make(map[int]Forum)
 var static_files map[string]SFile = make(map[string]SFile)
-var ctemplates map[string]func(Page,io.Writer) = make(map[string]func(Page,io.Writer))
+var ctemplates []string
+var template_topic_handle func(TopicPage,io.Writer) = nil
+var template_topics_handle func(Page,io.Writer) = nil
+var template_forum_handle func(Page,io.Writer) = nil
+var template_forums_handle func(Page,io.Writer) = nil
+var template_profile_handle func(Page,io.Writer) = nil
 
 func compile_templates() {
 	var c CTemplateSet
-	user := User{0,"",0,false,false,false,false,false,false,"",false,"","","","",""}
+	user := User{0,"",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","",""}
 	var noticeList map[int]string = make(map[int]string)
 	noticeList[0] = "test"
 	
 	log.Print("Compiling the templates")
 	
 	topic := TopicUser{0,"",template.HTML(""),0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
-	var replyList []interface{}
+	var replyList []Reply
 	replyList = append(replyList, Reply{0,0,"",template.HTML(""),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	var varList map[string]VarItem = make(map[string]VarItem)
-	varList["extra_data"] = VarItem{"extra_data","tmpl_topic_vars.Something.(TopicUser)","TopicUser"}
 	
-	pi := Page{"Title","name",user,noticeList,replyList,topic}
-	topic_id_tmpl := c.compile_template("topic.html","templates/","Page", pi, varList)
+	var varList map[string]VarItem = make(map[string]VarItem)
+	tpage := TopicPage{"Title","name",user,noticeList,replyList,topic,false}
+	topic_id_tmpl := c.compile_template("topic.html","templates/","TopicPage", tpage, varList)
 	
 	varList = make(map[string]VarItem)
 	varList["extra_data"] = VarItem{"extra_data","tmpl_profile_vars.Something.(User)","User"}
-	pi = Page{"Title","name",user,noticeList,replyList,user}
-	profile_tmpl := c.compile_template("profile.html","templates/","Page", pi, varList)
+	//pi := Page{"Title","name",user,noticeList,replyList,user}
+	//profile_tmpl := c.compile_template("profile.html","templates/","Page", pi, varList)
 	
 	var forumList []interface{}
 	for _, forum := range forums {
@@ -63,7 +65,7 @@ func compile_templates() {
 		}
 	}
 	varList = make(map[string]VarItem)
-	pi = Page{"Forum List","forums",user,noticeList,forumList,0}
+	pi := Page{"Forum List","forums",user,noticeList,forumList,0}
 	forums_tmpl := c.compile_template("forums.html","templates/","Page", pi, varList)
 	
 	var topicList []interface{}
@@ -76,7 +78,7 @@ func compile_templates() {
 	
 	log.Print("Writing the templates")
 	write_template("topic", topic_id_tmpl)
-	write_template("profile", profile_tmpl)
+	//write_template("profile", profile_tmpl)
 	write_template("forums", forums_tmpl)
 	write_template("topics", topics_tmpl)
 	write_template("forum", forum_tmpl)
@@ -203,6 +205,7 @@ func main(){
 	http.HandleFunc("/panel/plugins/activate/", route_panel_plugins_activate)
 	http.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)
 	http.HandleFunc("/panel/users/", route_panel_users)
+	http.HandleFunc("/panel/users/edit/", route_panel_users_edit)
 	
 	http.HandleFunc("/", default_route)
 	
