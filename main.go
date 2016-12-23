@@ -21,6 +21,7 @@ const kilobyte int = 1024
 const megabyte int = 1024 * 1024
 const saltLength int = 32
 const sessionLength int = 80
+var nogrouplog bool = false // This is mainly for benchmarks, as we don't want a lot of information getting in the way of the results
 
 var templates = template.Must(template.ParseGlob("templates/*"))
 var no_css_tmpl = template.CSS("")
@@ -39,7 +40,7 @@ var template_profile_handle func(Page,io.Writer) = nil
 
 func compile_templates() {
 	var c CTemplateSet
-	user := User{0,"",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","",""}
+	user := User{0,"","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","",""}
 	var noticeList map[int]string = make(map[int]string)
 	noticeList[0] = "test"
 	
@@ -206,6 +207,7 @@ func main(){
 	http.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)
 	http.HandleFunc("/panel/users/", route_panel_users)
 	http.HandleFunc("/panel/users/edit/", route_panel_users_edit)
+	http.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
 	
 	http.HandleFunc("/", default_route)
 	

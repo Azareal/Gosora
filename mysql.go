@@ -9,6 +9,7 @@ import "encoding/json"
 
 var db *sql.DB
 var get_session_stmt *sql.Stmt
+var get_topic_list_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
 var create_report_stmt *sql.Stmt
 var create_reply_stmt *sql.Stmt
@@ -40,6 +41,7 @@ var update_forum_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
 var add_plugin_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
+var update_user_stmt *sql.Stmt
 
 func init_database(err error) {
 	if(dbpassword != ""){
@@ -57,13 +59,19 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_session statement.")
-	get_session_stmt, err = db.Prepare("SELECT `uid`, `name`, `group`, `is_super_admin`, `session`, `avatar`, `message`, `url_prefix`, `url_name` FROM `users` WHERE `uid` = ? AND `session` = ? AND `session` <> ''")
+	get_session_stmt, err = db.Prepare("select `uid`, `name`, `group`, `is_super_admin`, `session`, `avatar`, `message`, `url_prefix`, `url_name` FROM `users` WHERE `uid` = ? AND `session` = ? AND `session` <> ''")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing get_topic_list statement.")
+	get_topic_list_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
+	create_topic_stmt, err = db.Prepare("insert into topics(title,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -245,6 +253,12 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing update_user statement.")
+	update_user_stmt, err = db.Prepare("UPDATE `users` SET `name` = ?, `email` = ?, `group` = ? WHERE `uid` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Loading the usergroups.")
 	rows, err := db.Query("SELECT gid,name,permissions,is_mod,is_admin,is_banned,tag FROM users_groups")
 	if err != nil {
@@ -264,8 +278,10 @@ func init_database(err error) {
 			log.Fatal(err)
 		}
 		
-		fmt.Println(group.Name + ": ")
-		fmt.Printf("%+v\n", group.Perms)
+		if !nogrouplog {
+			fmt.Println(group.Name + ": ")
+			fmt.Printf("%+v\n", group.Perms)
+		}
 		
 		group.Perms.ExtData = make(map[string]bool)
 		groups[group.ID] = group

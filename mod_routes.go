@@ -446,6 +446,11 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
 	uid, err := strconv.Atoi(r.URL.Path[len("/users/unban/"):])
 	if err != nil {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
@@ -483,6 +488,11 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 	}
 	if !user.Perms.ActivateUsers {
 		NoPermissions(w,r,user)
+		return
+	}
+	
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
 		return
 	}
 	
@@ -678,7 +688,6 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	forum_name := r.PostFormValue("edit_item")
-	
 	forum, ok := forums[fid];
     if !ok {
 		LocalError("The forum you're trying to edit doesn't exist.",w,r,user)
@@ -790,7 +799,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 		
 		labels := strings.Split(llist,",")
 		for index, label := range labels {
-			itemList = append(itemList, SettingLabel{
+			itemList = append(itemList, OptionLabel{
 				Label: label,
 				Value: index + 1,
 				Selected: conv == (index + 1),
@@ -887,6 +896,11 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
 	uname := r.URL.Path[len("/panel/plugins/activate/"):]
 	plugin, ok := plugins[uname]
 	if !ok {
@@ -945,6 +959,11 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
 	uname := r.URL.Path[len("/panel/plugins/deactivate/"):]
 	plugin, ok := plugins[uname]
 	if !ok {
@@ -990,7 +1009,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	}
 	
 	var userList []interface{}
-	rows, err := db.Query("SELECT `uid`, `name`, `group`, `active`, `is_super_admin`, `avatar` FROM users")
+	rows, err := db.Query("SELECT `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` FROM users")
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -1043,5 +1062,150 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 }
 
 func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
 	
+	// Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
+	if !user.Is_Super_Mod || !user.Perms.EditUser {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	var err error
+	targetUser := User{ID: 0,}
+	targetUser.ID, err = strconv.Atoi(r.URL.Path[len("/panel/users/edit/"):])
+	if err != nil {
+		LocalError("The provided User ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	err = db.QueryRow("SELECT `name`, `email`, `group` from `users` where `uid` = ?", targetUser.ID).Scan(&targetUser.Name, &targetUser.Email, &targetUser.Group)
+	if err == sql.ErrNoRows {
+		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	targetUser.Is_Admin = targetUser.Is_Super_Admin || groups[targetUser.Group].Is_Admin
+	targetUser.Is_Super_Mod = groups[targetUser.Group].Is_Mod || targetUser.Is_Admin
+	if targetUser.Is_Admin && !user.Is_Admin {
+		LocalError("Only administrators can edit the account of an administrator.",w,r,user)
+		return
+	}
+	
+	var groupList []interface{}
+	for _, group := range groups {
+		if !user.Perms.EditUserGroupAdmin && group.Is_Admin {
+			continue
+		}
+		if !user.Perms.EditUserGroupSuperMod && group.Is_Mod {
+			continue
+		}
+		groupList = append(groupList, group)
+	}
+	
+	pi := Page{"User Editor","panel-user-edit",user,noticeList,groupList,targetUser}
+	err = templates.ExecuteTemplate(w,"panel-user-edit.html", pi)
+	if err != nil {
+		InternalError(err, w, r, user)
+	}
+}
+
+func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.EditUser {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	var err error
+	targetUser := User{ID: 0,}
+	targetUser.ID, err = strconv.Atoi(r.URL.Path[len("/panel/users/edit/submit/"):])
+	if err != nil {
+		LocalError("The provided User ID is not a valid number.",w,r,user)
+		return
+	}
+	
+	err = db.QueryRow("SELECT `name`, `email`, `group` from `users` where `uid` = ?", targetUser.ID).Scan(&targetUser.Name, &targetUser.Email, &targetUser.Group)
+	if err == sql.ErrNoRows {
+		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	targetUser.Is_Admin = targetUser.Is_Super_Admin || groups[targetUser.Group].Is_Admin
+	targetUser.Is_Super_Mod = groups[targetUser.Group].Is_Mod || targetUser.Is_Admin
+	if targetUser.Is_Admin && !user.Is_Admin {
+		LocalError("Only administrators can edit the account of an administrator.",w,r,user)
+		return
+	}
+	
+	newname := html.EscapeString(r.PostFormValue("user-name"))
+	if newname == "" {
+		LocalError("You didn't put in a username.", w, r, user)
+		return
+	}
+	
+	newemail := html.EscapeString(r.PostFormValue("user-email"))
+	if newemail == "" {
+		LocalError("You didn't put in an email address.", w, r, user)
+		return
+	}
+	if (newemail != targetUser.Email) && !user.Perms.EditUserEmail {
+		LocalError("You need the EditUserEmail permission to edit the email address of a user.", w, r, user)
+		return
+	}
+	
+	newpassword := r.PostFormValue("user-password")
+	if newpassword != "" && !user.Perms.EditUserPassword {
+		LocalError("You need the EditUserPassword permission to edit the password of a user.", w, r, user)
+		return
+	}
+	
+	newgroup, err := strconv.Atoi(r.PostFormValue("user-group"))
+	if err != nil {
+		LocalError("The provided GroupID is not a valid number.",w,r,user)
+		return
+	}
+	
+	_, ok = groups[newgroup]
+	if !ok {
+		LocalError("The group you're trying to place this user in doesn't exist.",w,r,user)
+		return
+	}
+	
+	if !user.Perms.EditUserGroupAdmin && groups[newgroup].Is_Admin {
+		LocalError("You need the EditUserGroupAdmin permission to assign someone to an administrator group.",w,r,user)
+		return
+	}
+	if !user.Perms.EditUserGroupSuperMod && groups[newgroup].Is_Mod {
+		LocalError("You need the EditUserGroupAdmin permission to assign someone to a super mod group.",w,r,user)
+		return
+	}
+	
+	_, err = update_user_stmt.Exec(newname,newemail,newgroup,targetUser.ID)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	if newpassword != "" {
+		SetPassword(targetUser.ID, newpassword)
+	}
+	
+	http.Redirect(w,r,"/panel/users/edit/" + strconv.Itoa(targetUser.ID),http.StatusSeeOther)
 }

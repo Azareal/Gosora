@@ -10,6 +10,7 @@ type User struct
 {
 	ID int
 	Name string
+	Email string
 	Group int
 	Active bool
 	Is_Mod bool
@@ -72,6 +73,9 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	// Is this session valid..?
 	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
 	if err == sql.ErrNoRows {
+		user.ID = 0
+		user.Session = ""
+		user.Perms = GuestPerms
 		return user, noticeList, true
 	} else if err != nil {
 		InternalError(err,w,r,user)
@@ -131,6 +135,9 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 	// Is this session valid..?
 	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
 	if err == sql.ErrNoRows {
+		user.ID = 0
+		user.Session = ""
+		user.Perms = GuestPerms
 		return user, true
 	} else if err != nil {
 		InternalError(err,w,r,user)

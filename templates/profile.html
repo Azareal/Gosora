@@ -7,7 +7,7 @@
 	<div class="rowitem passive">
 		<a class="username">Add Friend</a>
 		{{if (.CurrentUser.Is_Super_Mod) and not (.Something.Is_Super_Mod) }}
-		{{if .Something.Is_Banned }}<a href="/users/unban/{{.Something.ID}}" class="username">Unban</a>{{else}}<a href="/users/ban/{{.Something.ID}}" class="username">Ban</a>{{end}}
+		{{if .Something.Is_Banned }}<a href="/users/unban/{{.Something.ID}}?session={{.CurrentUser.Session}}" class="username">Unban</a>{{else}}<a href="/users/ban/{{.Something.ID}}?session={{.CurrentUser.Session}}" class="username">Ban</a>{{end}}
 		{{end}}
 		<a href="/report/submit/{{.Something.ID}}?session={{.CurrentUser.Session}}&type=user" class="username report_item">Report</a>
 	</div>

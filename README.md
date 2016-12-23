@@ -98,7 +98,7 @@ Add a plugin system.
 
 Tweak the CSS to make it responsive.
 
-Nest the moderation routes to possibly speed routing up a little...?
+Implement a faster router.
 
 Add a friend system.
 

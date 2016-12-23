@@ -16,11 +16,18 @@ type Group struct
 	Tag string
 }
 
+// Permission Structure: ActionComponent[Subcomponent]Flag
 type Perms struct
 {
 	// Global Permissions
 	BanUsers bool
 	ActivateUsers bool
+	EditUser bool
+	EditUserEmail bool
+	EditUserPassword bool
+	EditUserGroup bool
+	EditUserGroupSuperMod bool
+	EditUserGroupAdmin bool
 	ManageForums bool // This could be local, albeit limited for per-forum managers
 	EditSettings bool
 	ManagePlugins bool
@@ -71,6 +78,12 @@ func init() {
 	AllPerms = Perms{
 		BanUsers: true,
 		ActivateUsers: true,
+		EditUser: true,
+		EditUserEmail: true,
+		EditUserPassword: true,
+		EditUserGroup: true,
+		EditUserGroupSuperMod: true,
+		EditUserGroupAdmin: true,
 		ManageForums: true,
 		EditSettings: true,
 		ManagePlugins: true,

@@ -17,7 +17,7 @@
 <div class="colblock_right">
 	{{range .ItemList}}
 	<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
-		<a href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}}" class="editable_block" style="font-size: 20px;position:relative;top: -2px;">{{.Name}}</a>
+		<a {{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}} "{{end}}class="editable_block" style="font-size: 20px;position:relative;top: -2px;">{{.Name}}</a>
 		<a href="/user/{{.ID}}" class="tag-mini" style="margin-left: 3px;position: relative;top:-5px;color: #505050;">Profile</a>
 		{{if .Tag}}<span class="username" style="margin-left 4px;{{if (.Is_Super_Mod) and (.Active)}}float: right;{{end}}">{{.Tag}}</span>{{end}}
 		<span style="float: right;">

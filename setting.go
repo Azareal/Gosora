@@ -4,7 +4,7 @@ import "strings"
 
 var settingLabels map[string]string
 
-type SettingLabel struct
+type OptionLabel struct
 {
 	Label string
 	Value int

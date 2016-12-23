@@ -98,7 +98,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		avatar string
 	)
 	
-	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	rows, err := get_topic_list_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -287,14 +287,16 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		
 		replyList []Reply
 	)
-	topic := TopicUser{0,"","",0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
 	
+	topic := TopicUser{0,"","",0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
 	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
 		return
 	}
 	if !user.Perms.ViewTopic {
+		//fmt.Printf("%+v\n", user)
+		//fmt.Printf("%+v\n", user.Perms)
 		NoPermissions(w,r,user)
 		return
 	}
