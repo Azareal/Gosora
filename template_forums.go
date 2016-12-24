@@ -17,6 +17,7 @@ w.Write([]byte(`<!doctype html>
 		var session = "` + tmpl_forums_vars.CurrentUser.Session + `";
 		</script>
 		<script type="text/javascript" src="/static/global.js"></script>
+		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
 	</head>
 	<body>
 		<div class="container">
@@ -32,10 +33,10 @@ w.Write([]byte(`<!doctype html>
 if tmpl_forums_vars.CurrentUser.Loggedin {
 w.Write([]byte(`
 		<li class="menu_left menu_account"><a href="/user/edit/critical/">Account</a></li>
-		<li class="menu_left menu_account"><a href="/user/` + strconv.Itoa(tmpl_forums_vars.CurrentUser.ID) + `">Profile</a></li>
+		<li class="menu_left menu_profile"><a href="/user/` + strconv.Itoa(tmpl_forums_vars.CurrentUser.ID) + `">Profile</a></li>
 		`))
 if tmpl_forums_vars.CurrentUser.Is_Super_Mod {
-w.Write([]byte(`<li class="menu_left menu_account"><a href="/panel/forums/">Panel</a></li>`))
+w.Write([]byte(`<li class="menu_left menu_account"><a href="/panel/">Panel</a></li>`))
 }
 w.Write([]byte(`
 		<li class="menu_left menu_logout"><a href="/accounts/logout?session=` + tmpl_forums_vars.CurrentUser.Session + `">Logout</a></li>

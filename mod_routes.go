@@ -532,12 +532,27 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
+/* Control Panel*/
+func route_panel(w http.ResponseWriter, r *http.Request){
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	pi := Page{"Control Panel Dashboard","panel",user,noticeList,tList,0}
+	templates.ExecuteTemplate(w,"panel-dashboard.html", pi)
+}
+
 func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Perms.ManageForums {
+	if !user.Is_Super_Mod || !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -558,7 +573,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Perms.ManageForums {
+	if !user.Is_Super_Mod || !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -595,7 +610,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Perms.ManageForums {
+	if !user.Is_Super_Mod || !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -628,7 +643,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !user.Perms.ManageForums {
+	if !user.Is_Super_Mod || !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -666,7 +681,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !user.Perms.ManageForums {
+	if !user.Is_Super_Mod || !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -710,7 +725,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Perms.EditSettings {
+	if !user.Is_Super_Mod || !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -766,7 +781,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Perms.EditSettings {
+	if !user.Is_Super_Mod || !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -816,7 +831,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !user.Perms.EditSettings {
+	if !user.Is_Super_Mod || !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -872,7 +887,7 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Perms.ManagePlugins {
+	if !user.Is_Super_Mod || !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -891,7 +906,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Perms.ManagePlugins {
+	if !user.Is_Super_Mod || !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -954,7 +969,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Perms.ManagePlugins {
+	if !user.Is_Super_Mod || !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}

@@ -194,6 +194,7 @@ func main(){
 	http.HandleFunc("/users/activate/", route_activate)
 	
 	// Admin
+	http.HandleFunc("/panel/", route_panel)
 	http.HandleFunc("/panel/forums/", route_panel_forums)
 	http.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
 	http.HandleFunc("/panel/forums/delete/", route_panel_forums_delete)

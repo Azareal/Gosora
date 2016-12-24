@@ -2,6 +2,7 @@ package main
 //import "fmt"
 import "log"
 import "bytes"
+import "math/rand"
 import "testing"
 import "net/http"
 import "net/http/httptest"
@@ -216,17 +217,170 @@ func BenchmarkRoute(b *testing.B) {
 			forums_handler.ServeHTTP(forums_w,forums_req)
 		}
 	})
+}
+
+func addEmptyRoutesToMux(routes []string, serveMux *http.ServeMux) {
+	for _, route := range routes {
+		serveMux.HandleFunc(route, func(_ http.ResponseWriter,_ *http.Request){})
+	}
+}
+
+func BenchmarkRouter(b *testing.B) {
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest("get","/topics/",bytes.NewReader(nil))
+	routes := make([]string, 0)
 	
+	routes = append(routes,"/test/")
 	serveMux := http.NewServeMux()
-	serveMux.HandleFunc("/topics/", route_topics)
-	b.Run("topics_guest_plus_router", func(b *testing.B) {
+	serveMux.HandleFunc("/test/", func(_ http.ResponseWriter,_ *http.Request){})
+	b.Run("one-route", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			topics_w.Body.Reset()
-			serveMux.ServeHTTP(topics_w,topics_req)
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
+		}
+	})
+	
+	routes = append(routes,"/topic/")
+	routes = append(routes,"/forums/")
+	routes = append(routes,"/forum/")
+	routes = append(routes,"/panel/")
+	serveMux = http.NewServeMux()
+	addEmptyRoutesToMux(routes, serveMux)
+	b.Run("five-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
+		}
+	})
+	
+	serveMux = http.NewServeMux()
+	routes = append(routes,"/panel/plugins/")
+	routes = append(routes,"/panel/groups/")
+	routes = append(routes,"/panel/settings/")
+	routes = append(routes,"/panel/users/")
+	routes = append(routes,"/panel/forums/")
+	addEmptyRoutesToMux(routes, serveMux)
+	b.Run("ten-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
+		}
+	})
+	
+	serveMux = http.NewServeMux()
+	routes = append(routes,"/panel/forums/create/submit/")
+	routes = append(routes,"/panel/forums/delete/")
+	routes = append(routes,"/users/ban/")
+	routes = append(routes,"/panel/users/edit/")
+	routes = append(routes,"/panel/forums/create/")
+	routes = append(routes,"/users/unban/")
+	routes = append(routes,"/pages/")
+	routes = append(routes,"/users/activate/")
+	routes = append(routes,"/panel/forums/edit/submit/")
+	routes = append(routes,"/panel/plugins/activate/")
+	addEmptyRoutesToMux(routes, serveMux)
+	b.Run("twenty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
+		}
+	})
+	
+	serveMux = http.NewServeMux()
+	routes = append(routes,"/panel/plugins/deactivate/")
+	routes = append(routes,"/panel/plugins/install/")
+	routes = append(routes,"/panel/plugins/uninstall/")
+	routes = append(routes,"/panel/templates/")
+	routes = append(routes,"/panel/templates/edit/")
+	routes = append(routes,"/panel/templates/create/")
+	routes = append(routes,"/panel/templates/delete/")
+	routes = append(routes,"/panel/templates/edit/submit/")
+	routes = append(routes,"/panel/themes/")
+	routes = append(routes,"/panel/themes/edit/")
+	addEmptyRoutesToMux(routes, serveMux)
+	b.Run("thirty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
+		}
+	})
+	
+	serveMux = http.NewServeMux()
+	routes = append(routes,"/panel/themes/create/")
+	routes = append(routes,"/panel/themes/delete/")
+	routes = append(routes,"/panel/themes/delete/submit/")
+	routes = append(routes,"/panel/templates/create/submit/")
+	routes = append(routes,"/panel/templates/delete/submit/")
+	routes = append(routes,"/panel/widgets/")
+	routes = append(routes,"/panel/widgets/edit/")
+	routes = append(routes,"/panel/widgets/activate/")
+	routes = append(routes,"/panel/widgets/deactivate/")
+	routes = append(routes,"/panel/magical/wombat/path")
+	addEmptyRoutesToMux(routes, serveMux)
+	b.Run("forty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
+		}
+	})
+	
+	serveMux = http.NewServeMux()
+	routes = append(routes,"/report/")
+	routes = append(routes,"/report/submit/")
+	routes = append(routes,"/topic/create/submit/")
+	routes = append(routes,"/topics/create/")
+	routes = append(routes,"/overview/")
+	routes = append(routes,"/uploads/")
+	routes = append(routes,"/static/")
+	routes = append(routes,"/reply/edit/submit/")
+	routes = append(routes,"/reply/delete/submit/")
+	routes = append(routes,"/topic/edit/submit/")
+	addEmptyRoutesToMux(routes, serveMux)
+	b.Run("fifty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
+		}
+	})
+	
+	serveMux = http.NewServeMux()
+	routes = append(routes,"/topic/delete/submit/")
+	routes = append(routes,"/topic/stick/submit/")
+	routes = append(routes,"/topic/unstick/submit/")
+	routes = append(routes,"/accounts/login/")
+	routes = append(routes,"/accounts/create/")
+	routes = append(routes,"/accounts/logout/")
+	routes = append(routes,"/accounts/login/submit/")
+	routes = append(routes,"/accounts/create/submit/")
+	routes = append(routes,"/user/edit/critical/")
+	routes = append(routes,"/user/edit/critical/submit/")
+	addEmptyRoutesToMux(routes, serveMux)
+	b.Run("sixty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
+		}
+	})
+	
+	serveMux = http.NewServeMux()
+	routes = append(routes,"/user/edit/avatar/")
+	routes = append(routes,"/user/edit/avatar/submit/")
+	routes = append(routes,"/user/edit/username/")
+	routes = append(routes,"/user/edit/username/submit/")
+	routes = append(routes,"/profile/reply/create/")
+	routes = append(routes,"/profile/reply/edit/submit/")
+	routes = append(routes,"/profile/reply/delete/submit/")
+	routes = append(routes,"/arcane/tower/")
+	routes = append(routes,"/magical/kingdom/")
+	routes = append(routes,"/insert/name/here/")
+	addEmptyRoutesToMux(routes, serveMux)
+	b.Run("seventy-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			serveMux.ServeHTTP(w,req)
 		}
 	})
 }
 
-/*func TestRoute(b *testing.T) {
-	
+/*func TestRoute(t *testing.T) {
 }*/

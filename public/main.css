@@ -28,18 +28,8 @@ body
 }
 }
 
-/*.move_left
-{
-	float: left;
-	position: relative;
-	left: 50%;
-}
-.move_right
-{
-	float: left;
-	position: relative;
-	left: -50%;
-}*/
+/*.move_left{float: left;position: relative;left: 50%;}
+.move_right{float: left;position: relative;left: -50%;}*/
 ul
 {
 	padding-left: 0px;
@@ -340,4 +330,82 @@ button.username
 	border: 1px solid #FF004B;
 	margin-bottom: 8px;
 	background-color: #FEB7CC;
+}
+
+@media (max-width: 880px) {
+	li
+	{
+		height: 25px;
+		font-size: 15px;
+		padding-left: 7px;
+	}
+	ul { height: 26px; margin-top: 8px; }
+	.menu_left { padding-right: 7px; }
+	.menu_right { padding-right: 7px; }
+	body { padding-left: 4px; padding-right: 4px; margin: 0px !important; width: 100% !important; height: 100% !important; overflow-x: hidden; }
+	.container { width: auto; }
+}
+
+@media (max-width: 810px) {
+	li
+	{
+		font-weight: normal;
+		text-transform: none;
+	}
+	.rowitem
+	{
+		text-transform: none;
+	}
+}
+
+@media (max-width: 620px) {
+	li
+	{
+		padding-left: 5px;
+		padding-top: 2px;
+		padding-bottom: 2px;
+		height: 23px;
+	}
+	ul { height: 24px; }
+	.menu_left { padding-right: 5px; }
+	.menu_right { padding-right: 5px; }
+	.menu_create_topic { display: none;}
+	.hide_on_mobile { display: none; }
+}
+
+@media (max-width: 470px) {
+	.menu_overview { display: none; }
+	.menu_profile { display: none; }
+	.hide_on_micro { display: none; }
+	.post_container {
+		overflow: visible !important;
+	}
+	.post_item {
+		background-position: 0px 2px !important;
+		background-size: 64px 64px !important;
+		padding-left: 2px !important;
+		min-height: 96px;
+		position: relative !important;
+	}
+	.post_item > .user_content {
+		margin-left: 75px !important;
+		width: 100% !important;
+	}
+	.post_item > .mod_button {
+		float: right !important;
+		margin-left: 2px !important;
+		position: relative;
+		top: -14px;
+	}
+	.post_item > .real_username {
+		position: absolute;
+		top: 70px;
+		float: left;
+		margin-top: 0px;
+		padding-top: 3px !important;
+		margin-right: 2px;
+		width: 60px;
+		font-size: 15px;
+	}
+	.container { width: 100% !important; }
 }

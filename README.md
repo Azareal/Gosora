@@ -18,7 +18,7 @@ In-memory static file, forum and group caches.
 
 A profile system including profile comments and moderation tools for the profile owner.
 
-A template engine which compiles templates down into machine code. Over ten times faster than html/templates.
+A template engine which compiles templates down into machine code. Over ten times faster than html/templates. Compatible with templates written for html/templates, you don't need to learn any new templating language.
 
 A plugin system. Under development.
 
