@@ -10,7 +10,7 @@ Discord Server: https://discord.gg/eyYvtTf
 # Features
 Basic Forum Functionality
 
-Custom Pages
+Custom Pages. Under development.
 
 Emojis
 
@@ -20,7 +20,7 @@ A profile system including profile comments and moderation tools for the profile
 
 A template engine which compiles templates down into machine code. Over ten times faster than html/templates.
 
-A plugin system.
+A plugin system. Under development.
 
 
 # Dependencies
@@ -78,6 +78,10 @@ We're also looking into ways to distribute ready made executables for Windows. W
 
 With the introduction of the new settings system, we will begin moving some of the less critical settings out of the configuration file, and will likely have a config.xml or config.ini in the future to store the critical settings in.
 
+You might have to go build, run the executable, and then go build and then run the executable again to make sure the templates are compiled properly. We'll be resolving this issue while we roll out the new compiled templates system to the rest of the routes.
+
+Several important features for saving memory in the templates system may have to be implemented before the new compiled template system is rolled out to every route. These features are coming fairly soon, but not before the other more high priority items.
+
 
 # TO-DO
 
@@ -86,15 +90,13 @@ Oh my, you caught me right at the start of this project. There's nothing to see 
 
 More moderation features.
 
-Fix the custom pages.
-
-Add emails as a requirement for registration and add a simple anti-spam measure.
+Add a simple anti-spam measure.
 
 Add an alert system.
 
-Add a complex permissions system.
+Add per-forum permissions to finish up the foundations of the permissions system.
 
-Add a plugin system.
+Add a *better* plugin system.
 
 Tweak the CSS to make it responsive.
 
@@ -103,3 +105,5 @@ Implement a faster router.
 Add a friend system.
 
 Add more administration features.
+
+Add more features for improving user engagement.
