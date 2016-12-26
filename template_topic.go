@@ -66,6 +66,10 @@ w.Write([]byte(`
 		<div class="rowitem"`))
 if tmpl_topic_vars.Topic.Sticky {
 w.Write([]byte(` style="background-color: #FFFFEA;"`))
+} else {
+if tmpl_topic_vars.Topic.Is_Closed {
+w.Write([]byte(` style="background-color: #eaeaea;"`))
+}
 }
 w.Write([]byte(`>
 			<a class='topic_name hide_on_edit'>` + tmpl_topic_vars.Topic.Title + `</a> 
@@ -123,8 +127,7 @@ w.Write([]byte(`<a href="` + tmpl_topic_vars.Topic.URL + `" class="username" sty
 w.Write([]byte(`
 	</div>
 </div><br />
-<div class="rowblock post_container" style="overflow: hidden;">
-	`))
+<div class="rowblock post_container" style="overflow: hidden;">`))
 if len(tmpl_topic_vars.ItemList) != 0 {
 for _, item := range tmpl_topic_vars.ItemList {
 w.Write([]byte(`
@@ -137,8 +140,7 @@ w.Write([]byte(`-1`))
 w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;` + string(item.Css)))
 }
 w.Write([]byte(`">
-		<p class="editable_block user_content" style="margin: 0;padding: 0;">` + string(item.ContentHtml) + `</p>
-		<br /><br />
+		<p class="editable_block user_content" style="margin: 0;padding: 0;">` + string(item.ContentHtml) + `</p><br /><br />
 		<a href="/user/` + strconv.Itoa(item.CreatedBy) + `" class="username real_username">` + item.CreatedByName + `</a>
 		`))
 if tmpl_topic_vars.CurrentUser.Perms.EditReply {
@@ -161,11 +163,11 @@ w.Write([]byte(`<a href="` + item.URL + `" class="username hide_on_mobile" style
 }
 }
 w.Write([]byte(`
-	</div>`))
+	</div>
+`))
 }
 }
-w.Write([]byte(`
-</div>
+w.Write([]byte(`</div>
 `))
 if tmpl_topic_vars.CurrentUser.Perms.CreateReply {
 w.Write([]byte(`

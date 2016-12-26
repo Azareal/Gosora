@@ -73,6 +73,10 @@ w.Write([]byte(`background-image: url(` + item.(TopicUser).Avatar + `);backgroun
 }
 if item.(TopicUser).Sticky {
 w.Write([]byte(`background-color: #FFFFCC;`))
+} else {
+if item.(TopicUser).Is_Closed {
+w.Write([]byte(`background-color: #eaeaea;`))
+}
 }
 w.Write([]byte(`">
 		<a href="/topic/` + strconv.Itoa(item.(TopicUser).ID) + `">` + item.(TopicUser).Title + `</a> `))

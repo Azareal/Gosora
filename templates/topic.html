@@ -1,7 +1,7 @@
 {{template "header.html" . }}
 <div class="rowblock">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
-		<div class="rowitem"{{ if .Topic.Sticky }} style="background-color: #FFFFEA;"{{end}}>
+		<div class="rowitem"{{ if .Topic.Sticky }} style="background-color: #FFFFEA;"{{else if .Topic.Is_Closed}} style="background-color: #eaeaea;"{{end}}>
 			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a> 
 			<span class='username hide_on_micro topic_status_e topic_status_{{.Topic.Status}} hide_on_edit' style="font-weight:normal;float: right;">{{.Topic.Status}}</span> 
 			<span class="username hide_on_micro" style="border-right: 0;font-weight: normal;float: right;">Status</span>
@@ -31,19 +31,17 @@
 		<a class="username" style="color: #505050;float: right;border-right: 0;">{{.Topic.URLPrefix}}</a>{{end}}
 	</div>
 </div><br />
-<div class="rowblock post_container" style="overflow: hidden;">
-	{{range .ItemList}}
+<div class="rowblock post_container" style="overflow: hidden;">{{range .ItemList}}
 	<div class="rowitem passive deletable_block editable_parent post_item" style="{{ if .Avatar }}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Css}}{{end}}">
-		<p class="editable_block user_content" style="margin: 0;padding: 0;">{{.ContentHtml}}</p>
-		<br /><br />
+		<p class="editable_block user_content" style="margin: 0;padding: 0;">{{.ContentHtml}}</p><br /><br />
 		<a href="/user/{{.CreatedBy}}" class="username real_username">{{.CreatedByName}}</a>
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button"><button class="username edit_item">Edit</button></a>{{end}}
 		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="mod_button"><button class="username delete_item">Delete</button></a>{{end}}
 		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button"><button class="username report_item">Report</button></a>
 		{{if .Tag}}<a class="username hide_on_micro" style="float: right;">{{.Tag}}</a>{{else if .URLName}}<a href="{{.URL}}" class="username hide_on_mobile" style="color: #505050;float: right;" rel="nofollow">{{.URLName}}</a>
 		<a class="username hide_on_mobile" style="color: #505050;float: right;border-right: 0;">{{.URLPrefix}}</a>{{end}}
-	</div>{{end}}
-</div>
+	</div>
+{{end}}</div>
 {{if .CurrentUser.Perms.CreateReply}}
 <div class="rowblock">
 	<form action="/reply/create/" method="post">

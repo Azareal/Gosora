@@ -33,10 +33,11 @@ var forums map[int]Forum = make(map[int]Forum)
 var static_files map[string]SFile = make(map[string]SFile)
 var ctemplates []string
 var template_topic_handle func(TopicPage,io.Writer) = nil
+var template_topic_alt_handle func(TopicPage,io.Writer) = nil
 var template_topics_handle func(Page,io.Writer) = nil
 var template_forum_handle func(Page,io.Writer) = nil
 var template_forums_handle func(Page,io.Writer) = nil
-var template_profile_handle func(Page,io.Writer) = nil
+var template_profile_handle func(ProfilePage,io.Writer) = nil
 
 func compile_templates() {
 	var c CTemplateSet
@@ -53,11 +54,11 @@ func compile_templates() {
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title","name",user,noticeList,replyList,topic,false}
 	topic_id_tmpl := c.compile_template("topic.html","templates/","TopicPage", tpage, varList)
+	topic_id_alt_tmpl := c.compile_template("topic_alt.html","templates/","TopicPage", tpage, varList)
 	
 	varList = make(map[string]VarItem)
-	varList["extra_data"] = VarItem{"extra_data","tmpl_profile_vars.Something.(User)","User"}
-	//pi := Page{"Title","name",user,noticeList,replyList,user}
-	//profile_tmpl := c.compile_template("profile.html","templates/","Page", pi, varList)
+	ppage := ProfilePage{"Title",user,noticeList,replyList,user,false}
+	profile_tmpl := c.compile_template("profile.html","templates/","ProfilePage", ppage, varList)
 	
 	var forumList []interface{}
 	for _, forum := range forums {
@@ -79,7 +80,8 @@ func compile_templates() {
 	
 	log.Print("Writing the templates")
 	write_template("topic", topic_id_tmpl)
-	//write_template("profile", profile_tmpl)
+	write_template("topic_alt", topic_id_alt_tmpl)
+	write_template("profile", profile_tmpl)
 	write_template("forums", forums_tmpl)
 	write_template("topics", topics_tmpl)
 	write_template("forum", forum_tmpl)
@@ -209,6 +211,7 @@ func main(){
 	http.HandleFunc("/panel/users/", route_panel_users)
 	http.HandleFunc("/panel/users/edit/", route_panel_users_edit)
 	http.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
+	http.HandleFunc("/panel/groups/", route_panel_groups)
 	
 	http.HandleFunc("/", default_route)
 	

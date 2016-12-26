@@ -5,7 +5,7 @@ import "strings"
 type Page struct
 {
 	Title string
-	Name string
+	Name string // What's the point of this field? If we're not going to use it, remove it.
 	CurrentUser User
 	NoticeList map[int]string
 	ItemList []interface{}
@@ -20,6 +20,16 @@ type TopicPage struct
 	NoticeList map[int]string
 	ItemList []Reply
 	Topic TopicUser
+	ExtData interface{}
+}
+
+type ProfilePage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList map[int]string
+	ItemList []Reply
+	ProfileOwner User
 	ExtData interface{}
 }
 

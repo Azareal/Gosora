@@ -22,6 +22,8 @@ A template engine which compiles templates down into machine code. Over ten time
 
 A plugin system. Under development.
 
+A responsive design. Looks good on mobile phones, tablets, laptops, desktops and more!
+
 
 # Dependencies
 
@@ -83,6 +85,17 @@ You might have to go build, run the executable, and then go build and then run t
 Several important features for saving memory in the templates system may have to be implemented before the new compiled template system is rolled out to every route. These features are coming fairly soon, but not before the other more high priority items.
 
 
+# How do I install plugins?
+
+For the default plugins like Markdown and Helloworld, you can find them in the Plugin Manager of your Control Panel. For ones which aren't included by default, you will need to drag them from your /extend/ directory and into the / directory (the root directory of your Gosora installation, where the executable and most of the main Go files are).
+
+You will then need to recompile Gosora in order to link the plugin code with Gosora's code. For plugins not written in Gosora (e.g. JavaScript), you do not need to move them from the /extend/ directory, they will automatically show up in your Control Panel ready to be installed.
+
+Experimental plugins aka the ones in the /experimental/ folder (e.g. plugin_sendmail) are similar but different. You will have to move native plugins (ones written in Go) to the root directory of your installation and will have to move experimental plugins written in other languages into the /extend/ directory.
+
+We're looking for ways to clean-up the plugin system so that all of them (except the experimental ones) are housed in /extend/, however we've encountered some problems with Go's packaging system. We plan to fix this issue in the future.
+
+
 # TO-DO
 
 Oh my, you caught me right at the start of this project. There's nothing to see here yet, asides from the absolute basics. You might want to look again later!
@@ -96,9 +109,7 @@ Add an alert system.
 
 Add per-forum permissions to finish up the foundations of the permissions system.
 
-Add a *better* plugin system.
-
-Tweak the CSS to make it responsive.
+Add a *better* plugin system. E.g. Allow for plugins written in Javascript and ones written in Go. Also, we need to add many, many, many more plugin hooks.
 
 Implement a faster router.
 
@@ -107,3 +118,5 @@ Add a friend system.
 Add more administration features.
 
 Add more features for improving user engagement.
+
+Add a widget system.

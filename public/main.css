@@ -47,15 +47,13 @@ li
 	font-weight: bold;
 	text-transform: uppercase;
 }
+li:hover { background: rgb(250,250,250); }
 li a
 {
 	text-decoration: none;
 	color: #515151;
 }
-li a:hover
-{
-	color: #7a7a7a;
-}
+/*li a:hover { color: #7a7a7a; }*/
 .menu_left
 {
 	float: left;
@@ -131,7 +129,7 @@ li a:hover
 	font-weight: normal;
 	text-transform: none;
 }
-.rowitem:not(:last-child)/*:not(:only-child)*/
+.rowitem:not(:last-child)
 {
 	border-bottom: 1px dotted #ccc;
 }

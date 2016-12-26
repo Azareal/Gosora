@@ -1224,3 +1224,22 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 	
 	http.Redirect(w,r,"/panel/users/edit/" + strconv.Itoa(targetUser.ID),http.StatusSeeOther)
 }
+
+func route_panel_groups(w http.ResponseWriter, r *http.Request){
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	var groupList []interface{}
+	for _, group := range groups {
+		groupList = append(groupList, group)
+	}
+	
+	pi := Page{"Group Manager","panel-groups",user,noticeList,groupList,0}
+	templates.ExecuteTemplate(w,"panel-groups.html", pi)
+}

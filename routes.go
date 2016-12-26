@@ -316,6 +316,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 	if topic.Is_Closed {
 		topic.Status = "closed"
+		
+		// We don't want users posting in locked topics...
+		if !user.Is_Mod {
+			user.Perms.CreateReply = false
+		}
 	} else {
 		topic.Status = "open"
 	}
@@ -403,8 +408,8 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	
 	tpage := TopicPage{topic.Title,"topic",user,noticeList,replyList,topic,0}
-	if template_topic_handle != nil {
-		template_topic_handle(tpage,w)
+	if template_topic_handle != nil { //if template_topic_alt_handle != nil {
+		template_topic_handle(tpage,w) //template_topic_alt_handle(tpage,w)
 	} else {
 		err = templates.ExecuteTemplate(w,"topic.html", tpage)
 		if err != nil {
@@ -435,7 +440,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		is_super_admin bool
 		group int
 		
-		replyList []interface{}
+		replyList []Reply
 	)
 	
 	puser := User{ID: 0,}
@@ -526,11 +531,11 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{puser.Name + "'s Profile","profile",user,noticeList,replyList,puser}
+	ppage := ProfilePage{puser.Name + "'s Profile",user,noticeList,replyList,puser,false}
 	if template_profile_handle != nil {
-		template_profile_handle(pi,w)
+		template_profile_handle(ppage,w)
 	} else {
-		err = templates.ExecuteTemplate(w,"profile.html", pi)
+		err = templates.ExecuteTemplate(w,"profile.html", ppage)
 		if err != nil {
 			InternalError(err, w, r, user)
 		}
