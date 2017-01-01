@@ -213,6 +213,7 @@ func reset_template_overrides() {
 			return
 		}
 		
+		// Not really a pointer, more of a function handle, an artifact from one of the earlier versions of themes.go
 		switch o_ptr := origin_pointer.(type) {
 			case func(TopicPage,io.Writer):
 				switch d_ptr := dest_tmpl_ptr.(type) {
@@ -233,28 +234,28 @@ func reset_template_overrides() {
 					default:
 						log.Fatal("The origin and destination templates are incompatible")
 				}
-			case *func(TopicsPage,io.Writer):
+			case func(TopicsPage,io.Writer):
 				switch d_ptr := dest_tmpl_ptr.(type) {
 					case *func(TopicsPage,io.Writer):
 						*d_ptr = o_ptr
 					default:
 						log.Fatal("The origin and destination templates are incompatible")
 				}
-			case *func(ForumPage,io.Writer):
+			case func(ForumPage,io.Writer):
 				switch d_ptr := dest_tmpl_ptr.(type) {
 					case *func(ForumPage,io.Writer):
 						*d_ptr = o_ptr
 					default:
 						log.Fatal("The origin and destination templates are incompatible")
 				}
-			case *func(ForumsPage,io.Writer):
+			case func(ForumsPage,io.Writer):
 				switch d_ptr := dest_tmpl_ptr.(type) {
 					case *func(ForumsPage,io.Writer):
 						*d_ptr = o_ptr
 					default:
 						log.Fatal("The origin and destination templates are incompatible")
 				}
-			case *func(ProfilePage,io.Writer):
+			case func(ProfilePage,io.Writer):
 				switch d_ptr := dest_tmpl_ptr.(type) {
 					case *func(ProfilePage,io.Writer):
 						*d_ptr = o_ptr
@@ -268,52 +269,4 @@ func reset_template_overrides() {
 	}
 	overriden_templates = make(map[string]bool)
 	log.Print("All of the template overrides have been reset")
-	
-	/*for name, origin_pointer := range overriden_templates {
-		dest_tmpl_ptr, ok := tmpl_ptr_map[name]
-		if !ok {
-			log.Fatal("The destination template doesn't exist!")
-		}
-		
-		switch o_ptr := origin_pointer.(type) {
-			case *func(TopicPage,io.Writer):
-				switch d_ptr := dest_tmpl_ptr.(type) {
-					case *func(TopicPage,io.Writer):
-						*d_ptr = *o_ptr
-					default:
-							log.Fatal("The origin and destination templates are incompatible")
-				}
-			case *func(TopicsPage,io.Writer):
-				switch d_ptr := dest_tmpl_ptr.(type) {
-					case *func(TopicsPage,io.Writer):
-						*d_ptr = *o_ptr
-					default:
-							log.Fatal("The origin and destination templates are incompatible")
-				}
-			case *func(ForumPage,io.Writer):
-				switch d_ptr := dest_tmpl_ptr.(type) {
-					case *func(ForumPage,io.Writer):
-						*d_ptr = *o_ptr
-					default:
-							log.Fatal("The origin and destination templates are incompatible")
-				}
-			case *func(ForumsPage,io.Writer):
-				switch d_ptr := dest_tmpl_ptr.(type) {
-					case *func(ForumsPage,io.Writer):
-						*d_ptr = *o_ptr
-					default:
-							log.Fatal("The origin and destination templates are incompatible")
-				}
-			case *func(ProfilePage,io.Writer):
-				switch d_ptr := dest_tmpl_ptr.(type) {
-					case *func(ProfilePage,io.Writer):
-						*d_ptr = *o_ptr
-					default:
-							log.Fatal("The origin and destination templates are incompatible")
-				}
-			default:
-				log.Fatal("Unknown destination template type!")
-		}
-		delete(overriden_templates, name)
-	}*/
 }
