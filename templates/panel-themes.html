@@ -1,0 +1,20 @@
+{{template "header.html" . }}
+{{template "panel-menu.html" . }}
+<style type="text/css">.rowitem::after {content:"";display:block;clear:both;}</style>
+<div class="colblock_right">
+	<div class="rowitem"><a>Themes</a></div>
+</div>
+<div class="colblock_right">
+	{{range .ItemList}}
+	<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
+		<span style="float: left;">
+			<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size: 20px;">{{.FriendlyName}}</a><br />
+			<small style="margin-left: 2px;">Author: {{.Creator}}</small>
+		</span>
+		<span style="float: right;">
+			{{if .Active}}<span>Default</span>{{else}}<a href="/panel/themes/default/{{.Name}}?session={{$.CurrentUser.Session}}" class="username">Make Default</a>{{end}}
+		</span>
+	</div>
+	{{end}}
+</div>
+{{template "footer.html" . }}

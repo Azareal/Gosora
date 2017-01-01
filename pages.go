@@ -15,11 +15,37 @@ type Page struct
 type TopicPage struct
 {
 	Title string
-	Name string
 	CurrentUser User
 	NoticeList map[int]string
 	ItemList []Reply
 	Topic TopicUser
+	ExtData interface{}
+}
+
+type TopicsPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList map[int]string
+	ItemList []TopicUser
+	ExtData interface{}
+}
+
+type ForumPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList map[int]string
+	ItemList []TopicUser
+	ExtData interface{}
+}
+
+type ForumsPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList map[int]string
+	ItemList []Forum
 	ExtData interface{}
 }
 
@@ -36,7 +62,6 @@ type ProfilePage struct
 type PageSimple struct
 {
 	Title string
-	Name string
 	Something interface{}
 }
 

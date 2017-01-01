@@ -99,8 +99,15 @@ CREATE TABLE `plugins`(
 	unique(`uname`)
 );
 
+CREATE TABLE `themes`(
+	`uname` varchar(200) not null,
+	`default` tinyint DEFAULT 0 not null,
+	unique(`uname`)
+);
+
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('url_tags','1','bool');
 INSERT INTO settings(`name`,`content`,`type`,`constraints`) VALUES ('activation_type','1','list','1-3',);
+INSERT INTO themes(`uname`,`default`) VALUES ('tempra-simple',1);
 
 INSERT INTO users(`name`,`email`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`,`message`) 
 VALUES ('Admin','admin@localhost',1,1,NOW(),NOW(),'');
@@ -118,6 +125,7 @@ EditUserGroupSuperMod
 EditUserGroupAdmin
 ManageForums
 EditSettings
+ManageThemes
 ManagePlugins
 ViewIPs
 
@@ -132,11 +140,11 @@ PinTopic
 CloseTopic
 */
 
-INSERT INTO users_groups(`name`,`permissions`,`active`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManagePlugins":true,"ViewIPs":true,"ViewTopic":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,1,1,"Admin");
-INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`tag`) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":true,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManagePlugins":false,"ViewIPs":true,"ViewTopic":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,"Mod");
-INSERT INTO users_groups(`name`,`permissions`) VALUES ('Member','{"BanUsers":false,"ActivateUsers":false,"EditUser":false,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":false,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManagePlugins":false,"ViewIPs":false,"ViewTopic":true,"CreateTopic":true,"EditTopic":false,"DeleteTopic":false,"CreateReply":true,"EditReply":false,"DeleteReply":false,"PinTopic":false,"CloseTopic":false}');
-INSERT INTO users_groups(`name`,`permissions`,`is_banned`) VALUES ('Banned','{"BanUsers":false,"ActivateUsers":false,"EditUser":false,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":false,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManagePlugins":false,"ViewIPs":false,"ViewTopic":true,"CreateTopic":false,"EditTopic":false,"DeleteTopic":false,"CreateReply":false,"EditReply":false,"DeleteReply":false,"PinTopic":false,"CloseTopic":false}',1);
-INSERT INTO users_groups(`name`,`permissions`,`is_banned`) VALUES ('Awaiting Activation','{"BanUsers":false,"ActivateUsers":false,"EditUser":false,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":false,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManagePlugins":false,"ViewIPs":false,"ViewTopic":true,"CreateTopic":false,"EditTopic":false,"DeleteTopic":false,"CreateReply":false,"EditReply":false,"DeleteReply":false,"PinTopic":false,"CloseTopic":false}');
+INSERT INTO users_groups(`name`,`permissions`,`active`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewIPs":true,"ViewTopic":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,1,1,"Admin");
+INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`tag`) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":true,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManageThemes":false,"ManagePlugins":false,"ViewIPs":true,"ViewTopic":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,"Mod");
+INSERT INTO users_groups(`name`,`permissions`) VALUES ('Member','{"BanUsers":false,"ActivateUsers":false,"EditUser":false,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":false,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManageThemes":false,"ManagePlugins":false,"ViewIPs":false,"ViewTopic":true,"CreateTopic":true,"EditTopic":false,"DeleteTopic":false,"CreateReply":true,"EditReply":false,"DeleteReply":false,"PinTopic":false,"CloseTopic":false}');
+INSERT INTO users_groups(`name`,`permissions`,`is_banned`) VALUES ('Banned','{"BanUsers":false,"ActivateUsers":false,"EditUser":false,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":false,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManageThemes":false,"ManagePlugins":false,"ViewIPs":false,"ViewTopic":true,"CreateTopic":false,"EditTopic":false,"DeleteTopic":false,"CreateReply":false,"EditReply":false,"DeleteReply":false,"PinTopic":false,"CloseTopic":false}',1);
+INSERT INTO users_groups(`name`,`permissions`,`is_banned`) VALUES ('Awaiting Activation','{"BanUsers":false,"ActivateUsers":false,"EditUser":false,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":false,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManageThemes":false,"ManagePlugins":false,"ViewIPs":false,"ViewTopic":true,"CreateTopic":false,"EditTopic":false,"DeleteTopic":false,"CreateReply":false,"EditReply":false,"DeleteReply":false,"PinTopic":false,"CloseTopic":false}');
 
 INSERT INTO forums(`name`,`lastTopicTime`) VALUES ('General',NOW());
 INSERT INTO topics(`title`,`content`,`createdAt`,`lastReplyAt`,`createdBy`,`parentID`) 

@@ -4,9 +4,7 @@
 	<div class="rowitem passive"><a href="/panel/groups/">Groups</a></div>
 	{{if .CurrentUser.Perms.ManageForums}}<div class="rowitem passive"><a href="/panel/forums/">Forums</a></div>{{end}}
 	{{if .CurrentUser.Perms.EditSettings}}<div class="rowitem passive"><a href="/panel/settings/">Settings</a></div>{{end}}
+	{{if .CurrentUser.Perms.ManageThemes}}<div class="rowitem passive"><a href="/panel/themes/">Themes</a></div>{{end}}
 	{{if .CurrentUser.Perms.ManagePlugins}}<div class="rowitem passive"><a href="/panel/plugins/">Plugins</a></div>{{end}}
-	<div class="rowitem passive"><a>Coming Soon</a></div>
-	<div class="rowitem passive"><a>Coming Soon</a></div>
-	<div class="rowitem passive"><a>Coming Soon</a></div>
 	<div class="rowitem passive"><a href="/forum/-1">Reported Content</a></div>
 </div>

@@ -1,0 +1,12 @@
+{
+	"Name": "tempra-conflux",
+	"FriendlyName": "Tempra Conflux",
+	"Version": "0.0.1",
+	"Creator": "Azareal",
+	"Templates": [
+		{
+			"Name": "topic",
+			"Source": "topic_alt"
+		}
+	]
+}

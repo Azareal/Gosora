@@ -31,52 +31,54 @@ var external_sites map[string]string = make(map[string]string)
 var groups map[int]Group = make(map[int]Group)
 var forums map[int]Forum = make(map[int]Forum)
 var static_files map[string]SFile = make(map[string]SFile)
-var ctemplates []string
+
 var template_topic_handle func(TopicPage,io.Writer) = nil
+var template_topic_origin_handle func(TopicPage,io.Writer) = nil
 var template_topic_alt_handle func(TopicPage,io.Writer) = nil
-var template_topics_handle func(Page,io.Writer) = nil
-var template_forum_handle func(Page,io.Writer) = nil
-var template_forums_handle func(Page,io.Writer) = nil
+var template_topics_handle func(TopicsPage,io.Writer) = nil
+var template_forum_handle func(ForumPage,io.Writer) = nil
+var template_forums_handle func(ForumsPage,io.Writer) = nil
 var template_profile_handle func(ProfilePage,io.Writer) = nil
 
 func compile_templates() {
 	var c CTemplateSet
-	user := User{0,"","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","",""}
+	user := User{62,"","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","",""}
 	var noticeList map[int]string = make(map[int]string)
 	noticeList[0] = "test"
 	
 	log.Print("Compiling the templates")
 	
-	topic := TopicUser{0,"",template.HTML(""),0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
+	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"",template.HTML(""),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
+	replyList = append(replyList, Reply{0,0,"",template.HTML("Yo!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
 	
 	var varList map[string]VarItem = make(map[string]VarItem)
-	tpage := TopicPage{"Title","name",user,noticeList,replyList,topic,false}
+	tpage := TopicPage{"Title",user,noticeList,replyList,topic,false}
 	topic_id_tmpl := c.compile_template("topic.html","templates/","TopicPage", tpage, varList)
 	topic_id_alt_tmpl := c.compile_template("topic_alt.html","templates/","TopicPage", tpage, varList)
 	
 	varList = make(map[string]VarItem)
-	ppage := ProfilePage{"Title",user,noticeList,replyList,user,false}
+	ppage := ProfilePage{"User 526",user,noticeList,replyList,user,false}
 	profile_tmpl := c.compile_template("profile.html","templates/","ProfilePage", ppage, varList)
 	
-	var forumList []interface{}
+	var forumList []Forum
 	for _, forum := range forums {
 		if forum.Active {
 			forumList = append(forumList, forum)
 		}
 	}
 	varList = make(map[string]VarItem)
-	pi := Page{"Forum List","forums",user,noticeList,forumList,0}
-	forums_tmpl := c.compile_template("forums.html","templates/","Page", pi, varList)
+	forums_page := ForumsPage{"Forum List",user,noticeList,forumList,0}
+	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage", forums_page, varList)
 	
-	var topicList []interface{}
+	var topicList []TopicUser
 	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"",1,"open","Admin","","",0,"","","",""})
-	pi = Page{"Topic List","topics",user,noticeList,topicList,""}
-	topics_tmpl := c.compile_template("topics.html","templates/","Page", pi, varList)
+	topics_page := TopicsPage{"Topic List",user,noticeList,topicList,""}
+	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
+	//topics_tmpl := c.compile_template("topics.html","templates/","Page", pi, varList)
 	
-	pi = Page{"General Forum","forum",user,noticeList,topicList,"There aren't any topics in this forum yet."}
-	forum_tmpl := c.compile_template("forum.html","templates/","Page", pi, varList)
+	forum_page := ForumPage{"General Forum",user,noticeList,topicList,"There aren't any topics in this forum yet."}
+	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)
 	
 	log.Print("Writing the templates")
 	write_template("topic", topic_id_tmpl)
@@ -102,8 +104,9 @@ func write_template(name string, content string) {
 }
 
 func main(){
+	init_themes()
 	var err error
-	init_database(err);
+	init_database(err)
 	compile_templates()
 	
 	log.Print("Loading the static files.")
@@ -132,19 +135,11 @@ func main(){
 	hooks["rrow_assign"] = nil
 	templates.ParseGlob("pages/*")
 	
-	for name, body := range plugins {
-		log.Print("Added plugin " + name)
-		if body.Active {
-			log.Print("Initialised plugin " + name)
-			plugins[name].Init()
-		}
-	}
+	init_plugins()
 	
 	// In a directory to stop it clashing with the other paths
 	http.HandleFunc("/static/", route_static)
-	//http.HandleFunc("/static/", route_fstatic)
-	//fs_p := http.FileServer(http.Dir("./public"))
-	//http.Handle("/static/", http.StripPrefix("/static/",fs_p))
+	
 	fs_u := http.FileServer(http.Dir("./uploads"))
 	http.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))
 	
@@ -205,6 +200,8 @@ func main(){
 	http.HandleFunc("/panel/settings/", route_panel_settings)
 	http.HandleFunc("/panel/settings/edit/", route_panel_setting)
 	http.HandleFunc("/panel/settings/edit/submit/", route_panel_setting_edit)
+	http.HandleFunc("/panel/themes/", route_panel_themes)
+	http.HandleFunc("/panel/themes/default/", route_panel_themes_default)
 	http.HandleFunc("/panel/plugins/", route_panel_plugins)
 	http.HandleFunc("/panel/plugins/activate/", route_panel_plugins_activate)
 	http.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)

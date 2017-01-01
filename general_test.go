@@ -31,8 +31,8 @@ func BenchmarkTopicTemplate(b *testing.B) {
 	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
 	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
 	
-	tpage := TopicPage{"Topic Blah","topic",user,noticeList,replyList,topic,false}
-	tpage2 := TopicPage{"Topic Blah","topic",admin,noticeList,replyList,topic,false}
+	tpage := TopicPage{"Topic Blah",user,noticeList,replyList,topic,false}
+	tpage2 := TopicPage{"Topic Blah",admin,noticeList,replyList,topic,false}
 	w := ioutil.Discard
 	
 	b.Run("compiled_useradmin", func(b *testing.B) {
@@ -65,7 +65,7 @@ func BenchmarkTopicsTemplate(b *testing.B) {
 	var noticeList map[int]string = make(map[int]string)
 	noticeList[0] = "test"
 	
-	var topicList []interface{}
+	var topicList []TopicUser
 	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
 	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
 	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
@@ -77,8 +77,8 @@ func BenchmarkTopicsTemplate(b *testing.B) {
 	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
 	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
 	
-	tpage := Page{"Topic Blah","topic",user,noticeList,topicList,0}
-	tpage2 := Page{"Topic Blah","topic",admin,noticeList,topicList,0}
+	tpage := TopicsPage{"Topic Blah",user,noticeList,topicList,0}
+	tpage2 := TopicsPage{"Topic Blah",admin,noticeList,topicList,0}
 	w := ioutil.Discard
 	
 	b.Run("compiled_useradmin", func(b *testing.B) {
@@ -138,6 +138,10 @@ func BenchmarkRoute(b *testing.B) {
 	forums_req_admin.AddCookie(&admin_session_cookie)
 	forums_handler := http.HandlerFunc(route_forums)
 	
+	static_w := httptest.NewRecorder()
+	static_req := httptest.NewRequest("get","/static/global.js",bytes.NewReader(nil))
+	static_handler := http.HandlerFunc(route_static)
+	
 	debug = false
 	nogrouplog = true
 	
@@ -146,16 +150,18 @@ func BenchmarkRoute(b *testing.B) {
 	log.SetOutput(discard)
 	
 	var err error
-	init_database(err);
+	init_database(err)
 	external_sites["YT"] = "https://www.youtube.com/"
 	hooks["trow_assign"] = nil
 	hooks["rrow_assign"] = nil
+	init_plugins()
 	
-	for name, body := range plugins {
-		if body.Active {
-			plugins[name].Init()
+	b.Run("static_files", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			static_w.Body.Reset()
+			static_handler.ServeHTTP(static_w,static_req)
 		}
-	}
+	})
 	
 	b.Run("topic_admin", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

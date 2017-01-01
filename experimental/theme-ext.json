@@ -1,0 +1,19 @@
+{
+	"Name": "tempra-simple",
+	"FriendlyName": "Tempra Simple",
+	"Version": "0.0.1",
+	"Creator": "Azareal",
+	"Settings": {
+		"PostLayout": {
+			"FriendlyName":"Post Layout",
+			"Options": ["Compact","Alternate"]
+		}
+	},
+	"Templates": [
+		{
+			"Name": "topic",
+			"Source": "topic_alt",
+			"When": "PostLayout=Alternate"
+		}
+	]
+}

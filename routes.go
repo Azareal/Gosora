@@ -24,18 +24,27 @@ var nList map[int]string
 // GET functions
 func route_static(w http.ResponseWriter, r *http.Request){
 	//name := r.URL.Path[len("/static/"):]
-	if t, err := time.Parse(http.TimeFormat, r.Header.Get("If-Modified-Since")); err == nil && static_files[r.URL.Path].Info.ModTime().Before(t.Add(1*time.Second)) {
+	//log.Print("Outputting static file '" + r.URL.Path + "'")
+	
+	file, ok := static_files[r.URL.Path]
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	
+	// Surely, there's a more efficient way of doing this?
+	if t, err := time.Parse(http.TimeFormat, r.Header.Get("If-Modified-Since")); err == nil && file.Info.ModTime().Before(t.Add(1 * time.Second)) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 	h := w.Header()
-	h.Set("Last-Modified", static_files[r.URL.Path].FormattedModTime)
-	h.Set("Content-Type", static_files[r.URL.Path].Mimetype)
-	h.Set("Content-Length", strconv.FormatInt(static_files[r.URL.Path].Length, 10))
-	//http.ServeContent(w,r,r.URL.Path,static_files[r.URL.Path].Info.ModTime(),static_files[r.URL.Path])
-	//w.Write(static_files[r.URL.Path].Data)
-	io.Copy(w, bytes.NewReader(static_files[r.URL.Path].Data))
-	//io.CopyN(w, bytes.NewReader(static_files[r.URL.Path].Data), static_files[r.URL.Path].Length)
+	h.Set("Last-Modified", file.FormattedModTime)
+	h.Set("Content-Type", file.Mimetype)
+	h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
+	//http.ServeContent(w,r,r.URL.Path,file.Info.ModTime(),file)
+	//w.Write(file.Data)
+	io.Copy(w, bytes.NewReader(file.Data)) // Use w.Write instead?
+	//io.CopyN(w, bytes.NewReader(file.Data), static_files[r.URL.Path].Length)
 }
 
 func route_fstatic(w http.ResponseWriter, r *http.Request){
@@ -83,21 +92,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		return
 	}*/
 	
-	var(
-		topicList []interface{}
-		tid int
-		title string
-		content string
-		createdBy int
-		is_closed bool
-		sticky bool
-		createdAt string
-		parentID int
-		status string
-		name string
-		avatar string
-	)
-	
+	var topicList []TopicUser
 	rows, err := get_topic_list_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r,user)
@@ -105,27 +100,27 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 	defer rows.Close()
 	
+	topicItem := TopicUser{ID: 0,}
 	for rows.Next() {
-		err := rows.Scan(&tid, &title, &content, &createdBy, &is_closed, &sticky, &createdAt, &parentID, &name, &avatar)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
 		}
 		
-		if is_closed {
-			status = "closed"
+		if topicItem.Is_Closed {
+			topicItem.Status = "shut"
 		} else {
-			status = "open"
+			topicItem.Status = "open"
 		}
-		if avatar != "" {
-			if avatar[0] == '.' {
-				avatar = "/uploads/avatar_" + strconv.Itoa(createdBy) + avatar
+		if topicItem.Avatar != "" {
+			if topicItem.Avatar[0] == '.' {
+				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
 			}
 		} else {
-			avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(createdBy),1)
+			topicItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
 		}
 		
-		topicItem := TopicUser{tid,title,content,createdBy,is_closed,sticky, createdAt,parentID,status,name,avatar,"",0,"","","",""}
 		if hooks["trow_assign"] != nil {
 			topicItem = run_hook("trow_assign", topicItem).(TopicUser)
 		}
@@ -137,7 +132,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{"Topic List","topics",user,noticeList,topicList,0}
+	pi := TopicsPage{"Topic List",user,noticeList,topicList,0}
 	if template_topics_handle != nil {
 		template_topics_handle(pi,w)
 	} else {
@@ -154,20 +149,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var(
-		topicList []interface{}
-		tid int
-		title string
-		content string
-		createdBy int
-		is_closed bool
-		sticky bool
-		createdAt string
-		parentID int
-		status string
-		name string
-		avatar string
-	)
+	var topicList []TopicUser
 	
 	fid, err := strconv.Atoi(r.URL.Path[len("/forum/"):])
 	if err != nil {
@@ -192,27 +174,27 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	}
 	defer rows.Close()
 	
+	topicItem := TopicUser{ID: 0}
 	for rows.Next() {
-		err := rows.Scan(&tid, &title, &content, &createdBy, &is_closed, &sticky, &createdAt, &parentID, &name, &avatar)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
 		}
 		
-		if is_closed {
-			status = "closed"
+		if topicItem.Is_Closed {
+			topicItem.Status = "shut"
 		} else {
-			status = "open"
+			topicItem.Status = "open"
 		}
-		if avatar != "" {
-			if avatar[0] == '.' {
-				avatar = "/uploads/avatar_" + strconv.Itoa(createdBy) + avatar
+		if topicItem.Avatar != "" {
+			if topicItem.Avatar[0] == '.' {
+				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
 			}
 		} else {
-			avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(createdBy),1)
+			topicItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
 		}
 		
-		topicItem := TopicUser{tid,title,content,createdBy,is_closed,sticky,createdAt,parentID,status,name,avatar,"",0,"","","",""}
 		if hooks["trow_assign"] != nil {
 			topicItem = run_hook("trow_assign", topicItem).(TopicUser)
 		}
@@ -224,7 +206,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{forums[fid].Name,"forum",user,noticeList,topicList,0}
+	pi := ForumPage{forums[fid].Name,user,noticeList,topicList,0}
 	if template_forum_handle != nil {
 		template_forum_handle(pi,w)
 	} else {
@@ -241,14 +223,14 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var forumList []interface{}
+	var forumList []Forum
 	for _, forum := range forums {
 		if forum.Active {
 			forumList = append(forumList, forum)
 		}
 	}
 	
-	pi := Page{"Forum List","forums",user,noticeList,forumList,0}
+	pi := ForumsPage{"Forum List",user,noticeList,forumList,0}
 	if template_forums_handle != nil {
 		template_forums_handle(pi,w)
 	} else {
@@ -315,7 +297,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	topic.ContentLines = strings.Count(content,"\n")
 	
 	if topic.Is_Closed {
-		topic.Status = "closed"
+		topic.Status = "shut"
 		
 		// We don't want users posting in locked topics...
 		if !user.Is_Mod {
@@ -407,9 +389,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	tpage := TopicPage{topic.Title,"topic",user,noticeList,replyList,topic,0}
-	if template_topic_handle != nil { //if template_topic_alt_handle != nil {
-		template_topic_handle(tpage,w) //template_topic_alt_handle(tpage,w)
+	tpage := TopicPage{topic.Title,user,noticeList,replyList,topic,0}
+	if template_topic_handle != nil {
+		template_topic_handle(tpage,w)
 	} else {
 		err = templates.ExecuteTemplate(w,"topic.html", tpage)
 		if err != nil {

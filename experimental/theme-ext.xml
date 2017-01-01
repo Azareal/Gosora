@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<theme>
+	<name>tempra-simple</name>
+	<friendlyName>Tempra Simple</friendlyName>
+	<version>0.0.1</version>
+	<creator url="http://github.com/Azareal">Azareal</creator>
+	<settings>
+		<name>PostLayout</name>
+		<friendlyName>Post Layout</name>
+		<options>
+			<option>Compact</option>
+			<option>Alternate</option>
+		</options>
+	</settings>
+	<templates>
+		<template name="topic" src="topic_alt" when="PostLayout=Alternate"></template>
+	</templates>
+</theme>

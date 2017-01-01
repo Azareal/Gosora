@@ -42,8 +42,6 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	var is_closed bool
 	if topic_status == "closed" {
 		is_closed = true
-	} else {
-		is_closed = false
 	}
 	
 	topic_content := html.EscapeString(r.PostFormValue("topic_content"))
@@ -910,7 +908,6 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
@@ -1242,4 +1239,96 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 	
 	pi := Page{"Group Manager","panel-groups",user,noticeList,groupList,0}
 	templates.ExecuteTemplate(w,"panel-groups.html", pi)
+}
+
+func route_panel_themes(w http.ResponseWriter, r *http.Request){
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.ManageThemes {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	var themeList []interface{}
+	for _, theme := range themes {
+		themeList = append(themeList, theme)
+	}
+	
+	pi := Page{"Theme Manager","panel-themes",user,noticeList,themeList,0}
+	templates.ExecuteTemplate(w,"panel-themes.html", pi)
+}
+
+func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.ManageThemes {
+		NoPermissions(w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	uname := r.URL.Path[len("/panel/themes/default/"):]
+	theme, ok := themes[uname]
+	if !ok {
+		LocalError("The theme isn't registered in the system",w,r,user)
+		return
+	}
+	
+	var isDefault bool
+	err := db.QueryRow("SELECT `default` from `themes` where `uname` = ?", uname).Scan(&isDefault)
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	has_theme := err != sql.ErrNoRows
+	if has_theme {
+		if isDefault {
+			LocalError("The theme is already active",w,r,user)
+			return
+		}
+		_, err = update_theme_stmt.Exec(1, uname)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+	} else {
+		_, err := add_theme_stmt.Exec(uname,1)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+	}
+	
+	_, err = update_theme_stmt.Exec(0, defaultTheme)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	log.Print("Setting theme '" + theme.Name + "' as the default theme")
+	theme.Active = true
+	themes[uname] = theme
+	
+	dTheme, ok := themes[defaultTheme]
+	if !ok {
+		log.Fatal("The default theme is missing")
+		return
+	}
+	dTheme.Active = false
+	themes[defaultTheme] = dTheme
+	
+	defaultTheme = uname
+	reset_template_overrides()
+	add_theme_static_files(uname)
+	map_theme_templates(theme)
+	
+	http.Redirect(w,r,"/panel/themes/",http.StatusSeeOther)
 }

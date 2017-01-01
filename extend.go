@@ -1,5 +1,6 @@
 /* Copyright Azareal 2016 - 2017 */
 package main
+import "log"
 
 var plugins map[string]Plugin = make(map[string]Plugin)
 var hooks map[string]func(interface{})interface{} = make(map[string]func(interface{})interface{})
@@ -23,6 +24,16 @@ type Plugin struct
 /*func add_hook(name string, handler func(interface{})interface{}) {
 	hooks[name] = handler
 }*/
+
+func init_plugins() {
+	for name, body := range plugins {
+		log.Print("Added plugin " + name)
+		if body.Active {
+			log.Print("Initialised plugin " + name)
+			plugins[name].Init()
+		}
+	}
+}
 
 func add_hook(name string, handler interface{}) {
 	switch h := handler.(type) {

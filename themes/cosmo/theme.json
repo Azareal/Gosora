@@ -1,0 +1,12 @@
+{
+	"Name": "cosmo",
+	"FriendlyName": "AtomBB Cosmo",
+	"Version": "Coming Soon",
+	"Creator": "Azareal",
+	"Templates": [
+		{
+			"Name": "topic",
+			"Source": "topic_alt"
+		}
+	]
+}

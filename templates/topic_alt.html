@@ -1,7 +1,7 @@
 {{template "header.html" . }}
 <div class="rowblock">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
-		<div class="rowitem"{{ if .Topic.Sticky }} style="background-color: #FFFFEA;"{{else if .Topic.Is_Closed}} style="background-color: #eaeaea;"{{end}}>
+		<div class="rowitem" style="{{ if .Topic.Sticky }}background-color: #FFFFEA;background: linear-gradient(to bottom, hsl(60, 70%, 96%), hsl(60, 70%, 89%)), url('/static/fabric-base-simple-alpha.png');{{else if .Topic.Is_Closed}}background-color: #eaeaea;background: linear-gradient(to bottom, #eaeaea, hsl(0,0%,79%));{{else}}background: linear-gradient(to bottom, white, hsl(0, 0%, 93%));{{end}}">
 			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a> 
 			<span class='username hide_on_micro topic_status_e topic_status_{{.Topic.Status}} hide_on_edit' style="font-weight:normal;float: right;">{{.Topic.Status}}</span> 
 			<span class="username hide_on_micro" style="border-right: 0;font-weight: normal;float: right;">Status</span>
@@ -13,7 +13,7 @@
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />
 			<select name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
 				<option>open</option>
-				<option>closed</option>
+				<option>shut</option>
 			</select>
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
 			{{end}}
@@ -24,7 +24,7 @@
 <style type="text/css">.rowitem:last-child .content_container { margin-bottom: 5px !important; }</style>
 <div class="rowblock post_container" style="border-top: none;">
 	<div class="rowitem passive deletable_block editable_parent post_item" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
-		<div class="userinfo" style="background: white;width: 132px;padding: 2px;margin-top: 2px;float: left;box-shadow:0 1px 2px rgba(0,0,0,.1);">
+		<div class="userinfo" style="background: white;width: 132px;padding: 2px;margin-top: 2px;float: left;position: sticky;top: 4px;box-shadow:0 1px 2px rgba(0,0,0,.1);">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;background-repeat: no-repeat, repeat-y;background-size: 128px;width: 128px;height: 100%;min-height: 128px;border-style: solid;border-color: #eaeaea;border-width: 1px;">&nbsp;</div>
 			<div class="the_name" style="margin-top: 3px;text-align: center;color: #505050;">{{.Topic.CreatedByName}}</div>
 		</div>
@@ -35,7 +35,7 @@
 	</div>
 	{{range .ItemList}}
 	<div class="rowitem passive deletable_block editable_parent post_item" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
-		<div class="userinfo" style="background: white;width: 132px;padding: 2px;margin-top: 2px;float: left;box-shadow:0 1px 2px rgba(0,0,0,.1);">
+		<div class="userinfo" style="background: white;width: 132px;padding: 2px;margin-top: 2px;float: left;position: sticky;top: 4px;box-shadow:0 1px 2px rgba(0,0,0,.1);">
 			<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;background-repeat: no-repeat, repeat-y;background-size: 128px;width: 128px;height: 100%;min-height: 128px;border-style: solid;border-color: #eaeaea;border-width: 1px;">&nbsp;</div>
 			<div class="the_name" style="margin-top: 3px;text-align: center;color: #505050;">{{.CreatedByName}}</div>
 		</div>
@@ -50,7 +50,7 @@
 	</div>
 {{end}}</div>
 {{if .CurrentUser.Perms.CreateReply}}
-<div class="rowblock">
+<div class="rowblock" style="border-top: none;">
 	<form action="/reply/create/" method="post">
 		<input name="tid" value='{{.Topic.ID}}' type="hidden" />
 		<div class="formrow">

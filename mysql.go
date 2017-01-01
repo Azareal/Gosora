@@ -42,6 +42,8 @@ var update_setting_stmt *sql.Stmt
 var add_plugin_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
 var update_user_stmt *sql.Stmt
+var add_theme_stmt *sql.Stmt
+var update_theme_stmt *sql.Stmt
 
 func init_database(err error) {
 	if(dbpassword != ""){
@@ -253,6 +255,18 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing add_theme statement.")
+	add_theme_stmt, err = db.Prepare("INSERT INTO `themes`(`uname`,`default`) VALUES(?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_theme statement.")
+	update_theme_stmt, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Preparing update_user statement.")
 	update_user_stmt, err = db.Prepare("UPDATE `users` SET `name` = ?, `email` = ?, `group` = ? WHERE `uid` = ?")
 	if err != nil {
@@ -381,4 +395,42 @@ func init_database(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	
+	log.Print("Loading the themes.")
+	rows, err = db.Query("SELECT `uname`, `default` FROM `themes`")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	var defaultThemeSwitch bool
+	for rows.Next() {
+		err := rows.Scan(&uname, &defaultThemeSwitch)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		// Was the theme deleted at some point?
+		theme, ok := themes[uname]
+		if !ok {
+			continue
+		}
+		
+		if defaultThemeSwitch {
+			log.Print("Loading the theme '" + theme.Name + "'")
+			theme.Active = true
+			defaultTheme = uname
+			add_theme_static_files(uname)
+			map_theme_templates(theme)
+		} else {
+			theme.Active = false
+		}
+		themes[uname] = theme
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	
 }
