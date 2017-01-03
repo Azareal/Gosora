@@ -8,13 +8,13 @@ Discord Server: https://discord.gg/eyYvtTf
 
 
 # Features
-Basic Forum Functionality
+Basic Forum Functionality. All of the little things you would expect of any forum software. E.g. Moderation, Custom Themes, Avatars, and so on.
 
-Custom Pages. Under development.
+Custom Pages. Under development. Mainly the Control Panel portion to come, but you can create them by hand today.
 
-Emojis
+Emojis. Allow your users to express themselves without resorting to serving tons upon tons of image files.
 
-In-memory static file, forum and group caches.
+In-memory static file, forum and group caches. We're pondering over extending this solution over to topics, users, etc. to some extent.
 
 A profile system including profile comments and moderation tools for the profile owner.
 
@@ -22,7 +22,7 @@ A template engine which compiles templates down into machine code. Over ten time
 
 A plugin system. Under development.
 
-A responsive design. Looks good on mobile phones, tablets, laptops, desktops and more!
+A responsive design. Looks great on mobile phones, tablets, laptops, desktops and more!
 
 
 # Dependencies
@@ -38,19 +38,15 @@ Instructions on how to do so on Linux: https://downloads.mariadb.org/mariadb/rep
 
 **Run the following commands:**
 
-go get github.com/go-sql-driver/mysql
+go get -u github.com/go-sql-driver/mysql
 
-go install github.com/go-sql-driver/mysql
-
-go get golang.org/x/crypto/bcrypt
-
-go install golang.org/x/crypto/bcrypt
+go get -u golang.org/x/crypto/bcrypt
 
 Tweak the config.go file and put your database details in there. Import data.sql into the same database. Comment out the first line (put /* and */ around it), if you've already made a database, and don't want the script to generate it for you.
 
 Set the password column of your user account in the database to what you want your password to be. The system will encrypt your password when you login for the first time.
 
-Add -u after go get to update those libraries, if you've already got them installed.
+You can run these commands again at any time to update these dependencies to their latest versions.
 
 # Run the program
 
@@ -67,7 +63,7 @@ go build
 
 Open up cmd.exe
 
-cd to the directory / folder the code is in. E.g. cd /Users/Blah/Documents/gosora
+cd to the directory / folder the code is in. E.g. `cd /Users/Blah/Documents/gosora`
 
 go build
 
@@ -101,9 +97,11 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 Oh my, you caught me right at the start of this project. There's nothing to see here yet, asides from the absolute basics. You might want to look again later!
 
 
-More moderation features.
+The various little features which somehow got stuck in the net. Don't worry, I'll get to them!
 
-Add a simple anti-spam measure.
+More moderation features. E.g. Move, Approval Queue (Posts made by users in certain usergroups will need to be approved by a moderator before they're publically visible), etc.
+
+Add a simple anti-spam measure. I have quite a few ideas in mind, but it'll take a while to implement the more advanced ones, so I'd like to put off some of those to a later date and focus on the basics. E.g. CAPTCHAs, hidden fields, etc.
 
 Add an alert system.
 
@@ -111,12 +109,18 @@ Add per-forum permissions to finish up the foundations of the permissions system
 
 Add a *better* plugin system. E.g. Allow for plugins written in Javascript and ones written in Go. Also, we need to add many, many, many more plugin hooks.
 
-Implement a faster router.
+I will need to ponder over implementing an even faster router. We don't need one immediately, although it would be nice if we could get one in the near future. It really depends. Ideally, it would be one which can easily integrate with the current structure without much work, although I'm not beyond making some alterations to faciliate it, assuming that we don't get too tightly bound to that specific router.
+
+Allow themes to define their own templates.
 
 Add a friend system.
 
 Add more administration features.
 
-Add more features for improving user engagement.
+Add more features for improving user engagement. I have quite a few of these in mind, but I'm mostly occupied with implementing the essentials right now.
 
 Add a widget system.
+
+Add support for multi-factor authentication.
+
+Add support for secondary emails for users.

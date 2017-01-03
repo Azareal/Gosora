@@ -28,6 +28,15 @@ type User struct
 	Tag string
 }
 
+type Email struct
+{
+	UserID int
+	Email string
+	Validated bool
+	Primary bool
+	Token string
+}
+
 func SetPassword(uid int, password string) (error) {
 	salt, err := GenerateSafeString(saltLength)
 	if err != nil {
@@ -45,6 +54,18 @@ func SetPassword(uid int, password string) (error) {
 		return err
 	}
 	return nil
+}
+
+func SendValidationEmail(username string, email string, token string) bool {
+	var schema string
+	if enable_ssl {
+		schema = "s"
+	}
+	
+	subject := "Validate Your Email @ " + site_name
+	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\nClick on the following link to do so. http" + schema + "://" + site_url + "/user/edit/token/" + token + "\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
+	
+	return SendEmail(email, subject, msg)
 }
 
 func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList map[int]string, success bool) {
@@ -71,7 +92,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	user.Session = cookie.Value
 	
 	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
+	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""

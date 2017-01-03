@@ -27,6 +27,9 @@ var set_password_stmt *sql.Stmt
 var get_password_stmt *sql.Stmt
 var set_avatar_stmt *sql.Stmt
 var set_username_stmt *sql.Stmt
+var add_email_stmt *sql.Stmt
+var update_email_stmt *sql.Stmt
+var verify_email_stmt *sql.Stmt
 var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 var change_group_stmt *sql.Stmt
@@ -61,7 +64,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_session statement.")
-	get_session_stmt, err = db.Prepare("select `uid`, `name`, `group`, `is_super_admin`, `session`, `avatar`, `message`, `url_prefix`, `url_name` FROM `users` WHERE `uid` = ? AND `session` = ? AND `session` <> ''")
+	get_session_stmt, err = db.Prepare("select `uid`, `name`, `group`, `is_super_admin`, `session`, `email`, `avatar`, `message`, `url_prefix`, `url_name` FROM `users` WHERE `uid` = ? AND `session` = ? AND `session` <> ''")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -195,6 +198,24 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing add_email statement.")
+	add_email_stmt, err = db.Prepare("INSERT INTO emails(`email`,`uid`,`validated`,`token`) VALUES(?,?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_email statement.")
+	update_email_stmt, err = db.Prepare("UPDATE emails SET email = ?, uid = ?, validated = ?, token = ? WHERE email = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing verify_email statement.")
+	verify_email_stmt, err = db.Prepare("UPDATE emails SET validated = 1, token = '' WHERE email = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Preparing activate_user statement.")
 	activate_user_stmt, err = db.Prepare("UPDATE users SET active = 1 WHERE uid = ?")
 	if err != nil {
@@ -291,7 +312,6 @@ func init_database(err error) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		
 		if !nogrouplog {
 			fmt.Println(group.Name + ": ")
 			fmt.Printf("%+v\n", group.Perms)
@@ -328,7 +348,6 @@ func init_database(err error) {
 			forum.LastTopic = "None"
 			forum.LastTopicTime = ""
 		}
-		
 		forums[forum.ID] = forum
 	}
 	err = rows.Err()
@@ -387,7 +406,6 @@ func init_database(err error) {
 		if !ok {
 			continue
 		}
-		
 		plugin.Active = active
 		plugins[uname] = plugin
 	}

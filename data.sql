@@ -32,6 +32,13 @@ CREATE TABLE `users_groups`(
 	primary key(`gid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
+CREATE TABLE `emails`(
+	`email` varchar(200) not null,
+	`uid` int not null,
+	`validated` tinyint DEFAULT 0 not null,
+	`token` varchar(200) DEFAULT '' not null
+);
+
 CREATE TABLE `forums`(
 	`fid` int not null AUTO_INCREMENT,
 	`name` varchar(100) not null,
@@ -111,6 +118,7 @@ INSERT INTO themes(`uname`,`default`) VALUES ('tempra-simple',1);
 
 INSERT INTO users(`name`,`email`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`,`message`) 
 VALUES ('Admin','admin@localhost',1,1,NOW(),NOW(),'');
+INSERT INTO emails(`email`,`uid`,`validated`) VALUES ('admin@localhost',1,1);
 
 /*
 The Permissions:

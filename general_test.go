@@ -1,5 +1,4 @@
 package main
-//import "fmt"
 import "log"
 import "bytes"
 import "math/rand"
@@ -8,6 +7,7 @@ import "net/http"
 import "net/http/httptest"
 import "io/ioutil"
 import "html/template"
+//import "github.com/husobee/vestigo"
 
 func BenchmarkTopicTemplate(b *testing.B) {
 	b.ReportAllocs()
@@ -107,7 +107,7 @@ func BenchmarkRoute(b *testing.B) {
 	b.ReportAllocs()
 	
 	admin_uid_cookie := http.Cookie{Name: "uid",Value: "1",Path: "/",MaxAge: year}
-	// TO-DO: Stop hard-coding this value
+	// TO-DO: Stop hard-coding this value. Seriously.
 	admin_session_cookie := http.Cookie{Name: "session",Value: "TKBh5Z-qEQhWDBnV6_XVmOhKAowMYPhHeRlrQjjbNc0QRrRiglvWOYFDc1AaMXQIywvEsyA2AOBRYUrZ5kvnGhThY1GhOW6FSJADnRWm_bI=",Path: "/",MaxAge: year}
 	
 	topic_w := httptest.NewRecorder()
@@ -231,7 +231,7 @@ func addEmptyRoutesToMux(routes []string, serveMux *http.ServeMux) {
 	}
 }
 
-func BenchmarkRouter(b *testing.B) {
+func BenchmarkDefaultGoRouter(b *testing.B) {
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("get","/topics/",bytes.NewReader(nil))
 	routes := make([]string, 0)
@@ -388,5 +388,332 @@ func BenchmarkRouter(b *testing.B) {
 	})
 }
 
+/*func addEmptyRoutesToVestigo(routes []string, router *vestigo.Router) {
+	for _, route := range routes {
+		router.HandleFunc(route, func(_ http.ResponseWriter,_ *http.Request){})
+	}
+}
+
+func BenchmarkVestigoRouter(b *testing.B) {
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest("get","/topics/",bytes.NewReader(nil))
+	routes := make([]string, 0)
+	
+	routes = append(routes,"/test/")
+	router := vestigo.NewRouter()
+	router.HandleFunc("/test/", func(_ http.ResponseWriter,_ *http.Request){})
+	b.Run("one-route", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	routes = append(routes,"/topic/")
+	routes = append(routes,"/forums/")
+	routes = append(routes,"/forum/")
+	routes = append(routes,"/panel/")
+	router = vestigo.NewRouter()
+	addEmptyRoutesToVestigo(routes, router)
+	b.Run("five-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = vestigo.NewRouter()
+	routes = append(routes,"/panel/plugins/")
+	routes = append(routes,"/panel/groups/")
+	routes = append(routes,"/panel/settings/")
+	routes = append(routes,"/panel/users/")
+	routes = append(routes,"/panel/forums/")
+	addEmptyRoutesToVestigo(routes, router)
+	b.Run("ten-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = vestigo.NewRouter()
+	routes = append(routes,"/panel/forums/create/submit/")
+	routes = append(routes,"/panel/forums/delete/")
+	routes = append(routes,"/users/ban/")
+	routes = append(routes,"/panel/users/edit/")
+	routes = append(routes,"/panel/forums/create/")
+	routes = append(routes,"/users/unban/")
+	routes = append(routes,"/pages/")
+	routes = append(routes,"/users/activate/")
+	routes = append(routes,"/panel/forums/edit/submit/")
+	routes = append(routes,"/panel/plugins/activate/")
+	addEmptyRoutesToVestigo(routes, router)
+	b.Run("twenty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = vestigo.NewRouter()
+	routes = append(routes,"/panel/plugins/deactivate/")
+	routes = append(routes,"/panel/plugins/install/")
+	routes = append(routes,"/panel/plugins/uninstall/")
+	routes = append(routes,"/panel/templates/")
+	routes = append(routes,"/panel/templates/edit/")
+	routes = append(routes,"/panel/templates/create/")
+	routes = append(routes,"/panel/templates/delete/")
+	routes = append(routes,"/panel/templates/edit/submit/")
+	routes = append(routes,"/panel/themes/")
+	routes = append(routes,"/panel/themes/edit/")
+	addEmptyRoutesToVestigo(routes, router)
+	b.Run("thirty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = vestigo.NewRouter()
+	routes = append(routes,"/panel/themes/create/")
+	routes = append(routes,"/panel/themes/delete/")
+	routes = append(routes,"/panel/themes/delete/submit/")
+	routes = append(routes,"/panel/templates/create/submit/")
+	routes = append(routes,"/panel/templates/delete/submit/")
+	routes = append(routes,"/panel/widgets/")
+	routes = append(routes,"/panel/widgets/edit/")
+	routes = append(routes,"/panel/widgets/activate/")
+	routes = append(routes,"/panel/widgets/deactivate/")
+	routes = append(routes,"/panel/magical/wombat/path")
+	addEmptyRoutesToVestigo(routes, router)
+	b.Run("forty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = vestigo.NewRouter()
+	routes = append(routes,"/report/")
+	routes = append(routes,"/report/submit/")
+	routes = append(routes,"/topic/create/submit/")
+	routes = append(routes,"/topics/create/")
+	routes = append(routes,"/overview/")
+	routes = append(routes,"/uploads/")
+	routes = append(routes,"/static/")
+	routes = append(routes,"/reply/edit/submit/")
+	routes = append(routes,"/reply/delete/submit/")
+	routes = append(routes,"/topic/edit/submit/")
+	addEmptyRoutesToVestigo(routes, router)
+	b.Run("fifty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = vestigo.NewRouter()
+	routes = append(routes,"/topic/delete/submit/")
+	routes = append(routes,"/topic/stick/submit/")
+	routes = append(routes,"/topic/unstick/submit/")
+	routes = append(routes,"/accounts/login/")
+	routes = append(routes,"/accounts/create/")
+	routes = append(routes,"/accounts/logout/")
+	routes = append(routes,"/accounts/login/submit/")
+	routes = append(routes,"/accounts/create/submit/")
+	routes = append(routes,"/user/edit/critical/")
+	routes = append(routes,"/user/edit/critical/submit/")
+	addEmptyRoutesToVestigo(routes, router)
+	b.Run("sixty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = vestigo.NewRouter()
+	routes = append(routes,"/user/edit/avatar/")
+	routes = append(routes,"/user/edit/avatar/submit/")
+	routes = append(routes,"/user/edit/username/")
+	routes = append(routes,"/user/edit/username/submit/")
+	routes = append(routes,"/profile/reply/create/")
+	routes = append(routes,"/profile/reply/edit/submit/")
+	routes = append(routes,"/profile/reply/delete/submit/")
+	routes = append(routes,"/arcane/tower/")
+	routes = append(routes,"/magical/kingdom/")
+	routes = append(routes,"/insert/name/here/")
+	addEmptyRoutesToVestigo(routes, router)
+	b.Run("seventy-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+}*/
+
+func addEmptyRoutesToCustom(routes []string, router *Router) {
+	for _, route := range routes {
+		router.HandleFunc(route, func(_ http.ResponseWriter,_ *http.Request){})
+	}
+}
+
+func BenchmarkCustomRouter(b *testing.B) {
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest("get","/topics/",bytes.NewReader(nil))
+	routes := make([]string, 0)
+	
+	routes = append(routes,"/test/")
+	router := NewRouter()
+	router.HandleFunc("/test/", func(_ http.ResponseWriter,_ *http.Request){})
+	b.Run("one-route", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	routes = append(routes,"/topic/")
+	routes = append(routes,"/forums/")
+	routes = append(routes,"/forum/")
+	routes = append(routes,"/panel/")
+	router = NewRouter()
+	addEmptyRoutesToCustom(routes, router)
+	b.Run("five-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = NewRouter()
+	routes = append(routes,"/panel/plugins/")
+	routes = append(routes,"/panel/groups/")
+	routes = append(routes,"/panel/settings/")
+	routes = append(routes,"/panel/users/")
+	routes = append(routes,"/panel/forums/")
+	addEmptyRoutesToCustom(routes, router)
+	b.Run("ten-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = NewRouter()
+	routes = append(routes,"/panel/forums/create/submit/")
+	routes = append(routes,"/panel/forums/delete/")
+	routes = append(routes,"/users/ban/")
+	routes = append(routes,"/panel/users/edit/")
+	routes = append(routes,"/panel/forums/create/")
+	routes = append(routes,"/users/unban/")
+	routes = append(routes,"/pages/")
+	routes = append(routes,"/users/activate/")
+	routes = append(routes,"/panel/forums/edit/submit/")
+	routes = append(routes,"/panel/plugins/activate/")
+	addEmptyRoutesToCustom(routes, router)
+	b.Run("twenty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = NewRouter()
+	routes = append(routes,"/panel/plugins/deactivate/")
+	routes = append(routes,"/panel/plugins/install/")
+	routes = append(routes,"/panel/plugins/uninstall/")
+	routes = append(routes,"/panel/templates/")
+	routes = append(routes,"/panel/templates/edit/")
+	routes = append(routes,"/panel/templates/create/")
+	routes = append(routes,"/panel/templates/delete/")
+	routes = append(routes,"/panel/templates/edit/submit/")
+	routes = append(routes,"/panel/themes/")
+	routes = append(routes,"/panel/themes/edit/")
+	addEmptyRoutesToCustom(routes, router)
+	b.Run("thirty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = NewRouter()
+	routes = append(routes,"/panel/themes/create/")
+	routes = append(routes,"/panel/themes/delete/")
+	routes = append(routes,"/panel/themes/delete/submit/")
+	routes = append(routes,"/panel/templates/create/submit/")
+	routes = append(routes,"/panel/templates/delete/submit/")
+	routes = append(routes,"/panel/widgets/")
+	routes = append(routes,"/panel/widgets/edit/")
+	routes = append(routes,"/panel/widgets/activate/")
+	routes = append(routes,"/panel/widgets/deactivate/")
+	routes = append(routes,"/panel/magical/wombat/path")
+	addEmptyRoutesToCustom(routes, router)
+	b.Run("forty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = NewRouter()
+	routes = append(routes,"/report/")
+	routes = append(routes,"/report/submit/")
+	routes = append(routes,"/topic/create/submit/")
+	routes = append(routes,"/topics/create/")
+	routes = append(routes,"/overview/")
+	routes = append(routes,"/uploads/")
+	routes = append(routes,"/static/")
+	routes = append(routes,"/reply/edit/submit/")
+	routes = append(routes,"/reply/delete/submit/")
+	routes = append(routes,"/topic/edit/submit/")
+	addEmptyRoutesToCustom(routes, router)
+	b.Run("fifty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = NewRouter()
+	routes = append(routes,"/topic/delete/submit/")
+	routes = append(routes,"/topic/stick/submit/")
+	routes = append(routes,"/topic/unstick/submit/")
+	routes = append(routes,"/accounts/login/")
+	routes = append(routes,"/accounts/create/")
+	routes = append(routes,"/accounts/logout/")
+	routes = append(routes,"/accounts/login/submit/")
+	routes = append(routes,"/accounts/create/submit/")
+	routes = append(routes,"/user/edit/critical/")
+	routes = append(routes,"/user/edit/critical/submit/")
+	addEmptyRoutesToCustom(routes, router)
+	b.Run("sixty-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+	
+	router = NewRouter()
+	routes = append(routes,"/user/edit/avatar/")
+	routes = append(routes,"/user/edit/avatar/submit/")
+	routes = append(routes,"/user/edit/username/")
+	routes = append(routes,"/user/edit/username/submit/")
+	routes = append(routes,"/profile/reply/create/")
+	routes = append(routes,"/profile/reply/edit/submit/")
+	routes = append(routes,"/profile/reply/delete/submit/")
+	routes = append(routes,"/arcane/tower/")
+	routes = append(routes,"/magical/kingdom/")
+	routes = append(routes,"/insert/name/here/")
+	addEmptyRoutesToCustom(routes, router)
+	b.Run("seventy-routes", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			req = httptest.NewRequest("get",routes[rand.Intn(len(routes))],bytes.NewReader(nil))
+			router.ServeHTTP(w,req)
+		}
+	})
+}
+
 /*func TestRoute(t *testing.T) {
+	
 }*/

@@ -3,6 +3,7 @@ import "fmt"
 import "time"
 import "encoding/base64"
 import "crypto/rand"
+import "net/smtp"
 
 // Generate a cryptographically secure set of random bytes..
 func GenerateSafeString(length int) (string, error) {
@@ -44,4 +45,45 @@ func relative_time(in string) (string, error) {
 		default:
 			return fmt.Sprintf("%d hours ago", int(seconds / 60 / 60)), err
 	}
+}
+
+func SendEmail(email string, subject string, msg string) bool {
+	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
+	if vhooks["email_send_intercept"] != nil {
+		return vhooks["email_send_intercept"](email, subject, msg).(bool)
+	}
+	body := "Subject: " + subject + "\n\n" + msg + "\n"
+	
+	con, err := smtp.Dial(smtp_server)
+	if err != nil {
+		return false
+	}
+	
+	err = con.Mail(site_email)
+	if err != nil {
+		return false
+	}
+	err = con.Rcpt(email)
+	if err != nil {
+		return false
+	}
+	
+	email_data, err := con.Data()
+	if err != nil {
+		return false
+	}
+	_, err = fmt.Fprintf(email_data, body)
+	if err != nil {
+		return false
+	}
+	
+	err = email_data.Close()
+	if err != nil {
+		return false
+	}
+	err = con.Quit()
+	if err != nil {
+		return false
+	}
+	return true
 }

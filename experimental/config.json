@@ -1,0 +1,23 @@
+{
+	"dbhost": "127.0.0.1",
+	"dbuser": "root",
+	"dbpassword": "password",
+	"dbname": "gosora",
+	"dbport": "3306",
+	
+	"default_group": 3,
+	"activation_group": 5,
+	"staff_css": " background-color: #ffeaff;",
+	"uncategorised_forum_visible": true,
+	"enable_emails": false,
+	"smtp_server": "",
+	"items_per_page": 40,
+	
+	"site_url": "localhost:8080",
+	"server_port": "8080",
+	"enable_ssl": false,
+	"ssl_privkey": "",
+	"ssl_fullchain": "",
+	
+	"debug": false
+}

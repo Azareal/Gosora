@@ -140,15 +140,24 @@ func NotFound(w http.ResponseWriter, r *http.Request, user User) {
 	fmt.Fprintln(w,errpage)
 }
 
+func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User) {
+	pi := Page{errtitle,"error",user,nList,tList,errmsg}
+	var b bytes.Buffer
+	templates.ExecuteTemplate(&b,"error.html", pi)
+	errpage := b.String()
+	w.WriteHeader(errcode)
+	fmt.Fprintln(w,errpage)
+}
+
 func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User, is_js string) {
 	if is_js == "0" {
 		pi := Page{errtitle,"error",user,nList,tList,errmsg}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		errpage := b.String()
-		w.WriteHeader(500)
+		w.WriteHeader(errcode)
 		fmt.Fprintln(w,errpage)
 	} else {
-		http.Error(w,"{'errmsg': '" + errmsg + "'}",500)
+		http.Error(w,"{'errmsg': '" + errmsg + "'}",errcode)
 	}
 }

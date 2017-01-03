@@ -12,16 +12,23 @@ var max_request_size = 5 * megabyte
 
 // Misc
 var default_route = route_topics
-var default_group = 3
-var activation_group = 5
+var default_group = 3 // Should be a setting
+var activation_group = 5 // Should be a setting
 var staff_css = " background-color: #ffeaff;"
 var uncategorised_forum_visible = true
 var enable_emails = false
-var site_email = ""
+var site_name = "Test Install" // Should be a setting
+var site_email = "" // Should be a setting
 var smtp_server = ""
-var siteurl = "localhost:8080"
-var noavatar = "https://api.adorable.io/avatars/285/{id}@" + siteurl + ".png"
-var items_per_page = 50
+//var noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
+var noavatar = "https://api.adorable.io/avatars/285/{id}@" + site_url + ".png"
+var items_per_page = 40 // Should be a setting
+
+var site_url = "localhost:8080"
+var server_port = "8080"
+var enable_ssl = false
+var ssl_privkey = ""
+var ssl_fullchain = ""
 
 // Developer flag
 var debug = false

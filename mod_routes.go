@@ -488,7 +488,6 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 		NoPermissions(w,r,user)
 		return
 	}
-	
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
@@ -515,7 +514,6 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 		LocalError("The account you're trying to activate has already been activated.",w,r,user)
 		return
 	}
-	
 	_, err = activate_user_stmt.Exec(uid)
 	if err != nil {
 		InternalError(err,w,r,user)

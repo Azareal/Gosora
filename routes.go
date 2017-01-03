@@ -877,19 +877,10 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if !user.Loggedin {
-		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	
 	pi := Page{"Edit Password","account-own-edit",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
@@ -899,16 +890,8 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	if !ok {
 		return
 	}
-	
 	if !user.Loggedin {
-		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
 	
@@ -973,8 +956,9 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	
-	pi := Page{"Edit Password","account-own-edit-success",user,noticeList,tList,0}
-	templates.ExecuteTemplate(w,"account-own-edit-success.html", pi)
+	noticeList[len(noticeList)] = "Your password was successfully updated"
+	pi := Page{"Edit Password","account-own-edit",user,noticeList,tList,0}
+	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
 func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
@@ -982,19 +966,10 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if !user.Loggedin {
-		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	
 	pi := Page{"Edit Avatar","account-own-edit-avatar",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
@@ -1011,14 +986,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if !user.Loggedin {
-		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
 	
@@ -1028,7 +996,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 	
-	var filename string = ""
+	var filename string
 	var ext string
 	for _, fheaders := range r.MultipartForm.File {
 		for _, hdr := range fheaders {
@@ -1087,7 +1055,6 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		InternalError(err,w,r,user)
 		return
 	}
-	
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
 	noticeList[len(noticeList)] = "Your avatar was successfully updated"
 	
@@ -1100,16 +1067,8 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if !user.Loggedin {
-		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
 	
@@ -1122,19 +1081,10 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 	if !ok {
 		return
 	}
-	
 	if !user.Loggedin {
-		errmsg := "You need to login to edit your own account."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -1149,8 +1099,129 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 	}
 	user.Name = new_username
 	
-	pi := Page{"Edit Username","account-own-edit-username",user,noticeList,tList,user.Name}
+	noticeList[len(noticeList)] = "Your username was successfully updated"
+	pi := Page{"Edit Username","account-own-edit-username",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
+}
+
+func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Loggedin {
+		LocalError("You need to login to edit your account.",w,r,user)
+		return
+	}
+	
+	email := Email{UserID: user.ID}
+	var emailList []interface{}
+	rows, err := db.Query("SELECT email, validated FROM emails WHERE uid = ?", user.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		err := rows.Scan(&email.Email, &email.Validated)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		if email.Email == user.Email {
+			email.Primary = true
+		}
+		emailList = append(emailList, email)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	// Was this site migrated from another forum software? Most of them don't have multiple emails for a single user. This also applies when the admin switches enable_emails on after having it off for a while
+	if len(emailList) == 0 {
+		email.Email = user.Email
+		email.Validated = false
+		email.Primary = true
+		emailList = append(emailList, email)
+	}
+	
+	if !enable_emails {
+		noticeList[len(noticeList)] = "The email system has been turned off. All features involving sending emails have been disabled."
+	}
+	pi := Page{"Email Manager","account-own-edit-email",user,noticeList,emailList,0}
+	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
+}
+
+func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Request) {
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Loggedin {
+		LocalError("You need to login to edit your account.",w,r,user)
+		return
+	}
+	token := r.URL.Path[len("/user/edit/email/token/"):]
+	
+	email := Email{UserID: user.ID}
+	targetEmail := Email{UserID: user.ID}
+	var emailList []interface{}
+	rows, err := db.Query("SELECT email, validated, token FROM emails WHERE uid = ?", user.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		err := rows.Scan(&email.Email, &email.Validated, &email.Token)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		if email.Email == user.Email {
+			email.Primary = true
+		}
+		if email.Token == token {
+			targetEmail = email
+		}
+		emailList = append(emailList, email)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	if len(emailList) == 0 {
+		LocalError("A verification email was never sent for you!",w,r,user)
+		return
+	}
+	if targetEmail.Token == "" {
+		LocalError("That's not a valid token!",w,r,user)
+		return
+	}
+	
+	_, err = verify_email_stmt.Exec(user.Email)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	// If Email Activation is on, then activate the account while we're here
+	if settings["activation_type"] == 2 {
+		_, err = activate_user_stmt.Exec(user.ID)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+	}
+	
+	if !enable_emails {
+		noticeList[len(noticeList)] = "The email system has been turned off. All features involving sending emails have been disabled."
+	}
+	noticeList[len(noticeList)] = "Your email was successfully verified"
+	pi := Page{"Email Manager","account-own-edit-email",user,noticeList,emailList,0}
+	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
 func route_logout(w http.ResponseWriter, r *http.Request) {
@@ -1312,7 +1383,6 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if user.Loggedin {
 		errmsg := "You're already logged in."
 		pi := Page{"Error","error",user,nList,tList,errmsg}
@@ -1346,12 +1416,12 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("You didn't put in a username.", w, r, user)
 		return  
 	}
-	
 	email := html.EscapeString(r.PostFormValue("email"))
 	if email == "" {
 		LocalError("You didn't put in an email.", w, r, user)
 		return  
 	}
+	
 	password := r.PostFormValue("password")
 	if password == "" {
 		LocalError("You didn't put in a password.", w, r, user)
@@ -1416,12 +1486,12 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	
 	var active int
 	var group int
-	if settings["activation_type"] == 1 {
-		active = 1
-		group = default_group
-	} else {
-		active = 0
-		group = activation_group
+	switch settings["activation_type"] {
+		case 1: // Activate All
+			active = 1
+			group = default_group
+		default: // Anything else. E.g. Admin Activation or Email Activation.
+			group = activation_group
 	}
 	
 	res, err := register_stmt.Exec(username,email,string(hashed_password),salt,group,session,active)
@@ -1434,6 +1504,25 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
+	}
+	
+	// Check if this user actually owns this email, if email activation is on, automatically flip their account to active when the email is validated. Validation is also useful for determining whether this user should receive any alerts, etc. via email
+	if enable_emails {
+		token, err := GenerateSafeString(80)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		_, err = add_email_stmt.Exec(email, lastId, 0, token)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return
+		}
+		
+		if !SendValidationEmail(username, email, token) {
+			LocalError("We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.",w,r,user)
+			return
+		}
 	}
 	
 	cookie := http.Cookie{Name: "uid",Value: strconv.FormatInt(lastId, 10),Path: "/",MaxAge: year}

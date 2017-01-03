@@ -138,7 +138,7 @@ func main(){
 	init_plugins()
 	
 	// In a directory to stop it clashing with the other paths
-	http.HandleFunc("/static/", route_static)
+	/*http.HandleFunc("/static/", route_static)
 	
 	fs_u := http.FileServer(http.Dir("./uploads"))
 	http.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))
@@ -180,6 +180,7 @@ func main(){
 	http.HandleFunc("/user/edit/avatar/submit/", route_account_own_edit_avatar_submit)
 	http.HandleFunc("/user/edit/username/", route_account_own_edit_username)
 	http.HandleFunc("/user/edit/username/submit/", route_account_own_edit_username_submit)
+	http.HandleFunc("/user/edit/email/token/", route_account_own_edit_email_token_submit)
 	http.HandleFunc("/user/", route_profile)
 	http.HandleFunc("/profile/reply/create/", route_profile_reply_create)
 	http.HandleFunc("/profile/reply/edit/submit/", route_profile_reply_edit_submit)
@@ -210,8 +211,96 @@ func main(){
 	http.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
 	http.HandleFunc("/panel/groups/", route_panel_groups)
 	
-	http.HandleFunc("/", default_route)
+	http.HandleFunc("/", default_route)*/
+	
+	router := NewRouter()
+	router.HandleFunc("/static/", route_static)
+	
+	fs_u := http.FileServer(http.Dir("./uploads"))
+	router.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))
+	
+	router.HandleFunc("/overview/", route_overview)
+	router.HandleFunc("/topics/create/", route_topic_create)
+	router.HandleFunc("/topics/", route_topics)
+	router.HandleFunc("/forums/", route_forums)
+	router.HandleFunc("/forum/", route_forum)
+	router.HandleFunc("/topic/create/submit/", route_create_topic)
+	router.HandleFunc("/topic/", route_topic_id)
+	router.HandleFunc("/reply/create/", route_create_reply)
+	//router.HandleFunc("/reply/edit/", route_reply_edit)
+	//router.HandleFunc("/reply/delete/", route_reply_delete)
+	router.HandleFunc("/reply/edit/submit/", route_reply_edit_submit)
+	router.HandleFunc("/reply/delete/submit/", route_reply_delete_submit)
+	router.HandleFunc("/report/submit/", route_report_submit)
+	router.HandleFunc("/topic/edit/submit/", route_edit_topic)
+	router.HandleFunc("/topic/delete/submit/", route_delete_topic)
+	router.HandleFunc("/topic/stick/submit/", route_stick_topic)
+	router.HandleFunc("/topic/unstick/submit/", route_unstick_topic)
+	
+	// Custom Pages
+	router.HandleFunc("/pages/", route_custom_page)
+	
+	// Accounts
+	router.HandleFunc("/accounts/login/", route_login)
+	router.HandleFunc("/accounts/create/", route_register)
+	router.HandleFunc("/accounts/logout/", route_logout)
+	router.HandleFunc("/accounts/login/submit/", route_login_submit)
+	router.HandleFunc("/accounts/create/submit/", route_register_submit)
+	
+	//router.HandleFunc("/accounts/list/", route_login) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
+	//router.HandleFunc("/accounts/create/full/", route_logout) // Advanced account creator for admins?
+	//router.HandleFunc("/user/edit/", route_logout)
+	router.HandleFunc("/user/edit/critical/", route_account_own_edit_critical) // Password & Email
+	router.HandleFunc("/user/edit/critical/submit/", route_account_own_edit_critical_submit)
+	router.HandleFunc("/user/edit/avatar/", route_account_own_edit_avatar)
+	router.HandleFunc("/user/edit/avatar/submit/", route_account_own_edit_avatar_submit)
+	router.HandleFunc("/user/edit/username/", route_account_own_edit_username)
+	router.HandleFunc("/user/edit/username/submit/", route_account_own_edit_username_submit)
+	router.HandleFunc("/user/edit/email/", route_account_own_edit_email)
+	router.HandleFunc("/user/edit/email/token/", route_account_own_edit_email_token_submit)
+	router.HandleFunc("/user/", route_profile)
+	router.HandleFunc("/profile/reply/create/", route_profile_reply_create)
+	router.HandleFunc("/profile/reply/edit/submit/", route_profile_reply_edit_submit)
+	router.HandleFunc("/profile/reply/delete/submit/", route_profile_reply_delete_submit)
+	//router.HandleFunc("/user/edit/submit/", route_logout)
+	router.HandleFunc("/users/ban/", route_ban)
+	router.HandleFunc("/users/ban/submit/", route_ban_submit)
+	router.HandleFunc("/users/unban/", route_unban)
+	router.HandleFunc("/users/activate/", route_activate)
+	
+	// Admin
+	router.HandleFunc("/panel/", route_panel)
+	router.HandleFunc("/panel/forums/", route_panel_forums)
+	router.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
+	router.HandleFunc("/panel/forums/delete/", route_panel_forums_delete)
+	router.HandleFunc("/panel/forums/delete/submit/", route_panel_forums_delete_submit)
+	router.HandleFunc("/panel/forums/edit/submit/", route_panel_forums_edit_submit)
+	router.HandleFunc("/panel/settings/", route_panel_settings)
+	router.HandleFunc("/panel/settings/edit/", route_panel_setting)
+	router.HandleFunc("/panel/settings/edit/submit/", route_panel_setting_edit)
+	router.HandleFunc("/panel/themes/", route_panel_themes)
+	router.HandleFunc("/panel/themes/default/", route_panel_themes_default)
+	router.HandleFunc("/panel/plugins/", route_panel_plugins)
+	router.HandleFunc("/panel/plugins/activate/", route_panel_plugins_activate)
+	router.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)
+	router.HandleFunc("/panel/users/", route_panel_users)
+	router.HandleFunc("/panel/users/edit/", route_panel_users_edit)
+	router.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
+	router.HandleFunc("/panel/groups/", route_panel_groups)
+	
+	router.HandleFunc("/", default_route)
 	
 	defer db.Close()
-    http.ListenAndServe(":8080", nil)
+	if !enable_ssl {
+		if server_port == "" {
+			 server_port = "80"
+		}
+		//http.ListenAndServe(":" + server_port, nil)
+		http.ListenAndServe(":" + server_port, router)
+	} else {
+		if server_port == "" {
+			 server_port = "443"
+		}
+		http.ListenAndServeTLS(":" + server_port, ssl_fullchain, ssl_privkey, router)
+	}
 }
