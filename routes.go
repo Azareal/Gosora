@@ -605,20 +605,9 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return          
 	}
 	
-	success := 1
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
-		log.Print(err)
-		success = 0
-		
-		errmsg := "Unable to create the reply"
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("Failed to convert the TopicID", w, r, user)
 		return
 	}
 	
@@ -626,15 +615,15 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	log.Print(content)
 	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),user.ID)
 	if err != nil {
-		log.Print(err)
-		success = 0
+		InternalError(err,w,r,user)
+		return
 	}
 	
 	var topic_name string
 	err = db.QueryRow("select title from topics where tid = ?", tid).Scan(&topic_name)
 	if err == sql.ErrNoRows {
-		log.Print(err)
-		success = 0
+		LocalError("Couldn't find the parent topic", w, r, user)
+		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -646,18 +635,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if success != 1 {
-		errmsg := "Unable to create the reply"
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
-	} else {
-		http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
-	}
+	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 }
 
 func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {

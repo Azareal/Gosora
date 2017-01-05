@@ -9,22 +9,11 @@ body
 	font-family: arial;
 }
 
-@font-face {
-	font-family: 'EmojiFont';
-	src: url('https://github.com/Ranks/emojione/raw/master/assets/fonts/emojione-svg.woff2') format('woff2'),
-	url('https://github.com/Ranks/emojione/raw/master/assets/fonts/emojione-svg.woff') format('woff'), local("arial");
-}
-
+/* Patch for Edge */
 @supports (-ms-ime-align:auto) {
 .user_content
 {
-	font-family: EmojiFont, arial;
-}
-}
-@-moz-document url-prefix() {
-.user_content
-{
-	font-family: EmojiFont, arial;
+	font-family: Segoe UI Emoji, arial;
 }
 }
 
@@ -330,6 +319,41 @@ button.username
 	background-color: #FEB7CC;
 }
 
+/* Tempra Conflux */
+.user_content {
+	padding: 5px;
+	margin-top: 3px;
+	margin-bottom: 0;
+	background: white;
+	min-height: 129px;
+	padding-bottom: 0;
+	width: 100%;
+}
+
+.button_container {
+	border-top: solid 1px #eaeaea;
+	border-spacing: 0px;
+	border-collapse: collapse;
+	padding: 0;
+	margin: 0;
+	margin-top: 3px;
+	display: block;
+	height: 20px;
+}
+
+.action_button {
+	display: block;
+	float: left;
+	border-right: solid 1px #eaeaea;
+	color: #505050;
+	font-size: 13px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+/* Media Queries from Simple. Probably useless in Conflux */
 @media (max-width: 880px) {
 	li
 	{

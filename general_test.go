@@ -714,6 +714,138 @@ func BenchmarkCustomRouter(b *testing.B) {
 	})
 }
 
+func BenchmarkParser(b *testing.B) {
+	b.ReportAllocs()
+	b.Run("empty_post", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = parse_message("")
+		}
+	})
+	b.Run("short_post", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = parse_message("Hey everyone, how's it going?")
+		}
+	})
+	b.Run("one_smily", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = parse_message("Hey everyone, how's it going? :)")
+		}
+	})
+	b.Run("five_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = parse_message("Hey everyone, how's it going? :):):):):)")
+		}
+	})
+	b.Run("ten_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = parse_message("Hey everyone, how's it going? :):):):):):):):):):)")
+		}
+	})
+	b.Run("twenty_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = parse_message("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+		}
+	})
+}
+
+func BenchmarkBBCodePluginWithRegexp(b *testing.B) {
+	b.ReportAllocs()
+	b.Run("empty_post", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("")
+		}
+	})
+	b.Run("short_post", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("Hey everyone, how's it going?")
+		}
+	})
+	b.Run("one_smily", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("Hey everyone, how's it going? :)")
+		}
+	})
+	b.Run("five_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("Hey everyone, how's it going? :):):):):)")
+		}
+	})
+	b.Run("ten_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("Hey everyone, how's it going? :):):):):):):):):):)")
+		}
+	})
+	b.Run("twenty_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+		}
+	})
+	b.Run("one_bold", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("[b]H[/b]ey everyone, how's it going?")
+		}
+	})
+	b.Run("five_bold", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+		}
+	})
+	b.Run("ten_bold", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
+		}
+	})
+}
+
+func BenchmarkBBCodePluginWithCustomParser(b *testing.B) {
+	b.ReportAllocs()
+	b.Run("empty_post", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("")
+		}
+	})
+	b.Run("short_post", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("Hey everyone, how's it going?")
+		}
+	})
+	b.Run("one_smily", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("Hey everyone, how's it going? :)")
+		}
+	})
+	b.Run("five_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("Hey everyone, how's it going? :):):):):)")
+		}
+	})
+	b.Run("ten_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("Hey everyone, how's it going? :):):):):):):):):):)")
+		}
+	})
+	b.Run("twenty_smilies", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+		}
+	})
+	b.Run("one_bold", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("[b]H[/b]ey everyone, how's it going?")
+		}
+	})
+	b.Run("five_bold", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+		}
+	})
+	b.Run("ten_bold", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = bbcode_parse2("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
+		}
+	})
+}
+
 /*func TestRoute(t *testing.T) {
 	
 }*/

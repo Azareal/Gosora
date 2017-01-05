@@ -1,6 +1,8 @@
 package main
+import "log"
 import "fmt"
 import "time"
+import "os"
 import "encoding/base64"
 import "crypto/rand"
 import "net/smtp"
@@ -86,4 +88,18 @@ func SendEmail(email string, subject string, msg string) bool {
 		return false
 	}
 	return true
+}
+
+func write_file(name string, content string) {
+	f, err := os.Create(name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	_, err = f.WriteString(content)
+	if err != nil {
+		log.Fatal(err)
+	}
+	f.Sync()
+	f.Close()
 }

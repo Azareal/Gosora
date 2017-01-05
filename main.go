@@ -33,7 +33,6 @@ var forums map[int]Forum = make(map[int]Forum)
 var static_files map[string]SFile = make(map[string]SFile)
 
 var template_topic_handle func(TopicPage,io.Writer) = nil
-var template_topic_origin_handle func(TopicPage,io.Writer) = nil
 var template_topic_alt_handle func(TopicPage,io.Writer) = nil
 var template_topics_handle func(TopicsPage,io.Writer) = nil
 var template_forum_handle func(ForumPage,io.Writer) = nil
@@ -75,7 +74,6 @@ func compile_templates() {
 	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"",1,"open","Admin","","",0,"","","",""})
 	topics_page := TopicsPage{"Topic List",user,noticeList,topicList,""}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
-	//topics_tmpl := c.compile_template("topics.html","templates/","Page", pi, varList)
 	
 	forum_page := ForumPage{"General Forum",user,noticeList,topicList,"There aren't any topics in this forum yet."}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)
@@ -90,17 +88,7 @@ func compile_templates() {
 }
 
 func write_template(name string, content string) {
-	f, err := os.Create("./template_" + name + ".go")
-	if err != nil {
-		log.Fatal(err)
-	}
-	
-	_, err = f.WriteString(content)
-	if err != nil {
-		log.Fatal(err)
-	}
-	f.Sync()
-	f.Close()
+	write_file("./template_" + name + ".go", content)
 }
 
 func main(){
@@ -137,84 +125,8 @@ func main(){
 	
 	init_plugins()
 	
-	// In a directory to stop it clashing with the other paths
-	/*http.HandleFunc("/static/", route_static)
-	
-	fs_u := http.FileServer(http.Dir("./uploads"))
-	http.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))
-	
-	http.HandleFunc("/overview/", route_overview)
-	http.HandleFunc("/topics/create/", route_topic_create)
-	http.HandleFunc("/topics/", route_topics)
-	http.HandleFunc("/forums/", route_forums)
-	http.HandleFunc("/forum/", route_forum)
-	http.HandleFunc("/topic/create/submit/", route_create_topic)
-	http.HandleFunc("/topic/", route_topic_id)
-	http.HandleFunc("/reply/create/", route_create_reply)
-	//http.HandleFunc("/reply/edit/", route_reply_edit)
-	//http.HandleFunc("/reply/delete/", route_reply_delete)
-	http.HandleFunc("/reply/edit/submit/", route_reply_edit_submit)
-	http.HandleFunc("/reply/delete/submit/", route_reply_delete_submit)
-	http.HandleFunc("/report/submit/", route_report_submit)
-	http.HandleFunc("/topic/edit/submit/", route_edit_topic)
-	http.HandleFunc("/topic/delete/submit/", route_delete_topic)
-	http.HandleFunc("/topic/stick/submit/", route_stick_topic)
-	http.HandleFunc("/topic/unstick/submit/", route_unstick_topic)
-	
-	// Custom Pages
-	http.HandleFunc("/pages/", route_custom_page)
-	
-	// Accounts
-	http.HandleFunc("/accounts/login/", route_login)
-	http.HandleFunc("/accounts/create/", route_register)
-	http.HandleFunc("/accounts/logout/", route_logout)
-	http.HandleFunc("/accounts/login/submit/", route_login_submit)
-	http.HandleFunc("/accounts/create/submit/", route_register_submit)
-	
-	//http.HandleFunc("/accounts/list/", route_login) // Redirect /accounts/ and /user/ to here..
-	//http.HandleFunc("/accounts/create/full/", route_logout)
-	//http.HandleFunc("/user/edit/", route_logout)
-	http.HandleFunc("/user/edit/critical/", route_account_own_edit_critical) // Password & Email
-	http.HandleFunc("/user/edit/critical/submit/", route_account_own_edit_critical_submit)
-	http.HandleFunc("/user/edit/avatar/", route_account_own_edit_avatar)
-	http.HandleFunc("/user/edit/avatar/submit/", route_account_own_edit_avatar_submit)
-	http.HandleFunc("/user/edit/username/", route_account_own_edit_username)
-	http.HandleFunc("/user/edit/username/submit/", route_account_own_edit_username_submit)
-	http.HandleFunc("/user/edit/email/token/", route_account_own_edit_email_token_submit)
-	http.HandleFunc("/user/", route_profile)
-	http.HandleFunc("/profile/reply/create/", route_profile_reply_create)
-	http.HandleFunc("/profile/reply/edit/submit/", route_profile_reply_edit_submit)
-	http.HandleFunc("/profile/reply/delete/submit/", route_profile_reply_delete_submit)
-	//http.HandleFunc("/user/edit/submit/", route_logout)
-	http.HandleFunc("/users/ban/", route_ban)
-	http.HandleFunc("/users/ban/submit/", route_ban_submit)
-	http.HandleFunc("/users/unban/", route_unban)
-	http.HandleFunc("/users/activate/", route_activate)
-	
-	// Admin
-	http.HandleFunc("/panel/", route_panel)
-	http.HandleFunc("/panel/forums/", route_panel_forums)
-	http.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
-	http.HandleFunc("/panel/forums/delete/", route_panel_forums_delete)
-	http.HandleFunc("/panel/forums/delete/submit/", route_panel_forums_delete_submit)
-	http.HandleFunc("/panel/forums/edit/submit/", route_panel_forums_edit_submit)
-	http.HandleFunc("/panel/settings/", route_panel_settings)
-	http.HandleFunc("/panel/settings/edit/", route_panel_setting)
-	http.HandleFunc("/panel/settings/edit/submit/", route_panel_setting_edit)
-	http.HandleFunc("/panel/themes/", route_panel_themes)
-	http.HandleFunc("/panel/themes/default/", route_panel_themes_default)
-	http.HandleFunc("/panel/plugins/", route_panel_plugins)
-	http.HandleFunc("/panel/plugins/activate/", route_panel_plugins_activate)
-	http.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)
-	http.HandleFunc("/panel/users/", route_panel_users)
-	http.HandleFunc("/panel/users/edit/", route_panel_users_edit)
-	http.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
-	http.HandleFunc("/panel/groups/", route_panel_groups)
-	
-	http.HandleFunc("/", default_route)*/
-	
 	router := NewRouter()
-	router.HandleFunc("/static/", route_static)
+	router.HandleFunc("/static/", route_static) // In a directory to stop it clashing with the other paths
 	
 	fs_u := http.FileServer(http.Dir("./uploads"))
 	router.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))
@@ -295,7 +207,6 @@ func main(){
 		if server_port == "" {
 			 server_port = "80"
 		}
-		//http.ListenAndServe(":" + server_port, nil)
 		http.ListenAndServe(":" + server_port, router)
 	} else {
 		if server_port == "" {

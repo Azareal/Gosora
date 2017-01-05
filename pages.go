@@ -1,6 +1,6 @@
 package main
 import "strings"
-//import "regexp"
+import "regexp"
 
 type Page struct
 {
@@ -71,6 +71,13 @@ type AreYouSure struct
 	Message string
 }
 
+var urlpattern string = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
+var url_reg *regexp.Regexp
+
+func init() {
+	url_reg = regexp.MustCompile(urlpattern)
+}
+
 func shortcode_to_unicode(msg string) string {
 	//re := regexp.MustCompile(":(.):")
 	msg = strings.Replace(msg,":grinning:","😀",-1)
@@ -126,6 +133,7 @@ func parse_message(msg string) string {
 	msg = strings.Replace(msg,":)","😀",-1)
 	msg = strings.Replace(msg,":D","😃",-1)
 	msg = strings.Replace(msg,":P","😛",-1)
+	msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 	msg = strings.Replace(msg,"\n","<br>",-1)
 	if hooks["parse_assign"] != nil {
 		out := run_hook("parse_assign", msg)

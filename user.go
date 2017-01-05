@@ -154,7 +154,7 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 	user.Session = cookie.Value
 	
 	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
+	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""

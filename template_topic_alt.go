@@ -130,19 +130,19 @@ w.Write([]byte(`
 			<div class="the_name" style="margin-top: 3px;text-align: center;color: #505050;">` + item.CreatedByName + `</div>
 		</div>
 		<div class="content_container" style="background: white;margin-left: 137px;min-height: 128px;margin-bottom: 0;margin-right: 3px;box-shadow:0 1px 2px rgba(0,0,0,.1);">
-			<div class="editable_block user_content" style="padding: 5px;margin-top: 3px;margin-bottom: 0;background: white;min-height: 133px;padding-bottom: 0;width: 100%;">` + string(item.ContentHtml) + `</div>
-			<div class="button_container" style="border-top: solid 1px #eaeaea;border-spacing: 0px;border-collapse: collapse;padding: 0;margin: 0;display: block;">
+			<div class="editable_block user_content">` + string(item.ContentHtml) + `</div>
+			<div class="button_container">
 				`))
 if tmpl_topic_alt_vars.CurrentUser.Perms.EditReply {
-w.Write([]byte(`<a href="/reply/edit/submit/` + strconv.Itoa(item.ID) + `" style="border-right: solid 1px #eaeaea;color: #505050;font-size: 13px;padding-left: 5px;padding-right: 5px;">Edit</a>`))
+w.Write([]byte(`<a href="/reply/edit/submit/` + strconv.Itoa(item.ID) + `" class="action_button">Edit</a>`))
 }
 w.Write([]byte(`
 				`))
 if tmpl_topic_alt_vars.CurrentUser.Perms.DeleteReply {
-w.Write([]byte(`<a href="/reply/delete/submit/` + strconv.Itoa(item.ID) + `" style="border-right: solid 1px #eaeaea;color: #505050;font-size: 13px;padding-left: 0;padding-right: 5px;">Delete</a>`))
+w.Write([]byte(`<a href="/reply/delete/submit/` + strconv.Itoa(item.ID) + `" class="action_button">Delete</a>`))
 }
 w.Write([]byte(`
-				<a href="/report/submit/` + strconv.Itoa(item.ID) + `?session=` + tmpl_topic_alt_vars.CurrentUser.Session + `&type=reply" style="border: none;border-right: solid 1px #eaeaea;padding-right: 6px;color: #505050;font-size: 13px;">Report</a>
+				<a href="/report/submit/` + strconv.Itoa(item.ID) + `?session=` + tmpl_topic_alt_vars.CurrentUser.Session + `&type=reply" class="action_button">Report</a>
 			</div>
 		</div>
 	</div>
