@@ -93,10 +93,13 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 
 # Images
-[[https://github.com/Azareal/Gosora/blob/master/images/tempra-simple.png|alt=Tempra Simple Theme]]
-[[https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux.png|alt=Tempra Conflux Theme]]
-[[https://github.com/Azareal/Gosora/blob/master/images/cosmo-conflux.png|alt=Cosmo Conflux Theme]]
-[[https://github.com/Azareal/Gosora/blob/master/images/cosmo.png|alt=Cosmo Theme]]
+![Tempra Simple Theme](https://github.com/Azareal/Gosora/blob/master/images/tempra-simple.png)
+
+![Tempra Conflux Theme](https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux.png)
+
+![Cosmo Conflux Theme](https://github.com/Azareal/Gosora/blob/master/images/cosmo-conflux.png)
+
+![Cosmo Theme](https://github.com/Azareal/Gosora/blob/master/images/cosmo.png)
 
 
 # TO-DO
