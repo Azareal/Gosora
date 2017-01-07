@@ -92,6 +92,13 @@ Experimental plugins aka the ones in the /experimental/ folder (e.g. plugin_send
 We're looking for ways to clean-up the plugin system so that all of them (except the experimental ones) are housed in /extend/, however we've encountered some problems with Go's packaging system. We plan to fix this issue in the future.
 
 
+# Images
+[[https://github.com/Azareal/Gosora/blob/master/images/tempra-simple.png|alt=Tempra Simple Theme]]
+[[https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux.png|alt=Tempra Conflux Theme]]
+[[https://github.com/Azareal/Gosora/blob/master/images/cosmo-conflux.png|alt=Cosmo Conflux Theme]]
+[[https://github.com/Azareal/Gosora/blob/master/images/cosmo.png|alt=Cosmo Theme]]
+
+
 # TO-DO
 
 Oh my, you caught me right at the start of this project. There's nothing to see here yet, asides from the absolute basics. You might want to look again later!

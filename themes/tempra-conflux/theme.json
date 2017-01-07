@@ -3,6 +3,7 @@
 	"FriendlyName": "Tempra Conflux",
 	"Version": "0.0.1",
 	"Creator": "Azareal",
+	"FullImage": "tempra-conflux.png",
 	"Templates": [
 		{
 			"Name": "topic",

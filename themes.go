@@ -1,7 +1,7 @@
 /* Copyright Azareal 2016 - 2017 */
 package main
 
-import "fmt"
+//import "fmt"
 import "log"
 import "io"
 import "os"
@@ -23,6 +23,8 @@ type Theme struct
 	FriendlyName string
 	Version string
 	Creator string
+	FullImage string
+	MobileFriendly bool
 	Settings map[string]ThemeSetting
 	Templates []TemplateMapping
 	
@@ -62,8 +64,21 @@ func init_themes() {
 		}
 		
 		var theme Theme
-		json.Unmarshal(themeFile, &theme)
+		err = json.Unmarshal(themeFile, &theme)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		
 		theme.Active = false // Set this to false, just in case someone explicitly overrode this value in the JSON file
+		
+		if theme.FullImage != "" {
+			log.Print("Adding theme image")
+			err = add_static_file("./themes/" + themeName + "/" + theme.FullImage, "./themes/" + themeName)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		
 		themes[theme.Name] = theme
 	}
@@ -106,7 +121,7 @@ func map_theme_templates(theme Theme) {
 				log.Fatal("Invalid source template name")
 			}
 			
-			// go generate is one possibility, but it would simply add another step of compilation
+			// `go generate` is one possibility for letting plugins inject custom page structs, but it would simply add another step of compilation. It might be simpler than the current build process from the perspective of the administrator?
 			
 			dest_tmpl_ptr, ok := tmpl_ptr_map[themeTmpl.Name]
 			if !ok {
@@ -123,21 +138,21 @@ func map_theme_templates(theme Theme) {
 						case *func(TopicPage,io.Writer):
 							//overriden_templates[themeTmpl.Name] = d_tmpl_ptr
 							overriden_templates[themeTmpl.Name] = true
-							log.Print("Topic Handle")
-							fmt.Println(template_topic_handle)
-							log.Print("Before")
-							fmt.Println(d_tmpl_ptr)
-							fmt.Println(*d_tmpl_ptr)
-							log.Print("Source")
-							fmt.Println(s_tmpl_ptr)
-							fmt.Println(*s_tmpl_ptr)
+							//log.Print("Topic Handle")
+							//fmt.Println(template_topic_handle)
+							//log.Print("Before")
+							//fmt.Println(d_tmpl_ptr)
+							//fmt.Println(*d_tmpl_ptr)
+							//log.Print("Source")
+							//fmt.Println(s_tmpl_ptr)
+							//fmt.Println(*s_tmpl_ptr)
 							*d_tmpl_ptr = *s_tmpl_ptr
-							log.Print("After")
-							fmt.Println(d_tmpl_ptr)
-							fmt.Println(*d_tmpl_ptr)
-							log.Print("Source")
-							fmt.Println(s_tmpl_ptr)
-							fmt.Println(*s_tmpl_ptr)
+							//log.Print("After")
+							//fmt.Println(d_tmpl_ptr)
+							//fmt.Println(*d_tmpl_ptr)
+							//log.Print("Source")
+							//fmt.Println(s_tmpl_ptr)
+							//fmt.Println(*s_tmpl_ptr)
 						default:
 							log.Fatal("The source and destination templates are incompatible")
 					}
@@ -218,19 +233,19 @@ func reset_template_overrides() {
 			case func(TopicPage,io.Writer):
 				switch d_ptr := dest_tmpl_ptr.(type) {
 					case *func(TopicPage,io.Writer):
-						log.Print("Topic Handle")
-						fmt.Println(template_topic_handle)
-						log.Print("Before")
-						fmt.Println(d_ptr)
-						fmt.Println(*d_ptr)
-						log.Print("Origin")
-						fmt.Println(o_ptr)
+						//log.Print("Topic Handle")
+						//fmt.Println(template_topic_handle)
+						//log.Print("Before")
+						//fmt.Println(d_ptr)
+						//fmt.Println(*d_ptr)
+						//log.Print("Origin")
+						//fmt.Println(o_ptr)
 						*d_ptr = o_ptr
-						log.Print("After")
-						fmt.Println(d_ptr)
-						fmt.Println(*d_ptr)
-						log.Print("Origin")
-						fmt.Println(o_ptr)
+						//log.Print("After")
+						//fmt.Println(d_ptr)
+						//fmt.Println(*d_ptr)
+						//log.Print("Origin")
+						//fmt.Println(o_ptr)
 					default:
 						log.Fatal("The origin and destination templates are incompatible")
 				}

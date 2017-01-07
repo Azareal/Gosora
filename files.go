@@ -1,7 +1,13 @@
 package main
-import "io"
-import "os"
+import "log"
+import "strings"
+import "mime"
 import "errors"
+import "os"
+import "io"
+import "io/ioutil"
+import "path/filepath"
+import "net/http"
 
 type SFile struct
 {
@@ -48,4 +54,26 @@ func (r SFile) Seek(offset int64, whence int) (int64, error) {
 			return 0, errors.New("invalid whence")
 	}
 	return r.Pos, nil
+}
+
+func add_static_file(path string, prefix string) error {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	fi, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	f, err := fi.Stat()
+	if err != nil {
+		return err
+	}
+	
+	log.Print("Adding the '" + path + "' static file")
+	path = strings.TrimPrefix(path, prefix)
+	log.Print("Added the '" + path + "' static file")
+	
+	static_files["/static" + path] = SFile{data,0,int64(len(data)),mime.TypeByExtension(filepath.Ext(prefix + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
+	return nil
 }

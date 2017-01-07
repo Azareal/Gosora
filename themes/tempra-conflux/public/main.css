@@ -171,18 +171,15 @@ li a
 	/*height: 40px;*/
 	width: 100%;
 }
-
 /*Clearfix*/
 .formrow:before,
 .formrow:after {
   content: " ";
   display: table;
 }
-
 .formrow:after {
   clear: both;
 }
-
 .formrow:not(:last-child)
 {
 	border-bottom: 1px dotted #ccc;
@@ -197,22 +194,18 @@ li a
 	padding-bottom: 8px;
 	font-weight: bold;
 }
-
 .formitem:first-child
 {
 	font-weight: bold;
 }
-
 .formitem:not(:last-child)
 {
 	border-right: 1px dotted #ccc;
 }
-
 .formitem.invisible_border
 {
 	border: none;
 }
-
 /* Mostly for textareas */
 .formitem:only-child
 {
@@ -249,9 +242,20 @@ button
 	border-radius: 2px;
 }
 
-.topic_status:empty
-{
+.topic_status:empty {
 	display: none;
+}
+
+.rowhead {
+	background: linear-gradient(to bottom, white, hsl(0, 0%, 93%));
+}
+.topic_sticky_head {
+	background-color: #FFFFEA;
+	background: linear-gradient(to bottom, hsl(60, 70%, 96%), hsl(60, 70%, 89%)), url('/static/fabric-base-simple-alpha.png');
+}
+.topic_closed_head {
+	background-color: #eaeaea;
+	background: linear-gradient(to bottom, #eaeaea, hsl(0,0%,79%));
 }
 
 .username
@@ -351,6 +355,41 @@ button.username
 	padding-bottom: 2px;
 	padding-left: 5px;
 	padding-right: 5px;
+}
+
+.post_item {
+	background-color: #eaeaea;
+	padding-top: 4px;
+	padding-left: 5px;
+	clear: both;
+	border-bottom: none;
+	padding-right: 4px;
+	padding-bottom: 2px;
+}
+.post_item:last-child {
+	padding-bottom: 7px;
+}
+.post_tag {
+	display: none;
+}
+
+.userinfo {
+	background: white;
+	width: 132px;
+	padding: 2px;
+	margin-top: 2px;
+	float: left;
+	position: sticky;
+	top: 4px;
+	box-shadow:0 1px 2px rgba(0,0,0,.1);
+}
+.content_container {
+	background: white;
+	margin-left: 137px;
+	min-height: 128px;
+	margin-bottom: 0;
+	margin-right: 3px;
+	box-shadow:0 1px 2px rgba(0,0,0,.1);
 }
 
 /* Media Queries from Simple. Probably useless in Conflux */

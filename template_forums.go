@@ -58,7 +58,7 @@ w.Write([]byte(`
 	</div>
 	<div style="clear: both;"></div>
 </div>
-`))
+<div id="back"><div id="main">`))
 if len(tmpl_forums_vars.NoticeList) != 0 {
 for _, item := range tmpl_forums_vars.NoticeList {
 w.Write([]byte(`<div class="alert">` + item + `</div>`))
@@ -81,7 +81,7 @@ w.Write([]byte(`<div class="rowitem passive">You don't have access to any forums
 w.Write([]byte(`
 </div>
 			<!--<link rel="stylesheet" href="https://use.fontawesome.com/8670aa03ca.css">-->
-		</div>
+		</div><div style="clear: both;"></div></div></div>
 	</body>
 </html>`))
 }

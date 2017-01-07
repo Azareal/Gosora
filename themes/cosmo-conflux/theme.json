@@ -1,9 +1,9 @@
 {
-	"Name": "cosmo",
-	"FriendlyName": "AtomBB Cosmo",
+	"Name": "cosmo-conflux",
+	"FriendlyName": "Cosmo Conflux",
 	"Version": "Coming Soon",
 	"Creator": "Azareal",
-	"FullImage": "cosmo.png",
+	"FullImage": "cosmo-conflux.png",
 	"Templates": [
 		{
 			"Name": "topic",

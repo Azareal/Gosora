@@ -1255,7 +1255,10 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{"Theme Manager","panel-themes",user,noticeList,themeList,0}
-	templates.ExecuteTemplate(w,"panel-themes.html", pi)
+	err := templates.ExecuteTemplate(w,"panel-themes.html", pi)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func route_panel_themes_default(w http.ResponseWriter, r *http.Request){

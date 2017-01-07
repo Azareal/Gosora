@@ -58,7 +58,7 @@ w.Write([]byte(`
 	</div>
 	<div style="clear: both;"></div>
 </div>
-`))
+<div id="back"><div id="main">`))
 if len(tmpl_topics_vars.NoticeList) != 0 {
 for _, item := range tmpl_topics_vars.NoticeList {
 w.Write([]byte(`<div class="alert">` + item + `</div>`))
@@ -66,7 +66,7 @@ w.Write([]byte(`<div class="alert">` + item + `</div>`))
 }
 w.Write([]byte(`
 <div class="rowblock">
-	<div class="rowitem"><a>Topic List</a></div>
+	<div class="rowitem rowhead"><a>Topic List</a></div>
 </div>
 <div class="rowblock">
 	`))
@@ -92,7 +92,7 @@ w.Write([]byte(`<span class="username topic_status_e topic_status_closed" style=
 w.Write([]byte(`<span class="username hide_on_micro topic_status_e topic_status_open" style="float: right;">open</span>`))
 }
 w.Write([]byte(`
-		<span class="username hide_on_micro" style="border-right: 0;float: right;">Status</span>
+		<span class="username hide_on_micro status_label" style="border-right: 0;float: right;">Status</span>
 	</div>
 	`))
 }
@@ -102,7 +102,7 @@ w.Write([]byte(`<div class="rowitem passive">There aren't any topics yet.</div>`
 w.Write([]byte(`
 </div>
 			<!--<link rel="stylesheet" href="https://use.fontawesome.com/8670aa03ca.css">-->
-		</div>
+		</div><div style="clear: both;"></div></div></div>
 	</body>
 </html>`))
 }

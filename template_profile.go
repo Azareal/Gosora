@@ -58,7 +58,7 @@ w.Write([]byte(`
 	</div>
 	<div style="clear: both;"></div>
 </div>
-`))
+<div id="back"><div id="main">`))
 if len(tmpl_profile_vars.NoticeList) != 0 {
 for _, item := range tmpl_profile_vars.NoticeList {
 w.Write([]byte(`<div class="alert">` + item + `</div>`))
@@ -93,7 +93,7 @@ w.Write([]byte(`
 	</div>
 </div>
 <div class="colblock_right">
-	<div class="rowitem"><a>Comments</a></div>
+	<div class="rowitem rowhead"><a>Comments</a></div>
 </div>
 <div class="colblock_right" style="overflow: hidden;">
 	`))
@@ -147,7 +147,7 @@ w.Write([]byte(`
 }
 w.Write([]byte(`
 			<!--<link rel="stylesheet" href="https://use.fontawesome.com/8670aa03ca.css">-->
-		</div>
+		</div><div style="clear: both;"></div></div></div>
 	</body>
 </html>`))
 }

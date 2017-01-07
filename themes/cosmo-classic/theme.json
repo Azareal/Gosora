@@ -1,9 +1,8 @@
 {
-	"Name": "cosmo",
-	"FriendlyName": "AtomBB Cosmo",
+	"Name": "cosmo-classic",
+	"FriendlyName": "Cosmo Classic",
 	"Version": "Coming Soon",
 	"Creator": "Azareal",
-	"FullImage": "cosmo.png",
 	"Templates": [
 		{
 			"Name": "topic",

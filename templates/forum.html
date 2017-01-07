@@ -1,6 +1,6 @@
 {{template "header.html" . }}
 <div class="rowblock">
-	<div class="rowitem"><a>{{.Title}}</a></div>
+	<div class="rowitem rowhead"><a>{{.Title}}</a></div>
 </div>
 <div class="rowblock">
 	{{range .ItemList}}<div class="rowitem passive" style="{{ if .Avatar }}background-image: url({{ .Avatar }});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{ if .Sticky }}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">

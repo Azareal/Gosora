@@ -1,7 +1,7 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
 <div class="colblock_right">
-	<div class="rowitem"><a>Forums</a></div>
+	<div class="rowitem rowhead"><a>Forums</a></div>
 </div>
 <div class="colblock_right">
 	{{range .ItemList}}
@@ -15,7 +15,7 @@
 	{{end}}
 </div><br />
 <div class="colblock_right">
-	<div class="rowitem"><a>Add Forum</a></div>
+	<div class="rowitem rowhead"><a>Add Forum</a></div>
 </div>
 <div class="colblock_right">
 	<form action="/panel/forums/create/?session={{.CurrentUser.Session}}" method="post">
@@ -24,7 +24,7 @@
 			<div class="formitem"><input name="forum-name" type="text" /></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem"><button name="panel-button" class="formbutton">Add</div></div>
+			<div class="formitem"><button name="panel-button" class="formbutton">Add Forum</button></div>
 		</div>
 	</form>
 </div>
