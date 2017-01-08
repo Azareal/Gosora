@@ -172,9 +172,8 @@ hr { color: silver; border: 1px solid silver; }
 .colhead a { color: white; display: block; padding-top: 5px; }
 .colhead span { display: block; padding-top: 5px; }
 .open_edit { display: none !important; }
-/*.username { display: none !important; }*/
 .show_on_edit { display: none; }
-.status_label, .topic_status_e/*, .topic_button*/ { display: none !important; }
+.rowhead .topic_status_e { display: none !important; }
 .topic_button { float: right; position: relative; top: -22px; margin-right: 2px; border-style: solid !important; }
 
 .colblock_left
@@ -342,7 +341,7 @@ hr { color: silver; border: 1px solid silver; }
 	box-sizing: border-box;
 }
 
-button
+/*button
 {
 	background: #ce2424;
 	background: linear-gradient(#f97779, #ce2424);
@@ -355,7 +354,7 @@ button
 	margin-bottom: 2px;
 	border-radius: 5px;
 }
-button .big { padding: 6px; }
+button .big { padding: 6px; }*/
 
 .formbutton
 {
@@ -523,13 +522,13 @@ blockquote p
 	right: -1px;
 }
 
-.post_block.groupRibbon
+.tag_block.groupRibbon
 {
 	display: none;
 }
 
 /* From Tempra Conflux */
-.user_content {
+.user_content:not(.simple) {
 	padding: 5px;
 	margin-top: 3px;
 	margin-bottom: 0;
@@ -537,6 +536,9 @@ blockquote p
 	min-height: 129px;
 	padding-bottom: 0;
 	width: 100%;
+}
+.user_content.nobuttons {
+	min-height: 153px;
 }
 
 .button_container {
@@ -561,8 +563,10 @@ blockquote p
 	padding-left: 5px;
 	padding-right: 5px;
 }
-.post_item {
+.post_item:not(.simple) {
 	background-color: #eaeaea;
+}
+.post_item {
 	padding-top: 4px;
 	padding-left: 7px !important;
 	clear: both;
@@ -574,6 +578,13 @@ blockquote p
 .post_item:last-child {
 	padding-bottom: 7px;
 }
+.the_name {
+	margin-top: 3px;
+	text-align: center;
+	color: #505050;
+	display: block;
+}
+
 .userinfo {
 	border-radius: 5px;
 	
@@ -586,6 +597,17 @@ blockquote p
 	top: 4px;
 	box-shadow:0 1px 2px rgba(0,0,0,.1);
 }
+.userinfo .avatar_item {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	width: 128px;
+	height: 100%;
+	min-height: 128px;
+	border-style: solid;
+	border-color: #eaeaea;
+	border-width: 1px;
+}
+
 .content_container {
 	background: white;
 	margin-left: 140px;
@@ -599,26 +621,6 @@ blockquote p
 /* Anything that isn't a small mobile */
 @media(min-width: 501px)
 {
-	/*.top
-	{
-		margin-top: 0px;
-		margin-bottom: 0px;
-		margin-left: auto;
-		margin-right: auto;
-		width: 200px;
-		padding: 0px;
-		outline: none;
-	}
-	
-	.top h1
-	{
-		text-align: center;
-		color: darkgray;
-		text-shadow: 0px 1px 0px #646464;
-		margin: 0px;
-		line-height: 60px;
-	}*/
-	
 	.options
 	{
 		float: right;
@@ -741,13 +743,6 @@ blockquote p
 @media (max-width: 800px)
 {
 	body { background: #cdcdcd; margin-bottom: 10px;}
-	/*.top
-	{
-		background: url('../../images/atombb-small.png') no-repeat left, url('../../images/head-bg.png');
-		width: 100%;
-	}
-	.top img { display: none; }*/
-	
 	#main
 	{
 		width: 100%;
@@ -810,9 +805,7 @@ blockquote p
 	body { overflow-x: hidden; }
 	h1 { font-size: 0; }
 	
-	/*.top { display: none !important; }*/
 	.options { display: none !important; }
-	/*.top div {display: none;}*/
 	ul
 	{
 		line-height: 30px;
@@ -828,7 +821,6 @@ blockquote p
 		clear: left;
 		width: 100%;
 	}
-	
 	li
 	{
 		font-size: 15px;
@@ -842,7 +834,6 @@ blockquote p
 		position: relative;
 		top: -25px;
 	}
-	
 	#main
 	{
 		padding-left: 4px;
@@ -870,27 +861,27 @@ blockquote p
 		max-height: 80px;
 		max-width: 80px;
 	}
-	.userRibbon { word-wrap: break-word; }
+	.tag_block { word-wrap: break-word; }
+	.tag_block:last-child { margin-bottom: 5px; }
 	
 	.notice:first-child { display: inline-block; }
 	.forumLastposter img { display: none; }
 	.getTopics { display: none; }
+	
+	.userinfo {
+		width: 70px;
+	}
+	.userinfo .avatar_item {
+		background-size: 64px;
+		width: 64px;
+		min-height: 64px;
+	}
+	.content_container {
+		margin-left: 73px;
+	}
 }
 @media (min-width: 800px)
 {
-	/*.top {
-		min-height: 50px !important;
-		-webkit-animation-duration: 2s;
-		-moz-animation-duration: 2s;
-		animation-duration: 2s;
-		-webkit-animation-name: slidein;
-		-moz-animation-name: slidein;
-		animation-name: slidein;
-	}
-	.top a
-	{
-		height: 50px !important;
-	}*/
 	@-webkit-keyframes slidein
 	{
 		from { transform: translate(0,-50px) scale(0.75); }
@@ -906,8 +897,6 @@ blockquote p
 		from { transform: translate(0,-50px) scale(0.75); }
 		to {}
 	}
-	/*.top img { min-height: 50px !important; }
-	.top h1 { display: none; }*/
 	.right_most { margin-right: 15%; }
 	
 	#back
@@ -922,7 +911,6 @@ blockquote p
 		border-top: none;
 		padding: 0px;
 		padding-top: 0px;
-		/*padding-bottom: 50px;*/
 		padding-bottom: 10px;
 		
 		background-color: rgba(30,30,30,0.75);
@@ -1029,12 +1017,6 @@ blockquote p
 		padding: 8px;
 	}
 	.nav { width: 1000px; }
-	
-	.bigAvatar
-	{
-		max-height: 128px;
-		max-width: 128px;
-	}
 }
 
 @media (min-width: 1603px)
@@ -1044,9 +1026,7 @@ blockquote p
 		width: 1548px;
 		margin-left: auto;
 		margin-right: auto;
-		/*background-color: rgba(60,60,60,0.75);*/
 	}
-	
 	#main { width: 1250px; }
 	.forumLastposter .title { width: 280px; }
 }

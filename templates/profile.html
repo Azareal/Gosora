@@ -1,6 +1,6 @@
 {{template "header.html" . }}
 <div class="colblock_left" style="max-width: 220px;">
-	<div class="rowitem" style="padding: 0;"><img src="{{.ProfileOwner.Avatar}}" style="max-width: 100%;margin: 0;"/></div>
+	<div class="rowitem" style="padding: 0;"><img src="{{.ProfileOwner.Avatar}}" style="max-width: 100%;margin: 0;display: block;" /></div>
 	<div class="rowitem" style="text-transform: capitalize;">
 	<span style="font-size: 18px;">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username" style="float: right;font-weight: normal;">{{.ProfileOwner.Tag}}</span>{{end}}
 	</div>
@@ -15,29 +15,28 @@
 <div class="colblock_right">
 	<div class="rowitem rowhead"><a>Comments</a></div>
 </div>
-<div class="colblock_right" style="overflow: hidden;">
-	{{range .ItemList}}
-	<div class="rowitem passive deletable_block editable_parent" style="{{ if .Avatar }}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Css}}{{end}}">
-		<span class="editable_block user_content">{{.ContentHtml}}</span>
+<div class="colblock_right" style="overflow: hidden;border-top: none;">{{range .ItemList}}
+<div class="rowitem passive deletable_block editable_parent simple" style="{{ if .Avatar }}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Css}}{{end}}">
+		<span class="editable_block user_content simple">{{.ContentHtml}}</span>
 		<br /><br />
 		<a href="/user/{{.CreatedBy}}" class="username">{{.CreatedByName}}</a>
 		{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}"><button class="username edit_item">Edit</button></a>
 		<a href="/profile/reply/delete/submit/{{.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
 		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item">Report</button></a>
 		{{ if .Tag }}<a class="username hide_on_mobile" style="float: right;">{{.Tag}}</a>{{end}}
-	</div>{{end}}
-</div>
+	</div>
+{{end}}</div>
+<div class="colblock_right" style="border-top: none;">
 {{if not .CurrentUser.Is_Banned}}
-<div class="colblock_right">
-	<form action="/profile/reply/create/" method="post">
-		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
-		<div class="formrow">
-			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
-		</div>
-	</form>
-</div>
+<form action="/profile/reply/create/" method="post">
+	<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
+	<div class="formrow">
+		<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
+	</div>
+	<div class="formrow">
+		<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
+	</div>
+</form>
 {{end}}
+</div>
 {{template "footer.html" . }}

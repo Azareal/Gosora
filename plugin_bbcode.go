@@ -1,7 +1,14 @@
 package main
+//import "log"
+//import "fmt"
+import "bytes"
 //import "strings"
 import "regexp"
 
+var bbcode_invalid_url []byte
+var bbcode_url_open []byte
+var bbcode_url_open2 []byte
+var bbcode_url_close []byte
 var bbcode_bold *regexp.Regexp
 var bbcode_italic *regexp.Regexp
 var bbcode_underline *regexp.Regexp
@@ -14,8 +21,13 @@ func init() {
 }
 
 func init_bbcode() {
-	plugins["bbcode"].AddHook("parse_assign", bbcode_parse_without_code)
-	//plugins["bbcode"].AddHook("parse_assign", bbcode_full_parse)
+	//plugins["bbcode"].AddHook("parse_assign", bbcode_parse_without_code)
+	plugins["bbcode"].AddHook("parse_assign", bbcode_full_parse)
+	
+	bbcode_invalid_url = []byte("<span style='color: red;'>[Invalid URL]</span>")
+	bbcode_url_open = []byte("<a href='")
+	bbcode_url_open2 = []byte("'>")
+	bbcode_url_close = []byte("</a>")
 	
 	bbcode_bold = regexp.MustCompile(`(?s)\[b\](.*)\[/b\]`)
 	bbcode_italic = regexp.MustCompile(`(?s)\[i\](.*)\[/i\]`)
@@ -27,8 +39,8 @@ func init_bbcode() {
 }
 
 func deactivate_bbcode() {
-	plugins["bbcode"].RemoveHook("parse_assign", bbcode_parse_without_code)
-	//plugins["bbcode"].RemoveHook("parse_assign", bbcode_full_parse)
+	//plugins["bbcode"].RemoveHook("parse_assign", bbcode_parse_without_code)
+	plugins["bbcode"].RemoveHook("parse_assign", bbcode_full_parse)
 }
 
 func bbcode_regex_parse(data interface{}) interface{} {
@@ -147,13 +159,12 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 		closer := []byte("</u></i></b></s>")
 		msgbytes = append(msgbytes, closer...)
 	}
-	msg = string(msgbytes)
 	
 	if complex_bbc {
 		msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
 	}
-	return msg
+	return string(msgbytes)
 }
 
 // Does every type of BBCode
@@ -233,13 +244,73 @@ func bbcode_full_parse(data interface{}) interface{} {
 		closer := []byte("</u></i></b></s>")
 		msgbytes = append(msgbytes, closer...)
 	}
-	msg = string(msgbytes)
 	
 	if complex_bbc {
-		msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
+		var start int
+		var lastTag int
+		var outbytes []byte
+		for i := 0; i < len(msgbytes); i++ {
+			MainLoop:
+			if msgbytes[i] == '[' {
+				OuterComplex:
+				if msgbytes[i + 1] == 'u' {
+					if msgbytes[i + 2] == 'r' && msgbytes[i + 3] == 'l' && msgbytes[i + 4] == ']' {
+						outbytes = append(outbytes, msgbytes[lastTag:i]...)
+						start = i + 5
+						i = start
+						if msgbytes[i] == 'h' {
+							if msgbytes[i + 1] == 't' && msgbytes[i + 2] == 't' && msgbytes[i + 3] == 'p' {
+								if bytes.Equal(msgbytes[i + 4:i + 7],[]byte("s://")) {
+									i += 7
+								} else if msgbytes[i + 4] == ':' && msgbytes[i + 5] == '/' && msgbytes[i + 6] == '/' {
+									i += 6
+								} else {
+									outbytes = append(outbytes, bbcode_invalid_url...)
+									continue
+								}
+							}
+						} else if msgbytes[i] == 'f' {
+							if bytes.Equal(msgbytes[i + 1:i + 5],[]byte("tp://")) {
+								i += 5
+							}
+						}
+						
+						for ;; i++ {
+							if msgbytes[i] == '[' {
+								if !bytes.Equal(msgbytes[i + 1:i + 6],[]byte("/url]")) {
+									//log.Print("Not the URL closing tag!")
+									//fmt.Println(msgbytes[i + 1:i + 6])
+									goto OuterComplex
+								}
+								break
+							} else if msgbytes[i] != '\\' && msgbytes[i] != '_' && !(msgbytes[i] > 44 && msgbytes[i] < 58) && !(msgbytes[i] > 64 && msgbytes[i] < 91) && !(msgbytes[i] > 96 && msgbytes[i] < 123) {
+								outbytes = append(outbytes, bbcode_invalid_url...)
+								//log.Print("Weird character")
+								//fmt.Println(msgbytes[i])
+								goto MainLoop
+							}
+						}
+						outbytes = append(outbytes, bbcode_url_open...)
+						outbytes = append(outbytes, msgbytes[start:i]...)
+						outbytes = append(outbytes, bbcode_url_open2...)
+						outbytes = append(outbytes, msgbytes[start:i]...)
+						outbytes = append(outbytes, bbcode_url_close...)
+						i += 6
+						lastTag = i
+					}
+				}
+			}
+		}
+		if len(outbytes) != 0 {
+			return string(outbytes)
+		}
+		
+		msg = string(msgbytes)
+		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
-		//msg = strings.Replace(msg,"[code]","",-1)
-		//msg = strings.Replace(msg,"[/code]","",-1)
+		// Convert [code] into class="codequotes"
+	} else {
+		msg = string(msgbytes)
 	}
 	return msg
 }

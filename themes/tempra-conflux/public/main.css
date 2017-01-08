@@ -333,6 +333,9 @@ button.username
 	padding-bottom: 0;
 	width: 100%;
 }
+.user_content.nobuttons {
+	min-height: 153px;
+}
 
 .button_container {
 	border-top: solid 1px #eaeaea;
@@ -357,8 +360,11 @@ button.username
 	padding-right: 5px;
 }
 
-.post_item {
+.simple { background-color: white; }
+.post_item:not(.simple) {
 	background-color: #eaeaea;
+}
+.post_item {
 	padding-top: 4px;
 	padding-left: 5px;
 	clear: both;
@@ -372,6 +378,12 @@ button.username
 .post_tag {
 	display: none;
 }
+.the_name {
+	margin-top: 3px;
+	text-align: center;
+	color: #505050;
+	display: block;
+}
 
 .userinfo {
 	background: white;
@@ -383,6 +395,17 @@ button.username
 	top: 4px;
 	box-shadow:0 1px 2px rgba(0,0,0,.1);
 }
+.userinfo .avatar_item {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	width: 128px;
+	height: 100%;
+	min-height: 128px;
+	border-style: solid;
+	border-color: #eaeaea;
+	border-width: 1px;
+}
+
 .content_container {
 	background: white;
 	margin-left: 137px;
@@ -468,5 +491,17 @@ button.username
 		width: 60px;
 		font-size: 15px;
 	}
+	.userinfo {
+		width: 70px;
+	}
+	.userinfo .avatar_item {
+		background-size: 64px;
+		width: 64px;
+		min-height: 64px;
+	}
+	.content_container {
+		margin-left: 73px;
+	}
+	
 	.container { width: 100% !important; }
 }

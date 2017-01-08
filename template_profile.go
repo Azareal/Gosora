@@ -66,7 +66,7 @@ w.Write([]byte(`<div class="alert">` + item + `</div>`))
 }
 w.Write([]byte(`
 <div class="colblock_left" style="max-width: 220px;">
-	<div class="rowitem" style="padding: 0;"><img src="` + tmpl_profile_vars.ProfileOwner.Avatar + `" style="max-width: 100%;margin: 0;"/></div>
+	<div class="rowitem" style="padding: 0;"><img src="` + tmpl_profile_vars.ProfileOwner.Avatar + `" style="max-width: 100%;margin: 0;display: block;" /></div>
 	<div class="rowitem" style="text-transform: capitalize;">
 	<span style="font-size: 18px;">` + tmpl_profile_vars.ProfileOwner.Name + `</span>`))
 if tmpl_profile_vars.ProfileOwner.Tag != "" {
@@ -95,12 +95,11 @@ w.Write([]byte(`
 <div class="colblock_right">
 	<div class="rowitem rowhead"><a>Comments</a></div>
 </div>
-<div class="colblock_right" style="overflow: hidden;">
-	`))
+<div class="colblock_right" style="overflow: hidden;border-top: none;">`))
 if len(tmpl_profile_vars.ItemList) != 0 {
 for _, item := range tmpl_profile_vars.ItemList {
 w.Write([]byte(`
-	<div class="rowitem passive deletable_block editable_parent" style="`))
+<div class="rowitem passive deletable_block editable_parent simple" style="`))
 if item.Avatar != "" {
 w.Write([]byte(`background-image: url(` + item.Avatar + `), url(/static/white-dot.jpg);background-position: 0px `))
 if item.ContentLines <= 5 {
@@ -109,7 +108,7 @@ w.Write([]byte(`-1`))
 w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;` + string(item.Css)))
 }
 w.Write([]byte(`">
-		<span class="editable_block user_content">` + string(item.ContentHtml) + `</span>
+		<span class="editable_block user_content simple">` + string(item.ContentHtml) + `</span>
 		<br /><br />
 		<a href="/user/` + strconv.Itoa(item.CreatedBy) + `" class="username">` + item.CreatedByName + `</a>
 		`))
@@ -124,28 +123,28 @@ if item.Tag != "" {
 w.Write([]byte(`<a class="username hide_on_mobile" style="float: right;">` + item.Tag + `</a>`))
 }
 w.Write([]byte(`
-	</div>`))
+	</div>
+`))
 }
 }
-w.Write([]byte(`
-</div>
+w.Write([]byte(`</div>
+<div class="colblock_right" style="border-top: none;">
 `))
 if !tmpl_profile_vars.CurrentUser.Is_Banned {
 w.Write([]byte(`
-<div class="colblock_right">
-	<form action="/profile/reply/create/" method="post">
-		<input name="uid" value='` + strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID) + `' type="hidden" />
-		<div class="formrow">
-			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
-		</div>
-	</form>
-</div>
+<form action="/profile/reply/create/" method="post">
+	<input name="uid" value='` + strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID) + `' type="hidden" />
+	<div class="formrow">
+		<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
+	</div>
+	<div class="formrow">
+		<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
+	</div>
+</form>
 `))
 }
 w.Write([]byte(`
+</div>
 			<!--<link rel="stylesheet" href="https://use.fontawesome.com/8670aa03ca.css">-->
 		</div><div style="clear: both;"></div></div></div>
 	</body>

@@ -86,7 +86,7 @@ w.Write([]byte(`background-color: #eaeaea;`))
 w.Write([]byte(`">
 		<a href="/topic/` + strconv.Itoa(item.ID) + `">` + item.Title + `</a> `))
 if item.Is_Closed {
-w.Write([]byte(`<span class="username topic_status_e topic_status_closed" style="float: right;">shut</span>
+w.Write([]byte(`<span class="username topic_status_e topic_status_closed" style="float: right;">closed</span>
 		`))
 } else {
 w.Write([]byte(`<span class="username hide_on_micro topic_status_e topic_status_open" style="float: right;">open</span>`))

@@ -4,6 +4,7 @@
 	"Version": "0.0.1",
 	"Creator": "Azareal",
 	"FullImage": "tempra-conflux.png",
+	"MobileFriendly": true,
 	"Templates": [
 		{
 			"Name": "topic",

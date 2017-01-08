@@ -175,9 +175,8 @@ hr { color: silver; border: 1px solid silver; }
 .colhead a { color: white; display: block; padding-top: 5px; }
 .colhead span { display: block; padding-top: 5px; }
 .open_edit { display: none !important; }
-/*.username { display: none !important; }*/
 .show_on_edit { display: none; }
-.status_label, .topic_status_e/*, .topic_button*/ { display: none !important; }
+.rowhead .topic_status_e { display: none !important; }
 .topic_button { float: right; position: relative; top: -22px; margin-right: 2px; border-style: solid !important; }
 
 .colblock_left
@@ -344,7 +343,7 @@ hr { color: silver; border: 1px solid silver; }
 	box-sizing: border-box;
 }
 
-button
+/*button
 {
 	background: #ce2424;
 	background: linear-gradient(#f97779, #ce2424);
@@ -357,7 +356,7 @@ button
 	margin-bottom: 2px;
 	border-radius: 5px;
 }
-button .big { padding: 6px; }
+button .big { padding: 6px; }*/
 
 .formbutton
 {
@@ -481,11 +480,6 @@ blockquote p
 	max-height: 128px;
 	max-width: 128px;
 }
-.bigAvatar
-{
-	max-height: 64px;
-	max-width: 64px;
-}
 
 /* From Tempra Conflux */
 .user_content {
@@ -496,6 +490,9 @@ blockquote p
 	min-height: 129px;
 	padding-bottom: 0;
 	width: 100%;
+}
+.user_content.nobuttons {
+	min-height: 153px;
 }
 
 .button_container {
@@ -520,6 +517,10 @@ blockquote p
 	padding-left: 5px;
 	padding-right: 5px;
 }
+
+.post_item:not(.simple) {
+	background-color: #eaeaea;
+}
 .post_item {
 	background-color: #eaeaea;
 	padding-top: 4px;
@@ -533,6 +534,13 @@ blockquote p
 .post_tag {
 	display: none;
 }
+.the_name {
+	margin-top: 3px;
+	text-align: center;
+	color: #505050;
+	display: block;
+}
+
 .userinfo {
 	background: white;
 	width: 132px;
@@ -543,6 +551,17 @@ blockquote p
 	top: 4px;
 	box-shadow:0 1px 2px rgba(0,0,0,.1);
 }
+.userinfo .avatar_item {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	width: 128px;
+	height: 100%;
+	min-height: 128px;
+	border-style: solid;
+	border-color: #eaeaea;
+	border-width: 1px;
+}
+
 .content_container {
 	background: white;
 	margin-left: 137px;
@@ -783,7 +802,6 @@ blockquote p
 		clear: left;
 		width: 100%;
 	}
-	
 	li
 	{
 		font-size: 15px;
@@ -797,7 +815,6 @@ blockquote p
 		position: relative;
 		top: -25px;
 	}
-	
 	#main
 	{
 		padding-left: 4px;
@@ -825,10 +842,22 @@ blockquote p
 		max-height: 80px;
 		max-width: 80px;
 	}
-	.userRibbon { word-wrap: break-word; }
+	.tag_block { word-wrap: break-word; }
 	
 	.notice:first-child { display: inline-block; }
 	.getTopics { display: none; }
+	
+	.userinfo {
+		width: 70px;
+	}
+	.userinfo .avatar_item {
+		background-size: 64px;
+		width: 64px;
+		min-height: 64px;
+	}
+	.content_container {
+		margin-left: 73px;
+	}
 }
 @media (min-width: 800px)
 {
@@ -981,12 +1010,6 @@ blockquote p
 		padding: 8px;
 	}
 	.nav { width: 1000px; }
-	
-	.bigAvatar
-	{
-		max-height: 128px;
-		max-width: 128px;
-	}
 }
 
 @media (min-width: 1603px)

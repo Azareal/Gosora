@@ -3,12 +3,11 @@
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
 		<div class="rowitem rowhead{{ if .Topic.Sticky }} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
 			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a> 
-			<span class='username hide_on_micro topic_status_e topic_status_{{.Topic.Status}} hide_on_edit' style="font-weight:normal;float: right;">{{.Topic.Status}}</span> 
-			<span class="username hide_on_micro status_label" style="border-right: 0;font-weight: normal;float: right;">Status</span>
+			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;">&#x1F512;&#xFE0E</span>{{end}}
 			{{if .CurrentUser.Is_Mod}}
 			<a href='/topic/edit/{{.Topic.ID}}' class="username hide_on_edit open_edit topic_button" style="font-weight: normal;margin-left: 6px;">Edit</a>
 			<a href='/topic/delete/submit/{{.Topic.ID}}' class="username topic_button" style="font-weight: normal;">Delete</a>
-			{{ if .Topic.Sticky }}<a href='/topic/unstick/submit/{{.Topic.ID}}' class="username topic_button" style="font-weight: normal;">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="username topic_button" style="font-weight: normal;">Pin</a>{{end}}
+			{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}' class="username topic_button" style="font-weight: normal;">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="username topic_button" style="font-weight: normal;">Pin</a>{{end}}
 			
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />
 			<select name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
@@ -24,13 +23,13 @@
 <style type="text/css">.rowitem:last-child .content_container { margin-bottom: 5px !important; }</style>
 <div class="rowblock post_container" style="border-top: none;">
 	<div class="rowitem passive deletable_block editable_parent post_item" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
-		<div class="userinfo" style="background: white;width: 132px;padding: 2px;margin-top: 2px;float: left;position: sticky;top: 4px;box-shadow:0 1px 2px rgba(0,0,0,.1);">
-			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;background-repeat: no-repeat, repeat-y;background-size: 128px;width: 128px;height: 100%;min-height: 128px;border-style: solid;border-color: #eaeaea;border-width: 1px;">&nbsp;</div>
-			<div class="the_name" style="margin-top: 3px;text-align: center;color: #505050;">{{.Topic.CreatedByName}}</div>
+		<div class="userinfo">
+			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+			<a href="/user/{{.Topic.CreatedBy}}" class="the_name">{{.Topic.CreatedByName}}</a>
 			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container">
-			<div class="hide_on_edit topic_content user_content" style="min-height: 153px;">{{.Topic.Content}}</div>
+			<div class="hide_on_edit topic_content user_content nobuttons">{{.Topic.Content}}</div>
 			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 		</div>
 		<div style="clear:both;"></div>
@@ -38,8 +37,8 @@
 	{{range .ItemList}}
 	<div class="rowitem passive deletable_block editable_parent post_item">
 		<div class="userinfo">
-			<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;background-repeat: no-repeat, repeat-y;background-size: 128px;width: 128px;height: 100%;min-height: 128px;border-style: solid;border-color: #eaeaea;border-width: 1px;">&nbsp;</div>
-			<div class="the_name" style="margin-top: 3px;text-align: center;color: #505050;">{{.CreatedByName}}</div>
+			<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+			<a href="/user/{{.CreatedBy}}" class="the_name">{{.CreatedByName}}</a>
 			{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container">

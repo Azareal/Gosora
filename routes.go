@@ -109,7 +109,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		}
 		
 		if topicItem.Is_Closed {
-			topicItem.Status = "shut"
+			topicItem.Status = "closed"
 		} else {
 			topicItem.Status = "open"
 		}
@@ -183,7 +183,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		}
 		
 		if topicItem.Is_Closed {
-			topicItem.Status = "shut"
+			topicItem.Status = "closed"
 		} else {
 			topicItem.Status = "open"
 		}
@@ -297,7 +297,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	topic.ContentLines = strings.Count(content,"\n")
 	
 	if topic.Is_Closed {
-		topic.Status = "shut"
+		topic.Status = "closed"
 		
 		// We don't want users posting in locked topics...
 		if !user.Is_Mod {

@@ -6,6 +6,10 @@ The initial code-base was forked from one of my side projects, but has now gone 
 
 Discord Server: https://discord.gg/eyYvtTf
 
+If you like this software, please give it a star and give us some feedback :)
+
+If you dislike it, please give us some feedback on how to make it better! We're always looking for feedback. We love hearing your opinions. If there's something missing or something doesn't look quite right, don't worry! We plan to change many things before the alpha!
+
 
 # Features
 Basic Forum Functionality. All of the little things you would expect of any forum software. E.g. Moderation, Custom Themes, Avatars, and so on.
