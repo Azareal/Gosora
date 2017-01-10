@@ -23,7 +23,7 @@ var server_port string
 
 var default_host string = "localhost"
 var default_username string = "root"
-var default_dbname string = "gosora2"
+var default_dbname string = "gosora"
 var default_site_name string = "Site Name"
 var default_site_url string = "localhost"
 var default_server_port string = "80" // 8080's a good one, if you're testing and don't want it to clash with port 80
