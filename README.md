@@ -71,6 +71,7 @@ In the same directory you installed it, you simply have to type: ./run-gosora-li
 Run run.bat
 
 *Updating Dependencies*
+
 You can update the dependencies which Gosora relies on by running update-deps.bat on Windows or ./update-deps-linux on Linux. These dependencies do not include Go or MySQL.
 
 We're also looking into ways to distribute ready made executables for Windows. While this is not a complicated endeavour, the configuration settings currently get built with the rest of the program for speed, and we will likely have to change this.
