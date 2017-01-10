@@ -14,75 +14,71 @@ If you dislike it, please give us some feedback on how to make it better! We're 
 # Features
 Basic Forum Functionality. All of the little things you would expect of any forum software. E.g. Moderation, Custom Themes, Avatars, and so on.
 
-Custom Pages. Under development. Mainly the Control Panel portion to come, but you can create them by hand today.
+Custom Pages. Under development. The Control Panel portion is incomplete, but you can create them by hand today. They're basically html/templates templates in the /pages/ folder.
 
 Emojis. Allow your users to express themselves without resorting to serving tons upon tons of image files.
 
-In-memory static file, forum and group caches. We're pondering over extending this solution over to topics, users, etc. to some extent.
+In-memory static file, forum and group caches. We're pondering over extending this solution over to topics, users, etc.
 
 A profile system including profile comments and moderation tools for the profile owner.
 
 A template engine which compiles templates down into machine code. Over ten times faster than html/templates. Compatible with templates written for html/templates, you don't need to learn any new templating language.
 
-A plugin system. Under development.
+A plugin system. More on this to come.
 
 A responsive design. Looks great on mobile phones, tablets, laptops, desktops and more!
 
 
 # Dependencies
 
-Go 1.7. The programming language this program is written in, and the compiler which it requires. You will need to install this. https://golang.org/doc/install
+Go 1.7. You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
-MySQL Database. You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well, and is much faster than MySQL.
-If you're curious about how to install this, you might want to try the WNMP or XAMPP bundles on Windows.
+MySQL Database. You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL.
+Download the .msi installer from ![MariaDB](https://mariadb.com/downloads) and run that. You may want to set it up as a service to avoid running it every-time the computer starts up.
+
+We recommend changing the root password (that is the password for the user 'root'). Remember that password, you will need it for the installation process. Of course, we would advise using a user other than root for maximum security, although that adds additional steps to the process of getting everything setup.
 Instructions on how to do so on Linux: https://downloads.mariadb.org/mariadb/repositories/
+
+It's entirely possible that your host might already have MySQL, so you might be able to skip this step, particularly if it's a managed VPS or a shared host (contrary to popular belief, it is possible, although the ecosystem in this regard is extremely immature). Or they might have a quicker and easier method of setting up MySQL.
 
 
 # Installation Instructions
 
-**Run the following commands:**
+*Linux*
 
-go get -u github.com/go-sql-driver/mysql
+cd to the directory / folder the code is in. In other words, type cd followed by the location of the code and it should jump there.
 
-go get -u golang.org/x/crypto/bcrypt
+Run ./install-gosora-linux
 
-Tweak the config.go file and put your database details in there. Import data.sql into the same database. Comment out the first line (put /* and */ around it), if you've already made a database, and don't want the script to generate it for you.
+Follow the instructions shown on the screen.
 
-Set the password column of your user account in the database to what you want your password to be. The system will encrypt your password when you login for the first time.
+*Windows*
 
-You can run these commands again at any time to update these dependencies to their latest versions.
+Run install.bat
+
+Follow the instructions shown on the screen.
+
 
 # Run the program
 
 *Linux*
 
-cd to the directory / folder the code is in.
-
-go build
-
-./gosora
-
+In the same directory you installed it, you simply have to type: ./run-gosora-linux
 
 *Windows*
 
-Open up cmd.exe
+Run run.bat
 
-cd to the directory / folder the code is in. E.g. `cd /Users/Blah/Documents/gosora`
-
-go build
-
-./gosora.exe
-
-
-Alternatively, you could run the run.bat batch file on Windows.
+*Updating Dependencies*
+You can update the dependencies which Gosora relies on by running update-deps.bat on Windows or ./update-deps-linux on Linux. These dependencies do not include Go or MySQL.
 
 We're also looking into ways to distribute ready made executables for Windows. While this is not a complicated endeavour, the configuration settings currently get built with the rest of the program for speed, and we will likely have to change this.
 
 With the introduction of the new settings system, we will begin moving some of the less critical settings out of the configuration file, and will likely have a config.xml or config.ini in the future to store the critical settings in.
 
-You might have to go build, run the executable, and then go build and then run the executable again to make sure the templates are compiled properly. We'll be resolving this issue while we roll out the new compiled templates system to the rest of the routes.
+You might have to run run.bat or ./run-gosora-linux twice after changing a template to make sure the templates are compiled properly. We'll be resolving this issue while rolling out the new compiled templates system to the rest of the routes.
 
-Several important features for saving memory in the templates system may have to be implemented before the new compiled template system is rolled out to every route. These features are coming fairly soon, but not before the other more high priority items.
+Several important features for saving memory in the templates system may have to be implemented before the new compiled template system is rolled out to every route. These features are coming fairly soon, but not before the higher priority items.
 
 
 # How do I install plugins?
@@ -117,7 +113,7 @@ More moderation features. E.g. Move, Approval Queue (Posts made by users in cert
 
 Add a simple anti-spam measure. I have quite a few ideas in mind, but it'll take a while to implement the more advanced ones, so I'd like to put off some of those to a later date and focus on the basics. E.g. CAPTCHAs, hidden fields, etc.
 
-Add an alert system.
+Add a modern alert system.
 
 Add per-forum permissions to finish up the foundations of the permissions system.
 
@@ -125,13 +121,19 @@ Add a *better* plugin system. E.g. Allow for plugins written in Javascript and o
 
 I will need to ponder over implementing an even faster router. We don't need one immediately, although it would be nice if we could get one in the near future. It really depends. Ideally, it would be one which can easily integrate with the current structure without much work, although I'm not beyond making some alterations to faciliate it, assuming that we don't get too tightly bound to that specific router.
 
-Allow themes to define their own templates.
+Allow themes to define their own templates and to override core templates with their own.
 
 Add a friend system.
 
+Improve profile customisability.
+
+Implement all the common BBCode tags in plugin_bbcode
+
+Implement all the common Markdown codes in plugin_markdown
+
 Add more administration features.
 
-Add more features for improving user engagement. I have quite a few of these in mind, but I'm mostly occupied with implementing the essentials right now.
+Add more features for improving user engagement. E.g. A like system. I have a few of these in mind, but I've been pre-occupied with implementing other features.
 
 Add a widget system.
 

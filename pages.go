@@ -5,7 +5,7 @@ import "regexp"
 type Page struct
 {
 	Title string
-	Name string // What's the point of this field? If we're not going to use it, remove it.
+	Name string // Deprecated. Marked for removal.
 	CurrentUser User
 	NoticeList map[int]string
 	ItemList []interface{}

@@ -1,7 +1,7 @@
 package main
 
 // Database details
-var dbhost = "127.0.0.1"
+var dbhost = "localhost"
 var dbuser = "root"
 var dbpassword = "password"
 var dbname = "gosora"

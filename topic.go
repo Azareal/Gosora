@@ -11,7 +11,7 @@ type Topic struct
 	Sticky bool
 	CreatedAt string
 	ParentID int
-	Status string
+	Status string // Deprecated. Marked for removal.
 }
 
 type TopicUser struct
@@ -24,7 +24,7 @@ type TopicUser struct
 	Sticky bool
 	CreatedAt string
 	ParentID int
-	Status string
+	Status string // Deprecated. Marked for removal.
 	
 	CreatedByName string
 	Avatar string

@@ -108,11 +108,6 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			return
 		}
 		
-		if topicItem.Is_Closed {
-			topicItem.Status = "closed"
-		} else {
-			topicItem.Status = "open"
-		}
 		if topicItem.Avatar != "" {
 			if topicItem.Avatar[0] == '.' {
 				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
@@ -182,11 +177,6 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 			return
 		}
 		
-		if topicItem.Is_Closed {
-			topicItem.Status = "closed"
-		} else {
-			topicItem.Status = "open"
-		}
 		if topicItem.Avatar != "" {
 			if topicItem.Avatar[0] == '.' {
 				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
@@ -296,16 +286,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	topic.Content = template.HTML(parse_message(content))
 	topic.ContentLines = strings.Count(content,"\n")
 	
-	if topic.Is_Closed {
-		topic.Status = "closed"
-		
-		// We don't want users posting in locked topics...
-		if !user.Is_Mod {
-			user.Perms.CreateReply = false
-		}
-	} else {
-		topic.Status = "open"
+	// We don't want users posting in locked topics...
+	if topic.Is_Closed && !user.Is_Mod {
+		user.Perms.CreateReply = false
 	}
+	
 	if topic.Avatar != "" {
 		if topic.Avatar[0] == '.' {
 			topic.Avatar = "/uploads/avatar_" + strconv.Itoa(topic.CreatedBy) + topic.Avatar

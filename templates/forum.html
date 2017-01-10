@@ -4,9 +4,7 @@
 </div>
 <div class="rowblock">
 	{{range .ItemList}}<div class="rowitem passive" style="{{ if .Avatar }}background-image: url({{ .Avatar }});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{ if .Sticky }}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
-		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="username topic_status_e topic_status_closed" style="float: right;">closed</span>
-		{{else}}<span class="username hide_on_micro topic_status_e topic_status_open" style="float: right;">open</span>{{end}}
-		<span class="username hide_on_micro" style="border-right: 0;float: right;">Status</span>
+		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;">&#x1F512;&#xFE0E</span>{{end}}
 	</div>
 	{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.</div>{{end}}
 </div>

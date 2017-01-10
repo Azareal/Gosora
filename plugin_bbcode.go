@@ -248,7 +248,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 	if complex_bbc {
 		var start int
 		var lastTag int
-		var outbytes []byte
+		outbytes := make([]byte, len(msgbytes))
 		for i := 0; i < len(msgbytes); i++ {
 			MainLoop:
 			if msgbytes[i] == '[' {
