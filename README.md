@@ -36,8 +36,9 @@ Go 1.7. You will need to install this. Pick the .msi, if you want everything sor
 MySQL Database. You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL.
 Download the .msi installer from ![MariaDB](https://mariadb.com/downloads) and run that. You may want to set it up as a service to avoid running it every-time the computer starts up.
 
+Instructions on how to set MariaDB up on Linux: https://downloads.mariadb.org/mariadb/repositories/
+
 We recommend changing the root password (that is the password for the user 'root'). Remember that password, you will need it for the installation process. Of course, we would advise using a user other than root for maximum security, although that adds additional steps to the process of getting everything setup.
-Instructions on how to do so on Linux: https://downloads.mariadb.org/mariadb/repositories/
 
 It's entirely possible that your host might already have MySQL, so you might be able to skip this step, particularly if it's a managed VPS or a shared host (contrary to popular belief, it is possible, although the ecosystem in this regard is extremely immature). Or they might have a quicker and easier method of setting up MySQL.
 
