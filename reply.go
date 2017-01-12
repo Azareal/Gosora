@@ -20,4 +20,5 @@ type Reply struct
 	URL string
 	URLPrefix string
 	URLName string
+	Level int
 }

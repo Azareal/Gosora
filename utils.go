@@ -3,6 +3,9 @@ import "log"
 import "fmt"
 import "time"
 import "os"
+import "math"
+import "strings"
+import "unicode"
 import "encoding/base64"
 import "crypto/rand"
 import "net/smtp"
@@ -102,4 +105,85 @@ func write_file(name string, content string) {
 	}
 	f.Sync()
 	f.Close()
+}
+
+func word_count(input string) int {
+	input = strings.TrimSpace(input)
+	count := 0
+	in_space := false
+	for _, value := range input {
+		if unicode.IsSpace(value) {
+			if !in_space {
+				in_space = true
+			}
+		} else if in_space {
+			count++
+			in_space = false
+		}
+	}
+	return count
+}
+
+func getLevel(score int) (level int) {
+	var base float64 = 25
+	var current float64
+	var prev float64
+	exp_factor := 2.8
+	
+	for i := 1;;i++ {
+		_, bit := math.Modf(float64(i) / 10)
+		if bit == 0 {
+			exp_factor += 0.1
+		}
+		current = base + math.Pow(float64(i), exp_factor) + (prev / 3)
+		prev = current
+		if float64(score) < current {
+			break
+		} else {
+			level++
+		}
+	}
+	return level
+}
+
+func getLevelScore(getLevel int) (score int) {
+	var base float64 = 25
+	var current float64
+	var prev float64
+	var level int
+	exp_factor := 2.8
+	
+	for i := 1;;i++ {
+		_, bit := math.Modf(float64(i) / 10)
+		if bit == 0 {
+			exp_factor += 0.1
+		}
+		current = base + math.Pow(float64(i), exp_factor) + (prev / 3)
+		prev = current
+		level++
+		if level <= getLevel {
+			break
+		}
+	}
+	return int(math.Ceil(current))
+}
+
+func getLevels(maxLevel int) []float64 {
+	var base float64 = 25
+	var current float64 = 0
+	var prev float64 = 0
+	exp_factor := 2.8
+	var out []float64
+	out = append(out, 0)
+	
+	for i := 1;i <= maxLevel;i++ {
+		_, bit := math.Modf(float64(i) / 10)
+		if bit == 0 {
+			exp_factor += 0.1
+		}
+		current = base + math.Pow(float64(i), exp_factor) + (prev / 3)
+		prev = current
+		out = append(out, current)
+	}
+	return out
 }

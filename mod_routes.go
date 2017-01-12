@@ -38,11 +38,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	
 	topic_name := r.PostFormValue("topic_name")
 	topic_status := r.PostFormValue("topic_status")
-	
-	var is_closed bool
-	if topic_status == "closed" {
-		is_closed = true
-	}
+	is_closed := (topic_status == "closed")
 	
 	topic_content := html.EscapeString(r.PostFormValue("topic_content"))
 	_, err = edit_topic_stmt.Exec(topic_name, preparse_message(topic_content), parse_message(html.EscapeString(preparse_message(topic_content))), is_closed, tid)
@@ -74,7 +70,9 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	err = db.QueryRow("SELECT tid from topics where tid = ?", tid).Scan(&tid)
+	var content string
+	var createdBy int
+	err = db.QueryRow("select tid, content, createdBy from topics where tid = ?", tid).Scan(&tid, &content, &createdBy)
 	if err == sql.ErrNoRows {
 		LocalError("The topic you tried to delete doesn't exist.",w,r,user)
 		return
@@ -88,9 +86,15 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	
 	log.Print("The topic '" + strconv.Itoa(tid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w,r,"/",http.StatusSeeOther)
+	
+	wcount := word_count(content)
+	err = decrease_post_user_stats(wcount, createdBy, true, user)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
 }
 
 func route_stick_topic(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +156,6 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form", w, r, user)
 		return          
 	}
-	
 	is_js := r.PostFormValue("js")
 	if is_js == "" {
 		is_js = "0"
@@ -218,7 +221,9 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	var tid int
-	err = db.QueryRow("SELECT tid from replies where rid = ?", rid).Scan(&tid)
+	var content string
+	var createdBy int
+	err = db.QueryRow("SELECT tid, content, createdBy from replies where rid = ?", rid).Scan(&tid, &content, &createdBy)
 	if err == sql.ErrNoRows {
 		LocalErrorJSQ("The reply you tried to delete doesn't exist.",w,r,user,is_js)
 		return
@@ -233,11 +238,17 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Print("The reply '" + strconv.Itoa(rid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
-	
 	if is_js == "0" {
 		//http.Redirect(w,r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
 		fmt.Fprintf(w,"{'success': '1'}")
+	}
+	
+	wcount := word_count(content)
+	err = decrease_post_user_stats(wcount, createdBy, false, user)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
 	}
 }
 

@@ -4,7 +4,7 @@ A super fast forum software written in Go.
 
 The initial code-base was forked from one of my side projects, but has now gone far beyond that.
 
-Discord Server: https://discord.gg/eyYvtTf
+Azareal's Discord Chat: https://discord.gg/eyYvtTf
 
 If you like this software, please give it a star and give us some feedback :)
 

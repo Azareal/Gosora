@@ -273,6 +273,11 @@ func get_site_details() bool {
 	if server_port == "" {
 		server_port = default_server_port
 	}
+	_, err := strconv.Atoi(server_port)
+	if err != nil {
+		fmt.Println("That's not a valid number!")
+		return false
+	}
 	fmt.Println("Set the server port to " + server_port)
 	return true
 }

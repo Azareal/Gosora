@@ -34,6 +34,12 @@ var register_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 var change_group_stmt *sql.Stmt
 var activate_user_stmt *sql.Stmt
+var update_user_level_stmt *sql.Stmt
+var increment_user_score_stmt *sql.Stmt
+var increment_user_posts_stmt *sql.Stmt
+var increment_user_bigposts_stmt *sql.Stmt
+var increment_user_megaposts_stmt *sql.Stmt
+var increment_user_topics_stmt *sql.Stmt
 var create_profile_reply_stmt *sql.Stmt
 var edit_profile_reply_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
@@ -64,7 +70,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_session statement.")
-	get_session_stmt, err = db.Prepare("select `uid`, `name`, `group`, `is_super_admin`, `session`, `email`, `avatar`, `message`, `url_prefix`, `url_name` FROM `users` WHERE `uid` = ? AND `session` = ? AND `session` <> ''")
+	get_session_stmt, err = db.Prepare("select `uid`, `name`, `group`, `is_super_admin`, `session`, `email`, `avatar`, `message`, `url_prefix`, `url_name`, `level`, `score` FROM `users` where `uid` = ? AND `session` = ? AND `session` <> ''")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -218,6 +224,42 @@ func init_database(err error) {
 	
 	log.Print("Preparing activate_user statement.")
 	activate_user_stmt, err = db.Prepare("UPDATE users SET active = 1 WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_user_level statement.")
+	update_user_level_stmt, err = db.Prepare("UPDATE users SET level = ? WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing increment_user_score statement.")
+	increment_user_score_stmt, err = db.Prepare("UPDATE users SET score = score + ? WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing increment_user_posts statement.")
+	increment_user_posts_stmt, err = db.Prepare("UPDATE users SET posts = posts + ? WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing increment_user_bigposts statement.")
+	increment_user_bigposts_stmt, err = db.Prepare("UPDATE users SET posts = posts + ?, bigposts =  bigposts + ? WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing increment_user_megaposts statement.")
+	increment_user_megaposts_stmt, err = db.Prepare("UPDATE users SET posts = posts + ?, bigposts = bigposts + ?, megaposts =  megaposts + ? WHERE uid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing increment_user_topics statement.")
+	increment_user_topics_stmt, err = db.Prepare("UPDATE users SET topics =  topics + ? WHERE uid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

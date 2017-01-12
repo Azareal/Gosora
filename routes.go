@@ -236,7 +236,6 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
 	var(
 		err error
 		rid int
@@ -254,13 +253,14 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		replyURL string
 		replyURLPrefix string
 		replyURLName string
+		replyLevel int
 		is_super_admin bool
 		group int
 		
 		replyList []Reply
 	)
 	
-	topic := TopicUser{0,"","",0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
+	topic := TopicUser{Css: no_css_tmpl}
 	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
@@ -274,7 +274,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	
 	// Get the topic..
-	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar, users.is_super_admin, users.group, users.url_prefix, users.url_name from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group, &topic.URLPrefix, &topic.URLName)
+	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group, &topic.URLPrefix, &topic.URLName, &topic.Level)
 	if err == sql.ErrNoRows {
 		NotFound(w,r,user)
 		return
@@ -300,12 +300,13 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
 		topic.Css = staff_css_tmpl
+		topic.Level = -1
 	}
-	if groups[group].Tag != "" {
+	//if groups[group].Tag != "" {
 			topic.Tag = groups[group].Tag
-	} else {
-		topic.Tag = ""
-	}
+	//} else {
+	//	topic.Tag = ""
+	//}
 	if settings["url_tags"] == false {
 		topic.URLName = ""
 	} else {
@@ -318,7 +319,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	
 	// Get the replies..
-	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name from replies left join users ON replies.createdBy = users.uid where tid = ?", topic.ID)
+	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level from replies left join users ON replies.createdBy = users.uid where tid = ?", topic.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -326,7 +327,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	defer rows.Close()
 	
 	for rows.Next() {
-		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &is_super_admin, &group, &replyURLPrefix, &replyURLName)
+		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &is_super_admin, &group, &replyURLPrefix, &replyURLName, &replyLevel)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
@@ -335,6 +336,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		replyLines = strings.Count(replyContent,"\n")
 		if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
 			replyCss = staff_css_tmpl
+			replyLevel = -1
 		} else {
 			replyCss = no_css_tmpl
 		}
@@ -345,11 +347,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		} else {
 			replyAvatar = strings.Replace(noavatar,"{id}",strconv.Itoa(replyCreatedBy),1)
 		}
-		if groups[group].Tag != "" {
+		//if groups[group].Tag != "" {
 			replyTag = groups[group].Tag
-		} else {
-			replyTag = ""
-		}
+		//} else {
+		//	replyTag = ""
+		//}
 		if settings["url_tags"] == false {
 			replyURLName = ""
 		} else {
@@ -361,7 +363,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 			}
 		}
 		
-		replyItem := Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,replyURL,replyURLPrefix,replyURLName}
+		replyItem := Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,replyURL,replyURLPrefix,replyURLName,replyLevel}
 		
 		if hooks["rrow_assign"] != nil {
 			replyItem = run_hook("rrow_assign", replyItem).(Reply)
@@ -422,7 +424,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		puser = user
 	} else {
 		// Fetch the user data
-		err = db.QueryRow("SELECT `name`, `group`, `is_super_admin`, `avatar`, `message`, `url_prefix`, `url_name` FROM `users` WHERE `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName)
+		err = db.QueryRow("SELECT `name`, `group`, `is_super_admin`, `avatar`, `message`, `url_prefix`, `url_name`, `level` FROM `users` WHERE `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName, &puser.Level)
 		if err == sql.ErrNoRows {
 			NotFound(w,r,user)
 			return
@@ -440,11 +442,11 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	if groups[puser.Group].Tag != "" {
+	//if groups[puser.Group].Tag != "" {
 			puser.Tag = groups[puser.Group].Tag
-	} else {
-		puser.Tag = ""
-	}
+	//} else {
+	//	puser.Tag = ""
+	//}
 	
 	if puser.Avatar != "" {
 		if puser.Avatar[0] == '.' {
@@ -490,7 +492,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 			replyTag = ""
 		}
 		
-		replyList = append(replyList, Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","",""})
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0})
 	}
 	err = rows.Err()
 	if err != nil {
@@ -518,7 +520,6 @@ func route_topic_create(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
 	pi := Page{"Create Topic","create-topic",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"create-topic.html", pi)
 }
@@ -539,38 +540,32 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form", w, r, user)
 		return          
 	}
-	success := 1
 	topic_name := html.EscapeString(r.PostFormValue("topic-name"))
+	content := html.EscapeString(preparse_message(r.PostFormValue("topic-content")))
 	
-	res, err := create_topic_stmt.Exec(topic_name,html.EscapeString(preparse_message(r.PostFormValue("topic-content"))),parse_message(html.EscapeString(preparse_message(r.PostFormValue("topic-content")))),user.ID)
+	res, err := create_topic_stmt.Exec(topic_name,content,parse_message(content),user.ID)
 	if err != nil {
-		log.Print(err)
-		success = 0
+		InternalError(err,w,r,user)
+		return
 	}
 	
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		log.Print(err)
-		success = 0
+		InternalError(err,w,r,user)
+		return
 	}
-	
 	_, err = update_forum_cache_stmt.Exec(topic_name, lastId, user.Name, user.ID, 1)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
-	if success != 1 {
-		errmsg := "Unable to create the topic"
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
-	} else {
-		http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId, 10), http.StatusSeeOther)
+	http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId,10), http.StatusSeeOther)
+	wcount := word_count(content)
+	err = increase_post_user_stats(wcount, user.ID, true, user)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
 	}
 }
 
@@ -589,7 +584,6 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form", w, r, user)
 		return          
 	}
-	
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
 		LocalError("Failed to convert the TopicID", w, r, user)
@@ -597,7 +591,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	content := preparse_message(html.EscapeString(r.PostFormValue("reply-content")))
-	log.Print(content)
+	//log.Print(content)
 	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),user.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
@@ -621,6 +615,12 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
+	wcount := word_count(content)
+	err = increase_post_user_stats(wcount, user.ID, false, user)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
 }
 
 func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
@@ -638,52 +638,29 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form", w, r, user)
 		return          
 	}
-	
-	success := 1
 	uid, err := strconv.Atoi(r.PostFormValue("uid"))
 	if err != nil {
-		log.Print(err)
-		success = 0
-		
-		errmsg := "Unable to create the reply"
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("Invalid UID",w,r,user)
 		return
 	}
 	
 	_, err = create_profile_reply_stmt.Exec(uid,html.EscapeString(preparse_message(r.PostFormValue("reply-content"))),parse_message(html.EscapeString(preparse_message(r.PostFormValue("reply-content")))),user.ID)
 	if err != nil {
-		log.Print(err)
-		success = 0
+		InternalError(err,w,r,user)
+		return
 	}
 	
 	var user_name string
 	err = db.QueryRow("select name from users where uid = ?", uid).Scan(&user_name)
 	if err == sql.ErrNoRows {
-		log.Print(err)
-		success = 0
+		LocalError("The profile you're trying to post on doesn't exist.",w,r,user)
+		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
-	if success != 1 {
-		errmsg := "Unable to create the reply"
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
-	} else {
-		http.Redirect(w, r, "/user/" + strconv.Itoa(uid), http.StatusSeeOther)
-	}
+	http.Redirect(w, r, "/user/" + strconv.Itoa(uid), http.StatusSeeOther)
 }
 
 func route_report_submit(w http.ResponseWriter, r *http.Request) {
@@ -691,7 +668,6 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
 		return
@@ -872,13 +848,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	
 	err = get_password_stmt.QueryRow(user.ID).Scan(&real_password, &salt)
 	if err == sql.ErrNoRows {
-		pi := Page{"Error","error",user,nList,tList,"Your account doesn't exist."}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("Your account no longer exists.",w,r,user)
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
@@ -888,26 +858,14 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	current_password = current_password + salt
 	err = bcrypt.CompareHashAndPassword([]byte(real_password), []byte(current_password))
 	if err == bcrypt.ErrMismatchedHashAndPassword {
-		pi := Page{"Error","error",user,nList,tList,"That's not the correct password."}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("That's not the correct password.",w,r,user)
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	if new_password != confirm_password {
-		pi := Page{"Error","error",user,nList,tList,"The two passwords don't match."}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("The two passwords don't match.",w,r,user)
 		return
 	}
 	SetPassword(user.ID, new_password)
@@ -1192,16 +1150,8 @@ func route_logout(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if !user.Loggedin {
-		errmsg := "You can't logout without logging in first."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You can't logout without logging in first.",w,r,user)
 		return
 	}
 	
@@ -1218,19 +1168,10 @@ func route_login(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if user.Loggedin {
-		errmsg := "You're already logged in."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	
 	pi := Page{"Login","login",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"login.html", pi)
 }
@@ -1240,16 +1181,8 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if user.Loggedin {
-		errmsg := "You're already logged in."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You're already logged in.",w,r,user)
 		return
 	}
 	
@@ -1268,14 +1201,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	
 	err = login_stmt.QueryRow(username).Scan(&uid, &username, &real_password, &salt)
 	if err == sql.ErrNoRows {
-		errmsg := "That username doesn't exist."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("That username doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
@@ -1285,14 +1211,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	// Emergency password reset mechanism..
 	if salt == "" {
 		if password != real_password {
-			errmsg := "That's not the correct password."
-			pi := Page{"Error","error",user,nList,tList,errmsg}
-			
-			var b bytes.Buffer
-			templates.ExecuteTemplate(&b,"error.html", pi)
-			errpage := b.String()
-			w.WriteHeader(500)
-			fmt.Fprintln(w,errpage)
+			LocalError("That's not the correct password.",w,r,user)
 			return
 		}
 		
@@ -1307,14 +1226,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		
 		err := bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password))
 		if err == bcrypt.ErrMismatchedHashAndPassword {
-			errmsg := "That's not the correct password."
-			pi := Page{"Error","error",user,nList,tList,errmsg}
-			
-			var b bytes.Buffer
-			templates.ExecuteTemplate(&b,"error.html", pi)
-			errpage := b.String()
-			w.WriteHeader(500)
-			fmt.Fprintln(w,errpage)
+			LocalError("That's not the correct password.",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r,user)
@@ -1347,17 +1259,9 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if user.Loggedin {
-		errmsg := "You're already logged in."
-		pi := Page{"Error","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	
 	pi := Page{"Registration","register",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"register.html", pi)
 }
@@ -1367,7 +1271,6 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -1400,14 +1303,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	
 	// Do the two inputted passwords match..?
 	if password != confirm_password {
-		errmsg := "The two passwords don't match."
-		pi := Page{"Password Mismatch","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("The two passwords don't match.",w,r,user)
 		return
 	}
 	
@@ -1417,14 +1313,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	} else if err != sql.ErrNoRows {
-		errmsg := "This username isn't available. Try another."
-		pi := Page{"Username Taken","error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		LocalError("This username isn't available. Try another.",w,r,user)
 		return
 	}
 	
@@ -1433,7 +1322,6 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	
 	session, err := GenerateSafeString(sessionLength)
 	if err != nil {
 		InternalError(err,w,r,user)

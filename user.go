@@ -1,4 +1,5 @@
 package main
+import "fmt"
 import "strings"
 import "strconv"
 import "net/http"
@@ -26,6 +27,8 @@ type User struct
 	URLPrefix string
 	URLName string
 	Tag string
+	Level int
+	Score int
 }
 
 type Email struct
@@ -92,7 +95,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	user.Session = cookie.Value
 	
 	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
+	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score)
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""
@@ -154,7 +157,7 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 	user.Session = cookie.Value
 	
 	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName)
+	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score)
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""
@@ -188,4 +191,80 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	return user, true
+}
+
+func increase_post_user_stats(wcount int, uid int, topic bool, user User) error {
+	var mod int
+	base_score := 1
+	if topic {
+		_, err := increment_user_topics_stmt.Exec(1, uid)
+		if err != nil {
+			return err
+		}
+		base_score = 2
+	}
+	
+	if wcount > settings["megapost_min_chars"].(int) {
+		_, err := increment_user_megaposts_stmt.Exec(1,1,1,uid)
+		if err != nil {
+			return err
+		}
+		mod = 4
+	} else if wcount > settings["bigpost_min_chars"].(int) {
+		_, err := increment_user_bigposts_stmt.Exec(1,1,uid)
+		if err != nil {
+			return err
+		}
+		mod = 1
+	} else {
+		_, err := increment_user_posts_stmt.Exec(1,uid)
+		if err != nil {
+			return err
+		}
+	}
+	_, err := increment_user_score_stmt.Exec(base_score + mod, uid)
+	if err != nil {
+		return err
+	}
+	fmt.Println(user.Score + base_score + mod)
+	fmt.Println(getLevel(user.Score + base_score + mod))
+	_, err = update_user_level_stmt.Exec(getLevel(user.Score + base_score + mod), uid)
+	return err
+}
+
+func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error {
+	var mod int
+	base_score := -1
+	if topic {
+		_, err := increment_user_topics_stmt.Exec(-1, uid)
+		if err != nil {
+			return err
+		}
+		base_score = -2
+	}
+	
+	if wcount > settings["megapost_min_chars"].(int) {
+		_, err := increment_user_megaposts_stmt.Exec(-1,-1,-1,uid)
+		if err != nil {
+			return err
+		}
+		mod = 4
+	} else if wcount > settings["bigpost_min_chars"].(int) {
+		_, err := increment_user_bigposts_stmt.Exec(-1,-1,uid)
+		if err != nil {
+			return err
+		}
+		mod = 1
+	} else {
+		_, err := increment_user_posts_stmt.Exec(-1,uid)
+		if err != nil {
+			return err
+		}
+	}
+	_, err := increment_user_score_stmt.Exec(base_score - mod, uid)
+	if err != nil {
+		return err
+	}
+	_, err = update_user_level_stmt.Exec(getLevel(user.Score - base_score - mod), uid)
+	return err
 }

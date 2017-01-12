@@ -41,15 +41,15 @@ var template_profile_handle func(ProfilePage,io.Writer) = nil
 
 func compile_templates() {
 	var c CTemplateSet
-	user := User{62,"","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","",""}
+	user := User{62,"","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0}
 	var noticeList map[int]string = make(map[int]string)
 	noticeList[0] = "test"
 	
 	log.Print("Compiling the templates")
 	
-	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
+	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"",0,"","","",no_css_tmpl,0,"","","","",58}
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"",template.HTML("Yo!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
+	replyList = append(replyList, Reply{0,0,"",template.HTML("Yo!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
 	
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title",user,noticeList,replyList,topic,false}
@@ -71,7 +71,7 @@ func compile_templates() {
 	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage", forums_page, varList)
 	
 	var topicList []TopicUser
-	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"",1,"open","Admin","","",0,"","","",""})
+	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"",1,"open","Admin","","",0,"","","","",58})
 	topics_page := TopicsPage{"Topic List",user,noticeList,topicList,""}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
 	

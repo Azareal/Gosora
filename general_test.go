@@ -1,6 +1,7 @@
 package main
 import "log"
 import "bytes"
+import "strconv"
 import "math/rand"
 import "testing"
 import "net/http"
@@ -12,24 +13,24 @@ import "html/template"
 func BenchmarkTopicTemplate(b *testing.B) {
 	b.ReportAllocs()
 	
-	user := User{0,"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","",""}
-	admin := User{1,"Admin","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","",""}
+	user := User{0,"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0}
+	admin := User{1,"Admin","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","","",-1,58}
 	var noticeList map[int]string = make(map[int]string)
 	noticeList[0] = "test"
 	
-	topic := TopicUser{0,"Lol",template.HTML("Hey everyone!"),0,false,false,"",0,"","","",no_css_tmpl,0,"","","",""}
+	topic := TopicUser{Title: "Lol",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58}
 	
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0})
 	
 	tpage := TopicPage{"Topic Blah",user,noticeList,replyList,topic,false}
 	tpage2 := TopicPage{"Topic Blah",admin,noticeList,replyList,topic,false}
@@ -60,22 +61,22 @@ func BenchmarkTopicTemplate(b *testing.B) {
 func BenchmarkTopicsTemplate(b *testing.B) {
 	b.ReportAllocs()
 	
-	user := User{0,"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","",""}
-	admin := User{1,"Admin","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","",""}
+	user := User{0,"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0}
+	admin := User{1,"Admin","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","","",-1,58}
 	var noticeList map[int]string = make(map[int]string)
 	noticeList[0] = "test"
 	
 	var topicList []TopicUser
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
-	topicList = append(topicList, TopicUser{0,"Hey everyone!",template.HTML("Hey everyone!"),0,false,false,"0000-00-00 00:00:00",1,"open","Admin","",no_css_tmpl,0,"Admin","","",""})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
+	topicList = append(topicList, TopicUser{Title: "Hey everyone!",Content: template.HTML("Hey everyone!"),CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58})
 	
 	tpage := TopicsPage{"Topic Blah",user,noticeList,topicList,0}
 	tpage2 := TopicsPage{"Topic Blah",admin,noticeList,topicList,0}
@@ -893,6 +894,14 @@ func BenchmarkBBCodePluginWithFullParser(b *testing.B) {
 			_ = bbcode_full_parse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 		}
 	})
+}
+
+func TestLevels(t *testing.T) {
+	levels := getLevels(40)
+	for level, score := range levels {
+		sscore := strconv.FormatFloat(score, 'f', -1, 64)
+		log.Print("Level: " + strconv.Itoa(level) + " Score: " + sscore)
+	}
 }
 
 /*func TestRoute(t *testing.T) {

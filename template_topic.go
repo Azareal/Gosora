@@ -120,9 +120,13 @@ w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128p
 }
 w.Write([]byte(`">
 		<p class="hide_on_edit topic_content user_content" style="margin: 0;padding: 0;">` + string(tmpl_topic_vars.Topic.Content.(template.HTML)) + `</p>
-		<textarea name="topic_content" class="show_on_edit topic_content_input">` + string(tmpl_topic_vars.Topic.Content.(template.HTML)) + `</textarea>
-		<br /><br />
+		<textarea name="topic_content" class="show_on_edit topic_content_input">` + string(tmpl_topic_vars.Topic.Content.(template.HTML)) + `</textarea><br /><br />
 		<a href="/user/` + strconv.Itoa(tmpl_topic_vars.Topic.CreatedBy) + `" class="username real_username">` + tmpl_topic_vars.Topic.CreatedByName + `</a>
+		`))
+if tmpl_topic_vars.Topic.Level != -1 {
+w.Write([]byte(`<a class="username level hide_on_mobile" title="Level ` + strconv.Itoa(tmpl_topic_vars.Topic.Level) + `">L` + strconv.Itoa(tmpl_topic_vars.Topic.Level) + `</a>`))
+}
+w.Write([]byte(`
 		`))
 if tmpl_topic_vars.Topic.Tag != "" {
 w.Write([]byte(`<a class="username hide_on_micro" style="float: right;">` + tmpl_topic_vars.Topic.Tag + `</a>`))
@@ -150,6 +154,11 @@ w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128p
 w.Write([]byte(`">
 		<p class="editable_block user_content" style="margin: 0;padding: 0;">` + string(item.ContentHtml) + `</p><br /><br />
 		<a href="/user/` + strconv.Itoa(item.CreatedBy) + `" class="username real_username">` + item.CreatedByName + `</a>
+		`))
+if item.Level != -1 {
+w.Write([]byte(`<a class="username level hide_on_mobile" title="Level ` + strconv.Itoa(item.Level) + `">L` + strconv.Itoa(item.Level) + `</a>`))
+}
+w.Write([]byte(`
 		`))
 if tmpl_topic_vars.CurrentUser.Perms.EditReply {
 w.Write([]byte(`<a href="/reply/edit/submit/` + strconv.Itoa(item.ID) + `" class="mod_button"><button class="username edit_item">Edit</button></a>`))

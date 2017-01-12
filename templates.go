@@ -304,7 +304,6 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 				} else {
 					varbit += "." + id
 				}
-				
 				if debug {
 					fmt.Println("End Cycle")
 				}
@@ -331,9 +330,8 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 				fmt.Println(n.String())
 				fmt.Println(n.Ident)
 			}
-			
-			out, _ = c.compile_if_varsub(n.String(), varholder, template_name, holdreflect)
-			return "w.Write([]byte(" + out + "))\n"
+			varname, reflectVal := c.compile_if_varsub(n.String(), varholder, template_name, holdreflect)
+			return c.compile_varsub(varname, reflectVal)
 		case *parse.StringNode:
 			return n.Quoted
 		default:
@@ -428,6 +426,21 @@ func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect
 				out += " && "
 			case "le":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " <= " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				break ArgLoop
+			case "lt":
+				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " < " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				break ArgLoop
+			case "gt":
+				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " > " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				break ArgLoop
+			case "ge":
+				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " >= " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				break ArgLoop
+			case "eq":
+				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " == " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				break ArgLoop
+			case "ne":
+				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " != " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
 				break ArgLoop
 			default:
 				if debug {
