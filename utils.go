@@ -107,9 +107,8 @@ func write_file(name string, content string) {
 	f.Close()
 }
 
-func word_count(input string) int {
+func word_count(input string) (count int) {
 	input = strings.TrimSpace(input)
-	count := 0
 	in_space := false
 	for _, value := range input {
 		if unicode.IsSpace(value) {

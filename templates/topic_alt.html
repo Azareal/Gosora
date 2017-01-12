@@ -1,7 +1,7 @@
 {{template "header.html" . }}
 <div class="rowblock">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
-		<div class="rowitem rowhead{{ if .Topic.Sticky }} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
+		<div class="rowitem rowhead{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
 			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a> 
 			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;">&#x1F512;&#xFE0E</span>{{end}}
 			{{if .CurrentUser.Is_Mod}}
@@ -26,7 +26,7 @@
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="/user/{{.Topic.CreatedBy}}" class="the_name">{{.Topic.CreatedByName}}</a>
-			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{end}}
+			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content nobuttons">{{.Topic.Content}}</div>
@@ -39,7 +39,7 @@
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="/user/{{.CreatedBy}}" class="the_name">{{.CreatedByName}}</a>
-			{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{end}}
+			{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container">
 			<div class="editable_block user_content">{{.ContentHtml}}</div>

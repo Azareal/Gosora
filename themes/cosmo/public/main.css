@@ -533,12 +533,13 @@ blockquote p
 	margin-top: 3px;
 	margin-bottom: 0;
 	background: white;
-	min-height: 129px;
+	min-height: 167px;
 	padding-bottom: 0;
 	width: 100%;
+	border-radius: 4px;
 }
 .user_content.nobuttons {
-	min-height: 153px;
+	min-height: 190px;
 }
 
 .button_container {
@@ -615,6 +616,7 @@ blockquote p
 	margin-bottom: 0;
 	margin-right: 3px;
 	box-shadow:0 1px 2px rgba(0,0,0,.1);
+	border-radius: 4px;
 }
 
 /* Responsive Layout */
@@ -742,7 +744,7 @@ blockquote p
 
 @media (max-width: 800px)
 {
-	body { background: #cdcdcd; margin-bottom: 10px;}
+	body { background: #505050; margin-bottom: 10px;}
 	#main
 	{
 		width: 100%;
@@ -797,14 +799,23 @@ blockquote p
 	.cell_last img { display: none; }
 }
 
+@media(max-width: 620px)
+{
+	.menu_create_topic { display: none;}
+	.menu_overview { display: none; }
+	.hide_on_mobile { display: none; }
+}
+
 /* This one is specifically for small mobiles.. */
 @media(max-width: 500px)
 {
 	#main { margin-top: 20px; }
 	.rowblock { box-sizing: border-box; }
+	.rowblock:first-of-type { margin-top: 2px; }
 	body { overflow-x: hidden; }
-	h1 { font-size: 0; }
 	
+	.topic_name { text-align: left; margin-left: 8px; width: 50%; text-overflow: ellipsis; overflow: hidden; }
+	.menu_profile { display: none; }
 	.options { display: none !important; }
 	ul
 	{
@@ -839,7 +850,6 @@ blockquote p
 		padding-left: 4px;
 		padding-right: 6px;
 	}
-	
 	.notice
 	{
 		width: 100%;
@@ -878,7 +888,10 @@ blockquote p
 	}
 	.content_container {
 		margin-left: 73px;
+		min-height: inherit;
 	}
+	.user_content { min-height: 97.5px !important; }
+	.user_content.nobuttons { min-height: 121px !important; }
 }
 @media (min-width: 800px)
 {

@@ -4,6 +4,7 @@
 	"Version": "Coming Soon",
 	"Creator": "Azareal",
 	"FullImage": "cosmo-conflux.png",
+	"MobileFriendly": true,
 	"Templates": [
 		{
 			"Name": "topic",

@@ -487,12 +487,12 @@ blockquote p
 	margin-top: 3px;
 	margin-bottom: 0;
 	background: white;
-	min-height: 129px;
+	min-height: 145px;
 	padding-bottom: 0;
 	width: 100%;
 }
 .user_content.nobuttons {
-	min-height: 153px;
+	min-height: 168px;
 }
 
 .button_container {
@@ -532,7 +532,11 @@ blockquote p
 	padding-bottom: 2px;
 }
 .post_tag {
-	display: none;
+	margin-top: 0px;
+	text-align: center;
+	color: #505050;
+	display: block;
+	font-size: 13px;
 }
 .the_name {
 	margin-top: 3px;
@@ -574,27 +578,7 @@ blockquote p
 /* Responsive Layout */
 /* Anything that isn't a small mobile */
 @media(min-width: 501px)
-{
-	/*.top
-	{
-		margin-top: 0px;
-		margin-bottom: 0px;
-		margin-left: auto;
-		margin-right: auto;
-		width: 200px;
-		padding: 0px;
-		outline: none;
-	}
-	
-	.top h1
-	{
-		text-align: center;
-		color: darkgray;
-		text-shadow: 0px 1px 0px #646464;
-		margin: 0px;
-		line-height: 60px;
-	}*/
-	
+{	
 	.options
 	{
 		float: right;
@@ -716,14 +700,7 @@ blockquote p
 
 @media (max-width: 800px)
 {
-	body { background: #cdcdcd; margin-bottom: 10px;}
-	/*.top
-	{
-		background: url('../../images/atombb-small.png') no-repeat left, url('../../images/head-bg.png');
-		width: 100%;
-	}
-	.top img { display: none; }*/
-	
+	body { background: #505050; margin-bottom: 10px;}
 	#main
 	{
 		width: 100%;
@@ -772,8 +749,13 @@ blockquote p
 	.rowitem { border-left: none;border-right: none; }
 	.rowhead { border-left: none;border-right: none; }
 	.tbody { border-left: none;border-right: none; }
-	.cell_author img { display: none; }
-	.cell_last img { display: none; }
+}
+
+@media(max-width: 620px)
+{
+	.menu_create_topic { display: none;}
+	.menu_overview { display: none; }
+	.hide_on_mobile { display: none; }
 }
 
 /* This one is specifically for small mobiles.. */
@@ -781,12 +763,12 @@ blockquote p
 {
 	#main { margin-top: 20px; }
 	.rowblock { box-sizing: border-box; }
+	.rowblock:first-of-type { margin-top: 2px; }
 	body { overflow-x: hidden; }
-	h1 { font-size: 0; }
 	
-	/*.top { display: none !important; }*/
+	.topic_name { text-align: left; margin-left: 8px; width: 50%; text-overflow: ellipsis; overflow: hidden; }
+	.menu_profile { display: none; }
 	.options { display: none !important; }
-	/*.top div {display: none;}*/
 	ul
 	{
 		line-height: 30px;
@@ -857,23 +839,13 @@ blockquote p
 	}
 	.content_container {
 		margin-left: 73px;
+		min-height: inherit;
 	}
+	.user_content { min-height: 80px !important; }
+	.user_content.nobuttons { min-height: 103px !important; }
 }
 @media (min-width: 800px)
 {
-	/*.top {
-		min-height: 50px !important;
-		-webkit-animation-duration: 2s;
-		-moz-animation-duration: 2s;
-		animation-duration: 2s;
-		-webkit-animation-name: slidein;
-		-moz-animation-name: slidein;
-		animation-name: slidein;
-	}
-	.top a
-	{
-		height: 50px !important;
-	}*/
 	@-webkit-keyframes slidein
 	{
 		from { transform: translate(0,-50px) scale(0.75); }

@@ -1,5 +1,4 @@
 package main
-import "fmt"
 import "strings"
 import "strconv"
 import "net/http"
@@ -226,8 +225,8 @@ func increase_post_user_stats(wcount int, uid int, topic bool, user User) error 
 	if err != nil {
 		return err
 	}
-	fmt.Println(user.Score + base_score + mod)
-	fmt.Println(getLevel(user.Score + base_score + mod))
+	//fmt.Println(user.Score + base_score + mod)
+	//fmt.Println(getLevel(user.Score + base_score + mod))
 	_, err = update_user_level_stmt.Exec(getLevel(user.Score + base_score + mod), uid)
 	return err
 }

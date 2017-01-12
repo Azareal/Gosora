@@ -274,6 +274,7 @@ button.username
 	position: relative;
 	top: -0.25px;
 }
+.username.level {color: #303030;}
 .tag-mini
 {
 	text-transform: none;
@@ -388,11 +389,12 @@ button.username
 		position: absolute;
 		top: 70px;
 		float: left;
-		margin-top: 0px;
+		margin-top: -2px;
 		padding-top: 3px !important;
 		margin-right: 2px;
 		width: 60px;
 		font-size: 15px;
+		text-align: center;
 	}
 	.container { width: 100% !important; }
 }

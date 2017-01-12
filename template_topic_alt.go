@@ -118,6 +118,8 @@ w.Write([]byte(`
 			`))
 if tmpl_topic_alt_vars.Topic.Tag != "" {
 w.Write([]byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">` + tmpl_topic_alt_vars.Topic.Tag + `</div><div class="tag_post"></div></div>`))
+} else {
+w.Write([]byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level ` + strconv.Itoa(tmpl_topic_alt_vars.Topic.Level) + `</div><div class="tag_post"></div></div>`))
 }
 w.Write([]byte(`
 		</div>
@@ -138,6 +140,8 @@ w.Write([]byte(`
 			`))
 if item.Tag != "" {
 w.Write([]byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">` + item.Tag + `</div><div class="tag_post"></div></div>`))
+} else {
+w.Write([]byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level ` + strconv.Itoa(item.Level) + `</div><div class="tag_post"></div></div>`))
 }
 w.Write([]byte(`
 		</div>
