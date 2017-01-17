@@ -248,11 +248,7 @@ button
 	color: #505050; /* 80,80,80 */
 	border-radius: 2px;
 }
-
-.topic_status:empty
-{
-	display: none;
-}
+.topic_status:empty { display: none; }
 
 .username
 {

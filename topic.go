@@ -35,4 +35,6 @@ type TopicUser struct
 	URLPrefix string
 	URLName string
 	Level int
+	
+	IpAddress string
 }

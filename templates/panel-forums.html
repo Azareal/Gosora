@@ -7,7 +7,7 @@
 	{{range .ItemList}}
 	<div class="rowitem editable_parent" style="font-weight: normal;">
 		<a class="editable_block" style="font-size: 20px;position:relative;top: -2px;text-transform: none;">{{.Name}}</a>
-		{{if not (eq .ID 0)}}<span style="float: right;">
+		{{if ne .ID 0}}<span style="float: right;">
 			<a href="/panel/forums/edit/submit/{{.ID}}" class="username edit_field">Edit</a>
 			<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Delete</a>
 		</span>{{end}}

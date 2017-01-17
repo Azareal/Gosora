@@ -78,6 +78,7 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 	delete(plugin.Hooks, name)
 }
 
+var plugins_inited bool = false
 func init_plugins() {
 	for name, body := range plugins {
 		log.Print("Added plugin " + name)
@@ -86,6 +87,7 @@ func init_plugins() {
 			plugins[name].Init()
 		}
 	}
+	plugins_inited = true
 }
 
 func run_hook(name string, data interface{}) interface{} {

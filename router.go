@@ -43,7 +43,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if req.URL.Path[len(req.URL.Path) - 1] == '/' {
 		w.WriteHeader(404)
-		w.Write([]byte(""))
+		w.Write(error_notfound)
 		return
 	}
 	
@@ -61,6 +61,6 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	w.WriteHeader(404)
-	w.Write([]byte(""))
+	w.Write(error_notfound)
 	return
 }

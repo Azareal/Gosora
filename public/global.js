@@ -15,7 +15,6 @@ $(document).ready(function(){
 	$(".open_edit").click(function(event){
 		console.log("Clicked on edit");
 		event.preventDefault();
-		
 		$(".hide_on_edit").hide();
 		$(".show_on_edit").show();
 	});
@@ -108,5 +107,18 @@ $(document).ready(function(){
 				data: {is_js: "1",edit_item: newContent}
 			});
 		});
+	});
+	
+	$(this).find(".ip_item").each(function(){
+		var ip = $(this).text();
+		//var ip_width = $(this).width();
+		console.log("IP: " + ip);
+		if(ip.length > 10){
+			$(this).html("Show IP");
+			$(this).click(function(event){
+				event.preventDefault();
+				$(this).text(ip);/*.animate({width: ip.width},{duration: 1000, easing: 'easeOutBounce'});*/
+			});
+		}
 	});
 });

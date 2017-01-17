@@ -130,8 +130,8 @@ INSERT INTO settings(`name`,`content`,`type`) VALUES ('bigpost_min_chars','250',
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('megapost_min_chars','1000','int');
 INSERT INTO themes(`uname`,`default`) VALUES ('tempra-simple',1);
 
-INSERT INTO users(`name`,`password`,`email`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`,`message`) 
-VALUES ('Admin','password','admin@localhost',1,1,NOW(),NOW(),'');
+INSERT INTO users(`name`,`password`,`email`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`,`message`,`last_ip`) 
+VALUES ('Admin','password','admin@localhost',1,1,NOW(),NOW(),'','127.0.0.1');
 INSERT INTO emails(`email`,`uid`,`validated`) VALUES ('admin@localhost',1,1);
 
 /*

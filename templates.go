@@ -1,8 +1,10 @@
 package main
 import "log"
 import "fmt"
+import "bytes"
 import "strings"
 import "strconv"
+//import "regexp"
 import "reflect"
 import "path/filepath"
 import "io/ioutil"
@@ -31,6 +33,9 @@ type CTemplateSet struct
 	dir string
 	funcMap map[string]interface{}
 	importMap map[string]string
+	Fragments map[string]int
+	FragmentCursor map[string]int
+	FragOut string
 	varList map[string]VarItem
 	localVars map[string]map[string]VarItemReflect
 	stats map[string]int
@@ -95,6 +100,11 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	c.localVars = make(map[string]map[string]VarItemReflect)
 	c.localVars[fname] = make(map[string]VarItemReflect)
 	c.localVars[fname]["."] = VarItemReflect{".",varholder,holdreflect}
+	if c.Fragments == nil {
+		c.Fragments = make(map[string]int)
+	}
+	c.FragmentCursor = make(map[string]int)
+	c.FragmentCursor[fname] = 0
 	
 	subtree := c.tlist[fname]
 	if debug {
@@ -135,6 +145,9 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	fout = strings.Replace(fout,`))
 w.Write([]byte(`," + ",-1)
 	fout = strings.Replace(fout,"` + `","",-1)
+	//spstr := "`([:space:]*)`"
+	//whitespace_writes := regexp.MustCompile(`(?s)w.Write\(\[\]byte\(`+spstr+`\)\)`)
+	//fout = whitespace_writes.ReplaceAllString(fout,"")
 	
 	for index, count := range c.stats {
 		fmt.Println(index + ": " + strconv.Itoa(count))
@@ -256,7 +269,20 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 			c.previousNode = c.currentNode
 			c.currentNode = node.Type()
 			c.nextNode = 0
-			return "w.Write([]byte(`" + string(node.Text) + "`))\n"
+			tmpText := bytes.TrimSpace(node.Text)
+			if len(tmpText) == 0 {
+				return ""
+			} else {
+				//return "w.Write([]byte(`" + string(node.Text) + "`))\n"
+				fragment_name := template_name + "_" + strconv.Itoa(c.FragmentCursor[template_name])
+				_, ok := c.Fragments[fragment_name]
+				if !ok {
+					c.Fragments[fragment_name] = len(node.Text)
+					c.FragOut += "var " + fragment_name + " []byte = []byte(`" + string(node.Text) + "`)\n"
+				}
+				c.FragmentCursor[template_name] = c.FragmentCursor[template_name] + 1
+				return "w.Write(" + fragment_name + ")\n"
+			}
 		default:
 			panic("Unknown Node in main switch")
 	}
@@ -670,6 +696,7 @@ func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect refle
 	
 	c.localVars[fname] = make(map[string]VarItemReflect)
 	c.localVars[fname]["."] = VarItemReflect{".",varholder,holdreflect}
+	c.FragmentCursor[fname] = 0
 	
 	treeLength := len(subtree.Root.Nodes)
 	for index, node := range subtree.Root.Nodes {

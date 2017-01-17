@@ -10,6 +10,9 @@ import "encoding/json"
 var db *sql.DB
 var get_session_stmt *sql.Stmt
 var get_topic_list_stmt *sql.Stmt
+var get_topic_user_stmt *sql.Stmt
+var get_topic_replies_stmt *sql.Stmt
+var get_forum_topics_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
 var create_report_stmt *sql.Stmt
 var create_reply_stmt *sql.Stmt
@@ -20,6 +23,7 @@ var delete_reply_stmt *sql.Stmt
 var delete_topic_stmt *sql.Stmt
 var stick_topic_stmt *sql.Stmt
 var unstick_topic_stmt *sql.Stmt
+var update_last_ip_stmt *sql.Stmt
 var login_stmt *sql.Stmt
 var update_session_stmt *sql.Stmt
 var logout_stmt *sql.Stmt
@@ -70,7 +74,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_session statement.")
-	get_session_stmt, err = db.Prepare("select `uid`, `name`, `group`, `is_super_admin`, `session`, `email`, `avatar`, `message`, `url_prefix`, `url_name`, `level`, `score` FROM `users` where `uid` = ? AND `session` = ? AND `session` <> ''")
+	get_session_stmt, err = db.Prepare("select `uid`,`name`,`group`,`is_super_admin`,`session`,`email`,`avatar`,`message`,`url_prefix`,`url_name`,`level`,`score`,`last_ip` from `users` where `uid` = ? and `session` = ? AND `session` <> ''")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,8 +85,26 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing get_topic_user statement.")
+	get_topic_user_stmt, err = db.Prepare("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level, topics.ipaddress from topics left join users ON topics.createdBy = users.uid where tid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing get_topic_replies statement.")
+	get_topic_replies_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing get_forum_topics statement.")
+	get_forum_topics_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("insert into topics(title,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
+	create_topic_stmt, err = db.Prepare("insert into topics(title,content,parsed_content,createdAt,ipaddress,createdBy) VALUES(?,?,?,NOW(),?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,7 +116,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing create_reply statement.")
-	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,parsed_content,createdAt,createdBy) VALUES(?,?,?,NOW(),?)")
+	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,parsed_content,createdAt,ipaddress,createdBy) VALUES(?,?,?,NOW(),?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -137,6 +159,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing unstick_topic statement.")
 	unstick_topic_stmt, err = db.Prepare("UPDATE topics SET sticky = 0 WHERE tid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_last_ip statement.")
+	update_last_ip_stmt, err = db.Prepare("UPDATE users SET last_ip = ? WHERE uid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

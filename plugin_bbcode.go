@@ -3,9 +3,15 @@ package main
 //import "fmt"
 import "bytes"
 //import "strings"
+import "strconv"
 import "regexp"
+import "time"
+import "math/rand"
 
+var random *rand.Rand
 var bbcode_invalid_url []byte
+var bbcode_invalid_number []byte
+var bbcode_missing_tag []byte
 var bbcode_url_open []byte
 var bbcode_url_open2 []byte
 var bbcode_url_close []byte
@@ -25,6 +31,8 @@ func init_bbcode() {
 	plugins["bbcode"].AddHook("parse_assign", bbcode_full_parse)
 	
 	bbcode_invalid_url = []byte("<span style='color: red;'>[Invalid URL]</span>")
+	bbcode_invalid_number = []byte("<span style='color: red;'>[Invalid Number]</span>")
+	bbcode_missing_tag = []byte("<span style='color: red;'>[Missing Tag]</span>")
 	bbcode_url_open = []byte("<a href='")
 	bbcode_url_open2 = []byte("'>")
 	bbcode_url_close = []byte("</a>")
@@ -36,6 +44,8 @@ func init_bbcode() {
 	urlpattern := `(http|https|ftp|mailto*)(:??)\/\/([\.a-zA-Z\/]+)`
 	bbcode_url = regexp.MustCompile(`\[url\]` + urlpattern + `\[/url\]`)
 	bbcode_url_label = regexp.MustCompile(`(?s)\[url=` + urlpattern + `\](.*)\[/url\]`)
+	
+	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 func deactivate_bbcode() {
@@ -62,7 +72,7 @@ func bbcode_simple_parse(data interface{}) interface{} {
 	has_b := false
 	has_i := false
 	has_s := false
-	for i := 0; i < len(msgbytes); i++ {
+	for i := 0; (i + 2) < len(msgbytes); i++ {
 		if msgbytes[i] == '[' && msgbytes[i + 2] == ']' {
 			if msgbytes[i + 1] == 'b' {
 				msgbytes[i] = '<'
@@ -102,7 +112,7 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 	has_i := false
 	has_s := false
 	complex_bbc := false
-	for i := 0; i < len(msgbytes); i++ {
+	for i := 0; (i + 2) < len(msgbytes); i++ {
 		if msgbytes[i] == '[' {
 			if msgbytes[i + 2] != ']' {
 				if msgbytes[i + 1] == '/' {
@@ -177,7 +187,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 	has_s := false
 	has_c := false
 	complex_bbc := false
-	for i := 0; i < len(msgbytes); i++ {
+	for i := 0; (i + 2) < len(msgbytes); i++ {
 		if msgbytes[i] == '[' {
 			if msgbytes[i + 2] != ']' {
 				if msgbytes[i + 1] == '/' {
@@ -249,20 +259,21 @@ func bbcode_full_parse(data interface{}) interface{} {
 		var start int
 		var lastTag int
 		outbytes := make([]byte, len(msgbytes))
+		//fmt.Println(string(msgbytes))
 		for i := 0; i < len(msgbytes); i++ {
 			MainLoop:
 			if msgbytes[i] == '[' {
 				OuterComplex:
 				if msgbytes[i + 1] == 'u' {
-					if msgbytes[i + 2] == 'r' && msgbytes[i + 3] == 'l' && msgbytes[i + 4] == ']' {
+					if msgbytes[i+2] == 'r' && msgbytes[i+3] == 'l' && msgbytes[i+4] == ']' {
 						outbytes = append(outbytes, msgbytes[lastTag:i]...)
 						start = i + 5
 						i = start
 						if msgbytes[i] == 'h' {
-							if msgbytes[i + 1] == 't' && msgbytes[i + 2] == 't' && msgbytes[i + 3] == 'p' {
+							if msgbytes[i+1] == 't' && msgbytes[i+2] == 't' && msgbytes[i+3] == 'p' {
 								if bytes.Equal(msgbytes[i + 4:i + 7],[]byte("s://")) {
 									i += 7
-								} else if msgbytes[i + 4] == ':' && msgbytes[i + 5] == '/' && msgbytes[i + 6] == '/' {
+								} else if msgbytes[i+4] == ':' && msgbytes[i+5] == '/' && msgbytes[i+6] == '/' {
 									i += 6
 								} else {
 									outbytes = append(outbytes, bbcode_invalid_url...)
@@ -270,16 +281,17 @@ func bbcode_full_parse(data interface{}) interface{} {
 								}
 							}
 						} else if msgbytes[i] == 'f' {
-							if bytes.Equal(msgbytes[i + 1:i + 5],[]byte("tp://")) {
+							if bytes.Equal(msgbytes[i+1:i+5],[]byte("tp://")) {
 								i += 5
 							}
 						}
 						
 						for ;; i++ {
 							if msgbytes[i] == '[' {
-								if !bytes.Equal(msgbytes[i + 1:i + 6],[]byte("/url]")) {
+								if !bytes.Equal(msgbytes[i+1:i+6],[]byte("/url]")) {
 									//log.Print("Not the URL closing tag!")
 									//fmt.Println(msgbytes[i + 1:i + 6])
+									outbytes = append(outbytes, bbcode_missing_tag...)
 									goto OuterComplex
 								}
 								break
@@ -288,6 +300,9 @@ func bbcode_full_parse(data interface{}) interface{} {
 								//log.Print("Weird character")
 								//fmt.Println(msgbytes[i])
 								goto MainLoop
+							} else if (len(msgbytes) - 1) < (i + 6) {
+								outbytes = append(outbytes, bbcode_missing_tag...)
+								goto OuterComplex
 							}
 						}
 						outbytes = append(outbytes, bbcode_url_open...)
@@ -298,9 +313,41 @@ func bbcode_full_parse(data interface{}) interface{} {
 						i += 6
 						lastTag = i
 					}
+				} else if msgbytes[i + 1] == 'r' {
+					if bytes.Equal(msgbytes[i+2:i+6],[]byte("and]")) {
+						outbytes = append(outbytes, msgbytes[lastTag:i]...)
+						start = i + 6
+						i = start
+						for ;; i++ {
+							if msgbytes[i] == '[' {
+								if !bytes.Equal(msgbytes[i+1:i+7],[]byte("/rand]")) {
+									outbytes = append(outbytes, bbcode_missing_tag...)
+									goto OuterComplex
+								}
+								break
+							} else if (len(msgbytes) - 1) < (i + 7) {
+								outbytes = append(outbytes, bbcode_missing_tag...)
+									goto OuterComplex
+							}
+						}
+						
+						number, err := strconv.ParseInt(string(msgbytes[start:i]),10,64)
+						if err != nil {
+							outbytes = append(outbytes, bbcode_invalid_number...)
+							goto MainLoop
+						}
+						
+						dat := []byte(strconv.FormatInt((random.Int63n(number)),10))
+						outbytes = append(outbytes, dat...)
+						//log.Print("Outputted the random number")
+						i += 6
+						lastTag = i
+					}
 				}
 			}
 		}
+		//fmt.Println(outbytes)
+		//fmt.Println(string(outbytes))
 		if len(outbytes) != 0 {
 			return string(outbytes)
 		}

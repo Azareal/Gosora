@@ -10,6 +10,7 @@ import "strings"
 import "time"
 import "io"
 import "os"
+import "net"
 import "net/http"
 import "html"
 import "html/template"
@@ -19,7 +20,7 @@ import "golang.org/x/crypto/bcrypt"
 
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
-var nList map[int]string
+var nList []string
 
 // GET functions
 func route_static(w http.ResponseWriter, r *http.Request){
@@ -47,6 +48,11 @@ func route_static(w http.ResponseWriter, r *http.Request){
 	//io.CopyN(w, bytes.NewReader(file.Data), static_files[r.URL.Path].Length)
 }
 
+/*func route_exit(w http.ResponseWriter, r *http.Request){
+	db.Close()
+	os.Exit(0)
+}*/
+
 func route_fstatic(w http.ResponseWriter, r *http.Request){
 	http.ServeFile(w, r, r.URL.Path)
 }
@@ -56,8 +62,7 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
-	pi := Page{"Overview","overview",user,noticeList,tList,0}
+	pi := Page{"Overview",user,noticeList,tList,nil}
 	err := templates.ExecuteTemplate(w,"overview.html", pi)
     if err != nil {
         InternalError(err, w, r, user)
@@ -73,8 +78,9 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 	name := r.URL.Path[len("/pages/"):]
 	if templates.Lookup("page_" + name) == nil {
 		NotFound(w,r,user)
+		return
 	}
-	pi := Page{"Page","page",user,noticeList,tList,0}
+	pi := Page{"Page",user,noticeList,tList,0}
 	err := templates.ExecuteTemplate(w,"page_" + name,pi)
 	if err != nil {
 		InternalError(err, w, r, user)
@@ -98,7 +104,6 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r,user)
 		return
 	}
-	defer rows.Close()
 	
 	topicItem := TopicUser{ID: 0,}
 	for rows.Next() {
@@ -126,8 +131,9 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r,user)
 		return
 	}
+	rows.Close()
 	
-	pi := TopicsPage{"Topic List",user,noticeList,topicList,0}
+	pi := TopicsPage{"Topic List",user,noticeList,topicList,nil}
 	if template_topics_handle != nil {
 		template_topics_handle(pi,w)
 	} else {
@@ -145,7 +151,6 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	}
 	
 	var topicList []TopicUser
-	
 	fid, err := strconv.Atoi(r.URL.Path[len("/forum/"):])
 	if err != nil {
 		LocalError("The provided ForumID is not a valid number.",w,r,user)
@@ -162,12 +167,11 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC", fid)
+	rows, err := get_forum_topics_stmt.Query(fid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
-	defer rows.Close()
 	
 	topicItem := TopicUser{ID: 0}
 	for rows.Next() {
@@ -195,8 +199,9 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r,user)
 		return
 	}
+	rows.Close()
 	
-	pi := ForumPage{forums[fid].Name,user,noticeList,topicList,0}
+	pi := ForumPage{forums[fid].Name,user,noticeList,topicList,nil}
 	if template_forum_handle != nil {
 		template_forum_handle(pi,w)
 	} else {
@@ -220,13 +225,13 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	pi := ForumsPage{"Forum List",user,noticeList,forumList,0}
+	pi := ForumsPage{"Forum List",user,noticeList,forumList,nil}
 	if template_forums_handle != nil {
 		template_forums_handle(pi,w)
 	} else {
-		err := templates.ExecuteTemplate(w,"forums.html", pi)
+		err := templates.ExecuteTemplate(w,"forums.html",pi)
 		if err != nil {
-			InternalError(err, w, r, user)
+			InternalError(err,w,r,user)
 		}
 	}
 }
@@ -238,25 +243,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	var(
 		err error
-		rid int
 		content string
-		replyContent string
-		replyCreatedBy int
-		replyCreatedByName string
-		replyCreatedAt string
-		replyLastEdit int
-		replyLastEditBy int
-		replyAvatar string
-		replyCss template.CSS
-		replyLines int
-		replyTag string
-		replyURL string
-		replyURLPrefix string
-		replyURLName string
-		replyLevel int
 		is_super_admin bool
 		group int
-		
 		replyList []Reply
 	)
 	
@@ -274,7 +263,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	
 	// Get the topic..
-	err = db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, users.name, users.avatar, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group, &topic.URLPrefix, &topic.URLName, &topic.Level)
+	err = get_topic_user_stmt.QueryRow(topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group, &topic.URLPrefix, &topic.URLName, &topic.Level, &topic.IpAddress)
 	if err == sql.ErrNoRows {
 		NotFound(w,r,user)
 		return
@@ -302,11 +291,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		topic.Css = staff_css_tmpl
 		topic.Level = -1
 	}
-	//if groups[group].Tag != "" {
-			topic.Tag = groups[group].Tag
-	//} else {
-	//	topic.Tag = ""
-	//}
+	
+	topic.Tag = groups[group].Tag
+	
 	if settings["url_tags"] == false {
 		topic.URLName = ""
 	} else {
@@ -314,56 +301,54 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		if !ok {
 			topic.URL = topic.URLName
 		} else {
-			topic.URL = replyURL + topic.URLName
+			topic.URL = topic.URL + topic.URLName
 		}
 	}
 	
 	// Get the replies..
-	rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level from replies left join users ON replies.createdBy = users.uid where tid = ?", topic.ID)
+	rows, err := get_topic_replies_stmt.Query(topic.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
-	defer rows.Close()
 	
+	replyItem := Reply{Css: no_css_tmpl}
 	for rows.Next() {
-		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &is_super_admin, &group, &replyURLPrefix, &replyURLName, &replyLevel)
+		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &is_super_admin, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
 		}
 		
-		replyLines = strings.Count(replyContent,"\n")
+		replyItem.ParentID = topic.ID
+		replyItem.ContentHtml = template.HTML(parse_message(replyItem.Content))
+		replyItem.ContentLines = strings.Count(replyItem.Content,"\n")
 		if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
-			replyCss = staff_css_tmpl
-			replyLevel = -1
+			replyItem.Css = staff_css_tmpl
+			replyItem.Level = -1
 		} else {
-			replyCss = no_css_tmpl
+			replyItem.Css = no_css_tmpl
 		}
-		if replyAvatar != "" {
-			if replyAvatar[0] == '.' {
-				replyAvatar = "/uploads/avatar_" + strconv.Itoa(replyCreatedBy) + replyAvatar
+		if replyItem.Avatar != "" {
+			if replyItem.Avatar[0] == '.' {
+				replyItem.Avatar = "/uploads/avatar_" + strconv.Itoa(replyItem.CreatedBy) + replyItem.Avatar
 			}
 		} else {
-			replyAvatar = strings.Replace(noavatar,"{id}",strconv.Itoa(replyCreatedBy),1)
-		}
-		//if groups[group].Tag != "" {
-			replyTag = groups[group].Tag
-		//} else {
-		//	replyTag = ""
-		//}
-		if settings["url_tags"] == false {
-			replyURLName = ""
-		} else {
-			replyURL, ok = external_sites[replyURLPrefix]
-			if !ok {
-				replyURL = replyURLName
-			} else {
-				replyURL = replyURL + replyURLName
-			}
+			replyItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(replyItem.CreatedBy),1)
 		}
 		
-		replyItem := Reply{rid,topic.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,replyURL,replyURLPrefix,replyURLName,replyLevel}
+		replyItem.Tag = groups[group].Tag
+		
+		if settings["url_tags"] == false {
+			replyItem.URLName = ""
+		} else {
+			replyItem.URL, ok = external_sites[replyItem.URLPrefix]
+			if !ok {
+				replyItem.URL = replyItem.URLName
+			} else {
+				replyItem.URL = replyItem.URL + replyItem.URLName
+			}
+		}
 		
 		if hooks["rrow_assign"] != nil {
 			replyItem = run_hook("rrow_assign", replyItem).(Reply)
@@ -375,8 +360,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r,user)
 		return
 	}
+	rows.Close()
 	
-	tpage := TopicPage{topic.Title,user,noticeList,replyList,topic,0}
+	tpage := TopicPage{topic.Title,user,noticeList,replyList,topic,nil}
 	if template_topic_handle != nil {
 		template_topic_handle(tpage,w)
 	} else {
@@ -424,7 +410,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		puser = user
 	} else {
 		// Fetch the user data
-		err = db.QueryRow("SELECT `name`, `group`, `is_super_admin`, `avatar`, `message`, `url_prefix`, `url_name`, `level` FROM `users` WHERE `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName, &puser.Level)
+		err = db.QueryRow("select `name`,`group`,`is_super_admin`,`avatar`,`message`,`url_prefix`,`url_name`,`level` from `users` where `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName, &puser.Level)
 		if err == sql.ErrNoRows {
 			NotFound(w,r,user)
 			return
@@ -442,11 +428,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	//if groups[puser.Group].Tag != "" {
-			puser.Tag = groups[puser.Group].Tag
-	//} else {
-	//	puser.Tag = ""
-	//}
+	puser.Tag = groups[puser.Group].Tag
 	
 	if puser.Avatar != "" {
 		if puser.Avatar[0] == '.' {
@@ -492,7 +474,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 			replyTag = ""
 		}
 		
-		replyList = append(replyList, Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0})
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,""})
 	}
 	err = rows.Err()
 	if err != nil {
@@ -520,7 +502,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	pi := Page{"Create Topic","create-topic",user,noticeList,tList,0}
+	pi := Page{"Create Topic",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"create-topic.html", pi)
 }
 	
@@ -542,8 +524,13 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	topic_name := html.EscapeString(r.PostFormValue("topic-name"))
 	content := html.EscapeString(preparse_message(r.PostFormValue("topic-content")))
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
 	
-	res, err := create_topic_stmt.Exec(topic_name,content,parse_message(content),user.ID)
+	res, err := create_topic_stmt.Exec(topic_name,content,parse_message(content),ipaddress,user.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -591,8 +578,13 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	content := preparse_message(html.EscapeString(r.PostFormValue("reply-content")))
-	//log.Print(content)
-	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),user.ID)
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	
+	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),ipaddress,user.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -799,7 +791,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	
 	if success != 1 {
 		errmsg := "Unable to create the report"
-		pi := Page{"Error","error",user,nList,tList,errmsg}
+		pi := Page{"Error",user,nList,tList,errmsg}
 		
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
@@ -820,7 +812,7 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	pi := Page{"Edit Password","account-own-edit",user,noticeList,tList,0}
+	pi := Page{"Edit Password",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
@@ -878,7 +870,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	}
 	
 	noticeList[len(noticeList)] = "Your password was successfully updated"
-	pi := Page{"Edit Password","account-own-edit",user,noticeList,tList,0}
+	pi := Page{"Edit Password",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
@@ -891,7 +883,7 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	pi := Page{"Edit Avatar","account-own-edit-avatar",user,noticeList,tList,0}
+	pi := Page{"Edit Avatar",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
 
@@ -977,9 +969,9 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
-	noticeList[len(noticeList)] = "Your avatar was successfully updated"
+	noticeList = append(noticeList, "Your avatar was successfully updated")
 	
-	pi := Page{"Edit Avatar","account-own-edit-avatar",user,noticeList,tList,0}
+	pi := Page{"Edit Avatar",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
 
@@ -993,7 +985,7 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	pi := Page{"Edit Username","account-own-edit-username",user,noticeList,tList,user.Name}
+	pi := Page{"Edit Username",user,noticeList,tList,user.Name}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
 }
 
@@ -1020,8 +1012,8 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 	}
 	user.Name = new_username
 	
-	noticeList[len(noticeList)] = "Your username was successfully updated"
-	pi := Page{"Edit Username","account-own-edit-username",user,noticeList,tList,0}
+	noticeList = append(noticeList,"Your username was successfully updated")
+	pi := Page{"Edit Username",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
 }
 
@@ -1037,7 +1029,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 	
 	email := Email{UserID: user.ID}
 	var emailList []interface{}
-	rows, err := db.Query("SELECT email, validated FROM emails WHERE uid = ?", user.ID)
+	rows, err := db.Query("select email, validated from emails where uid = ?", user.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1068,9 +1060,9 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	if !enable_emails {
-		noticeList[len(noticeList)] = "The email system has been turned off. All features involving sending emails have been disabled."
+		noticeList = append(noticeList, "The email system has been turned off. All features involving sending emails have been disabled.")
 	}
-	pi := Page{"Email Manager","account-own-edit-email",user,noticeList,emailList,0}
+	pi := Page{"Email Manager",user,noticeList,emailList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
@@ -1088,7 +1080,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	email := Email{UserID: user.ID}
 	targetEmail := Email{UserID: user.ID}
 	var emailList []interface{}
-	rows, err := db.Query("SELECT email, validated, token FROM emails WHERE uid = ?", user.ID)
+	rows, err := db.Query("select email, validated, token from emails where uid = ?", user.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1138,10 +1130,10 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	}
 	
 	if !enable_emails {
-		noticeList[len(noticeList)] = "The email system has been turned off. All features involving sending emails have been disabled."
+		noticeList = append(noticeList,"The email system has been turned off. All features involving sending emails have been disabled.")
 	}
-	noticeList[len(noticeList)] = "Your email was successfully verified"
-	pi := Page{"Email Manager","account-own-edit-email",user,noticeList,emailList,0}
+	noticeList = append(noticeList,"Your email was successfully verified")
+	pi := Page{"Email Manager",user,noticeList,emailList,0}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
@@ -1172,7 +1164,7 @@ func route_login(w http.ResponseWriter, r *http.Request) {
 		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	pi := Page{"Login","login",user,noticeList,tList,0}
+	pi := Page{"Login",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"login.html", pi)
 }
 
@@ -1262,7 +1254,7 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	pi := Page{"Registration","register",user,noticeList,tList,0}
+	pi := Page{"Registration",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"register.html", pi)
 }
 

@@ -12,141 +12,111 @@ func init() {
 }
 
 func template_profile(tmpl_profile_vars ProfilePage, w io.Writer) {
-w.Write([]byte(`<!doctype html>
-<html lang="en">
-	<head>
-		<title>` + tmpl_profile_vars.Title + `</title>
-		<link href="/static/main.css" rel="stylesheet" type="text/css">
-		<script type="text/javascript" src="/static/jquery-1.12.3.min.js"></script>
-		<script type="text/javascript">
-		var session = "` + tmpl_profile_vars.CurrentUser.Session + `";
-		</script>
-		<script type="text/javascript" src="/static/global.js"></script>
-		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
-	</head>
-	<body>
-		<div class="container">
-<div class="nav">
-	<div class="move_left">
-	<div class="move_right">
-	<ul>
-		<li class="menu_left menu_overview"><a href="/">Overview</a></li>
-		<li class="menu_left menu_forums"><a href="/forums/">Forums</a></li>
-		<li class="menu_left menu_topics"><a href="/">Topics</a></li>
-		<li class="menu_left menu_create_topic"><a href="/topics/create/">Create Topic</a></li>
-		`))
+w.Write(header_0)
+w.Write([]byte(tmpl_profile_vars.Title))
+w.Write(header_1)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(header_2)
+w.Write(menu_0)
 if tmpl_profile_vars.CurrentUser.Loggedin {
-w.Write([]byte(`
-		<li class="menu_left menu_account"><a href="/user/edit/critical/">Account</a></li>
-		<li class="menu_left menu_profile"><a href="/user/` + strconv.Itoa(tmpl_profile_vars.CurrentUser.ID) + `">Profile</a></li>
-		`))
+w.Write(menu_1)
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.CurrentUser.ID)))
+w.Write(menu_2)
 if tmpl_profile_vars.CurrentUser.Is_Super_Mod {
-w.Write([]byte(`<li class="menu_left menu_account"><a href="/panel/">Panel</a></li>`))
+w.Write(menu_3)
 }
-w.Write([]byte(`
-		<li class="menu_left menu_logout"><a href="/accounts/logout?session=` + tmpl_profile_vars.CurrentUser.Session + `">Logout</a></li>
-		`))
+w.Write(menu_4)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(menu_5)
 } else {
-w.Write([]byte(`
-		<li class="menu_left menu_register"><a href="/accounts/create/">Register</a></li>
-		<li class="menu_left menu_login"><a href="/accounts/login/">Login</a></li>
-		`))
+w.Write(menu_6)
 }
-w.Write([]byte(`
-	</ul>
-	</div>
-	</div>
-	<div style="clear: both;"></div>
-</div>
-<div id="back"><div id="main">`))
+w.Write(menu_7)
+w.Write(header_3)
 if len(tmpl_profile_vars.NoticeList) != 0 {
 for _, item := range tmpl_profile_vars.NoticeList {
-w.Write([]byte(`<div class="alert">` + item + `</div>`))
+w.Write(header_4)
+w.Write([]byte(item))
+w.Write(header_5)
 }
 }
-w.Write([]byte(`
-<div class="colblock_left" style="max-width: 220px;">
-	<div class="rowitem" style="padding: 0;"><img src="` + tmpl_profile_vars.ProfileOwner.Avatar + `" style="max-width: 100%;margin: 0;display: block;" /></div>
-	<div class="rowitem" style="text-transform: capitalize;">
-	<span style="font-size: 18px;">` + tmpl_profile_vars.ProfileOwner.Name + `</span>`))
+w.Write(profile_0)
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Avatar))
+w.Write(profile_1)
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Name))
+w.Write(profile_2)
 if tmpl_profile_vars.ProfileOwner.Tag != "" {
-w.Write([]byte(`<span class="username" style="float: right;font-weight: normal;">` + tmpl_profile_vars.ProfileOwner.Tag + `</span>`))
+w.Write(profile_3)
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Tag))
+w.Write(profile_4)
 }
-w.Write([]byte(`
-	</div>
-	<div class="rowitem passive">
-		<a class="username">Add Friend</a>
-		`))
+w.Write(profile_5)
 if tmpl_profile_vars.CurrentUser.Is_Super_Mod && !tmpl_profile_vars.ProfileOwner.Is_Super_Mod {
-w.Write([]byte(`
-		`))
 if tmpl_profile_vars.ProfileOwner.Is_Banned {
-w.Write([]byte(`<a href="/users/unban/` + strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID) + `?session=` + tmpl_profile_vars.CurrentUser.Session + `" class="username">Unban</a>`))
+w.Write(profile_6)
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write(profile_7)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_8)
 } else {
-w.Write([]byte(`<a href="/users/ban/` + strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID) + `?session=` + tmpl_profile_vars.CurrentUser.Session + `" class="username">Ban</a>`))
+w.Write(profile_9)
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write(profile_10)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_11)
 }
-w.Write([]byte(`
-		`))
 }
-w.Write([]byte(`
-		<a href="/report/submit/` + strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID) + `?session=` + tmpl_profile_vars.CurrentUser.Session + `&type=user" class="username report_item">Report</a>
-	</div>
-</div>
-<div class="colblock_right">
-	<div class="rowitem rowhead"><a>Comments</a></div>
-</div>
-<div class="colblock_right" style="overflow: hidden;border-top: none;">`))
+w.Write(profile_12)
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write(profile_13)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_14)
 if len(tmpl_profile_vars.ItemList) != 0 {
 for _, item := range tmpl_profile_vars.ItemList {
-w.Write([]byte(`
-<div class="rowitem passive deletable_block editable_parent simple" style="`))
+w.Write(profile_15)
 if item.Avatar != "" {
-w.Write([]byte(`background-image: url(` + item.Avatar + `), url(/static/white-dot.jpg);background-position: 0px `))
+w.Write(profile_16)
+w.Write([]byte(item.Avatar))
+w.Write(profile_17)
 if item.ContentLines <= 5 {
-w.Write([]byte(`-1`))
+w.Write(profile_18)
 }
-w.Write([]byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;` + string(item.Css)))
+w.Write(profile_19)
+w.Write([]byte(string(item.Css)))
 }
-w.Write([]byte(`">
-		<span class="editable_block user_content simple">` + string(item.ContentHtml) + `</span>
-		<br /><br />
-		<a href="/user/` + strconv.Itoa(item.CreatedBy) + `" class="username">` + item.CreatedByName + `</a>
-		`))
+w.Write(profile_20)
+w.Write([]byte(string(item.ContentHtml)))
+w.Write(profile_21)
+w.Write([]byte(strconv.Itoa(item.CreatedBy)))
+w.Write(profile_22)
+w.Write([]byte(item.CreatedByName))
+w.Write(profile_23)
 if tmpl_profile_vars.CurrentUser.Is_Mod {
-w.Write([]byte(`<a href="/profile/reply/edit/submit/` + strconv.Itoa(item.ID) + `"><button class="username edit_item">Edit</button></a>
-		<a href="/profile/reply/delete/submit/` + strconv.Itoa(item.ID) + `"><button class="username delete_item">Delete</button></a>`))
+w.Write(profile_24)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_25)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_26)
 }
-w.Write([]byte(`
-		<a href="/report/submit/` + strconv.Itoa(item.ID) + `?session=` + tmpl_profile_vars.CurrentUser.Session + `&type=user-reply"><button class="username report_item">Report</button></a>
-		`))
+w.Write(profile_27)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_28)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_29)
 if item.Tag != "" {
-w.Write([]byte(`<a class="username hide_on_mobile" style="float: right;">` + item.Tag + `</a>`))
+w.Write(profile_30)
+w.Write([]byte(item.Tag))
+w.Write(profile_31)
 }
-w.Write([]byte(`
-	</div>
-`))
+w.Write(profile_32)
 }
 }
-w.Write([]byte(`</div>
-<div class="colblock_right" style="border-top: none;">
-`))
+w.Write(profile_33)
 if !tmpl_profile_vars.CurrentUser.Is_Banned {
-w.Write([]byte(`
-<form action="/profile/reply/create/" method="post">
-	<input name="uid" value='` + strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID) + `' type="hidden" />
-	<div class="formrow">
-		<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
-	</div>
-	<div class="formrow">
-		<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
-	</div>
-</form>
-`))
+w.Write(profile_34)
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write(profile_35)
 }
-w.Write([]byte(`
-</div>
-			<!--<link rel="stylesheet" href="https://use.fontawesome.com/8670aa03ca.css">-->
-		</div><div style="clear: both;"></div></div></div>
-	</body>
-</html>`))
+w.Write(profile_36)
+w.Write(footer_0)
 }

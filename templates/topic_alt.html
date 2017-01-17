@@ -29,10 +29,13 @@
 			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container">
-			<div class="hide_on_edit topic_content user_content nobuttons">{{.Topic.Content}}</div>
+			<div class="hide_on_edit topic_content user_content">{{.Topic.Content}}</div>
 			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
-		</div>
-		<div style="clear:both;"></div>
+			<div class="button_container">
+				{{/* Element Queries might help with having to use JS. Unfortunately, the W3C is taking a while with it */}}
+				{{if $.CurrentUser.Perms.ViewIPs}}<a href="#" class="action_button action_button_right ip_item">{{.Topic.IpAddress}}</a>{{end}}
+			</div>
+		</div><div style="clear:both;"></div>
 	</div>
 	{{range .ItemList}}
 	<div class="rowitem passive deletable_block editable_parent post_item">
@@ -47,6 +50,7 @@
 				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="action_button edit_item">Edit</a>{{end}}
 				{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="action_button delete_item">Delete</a>{{end}}
 				<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="action_button report_item">Report</a>
+				{{if $.CurrentUser.Perms.ViewIPs}}<a href="#" class="action_button action_button_right ip_item">{{.IpAddress}}</a>{{end}}
 			</div>
 		</div>
 		<div style="clear:both;"></div>

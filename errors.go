@@ -4,160 +4,153 @@ import "log"
 import "bytes"
 import "net/http"
 
-func InternalError(err error, w http.ResponseWriter, r *http.Request, user User) {
-	log.Fatal(err)
-	pi := Page{"Internal Server Error","error",user,nList,tList,"A problem has occured in the system."}
+var error_internal []byte
+var error_notfound []byte
+func init_errors() error {
 	var b bytes.Buffer
-	templates.ExecuteTemplate(&b,"error.html", pi)
-	errpage := b.String()
-	w.WriteHeader(500)
-	fmt.Fprintln(w,errpage)
+	user := User{0,"Guest","",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"0.0.0.0.0"}
+	pi := Page{"Internal Server Error",user,nList,tList,"A problem has occurred in the system."}
+	err := templates.ExecuteTemplate(&b,"error.html", pi)
+	if err != nil {
+		return err
+	}
+	error_internal = b.Bytes()
+	
+	b.Reset()
+	pi = Page{"Not Found",user,nList,tList,"The requested page doesn't exist."}
+	err = templates.ExecuteTemplate(&b,"error.html", pi)
+	if err != nil {
+		return err
+	}
+	error_notfound = b.Bytes()
+	return nil
+}
+
+func InternalError(err error, w http.ResponseWriter, r *http.Request, user User) {
+	w.Write(error_internal)
+	log.Fatal(err)
 }
 
 func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, user User, is_js string) {
-	log.Fatal(err)
-	errmsg := "A problem has occured in the system."
+	w.WriteHeader(500)
 	if is_js == "0" {
-		pi := Page{"Internal Server Error","error",user,nList,tList,errmsg}
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		w.Write(error_internal)
 	} else {
-		http.Error(w,"{'errmsg': '" + errmsg + "'}",500)
+		w.Write([]byte(`{'errmsg': 'A problem has occured in the system.'}`))
 	}
+	log.Fatal(err)
 }
 
 func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) {
-	pi := Page{"Local Error","error",user,nList,tList,errmsg}
+	w.WriteHeader(500)
+	pi := Page{"Local Error",user,nList,tList,errmsg}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
-	errpage := b.String()
-	w.WriteHeader(500)
-	fmt.Fprintln(w,errpage)
+	fmt.Fprintln(w,b.String())
 }
 
 func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
-	pi := Page{"Local Error","error",user,nList,tList,"You need to login to do that."}
-	
+	w.WriteHeader(401)
+	pi := Page{"Local Error",user,nList,tList,"You need to login to do that."}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
-	errpage := b.String()
-	w.WriteHeader(401)
-	fmt.Fprintln(w,errpage)
+	fmt.Fprintln(w,b.String())
 }
 
 func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, is_js string) {
+	w.WriteHeader(500)
 	if is_js == "0" {
-		pi := Page{"Local Error","error",user,nList,tList,errmsg}
+		pi := Page{"Local Error",user,nList,tList,errmsg}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
+		fmt.Fprintln(w,b.String())
 	} else {
-		http.Error(w,"{'errmsg': '" + errmsg + "'}",500)
+		w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
 	}
 }
 
 func NoPermissions(w http.ResponseWriter, r *http.Request, user User) {
-	errmsg := "You don't have permission to do that."
-	pi := Page{"Local Error","error",user,nList,tList,errmsg}
+	w.WriteHeader(403)
+	pi := Page{"Local Error",user,nList,tList,"You don't have permission to do that."}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
 	errpage := b.String()
-	w.WriteHeader(403)
 	fmt.Fprintln(w,errpage)
 }
 
 func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
-	errmsg := "You don't have permission to do that."
+	w.WriteHeader(403)
 	if is_js == "0" {
-		pi := Page{"Local Error","error",user,nList,tList,errmsg}
+		pi := Page{"Local Error",user,nList,tList,"You don't have permission to do that."}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(403)
-		fmt.Fprintln(w,errpage)
+		fmt.Fprintln(w,b.String())
 	} else {
-		http.Error(w,"{'errmsg': '" + errmsg + "'}",403)
+		w.Write([]byte("{'errmsg': 'You don't have permission to do that.'}"))
 	}
 }
 
 func Banned(w http.ResponseWriter, r *http.Request, user User) {
-	pi := Page{"Banned","error",user,nList,tList,"You have been banned from this site."}
+	w.WriteHeader(403)
+	pi := Page{"Banned",user,nList,tList,"You have been banned from this site."}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
-	errpage := b.String()
-	w.WriteHeader(403)
-	fmt.Fprintln(w,errpage)
+	fmt.Fprintln(w,b.String())
 }
 
 func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
+	w.WriteHeader(403)
 	if is_js == "0" {
-		pi := Page{"Banned","error",user,nList,tList,"You have been banned from this site."}
+		pi := Page{"Banned",user,nList,tList,"You have been banned from this site."}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(403)
-		fmt.Fprintln(w,errpage)
+		fmt.Fprintln(w,b.String())
 	} else {
-		http.Error(w,"{'errmsg': 'You have been banned from this site.'}",403)
+		w.Write([]byte("{'errmsg': 'You have been banned from this site.'}"))
 	}
 }
 
 func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) {
+	w.WriteHeader(401)
 	if is_js == "0" {
-		pi := Page{"Local Error","error",user,nList,tList,"You need to login to do that."}
+		pi := Page{"Local Error",user,nList,tList,"You need to login to do that."}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(401)
-		fmt.Fprintln(w,errpage)
+		fmt.Fprintln(w,b.String())
 	} else {
-		http.Error(w,"{'errmsg': 'You need to login to do that.'}",401)
+		w.Write([]byte("{'errmsg': 'You need to login to do that.'}"))
 	}
 }
 
 func SecurityError(w http.ResponseWriter, r *http.Request, user User) {
-	errmsg := "There was a security issue with your request."
-	pi := Page{"Security Error","error",user,nList,tList,errmsg}
+	w.WriteHeader(403)
+	pi := Page{"Security Error",user,nList,tList,"There was a security issue with your request."}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
-	errpage := b.String()
-	w.WriteHeader(403)
-	fmt.Fprintln(w,errpage)
+	fmt.Fprintln(w,b.String())
 }
 
 func NotFound(w http.ResponseWriter, r *http.Request, user User) {
-	errmsg := "The requested page doesn't exist."
-	pi := Page{"Not Found","error",user,nList,tList,errmsg}
-	var b bytes.Buffer
-	templates.ExecuteTemplate(&b,"error.html", pi)
-	errpage := b.String()
 	w.WriteHeader(404)
-	fmt.Fprintln(w,errpage)
+	w.Write(error_notfound)
 }
 
 func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User) {
-	pi := Page{errtitle,"error",user,nList,tList,errmsg}
+	w.WriteHeader(errcode)
+	pi := Page{errtitle,user,nList,tList,errmsg}
 	var b bytes.Buffer
 	templates.ExecuteTemplate(&b,"error.html", pi)
-	errpage := b.String()
-	w.WriteHeader(errcode)
-	fmt.Fprintln(w,errpage)
+	fmt.Fprintln(w,b.String())
 }
 
 func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User, is_js string) {
+	w.WriteHeader(errcode)
 	if is_js == "0" {
-		pi := Page{errtitle,"error",user,nList,tList,errmsg}
+		pi := Page{errtitle,user,nList,tList,errmsg}
 		var b bytes.Buffer
 		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(errcode)
-		fmt.Fprintln(w,errpage)
+		fmt.Fprintln(w,b.String())
 	} else {
-		http.Error(w,"{'errmsg': '" + errmsg + "'}",errcode)
+		w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
 	}
 }

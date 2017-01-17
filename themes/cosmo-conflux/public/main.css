@@ -517,6 +517,10 @@ blockquote p
 	padding-left: 5px;
 	padding-right: 5px;
 }
+.action_button_right {
+	float: right;
+	border-left: solid 1px #eaeaea;
+}
 
 .post_item:not(.simple) {
 	background-color: #eaeaea;

@@ -1,4 +1,9 @@
+tmp/*
+tmp2/*
 uploads/avatar_*
 bin/*
 gosora.exe
+gosora.test.exe
 install.exe
+*.prof
+

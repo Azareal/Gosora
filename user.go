@@ -1,6 +1,8 @@
 package main
+//import "fmt"
 import "strings"
 import "strconv"
+import "net"
 import "net/http"
 import "golang.org/x/crypto/bcrypt"
 import "database/sql"
@@ -28,6 +30,7 @@ type User struct
 	Tag string
 	Level int
 	Score int
+	Last_IP string
 }
 
 type Email struct
@@ -70,18 +73,14 @@ func SendValidationEmail(username string, email string, token string) bool {
 	return SendEmail(email, subject, msg)
 }
 
-func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList map[int]string, success bool) {
-	noticeList = make(map[int]string)
-	
+func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList []string, success bool) {
 	// Are there any session cookies..?
-	// Assign it to user.name to avoid having to create a temporary variable for the type conversion
 	cookie, err := r.Cookie("uid")
 	if err != nil {
 		user.Perms = GuestPerms
 		return user, noticeList, true
 	}
-	user.Name = cookie.Value
-	user.ID, err = strconv.Atoi(user.Name)
+	user.ID, err = strconv.Atoi(cookie.Value)
 	if err != nil {
 		user.Perms = GuestPerms
 		return user, noticeList, true
@@ -91,10 +90,9 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 		user.Perms = GuestPerms
 		return user, noticeList, true
 	}
-	user.Session = cookie.Value
 	
 	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score)
+	err = get_session_stmt.QueryRow(user.ID,cookie.Value).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""
@@ -121,7 +119,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	}
 	
 	if user.Is_Banned {
-		noticeList[0] = "Your account has been suspended. Some of your permissions may have been revoked."
+		noticeList = append(noticeList, "Your account has been suspended. Some of your permissions may have been revoked.")
 	}
 	
 	if user.Avatar != "" {
@@ -131,19 +129,26 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
+	
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return user, noticeList, false
+	}
+	if host != user.Last_IP {
+		go update_last_ip_stmt.Exec(host, user.ID)
+	}
 	return user, noticeList, true
 }
 
 func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, success bool) {
 	// Are there any session cookies..?
-	// Assign it to user.name to avoid having to create a temporary variable for the type conversion
 	cookie, err := r.Cookie("uid")
 	if err != nil {
 		user.Perms = GuestPerms
 		return user, true
 	}
-	user.Name = cookie.Value
-	user.ID, err = strconv.Atoi(user.Name)
+	user.ID, err = strconv.Atoi(cookie.Value)
 	if err != nil {
 		user.Perms = GuestPerms
 		return user, true
@@ -153,10 +158,9 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 		user.Perms = GuestPerms
 		return user, true
 	}
-	user.Session = cookie.Value
 	
 	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,user.Session).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score)
+	err = get_session_stmt.QueryRow(user.ID,cookie.Value).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""
@@ -188,6 +192,20 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 		}
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	}
+	
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return user, false
+	}
+	if host != user.Last_IP {
+		//fmt.Println("Update")
+		_, err = update_last_ip_stmt.Exec(host, user.ID)
+		if err != nil {
+			InternalError(err,w,r,user)
+			return user, false
+		}
 	}
 	return user, true
 }

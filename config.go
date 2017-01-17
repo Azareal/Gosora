@@ -32,3 +32,4 @@ var ssl_fullchain = ""
 
 // Developer flag
 var debug = false
+var profiling = false

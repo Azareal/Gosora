@@ -5,9 +5,8 @@ import "regexp"
 type Page struct
 {
 	Title string
-	Name string // Deprecated. Marked for removal.
 	CurrentUser User
-	NoticeList map[int]string
+	NoticeList []string
 	ItemList []interface{}
 	Something interface{}
 }
@@ -16,7 +15,7 @@ type TopicPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList map[int]string
+	NoticeList []string
 	ItemList []Reply
 	Topic TopicUser
 	ExtData interface{}
@@ -26,7 +25,7 @@ type TopicsPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList map[int]string
+	NoticeList []string
 	ItemList []TopicUser
 	ExtData interface{}
 }
@@ -35,7 +34,7 @@ type ForumPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList map[int]string
+	NoticeList []string
 	ItemList []TopicUser
 	ExtData interface{}
 }
@@ -44,7 +43,7 @@ type ForumsPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList map[int]string
+	NoticeList []string
 	ItemList []Forum
 	ExtData interface{}
 }
@@ -53,7 +52,7 @@ type ProfilePage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList map[int]string
+	NoticeList []string
 	ItemList []Reply
 	ProfileOwner User
 	ExtData interface{}

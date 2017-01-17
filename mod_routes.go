@@ -383,7 +383,7 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 	confirm_msg := "Are you sure you want to ban '" + uname + "'?"
 	yousure := AreYouSure{"/users/ban/submit/" + strconv.Itoa(uid),confirm_msg}
 	
-	pi := Page{"Ban User","ban-user",user,noticeList,tList,yousure}
+	pi := Page{"Ban User",user,noticeList,tList,yousure}
 	templates.ExecuteTemplate(w,"areyousure.html", pi)
 }
 
@@ -550,7 +550,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{"Control Panel Dashboard","panel",user,noticeList,tList,0}
+	pi := Page{"Control Panel Dashboard",user,noticeList,tList,0}
 	templates.ExecuteTemplate(w,"panel-dashboard.html", pi)
 }
 
@@ -571,7 +571,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	pi := Page{"Forum Manager","panel-forums",user,noticeList,forumList,0}
+	pi := Page{"Forum Manager",user,noticeList,forumList,0}
 	templates.ExecuteTemplate(w,"panel-forums.html", pi)
 }
 
@@ -641,7 +641,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 	confirm_msg := "Are you sure you want to delete the '" + forums[fid].Name + "' forum?"
 	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
 	
-	pi := Page{"Delete Forum","panel-forums-delete",user,noticeList,tList,yousure}
+	pi := Page{"Delete Forum",user,noticeList,tList,yousure}
 	templates.ExecuteTemplate(w,"areyousure.html", pi)
 }
 
@@ -779,7 +779,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{"Setting Manager","panel-settings",user, noticeList,tList,settingList}
+	pi := Page{"Setting Manager",user, noticeList,tList,settingList}
 	templates.ExecuteTemplate(w,"panel-settings.html", pi)
 }
 
@@ -829,7 +829,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	pi := Page{"Edit Setting","panel-setting",user,noticeList,itemList,setting}
+	pi := Page{"Edit Setting",user,noticeList,itemList,setting}
 	templates.ExecuteTemplate(w,"panel-setting.html", pi)
 }
 
@@ -904,7 +904,7 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 		pluginList = append(pluginList, plugin)
 	}
 	
-	pi := Page{"Plugin Manager","panel-plugins",user,noticeList,pluginList,0}
+	pi := Page{"Plugin Manager",user,noticeList,pluginList,0}
 	templates.ExecuteTemplate(w,"panel-plugins.html", pi)
 }
 
@@ -1075,7 +1075,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	pi := Page{"User Manager","panel-users",user,noticeList,userList,0}
+	pi := Page{"User Manager",user,noticeList,userList,0}
 	err = templates.ExecuteTemplate(w,"panel-users.html", pi)
 	if err != nil {
 		InternalError(err, w, r, user)
@@ -1129,7 +1129,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 		groupList = append(groupList, group)
 	}
 	
-	pi := Page{"User Editor","panel-user-edit",user,noticeList,groupList,targetUser}
+	pi := Page{"User Editor",user,noticeList,groupList,targetUser}
 	err = templates.ExecuteTemplate(w,"panel-user-edit.html", pi)
 	if err != nil {
 		InternalError(err, w, r, user)
@@ -1246,7 +1246,7 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 		groupList = append(groupList, group)
 	}
 	
-	pi := Page{"Group Manager","panel-groups",user,noticeList,groupList,0}
+	pi := Page{"Group Manager",user,noticeList,groupList,0}
 	templates.ExecuteTemplate(w,"panel-groups.html", pi)
 }
 
@@ -1265,7 +1265,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 		themeList = append(themeList, theme)
 	}
 	
-	pi := Page{"Theme Manager","panel-themes",user,noticeList,themeList,0}
+	pi := Page{"Theme Manager",user,noticeList,themeList,0}
 	err := templates.ExecuteTemplate(w,"panel-themes.html", pi)
 	if err != nil {
 		log.Print(err)
