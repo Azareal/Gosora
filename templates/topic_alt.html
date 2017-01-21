@@ -1,4 +1,6 @@
 {{template "header.html" . }}
+{{if gt .Page 1}}<div class="prev_button"><a href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+{{if ne .LastPage .Page}}<div class="next_button"><a href="/topic/{{.Topic.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 <div class="rowblock">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
 		<div class="rowitem rowhead{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">

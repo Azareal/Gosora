@@ -18,6 +18,8 @@ type TopicPage struct
 	NoticeList []string
 	ItemList []Reply
 	Topic TopicUser
+	Page int
+	LastPage int
 	ExtData interface{}
 }
 

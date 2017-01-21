@@ -250,6 +250,11 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
+	_, err = remove_replies_from_topic_stmt.Exec(1, tid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
 }
 
 func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
@@ -1265,7 +1270,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 		themeList = append(themeList, theme)
 	}
 	
-	pi := Page{"Theme Manager",user,noticeList,themeList,0}
+	pi := Page{"Theme Manager",user,noticeList,themeList,nil}
 	err := templates.ExecuteTemplate(w,"panel-themes.html", pi)
 	if err != nil {
 		log.Print(err)
@@ -1290,6 +1295,10 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
 	theme, ok := themes[uname]
 	if !ok {
 		LocalError("The theme isn't registered in the system",w,r,user)
+		return
+	}
+	if theme.Disabled {
+		LocalError("You must not enable this theme",w,r,user)
 		return
 	}
 	

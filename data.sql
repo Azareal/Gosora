@@ -67,6 +67,7 @@ CREATE TABLE `topics`(
 	`sticky` tinyint DEFAULT 0 not null,
 	`parentID` int DEFAULT 1 not null,
 	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
+	`postCount` int DEFAULT 1 not null,
 	`data` varchar(200) DEFAULT '' not null,
 	primary key(`tid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;

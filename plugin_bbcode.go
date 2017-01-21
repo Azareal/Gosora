@@ -1,6 +1,6 @@
 package main
 //import "log"
-//import "fmt"
+import "fmt"
 import "bytes"
 //import "strings"
 import "strconv"
@@ -112,7 +112,7 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 	has_i := false
 	has_s := false
 	complex_bbc := false
-	for i := 0; (i + 2) < len(msgbytes); i++ {
+	for i := 0; (i + 3) < len(msgbytes); i++ {
 		if msgbytes[i] == '[' {
 			if msgbytes[i + 2] != ']' {
 				if msgbytes[i + 1] == '/' {
@@ -170,6 +170,7 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 		msgbytes = append(msgbytes, closer...)
 	}
 	
+	// Copy the new complex parser over once the rough edges have been smoothed over
 	if complex_bbc {
 		msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
@@ -187,7 +188,8 @@ func bbcode_full_parse(data interface{}) interface{} {
 	has_s := false
 	has_c := false
 	complex_bbc := false
-	for i := 0; (i + 2) < len(msgbytes); i++ {
+	msglen := len(msgbytes)
+	for i := 0; (i + 3) < msglen; i++ {
 		if msgbytes[i] == '[' {
 			if msgbytes[i + 2] != ']' {
 				if msgbytes[i + 1] == '/' {
@@ -213,17 +215,27 @@ func bbcode_full_parse(data interface{}) interface{} {
 							i += 3
 						}
 					} else {
-						if msgbytes[i + 2] == 'c' && msgbytes[i + 3] == 'o' && msgbytes[i + 4] == 'd' && msgbytes[i + 5] == 'e' {
+						if msglen >= (i+6) && msgbytes[i+2] == 'c' && msgbytes[i+3] == 'o' && msgbytes[i+4] == 'd' && msgbytes[i+5] == 'e' && msgbytes[i+6] == ']' {
 							has_c = false
-							i += 6
+							i += 7
 						}
+						//if msglen >= (i+6) {
+						//	fmt.Println("boo")
+						//	fmt.Println(msglen)
+						//	fmt.Println(i+6)
+						//	fmt.Println(string(msgbytes[i:i+6]))
+						//}
 						complex_bbc = true
 					}
 				} else {
-					if msgbytes[i + 1] == 'c' && msgbytes[i + 2] == 'o' && msgbytes[i + 3] == 'd' && msgbytes[i + 4] == 'e' {
+					if msglen >= (i+5) && msgbytes[i+1] == 'c' && msgbytes[i+2] == 'o' && msgbytes[i+3] == 'd' && msgbytes[i+4] == 'e' && msgbytes[i+5] == ']' {
 						has_c = true
-						i += 5
+						i += 6
 					}
+					//if msglen >= (i+5) {
+					//	fmt.Println("boo2")
+					//	fmt.Println(string(msgbytes[i:i+5]))
+					//}
 					complex_bbc = true
 				}
 			} else if !has_c {
@@ -256,16 +268,17 @@ func bbcode_full_parse(data interface{}) interface{} {
 	}
 	
 	if complex_bbc {
+		i := 0
 		var start int
 		var lastTag int
-		outbytes := make([]byte, len(msgbytes))
-		//fmt.Println(string(msgbytes))
-		for i := 0; i < len(msgbytes); i++ {
+		outbytes := make([]byte, msglen)
+		fmt.Println(string(msgbytes))
+		for ; (i+3) < msglen; i++ {
 			MainLoop:
 			if msgbytes[i] == '[' {
 				OuterComplex:
 				if msgbytes[i + 1] == 'u' {
-					if msgbytes[i+2] == 'r' && msgbytes[i+3] == 'l' && msgbytes[i+4] == ']' {
+					if (msglen-1) >= (i+6) && msgbytes[i+2] == 'r' && msgbytes[i+3] == 'l' && msgbytes[i+4] == ']' {
 						outbytes = append(outbytes, msgbytes[lastTag:i]...)
 						start = i + 5
 						i = start
@@ -287,7 +300,12 @@ func bbcode_full_parse(data interface{}) interface{} {
 						}
 						
 						for ;; i++ {
-							if msgbytes[i] == '[' {
+							if msglen < (i + 6) {
+								//fmt.Println(msglen)
+								//fmt.Println(i+6)
+								outbytes = append(outbytes, bbcode_missing_tag...)
+								goto OuterComplex
+							} else if msgbytes[i] == '[' {
 								if !bytes.Equal(msgbytes[i+1:i+6],[]byte("/url]")) {
 									//log.Print("Not the URL closing tag!")
 									//fmt.Println(msgbytes[i + 1:i + 6])
@@ -300,9 +318,6 @@ func bbcode_full_parse(data interface{}) interface{} {
 								//log.Print("Weird character")
 								//fmt.Println(msgbytes[i])
 								goto MainLoop
-							} else if (len(msgbytes) - 1) < (i + 6) {
-								outbytes = append(outbytes, bbcode_missing_tag...)
-								goto OuterComplex
 							}
 						}
 						outbytes = append(outbytes, bbcode_url_open...)
@@ -314,7 +329,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 						lastTag = i
 					}
 				} else if msgbytes[i + 1] == 'r' {
-					if bytes.Equal(msgbytes[i+2:i+6],[]byte("and]")) {
+					if msglen >= (i+6) && bytes.Equal(msgbytes[i+2:i+6],[]byte("and]")) {
 						outbytes = append(outbytes, msgbytes[lastTag:i]...)
 						start = i + 6
 						i = start
@@ -340,7 +355,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 						dat := []byte(strconv.FormatInt((random.Int63n(number)),10))
 						outbytes = append(outbytes, dat...)
 						//log.Print("Outputted the random number")
-						i += 6
+						i += 7
 						lastTag = i
 					}
 				}
@@ -348,6 +363,9 @@ func bbcode_full_parse(data interface{}) interface{} {
 		}
 		//fmt.Println(outbytes)
 		//fmt.Println(string(outbytes))
+		if lastTag != i {
+			outbytes = append(outbytes, msgbytes[lastTag:]...)
+		}
 		if len(outbytes) != 0 {
 			return string(outbytes)
 		}

@@ -1,7 +1,9 @@
 {{template "header.html" . }}
+{{if gt .Page 1}}<div class="prev_button"><a href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+{{if ne .LastPage .Page}}<div class="next_button"><a href="/topic/{{.Topic.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 <div class="rowblock">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
-		<div class="rowitem"{{ if .Topic.Sticky }} style="background-color: #FFFFEA;"{{else if .Topic.Is_Closed}} style="background-color: #eaeaea;"{{end}}>
+		<div class="rowitem"{{if .Topic.Sticky}} style="background-color: #FFFFEA;"{{else if .Topic.Is_Closed}} style="background-color: #eaeaea;"{{end}}>
 			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a> 
 			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;">&#x1F512;&#xFE0E</span>{{end}}
 			{{if .CurrentUser.Is_Mod}}
@@ -21,7 +23,7 @@
 	</form>
 </div>
 <div class="rowblock post_container">
-	<div class="rowitem passive editable_parent post_item" style="border-bottom: none;{{ if .Topic.Avatar }}background-image: url({{ .Topic.Avatar }}), url(/static/white-dot.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Topic.Css}}{{end}}">
+	<div class="rowitem passive editable_parent post_item" style="border-bottom: none;{{if .Topic.Avatar}}background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Topic.Css}}{{end}}">
 		<p class="hide_on_edit topic_content user_content" style="margin: 0;padding: 0;">{{.Topic.Content}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea><br /><br />
 		<a href="/user/{{.Topic.CreatedBy}}" class="username real_username">{{.Topic.CreatedByName}}</a>
@@ -29,7 +31,7 @@
 	</div>
 </div><br />
 <div class="rowblock post_container" style="overflow: hidden;">{{range .ItemList}}
-	<div class="rowitem rowhead passive deletable_block editable_parent post_item" style="{{ if .Avatar }}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Css}}{{end}}">
+	<div class="rowitem rowhead passive deletable_block editable_parent post_item" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Css}}{{end}}">
 		<p class="editable_block user_content" style="margin: 0;padding: 0;">{{.ContentHtml}}</p><br /><br />
 		<a href="/user/{{.CreatedBy}}" class="username real_username">{{.CreatedByName}}</a>
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button"><button class="username edit_item">Edit</button></a> {{end}}

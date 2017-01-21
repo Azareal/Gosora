@@ -623,6 +623,30 @@ blockquote p
 	border-radius: 4px;
 }
 
+.prev_button, .next_button {
+	position: fixed;
+	top: 50%;
+	font-size: 30px;
+	border-width: 1px;
+	background-color: #FFFFFF;
+	border-style: dotted;
+	border-color: #505050;
+	padding: 0px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.prev_button a, .next_button a {
+	line-height: 28px;
+	margin-top: 2px;
+	margin-bottom: 0px;
+	display: block;
+	text-decoration: none;
+	color: #505050;
+}
+.prev_button { left: 14px; }
+.next_button { right: 14px; }
+
 /* Responsive Layout */
 /* Anything that isn't a small mobile */
 @media(min-width: 501px)

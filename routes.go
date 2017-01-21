@@ -244,11 +244,13 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	var(
 		err error
 		content string
-		is_super_admin bool
 		group int
+		page int
+		offset int
 		replyList []Reply
 	)
 	
+	page, _ = strconv.Atoi(r.FormValue("page"))
 	topic := TopicUser{Css: no_css_tmpl}
 	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
@@ -263,7 +265,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	
 	// Get the topic..
-	err = get_topic_user_stmt.QueryRow(topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.CreatedByName, &topic.Avatar, &is_super_admin, &group, &topic.URLPrefix, &topic.URLName, &topic.Level, &topic.IpAddress)
+	err = get_topic_user_stmt.QueryRow(topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.CreatedByName, &topic.Avatar, &group, &topic.URLPrefix, &topic.URLName, &topic.Level)
 	if err == sql.ErrNoRows {
 		NotFound(w,r,user)
 		return
@@ -287,7 +289,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	} else {
 		topic.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topic.CreatedBy),1)
 	}
-	if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
+	if groups[group].Is_Mod || groups[group].Is_Admin {
 		topic.Css = staff_css_tmpl
 		topic.Level = -1
 	}
@@ -305,16 +307,34 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
+	// Calculate the offset
+	last_page := int(topic.PostCount / items_per_page) + 1
+	if page > 1 {
+		offset = (items_per_page * page) - items_per_page
+	} else if page == -1 {
+		page = last_page
+		offset = (items_per_page * page) - items_per_page
+		//fmt.Println(topic.PostCount)
+		//fmt.Println((topic.PostCount / items_per_page) + 1)
+		//fmt.Println(page)
+		//fmt.Println(offset)
+	} else {
+		page = 1
+	}
+	
 	// Get the replies..
-	rows, err := get_topic_replies_stmt.Query(topic.ID)
-	if err != nil {
+	rows, err := get_topic_replies_offset_stmt.Query(topic.ID, offset)
+	if err == sql.ErrNoRows {
+		LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.",w,r,user)
+		return
+	} else if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
 	replyItem := Reply{Css: no_css_tmpl}
 	for rows.Next() {
-		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &is_super_admin, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress)
+		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
@@ -323,7 +343,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		replyItem.ParentID = topic.ID
 		replyItem.ContentHtml = template.HTML(parse_message(replyItem.Content))
 		replyItem.ContentLines = strings.Count(replyItem.Content,"\n")
-		if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
+		if groups[group].Is_Mod || groups[group].Is_Admin {
 			replyItem.Css = staff_css_tmpl
 			replyItem.Level = -1
 		} else {
@@ -362,7 +382,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	rows.Close()
 	
-	tpage := TopicPage{topic.Title,user,noticeList,replyList,topic,nil}
+	tpage := TopicPage{topic.Title,user,noticeList,replyList,topic,page,last_page,nil}
 	if template_topic_handle != nil {
 		template_topic_handle(tpage,w)
 	} else {
@@ -392,7 +412,6 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		replyCss template.CSS
 		replyLines int
 		replyTag string
-		is_super_admin bool
 		group int
 		
 		replyList []Reply
@@ -439,7 +458,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	}
 	
 	// Get the replies..
-	rows, err := db.Query("select users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group from users_replies left join users ON users_replies.createdBy = users.uid where users_replies.uid = ?", puser.ID)
+	rows, err := db.Query("select users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group from users_replies left join users ON users_replies.createdBy = users.uid where users_replies.uid = ?", puser.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -447,14 +466,14 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	defer rows.Close()
 	
 	for rows.Next() {
-		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &is_super_admin, &group)
+		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &group)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
 		}
 		
 		replyLines = strings.Count(replyContent,"\n")
-		if is_super_admin || groups[group].Is_Mod || groups[group].Is_Admin {
+		if groups[group].Is_Mod || groups[group].Is_Admin {
 			replyCss = staff_css_tmpl
 		} else {
 			replyCss = no_css_tmpl
@@ -600,6 +619,11 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	_, err = add_replies_to_topic_stmt.Exec(1, tid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
 	_, err = update_forum_cache_stmt.Exec(topic_name, tid, user.Name, user.ID, 1)
 	if err != nil {
 		InternalError(err,w,r,user)

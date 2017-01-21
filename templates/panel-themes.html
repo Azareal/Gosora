@@ -13,6 +13,7 @@
 		</span>
 		<span style="float: right;">
 			{{if .MobileFriendly}}<span class="username" title="Mobile Friendly">📱</span>{{end}}
+			{{if .Tag}}<span class="username">{{.Tag}}</span>{{end}}
 			{{if .Active}}<span class="username">Default</span>{{else}}<a href="/panel/themes/default/{{.Name}}?session={{$.CurrentUser.Session}}" class="username">Make Default</a>{{end}}
 		</span>
 	</div>

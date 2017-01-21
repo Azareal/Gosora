@@ -62,6 +62,10 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	c.funcMap["le"] = true
 	c.funcMap["lt"] = true
 	c.funcMap["ne"] = true
+	c.funcMap["add"] = true
+	c.funcMap["subtract"] = true
+	c.funcMap["multiply"] = true
+	c.funcMap["divide"] = true
 	c.importMap = make(map[string]string)
 	c.importMap["io"] = "io"
 	c.importMap["strconv"] = "strconv"
@@ -360,6 +364,13 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 			return c.compile_varsub(varname, reflectVal)
 		case *parse.StringNode:
 			return n.Quoted
+		case *parse.IdentifierNode:
+			if debug {
+				fmt.Println("Identifier Node: ")
+				fmt.Println(node)
+				fmt.Println(node.Args)
+			}
+			return c.compile_varsub(c.compile_identswitch(varholder, holdreflect, template_name, node))
 		default:
 			fmt.Println("Unknown Kind: ")
 			fmt.Println(reflect.ValueOf(firstWord).Elem().Kind())
@@ -399,7 +410,7 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 				fmt.Println(node)
 				fmt.Println(node.Args)
 			}
-			return c.compile_identswitch(varholder, holdreflect, template_name, node)
+			return c.compile_identswitch_n(varholder, holdreflect, template_name, node)
 		case *parse.DotNode:
 			return varholder
 		case *parse.VariableNode:
@@ -419,7 +430,7 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 				fmt.Println("Args: ")
 				fmt.Println(node.Args)
 			}
-			out += c.compile_identswitch(varholder, holdreflect, template_name, node)
+			out += c.compile_identswitch_n(varholder, holdreflect, template_name, node)
 			
 			if debug {
 				fmt.Println("Out: ")
@@ -436,7 +447,12 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 	return ""
 }
 
-func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect.Value, template_name string, node *parse.CommandNode) (out string) {
+func (c *CTemplateSet) compile_identswitch_n(varholder string, holdreflect reflect.Value, template_name string, node *parse.CommandNode) (out string) {
+	out, _ = c.compile_identswitch(varholder, holdreflect, template_name, node)
+	return out
+}
+
+func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect.Value, template_name string, node *parse.CommandNode) (out string, val reflect.Value) {
 	ArgLoop:
 	for pos, id := range node.Args {
 		if debug {
@@ -452,21 +468,125 @@ func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect
 				out += " && "
 			case "le":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " <= " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				if debug {
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
 				break ArgLoop
 			case "lt":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " < " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				if debug {
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
 				break ArgLoop
 			case "gt":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " > " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				if debug {
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
 				break ArgLoop
 			case "ge":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " >= " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				if debug {
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
 				break ArgLoop
 			case "eq":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " == " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				if debug {
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
 				break ArgLoop
 			case "ne":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " != " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				if debug {
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
+				break ArgLoop
+			case "add":
+				param1, val2 := c.compile_if_varsub(node.Args[pos + 1].String(), varholder, template_name, holdreflect)
+				param2, val3 := c.compile_if_varsub(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				
+				if val2.IsValid() {
+					val = val2
+				} else if val3.IsValid() {
+					val = val3
+				} else {
+					numSample := 1
+					val = reflect.ValueOf(numSample)
+				}
+				
+				out += param1 + " + " + param2
+				if debug {
+					fmt.Println("add")
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
+				break ArgLoop
+			case "subtract":
+				param1, val2 := c.compile_if_varsub(node.Args[pos + 1].String(), varholder, template_name, holdreflect)
+				param2, val3 := c.compile_if_varsub(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				
+				if val2.IsValid() {
+					val = val2
+				} else if val3.IsValid() {
+					val = val3
+				} else {
+					numSample := 1
+					val = reflect.ValueOf(numSample)
+				}
+				
+				out += param1 + " - " + param2
+				if debug {
+					fmt.Println("subtract")
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
+				break ArgLoop
+			case "divide":
+				param1, val2 := c.compile_if_varsub(node.Args[pos + 1].String(), varholder, template_name, holdreflect)
+				param2, val3 := c.compile_if_varsub(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				
+				if val2.IsValid() {
+					val = val2
+				} else if val3.IsValid() {
+					val = val3
+				} else {
+					numSample := 1
+					val = reflect.ValueOf(numSample)
+				}
+				
+				out += param1 + " / " + param2
+				if debug {
+					fmt.Println("divide")
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
+				break ArgLoop
+			case "multiply":
+				param1, val2 := c.compile_if_varsub(node.Args[pos + 1].String(), varholder, template_name, holdreflect)
+				param2, val3 := c.compile_if_varsub(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
+				
+				if val2.IsValid() {
+					val = val2
+				} else if val3.IsValid() {
+					val = val3
+				} else {
+					numSample := 1
+					val = reflect.ValueOf(numSample)
+				}
+				
+				out += param1 + " * " + param2
+				if debug {
+					fmt.Println("multiply")
+					fmt.Println(node.Args[pos + 1])
+					fmt.Println(node.Args[pos + 2])
+				}
 				break ArgLoop
 			default:
 				if debug {
@@ -475,7 +595,7 @@ func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect
 				out += c.compile_if_varsub_n(id.String(), varholder, template_name, holdreflect)
 		}
 	}
-	return out
+	return out, val
 }
 
 func (c *CTemplateSet) compile_reflectswitch(varholder string, holdreflect reflect.Value, template_name string, node *parse.CommandNode) (out string, outVal reflect.Value) {
@@ -577,10 +697,28 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 		}
 	}
 	
+	if debug {
+		fmt.Println("Out Value: ")
+		fmt.Println(out)
+		fmt.Println("Out Kind: ")
+		fmt.Println(cur.Kind())
+		fmt.Println("Out Type: ")
+		fmt.Println(cur.Type().Name())
+	}
+	
 	for _, varItem := range c.varList {
 		if strings.HasPrefix(out, varItem.Destination) {
 			out = strings.Replace(out, varItem.Destination, varItem.Name, 1)
 		}
+	}
+	
+	if debug {
+		fmt.Println("Out Value: ")
+		fmt.Println(out)
+		fmt.Println("Out Kind: ")
+		fmt.Println(cur.Kind())
+		fmt.Println("Out Type: ")
+		fmt.Println(cur.Type().Name())
 	}
 	
 	_, ok := c.stats[out]
@@ -605,6 +743,9 @@ func (c *CTemplateSet) compile_boolsub(varname string, varholder string, templat
 		case reflect.Int64:
 			out += " > 0"
 		default:
+			fmt.Println(varname)
+			fmt.Println(varholder)
+			fmt.Println(val.Kind())
 			panic("I don't know what this variable's type is o.o\n")
 	}
 	return out
@@ -642,6 +783,8 @@ func (c *CTemplateSet) compile_varsub(varname string, val reflect.Value) string 
 		case reflect.Int64:
 			return "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))"
 		default:
+			fmt.Println("Unknown Variable Name: ")
+			fmt.Println(varname)
 			fmt.Println("Unknown Kind: ")
 			fmt.Println(val.Kind())
 			fmt.Println("Unknown Type: ")

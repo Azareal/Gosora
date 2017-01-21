@@ -25,6 +25,8 @@ type Theme struct
 	Creator string
 	FullImage string
 	MobileFriendly bool
+	Disabled bool
+	Tag string
 	Settings map[string]ThemeSetting
 	Templates []TemplateMapping
 	

@@ -41,123 +41,137 @@ w.Write([]byte(item))
 w.Write(header_5)
 }
 }
+if tmpl_topic_vars.Page > 1 {
 w.Write(topic_0)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_1)
-if tmpl_topic_vars.Topic.Sticky {
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Page - 1)))
 w.Write(topic_2)
+}
+if tmpl_topic_vars.LastPage != tmpl_topic_vars.Page {
+w.Write(topic_3)
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
+w.Write(topic_4)
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Page + 1)))
+w.Write(topic_5)
+}
+w.Write(topic_6)
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
+w.Write(topic_7)
+if tmpl_topic_vars.Topic.Sticky {
+w.Write(topic_8)
 } else {
 if tmpl_topic_vars.Topic.Is_Closed {
-w.Write(topic_3)
+w.Write(topic_9)
 }
 }
-w.Write(topic_4)
+w.Write(topic_10)
 w.Write([]byte(tmpl_topic_vars.Topic.Title))
-w.Write(topic_5)
+w.Write(topic_11)
 if tmpl_topic_vars.Topic.Is_Closed {
-w.Write(topic_6)
+w.Write(topic_12)
 }
 if tmpl_topic_vars.CurrentUser.Is_Mod {
-w.Write(topic_7)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_8)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_9)
-if tmpl_topic_vars.Topic.Sticky {
-w.Write(topic_10)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_11)
-} else {
-w.Write(topic_12)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_13)
-}
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_14)
-w.Write([]byte(tmpl_topic_vars.Topic.Title))
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_15)
-}
+if tmpl_topic_vars.Topic.Sticky {
 w.Write(topic_16)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_17)
-w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
+} else {
 w.Write(topic_18)
-if tmpl_topic_vars.Topic.Avatar != "" {
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_19)
-w.Write([]byte(tmpl_topic_vars.Topic.Avatar))
+}
 w.Write(topic_20)
-if tmpl_topic_vars.Topic.ContentLines <= 5 {
+w.Write([]byte(tmpl_topic_vars.Topic.Title))
 w.Write(topic_21)
 }
 w.Write(topic_22)
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
+w.Write(topic_23)
+w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
+w.Write(topic_24)
+if tmpl_topic_vars.Topic.Avatar != "" {
+w.Write(topic_25)
+w.Write([]byte(tmpl_topic_vars.Topic.Avatar))
+w.Write(topic_26)
+if tmpl_topic_vars.Topic.ContentLines <= 5 {
+w.Write(topic_27)
+}
+w.Write(topic_28)
 w.Write([]byte(string(tmpl_topic_vars.Topic.Css)))
 }
-w.Write(topic_23)
+w.Write(topic_29)
 w.Write([]byte(string(tmpl_topic_vars.Topic.Content.(template.HTML))))
-w.Write(topic_24)
+w.Write(topic_30)
 w.Write([]byte(string(tmpl_topic_vars.Topic.Content.(template.HTML))))
-w.Write(topic_25)
+w.Write(topic_31)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.CreatedBy)))
-w.Write(topic_26)
+w.Write(topic_32)
 w.Write([]byte(tmpl_topic_vars.Topic.CreatedByName))
-w.Write(topic_27)
+w.Write(topic_33)
 if tmpl_topic_vars.Topic.Tag != "" {
-w.Write(topic_28)
+w.Write(topic_34)
 w.Write([]byte(tmpl_topic_vars.Topic.Tag))
 } else {
-w.Write(topic_29)
+w.Write(topic_35)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.Level)))
 }
-w.Write(topic_30)
+w.Write(topic_36)
 if len(tmpl_topic_vars.ItemList) != 0 {
 for _, item := range tmpl_topic_vars.ItemList {
-w.Write(topic_31)
+w.Write(topic_37)
 if item.Avatar != "" {
-w.Write(topic_32)
+w.Write(topic_38)
 w.Write([]byte(item.Avatar))
-w.Write(topic_33)
+w.Write(topic_39)
 if item.ContentLines <= 5 {
-w.Write(topic_34)
+w.Write(topic_40)
 }
-w.Write(topic_35)
+w.Write(topic_41)
 w.Write([]byte(string(item.Css)))
 }
-w.Write(topic_36)
+w.Write(topic_42)
 w.Write([]byte(string(item.ContentHtml)))
-w.Write(topic_37)
+w.Write(topic_43)
 w.Write([]byte(strconv.Itoa(item.CreatedBy)))
-w.Write(topic_38)
+w.Write(topic_44)
 w.Write([]byte(item.CreatedByName))
-w.Write(topic_39)
+w.Write(topic_45)
 if tmpl_topic_vars.CurrentUser.Perms.EditReply {
-w.Write(topic_40)
+w.Write(topic_46)
 w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_41)
+w.Write(topic_47)
 }
 if tmpl_topic_vars.CurrentUser.Perms.DeleteReply {
-w.Write(topic_42)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_43)
-}
-w.Write(topic_44)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_45)
-w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
-w.Write(topic_46)
-if item.Tag != "" {
-w.Write(topic_47)
-w.Write([]byte(item.Tag))
-} else {
 w.Write(topic_48)
-w.Write([]byte(strconv.Itoa(item.Level)))
-}
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_49)
 }
-}
 w.Write(topic_50)
-if tmpl_topic_vars.CurrentUser.Perms.CreateReply {
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_51)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
+w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
 w.Write(topic_52)
+if item.Tag != "" {
+w.Write(topic_53)
+w.Write([]byte(item.Tag))
+} else {
+w.Write(topic_54)
+w.Write([]byte(strconv.Itoa(item.Level)))
+}
+w.Write(topic_55)
+}
+}
+w.Write(topic_56)
+if tmpl_topic_vars.CurrentUser.Perms.CreateReply {
+w.Write(topic_57)
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
+w.Write(topic_58)
 }
 w.Write(footer_0)
 }

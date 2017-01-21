@@ -3,6 +3,8 @@
 	"FriendlyName": "Cosmo Classic",
 	"Version": "Coming Soon",
 	"Creator": "Azareal",
+	"Disabled": true,
+	"Tag": "WIP",
 	"Templates": [
 		{
 			"Name": "topic",

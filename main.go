@@ -24,7 +24,7 @@ const saltLength int = 32
 const sessionLength int = 80
 var nogrouplog bool = false // This is mainly for benchmarks, as we don't want a lot of information getting in the way of the results
 
-var templates = template.Must(template.ParseGlob("templates/*"))
+var templates = template.New("")
 var no_css_tmpl = template.CSS("")
 var staff_css_tmpl = template.CSS(staff_css)
 var settings map[string]interface{} = make(map[string]interface{})
@@ -47,12 +47,12 @@ func compile_templates() {
 	
 	log.Print("Compiling the templates")
 	
-	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"",0,"","","",no_css_tmpl,0,"","","","",58,"127.0.0.1"}
+	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"",0,"","127.0.0.1",0,"","",no_css_tmpl,0,"","","","",58}
 	var replyList []Reply
 	replyList = append(replyList, Reply{0,0,"",template.HTML("Yo!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1"})
 	
 	var varList map[string]VarItem = make(map[string]VarItem)
-	tpage := TopicPage{"Title",user,noticeList,replyList,topic,false}
+	tpage := TopicPage{"Title",user,noticeList,replyList,topic,1,1,false}
 	topic_id_tmpl := c.compile_template("topic.html","templates/","TopicPage", tpage, varList)
 	topic_id_alt_tmpl := c.compile_template("topic_alt.html","templates/","TopicPage", tpage, varList)
 	
@@ -71,7 +71,7 @@ func compile_templates() {
 	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage", forums_page, varList)
 	
 	var topicList []TopicUser
-	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"",1,"open","Admin","","",0,"","","","",58,"127.0.0.1"})
+	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"",1,"","127.0.0.1",0,"Admin","","",0,"","","","",58})
 	topics_page := TopicsPage{"Topic List",user,noticeList,topicList,""}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
 	
@@ -92,6 +92,30 @@ func write_template(name string, content string) {
 	write_file("./template_" + name + ".go", content)
 }
 
+func init_templates() {
+	compile_templates()
+	
+	// Filler functions for now...
+	fmap := make(map[string]interface{})
+	fmap["add"] = func(in interface{}, in2 interface{})interface{} {
+		return 1
+	}
+	fmap["subtract"] = func(in interface{}, in2 interface{})interface{} {
+		return 1
+	}
+	fmap["multiply"] = func(in interface{}, in2 interface{})interface{} {
+		return 1
+	}
+	fmap["divide"] = func(in interface{}, in2 interface{})interface{} {
+		return 1
+	}
+	
+	// The interpreted templates...
+	templates.Funcs(fmap)
+	template.Must(templates.ParseGlob("templates/*"))
+	template.Must(templates.ParseGlob("pages/*"))
+}
+
 func main(){
 	//if profiling {
 	//	f, err := os.Create("startup_cpu.prof")
@@ -104,7 +128,7 @@ func main(){
 	init_themes()
 	var err error
 	init_database(err)
-	compile_templates()
+	init_templates()
 	db.SetMaxOpenConns(64)
 	
 	err = init_errors()
@@ -136,7 +160,7 @@ func main(){
 	external_sites["YT"] = "https://www.youtube.com/"
 	hooks["trow_assign"] = nil
 	hooks["rrow_assign"] = nil
-	templates.ParseGlob("pages/*")
+	
 	init_plugins()
 	
 	router := NewRouter()

@@ -12,6 +12,8 @@ type Topic struct
 	CreatedAt string
 	ParentID int
 	Status string // Deprecated. Marked for removal.
+	IpAddress string
+	PostCount int
 }
 
 type TopicUser struct
@@ -25,6 +27,8 @@ type TopicUser struct
 	CreatedAt string
 	ParentID int
 	Status string // Deprecated. Marked for removal.
+	IpAddress string
+	PostCount int
 	
 	CreatedByName string
 	Avatar string
@@ -35,6 +39,4 @@ type TopicUser struct
 	URLPrefix string
 	URLName string
 	Level int
-	
-	IpAddress string
 }

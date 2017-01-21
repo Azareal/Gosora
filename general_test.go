@@ -54,8 +54,8 @@ func BenchmarkTopicTemplate(b *testing.B) {
 	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1"})
 	replyList = append(replyList, Reply{0,0,"Hey everyone!",template.HTML("Hey everyone!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1"})
 	
-	tpage := TopicPage{"Topic Blah",user,noticeList,replyList,topic,false}
-	tpage2 := TopicPage{"Topic Blah",admin,noticeList,replyList,topic,false}
+	tpage := TopicPage{"Topic Blah",user,noticeList,replyList,topic,1,1,false}
+	tpage2 := TopicPage{"Topic Blah",admin,noticeList,replyList,topic,1,1,false}
 	w := ioutil.Discard
 	
 	b.Run("compiled_useradmin", func(b *testing.B) {

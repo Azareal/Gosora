@@ -6,4 +6,4 @@ gosora.exe
 gosora.test.exe
 install.exe
 *.prof
-
+.DS_Store
