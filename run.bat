@@ -7,7 +7,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the executable
-go build
+go build -o gosora.exe
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

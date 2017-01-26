@@ -30,6 +30,7 @@ var enable_ssl = false
 var ssl_privkey = ""
 var ssl_fullchain = ""
 
-// Developer flag
+// Developer flags
 var debug = false
 var profiling = false
+

@@ -4,7 +4,7 @@
 </div>
 <div class="rowblock">
 	{{range .ItemList}}<div class="rowitem passive" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{if .Sticky}}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
-		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="username topic_status_e topic_status_closed" style="float: right;" title="Status: Closed">&#x1F512;&#xFE0E</span>{{end}}
+		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="username topic_status_e topic_status_closed" style="float: right;position:relative;top:-5px;" title="Status: Closed">&#x1F512;&#xFE0E</span>{{end}}
 	</div>
 	{{else}}<div class="rowitem passive">There aren't any topics yet.</div>{{end}}
 </div>

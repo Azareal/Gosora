@@ -12,6 +12,11 @@ if %errorlevel% neq 0 (
 )
 
 echo Preparing the installer
+go generate
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
 go build
 if %errorlevel% neq 0 (
 	pause

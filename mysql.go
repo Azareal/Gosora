@@ -15,11 +15,14 @@ var get_topic_user_stmt *sql.Stmt
 var get_topic_replies_stmt *sql.Stmt
 var get_topic_replies_offset_stmt *sql.Stmt
 var get_forum_topics_stmt *sql.Stmt
+var get_forum_topics_offset_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
 var create_report_stmt *sql.Stmt
 var create_reply_stmt *sql.Stmt
 var add_replies_to_topic_stmt *sql.Stmt
 var remove_replies_from_topic_stmt *sql.Stmt
+var add_topics_to_forum_stmt *sql.Stmt
+var remove_topics_from_forum_stmt *sql.Stmt
 var update_forum_cache_stmt *sql.Stmt
 var edit_topic_stmt *sql.Stmt
 var edit_reply_stmt *sql.Stmt
@@ -55,6 +58,7 @@ var delete_profile_reply_stmt *sql.Stmt
 var create_forum_stmt *sql.Stmt
 var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
+var forum_entry_exists_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
 var add_plugin_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
@@ -102,13 +106,19 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_topic_replies_offset statement.")
-	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ? limit ? , " + strconv.Itoa(items_per_page))
+	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users on replies.createdBy = users.uid where tid = ? limit ?, " + strconv.Itoa(items_per_page))
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing get_forum_topics statement.")
-	get_forum_topics_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	get_forum_topics_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing get_forum_topics_offset statement.")
+	get_forum_topics_offset_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC limit ?, " + strconv.Itoa(items_per_page))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,7 +130,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing create_report statement.")
-	create_report_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,createdBy,data,parentID) VALUES(?,?,?,NOW(),?,?,-1)")
+	create_report_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,createdBy,data,parentID) VALUES(?,?,?,NOW(),?,?,1)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -139,6 +149,18 @@ func init_database(err error) {
 	
 	log.Print("Preparing remove_replies_from_topic statement.")
 	remove_replies_from_topic_stmt, err = db.Prepare("UPDATE topics SET postCount = postCount - ? WHERE tid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_topics_to_forum statement.")
+	add_topics_to_forum_stmt, err = db.Prepare("UPDATE forums SET topicCount = topicCount + ? WHERE fid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing remove_topics_from_forum statement.")
+	remove_topics_from_forum_stmt, err = db.Prepare("UPDATE forums SET topicCount = topicCount - ? WHERE fid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -249,7 +271,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing change_group statement.")
-	change_group_stmt, err = db.Prepare("UPDATE `users` SET `group` = ? WHERE `uid` = ?")
+	change_group_stmt, err = db.Prepare("update `users` set `group` = ? where `uid` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -333,19 +355,26 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing create_forum statement.")
-	create_forum_stmt, err = db.Prepare("INSERT INTO forums(name) VALUES(?)")
+	create_forum_stmt, err = db.Prepare("INSERT INTO forums(name,active) VALUES(?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing delete_forum statement.")
-	delete_forum_stmt, err = db.Prepare("DELETE FROM forums WHERE fid = ?")
+	//delete_forum_stmt, err = db.Prepare("DELETE FROM forums WHERE fid = ?")
+	delete_forum_stmt, err = db.Prepare("update forums set name= '', active = 0 where fid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing update_forum statement.")
-	update_forum_stmt, err = db.Prepare("UPDATE forums SET name = ? WHERE fid = ?")
+	update_forum_stmt, err = db.Prepare("update forums set name = ?, active = ? where fid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing forum_entry_exists statement.")
+	forum_entry_exists_stmt, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = '' order by fid asc limit 1")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -418,18 +447,29 @@ func init_database(err error) {
 	}
 	
 	log.Print("Loading the forums.")
-	rows, err = db.Query("SELECT fid, name, active, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums")
+	log.Print("Adding the uncategorised forum")
+	forums = append(forums, Forum{0,"Uncategorised",uncategorised_forum_visible,0,"",0,"",0,""})
+	
+	//rows, err = db.Query("SELECT fid, name, active, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums")
+	rows, err = db.Query("SELECT fid, name, active, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums ORDER BY fid ASC")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 	
-	for rows.Next() {
-		forum := Forum{0,"",true,"",0,"",0,""}
-		err := rows.Scan(&forum.ID, &forum.Name, &forum.Active, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+	i := 1
+	for ;rows.Next();i++ {
+		forum := Forum{0,"",true,0,"",0,"",0,""}
+		err := rows.Scan(&forum.ID, &forum.Name, &forum.Active, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
 		if err != nil {
 			log.Fatal(err)
 		}
+		
+		// Ugh, you really shouldn't physically delete these items, it makes a big mess of things
+		if forum.ID != i {
+			fmt.Println("Stop physically deleting forums. You are messing up the IDs. Use the Forum Manager or delete_forums() instead x.x")
+			fill_forum_id_gap(i, forum.ID)
+		} 
 		
 		if forum.LastTopicID != 0 {
 			forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
@@ -440,17 +480,18 @@ func init_database(err error) {
 			forum.LastTopic = "None"
 			forum.LastTopicTime = ""
 		}
-		forums[forum.ID] = forum
+		
+		log.Print("Adding the " + forum.Name + " forum")
+		forums = append(forums,forum)
 	}
 	err = rows.Err()
 	if err != nil {
 		log.Fatal(err)
 	}
+	forumCapCount = i
 	
-	log.Print("Adding the uncategorised forum")
-	forums[0] = Forum{0,"Uncategorised",uncategorised_forum_visible,"",0,"",0,""}
-	log.Print("Adding the reports forum")
-	forums[-1] = Forum{-1,"Reports",false,"",0,"",0,""}
+	//log.Print("Adding the reports forum")
+	//forums[-1] = Forum{-1,"Reports",false,0,"",0,"",0,""}
 	
 	log.Print("Loading the settings.")
 	rows, err = db.Query("SELECT name, content, type, constraints FROM settings")
@@ -541,6 +582,4 @@ func init_database(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
-	
 }

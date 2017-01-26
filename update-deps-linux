@@ -1,2 +1,4 @@
+echo "Updating the MySQL Driver"
 go get -u github.com/go-sql-driver/mysql
+echo "Updating bcrypt"
 go get -u golang.org/x/crypto/bcrypt

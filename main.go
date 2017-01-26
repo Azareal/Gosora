@@ -30,7 +30,9 @@ var staff_css_tmpl = template.CSS(staff_css)
 var settings map[string]interface{} = make(map[string]interface{})
 var external_sites map[string]string = make(map[string]string)
 var groups map[int]Group = make(map[int]Group)
-var forums map[int]Forum = make(map[int]Forum)
+var forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency 
+var groupCapCount int
+var forumCapCount int
 var static_files map[string]SFile = make(map[string]SFile)
 
 var template_topic_handle func(TopicPage,io.Writer) = nil
@@ -75,7 +77,8 @@ func compile_templates() {
 	topics_page := TopicsPage{"Topic List",user,noticeList,topicList,""}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
 	
-	forum_page := ForumPage{"General Forum",user,noticeList,topicList,"There aren't any topics in this forum yet."}
+	forum_item := Forum{1,"General Forum",true,0,"",0,"",0,""}
+	forum_page := ForumPage{"General Forum",user,noticeList,topicList,forum_item,1,1,nil}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)
 	
 	log.Print("Writing the templates")

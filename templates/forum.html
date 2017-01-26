@@ -1,10 +1,13 @@
 {{template "header.html" . }}
+{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" href="/forum/{{.Forum.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+{{if ne .LastPage .Page}}<link rel="prerender" href="/forum/{{.Forum.ID}}?page={{add .Page 1}}" />
+<div id="nextFloat" class="next_button"><a class="next_link" href="/forum/{{.Forum.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 <div class="rowblock">
 	<div class="rowitem rowhead"><a>{{.Title}}</a></div>
 </div>
 <div class="rowblock">
-	{{range .ItemList}}<div class="rowitem passive" style="{{ if .Avatar }}background-image: url({{ .Avatar }});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{ if .Sticky }}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
-		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;">&#x1F512;&#xFE0E</span>{{end}}
+	{{range .ItemList}}<div class="rowitem passive" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{if .Sticky}}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
+		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
 	</div>
 	{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.</div>{{end}}
 </div>

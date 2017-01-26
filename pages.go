@@ -38,6 +38,9 @@ type ForumPage struct
 	CurrentUser User
 	NoticeList []string
 	ItemList []TopicUser
+	Forum Forum
+	Page int
+	LastPage int
 	ExtData interface{}
 }
 

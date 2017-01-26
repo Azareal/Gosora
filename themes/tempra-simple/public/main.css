@@ -7,14 +7,12 @@
 body
 {
 	font-family: arial;
+	padding-bottom: 8px;
 }
 
 /* Patch for Edge */
 @supports (-ms-ime-align:auto) {
-.user_content
-{
-	font-family: Segoe UI Emoji, arial;
-}
+.user_content { font-family: Segoe UI Emoji, arial; }
 }
 
 /*.move_left{float: left;position: relative;left: 50%;}
@@ -71,10 +69,7 @@ li a
 	padding: 0px;
 	padding-top: 0px;
 }
-.rowblock:empty
-{
-	display: none;
-}
+.rowblock:empty { display: none; }
 
 .colblock_left
 {
@@ -94,14 +89,8 @@ li a
 	overflow: hidden;
 	word-wrap: break-word;
 }
-.colblock_left:empty
-{
-	display: none;
-}
-.colblock_right:empty
-{
-	display: none;
-}
+.colblock_left:empty { display: none; }
+.colblock_right:empty { display: none; }
 
 .rowitem
 {
@@ -127,10 +116,7 @@ li a
 	text-decoration: none;
 	color: black;
 }
-.rowitem a:hover
-{
-	color: silver;
-}
+.rowitem a:hover { color: silver; }
 
 .col_left
 {
@@ -161,10 +147,7 @@ li a
 	text-decoration: none;
 	color: black;
 }
-.colitem a:hover
-{
-	color: silver;
-}
+.colitem a:hover { color: silver; }
 
 .formrow
 {
@@ -214,14 +197,12 @@ li a
 }
 
 /* Mostly for textareas */
-.formitem:only-child
-{
-	width: 97%;
-}
+.formitem:only-child { width: 100%; }
 .formitem textarea
 {
 	width: 100%;
 	height: 100px;
+	outline-color: #8e8e8e;
 }
 .formitem:has-child()
 {
@@ -287,11 +268,7 @@ button.username
 	font-size: 10px;
 }
 
-.show_on_edit
-{
-	display: none;
-}
-
+.show_on_edit { display: none; }
 .alert
 {
 	display: block;
@@ -326,6 +303,7 @@ button.username
 	padding: 0px;
 	padding-left: 5px;
 	padding-right: 5px;
+	z-index: 100;
 }
 
 .prev_button a, .next_button a {
@@ -378,6 +356,7 @@ button.username
 	.menu_right { padding-right: 5px; }
 	.menu_create_topic { display: none;}
 	.hide_on_mobile { display: none; }
+	.prev_button, .next_button { top: auto;bottom: 5px; }
 }
 
 @media (max-width: 470px) {

@@ -1,3 +1,6 @@
-go build
-go build ./install
+echo "Generating the dynamic code"
+go generate
+echo "Building Gosora"
+go build -o Gosora
+echo "Running Gosora"
 ./Gosora

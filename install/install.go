@@ -160,7 +160,7 @@ var site_email = "" // Should be a setting
 var smtp_server = ""
 //var noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
 var noavatar = "https://api.adorable.io/avatars/285/{id}@" + site_url + ".png"
-var items_per_page = 40 // Should be a setting
+var items_per_page = 25
 
 var site_url = "` + site_url + `"
 var server_port = "` + server_port + `"
@@ -170,6 +170,7 @@ var ssl_fullchain = ""
 
 // Developer flag
 var debug = false
+var profiling = false
 `)
 	
 	fmt.Println("Opening the configuration file")

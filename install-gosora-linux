@@ -1,5 +1,10 @@
+echo "Installing the MySQL Driver"
 go get -u github.com/go-sql-driver/mysql
+echo "Installing bcrypt"
 go get -u golang.org/x/crypto/bcrypt
-go build
+
+echo "Preparing the installer"
+go generate
+go build -o Gosora
 go build ./install
 ./Install

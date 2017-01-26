@@ -2,7 +2,7 @@
 package main
 
 import "log"
-import "fmt"
+//import "fmt"
 import "strconv"
 import "bytes"
 import "regexp"
@@ -150,15 +150,14 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var topicList []TopicUser
+	page, _ := strconv.Atoi(r.FormValue("page"))
 	fid, err := strconv.Atoi(r.URL.Path[len("/forum/"):])
 	if err != nil {
 		LocalError("The provided ForumID is not a valid number.",w,r,user)
 		return
 	}
 	
-	_, ok = forums[fid]
-	if !ok {
+	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
 		NotFound(w,r,user)
 		return
 	}
@@ -167,12 +166,24 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	rows, err := get_forum_topics_stmt.Query(fid)
+	// Calculate the offset
+	var offset int
+	last_page := int(forums[fid].TopicCount / items_per_page) + 1
+	if page > 1 {
+		offset = (items_per_page * page) - items_per_page
+	} else if page == -1 {
+		page = last_page
+		offset = (items_per_page * page) - items_per_page
+	} else {
+		page = 1
+	}
+	rows, err := get_forum_topics_offset_stmt.Query(fid, offset)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
+	var topicList []TopicUser
 	topicItem := TopicUser{ID: 0}
 	for rows.Next() {
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
@@ -201,7 +212,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	}
 	rows.Close()
 	
-	pi := ForumPage{forums[fid].Name,user,noticeList,topicList,nil}
+	pi := ForumPage{forums[fid].Name,user,noticeList,topicList,forums[fid],page,last_page,nil}
 	if template_forum_handle != nil {
 		template_forum_handle(pi,w)
 	} else {
@@ -541,11 +552,18 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form", w, r, user)
 		return          
 	}
+	
+	fid := 2
 	topic_name := html.EscapeString(r.PostFormValue("topic-name"))
 	content := html.EscapeString(preparse_message(r.PostFormValue("topic-content")))
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		LocalError("Bad IP",w,r,user)
+		return
+	}
+	
+	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+		LocalError("The topic's parent forum doesn't exist.",w,r,user)
 		return
 	}
 	
@@ -560,7 +578,15 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	_, err = update_forum_cache_stmt.Exec(topic_name, lastId, user.Name, user.ID, 1)
+	
+	_, err = add_topics_to_forum_stmt.Exec(1, fid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	forums[fid].TopicCount -= 1
+	
+	_, err = update_forum_cache_stmt.Exec(topic_name, lastId, user.Name, user.ID, fid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -710,8 +736,8 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	item_type := r.FormValue("type")
-	success := 1
 	
+	fid := 1
 	var tid int
 	var title string
 	var content string
@@ -719,16 +745,16 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	if item_type == "reply" {
 		err = db.QueryRow("select tid, content from replies where rid = ?", item_id).Scan(&tid, &content)
 		if err == sql.ErrNoRows {
-			LocalError("We were unable to find the reported post", w, r, user)
+			LocalError("We were unable to find the reported post",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r,user)
 			return
 		}
 		
-		err = db.QueryRow("select title, data from topics where tid = ?", tid).Scan(&title,&data)
+		err = db.QueryRow("select title, data from topics where tid = ?",tid).Scan(&title,&data)
 		if err == sql.ErrNoRows {
-			LocalError("We were unable to find the topic which the reported post is supposed to be in", w, r, user)
+			LocalError("We were unable to find the topic which the reported post is supposed to be in",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r,user)
@@ -738,7 +764,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	} else if item_type == "user-reply" {
 		err = db.QueryRow("select uid, content from users_replies where rid = ?", item_id).Scan(&tid, &content)
 		if err == sql.ErrNoRows {
-			LocalError("We were unable to find the reported post", w, r, user)
+			LocalError("We were unable to find the reported post",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r,user)
@@ -747,7 +773,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		
 		err = db.QueryRow("select name from users where uid = ?", tid).Scan(&title)
 		if err == sql.ErrNoRows {
-			LocalError("We were unable to find the profile which the reported post is supposed to be on", w, r, user)
+			LocalError("We were unable to find the profile which the reported post is supposed to be on",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r,user)
@@ -769,14 +795,13 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			run_vhook_noreturn("report_preassign", &item_id, &item_type)
 			return
 		}
-		
 		// Don't try to guess the type
-		LocalError("Unknown type", w, r, user)
+		LocalError("Unknown type",w,r,user)
 		return  
 	}
 	
 	var count int
-	rows, err := db.Query("select count(*) as count from topics where data = ? and data != '' and parentID = -1", item_type + "_" + strconv.Itoa(item_id))
+	rows, err := db.Query("select count(*) as count from topics where data = ? and data != '' and parentID = 1", item_type + "_" + strconv.Itoa(item_id))
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r,user)
 		return
@@ -797,34 +822,28 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	title = "Report: " + title
 	res, err := create_report_stmt.Exec(title,content,content,user.ID,item_type + "_" + strconv.Itoa(item_id))
 	if err != nil {
-		log.Print(err)
-		success = 0
+		InternalError(err,w,r,user)
+		return
 	}
 	
 	lastId, err := res.LastInsertId()
-	if err != nil {
-		log.Print(err)
-		success = 0
-	}
-	
-	_, err = update_forum_cache_stmt.Exec(title, lastId, user.Name, user.ID, 1)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
-	if success != 1 {
-		errmsg := "Unable to create the report"
-		pi := Page{"Error",user,nList,tList,errmsg}
-		
-		var b bytes.Buffer
-		templates.ExecuteTemplate(&b,"error.html", pi)
-		errpage := b.String()
-		w.WriteHeader(500)
-		fmt.Fprintln(w,errpage)
-	} else {
-		http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId, 10), http.StatusSeeOther)
+	_, err = add_topics_to_forum_stmt.Exec(1, fid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
 	}
+	_, err = update_forum_cache_stmt.Exec(title, lastId, user.Name, user.ID, fid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId, 10), http.StatusSeeOther)
 }
 
 func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {

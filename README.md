@@ -2,7 +2,7 @@
 
 A super fast forum software written in Go.
 
-The initial code-base was forked from one of my side projects, but has now gone far beyond that.
+The initial code-base was forked from one of my side projects, but has now gone far beyond that. We're still fairly early in development, so the code-base might change at an incredible rate. We plan to start stabilising it somewhat once we enter alpha.
 
 Azareal's Discord Chat: https://discord.gg/eyYvtTf
 
@@ -106,7 +106,7 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 # Dependencies
 
-Go 1.7
+* Go 1.7
 
 * MariaDB
 
@@ -120,6 +120,6 @@ There are several plugins which are bundled with the software by default. These 
 
 * Hello World / Skeleton - Example plugins for helping you learn how to develop plugins.
 
-* BBCode - A plugin in early development for converting BBCode Tags into HTML. Don't use this in production yet.
+* BBCode - A plugin in early development for converting BBCode Tags into HTML.
 
 * Markdown - An extremely simple plugin for converting Markdown into HTML.

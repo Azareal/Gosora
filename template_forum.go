@@ -40,37 +40,55 @@ w.Write([]byte(item))
 w.Write(header_5)
 }
 }
+if tmpl_forum_vars.Page > 1 {
 w.Write(forum_0)
-w.Write([]byte(tmpl_forum_vars.Title))
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
 w.Write(forum_1)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Page - 1)))
+w.Write(forum_2)
+}
+if tmpl_forum_vars.LastPage != tmpl_forum_vars.Page {
+w.Write(forum_3)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write(forum_4)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Page + 1)))
+w.Write(forum_5)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write(forum_6)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Page + 1)))
+w.Write(forum_7)
+}
+w.Write(forum_8)
+w.Write([]byte(tmpl_forum_vars.Title))
+w.Write(forum_9)
 if len(tmpl_forum_vars.ItemList) != 0 {
 for _, item := range tmpl_forum_vars.ItemList {
-w.Write(forum_2)
-if item.Avatar != "" {
-w.Write(forum_3)
-w.Write([]byte(item.Avatar))
-w.Write(forum_4)
-}
-if item.Sticky {
-w.Write(forum_5)
-} else {
-if item.Is_Closed {
-w.Write(forum_6)
-}
-}
-w.Write(forum_7)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(forum_8)
-w.Write([]byte(item.Title))
-w.Write(forum_9)
-if item.Is_Closed {
 w.Write(forum_10)
-}
+if item.Avatar != "" {
 w.Write(forum_11)
-}
-} else {
+w.Write([]byte(item.Avatar))
 w.Write(forum_12)
 }
+if item.Sticky {
 w.Write(forum_13)
+} else {
+if item.Is_Closed {
+w.Write(forum_14)
+}
+}
+w.Write(forum_15)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(forum_16)
+w.Write([]byte(item.Title))
+w.Write(forum_17)
+if item.Is_Closed {
+w.Write(forum_18)
+}
+w.Write(forum_19)
+}
+} else {
+w.Write(forum_20)
+}
+w.Write(forum_21)
 w.Write(footer_0)
 }

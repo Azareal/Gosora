@@ -121,4 +121,13 @@ $(document).ready(function(){
 			});
 		}
 	});
+	
+	$(this).keyup(function(event){
+		if(event.which == 37) {
+			$("#prevFloat a")[0].click();
+		}
+		if(event.which == 39) {
+			$("#nextFloat a")[0].click();
+		}
+	});
 });

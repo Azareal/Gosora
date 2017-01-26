@@ -37,4 +37,4 @@ Add support for multi-factor authentication.
 
 Add support for secondary emails for users.
 
-Improve the shell scripts and possibly add support for Make?
+Improve the shell scripts and possibly add support for Make? A make.go might be a good solution?

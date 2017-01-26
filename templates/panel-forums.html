@@ -5,12 +5,15 @@
 </div>
 <div class="colblock_right">
 	{{range .ItemList}}
-	<div class="rowitem editable_parent" style="font-weight: normal;">
-		<a class="editable_block" style="font-size: 20px;position:relative;top: -2px;text-transform: none;">{{.Name}}</a>
-		{{if ne .ID 0}}<span style="float: right;">
+	<div class="rowitem editable_parent" style="font-weight: normal;{{if eq .ID 1}}border-bottom-style:solid;{{end}}">
+		<a class="editable_block" style="font-size: 20px;position:relative;top: -2px;text-transform: none;{{if not .Active}}color:#707070;{{end}}">{{.Name}}</a>
+		<span style="float: right;">
+			{{if not .Active}}<span class="username" style="color: black;">Hidden</span>{{end}}
+		{{if gt .ID 1}}
 			<a href="/panel/forums/edit/submit/{{.ID}}" class="username edit_field">Edit</a>
 			<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Delete</a>
-		</span>{{end}}
+		{{end}}
+		</span>
 	</div>
 	{{end}}
 </div><br />
@@ -22,6 +25,13 @@
 		<div class="formrow">
 			<div class="formitem"><a>Forum Name</a></div>
 			<div class="formitem"><input name="forum-name" type="text" /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem"><a>Hidden?</a></div>
+			<div class="formitem"><select name="forum-active">
+				<option value="1">Yes</option>
+				<option value="0">No</option>
+			</select></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem"><button name="panel-button" class="formbutton">Add Forum</button></div>

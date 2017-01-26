@@ -72,7 +72,8 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	
 	var content string
 	var createdBy int
-	err = db.QueryRow("select tid, content, createdBy from topics where tid = ?", tid).Scan(&tid, &content, &createdBy)
+	var fid int
+	err = db.QueryRow("select tid, content, createdBy, parentID from topics where tid = ?", tid).Scan(&tid, &content, &createdBy, &fid)
 	if err == sql.ErrNoRows {
 		LocalError("The topic you tried to delete doesn't exist.",w,r,user)
 		return
@@ -95,6 +96,18 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
+	
+	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+		return
+	}
+	_, err = remove_topics_from_forum_stmt.Exec(1, fid)
+	if err != nil {
+		InternalError(err,w,r,user)
+		return
+	}
+	
+	forums[fid].TopicCount -= 1
 }
 
 func route_stick_topic(w http.ResponseWriter, r *http.Request) {
@@ -571,12 +584,12 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	
 	var forumList []interface{}
 	for _, forum := range forums {
-		if forum.ID > -1 {
+		if forum.Name != "" {
 			forumList = append(forumList, forum)
 		}
 	}
 	
-	pi := Page{"Forum Manager",user,noticeList,forumList,0}
+	pi := Page{"Forum Manager",user,noticeList,forumList,nil}
 	templates.ExecuteTemplate(w,"panel-forums.html", pi)
 }
 
@@ -600,20 +613,20 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
+	var active bool
 	fname := r.PostFormValue("forum-name")
-	res, err := create_forum_stmt.Exec(fname)
+	factive := r.PostFormValue("forum-name")
+	if factive == "on" || factive == "1" {
+		active = true
+	} else {
+		active = false
+	}
+	
+	_, err = create_forum(fname, active)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
-	
-	lastId, err := res.LastInsertId()
-	if err != nil {
-		InternalError(err,w,r,user)
-		return
-	}
-	
-	forums[int(lastId)] = Forum{int(lastId),fname,true,"",0,"",0,""}
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 
@@ -637,8 +650,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	_, ok = forums[fid];
-    if !ok {
+	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	}
@@ -671,20 +683,17 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	_, ok = forums[fid];
-    if !ok {
+	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	}
 	
-	_, err = delete_forum_stmt.Exec(fid)
+	err = delete_forum(fid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	
-	// Remove this forum from the forum cache
-	delete(forums,fid);
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 
@@ -715,8 +724,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	forum_name := r.PostFormValue("edit_item")
-	forum, ok := forums[fid];
-    if !ok {
+    if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
 		LocalError("The forum you're trying to edit doesn't exist.",w,r,user)
 		return
 	}
@@ -726,8 +734,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	forum.Name = forum_name
-	forums[fid] = forum
+	forums[fid].Name = forum_name
 	
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
