@@ -8,6 +8,8 @@ body
 {
 	font-family: arial;
 	padding-bottom: 8px;
+	background-image: url('/static/test_bg2.svg');
+	background-size: cover;
 }
 
 /* Patch for Edge */
@@ -24,6 +26,7 @@ ul
 	height: 28px;
 	list-style-type: none;
 	border: 1px solid #ccc;
+	background-color: white;
 }
 li
 {
@@ -110,6 +113,7 @@ li a
 	padding-bottom: 12px;
 	font-weight: bold;
 	text-transform: uppercase;
+	background-color: white;
 }
 .rowitem.passive
 {
@@ -167,15 +171,14 @@ li a
 .formrow
 {
 	width: 100%;
+	background-color: white;
 }
 /* Clearfix */
 .formrow:before, .formrow:after {
-  content: " ";
-  display: table;
+	content: " ";
+	display: table;
 }
-.formrow:after {
-  clear: both;
-}
+.formrow:after { clear: both; }
 .formrow:not(:last-child)
 {
 	border-bottom: 1px dotted #ccc;

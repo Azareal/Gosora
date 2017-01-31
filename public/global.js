@@ -1,14 +1,11 @@
+var form_vars = {};
+
 function post_link(event)
 {
 	event.preventDefault();
 	var form_action = $(event.target).closest('a').attr("href");
 	console.log("Form Action: " + form_action);
-	$.ajax({
-		url: form_action,
-		type: "POST",
-		dataType: "json",
-		data: {js: "1"}
-	});
+	$.ajax({ url: form_action, type: "POST", dataType: "json", data: { js: "1" } });
 }
 
 $(document).ready(function(){
@@ -19,9 +16,8 @@ $(document).ready(function(){
 		$(".show_on_edit").show();
 	});
 	
-	$(".submit_edit").click(function(event){
+	$(".topic_item .submit_edit").click(function(event){
 		event.preventDefault();
-		
 		$(".topic_name").html($(".topic_name_input").val());
 		$(".topic_content").html($(".topic_content_input").val());
 		$(".topic_status_e:not(.open_edit)").html($(".topic_status_input").val());
@@ -74,11 +70,7 @@ $(document).ready(function(){
 			
 			var form_action = $(this).closest('a').attr("href");
 			console.log("Form Action: " + form_action);
-			$.ajax({
-				url: form_action,
-				type: "POST",
-				dataType: "json",
-				data: {is_js: "1",edit_item: newContent}
+			$.ajax({ url: form_action, type: "POST", dataType: "json", data: { is_js: "1", edit_item: newContent }
 			});
 		});
 	});
@@ -109,25 +101,70 @@ $(document).ready(function(){
 		});
 	});
 	
+	$(".edit_fields").click(function(event)
+	{
+		event.preventDefault();
+		var block_parent = $(this).closest('.editable_parent');
+		block_parent.find('.hide_on_edit').hide();
+		block_parent.find('.editable_block').show();
+		block_parent.find('.editable_block').each(function(){
+			var field_name = $(this).data("field");
+			var field_type = $(this).data("type");
+			if(field_type=="list") {
+				var field_value = $(this).data("value");
+				if(field_name in form_vars) var it = form_vars[field_name];
+				else var it = ['No','Yes'];
+				var itLen = it.length;
+				var out = "";
+				for (var i = 0; i < itLen; i++){
+					if(field_value==i) sel = "selected ";
+					else sel = "";
+					out += "<option "+sel+"value='"+i+"'>"+it[i]+"</option>";
+				}
+				$(this).html("<select data-field='"+field_name+"' name='"+field_name+"'>" + out + "</select>");
+			}
+			else $(this).html("<input name='"+field_name+"' value='" + $(this).text() + "' type='text'/>");
+		});
+		block_parent.find('.show_on_edit').eq(0).show();
+		
+		$(".submit_edit").click(function(event)
+		{
+			event.preventDefault();
+			var out_data = {is_js: "1"}
+			var block_parent = $(this).closest('.editable_parent');
+			var block = block_parent.find('.editable_block').each(function(){
+				var field_name = $(this).data("field");
+				var field_type = $(this).data("type");
+				if(field_type == "list") var newContent = $(this).find('select :selected').text();
+				else var newContent = $(this).find('input').eq(0).val();
+				
+				$(this).html(newContent);
+				out_data[field_name] = newContent
+			});
+			
+			var form_action = $(this).closest('a').attr("href");
+			console.log("Form Action: " + form_action);
+			console.log(out_data);
+			$.ajax({ url: form_action + "?session=" + session, type:"POST", dataType:"json", data: out_data });
+			block_parent.find('.hide_on_edit').show();
+			block_parent.find('.show_on_edit').hide();
+		});
+	});
+	
 	$(this).find(".ip_item").each(function(){
 		var ip = $(this).text();
-		//var ip_width = $(this).width();
 		console.log("IP: " + ip);
 		if(ip.length > 10){
 			$(this).html("Show IP");
 			$(this).click(function(event){
 				event.preventDefault();
-				$(this).text(ip);/*.animate({width: ip.width},{duration: 1000, easing: 'easeOutBounce'});*/
+				$(this).text(ip);
 			});
 		}
 	});
 	
 	$(this).keyup(function(event){
-		if(event.which == 37) {
-			$("#prevFloat a")[0].click();
-		}
-		if(event.which == 39) {
-			$("#nextFloat a")[0].click();
-		}
+		if(event.which == 37) $("#prevFloat a")[0].click();
+		if(event.which == 39) $("#nextFloat a")[0].click();
 	});
 });

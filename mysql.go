@@ -410,23 +410,32 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing update_user statement.")
-	update_user_stmt, err = db.Prepare("UPDATE `users` SET `name` = ?, `email` = ?, `group` = ? WHERE `uid` = ?")
+	update_user_stmt, err = db.Prepare("update `users` set `name` = ?, `email` = ?, `group` = ? where `uid` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Loading the usergroups.")
-	rows, err := db.Query("SELECT gid,name,permissions,is_mod,is_admin,is_banned,tag FROM users_groups")
+	groups = append(groups, Group{ID:0,Name:"System"})
+	
+	rows, err := db.Query("select gid,name,permissions,is_mod,is_admin,is_banned,tag from users_groups")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 	
-	for rows.Next() {
+	i := 1
+	for ;rows.Next();i++ {
 		group := Group{ID: 0,}
 		err := rows.Scan(&group.ID, &group.Name, &group.PermissionsText, &group.Is_Mod, &group.Is_Admin, &group.Is_Banned, &group.Tag)
 		if err != nil {
 			log.Fatal(err)
+		}
+		
+		// Ugh, you really shouldn't physically delete these items, it makes a big mess of things
+		if group.ID != i {
+			fmt.Println("Stop physically deleting groups. You are messing up the IDs. Use the Group Manager or delete_group() instead x.x")
+			fill_group_id_gap(i, group.ID)
 		}
 		
 		err = json.Unmarshal(group.PermissionsText, &group.Perms)
@@ -439,25 +448,28 @@ func init_database(err error) {
 		}
 		
 		group.Perms.ExtData = make(map[string]bool)
-		groups[group.ID] = group
+		groups = append(groups, group)
 	}
 	err = rows.Err()
 	if err != nil {
 		log.Fatal(err)
 	}
 	
+	log.Print("Binding the Not Loggedin Group")
+	GuestPerms = groups[6].Perms
+	
 	log.Print("Loading the forums.")
 	log.Print("Adding the uncategorised forum")
 	forums = append(forums, Forum{0,"Uncategorised",uncategorised_forum_visible,0,"",0,"",0,""})
 	
 	//rows, err = db.Query("SELECT fid, name, active, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums")
-	rows, err = db.Query("SELECT fid, name, active, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums ORDER BY fid ASC")
+	rows, err = db.Query("select fid, name, active, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime from forums order by fid asc")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 	
-	i := 1
+	i = 1
 	for ;rows.Next();i++ {
 		forum := Forum{0,"",true,0,"",0,"",0,""}
 		err := rows.Scan(&forum.ID, &forum.Name, &forum.Active, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
@@ -467,9 +479,9 @@ func init_database(err error) {
 		
 		// Ugh, you really shouldn't physically delete these items, it makes a big mess of things
 		if forum.ID != i {
-			fmt.Println("Stop physically deleting forums. You are messing up the IDs. Use the Forum Manager or delete_forums() instead x.x")
+			fmt.Println("Stop physically deleting forums. You are messing up the IDs. Use the Forum Manager or delete_forum() instead x.x")
 			fill_forum_id_gap(i, forum.ID)
-		} 
+		}
 		
 		if forum.LastTopicID != 0 {
 			forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
@@ -493,8 +505,68 @@ func init_database(err error) {
 	//log.Print("Adding the reports forum")
 	//forums[-1] = Forum{-1,"Reports",false,0,"",0,"",0,""}
 	
+	log.Print("Loading the forum permissions")
+	rows, err = db.Query("select gid, fid, permissions from forums_permissions order by gid asc, fid asc")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	// Temporarily store the forum perms in a map before transferring it to a much faster slice
+	log.Print("Adding the forum permissions")
+	forum_perms := make(map[int]map[int]ForumPerms)
+	for ;rows.Next();i++ {
+		var gid int
+		var fid int
+		var perms []byte
+		var pperms ForumPerms
+		err := rows.Scan(&gid, &fid, &perms)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = json.Unmarshal(perms, &pperms)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pperms.ExtData = make(map[string]bool)
+		pperms.Overrides = true
+		_, ok := forum_perms[gid]
+		if !ok {
+			forum_perms[gid] = make(map[int]ForumPerms)
+		}
+		forum_perms[gid][fid] = pperms
+	}
+	for gid, _ := range groups {
+		log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid))
+		//groups[gid].Forums = append(groups[gid].Forums,BlankForumPerms) // GID 0. I sometimes wish MySQL's AUTO_INCREMENT would start at zero
+		for fid, _ := range forums {
+			forum_perm, ok := forum_perms[gid][fid]
+			if ok {
+				// Override group perms
+				//log.Print("Overriding permissions for forum #" + strconv.Itoa(fid))
+				groups[gid].Forums = append(groups[gid].Forums,forum_perm)
+			} else {
+				// Inherit from Group
+				//log.Print("Inheriting from default for forum #" + strconv.Itoa(fid))
+				forum_perm = BlankForumPerms
+				groups[gid].Forums = append(groups[gid].Forums,forum_perm)
+			}
+			
+			if forum_perm.Overrides {
+				if forum_perm.ViewTopic {
+					groups[gid].CanSee = append(groups[gid].CanSee, fid)
+				}
+			} else if groups[gid].Perms.ViewTopic {
+				groups[gid].CanSee = append(groups[gid].CanSee, fid)
+			}
+		}
+		//fmt.Printf("%+v\n", groups[gid].CanSee)
+		//fmt.Printf("%+v\n", groups[gid].Forums)
+		//fmt.Println(len(groups[gid].Forums))
+	}
+	
 	log.Print("Loading the settings.")
-	rows, err = db.Query("SELECT name, content, type, constraints FROM settings")
+	rows, err = db.Query("select name, content, type, constraints from settings")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -520,7 +592,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Loading the plugins.")
-	rows, err = db.Query("SELECT uname, active FROM plugins")
+	rows, err = db.Query("select uname, active from plugins")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -548,7 +620,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Loading the themes.")
-	rows, err = db.Query("SELECT `uname`, `default` FROM `themes`")
+	rows, err = db.Query("select `uname`, `default` from `themes`")
 	if err != nil {
 		log.Fatal(err)
 	}

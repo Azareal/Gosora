@@ -77,16 +77,19 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	// Are there any session cookies..?
 	cookie, err := r.Cookie("uid")
 	if err != nil {
+		user.Group = 6
 		user.Perms = GuestPerms
 		return user, noticeList, true
 	}
 	user.ID, err = strconv.Atoi(cookie.Value)
 	if err != nil {
+		user.Group = 6
 		user.Perms = GuestPerms
 		return user, noticeList, true
 	}
 	cookie, err = r.Cookie("session")
 	if err != nil {
+		user.Group = 6
 		user.Perms = GuestPerms
 		return user, noticeList, true
 	}
@@ -96,6 +99,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""
+		user.Group = 6
 		user.Perms = GuestPerms
 		return user, noticeList, true
 	} else if err != nil {
@@ -145,16 +149,19 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 	// Are there any session cookies..?
 	cookie, err := r.Cookie("uid")
 	if err != nil {
+		user.Group = 6
 		user.Perms = GuestPerms
 		return user, true
 	}
 	user.ID, err = strconv.Atoi(cookie.Value)
 	if err != nil {
+		user.Group = 6
 		user.Perms = GuestPerms
 		return user, true
 	}
 	cookie, err = r.Cookie("session")
 	if err != nil {
+		user.Group = 6
 		user.Perms = GuestPerms
 		return user, true
 	}
@@ -164,6 +171,7 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""
+		user.Group = 6
 		user.Perms = GuestPerms
 		return user, true
 	} else if err != nil {

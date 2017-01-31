@@ -60,10 +60,10 @@ var topic_5 []byte = []byte(`" />
 var topic_6 []byte = []byte(`?page=`)
 var topic_7 []byte = []byte(`">&gt;</a></div>`)
 var topic_8 []byte = []byte(`
-<div class="rowblock">
+<div class="rowblock topic_block">
 	<form action='/topic/edit/submit/`)
 var topic_9 []byte = []byte(`' method="post">
-		<div class="rowitem"`)
+		<div class="rowitem topic_item"`)
 var topic_10 []byte = []byte(` style="background-color: #FFFFEA;"`)
 var topic_11 []byte = []byte(` style="background-color: #eaeaea;"`)
 var topic_12 []byte = []byte(`>
@@ -176,10 +176,10 @@ var topic_alt_5 []byte = []byte(`" />
 var topic_alt_6 []byte = []byte(`?page=`)
 var topic_alt_7 []byte = []byte(`">&gt;</a></div>`)
 var topic_alt_8 []byte = []byte(`
-<div class="rowblock">
+<div class="rowblock topic_block">
 	<form action='/topic/edit/submit/`)
 var topic_alt_9 []byte = []byte(`' method="post">
-		<div class="rowitem rowhead`)
+		<div class="rowitem topic_item rowhead`)
 var topic_alt_10 []byte = []byte(` topic_sticky_head`)
 var topic_alt_11 []byte = []byte(` topic_closed_head`)
 var topic_alt_12 []byte = []byte(`">

@@ -193,3 +193,10 @@ func fill_forum_id_gap(biggerID int, smallerID int) {
 		forums = append(forums, dummy)
 	}
 }
+
+func fill_group_id_gap(biggerID int, smallerID int) {
+	dummy := Group{ID:0, Name:""}
+	for i := smallerID; i > biggerID;i++ {
+		groups = append(groups, dummy)
+	}
+}

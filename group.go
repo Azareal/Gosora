@@ -1,6 +1,8 @@
 package main
 import "fmt"
 
+var BlankPerms Perms
+var BlankForumPerms ForumPerms
 var GuestPerms Perms
 var AllPerms Perms
 
@@ -8,12 +10,14 @@ type Group struct
 {
 	ID int
 	Name string
-	Perms Perms
-	PermissionsText []byte
 	Is_Mod bool
 	Is_Admin bool
 	Is_Banned bool
 	Tag string
+	Perms Perms
+	PermissionsText []byte
+	Forums []ForumPerms
+	CanSee []int // The IDs of the forums this group can see
 }
 
 // Permission Structure: ActionComponent[Subcomponent]Flag
@@ -67,10 +71,19 @@ type ForumPerms struct
 	CloseTopic bool
 	//CloseOwnTopic bool
 	
+	Overrides bool
 	ExtData map[string]bool
 }
 
 func init() {
+	BlankPerms = Perms{
+		ExtData: make(map[string]bool),
+	}
+	
+	BlankForumPerms = ForumPerms{
+		ExtData: make(map[string]bool),
+	}
+	
 	GuestPerms = Perms{
 		ViewTopic: true,
 		ExtData: make(map[string]bool),

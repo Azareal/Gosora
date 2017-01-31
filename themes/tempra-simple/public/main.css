@@ -12,7 +12,7 @@ body
 
 /* Patch for Edge */
 @supports (-ms-ime-align:auto) {
-.user_content { font-family: Segoe UI Emoji, arial; }
+	.user_content { font-family: Segoe UI Emoji, arial; }
 }
 
 /*.move_left{float: left;position: relative;left: 50%;}
@@ -24,6 +24,7 @@ ul
 	height: 28px;
 	list-style-type: none;
 	border: 1px solid #ccc;
+	background-color: white;
 }
 li
 {
@@ -101,6 +102,7 @@ li a
 	padding-bottom: 12px;
 	font-weight: bold;
 	text-transform: uppercase;
+	background-color: white;
 }
 .rowitem.passive
 {
@@ -151,20 +153,16 @@ li a
 
 .formrow
 {
-	/*height: 40px;*/
 	width: 100%;
+	background-color: white;
 }
 
 /*Clearfix*/
-.formrow:before,
-.formrow:after {
-  content: " ";
-  display: table;
+.formrow:before, .formrow:after {
+	content: " ";
+	display: table;
 }
-
-.formrow:after {
-  clear: both;
-}
+.formrow:after { clear: both; }
 
 .formrow:not(:last-child)
 {

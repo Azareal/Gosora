@@ -29,8 +29,9 @@ var no_css_tmpl = template.CSS("")
 var staff_css_tmpl = template.CSS(staff_css)
 var settings map[string]interface{} = make(map[string]interface{})
 var external_sites map[string]string = make(map[string]string)
-var groups map[int]Group = make(map[int]Group)
-var forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency 
+var groups []Group
+var forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency
+var forum_perms [][]ForumPerms // [gid][fid]Perms
 var groupCapCount int
 var forumCapCount int
 var static_files map[string]SFile = make(map[string]SFile)
@@ -227,6 +228,7 @@ func main(){
 	router.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
 	router.HandleFunc("/panel/forums/delete/", route_panel_forums_delete)
 	router.HandleFunc("/panel/forums/delete/submit/", route_panel_forums_delete_submit)
+	router.HandleFunc("/panel/forums/edit/", route_panel_forums_edit)
 	router.HandleFunc("/panel/forums/edit/submit/", route_panel_forums_edit_submit)
 	router.HandleFunc("/panel/settings/", route_panel_settings)
 	router.HandleFunc("/panel/settings/edit/", route_panel_setting)

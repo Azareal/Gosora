@@ -54,7 +54,7 @@ func route_static(w http.ResponseWriter, r *http.Request){
 }*/
 
 func route_fstatic(w http.ResponseWriter, r *http.Request){
-	http.ServeFile(w, r, r.URL.Path)
+	http.ServeFile(w,r,r.URL.Path)
 }
 
 func route_overview(w http.ResponseWriter, r *http.Request){
@@ -65,7 +65,7 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 	pi := Page{"Overview",user,noticeList,tList,nil}
 	err := templates.ExecuteTemplate(w,"overview.html", pi)
     if err != nil {
-        InternalError(err, w, r, user)
+        InternalError(err,w,r,user)
     }
 }
 
@@ -80,10 +80,10 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 		NotFound(w,r,user)
 		return
 	}
-	pi := Page{"Page",user,noticeList,tList,0}
+	pi := Page{"Page",user,noticeList,tList,nil}
 	err := templates.ExecuteTemplate(w,"page_" + name,pi)
 	if err != nil {
-		InternalError(err, w, r, user)
+		InternalError(err,w,r,user)
 	}
 }
 	
@@ -92,11 +92,6 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	// I'll have to find a solution which doesn't involve shutting down all of the routes for a user, if they don't have ANY permissions
-	/*if !user.Perms.ViewTopic {
-		NoPermissions(w,r,user)
-		return
-	}*/
 	
 	var topicList []TopicUser
 	rows, err := get_topic_list_stmt.Query()
@@ -139,7 +134,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	} else {
 		err = templates.ExecuteTemplate(w,"topics.html", pi)
 		if err != nil {
-			InternalError(err, w, r, user)
+			InternalError(err,w,r,user)
 		}
 	}
 }
@@ -161,7 +156,14 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 		NotFound(w,r,user)
 		return
 	}
-	if !user.Perms.ViewTopic {
+	
+	//fmt.Printf("%+v\n", groups[user.Group].Forums)
+	if groups[user.Group].Forums[fid].Overrides {
+		if !groups[user.Group].Forums[fid].ViewTopic {
+			NoPermissions(w,r,user)
+			return
+		}
+	} else if !user.Perms.ViewTopic {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -218,7 +220,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	} else {
 		err = templates.ExecuteTemplate(w,"forum.html", pi)
 		if err != nil {
-			InternalError(err, w, r, user)
+			InternalError(err,w,r,user)
 		}
 	}
 }
@@ -230,9 +232,10 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	}
 	
 	var forumList []Forum
-	for _, forum := range forums {
-		if forum.Active {
-			forumList = append(forumList, forum)
+	group := groups[user.Group]
+	for fid, _ := range group.CanSee {
+		if forums[fid].Active && forums[fid].Name != "" {
+			forumList = append(forumList, forums[fid])
 		}
 	}
 	
@@ -268,12 +271,6 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		LocalError("The provided TopicID is not a valid number.",w,r,user)
 		return
 	}
-	if !user.Perms.ViewTopic {
-		//fmt.Printf("%+v\n", user)
-		//fmt.Printf("%+v\n", user.Perms)
-		NoPermissions(w,r,user)
-		return
-	}
 	
 	// Get the topic..
 	err = get_topic_user_stmt.QueryRow(topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.CreatedByName, &topic.Avatar, &group, &topic.URLPrefix, &topic.URLName, &topic.Level)
@@ -282,6 +279,21 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	} else if err != nil {
 		InternalError(err,w,r,user)
+		return
+	}
+	
+	if (topic.ParentID > forumCapCount) || (topic.ParentID < 0) || forums[topic.ParentID].Name=="" {
+		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+		return
+	}
+	
+	if groups[user.Group].Forums[topic.ParentID].Overrides {
+		if !groups[user.Group].Forums[topic.ParentID].ViewTopic {
+			NoPermissions(w,r,user)
+			return
+		}
+	} else if !user.Perms.ViewTopic {
+		NoPermissions(w,r,user)
 		return
 	}
 	
