@@ -47,8 +47,9 @@ func create_forum(forum_name string, active bool) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	fid = int(fid64)
 	
-	forums = append(forums, Forum{int(fid64),forum_name,active,0,"",0,"",0,""})
+	forums = append(forums, Forum{fid,forum_name,active,0,"",0,"",0,""})
 	return fid, nil
 }
 

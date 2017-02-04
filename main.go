@@ -31,7 +31,7 @@ var settings map[string]interface{} = make(map[string]interface{})
 var external_sites map[string]string = make(map[string]string)
 var groups []Group
 var forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency
-var forum_perms [][]ForumPerms // [gid][fid]Perms
+var forum_perms map[int]map[int]ForumPerms // [gid][fid]Perms
 var groupCapCount int
 var forumCapCount int
 var static_files map[string]SFile = make(map[string]SFile)

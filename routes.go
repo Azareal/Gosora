@@ -63,7 +63,7 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	pi := Page{"Overview",user,noticeList,tList,nil}
-	err := templates.ExecuteTemplate(w,"overview.html", pi)
+	err := templates.ExecuteTemplate(w,"overview.html",pi)
     if err != nil {
         InternalError(err,w,r,user)
     }
@@ -80,8 +80,8 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 		NotFound(w,r,user)
 		return
 	}
-	pi := Page{"Page",user,noticeList,tList,nil}
-	err := templates.ExecuteTemplate(w,"page_" + name,pi)
+	
+	err := templates.ExecuteTemplate(w,"page_" + name,Page{"Page",user,noticeList,tList,nil})
 	if err != nil {
 		InternalError(err,w,r,user)
 	}
@@ -132,7 +132,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	if template_topics_handle != nil {
 		template_topics_handle(pi,w)
 	} else {
-		err = templates.ExecuteTemplate(w,"topics.html", pi)
+		err = templates.ExecuteTemplate(w,"topics.html",pi)
 		if err != nil {
 			InternalError(err,w,r,user)
 		}
@@ -179,7 +179,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	} else {
 		page = 1
 	}
-	rows, err := get_forum_topics_offset_stmt.Query(fid, offset)
+	rows, err := get_forum_topics_offset_stmt.Query(fid,offset)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -218,7 +218,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	if template_forum_handle != nil {
 		template_forum_handle(pi,w)
 	} else {
-		err = templates.ExecuteTemplate(w,"forum.html", pi)
+		err = templates.ExecuteTemplate(w,"forum.html",pi)
 		if err != nil {
 			InternalError(err,w,r,user)
 		}
@@ -233,7 +233,9 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	
 	var forumList []Forum
 	group := groups[user.Group]
-	for fid, _ := range group.CanSee {
+	//fmt.Println(group.CanSee)
+	for _, fid := range group.CanSee {
+		//fmt.Println(forums[fid])
 		if forums[fid].Active && forums[fid].Name != "" {
 			forumList = append(forumList, forums[fid])
 		}
@@ -1309,8 +1311,7 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	pi := Page{"Registration",user,noticeList,tList,0}
-	templates.ExecuteTemplate(w,"register.html", pi)
+	templates.ExecuteTemplate(w,"register.html",Page{"Registration",user,noticeList,tList,nil})
 }
 
 func route_register_submit(w http.ResponseWriter, r *http.Request) {
@@ -1320,28 +1321,28 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	
 	username := html.EscapeString(r.PostFormValue("username"))
 	if username == "" {
-		LocalError("You didn't put in a username.", w, r, user)
+		LocalError("You didn't put in a username.",w,r,user)
 		return  
 	}
 	email := html.EscapeString(r.PostFormValue("email"))
 	if email == "" {
-		LocalError("You didn't put in an email.", w, r, user)
+		LocalError("You didn't put in an email.",w,r,user)
 		return  
 	}
 	
 	password := r.PostFormValue("password")
 	if password == "" {
-		LocalError("You didn't put in a password.", w, r, user)
+		LocalError("You didn't put in a password.",w,r,user)
 		return  
 	}
 	if password == "test" || password == "123456" || password == "123" || password == "password" {
-		LocalError("Your password is too weak.", w, r, user)
+		LocalError("Your password is too weak.",w,r,user)
 		return  
 	}
 	
@@ -1397,7 +1398,6 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	
 	lastId, err := res.LastInsertId()
 	if err != nil {
 		InternalError(err,w,r,user)

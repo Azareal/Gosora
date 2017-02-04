@@ -98,7 +98,6 @@ func write_file(name string, content string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
 	_, err = f.WriteString(content)
 	if err != nil {
 		log.Fatal(err)
@@ -138,9 +137,8 @@ func getLevel(score int) (level int) {
 		prev = current
 		if float64(score) < current {
 			break
-		} else {
-			level++
 		}
+		level++
 	}
 	return level
 }

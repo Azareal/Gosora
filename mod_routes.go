@@ -180,7 +180,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
+	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
 func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
@@ -225,7 +225,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
+	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
 func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
@@ -379,7 +379,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r,user)
 		return
 	}
-	_, err = remove_replies_from_topic_stmt.Exec(1, tid)
+	_, err = remove_replies_from_topic_stmt.Exec(1,tid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -518,7 +518,7 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 	yousure := AreYouSure{"/users/ban/submit/" + strconv.Itoa(uid),confirm_msg}
 	
 	pi := Page{"Ban User",user,noticeList,tList,yousure}
-	templates.ExecuteTemplate(w,"areyousure.html", pi)
+	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }
 
 func route_ban_submit(w http.ResponseWriter, r *http.Request) {
@@ -544,7 +544,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 	
 	var group int
 	var is_super_admin bool
-	err = db.QueryRow("select `group`, `is_super_admin` from `users` where `uid` = ?", uid).Scan(&group, &is_super_admin)
+	err = db.QueryRow("select `group`,`is_super_admin` from `users` where `uid` = ?", uid).Scan(&group, &is_super_admin)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
@@ -684,7 +684,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	pi := Page{"Control Panel Dashboard",user,noticeList,tList,nil}
-	templates.ExecuteTemplate(w,"panel-dashboard.html", pi)
+	templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
 }
 
 func route_panel_forums(w http.ResponseWriter, r *http.Request){
@@ -704,7 +704,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	pi := Page{"Forum Manager",user,noticeList,forumList,nil}
-	templates.ExecuteTemplate(w,"panel-forums.html", pi)
+	templates.ExecuteTemplate(w,"panel-forums.html",pi)
 }
 
 func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
@@ -719,7 +719,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	if r.FormValue("session") != user.Session {
@@ -729,6 +729,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	
 	var active bool
 	fname := r.PostFormValue("forum-name")
+	fpreset := r.PostFormValue("forum-preset")
 	factive := r.PostFormValue("forum-name")
 	if factive == "on" || factive == "1" {
 		active = true
@@ -736,11 +737,13 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 		active = false
 	}
 	
-	_, err = create_forum(fname, active)
+	fid, err := create_forum(fname,active)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
+	
+	permmap_to_query(preset_to_permmap(fpreset),fid)
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 
@@ -773,7 +776,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
 	
 	pi := Page{"Delete Forum",user,noticeList,tList,yousure}
-	templates.ExecuteTemplate(w,"areyousure.html", pi)
+	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }
 
 func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
@@ -829,7 +832,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	pi := Page{"Forum Editor",user,noticeList,tList,nil}
-	templates.ExecuteTemplate(w,"panel-forum-edit.html", pi)
+	templates.ExecuteTemplate(w,"panel-forum-edit.html",pi)
 }
 
 func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
@@ -887,7 +890,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 		active = false
 	}
 	
-	_, err = update_forum_stmt.Exec(forum_name, active, fid)
+	_, err = update_forum_stmt.Exec(forum_name,active,fid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,user,is_js)
 		return
@@ -929,7 +932,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	var scontent string
 	var stype string
 	for rows.Next() {
-		err := rows.Scan(&sname, &scontent, &stype)
+		err := rows.Scan(&sname,&scontent,&stype)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
@@ -960,7 +963,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{"Setting Manager",user,noticeList,tList,settingList}
-	templates.ExecuteTemplate(w,"panel-settings.html", pi)
+	templates.ExecuteTemplate(w,"panel-settings.html",pi)
 }
 
 func route_panel_setting(w http.ResponseWriter, r *http.Request){
@@ -1010,7 +1013,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{"Edit Setting",user,noticeList,itemList,setting}
-	templates.ExecuteTemplate(w,"panel-setting.html", pi)
+	templates.ExecuteTemplate(w,"panel-setting.html",pi)
 }
 
 func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
@@ -1025,7 +1028,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	if r.FormValue("session") != user.Session {
@@ -1055,7 +1058,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	
-	_, err = update_setting_stmt.Exec(scontent, sname)
+	_, err = update_setting_stmt.Exec(scontent,sname)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -1081,11 +1084,11 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 	
 	var pluginList []interface{}
 	for _, plugin := range plugins {
-		pluginList = append(pluginList, plugin)
+		pluginList = append(pluginList,plugin)
 	}
 	
 	pi := Page{"Plugin Manager",user,noticeList,pluginList,nil}
-	templates.ExecuteTemplate(w,"panel-plugins.html", pi)
+	templates.ExecuteTemplate(w,"panel-plugins.html",pi)
 }
 
 func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
@@ -1130,7 +1133,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 			LocalError("The plugin is already active",w,r,user)
 			return
 		}
-		_, err = update_plugin_stmt.Exec(1, uname)
+		_, err = update_plugin_stmt.Exec(1,uname)
 		if err != nil {
 			InternalError(err,w,r,user)
 			return
@@ -1246,8 +1249,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		} else {
 			puser.Tag = ""
 		}
-		
-		userList = append(userList, puser)
+		userList = append(userList,puser)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -1256,7 +1258,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{"User Manager",user,noticeList,userList,nil}
-	err = templates.ExecuteTemplate(w,"panel-users.html", pi)
+	err = templates.ExecuteTemplate(w,"panel-users.html",pi)
 	if err != nil {
 		InternalError(err,w,r,user)
 	}
@@ -1282,7 +1284,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	err = db.QueryRow("select `name`,`email`,`group` from `users` where `uid` = ?", targetUser.ID).Scan(&targetUser.Name, &targetUser.Email, &targetUser.Group)
+	err = db.QueryRow("select `name`,`email`,`group` from `users` where `uid` = ?", targetUser.ID).Scan(&targetUser.Name,&targetUser.Email,&targetUser.Group)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
@@ -1306,13 +1308,13 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 		if !user.Perms.EditUserGroupSuperMod && group.Is_Mod {
 			continue
 		}
-		groupList = append(groupList, group)
+		groupList = append(groupList,group)
 	}
 	
 	pi := Page{"User Editor",user,noticeList,groupList,targetUser}
-	err = templates.ExecuteTemplate(w,"panel-user-edit.html", pi)
+	err = templates.ExecuteTemplate(w,"panel-user-edit.html",pi)
 	if err != nil {
-		InternalError(err, w, r, user)
+		InternalError(err,w,r,user)
 	}
 }
 
@@ -1339,7 +1341,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	err = db.QueryRow("select `name`, `email`, `group` from `users` where `uid` = ?", targetUser.ID).Scan(&targetUser.Name, &targetUser.Email, &targetUser.Group)
+	err = db.QueryRow("select `name`,`email`,`group` from `users` where `uid` = ?", targetUser.ID).Scan(&targetUser.Name, &targetUser.Email, &targetUser.Group)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
@@ -1367,13 +1369,13 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	if (newemail != targetUser.Email) && !user.Perms.EditUserEmail {
-		LocalError("You need the EditUserEmail permission to edit the email address of a user.", w, r, user)
+		LocalError("You need the EditUserEmail permission to edit the email address of a user.",w,r,user)
 		return
 	}
 	
 	newpassword := r.PostFormValue("user-password")
 	if newpassword != "" && !user.Perms.EditUserPassword {
-		LocalError("You need the EditUserPassword permission to edit the password of a user.", w, r, user)
+		LocalError("You need the EditUserPassword permission to edit the password of a user.",w,r,user)
 		return
 	}
 	
@@ -1426,7 +1428,7 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 	}
 	
 	pi := Page{"Group Manager",user,noticeList,groupList,nil}
-	templates.ExecuteTemplate(w,"panel-groups.html", pi)
+	templates.ExecuteTemplate(w,"panel-groups.html",pi)
 }
 
 func route_panel_themes(w http.ResponseWriter, r *http.Request){

@@ -59,6 +59,12 @@ var create_forum_stmt *sql.Stmt
 var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
 var forum_entry_exists_stmt *sql.Stmt
+var delete_forum_perms_by_forum_stmt *sql.Stmt
+var add_forum_perms_to_forum_stmt *sql.Stmt
+var add_forum_perms_to_forum_admins_stmt *sql.Stmt
+var add_forum_perms_to_forum_staff_stmt *sql.Stmt
+var add_forum_perms_to_forum_members_stmt *sql.Stmt
+var add_forum_perms_to_forum_guests_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
 var add_plugin_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
@@ -379,6 +385,42 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing delete_forum_perms_by_forum statement.")
+	delete_forum_perms_by_forum_stmt, err = db.Prepare("DELETE FROM forums_permissions WHERE fid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_forum_perms_to_forum statement.")
+	add_forum_perms_to_forum_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) VALUES(?,?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_forum_perms_to_forum_admins statement.")
+	add_forum_perms_to_forum_admins_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset, ? AS permissions FROM users_groups WHERE is_admin = 1")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_forum_perms_to_forum_staff statement.")
+	add_forum_perms_to_forum_staff_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset, ? AS permissions FROM users_groups WHERE is_admin = 0 AND is_mod = 1")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_forum_perms_to_forum_members statement.")
+	add_forum_perms_to_forum_members_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset, ? AS permissions FROM users_groups WHERE is_admin = 0 AND is_mod = 0 AND is_banned = 0")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_forum_perms_to_forum_guests statement.")
+	add_forum_perms_to_forum_guests_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) VALUES(6,?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Preparing update_setting statement.")
 	update_setting_stmt, err = db.Prepare("UPDATE settings SET content = ? WHERE name = ?")
 	if err != nil {
@@ -404,13 +446,13 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing update_theme statement.")
-	update_theme_stmt, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ?")
+	update_theme_stmt, err = db.Prepare("update `themes` set `default` = ? where `uname` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing update_user statement.")
-	update_user_stmt, err = db.Prepare("update `users` set `name` = ?, `email` = ?, `group` = ? where `uid` = ?")
+	update_user_stmt, err = db.Prepare("update `users` set `name` = ?,`email` = ?,`group` = ? where `uid` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -514,8 +556,8 @@ func init_database(err error) {
 	
 	// Temporarily store the forum perms in a map before transferring it to a much faster slice
 	log.Print("Adding the forum permissions")
-	forum_perms := make(map[int]map[int]ForumPerms)
-	for ;rows.Next();i++ {
+	forum_perms = make(map[int]map[int]ForumPerms)
+	for rows.Next() {
 		var gid int
 		var fid int
 		var perms []byte
@@ -537,7 +579,7 @@ func init_database(err error) {
 		forum_perms[gid][fid] = pperms
 	}
 	for gid, _ := range groups {
-		log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid))
+		log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid) + " - " + groups[gid].Name)
 		//groups[gid].Forums = append(groups[gid].Forums,BlankForumPerms) // GID 0. I sometimes wish MySQL's AUTO_INCREMENT would start at zero
 		for fid, _ := range forums {
 			forum_perm, ok := forum_perms[gid][fid]
@@ -562,6 +604,7 @@ func init_database(err error) {
 		}
 		//fmt.Printf("%+v\n", groups[gid].CanSee)
 		//fmt.Printf("%+v\n", groups[gid].Forums)
+        //fmt.Println(len(groups[gid].CanSee))
 		//fmt.Println(len(groups[gid].Forums))
 	}
 	
