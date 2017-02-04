@@ -78,7 +78,7 @@ func compile_templates() {
 	topics_page := TopicsPage{"Topic List",user,noticeList,topicList,""}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
 	
-	forum_item := Forum{1,"General Forum",true,0,"",0,"",0,""}
+	forum_item := Forum{1,"General Forum",true,"all",0,"",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,noticeList,topicList,forum_item,1,1,nil}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)
 	

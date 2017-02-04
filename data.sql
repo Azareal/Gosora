@@ -48,6 +48,7 @@ CREATE TABLE `forums`(
 	`name` varchar(100) not null,
 	`active` tinyint DEFAULT 1 not null,
 	`topicCount` int DEFAULT 0 not null,
+	`preset` varchar(100) DEFAULT '' not null,
 	`lastTopic` varchar(100) DEFAULT '' not null,
 	`lastTopicID` int DEFAULT 0 not null,
 	`lastReplyer` varchar(100) DEFAULT '' not null,

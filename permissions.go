@@ -299,3 +299,54 @@ func rebuild_forum_permissions(fid int) error {
 func build_forum_permissions() error {
 	return nil
 }
+
+func strip_invalid_preset(preset string) string {
+	switch(preset) {
+		case "all":
+		case "announce":
+		case "members":
+		case "staff":
+		case "admins":
+		case "archive":
+			break
+		default:
+			return ""
+	}
+	return preset
+}
+
+func preset_to_lang(preset string) string {
+	switch(preset) {
+		case "all":
+			return ""//return "Everyone"
+		case "announce":
+			return "Announcements"
+		case "members":
+			return "Member Only"
+		case "staff":
+			return "Staff Only"
+		case "admins":
+			return "Admin Only"
+		case "archive":
+			return "Archive"
+	}
+	return ""
+}
+
+func preset_to_emoji(preset string) string {
+	switch(preset) {
+		case "all":
+			return ""//return "Everyone"
+		case "announce":
+			return "📣"
+		case "members":
+			return "👪"
+		case "staff":
+			return "👮"
+		case "admins":
+			return "👑"
+		case "archive":
+			return "☠️"
+	}
+	return ""
+}

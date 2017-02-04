@@ -700,7 +700,8 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	var forumList []interface{}
 	for _, forum := range forums {
 		if forum.Name != "" {
-			forumList = append(forumList,forum)
+			fadmin := ForumAdmin{forum.ID,forum.Name,forum.Active,forum.Preset,forum.TopicCount,preset_to_lang(forum.Preset),preset_to_emoji(forum.Preset)}
+			forumList = append(forumList,fadmin)
 		}
 	}
 	pi := Page{"Forum Manager",user,noticeList,forumList,nil}
@@ -729,7 +730,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	
 	var active bool
 	fname := r.PostFormValue("forum-name")
-	fpreset := r.PostFormValue("forum-preset")
+	fpreset := strip_invalid_preset(r.PostFormValue("forum-preset"))
 	factive := r.PostFormValue("forum-name")
 	if factive == "on" || factive == "1" {
 		active = true
@@ -737,7 +738,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 		active = false
 	}
 	
-	fid, err := create_forum(fname,active)
+	fid, err := create_forum(fname,active,fpreset)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -866,16 +867,17 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	forum_name := r.PostFormValue("forum-name")
+	forum_preset := strip_invalid_preset(r.PostFormValue("forum-preset"))
 	forum_active := r.PostFormValue("forum-active")
     if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
 		LocalErrorJSQ("The forum you're trying to edit doesn't exist.",w,r,user,is_js)
 		return
 	}
 	
-	if forum_name == "" && forum_active == "" {
+	/*if forum_name == "" && forum_active == "" {
 		LocalErrorJSQ("You haven't changed anything!",w,r,user,is_js)
 		return
-	}
+	}*/
 	
 	if forum_name == "" {
 		forum_name = forums[fid].Name
@@ -890,7 +892,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 		active = false
 	}
 	
-	_, err = update_forum_stmt.Exec(forum_name,active,fid)
+	_, err = update_forum_stmt.Exec(forum_name,active,forum_preset,fid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,user,is_js)
 		return
@@ -902,6 +904,11 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if forums[fid].Active != active {
 		forums[fid].Active = active
 	}
+	if forums[fid].Preset != forum_preset {
+		forums[fid].Preset = forum_preset
+	}
+	
+	permmap_to_query(preset_to_permmap(forum_preset),fid)
 	
 	if is_js == "0" {
 		http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)

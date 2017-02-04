@@ -361,7 +361,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing create_forum statement.")
-	create_forum_stmt, err = db.Prepare("INSERT INTO forums(name,active) VALUES(?,?)")
+	create_forum_stmt, err = db.Prepare("INSERT INTO forums(name,active,preset) VALUES(?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -374,7 +374,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing update_forum statement.")
-	update_forum_stmt, err = db.Prepare("update forums set name = ?, active = ? where fid = ?")
+	update_forum_stmt, err = db.Prepare("update forums set name = ?, active = ?, preset = ? where fid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -502,10 +502,10 @@ func init_database(err error) {
 	
 	log.Print("Loading the forums.")
 	log.Print("Adding the uncategorised forum")
-	forums = append(forums, Forum{0,"Uncategorised",uncategorised_forum_visible,0,"",0,"",0,""})
+	forums = append(forums, Forum{0,"Uncategorised",uncategorised_forum_visible,"all",0,"",0,"",0,""})
 	
 	//rows, err = db.Query("SELECT fid, name, active, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime FROM forums")
-	rows, err = db.Query("select fid, name, active, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime from forums order by fid asc")
+	rows, err = db.Query("select fid, name, active, preset, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime from forums order by fid asc")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -513,8 +513,8 @@ func init_database(err error) {
 	
 	i = 1
 	for ;rows.Next();i++ {
-		forum := Forum{0,"",true,0,"",0,"",0,""}
-		err := rows.Scan(&forum.ID, &forum.Name, &forum.Active, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+		forum := Forum{ID:0,Name:"",Active:true,Preset:"all"}
+		err := rows.Scan(&forum.ID, &forum.Name, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
 		if err != nil {
 			log.Fatal(err)
 		}

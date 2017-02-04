@@ -1,6 +1,9 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
-<script>var form_vars = {'forum-active': ['Hide','Show']};</script>
+<script>var form_vars = {
+	'forum-active': ['Hide','Show'],
+	'forum-preset': ['all','announce','members','staff','admins','archive','custom']};
+</script>
 <div class="colblock_right">
 	<div class="rowitem rowhead"><a>Forums</a></div>
 </div>
@@ -9,7 +12,9 @@
 	<div class="rowitem editable_parent" style="font-weight: normal;{{if eq .ID 1}}border-bottom-style:solid;{{end}}">
 		<a data-field="forum-name" data-type="text" class="editable_block" style="font-size: 20px;position:relative;top: -2px;text-transform: none;{{if not .Active}}color:#707070;{{end}}">{{.Name}}</a>
 		<span style="float: right;">
-		<span data-field="forum-active" data-type="list" class="username editable_block hide_on_zero" style="color: black;{{if .Active}}display:none;" data-value="1"{{else}}" data-value="0"{{end}}>Hidden</span>
+		<span data-field="forum-active" data-type="list" class="username editable_block hide_on_zero" title="Hidden" style="color: black;{{if .Active}}display:none;" data-value="1"{{else}}" data-value="0"{{end}}>🕵️</span>
+		{{if .PresetEmoji}}<span data-field="forum-preset" data-type="list" data-value="{{.Preset}}" class="username editable_block" title="{{.PresetLang}}">{{.PresetEmoji}}</span>
+		{{else if .PresetLang}}<span data-field="forum-preset" data-type="list" data-value="{{.Preset}}" class="username editable_block">{{.PresetLang}}</span>{{else}}<span data-field="forum-preset" data-type="list" data-value="{{.Preset}}" class="username editable_block" style="display:none;">{{.PresetLang}}</span>{{end}}
 		{{if gt .ID 0}}<a class="username edit_fields hide_on_edit">Edit</a>
 		<a href="/panel/forums/edit/submit/{{.ID}}"><button class='username submit_edit show_on_edit' type='submit'>Update</button></a>{{end}}
 		{{if gt .ID 1}}<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Delete</a>{{end}}

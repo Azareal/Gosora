@@ -186,7 +186,7 @@ func getLevels(maxLevel int) []float64 {
 }
 
 func fill_forum_id_gap(biggerID int, smallerID int) {
-	dummy := Forum{0,"",false,0,"",0,"",0,""}
+	dummy := Forum{ID:0,Name:"",Active:false,Preset:"all"}
 	for i := smallerID; i > biggerID;i++ {
 		forums = append(forums, dummy)
 	}
