@@ -65,7 +65,7 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 	pi := Page{"Overview",user,noticeList,tList,nil}
 	err := templates.ExecuteTemplate(w,"overview.html",pi)
     if err != nil {
-        InternalError(err,w,r,user)
+        InternalError(err,w,r)
     }
 }
 
@@ -76,13 +76,13 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 	}
 	name := r.URL.Path[len("/pages/"):]
 	if templates.Lookup("page_" + name) == nil {
-		NotFound(w,r,user)
+		NotFound(w,r)
 		return
 	}
 	
 	err := templates.ExecuteTemplate(w,"page_" + name,Page{"Page",user,noticeList,tList,nil})
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 	}
 }
 	
@@ -104,7 +104,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	//rows, err := get_topic_list_stmt.Query()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -112,7 +112,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	for rows.Next() {
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -131,7 +131,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	rows.Close()
@@ -142,36 +142,25 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	} else {
 		err = templates.ExecuteTemplate(w,"topics.html",pi)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 		}
 	}
 }
 
 func route_forum(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
-	if !ok {
-		return
-	}
-	
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	fid, err := strconv.Atoi(r.URL.Path[len("/forum/"):])
 	if err != nil {
-		LocalError("The provided ForumID is not a valid number.",w,r,user)
+		PreError("The provided ForumID is not a valid number.",w,r)
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
-		NotFound(w,r,user)
+	user, noticeList, ok := ForumSessionCheck(w,r,fid)
+	if !ok {
 		return
 	}
-	
 	//fmt.Printf("%+v\n", groups[user.Group].Forums)
-	if groups[user.Group].Forums[fid].Overrides {
-		if !groups[user.Group].Forums[fid].ViewTopic {
-			NoPermissions(w,r,user)
-			return
-		}
-	} else if !user.Perms.ViewTopic {
+	if !user.Perms.ViewTopic {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -189,7 +178,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	}
 	rows, err := get_forum_topics_offset_stmt.Query(fid,offset)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -198,7 +187,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	for rows.Next() {
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -217,7 +206,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	rows.Close()
@@ -228,7 +217,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	} else {
 		err = templates.ExecuteTemplate(w,"forum.html",pi)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 		}
 	}
 }
@@ -255,16 +244,12 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	} else {
 		err := templates.ExecuteTemplate(w,"forums.html",pi)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 		}
 	}
 }
 	
 func route_topic_id(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
-	if !ok {
-		return
-	}
 	var(
 		err error
 		content string
@@ -278,31 +263,25 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	topic := TopicUser{Css: no_css_tmpl}
 	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
-		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		PreError("The provided TopicID is not a valid number.",w,r)
 		return
 	}
 	
 	// Get the topic..
 	err = get_topic_user_stmt.QueryRow(topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.CreatedByName, &topic.Avatar, &group, &topic.URLPrefix, &topic.URLName, &topic.Level)
 	if err == sql.ErrNoRows {
-		NotFound(w,r,user)
+		NotFound(w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	if (topic.ParentID > forumCapCount) || (topic.ParentID < 0) || forums[topic.ParentID].Name=="" {
-		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+	user, noticeList, ok := ForumSessionCheck(w,r,topic.ParentID)
+	if !ok {
 		return
 	}
-	
-	if groups[user.Group].Forums[topic.ParentID].Overrides {
-		if !groups[user.Group].Forums[topic.ParentID].ViewTopic {
-			NoPermissions(w,r,user)
-			return
-		}
-	} else if !user.Perms.ViewTopic {
+	if !user.Perms.ViewTopic {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -361,7 +340,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -369,7 +348,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	for rows.Next() {
 		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -410,7 +389,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	rows.Close()
@@ -421,7 +400,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	} else {
 		err = templates.ExecuteTemplate(w,"topic.html", tpage)
 		if err != nil {
-			InternalError(err, w, r, user)
+			InternalError(err,w,r)
 		}
 	}
 }
@@ -464,10 +443,10 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		// Fetch the user data
 		err = db.QueryRow("select `name`,`group`,`is_super_admin`,`avatar`,`message`,`url_prefix`,`url_name`,`level` from `users` where `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName, &puser.Level)
 		if err == sql.ErrNoRows {
-			NotFound(w,r,user)
+			NotFound(w,r)
 			return
 		} else if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -493,7 +472,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	// Get the replies..
 	rows, err := db.Query("select users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group from users_replies left join users ON users_replies.createdBy = users.uid where users_replies.uid = ?", puser.ID)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	defer rows.Close()
@@ -501,7 +480,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	for rows.Next() {
 		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &group)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -530,7 +509,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -540,30 +519,30 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	} else {
 		err = templates.ExecuteTemplate(w,"profile.html",ppage)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 		}
 	}
 }
 
 func route_topic_create(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
-	if !ok {
-		return
-	}
-	if !user.Loggedin || !user.Perms.CreateTopic {
-		NoPermissions(w,r,user)
-		return
-	}
-	
 	var fid int
 	var err error
 	sfid := r.URL.Path[len("/topics/create/"):]
 	if sfid != "" {
 		fid, err = strconv.Atoi(sfid)
 		if err != nil {
-			LocalError("The provided ForumID is not a valid number.",w,r,user)
+			PreError("The provided ForumID is not a valid number.",w,r)
 			return
 		}
+	}
+	
+	user, noticeList, ok := ForumSessionCheck(w,r,fid)
+	if !ok {
+		return
+	}
+	if !user.Loggedin || !user.Perms.CreateTopic {
+		NoPermissions(w,r,user)
+		return
 	}
 	
 	var forumList []Forum
@@ -580,14 +559,26 @@ func route_topic_create(w http.ResponseWriter, r *http.Request){
 	} else {
 		err = templates.ExecuteTemplate(w,"create-topic.html",ctpage)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 		}
 	}
 }
 	
 // POST functions. Authorised users only.
 func route_create_topic(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form",w,r)
+		return          
+	}
+	
+	fid, err := strconv.Atoi(r.PostFormValue("topic-board"))
+	if err != nil {
+		PreError("The provided ForumID is not a valid number.",w,r)
+		return
+	}
+	
+	user, ok := SimpleForumSessionCheck(w,r,fid)
 	if !ok {
 		return
 	}
@@ -596,17 +587,6 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	err := r.ParseForm()
-	if err != nil {
-		LocalError("Bad Form",w,r,user)
-		return          
-	}
-	
-	fid, err := strconv.Atoi(r.PostFormValue("topic-board"))
-	if err != nil {
-		LocalError("The provided ForumID is not a valid number.",w,r,user)
-		return
-	}
 	topic_name := html.EscapeString(r.PostFormValue("topic-name"))
 	content := html.EscapeString(preparse_message(r.PostFormValue("topic-content")))
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -615,33 +595,27 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
-		LocalError("The topic's parent forum doesn't exist.",w,r,user)
-		return
-	}
-	
 	res, err := create_topic_stmt.Exec(fid,topic_name,content,parse_message(content),ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
-	
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	_, err = add_topics_to_forum_stmt.Exec(1,fid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	forums[fid].TopicCount -= 1
 	
 	_, err = update_forum_cache_stmt.Exec(topic_name,lastId,user.Name,user.ID,fid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	forums[fid].LastTopic = topic_name
@@ -654,29 +628,40 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	wcount := word_count(content)
 	err = increase_post_user_stats(wcount,user.ID,true,user)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 }
 
 func route_create_reply(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form",w,r)
+		return          
+	}
+	tid, err := strconv.Atoi(r.PostFormValue("tid"))
+	if err != nil {
+		PreError("Failed to convert the TopicID",w,r)
+		return
+	}
+	
+	var topic_name string
+	var fid int
+	err = db.QueryRow("select title, parentID from topics where tid = ?",tid).Scan(&topic_name,&fid)
+	if err == sql.ErrNoRows {
+		PreError("Couldn't find the parent topic",w,r)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	user, ok := SimpleForumSessionCheck(w,r,fid)
 	if !ok {
 		return
 	}
 	if !user.Loggedin || !user.Perms.CreateReply {
 		NoPermissions(w,r,user)
-		return
-	}
-	
-	err := r.ParseForm()
-	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return          
-	}
-	tid, err := strconv.Atoi(r.PostFormValue("tid"))
-	if err != nil {
-		LocalError("Failed to convert the TopicID", w, r, user)
 		return
 	}
 	
@@ -689,36 +674,26 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	
 	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r,user)
-		return
-	}
-	
-	var topic_name string
-	err = db.QueryRow("select title from topics where tid = ?", tid).Scan(&topic_name)
-	if err == sql.ErrNoRows {
-		LocalError("Couldn't find the parent topic", w, r, user)
-		return
-	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	_, err = add_replies_to_topic_stmt.Exec(1, tid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	_, err = update_forum_cache_stmt.Exec(topic_name, tid, user.Name, user.ID, 1)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	http.Redirect(w, r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
+	http.Redirect(w,r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	wcount := word_count(content)
 	err = increase_post_user_stats(wcount, user.ID, false, user)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 }
@@ -735,7 +710,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	uid, err := strconv.Atoi(r.PostFormValue("uid"))
@@ -746,7 +721,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 	
 	_, err = create_profile_reply_stmt.Exec(uid,html.EscapeString(preparse_message(r.PostFormValue("reply-content"))),parse_message(html.EscapeString(preparse_message(r.PostFormValue("reply-content")))),user.ID)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -756,7 +731,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 		LocalError("The profile you're trying to post on doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -806,7 +781,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			LocalError("We were unable to find the reported post",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -815,7 +790,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			LocalError("We were unable to find the topic which the reported post is supposed to be in",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(tid) + "'>" + title + "</a>"
@@ -825,7 +800,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			LocalError("We were unable to find the reported post",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -834,17 +809,17 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			LocalError("We were unable to find the profile which the reported post is supposed to be on",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		content = content + "<br><br>Original Post: <a href='/user/" + strconv.Itoa(tid) + "'>" + title + "</a>"
 	} else if item_type == "topic" {
 		err = db.QueryRow("select title, content from topics where tid = ?", item_id).Scan(&title,&content)
 		if err == sql.ErrNoRows {
-			NotFound(w,r,user)
+			NotFound(w,r)
 			return
 		} else if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(item_id) + "'>" + title + "</a>"
@@ -861,14 +836,14 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	var count int
 	rows, err := db.Query("select count(*) as count from topics where data = ? and data != '' and parentID = 1", item_type + "_" + strconv.Itoa(item_id))
 	if err != nil && err != sql.ErrNoRows {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	for rows.Next() {
 		err = rows.Scan(&count)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 	}
@@ -880,24 +855,24 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	title = "Report: " + title
 	res, err := create_report_stmt.Exec(title,content,content,user.ID,item_type + "_" + strconv.Itoa(item_id))
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	_, err = add_topics_to_forum_stmt.Exec(1, fid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	_, err = update_forum_cache_stmt.Exec(title, lastId, user.Name, user.ID, fid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -913,7 +888,7 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	pi := Page{"Edit Password",user,noticeList,tList,0}
+	pi := Page{"Edit Password",user,noticeList,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
@@ -929,7 +904,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	
@@ -944,7 +919,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		LocalError("Your account no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -954,7 +929,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		LocalError("That's not the correct password.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	if new_password != confirm_password {
@@ -966,12 +941,12 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	// Log the user out as a safety precaution
 	_, err = logout_stmt.Exec(user.ID)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	noticeList[len(noticeList)] = "Your password was successfully updated"
-	pi := Page{"Edit Password",user,noticeList,tList,0}
+	noticeList = append(noticeList,"Your password was successfully updated")
+	pi := Page{"Edit Password",user,noticeList,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
@@ -984,13 +959,13 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	pi := Page{"Edit Avatar",user,noticeList,tList,0}
-	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
+	pi := Page{"Edit Avatar",user,noticeList,tList,nil}
+	templates.ExecuteTemplate(w,"account-own-edit-avatar.html",pi)
 }
 
 func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request) {
 	if r.ContentLength > int64(max_request_size) {
-		http.Error(w, "request too large", http.StatusExpectationFailed)
+		http.Error(w,"Request too large",http.StatusExpectationFailed)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(max_request_size))
@@ -1006,7 +981,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 	
 	err := r.ParseMultipartForm(int64(max_request_size))
 	if  err != nil {
-		LocalError("Upload failed", w, r, user)
+		LocalError("Upload failed",w,r,user)
 		return
 	}
 	
@@ -1051,14 +1026,14 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 			
 			outfile, err := os.Create("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext);
 			if  err != nil {
-				LocalError("Upload failed [File Creation Failed]", w, r, user)
+				LocalError("Upload failed [File Creation Failed]",w,r,user)
 				return
 			}
 			defer outfile.Close()
 			
 			_, err = io.Copy(outfile, infile);
 			if  err != nil {
-				LocalError("Upload failed [Copy Failed]", w, r, user)
+				LocalError("Upload failed [Copy Failed]",w,r,user)
 				return
 			}
 		}
@@ -1066,13 +1041,13 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 	
 	_, err = set_avatar_stmt.Exec("." + ext, strconv.Itoa(user.ID))
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
 	noticeList = append(noticeList, "Your avatar was successfully updated")
 	
-	pi := Page{"Edit Avatar",user,noticeList,tList,0}
+	pi := Page{"Edit Avatar",user,noticeList,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
 
@@ -1085,9 +1060,8 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	
 	pi := Page{"Edit Username",user,noticeList,tList,user.Name}
-	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
+	templates.ExecuteTemplate(w,"account-own-edit-username.html",pi)
 }
 
 func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Request) {
@@ -1101,7 +1075,7 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 	}
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	
@@ -1114,7 +1088,7 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 	user.Name = new_username
 	
 	noticeList = append(noticeList,"Your username was successfully updated")
-	pi := Page{"Edit Username",user,noticeList,tList,0}
+	pi := Page{"Edit Username",user,noticeList,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
 }
 
@@ -1217,7 +1191,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	
 	_, err = verify_email_stmt.Exec(user.Email)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1225,7 +1199,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	if settings["activation_type"] == 2 {
 		_, err = activate_user_stmt.Exec(user.ID)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 	}
@@ -1250,7 +1224,7 @@ func route_logout(w http.ResponseWriter, r *http.Request) {
 	
 	_, err := logout_stmt.Exec(user.ID)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	http.Redirect(w,r, "/", http.StatusSeeOther)
@@ -1265,7 +1239,7 @@ func route_login(w http.ResponseWriter, r *http.Request) {
 		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	pi := Page{"Login",user,noticeList,tList,0}
+	pi := Page{"Login",user,noticeList,tList,nil}
 	templates.ExecuteTemplate(w,"login.html", pi)
 }
 
@@ -1278,10 +1252,9 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	
@@ -1297,7 +1270,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("That username doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1313,7 +1286,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	} else { // Normal login..
 		password = password + salt
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -1322,20 +1295,20 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 			LocalError("That's not the correct password.",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 	}
 	
 	session, err = GenerateSafeString(sessionLength)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	_, err = update_session_stmt.Exec(session, uid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1402,7 +1375,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	// Is this username already taken..?
 	err = username_exists_stmt.QueryRow(username).Scan(&username)
 	if err != nil && err != sql.ErrNoRows {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	} else if err != sql.ErrNoRows {
 		LocalError("This username isn't available. Try another.",w,r,user)
@@ -1411,19 +1384,19 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	
 	salt, err := GenerateSafeString(saltLength)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	session, err := GenerateSafeString(sessionLength)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	password = password + salt
 	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1439,12 +1412,12 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	
 	res, err := register_stmt.Exec(username,email,string(hashed_password),salt,group,session,active)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1452,12 +1425,12 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	if enable_emails {
 		token, err := GenerateSafeString(80)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		_, err = add_email_stmt.Exec(email, lastId, 0, token)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		

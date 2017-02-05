@@ -73,76 +73,57 @@ func SendValidationEmail(username string, email string, token string) bool {
 	return SendEmail(email, subject, msg)
 }
 
-func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList []string, success bool) {
-	// Are there any session cookies..?
-	cookie, err := r.Cookie("uid")
-	if err != nil {
-		user.Group = 6
-		user.Perms = GuestPerms
-		return user, noticeList, true
+func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, success bool) {
+	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+		PreError("The target forum doesn't exist.",w,r)
+		return user, false
 	}
-	user.ID, err = strconv.Atoi(cookie.Value)
-	if err != nil {
-		user.Group = 6
-		user.Perms = GuestPerms
-		return user, noticeList, true
+	user, success = SimpleSessionCheck(w,r)
+	fperms := groups[user.Group].Forums[fid]
+	if fperms.Overrides && !user.Is_Super_Admin {
+		user.Perms.ViewTopic = fperms.ViewTopic
+		user.Perms.CreateTopic = fperms.CreateTopic
+		user.Perms.EditTopic = fperms.EditTopic
+		user.Perms.DeleteTopic = fperms.DeleteTopic
+		user.Perms.CreateReply = fperms.CreateReply
+		user.Perms.EditReply = fperms.EditReply
+		user.Perms.DeleteReply = fperms.DeleteReply
+		user.Perms.PinTopic = fperms.PinTopic
+		user.Perms.CloseTopic = fperms.CloseTopic
 	}
-	cookie, err = r.Cookie("session")
-	if err != nil {
-		user.Group = 6
-		user.Perms = GuestPerms
-		return user, noticeList, true
-	}
-	
-	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,cookie.Value).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
-	if err == sql.ErrNoRows {
-		user.ID = 0
-		user.Session = ""
-		user.Group = 6
-		user.Perms = GuestPerms
-		return user, noticeList, true
-	} else if err != nil {
-		InternalError(err,w,r,user)
+	return user, success
+}
+
+func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, noticeList []string, success bool) {
+	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+		NotFound(w,r)
 		return user, noticeList, false
 	}
-	
-	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin
-	user.Is_Super_Mod = groups[user.Group].Is_Mod || user.Is_Admin
-	user.Is_Mod = user.Is_Super_Mod
-	user.Is_Banned = groups[user.Group].Is_Banned
-	user.Loggedin = !user.Is_Banned || user.Is_Super_Mod
-	if user.Is_Banned && user.Is_Super_Mod {
-		user.Is_Banned = false
+	user, success = SimpleSessionCheck(w,r)
+	fperms := groups[user.Group].Forums[fid]
+	if fperms.Overrides && !user.Is_Super_Admin {
+		user.Perms.ViewTopic = fperms.ViewTopic
+		user.Perms.CreateTopic = fperms.CreateTopic
+		user.Perms.EditTopic = fperms.EditTopic
+		user.Perms.DeleteTopic = fperms.DeleteTopic
+		user.Perms.CreateReply = fperms.CreateReply
+		user.Perms.EditReply = fperms.EditReply
+		user.Perms.DeleteReply = fperms.DeleteReply
+		user.Perms.PinTopic = fperms.PinTopic
+		user.Perms.CloseTopic = fperms.CloseTopic
 	}
-	
-	if user.Is_Super_Admin {
-		user.Perms = AllPerms
-	} else {
-		user.Perms = groups[user.Group].Perms
-	}
-	
 	if user.Is_Banned {
-		noticeList = append(noticeList, "Your account has been suspended. Some of your permissions may have been revoked.")
+		noticeList = append(noticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
 	}
-	
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	return user, noticeList, success
+}
+
+func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList []string, success bool) {
+	user, success = SimpleSessionCheck(w,r)
+	if user.Is_Banned {
+		noticeList = append(noticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
 	}
-	
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		LocalError("Bad IP",w,r,user)
-		return user, noticeList, false
-	}
-	if host != user.Last_IP {
-		go update_last_ip_stmt.Exec(host, user.ID)
-	}
-	return user, noticeList, true
+	return user, noticeList, success
 }
 
 func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, success bool) {
@@ -175,7 +156,7 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 		user.Perms = GuestPerms
 		return user, true
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return user, false
 	}
 	
@@ -208,10 +189,9 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 		return user, false
 	}
 	if host != user.Last_IP {
-		//fmt.Println("Update")
 		_, err = update_last_ip_stmt.Exec(host, user.ID)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return user, false
 		}
 	}

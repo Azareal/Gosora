@@ -10,14 +10,9 @@ import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
 func route_edit_topic(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
-	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form",w,r,user)
+		PreError("Bad Form",w,r)
 		return          
 	}
 	is_js := r.PostFormValue("js")
@@ -29,30 +24,24 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	var fid int
 	tid, err = strconv.Atoi(r.URL.Path[len("/topic/edit/submit/"):])
 	if err != nil {
-		LocalErrorJSQ("The provided TopicID is not a valid number.",w,r,user,is_js)
+		PreErrorJSQ("The provided TopicID is not a valid number.",w,r,is_js)
 		return
 	}
 	
 	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
 	if err == sql.ErrNoRows {
-		LocalError("The topic you tried to edit doesn't exist.",w,r,user)
+		PreError("The topic you tried to edit doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
-		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+	user, ok := SimpleForumSessionCheck(w,r,fid)
+	if !ok {
 		return
 	}
-	
-	if groups[user.Group].Forums[fid].Overrides {
-		if !groups[user.Group].Forums[fid].ViewTopic || !groups[user.Group].Forums[fid].EditTopic {
-			NoPermissionsJSQ(w,r,user,is_js)
-			return
-		}
-	} else if !user.Perms.ViewTopic || !user.Perms.EditTopic {
+	if !user.Perms.ViewTopic || !user.Perms.EditTopic {
 		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
@@ -64,7 +53,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	topic_content := html.EscapeString(r.PostFormValue("topic_content"))
 	_, err = edit_topic_stmt.Exec(topic_name, preparse_message(topic_content), parse_message(html.EscapeString(preparse_message(topic_content))), is_closed, tid)
 	if err != nil {
-		InternalErrorJSQ(err,w,r,user,is_js)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -76,14 +65,9 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_delete_topic(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
-	
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
 	if err != nil {
-		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		PreError("The provided TopicID is not a valid number.",w,r)
 		return
 	}
 	
@@ -92,46 +76,40 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	var fid int
 	err = db.QueryRow("select content, createdBy, parentID from topics where tid = ?", tid).Scan(&content, &createdBy, &fid)
 	if err == sql.ErrNoRows {
-		LocalError("The topic you tried to delete doesn't exist.",w,r,user)
+		PreError("The topic you tried to delete doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
-		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+	user, ok := SimpleForumSessionCheck(w,r,fid)
+	if !ok {
 		return
 	}
-	
-	if groups[user.Group].Forums[fid].Overrides {
-		if !groups[user.Group].Forums[fid].ViewTopic || !groups[user.Group].Forums[fid].DeleteTopic {
-			NoPermissions(w,r,user)
-			return
-		}
-	} else if !user.Perms.ViewTopic || !user.Perms.DeleteTopic {
+	if !user.Perms.ViewTopic || !user.Perms.DeleteTopic {
 		NoPermissions(w,r,user)
 		return
 	}
 	
 	_, err = delete_topic_stmt.Exec(tid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	log.Print("The topic '" + strconv.Itoa(tid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
 	http.Redirect(w,r,"/",http.StatusSeeOther)
 	
 	wcount := word_count(content)
-	err = decrease_post_user_stats(wcount, createdBy, true, user)
+	err = decrease_post_user_stats(wcount,createdBy,true,user)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	_, err = remove_topics_from_forum_stmt.Exec(1, fid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -139,104 +117,77 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_stick_topic(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
-	
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/stick/submit/"):])
 	if err != nil {
-		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		PreError("The provided TopicID is not a valid number.",w,r)
 		return
 	}
 	
 	var fid int
 	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
 	if err == sql.ErrNoRows {
-		LocalError("The topic you tried to pin doesn't exist.",w,r,user)
+		PreError("The topic you tried to pin doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
-		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+	user, ok := SimpleForumSessionCheck(w,r,fid)
+	if !ok {
 		return
 	}
-	
-	if groups[user.Group].Forums[fid].Overrides {
-		if !groups[user.Group].Forums[fid].ViewTopic || !groups[user.Group].Forums[fid].PinTopic {
-			NoPermissions(w,r,user)
-			return
-		}
-	} else if !user.Perms.ViewTopic || !user.Perms.PinTopic {
+	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		NoPermissions(w,r,user)
 		return
 	}
 	
 	_, err = stick_topic_stmt.Exec(tid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
 func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
-	
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unstick/submit/"):])
 	if err != nil {
-		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		PreError("The provided TopicID is not a valid number.",w,r)
 		return
 	}
 	
 	var fid int
 	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
 	if err == sql.ErrNoRows {
-		LocalError("The topic you tried to unpin doesn't exist.",w,r,user)
+		PreError("The topic you tried to unpin doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
-		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+	user, ok := SimpleForumSessionCheck(w,r,fid)
+	if !ok {
 		return
 	}
-	
-	if groups[user.Group].Forums[fid].Overrides {
-		if !groups[user.Group].Forums[fid].ViewTopic || !groups[user.Group].Forums[fid].PinTopic {
-			NoPermissions(w,r,user)
-			return
-		}
-	} else if !user.Perms.ViewTopic || !user.Perms.PinTopic {
+	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		NoPermissions(w,r,user)
 		return
 	}
 	
 	_, err = unstick_topic_stmt.Exec(tid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
 func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
-	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		PreError("Bad Form",w,r)
 		return          
 	}
 	is_js := r.PostFormValue("js")
@@ -246,14 +197,14 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	
 	rid, err := strconv.Atoi(r.URL.Path[len("/reply/edit/submit/"):])
 	if err != nil {
-		LocalError("The provided Reply ID is not a valid number.",w,r,user)
+		PreError("The provided Reply ID is not a valid number.",w,r)
 		return
 	}
 	
 	content := html.EscapeString(preparse_message(r.PostFormValue("edit_item")))
 	_, err = edit_reply_stmt.Exec(content, parse_message(content), rid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -261,31 +212,25 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	var tid int
 	err = db.QueryRow("select tid from replies where rid = ?", rid).Scan(&tid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	var fid int
 	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
 	if err == sql.ErrNoRows {
-		LocalError("The parent topic doesn't exist.",w,r,user)
+		PreError("The parent topic doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
-		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+	user, ok := SimpleForumSessionCheck(w,r,fid)
+	if !ok {
 		return
 	}
-	
-	if groups[user.Group].Forums[fid].Overrides {
-		if !groups[user.Group].Forums[fid].ViewTopic || !groups[user.Group].Forums[fid].EditReply {
-			NoPermissions(w,r,user)
-			return
-		}
-	} else if !user.Perms.ViewTopic || !user.Perms.EditReply {
+	if !user.Perms.ViewTopic || !user.Perms.EditReply {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -298,14 +243,9 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
-	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		PreError("Bad Form",w,r)
 		return          
 	}
 	is_js := r.PostFormValue("is_js")
@@ -313,14 +253,9 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 	
-	if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
-		NoPermissionsJSQ(w,r,user,is_js)
-		return
-	}
-	
 	rid, err := strconv.Atoi(r.URL.Path[len("/reply/delete/submit/"):])
 	if err != nil {
-		LocalErrorJSQ("The provided Reply ID is not a valid number.",w,r,user,is_js)
+		PreErrorJSQ("The provided Reply ID is not a valid number.",w,r,is_js)
 		return
 	}
 	
@@ -329,41 +264,35 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	var createdBy int
 	err = db.QueryRow("select tid, content, createdBy from replies where rid = ?", rid).Scan(&tid, &content, &createdBy)
 	if err == sql.ErrNoRows {
-		LocalErrorJSQ("The reply you tried to delete doesn't exist.",w,r,user,is_js)
+		PreErrorJSQ("The reply you tried to delete doesn't exist.",w,r,is_js)
 		return
 	} else if err != nil {
-		InternalErrorJSQ(err,w,r,user,is_js)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
 	var fid int
 	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
 	if err == sql.ErrNoRows {
-		LocalError("The parent topic doesn't exist.",w,r,user)
+		PreError("The parent topic doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
-		LocalError("The topic's parent forum doesn't exist.",w,r,user)
+	user, ok := SimpleForumSessionCheck(w,r,fid)
+	if !ok {
 		return
 	}
-	
-	if groups[user.Group].Forums[fid].Overrides {
-		if !groups[user.Group].Forums[fid].ViewTopic || !groups[user.Group].Forums[fid].DeleteReply {
-			NoPermissions(w,r,user)
-			return
-		}
-	} else if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
+	if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
 		NoPermissions(w,r,user)
 		return
 	}
 	
 	_, err = delete_reply_stmt.Exec(rid)
 	if err != nil {
-		InternalErrorJSQ(err,w,r,user,is_js)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	log.Print("The reply '" + strconv.Itoa(rid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
@@ -376,13 +305,12 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	wcount := word_count(content)
 	err = decrease_post_user_stats(wcount, createdBy, false, user)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	_, err = remove_replies_from_topic_stmt.Exec(1,tid)
 	if err != nil {
-		InternalError(err,w,r,user)
-		return
+		InternalError(err,w,r)
 	}
 }
 
@@ -394,7 +322,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	is_js := r.PostFormValue("js")
@@ -412,7 +340,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	var uid int
 	err = db.QueryRow("select uid from users_replies where rid = ?", rid).Scan(&uid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -424,7 +352,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	content := html.EscapeString(preparse_message(r.PostFormValue("edit_item")))
 	_, err = edit_profile_reply_stmt.Exec(content, parse_message(content), rid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -443,7 +371,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	
@@ -464,7 +392,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		LocalErrorJSQ("The reply you tried to delete doesn't exist.",w,r,user,is_js)
 		return
 	} else if err != nil {
-		InternalErrorJSQ(err,w,r,user,is_js)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -475,7 +403,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	
 	_, err = delete_profile_reply_stmt.Exec(rid)
 	if err != nil {
-		InternalErrorJSQ(err,w,r,user,is_js)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	log.Print("The reply '" + strconv.Itoa(rid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
@@ -492,7 +420,6 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if !user.Perms.BanUsers {
 		NoPermissions(w,r,user)
 		return
@@ -510,7 +437,7 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -526,7 +453,6 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if !user.Perms.BanUsers {
 		NoPermissions(w,r,user)
 		return
@@ -549,7 +475,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -573,7 +499,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 	
 	_, err = change_group_stmt.Exec(4, uid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
@@ -588,7 +514,6 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 		NoPermissions(w,r,user)
 		return
 	}
-	
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
@@ -607,7 +532,7 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 		LocalError("The user you're trying to unban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -618,7 +543,7 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 	
 	_, err = change_group_stmt.Exec(default_group, uid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
@@ -646,12 +571,12 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 	
 	var uname string
 	var active bool
-	err = db.QueryRow("select `name`, `active` from users where `uid` = ?", uid).Scan(&uname, &active)
+	err = db.QueryRow("select `name`,`active` from users where `uid` = ?", uid).Scan(&uname, &active)
 	if err == sql.ErrNoRows {
 		LocalError("The account you're trying to activate no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -661,13 +586,13 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err = activate_user_stmt.Exec(uid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	_, err = change_group_stmt.Exec(default_group, uid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
@@ -740,7 +665,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	
 	fid, err := create_forum(fname,active,fpreset)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -757,11 +682,11 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
 	}
+	
 	fid, err := strconv.Atoi(r.URL.Path[len("/panel/forums/delete/"):])
 	if err != nil {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
@@ -806,7 +731,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 	
 	err = delete_forum(fid)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
@@ -894,7 +819,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	
 	_, err = update_forum_stmt.Exec(forum_name,active,forum_preset,fid)
 	if err != nil {
-		InternalErrorJSQ(err,w,r,user,is_js)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -930,7 +855,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	var settingList map[string]interface{} = make(map[string]interface{})
 	rows, err := db.Query("select name, content, type from settings")
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	defer rows.Close()
@@ -941,7 +866,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	for rows.Next() {
 		err := rows.Scan(&sname,&scontent,&stype)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -965,7 +890,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -991,7 +916,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1053,7 +978,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1067,7 +992,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 	
 	_, err = update_setting_stmt.Exec(scontent,sname)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1122,7 +1047,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 	var active bool
 	err := db.QueryRow("select active from plugins where uname = ?", uname).Scan(&active)
 	if err != nil && err != sql.ErrNoRows {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1142,13 +1067,13 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 		}
 		_, err = update_plugin_stmt.Exec(1,uname)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 	} else {
 		_, err := add_plugin_stmt.Exec(uname,1)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 	}
@@ -1188,7 +1113,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
 		LocalError("The plugin you're trying to deactivate isn't active",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1198,7 +1123,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
 	}
 	_, err = update_plugin_stmt.Exec(0,uname)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1222,7 +1147,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	var userList []interface{}
 	rows, err := db.Query("select `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` from users")
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	defer rows.Close()
@@ -1231,7 +1156,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		puser := User{ID: 0,}
 		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.Is_Super_Admin, &puser.Avatar)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 		
@@ -1260,14 +1185,14 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
 	pi := Page{"User Manager",user,noticeList,userList,nil}
 	err = templates.ExecuteTemplate(w,"panel-users.html",pi)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 	}
 }
 
@@ -1296,7 +1221,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1321,7 +1246,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 	pi := Page{"User Editor",user,noticeList,groupList,targetUser}
 	err = templates.ExecuteTemplate(w,"panel-user-edit.html",pi)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 	}
 }
 
@@ -1334,7 +1259,6 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
@@ -1353,7 +1277,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1408,7 +1332,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 	
 	_, err = update_user_stmt.Exec(newname,newemail,newgroup,targetUser.ID)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1488,7 +1412,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
 	var isDefault bool
 	err := db.QueryRow("select `default` from `themes` where `uname` = ?", uname).Scan(&isDefault)
 	if err != nil && err != sql.ErrNoRows {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	
@@ -1500,20 +1424,20 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
 		}
 		_, err = update_theme_stmt.Exec(1, uname)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 	} else {
 		_, err := add_theme_stmt.Exec(uname,1)
 		if err != nil {
-			InternalError(err,w,r,user)
+			InternalError(err,w,r)
 			return
 		}
 	}
 	
 	_, err = update_theme_stmt.Exec(0, defaultTheme)
 	if err != nil {
-		InternalError(err,w,r,user)
+		InternalError(err,w,r)
 		return
 	}
 	

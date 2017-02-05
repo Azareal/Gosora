@@ -26,12 +26,12 @@ func init_errors() error {
 	return nil
 }
 
-func InternalError(err error, w http.ResponseWriter, r *http.Request, user User) {
+func InternalError(err error, w http.ResponseWriter, r *http.Request) {
 	w.Write(error_internal)
 	log.Fatal(err)
 }
 
-func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, user User, is_js string) {
+func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, is_js string) {
 	w.WriteHeader(500)
 	if is_js == "0" {
 		w.Write(error_internal)
@@ -41,11 +41,20 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, user Us
 	log.Fatal(err)
 }
 
+func PreError(errmsg string, w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(500)
+	user := User{ID:0,Group:6,Perms:GuestPerms,}
+	pi := Page{"Error",user,nList,tList,errmsg}
+	var b bytes.Buffer
+	templates.ExecuteTemplate(&b,"error.html",pi)
+	fmt.Fprintln(w,b.String())
+}
+
 func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) {
 	w.WriteHeader(500)
 	pi := Page{"Local Error",user,nList,tList,errmsg}
 	var b bytes.Buffer
-	templates.ExecuteTemplate(&b,"error.html", pi)
+	templates.ExecuteTemplate(&b,"error.html",pi)
 	fmt.Fprintln(w,b.String())
 }
 
@@ -53,8 +62,21 @@ func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
 	w.WriteHeader(401)
 	pi := Page{"Local Error",user,nList,tList,"You need to login to do that."}
 	var b bytes.Buffer
-	templates.ExecuteTemplate(&b,"error.html", pi)
+	templates.ExecuteTemplate(&b,"error.html",pi)
 	fmt.Fprintln(w,b.String())
+}
+
+func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, is_js string) {
+	w.WriteHeader(500)
+	if is_js == "0" {
+		user := User{ID:0,Group:6,Perms:GuestPerms,}
+		pi := Page{"Local Error",user,nList,tList,errmsg}
+		var b bytes.Buffer
+		templates.ExecuteTemplate(&b,"error.html", pi)
+		fmt.Fprintln(w,b.String())
+	} else {
+		w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
+	}
 }
 
 func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, is_js string) {
@@ -130,7 +152,7 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) {
 	fmt.Fprintln(w,b.String())
 }
 
-func NotFound(w http.ResponseWriter, r *http.Request, user User) {
+func NotFound(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(404)
 	w.Write(error_notfound)
 }
