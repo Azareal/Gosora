@@ -42,6 +42,7 @@ var template_topics_handle func(TopicsPage,io.Writer) = nil
 var template_forum_handle func(ForumPage,io.Writer) = nil
 var template_forums_handle func(ForumsPage,io.Writer) = nil
 var template_profile_handle func(ProfilePage,io.Writer) = nil
+var template_create_topic_handle func(CreateTopicPage,io.Writer) = nil
 
 func compile_templates() {
 	var c CTemplateSet

@@ -425,24 +425,32 @@ var forum_7 []byte = []byte(`">&gt;</a></div>`)
 var forum_8 []byte = []byte(`
 <div class="rowblock">
 	<div class="rowitem rowhead"><a>`)
-var forum_9 []byte = []byte(`</a></div>
+var forum_9 []byte = []byte(`</a>
+    `)
+var forum_10 []byte = []byte(`<span class='username' title='No Permissions' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>`)
+var forum_11 []byte = []byte(`<a href="/topics/create/`)
+var forum_12 []byte = []byte(`" class='username' style="float: right;position:relative;top:-5px;">New Topic</a>`)
+var forum_13 []byte = []byte(`</div>
 </div>
 <div class="rowblock">
 	`)
-var forum_10 []byte = []byte(`<div class="rowitem passive" style="`)
-var forum_11 []byte = []byte(`background-image: url(`)
-var forum_12 []byte = []byte(`);background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;`)
-var forum_13 []byte = []byte(`background-color: #FFFFCC;`)
-var forum_14 []byte = []byte(`background-color: #eaeaea;`)
-var forum_15 []byte = []byte(`">
+var forum_14 []byte = []byte(`<div class="rowitem passive" style="`)
+var forum_15 []byte = []byte(`background-image: url(`)
+var forum_16 []byte = []byte(`);background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;`)
+var forum_17 []byte = []byte(`background-color: #FFFFCC;`)
+var forum_18 []byte = []byte(`background-color: #eaeaea;`)
+var forum_19 []byte = []byte(`">
 		<a href="/topic/`)
-var forum_16 []byte = []byte(`">`)
-var forum_17 []byte = []byte(`</a> `)
-var forum_18 []byte = []byte(`<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>`)
-var forum_19 []byte = []byte(`
+var forum_20 []byte = []byte(`">`)
+var forum_21 []byte = []byte(`</a> `)
+var forum_22 []byte = []byte(`<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>`)
+var forum_23 []byte = []byte(`
 	</div>
 	`)
-var forum_20 []byte = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.</div>`)
-var forum_21 []byte = []byte(`
+var forum_24 []byte = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.`)
+var forum_25 []byte = []byte(` <a href="/topics/create/`)
+var forum_26 []byte = []byte(`">Start one?</a>`)
+var forum_27 []byte = []byte(`</div>`)
+var forum_28 []byte = []byte(`
 </div>
 `)

@@ -74,7 +74,7 @@ CREATE TABLE `topics`(
 	`createdBy` int not null,
 	`is_closed` tinyint DEFAULT 0 not null,
 	`sticky` tinyint DEFAULT 0 not null,
-	`parentID` int DEFAULT 1 not null,
+	`parentID` int DEFAULT 2 not null,
 	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
 	`postCount` int DEFAULT 1 not null,
 	`data` varchar(200) DEFAULT '' not null,

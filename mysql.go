@@ -130,7 +130,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("insert into topics(title,content,parsed_content,createdAt,ipaddress,createdBy) VALUES(?,?,?,NOW(),?,?)")
+	create_topic_stmt, err = db.Prepare("insert into topics(parentID,title,content,parsed_content,createdAt,ipaddress,createdBy) VALUES(?,?,?,?,NOW(),?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}

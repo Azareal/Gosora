@@ -63,6 +63,16 @@ type ProfilePage struct
 	ExtData interface{}
 }
 
+type CreateTopicPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList []string
+	ItemList []Forum
+	FID int
+	ExtData interface{}
+}
+
 type PageSimple struct
 {
 	Title string

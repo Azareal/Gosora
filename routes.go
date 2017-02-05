@@ -74,7 +74,6 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	
 	name := r.URL.Path[len("/pages/"):]
 	if templates.Lookup("page_" + name) == nil {
 		NotFound(w,r,user)
@@ -93,8 +92,17 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
+	var fidList []string
+	group := groups[user.Group]
+	for _, fid := range group.CanSee {
+		if forums[fid].Name != "" {
+			fidList = append(fidList,strconv.Itoa(fid))
+		}
+	}
+	
 	var topicList []TopicUser
-	rows, err := get_topic_list_stmt.Query()
+	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	//rows, err := get_topic_list_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -530,9 +538,9 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	if template_profile_handle != nil {
 		template_profile_handle(ppage,w)
 	} else {
-		err = templates.ExecuteTemplate(w,"profile.html", ppage)
+		err = templates.ExecuteTemplate(w,"profile.html",ppage)
 		if err != nil {
-			InternalError(err, w, r, user)
+			InternalError(err,w,r,user)
 		}
 	}
 }
@@ -546,8 +554,35 @@ func route_topic_create(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	pi := Page{"Create Topic",user,noticeList,tList,0}
-	templates.ExecuteTemplate(w,"create-topic.html", pi)
+	
+	var fid int
+	var err error
+	sfid := r.URL.Path[len("/topics/create/"):]
+	if sfid != "" {
+		fid, err = strconv.Atoi(sfid)
+		if err != nil {
+			LocalError("The provided ForumID is not a valid number.",w,r,user)
+			return
+		}
+	}
+	
+	var forumList []Forum
+	group := groups[user.Group]
+	for _, fid := range group.CanSee {
+		if forums[fid].Active && forums[fid].Name != "" {
+			forumList = append(forumList, forums[fid])
+		}
+	}
+	
+	ctpage := CreateTopicPage{"Create Topic",user,noticeList,forumList,fid,nil}
+	if template_create_topic_handle != nil {
+		template_create_topic_handle(ctpage,w)
+	} else {
+		err = templates.ExecuteTemplate(w,"create-topic.html",ctpage)
+		if err != nil {
+			InternalError(err,w,r,user)
+		}
+	}
 }
 	
 // POST functions. Authorised users only.
@@ -563,11 +598,15 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return          
 	}
 	
-	fid := 2
+	fid, err := strconv.Atoi(r.PostFormValue("topic-board"))
+	if err != nil {
+		LocalError("The provided ForumID is not a valid number.",w,r,user)
+		return
+	}
 	topic_name := html.EscapeString(r.PostFormValue("topic-name"))
 	content := html.EscapeString(preparse_message(r.PostFormValue("topic-content")))
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -581,7 +620,7 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	res, err := create_topic_stmt.Exec(topic_name,content,parse_message(content),ipaddress,user.ID)
+	res, err := create_topic_stmt.Exec(fid,topic_name,content,parse_message(content),ipaddress,user.ID)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
@@ -593,22 +632,27 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	_, err = add_topics_to_forum_stmt.Exec(1, fid)
+	_, err = add_topics_to_forum_stmt.Exec(1,fid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
 	forums[fid].TopicCount -= 1
 	
-	_, err = update_forum_cache_stmt.Exec(topic_name, lastId, user.Name, user.ID, fid)
+	_, err = update_forum_cache_stmt.Exec(topic_name,lastId,user.Name,user.ID,fid)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
 	}
+	forums[fid].LastTopic = topic_name
+	forums[fid].LastTopicID = int(lastId)
+	forums[fid].LastReplyer = user.Name
+	forums[fid].LastReplyerID = user.ID
+	forums[fid].LastTopicTime = ""
 	
 	http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId,10), http.StatusSeeOther)
 	wcount := word_count(content)
-	err = increase_post_user_stats(wcount, user.ID, true, user)
+	err = increase_post_user_stats(wcount,user.ID,true,user)
 	if err != nil {
 		InternalError(err,w,r,user)
 		return
