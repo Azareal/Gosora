@@ -51,7 +51,7 @@ func compile_templates() {
 	
 	log.Print("Compiling the templates")
 	
-	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"",0,"","127.0.0.1",0,"","",no_css_tmpl,0,"","","","",58}
+	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"Date","Date",0,"","127.0.0.1",0,"","",no_css_tmpl,0,"","","","",58}
 	var replyList []Reply
 	replyList = append(replyList, Reply{0,0,"",template.HTML("Yo!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1"})
 	
@@ -74,11 +74,13 @@ func compile_templates() {
 	forums_page := ForumsPage{"Forum List",user,noticeList,forumList,0}
 	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage", forums_page, varList)
 	
-	var topicList []TopicUser
-	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"",1,"","127.0.0.1",0,"Admin","","",0,"","","","",58})
-	topics_page := TopicsPage{"Topic List",user,noticeList,topicList,""}
+	var topicsList []TopicsRow
+	topicsList = append(topicsList, TopicsRow{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,"Admin","","",0,"","","","",58,"General"})
+	topics_page := TopicsPage{"Topic List",user,noticeList,topicsList,""}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
 	
+	var topicList []TopicUser
+	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,"Admin","","",0,"","","","",58})
 	forum_item := Forum{1,"General Forum",true,"all",0,"",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,noticeList,topicList,forum_item,1,1,nil}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)

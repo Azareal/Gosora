@@ -21,6 +21,9 @@ func GenerateSafeString(length int) (string, error) {
 }
 
 func relative_time(in string) (string, error) {
+	if in == "" {
+		return "", nil
+	}
 	layout := "2006-01-02 15:04:05"
 	t, err := time.Parse(layout, in)
 	if err != nil {
@@ -30,9 +33,20 @@ func relative_time(in string) (string, error) {
 	diff := time.Since(t)
 	hours := diff.Hours()
 	seconds := diff.Seconds()
+	weeks := int(hours / 24 / 7)
+	months := int(hours / 24 / 31)
 	switch {
-		case (hours / 24) > 7:
-			return t.Format("Mon Jan 2 2006"), err
+		case months > 11:
+			//return t.Format("Mon Jan 2 2006"), err
+			return t.Format("Jan 2 2006"), err
+		case months > 1:
+			return fmt.Sprintf("%d months ago", months), err
+		case months == 1:
+			return "a month ago", err
+		case weeks > 1:
+			return fmt.Sprintf("%d weeks ago", weeks), err
+		case int(hours / 24) == 7:
+			return "a week ago", err
 		case int(hours / 24) == 1:
 			return "1 day ago", err
 		case int(hours / 24) > 1:

@@ -61,14 +61,27 @@ w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topics_7)
 w.Write([]byte(item.Title))
 w.Write(topics_8)
-if item.Is_Closed {
+if item.ForumName != "" {
 w.Write(topics_9)
-}
+w.Write([]byte(strconv.Itoa(item.ParentID)))
 w.Write(topics_10)
-}
-} else {
+w.Write([]byte(item.ForumName))
 w.Write(topics_11)
 }
+if item.Is_Closed {
 w.Write(topics_12)
+}
+w.Write(topics_13)
+w.Write([]byte(item.LastReplyAt))
+w.Write(topics_14)
+}
+} else {
+w.Write(topics_15)
+if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+w.Write(topics_16)
+}
+w.Write(topics_17)
+}
+w.Write(topics_18)
 w.Write(footer_0)
 }

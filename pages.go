@@ -28,7 +28,7 @@ type TopicsPage struct
 	Title string
 	CurrentUser User
 	NoticeList []string
-	ItemList []TopicUser
+	ItemList []TopicsRow
 	ExtData interface{}
 }
 

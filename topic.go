@@ -25,6 +25,7 @@ type TopicUser struct
 	Is_Closed bool
 	Sticky bool
 	CreatedAt string
+	LastReplyAt string
 	ParentID int
 	Status string // Deprecated. Marked for removal.
 	IpAddress string
@@ -39,4 +40,32 @@ type TopicUser struct
 	URLPrefix string
 	URLName string
 	Level int
+}
+
+type TopicsRow struct
+{
+	ID int
+	Title string
+	Content interface{}
+	CreatedBy int
+	Is_Closed bool
+	Sticky bool
+	CreatedAt string
+	LastReplyAt string
+	ParentID int
+	Status string // Deprecated. Marked for removal.
+	IpAddress string
+	PostCount int
+	
+	CreatedByName string
+	Avatar string
+	Css template.CSS
+	ContentLines int
+	Tag string
+	URL string
+	URLPrefix string
+	URLName string
+	Level int
+	
+	ForumName string //TopicsRow
 }

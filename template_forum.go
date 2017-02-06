@@ -95,16 +95,18 @@ if item.Is_Closed {
 w.Write(forum_22)
 }
 w.Write(forum_23)
+w.Write([]byte(item.LastReplyAt))
+w.Write(forum_24)
 }
 } else {
-w.Write(forum_24)
-if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
 w.Write(forum_25)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
 w.Write(forum_26)
-}
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
 w.Write(forum_27)
 }
 w.Write(forum_28)
+}
+w.Write(forum_29)
 w.Write(footer_0)
 }

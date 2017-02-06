@@ -405,12 +405,19 @@ var topics_6 []byte = []byte(`">
 		<a href="/topic/`)
 var topics_7 []byte = []byte(`">`)
 var topics_8 []byte = []byte(`</a> `)
-var topics_9 []byte = []byte(`<span class="username topic_status_e topic_status_closed" style="float: right;position:relative;top:-5px;" title="Status: Closed">&#x1F512;&#xFE0E</span>`)
-var topics_10 []byte = []byte(`
+var topics_9 []byte = []byte(`<a href="/forum/`)
+var topics_10 []byte = []byte(`" style="font-size:12px;">`)
+var topics_11 []byte = []byte(`</a> `)
+var topics_12 []byte = []byte(`<span class="username topic_status_e topic_status_closed" style="float: right;position:relative;top:-5px;margin-left:8px;" title="Status: Closed">&#x1F512;&#xFE0E</span>`)
+var topics_13 []byte = []byte(`
+		<a style="float: right;font-size:12px;">`)
+var topics_14 []byte = []byte(`</a>
 	</div>
 	`)
-var topics_11 []byte = []byte(`<div class="rowitem passive">There aren't any topics yet.</div>`)
-var topics_12 []byte = []byte(`
+var topics_15 []byte = []byte(`<div class="rowitem passive">There aren't any topics yet.`)
+var topics_16 []byte = []byte(` <a href="/topics/create/">Start one?</a>`)
+var topics_17 []byte = []byte(`</div>`)
+var topics_18 []byte = []byte(`
 </div>
 `)
 var forum_0 []byte = []byte(`<div id="prevFloat" class="prev_button"><a class="prev_link" href="/forum/`)
@@ -443,14 +450,16 @@ var forum_19 []byte = []byte(`">
 		<a href="/topic/`)
 var forum_20 []byte = []byte(`">`)
 var forum_21 []byte = []byte(`</a> `)
-var forum_22 []byte = []byte(`<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>`)
+var forum_22 []byte = []byte(`<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;position:relative;top:-5px;margin-left:8px;">&#x1F512;&#xFE0E</span>`)
 var forum_23 []byte = []byte(`
+		<a style="float: right;font-size:12px;">`)
+var forum_24 []byte = []byte(`</a>
 	</div>
 	`)
-var forum_24 []byte = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.`)
-var forum_25 []byte = []byte(` <a href="/topics/create/`)
-var forum_26 []byte = []byte(`">Start one?</a>`)
-var forum_27 []byte = []byte(`</div>`)
-var forum_28 []byte = []byte(`
+var forum_25 []byte = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.`)
+var forum_26 []byte = []byte(` <a href="/topics/create/`)
+var forum_27 []byte = []byte(`">Start one?</a>`)
+var forum_28 []byte = []byte(`</div>`)
+var forum_29 []byte = []byte(`
 </div>
 `)

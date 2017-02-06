@@ -100,17 +100,17 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	var topicList []TopicUser
-	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	var topicList []TopicsRow
+	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	//rows, err := get_topic_list_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 	
-	topicItem := TopicUser{ID: 0,}
+	topicItem := TopicsRow{ID: 0,}
 	for rows.Next() {
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -124,8 +124,23 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			topicItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
 		}
 		
+		if topicItem.ParentID >= 0 {
+			topicItem.ForumName = forums[topicItem.ParentID].Name
+		} else {
+			topicItem.ForumName = ""
+		}
+		
+		/*topicItem.CreatedAt, err = relative_time(topicItem.CreatedAt)
+		if err != nil {
+			InternalError(err,w,r)
+		}*/
+		topicItem.LastReplyAt, err = relative_time(topicItem.LastReplyAt)
+		if err != nil {
+			InternalError(err,w,r)
+		}
+		
 		if hooks["trow_assign"] != nil {
-			topicItem = run_hook("trow_assign", topicItem).(TopicUser)
+			topicItem = run_hook("trow_assign", topicItem).(TopicsRow)
 		}
 		topicList = append(topicList, topicItem)
 	}
@@ -185,7 +200,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	var topicList []TopicUser
 	topicItem := TopicUser{ID: 0}
 	for rows.Next() {
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -197,6 +212,11 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 			}
 		} else {
 			topicItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
+		}
+		
+		topicItem.LastReplyAt, err = relative_time(topicItem.LastReplyAt)
+		if err != nil {
+			InternalError(err,w,r)
 		}
 		
 		if hooks["trow_assign"] != nil {
@@ -229,12 +249,23 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	}
 	
 	var forumList []Forum
+	var err error
 	group := groups[user.Group]
 	//fmt.Println(group.CanSee)
 	for _, fid := range group.CanSee {
 		//fmt.Println(forums[fid])
-		if forums[fid].Active && forums[fid].Name != "" {
-			forumList = append(forumList, forums[fid])
+		forum := forums[fid]
+		if forum.Active && forum.Name != "" {
+			if forum.LastTopicID != 0 {
+				forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
+				if err != nil {
+					InternalError(err,w,r)
+				}
+			} else {
+				forum.LastTopic = "None"
+				forum.LastTopicTime = ""
+			}
+			forumList = append(forumList, forum)
 		}
 	}
 	

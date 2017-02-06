@@ -118,25 +118,25 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_forum_topics statement.")
-	get_forum_topics_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc")
+	get_forum_topics_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing get_forum_topics_offset statement.")
-	get_forum_topics_offset_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC limit ?, " + strconv.Itoa(items_per_page))
+	get_forum_topics_offset_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC limit ?, " + strconv.Itoa(items_per_page))
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("insert into topics(parentID,title,content,parsed_content,createdAt,ipaddress,createdBy) VALUES(?,?,?,?,NOW(),?,?)")
+	create_topic_stmt, err = db.Prepare("insert into topics(parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,createdBy) VALUES(?,?,?,?,NOW(),NOW(),?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing create_report statement.")
-	create_report_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,createdBy,data,parentID) VALUES(?,?,?,NOW(),?,?,1)")
+	create_report_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,lastReplyAt,createdBy,data,parentID) VALUES(?,?,?,NOW(),NOW(),?,?,1)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing add_replies_to_topic statement.")
-	add_replies_to_topic_stmt, err = db.Prepare("UPDATE topics SET postCount = postCount + ? WHERE tid = ?")
+	add_replies_to_topic_stmt, err = db.Prepare("UPDATE topics SET postCount = postCount + ?, lastReplyAt = NOW() WHERE tid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -525,7 +525,7 @@ func init_database(err error) {
 			fill_forum_id_gap(i, forum.ID)
 		}
 		
-		if forum.LastTopicID != 0 {
+		/*if forum.LastTopicID != 0 {
 			forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
 			if err != nil {
 				log.Fatal(err)
@@ -533,7 +533,7 @@ func init_database(err error) {
 		} else {
 			forum.LastTopic = "None"
 			forum.LastTopicTime = ""
-		}
+		}*/
 		
 		log.Print("Adding the " + forum.Name + " forum")
 		forums = append(forums,forum)

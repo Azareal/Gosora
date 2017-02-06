@@ -98,7 +98,11 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 # Images
 ![Tempra Simple Theme](https://github.com/Azareal/Gosora/blob/master/images/tempra-simple.png)
 
+![Tempra Simple Topic List](https://github.com/Azareal/Gosora/blob/master/images/topic-list.png)
+
 ![Tempra Conflux Theme](https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux.png)
+
+![Tempra Conflux Mobile](https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux-mobile-320px.png)
 
 ![Cosmo Conflux Theme](https://github.com/Azareal/Gosora/blob/master/images/cosmo-conflux.png)
 
