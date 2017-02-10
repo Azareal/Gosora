@@ -30,10 +30,10 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	
 	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
 	if err == sql.ErrNoRows {
-		PreError("The topic you tried to edit doesn't exist.",w,r)
+		PreErrorJSQ("The topic you tried to edit doesn't exist.",w,r,is_js)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -197,14 +197,14 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	
 	rid, err := strconv.Atoi(r.URL.Path[len("/reply/edit/submit/"):])
 	if err != nil {
-		PreError("The provided Reply ID is not a valid number.",w,r)
+		PreErrorJSQ("The provided Reply ID is not a valid number.",w,r,is_js)
 		return
 	}
 	
 	content := html.EscapeString(preparse_message(r.PostFormValue("edit_item")))
 	_, err = edit_reply_stmt.Exec(content, parse_message(content), rid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -212,17 +212,17 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	var tid int
 	err = db.QueryRow("select tid from replies where rid = ?", rid).Scan(&tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
 	var fid int
 	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
 	if err == sql.ErrNoRows {
-		PreError("The parent topic doesn't exist.",w,r)
+		PreErrorJSQ("The parent topic doesn't exist.",w,r,is_js)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -231,7 +231,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !user.Perms.ViewTopic || !user.Perms.EditReply {
-		NoPermissions(w,r,user)
+		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
 	
@@ -274,10 +274,10 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	var fid int
 	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
 	if err == sql.ErrNoRows {
-		PreError("The parent topic doesn't exist.",w,r)
+		PreErrorJSQ("The parent topic doesn't exist.",w,r,is_js)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -286,7 +286,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
-		NoPermissions(w,r,user)
+		NoPermissionsJSQ(w,r,user,is_js)
 		return
 	}
 	
@@ -305,12 +305,12 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	wcount := word_count(content)
 	err = decrease_post_user_stats(wcount, createdBy, false, user)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	_, err = remove_replies_from_topic_stmt.Exec(1,tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 	}
 }
 
@@ -332,7 +332,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	
 	rid, err := strconv.Atoi(r.URL.Path[len("/profile/reply/edit/submit/"):])
 	if err != nil {
-		LocalError("The provided Reply ID is not a valid number.",w,r,user)
+		LocalErrorJSQ("The provided Reply ID is not a valid number.",w,r,user,is_js)
 		return
 	}
 	
@@ -340,7 +340,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	var uid int
 	err = db.QueryRow("select uid from users_replies where rid = ?", rid).Scan(&uid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -352,7 +352,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	content := html.EscapeString(preparse_message(r.PostFormValue("edit_item")))
 	_, err = edit_profile_reply_stmt.Exec(content, parse_message(content), rid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 	
@@ -1374,11 +1374,11 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 	
 	var themeList []interface{}
 	for _, theme := range themes {
-		themeList = append(themeList, theme)
+		themeList = append(themeList,theme)
 	}
 	
 	pi := Page{"Theme Manager",user,noticeList,themeList,nil}
-	err := templates.ExecuteTemplate(w,"panel-themes.html", pi)
+	err := templates.ExecuteTemplate(w,"panel-themes.html",pi)
 	if err != nil {
 		log.Print(err)
 	}
@@ -1422,7 +1422,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
 			LocalError("The theme is already active",w,r,user)
 			return
 		}
-		_, err = update_theme_stmt.Exec(1, uname)
+		_, err = update_theme_stmt.Exec(1,uname)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -1435,7 +1435,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	
-	_, err = update_theme_stmt.Exec(0, defaultTheme)
+	_, err = update_theme_stmt.Exec(0,defaultTheme)
 	if err != nil {
 		InternalError(err,w,r)
 		return

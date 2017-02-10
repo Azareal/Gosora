@@ -51,9 +51,9 @@ func compile_templates() {
 	
 	log.Print("Compiling the templates")
 	
-	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"Date","Date",0,"","127.0.0.1",0,"","",no_css_tmpl,0,"","","","",58}
+	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"","",no_css_tmpl,0,"","","","",58,false}
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"",template.HTML("Yo!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1"})
+	replyList = append(replyList, Reply{0,0,"",template.HTML("Yo!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
 	
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title",user,noticeList,replyList,topic,1,1,false}
@@ -67,7 +67,7 @@ func compile_templates() {
 	var forumList []Forum
 	for _, forum := range forums {
 		if forum.Active {
-			forumList = append(forumList, forum)
+			forumList = append(forumList,forum)
 		}
 	}
 	varList = make(map[string]VarItem)
@@ -75,12 +75,12 @@ func compile_templates() {
 	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage", forums_page, varList)
 	
 	var topicsList []TopicsRow
-	topicsList = append(topicsList, TopicsRow{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,"Admin","","",0,"","","","",58,"General"})
+	topicsList = append(topicsList,TopicsRow{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"Admin","","",0,"","","","",58,"General"})
 	topics_page := TopicsPage{"Topic List",user,noticeList,topicsList,""}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
 	
 	var topicList []TopicUser
-	topicList = append(topicList, TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,"Admin","","",0,"","","","",58})
+	topicList = append(topicList,TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"Admin","","",0,"","","","",58,false})
 	forum_item := Forum{1,"General Forum",true,"all",0,"",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,noticeList,topicList,forum_item,1,1,nil}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)
@@ -92,7 +92,7 @@ func compile_templates() {
 	go write_template("forums", forums_tmpl)
 	go write_template("topics", topics_tmpl)
 	go write_template("forum", forum_tmpl)
-	go write_file("./template_list.go", "package main\n\n" + c.FragOut)
+	go write_file("./template_list.go","package main\n\n" + c.FragOut)
 }
 
 func write_template(name string, content string) {
@@ -157,7 +157,7 @@ func main(){
 		
 		path = strings.TrimPrefix(path,"public/")
 		log.Print("Added the '" + path + "' static file.")
-		static_files["/static/" + path] = SFile{data,0,int64(len(data)),mime.TypeByExtension(filepath.Ext("/public/" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
+		static_files["/static/" + path] = SFile{data,compress_bytes_gzip(data),0,int64(len(data)),mime.TypeByExtension(filepath.Ext("/public/" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
 		return nil
 	})
 	if err != nil {
@@ -188,11 +188,13 @@ func main(){
 	//router.HandleFunc("/reply/delete/", route_reply_delete)
 	router.HandleFunc("/reply/edit/submit/", route_reply_edit_submit)
 	router.HandleFunc("/reply/delete/submit/", route_reply_delete_submit)
+	router.HandleFunc("/reply/like/submit/", route_reply_like_submit)
 	router.HandleFunc("/report/submit/", route_report_submit)
 	router.HandleFunc("/topic/edit/submit/", route_edit_topic)
 	router.HandleFunc("/topic/delete/submit/", route_delete_topic)
 	router.HandleFunc("/topic/stick/submit/", route_stick_topic)
 	router.HandleFunc("/topic/unstick/submit/", route_unstick_topic)
+	router.HandleFunc("/topic/like/submit/", route_like_topic)
 	
 	// Custom Pages
 	router.HandleFunc("/pages/", route_custom_page)

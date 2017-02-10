@@ -24,6 +24,9 @@ var remove_replies_from_topic_stmt *sql.Stmt
 var add_topics_to_forum_stmt *sql.Stmt
 var remove_topics_from_forum_stmt *sql.Stmt
 var update_forum_cache_stmt *sql.Stmt
+var create_like_stmt *sql.Stmt
+var add_likes_to_topic_stmt *sql.Stmt
+var add_likes_to_reply_stmt *sql.Stmt
 var edit_topic_stmt *sql.Stmt
 var edit_reply_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
@@ -100,7 +103,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_topic_user statement.")
-	get_topic_user_stmt, err = db.Prepare("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?")
+	get_topic_user_stmt, err = db.Prepare("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -112,7 +115,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_topic_replies_offset statement.")
-	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users on replies.createdBy = users.uid where tid = ? limit ?, " + strconv.Itoa(items_per_page))
+	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount from replies left join users on replies.createdBy = users.uid where tid = ? limit ?, " + strconv.Itoa(items_per_page))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,13 +127,13 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_forum_topics_offset statement.")
-	get_forum_topics_offset_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC limit ?, " + strconv.Itoa(items_per_page))
+	get_forum_topics_offset_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.likeCount, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC limit ?, " + strconv.Itoa(items_per_page))
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("insert into topics(parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,createdBy) VALUES(?,?,?,?,NOW(),NOW(),?,?)")
+	create_topic_stmt, err = db.Prepare("insert into topics(parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,words,createdBy) VALUES(?,?,?,?,NOW(),NOW(),?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -142,7 +145,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing create_reply statement.")
-	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,parsed_content,createdAt,ipaddress,createdBy) VALUES(?,?,?,NOW(),?,?)")
+	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,parsed_content,createdAt,ipaddress,words,createdBy) VALUES(?,?,?,NOW(),?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -173,6 +176,24 @@ func init_database(err error) {
 	
 	log.Print("Preparing update_forum_cache statement.")
 	update_forum_cache_stmt, err = db.Prepare("UPDATE forums SET lastTopic = ?, lastTopicID = ?, lastReplyer = ?, lastReplyerID = ?, lastTopicTime = NOW() WHERE fid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing create_like statement.")
+	create_like_stmt, err = db.Prepare("INSERT INTO likes(weight, targetItem, targetType, sentBy) VALUES(?,?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_likes_to_topic statement.")
+	add_likes_to_topic_stmt, err = db.Prepare("UPDATE topics SET likeCount = likeCount + ? WHERE tid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_likes_to_reply statement.")
+	add_likes_to_reply_stmt, err = db.Prepare("UPDATE replies SET likeCount = likeCount + ? WHERE rid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

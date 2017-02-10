@@ -1,5 +1,7 @@
 package main
+
 import "log"
+import "bytes"
 import "strings"
 import "mime"
 import "errors"
@@ -8,10 +10,12 @@ import "io"
 import "io/ioutil"
 import "path/filepath"
 import "net/http"
+import "compress/gzip"
 
 type SFile struct
 {
 	Data []byte
+	GzipData []byte
 	Pos int64
 	Length int64
 	Mimetype string
@@ -74,6 +78,14 @@ func add_static_file(path string, prefix string) error {
 	path = strings.TrimPrefix(path, prefix)
 	log.Print("Added the '" + path + "' static file")
 	
-	static_files["/static" + path] = SFile{data,0,int64(len(data)),mime.TypeByExtension(filepath.Ext(prefix + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
+	static_files["/static" + path] = SFile{data,compress_bytes_gzip(data),0,int64(len(data)),mime.TypeByExtension(filepath.Ext(prefix + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
 	return nil
+}
+
+func compress_bytes_gzip(in []byte) []byte {
+	var buff bytes.Buffer
+	gz := gzip.NewWriter(&buff) 
+	gz.Write(in)
+	gz.Close()
+	return buff.Bytes()
 }

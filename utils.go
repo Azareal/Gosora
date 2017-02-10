@@ -122,6 +122,9 @@ func write_file(name string, content string) {
 
 func word_count(input string) (count int) {
 	input = strings.TrimSpace(input)
+	if input == "" {
+		return 0
+	}
 	in_space := false
 	for _, value := range input {
 		if unicode.IsSpace(value) {
@@ -133,7 +136,7 @@ func word_count(input string) (count int) {
 			in_space = false
 		}
 	}
-	return count
+	return count + 1
 }
 
 func getLevel(score int) (level int) {

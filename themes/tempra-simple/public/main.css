@@ -179,20 +179,9 @@ li a
 	font-weight: bold;
 }
 
-.formitem:first-child
-{
-	font-weight: bold;
-}
-
-.formitem:not(:last-child)
-{
-	border-right: 1px dotted #ccc;
-}
-
-.formitem.invisible_border
-{
-	border: none;
-}
+.formitem:first-child { font-weight: bold; }
+.formitem:not(:last-child) { border-right: 1px dotted #ccc; }
+.formitem.invisible_border { border: none; }
 
 /* Mostly for textareas */
 .formitem:only-child { width: 100%; }
@@ -249,7 +238,9 @@ button.username
 	position: relative;
 	top: -0.25px;
 }
-.username.level {color: #303030;}
+.username.level { color: #303030; }
+.username.real_username { color: #404040; font-size: 17px; }
+.username.real_username:hover { color: black; }
 .tag-mini
 {
 	text-transform: none;
@@ -264,6 +255,15 @@ button.username
 	border-color: #505050; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
 	border-width: 1px;
 	font-size: 10px;
+}
+
+.post_item > .mod_button > button {
+	font-size: 15px;
+	color: #202020;
+	opacity: 0.7;
+}
+.post_item > .mod_button > button:hover {
+	opacity: 0.9;
 }
 
 .show_on_edit { display: none; }
@@ -335,10 +335,7 @@ button.username
 		font-weight: normal;
 		text-transform: none;
 	}
-	.rowitem
-	{
-		text-transform: none;
-	}
+	.rowitem { text-transform: none; }
 }
 
 @media (max-width: 620px) {
@@ -380,6 +377,9 @@ button.username
 		margin-left: 2px !important;
 		position: relative;
 		top: -14px;
+	}
+	.post_item > .mod_button > button {
+		opacity: 1;
 	}
 	.post_item > .real_username {
 		position: absolute;

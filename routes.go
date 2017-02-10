@@ -44,7 +44,12 @@ func route_static(w http.ResponseWriter, r *http.Request){
 	h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
 	//http.ServeContent(w,r,r.URL.Path,file.Info.ModTime(),file)
 	//w.Write(file.Data)
-	io.Copy(w, bytes.NewReader(file.Data)) // Use w.Write instead?
+	if strings.Contains(r.Header.Get("Accept-Encoding"),"gzip") {
+		h.Set("Content-Encoding","gzip")
+		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?
+	} else {
+		io.Copy(w, bytes.NewReader(file.Data))
+	}
 	//io.CopyN(w, bytes.NewReader(file.Data), static_files[r.URL.Path].Length)
 }
 
@@ -101,7 +106,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 	
 	var topicList []TopicsRow
-	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.likeCount, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	//rows, err := get_topic_list_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r)
@@ -110,7 +115,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	
 	topicItem := TopicsRow{ID: 0,}
 	for rows.Next() {
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -200,7 +205,7 @@ func route_forum(w http.ResponseWriter, r *http.Request){
 	var topicList []TopicUser
 	topicItem := TopicUser{ID: 0}
 	for rows.Next() {
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.CreatedByName, &topicItem.Avatar)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -299,7 +304,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	
 	// Get the topic..
-	err = get_topic_user_stmt.QueryRow(topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.CreatedByName, &topic.Avatar, &group, &topic.URLPrefix, &topic.URLName, &topic.Level)
+	err = get_topic_user_stmt.QueryRow(topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.CreatedByName, &topic.Avatar, &group, &topic.URLPrefix, &topic.URLName, &topic.Level)
 	if err == sql.ErrNoRows {
 		NotFound(w,r)
 		return
@@ -377,7 +382,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 	replyItem := Reply{Css: no_css_tmpl}
 	for rows.Next() {
-		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress)
+		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress, &replyItem.LikeCount)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -402,7 +407,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		
 		replyItem.Tag = groups[group].Tag
 		
-		if settings["url_tags"] == false {
+		/*if settings["url_tags"] == false {
 			replyItem.URLName = ""
 		} else {
 			replyItem.URL, ok = external_sites[replyItem.URLPrefix]
@@ -411,7 +416,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 			} else {
 				replyItem.URL = replyItem.URL + replyItem.URLName
 			}
-		}
+		}*/
+		
+		replyItem.Liked = false
 		
 		if hooks["rrow_assign"] != nil {
 			replyItem = run_hook("rrow_assign", replyItem).(Reply)
@@ -528,6 +535,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		} else {
 			replyAvatar = strings.Replace(noavatar,"{id}",strconv.Itoa(replyCreatedBy),1)
 		}
+		
 		if groups[group].Tag != "" {
 			replyTag = groups[group].Tag
 		} else if puser.ID == replyCreatedBy {
@@ -536,7 +544,10 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 			replyTag = ""
 		}
 		
-		replyList = append(replyList, Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,""})
+		replyLiked := false
+		replyLikeCount := 0
+		
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount})
 	}
 	err = rows.Err()
 	if err != nil {
@@ -626,7 +637,8 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	res, err := create_topic_stmt.Exec(fid,topic_name,content,parse_message(content),ipaddress,user.ID)
+	wcount := word_count(content)
+	res, err := create_topic_stmt.Exec(fid,topic_name,content,parse_message(content),ipaddress,wcount,user.ID)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -656,7 +668,6 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	forums[fid].LastTopicTime = ""
 	
 	http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId,10), http.StatusSeeOther)
-	wcount := word_count(content)
 	err = increase_post_user_stats(wcount,user.ID,true,user)
 	if err != nil {
 		InternalError(err,w,r)
@@ -672,7 +683,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
-		PreError("Failed to convert the TopicID",w,r)
+		PreError("Failed to convert the Topic ID",w,r)
 		return
 	}
 	
@@ -703,7 +714,8 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),ipaddress,user.ID)
+	wcount := word_count(content)
+	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),ipaddress,wcount, user.ID)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -721,12 +733,139 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	http.Redirect(w,r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
-	wcount := word_count(content)
 	err = increase_post_user_stats(wcount, user.ID, false, user)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
+}
+
+func route_like_topic(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form",w,r)
+		return   
+	}
+	
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/like/submit/"):])
+	if err != nil {
+		PreError("Topic IDs can only ever be numbers.",w,r)
+		return
+	}
+	
+	var words int
+	var fid int
+	err = db.QueryRow("select parentID, words from topics where tid = ?", tid).Scan(&fid,&words)
+	if err == sql.ErrNoRows {
+		PreError("The requested topic doesn't exist.",w,r)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	user, ok := SimpleForumSessionCheck(w,r,fid)
+	if !ok {
+		return
+	}
+	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	err = db.QueryRow("select targetItem from likes where sentBy = ? and targetItem = ? and targetType = 'topics'", user.ID, tid).Scan(&tid)
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r)
+		return
+	} else if err != sql.ErrNoRows {
+		LocalError("You already liked this!",w,r,user)
+		return
+	}
+	
+	//score := words_to_score(words,true)
+	score := 1
+	_, err = create_like_stmt.Exec(score,tid,"topics",user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	_, err = add_likes_to_topic_stmt.Exec(1,tid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
+}
+
+func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form",w,r)
+		return 
+	}
+	
+	rid, err := strconv.Atoi(r.URL.Path[len("/reply/like/submit/"):])
+	if err != nil {
+		PreError("The provided Reply ID is not a valid number.",w,r)
+		return
+	}
+	
+	var tid int
+	var words int
+	err = db.QueryRow("select tid, words from replies where rid = ?", rid).Scan(&tid, &words)
+	if err == sql.ErrNoRows {
+		PreError("You can't like something which doesn't exist!",w,r)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	var fid int
+	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
+	if err == sql.ErrNoRows {
+		PreError("The parent topic doesn't exist.",w,r)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	user, ok := SimpleForumSessionCheck(w,r,fid)
+	if !ok {
+		return
+	}
+	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	err = db.QueryRow("select targetItem from likes where sentBy = ? and targetItem = ? and targetType = 'replies'", user.ID, rid).Scan(&rid)
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r)
+		return
+	} else if err != sql.ErrNoRows {
+		LocalError("You already liked this!",w,r,user)
+		return
+	}
+	
+	//score := words_to_score(words,false)
+	score := 1
+	_, err = create_like_stmt.Exec(score,rid,"replies",user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	_, err = add_likes_to_reply_stmt.Exec(1,rid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
 func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {

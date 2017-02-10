@@ -82,6 +82,7 @@ func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (u
 	fperms := groups[user.Group].Forums[fid]
 	if fperms.Overrides && !user.Is_Super_Admin {
 		user.Perms.ViewTopic = fperms.ViewTopic
+		user.Perms.LikeItem = fperms.LikeItem
 		user.Perms.CreateTopic = fperms.CreateTopic
 		user.Perms.EditTopic = fperms.EditTopic
 		user.Perms.DeleteTopic = fperms.DeleteTopic
@@ -103,6 +104,7 @@ func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user Us
 	fperms := groups[user.Group].Forums[fid]
 	if fperms.Overrides && !user.Is_Super_Admin {
 		user.Perms.ViewTopic = fperms.ViewTopic
+		user.Perms.LikeItem = fperms.LikeItem
 		user.Perms.CreateTopic = fperms.CreateTopic
 		user.Perms.EditTopic = fperms.EditTopic
 		user.Perms.DeleteTopic = fperms.DeleteTopic
@@ -196,6 +198,21 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 		}
 	}
 	return user, true
+}
+
+func words_to_score(wcount int, topic bool) (score int) {
+	if topic {
+		score = 2
+	} else {
+		score = 1
+	}
+	
+	if wcount > settings["megapost_min_chars"].(int) {
+		score += 4
+	} else if wcount > settings["bigpost_min_chars"].(int) {
+		score += 1
+	}
+	return score
 }
 
 func increase_post_user_stats(wcount int, uid int, topic bool, user User) error {

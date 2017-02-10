@@ -6,7 +6,7 @@
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
 		<div class="rowitem topic_item rowhead{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
 			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a> 
-			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
+			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{else}}<span class='username hide_on_micro' title='Love it' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F5A4;&#xFE0E</span>{{end}}
 			{{if .CurrentUser.Is_Mod}}
 			<a href='/topic/edit/{{.Topic.ID}}' class="username hide_on_edit open_edit topic_button" style="font-weight: normal;margin-left: 6px;">Edit</a>
 			<a href='/topic/delete/submit/{{.Topic.ID}}' class="username topic_button" style="font-weight: normal;">Delete</a>

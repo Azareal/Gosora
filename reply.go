@@ -22,4 +22,7 @@ type Reply struct
 	URLName string
 	Level int
 	IpAddress string
+	Liked bool
+	LikeCount int
 }
+

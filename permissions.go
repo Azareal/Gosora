@@ -34,6 +34,7 @@ type Perms struct
 	
 	// Forum permissions
 	ViewTopic bool
+	LikeItem bool
 	CreateTopic bool
 	EditTopic bool
 	DeleteTopic bool
@@ -53,6 +54,7 @@ type Perms struct
 type ForumPerms struct
 {
 	ViewTopic bool
+	LikeItem bool
 	CreateTopic bool
 	EditTopic bool
 	DeleteTopic bool
@@ -99,6 +101,7 @@ func init() {
 		ViewIPs: true,
 		
 		ViewTopic: true,
+		LikeItem: true,
 		CreateTopic: true,
 		EditTopic: true,
 		DeleteTopic: true,
@@ -113,6 +116,7 @@ func init() {
 	
 	AllForumPerms = ForumPerms{
 		ViewTopic: true,
+		LikeItem: true,
 		CreateTopic: true,
 		EditTopic: true,
 		DeleteTopic: true,
@@ -128,6 +132,7 @@ func init() {
 	
 	ReadWriteForumPerms = ForumPerms{
 		ViewTopic: true,
+		LikeItem: true,
 		CreateTopic: true,
 		CreateReply: true,
 		Overrides: true,
@@ -136,6 +141,7 @@ func init() {
 	
 	ReadReplyForumPerms = ForumPerms{
 		ViewTopic: true,
+		LikeItem: true,
 		CreateReply: true,
 		Overrides: true,
 		ExtData: make(map[string]bool),

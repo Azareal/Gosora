@@ -30,6 +30,7 @@ type TopicUser struct
 	Status string // Deprecated. Marked for removal.
 	IpAddress string
 	PostCount int
+	LikeCount int
 	
 	CreatedByName string
 	Avatar string
@@ -40,6 +41,7 @@ type TopicUser struct
 	URLPrefix string
 	URLName string
 	Level int
+	Liked bool
 }
 
 type TopicsRow struct
@@ -56,6 +58,7 @@ type TopicsRow struct
 	Status string // Deprecated. Marked for removal.
 	IpAddress string
 	PostCount int
+	LikeCount int
 	
 	CreatedByName string
 	Avatar string
