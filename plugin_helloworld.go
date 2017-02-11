@@ -1,5 +1,4 @@
 package main
-import "html/template"
 
 func init() {
 	plugins["helloworld"] = NewPlugin("helloworld","Hello World","Azareal","http://github.com/Azareal","","","",init_helloworld,nil,deactivate_helloworld)
@@ -17,7 +16,7 @@ func deactivate_helloworld() {
 func helloworld_reply(data interface{}) interface{} {
 	reply := data.(Reply)
 	reply.Content = "Hello World!"
-	reply.ContentHtml = template.HTML("Hello World!")
+	reply.ContentHtml = "Hello World!"
 	reply.Tag = "Auto"
 	return reply
 }

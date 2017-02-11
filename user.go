@@ -1,5 +1,6 @@
 package main
 //import "fmt"
+import "sync"
 import "strings"
 import "strconv"
 import "net"
@@ -40,6 +41,161 @@ type Email struct
 	Validated bool
 	Primary bool
 	Token string
+}
+
+type UserStore interface {
+	Get(id int) (*User, error)
+	GetUnsafe(id int) (*User, error)
+	CascadeGet(id int) (*User, error)
+	Add(item *User) error
+	AddUnsafe(item *User) error
+	Remove(id int) error
+	RemoveUnsafe(id int) error
+	GetLength() int
+	GetCapacity() int
+}
+
+type StaticUserStore struct {
+	items map[int]*User
+	length int
+	capacity int
+	mu sync.RWMutex
+}
+
+func NewStaticUserStore(capacity int) *StaticUserStore {
+	return &StaticUserStore{items:make(map[int]*User),capacity:capacity}
+}
+
+func (sts *StaticUserStore) Get(id int) (*User, error) {
+	sts.mu.RLock()
+	item, ok := sts.items[id]
+	sts.mu.RUnlock()
+	if ok {
+		return item, nil
+	}
+	return item, sql.ErrNoRows
+}
+
+func (sts *StaticUserStore) GetUnsafe(id int) (*User, error) {
+	item, ok := sts.items[id]
+	if ok {
+		return item, nil
+	}
+	return item, sql.ErrNoRows
+}
+
+func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
+	sts.mu.RLock()
+	user, ok := sts.items[id]
+	sts.mu.RUnlock()
+	if ok {
+		return user, nil
+	}
+	
+	user = &User{ID:id}
+	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	if err == nil {
+		sts.Add(user)
+	}
+	return user, err
+}
+
+func (sts *StaticUserStore) Add(item *User) error {
+	if sts.length >= sts.capacity {
+		return ErrStoreCapacityOverflow
+	}
+	sts.mu.Lock()
+	sts.items[item.ID] = item
+	sts.mu.Unlock()
+	sts.length++
+	return nil
+}
+
+func (sts *StaticUserStore) AddUnsafe(item *User) error {
+	if sts.length >= sts.capacity {
+		return ErrStoreCapacityOverflow
+	}
+	sts.items[item.ID] = item
+	sts.length++
+	return nil
+}
+
+func (sts *StaticUserStore) Remove(id int) error {
+	sts.mu.Lock()
+	delete(sts.items,id)
+	sts.mu.Unlock()
+	sts.length--
+	return nil
+}
+
+func (sts *StaticUserStore) RemoveUnsafe(id int) error {
+	delete(sts.items,id)
+	sts.length--
+	return nil
+}
+
+func (sts *StaticUserStore) GetLength() int {
+	return sts.length
+}
+
+func (sts *StaticUserStore) SetCapacity(capacity int) {
+	sts.capacity = capacity
+}
+
+func (sts *StaticUserStore) GetCapacity() int {
+	return sts.capacity
+}
+
+//type DynamicUserStore struct {
+//	items_expiries list.List
+//	items map[int]*User
+//}
+
+type SqlUserStore struct {
+}
+
+func NewSqlUserStore() *SqlUserStore {
+	return &SqlUserStore{}
+}
+
+func (sus *SqlUserStore) Get(id int) (*User, error) {
+	user := User{ID:id}
+	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	return &user, err
+}
+
+func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
+	user := User{ID:id}
+	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	return &user, err
+}
+
+func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
+	user := User{ID:id}
+	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	return &user, err
+}
+
+// Placeholder methods, the actual queries are done elsewhere
+func (sus *SqlUserStore) Add(item *User) error {
+	return nil
+}
+func (sus *SqlUserStore) AddUnsafe(item *User) error {
+	return nil
+}
+func (sus *SqlUserStore) Remove(id int) error {
+	return nil
+}
+func (sus *SqlUserStore) RemoveUnsafe(id int) error {
+	return nil
+}
+func (sus *SqlUserStore) GetCapacity() int {
+	return 0
+}
+
+func (sus *SqlUserStore) GetLength() int {
+	// Return the total number of users registered on the forums
+	return 0
 }
 
 func SetPassword(uid int, password string) (error) {
@@ -128,38 +284,40 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	return user, noticeList, success
 }
 
-func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, success bool) {
+func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (User,bool) {
 	// Are there any session cookies..?
 	cookie, err := r.Cookie("uid")
 	if err != nil {
-		user.Group = 6
-		user.Perms = GuestPerms
-		return user, true
+		return User{ID:0,Group:6,Perms:GuestPerms}, true
 	}
-	user.ID, err = strconv.Atoi(cookie.Value)
+	uid, err := strconv.Atoi(cookie.Value)
 	if err != nil {
-		user.Group = 6
-		user.Perms = GuestPerms
-		return user, true
+		return User{ID:0,Group:6,Perms:GuestPerms}, true
 	}
 	cookie, err = r.Cookie("session")
 	if err != nil {
-		user.Group = 6
-		user.Perms = GuestPerms
-		return user, true
+		return User{ID:0,Group:6,Perms:GuestPerms}, true
 	}
 	
 	// Is this session valid..?
-	err = get_session_stmt.QueryRow(user.ID,cookie.Value).Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	user, err := users.CascadeGet(uid)
 	if err == sql.ErrNoRows {
 		user.ID = 0
 		user.Session = ""
 		user.Group = 6
 		user.Perms = GuestPerms
-		return user, true
+		return *user, true
 	} else if err != nil {
 		InternalError(err,w,r)
-		return user, false
+		return *user, false
+	}
+	
+	if user.Session == "" || cookie.Value != user.Session {
+		user.ID = 0
+		user.Session = ""
+		user.Group = 6
+		user.Perms = GuestPerms
+		return *user, true
 	}
 	
 	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin
@@ -187,17 +345,17 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (user User, succ
 	
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP",w,r,user)
-		return user, false
+		PreError("Bad IP",w,r)
+		return *user, false
 	}
 	if host != user.Last_IP {
 		_, err = update_last_ip_stmt.Exec(host, user.ID)
 		if err != nil {
 			InternalError(err,w,r)
-			return user, false
+			return *user, false
 		}
 	}
-	return user, true
+	return *user, true
 }
 
 func words_to_score(wcount int, topic bool) (score int) {

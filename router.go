@@ -16,38 +16,45 @@ func NewRouter() *Router {
 }
 
 func (router *Router) Handle(pattern string, handle http.Handler) {
+	router.mu.Lock()
 	router.routes[pattern] = handle.ServeHTTP
+	router.mu.Unlock()
 }
 
 func (router *Router) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request)) {
+	router.mu.Lock()
 	router.routes[pattern] = handle
+	router.mu.Unlock()
 }
 
 func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	router.mu.RLock()
-	defer router.mu.RUnlock()
 	
 	if req.URL.Path[0] != '/' {
+		router.mu.RUnlock()
 		w.WriteHeader(405)
 		w.Write([]byte(""))
 		return
 	}
 	
-	// Do something on the path to turn slashes facing the wrong way "\" into "/" slashes. If it's bytes, then alter the bytes in place for the maximum speed
+	// Do something on the path to turn slashes facing the wrong way "\" into "/" slashes. Like what? Wouldn't that be slow? Might need to move to fasthttp for this
 	
 	handle, ok := router.routes[req.URL.Path]
 	if ok {
+		router.mu.RUnlock()
 		handle(w,req)
 		return
 	}
 	
 	if req.URL.Path[len(req.URL.Path) - 1] == '/' {
+		router.mu.RUnlock()
 		NotFound(w,req)
 		return
 	}
 	
 	handle, ok = router.routes[req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]]
 	if ok {
+		router.mu.RUnlock()
 		handle(w,req)
 		return
 	}
@@ -55,10 +62,12 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	handle, ok = router.routes[req.URL.Path + "/"]
 	if ok {
+		router.mu.RUnlock()
 		handle(w,req)
 		return
 	}
 	
+	router.mu.RUnlock()
 	NotFound(w,req)
 	return
 }

@@ -9,9 +9,11 @@ import "strconv"
 import "encoding/json"
 
 var db *sql.DB
-var get_session_stmt *sql.Stmt
+var get_user_stmt *sql.Stmt
+var get_full_user_stmt *sql.Stmt
 var get_topic_list_stmt *sql.Stmt
 var get_topic_user_stmt *sql.Stmt
+var get_topic_stmt *sql.Stmt
 var get_topic_replies_stmt *sql.Stmt
 var get_topic_replies_offset_stmt *sql.Stmt
 var get_forum_topics_stmt *sql.Stmt
@@ -90,8 +92,20 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
-	log.Print("Preparing get_session statement.")
+	/*log.Print("Preparing get_session statement.")
 	get_session_stmt, err = db.Prepare("select `uid`,`name`,`group`,`is_super_admin`,`session`,`email`,`avatar`,`message`,`url_prefix`,`url_name`,`level`,`score`,`last_ip` from `users` where `uid` = ? and `session` = ? AND `session` <> ''")
+	if err != nil {
+		log.Fatal(err)
+	}*/
+	
+	log.Print("Preparing get_user statement.")
+	get_user_stmt, err = db.Prepare("select `name`,`group`,`is_super_admin`,`avatar`,`message`,`url_prefix`,`url_name`,`level` from `users` where `uid` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing get_full_user statement.")
+	get_full_user_stmt, err = db.Prepare("select `name`,`group`,`is_super_admin`,`session`,`email`,`avatar`,`message`,`url_prefix`,`url_name`,`level`,`score`,`last_ip` from `users` where `uid` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -104,6 +118,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing get_topic_user statement.")
 	get_topic_user_stmt, err = db.Prepare("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing get_topic statement.")
+	get_topic_stmt, err = db.Prepare("select title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount from topics where tid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

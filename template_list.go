@@ -97,25 +97,25 @@ var topic_23 []byte = []byte(`</p>
 var topic_24 []byte = []byte(`</textarea><br /><br />
 		<a href="/user/`)
 var topic_25 []byte = []byte(`" class="username real_username">`)
-var topic_26 []byte = []byte(`</a>
+var topic_26 []byte = []byte(`</a>&nbsp;
 		<a href="/topic/like/submit/`)
 var topic_27 []byte = []byte(`" class="mod_button" title="Love it" style="color:#202020;"><button class="username" style="`)
 var topic_28 []byte = []byte(`background-color:/*#eaffea*/#D6FFD6;`)
-var topic_29 []byte = []byte(`">😀</button></a>
+var topic_29 []byte = []byte(`">😀</button></a>&nbsp;
 		`)
 var topic_30 []byte = []byte(`<a href='/topic/edit/`)
-var topic_31 []byte = []byte(`' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic"><button class="username">🖊️</button></a>
+var topic_31 []byte = []byte(`' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic"><button class="username">🖊️</button></a>&nbsp;
 		<a href='/topic/delete/submit/`)
-var topic_32 []byte = []byte(`' class="mod_button" style="font-weight:normal;" title="Delete Topic"><button class="username">🗑️</button></a>
+var topic_32 []byte = []byte(`' class="mod_button" style="font-weight:normal;" title="Delete Topic"><button class="username">🗑️</button></a>&nbsp;
 		`)
 var topic_33 []byte = []byte(`<a class="mod_button" href='/topic/unstick/submit/`)
 var topic_34 []byte = []byte(`' style="font-weight:normal;" title="Unpin Topic"><button class="username" style="background-color:/*#eaffea*/#D6FFD6;">📌</button></a>`)
 var topic_35 []byte = []byte(`<a href='/topic/stick/submit/`)
 var topic_36 []byte = []byte(`' class="mod_button" style="font-weight:normal;" title="Pin Topic"><button class="username">📌</button></a>`)
-var topic_37 []byte = []byte(`
+var topic_37 []byte = []byte(`&nbsp;
 		<a href="/report/submit/`)
 var topic_38 []byte = []byte(`?session=`)
-var topic_39 []byte = []byte(`&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag Topic"><button class="username">🚩</button></a>
+var topic_39 []byte = []byte(`&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag Topic"><button class="username">🚩</button></a>&nbsp;
 		`)
 var topic_40 []byte = []byte(`<a class="username hide_on_micro" style="float: right;color:#505050;border-left:none;padding-left:5px;padding-right:5px;font-size:17px;">`)
 var topic_41 []byte = []byte(`</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;margin-left:5px;" title="Like Count">😀</a>`)
@@ -138,20 +138,20 @@ var topic_52 []byte = []byte(`">
 var topic_53 []byte = []byte(`</p><br /><br />
 		<a href="/user/`)
 var topic_54 []byte = []byte(`" class="username real_username">`)
-var topic_55 []byte = []byte(`</a>
+var topic_55 []byte = []byte(`</a>&nbsp;
 		<a href="/reply/like/submit/`)
 var topic_56 []byte = []byte(`" class="mod_button" title="Love it" style="color:#202020;"><button class="username" style="`)
 var topic_57 []byte = []byte(`background-color:/*#eaffea*/#D6FFD6;`)
-var topic_58 []byte = []byte(`">😀</button></a>
+var topic_58 []byte = []byte(`">😀</button></a>&nbsp;
 		`)
 var topic_59 []byte = []byte(`<a href="/reply/edit/submit/`)
-var topic_60 []byte = []byte(`" class="mod_button" title="Edit Reply"><button class="username edit_item">🖊️</button></a> `)
+var topic_60 []byte = []byte(`" class="mod_button" title="Edit Reply"><button class="username edit_item">🖊️</button></a>&nbsp;`)
 var topic_61 []byte = []byte(`<a href="/reply/delete/submit/`)
-var topic_62 []byte = []byte(`" class="mod_button" title="Delete Reply"><button class="username delete_item">🗑️</button></a> `)
+var topic_62 []byte = []byte(`" class="mod_button" title="Delete Reply"><button class="username delete_item">🗑️</button></a>&nbsp;`)
 var topic_63 []byte = []byte(`
 		<a href="/report/submit/`)
 var topic_64 []byte = []byte(`?session=`)
-var topic_65 []byte = []byte(`&type=reply" class="mod_button" title="Flag Reply"><button class="username report_item">🚩</button></a>
+var topic_65 []byte = []byte(`&type=reply" class="mod_button" title="Flag Reply"><button class="username report_item">🚩</button></a>&nbsp;
 		`)
 var topic_66 []byte = []byte(`<a class="username hide_on_micro" style="float: right;color:#505050;border-left:none;padding-left:5px;padding-right:5px;font-size:17px;">`)
 var topic_67 []byte = []byte(`</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;margin-left:5px;" title="Like Count">😀</a>`)

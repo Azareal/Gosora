@@ -51,9 +51,9 @@ func compile_templates() {
 	
 	log.Print("Compiling the templates")
 	
-	topic := TopicUser{1,"Blah",template.HTML("Hey there!"),0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"","",no_css_tmpl,0,"","","","",58,false}
+	topic := TopicUser{1,"Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"",default_group,"",no_css_tmpl,0,"","","","",58,false}
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"",template.HTML("Yo!"),0,"","",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
+	replyList = append(replyList, Reply{0,0,"","Yo!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
 	
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title",user,noticeList,replyList,topic,1,1,false}
@@ -80,7 +80,7 @@ func compile_templates() {
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
 	
 	var topicList []TopicUser
-	topicList = append(topicList,TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"Admin","","",0,"","","","",58,false})
+	topicList = append(topicList,TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"Admin",default_group,"","",0,"","","","",58,false})
 	forum_item := Forum{1,"General Forum",true,"all",0,"",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,noticeList,topicList,forum_item,1,1,nil}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)
@@ -141,6 +141,14 @@ func main(){
 	err = init_errors()
 	if err != nil {
 		log.Fatal(err)
+	}
+	
+	if cache_topicuser == CACHE_STATIC {
+		users = NewStaticUserStore(user_cache_capacity)
+		topics = NewStaticTopicStore(topic_cache_capacity)
+	} else {
+		users = NewSqlUserStore()
+		topics = NewSqlTopicStore()
 	}
 	
 	log.Print("Loading the static files.")

@@ -2,7 +2,6 @@
 package main
 import "io"
 import "strconv"
-import "html/template"
 
 func init() {
 	template_topic_alt_handle = template_topic_alt
@@ -117,9 +116,9 @@ w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.Level)))
 w.Write(topic_alt_34)
 }
 w.Write(topic_alt_35)
-w.Write([]byte(string(tmpl_topic_alt_vars.Topic.Content.(template.HTML))))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Content))
 w.Write(topic_alt_36)
-w.Write([]byte(string(tmpl_topic_alt_vars.Topic.Content.(template.HTML))))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Content))
 w.Write(topic_alt_37)
 if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_38)
@@ -146,7 +145,7 @@ w.Write([]byte(strconv.Itoa(item.Level)))
 w.Write(topic_alt_48)
 }
 w.Write(topic_alt_49)
-w.Write([]byte(string(item.ContentHtml)))
+w.Write([]byte(item.ContentHtml))
 w.Write(topic_alt_50)
 if tmpl_topic_alt_vars.CurrentUser.Perms.EditReply {
 w.Write(topic_alt_51)

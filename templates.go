@@ -12,6 +12,11 @@ import "text/template/parse"
 
 var ctemplates []string
 var tmpl_ptr_map map[string]interface{} = make(map[string]interface{})
+var text_overlap_list map[string]int
+
+func init() {
+	text_overlap_list = make(map[string]int)
+}
 
 type VarItem struct
 {
@@ -80,7 +85,11 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	if err != nil {
 		log.Fatal(err)
 	}
+	
 	content := string(res)
+	if !debug {
+		content = minify(content)
+	}
 	
 	tree := parse.New(name, c.funcMap)
 	var treeSet map[string]*parse.Tree = make(map[string]*parse.Tree)
@@ -822,7 +831,11 @@ func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect refle
 	if err != nil {
 		log.Fatal(err)
 	}
+	
 	content := string(res)
+	if !debug {
+		content = minify(content)
+	}
 	
 	tree := parse.New(node.Name, c.funcMap)
 	var treeSet map[string]*parse.Tree = make(map[string]*parse.Tree)
@@ -859,4 +872,13 @@ func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect refle
 
 func (c *CTemplateSet) compile_command(*parse.CommandNode) (out string) {
 	return ""
+}
+
+func minify(data string) string {
+	data = strings.Replace(data,"\t","",-1)
+	data = strings.Replace(data,"\v","",-1)
+	data = strings.Replace(data,"\n","",-1)
+	data = strings.Replace(data,"\r","",-1)
+	data = strings.Replace(data,"  "," ",-1)
+	return data
 }

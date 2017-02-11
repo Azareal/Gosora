@@ -112,6 +112,7 @@ CREATE TABLE `users_replies`(
 
 CREATE TABLE `likes`(
 	`weight` tinyint DEFAULT 1 not null,
+	/*`type` tinyint not null, /* Regular Post = 1, Big Post = 2, Mega Post = 3, etc.*/
 	`targetItem` int not null,
 	`targetType` varchar(50) DEFAULT 'replies' not null,
 	`sentBy` int not null,

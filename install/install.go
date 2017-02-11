@@ -149,6 +149,9 @@ var dbport = "` + db_port + `" // You probably won't need to change this
 var max_request_size = 5 * megabyte
 
 // Misc
+var cache_topicuser = CACHE_STATIC
+var user_cache_capacity = 100 // The max number of users held in memory
+var topic_cache_capacity = 100 // The max number of topics held in memory
 var default_route = route_topics
 var default_group = 3 // Should be a setting
 var activation_group = 5 // Should be a setting

@@ -7,9 +7,10 @@ type Reply struct
 	ID int
 	ParentID int
 	Content string
-	ContentHtml template.HTML
+	ContentHtml string
 	CreatedBy int
 	CreatedByName string
+	Group int
 	CreatedAt string
 	LastEdit int
 	LastEditBy int

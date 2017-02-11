@@ -288,23 +288,20 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 func route_topic_id(w http.ResponseWriter, r *http.Request){
 	var(
 		err error
-		content string
-		group int
 		page int
 		offset int
 		replyList []Reply
 	)
 	
 	page, _ = strconv.Atoi(r.FormValue("page"))
-	topic := TopicUser{Css: no_css_tmpl}
-	topic.ID, err = strconv.Atoi(r.URL.Path[len("/topic/"):])
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/"):])
 	if err != nil {
 		PreError("The provided TopicID is not a valid number.",w,r)
 		return
 	}
 	
 	// Get the topic..
-	err = get_topic_user_stmt.QueryRow(topic.ID).Scan(&topic.Title, &content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.CreatedByName, &topic.Avatar, &group, &topic.URLPrefix, &topic.URLName, &topic.Level)
+	topic, err := get_topicuser(tid)
 	if err == sql.ErrNoRows {
 		NotFound(w,r)
 		return
@@ -312,6 +309,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r)
 		return
 	}
+	topic.Css = no_css_tmpl
 	
 	user, noticeList, ok := ForumSessionCheck(w,r,topic.ParentID)
 	if !ok {
@@ -322,8 +320,8 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	topic.Content = template.HTML(parse_message(content))
-	topic.ContentLines = strings.Count(content,"\n")
+	topic.ContentLines = strings.Count(topic.Content,"\n")
+	topic.Content = parse_message(topic.Content)
 	
 	// We don't want users posting in locked topics...
 	if topic.Is_Closed && !user.Is_Mod {
@@ -337,12 +335,12 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	} else {
 		topic.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topic.CreatedBy),1)
 	}
-	if groups[group].Is_Mod || groups[group].Is_Admin {
+	if groups[topic.Group].Is_Mod || groups[topic.Group].Is_Admin {
 		topic.Css = staff_css_tmpl
 		topic.Level = -1
 	}
 	
-	topic.Tag = groups[group].Tag
+	topic.Tag = groups[topic.Group].Tag
 	
 	if settings["url_tags"] == false {
 		topic.URLName = ""
@@ -382,16 +380,16 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 	replyItem := Reply{Css: no_css_tmpl}
 	for rows.Next() {
-		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress, &replyItem.LikeCount)
+		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress, &replyItem.LikeCount)
 		if err != nil {
 			InternalError(err,w,r)
 			return
 		}
 		
 		replyItem.ParentID = topic.ID
-		replyItem.ContentHtml = template.HTML(parse_message(replyItem.Content))
+		replyItem.ContentHtml = parse_message(replyItem.Content)
 		replyItem.ContentLines = strings.Count(replyItem.Content,"\n")
-		if groups[group].Is_Mod || groups[group].Is_Admin {
+		if groups[replyItem.Group].Is_Mod || groups[replyItem.Group].Is_Admin {
 			replyItem.Css = staff_css_tmpl
 			replyItem.Level = -1
 		} else {
@@ -405,7 +403,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 			replyItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(replyItem.CreatedBy),1)
 		}
 		
-		replyItem.Tag = groups[group].Tag
+		replyItem.Tag = groups[replyItem.Group].Tag
 		
 		/*if settings["url_tags"] == false {
 			replyItem.URLName = ""
@@ -462,7 +460,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		replyCss template.CSS
 		replyLines int
 		replyTag string
-		group int
+		replyGroup int
 		
 		replyList []Reply
 	)
@@ -479,7 +477,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		puser = user
 	} else {
 		// Fetch the user data
-		err = db.QueryRow("select `name`,`group`,`is_super_admin`,`avatar`,`message`,`url_prefix`,`url_name`,`level` from `users` where `uid` = ?", puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName, &puser.Level)
+		err = get_user_stmt.QueryRow(puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName, &puser.Level)
 		if err == sql.ErrNoRows {
 			NotFound(w,r)
 			return
@@ -516,14 +514,14 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	defer rows.Close()
 	
 	for rows.Next() {
-		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &group)
+		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &replyGroup)
 		if err != nil {
 			InternalError(err,w,r)
 			return
 		}
 		
 		replyLines = strings.Count(replyContent,"\n")
-		if groups[group].Is_Mod || groups[group].Is_Admin {
+		if groups[replyGroup].Is_Mod || groups[replyGroup].Is_Admin {
 			replyCss = staff_css_tmpl
 		} else {
 			replyCss = no_css_tmpl
@@ -536,8 +534,8 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 			replyAvatar = strings.Replace(noavatar,"{id}",strconv.Itoa(replyCreatedBy),1)
 		}
 		
-		if groups[group].Tag != "" {
-			replyTag = groups[group].Tag
+		if groups[replyGroup].Tag != "" {
+			replyTag = groups[replyGroup].Tag
 		} else if puser.ID == replyCreatedBy {
 			replyTag = "Profile Owner"
 		} else {
@@ -547,7 +545,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		replyLiked := false
 		replyLikeCount := 0
 		
-		replyList = append(replyList, Reply{rid,puser.ID,replyContent,template.HTML(parse_message(replyContent)),replyCreatedBy,replyCreatedByName,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount})
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount})
 	}
 	err = rows.Err()
 	if err != nil {

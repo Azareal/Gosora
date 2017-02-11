@@ -85,7 +85,7 @@ w.Write(profile_19)
 w.Write([]byte(string(item.Css)))
 }
 w.Write(profile_20)
-w.Write([]byte(string(item.ContentHtml)))
+w.Write([]byte(item.ContentHtml))
 w.Write(profile_21)
 w.Write([]byte(strconv.Itoa(item.CreatedBy)))
 w.Write(profile_22)
