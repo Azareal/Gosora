@@ -11,9 +11,11 @@ var users UserStore
 var topics TopicStore
 
 type DataStore interface {
+	Load(id int) error
 	Get(id int) (interface{}, error)
 	GetUnsafe(id int) (interface{}, error)
 	CascadeGet(id int) (interface{}, error)
+	Set(item interface{}) error
 	Add(item interface{}) error
 	AddUnsafe(item interface{}) error
 	Remove(id int) error

@@ -28,17 +28,13 @@ func (router *Router) HandleFunc(pattern string, handle func(http.ResponseWriter
 }
 
 func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	router.mu.RLock()
-	
 	if req.URL.Path[0] != '/' {
-		router.mu.RUnlock()
 		w.WriteHeader(405)
 		w.Write([]byte(""))
 		return
 	}
 	
-	// Do something on the path to turn slashes facing the wrong way "\" into "/" slashes. Like what? Wouldn't that be slow? Might need to move to fasthttp for this
-	
+	router.mu.RLock()
 	handle, ok := router.routes[req.URL.Path]
 	if ok {
 		router.mu.RUnlock()

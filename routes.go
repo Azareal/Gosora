@@ -113,7 +113,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	topicItem := TopicsRow{ID: 0,}
+	topicItem := TopicsRow{ID: 0}
 	for rows.Next() {
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
@@ -316,33 +316,25 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	if !user.Perms.ViewTopic {
+		//fmt.Printf("%+v\n", user.Perms)
 		NoPermissions(w,r,user)
 		return
 	}
 	
-	topic.ContentLines = strings.Count(topic.Content,"\n")
 	topic.Content = parse_message(topic.Content)
+	topic.ContentLines = strings.Count(topic.Content,"\n")
 	
 	// We don't want users posting in locked topics...
 	if topic.Is_Closed && !user.Is_Mod {
 		user.Perms.CreateReply = false
 	}
 	
-	if topic.Avatar != "" {
-		if topic.Avatar[0] == '.' {
-			topic.Avatar = "/uploads/avatar_" + strconv.Itoa(topic.CreatedBy) + topic.Avatar
-		}
-	} else {
-		topic.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topic.CreatedBy),1)
-	}
-	if groups[topic.Group].Is_Mod || groups[topic.Group].Is_Admin {
+	if groups[topic.Group].Is_Mod {
 		topic.Css = staff_css_tmpl
 		topic.Level = -1
 	}
 	
-	topic.Tag = groups[topic.Group].Tag
-	
-	if settings["url_tags"] == false {
+	/*if settings["url_tags"] == false {
 		topic.URLName = ""
 	} else {
 		topic.URL, ok = external_sites[topic.URLPrefix]
@@ -351,7 +343,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		} else {
 			topic.URL = topic.URL + topic.URLName
 		}
-	}
+	}*/
 	
 	// Calculate the offset
 	last_page := int(topic.PostCount / items_per_page) + 1
@@ -415,7 +407,6 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 				replyItem.URL = replyItem.URL + replyItem.URLName
 			}
 		}*/
-		
 		replyItem.Liked = false
 		
 		if hooks["rrow_assign"] != nil {
@@ -465,19 +456,19 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		replyList []Reply
 	)
 	
-	puser := User{ID: 0,}
-	puser.ID, err = strconv.Atoi(r.URL.Path[len("/user/"):])
+	pid, err := strconv.Atoi(r.URL.Path[len("/user/"):])
 	if err != nil {
-		LocalError("The provided TopicID is not a valid number.",w,r,user)
+		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
 	}
 	
-	if puser.ID == user.ID {
+	var puser *User
+	if pid == user.ID {
 		user.Is_Mod = true
-		puser = user
+		puser = &user
 	} else {
 		// Fetch the user data
-		err = get_user_stmt.QueryRow(puser.ID).Scan(&puser.Name, &puser.Group, &puser.Is_Super_Admin, &puser.Avatar, &puser.Message, &puser.URLPrefix, &puser.URLName, &puser.Level)
+		puser, err = users.CascadeGet(pid)
 		if err == sql.ErrNoRows {
 			NotFound(w,r)
 			return
@@ -485,24 +476,6 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 			InternalError(err,w,r)
 			return
 		}
-		
-		puser.Is_Admin = puser.Is_Super_Admin || groups[puser.Group].Is_Admin
-		puser.Is_Super_Mod = puser.Is_Admin || groups[puser.Group].Is_Mod
-		puser.Is_Mod = puser.Is_Super_Mod
-		puser.Is_Banned = groups[puser.Group].Is_Banned
-		if puser.Is_Banned && puser.Is_Super_Mod {
-			puser.Is_Banned = false
-		}
-	}
-	
-	puser.Tag = groups[puser.Group].Tag
-	
-	if puser.Avatar != "" {
-		if puser.Avatar[0] == '.' {
-			puser.Avatar = "/uploads/avatar_" + strconv.Itoa(puser.ID) + puser.Avatar
-		}
-	} else {
-		puser.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(puser.ID),1)
 	}
 	
 	// Get the replies..
@@ -553,7 +526,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	ppage := ProfilePage{puser.Name + "'s Profile",user,noticeList,replyList,puser,false}
+	ppage := ProfilePage{puser.Name + "'s Profile",user,noticeList,replyList,*puser,false}
 	if template_profile_handle != nil {
 		template_profile_handle(ppage,w)
 	} else {
@@ -922,7 +895,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
+		LocalError("Bad Form",w,r,user)
 		return
 	}
 	if r.FormValue("session") != user.Session {
@@ -1213,6 +1186,11 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
+	err = users.Load(user.ID)
+	if err != nil {
+		LocalError("This user no longer exists!",w,r,user)
+		return
+	}
 	noticeList = append(noticeList, "Your avatar was successfully updated")
 	
 	pi := Page{"Edit Avatar",user,noticeList,tList,nil}
@@ -1253,7 +1231,13 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 		LocalError("Unable to change the username. Does someone else already have this name?",w,r,user)
 		return
 	}
+	
 	user.Name = new_username
+	err = users.Load(user.ID)
+	if err != nil {
+		LocalError("Your account doesn't exist!",w,r,user)
+		return
+	}
 	
 	noticeList = append(noticeList,"Your username was successfully updated")
 	pi := Page{"Edit Username",user,noticeList,tList,nil}
@@ -1305,7 +1289,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 	if !enable_emails {
 		noticeList = append(noticeList, "The email system has been turned off. All features involving sending emails have been disabled.")
 	}
-	pi := Page{"Email Manager",user,noticeList,emailList,0}
+	pi := Page{"Email Manager",user,noticeList,emailList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
@@ -1376,7 +1360,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 		noticeList = append(noticeList,"The email system has been turned off. All features involving sending emails have been disabled.")
 	}
 	noticeList = append(noticeList,"Your email was successfully verified")
-	pi := Page{"Email Manager",user,noticeList,emailList,0}
+	pi := Page{"Email Manager",user,noticeList,emailList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
@@ -1395,6 +1379,12 @@ func route_logout(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r)
 		return
 	}
+	
+	err = users.Load(user.ID)
+	if err != nil {
+		LocalError("Your account doesn't exist!",w,r,user)
+		return
+	}
 	http.Redirect(w,r, "/", http.StatusSeeOther)
 }
 	
@@ -1408,7 +1398,7 @@ func route_login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pi := Page{"Login",user,noticeList,tList,nil}
-	templates.ExecuteTemplate(w,"login.html", pi)
+	templates.ExecuteTemplate(w,"login.html",pi)
 }
 
 func route_login_submit(w http.ResponseWriter, r *http.Request) {

@@ -57,6 +57,12 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	err = topics.Load(tid)
+	if err != nil {
+		LocalError("This topic no longer exists!",w,r,user)
+		return
+	}
+	
 	if is_js == "0" {
 		http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 	} else {
@@ -114,6 +120,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	forums[fid].TopicCount -= 1
+	topics.Remove(tid)
 }
 
 func route_stick_topic(w http.ResponseWriter, r *http.Request) {
@@ -123,8 +130,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	var fid int
-	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
+	topic, err := topics.CascadeGet(tid)
 	if err == sql.ErrNoRows {
 		PreError("The topic you tried to pin doesn't exist.",w,r)
 		return
@@ -133,7 +139,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -147,6 +153,8 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r)
 		return
 	}
+	
+	topic.Sticky = true
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
@@ -157,8 +165,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	var fid int
-	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
+	topic, err := topics.CascadeGet(tid)
 	if err == sql.ErrNoRows {
 		PreError("The topic you tried to unpin doesn't exist.",w,r)
 		return
@@ -167,7 +174,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -181,6 +188,8 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r)
 		return
 	}
+	
+	topic.Sticky = false
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
@@ -312,6 +321,12 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		InternalErrorJSQ(err,w,r,is_js)
 	}
+	
+	err = topics.Load(tid)
+	if err != nil {
+		LocalError("This topic no longer exists!",w,r,user)
+		return
+	}
 }
 
 func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
@@ -374,7 +389,6 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad Form",w,r,user)
 		return          
 	}
-	
 	is_js := r.PostFormValue("is_js")
 	if is_js == "" {
 		is_js = "0"
@@ -387,7 +401,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	var uid int
-	err = db.QueryRow("SELECT uid from users_replies where rid = ?", rid).Scan(&uid)
+	err = db.QueryRow("select uid from users_replies where rid = ?", rid).Scan(&uid)
 	if err == sql.ErrNoRows {
 		LocalErrorJSQ("The reply you tried to delete doesn't exist.",w,r,user,is_js)
 		return
@@ -502,6 +516,12 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r)
 		return
 	}
+	
+	err = users.Load(uid)
+	if err != nil {
+		LocalError("This user no longer exists!",w,r,user)
+		return
+	}
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
@@ -544,6 +564,12 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 	_, err = change_group_stmt.Exec(default_group, uid)
 	if err != nil {
 		InternalError(err,w,r)
+		return
+	}
+	
+	err = users.Load(uid)
+	if err != nil {
+		LocalError("This user no longer exists!",w,r,user)
 		return
 	}
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
@@ -593,6 +619,12 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 	_, err = change_group_stmt.Exec(default_group, uid)
 	if err != nil {
 		InternalError(err,w,r)
+		return
+	}
+	
+	err = users.Load(uid)
+	if err != nil {
+		LocalError("This user no longer exists!",w,r,user)
 		return
 	}
 	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
@@ -973,7 +1005,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 	sname := r.URL.Path[len("/panel/settings/edit/submit/"):]
 	scontent := r.PostFormValue("setting-value")
 	
-	err = db.QueryRow("SELECT name, type, constraints from settings where name = ?", sname).Scan(&sname, &stype, &sconstraints)
+	err = db.QueryRow("select name, type, constraints from settings where name = ?", sname).Scan(&sname, &stype, &sconstraints)
 	if err == sql.ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
@@ -1208,15 +1240,13 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var err error
-	targetUser := User{ID: 0,}
-	targetUser.ID, err = strconv.Atoi(r.URL.Path[len("/panel/users/edit/"):])
+	uid, err := strconv.Atoi(r.URL.Path[len("/panel/users/edit/"):])
 	if err != nil {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
 	}
 	
-	err = db.QueryRow("select `name`,`email`,`group` from `users` where `uid` = ?", targetUser.ID).Scan(&targetUser.Name,&targetUser.Email,&targetUser.Group)
+	targetUser, err := users.Get(uid)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
@@ -1225,8 +1255,6 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	targetUser.Is_Admin = targetUser.Is_Super_Admin || groups[targetUser.Group].Is_Admin
-	targetUser.Is_Super_Mod = groups[targetUser.Group].Is_Mod || targetUser.Is_Admin
 	if targetUser.Is_Admin && !user.Is_Admin {
 		LocalError("Only administrators can edit the account of an administrator.",w,r,user)
 		return
@@ -1264,15 +1292,13 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var err error
-	targetUser := User{ID: 0,}
-	targetUser.ID, err = strconv.Atoi(r.URL.Path[len("/panel/users/edit/submit/"):])
+	tid, err := strconv.Atoi(r.URL.Path[len("/panel/users/edit/submit/"):])
 	if err != nil {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
 	}
 	
-	err = db.QueryRow("select `name`,`email`,`group` from `users` where `uid` = ?", targetUser.ID).Scan(&targetUser.Name, &targetUser.Email, &targetUser.Group)
+	targetUser, err := users.Get(tid)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
@@ -1281,8 +1307,6 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	targetUser.Is_Admin = targetUser.Is_Super_Admin || groups[targetUser.Group].Is_Admin
-	targetUser.Is_Super_Mod = groups[targetUser.Group].Is_Mod || targetUser.Is_Admin
 	if targetUser.Is_Admin && !user.Is_Admin {
 		LocalError("Only administrators can edit the account of an administrator.",w,r,user)
 		return
@@ -1338,6 +1362,12 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 	
 	if newpassword != "" {
 		SetPassword(targetUser.ID, newpassword)
+	}
+	
+	err = users.Load(targetUser.ID)
+	if err != nil {
+		LocalError("This user no longer exists!",w,r,user)
+		return
 	}
 	
 	http.Redirect(w,r,"/panel/users/edit/" + strconv.Itoa(targetUser.ID),http.StatusSeeOther)

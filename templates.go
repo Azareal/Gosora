@@ -871,6 +871,7 @@ func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect refle
 }
 
 func (c *CTemplateSet) compile_command(*parse.CommandNode) (out string) {
+	panic("Uh oh! Something went wrong!")
 	return ""
 }
 

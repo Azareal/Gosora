@@ -9,6 +9,8 @@ import "golang.org/x/crypto/bcrypt"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
+var guest_user User = User{ID:0,Group:6,Perms:GuestPerms}
+
 type User struct
 {
 	ID int
@@ -44,9 +46,11 @@ type Email struct
 }
 
 type UserStore interface {
+	Load(id int) error
 	Get(id int) (*User, error)
 	GetUnsafe(id int) (*User, error)
 	CascadeGet(id int) (*User, error)
+	Set(item *User) error
 	Add(item *User) error
 	AddUnsafe(item *User) error
 	Remove(id int) error
@@ -94,10 +98,56 @@ func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
 	
 	user = &User{ID:id}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	}
+	user.Tag = groups[user.Group].Tag
+	init_user_perms(user)
 	if err == nil {
 		sts.Add(user)
 	}
 	return user, err
+}
+
+func (sts *StaticUserStore) Load(id int) error {
+	user := &User{ID:id}
+	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	if err != nil {
+		return err
+	}
+	
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	}
+	user.Tag = groups[user.Group].Tag
+	init_user_perms(user)
+	sts.Set(user)
+	return nil
+}
+
+func (sts *StaticUserStore) Set(item *User) error {
+	sts.mu.Lock()
+	item, ok := sts.items[item.ID]
+	if ok {
+		sts.items[item.ID] = item
+	} else if sts.length >= sts.capacity {
+		sts.mu.Unlock()
+		return ErrStoreCapacityOverflow
+	} else {
+		sts.items[item.ID] = item
+	}
+	sts.mu.Unlock()
+	sts.length++
+	return nil
 }
 
 func (sts *StaticUserStore) Add(item *User) error {
@@ -161,22 +211,62 @@ func NewSqlUserStore() *SqlUserStore {
 func (sus *SqlUserStore) Get(id int) (*User, error) {
 	user := User{ID:id}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	}
+	user.Tag = groups[user.Group].Tag
+	init_user_perms(&user)
 	return &user, err
 }
 
 func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 	user := User{ID:id}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	}
+	user.Tag = groups[user.Group].Tag
+	init_user_perms(&user)
 	return &user, err
 }
 
 func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 	user := User{ID:id}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	}
+	user.Tag = groups[user.Group].Tag
+	init_user_perms(&user)
 	return &user, err
 }
 
+func (sus *SqlUserStore) Load(id int) error {
+	user := &User{ID:id}
+	// Simplify this into a quick check whether the user exists
+	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	return err
+}
+
 // Placeholder methods, the actual queries are done elsewhere
+func (sus *SqlUserStore) Set(item *User) error {
+	return nil
+}
 func (sus *SqlUserStore) Add(item *User) error {
 	return nil
 }
@@ -258,6 +348,8 @@ func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user Us
 	}
 	user, success = SimpleSessionCheck(w,r)
 	fperms := groups[user.Group].Forums[fid]
+	//fmt.Printf("%+v\n", user.Perms)
+	//fmt.Printf("%+v\n", fperms)
 	if fperms.Overrides && !user.Is_Super_Admin {
 		user.Perms.ViewTopic = fperms.ViewTopic
 		user.Perms.LikeItem = fperms.LikeItem
@@ -288,59 +380,34 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (User,bool) {
 	// Are there any session cookies..?
 	cookie, err := r.Cookie("uid")
 	if err != nil {
-		return User{ID:0,Group:6,Perms:GuestPerms}, true
+		return guest_user, true
 	}
 	uid, err := strconv.Atoi(cookie.Value)
 	if err != nil {
-		return User{ID:0,Group:6,Perms:GuestPerms}, true
+		return guest_user, true
 	}
 	cookie, err = r.Cookie("session")
 	if err != nil {
-		return User{ID:0,Group:6,Perms:GuestPerms}, true
+		return guest_user, true
 	}
 	
 	// Is this session valid..?
 	user, err := users.CascadeGet(uid)
 	if err == sql.ErrNoRows {
-		user.ID = 0
-		user.Session = ""
-		user.Group = 6
-		user.Perms = GuestPerms
-		return *user, true
+		return guest_user, true
 	} else if err != nil {
 		InternalError(err,w,r)
-		return *user, false
+		return guest_user, false
 	}
 	
 	if user.Session == "" || cookie.Value != user.Session {
-		user.ID = 0
-		user.Session = ""
-		user.Group = 6
-		user.Perms = GuestPerms
-		return *user, true
-	}
-	
-	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin
-	user.Is_Super_Mod = groups[user.Group].Is_Mod || user.Is_Admin
-	user.Is_Mod = user.Is_Super_Mod
-	user.Is_Banned = groups[user.Group].Is_Banned
-	user.Loggedin = !user.Is_Banned || user.Is_Super_Mod
-	if user.Is_Banned && user.Is_Super_Mod {
-		user.Is_Banned = false
+		return guest_user, true
 	}
 	
 	if user.Is_Super_Admin {
 		user.Perms = AllPerms
 	} else {
 		user.Perms = groups[user.Group].Perms
-	}
-	
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -447,4 +514,14 @@ func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error 
 	}
 	_, err = update_user_level_stmt.Exec(getLevel(user.Score - base_score - mod), uid)
 	return err
+}
+
+func init_user_perms(user *User) {
+	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin
+	user.Is_Super_Mod = user.Is_Admin || groups[user.Group].Is_Mod
+	user.Is_Mod = user.Is_Super_Mod
+	user.Is_Banned = groups[user.Group].Is_Banned
+	if user.Is_Banned && user.Is_Super_Mod {
+		user.Is_Banned = false
+	}
 }

@@ -9,6 +9,8 @@ import "strconv"
 import "encoding/json"
 
 var db *sql.DB
+var db_version string
+
 var get_user_stmt *sql.Stmt
 var get_full_user_stmt *sql.Stmt
 var get_topic_list_stmt *sql.Stmt
@@ -91,6 +93,9 @@ func init_database(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	
+	// Getting the database version..
+	db.QueryRow("SELECT VERSION()").Scan(&db_version)
 	
 	/*log.Print("Preparing get_session statement.")
 	get_session_stmt, err = db.Prepare("select `uid`,`name`,`group`,`is_super_admin`,`session`,`email`,`avatar`,`message`,`url_prefix`,`url_name`,`level`,`score`,`last_ip` from `users` where `uid` = ? and `session` = ? AND `session` <> ''")

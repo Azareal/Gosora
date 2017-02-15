@@ -80,9 +80,11 @@ type TopicsRow struct
 }
 
 type TopicStore interface {
+	Load(id int) error
 	Get(id int) (*Topic, error)
 	GetUnsafe(id int) (*Topic, error)
 	CascadeGet(id int) (*Topic, error)
+	Set(item *Topic) error
 	Add(item *Topic) error
 	AddUnsafe(item *Topic) error
 	Remove(id int) error
@@ -135,6 +137,31 @@ func (sts *StaticTopicStore) CascadeGet(id int) (*Topic, error) {
 		sts.Add(topic)
 	}
 	return topic, err
+}
+
+func (sts *StaticTopicStore) Load(id int) error {
+	topic := &Topic{ID:id}
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	if err == nil {
+		sts.Set(topic)
+	}
+	return err
+}
+
+func (sts *StaticTopicStore) Set(item *Topic) error {
+	sts.mu.Lock()
+	item, ok := sts.items[item.ID]
+	if ok {
+		sts.items[item.ID] = item
+	} else if sts.length >= sts.capacity {
+		sts.mu.Unlock()
+		return ErrStoreCapacityOverflow
+	} else {
+		sts.items[item.ID] = item
+	}
+	sts.mu.Unlock()
+	sts.length++
+	return nil
 }
 
 func (sts *StaticTopicStore) Add(item *Topic) error {
@@ -218,7 +245,16 @@ func (sus *SqlTopicStore) CascadeGet(id int) (*Topic, error) {
 	return &topic, err
 }
 
+func (sus *SqlTopicStore) Load(id int) error {
+	topic := Topic{ID:id}
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	return err
+}
+
 // Placeholder methods, the actual queries are done elsewhere
+func (sus *SqlTopicStore) Set(item *Topic) error {
+	return nil
+}
 func (sus *SqlTopicStore) Add(item *Topic) error {
 	return nil
 }
@@ -252,6 +288,7 @@ func get_topicuser(tid int) (TopicUser,error) {
 			if err != nil {
 				return TopicUser{ID:tid}, err
 			}
+			init_user_perms(user)
 			
 			// We might be better off just passing seperate topic and user structs to the caller?
 			return copy_topic_to_topicuser(topic, user), nil
@@ -264,13 +301,8 @@ func get_topicuser(tid int) (TopicUser,error) {
 			if err != nil {
 				return TopicUser{ID:tid}, err
 			}
+			init_user_perms(user)
 			tu := copy_topic_to_topicuser(topic, user)
-			//fmt.Printf("%+v\n", topic)
-			//fmt.Println("")
-			//fmt.Printf("%+v\n", user)
-			//fmt.Println("")
-			//fmt.Printf("%+v\n", tu)
-			//fmt.Println("")
 			return tu, nil
 		}
 	}
@@ -280,7 +312,9 @@ func get_topicuser(tid int) (TopicUser,error) {
 	
 	the_topic := Topic{ID:tu.ID, Title:tu.Title, Content:tu.Content, CreatedBy:tu.CreatedBy, Is_Closed:tu.Is_Closed, Sticky:tu.Sticky, CreatedAt:tu.CreatedAt, LastReplyAt:tu.LastReplyAt, ParentID:tu.ParentID, IpAddress:tu.IpAddress, PostCount:tu.PostCount, LikeCount:tu.LikeCount}
 	//fmt.Printf("%+v\n", the_topic)
+	tu.Tag = groups[tu.Group].Tag
 	topics.Add(&the_topic)
+	//err = errors.Error("Loaded data via query")
 	return tu, err
 }
 

@@ -4,9 +4,9 @@ import "log"
 import "bytes"
 import "strings"
 import "mime"
-import "errors"
+//import "errors"
 import "os"
-import "io"
+//import "io"
 import "io/ioutil"
 import "path/filepath"
 import "net/http"
@@ -23,7 +23,7 @@ type SFile struct
 	FormattedModTime string
 }
 
-func (r SFile) Read(b []byte) (n int, err error) {
+/*func (r SFile) Read(b []byte) (n int, err error) {
 	n = 0
 	if r.Pos > r.Length {
 		return n, io.EOF
@@ -58,7 +58,7 @@ func (r SFile) Seek(offset int64, whence int) (int64, error) {
 			return 0, errors.New("invalid whence")
 	}
 	return r.Pos, nil
-}
+}*/
 
 func add_static_file(path string, prefix string) error {
 	data, err := ioutil.ReadFile(path)

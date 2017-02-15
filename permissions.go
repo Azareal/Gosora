@@ -153,6 +153,8 @@ func init() {
 		ExtData: make(map[string]bool),
 	}
 	
+	guest_user.Perms = GuestPerms
+	
 	if debug {
 		fmt.Printf("Guest Perms: ")
 		fmt.Printf("%+v\n", GuestPerms)

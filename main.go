@@ -123,6 +123,29 @@ func init_templates() {
 	template.Must(templates.ParseGlob("pages/*"))
 }
 
+func init_static_files() {
+	log.Print("Loading the static files.")
+	err := filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
+		if f.IsDir() {
+			return nil
+		}
+		
+		path = strings.Replace(path,"\\","/",-1)
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		
+		path = strings.TrimPrefix(path,"public/")
+		log.Print("Added the '" + path + "' static file.")
+		static_files["/static/" + path] = SFile{data,compress_bytes_gzip(data),0,int64(len(data)),mime.TypeByExtension(filepath.Ext("/public/" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main(){
 	//if profiling {
 	//	f, err := os.Create("startup_cpu.prof")
@@ -151,27 +174,7 @@ func main(){
 		topics = NewSqlTopicStore()
 	}
 	
-	log.Print("Loading the static files.")
-	err = filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
-		if f.IsDir() {
-			return nil
-		}
-		
-		path = strings.Replace(path,"\\","/",-1)
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		
-		path = strings.TrimPrefix(path,"public/")
-		log.Print("Added the '" + path + "' static file.")
-		static_files["/static/" + path] = SFile{data,compress_bytes_gzip(data),0,int64(len(data)),mime.TypeByExtension(filepath.Ext("/public/" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
-		return nil
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	
+	init_static_files()
 	external_sites["YT"] = "https://www.youtube.com/"
 	hooks["trow_assign"] = nil
 	hooks["rrow_assign"] = nil
