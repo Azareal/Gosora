@@ -7,12 +7,12 @@
 		<div class="rowitem topic_item"{{if .Topic.Sticky}} style="background-color:#FFFFEA;"{{else if .Topic.Is_Closed}} style="background-color:#eaeaea;"{{end}}>
 			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a> 
 			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
-			{{if .CurrentUser.Is_Mod}}
+			{{if .CurrentUser.Perms.EditTopic}}
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />
-			<select name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
+			{{if .CurrentUser.Perms.CloseTopic}}<select name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
 				<option>open</option>
 				<option>closed</option>
-			</select>
+			</select>{{end}}
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
 			{{end}}
 		</div>
@@ -23,11 +23,10 @@
 		<p class="hide_on_edit topic_content user_content" style="margin:0;padding:0;">{{.Topic.Content}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea><br /><br />
 		<a href="/user/{{.Topic.CreatedBy}}" class="username real_username">{{.Topic.CreatedByName}}</a>&nbsp;
-		<a href="/topic/like/submit/{{.Topic.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username" style="{{if .Topic.Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}">😀</button></a>&nbsp;
-		{{if .CurrentUser.Is_Mod}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic"><button class="username">🖊️</button></a>&nbsp;
-		<a href='/topic/delete/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Delete Topic"><button class="username">🗑️</button></a>&nbsp;
-		{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}' style="font-weight:normal;" title="Unpin Topic"><button class="username" style="background-color:/*#eaffea*/#D6FFD6;">📌</button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Pin Topic"><button class="username">📌</button></a>{{end}}
-		{{end}}&nbsp;
+		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username" style="{{if .Topic.Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}">😀</button></a>&nbsp;{{end}}
+		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic"><button class="username">🖊️</button></a>&nbsp;{{end}}
+		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Delete Topic"><button class="username">🗑️</button></a>&nbsp;{{end}}
+		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}' style="font-weight:normal;" title="Unpin Topic"><button class="username" style="background-color:/*#eaffea*/#D6FFD6;">📌</button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Pin Topic"><button class="username">📌</button></a>&nbsp;{{end}}{{end}}
 		<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag Topic"><button class="username">🚩</button></a>&nbsp;
 		{{if .Topic.LikeCount}}<a class="username hide_on_micro" style="float: right;color:#505050;border-left:none;padding-left:5px;padding-right:5px;font-size:17px;">{{.Topic.LikeCount}}</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;margin-left:5px;" title="Like Count">😀</a>{{end}}
 		{{if .Topic.Tag}}<a class="username hide_on_micro" style="float:right;color:#505050;font-size:16px;">{{.Topic.Tag}}</a>{{else}}<a class="username hide_on_micro" style="float: right;color:#505050;border-left:none;padding-left:5px;padding-right:5px;font-size:17px;">{{.Topic.Level}}</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;" title="Level">👑</a>{{end}}
@@ -37,7 +36,7 @@
 	<div class="rowitem rowhead passive deletable_block editable_parent post_item" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;{{.Css}}{{end}}">
 		<p class="editable_block user_content" style="margin: 0;padding: 0;">{{.ContentHtml}}</p><br /><br />
 		<a href="/user/{{.CreatedBy}}" class="username real_username">{{.CreatedByName}}</a>&nbsp;
-		<a href="/reply/like/submit/{{.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username" style="{{if .Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}">😀</button></a>&nbsp;
+		{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username" style="{{if .Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}">😀</button></a>&nbsp;{{end}}
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Reply"><button class="username edit_item">🖊️</button></a>&nbsp;{{end}}
 		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Reply"><button class="username delete_item">🗑️</button></a>&nbsp;{{end}}
 		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button" title="Flag Reply"><button class="username report_item">🚩</button></a>&nbsp;

@@ -1334,7 +1334,7 @@ func TestForumAdminRoute(t *testing.T) {
 	admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
 	
 	forum_w := httptest.NewRecorder()
-	forum_req := httptest.NewRequest("get","/forum/2",bytes.NewReader(nil))
+	forum_req := httptest.NewRequest("get","/forum/1",bytes.NewReader(nil))
 	forum_req_admin := forum_req
 	forum_req_admin.AddCookie(&admin_uid_cookie)
 	forum_req_admin.AddCookie(&admin_session_cookie)

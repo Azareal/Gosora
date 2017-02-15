@@ -96,7 +96,7 @@ func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
 		return user, nil
 	}
 	
-	user = &User{ID:id}
+	user = &User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	
 	if user.Avatar != "" {
@@ -115,7 +115,7 @@ func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
 }
 
 func (sts *StaticUserStore) Load(id int) error {
-	user := &User{ID:id}
+	user := &User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	if err != nil {
 		return err
@@ -209,7 +209,7 @@ func NewSqlUserStore() *SqlUserStore {
 }
 
 func (sus *SqlUserStore) Get(id int) (*User, error) {
-	user := User{ID:id}
+	user := User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	
 	if user.Avatar != "" {
@@ -225,7 +225,7 @@ func (sus *SqlUserStore) Get(id int) (*User, error) {
 }
 
 func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
-	user := User{ID:id}
+	user := User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	
 	if user.Avatar != "" {
@@ -241,7 +241,7 @@ func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 }
 
 func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
-	user := User{ID:id}
+	user := User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	
 	if user.Avatar != "" {
