@@ -18,6 +18,7 @@ type SFile struct
 	GzipData []byte
 	Pos int64
 	Length int64
+	GzipLength int64
 	Mimetype string
 	Info os.FileInfo
 	FormattedModTime string
@@ -77,8 +78,9 @@ func add_static_file(path string, prefix string) error {
 	log.Print("Adding the '" + path + "' static file")
 	path = strings.TrimPrefix(path, prefix)
 	log.Print("Added the '" + path + "' static file")
+	gzip_data := compress_bytes_gzip(data)
 	
-	static_files["/static" + path] = SFile{data,compress_bytes_gzip(data),0,int64(len(data)),mime.TypeByExtension(filepath.Ext(prefix + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
+	static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext(prefix + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
 	return nil
 }
 

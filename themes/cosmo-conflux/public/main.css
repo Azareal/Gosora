@@ -174,7 +174,6 @@ hr { color: silver; border: 1px solid silver; }
 .rowhead span { display: block; padding-top: 5px; }
 .colhead a { color: white; display: block; padding-top: 5px; }
 .colhead span { display: block; padding-top: 5px; }
-.open_edit { display: none !important; }
 .show_on_edit { display: none; }
 .rowhead .topic_status_e { display: none !important; }
 .topic_button { float: right; position: relative; top: -22px; margin-right: 2px; border-style: solid !important; }

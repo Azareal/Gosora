@@ -41,13 +41,14 @@ func route_static(w http.ResponseWriter, r *http.Request){
 	h := w.Header()
 	h.Set("Last-Modified", file.FormattedModTime)
 	h.Set("Content-Type", file.Mimetype)
-	h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
 	//http.ServeContent(w,r,r.URL.Path,file.Info.ModTime(),file)
 	//w.Write(file.Data)
 	if strings.Contains(r.Header.Get("Accept-Encoding"),"gzip") {
 		h.Set("Content-Encoding","gzip")
+		h.Set("Content-Length", strconv.FormatInt(file.GzipLength, 10))
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?
 	} else {
+		h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
 		io.Copy(w, bytes.NewReader(file.Data))
 	}
 	//io.CopyN(w, bytes.NewReader(file.Data), static_files[r.URL.Path].Length)

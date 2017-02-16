@@ -59,7 +59,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	
 	err = topics.Load(tid)
 	if err != nil {
-		LocalError("This topic no longer exists!",w,r,user)
+		LocalErrorJSQ("This topic no longer exists!",w,r,user,is_js)
 		return
 	}
 	
@@ -153,8 +153,12 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r)
 		return
 	}
-	
-	topic.Sticky = true
+	//topic.Sticky = true
+	err = topics.Load(tid)
+	if err != nil {
+		LocalError("This topic doesn't exist!",w,r,user)
+		return
+	}
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
@@ -188,8 +192,12 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r)
 		return
 	}
-	
-	topic.Sticky = false
+	//topic.Sticky = false
+	err = topics.Load(tid)
+	if err != nil {
+		LocalError("This topic doesn't exist!",w,r,user)
+		return
+	}
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 

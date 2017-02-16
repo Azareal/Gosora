@@ -6,9 +6,8 @@ var header_0 []byte = []byte(`<!doctype html>
 		<title>`)
 var header_1 []byte = []byte(`</title>
 		<link href="/static/main.css" rel="stylesheet" type="text/css">
-		<script type="text/javascript" src="/static/jquery-1.12.3.min.js"></script>
-		<script type="text/javascript">
-		var session = "`)
+		<script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript">var session = "`)
 var header_2 []byte = []byte(`";
 		</script>
 		<script type="text/javascript" src="/static/global.js"></script>
@@ -47,7 +46,8 @@ var menu_7 []byte = []byte(`
 	<div style="clear: both;"></div>
 </div>`)
 var header_3 []byte = []byte(`
-<div id="back"><div id="main">`)
+<div id="back"><div id="main">
+`)
 var header_4 []byte = []byte(`<div class="alert">`)
 var header_5 []byte = []byte(`</div>`)
 var topic_0 []byte = []byte(`<div id="prevFloat" class="prev_button"><a class="prev_link" href="/topic/`)

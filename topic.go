@@ -144,13 +144,15 @@ func (sts *StaticTopicStore) Load(id int) error {
 	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
 	if err == nil {
 		sts.Set(topic)
+	} else {
+		sts.Remove(id)
 	}
 	return err
 }
 
 func (sts *StaticTopicStore) Set(item *Topic) error {
 	sts.mu.Lock()
-	item, ok := sts.items[item.ID]
+	_, ok := sts.items[item.ID]
 	if ok {
 		sts.items[item.ID] = item
 	} else if sts.length >= sts.capacity {
@@ -158,9 +160,9 @@ func (sts *StaticTopicStore) Set(item *Topic) error {
 		return ErrStoreCapacityOverflow
 	} else {
 		sts.items[item.ID] = item
+		sts.length++
 	}
 	sts.mu.Unlock()
-	sts.length++
 	return nil
 }
 

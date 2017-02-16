@@ -104,8 +104,9 @@ func add_theme_static_files(themeName string) {
 		
 		path = strings.TrimPrefix(path,"themes/" + themeName + "/public")
 		log.Print("Added the '" + path + "' static file for default theme " + themeName + ".")
+		gzip_data := compress_bytes_gzip(data)
 		
-		static_files["/static" + path] = SFile{data,compress_bytes_gzip(data),0,int64(len(data)),mime.TypeByExtension(filepath.Ext("/themes/" + themeName + "/public" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
+		static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext("/themes/" + themeName + "/public" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
 		return nil
 	})
 	if err != nil {

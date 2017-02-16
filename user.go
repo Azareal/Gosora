@@ -118,6 +118,7 @@ func (sts *StaticUserStore) Load(id int) error {
 	user := &User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	if err != nil {
+		sts.Remove(id)
 		return err
 	}
 	
@@ -136,7 +137,7 @@ func (sts *StaticUserStore) Load(id int) error {
 
 func (sts *StaticUserStore) Set(item *User) error {
 	sts.mu.Lock()
-	item, ok := sts.items[item.ID]
+	_, ok := sts.items[item.ID]
 	if ok {
 		sts.items[item.ID] = item
 	} else if sts.length >= sts.capacity {
@@ -144,9 +145,9 @@ func (sts *StaticUserStore) Set(item *User) error {
 		return ErrStoreCapacityOverflow
 	} else {
 		sts.items[item.ID] = item
+		sts.length++
 	}
 	sts.mu.Unlock()
-	sts.length++
 	return nil
 }
 

@@ -4,13 +4,13 @@ function post_link(event)
 {
 	event.preventDefault();
 	var form_action = $(event.target).closest('a').attr("href");
-	console.log("Form Action: " + form_action);
+	//console.log("Form Action: " + form_action);
 	$.ajax({ url: form_action, type: "POST", dataType: "json", data: { js: "1" } });
 }
 
 $(document).ready(function(){
 	$(".open_edit").click(function(event){
-		console.log("Clicked on edit");
+		//console.log("Clicked on edit");
 		event.preventDefault();
 		$(".hide_on_edit").hide();
 		$(".show_on_edit").show();
@@ -29,9 +29,9 @@ $(document).ready(function(){
 		var topic_status_input = $('.topic_status_input').val();
 		var topic_content_input = $('.topic_content_input').val();
 		var form_action = $(this).closest('form').attr("action");
-		console.log("New Topic Name: " + topic_name_input);
-		console.log("New Topic Status: " + topic_status_input);
-		console.log("Form Action: " + form_action);
+		//console.log("New Topic Name: " + topic_name_input);
+		//console.log("New Topic Status: " + topic_status_input);
+		//console.log("Form Action: " + form_action);
 		$.ajax({
 			url: form_action,
 			data: {
@@ -45,7 +45,6 @@ $(document).ready(function(){
 		});
 	});
 	
-	$(".post_link").click(post_link);
 	$(".delete_item").click(function(event)
 	{
 		post_link(event);
@@ -69,7 +68,7 @@ $(document).ready(function(){
 			block.html(newContent);
 			
 			var form_action = $(this).closest('a').attr("href");
-			console.log("Form Action: " + form_action);
+			//console.log("Form Action: " + form_action);
 			$.ajax({ url: form_action, type: "POST", dataType: "json", data: { is_js: "1", edit_item: newContent }
 			});
 		});
@@ -91,7 +90,7 @@ $(document).ready(function(){
 			block.html(newContent);
 			
 			var form_action = $(this).closest('a').attr("href");
-			console.log("Form Action: " + form_action);
+			//console.log("Form Action: " + form_action);
 			$.ajax({
 				url: form_action + "?session=" + session,
 				type: "POST",
@@ -108,10 +107,10 @@ $(document).ready(function(){
 		block_parent.find('.hide_on_edit').hide();
 		block_parent.find('.editable_block').show();
 		block_parent.find('.editable_block').each(function(){
-			var field_name = $(this).data("field");
-			var field_type = $(this).data("type");
+			var field_name = this.getAttribute("data-field");
+			var field_type = this.getAttribute("data-type");
 			if(field_type=="list") {
-				var field_value = $(this).data("value");
+				var field_value = this.getAttribute("data-value");
 				if(field_name in form_vars) var it = form_vars[field_name];
 				else var it = ['No','Yes'];
 				var itLen = it.length;
@@ -121,9 +120,9 @@ $(document).ready(function(){
 					else sel = "";
 					out += "<option "+sel+"value='"+i+"'>"+it[i]+"</option>";
 				}
-				$(this).html("<select data-field='"+field_name+"' name='"+field_name+"'>" + out + "</select>");
+				this.innerHTML = "<select data-field='"+field_name+"' name='"+field_name+"'>" + out + "</select>";
 			}
-			else $(this).html("<input name='"+field_name+"' value='" + $(this).text() + "' type='text'/>");
+			else this.innerHTML = "<input name='"+field_name+"' value='" + this.textContent + "' type='text'/>";
 		});
 		block_parent.find('.show_on_edit').eq(0).show();
 		
@@ -133,38 +132,38 @@ $(document).ready(function(){
 			var out_data = {is_js: "1"}
 			var block_parent = $(this).closest('.editable_parent');
 			var block = block_parent.find('.editable_block').each(function(){
-				var field_name = $(this).data("field");
-				var field_type = $(this).data("type");
+				var field_name = this.getAttribute("data-field");
+				var field_type = this.getAttribute("data-type");
 				if(field_type == "list") var newContent = $(this).find('select :selected').text();
 				else var newContent = $(this).find('input').eq(0).val();
 				
-				$(this).html(newContent);
+				this.innerHTML = newContent;
 				out_data[field_name] = newContent
 			});
 			
 			var form_action = $(this).closest('a').attr("href");
-			console.log("Form Action: " + form_action);
-			console.log(out_data);
+			//console.log("Form Action: " + form_action);
+			//console.log(out_data);
 			$.ajax({ url: form_action + "?session=" + session, type:"POST", dataType:"json", data: out_data });
 			block_parent.find('.hide_on_edit').show();
 			block_parent.find('.show_on_edit').hide();
 		});
 	});
 	
-	$(this).find(".ip_item").each(function(){
-		var ip = $(this).text();
-		console.log("IP: " + ip);
+	$(".ip_item").each(function(){
+		var ip = this.textContent;
+		//console.log("IP: " + ip);
 		if(ip.length > 10){
-			$(this).html("Show IP");
-			$(this).click(function(event){
+			this.innerHTML = "Show IP";
+			this.onclick = function(event){
 				event.preventDefault();
-				$(this).text(ip);
-			});
+				this.textContent = ip;
+			};
 		}
 	});
 	
-	$(this).keyup(function(event){
-		if(event.which == 37) $("#prevFloat a")[0].click();
-		if(event.which == 39) $("#nextFloat a")[0].click();
-	});
+	this.onkeyup = function(event){
+		if(event.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
+		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
+	};
 });
