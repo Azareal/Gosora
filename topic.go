@@ -1,6 +1,7 @@
 package main
 //import "fmt"
 import "sync"
+import "strconv"
 import "html/template"
 import "database/sql"
 
@@ -341,4 +342,14 @@ func copy_topic_to_topicuser(topic *Topic, user *User) (tu TopicUser) {
 	tu.PostCount = topic.PostCount
 	tu.LikeCount = topic.LikeCount
 	return tu
+}
+
+func get_topic_by_reply(rid int) (*Topic, error) {
+	topic := Topic{ID:0}
+	err := get_topic_by_reply_stmt.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	return &topic, err
+}
+
+func build_topic_url(tid int) string {
+	return "/topic/" + strconv.Itoa(tid)
 }

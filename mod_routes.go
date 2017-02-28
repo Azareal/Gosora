@@ -1412,6 +1412,9 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 	
 	var themeList []interface{}
 	for _, theme := range themes {
+		if theme.HideFromThemes {
+			continue
+		}
 		themeList = append(themeList,theme)
 	}
 	

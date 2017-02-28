@@ -26,6 +26,7 @@ type Theme struct
 	FullImage string
 	MobileFriendly bool
 	Disabled bool
+	HideFromThemes bool
 	Tag string
 	Settings map[string]ThemeSetting
 	Templates []TemplateMapping
@@ -141,21 +142,7 @@ func map_theme_templates(theme Theme) {
 						case *func(TopicPage,io.Writer):
 							//overriden_templates[themeTmpl.Name] = d_tmpl_ptr
 							overriden_templates[themeTmpl.Name] = true
-							//log.Print("Topic Handle")
-							//fmt.Println(template_topic_handle)
-							//log.Print("Before")
-							//fmt.Println(d_tmpl_ptr)
-							//fmt.Println(*d_tmpl_ptr)
-							//log.Print("Source")
-							//fmt.Println(s_tmpl_ptr)
-							//fmt.Println(*s_tmpl_ptr)
 							*d_tmpl_ptr = *s_tmpl_ptr
-							//log.Print("After")
-							//fmt.Println(d_tmpl_ptr)
-							//fmt.Println(*d_tmpl_ptr)
-							//log.Print("Source")
-							//fmt.Println(s_tmpl_ptr)
-							//fmt.Println(*s_tmpl_ptr)
 						default:
 							log.Fatal("The source and destination templates are incompatible")
 					}
@@ -236,19 +223,7 @@ func reset_template_overrides() {
 			case func(TopicPage,io.Writer):
 				switch d_ptr := dest_tmpl_ptr.(type) {
 					case *func(TopicPage,io.Writer):
-						//log.Print("Topic Handle")
-						//fmt.Println(template_topic_handle)
-						//log.Print("Before")
-						//fmt.Println(d_ptr)
-						//fmt.Println(*d_ptr)
-						//log.Print("Origin")
-						//fmt.Println(o_ptr)
 						*d_ptr = o_ptr
-						//log.Print("After")
-						//fmt.Println(d_ptr)
-						//fmt.Println(*d_ptr)
-						//log.Print("Origin")
-						//fmt.Println(o_ptr)
 					default:
 						log.Fatal("The origin and destination templates are incompatible")
 				}

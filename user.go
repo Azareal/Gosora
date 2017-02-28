@@ -526,3 +526,7 @@ func init_user_perms(user *User) {
 		user.Is_Banned = false
 	}
 }
+
+func build_profile_url(uid int) string {
+	return "/user/" + strconv.Itoa(uid)
+}

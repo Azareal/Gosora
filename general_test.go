@@ -10,12 +10,17 @@ import "net/http"
 import "net/http/httptest"
 import "io/ioutil"
 import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
+//import _ "github.com/go-sql-driver/mysql"
+//import "github.com/erikstmartin/go-testdb"
 //import "github.com/husobee/vestigo"
 import "runtime/pprof"
 
+var db_test *sql.DB
+var db_prod *sql.DB
 var gloinited bool = false
+
 func gloinit() {
+	var err error
 	debug = false
 	nogrouplog = true
 	
@@ -24,10 +29,15 @@ func gloinit() {
 	//log.SetOutput(discard)
 	
 	init_themes()
-	var err error
 	init_database(err)
+	db_prod = db
+	//db_test, err = sql.Open("testdb","")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	
 	init_templates()
-	db.SetMaxOpenConns(64)
+	db_prod.SetMaxOpenConns(64)
 	err = init_errors()
 	if err != nil {
 		log.Fatal(err)
@@ -1367,6 +1377,35 @@ func TestForumGuestRoute(t *testing.T) {
 	}
 	fmt.Println("No problems found in the forum-guest route!")
 }
+
+/*func TestAlerts(t *testing.T) {
+	if !gloinited {
+		gloinit()
+	}
+	if !plugins_inited {
+		init_plugins()
+	}
+	db = db_test
+	alert_w := httptest.NewRecorder()
+	alert_req := httptest.NewRequest("get","/api/?action=get&module=alerts",bytes.NewReader(nil))
+	alert_handler := http.HandlerFunc(route_api)
+	//testdb.StubQuery()
+	testdb.SetQueryFunc(func(query string) (result sql.Rows, err error) {
+		cols := []string{"asid","actor","targetUser","event","elementType","elementID"}
+		rows := `1,1,0,like,post,5
+		1,1,0,friend_invite,user,2`
+		return testdb.RowsFromCSVString(cols,rows), nil
+	})
+	
+	alert_handler.ServeHTTP(alert_w,alert_req)
+	fmt.Println(alert_w.Body)
+	if alert_w.Code != 200 {
+		panic("HTTP Error!")
+	}
+	
+	fmt.Println("No problems found in the alert handler!")
+	db = db_prod
+}*/
 
 /*func TestRoute(t *testing.T) {
 	

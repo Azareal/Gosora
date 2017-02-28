@@ -4,6 +4,7 @@
 	"Version": "Coming Soon",
 	"Creator": "Azareal",
 	"Disabled": true,
+	"HideFromThemes": true,
 	"Tag": "WIP",
 	"Templates": [
 		{

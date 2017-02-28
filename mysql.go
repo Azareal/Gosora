@@ -16,8 +16,10 @@ var get_full_user_stmt *sql.Stmt
 var get_topic_list_stmt *sql.Stmt
 var get_topic_user_stmt *sql.Stmt
 var get_topic_stmt *sql.Stmt
+var get_topic_by_reply_stmt *sql.Stmt
 var get_topic_replies_stmt *sql.Stmt
 var get_topic_replies_offset_stmt *sql.Stmt
+var get_post_stmt *sql.Stmt
 var get_forum_topics_stmt *sql.Stmt
 var get_forum_topics_offset_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
@@ -37,6 +39,7 @@ var delete_reply_stmt *sql.Stmt
 var delete_topic_stmt *sql.Stmt
 var stick_topic_stmt *sql.Stmt
 var unstick_topic_stmt *sql.Stmt
+var get_activity_feed_by_watcher_stmt *sql.Stmt
 var update_last_ip_stmt *sql.Stmt
 var login_stmt *sql.Stmt
 var update_session_stmt *sql.Stmt
@@ -133,6 +136,12 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing get_topic_by_reply statement.")
+	get_topic_by_reply_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount from replies left join topics on replies.tid = topics.tid where rid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Preparing get_topic_replies statement.")
 	get_topic_replies_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?")
 	if err != nil {
@@ -141,6 +150,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing get_topic_replies_offset statement.")
 	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount from replies left join users on replies.createdBy = users.uid where tid = ? limit ?, " + strconv.Itoa(items_per_page))
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing get_post statement.")
+	get_post_stmt, err = db.Prepare("select content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount from replies where rid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -259,6 +274,12 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing get_activity_feed_by_watcher statement.")
+	get_activity_feed_by_watcher_stmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` LEFT JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid WHERE `watcher` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Preparing update_last_ip statement.")
 	update_last_ip_stmt, err = db.Prepare("UPDATE users SET last_ip = ? WHERE uid = ?")
 	if err != nil {
@@ -266,7 +287,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing login statement.")
-	login_stmt, err = db.Prepare("SELECT `uid`, `name`, `password`, `salt` FROM `users` WHERE `name` = ?")
+	login_stmt, err = db.Prepare("SELECT `uid`,`name`,`password`,`salt` FROM `users` WHERE `name` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -290,7 +311,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_password statement.")
-	get_password_stmt, err = db.Prepare("SELECT `password`, `salt` FROM `users` WHERE `uid` = ?")
+	get_password_stmt, err = db.Prepare("SELECT `password`,`salt` FROM `users` WHERE `uid` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -444,19 +465,19 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing add_forum_perms_to_forum_admins statement.")
-	add_forum_perms_to_forum_admins_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset, ? AS permissions FROM users_groups WHERE is_admin = 1")
+	add_forum_perms_to_forum_admins_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset,? AS permissions FROM users_groups WHERE is_admin = 1")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing add_forum_perms_to_forum_staff statement.")
-	add_forum_perms_to_forum_staff_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset, ? AS permissions FROM users_groups WHERE is_admin = 0 AND is_mod = 1")
+	add_forum_perms_to_forum_staff_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset,? AS permissions FROM users_groups WHERE is_admin = 0 AND is_mod = 1")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing add_forum_perms_to_forum_members statement.")
-	add_forum_perms_to_forum_members_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset, ? AS permissions FROM users_groups WHERE is_admin = 0 AND is_mod = 0 AND is_banned = 0")
+	add_forum_perms_to_forum_members_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset,? AS permissions FROM users_groups WHERE is_admin = 0 AND is_mod = 0 AND is_banned = 0")
 	if err != nil {
 		log.Fatal(err)
 	}

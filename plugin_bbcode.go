@@ -364,21 +364,20 @@ func bbcode_full_parse(data interface{}) interface{} {
 				}
 			}
 		}
-		//fmt.Println(outbytes)
 		//fmt.Println(string(outbytes))
 		if lastTag != i {
-			outbytes = append(outbytes, msgbytes[lastTag:len(msgbytes) - 10]...)
+			outbytes = append(outbytes, msgbytes[lastTag:]...)
 		}
 		if len(outbytes) != 0 {
-			return string(outbytes)
+			return string(outbytes[0:len(msgbytes) - 10])
 		}
 		
-		msg = string(msgbytes)
+		msg = string(msgbytes[0:len(msgbytes) - 10])
 		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
 		// Convert [code] into class="codequotes"
 	} else {
-		msg = string(msgbytes)
+		msg = string(msgbytes[0:len(msgbytes) - 10])
 	}
 	return msg
 }

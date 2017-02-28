@@ -41,6 +41,12 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, is_js s
 	log.Fatal(err)
 }
 
+func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(500)
+	w.Write([]byte(`{'errmsg': 'A problem has occured in the system.'}`))
+	log.Fatal(err)
+}
+
 func PreError(errmsg string, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(500)
 	user := User{ID:0,Group:6,Perms:GuestPerms,}
@@ -89,6 +95,11 @@ func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user U
 	} else {
 		w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
 	}
+}
+
+func LocalErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(500)
+	w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
 }
 
 func NoPermissions(w http.ResponseWriter, r *http.Request, user User) {

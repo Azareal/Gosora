@@ -55,6 +55,31 @@ li a
 	padding-right: 10px;
 }
 
+.menu_alerts {
+	padding-left: 7px;
+	padding-top: 2px;
+	color: rgb(80,80,80);
+}
+.menu_alerts .alert_counter {
+	position:relative;
+	font-size: 9px;
+	top: -24px;
+	background-color: rgb(140,0,0);
+	color: white;
+	padding: 3px;
+	width: 14px;
+	left: 10px;
+	line-height: 8px;
+	border-radius: 20px;
+	padding-top: 2.5px;
+	height: 14px;
+	opacity: 0.8;
+	text-align: center;
+}
+.menu_alerts .alert_counter:empty {
+	display: none;
+}
+
 .container
 {
 	width: 90%;

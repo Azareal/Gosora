@@ -1605,3 +1605,187 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w,&cookie)
 	http.Redirect(w,r, "/", http.StatusSeeOther)
 }
+
+func route_api(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	is_js := r.PostFormValue("js")
+	if is_js == "" {
+		is_js = "0"
+	}
+	if err != nil {
+		PreErrorJSQ("Bad Form",w,r,is_js)
+		return
+	}
+	
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	
+	action := r.FormValue("action")
+	if action != "get" && action != "set" {
+		PreErrorJSQ("Invalid Action",w,r,is_js)
+		return
+	}
+	
+	module := r.FormValue("module")
+	switch(module) {
+		case "alerts": // A feed of events tailored for a specific user
+			w.Header().Set("Content-Type","application/json")
+			if !user.Loggedin {
+				w.Write([]byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`))
+				return
+			}
+			
+			var msglist string
+			var asid int
+			var actor_id int
+			var targetUser_id int
+			var event string
+			var elementType string
+			var elementID int
+			//---
+			var targetUser *User
+			
+			rows, err := get_activity_feed_by_watcher_stmt.Query(user.ID)
+			if err != nil {
+				InternalErrorJS(err,w,r)
+				return
+			}
+			
+			for rows.Next() {
+				err = rows.Scan(&asid,&actor_id,&targetUser_id,&event,&elementType,&elementID)
+				if err != nil {
+					InternalErrorJS(err,w,r)
+					return
+				}
+				
+				actor, err := users.CascadeGet(actor_id)
+				if err != nil {
+					LocalErrorJS("Unable to find the actor",w,r)
+					return
+				}
+				
+				/*if elementType != "forum" {
+					targetUser, err = users.CascadeGet(targetUser_id)
+					if err != nil {
+						LocalErrorJS("Unable to find the target user",w,r)
+						return
+					}
+				}*/
+				
+				if event == "friend_invite" {
+					msglist += `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"/user/`+strconv.Itoa(actor.ID)+`"},`
+					continue
+				}
+				
+				/*
+				"You received a friend invite from {user}"
+				"{x}{mentioned you on}{user}{'s profile}"
+				"{x}{mentioned you in}{topic}"
+				"{x}{likes}{you}"
+				"{x}{liked}{your topic}{topic}"
+				"{x}{liked}{your post on}{user}{'s profile}" todo
+				"{x}{liked}{your post in}{topic}"
+				"{x}{replied to}{your post in}{topic}" todo
+				"{x}{created a new topic}{topic}"
+				*/
+				
+				var act string
+				var post_act string
+				var url string
+				var area string
+				var start_frag string
+				var end_frag string
+				switch(elementType) {
+					case "forum":
+						if event == "reply" {
+							act = "created a new topic"
+							topic, err := topics.CascadeGet(elementID)
+							if err != nil {
+								LocalErrorJS("Unable to find the linked topic",w,r)
+								return
+							}
+							url = build_topic_url(elementID)
+							area = topic.Title
+							// Store the forum ID in the targetUser column instead of making a new one? o.O
+							// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now..
+						} else {
+							act = "did something in a forum"
+						}
+					case "topic":
+						topic, err := topics.CascadeGet(elementID)
+						if err != nil {
+							LocalErrorJS("Unable to find the linked topic",w,r)
+							return
+						}
+						url = build_topic_url(elementID)
+						area = topic.Title
+						if targetUser_id == user.ID {
+							post_act = " your topic"
+						}
+					case "user":
+						targetUser, err = users.CascadeGet(elementID)
+						if err != nil {
+							LocalErrorJS("Unable to find the target user",w,r)
+							return
+						}
+						area = targetUser.Name
+						end_frag = "'s profile"
+						url = build_profile_url(elementID)
+					case "post":
+						topic, err := get_topic_by_reply(elementID)
+						if err != nil {
+							LocalErrorJS("Unable to find the target reply or parent topic",w,r)
+							return
+						}
+						url = build_topic_url(elementID)
+						area = topic.Title
+						if targetUser_id == user.ID {
+							post_act = " your post in"
+						}
+					default:
+						LocalErrorJS("Invalid elementType",w,r)
+				}
+				
+				if event == "like" {
+					if elementType == "user" {
+						act = "likes"
+						end_frag = ""
+						if targetUser.ID == user.ID {
+							area = "you"
+						}
+					} else {
+						act = "liked"
+					}
+				} else if event == "mention" {
+					if elementType == "user" {
+						act = "mentioned you on"
+					} else {
+						act = "mentioned you in"
+						post_act = ""
+					}
+				}
+				
+				msglist += `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `"},`
+			}
+			
+			err = rows.Err()
+			if err != nil {
+				InternalErrorJS(err,w,r)
+				return
+			}
+			rows.Close()
+			
+			if len(msglist) != 0 {
+				msglist = msglist[0:len(msglist)-1]
+			}
+			w.Write([]byte(`{"msgs":[`+msglist+`]}`))
+		//case "topics":
+		//case "forums":
+		//case "users":
+		//case "pages":
+		default:
+			PreErrorJSQ("Invalid Module",w,r,is_js)
+	}
+}

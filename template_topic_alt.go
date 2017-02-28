@@ -32,6 +32,10 @@ w.Write(menu_5)
 w.Write(menu_6)
 }
 w.Write(menu_7)
+if !tmpl_topic_alt_vars.CurrentUser.Loggedin {
+w.Write(menu_8)
+}
+w.Write(menu_9)
 w.Write(header_3)
 if len(tmpl_topic_alt_vars.NoticeList) != 0 {
 for _, item := range tmpl_topic_alt_vars.NoticeList {

@@ -112,11 +112,33 @@ CREATE TABLE `users_replies`(
 
 CREATE TABLE `likes`(
 	`weight` tinyint DEFAULT 1 not null,
-	/*`type` tinyint not null, /* Regular Post = 1, Big Post = 2, Mega Post = 3, etc.*/
+	/*`type` tinyint not null, /* Regular Post: 1, Big Post: 2, Mega Post: 3, etc.*/
 	`targetItem` int not null,
 	`targetType` varchar(50) DEFAULT 'replies' not null,
 	`sentBy` int not null,
 	`recalc` tinyint DEFAULT 0 not null
+);
+
+CREATE TABLE `activity_stream_matches`(
+	`watcher` int not null,
+	`asid` int not null
+);
+
+CREATE TABLE `activity_stream`(
+	`asid` int not null AUTO_INCREMENT,
+	`actor` int not null, /* the one doing the act */
+	`targetUser` int not null, /* the user who created the item the actor is acting on, some items like forums may lack a targetUser field */
+	`event` varchar(50) not null, /* mention, like, reply (as in the act of replying to an item, not the reply item type, you can "reply" to a forum by making a topic in it), friend_invite */
+	`elementType` varchar(50) not null, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
+	`elementID` int not null, /* the ID of the element being acted upon */
+	primary key(`asid`)
+);
+
+CREATE TABLE `activity_subscriptions`(
+	`user` int not null,
+	`targetID` int not null,
+	`targetType` varchar(50) not null,
+	`level` tinyint DEFAULT 0 not null /* 0: Mentions (aka the global default for any post), 1: Replies, 2: Everyone*/
 );
 
 CREATE TABLE `settings`(

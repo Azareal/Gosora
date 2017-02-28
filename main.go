@@ -184,8 +184,7 @@ func main(){
 	init_plugins()
 	
 	router := NewRouter()
-	router.HandleFunc("/static/", route_static) // In a directory to stop it clashing with the other paths
-	
+	router.HandleFunc("/static/", route_static)
 	fs_u := http.FileServer(http.Dir("./uploads"))
 	router.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))
 	
@@ -260,6 +259,7 @@ func main(){
 	router.HandleFunc("/panel/users/edit/", route_panel_users_edit)
 	router.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
 	router.HandleFunc("/panel/groups/", route_panel_groups)
+	router.HandleFunc("/api/", route_api)
 	//router.HandleFunc("/exit/", route_exit)
 	
 	router.HandleFunc("/", default_route)
