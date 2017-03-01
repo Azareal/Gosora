@@ -19,7 +19,7 @@ var get_topic_stmt *sql.Stmt
 var get_topic_by_reply_stmt *sql.Stmt
 var get_topic_replies_stmt *sql.Stmt
 var get_topic_replies_offset_stmt *sql.Stmt
-var get_post_stmt *sql.Stmt
+var get_reply_stmt *sql.Stmt
 var get_forum_topics_stmt *sql.Stmt
 var get_forum_topics_offset_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
@@ -154,8 +154,8 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
-	log.Print("Preparing get_post statement.")
-	get_post_stmt, err = db.Prepare("select content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount from replies where rid = ?")
+	log.Print("Preparing get_reply statement.")
+	get_reply_stmt, err = db.Prepare("select content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount from replies where rid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

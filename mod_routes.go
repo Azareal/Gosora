@@ -66,7 +66,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,"{'success': '1'}")
+		fmt.Fprintf(w,`{"success":"1"}`)
 	}
 }
 
@@ -255,7 +255,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		http.Redirect(w,r, "/topic/" + strconv.Itoa(tid) + "#reply-" + strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,"{'success': '1'}")
+		fmt.Fprintf(w,`{"success":"1"}`)
 	}
 }
 
@@ -316,7 +316,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		//http.Redirect(w,r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,"{'success': '1'}")
+		fmt.Fprintf(w,`{"success":"1"}`)
 	}
 	
 	wcount := word_count(content)
@@ -382,7 +382,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		http.Redirect(w,r, "/user/" + strconv.Itoa(uid) + "#reply-" + strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,"{'success': '1'}")
+		fmt.Fprintf(w,`{"success":"1"}`)
 	}
 }
 
@@ -433,7 +433,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		//http.Redirect(w,r, "/user/" + strconv.Itoa(uid), http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,"{'success': '1'}")
+		fmt.Fprintf(w,`{"success":"1"}`)
 	}
 }
 
@@ -878,7 +878,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,"{'success': '1'}")
+		fmt.Fprintf(w,`{"success":"1"}`)
 	}
 }
 

@@ -5,7 +5,7 @@ function post_link(event)
 	event.preventDefault();
 	var form_action = $(event.target).closest('a').attr("href");
 	//console.log("Form Action: " + form_action);
-	$.ajax({ url: form_action, type: "POST", dataType: "json", data: { js: "1" } });
+	$.ajax({ url: form_action, type: "POST", dataType: "json", data: {js: "1"} });
 }
 
 $(document).ready(function(){
@@ -160,6 +160,65 @@ $(document).ready(function(){
 				this.textContent = ip;
 			};
 		}
+	});
+	
+	$(".menu_alerts").click(function(event) {
+		if($(this).hasClass("selectedAlert")) return;
+		var menu_alerts = $(this);
+		
+		this.className += " selectedAlert";
+		$.ajax({
+			type: 'get',
+			dataType: 'json',
+			url:'/api/?action=get&module=alerts&format=json',
+			success: function(data) {
+				if("errmsg" in data) {
+					console.log(data.errmsg);
+					menu_alerts.find(".alertList").html("<div class='alertItem'>"+data.errmsg+"</div>");
+					return;
+				}
+				
+				var alist = "";
+				for(var i in data.msgs) {
+					var msg = data.msgs[i];
+					var mmsg = msg.msg;
+					
+					if("sub" in msg) {
+						for(var i = 0; i < msg.sub.length; i++) {
+							mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
+							console.log("Sub #" + i);
+							console.log(msg.sub[i]);
+						}
+					}
+					
+					if("avatar" in msg) {
+						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><div class='text'>"+mmsg+"</div></div>";
+						console.log(msg.avatar);
+					} else {
+						alist += "<div class='alertItem'>"+mmsg+"</div>";
+					}
+					console.log(msg);
+					console.log(mmsg);
+				}
+				
+				if(alist == "") {
+					alist = "<div class='alertItem'>You don't have any alerts</div>"
+				}
+				menu_alerts.find(".alertList").html(alist);
+			},
+			error: function(magic,theStatus,error) {
+				try {
+					var data = JSON.parse(magic.responseText);
+					if("errmsg" in data)
+					{
+						console.log(data.errmsg);
+						errtxt = data.errmsg;
+					}
+					else errtxt = "Unable to get the alerts"
+				} catch(e) { errtxt = "Unable to get the alerts"; }
+				menu_alerts.find(".alertList").html("<div class='alertItem'>"+errtxt+"</div>");
+			}
+		});
 	});
 	
 	this.onkeyup = function(event){

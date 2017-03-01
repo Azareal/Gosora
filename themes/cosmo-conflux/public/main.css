@@ -87,16 +87,75 @@ li:hover
 	padding-right: 10px;
 	height: 38px;
 	text-align: center;
+	border-left: 1px solid #7a7a7a;
 }
 
-.menu_right:hover
-{
-	border: #282828 1px solid;
-	background: #282828;
-	padding-left: 10px;
-	padding-right: 10px;
-	height: 38px;
+.menu_alerts .alert_counter {
+	position: relative;
+	font-size: 9px;
+	top: -24px;
+	background-color: rgb(140,0,0);
+	color: white;
+	padding: 3px;
+	width: 14px;
+	left: 10px;
+	line-height: 8px;
+	border-radius: 20px;
+	padding-top: 2.5px;
+	height: 14px;
+	opacity: 0.8;
 	text-align: center;
+}
+.menu_alerts .alert_counter:empty {
+	display: none;
+}
+
+.selectedAlert {
+	background: white;
+	color: black;
+}
+.selectedAlert:hover {
+	background: white;
+	color: black;
+}
+.menu_alerts .alertList {
+	display: none;
+}
+.selectedAlert .alertList {
+	position: absolute;
+	top: 41px;
+	display: block;
+	background: white;
+	font-size: 10px;
+	line-height: 16px;
+	width: 135px;
+	right: -15px;
+	border-top: 1px solid #ccc;
+	border-left: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+}
+.alertItem {
+	padding: 8px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.alertItem.withAvatar {
+	/*background-image: url('/uploads/avatar_1.jpg');*/
+	background-size: auto 56px;
+	background-repeat: no-repeat;
+	text-align: right;
+	padding-right: 12px;
+	height: 46px;
+}
+.alertItem.withAvatar:not(:last-child) {
+	border-bottom: 1px solid rgb(230,230,230);
+}
+.alertItem.withAvatar .text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	float: right;
+	width: calc(100% - 20px);
+	height: 30px;
 }
 
 #footer
@@ -626,18 +685,7 @@ blockquote p
 	.options:last-child { border-left: 1px solid rgba(100,100,110,0.75); }
 	.right_most { margin-right: 10%; border-right: 1px solid rgba(100,100,110,0.75); }
 	
-	#alertFeed { background: url('../../images/bell.png') no-repeat center center / 24px, rgba(30,30,30,0.75); }
-	#alertFeed:hover { background: url('../../images/bell.png') no-repeat center center / 24px, rgba(90, 90, 90, 0.4); }
-	#mailFeed { background: url('../../images/mail.png') no-repeat center center / 24px, rgba(30,30,30,0.75); }
-	#mailFeed:hover { background: url('../../images/mail.png') no-repeat center center / 24px, rgba(90, 90, 90, 0.4); }
-	#awardFeed { background: url('../../images/emblem.png') no-repeat center center / 24px, rgba(30,30,30,0.75); }
-	#awardFeed:hover { background: url('../../images/emblem.png') no-repeat center center / 24px, rgba(90, 90, 90, 0.4); }
-	
-	.selectedAlert { background: url('../../images/bell.png') no-repeat center center / 24px, rgba(250,250,250, 1) !important; }
-	.selectedMail { background: url('../../images/mail.png') no-repeat center center / 24px, rgba(250,250,250, 1) !important; }
-	.selectedAward { background: url('../../images/emblem.png') no-repeat center center / 24px, rgba(250,250,250, 1) !important; }
-	
-	.options > .counter
+	/*.options > .counter
 	{
 		background: red;
 		border-radius: 5px;
@@ -651,77 +699,7 @@ blockquote p
 		
 		position: absolute;
 		right: 0px;
-	}
-	
-	.options > .alertList
-	{
-		display: none;
-		position: absolute;
-		display: block;
-		width: 250px;
-		left: -250%;
-		top: 40px;
-		opacity: 0;
-		visibility: hidden;
-		overflow: hidden;
-		
-		background: rgba(250,250,250,1);
-		word-wrap: none;
-		box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-		padding: 0px;
-		z-index: 50;
-	}
-	
-	.options > .alertList > h2
-	{
-		font-weight: normal;
-		padding-top: 10px;
-		padding-left: 0px;
-		padding-right: 0px;
-		padding-bottom: 0px;
-		margin-left: 10px;
-		margin-top: 0px;
-		margin-right: 0px;
-		margin-bottom: 5px;
-		font-size: 20px;
-		line-height: 30px;
-		border: none;
-	}
-	
-	.options > .alertList > hr
-	{
-		border: 0.5px solid rgba(220,220,220,1);
-		width: 100%;
-		margin: 0px;
-		padding: 0px;
-	}
-	
-	.options > .alertList > .alertItem
-	{
-		display: block;
-		font-size: 13px;
-		margin-left: 0px;
-		margin-top: 0px;
-		margin-right: 0px;
-		margin-bottom: 3px;
-		padding-top: 10px;
-		padding-bottom: 10px;
-		padding-left: 10px;
-		padding-right: 0px;
-		overflow: hidden;
-		
-		border-bottom: 1px solid rgb(220, 220, 220);
-	}
-	
-	.options > .alertList > .alertItem:last-child { border: none; }
-	.options > .alertList > .alertItem > a { color: rgba(25,25,25,1); }
-	
-	.options > .alertList > .alertItem > .alertAvatar
-	{
-		float: left;
-		border-radius: 3px;
-		margin-right: 2px;
-	}
+	}*/
 }
 
 @media (max-width: 800px)

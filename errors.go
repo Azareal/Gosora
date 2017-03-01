@@ -36,14 +36,14 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, is_js s
 	if is_js == "0" {
 		w.Write(error_internal)
 	} else {
-		w.Write([]byte(`{'errmsg': 'A problem has occured in the system.'}`))
+		w.Write([]byte(`{"errmsg":"A problem has occured in the system."}`))
 	}
 	log.Fatal(err)
 }
 
 func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(500)
-	w.Write([]byte(`{'errmsg': 'A problem has occured in the system.'}`))
+	w.Write([]byte(`{"errmsg":"A problem has occured in the system."}`))
 	log.Fatal(err)
 }
 
@@ -81,7 +81,7 @@ func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, is_js st
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		fmt.Fprintln(w,b.String())
 	} else {
-		w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
+		w.Write([]byte(`{"errmsg":"` + errmsg + `"}`))
 	}
 }
 
@@ -93,7 +93,7 @@ func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user U
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		fmt.Fprintln(w,b.String())
 	} else {
-		w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
+		w.Write([]byte(`{"errmsg":"` + errmsg + `"}`))
 	}
 }
 
@@ -119,7 +119,7 @@ func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, is_js s
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		fmt.Fprintln(w,b.String())
 	} else {
-		w.Write([]byte("{'errmsg': 'You don't have permission to do that.'}"))
+		w.Write([]byte(`{"errmsg":"You don't have permission to do that."}`))
 	}
 }
 
@@ -139,7 +139,7 @@ func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, is_js string) 
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		fmt.Fprintln(w,b.String())
 	} else {
-		w.Write([]byte("{'errmsg': 'You have been banned from this site.'}"))
+		w.Write([]byte(`{"errmsg":"You have been banned from this site."}`))
 	}
 }
 
@@ -151,7 +151,7 @@ func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, is_js s
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		fmt.Fprintln(w,b.String())
 	} else {
-		w.Write([]byte("{'errmsg': 'You need to login to do that.'}"))
+		w.Write([]byte(`{"errmsg":"You need to login to do that."}`))
 	}
 }
 
@@ -184,6 +184,6 @@ func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.Response
 		templates.ExecuteTemplate(&b,"error.html", pi)
 		fmt.Fprintln(w,b.String())
 	} else {
-		w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
+		w.Write([]byte(`{"errmsg":"` + errmsg + `"}`))
 	}
 }

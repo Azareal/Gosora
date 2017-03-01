@@ -80,6 +80,54 @@ li a
 	display: none;
 }
 
+.selectedAlert {
+	background: white;
+	color: black;
+}
+.selectedAlert:hover {
+	background: white;
+	color: black;
+}
+.menu_alerts .alertList {
+	display: none;
+}
+.selectedAlert .alertList {
+	position: absolute;
+	top: 41px;
+	display: block;
+	background: white;
+	font-size: 10px;
+	line-height: 16px;
+	width: 135px;
+	right: -15px;
+	border-top: 1px solid #ccc;
+	border-left: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+}
+.alertItem {
+	padding: 8px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.alertItem.withAvatar {
+	/*background-image: url('/uploads/avatar_1.jpg');*/
+	background-size: auto 56px;
+	background-repeat: no-repeat;
+	text-align: right;
+	padding-right: 12px;
+	height: 46px;
+}
+.alertItem.withAvatar:not(:last-child) {
+	border-bottom: 1px solid rgb(230,230,230);
+}
+.alertItem.withAvatar .text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	float: right;
+	width: calc(100% - 20px);
+	height: 30px;
+}
+
 .container
 {
 	width: 90%;
@@ -144,6 +192,7 @@ li a
 	color: black;
 }
 .rowitem a:hover { color: silver; }
+.opthead { display: none; }
 
 .col_left
 {

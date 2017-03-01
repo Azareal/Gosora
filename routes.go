@@ -1606,10 +1606,14 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r, "/", http.StatusSeeOther)
 }
 
+var phrase_login_alerts []byte = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
 func route_api(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
-	is_js := r.PostFormValue("js")
-	if is_js == "" {
+	format := r.FormValue("format")
+	var is_js string
+	if format == "json" {
+		is_js = "1"
+	} else { // html
 		is_js = "0"
 	}
 	if err != nil {
@@ -1631,9 +1635,14 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 	module := r.FormValue("module")
 	switch(module) {
 		case "alerts": // A feed of events tailored for a specific user
+			if format != "json" {
+				PreError("You can only fetch alerts in the JSON format!",w,r)
+				return
+			}
+			
 			w.Header().Set("Content-Type","application/json")
 			if !user.Loggedin {
-				w.Write([]byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`))
+				w.Write(phrase_login_alerts)
 				return
 			}
 			
@@ -1675,7 +1684,7 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 				}*/
 				
 				if event == "friend_invite" {
-					msglist += `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"/user/`+strconv.Itoa(actor.ID)+`"},`
+					msglist += `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"\/user\/`+strconv.Itoa(actor.ID)+`","avatar":"`+strings.Replace(actor.Avatar,"/","\\/",-1)+`"},`
 					continue
 				}
 				
@@ -1767,7 +1776,7 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				
-				msglist += `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `"},`
+				msglist += `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `"},`
 			}
 			
 			err = rows.Err()
@@ -1781,10 +1790,17 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 				msglist = msglist[0:len(msglist)-1]
 			}
 			w.Write([]byte(`{"msgs":[`+msglist+`]}`))
+			//fmt.Println(`{"msgs":[`+msglist+`]}`)
 		//case "topics":
 		//case "forums":
 		//case "users":
 		//case "pages":
+		// This might not be possible. We might need .xml paths for sitemaps
+		/*case "sitemap":
+			if format != "xml" {
+				PreError("You can only fetch sitemaps in the XML format!",w,r)
+				return
+			}*/
 		default:
 			PreErrorJSQ("Invalid Module",w,r,is_js)
 	}

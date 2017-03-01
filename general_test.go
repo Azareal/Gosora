@@ -1387,7 +1387,7 @@ func TestForumGuestRoute(t *testing.T) {
 	}
 	db = db_test
 	alert_w := httptest.NewRecorder()
-	alert_req := httptest.NewRequest("get","/api/?action=get&module=alerts",bytes.NewReader(nil))
+	alert_req := httptest.NewRequest("get","/api/?action=get&module=alerts&format=json",bytes.NewReader(nil))
 	alert_handler := http.HandlerFunc(route_api)
 	//testdb.StubQuery()
 	testdb.SetQueryFunc(func(query string) (result sql.Rows, err error) {
