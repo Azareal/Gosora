@@ -727,7 +727,8 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 	
 	var words int
 	var fid int
-	err = db.QueryRow("select parentID, words from topics where tid = ?", tid).Scan(&fid,&words)
+	var createdBy int
+	err = db.QueryRow("select parentID, words, createdBy from topics where tid = ?", tid).Scan(&fid,&words,&createdBy)
 	if err == sql.ErrNoRows {
 		PreError("The requested topic doesn't exist.",w,r)
 		return
@@ -754,6 +755,15 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	_, err = users.CascadeGet(createdBy)
+	if err != nil && err != sql.ErrNoRows {
+		LocalError("The target user doesn't exist",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	//score := words_to_score(words,true)
 	score := 1
 	_, err = create_like_stmt.Exec(score,tid,"topics",user.ID)
@@ -763,6 +773,28 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	_, err = add_likes_to_topic_stmt.Exec(1,tid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	res, err := add_activity_stmt.Exec(user.ID,createdBy,"like","topic",tid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	lastId, err := res.LastInsertId()
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	/*_, err = notify_watchers_stmt.Exec(lastId)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}*/
+	_, err = notify_one_stmt.Exec(createdBy,lastId)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -786,7 +818,8 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	
 	var tid int
 	var words int
-	err = db.QueryRow("select tid, words from replies where rid = ?", rid).Scan(&tid, &words)
+	var createdBy int
+	err = db.QueryRow("select tid, words, createdBy from replies where rid = ?", rid).Scan(&tid, &words, &createdBy)
 	if err == sql.ErrNoRows {
 		PreError("You can't like something which doesn't exist!",w,r)
 		return
@@ -823,6 +856,15 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	_, err = users.CascadeGet(createdBy)
+	if err != nil && err != sql.ErrNoRows {
+		LocalError("The target user doesn't exist",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	//score := words_to_score(words,false)
 	score := 1
 	_, err = create_like_stmt.Exec(score,rid,"replies",user.ID)
@@ -832,6 +874,23 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	_, err = add_likes_to_reply_stmt.Exec(1,rid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	res, err := add_activity_stmt.Exec(user.ID,createdBy,"like","post",rid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	lastId, err := res.LastInsertId()
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	_, err = notify_one_stmt.Exec(createdBy,lastId)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -1748,7 +1807,7 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 							LocalErrorJS("Unable to find the target reply or parent topic",w,r)
 							return
 						}
-						url = build_topic_url(elementID)
+						url = build_topic_url(topic.ID)
 						area = topic.Title
 						if targetUser_id == user.ID {
 							post_act = " your post in"

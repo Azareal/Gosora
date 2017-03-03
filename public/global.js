@@ -8,6 +8,70 @@ function post_link(event)
 	$.ajax({ url: form_action, type: "POST", dataType: "json", data: {js: "1"} });
 }
 
+function load_alerts(menu_alerts)
+{
+	menu_alerts.find(".alert_counter").text("");
+	$.ajax({
+			type: 'get',
+			dataType: 'json',
+			url:'/api/?action=get&module=alerts&format=json',
+			success: function(data) {
+				if("errmsg" in data) {
+					console.log(data.errmsg);
+					menu_alerts.find(".alertList").html("<div class='alertItem'>"+data.errmsg+"</div>");
+					return;
+				}
+				
+				var alist = "";
+				for(var i in data.msgs) {
+					var msg = data.msgs[i];
+					var mmsg = msg.msg;
+					
+					if("sub" in msg) {
+						for(var i = 0; i < msg.sub.length; i++) {
+							mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
+							console.log("Sub #" + i);
+							console.log(msg.sub[i]);
+						}
+					}
+					
+					if(mmsg.length > 46) mmsg = mmsg.substring(0,43) + "...";
+					else if(mmsg.length > 35) size_dial = " smaller"; //9px
+					else size_dial = ""; // 10px
+					
+					if("avatar" in msg) {
+						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text"+size_dial+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
+						console.log(msg.avatar);
+					} else {
+						alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text"+size_dial+"'>"+mmsg+"</a></div>";
+					}
+					console.log(msg);
+					//console.log(mmsg);
+				}
+				
+				if(alist == "") {
+					alist = "<div class='alertItem'>You don't have any alerts</div>"
+				}
+				menu_alerts.find(".alertList").html(alist);
+				if(data.msgs.length != 0) {
+					menu_alerts.find(".alert_counter").text(data.msgs.length);
+				}
+			},
+			error: function(magic,theStatus,error) {
+				try {
+					var data = JSON.parse(magic.responseText);
+					if("errmsg" in data)
+					{
+						console.log(data.errmsg);
+						errtxt = data.errmsg;
+					}
+					else errtxt = "Unable to get the alerts"
+				} catch(e) { errtxt = "Unable to get the alerts"; }
+				menu_alerts.find(".alertList").html("<div class='alertItem'>"+errtxt+"</div>");
+			}
+		});
+}
+
 $(document).ready(function(){
 	$(".open_edit").click(function(event){
 		//console.log("Clicked on edit");
@@ -162,63 +226,19 @@ $(document).ready(function(){
 		}
 	});
 	
+	$('body').click(function() {
+		$(".selectedAlert").removeClass("selectedAlert");
+	});
+	
+	$(".menu_alerts").ready(function(){
+		load_alerts($(this));
+	});
+	
 	$(".menu_alerts").click(function(event) {
+		event.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
-		var menu_alerts = $(this);
-		
 		this.className += " selectedAlert";
-		$.ajax({
-			type: 'get',
-			dataType: 'json',
-			url:'/api/?action=get&module=alerts&format=json',
-			success: function(data) {
-				if("errmsg" in data) {
-					console.log(data.errmsg);
-					menu_alerts.find(".alertList").html("<div class='alertItem'>"+data.errmsg+"</div>");
-					return;
-				}
-				
-				var alist = "";
-				for(var i in data.msgs) {
-					var msg = data.msgs[i];
-					var mmsg = msg.msg;
-					
-					if("sub" in msg) {
-						for(var i = 0; i < msg.sub.length; i++) {
-							mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
-							console.log("Sub #" + i);
-							console.log(msg.sub[i]);
-						}
-					}
-					
-					if("avatar" in msg) {
-						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><div class='text'>"+mmsg+"</div></div>";
-						console.log(msg.avatar);
-					} else {
-						alist += "<div class='alertItem'>"+mmsg+"</div>";
-					}
-					console.log(msg);
-					console.log(mmsg);
-				}
-				
-				if(alist == "") {
-					alist = "<div class='alertItem'>You don't have any alerts</div>"
-				}
-				menu_alerts.find(".alertList").html(alist);
-			},
-			error: function(magic,theStatus,error) {
-				try {
-					var data = JSON.parse(magic.responseText);
-					if("errmsg" in data)
-					{
-						console.log(data.errmsg);
-						errtxt = data.errmsg;
-					}
-					else errtxt = "Unable to get the alerts"
-				} catch(e) { errtxt = "Unable to get the alerts"; }
-				menu_alerts.find(".alertList").html("<div class='alertItem'>"+errtxt+"</div>");
-			}
-		});
+		load_alerts($(this));
 	});
 	
 	this.onkeyup = function(event){

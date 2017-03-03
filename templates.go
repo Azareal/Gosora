@@ -743,14 +743,10 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 func (c *CTemplateSet) compile_boolsub(varname string, varholder string, template_name string, val reflect.Value) string {
 	out, val := c.compile_if_varsub(varname, varholder, template_name, val)
 	switch val.Kind() {
-		case reflect.Int:
-			out += " > 0"
-		case reflect.Bool:
-			// Do nothing
-		case reflect.String:
-			out += " != \"\""
-		case reflect.Int64:
-			out += " > 0"
+		case reflect.Int: out += " > 0"
+		case reflect.Bool: // Do nothing
+		case reflect.String: out += " != \"\""
+		case reflect.Int64: out += " > 0"
 		default:
 			fmt.Println(varname)
 			fmt.Println(varholder)

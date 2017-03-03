@@ -33,6 +33,9 @@ var update_forum_cache_stmt *sql.Stmt
 var create_like_stmt *sql.Stmt
 var add_likes_to_topic_stmt *sql.Stmt
 var add_likes_to_reply_stmt *sql.Stmt
+var add_activity_stmt *sql.Stmt
+var notify_watchers_stmt *sql.Stmt
+var notify_one_stmt *sql.Stmt
 var edit_topic_stmt *sql.Stmt
 var edit_reply_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
@@ -234,6 +237,24 @@ func init_database(err error) {
 	
 	log.Print("Preparing add_likes_to_reply statement.")
 	add_likes_to_reply_stmt, err = db.Prepare("UPDATE replies SET likeCount = likeCount + ? WHERE rid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_activity statement.")
+	add_activity_stmt, err = db.Prepare("INSERT INTO activity_stream(actor,targetUser,event,elementType,elementID) VALUES(?,?,?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing notify_watchers statement.")
+	notify_watchers_stmt, err = db.Prepare("INSERT INTO activity_stream_matches(watcher, asid) SELECT activity_subscriptions.user, ? AS asid FROM activity_subscriptions LEFT JOIN activity_stream ON activity_subscriptions.targetType=activity_stream.elementType and activity_subscriptions.targetID=activity_stream.elementID")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing notify_one statement.")
+	notify_one_stmt, err = db.Prepare("INSERT INTO activity_stream_matches(watcher,asid) VALUES(?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
