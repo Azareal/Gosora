@@ -639,7 +639,13 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	forums[fid].LastReplyerID = user.ID
 	forums[fid].LastTopicTime = ""
 	
-	http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId,10), http.StatusSeeOther)
+	_, err = add_subscription_stmt.Exec(user.ID,lastId,"topic")
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	http.Redirect(w,r,"/topic/" + strconv.FormatInt(lastId,10), http.StatusSeeOther)
 	err = increase_post_user_stats(wcount,user.ID,true,user)
 	if err != nil {
 		InternalError(err,w,r)
@@ -661,7 +667,8 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	
 	var topic_name string
 	var fid int
-	err = db.QueryRow("select title, parentID from topics where tid = ?",tid).Scan(&topic_name,&fid)
+	var createdBy int
+	err = db.QueryRow("select title, parentID, createdBy from topics where tid = ?",tid).Scan(&topic_name,&fid,&createdBy)
 	if err == sql.ErrNoRows {
 		PreError("Couldn't find the parent topic",w,r)
 		return
@@ -704,7 +711,24 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	http.Redirect(w,r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
+	res, err := add_activity_stmt.Exec(user.ID,createdBy,"reply","topic",tid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	lastId, err := res.LastInsertId()
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	_, err = notify_watchers_stmt.Exec(lastId)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	err = increase_post_user_stats(wcount, user.ID, false, user)
 	if err != nil {
 		InternalError(err,w,r)
@@ -796,6 +820,16 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 	}*/
 	_, err = notify_one_stmt.Exec(createdBy,lastId)
 	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	// Reload the topic...
+	err = topics.Load(tid)
+	if err != nil && err != sql.ErrNoRows {
+		LocalError("The liked topic no longer exists",w,r,user)
+		return
+	} else if err != nil {
 		InternalError(err,w,r)
 		return
 	}
@@ -1756,6 +1790,8 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 				"{x}{liked}{your post on}{user}{'s profile}" todo
 				"{x}{liked}{your post in}{topic}"
 				"{x}{replied to}{your post in}{topic}" todo
+				"{x}{replied to}{topic}"
+				"{x}{replied to}{your topic}{topic}"
 				"{x}{created a new topic}{topic}"
 				*/
 				
@@ -1789,6 +1825,7 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 						}
 						url = build_topic_url(elementID)
 						area = topic.Title
+						
 						if targetUser_id == user.ID {
 							post_act = " your topic"
 						}
@@ -1816,23 +1853,25 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 						LocalErrorJS("Invalid elementType",w,r)
 				}
 				
-				if event == "like" {
-					if elementType == "user" {
-						act = "likes"
-						end_frag = ""
-						if targetUser.ID == user.ID {
-							area = "you"
+				switch(event) {
+					case "like":
+						if elementType == "user" {
+							act = "likes"
+							end_frag = ""
+							if targetUser.ID == user.ID {
+								area = "you"
+							}
+						} else {
+							act = "liked"
 						}
-					} else {
-						act = "liked"
-					}
-				} else if event == "mention" {
-					if elementType == "user" {
-						act = "mentioned you on"
-					} else {
-						act = "mentioned you in"
-						post_act = ""
-					}
+					case "mention":
+						if elementType == "user" {
+							act = "mentioned you on"
+						} else {
+							act = "mentioned you in"
+							post_act = ""
+						}
+					case "reply": act = "replied to"
 				}
 				
 				msglist += `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `"},`

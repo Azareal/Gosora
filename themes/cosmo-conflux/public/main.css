@@ -117,6 +117,10 @@ li:hover
 .selectedAlert:hover {
 	background: white;
 	color: black;
+	font-weight: bold;
+}
+.selectedAlert .alert_counter {
+	display: none;
 }
 .menu_alerts .alertList {
 	display: none;
@@ -128,7 +132,7 @@ li:hover
 	background: white;
 	font-size: 10px;
 	line-height: 16px;
-	width: 135px;
+	width: 156px;
 	right: -15px;
 	border-top: 1px solid #ccc;
 	border-left: 1px solid #ccc;
@@ -141,21 +145,25 @@ li:hover
 }
 .alertItem.withAvatar {
 	/*background-image: url('/uploads/avatar_1.jpg');*/
-	background-size: auto 56px;
+	background-size: 36px;
 	background-repeat: no-repeat;
-	text-align: right;
+	text-align: center;
 	padding-right: 12px;
+	padding-left: 42px;
 	height: 46px;
 }
 .alertItem.withAvatar:not(:last-child) {
 	border-bottom: 1px solid rgb(230,230,230);
 }
-.alertItem.withAvatar .text {
+.alertItem .text {
 	overflow: hidden;
 	text-overflow: ellipsis;
-	float: right;
-	width: calc(100% - 20px);
 	height: 30px;
+	width: 100%;
+	color: black;
+}
+.alertItem .text.smaller {
+	font-size: 9px;
 }
 
 #footer

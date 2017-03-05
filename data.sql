@@ -138,7 +138,7 @@ CREATE TABLE `activity_subscriptions`(
 	`user` int not null,
 	`targetID` int not null, /* the ID of the element being acted upon */
 	`targetType` varchar(50) not null, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
-	`level` tinyint DEFAULT 0 not null /* 0: Mentions (aka the global default for any post), 1: Replies, 2: Everyone*/
+	`level` tinyint DEFAULT 0 not null /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
 );
 
 CREATE TABLE `settings`(

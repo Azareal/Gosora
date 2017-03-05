@@ -36,6 +36,7 @@ var add_likes_to_reply_stmt *sql.Stmt
 var add_activity_stmt *sql.Stmt
 var notify_watchers_stmt *sql.Stmt
 var notify_one_stmt *sql.Stmt
+var add_subscription_stmt *sql.Stmt
 var edit_topic_stmt *sql.Stmt
 var edit_reply_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
@@ -248,13 +249,19 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing notify_watchers statement.")
-	notify_watchers_stmt, err = db.Prepare("INSERT INTO activity_stream_matches(watcher, asid) SELECT activity_subscriptions.user, ? AS asid FROM activity_subscriptions LEFT JOIN activity_stream ON activity_subscriptions.targetType=activity_stream.elementType and activity_subscriptions.targetID=activity_stream.elementID")
+	notify_watchers_stmt, err = db.Prepare("INSERT INTO activity_stream_matches(watcher, asid) SELECT activity_subscriptions.user, activity_stream.asid FROM activity_stream INNER JOIN activity_subscriptions ON activity_subscriptions.targetType = activity_stream.elementType and activity_subscriptions.targetID = activity_stream.elementID and activity_subscriptions.user != activity_stream.actor where asid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing notify_one statement.")
 	notify_one_stmt, err = db.Prepare("INSERT INTO activity_stream_matches(watcher,asid) VALUES(?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_subscription statement.")
+	add_subscription_stmt, err = db.Prepare("INSERT INTO activity_subscriptions(user,targetID,targetType,level) VALUES(?,?,?,2)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -296,7 +303,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_activity_feed_by_watcher statement.")
-	get_activity_feed_by_watcher_stmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` LEFT JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid WHERE `watcher` = ?")
+	get_activity_feed_by_watcher_stmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

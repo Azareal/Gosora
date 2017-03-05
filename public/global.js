@@ -226,7 +226,7 @@ $(document).ready(function(){
 		}
 	});
 	
-	$('body').click(function() {
+	$(this).click(function() {
 		$(".selectedAlert").removeClass("selectedAlert");
 	});
 	
