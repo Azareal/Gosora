@@ -9,9 +9,7 @@ More moderation features. E.g. Move, Approval Queue (Posts made by users in cert
 
 Add a simple anti-spam measure. I have quite a few ideas in mind, but it'll take a while to implement the more advanced ones, so I'd like to put off some of those to a later date and focus on the basics. E.g. CAPTCHAs, hidden fields, etc.
 
-Add a modern alert system.
-
-Add per-forum permissions to finish up the foundations of the permissions system.
+Add more granular permissions management to the Forum Manager.
 
 Add a *better* plugin system. E.g. Allow for plugins written in Javascript and ones written in Go. Also, we need to add many, many, many more plugin hooks.
 

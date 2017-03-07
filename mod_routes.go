@@ -1410,15 +1410,21 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var themeList []interface{}
+	var pThemeList []Theme
+	var vThemeList []Theme
 	for _, theme := range themes {
 		if theme.HideFromThemes {
 			continue
 		}
-		themeList = append(themeList,theme)
+		if theme.ForkOf == "" {
+			pThemeList = append(pThemeList,theme)
+		} else {
+			vThemeList = append(vThemeList,theme)
+		}
+		
 	}
 	
-	pi := Page{"Theme Manager",user,noticeList,themeList,nil}
+	pi := ThemesPage{"Theme Manager",user,noticeList,pThemeList,vThemeList,nil}
 	err := templates.ExecuteTemplate(w,"panel-themes.html",pi)
 	if err != nil {
 		log.Print(err)

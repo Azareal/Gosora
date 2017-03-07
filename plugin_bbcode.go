@@ -9,13 +9,8 @@ import "time"
 import "math/rand"
 
 var random *rand.Rand
-var bbcode_invalid_url []byte
 var bbcode_invalid_number []byte
 var bbcode_missing_tag []byte
-var bbcode_url_open []byte
-var bbcode_url_open2 []byte
-var bbcode_url_close []byte
-var bbcode_space_gap []byte
 
 var bbcode_bold *regexp.Regexp
 var bbcode_italic *regexp.Regexp
@@ -23,6 +18,7 @@ var bbcode_underline *regexp.Regexp
 var bbcode_strikethrough *regexp.Regexp
 var bbcode_url *regexp.Regexp
 var bbcode_url_label *regexp.Regexp
+var bbcode_quotes *regexp.Regexp
 
 func init() {
 	plugins["bbcode"] = NewPlugin("bbcode","BBCode","Azareal","http://github.com/Azareal","","","",init_bbcode,nil,deactivate_bbcode)
@@ -32,13 +28,8 @@ func init_bbcode() {
 	//plugins["bbcode"].AddHook("parse_assign", bbcode_parse_without_code)
 	plugins["bbcode"].AddHook("parse_assign", bbcode_full_parse)
 	
-	bbcode_invalid_url = []byte("<span style='color: red;'>[Invalid URL]</span>")
 	bbcode_invalid_number = []byte("<span style='color: red;'>[Invalid Number]</span>")
 	bbcode_missing_tag = []byte("<span style='color: red;'>[Missing Tag]</span>")
-	bbcode_url_open = []byte("<a href='")
-	bbcode_url_open2 = []byte("'>")
-	bbcode_url_close = []byte("</a>")
-	bbcode_space_gap = []byte("          ")
 	
 	bbcode_bold = regexp.MustCompile(`(?s)\[b\](.*)\[/b\]`)
 	bbcode_italic = regexp.MustCompile(`(?s)\[i\](.*)\[/i\]`)
@@ -47,6 +38,7 @@ func init_bbcode() {
 	urlpattern := `(http|https|ftp|mailto*)(:??)\/\/([\.a-zA-Z\/]+)`
 	bbcode_url = regexp.MustCompile(`\[url\]` + urlpattern + `\[/url\]`)
 	bbcode_url_label = regexp.MustCompile(`(?s)\[url=` + urlpattern + `\](.*)\[/url\]`)
+	bbcode_quotes = regexp.MustCompile(`\[quote\](.*)\[/quote\]`)
 	
 	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
@@ -64,6 +56,7 @@ func bbcode_regex_parse(data interface{}) interface{} {
 	msg = bbcode_strikethrough.ReplaceAllString(msg,"<s>$1</s>")
 	msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 	msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
+	msg = bbcode_quotes.ReplaceAllString(msg,"<div class=\"postQuote\">$1</div>")
 	return msg
 }
 
@@ -177,6 +170,7 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 	if complex_bbc {
 		msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
+		msg = bbcode_quotes.ReplaceAllString(msg,"<div class=\"postQuote\">$1</div>")
 	}
 	return string(msgbytes)
 }
@@ -184,6 +178,9 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 // Does every type of BBCode
 func bbcode_full_parse(data interface{}) interface{} {
 	msg := data.(string)
+	//fmt.Println("BBCode PrePre String:")
+	//fmt.Println("`"+msg+"`")
+	//fmt.Println("----")
 	msgbytes := []byte(msg)
 	has_u := false
 	has_b := false
@@ -191,7 +188,10 @@ func bbcode_full_parse(data interface{}) interface{} {
 	has_s := false
 	has_c := false
 	complex_bbc := false
-	msgbytes = append(msgbytes,bbcode_space_gap...)
+	msgbytes = append(msgbytes,space_gap...)
+	//fmt.Println("BBCode Simple Pre:")
+	//fmt.Println("`"+string(msgbytes)+"`")
+	//fmt.Println("----")
 	for i := 0; i < len(msgbytes); i++ {
 		if msgbytes[i] == '[' {
 			if msgbytes[i + 2] != ']' {
@@ -275,59 +275,36 @@ func bbcode_full_parse(data interface{}) interface{} {
 		var start int
 		var lastTag int
 		outbytes := make([]byte, len(msgbytes))
-		//fmt.Println(string(msgbytes))
+		//fmt.Println("BBCode Pre:")
+		//fmt.Println("`"+string(msgbytes)+"`")
+		//fmt.Println("----")
 		for ; i < len(msgbytes); i++ {
 			MainLoop:
 			if msgbytes[i] == '[' {
 				OuterComplex:
 				if msgbytes[i + 1] == 'u' {
 					if msgbytes[i+2] == 'r' && msgbytes[i+3] == 'l' && msgbytes[i+4] == ']' {
-						outbytes = append(outbytes, msgbytes[lastTag:i]...)
 						start = i + 5
+						outbytes = append(outbytes, msgbytes[lastTag:i]...)
 						i = start
-						if msgbytes[i] == 'h' {
-							if msgbytes[i+1] == 't' && msgbytes[i+2] == 't' && msgbytes[i+3] == 'p' {
-								if bytes.Equal(msgbytes[i + 4:i + 7],[]byte("s://")) {
-									i += 7
-								} else if msgbytes[i+4] == ':' && msgbytes[i+5] == '/' && msgbytes[i+6] == '/' {
-									i += 6
-								} else {
-									outbytes = append(outbytes, bbcode_invalid_url...)
-									continue
-								}
-							}
-						} else if msgbytes[i] == 'f' {
-							if bytes.Equal(msgbytes[i+1:i+5],[]byte("tp://")) {
-								i += 5
-							}
+						i += partial_url_bytes_len(msgbytes[start:])
+						
+						//fmt.Println("Partial Bytes:")
+						//fmt.Println(string(msgbytes[start:]))
+						//fmt.Println("-----")
+						if !bytes.Equal(msgbytes[i:i+6],[]byte("[/url]")) {
+							//fmt.Println("Invalid Bytes:")
+							//fmt.Println(string(msgbytes[i:i+6]))
+							//fmt.Println("-----")
+							outbytes = append(outbytes, invalid_url...)
+							goto MainLoop
 						}
 						
-						for ;; i++ {
-							if len(msgbytes) < (i + 10) {
-								//fmt.Println(msglen)
-								//fmt.Println(i+6)
-								outbytes = append(outbytes, bbcode_missing_tag...)
-								goto OuterComplex
-							} else if msgbytes[i] == '[' {
-								if !bytes.Equal(msgbytes[i+1:i+6],[]byte("/url]")) {
-									//log.Print("Not the URL closing tag!")
-									//fmt.Println(msgbytes[i + 1:i + 6])
-									outbytes = append(outbytes, bbcode_missing_tag...)
-									goto OuterComplex
-								}
-								break
-							} else if msgbytes[i] != '\\' && msgbytes[i] != '_' && !(msgbytes[i] > 44 && msgbytes[i] < 58) && !(msgbytes[i] > 64 && msgbytes[i] < 91) && !(msgbytes[i] > 96 && msgbytes[i] < 123) {
-								outbytes = append(outbytes, bbcode_invalid_url...)
-								//log.Print("Weird character")
-								//fmt.Println(msgbytes[i])
-								goto MainLoop
-							}
-						}
-						outbytes = append(outbytes, bbcode_url_open...)
+						outbytes = append(outbytes, url_open...)
 						outbytes = append(outbytes, msgbytes[start:i]...)
-						outbytes = append(outbytes, bbcode_url_open2...)
+						outbytes = append(outbytes, url_open2...)
 						outbytes = append(outbytes, msgbytes[start:i]...)
-						outbytes = append(outbytes, bbcode_url_close...)
+						outbytes = append(outbytes, url_close...)
 						i += 6
 						lastTag = i
 					}
@@ -367,15 +344,25 @@ func bbcode_full_parse(data interface{}) interface{} {
 		//fmt.Println(string(outbytes))
 		if lastTag != i {
 			outbytes = append(outbytes, msgbytes[lastTag:]...)
-		}
-		if len(outbytes) != 0 {
-			return string(outbytes[0:len(msgbytes) - 10])
+			//fmt.Println("Outbytes:")
+			//fmt.Println(`"`+string(outbytes)+`"`)
+			//fmt.Println("----")
 		}
 		
-		msg = string(msgbytes[0:len(msgbytes) - 10])
+		if len(outbytes) != 0 {
+			//fmt.Println("BBCode Post:")
+			//fmt.Println(`"`+string(outbytes[0:len(outbytes) - 10])+`"`)
+			//fmt.Println("----")
+			msg = string(outbytes[0:len(outbytes) - 10])
+		} else {
+			msg = string(msgbytes[0:len(msgbytes) - 10])
+		}
+		
 		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
+		msg = bbcode_quotes.ReplaceAllString(msg,"<div class=\"postQuote\">$1</div>")
 		// Convert [code] into class="codequotes"
+		//fmt.Println("guuuaaaa")
 	} else {
 		msg = string(msgbytes[0:len(msgbytes) - 10])
 	}

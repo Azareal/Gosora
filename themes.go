@@ -27,6 +27,7 @@ type Theme struct
 	MobileFriendly bool
 	Disabled bool
 	HideFromThemes bool
+	ForkOf string
 	Tag string
 	Settings map[string]ThemeSetting
 	Templates []TemplateMapping

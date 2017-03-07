@@ -67,7 +67,7 @@ var topic_8 []byte = []byte(`
 <div class="rowblock topic_block">
 	<form action='/topic/edit/submit/`)
 var topic_9 []byte = []byte(`' method="post">
-		<div class="rowitem topic_item"`)
+		<div class="rowitem rowhead topic_item"`)
 var topic_10 []byte = []byte(` style="background-color:#FFFFEA;"`)
 var topic_11 []byte = []byte(` style="background-color:#eaeaea;"`)
 var topic_12 []byte = []byte(`>
@@ -100,7 +100,7 @@ var topic_24 []byte = []byte(`">
 		<p class="hide_on_edit topic_content user_content" style="margin:0;padding:0;">`)
 var topic_25 []byte = []byte(`</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">`)
-var topic_26 []byte = []byte(`</textarea><br /><br />
+var topic_26 []byte = []byte(`</textarea>
 		<a href="/user/`)
 var topic_27 []byte = []byte(`" class="username real_username">`)
 var topic_28 []byte = []byte(`</a>&nbsp;
@@ -126,21 +126,21 @@ var topic_44 []byte = []byte(`<a class="username hide_on_micro" style="float: ri
 var topic_45 []byte = []byte(`</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;margin-left:5px;" title="Like Count">😀</a>`)
 var topic_46 []byte = []byte(`<a class="username hide_on_micro" style="float:right;color:#505050;font-size:16px;">`)
 var topic_47 []byte = []byte(`</a>`)
-var topic_48 []byte = []byte(`<a class="username hide_on_micro" style="float: right;color:#505050;border-left:none;padding-left:5px;padding-right:5px;font-size:17px;">`)
+var topic_48 []byte = []byte(`<a class="username hide_on_micro level">`)
 var topic_49 []byte = []byte(`</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;" title="Level">👑</a>`)
 var topic_50 []byte = []byte(`
 	</div>
 </div><br />
 <div class="rowblock post_container" style="overflow: hidden;">`)
 var topic_51 []byte = []byte(`
-	<div class="rowitem rowhead passive deletable_block editable_parent post_item" style="`)
+	<div class="rowitem passive deletable_block editable_parent post_item" style="`)
 var topic_52 []byte = []byte(`background-image:url(`)
 var topic_53 []byte = []byte(`), url(/static/white-dot.jpg);background-position: 0px `)
 var topic_54 []byte = []byte(`-1`)
 var topic_55 []byte = []byte(`0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;`)
 var topic_56 []byte = []byte(`">
 		<p class="editable_block user_content" style="margin: 0;padding: 0;">`)
-var topic_57 []byte = []byte(`</p><br /><br />
+var topic_57 []byte = []byte(`</p>
 		<a href="/user/`)
 var topic_58 []byte = []byte(`" class="username real_username">`)
 var topic_59 []byte = []byte(`</a>&nbsp;
@@ -162,7 +162,7 @@ var topic_71 []byte = []byte(`<a class="username hide_on_micro" style="float: ri
 var topic_72 []byte = []byte(`</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;margin-left:5px;" title="Like Count">😀</a>`)
 var topic_73 []byte = []byte(`<a class="username hide_on_micro" style="float: right;color:#505050;font-size:16px;">`)
 var topic_74 []byte = []byte(`</a>`)
-var topic_75 []byte = []byte(`<a class="username hide_on_micro" style="float: right;color:#505050;border-left:none;padding-left:5px;padding-right:5px;font-size:17px;">`)
+var topic_75 []byte = []byte(`<a class="username hide_on_micro level">`)
 var topic_76 []byte = []byte(`</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;" title="Level">👑`)
 var topic_77 []byte = []byte(`</a>
 	</div>

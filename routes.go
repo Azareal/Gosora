@@ -780,7 +780,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	_, err = users.CascadeGet(createdBy)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err == sql.ErrNoRows {
 		LocalError("The target user doesn't exist",w,r,user)
 		return
 	} else if err != nil {

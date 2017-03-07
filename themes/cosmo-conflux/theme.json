@@ -4,6 +4,7 @@
 	"Version": "Coming Soon",
 	"Creator": "Azareal",
 	"FullImage": "cosmo-conflux.png",
+	"ForkOf": "cosmo",
 	"MobileFriendly": true,
 	"Templates": [
 		{

@@ -1,4 +1,6 @@
 package main
+//import "fmt"
+import "bytes"
 import "strings"
 import "regexp"
 
@@ -73,6 +75,16 @@ type CreateTopicPage struct
 	ExtData interface{}
 }
 
+type ThemesPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList []string
+	PrimaryThemes []Theme
+	VariantThemes []Theme
+	ExtData interface{}
+}
+
 type PageSimple struct
 {
 	Title string
@@ -85,6 +97,12 @@ type AreYouSure struct
 	Message string
 }
 
+var space_gap []byte = []byte("          ")
+var http_prot_b []byte = []byte("http://")
+var invalid_url []byte = []byte("<span style='color: red;'>[Invalid URL]</span>")
+var url_open []byte = []byte("<a href='")
+var url_open2 []byte = []byte("'>")
+var url_close []byte = []byte("</a>")
 var urlpattern string = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
 var url_reg *regexp.Regexp
 
@@ -147,6 +165,89 @@ func parse_message(msg string) string {
 	msg = strings.Replace(msg,":)","😀",-1)
 	msg = strings.Replace(msg,":D","😃",-1)
 	msg = strings.Replace(msg,":P","😛",-1)
+	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
+	
+	// Search for URLs in the messages...
+	var msgbytes = []byte(msg)
+	outbytes := make([]byte, len(msgbytes))
+	msgbytes = append(msgbytes,space_gap...)
+	//fmt.Println(`"`+string(msgbytes)+`"`)
+	lastItem := 0
+	i := 0
+	for ; len(msgbytes) > (i + 1); i++ {
+		if i==0 || msgbytes[i] == 10 || (msgbytes[i] == ' ' && msgbytes[i + 1] != ' ') {
+			i++
+			if msgbytes[i] != 'h' && msgbytes[i] != 'f' && msgbytes[i] != 'g' && msgbytes[i + 1] != 't' {
+				continue
+			}
+			if msgbytes[i + 2] == 't' && msgbytes[i + 3] == 'p' {
+				if msgbytes[i + 4] == 's' && msgbytes[i + 5] == ':' && msgbytes[i + 6] == '/' && msgbytes[i + 7] == '/' {
+					// Do nothing
+				} else if msgbytes[i + 4] == ':' && msgbytes[i + 5] == '/' && msgbytes[i + 6] == '/' {
+					// Do nothing
+				} else {
+					continue
+				}
+			} else if msgbytes[i + 2] == 'p' && msgbytes[i + 3] == ':' && msgbytes[i + 4] == '/' && msgbytes[i + 5] == '/' {
+				// Do nothing
+			} else if msgbytes[i + 1] == 'i' && msgbytes[i + 2] == 't' && msgbytes[i + 3] == ':' && msgbytes[i + 4] == '/' && msgbytes[i + 5] == '/' {
+				// Do nothing
+			} else {
+				continue
+			}
+			
+			outbytes = append(outbytes,msgbytes[lastItem:i]...)
+			url_len := partial_url_bytes_len(msgbytes[i:])
+			if msgbytes[i + url_len] != ' ' && msgbytes[i + url_len] != 10 {
+				outbytes = append(outbytes,invalid_url...)
+				i += url_len
+				continue
+			}
+			//fmt.Println("Parsed URL:")
+			//fmt.Println("`"+string(msgbytes[i:i + url_len])+"`")
+			//fmt.Println("-----")
+			outbytes = append(outbytes, url_open...)
+			outbytes = append(outbytes, msgbytes[i:i + url_len]...)
+			outbytes = append(outbytes, url_open2...)
+			outbytes = append(outbytes, msgbytes[i:i + url_len]...)
+			outbytes = append(outbytes, url_close...)
+			i += url_len
+			lastItem = i
+		}
+	}
+	
+	if lastItem != i && len(outbytes) != 0 {
+		//fmt.Println("lastItem:")
+		//fmt.Println(msgbytes[lastItem])
+		//fmt.Println("lastItem index:")
+		//fmt.Println(lastItem)
+		//fmt.Println("i:")
+		//fmt.Println(i)
+		//fmt.Println("lastItem to end:")
+		//fmt.Println(msgbytes[lastItem:])
+		//fmt.Println("-----")
+		calclen := len(msgbytes) - 10
+		if calclen <= lastItem {
+			calclen = lastItem
+		}
+		outbytes = append(outbytes, msgbytes[lastItem:calclen]...)
+		msg = string(outbytes)
+	}
+	//fmt.Println(`"`+string(outbytes)+`"`)
+	//fmt.Println(`"`+msg+`"`)
+	
+	msg = strings.Replace(msg,"\n","<br>",-1)
+	if hooks["parse_assign"] != nil {
+		out := run_hook("parse_assign", msg)
+		msg = out.(string)
+	}
+	return msg
+}
+
+func regex_parse_message(msg string) string {
+	msg = strings.Replace(msg,":)","😀",-1)
+	msg = strings.Replace(msg,":D","😃",-1)
+	msg = strings.Replace(msg,":P","😛",-1)
 	msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 	msg = strings.Replace(msg,"\n","<br>",-1)
 	if hooks["parse_assign"] != nil {
@@ -154,4 +255,144 @@ func parse_message(msg string) string {
 		msg = out.(string)
 	}
 	return msg
+}
+
+// 6, 7, 8, 6, 7
+// ftp://, http://, https:// git://, mailto: (not a URL, just here for length comparison purposes)
+func validate_url_bytes(data []byte) bool {
+	datalen := len(data)
+	i := 0
+	
+	if datalen >= 6 {
+		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
+			i = 6
+		} else if datalen >= 7 && bytes.Equal(data[0:7],http_prot_b) {
+			i = 7
+		} else if datalen >= 8 && bytes.Equal(data[0:8],[]byte("https://")) {
+			i = 8
+		}
+	}
+	
+	for ;datalen > i; i++ {
+		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+			return false
+		}
+	}
+	return true
+}
+
+func validated_url_bytes(data []byte) (url []byte) {
+	datalen := len(data)
+	i := 0
+	
+	if datalen >= 6 {
+		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
+			i = 6
+		} else if datalen >= 7 && bytes.Equal(data[0:7],http_prot_b) {
+			i = 7
+		} else if datalen >= 8 && bytes.Equal(data[0:8],[]byte("https://")) {
+			i = 8
+		}
+	}
+	
+	for ;datalen > i; i++ {
+		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+			return invalid_url
+		}
+	}
+	
+	url = append(url, data...)
+	return url
+}
+
+func partial_url_bytes(data []byte) (url []byte) {
+	datalen := len(data)
+	i := 0
+	end := datalen - 1
+	
+	if datalen >= 6 {
+		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
+			i = 6
+		} else if datalen >= 7 && bytes.Equal(data[0:7],http_prot_b) {
+			i = 7
+		} else if datalen >= 8 && bytes.Equal(data[0:8],[]byte("https://")) {
+			i = 8
+		}
+	}
+	
+	for ;end >= i; i++ {
+		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+			end = i
+		}
+	}
+	
+	url = append(url, data[0:end]...)
+	return url
+}
+
+func partial_url_bytes_len(data []byte) int {
+	datalen := len(data)
+	i := 0
+	
+	if datalen >= 6 {
+		//fmt.Println(data[0:5])
+		//fmt.Println(string(data[0:5]))
+		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
+			i = 6
+		} else if datalen >= 7 && bytes.Equal(data[0:7],http_prot_b) {
+			i = 7
+			//fmt.Println("http")
+		} else if datalen >= 8 && bytes.Equal(data[0:8],[]byte("https://")) {
+			i = 8
+		} else {
+			//fmt.Println("no protocol")
+		}
+	}
+	
+	for ;datalen > i; i++ {
+		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+			//fmt.Println("Trimmed Length")
+			//fmt.Println(i)
+			//fmt.Println("Full Length")
+			//fmt.Println(i)
+			//fmt.Println("Data Length:")
+			//fmt.Println(datalen)
+			//fmt.Println("Bad Character:")
+			//fmt.Println(data[i])
+			return i
+		}
+	}
+	
+	//fmt.Println("Data Length:")
+	//fmt.Println(datalen)
+	return datalen
+}
+
+func parse_media_bytes(data []byte) (protocol []byte, url []byte) {
+	datalen := len(data)
+	i := 0
+	
+	if datalen >= 6 {
+		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
+			i = 6
+			protocol = data[0:2]
+		} else if datalen >= 7 && bytes.Equal(data[0:7],http_prot_b) {
+			i = 7
+			protocol = []byte("http")
+		} else if datalen >= 8 && bytes.Equal(data[0:8],[]byte("https://")) {
+			i = 8
+			protocol = []byte("https")
+		}
+	}
+	
+	for ;datalen > i; i++ {
+		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+			return []byte(""), invalid_url
+		}
+	}
+	
+	if len(protocol) == 0 {
+		protocol = []byte("http")
+	}
+	return protocol, data[i:]
 }

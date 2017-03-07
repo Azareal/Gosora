@@ -1,0 +1,10 @@
+{
+	"Name": "tempra-cursive",
+	"FriendlyName": "Tempra Cursive",
+	"Version": "0.0.1",
+	"Creator": "Azareal",
+	"FullImage": "tempra-cursive.png",
+	"ForkOf": "tempra-simple",
+	"Tag": "🏗️",
+	"MobileFriendly": true
+}
