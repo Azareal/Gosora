@@ -353,12 +353,12 @@ button.username
 
 .postQuote {
 	border: 1px solid #ccc;
-    background: white;
-    padding: 3px;
-    margin: 0px;
-    display: inline-block;
-    width: 100%;
-    margin-bottom: 5px;
+	background: white;
+	padding: 5px;
+	margin: 0px;
+	display: inline-block;
+	width: 100%;
+	margin-bottom: 8px;
 }
 
 .level {

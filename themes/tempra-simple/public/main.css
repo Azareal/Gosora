@@ -318,7 +318,7 @@ button.username
 .username.real_username:hover { color: black; }
 
 .post_item > .username {
-    margin-top: 44.2px;
+    margin-top: 20px;
     display: inline-block;
 }
 
@@ -349,12 +349,12 @@ button.username
 
 .postQuote {
 	border: 1px solid #ccc;
-    background: white;
-    padding: 3px;
-    margin: 0px;
-    display: inline-block;
-    width: 100%;
-    margin-bottom: 5px;
+	background: white;
+	padding: 5px;
+	margin: 0px;
+	display: inline-block;
+	width: 100%;
+	margin-bottom: 8px;
 }
 
 .level {
@@ -443,14 +443,14 @@ button.username
 	.menu_right { padding-right: 5px; }
 	.menu_create_topic { display: none;}
 	.menu_alerts { padding-left: 4px; padding-right: 4px; }
-	.hide_on_mobile { display: none; }
+	.hide_on_mobile { display: none !important; }
 	.prev_button, .next_button { top: auto; bottom: 5px; }
 }
 
 @media (max-width: 470px) {
 	.menu_overview { display: none; }
 	.menu_profile { display: none; }
-	.hide_on_micro { display: none; }
+	.hide_on_micro { display: none !important; }
 	.post_container {
 		overflow: visible !important;
 	}
@@ -464,12 +464,11 @@ button.username
 	.post_item > .user_content {
 		margin-left: 75px !important;
 		width: 100% !important;
+		min-height: 45px;
 	}
 	.post_item > .mod_button {
 		float: right !important;
 		margin-left: 2px !important;
-		position: relative;
-		top: -14px;
 	}
 	.post_item > .mod_button > button { opacity: 1; }
 	.post_item > .real_username {

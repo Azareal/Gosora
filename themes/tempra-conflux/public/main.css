@@ -357,11 +357,11 @@ button.username
 .postQuote {
 	border: rgb(200,200,210);
 	background: rgb(245,245,255);
-	padding: 3px;
+	padding: 5px;
 	margin: 0px;
 	display: inline-block;
 	width: 100%;
-	margin-bottom: 5px;
+	margin-bottom: 8px;
 	border-style: solid;
 	border-width: 1px;
 }

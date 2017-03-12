@@ -56,7 +56,7 @@ func bbcode_regex_parse(data interface{}) interface{} {
 	msg = bbcode_strikethrough.ReplaceAllString(msg,"<s>$1</s>")
 	msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 	msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
-	msg = bbcode_quotes.ReplaceAllString(msg,"<div class=\"postQuote\">$1</div>")
+	msg = bbcode_quotes.ReplaceAllString(msg,"<span class=\"postQuote\">$1</span>")
 	return msg
 }
 
@@ -70,19 +70,19 @@ func bbcode_simple_parse(data interface{}) interface{} {
 	has_s := false
 	for i := 0; (i + 2) < len(msgbytes); i++ {
 		if msgbytes[i] == '[' && msgbytes[i + 2] == ']' {
-			if msgbytes[i + 1] == 'b' {
+			if msgbytes[i + 1] == 'b' && !has_b {
 				msgbytes[i] = '<'
 				msgbytes[i + 2] = '>'
 				has_b = true
-			} else if msgbytes[i + 1] == 'i' {
+			} else if msgbytes[i + 1] == 'i' && !has_i {
 				msgbytes[i] = '<'
 				msgbytes[i + 2] = '>'
 				has_i = true
-			} else if msgbytes[i + 1] == 'u' {
+			} else if msgbytes[i + 1] == 'u' && !has_u {
 				msgbytes[i] = '<'
 				msgbytes[i + 2] = '>'
 				has_u = true
-			} else if msgbytes[i + 1] == 's' {
+			} else if msgbytes[i + 1] == 's' && !has_s {
 				msgbytes[i] = '<'
 				msgbytes[i + 2] = '>'
 				has_s = true
@@ -138,19 +138,19 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 					complex_bbc = true
 				}
 			} else {
-				if msgbytes[i + 1] == 'b' {
+				if msgbytes[i + 1] == 'b' && !has_b {
 					msgbytes[i] = '<'
 					msgbytes[i + 2] = '>'
 					has_b = true
-				} else if msgbytes[i + 1] == 'i' {
+				} else if msgbytes[i + 1] == 'i' && !has_i {
 					msgbytes[i] = '<'
 					msgbytes[i + 2] = '>'
 					has_i = true
-				} else if msgbytes[i + 1] == 'u' {
+				} else if msgbytes[i + 1] == 'u' && !has_u {
 					msgbytes[i] = '<'
 					msgbytes[i + 2] = '>'
 					has_u = true
-				} else if msgbytes[i + 1] == 's' {
+				} else if msgbytes[i + 1] == 's' && !has_s {
 					msgbytes[i] = '<'
 					msgbytes[i + 2] = '>'
 					has_s = true
@@ -170,7 +170,7 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 	if complex_bbc {
 		msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
-		msg = bbcode_quotes.ReplaceAllString(msg,"<div class=\"postQuote\">$1</div>")
+		msg = bbcode_quotes.ReplaceAllString(msg,"<span class=\"postQuote\">$1</span>")
 	}
 	return string(msgbytes)
 }
@@ -242,19 +242,19 @@ func bbcode_full_parse(data interface{}) interface{} {
 					complex_bbc = true
 				}
 			} else if !has_c {
-				if msgbytes[i + 1] == 'b' {
+				if msgbytes[i + 1] == 'b' && !has_b {
 					msgbytes[i] = '<'
 					msgbytes[i + 2] = '>'
 					has_b = true
-				} else if msgbytes[i + 1] == 'i' {
+				} else if msgbytes[i + 1] == 'i' && !has_i {
 					msgbytes[i] = '<'
 					msgbytes[i + 2] = '>'
 					has_i = true
-				} else if msgbytes[i + 1] == 'u' {
+				} else if msgbytes[i + 1] == 'u' && !has_u {
 					msgbytes[i] = '<'
 					msgbytes[i + 2] = '>'
 					has_u = true
-				} else if msgbytes[i + 1] == 's' {
+				} else if msgbytes[i + 1] == 's' && !has_s {
 					msgbytes[i] = '<'
 					msgbytes[i + 2] = '>'
 					has_s = true
@@ -360,7 +360,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 		
 		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
-		msg = bbcode_quotes.ReplaceAllString(msg,"<div class=\"postQuote\">$1</div>")
+		msg = bbcode_quotes.ReplaceAllString(msg,"<span class=\"postQuote\">$1</span>")
 		// Convert [code] into class="codequotes"
 		//fmt.Println("guuuaaaa")
 	} else {

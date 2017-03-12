@@ -353,10 +353,6 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	} else if page == -1 {
 		page = last_page
 		offset = (items_per_page * page) - items_per_page
-		//fmt.Println(topic.PostCount)
-		//fmt.Println((topic.PostCount / items_per_page) + 1)
-		//fmt.Println(page)
-		//fmt.Println(offset)
 	} else {
 		page = 1
 	}
