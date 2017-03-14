@@ -459,6 +459,10 @@ button .big { padding: 6px; }*/
 	background: rgb(250,250,250);
 }
 
+.mention {
+	font-weight: bold;
+}
+
 .threadHidden { background: orange; }
 .threadDeleted { background: rgba(255,0,0,0.5); }
 
@@ -555,7 +559,7 @@ blockquote p
 }
 
 /* From Tempra Conflux */
-.user_content {
+.user_content:not(.simple) {
 	padding: 5px;
 	margin-top: 3px;
 	margin-bottom: 0;
@@ -594,7 +598,6 @@ blockquote p
 	float: right;
 	border-left: solid 1px #eaeaea;
 }
-
 .post_item:not(.simple) {
 	background-color: #eaeaea;
 }

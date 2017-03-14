@@ -1,4 +1,5 @@
 package main
+//import "fmt"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
@@ -75,4 +76,12 @@ func delete_forum(fid int) error {
 	}
 	forums[fid].Name = ""
 	return nil
+}
+
+func forum_exists(fid int) bool {
+	//fmt.Println(fid)
+	//fmt.Println(fid <= forumCapCount)
+	//fmt.Println(fid >= 0)
+	//fmt.Println(forums[fid].Name!="")
+	return (fid <= forumCapCount) && (fid >= 0) && forums[fid].Name!=""
 }

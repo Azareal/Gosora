@@ -19,11 +19,11 @@
 <div class="rowitem passive deletable_block editable_parent simple" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Css}}{{end}}">
 		<span class="editable_block user_content simple">{{.ContentHtml}}</span>
 		<br /><br />
-		<a href="/user/{{.CreatedBy}}" class="username">{{.CreatedByName}}</a>
-		{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}"><button class="username edit_item">Edit</button></a>
-		<a href="/profile/reply/delete/submit/{{.ID}}"><button class="username delete_item">Delete</button></a>{{end}}
+		<a href="/user/{{.CreatedBy}}" class="username">{{.CreatedByName}}</a>&nbsp;
+		{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Item"><button class="username edit_item">Edit</button></a>&nbsp;
+		<a href="/profile/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Item"><button class="username delete_item">Delete</button></a>&nbsp;{{end}}
 		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item">Report</button></a>
-		{{ if .Tag }}<a class="username hide_on_mobile" style="float: right;">{{.Tag}}</a>{{end}}
+		{{if .Tag}}<a class="username hide_on_mobile" style="float: right;">{{.Tag}}</a>{{end}}
 	</div>
 {{end}}</div>
 <div class="colblock_right" style="border-top: none;">

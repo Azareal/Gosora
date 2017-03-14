@@ -1024,7 +1024,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			InternalError(err,w,r)
 			return
 		}
-		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(tid) + "'>" + title + "</a>"
+		content = content + "\n\nOriginal Post: #rid-" + strconv.Itoa(item_id)
 	} else if item_type == "user-reply" {
 		err = db.QueryRow("select uid, content from users_replies where rid = ?", item_id).Scan(&tid, &content)
 		if err == sql.ErrNoRows {
@@ -1043,7 +1043,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			InternalError(err,w,r)
 			return
 		}
-		content = content + "<br><br>Original Post: <a href='/user/" + strconv.Itoa(tid) + "'>" + title + "</a>"
+		content = content + "\n\nOriginal Post: @" + strconv.Itoa(tid)
 	} else if item_type == "topic" {
 		err = db.QueryRow("select title, content from topics where tid = ?", item_id).Scan(&title,&content)
 		if err == sql.ErrNoRows {
@@ -1053,7 +1053,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 			InternalError(err,w,r)
 			return
 		}
-		content = content + "<br><br>Original Post: <a href='/topic/" + strconv.Itoa(item_id) + "'>" + title + "</a>"
+		content = content + "\n\nOriginal Post: #tid-" + strconv.Itoa(item_id)
 	} else {
 		if vhooks["report_preassign"] != nil {
 			run_vhook_noreturn("report_preassign", &item_id, &item_type)
@@ -1084,7 +1084,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	title = "Report: " + title
-	res, err := create_report_stmt.Exec(title,content,content,user.ID,item_type + "_" + strconv.Itoa(item_id))
+	res, err := create_report_stmt.Exec(title,content,parse_message(content),user.ID,item_type + "_" + strconv.Itoa(item_id))
 	if err != nil {
 		InternalError(err,w,r)
 		return

@@ -357,6 +357,10 @@ button.username
 	margin-bottom: 8px;
 }
 
+.mention {
+	font-weight: bold;
+}
+
 .level {
 	float: right;
 	color: #505050;

@@ -733,7 +733,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+	if !forum_exists(fid) {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	}
@@ -764,7 +764,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
 	}
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+	if !forum_exists(fid) {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	}
@@ -792,7 +792,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request) {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
 	}
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+	if !forum_exists(fid) {
 		LocalError("The forum you're trying to edit doesn't exist.",w,r,user)
 		return
 	}
@@ -834,7 +834,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 	forum_name := r.PostFormValue("forum-name")
 	forum_preset := strip_invalid_preset(r.PostFormValue("forum-preset"))
 	forum_active := r.PostFormValue("forum-active")
-    if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+    if !forum_exists(fid) {
 		LocalErrorJSQ("The forum you're trying to edit doesn't exist.",w,r,user,is_js)
 		return
 	}

@@ -321,7 +321,7 @@ func SendValidationEmail(username string, email string, token string) bool {
 }
 
 func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, success bool) {
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+	if !forum_exists(fid) {
 		PreError("The target forum doesn't exist.",w,r)
 		return user, false
 	}
@@ -343,7 +343,7 @@ func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (u
 }
 
 func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, noticeList []string, success bool) {
-	if (fid > forumCapCount) || (fid < 0) || forums[fid].Name=="" {
+	if !forum_exists(fid) {
 		NotFound(w,r)
 		return user, noticeList, false
 	}

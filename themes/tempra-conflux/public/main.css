@@ -366,6 +366,10 @@ button.username
 	border-width: 1px;
 }
 
+.mention {
+	font-weight: bold;
+}
+
 .tag-mini
 {
 	text-transform: none;

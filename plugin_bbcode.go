@@ -274,7 +274,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 		i := 0
 		var start int
 		var lastTag int
-		outbytes := make([]byte, len(msgbytes))
+		var outbytes []byte
 		//fmt.Println("BBCode Pre:")
 		//fmt.Println("`"+string(msgbytes)+"`")
 		//fmt.Println("----")

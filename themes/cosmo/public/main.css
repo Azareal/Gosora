@@ -449,6 +449,10 @@ button .big { padding: 6px; }*/
 	background: rgb(250,250,250);
 }
 
+.mention {
+	font-weight: bold;
+}
+
 .threadHidden { background: orange; }
 .threadDeleted { background: rgba(255,0,0,0.5); }
 

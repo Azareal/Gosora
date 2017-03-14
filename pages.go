@@ -102,8 +102,12 @@ var space_gap []byte = []byte("          ")
 var http_prot_b []byte = []byte("http://")
 var invalid_url []byte = []byte("<span style='color: red;'>[Invalid URL]</span>")
 var invalid_topic []byte = []byte("<span style='color: red;'>[Invalid Topic]</span>")
+var invalid_profile []byte = []byte("<span style='color: red;'>[Invalid Profile]</span>")
 var url_open []byte = []byte("<a href='")
 var url_open2 []byte = []byte("'>")
+var bytes_singlequote []byte = []byte("'")
+var bytes_greaterthan []byte = []byte(">")
+var url_mention []byte = []byte(" class='mention'")
 var url_close []byte = []byte("</a>")
 var urlpattern string = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
 var url_reg *regexp.Regexp
@@ -163,23 +167,51 @@ func preparse_message(msg string) string {
 	return shortcode_to_unicode(msg)
 }
 
-func parse_message(msg string) string {
+//var msg_index int = 0
+func parse_message(msg string/*, user User*/) string {
 	msg = strings.Replace(msg,":)","😀",-1)
 	msg = strings.Replace(msg,":D","😃",-1)
 	msg = strings.Replace(msg,":P","😛",-1)
 	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 	
-	// Search for URLs in the messages...
+	// Search for URLs, mentions and hashlinks in the messages...
+	//fmt.Println("Parser Loop!")
+	//fmt.Println("Message Index:")
+	//msg_index++
+	//fmt.Println(msg_index)
 	var msgbytes = []byte(msg)
-	outbytes := make([]byte, len(msgbytes))
+	var outbytes []byte
+	//fmt.Println("Outbytes Start:")
+	//fmt.Println(outbytes)
+	//fmt.Println(string(outbytes))
+	//fmt.Println("Outbytes Start End:")
 	msgbytes = append(msgbytes,space_gap...)
 	//fmt.Println(`"`+string(msgbytes)+`"`)
 	lastItem := 0
 	i := 0
 	for ; len(msgbytes) > (i + 1); i++ {
-		if i==0 || msgbytes[i] == 10 || (msgbytes[i] == ' ' && msgbytes[i + 1] != ' ') {
-			i++
+		//fmt.Println("Index:")
+		//fmt.Println(i)
+		//fmt.Println("Index Item:")
+		//fmt.Println(msgbytes[i])
+		//if msgbytes[i] == 10 {
+		//	fmt.Println("NEWLINE")
+		//} else if msgbytes[i] == 32 {
+		//	fmt.Println("SPACE")
+		//} else {
+		//	fmt.Println(string(msgbytes[i]))
+		//}
+		//fmt.Println("End Index")
+		if (i==0 && (msgbytes[0] > 32)) || ((msgbytes[i] < 33) && (msgbytes[i + 1] > 32)) {
+			//fmt.Println("IN")
+			//fmt.Println(msgbytes[i])
+			//fmt.Println("STEP CONTINUE")
+			if (i != 0) || msgbytes[i] < 33 {
+				i++
+			}
+			
 			if msgbytes[i]=='#' {
+				//fmt.Println("IN #")
 				if bytes.Equal(msgbytes[i+1:i+5],[]byte("tid-")) {
 					outbytes = append(outbytes,msgbytes[lastItem:i]...)
 					i += 5
@@ -187,8 +219,8 @@ func parse_message(msg string) string {
 					tid, int_len := coerce_int_bytes(msgbytes[start:])
 					i += int_len
 					
-					_, err := topics.CascadeGet(tid)
-					if err != nil {
+					topic, err := topics.CascadeGet(tid)
+					if err != nil || !forum_exists(topic.ParentID) {
 						outbytes = append(outbytes,invalid_topic...)
 						lastItem = i
 						continue
@@ -202,10 +234,72 @@ func parse_message(msg string) string {
 					outbytes = append(outbytes, tid_bit...)
 					outbytes = append(outbytes, url_close...)
 					lastItem = i
+					
+					//fmt.Println(string(msgbytes))
+					//fmt.Println(msgbytes)
+					//fmt.Println(msgbytes[lastItem - 1])
+					//fmt.Println(lastItem - 1)
+					//fmt.Println(msgbytes[lastItem])
+					//fmt.Println(lastItem)
+				} else if bytes.Equal(msgbytes[i+1:i+5],[]byte("rid-")) {
+					outbytes = append(outbytes,msgbytes[lastItem:i]...)
+					i += 5
+					start := i
+					rid, int_len := coerce_int_bytes(msgbytes[start:])
+					i += int_len
+					
+					topic, err := get_topic_by_reply(rid)
+					if err != nil || !forum_exists(topic.ParentID) {
+						outbytes = append(outbytes,invalid_topic...)
+						lastItem = i
+						continue
+					}
+					
+					outbytes = append(outbytes, url_open...)
+					var url_bit []byte = []byte(build_topic_url(topic.ID))
+					outbytes = append(outbytes, url_bit...)
+					outbytes = append(outbytes, url_open2...)
+					var rid_bit []byte = []byte("#rid-" + strconv.Itoa(rid))
+					outbytes = append(outbytes, rid_bit...)
+					outbytes = append(outbytes, url_close...)
+					lastItem = i
 				} else {
 					// TO-DO: Forum Link
 				}
+			} else if msgbytes[i]=='@' {
+				//fmt.Println("IN @")
+				outbytes = append(outbytes,msgbytes[lastItem:i]...)
+				i++
+				start := i
+				uid, int_len := coerce_int_bytes(msgbytes[start:])
+				i += int_len
+				
+				menUser, err := users.CascadeGet(uid)
+				if err != nil {
+					outbytes = append(outbytes,invalid_profile...)
+					lastItem = i
+					continue
+				}
+				
+				outbytes = append(outbytes, url_open...)
+				var url_bit []byte = []byte(build_profile_url(uid))
+				outbytes = append(outbytes, url_bit...)
+				outbytes = append(outbytes, bytes_singlequote...)
+				outbytes = append(outbytes, url_mention...)
+				outbytes = append(outbytes, bytes_greaterthan...)
+				var uid_bit []byte = []byte("@" + menUser.Name)
+				outbytes = append(outbytes, uid_bit...)
+				outbytes = append(outbytes, url_close...)
+				lastItem = i
+				
+				//fmt.Println(string(msgbytes))
+				//fmt.Println(msgbytes)
+				//fmt.Println(msgbytes[lastItem - 1])
+				//fmt.Println(lastItem - 1)
+				//fmt.Println(msgbytes[lastItem])
+				//fmt.Println(lastItem)
 			} else if msgbytes[i]=='h' || msgbytes[i]=='f' || msgbytes[i]=='g' {
+				//fmt.Println("IN hfg")
 				if msgbytes[i + 1]=='t' && msgbytes[i + 2]=='t' && msgbytes[i + 3]=='p' {
 					if msgbytes[i + 4] == 's' && msgbytes[i + 5] == ':' && msgbytes[i + 6] == '/' && msgbytes[i + 7] == '/' {
 						// Do nothing
@@ -416,7 +510,7 @@ func coerce_int_bytes(data []byte) (res int, length int) {
 		return 0, 1
 	}
 	
-	i := 1
+	i := 0
 	for ;len(data) > i; i++ {
 		if !(data[i] > 47 && data[i] < 58) {
 			conv, err := strconv.Atoi(string(data[0:i]))

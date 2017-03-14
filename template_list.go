@@ -139,7 +139,7 @@ var topic_53 []byte = []byte(`), url(/static/white-dot.jpg);background-position:
 var topic_54 []byte = []byte(`-1`)
 var topic_55 []byte = []byte(`0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;`)
 var topic_56 []byte = []byte(`">
-		<p class="editable_block user_content" style="margin: 0;padding: 0;">`)
+		<p class="editable_block user_content" style="margin:0;padding:0;">`)
 var topic_57 []byte = []byte(`</p>
 		<a href="/user/`)
 var topic_58 []byte = []byte(`" class="username real_username">`)
@@ -369,12 +369,12 @@ var profile_21 []byte = []byte(`</span>
 		<br /><br />
 		<a href="/user/`)
 var profile_22 []byte = []byte(`" class="username">`)
-var profile_23 []byte = []byte(`</a>
+var profile_23 []byte = []byte(`</a>&nbsp;
 		`)
 var profile_24 []byte = []byte(`<a href="/profile/reply/edit/submit/`)
-var profile_25 []byte = []byte(`"><button class="username edit_item">Edit</button></a>
+var profile_25 []byte = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item">Edit</button></a>&nbsp;
 		<a href="/profile/reply/delete/submit/`)
-var profile_26 []byte = []byte(`"><button class="username delete_item">Delete</button></a>`)
+var profile_26 []byte = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item">Delete</button></a>&nbsp;`)
 var profile_27 []byte = []byte(`
 		<a href="/report/submit/`)
 var profile_28 []byte = []byte(`?session=`)

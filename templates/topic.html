@@ -34,7 +34,7 @@
 </div><br />
 <div class="rowblock post_container" style="overflow: hidden;">{{range .ItemList}}
 	<div class="rowitem passive deletable_block editable_parent post_item" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;{{.Css}}{{end}}">
-		<p class="editable_block user_content" style="margin: 0;padding: 0;">{{.ContentHtml}}</p>
+		<p class="editable_block user_content" style="margin:0;padding:0;">{{.ContentHtml}}</p>
 		<a href="/user/{{.CreatedBy}}" class="username real_username">{{.CreatedByName}}</a>&nbsp;
 		{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username" style="{{if .Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}">😀</button></a>&nbsp;{{end}}
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Reply"><button class="username edit_item">🖊️</button></a>&nbsp;{{end}}
