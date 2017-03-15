@@ -330,9 +330,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		user.Perms.CreateReply = false
 	}
 	
-	if groups[topic.Group].Is_Mod {
+	topic.Tag = groups[topic.Group].Tag
+	if groups[topic.Group].Is_Mod || groups[topic.Group].Is_Admin {
 		topic.Css = staff_css_tmpl
-		topic.Level = -1
 	}
 	
 	/*if settings["url_tags"] == false {
@@ -378,12 +378,13 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		replyItem.ParentID = topic.ID
 		replyItem.ContentHtml = parse_message(replyItem.Content)
 		replyItem.ContentLines = strings.Count(replyItem.Content,"\n")
+		
 		if groups[replyItem.Group].Is_Mod || groups[replyItem.Group].Is_Admin {
 			replyItem.Css = staff_css_tmpl
-			replyItem.Level = -1
 		} else {
 			replyItem.Css = no_css_tmpl
 		}
+		
 		if replyItem.Avatar != "" {
 			if replyItem.Avatar[0] == '.' {
 				replyItem.Avatar = "/uploads/avatar_" + strconv.Itoa(replyItem.CreatedBy) + replyItem.Avatar

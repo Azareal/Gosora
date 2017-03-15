@@ -6,5 +6,10 @@ go get -u golang.org/x/crypto/bcrypt
 echo "Preparing the installer"
 go generate
 go build -o Gosora
-go build ./install
+cd ./install
+go build -o Install
+mv ./Install ..
+cd ..
+
+echo "Running the installer"
 ./Install
