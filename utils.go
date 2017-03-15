@@ -87,6 +87,14 @@ func SendEmail(email string, subject string, msg string) bool {
 		return false
 	}
 	
+	if smtp_username != "" {
+		auth := smtp.PlainAuth("",smtp_username,smtp_password,smtp_server)
+		err = con.Auth(auth)
+		if err != nil {
+			return false
+		}
+	}
+	
 	email_data, err := con.Data()
 	if err != nil {
 		return false

@@ -1,5 +1,6 @@
 package main
 //import "fmt"
+import "strconv"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
@@ -78,10 +79,24 @@ func delete_forum(fid int) error {
 	return nil
 }
 
+func get_forum(fid int) (forum *Forum, res bool) {
+	if !((fid <= forumCapCount) && (fid >= 0) && forums[fid].Name!="") {
+		return forum, false
+	}
+	return &forums[fid], true
+}
+
+func get_forum_copy(fid int) (forum Forum, res bool) {
+	if !((fid <= forumCapCount) && (fid >= 0) && forums[fid].Name!="") {
+		return forum, false
+	}
+	return forums[fid], true
+}
+
 func forum_exists(fid int) bool {
-	//fmt.Println(fid)
-	//fmt.Println(fid <= forumCapCount)
-	//fmt.Println(fid >= 0)
-	//fmt.Println(forums[fid].Name!="")
 	return (fid <= forumCapCount) && (fid >= 0) && forums[fid].Name!=""
+}
+
+func build_forum_url(fid int) string {
+	return "/forum/" + strconv.Itoa(fid)
 }

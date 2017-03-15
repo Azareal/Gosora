@@ -21,8 +21,12 @@ var staff_css = " background-color: #ffeaff;"
 var uncategorised_forum_visible = true
 var enable_emails = false
 var site_name = "Test Install" // Should be a setting
+
 var site_email = "" // Should be a setting
 var smtp_server = ""
+var smtp_username = ""
+var smtp_password = ""
+
 //var noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
 var noavatar = "https://api.adorable.io/avatars/285/{id}@" + site_url + ".png"
 var items_per_page = 25

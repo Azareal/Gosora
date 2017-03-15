@@ -724,6 +724,16 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	// Reload the topic...
+	err = topics.Load(tid)
+	if err != nil && err != sql.ErrNoRows {
+		LocalError("The destination no longer exists",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	err = increase_post_user_stats(wcount, user.ID, false, user)
 	if err != nil {

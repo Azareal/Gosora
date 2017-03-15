@@ -103,6 +103,7 @@ var http_prot_b []byte = []byte("http://")
 var invalid_url []byte = []byte("<span style='color: red;'>[Invalid URL]</span>")
 var invalid_topic []byte = []byte("<span style='color: red;'>[Invalid Topic]</span>")
 var invalid_profile []byte = []byte("<span style='color: red;'>[Invalid Profile]</span>")
+var invalid_forum []byte = []byte("<span style='color: red;'>[Invalid Forum]</span>")
 var url_open []byte = []byte("<a href='")
 var url_open2 []byte = []byte("'>")
 var bytes_singlequote []byte = []byte("'")
@@ -156,6 +157,94 @@ func shortcode_to_unicode(msg string) string {
 	msg = strings.Replace(msg,":relieved:","😌",-1)
 	msg = strings.Replace(msg,":nerd:","🤓",-1)
 	msg = strings.Replace(msg,":stuck_out_tongue:","😛",-1)
+	msg = strings.Replace(msg,":worried:","😟",-1)
+	msg = strings.Replace(msg,":drooling_face:","🤤",-1)
+	msg = strings.Replace(msg,":disappointed:","😞",-1)
+	msg = strings.Replace(msg,":astonished:","😲",-1)
+	msg = strings.Replace(msg,":slight_frown:","🙁",-1)
+	msg = strings.Replace(msg,":skull_crossbones:","☠️",-1)
+	msg = strings.Replace(msg,":skull:","💀",-1)
+	msg = strings.Replace(msg,":point_up:","☝️",-1)
+	msg = strings.Replace(msg,":v:","✌️️",-1)
+	msg = strings.Replace(msg,":writing_hand:","✍️",-1)
+	msg = strings.Replace(msg,":heart:","❤️️",-1)
+	msg = strings.Replace(msg,":heart_exclamation:","❣️",-1)
+	msg = strings.Replace(msg,":hotsprings:","♨️",-1)
+	msg = strings.Replace(msg,":airplane:","✈️️",-1)
+	msg = strings.Replace(msg,":hourglass:","⌛",-1)
+	msg = strings.Replace(msg,":watch:","⌚",-1)
+	msg = strings.Replace(msg,":comet:","☄️",-1)
+	msg = strings.Replace(msg,":snowflake:","❄️",-1)
+	msg = strings.Replace(msg,":cloud:","☁️",-1)
+	msg = strings.Replace(msg,":sunny:","☀️",-1)
+	msg = strings.Replace(msg,":spades:","♠️",-1)
+	msg = strings.Replace(msg,":hearts:","♥️️",-1)
+	msg = strings.Replace(msg,":diamonds:","♦️",-1)
+	msg = strings.Replace(msg,":clubs:","♣️",-1)
+	msg = strings.Replace(msg,":phone:","☎️",-1)
+	msg = strings.Replace(msg,":telephone:","☎️",-1)
+	msg = strings.Replace(msg,":biohazard:","☣️",-1)
+	msg = strings.Replace(msg,":radioactive:","☢️",-1)
+	msg = strings.Replace(msg,":scissors:","✂️",-1)
+	msg = strings.Replace(msg,":arrow_upper_right:","↗️",-1)
+	msg = strings.Replace(msg,":arrow_right:","➡️",-1)
+	msg = strings.Replace(msg,":arrow_lower_right:","↘️",-1)
+	msg = strings.Replace(msg,":arrow_lower_left:","↙️",-1)
+	msg = strings.Replace(msg,":arrow_upper_left:","↖️",-1)
+	msg = strings.Replace(msg,":arrow_up_down:","↕️",-1)
+	msg = strings.Replace(msg,":left_right_arrow:","↔️",-1)
+	msg = strings.Replace(msg,":leftwards_arrow_with_hook:","↩️",-1)
+	msg = strings.Replace(msg,":arrow_right_hook:","↪️",-1)
+	msg = strings.Replace(msg,":arrow_forward:","▶️",-1)
+	msg = strings.Replace(msg,":arrow_backward:","◀️",-1)
+	msg = strings.Replace(msg,":female:","♀️",-1)
+	msg = strings.Replace(msg,":male:","♂️",-1)
+	msg = strings.Replace(msg,":ballot_box_with_check:","☑️",-1)
+	msg = strings.Replace(msg,":heavy_check_mark:","✔️️",-1)
+	msg = strings.Replace(msg,":heavy_multiplication_x:","✖️",-1)
+	msg = strings.Replace(msg,":pisces:","♓",-1)
+	msg = strings.Replace(msg,":aquarius:","♒",-1)
+	msg = strings.Replace(msg,":capricorn:","♑",-1)
+	msg = strings.Replace(msg,":sagittarius:","♐",-1)
+	msg = strings.Replace(msg,":scorpius:","♏",-1)
+	msg = strings.Replace(msg,":libra:","♎",-1)
+	msg = strings.Replace(msg,":virgo:","♍",-1)
+	msg = strings.Replace(msg,":leo:","♌",-1)
+	msg = strings.Replace(msg,":cancer:","♋",-1)
+	msg = strings.Replace(msg,":gemini:","♊",-1)
+	msg = strings.Replace(msg,":taurus:","♉",-1)
+	msg = strings.Replace(msg,":aries:","♈",-1)
+	msg = strings.Replace(msg,":peace:","☮️",-1)
+	msg = strings.Replace(msg,":eight_spoked_asterisk:","✳️",-1)
+	msg = strings.Replace(msg,":eight_pointed_black_star:","✴️",-1)
+	msg = strings.Replace(msg,":snowman2:","☃️",-1)
+	msg = strings.Replace(msg,":umbrella2:","☂️",-1)
+	msg = strings.Replace(msg,":pencil2:","✏️",-1)
+	msg = strings.Replace(msg,":black_nib:","✒️",-1)
+	msg = strings.Replace(msg,":email:","✉️",-1)
+	msg = strings.Replace(msg,":envelope:","✉️",-1)
+	msg = strings.Replace(msg,":keyboard:","⌨️",-1)
+	msg = strings.Replace(msg,":white_small_square:","▫️",-1)
+	msg = strings.Replace(msg,":black_small_square:","▪️",-1)
+	msg = strings.Replace(msg,":secret:","㊙️",-1)
+	msg = strings.Replace(msg,":congratulations:","㊗️",-1)
+	msg = strings.Replace(msg,":m:","Ⓜ️",-1)
+	msg = strings.Replace(msg,":tm:","™️️",-1)
+	msg = strings.Replace(msg,":registered:","®️",-1)
+	msg = strings.Replace(msg,":copyright:","©️",-1)
+	msg = strings.Replace(msg,":wavy_dash:","〰️",-1)
+	msg = strings.Replace(msg,":bangbang:","‼️",-1)
+	msg = strings.Replace(msg,":sparkle:","❇️",-1)
+	msg = strings.Replace(msg,":star_of_david:","✡️",-1)
+	msg = strings.Replace(msg,":wheel_of_dharma:","☸️",-1)
+	msg = strings.Replace(msg,":yin_yang:","☯️",-1)
+	msg = strings.Replace(msg,":cross:","✝️",-1)
+	msg = strings.Replace(msg,":orthodox_cross:","☦️",-1)
+	msg = strings.Replace(msg,":star_and_crescent:","☪️",-1)
+	msg = strings.Replace(msg,":frowning2:","☹️",-1)
+	msg = strings.Replace(msg,":information_source:","ℹ️",-1)
+	msg = strings.Replace(msg,":interrobang:","⁉️",-1)
+	
 	return msg
 }
 
@@ -167,24 +256,20 @@ func preparse_message(msg string) string {
 	return shortcode_to_unicode(msg)
 }
 
-//var msg_index int = 0
 func parse_message(msg string/*, user User*/) string {
 	msg = strings.Replace(msg,":)","😀",-1)
+	msg = strings.Replace(msg,":(","😞",-1)
 	msg = strings.Replace(msg,":D","😃",-1)
 	msg = strings.Replace(msg,":P","😛",-1)
+	msg = strings.Replace(msg,":O","😲",-1)
+	msg = strings.Replace(msg,":p","😛",-1)
+	msg = strings.Replace(msg,":o","😲",-1)
 	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 	
 	// Search for URLs, mentions and hashlinks in the messages...
 	//fmt.Println("Parser Loop!")
-	//fmt.Println("Message Index:")
-	//msg_index++
-	//fmt.Println(msg_index)
 	var msgbytes = []byte(msg)
 	var outbytes []byte
-	//fmt.Println("Outbytes Start:")
-	//fmt.Println(outbytes)
-	//fmt.Println(string(outbytes))
-	//fmt.Println("Outbytes Start End:")
 	msgbytes = append(msgbytes,space_gap...)
 	//fmt.Println(`"`+string(msgbytes)+`"`)
 	lastItem := 0
@@ -205,7 +290,6 @@ func parse_message(msg string/*, user User*/) string {
 		if (i==0 && (msgbytes[0] > 32)) || ((msgbytes[i] < 33) && (msgbytes[i + 1] > 32)) {
 			//fmt.Println("IN")
 			//fmt.Println(msgbytes[i])
-			//fmt.Println("STEP CONTINUE")
 			if (i != 0) || msgbytes[i] < 33 {
 				i++
 			}
@@ -263,8 +347,29 @@ func parse_message(msg string/*, user User*/) string {
 					outbytes = append(outbytes, rid_bit...)
 					outbytes = append(outbytes, url_close...)
 					lastItem = i
+				} else if bytes.Equal(msgbytes[i+1:i+5],[]byte("fid-")) {
+					outbytes = append(outbytes,msgbytes[lastItem:i]...)
+					i += 5
+					start := i
+					fid, int_len := coerce_int_bytes(msgbytes[start:])
+					i += int_len
+					
+					if !forum_exists(fid) {
+						outbytes = append(outbytes,invalid_forum...)
+						lastItem = i
+						continue
+					}
+					
+					outbytes = append(outbytes, url_open...)
+					var url_bit []byte = []byte(build_forum_url(fid))
+					outbytes = append(outbytes, url_bit...)
+					outbytes = append(outbytes, url_open2...)
+					var fid_bit []byte = []byte("#fid-" + strconv.Itoa(fid))
+					outbytes = append(outbytes, fid_bit...)
+					outbytes = append(outbytes, url_close...)
+					lastItem = i
 				} else {
-					// TO-DO: Forum Link
+					// TO-DO: Forum Shortcode Link
 				}
 			} else if msgbytes[i]=='@' {
 				//fmt.Println("IN @")
