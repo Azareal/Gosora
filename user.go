@@ -315,7 +315,7 @@ func SendValidationEmail(username string, email string, token string) bool {
 	}
 	
 	subject := "Validate Your Email @ " + site_name
-	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\nClick on the following link to do so. http" + schema + "://" + site_url + "/user/edit/token/" + token + "\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
+	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. http" + schema + "://" + site_url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
 	
 	return SendEmail(email, subject, msg)
 }

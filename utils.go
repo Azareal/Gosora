@@ -73,16 +73,7 @@ func SendEmail(email string, subject string, msg string) bool {
 	}
 	body := "Subject: " + subject + "\n\n" + msg + "\n"
 	
-	con, err := smtp.Dial(smtp_server)
-	if err != nil {
-		return false
-	}
-	
-	err = con.Mail(site_email)
-	if err != nil {
-		return false
-	}
-	err = con.Rcpt(email)
+	con, err := smtp.Dial(smtp_server + ":" + smtp_port)
 	if err != nil {
 		return false
 	}
@@ -93,6 +84,15 @@ func SendEmail(email string, subject string, msg string) bool {
 		if err != nil {
 			return false
 		}
+	}
+	
+	err = con.Mail(site_email)
+	if err != nil {
+		return false
+	}
+	err = con.Rcpt(email)
+	if err != nil {
+		return false
 	}
 	
 	email_data, err := con.Data()
