@@ -1,13 +1,21 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
-<div class="colblock_right">
-	<div class="rowitem rowhead"><a>Groups</a></div>
-</div>
-<div class="colblock_right">
-	{{range .ItemList}}
-	<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
-		<a class="editable_block" style="font-size: 20px;">{{.Name}}</a>
+<div class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>Groups</a></div>
 	</div>
-	{{end}}
+	<div class="colstack_item">
+		{{range .ItemList}}
+		<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
+			<a href="/panel/groups/edit/{{.ID}}" style="font-size: 20px;position:relative;top: -2px;text-transform: none;">{{.Name}}</a>
+			<span style="float: right;">
+				{{if .RankEmoji}}<a class="username" title="{{.Rank}}">{{.RankEmoji}}</a>
+				{{else}}<span class="username">{{.Rank}}</span>{{end}}
+				
+				{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="username">Edit</a>{{end}}
+			</span>
+		</div>
+		{{end}}
+	</div>
 </div>
 {{template "footer.html" . }}

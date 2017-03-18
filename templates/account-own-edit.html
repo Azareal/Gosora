@@ -1,25 +1,27 @@
 {{template "header.html" . }}
 {{template "account-menu.html" . }}
-<div class="colblock_right">
-	<div class="rowitem rowhead"><a>Edit Password</a></div>
-</div>
-<div class="colblock_right">
-	<form action="/user/edit/critical/submit/" method="post">
-		<div class="formrow">
-			<div class="formitem"><a>Current Password</a></div>
-			<div class="formitem"><input name="account-current-password" type="password" placeholder="*****" /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><a>New Password</a></div>
-			<div class="formitem"><input name="account-new-password" type="password" placeholder="*****" /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><a>Confirm Password</a></div>
-			<div class="formitem"><input name="account-confirm-password" type="password" placeholder="*****" /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><button name="account-button" class="formbutton">Update</button></div>
-		</div>
-	</form>
+<div class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>Edit Password</a></div>
+	</div>
+	<div class="colstack_item">
+		<form action="/user/edit/critical/submit/" method="post">
+			<div class="formrow">
+				<div class="formitem"><a>Current Password</a></div>
+				<div class="formitem"><input name="account-current-password" type="password" placeholder="*****" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem"><a>New Password</a></div>
+				<div class="formitem"><input name="account-new-password" type="password" placeholder="*****" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem"><a>Confirm Password</a></div>
+				<div class="formitem"><input name="account-confirm-password" type="password" placeholder="*****" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem"><button name="account-button" class="formbutton">Update</button></div>
+			</div>
+		</form>
+	</div>
 </div>
 {{template "footer.html" . }}

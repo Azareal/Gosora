@@ -1,19 +1,21 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
-<div class="colblock_right">
-	<div class="rowitem rowhead"><a>Users</a></div>
-</div>
-<div class="colblock_right">
-	{{range .ItemList}}
-	<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
-		<a {{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}} "{{end}}class="editable_block" style="font-size: 20px;position:relative;top: -2px;">{{.Name}}</a>
-		<a href="/user/{{.ID}}" class="tag-mini" style="margin-left: 3px;position: relative;top:-5px;color: #505050;">Profile</a>
-		{{if .Tag}}<span class="username" style="margin-left 4px;{{if (.Is_Super_Mod) and (.Active)}}float: right;{{end}}">{{.Tag}}</span>{{end}}
-		<span style="float: right;">
-			{{if .Is_Banned}}<a href="/users/unban/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Unban</a>{{else if not .Is_Super_Mod}}<a href="/users/ban/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Ban</a>{{end}}
-			{{if not .Active}}<a href="/users/activate/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Activate</a>{{end}}
-		</span>
+<div class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>Users</a></div>
 	</div>
-	{{end}}
+	<div class="colstack_item">
+		{{range .ItemList}}
+		<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
+			<a {{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}} "{{end}}class="editable_block" style="font-size: 20px;position:relative;top: -2px;">{{.Name}}</a>
+			<a href="/user/{{.ID}}" class="tag-mini" style="margin-left: 3px;position: relative;top:-5px;color: #505050;">Profile</a>
+			{{if .Tag}}<span class="username" style="margin-left 4px;{{if (.Is_Super_Mod) and (.Active)}}float: right;{{end}}">{{.Tag}}</span>{{end}}
+			<span style="float: right;">
+				{{if .Is_Banned}}<a href="/users/unban/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Unban</a>{{else if not .Is_Super_Mod}}<a href="/users/ban/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Ban</a>{{end}}
+				{{if not .Active}}<a href="/users/activate/{{.ID}}?session={{$.CurrentUser.Session}}" class="username">Activate</a>{{end}}
+			</span>
+		</div>
+		{{end}}
+	</div>
 </div>
 {{template "footer.html" . }}

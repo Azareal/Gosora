@@ -189,6 +189,11 @@ EditUserPassword
 EditUserGroup
 EditUserGroupSuperMod
 EditUserGroupAdmin
+EditGroup
+EditGroupLocalPerms
+EditGroupGlobalPerms
+EditGroupSuperMod
+EditGroupAdmin
 ManageForums
 EditSettings
 ManageThemes
@@ -207,8 +212,8 @@ PinTopic
 CloseTopic
 */
 
-INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,1,"Admin");
-INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`tag`) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserPassword":false,"EditUserGroup":true,"EditUserGroupSuperMod":false,"EditUserGroupAdmin":false,"ManageForums":false,"EditSettings":false,"ManageThemes":false,"ManagePlugins":false,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,"Mod");
+INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,1,"Admin");
+INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`tag`) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,"Mod");
 INSERT INTO users_groups(`name`,`permissions`) VALUES ('Member','{"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}');
 INSERT INTO users_groups(`name`,`permissions`,`is_banned`) VALUES ('Banned','{"ViewTopic":true}',1);
 INSERT INTO users_groups(`name`,`permissions`) VALUES ('Awaiting Activation','{"ViewTopic":true}');

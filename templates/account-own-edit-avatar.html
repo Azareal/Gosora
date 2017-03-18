@@ -1,22 +1,24 @@
 {{template "header.html" . }}
 {{template "account-menu.html" . }}
-<div class="colblock_right">
-	<div class="rowitem rowhead"><a>Edit Avatar</a></div>
-</div>
-{{ if .CurrentUser.Avatar }}
-<div class="colblock_right">
-	<div class="rowitem"><img src="{{.CurrentUser.Avatar}}" height="128px" max-width="128px" /></div>
-</div>
-{{end}}
-<div class="colblock_right">
-	<form action="/user/edit/avatar/submit/" method="post" enctype="multipart/form-data">
-		<div class="formrow">
-			<div class="formitem"><a>Upload Avatar</a></div>
-			<div class="formitem"><input name="account-avatar" type="file" /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><button name="account-button" class="formbutton">Update</button></div>
-		</div>
-	</form>
+<div class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>Edit Avatar</a></div>
+	</div>
+	{{if .CurrentUser.Avatar}}
+	<div class="colstack_item">
+		<div class="rowitem"><img src="{{.CurrentUser.Avatar}}" height="128px" max-width="128px" /></div>
+	</div>
+	{{end}}
+	<div class="colstack_item">
+		<form action="/user/edit/avatar/submit/" method="post" enctype="multipart/form-data">
+			<div class="formrow">
+				<div class="formitem"><a>Upload Avatar</a></div>
+				<div class="formitem"><input name="account-avatar" type="file" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem"><button name="account-button" class="formbutton">Update</button></div>
+			</div>
+		</form>
+	</div>
 </div>
 {{template "footer.html" . }}

@@ -1,17 +1,19 @@
 {{template "header.html" . }}
 {{template "account-menu.html" . }}
-<div class="colblock_right">
-	<div class="rowitem rowhead"><a>Emails</a></div>
-</div>
-<div class="colblock_right">
-	{{range .ItemList}}
-	<div class="rowitem" style="font-weight: normal;">
-		<a style="text-transform: none;">{{.Email}}</a>
-		<span style="float: right">
-		<span class="username">{{if .Primary}}Primary{{else}}Secondary{{end}}</span>
-		{{if .Validated}}<span class="username" style="color: green;">Verified</span>{{else}}<a class="username" style="color: crimson;">Resend Verification Email</a>{{end}}
-		</span>
+<div class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>Emails</a></div>
 	</div>
-	{{end}}
+	<div class="colstack_item">
+		{{range .ItemList}}
+		<div class="rowitem" style="font-weight: normal;">
+			<a style="text-transform: none;">{{.Email}}</a>
+			<span style="float: right">
+			<span class="username">{{if .Primary}}Primary{{else}}Secondary{{end}}</span>
+			{{if .Validated}}<span class="username" style="color: green;">Verified</span>{{else}}<a class="username" style="color: crimson;">Resend Verification Email</a>{{end}}
+			</span>
+		</div>
+		{{end}}
+	</div>
 </div>
 {{template "footer.html" . }}

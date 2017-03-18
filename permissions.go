@@ -26,6 +26,11 @@ type Perms struct
 	EditUserGroup bool
 	EditUserGroupSuperMod bool
 	EditUserGroupAdmin bool
+	EditGroup bool
+	EditGroupLocalPerms bool
+	EditGroupGlobalPerms bool
+	EditGroupSuperMod bool
+	EditGroupAdmin bool
 	ManageForums bool // This could be local, albeit limited for per-forum managers
 	EditSettings bool
 	ManageThemes bool
@@ -94,6 +99,11 @@ func init() {
 		EditUserGroup: true,
 		EditUserGroupSuperMod: true,
 		EditUserGroupAdmin: true,
+		EditGroup: true,
+		EditGroupLocalPerms: true,
+		EditGroupGlobalPerms: true,
+		EditGroupSuperMod: true,
+		EditGroupAdmin: true,
 		ManageForums: true,
 		EditSettings: true,
 		ManageThemes: true,

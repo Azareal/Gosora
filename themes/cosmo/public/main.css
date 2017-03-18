@@ -180,7 +180,7 @@ hr { color: silver; border: 1px solid silver; }
 	-o-transition: color 1s;
 }
 
-.rowblock, .colblock_left, .colblock_right {
+.rowblock, .colblock_left, .colblock_right, .colstack_item {
 	background: rgba(240,240,240,1);
 	border-spacing: 0;
 	border-collapse: collapse;
@@ -249,20 +249,40 @@ hr { color: silver; border: 1px solid silver; }
 	overflow: hidden;
 	word-wrap: break-word;
 }
-.colblock_left:empty
-{
-	display: none;
-}
+.colblock_left:empty { display: none; }
 .colblock_right:empty
+{ display: none; }
+.colblock_left:first-of-type { margin-top: 8px; }
+.colblock_right:first-of-type { margin-top: 8px; }
+
+/* The new method of doing columns layouts, colblock is now deprecated */
+.colstack_left
 {
-	display: none;
+	float: left;
+	width: 30%;
+	margin-right: 8px;
+	margin-top: 12px;
 }
-.colblock_left:first-of-type {
-	margin-top: 8px;
+.colstack_right
+{
+	float: left;
+	width: 65%;
+	width: calc(70% - 15px);
+	margin-top: 12px;
 }
-.colblock_right:first-of-type {
-	margin-top: 8px;
+.colstack_item
+{
+	padding: 0px;
+	padding-top: 0px;
+	width: 100%;
+	margin-bottom: 8px;
+	overflow: hidden;
+	word-wrap: break-word;
 }
+.colstack_head { margin-bottom: 0px; }
+.colstack_left:empty { display: none; }
+.colstack_right:empty { display: none; }
+
 .colitem
 {
 	padding-left: 8px;

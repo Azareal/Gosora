@@ -1,0 +1,46 @@
+{{template "header.html" . }}
+<div class="colstack_left">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a href="/panel/groups/edit/{{.ID}}">Group Editor</a></div>
+	</div>
+	<div class="colstack_item">
+		<div class="rowitem passive"><a href="/panel/groups/edit/{{.ID}}">General</a></div>
+		<div class="rowitem passive"><a>Promotions</a></div>
+		<div class="rowitem passive"><a>Permissions</a></div>
+	</div>
+{{template "panel-inner-menu.html" . }}
+</div>
+<div class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>{{.Name}} Group</a></div>
+	</div>
+	<div class="colstack_item">
+		<form action="/panel/groups/edit/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
+		<div class="formrow">
+			<div class="formitem"><a>Name</a></div>
+			<div class="formitem"><input name="group-name" type="text" value="{{.Name}}" placeholder="General Forum" /></div>
+		</div>
+		{{if .CurrentUser.Perms.EditUserGroup}}
+		<div class="formrow">
+			<div class="formitem"><a>Type</a></div>
+			<div class="formitem">
+				<select name="group-type"{{if .DisableRank}} disabled{{end}}>
+					<option{{if eq .Rank "Guest"}} selected{{end}} disabled>Guest</option>
+					<option{{if eq .Rank "Member"}} selected{{end}}>Member</option>
+					<option{{if eq .Rank "Mod"}} selected{{end}}{{if not .CurrentUser.Perms.EditGroupSuperMod}} disabled{{end}}>Mod</option>
+					<option{{if eq .Rank "Admin"}} selected{{end}}{{if not .CurrentUser.Perms.EditGroupAdmin}} disabled{{end}}>Admin</option>
+					<option{{if eq .Rank "Banned"}} selected{{end}}>Banned</option>
+				</select>
+			</div>
+		</div>{{end}}
+		<div class="formrow">
+			<div class="formitem"><a>Tag</a></div>
+			<div class="formitem"><input name="group-tag" type="text" value="{{.Tag}}" placeholder="VIP" /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem"><button name="panel-button" class="formbutton">Update Group</button></div>
+		</div>
+		</form>
+	</div>
+</div>
+{{template "footer.html" . }}

@@ -191,7 +191,7 @@ hr { color: silver; border: 1px solid silver; }
 	-o-transition: color 1s;
 }
 
-.rowblock, .colblock_left, .colblock_right {
+.rowblock, .colblock_left, .colblock_right, .colstack_item {
 	background: rgba(240,240,240,1);
 	border-spacing: 0;
 	border-collapse: collapse;
@@ -208,13 +208,8 @@ hr { color: silver; border: 1px solid silver; }
 	border-left: 1px solid black;
 	border-right: 1px solid black;
 }
-.rowitem:not(:last-child)
-{
-	border-bottom: 1px dotted #ccc;
-}
-.rowblock:first-of-type {
-	margin-top: 8px;
-}
+.rowitem:not(:last-child) { border-bottom: 1px dotted #ccc; }
+.rowblock:first-of-type { margin-top: 8px; }
 
 .rowhead, .colhead {
 	background: #ce2424;
@@ -261,20 +256,39 @@ hr { color: silver; border: 1px solid silver; }
 	overflow: hidden;
 	word-wrap: break-word;
 }
-.colblock_left:empty
+.colblock_left:empty { display: none; }
+.colblock_right:empty { display: none; }
+.colblock_left:first-of-type { margin-top: 8px; }
+.colblock_right:first-of-type { margin-top: 8px; }
+
+/* The new method of doing columns layouts, colblock is now deprecated */
+.colstack_left
 {
-	display: none;
+	float: left;
+	width: 30%;
+	margin-right: 8px;
+	margin-top: 12px;
 }
-.colblock_right:empty
+.colstack_right
 {
-	display: none;
+	float: left;
+	width: 65%;
+	width: calc(70% - 15px);
+	margin-top: 12px;
 }
-.colblock_left:first-of-type {
-	margin-top: 8px;
+.colstack_item
+{
+	padding: 0px;
+	padding-top: 0px;
+	width: 100%;
+	margin-bottom: 8px;
+	overflow: hidden;
+	word-wrap: break-word;
 }
-.colblock_right:first-of-type {
-	margin-top: 8px;
-}
+.colstack_head { margin-bottom: 0px; }
+.colstack_left:empty { display: none; }
+.colstack_right:empty { display: none; }
+
 .colitem
 {
 	padding-left: 8px;
@@ -294,10 +308,7 @@ hr { color: silver; border: 1px solid silver; }
 	text-decoration: none;
 	color: black;
 }
-.colitem a:hover
-{
-	color: silver;
-}
+.colitem a:hover { color: silver; }
 .col_left
 {
 	width: 30%;
@@ -317,16 +328,11 @@ hr { color: silver; border: 1px solid silver; }
 /*Clearfix*/
 .formrow:before,
 .formrow:after {
-  content: " ";
-  display: table;
+	content: " ";
+	display: table;
 }
-.formrow:after {
-  clear: both;
-}
-.formrow:not(:last-child)
-{
-	border-bottom: 1px dotted #ccc;
-}
+.formrow:after { clear: both; }
+.formrow:not(:last-child) { border-bottom: 1px dotted #ccc; }
 
 .formitem
 {
@@ -337,18 +343,9 @@ hr { color: silver; border: 1px solid silver; }
 	padding-bottom: 8px;
 	font-weight: bold;
 }
-.formitem:first-child
-{
-	font-weight: bold;
-}
-.formitem:not(:last-child)
-{
-	border-right: 1px dotted #ccc;
-}
-.formitem.invisible_border
-{
-	border: none;
-}
+.formitem:first-child { font-weight: bold; }
+.formitem:not(:last-child) { border-right: 1px dotted #ccc; }
+.formitem.invisible_border { border: none; }
 
 /* Mostly for textareas */
 .formitem:only-child { width: 100%; }
@@ -581,6 +578,22 @@ blockquote p
 	margin-top: 3px;
 	display: block;
 	height: 20px;
+}
+
+.tag-mini
+{
+	text-transform: none;
+	margin-left: 0px;
+	padding-left: 3px;
+	padding-right: 3px;
+	padding-top: 1.5px;
+	padding-bottom: 0px;
+	color: #505050; /* 80,80,80 */
+	background-color: #FFFFFF;
+	border-style: dotted;
+	border-color: #505050; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
+	border-width: 1px;
+	font-size: 10px;
 }
 
 .action_button {

@@ -1403,21 +1403,23 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	token := r.URL.Path[len("/user/edit/email/token/"):]
+	token := r.URL.Path[len("/user/edit/token/"):]
 	
 	email := Email{UserID: user.ID}
 	targetEmail := Email{UserID: user.ID}
 	var emailList []interface{}
 	rows, err := db.Query("select email, validated, token from emails where uid = ?", user.ID)
 	if err != nil {
-		log.Fatal(err)
+		InternalError(err,w,r)
+		return
 	}
 	defer rows.Close()
 	
 	for rows.Next() {
 		err := rows.Scan(&email.Email, &email.Validated, &email.Token)
 		if err != nil {
-			log.Fatal(err)
+			InternalError(err,w,r)
+			return
 		}
 		
 		if email.Email == user.Email {
@@ -1430,7 +1432,8 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err)
+		InternalError(err,w,r)
+		return
 	}
 	
 	if len(emailList) == 0 {

@@ -228,7 +228,7 @@ func main(){
 	router.HandleFunc("/user/edit/username/", route_account_own_edit_username)
 	router.HandleFunc("/user/edit/username/submit/", route_account_own_edit_username_submit)
 	router.HandleFunc("/user/edit/email/", route_account_own_edit_email)
-	router.HandleFunc("/user/edit/email/token/", route_account_own_edit_email_token_submit)
+	router.HandleFunc("/user/edit/token/", route_account_own_edit_email_token_submit)
 	router.HandleFunc("/user/", route_profile)
 	router.HandleFunc("/profile/reply/create/", route_profile_reply_create)
 	router.HandleFunc("/profile/reply/edit/submit/", route_profile_reply_edit_submit)
@@ -259,6 +259,8 @@ func main(){
 	router.HandleFunc("/panel/users/edit/", route_panel_users_edit)
 	router.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
 	router.HandleFunc("/panel/groups/", route_panel_groups)
+	router.HandleFunc("/panel/groups/edit/", route_panel_groups_edit)
+	router.HandleFunc("/panel/groups/edit/submit/", route_panel_groups_edit_submit)
 	router.HandleFunc("/api/", route_api)
 	//router.HandleFunc("/exit/", route_exit)
 	

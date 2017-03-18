@@ -1,35 +1,37 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
-<div class="colblock_right">
-	<div class="rowitem rowhead"><a>Edit Setting</a></div>
-</div>
-<div class="colblock_right">
-	<form action="/panel/settings/edit/submit/{{.Something.Name}}?session={{.CurrentUser.Session}}" method="post">
-		<div class="formrow">
-			<div class="formitem"><a>Setting Name</a></div>
-			<div class="formitem">{{.Something.Name}}</div>
-		</div>
-		{{if eq .Something.Type "list"}}
-		<div class="formrow">
-			<div class="formitem"><a>Setting Value</a></div>
-			<div class="formitem">
-				<select name="setting-value">
-				{{range .ItemList}}<option{{if .Selected}} selected{{end}} value="{{.Value}}">{{.Label}}</option>{{end}}
-				</select>
+<div class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>Edit Setting</a></div>
+	</div>
+	<div class="colstack_item">
+		<form action="/panel/settings/edit/submit/{{.Something.Name}}?session={{.CurrentUser.Session}}" method="post">
+			<div class="formrow">
+				<div class="formitem"><a>Setting Name</a></div>
+				<div class="formitem">{{.Something.Name}}</div>
 			</div>
-		</div>
-		{{else if eq .Something.Type "bool"}}
-		<div class="formrow">
-			<div class="formitem"><a>Setting Value</a></div>
-			<div class="formitem"><input name="setting-value" type="checkbox"{{if eq .Something.Content "1"}} checked{{end}} /></div>
-		</div>
-		{{else}}<div class="formrow">
-			<div class="formitem"><a>Setting Value</a></div>
-			<div class="formitem"><input name="setting-value" type="text" value="{{.Something.Content}}" /></div>
-		</div>{{end}}
-		<div class="formrow">
-			<div class="formitem"><button name="panel-button" class="formbutton">Update Setting</div></div>
-		</div>
-	</form>
+			{{if eq .Something.Type "list"}}
+			<div class="formrow">
+				<div class="formitem"><a>Setting Value</a></div>
+				<div class="formitem">
+					<select name="setting-value">
+					{{range .ItemList}}<option{{if .Selected}} selected{{end}} value="{{.Value}}">{{.Label}}</option>{{end}}
+					</select>
+				</div>
+			</div>
+			{{else if eq .Something.Type "bool"}}
+			<div class="formrow">
+				<div class="formitem"><a>Setting Value</a></div>
+				<div class="formitem"><input name="setting-value" type="checkbox"{{if eq .Something.Content "1"}} checked{{end}} /></div>
+			</div>
+			{{else}}<div class="formrow">
+				<div class="formitem"><a>Setting Value</a></div>
+				<div class="formitem"><input name="setting-value" type="text" value="{{.Something.Content}}" /></div>
+			</div>{{end}}
+			<div class="formrow">
+				<div class="formitem"><button name="panel-button" class="formbutton">Update Setting</button></div>
+			</div>
+		</form>
+	</div>
 </div>
 {{template "footer.html" . }}

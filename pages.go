@@ -86,6 +86,19 @@ type ThemesPage struct
 	ExtData interface{}
 }
 
+type EditGroupPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList []string
+	ID int
+	Name string
+	Tag string
+	Rank string
+	DisableRank bool
+	ExtData interface{}
+}
+
 type PageSimple struct
 {
 	Title string

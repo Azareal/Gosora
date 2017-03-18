@@ -1393,11 +1393,229 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 	
 	var groupList []interface{}
 	for _, group := range groups[1:] {
-		groupList = append(groupList, group)
+		var rank string
+		var rank_emoji string
+		var can_edit bool
+		var can_delete bool = false
+		
+		if group.Is_Admin {
+			rank = "Admin"
+			rank_emoji = "👑"
+		} else if group.Is_Mod {
+			rank = "Mod"
+			rank_emoji = "👮"
+		} else if group.Is_Banned {
+			rank = "Banned"
+			rank_emoji = "⛓️"
+		} else if group.ID == 6 {
+			rank = "Guest"
+			rank_emoji = "👽"
+		} else {
+			rank = "Member"
+			rank_emoji = "👪"
+		}
+		
+		if user.Perms.EditGroup && (!group.Is_Admin || user.Perms.EditGroupAdmin) && (!group.Is_Mod || user.Perms.EditGroupSuperMod) {
+			can_edit = true
+		} else {
+			can_edit = false
+		}
+		
+		groupList = append(groupList, GroupAdmin{group.ID,group.Name,rank,rank_emoji,can_edit,can_delete})
 	}
+	//fmt.Printf("%+v\n", groupList)
 	
 	pi := Page{"Group Manager",user,noticeList,groupList,nil}
 	templates.ExecuteTemplate(w,"panel-groups.html",pi)
+}
+
+func route_panel_groups_edit(w http.ResponseWriter, r *http.Request){
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	gid, err := strconv.Atoi(r.URL.Path[len("/panel/groups/edit/"):])
+	if err != nil {
+		LocalError("The Group ID is not a valid integer.",w,r,user)
+		return
+	}
+	
+	if !group_exists(gid) {
+		//fmt.Println("aaaaa monsters")
+		NotFound(w,r)
+		return
+	}
+	
+	group := groups[gid]
+	if group.Is_Admin && !user.Perms.EditGroupAdmin {
+		LocalError("You need the EditGroupAdmin permission to edit an admin group.",w,r,user)
+		return
+	}
+	if group.Is_Mod && !user.Perms.EditGroupSuperMod {
+		LocalError("You need the EditGroupSuperMod permission to edit an super-mod group.",w,r,user)
+		return
+	}
+	
+	var rank string
+	if group.Is_Admin {
+		rank = "Admin"
+	} else if group.Is_Mod {
+		rank = "Mod"
+	} else if group.Is_Banned {
+		rank = "Banned"
+	} else if group.ID == 6 {
+		rank = "Guest"
+	} else {
+		rank = "Member"
+	}
+	
+	var disable_rank bool
+	if !user.Perms.EditGroupGlobalPerms || (group.ID == 6) {
+		disable_rank = true
+	}
+	
+	pi := EditGroupPage{"Group Editor",user,noticeList,group.ID,group.Name,group.Tag,rank,disable_rank,nil}
+	err = templates.ExecuteTemplate(w,"panel-group-edit.html",pi)
+	if err != nil {
+		InternalError(err,w,r)
+	}
+}
+
+func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request){
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+		NoPermissions(w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	gid, err := strconv.Atoi(r.URL.Path[len("/panel/groups/edit/submit/"):])
+	if err != nil {
+		LocalError("The Group ID is not a valid integer.",w,r,user)
+		return
+	}
+	
+	if !group_exists(gid) {
+		//fmt.Println("aaaaa monsters")
+		NotFound(w,r)
+		return
+	}
+	
+	group := groups[gid]
+	if group.Is_Admin && !user.Perms.EditGroupAdmin {
+		LocalError("You need the EditGroupAdmin permission to edit an admin group.",w,r,user)
+		return
+	}
+	if group.Is_Mod && !user.Perms.EditGroupSuperMod {
+		LocalError("You need the EditGroupSuperMod permission to edit an super-mod group.",w,r,user)
+		return
+	}
+	
+	gname := r.FormValue("group-name")
+	if gname == "" {
+		LocalError("The group name can't be left blank.",w,r,user)
+		return
+	}
+	gtag := r.FormValue("group-tag")
+	rank := r.FormValue("group-type")
+	
+	var original_rank string
+	if group.Is_Admin {
+		original_rank = "Admin"
+	} else if group.Is_Mod {
+		original_rank = "Mod"
+	} else if group.Is_Banned {
+		original_rank = "Banned"
+	} else if group.ID == 6 {
+		original_rank = "Guest"
+	} else {
+		original_rank = "Member"
+	}
+	
+	group_update_mutex.Lock()
+	defer group_update_mutex.Unlock()
+	if rank != original_rank {
+		if !user.Perms.EditGroupGlobalPerms {
+			LocalError("You need the EditGroupGlobalPerms permission to change the group type.",w,r,user)
+			return
+		}
+		
+		switch(rank) {
+			case "Admin":
+				if !user.Perms.EditGroupAdmin {
+					LocalError("You need the EditGroupAdmin permission to designate this group as an admin group.",w,r,user)
+					return
+				}
+				
+				_, err = update_group_rank_stmt.Exec(1,1,0,gid)
+				if err != nil {
+					InternalError(err,w,r)
+					return
+				}
+				groups[gid].Is_Admin = true
+				groups[gid].Is_Mod = true
+				groups[gid].Is_Banned = false
+			case "Mod":
+				if !user.Perms.EditGroupSuperMod {
+					LocalError("You need the EditGroupSuperMod permission to designate this group as an admin group.",w,r,user)
+					return
+				}
+				
+				_, err = update_group_rank_stmt.Exec(0,1,0,gid)
+				if err != nil {
+					InternalError(err,w,r)
+					return
+				}
+				groups[gid].Is_Admin = false
+				groups[gid].Is_Mod = true
+				groups[gid].Is_Banned = false
+			case "Banned":
+				_, err = update_group_rank_stmt.Exec(0,0,1,gid)
+				if err != nil {
+					InternalError(err,w,r)
+					return
+				}
+				groups[gid].Is_Admin = false
+				groups[gid].Is_Mod = false
+				groups[gid].Is_Banned = true
+			case "Guest":
+				LocalError("You can't designate a group as a guest group.",w,r,user)
+				return
+			case "Member":
+				_, err = update_group_rank_stmt.Exec(0,0,0,gid)
+				if err != nil {
+					InternalError(err,w,r)
+					return
+				}
+				groups[gid].Is_Admin = false
+				groups[gid].Is_Mod = false
+				groups[gid].Is_Banned = false
+			default:
+				LocalError("Invalid group type.",w,r,user)
+				return
+		}
+	}
+	
+	_, err = update_group_stmt.Exec(gname,gtag,gid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	groups[gid].Name = gname
+	groups[gid].Tag = gtag
+	
+	http.Redirect(w,r,"/panel/groups/edit/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
 func route_panel_themes(w http.ResponseWriter, r *http.Request){

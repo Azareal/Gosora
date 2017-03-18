@@ -155,10 +155,7 @@ li a
 	padding: 0px;
 	padding-top: 0px;
 }
-.rowblock:empty
-{
-	display: none;
-}
+.rowblock:empty { display: none; }
 
 .colblock_left
 {
@@ -178,14 +175,35 @@ li a
 	overflow: hidden;
 	word-wrap: break-word;
 }
-.colblock_left:empty
+.colblock_left:empty { display: none; }
+.colblock_right:empty { display: none; }
+
+/* The new method of doing columns layouts, colblock is now deprecated */
+.colstack_left
 {
-	display: none;
+	float: left;
+	width: 30%;
+	margin-right: 8px;
 }
-.colblock_right:empty
+.colstack_right
 {
-	display: none;
+	float: left;
+	width: 65%;
+	width: calc(70% - 15px);
 }
+.colstack_item
+{
+	border: 1px solid #ccc;
+	padding: 0px;
+	padding-top: 0px;
+	width: 100%;
+	margin-bottom: 8px;
+	overflow: hidden;
+	word-wrap: break-word;
+}
+.colstack_head { margin-bottom: 0px; }
+.colstack_left:empty { display: none; }
+.colstack_right:empty { display: none; }
 
 .rowitem
 {
@@ -244,10 +262,7 @@ li a
 	text-decoration: none;
 	color: black;
 }
-.colitem a:hover
-{
-	color: silver;
-}
+.colitem a:hover { color: silver; }
 
 .formrow
 {

@@ -167,6 +167,33 @@ li a
 .colblock_left:empty { display: none; }
 .colblock_right:empty { display: none; }
 
+/* The new method of doing columns layouts, colblock is now deprecated */
+.colstack_left
+{
+	float: left;
+	width: 30%;
+	margin-right: 8px;
+}
+.colstack_right
+{
+	float: left;
+	width: 65%;
+	width: calc(70% - 15px);
+}
+.colstack_item
+{
+	border: 1px solid #ccc;
+	padding: 0px;
+	padding-top: 0px;
+	width: 100%;
+	margin-bottom: 8px;
+	overflow: hidden;
+	word-wrap: break-word;
+}
+.colstack_head { margin-bottom: 0px; }
+.colstack_left:empty { display: none; }
+.colstack_right:empty { display: none; }
+
 .rowhead { font-family: cursive; }
 .rowitem
 {

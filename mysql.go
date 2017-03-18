@@ -83,6 +83,8 @@ var update_setting_stmt *sql.Stmt
 var add_plugin_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
 var update_user_stmt *sql.Stmt
+var update_group_rank_stmt *sql.Stmt
+var update_group_stmt *sql.Stmt
 var add_theme_stmt *sql.Stmt
 var update_theme_stmt *sql.Stmt
 
@@ -552,6 +554,18 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing update_group_rank statement.")
+	update_group_rank_stmt, err = db.Prepare("update `users_groups` set `is_admin` = ?, `is_mod` = ?, `is_banned` = ? where `gid` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_group statement.")
+	update_group_stmt, err = db.Prepare("update `users_groups` set `name` = ?, `tag` = ? where `gid` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Loading the usergroups.")
 	groups = append(groups, Group{ID:0,Name:"System"})
 	
@@ -591,6 +605,7 @@ func init_database(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	groupCapCount = i
 	
 	log.Print("Binding the Not Loggedin Group")
 	GuestPerms = groups[6].Perms
