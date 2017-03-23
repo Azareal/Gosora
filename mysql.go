@@ -83,6 +83,7 @@ var update_setting_stmt *sql.Stmt
 var add_plugin_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
 var update_user_stmt *sql.Stmt
+var update_group_perms_stmt *sql.Stmt
 var update_group_rank_stmt *sql.Stmt
 var update_group_stmt *sql.Stmt
 var add_theme_stmt *sql.Stmt
@@ -550,6 +551,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing update_user statement.")
 	update_user_stmt, err = db.Prepare("update `users` set `name` = ?,`email` = ?,`group` = ? where `uid` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing update_group_rank statement.")
+	update_group_perms_stmt, err = db.Prepare("update `users_groups` set `permissions` = ? where `gid` = ?")
 	if err != nil {
 		log.Fatal(err)
 	}

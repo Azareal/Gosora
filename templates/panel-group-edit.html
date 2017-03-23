@@ -6,7 +6,7 @@
 	<div class="colstack_item">
 		<div class="rowitem passive"><a href="/panel/groups/edit/{{.ID}}">General</a></div>
 		<div class="rowitem passive"><a>Promotions</a></div>
-		<div class="rowitem passive"><a>Permissions</a></div>
+		<div class="rowitem passive"><a href="/panel/groups/edit/perms/{{.ID}}">Permissions</a></div>
 	</div>
 {{template "panel-inner-menu.html" . }}
 </div>
@@ -20,7 +20,7 @@
 			<div class="formitem"><a>Name</a></div>
 			<div class="formitem"><input name="group-name" type="text" value="{{.Name}}" placeholder="General Forum" /></div>
 		</div>
-		{{if .CurrentUser.Perms.EditUserGroup}}
+		{{if .CurrentUser.Perms.EditGroup}}
 		<div class="formrow">
 			<div class="formitem"><a>Type</a></div>
 			<div class="formitem">

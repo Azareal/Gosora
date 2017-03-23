@@ -1,0 +1,63 @@
+{{template "header.html" . }}
+<div class="colstack_left">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a href="/panel/groups/edit/{{.ID}}">Group Editor</a></div>
+	</div>
+	<div class="colstack_item">
+		<div class="rowitem passive"><a href="/panel/groups/edit/{{.ID}}">General</a></div>
+		<div class="rowitem passive"><a>Promotions</a></div>
+		<div class="rowitem passive"><a href="/panel/groups/edit/perms/{{.ID}}">Permissions</a></div>
+	</div>
+{{template "panel-inner-menu.html" . }}
+</div>
+<div class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>{{.Name}} Group</a></div>
+	</div>
+	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
+	<div class="colstack_item">
+		{{if .CurrentUser.Perms.EditGroupLocalPerms}}
+		{{range .LocalPerms}}
+		<div class="formrow">
+			<div class="formitem">
+				<a>{{.LangStr}}</a>
+				<div style="float: right;">
+					<select name="group-perm-{{.Name}}">
+						<option{{if .Toggle}} selected{{end}} value=1>Yes</option>
+						<option{{if not .Toggle}} selected{{end}} value=0>No</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		{{end}}
+		{{end}}
+		<div class="formrow">
+			<div class="formitem"><button name="panel-button" class="formbutton">Update Group</button></div>
+		</div>
+	</div>
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a>Extended Permissions</a></div>
+	</div>
+	<div class="colstack_item">
+		{{if .CurrentUser.Perms.EditGroupGlobalPerms}}
+		{{range .GlobalPerms}}
+		<div class="formrow">
+			<div class="formitem">
+				<a>{{.LangStr}}</a>
+				<div style="float: right;">
+					<select name="group-perm-{{.Name}}">
+						<option{{if .Toggle}} selected{{end}} value=1>Yes</option>
+						<option{{if not .Toggle}} selected{{end}} value=0>No</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		{{end}}
+		{{end}}
+		<div class="formrow">
+			<div class="formitem"><button name="panel-button" class="formbutton">Update Group</button></div>
+		</div>
+	</div>
+	</form>
+</div>
+{{template "footer.html" . }}

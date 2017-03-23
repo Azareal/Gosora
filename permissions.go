@@ -14,6 +14,46 @@ var ReadWriteForumPerms ForumPerms
 var AllPerms Perms
 var AllForumPerms ForumPerms
 
+var LocalPermList []string = []string{
+	"ViewTopic",
+	"LikeItem",
+	"CreateTopic",
+	"EditTopic",
+	"DeleteTopic",
+	"CreateReply",
+	"EditReply",
+	"DeleteReply",
+	"PinTopic",
+	"CloseTopic",
+}
+
+var GlobalPermList []string = []string{
+	"BanUsers",
+	"ActivateUsers",
+	"EditUser",
+	"EditUserEmail",
+	"EditUserPassword",
+	"EditUserGroup",
+	"EditUserGroupSuperMod",
+	"EditUserGroupAdmin",
+	"EditGroup",
+	"EditGroupLocalPerms",
+	"EditGroupGlobalPerms",
+	"EditGroupSuperMod",
+	"EditGroupAdmin",
+	"ManageForums",
+	"EditSettings",
+	"ManageThemes",
+	"ManagePlugins",
+	"ViewIPs",
+}
+
+/*type PermMeta struct
+{
+	Name string
+	Type int // 0: global, 1: local
+}*/
+
 // Permission Structure: ActionComponent[Subcomponent]Flag
 type Perms struct
 {
@@ -349,4 +389,22 @@ func preset_to_emoji(preset string) string {
 		case "archive": return "☠️"
 	}
 	return ""
+}
+
+func rebuild_group_permissions(gid int) error {
+	var permstr []byte
+	log.Print("Reloading a group")
+	err := db.QueryRow("select permissions from users_groups where gid = ?",gid).Scan(&permstr)
+	if err != nil {
+		return err
+	}
+	
+	tmp_perms := Perms{ExtData: make(map[string]bool)}
+	err = json.Unmarshal(permstr, &tmp_perms)
+	if err != nil {
+		return err
+	}
+	
+	groups[gid].Perms = tmp_perms
+	return nil
 }

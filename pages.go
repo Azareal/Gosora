@@ -99,6 +99,31 @@ type EditGroupPage struct
 	ExtData interface{}
 }
 
+type NameLangPair struct
+{
+	Name string
+	LangStr string
+}
+
+type NameLangToggle struct
+{
+	Name string
+	LangStr string
+	Toggle bool
+}
+
+type EditGroupPermsPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList []string
+	ID int
+	Name string
+	LocalPerms []NameLangToggle
+	GlobalPerms []NameLangToggle
+	ExtData interface{}
+}
+
 type PageSimple struct
 {
 	Title string

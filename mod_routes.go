@@ -6,6 +6,7 @@ import "strings"
 import "strconv"
 import "net/http"
 import "html"
+import "encoding/json"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
@@ -1457,7 +1458,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	if group.Is_Mod && !user.Perms.EditGroupSuperMod {
-		LocalError("You need the EditGroupSuperMod permission to edit an super-mod group.",w,r,user)
+		LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.",w,r,user)
 		return
 	}
 	
@@ -1481,6 +1482,78 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request){
 	
 	pi := EditGroupPage{"Group Editor",user,noticeList,group.ID,group.Name,group.Tag,rank,disable_rank,nil}
 	err = templates.ExecuteTemplate(w,"panel-group-edit.html",pi)
+	if err != nil {
+		InternalError(err,w,r)
+	}
+}
+
+func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request){
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	gid, err := strconv.Atoi(r.URL.Path[len("/panel/groups/edit/perms/"):])
+	if err != nil {
+		LocalError("The Group ID is not a valid integer.",w,r,user)
+		return
+	}
+	
+	if !group_exists(gid) {
+		//fmt.Println("aaaaa monsters")
+		NotFound(w,r)
+		return
+	}
+	
+	group := groups[gid]
+	if group.Is_Admin && !user.Perms.EditGroupAdmin {
+		LocalError("You need the EditGroupAdmin permission to edit an admin group.",w,r,user)
+		return
+	}
+	if group.Is_Mod && !user.Perms.EditGroupSuperMod {
+		LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.",w,r,user)
+		return
+	}
+	
+	var localPerms []NameLangToggle
+	localPerms = append(localPerms, NameLangToggle{"ViewTopic",GetLocalPermPhrase("ViewTopic"),group.Perms.ViewTopic})
+	localPerms = append(localPerms, NameLangToggle{"LikeItem",GetLocalPermPhrase("LikeItem"),group.Perms.LikeItem})
+	localPerms = append(localPerms, NameLangToggle{"CreateTopic",GetLocalPermPhrase("CreateTopic"),group.Perms.CreateTopic})
+	//<--
+	localPerms = append(localPerms, NameLangToggle{"EditTopic",GetLocalPermPhrase("EditTopic"),group.Perms.EditTopic})
+	localPerms = append(localPerms, NameLangToggle{"DeleteTopic",GetLocalPermPhrase("DeleteTopic"),group.Perms.DeleteTopic})
+	localPerms = append(localPerms, NameLangToggle{"CreateReply",GetLocalPermPhrase("CreateReply"),group.Perms.CreateReply})
+	localPerms = append(localPerms, NameLangToggle{"EditReply",GetLocalPermPhrase("EditReply"),group.Perms.EditReply})
+	localPerms = append(localPerms, NameLangToggle{"DeleteReply",GetLocalPermPhrase("DeleteReply"),group.Perms.DeleteReply})
+	localPerms = append(localPerms, NameLangToggle{"PinTopic",GetLocalPermPhrase("PinTopic"),group.Perms.PinTopic})
+	localPerms = append(localPerms, NameLangToggle{"CloseTopic",GetLocalPermPhrase("CloseTopic"),group.Perms.CloseTopic})
+	
+	var globalPerms []NameLangToggle
+	globalPerms = append(globalPerms, NameLangToggle{"BanUsers",GetGlobalPermPhrase("BanUsers"),group.Perms.BanUsers})
+	globalPerms = append(globalPerms, NameLangToggle{"ActivateUsers",GetGlobalPermPhrase("ActivateUsers"),group.Perms.ActivateUsers})
+	globalPerms = append(globalPerms, NameLangToggle{"EditUser",GetGlobalPermPhrase("EditUser"),group.Perms.EditUser})
+	globalPerms = append(globalPerms, NameLangToggle{"EditUserEmail",GetGlobalPermPhrase("EditUserEmail"),group.Perms.EditUserEmail})
+	globalPerms = append(globalPerms, NameLangToggle{"EditUserPassword",GetGlobalPermPhrase("EditUserPassword"),group.Perms.EditUserPassword})
+	globalPerms = append(globalPerms, NameLangToggle{"EditUserGroup",GetGlobalPermPhrase("EditUserGroup"),group.Perms.EditUserGroup})
+	globalPerms = append(globalPerms, NameLangToggle{"EditUserGroupSuperMod",GetGlobalPermPhrase("EditUserGroupSuperMod"),group.Perms.EditUserGroupSuperMod})
+	globalPerms = append(globalPerms, NameLangToggle{"EditUserGroupAdmin",GetGlobalPermPhrase("EditUserGroupAdmin"),group.Perms.EditUserGroupAdmin})
+	globalPerms = append(globalPerms, NameLangToggle{"EditGroup",GetGlobalPermPhrase("EditGroup"),group.Perms.EditGroup})
+	globalPerms = append(globalPerms, NameLangToggle{"EditGroupLocalPerms",GetGlobalPermPhrase("EditGroupLocalPerms"),group.Perms.EditGroupLocalPerms})
+	globalPerms = append(globalPerms, NameLangToggle{"EditGroupGlobalPerms",GetGlobalPermPhrase("EditGroupGlobalPerms"),group.Perms.EditGroupGlobalPerms})
+	globalPerms = append(globalPerms, NameLangToggle{"EditGroupSuperMod",GetGlobalPermPhrase("EditGroupSuperMod"),group.Perms.EditGroupSuperMod})
+	globalPerms = append(globalPerms, NameLangToggle{"EditGroupAdmin",GetGlobalPermPhrase("EditGroupAdmin"),group.Perms.EditGroupAdmin})
+	globalPerms = append(globalPerms, NameLangToggle{"ManageForums",GetGlobalPermPhrase("ManageForums"),group.Perms.ManageForums})
+	globalPerms = append(globalPerms, NameLangToggle{"EditSettings",GetGlobalPermPhrase("EditSettings"),group.Perms.EditSettings})
+	globalPerms = append(globalPerms, NameLangToggle{"ManageThemes",GetGlobalPermPhrase("ManageThemes"),group.Perms.ManageThemes})
+	globalPerms = append(globalPerms, NameLangToggle{"ManagePlugins",GetGlobalPermPhrase("ManagePlugins"),group.Perms.ManagePlugins})
+	globalPerms = append(globalPerms, NameLangToggle{"ViewIPs",GetGlobalPermPhrase("ViewIPs"),group.Perms.ViewIPs})
+	
+	pi := EditGroupPermsPage{"Group Editor",user,noticeList,group.ID,group.Name,localPerms,globalPerms,nil}
+	err = templates.ExecuteTemplate(w,"panel-group-edit-perms.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
@@ -1518,7 +1591,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	if group.Is_Mod && !user.Perms.EditGroupSuperMod {
-		LocalError("You need the EditGroupSuperMod permission to edit an super-mod group.",w,r,user)
+		LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.",w,r,user)
 		return
 	}
 	
@@ -1568,7 +1641,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request){
 				groups[gid].Is_Banned = false
 			case "Mod":
 				if !user.Perms.EditGroupSuperMod {
-					LocalError("You need the EditGroupSuperMod permission to designate this group as an admin group.",w,r,user)
+					LocalError("You need the EditGroupSuperMod permission to designate this group as a super-mod group.",w,r,user)
 					return
 				}
 				
@@ -1616,6 +1689,90 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request){
 	groups[gid].Tag = gtag
 	
 	http.Redirect(w,r,"/panel/groups/edit/" + strconv.Itoa(gid),http.StatusSeeOther)
+}
+
+func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request){
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+		NoPermissions(w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	gid, err := strconv.Atoi(r.URL.Path[len("/panel/groups/edit/perms/submit/"):])
+	if err != nil {
+		LocalError("The Group ID is not a valid integer.",w,r,user)
+		return
+	}
+	
+	if !group_exists(gid) {
+		//fmt.Println("aaaaa monsters")
+		NotFound(w,r)
+		return
+	}
+	
+	group := groups[gid]
+	if group.Is_Admin && !user.Perms.EditGroupAdmin {
+		LocalError("You need the EditGroupAdmin permission to edit an admin group.",w,r,user)
+		return
+	}
+	if group.Is_Mod && !user.Perms.EditGroupSuperMod {
+		LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.",w,r,user)
+		return
+	}
+	
+	//var lpmap map[string]bool = make(map[string]bool)
+	var pmap map[string]bool = make(map[string]bool)
+	if user.Perms.EditGroupLocalPerms {
+		pplist := LocalPermList
+		for _, perm := range pplist {
+			pvalue := r.PostFormValue("group-perm-" + perm)
+			if pvalue == "1" {
+				pmap[perm] = true
+			} else {
+				pmap[perm] = false
+			}
+		}
+	}
+	
+	//var gpmap map[string]bool = make(map[string]bool)
+	if user.Perms.EditGroupGlobalPerms {
+		gplist := GlobalPermList
+		for _, perm := range gplist {
+			pvalue := r.PostFormValue("group-perm-" + perm)
+			if pvalue == "1" {
+				pmap[perm] = true
+			} else {
+				pmap[perm] = false
+			}
+		}
+	}
+	
+	pjson, err := json.Marshal(pmap)
+	if err != nil {
+		LocalError("Unable to marshal the data",w,r,user)
+		return
+	}
+	
+	_, err = update_group_perms_stmt.Exec(pjson,gid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	err = rebuild_group_permissions(gid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	http.Redirect(w,r,"/panel/groups/edit/perms/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
 func route_panel_themes(w http.ResponseWriter, r *http.Request){

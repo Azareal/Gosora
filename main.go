@@ -260,7 +260,9 @@ func main(){
 	router.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
 	router.HandleFunc("/panel/groups/", route_panel_groups)
 	router.HandleFunc("/panel/groups/edit/", route_panel_groups_edit)
+	router.HandleFunc("/panel/groups/edit/perms/", route_panel_groups_edit_perms)
 	router.HandleFunc("/panel/groups/edit/submit/", route_panel_groups_edit_submit)
+	router.HandleFunc("/panel/groups/edit/perms/submit/", route_panel_groups_edit_perms_submit)
 	router.HandleFunc("/api/", route_api)
 	//router.HandleFunc("/exit/", route_exit)
 	
