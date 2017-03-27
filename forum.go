@@ -1,5 +1,7 @@
 package main
+
 //import "fmt"
+import "sync"
 import "strconv"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
@@ -38,6 +40,7 @@ type ForumSimple struct
 	Preset string
 }
 
+var forum_update_mutex sync.Mutex
 func create_forum(forum_name string, active bool, preset string) (int, error) {
 	var fid int
 	err := forum_entry_exists_stmt.QueryRow().Scan(&fid)
@@ -45,6 +48,7 @@ func create_forum(forum_name string, active bool, preset string) (int, error) {
 		return 0, err
 	}
 	if err != sql.ErrNoRows {
+		forum_update_mutex.Lock()
 		_, err = update_forum_stmt.Exec(forum_name, active, preset, fid)
 		if err != nil {
 			return fid, err
@@ -52,6 +56,7 @@ func create_forum(forum_name string, active bool, preset string) (int, error) {
 		forums[fid].Name = forum_name
 		forums[fid].Active = active
 		forums[fid].Preset = preset
+		forum_update_mutex.Unlock()
 		return fid, nil
 	}
 	

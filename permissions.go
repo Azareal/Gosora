@@ -266,25 +266,37 @@ func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 	}
 	
 	perms, err := json.Marshal(permmap["admins"])
+	if err != nil {
+		return err
+	}
 	_, err = add_forum_perms_to_forum_admins_stmt.Exec(fid,"",perms)
 	if err != nil {
 		return err
 	}
 	
 	perms, err = json.Marshal(permmap["staff"])
+	if err != nil {
+		return err
+	}
 	_, err = add_forum_perms_to_forum_staff_stmt.Exec(fid,"",perms)
 	if err != nil {
 		return err
 	}
 	
 	perms, err = json.Marshal(permmap["members"])
+	if err != nil {
+		return err
+	}
 	_, err = add_forum_perms_to_forum_members_stmt.Exec(fid,"",perms)
 	if err != nil {
 		return err
 	}
 	
 	perms, err = json.Marshal(permmap["guests"])
-	_, err = add_forum_perms_to_forum_guests_stmt.Exec(fid,"",perms)
+	if err != nil {
+		return err
+	}
+	_, err = add_forum_perms_to_group_stmt.Exec(6,fid,"",perms)
 	if err != nil {
 		return err
 	}

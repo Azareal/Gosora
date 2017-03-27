@@ -73,12 +73,13 @@ var create_forum_stmt *sql.Stmt
 var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
 var forum_entry_exists_stmt *sql.Stmt
+var group_entry_exists_stmt *sql.Stmt
 var delete_forum_perms_by_forum_stmt *sql.Stmt
 var add_forum_perms_to_forum_stmt *sql.Stmt
 var add_forum_perms_to_forum_admins_stmt *sql.Stmt
 var add_forum_perms_to_forum_staff_stmt *sql.Stmt
 var add_forum_perms_to_forum_members_stmt *sql.Stmt
-var add_forum_perms_to_forum_guests_stmt *sql.Stmt
+var add_forum_perms_to_group_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
 var add_plugin_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
@@ -86,6 +87,7 @@ var update_user_stmt *sql.Stmt
 var update_group_perms_stmt *sql.Stmt
 var update_group_rank_stmt *sql.Stmt
 var update_group_stmt *sql.Stmt
+var create_group_stmt *sql.Stmt
 var add_theme_stmt *sql.Stmt
 var update_theme_stmt *sql.Stmt
 
@@ -483,6 +485,12 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
+	log.Print("Preparing group_entry_exists statement.")
+	group_entry_exists_stmt, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = '' order by gid asc limit 1")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Print("Preparing delete_forum_perms_by_forum statement.")
 	delete_forum_perms_by_forum_stmt, err = db.Prepare("DELETE FROM forums_permissions WHERE fid = ?")
 	if err != nil {
@@ -513,8 +521,8 @@ func init_database(err error) {
 		log.Fatal(err)
 	}
 	
-	log.Print("Preparing add_forum_perms_to_forum_guests statement.")
-	add_forum_perms_to_forum_guests_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) VALUES(6,?,?,?)")
+	log.Print("Preparing add_forum_perms_to_group statement.")
+	add_forum_perms_to_group_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) VALUES(?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -569,6 +577,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing update_group statement.")
 	update_group_stmt, err = db.Prepare("update `users_groups` set `name` = ?, `tag` = ? where `gid` = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing create_group statement.")
+	create_group_stmt, err = db.Prepare("INSERT INTO users_groups(name,tag,is_admin,is_mod,is_banned,permissions) VALUES(?,?,?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}

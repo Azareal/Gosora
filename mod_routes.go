@@ -1775,6 +1775,59 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 	http.Redirect(w,r,"/panel/groups/edit/perms/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
+func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+		NoPermissions(w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	
+	group_name := r.PostFormValue("group-name")
+	if group_name == "" {
+		LocalError("You need a name for this group!",w,r,user)
+		return
+	}
+	group_tag := r.PostFormValue("group-tag")
+	
+	var is_admin bool
+	var is_mod bool
+	var is_banned bool
+	if user.Perms.EditGroupGlobalPerms {
+		group_type := r.PostFormValue("group-type")
+		if group_type == "Admin" {
+			if !user.Perms.EditGroupAdmin {
+				LocalError("You need the EditGroupAdmin permission can create admin groups",w,r,user)
+				return
+			}
+			is_admin = true
+			is_mod = true
+		} else if group_type == "Mod" {
+			if !user.Perms.EditGroupSuperMod {
+				LocalError("You need the EditGroupSuperMod permission can create admin groups",w,r,user)
+				return
+			}
+			is_mod = true
+		} else if group_type == "Banned" {
+			is_banned = true
+		}
+	}
+	
+	gid, err := create_group(group_name, group_tag, is_admin, is_mod, is_banned)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	fmt.Println(groups)
+	http.Redirect(w,r,"/panel/groups/edit/" + strconv.Itoa(gid),http.StatusSeeOther)
+}
+
 func route_panel_themes(w http.ResponseWriter, r *http.Request){
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
