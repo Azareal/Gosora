@@ -95,6 +95,7 @@ CREATE TABLE `replies`(
 	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
 	`likeCount` int DEFAULT 0 not null,
 	`words` int DEFAULT 1 not null,
+	`actionType` varchar(20) DEFAULT '' not null,
 	primary key(`rid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 

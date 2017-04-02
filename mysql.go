@@ -25,6 +25,7 @@ var get_forum_topics_offset_stmt *sql.Stmt
 var create_topic_stmt *sql.Stmt
 var create_report_stmt *sql.Stmt
 var create_reply_stmt *sql.Stmt
+var create_action_reply_stmt *sql.Stmt
 var add_replies_to_topic_stmt *sql.Stmt
 var remove_replies_from_topic_stmt *sql.Stmt
 var add_topics_to_forum_stmt *sql.Stmt
@@ -158,7 +159,7 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing get_topic_replies_offset statement.")
-	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount from replies left join users on replies.createdBy = users.uid where tid = ? limit ?, " + strconv.Itoa(items_per_page))
+	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType from replies left join users on replies.createdBy = users.uid where tid = ? limit ?, " + strconv.Itoa(items_per_page))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -195,6 +196,12 @@ func init_database(err error) {
 	
 	log.Print("Preparing create_reply statement.")
 	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,parsed_content,createdAt,ipaddress,words,createdBy) VALUES(?,?,?,NOW(),?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing create_action_reply statement.")
+	create_action_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,actionType,ipaddress,createdBy) VALUES(?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}

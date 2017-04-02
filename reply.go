@@ -25,6 +25,8 @@ type Reply struct /* Should probably rename this to ReplyUser and rename ReplySh
 	IpAddress string
 	Liked bool
 	LikeCount int
+	ActionType string
+	ActionIcon string
 }
 
 type ReplyShort struct

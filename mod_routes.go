@@ -4,6 +4,7 @@ import "log"
 import "fmt"
 import "strings"
 import "strconv"
+import "net"
 import "net/http"
 import "html"
 import "encoding/json"
@@ -29,7 +30,8 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
+	var old_is_closed bool
+	err = db.QueryRow("select parentID, is_closed from topics where tid = ?", tid).Scan(&fid,&old_is_closed)
 	if err == sql.ErrNoRows {
 		PreErrorJSQ("The topic you tried to edit doesn't exist.",w,r,is_js)
 		return
@@ -56,6 +58,37 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		InternalErrorJSQ(err,w,r,is_js)
 		return
+	}
+	
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	
+	if old_is_closed != is_closed {
+		var action string
+		if is_closed {
+			action = "lock"
+		} else {
+			action = "unlock"
+		}
+		_, err = create_action_reply_stmt.Exec(tid,action,ipaddress,user.ID)
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
+		
+		_, err = add_replies_to_topic_stmt.Exec(1, tid)
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
+		_, err = update_forum_cache_stmt.Exec(topic_name, tid, user.Name, user.ID, 1)
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
 	}
 	
 	err = topics.Load(tid)
@@ -1803,14 +1836,14 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
 		group_type := r.PostFormValue("group-type")
 		if group_type == "Admin" {
 			if !user.Perms.EditGroupAdmin {
-				LocalError("You need the EditGroupAdmin permission can create admin groups",w,r,user)
+				LocalError("You need the EditGroupAdmin permission to create admin groups",w,r,user)
 				return
 			}
 			is_admin = true
 			is_mod = true
 		} else if group_type == "Mod" {
 			if !user.Perms.EditGroupSuperMod {
-				LocalError("You need the EditGroupSuperMod permission can create admin groups",w,r,user)
+				LocalError("You need the EditGroupSuperMod permission to create admin groups",w,r,user)
 				return
 			}
 			is_mod = true

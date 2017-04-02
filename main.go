@@ -53,7 +53,7 @@ func compile_templates() {
 	
 	topic := TopicUser{1,"Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"",default_group,"",no_css_tmpl,0,"","","","",58,false}
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"","Yo!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
+	replyList = append(replyList, Reply{0,0,"","Yo!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
 	
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title",user,noticeList,replyList,topic,1,1,false}

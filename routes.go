@@ -301,7 +301,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	// Get the topic..
+	// Get the topic...
 	topic, err := get_topicuser(tid)
 	if err == sql.ErrNoRows {
 		NotFound(w,r)
@@ -369,7 +369,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	
 	replyItem := Reply{Css: no_css_tmpl}
 	for rows.Next() {
-		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress, &replyItem.LikeCount)
+		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress, &replyItem.LikeCount, &replyItem.ActionType)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -405,6 +405,21 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 				replyItem.URL = replyItem.URL + replyItem.URLName
 			}
 		}*/
+		
+		// We really shouldn't have inline HTML, we should do something about this...
+		if replyItem.ActionType != "" {
+			switch(replyItem.ActionType) {
+				case "lock":
+					replyItem.ActionType = "This topic has been locked by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
+				case "unlock":
+					replyItem.ActionType = "This topic has been reopened by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
+				default:
+					replyItem.ActionType = replyItem.ActionType + " has happened"
+					replyItem.ActionIcon = ""
+			}
+		}
 		replyItem.Liked = false
 		
 		if hooks["rrow_assign"] != nil {
@@ -516,7 +531,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		replyLiked := false
 		replyLikeCount := 0
 		
-		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount})
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount,"",""})
 	}
 	err = rows.Err()
 	if err != nil {
