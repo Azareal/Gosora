@@ -223,3 +223,19 @@ func fill_group_id_gap(biggerID int, smallerID int) {
 		groups = append(groups, dummy)
 	}
 }
+
+func addModLog(action string, elementID int, elementType string, ipaddress string,  actorID int) error {
+	_, err := add_modlog_entry_stmt.Exec(action,elementID,elementType,ipaddress,actorID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func addAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) error {
+	_, err := add_adminlog_entry_stmt.Exec(action,elementID,elementType,ipaddress,actorID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -91,6 +91,8 @@ var update_group_stmt *sql.Stmt
 var create_group_stmt *sql.Stmt
 var add_theme_stmt *sql.Stmt
 var update_theme_stmt *sql.Stmt
+var add_modlog_entry_stmt *sql.Stmt
+var add_adminlog_entry_stmt *sql.Stmt
 
 func init_database(err error) {
 	if(dbpassword != ""){
@@ -590,6 +592,18 @@ func init_database(err error) {
 	
 	log.Print("Preparing create_group statement.")
 	create_group_stmt, err = db.Prepare("INSERT INTO users_groups(name,tag,is_admin,is_mod,is_banned,permissions) VALUES(?,?,?,?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_modlog_entry statement.")
+	add_modlog_entry_stmt, err = db.Prepare("INSERT INTO moderation_logs(action,elementID,elementType,ipaddress,actorID) VALUES(?,?,?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Print("Preparing add_adminlog_entry statement.")
+	add_adminlog_entry_stmt, err = db.Prepare("INSERT INTO moderation_logs(action,elementID,elementType,actorID) VALUES(?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -73,6 +73,12 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		} else {
 			action = "unlock"
 		}
+		
+		err = addModLog(action,tid,"topic",ipaddress,user.ID)
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
 		_, err = create_action_reply_stmt.Exec(tid,action,ipaddress,user.ID)
 		if err != nil {
 			InternalError(err,w,r)
@@ -137,6 +143,23 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r)
 		return
 	}
+	
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	err = addModLog("delete",tid,"topic",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	/*_, err = create_action_reply_stmt.Exec(tid,"delete",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}*/
+	
 	log.Print("The topic '" + strconv.Itoa(tid) + "' was deleted by User ID #" + strconv.Itoa(user.ID) + ".")
 	http.Redirect(w,r,"/",http.StatusSeeOther)
 	
