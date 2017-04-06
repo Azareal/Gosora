@@ -597,13 +597,13 @@ func init_database(err error) {
 	}
 	
 	log.Print("Preparing add_modlog_entry statement.")
-	add_modlog_entry_stmt, err = db.Prepare("INSERT INTO moderation_logs(action,elementID,elementType,ipaddress,actorID) VALUES(?,?,?,?,?)")
+	add_modlog_entry_stmt, err = db.Prepare("INSERT INTO moderation_logs(action,elementID,elementType,ipaddress,actorID,doneAt) VALUES(?,?,?,?,?,NOW())")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	log.Print("Preparing add_adminlog_entry statement.")
-	add_adminlog_entry_stmt, err = db.Prepare("INSERT INTO moderation_logs(action,elementID,elementType,actorID) VALUES(?,?,?,?)")
+	add_adminlog_entry_stmt, err = db.Prepare("INSERT INTO moderation_logs(action,elementID,elementType,ipaddress,actorID,doneAt) VALUES(?,?,?,?,?,NOW())")
 	if err != nil {
 		log.Fatal(err)
 	}

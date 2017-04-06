@@ -4,6 +4,7 @@ import "bytes"
 import "strings"
 import "strconv"
 import "regexp"
+import "html/template"
 
 type Page struct
 {
@@ -121,6 +122,21 @@ type EditGroupPermsPage struct
 	Name string
 	LocalPerms []NameLangToggle
 	GlobalPerms []NameLangToggle
+	ExtData interface{}
+}
+
+type Log struct {
+	Action template.HTML
+	IPAddress string
+	DoneAt string
+}
+
+type LogsPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList []string
+	Logs []Log
 	ExtData interface{}
 }
 

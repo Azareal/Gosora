@@ -174,7 +174,8 @@ CREATE TABLE `moderation_logs`(
 	`elementID` int not null,
 	`elementType` varchar(100) not null,
 	`ipaddress` varchar(200) not null,
-	`actorID` int not null
+	`actorID` int not null,
+	`doneAt` datetime not null
 );
 
 CREATE TABLE `administration_logs`(
@@ -182,7 +183,8 @@ CREATE TABLE `administration_logs`(
 	`elementID` int not null,
 	`elementType` varchar(100) not null,
 	`ipaddress` varchar(200) not null,
-	`actorID` int not null
+	`actorID` int not null,
+	`doneAt` datetime not null
 );
 
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('url_tags','1','bool');

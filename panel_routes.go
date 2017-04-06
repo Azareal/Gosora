@@ -7,6 +7,7 @@ import "strconv"
 import "html"
 import "encoding/json"
 import "net/http"
+import "html/template"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
@@ -571,14 +572,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 			return
 		}
 		
-		puser.Is_Admin = puser.Is_Super_Admin || groups[puser.Group].Is_Admin
-		puser.Is_Super_Mod = puser.Is_Admin || groups[puser.Group].Is_Mod
-		puser.Is_Mod = puser.Is_Super_Mod
-		puser.Is_Banned = groups[puser.Group].Is_Banned
-		if puser.Is_Banned && puser.Is_Super_Mod {
-			puser.Is_Banned = false
-		}
-		
+		init_user_perms(&puser)
 		if puser.Avatar != "" {
 			if puser.Avatar[0] == '.' {
 				puser.Avatar = "/uploads/avatar_" + strconv.Itoa(puser.ID) + puser.Avatar
@@ -625,7 +619,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	targetUser, err := users.Get(uid)
+	targetUser, err := users.CascadeGet(uid)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
@@ -677,7 +671,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	targetUser, err := users.Get(tid)
+	targetUser, err := users.CascadeGet(tid)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
@@ -786,11 +780,7 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 			rank_emoji = "👪"
 		}
 		
-		if user.Perms.EditGroup && (!group.Is_Admin || user.Perms.EditGroupAdmin) && (!group.Is_Mod || user.Perms.EditGroupSuperMod) {
-			can_edit = true
-		} else {
-			can_edit = false
-		}
+		can_edit = user.Perms.EditGroup && (!group.Is_Admin || user.Perms.EditGroupAdmin) && (!group.Is_Mod || user.Perms.EditGroupSuperMod)
 		
 		groupList = append(groupList, GroupAdmin{group.ID,group.Name,rank,rank_emoji,can_edit,can_delete})
 	}
@@ -845,10 +835,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request){
 		rank = "Member"
 	}
 	
-	var disable_rank bool
-	if !user.Perms.EditGroupGlobalPerms || (group.ID == 6) {
-		disable_rank = true
-	}
+	disable_rank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 	
 	pi := EditGroupPage{"Group Editor",user,noticeList,group.ID,group.Name,group.Tag,rank,disable_rank,nil}
 	err = templates.ExecuteTemplate(w,"panel-group-edit.html",pi)
@@ -1304,4 +1291,107 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
 	map_theme_templates(theme)
 	
 	http.Redirect(w,r,"/panel/themes/",http.StatusSeeOther)
+}
+
+func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
+	user, noticeList, ok := SessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.ManageThemes {
+		NoPermissions(w,r,user)
+		return
+	}
+	
+	rows, err := db.Query("select action, elementID, elementType, ipaddress, actorID, doneAt from moderation_logs")
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	defer rows.Close()
+	
+	var logs []Log
+	var action, elementType, ipaddress, doneAt string
+	var elementID, actorID int
+	for rows.Next() {
+		err := rows.Scan(&action,&elementID,&elementType, &ipaddress, &actorID, &doneAt)
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
+		
+		actor, err := users.CascadeGet(actorID)
+		if err != nil {
+			actor = &User{Name:"Unknown"}
+		}
+		
+		switch(action) {
+			case "lock":
+				topic, err := topics.CascadeGet(elementID)
+				if err != nil {
+					topic = &Topic{Title:"Unknown"}
+				}
+				action = "<a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was locked by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+			case "unlock":
+				topic, err := topics.CascadeGet(elementID)
+				if err != nil {
+					topic = &Topic{Title:"Unknown"}
+				}
+				action = "<a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was reopened by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+			case "stick":
+				topic, err := topics.CascadeGet(elementID)
+				if err != nil {
+					topic = &Topic{Title:"Unknown"}
+				}
+				action = "<a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was pinned by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+			case "unstick":
+				topic, err := topics.CascadeGet(elementID)
+				if err != nil {
+					topic = &Topic{Title:"Unknown"}
+				}
+				action = "<a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was unpinned by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+			case "delete":
+				if elementType == "topic" {
+					action = "Topic #" + strconv.Itoa(elementID) + " was deleted by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				} else {
+					topic, err := get_topic_by_reply(elementID)
+					if err != nil {
+						topic = &Topic{Title:"Unknown"}
+					}
+					action = "A reply in <a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was deleted by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				}
+			case "ban":
+				targetUser, err := users.CascadeGet(elementID)
+				if err != nil {
+					targetUser = &User{Name:"Unknown"}
+				}
+				action = "<a href='" + build_profile_url(elementID) + "'>" + targetUser.Name + "</a> was banned by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+			case "unban":
+				targetUser, err := users.CascadeGet(elementID)
+				if err != nil {
+					targetUser = &User{Name:"Unknown"}
+				}
+				action = "<a href='" + build_profile_url(elementID) + "'>" + targetUser.Name + "</a> was unbanned by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+			case "activate":
+				targetUser, err := users.CascadeGet(elementID)
+				if err != nil {
+					targetUser = &User{Name:"Unknown"}
+				}
+				action = "<a href='" + build_profile_url(elementID) + "'>" + targetUser.Name + "</a> was activated by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+			default:
+				action = "Unknown action '" + action + "' by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+		}
+		logs = append(logs, Log{Action:template.HTML(action),IPAddress:ipaddress,DoneAt:doneAt})
+	}
+	err = rows.Err()
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
+	pi := LogsPage{"Moderation Logs",user,noticeList,logs,nil}
+	err = templates.ExecuteTemplate(w,"panel-modlogs.html",pi)
+	if err != nil {
+		log.Print(err)
+	}
 }

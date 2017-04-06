@@ -264,6 +264,7 @@ func main(){
 	router.HandleFunc("/panel/groups/edit/submit/", route_panel_groups_edit_submit)
 	router.HandleFunc("/panel/groups/edit/perms/submit/", route_panel_groups_edit_perms_submit)
 	router.HandleFunc("/panel/groups/create/", route_panel_groups_create_submit)
+	router.HandleFunc("/panel/logs/mod/", route_panel_logs_mod)
 	router.HandleFunc("/api/", route_api)
 	//router.HandleFunc("/exit/", route_exit)
 	

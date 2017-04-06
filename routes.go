@@ -288,12 +288,9 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 }
 	
 func route_topic_id(w http.ResponseWriter, r *http.Request){
-	var(
-		err error
-		page int
-		offset int
-		replyList []Reply
-	)
+	var err error
+	var page, offset int
+	var replyList []Reply
 	
 	page, _ = strconv.Atoi(r.FormValue("page"))
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/"):])
@@ -416,6 +413,12 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 				case "unlock":
 					replyItem.ActionType = "This topic has been reopened by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
+				case "stick":
+					replyItem.ActionType = "This topic has been pinned by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
+				case "unstick":
+					replyItem.ActionType = "This topic has been unpinned by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				default:
 					replyItem.ActionType = replyItem.ActionType + " has happened"
 					replyItem.ActionIcon = ""
@@ -452,23 +455,11 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var(
-		err error
-		rid int
-		replyContent string
-		replyCreatedBy int
-		replyCreatedByName string
-		replyCreatedAt string
-		replyLastEdit int
-		replyLastEditBy int
-		replyAvatar string
-		replyCss template.CSS
-		replyLines int
-		replyTag string
-		replyGroup int
-		
-		replyList []Reply
-	)
+	var err error
+	var replyContent, replyCreatedByName, replyCreatedAt, replyAvatar, replyTag string
+	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyLines, replyGroup int
+	var replyCss template.CSS
+	var replyList []Reply
 	
 	pid, err := strconv.Atoi(r.URL.Path[len("/user/"):])
 	if err != nil {

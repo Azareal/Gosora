@@ -209,6 +209,23 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//topic.Sticky = true
+	
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	err = addModLog("stick",tid,"topic",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	_, err = create_action_reply_stmt.Exec(tid,"stick",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	err = topics.Load(tid)
 	if err != nil {
 		LocalError("This topic doesn't exist!",w,r,user)
@@ -248,6 +265,23 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//topic.Sticky = false
+	
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	err = addModLog("unstick",tid,"topic",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	_, err = create_action_reply_stmt.Exec(tid,"unstick",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	err = topics.Load(tid)
 	if err != nil {
 		LocalError("This topic doesn't exist!",w,r,user)
@@ -385,6 +419,17 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		InternalErrorJSQ(err,w,r,is_js)
 	}
 	
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	err = addModLog("delete",tid,"reply",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	err = topics.Load(tid)
 	if err != nil {
 		LocalError("This topic no longer exists!",w,r,user)
@@ -435,7 +480,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	if is_js == "0" {
-		http.Redirect(w,r, "/user/" + strconv.Itoa(uid) + "#reply-" + strconv.Itoa(rid), http.StatusSeeOther)
+		http.Redirect(w,r,"/user/" + strconv.Itoa(uid) + "#reply-" + strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
 		fmt.Fprintf(w,`{"success":"1"}`)
 	}
@@ -544,6 +589,10 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
 	}
+	if uid == -2 {
+		LocalError("Sigh, are you really trying to ban me? Do you despise so much? Despite all of our adventures over at /arcane-tower/...?",w,r,user)
+		return
+	}
 	
 	var group int
 	var is_super_admin bool
@@ -561,11 +610,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if uid == user.ID {
-		LocalError("You may not ban yourself.",w,r,user)
-		return
-	}
-	if uid == -2 {
-		LocalError("You may not ban me. Fine, I will offer up some guidance unto thee. Come to my lair, young one. /arcane-tower/",w,r,user)
+		LocalError("Why are you trying to ban yourself? Stop that.",w,r,user)
 		return
 	}
 	
@@ -580,12 +625,23 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	err = addModLog("ban",uid,"user",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	err = users.Load(uid)
 	if err != nil {
 		LocalError("This user no longer exists!",w,r,user)
 		return
 	}
-	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
+	http.Redirect(w,r,"/user/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
 func route_unban(w http.ResponseWriter, r *http.Request) {
@@ -630,12 +686,23 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	err = addModLog("unban",uid,"user",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	err = users.Load(uid)
 	if err != nil {
 		LocalError("This user no longer exists!",w,r,user)
 		return
 	}
-	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
+	http.Redirect(w,r,"/user/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
 func route_activate(w http.ResponseWriter, r *http.Request) {
@@ -685,10 +752,21 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+	err = addModLog("activate",uid,"user",ipaddress,user.ID)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+	
 	err = users.Load(uid)
 	if err != nil {
 		LocalError("This user no longer exists!",w,r,user)
 		return
 	}
-	http.Redirect(w,r,"/users/" + strconv.Itoa(uid),http.StatusSeeOther)
+	http.Redirect(w,r,"/user/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
