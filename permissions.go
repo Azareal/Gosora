@@ -45,6 +45,7 @@ var GlobalPermList []string = []string{
 	"EditSettings",
 	"ManageThemes",
 	"ManagePlugins",
+	"ViewAdminLogs",
 	"ViewIPs",
 }
 
@@ -75,6 +76,7 @@ type Perms struct
 	EditSettings bool
 	ManageThemes bool
 	ManagePlugins bool
+	ViewAdminLogs bool
 	ViewIPs bool
 	
 	// Forum permissions
@@ -148,6 +150,7 @@ func init() {
 		EditSettings: true,
 		ManageThemes: true,
 		ManagePlugins: true,
+		ViewAdminLogs: true,
 		ViewIPs: true,
 		
 		ViewTopic: true,

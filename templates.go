@@ -57,23 +57,26 @@ type CTemplateSet struct
 func (c *CTemplateSet) compile_template(name string, dir string, expects string, expectsInt interface{}, varList map[string]VarItem) (out string) {
 	c.dir = dir
 	c.doImports = true
-	c.funcMap = make(map[string]interface{})
-	c.funcMap["and"] = "&&"
-	c.funcMap["not"] = "!"
-	c.funcMap["or"] = "||"
-	c.funcMap["eq"] = true
-	c.funcMap["ge"] = true
-	c.funcMap["gt"] = true
-	c.funcMap["le"] = true
-	c.funcMap["lt"] = true
-	c.funcMap["ne"] = true
-	c.funcMap["add"] = true
-	c.funcMap["subtract"] = true
-	c.funcMap["multiply"] = true
-	c.funcMap["divide"] = true
-	c.importMap = make(map[string]string)
-	c.importMap["io"] = "io"
-	c.importMap["strconv"] = "strconv"
+	c.funcMap = map[string]interface{}{
+		"and": "&&",
+		"not": "!",
+		"or": "||",
+		"eq": true,
+		"ge": true,
+		"gt": true,
+		"le": true,
+		"lt": true,
+		"ne": true,
+		"add": true,
+		"subtract": true,
+		"multiply": true,
+		"divide": true,
+	}
+	
+	c.importMap = map[string]string{
+		"io":"io",
+		"strconv":"strconv",
+	}
 	c.varList = varList
 	//c.pVarList = ""
 	//c.pVarPosition = 0

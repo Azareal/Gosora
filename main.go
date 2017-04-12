@@ -19,7 +19,7 @@ const day int = hour * 24
 const month int = day * 30
 const year int = day * 365
 const kilobyte int = 1024
-const megabyte int = 1024 * 1024
+const megabyte int = kilobyte * 1024
 const saltLength int = 32
 const sessionLength int = 80
 var nogrouplog bool = false // This is mainly for benchmarks, as we don't want a lot of information getting in the way of the results
@@ -158,8 +158,11 @@ func main(){
 	//}
 	
 	init_themes()
-	var err error
-	init_database(err)
+	err := init_database()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	init_templates()
 	db.SetMaxOpenConns(64)
 	
@@ -184,13 +187,13 @@ func main(){
 	init_plugins()
 	
 	router := NewRouter()
-	router.HandleFunc("/static/", route_static)
+	router.HandleFunc("/static/", route_static)//
 	fs_u := http.FileServer(http.Dir("./uploads"))
-	router.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))
+	router.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))//
 	
-	router.HandleFunc("/overview/", route_overview)
+	router.HandleFunc("/overview/", route_overview)//
 	router.HandleFunc("/topics/create/", route_topic_create)
-	router.HandleFunc("/topics/", route_topics)
+	router.HandleFunc("/topics/", route_topics)//
 	router.HandleFunc("/forums/", route_forums)
 	router.HandleFunc("/forum/", route_forum)
 	router.HandleFunc("/topic/create/submit/", route_create_topic)

@@ -24,6 +24,7 @@ var global_perm_phrases map[string]string = map[string]string{
 	"EditSettings": "Can edit settings",
 	"ManageThemes": "Can manage themes",
 	"ManagePlugins": "Can manage plugins",
+	"ViewAdminLogs": "Can view the administrator action logs",
 	"ViewIPs": "Can view IP addresses",
 }
 

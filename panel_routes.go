@@ -907,6 +907,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request){
 	globalPerms = append(globalPerms, NameLangToggle{"EditSettings",GetGlobalPermPhrase("EditSettings"),group.Perms.EditSettings})
 	globalPerms = append(globalPerms, NameLangToggle{"ManageThemes",GetGlobalPermPhrase("ManageThemes"),group.Perms.ManageThemes})
 	globalPerms = append(globalPerms, NameLangToggle{"ManagePlugins",GetGlobalPermPhrase("ManagePlugins"),group.Perms.ManagePlugins})
+	globalPerms = append(globalPerms, NameLangToggle{"ViewAdminLogs",GetGlobalPermPhrase("ViewAdminLogs"),group.Perms.ViewAdminLogs})
 	globalPerms = append(globalPerms, NameLangToggle{"ViewIPs",GetGlobalPermPhrase("ViewIPs"),group.Perms.ViewIPs})
 	
 	pi := EditGroupPermsPage{"Group Editor",user,noticeList,group.ID,group.Name,localPerms,globalPerms,nil}
@@ -1298,7 +1299,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageThemes {
+	if !user.Is_Super_Mod {
 		NoPermissions(w,r,user)
 		return
 	}

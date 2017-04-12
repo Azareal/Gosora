@@ -3,6 +3,7 @@ import "os"
 import "fmt"
 import "log"
 import "bytes"
+import "strings"
 import "strconv"
 import "math/rand"
 import "testing"
@@ -10,17 +11,17 @@ import "net/http"
 import "net/http/httptest"
 import "io/ioutil"
 import "database/sql"
+import "runtime/pprof"
+
 //import _ "github.com/go-sql-driver/mysql"
 //import "github.com/erikstmartin/go-testdb"
 //import "github.com/husobee/vestigo"
-import "runtime/pprof"
 
 var db_test *sql.DB
 var db_prod *sql.DB
 var gloinited bool = false
 
 func gloinit() {
-	var err error
 	debug = false
 	nogrouplog = true
 	
@@ -29,7 +30,11 @@ func gloinit() {
 	//log.SetOutput(discard)
 	
 	init_themes()
-	init_database(err)
+	err := init_database()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	db_prod = db
 	//db_test, err = sql.Open("testdb","")
 	//if err != nil {
@@ -73,16 +78,16 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 	topic := TopicUser{Title: "Lol",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"}
 	
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
 	
 	tpage := TopicPage{"Topic Blah",user,noticeList,replyList,topic,1,1,false}
 	tpage2 := TopicPage{"Topic Blah",admin,noticeList,replyList,topic,1,1,false}
@@ -1410,3 +1415,32 @@ func TestForumGuestRoute(t *testing.T) {
 /*func TestRoute(t *testing.T) {
 	
 }*/
+
+func TestSplittyThing(t *testing.T) {
+	fmt.Println("Splitty thing test")
+	var extra_data string
+	var path string = "/pages/hohoho"
+	fmt.Println("Raw Path:",path)
+	if path[len(path) - 1] != '/' {
+		extra_data = path[strings.LastIndexByte(path,'/') + 1:]
+		path = path[:strings.LastIndexByte(path,'/') + 1]
+	}
+	fmt.Println("Path:", path)
+	fmt.Println("Extra Data:", extra_data)
+	fmt.Println("Path Bytes:", []byte(path))
+	fmt.Println("Extra Data Bytes:", []byte(extra_data))
+	
+	
+	fmt.Println("Splitty thing test")
+	path = "/topics/"
+	extra_data = ""
+	fmt.Println("Raw Path:",path)
+	if path[len(path) - 1] != '/' {
+		extra_data = path[strings.LastIndexByte(path,'/') + 1:]
+		path = path[:strings.LastIndexByte(path,'/') + 1]
+	}
+	fmt.Println("Path:", path)
+	fmt.Println("Extra Data:", extra_data)
+	fmt.Println("Path Bytes:", []byte(path))
+	fmt.Println("Extra Data Bytes:", []byte(extra_data))
+}

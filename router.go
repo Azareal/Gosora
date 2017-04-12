@@ -34,34 +34,22 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	
+	var /*extra_data, */prefix string
+	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
+		//extra_data = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
+		prefix = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
+	} else {
+		prefix = req.URL.Path
+	}
+	
 	router.mu.RLock()
-	handle, ok := router.routes[req.URL.Path]
-	if ok {
-		router.mu.RUnlock()
-		handle(w,req)
-		return
-	}
-	
-	if req.URL.Path[len(req.URL.Path) - 1] == '/' {
-		router.mu.RUnlock()
-		NotFound(w,req)
-		return
-	}
-	
-	handle, ok = router.routes[req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]]
+	handle, ok := router.routes[prefix]
 	if ok {
 		router.mu.RUnlock()
 		handle(w,req)
 		return
 	}
 	//fmt.Println(req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')])
-	
-	handle, ok = router.routes[req.URL.Path + "/"]
-	if ok {
-		router.mu.RUnlock()
-		handle(w,req)
-		return
-	}
 	
 	router.mu.RUnlock()
 	NotFound(w,req)
