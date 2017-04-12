@@ -20,8 +20,9 @@ func addRouteGroup(path string, routes ...Route) {
 }
 
 func routes() {
-	//addRoute("route_static","/static/","&extra_data")
+	addRoute("route_static","/static/","req.URL.Path + extra_data")
 	addRoute("route_overview","/overview/")
 	addRoute("route_custom_page","/pages/","&extra_data")
 	addRoute("route_topics","/topics/","&groups","&forums")
+	addRoute("route_forums","/forums/","&forums")
 }

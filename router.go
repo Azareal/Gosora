@@ -5,7 +5,7 @@ import "sync"
 import "net/http"
 
 type Router struct {
-	mu sync.RWMutex
+	sync.RWMutex
 	routes map[string]func(http.ResponseWriter, *http.Request)
 }
 
@@ -16,15 +16,15 @@ func NewRouter() *Router {
 }
 
 func (router *Router) Handle(pattern string, handle http.Handler) {
-	router.mu.Lock()
+	router.Lock()
 	router.routes[pattern] = handle.ServeHTTP
-	router.mu.Unlock()
+	router.Unlock()
 }
 
 func (router *Router) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request)) {
-	router.mu.Lock()
+	router.Lock()
 	router.routes[pattern] = handle
-	router.mu.Unlock()
+	router.Unlock()
 }
 
 func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -42,16 +42,15 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		prefix = req.URL.Path
 	}
 	
-	router.mu.RLock()
+	router.RLock()
 	handle, ok := router.routes[prefix]
 	if ok {
-		router.mu.RUnlock()
+		router.RUnlock()
 		handle(w,req)
 		return
 	}
 	//fmt.Println(req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')])
 	
-	router.mu.RUnlock()
+	router.RUnlock()
 	NotFound(w,req)
-	return
 }

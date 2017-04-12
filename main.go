@@ -194,7 +194,7 @@ func main(){
 	router.HandleFunc("/overview/", route_overview)//
 	router.HandleFunc("/topics/create/", route_topic_create)
 	router.HandleFunc("/topics/", route_topics)//
-	router.HandleFunc("/forums/", route_forums)
+	router.HandleFunc("/forums/", route_forums)//
 	router.HandleFunc("/forum/", route_forum)
 	router.HandleFunc("/topic/create/submit/", route_create_topic)
 	router.HandleFunc("/topic/", route_topic_id)

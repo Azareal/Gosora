@@ -58,11 +58,11 @@ func route_static(w http.ResponseWriter, r *http.Request){
 /*func route_exit(w http.ResponseWriter, r *http.Request){
 	db.Close()
 	os.Exit(0)
-}*/
+}
 
 func route_fstatic(w http.ResponseWriter, r *http.Request){
 	http.ServeFile(w,r,r.URL.Path)
-}
+}*/
 
 func route_overview(w http.ResponseWriter, r *http.Request){
 	user, noticeList, ok := SessionCheck(w,r)
