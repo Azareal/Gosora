@@ -25,9 +25,7 @@ var nList []string
 
 // GET functions
 func route_static(w http.ResponseWriter, r *http.Request){
-	//name := r.URL.Path[len("/static/"):]
 	//log.Print("Outputting static file '" + r.URL.Path + "'")
-	
 	file, ok := static_files[r.URL.Path]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
@@ -542,10 +540,9 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_topic_create(w http.ResponseWriter, r *http.Request){
+func route_topic_create(w http.ResponseWriter, r *http.Request, sfid string){
 	var fid int
 	var err error
-	sfid := r.URL.Path[len("/topics/create/"):]
 	if sfid != "" {
 		fid, err = strconv.Atoi(sfid)
 		if err != nil {

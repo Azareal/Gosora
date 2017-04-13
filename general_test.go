@@ -688,7 +688,8 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	})
 }
 
-func addEmptyRoutesToMux(routes []string, serveMux *http.ServeMux) {
+// Commented until I add logic for profiling the router generator, I'm not sure what the best way of doing that is
+/*func addEmptyRoutesToMux(routes []string, serveMux *http.ServeMux) {
 	for _, route := range routes {
 		serveMux.HandleFunc(route, func(_ http.ResponseWriter,_ *http.Request){})
 	}
@@ -1012,7 +1013,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-}
+}*/
 
 func BenchmarkParserSerial(b *testing.B) {
 	b.ReportAllocs()

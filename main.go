@@ -186,15 +186,12 @@ func main(){
 	
 	init_plugins()
 	
-	router := NewRouter()
-	router.HandleFunc("/static/", route_static)//
-	fs_u := http.FileServer(http.Dir("./uploads"))
-	router.Handle("/uploads/", http.StripPrefix("/uploads/",fs_u))//
-	
-	router.HandleFunc("/overview/", route_overview)//
-	router.HandleFunc("/topics/create/", route_topic_create)
-	router.HandleFunc("/topics/", route_topics)//
-	router.HandleFunc("/forums/", route_forums)//
+	router := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	///router.HandleFunc("/static/", route_static)
+	///router.HandleFunc("/overview/", route_overview)
+	///router.HandleFunc("/topics/create/", route_topic_create)
+	///router.HandleFunc("/topics/", route_topics)
+	///router.HandleFunc("/forums/", route_forums)
 	router.HandleFunc("/forum/", route_forum)
 	router.HandleFunc("/topic/create/submit/", route_create_topic)
 	router.HandleFunc("/topic/", route_topic_id)
@@ -271,7 +268,7 @@ func main(){
 	router.HandleFunc("/api/", route_api)
 	//router.HandleFunc("/exit/", route_exit)
 	
-	router.HandleFunc("/", default_route)
+	///router.HandleFunc("/", default_route)
 	defer db.Close()
 	
 	//if profiling {
