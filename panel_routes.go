@@ -85,7 +85,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 
-func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
+func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, sfid string){
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
 		return
@@ -99,7 +99,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	fid, err := strconv.Atoi(r.URL.Path[len("/panel/forums/delete/"):])
+	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
@@ -117,7 +117,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request){
 	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }
 
-func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
+func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, sfid string) {
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -131,7 +131,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	fid, err := strconv.Atoi(r.URL.Path[len("/panel/forums/delete/submit/"):])
+	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
@@ -149,7 +149,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 
-func route_panel_forums_edit(w http.ResponseWriter, r *http.Request) {
+func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string) {
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
 		return
@@ -159,7 +159,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	fid, err := strconv.Atoi(r.URL.Path[len("/panel/forums/edit/"):])
+	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
@@ -173,7 +173,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w,"panel-forum-edit.html",pi)
 }
 
-func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
+func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid string) {
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -197,7 +197,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 	
-	fid, err := strconv.Atoi(r.URL.Path[len("/panel/forums/edit/submit/"):])
+	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		LocalErrorJSQ("The provided Forum ID is not a valid number.",w,r,user,is_js)
 		return

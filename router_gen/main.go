@@ -46,13 +46,31 @@ func main() {
 		out += `
 		case "` + group.Path[0:end] + `":
 			switch(req.URL.Path) {`
+		var default_route Route
 		for _, route := range group.Routes {
+			if group.Path == route.Path {
+				default_route = route
+				continue
+			}
+			
 			out += "\n\t\t\t\tcase \"" + route.Path + "\":"
 			if route.Before != "" {
 				out += "\n\t\t\t\t\t" + route.Before
 			}
 			out += "\n\t\t\t\t\t" + route.Name + "(w,req"
 			for _, item := range route.Vars {
+				out += ", " + item
+			}
+			out += ")\n\t\t\t\t\treturn"
+		}
+		
+		if default_route.Name != "" {
+			out += "\n\t\t\t\tdefault:"
+			if default_route.Before != "" {
+				out += "\n\t\t\t\t\t" + default_route.Before
+			}
+			out += "\n\t\t\t\t\t" + default_route.Name + "(w,req"
+			for _, item := range default_route.Vars {
 				out += ", " + item
 			}
 			out += ")\n\t\t\t\t\treturn"
@@ -137,7 +155,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	NotFound(w,req)
 }
 `
-	write_file("../gen_router.go",fdata)
+	write_file("./gen_router.go",fdata)
 	fmt.Println("Successfully generated the router")
 }
 

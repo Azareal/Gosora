@@ -65,11 +65,35 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		case "/topics":
 			switch(req.URL.Path) {
-				case "/topics/":
-					route_topics(w,req)
-					return
 				case "/topics/create/":
 					route_topic_create(w,req, extra_data)
+					return
+				default:
+					route_topics(w,req)
+					return
+			}
+		case "/panel":
+			switch(req.URL.Path) {
+				case "/panel/forums/":
+					route_panel_forums(w,req)
+					return
+				case "/panel/forums/create/":
+					route_panel_forums_create_submit(w,req)
+					return
+				case "/panel/forums/delete/":
+					route_panel_forums_delete(w,req, extra_data)
+					return
+				case "/panel/forums/delete/submit/":
+					route_panel_forums_delete_submit(w,req, extra_data)
+					return
+				case "/panel/forums/edit/":
+					route_panel_forums_edit(w,req, extra_data)
+					return
+				case "/panel/forums/edit/submit/":
+					route_panel_forums_edit_submit(w,req, extra_data)
+					return
+				default:
+					route_panel(w,req)
 					return
 			}
 		case "/uploads":

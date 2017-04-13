@@ -33,4 +33,15 @@ func routes() {
 		Route{"route_topics","/topics/","",[]string{}},
 		Route{"route_topic_create","/topics/create/","",[]string{"extra_data"}},
 	)
+	
+	// The Control Panel
+	addRouteGroup("/panel/",
+		Route{"route_panel","/panel/","",[]string{}},
+		Route{"route_panel_forums","/panel/forums/","",[]string{}},
+		Route{"route_panel_forums_create_submit","/panel/forums/create/","",[]string{}},
+		Route{"route_panel_forums_delete","/panel/forums/delete/","",[]string{"extra_data"}},
+		Route{"route_panel_forums_delete_submit","/panel/forums/delete/submit/","",[]string{"extra_data"}},
+		Route{"route_panel_forums_edit","/panel/forums/edit/","",[]string{"extra_data"}},
+		Route{"route_panel_forums_edit_submit","/panel/forums/edit/submit/","",[]string{"extra_data"}},
+	)
 }

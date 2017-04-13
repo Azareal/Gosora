@@ -239,14 +239,14 @@ func main(){
 	router.HandleFunc("/users/unban/", route_unban)
 	router.HandleFunc("/users/activate/", route_activate)
 	
-	// Admin
-	router.HandleFunc("/panel/", route_panel)
-	router.HandleFunc("/panel/forums/", route_panel_forums)
-	router.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
-	router.HandleFunc("/panel/forums/delete/", route_panel_forums_delete)
-	router.HandleFunc("/panel/forums/delete/submit/", route_panel_forums_delete_submit)
-	router.HandleFunc("/panel/forums/edit/", route_panel_forums_edit)
-	router.HandleFunc("/panel/forums/edit/submit/", route_panel_forums_edit_submit)
+	// The Control Panel
+	///router.HandleFunc("/panel/", route_panel)
+	///router.HandleFunc("/panel/forums/", route_panel_forums)
+	///router.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
+	///router.HandleFunc("/panel/forums/delete/", route_panel_forums_delete)
+	///router.HandleFunc("/panel/forums/delete/submit/", route_panel_forums_delete_submit)
+	///router.HandleFunc("/panel/forums/edit/", route_panel_forums_edit)
+	///router.HandleFunc("/panel/forums/edit/submit/", route_panel_forums_edit_submit)
 	router.HandleFunc("/panel/settings/", route_panel_settings)
 	router.HandleFunc("/panel/settings/edit/", route_panel_setting)
 	router.HandleFunc("/panel/settings/edit/submit/", route_panel_setting_edit)
