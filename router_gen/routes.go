@@ -24,8 +24,9 @@ func routes() {
 	//addRoute("default_route","","")
 	addRoute("route_static","/static/","req.URL.Path += extra_data")
 	addRoute("route_overview","/overview/","")
-	addRoute("route_custom_page","/pages/",""/*,"&extra_data"*/)
+	//addRoute("route_custom_page","/pages/",""/*,"&extra_data"*/)
 	addRoute("route_forums","/forums/",""/*,"&forums"*/)
+	addRoute("route_forum","/forum/","","extra_data")
 	
 	//addRoute("route_topic_create","/topics/create/","","extra_data")
 	//addRoute("route_topics","/topics/",""/*,"&groups","&forums"*/)
@@ -43,5 +44,29 @@ func routes() {
 		Route{"route_panel_forums_delete_submit","/panel/forums/delete/submit/","",[]string{"extra_data"}},
 		Route{"route_panel_forums_edit","/panel/forums/edit/","",[]string{"extra_data"}},
 		Route{"route_panel_forums_edit_submit","/panel/forums/edit/submit/","",[]string{"extra_data"}},
+		
+		Route{"route_panel_settings","/panel/settings/","",[]string{}},
+		Route{"route_panel_setting","/panel/settings/edit/","",[]string{"extra_data"}},
+		Route{"route_panel_setting_edit","/panel/settings/edit/submit/","",[]string{"extra_data"}},
+		
+		Route{"route_panel_themes","/panel/themes/","",[]string{}},
+		Route{"route_panel_themes_default","/panel/themes/default/","",[]string{"extra_data"}},
+		
+		Route{"route_panel_plugins","/panel/plugins/","",[]string{}},
+		Route{"route_panel_plugins_activate","/panel/plugins/activate/","",[]string{"extra_data"}},
+		Route{"route_panel_plugins_deactivate","/panel/plugins/deactivate/","",[]string{"extra_data"}},
+		
+		Route{"route_panel_users","/panel/users/","",[]string{}},
+		Route{"route_panel_users_edit","/panel/users/edit/","",[]string{"extra_data"}},
+		Route{"route_panel_users_edit_submit","/panel/users/edit/submit/","",[]string{"extra_data"}},
+		
+		Route{"route_panel_groups","/panel/groups/","",[]string{}},
+		Route{"route_panel_groups_edit","/panel/groups/edit/","",[]string{"extra_data"}},
+		Route{"route_panel_groups_edit_perms","/panel/groups/edit/perms/","",[]string{"extra_data"}},
+		Route{"route_panel_groups_edit_submit","/panel/groups/edit/submit/","",[]string{"extra_data"}},
+		Route{"route_panel_groups_edit_perms_submit","/panel/groups/edit/perms/submit/","",[]string{"extra_data"}},
+		Route{"route_panel_groups_create_submit","/panel/groups/create/","",[]string{}},
+		
+		Route{"route_panel_logs_mod","/panel/logs/mod/","",[]string{}},
 	)
 }

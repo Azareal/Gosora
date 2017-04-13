@@ -31,7 +31,7 @@ func main() {
 		}
 		out += "\n\t\t\t" + route.Name + "(w,req"
 		for _, item := range route.Vars {
-			out += ", " + item
+			out += "," + item
 		}
 		out += ")\n\t\t\treturn"
 	}
@@ -59,7 +59,7 @@ func main() {
 			}
 			out += "\n\t\t\t\t\t" + route.Name + "(w,req"
 			for _, item := range route.Vars {
-				out += ", " + item
+				out += "," + item
 			}
 			out += ")\n\t\t\t\t\treturn"
 		}

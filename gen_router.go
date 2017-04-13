@@ -57,16 +57,16 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		case "/overview":
 			route_overview(w,req)
 			return
-		case "/pages":
-			route_custom_page(w,req)
-			return
 		case "/forums":
 			route_forums(w,req)
+			return
+		case "/forum":
+			route_forum(w,req,extra_data)
 			return
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/create/":
-					route_topic_create(w,req, extra_data)
+					route_topic_create(w,req,extra_data)
 					return
 				default:
 					route_topics(w,req)
@@ -81,16 +81,70 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					route_panel_forums_create_submit(w,req)
 					return
 				case "/panel/forums/delete/":
-					route_panel_forums_delete(w,req, extra_data)
+					route_panel_forums_delete(w,req,extra_data)
 					return
 				case "/panel/forums/delete/submit/":
-					route_panel_forums_delete_submit(w,req, extra_data)
+					route_panel_forums_delete_submit(w,req,extra_data)
 					return
 				case "/panel/forums/edit/":
-					route_panel_forums_edit(w,req, extra_data)
+					route_panel_forums_edit(w,req,extra_data)
 					return
 				case "/panel/forums/edit/submit/":
-					route_panel_forums_edit_submit(w,req, extra_data)
+					route_panel_forums_edit_submit(w,req,extra_data)
+					return
+				case "/panel/settings/":
+					route_panel_settings(w,req)
+					return
+				case "/panel/settings/edit/":
+					route_panel_setting(w,req,extra_data)
+					return
+				case "/panel/settings/edit/submit/":
+					route_panel_setting_edit(w,req,extra_data)
+					return
+				case "/panel/themes/":
+					route_panel_themes(w,req)
+					return
+				case "/panel/themes/default/":
+					route_panel_themes_default(w,req,extra_data)
+					return
+				case "/panel/plugins/":
+					route_panel_plugins(w,req)
+					return
+				case "/panel/plugins/activate/":
+					route_panel_plugins_activate(w,req,extra_data)
+					return
+				case "/panel/plugins/deactivate/":
+					route_panel_plugins_deactivate(w,req,extra_data)
+					return
+				case "/panel/users/":
+					route_panel_users(w,req)
+					return
+				case "/panel/users/edit/":
+					route_panel_users_edit(w,req,extra_data)
+					return
+				case "/panel/users/edit/submit/":
+					route_panel_users_edit_submit(w,req,extra_data)
+					return
+				case "/panel/groups/":
+					route_panel_groups(w,req)
+					return
+				case "/panel/groups/edit/":
+					route_panel_groups_edit(w,req,extra_data)
+					return
+				case "/panel/groups/edit/perms/":
+					route_panel_groups_edit_perms(w,req,extra_data)
+					return
+				case "/panel/groups/edit/submit/":
+					route_panel_groups_edit_submit(w,req,extra_data)
+					return
+				case "/panel/groups/edit/perms/submit/":
+					route_panel_groups_edit_perms_submit(w,req,extra_data)
+					return
+				case "/panel/groups/create/":
+					route_panel_groups_create_submit(w,req)
+					return
+				case "/panel/logs/mod/":
+					route_panel_logs_mod(w,req)
 					return
 				default:
 					route_panel(w,req)

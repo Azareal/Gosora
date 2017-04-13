@@ -68,7 +68,11 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 		case func(interface{})interface{}:
 			key := plugin.Hooks[name]
 			hook := hooks[name]
-			hook = append(hook[:key], hook[key + 1:]...)
+			if len(hook) == 1 {
+				hook = []func(interface{})interface{}{}
+			} else {
+				hook = append(hook[:key], hook[key + 1:]...)
+			}
 			hooks[name] = hook
 		case func(...interface{}) interface{}:
 			delete(vhooks, name)

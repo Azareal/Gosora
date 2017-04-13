@@ -167,9 +167,9 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_forum(w http.ResponseWriter, r *http.Request){
+func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	fid, err := strconv.Atoi(r.URL.Path[len("/forum/"):])
+	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		PreError("The provided ForumID is not a valid number.",w,r)
 		return

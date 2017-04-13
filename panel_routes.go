@@ -272,9 +272,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	}
 	defer rows.Close()
 	
-	var sname string
-	var scontent string
-	var stype string
+	var sname, scontent, stype string
 	for rows.Next() {
 		err := rows.Scan(&sname,&scontent,&stype)
 		if err != nil {
@@ -310,7 +308,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	templates.ExecuteTemplate(w,"panel-settings.html",pi)
 }
 
-func route_panel_setting(w http.ResponseWriter, r *http.Request){
+func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
 		return
@@ -319,9 +317,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
-	setting := Setting{"","","",""}
-	setting.Name = r.URL.Path[len("/panel/settings/edit/"):]
+	setting := Setting{sname,"","",""}
 	
 	err := db.QueryRow("select content, type from settings where name = ?", setting.Name).Scan(&setting.Content,&setting.Type)
 	if err == sql.ErrNoRows {
@@ -360,7 +356,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request){
 	templates.ExecuteTemplate(w,"panel-setting.html",pi)
 }
 
-func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
+func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname string) {
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -382,7 +378,6 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request) {
 	
 	var stype string
 	var sconstraints string
-	sname := r.URL.Path[len("/panel/settings/edit/submit/"):]
 	scontent := r.PostFormValue("setting-value")
 	
 	err = db.QueryRow("select name, type, constraints from settings where name = ?", sname).Scan(&sname, &stype, &sconstraints)
@@ -435,7 +430,7 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 	templates.ExecuteTemplate(w,"panel-plugins.html",pi)
 }
 
-func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
+func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname string){
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -449,7 +444,6 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	uname := r.URL.Path[len("/panel/plugins/activate/"):]
 	plugin, ok := plugins[uname]
 	if !ok {
 		LocalError("The plugin isn't registered in the system",w,r,user)
@@ -497,7 +491,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request){
 	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
 }
 
-func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
+func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, uname string){
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -512,7 +506,6 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	uname := r.URL.Path[len("/panel/plugins/deactivate/"):]
 	plugin, ok := plugins[uname]
 	if !ok {
 		LocalError("The plugin isn't registered in the system",w,r,user)
@@ -601,7 +594,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
+func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
 		return
@@ -613,7 +606,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	uid, err := strconv.Atoi(r.URL.Path[len("/panel/users/edit/"):])
+	uid, err := strconv.Atoi(suid)
 	if err != nil {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
@@ -651,7 +644,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
+func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid string){
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -665,13 +658,13 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	tid, err := strconv.Atoi(r.URL.Path[len("/panel/users/edit/submit/"):])
+	uid, err := strconv.Atoi(suid)
 	if err != nil {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
 	}
 	
-	targetUser, err := users.CascadeGet(tid)
+	targetUser, err := users.CascadeGet(uid)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
@@ -687,13 +680,13 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 	
 	newname := html.EscapeString(r.PostFormValue("user-name"))
 	if newname == "" {
-		LocalError("You didn't put in a username.", w, r, user)
+		LocalError("You didn't put in a username.",w,r,user)
 		return
 	}
 	
 	newemail := html.EscapeString(r.PostFormValue("user-email"))
 	if newemail == "" {
-		LocalError("You didn't put in an email address.", w, r, user)
+		LocalError("You didn't put in an email address.",w,r,user)
 		return
 	}
 	if (newemail != targetUser.Email) && !user.Perms.EditUserEmail {
@@ -734,7 +727,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request){
 	}
 	
 	if newpassword != "" {
-		SetPassword(targetUser.ID, newpassword)
+		SetPassword(targetUser.ID,newpassword)
 	}
 	
 	err = users.Load(targetUser.ID)
@@ -790,7 +783,7 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 	templates.ExecuteTemplate(w,"panel-groups.html",pi)
 }
 
-func route_panel_groups_edit(w http.ResponseWriter, r *http.Request){
+func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string){
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
 		return
@@ -800,7 +793,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	gid, err := strconv.Atoi(r.URL.Path[len("/panel/groups/edit/"):])
+	gid, err := strconv.Atoi(sgid)
 	if err != nil {
 		LocalError("The Group ID is not a valid integer.",w,r,user)
 		return
@@ -844,7 +837,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request){
+func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid string){
 	user, noticeList, ok := SessionCheck(w,r)
 	if !ok {
 		return
@@ -854,7 +847,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	gid, err := strconv.Atoi(r.URL.Path[len("/panel/groups/edit/perms/"):])
+	gid, err := strconv.Atoi(sgid)
 	if err != nil {
 		LocalError("The Group ID is not a valid integer.",w,r,user)
 		return
@@ -917,7 +910,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request){
+func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid string){
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -931,7 +924,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	gid, err := strconv.Atoi(r.URL.Path[len("/panel/groups/edit/submit/"):])
+	gid, err := strconv.Atoi(sgid)
 	if err != nil {
 		LocalError("The Group ID is not a valid integer.",w,r,user)
 		return
@@ -1049,7 +1042,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request){
 	http.Redirect(w,r,"/panel/groups/edit/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
-func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request){
+func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request, sgid string){
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -1063,7 +1056,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 	
-	gid, err := strconv.Atoi(r.URL.Path[len("/panel/groups/edit/perms/submit/"):])
+	gid, err := strconv.Atoi(sgid)
 	if err != nil {
 		LocalError("The Group ID is not a valid integer.",w,r,user)
 		return
@@ -1091,11 +1084,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		pplist := LocalPermList
 		for _, perm := range pplist {
 			pvalue := r.PostFormValue("group-perm-" + perm)
-			if pvalue == "1" {
-				pmap[perm] = true
-			} else {
-				pmap[perm] = false
-			}
+			pmap[perm] = (pvalue == "1")
 		}
 	}
 	
@@ -1104,11 +1093,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		gplist := GlobalPermList
 		for _, perm := range gplist {
 			pvalue := r.PostFormValue("group-perm-" + perm)
-			if pvalue == "1" {
-				pmap[perm] = true
-			} else {
-				pmap[perm] = false
-			}
+			pmap[perm] = (pvalue == "1")
 		}
 	}
 	
@@ -1154,9 +1139,7 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
 	}
 	group_tag := r.PostFormValue("group-tag")
 	
-	var is_admin bool
-	var is_mod bool
-	var is_banned bool
+	var is_admin, is_mod, is_banned bool
 	if user.Perms.EditGroupGlobalPerms {
 		group_type := r.PostFormValue("group-type")
 		if group_type == "Admin" {
@@ -1196,8 +1179,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	var pThemeList []Theme
-	var vThemeList []Theme
+	var pThemeList, vThemeList []Theme
 	for _, theme := range themes {
 		if theme.HideFromThemes {
 			continue
@@ -1217,7 +1199,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
+func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname string){
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -1231,7 +1213,6 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	
-	uname := r.URL.Path[len("/panel/themes/default/"):]
 	theme, ok := themes[uname]
 	if !ok {
 		LocalError("The theme isn't registered in the system",w,r,user)
