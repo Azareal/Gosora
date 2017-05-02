@@ -22,14 +22,19 @@ func addRouteGroup(path string, routes ...Route) {
 
 func routes() {
 	//addRoute("default_route","","")
+	addRoute("route_api","/api/","")
 	addRoute("route_static","/static/","req.URL.Path += extra_data")
 	addRoute("route_overview","/overview/","")
 	//addRoute("route_custom_page","/pages/",""/*,"&extra_data"*/)
 	addRoute("route_forums","/forums/",""/*,"&forums"*/)
 	addRoute("route_forum","/forum/","","extra_data")
-	
 	//addRoute("route_topic_create","/topics/create/","","extra_data")
 	//addRoute("route_topics","/topics/",""/*,"&groups","&forums"*/)
+	
+	addRouteGroup("/report/",
+		Route{"route_report_submit","/report/submit/","",[]string{"extra_data"}},
+	)
+	
 	addRouteGroup("/topics/",
 		Route{"route_topics","/topics/","",[]string{}},
 		Route{"route_topic_create","/topics/create/","",[]string{"extra_data"}},

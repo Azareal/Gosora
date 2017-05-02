@@ -99,19 +99,24 @@ func init_database() (err error) {
 	if(dbpassword != ""){
 		dbpassword = ":" + dbpassword
 	}
+	
+	// Open the database connection
 	db, err = sql.Open("mysql",dbuser + dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname + "?collation=" + db_collation)
 	if err != nil {
 		return err
 	}
 	
-	// Make sure that the connection is alive..
+	// Make sure that the connection is alive
 	err = db.Ping()
 	if err != nil {
 		return err
 	}
 	
-	// Getting the database version..
+	// Fetch the database version
 	db.QueryRow("SELECT VERSION()").Scan(&db_version)
+	
+	// Set the number of max open connections
+	db.SetMaxOpenConns(64)
 	
 	/*log.Print("Preparing get_session statement.")
 	get_session_stmt, err = db.Prepare("select `uid`,`name`,`group`,`is_super_admin`,`session`,`email`,`avatar`,`message`,`url_prefix`,`url_name`,`level`,`score`,`last_ip` from `users` where `uid` = ? and `session` = ? AND `session` <> ''")

@@ -1,5 +1,5 @@
 package main
-import "log"
+
 import "fmt"
 import "time"
 import "os"
@@ -66,7 +66,7 @@ func relative_time(in string) (string, error) {
 	}
 }
 
-func SendEmail(email string, subject string, msg string) bool {
+func SendEmail(email string, subject string, msg string) (res bool) {
 	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
 	if vhooks["email_send_intercept"] != nil {
 		return vhooks["email_send_intercept"](email, subject, msg).(bool)
@@ -75,57 +75,58 @@ func SendEmail(email string, subject string, msg string) bool {
 	
 	con, err := smtp.Dial(smtp_server + ":" + smtp_port)
 	if err != nil {
-		return false
+		return
 	}
 	
 	if smtp_username != "" {
 		auth := smtp.PlainAuth("",smtp_username,smtp_password,smtp_server)
 		err = con.Auth(auth)
 		if err != nil {
-			return false
+			return
 		}
 	}
 	
 	err = con.Mail(site_email)
 	if err != nil {
-		return false
+		return
 	}
 	err = con.Rcpt(email)
 	if err != nil {
-		return false
+		return
 	}
 	
 	email_data, err := con.Data()
 	if err != nil {
-		return false
+		return
 	}
 	_, err = fmt.Fprintf(email_data, body)
 	if err != nil {
-		return false
+		return
 	}
 	
 	err = email_data.Close()
 	if err != nil {
-		return false
+		return
 	}
 	err = con.Quit()
 	if err != nil {
-		return false
+		return
 	}
 	return true
 }
 
-func write_file(name string, content string) {
+func write_file(name string, content string) (err error) {
 	f, err := os.Create(name)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	_, err = f.WriteString(content)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	f.Sync()
 	f.Close()
+	return
 }
 
 func word_count(input string) (count int) {
@@ -149,8 +150,7 @@ func word_count(input string) (count int) {
 
 func getLevel(score int) (level int) {
 	var base float64 = 25
-	var current float64
-	var prev float64
+	var current, prev float64
 	exp_factor := 2.8
 	
 	for i := 1;;i++ {
@@ -170,8 +170,7 @@ func getLevel(score int) (level int) {
 
 func getLevelScore(getLevel int) (score int) {
 	var base float64 = 25
-	var current float64
-	var prev float64
+	var current, prev float64
 	var level int
 	exp_factor := 2.8
 	
@@ -192,8 +191,7 @@ func getLevelScore(getLevel int) (score int) {
 
 func getLevels(maxLevel int) []float64 {
 	var base float64 = 25
-	var current float64 = 0
-	var prev float64 = 0
+	var current, prev float64 // = 0
 	exp_factor := 2.8
 	var out []float64
 	out = append(out, 0)
@@ -212,28 +210,28 @@ func getLevels(maxLevel int) []float64 {
 
 func fill_forum_id_gap(biggerID int, smallerID int) {
 	dummy := Forum{ID:0,Name:"",Active:false,Preset:"all"}
-	for i := smallerID; i > biggerID;i++ {
+	for i := smallerID; i > biggerID; i++ {
 		forums = append(forums, dummy)
 	}
 }
 
 func fill_group_id_gap(biggerID int, smallerID int) {
 	dummy := Group{ID:0, Name:""}
-	for i := smallerID; i > biggerID;i++ {
+	for i := smallerID; i > biggerID; i++ {
 		groups = append(groups, dummy)
 	}
 }
 
-func addModLog(action string, elementID int, elementType string, ipaddress string,  actorID int) error {
-	_, err := add_modlog_entry_stmt.Exec(action,elementID,elementType,ipaddress,actorID)
+func addModLog(action string, elementID int, elementType string, ipaddress string,  actorID int) (err error) {
+	_, err = add_modlog_entry_stmt.Exec(action,elementID,elementType,ipaddress,actorID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func addAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) error {
-	_, err := add_adminlog_entry_stmt.Exec(action,elementID,elementType,ipaddress,actorID)
+func addAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) (err error) {
+	_, err = add_adminlog_entry_stmt.Exec(action,elementID,elementType,ipaddress,actorID)
 	if err != nil {
 		return err
 	}

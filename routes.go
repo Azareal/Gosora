@@ -984,7 +984,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/user/" + strconv.Itoa(uid), http.StatusSeeOther)
 }
 
-func route_report_submit(w http.ResponseWriter, r *http.Request) {
+func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string) {
 	user, ok := SimpleSessionCheck(w,r)
 	if !ok {
 		return
@@ -1008,19 +1008,17 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	item_id, err := strconv.Atoi(r.URL.Path[len("/report/submit/"):])
+	item_id, err := strconv.Atoi(sitem_id)
 	if err != nil {
-		LocalError("Bad ID", w, r, user)
+		LocalError("Bad ID",w,r,user)
 		return
 	}
 	
 	item_type := r.FormValue("type")
 	
-	fid := 1
+	var fid int = 1
 	var tid int
-	var title string
-	var content string
-	var data string
+	var title, content, data string
 	if item_type == "reply" {
 		err = db.QueryRow("select tid, content from replies where rid = ?", item_id).Scan(&tid, &content)
 		if err == sql.ErrNoRows {
@@ -1094,7 +1092,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if count != 0 {
-		LocalError("Someone has already reported this!", w, r, user)
+		LocalError("Someone has already reported this!",w,r,user)
 		return
 	}
 	
@@ -1122,7 +1120,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	http.Redirect(w, r, "/topic/" + strconv.FormatInt(lastId, 10), http.StatusSeeOther)
+	http.Redirect(w,r,"/topic/" + strconv.FormatInt(lastId, 10), http.StatusSeeOther)
 }
 
 func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {

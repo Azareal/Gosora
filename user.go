@@ -63,7 +63,7 @@ type StaticUserStore struct {
 	items map[int]*User
 	length int
 	capacity int
-	mu sync.RWMutex
+	sync.RWMutex
 }
 
 func NewStaticUserStore(capacity int) *StaticUserStore {
@@ -71,9 +71,9 @@ func NewStaticUserStore(capacity int) *StaticUserStore {
 }
 
 func (sts *StaticUserStore) Get(id int) (*User, error) {
-	sts.mu.RLock()
+	sts.RLock()
 	item, ok := sts.items[id]
-	sts.mu.RUnlock()
+	sts.RUnlock()
 	if ok {
 		return item, nil
 	}
@@ -89,9 +89,9 @@ func (sts *StaticUserStore) GetUnsafe(id int) (*User, error) {
 }
 
 func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
-	sts.mu.RLock()
+	sts.RLock()
 	user, ok := sts.items[id]
-	sts.mu.RUnlock()
+	sts.RUnlock()
 	if ok {
 		return user, nil
 	}
@@ -136,18 +136,18 @@ func (sts *StaticUserStore) Load(id int) error {
 }
 
 func (sts *StaticUserStore) Set(item *User) error {
-	sts.mu.Lock()
+	sts.Lock()
 	_, ok := sts.items[item.ID]
 	if ok {
 		sts.items[item.ID] = item
 	} else if sts.length >= sts.capacity {
-		sts.mu.Unlock()
+		sts.Unlock()
 		return ErrStoreCapacityOverflow
 	} else {
 		sts.items[item.ID] = item
 		sts.length++
 	}
-	sts.mu.Unlock()
+	sts.Unlock()
 	return nil
 }
 
@@ -155,9 +155,9 @@ func (sts *StaticUserStore) Add(item *User) error {
 	if sts.length >= sts.capacity {
 		return ErrStoreCapacityOverflow
 	}
-	sts.mu.Lock()
+	sts.Lock()
 	sts.items[item.ID] = item
-	sts.mu.Unlock()
+	sts.Unlock()
 	sts.length++
 	return nil
 }
@@ -172,9 +172,9 @@ func (sts *StaticUserStore) AddUnsafe(item *User) error {
 }
 
 func (sts *StaticUserStore) Remove(id int) error {
-	sts.mu.Lock()
+	sts.Lock()
 	delete(sts.items,id)
-	sts.mu.Unlock()
+	sts.Unlock()
 	sts.length--
 	return nil
 }

@@ -96,7 +96,10 @@ func compile_templates() {
 }
 
 func write_template(name string, content string) {
-	write_file("./template_" + name + ".go", content)
+	err := write_file("./template_" + name + ".go", content)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func init_templates() {
@@ -164,8 +167,6 @@ func main(){
 	}
 	
 	init_templates()
-	db.SetMaxOpenConns(64)
-	
 	err = init_errors()
 	if err != nil {
 		log.Fatal(err)
@@ -183,7 +184,6 @@ func main(){
 	external_sites["YT"] = "https://www.youtube.com/"
 	hooks["trow_assign"] = nil
 	hooks["rrow_assign"] = nil
-	
 	init_plugins()
 	
 	router := NewGenRouter(http.FileServer(http.Dir("./uploads")))
@@ -201,7 +201,7 @@ func main(){
 	router.HandleFunc("/reply/edit/submit/", route_reply_edit_submit)
 	router.HandleFunc("/reply/delete/submit/", route_reply_delete_submit)
 	router.HandleFunc("/reply/like/submit/", route_reply_like_submit)
-	router.HandleFunc("/report/submit/", route_report_submit)
+	///router.HandleFunc("/report/submit/", route_report_submit)
 	router.HandleFunc("/topic/edit/submit/", route_edit_topic)
 	router.HandleFunc("/topic/delete/submit/", route_delete_topic)
 	router.HandleFunc("/topic/stick/submit/", route_stick_topic)
@@ -265,9 +265,9 @@ func main(){
 	///router.HandleFunc("/panel/groups/edit/perms/submit/", route_panel_groups_edit_perms_submit)
 	///router.HandleFunc("/panel/groups/create/", route_panel_groups_create_submit)
 	///router.HandleFunc("/panel/logs/mod/", route_panel_logs_mod)
-	router.HandleFunc("/api/", route_api)
-	//router.HandleFunc("/exit/", route_exit)
 	
+	///router.HandleFunc("/api/", route_api)
+	//router.HandleFunc("/exit/", route_exit)
 	///router.HandleFunc("/", default_route)
 	defer db.Close()
 	

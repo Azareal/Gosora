@@ -50,6 +50,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//fmt.Println("req.URL.Path:",req.URL.Path)
 	//fmt.Println("extra_data:",extra_data)
 	switch(prefix) {
+		case "/api":
+			route_api(w,req)
+			return
 		case "/static":
 			req.URL.Path += extra_data
 			route_static(w,req)
@@ -63,6 +66,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		case "/forum":
 			route_forum(w,req,extra_data)
 			return
+		case "/report":
+			switch(req.URL.Path) {
+				case "/report/submit/":
+					route_report_submit(w,req,extra_data)
+					return
+			}
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/create/":

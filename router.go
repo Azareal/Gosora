@@ -44,13 +44,12 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	router.RLock()
 	handle, ok := router.routes[prefix]
+	router.RUnlock()
+	
 	if ok {
-		router.RUnlock()
 		handle(w,req)
 		return
 	}
 	//fmt.Println(req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')])
-	
-	router.RUnlock()
 	NotFound(w,req)
 }
