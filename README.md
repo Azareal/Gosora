@@ -110,13 +110,17 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 # Dependencies
 
-* Go 1.7
+* Go 1.8
 
-* MariaDB
+* MariaDB (or any other MySQL compatible database engine)
 
-* github.com/go-sql-driver/mysql
+* github.com/go-sql-driver/mysql For interfacing with MariaDB.
 
-* golang.org/x/crypto/bcrypt
+* golang.org/x/crypto/bcrypt For hashing passwords.
+
+* github.com/shirou/gopsutil For pulling information on CPU and memory usage.
+
+  * github.com/StackExchange/wmi Dependency for gopsutil on Windows.
 
 # Bundled Plugins
 
@@ -127,3 +131,9 @@ There are several plugins which are bundled with the software by default. These 
 * BBCode - A plugin in early development for converting BBCode Tags into HTML.
 
 * Markdown - An extremely simple plugin for converting Markdown into HTML.
+
+# Developers
+
+There are a few things you'll need to know before running the more developer oriented features like the tests or the benchmarks.
+
+The benchmarks are currently being rewritten as they're currently extremely serial which can lead to severe slow-downs when run on a home computer due to the benchmarks being run on the one core everything else is being run on (Browser, OS, etc.) and the tests not taking parallelism into account.

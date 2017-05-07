@@ -633,7 +633,7 @@ func init_database() (err error) {
 		
 		// Ugh, you really shouldn't physically delete these items, it makes a big mess of things
 		if group.ID != i {
-			fmt.Println("Stop physically deleting groups. You are messing up the IDs. Use the Group Manager or delete_group() instead x.x")
+			log.Print("Stop physically deleting groups. You are messing up the IDs. Use the Group Manager or delete_group() instead x.x")
 			fill_group_id_gap(i, group.ID)
 		}
 		
@@ -641,8 +641,8 @@ func init_database() (err error) {
 		if err != nil {
 			return err
 		}
-		if !nogrouplog {
-			fmt.Println(group.Name + ": ")
+		if debug {
+			log.Print(group.Name + ": ")
 			fmt.Printf("%+v\n", group.Perms)
 		}
 		
@@ -679,7 +679,7 @@ func init_database() (err error) {
 		
 		// Ugh, you really shouldn't physically delete these items, it makes a big mess of things
 		if forum.ID != i {
-			fmt.Println("Stop physically deleting forums. You are messing up the IDs. Use the Forum Manager or delete_forum() instead x.x")
+			log.Print("Stop physically deleting forums. You are messing up the IDs. Use the Forum Manager or delete_forum() instead x.x")
 			fill_forum_id_gap(i, forum.ID)
 		}
 		
@@ -693,7 +693,13 @@ func init_database() (err error) {
 			forum.LastTopicTime = ""
 		}*/
 		
-		log.Print("Adding the " + forum.Name + " forum")
+		if forum.Name == "" {
+			if debug {
+				log.Print("Adding a placeholder forum")
+			}
+		} else {
+			log.Print("Adding the " + forum.Name + " forum")
+		}
 		forums = append(forums,forum)
 	}
 	err = rows.Err()
@@ -712,12 +718,13 @@ func init_database() (err error) {
 	}
 	defer rows.Close()
 	
+	if debug {
+		log.Print("Adding the forum permissions")
+	}
 	// Temporarily store the forum perms in a map before transferring it to a much faster slice
-	log.Print("Adding the forum permissions")
 	forum_perms = make(map[int]map[int]ForumPerms)
 	for rows.Next() {
-		var gid int
-		var fid int
+		var gid, fid int
 		var perms []byte
 		var pperms ForumPerms
 		err := rows.Scan(&gid, &fid, &perms)
@@ -737,7 +744,9 @@ func init_database() (err error) {
 		forum_perms[gid][fid] = pperms
 	}
 	for gid, _ := range groups {
-		log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid) + " - " + groups[gid].Name)
+		if debug {
+			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid) + " - " + groups[gid].Name)
+		}
 		//groups[gid].Forums = append(groups[gid].Forums,BlankForumPerms) // GID 0. I sometimes wish MySQL's AUTO_INCREMENT would start at zero
 		for fid, _ := range forums {
 			forum_perm, ok := forum_perms[gid][fid]

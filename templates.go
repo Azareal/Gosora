@@ -1,4 +1,5 @@
 package main
+
 import "log"
 import "fmt"
 import "bytes"
@@ -90,7 +91,7 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	}
 	
 	content := string(res)
-	if !debug {
+	if minify_templates {
 		content = minify(content)
 	}
 	
@@ -100,7 +101,7 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	if err != nil {
 		log.Fatal(err)
 	}
-	if debug {
+	if super_debug {
 		fmt.Println(name)
 	}
 	
@@ -110,7 +111,7 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	c.tlist[fname] = tree
 	varholder := "tmpl_" + fname + "_vars"
 	
-	if debug {
+	if super_debug {
 		fmt.Println(c.tlist)
 	}
 	c.localVars = make(map[string]map[string]VarItemReflect)
@@ -123,13 +124,13 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 	c.FragmentCursor[fname] = 0
 	
 	subtree := c.tlist[fname]
-	if debug {
+	if super_debug {
 		fmt.Println(subtree.Root)
 	}
 	
 	treeLength := len(subtree.Root.Nodes)
 	for index, node := range subtree.Root.Nodes {
-		if debug {
+		if super_debug {
 			fmt.Println("Node: " + node.String())
 		}
 		
@@ -165,12 +166,14 @@ w.Write([]byte(`," + ",-1)
 	//whitespace_writes := regexp.MustCompile(`(?s)w.Write\(\[\]byte\(`+spstr+`\)\)`)
 	//fout = whitespace_writes.ReplaceAllString(fout,"")
 	
-	for index, count := range c.stats {
-		fmt.Println(index + ": " + strconv.Itoa(count))
-	}
-	fmt.Println(" ")
-	
 	if debug {
+		for index, count := range c.stats {
+			fmt.Println(index + ": " + strconv.Itoa(count))
+		}
+		fmt.Println(" ")
+	}
+	
+	if super_debug {
 		fmt.Println("Output!")
 		fmt.Println(fout)
 	}
@@ -180,7 +183,7 @@ w.Write([]byte(`," + ",-1)
 func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Value, template_name string, node interface{}) (out string) {
 	switch node := node.(type) {
 		case *parse.ActionNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Action Node")
 			}
 			
@@ -192,14 +195,14 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 			}
 			return out
 		case *parse.IfNode:
-			if debug {
+			if super_debug {
 				fmt.Println("If Node: ")
 				fmt.Println(node.Pipe)
 			}
 			
 			var expr string
 			for _, cmd := range node.Pipe.Cmds {
-				if debug {
+				if super_debug {
 					fmt.Println("If Node Bit: ")
 					fmt.Println(cmd)
 					fmt.Println(reflect.ValueOf(cmd).Type().Name())
@@ -211,18 +214,18 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 			c.currentNode = parse.NodeList
 			c.nextNode = -1
 			if node.ElseList == nil {
-				if debug {
+				if super_debug {
 					fmt.Println("Branch 1")
 				}
 				return "if " + expr + " {\n" + c.compile_switch(varholder, holdreflect, template_name, node.List) + "}\n"
 			} else {
-				if debug {
+				if super_debug {
 					fmt.Println("Branch 2")
 				}
 				return "if " + expr + " {\n" + c.compile_switch(varholder, holdreflect, template_name, node.List) + "} else {\n" + c.compile_switch(varholder, holdreflect, template_name, node.ElseList) + "}\n"
 			}
 		case *parse.ListNode:
-			if debug {
+			if super_debug {
 				fmt.Println("List Node")
 			}
 			for _, subnode := range node.Nodes {
@@ -230,21 +233,21 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 			}
 			return out
 		case *parse.RangeNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Range Node!")
 				fmt.Println(node.Pipe)
 			}
 			
 			var outVal reflect.Value
 			for _, cmd := range node.Pipe.Cmds {
-				if debug {
+				if super_debug {
 					fmt.Println("Range Bit: ")
 					fmt.Println(cmd)
 				}
 				out, outVal = c.compile_reflectswitch(varholder, holdreflect, template_name, cmd)
 			}
 			
-			if debug {
+			if super_debug {
 				fmt.Println("Returned: ")
 				fmt.Println(out)
 				fmt.Println("Range Kind Switch!")
@@ -277,7 +280,7 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 			}
 			return out
 		case *parse.TemplateNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Template Node")
 			}
 			return c.compile_subtemplate(varholder, holdreflect, node)
@@ -309,7 +312,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 		case *parse.FieldNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Field Node: ")
 				fmt.Println(n.Ident)
 			}
@@ -324,7 +327,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 			}
 			
 			for _, id := range n.Ident {
-				if debug {
+				if super_debug {
 					fmt.Println("Data Kind: ")
 					fmt.Println(cur.Kind().String())
 					fmt.Println("Field Bit: ")
@@ -346,7 +349,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 				} else {
 					varbit += "." + id
 				}
-				if debug {
+				if super_debug {
 					fmt.Println("End Cycle")
 				}
 			}
@@ -359,7 +362,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 			}
 			return out
 		case *parse.DotNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Dot Node")
 				fmt.Println(node.String())
 			}
@@ -367,7 +370,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 		case *parse.NilNode:
 			panic("Nil is not a command x.x")
 		case *parse.VariableNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Variable Node")
 				fmt.Println(n.String())
 				fmt.Println(n.Ident)
@@ -377,7 +380,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 		case *parse.StringNode:
 			return n.Quoted
 		case *parse.IdentifierNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Identifier Node: ")
 				fmt.Println(node)
 				fmt.Println(node.Args)
@@ -397,7 +400,7 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 		case *parse.FieldNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Field Node: ")
 				fmt.Println(n.Ident)
 				
@@ -410,14 +413,14 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 			/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
 			return c.compile_boolsub(n.String(), varholder, template_name, holdreflect)
 		case *parse.ChainNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Chain Node: ")
 				fmt.Println(n.Node)
 				fmt.Println(node.Args)
 			}
 			break
 		case *parse.IdentifierNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Identifier Node: ")
 				fmt.Println(node)
 				fmt.Println(node.Args)
@@ -426,7 +429,7 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 		case *parse.DotNode:
 			return varholder
 		case *parse.VariableNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Variable Node")
 				fmt.Println(n.String())
 				fmt.Println(n.Ident)
@@ -436,7 +439,7 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 		case *parse.NilNode:
 			panic("Nil is not a command x.x")
 		case *parse.PipeNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Pipe Node!")
 				fmt.Println(n)
 				fmt.Println("Args: ")
@@ -444,7 +447,7 @@ func (c *CTemplateSet) compile_varswitch(varholder string, holdreflect reflect.V
 			}
 			out += c.compile_identswitch_n(varholder, holdreflect, template_name, node)
 			
-			if debug {
+			if super_debug {
 				fmt.Println("Out: ")
 				fmt.Println(out)
 			}
@@ -467,7 +470,7 @@ func (c *CTemplateSet) compile_identswitch_n(varholder string, holdreflect refle
 func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect.Value, template_name string, node *parse.CommandNode) (out string, val reflect.Value) {
 	ArgLoop:
 	for pos, id := range node.Args {
-		if debug {
+		if super_debug {
 			fmt.Println(id)
 		}
 		
@@ -480,42 +483,42 @@ func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect
 				out += " && "
 			case "le":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " <= " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
-				if debug {
+				if super_debug {
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
 				}
 				break ArgLoop
 			case "lt":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " < " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
-				if debug {
+				if super_debug {
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
 				}
 				break ArgLoop
 			case "gt":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " > " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
-				if debug {
+				if super_debug {
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
 				}
 				break ArgLoop
 			case "ge":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " >= " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
-				if debug {
+				if super_debug {
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
 				}
 				break ArgLoop
 			case "eq":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " == " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
-				if debug {
+				if super_debug {
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
 				}
 				break ArgLoop
 			case "ne":
 				out += c.compile_if_varsub_n(node.Args[pos + 1].String(), varholder, template_name, holdreflect) + " != " + c.compile_if_varsub_n(node.Args[pos + 2].String(), varholder, template_name, holdreflect)
-				if debug {
+				if super_debug {
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
 				}
@@ -534,7 +537,7 @@ func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect
 				}
 				
 				out += param1 + " + " + param2
-				if debug {
+				if super_debug {
 					fmt.Println("add")
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
@@ -554,7 +557,7 @@ func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect
 				}
 				
 				out += param1 + " - " + param2
-				if debug {
+				if super_debug {
 					fmt.Println("subtract")
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
@@ -574,7 +577,7 @@ func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect
 				}
 				
 				out += param1 + " / " + param2
-				if debug {
+				if super_debug {
 					fmt.Println("divide")
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
@@ -594,14 +597,14 @@ func (c *CTemplateSet) compile_identswitch(varholder string, holdreflect reflect
 				}
 				
 				out += param1 + " * " + param2
-				if debug {
+				if super_debug {
 					fmt.Println("multiply")
 					fmt.Println(node.Args[pos + 1])
 					fmt.Println(node.Args[pos + 2])
 				}
 				break ArgLoop
 			default:
-				if debug {
+				if super_debug {
 					fmt.Println("Variable!")
 				}
 				out += c.compile_if_varsub_n(id.String(), varholder, template_name, holdreflect)
@@ -614,7 +617,7 @@ func (c *CTemplateSet) compile_reflectswitch(varholder string, holdreflect refle
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 		case *parse.FieldNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Field Node: ")
 				fmt.Println(n.Ident)
 				
@@ -626,7 +629,7 @@ func (c *CTemplateSet) compile_reflectswitch(varholder string, holdreflect refle
 			/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
 			return c.compile_if_varsub(n.String(), varholder, template_name, holdreflect)
 		case *parse.ChainNode:
-			if debug {
+			if super_debug {
 				fmt.Println("Chain Node: ")
 				fmt.Println(n.Node)
 				fmt.Println(node.Args)
@@ -676,7 +679,7 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 	}
 	bits[0] = strings.TrimPrefix(bits[0],"$")
 	
-	if debug {
+	if super_debug {
 		fmt.Println("Cur Kind: ")
 		fmt.Println(cur.Kind())
 		fmt.Println("Cur Type: ")
@@ -684,7 +687,7 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 	}
 	
 	for _, bit := range bits {
-		if debug {
+		if super_debug {
 			fmt.Println("Variable Field!")
 			fmt.Println(bit)
 		}
@@ -701,7 +704,7 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 			out += "." + bit
 		}
 		
-		if debug {
+		if super_debug {
 			fmt.Println("Data Kind: ")
 			fmt.Println(cur.Kind())
 			fmt.Println("Data Type: ")
@@ -709,7 +712,7 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 		}
 	}
 	
-	if debug {
+	if super_debug {
 		fmt.Println("Out Value: ")
 		fmt.Println(out)
 		fmt.Println("Out Kind: ")
@@ -724,7 +727,7 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 		}
 	}
 	
-	if debug {
+	if super_debug {
 		fmt.Println("Out Value: ")
 		fmt.Println(out)
 		fmt.Println("Out Kind: ")
@@ -802,7 +805,7 @@ func (c *CTemplateSet) compile_varsub(varname string, val reflect.Value) string 
 }
 
 func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect reflect.Value, node *parse.TemplateNode) (out string) {
-	if debug {
+	if super_debug {
 		fmt.Println("Template Node: " + node.Name)
 	}
 	
@@ -832,7 +835,7 @@ func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect refle
 	}
 	
 	content := string(res)
-	if !debug {
+	if minify_templates {
 		content = minify(content)
 	}
 	
@@ -845,7 +848,7 @@ func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect refle
 	
 	c.tlist[fname] = tree
 	subtree := c.tlist[fname]
-	if debug {
+	if super_debug {
 		fmt.Println(subtree.Root)
 	}
 	
@@ -855,7 +858,7 @@ func (c *CTemplateSet) compile_subtemplate(pvarholder string, pholdreflect refle
 	
 	treeLength := len(subtree.Root.Nodes)
 	for index, node := range subtree.Root.Nodes {
-		if debug {
+		if super_debug {
 			fmt.Println("Node: " + node.String())
 		}
 		

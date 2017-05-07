@@ -77,6 +77,25 @@ type CreateTopicPage struct
 	ExtData interface{}
 }
 
+type GridElement struct
+{
+	Body string
+	Order int // For future use
+	Class string
+	Background string
+	TextColour string
+	Note string
+}
+
+type PanelDashboardPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList []string
+	GridItems []GridElement
+	ExtData interface{}
+}
+
 type ThemesPage struct
 {
 	Title string

@@ -6,9 +6,30 @@ import "os"
 import "math"
 import "strings"
 import "unicode"
+import "strconv"
 import "encoding/base64"
 import "crypto/rand"
 import "net/smtp"
+
+type Version struct
+{
+	Major int
+	Minor int
+	Patch int
+	Tag string
+	TagID int
+}
+
+func (version *Version) String() (out string) {
+	out = strconv.Itoa(version.Major) + "." + strconv.Itoa(version.Minor) + "." + strconv.Itoa(version.Patch)
+	if version.Tag != "" {
+		out += "-" + version.Tag
+		if version.TagID != 0 {
+			out += strconv.Itoa(version.TagID)
+		}
+	}
+	return
+}
 
 // Generate a cryptographically secure set of random bytes..
 func GenerateSafeString(length int) (string, error) {
@@ -64,6 +85,32 @@ func relative_time(in string) (string, error) {
 		default:
 			return fmt.Sprintf("%d hours ago", int(seconds / 60 / 60)), err
 	}
+}
+
+func convert_byte_unit(bytes float64) (float64,string) {
+	switch
+	{
+		case bytes >= float64(terabyte): return bytes / float64(terabyte), "TB"
+		case bytes >= float64(gigabyte): return bytes / float64(gigabyte), "GB"
+		case bytes >= float64(megabyte): return bytes / float64(megabyte), "MB"
+		case bytes >= float64(kilobyte): return bytes / float64(kilobyte), "KB"
+		default: return bytes, " bytes"
+	}
+}
+
+func convert_byte_in_unit(bytes float64,unit string) (count float64) {
+	switch(unit) {
+		case "TB": count = bytes / float64(terabyte)
+		case "GB": count = bytes / float64(gigabyte)
+		case "MB": count = bytes / float64(megabyte)
+		case "KB": count = bytes / float64(kilobyte)
+		default: count = 0.1
+	}
+	
+	if count < 0.1 {
+		count = 0.1
+	}
+	return
 }
 
 func SendEmail(email string, subject string, msg string) (res bool) {

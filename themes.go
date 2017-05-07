@@ -77,7 +77,9 @@ func init_themes() {
 		theme.Active = false // Set this to false, just in case someone explicitly overrode this value in the JSON file
 		
 		if theme.FullImage != "" {
-			log.Print("Adding theme image")
+			if debug {
+				log.Print("Adding theme image")
+			}
 			err = add_static_file("./themes/" + themeName + "/" + theme.FullImage, "./themes/" + themeName)
 			if err != nil {
 				log.Fatal(err)
@@ -98,14 +100,19 @@ func add_theme_static_files(themeName string) {
 		}
 		path = strings.Replace(path,"\\","/",-1)
 		
-		log.Print("Attempting to add static file '" + path + "' for default theme '" + themeName + "'")
+		if debug {
+			log.Print("Attempting to add static file '" + path + "' for default theme '" + themeName + "'")
+		}
+		
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
 		
 		path = strings.TrimPrefix(path,"themes/" + themeName + "/public")
-		log.Print("Added the '" + path + "' static file for default theme " + themeName + ".")
+		if debug {
+			log.Print("Added the '" + path + "' static file for default theme " + themeName + ".")
+		}
 		gzip_data := compress_bytes_gzip(data)
 		
 		static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext("/themes/" + themeName + "/public" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}

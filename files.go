@@ -75,9 +75,10 @@ func add_static_file(path string, prefix string) error {
 		return err
 	}
 	
-	log.Print("Adding the '" + path + "' static file")
 	path = strings.TrimPrefix(path, prefix)
-	log.Print("Added the '" + path + "' static file")
+	if debug {
+		log.Print("Added the '" + path + "' static file")
+	}
 	gzip_data := compress_bytes_gzip(data)
 	
 	static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext(prefix + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}

@@ -178,7 +178,7 @@ li a
 .colblock_left:empty { display: none; }
 .colblock_right:empty { display: none; }
 
-/* The new method of doing columns layouts, colblock is now deprecated */
+/* The new method of doing columns layouts, colblock is now deprecated :( */
 .colstack_left
 {
 	float: left;
@@ -204,6 +204,39 @@ li a
 .colstack_head { margin-bottom: 0px; }
 .colstack_left:empty { display: none; }
 .colstack_right:empty { display: none; }
+
+.colstack_grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	/*grid-gap: 15px;*/
+	grid-gap: 12px;
+	margin-left: 5px;
+}
+.grid_item {
+	border: 1px solid #ccc;
+	word-wrap: break-word;
+	background-color: white;
+	width: 100%;
+	overflow: hidden;
+}
+.grid_stat, .grid_istat {
+	/*padding-top: 15px;*/
+	text-align: center;
+	/*padding-bottom: 15px;
+	font-size: 20px;*/
+	padding-top: 12px;
+	padding-bottom: 12px;
+	font-size: 16px;
+}
+.grid_istat {
+	/*margin-bottom: 10px;*/
+	margin-bottom: 5px;
+}
+
+.stat_green { background-color: lightgreen; border-color: green; }
+.stat_orange { background-color: #ffe4b3; border-color: orange; }
+.stat_red { background-color: #ffb2b2; border-color: red; }
+.stat_disabled { background-color: lightgray; border-color: gray; }
 
 .rowitem
 {

@@ -1,8 +1,9 @@
-/* Copyright Azareal 2016 - 2017 */
+/* Copyright Azareal 2016 - 2018 */
 package main
 
 import (
 	"net/http"
+	"fmt"
 	"log"
 	"mime"
 	"strings"
@@ -14,15 +15,18 @@ import (
 	//"runtime/pprof"
 )
 
+var version Version = Version{Major:0,Minor:1,Patch:0,Tag:"dev"}
+
 const hour int = 60 * 60
 const day int = hour * 24
 const month int = day * 30
 const year int = day * 365
 const kilobyte int = 1024
 const megabyte int = kilobyte * 1024
+const gigabyte int = megabyte * 1024
+const terabyte int = gigabyte * 1024
 const saltLength int = 32
 const sessionLength int = 80
-var nogrouplog bool = false // This is mainly for benchmarks, as we don't want a lot of information getting in the way of the results
 
 var templates = template.New("")
 var no_css_tmpl = template.CSS("")
@@ -106,19 +110,14 @@ func init_templates() {
 	compile_templates()
 	
 	// Filler functions for now...
+	filler_func := func(in interface{}, in2 interface{})interface{} {
+		return 1
+	}
 	fmap := make(map[string]interface{})
-	fmap["add"] = func(in interface{}, in2 interface{})interface{} {
-		return 1
-	}
-	fmap["subtract"] = func(in interface{}, in2 interface{})interface{} {
-		return 1
-	}
-	fmap["multiply"] = func(in interface{}, in2 interface{})interface{} {
-		return 1
-	}
-	fmap["divide"] = func(in interface{}, in2 interface{})interface{} {
-		return 1
-	}
+	fmap["add"] = filler_func
+	fmap["subtract"] = filler_func
+	fmap["multiply"] = filler_func
+	fmap["divide"] = filler_func
 	
 	// The interpreted templates...
 	templates.Funcs(fmap)
@@ -140,7 +139,9 @@ func init_static_files() {
 		}
 		
 		path = strings.TrimPrefix(path,"public/")
-		log.Print("Added the '" + path + "' static file.")
+		if debug {
+			log.Print("Added the '" + path + "' static file.")
+		}
 		gzip_data := compress_bytes_gzip(data)
 		
 		static_files["/static/" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext("/public/" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
@@ -159,6 +160,9 @@ func main(){
 	//	}
 	//	pprof.StartCPUProfile(f)
 	//}
+	
+	log.Print("Running Gosora v" + version.String())
+	fmt.Println("")
 	
 	init_themes()
 	err := init_database()

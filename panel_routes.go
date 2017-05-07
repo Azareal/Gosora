@@ -1,15 +1,23 @@
 package main
 
-import "log"
-import "fmt"
-import "strings"
-import "strconv"
-import "html"
-import "encoding/json"
-import "net/http"
-import "html/template"
-import "database/sql"
+import (
+	"log"
+	"fmt"
+	"errors"
+	"strings"
+	"strconv"
+	"html"
+	"time"
+	"runtime"
+	"encoding/json"
+	"net/http"
+	"html/template"
+	"database/sql"
+)
+
 import _ "github.com/go-sql-driver/mysql"
+import "github.com/shirou/gopsutil/cpu"
+import "github.com/shirou/gopsutil/mem"
 
 func route_panel(w http.ResponseWriter, r *http.Request){
 	user, noticeList, ok := SessionCheck(w,r)
@@ -20,7 +28,137 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	pi := Page{"Control Panel Dashboard",user,noticeList,tList,nil}
+	
+	var cpustr, cpuColour string
+	perc2, err := cpu.Percent(time.Duration(time.Second),true)
+	if err != nil {
+		cpustr = "Unknown"
+	} else {
+		/*cpures, _ := cpu.Times(true)
+		totcpu := cpures[0].Idle + cpures[0].System + cpures[0].User
+		fmt.Println("System",cpures[0].System)
+		fmt.Println("User",cpures[0].User)
+		fmt.Println("Usage",cpures[0].System + cpures[0].User)
+		fmt.Println("Idle",cpures[0].Idle)
+		fmt.Println("Gap",totcpu - (cpures[0].System  + cpures[0].User))
+		perc := ((cpures[0].System +  + cpures[0].User) * 100) / totcpu
+		fmt.Println("Perc",perc)
+		fmt.Println("Perc2",perc2)*/
+		calcperc := int(perc2[0]) / runtime.NumCPU()
+		cpustr = strconv.Itoa(calcperc)
+		if calcperc < 25 {
+			cpuColour = "stat_green"
+		} else if calcperc < 75 {
+			cpuColour = "stat_orange"
+		} else {
+			cpuColour = "stat_red"
+		}
+	}
+	
+	var ramstr, ramColour string
+	memres, err := mem.VirtualMemory()
+	if err != nil {
+		ramstr = "Unknown"
+	} else {
+		total_count, total_unit := convert_byte_unit(float64(memres.Total))
+		used_count := convert_byte_in_unit(float64(memres.Total - memres.Available),total_unit)
+		
+		// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
+		//fmt.Println(used_count)
+		var totstr string
+		if (total_count - float64(int(total_count))) > 0.85 {
+			used_count += 1.0 - (total_count - float64(int(total_count)))
+			totstr = strconv.Itoa(int(total_count) + 1)
+		} else {
+			totstr = fmt.Sprintf("%.1f",total_count)
+		}
+		//fmt.Println(used_count)
+		
+		if used_count > total_count {
+			used_count = total_count
+		}
+		ramstr = fmt.Sprintf("%.1f",used_count) + " / " + totstr + total_unit
+		
+		ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
+		//fmt.Println(ramperc)
+		if ramperc < 50 {
+			ramColour = "stat_green"
+		} else if ramperc < 75 {
+			ramColour = "stat_orange"
+		} else {
+			ramColour = "stat_red"
+		}
+	}
+	
+	var postCount int
+	err = db.QueryRow("select count(*) from replies where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&postCount)
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r)
+		return
+	}
+	var postInterval string = "day"
+	
+	var postColour string
+	if postCount > 10 {
+		postColour = "stat_green"
+	} else if postCount > 0 {
+		postColour = "stat_orange"
+	} else {
+		postColour = "stat_red"
+	}
+	
+	var topicCount int
+	err = db.QueryRow("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&topicCount)
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r)
+		return
+	}
+	var topicInterval string = "day"
+	
+	var topicColour string
+	if topicCount > 10 {
+		topicColour = "stat_green"
+	} else if topicCount > 0 {
+		topicColour = "stat_orange"
+	} else {
+		topicColour = "stat_red"
+	}
+	
+	var reportCount int
+	err = db.QueryRow("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now() and parentID = 1").Scan(&reportCount)
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r)
+		return
+	}
+	var reportInterval string = "week"
+	
+	var newUserCount int
+	err = db.QueryRow("select count(*) from users where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&newUserCount)
+	if err != nil && err != sql.ErrNoRows {
+		InternalError(err,w,r)
+		return
+	}
+	var newUserInterval string = "week"
+	
+	var gridElements []GridElement = []GridElement{
+		GridElement{"v" + version.String(),0,"grid_istat stat_green","","","Gosora is up-to-date :)"},
+		GridElement{"CPU: " + cpustr + "%",1,"grid_istat " + cpuColour,"","","The global CPU usage of this server"},
+		GridElement{"RAM: " + ramstr,2,"grid_istat " + ramColour,"","","The global RAM usage of this server"},
+		
+		GridElement{strconv.Itoa(postCount) + " posts / " + postInterval,3,"grid_stat " + postColour,"","","The number of new posts over the last 24 hours"},
+		GridElement{strconv.Itoa(topicCount) + " topics / " + topicInterval,4,"grid_stat " + topicColour,"","","The number of new topics over the last 24 hours"},
+		GridElement{"20 online / day",5,"grid_stat stat_disabled","","","Coming Soon!"/*"The people online over the last 24 hours"*/},
+		
+		GridElement{"8 searches / week",6,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of searches over the last 7 days"*/},
+		GridElement{strconv.Itoa(newUserCount) + " new users / " + newUserInterval,7,"grid_stat","","","The number of new users over the last 7 days"},
+		GridElement{strconv.Itoa(reportCount) + " reports / " + reportInterval,8,"grid_stat","","","The number of reports over the last 7 days"},
+		
+		GridElement{"2 minutes / user / week",9,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of number of minutes spent by each active user over the last 7 days"*/},
+		GridElement{"2 visitors / week",10,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of unique visitors we've had over the last 7 days"*/},
+		GridElement{"5 posts / user / week",11,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of posts made by each active user over the past week"*/},
+	}
+	
+	pi := PanelDashboardPage{"Control Panel Dashboard",user,noticeList,gridElements,nil}
 	templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
 }
 
@@ -1261,7 +1399,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 	
 	dTheme, ok := themes[defaultTheme]
 	if !ok {
-		log.Fatal("The default theme is missing")
+		InternalError(errors.New("The default theme is missing"),w,r)
 		return
 	}
 	dTheme.Active = false

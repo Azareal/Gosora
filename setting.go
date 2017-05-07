@@ -27,11 +27,7 @@ func init() {
 func parseSetting(sname string, scontent string, stype string, constraint string) string {
 	var err error
 	if stype == "bool" {
-		if scontent == "1" {
-			settings[sname] = true
-		} else {
-			settings[sname] = false
-		}
+		settings[sname] = (scontent == "1")
 	} else if stype == "int" {
 		settings[sname], err = strconv.Atoi(scontent)
 		if err != nil {
