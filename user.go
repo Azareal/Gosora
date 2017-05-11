@@ -1,4 +1,5 @@
 package main
+
 //import "fmt"
 import "sync"
 import "strings"
@@ -34,6 +35,7 @@ type User struct
 	Level int
 	Score int
 	Last_IP string
+	//WS_Conn interface{}
 }
 
 type Email struct
@@ -53,6 +55,8 @@ type UserStore interface {
 	Set(item *User) error
 	Add(item *User) error
 	AddUnsafe(item *User) error
+	//SetConn(conn interface{}) error
+	//GetConn() interface{}
 	Remove(id int) error
 	RemoveUnsafe(id int) error
 	GetLength() int
@@ -109,7 +113,7 @@ func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
 	if err == nil {
-		sts.Add(user)
+		sts.Set(user)
 	}
 	return user, err
 }
@@ -137,17 +141,18 @@ func (sts *StaticUserStore) Load(id int) error {
 
 func (sts *StaticUserStore) Set(item *User) error {
 	sts.Lock()
-	_, ok := sts.items[item.ID]
+	user, ok := sts.items[item.ID]
 	if ok {
-		sts.items[item.ID] = item
+		sts.Unlock()
+		*user = *item
 	} else if sts.length >= sts.capacity {
 		sts.Unlock()
 		return ErrStoreCapacityOverflow
 	} else {
 		sts.items[item.ID] = item
+		sts.Unlock()
 		sts.length++
 	}
-	sts.Unlock()
 	return nil
 }
 
@@ -170,6 +175,17 @@ func (sts *StaticUserStore) AddUnsafe(item *User) error {
 	sts.length++
 	return nil
 }
+
+/*func (sts *StaticUserStore) SetConn(id int, conn interface{}) *User, error {
+	sts.Lock()
+	user, err := sts.CascadeGet(id)
+	sts.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	user.WS_Conn = conn
+	return user, nil
+}*/
 
 func (sts *StaticUserStore) Remove(id int) error {
 	sts.Lock()

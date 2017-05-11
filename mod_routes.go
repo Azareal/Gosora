@@ -1,13 +1,15 @@
 package main
 
-import "log"
-import "fmt"
-import "strconv"
-import "net"
-import "net/http"
-import "html"
-import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
+import (
+	"log"
+//	"fmt"
+	"strconv"
+	"net"
+	"net/http"
+	"html"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
+)
 
 func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -20,8 +22,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 	
-	var tid int
-	var fid int
+	var tid, fid int
 	tid, err = strconv.Atoi(r.URL.Path[len("/topic/edit/submit/"):])
 	if err != nil {
 		PreErrorJSQ("The provided TopicID is not a valid number.",w,r,is_js)
@@ -104,7 +105,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,`{"success":"1"}`)
+		w.Write(success_json_bytes)
 	}
 }
 
@@ -116,8 +117,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	var content string
-	var createdBy int
-	var fid int
+	var createdBy, fid int
 	err = db.QueryRow("select content, createdBy, parentID from topics where tid = ?", tid).Scan(&content, &createdBy, &fid)
 	if err == sql.ErrNoRows {
 		PreError("The topic you tried to delete doesn't exist.",w,r)
@@ -344,7 +344,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		http.Redirect(w,r, "/topic/" + strconv.Itoa(tid) + "#reply-" + strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,`{"success":"1"}`)
+		w.Write(success_json_bytes)
 	}
 }
 
@@ -365,9 +365,8 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	var tid int
+	var tid, createdBy int
 	var content string
-	var createdBy int
 	err = db.QueryRow("select tid, content, createdBy from replies where rid = ?", rid).Scan(&tid, &content, &createdBy)
 	if err == sql.ErrNoRows {
 		PreErrorJSQ("The reply you tried to delete doesn't exist.",w,r,is_js)
@@ -405,7 +404,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		//http.Redirect(w,r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,`{"success":"1"}`)
+		w.Write(success_json_bytes)
 	}
 	
 	wcount := word_count(content)
@@ -482,7 +481,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		http.Redirect(w,r,"/user/" + strconv.Itoa(uid) + "#reply-" + strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,`{"success":"1"}`)
+		w.Write(success_json_bytes)
 	}
 }
 
@@ -533,7 +532,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	if is_js == "0" {
 		//http.Redirect(w,r, "/user/" + strconv.Itoa(uid), http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,`{"success":"1"}`)
+		w.Write(success_json_bytes)
 	}
 }
 

@@ -1,0 +1,4 @@
+echo "Building Gosora"
+go build -o Gosora -tags no_ws
+echo "Building the installer"
+go build ./install

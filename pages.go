@@ -79,6 +79,7 @@ type CreateTopicPage struct
 
 type GridElement struct
 {
+	ID string
 	Body string
 	Order int // For future use
 	Class string

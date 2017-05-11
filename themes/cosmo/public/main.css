@@ -940,9 +940,7 @@ blockquote p
 	.forumLastposter img { display: none; }
 	.getTopics { display: none; }
 	
-	.userinfo {
-		width: 70px;
-	}
+	.userinfo { width: 70px; }
 	.userinfo .avatar_item {
 		background-size: 64px;
 		width: 64px;
@@ -954,6 +952,9 @@ blockquote p
 	}
 	.user_content { min-height: 97.5px !important; }
 	.user_content.nobuttons { min-height: 121px !important; }
+	
+	.colstack_grid { grid-template-columns: none; grid-gap: 8px; }
+	.grid_istat { margin-bottom: 0px; }
 }
 @media (min-width: 800px)
 {
@@ -1113,11 +1114,7 @@ blockquote p
 	}
 	
 	#main { width: 1690px; }
-	.index_category
-	{
-		float: left;
-		width: 835px;
-	}
+	.index_category { float: left; width: 835px; }
 	.index_category:nth-child(even) { margin-left: 10px; }
 	.index_category:nth-child(odd) { overflow: hidden; }
 	.index_category:only-child { width: 100%; }

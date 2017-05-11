@@ -899,9 +899,7 @@ blockquote p
 	.notice:first-child { display: inline-block; }
 	.getTopics { display: none; }
 	
-	.userinfo {
-		width: 70px;
-	}
+	.userinfo { width: 70px; }
 	.userinfo .avatar_item {
 		background-size: 64px;
 		width: 64px;
@@ -913,6 +911,9 @@ blockquote p
 	}
 	.user_content { min-height: 80px !important; }
 	.user_content.nobuttons { min-height: 103px !important; }
+	
+	.colstack_grid { grid-template-columns: none; grid-gap: 8px; }
+	.grid_istat { margin-bottom: 0px; }
 }
 @media (min-width: 800px)
 {

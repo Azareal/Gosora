@@ -1,0 +1,6 @@
+echo "Generating the dynamic code"
+go generate
+echo "Building Gosora"
+go build -o Gosora -tags no_ws
+echo "Running Gosora"
+./Gosora

@@ -3,7 +3,7 @@
 <div class="colstack_right">
 	<div class="colstack_grid">
 {{range .GridItems}}
-		<div class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color: {{.TextColour}};{{end}}
+		<div id="{{.ID}}" class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color: {{.TextColour}};{{end}}
 		{{if .Background}}background-color: {{.Background}};{{end}}">{{.Body}}</div>
 {{end}}
 	</div>

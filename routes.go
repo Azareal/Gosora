@@ -1,20 +1,22 @@
 /* Copyright Azareal 2016 - 2017 */
 package main
 
-import "log"
-//import "fmt"
-import "strconv"
-import "bytes"
-import "regexp"
-import "strings"
-import "time"
-import "io"
-import "os"
-import "net"
-import "net/http"
-import "html"
-import "html/template"
-import "database/sql"
+import (
+	"log"
+//	"fmt"
+	"strconv"
+	"bytes"
+	"regexp"
+	"strings"
+	"time"
+	"io"
+	"os"
+	"net"
+	"net/http"
+	"html"
+	"html/template"
+	"database/sql"
+)
 
 import _ "github.com/go-sql-driver/mysql"
 import "golang.org/x/crypto/bcrypt"
@@ -22,6 +24,7 @@ import "golang.org/x/crypto/bcrypt"
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
 var nList []string
+var success_json_bytes []byte = []byte(`{"success":"1"}`)
 
 // GET functions
 func route_static(w http.ResponseWriter, r *http.Request){

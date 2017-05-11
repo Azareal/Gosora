@@ -28,12 +28,14 @@ A plugin system. More on this to come.
 
 A responsive design. Looks great on mobile phones, tablets, laptops, desktops and more!
 
+Other modern features like alerts, advanced dashboard, etc.
+
 
 # Dependencies
 
-Go 1.7. You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
+Go 1.8 - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
-MySQL Database. You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL. You could use something like WNMP / XAMPP which have a little PHP script called PhpMyAdmin for managing MySQL databases or you could install MariaDB directly.
+MySQL Database - You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL. You could use something like WNMP / XAMPP which have a little PHP script called PhpMyAdmin for managing MySQL databases or you could install MariaDB directly.
 
 Download the .msi installer from [MariaDB](https://mariadb.com/downloads) and run that. You may want to set it up as a service to avoid running it every-time the computer starts up.
 
@@ -121,6 +123,8 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 * github.com/shirou/gopsutil For pulling information on CPU and memory usage.
 
   * github.com/StackExchange/wmi Dependency for gopsutil on Windows.
+
+* github.com/gorilla/websocket Needed for Gosora's Optional WebSockets Module.
 
 # Bundled Plugins
 

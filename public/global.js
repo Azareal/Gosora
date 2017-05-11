@@ -73,6 +73,66 @@ function load_alerts(menu_alerts)
 }
 
 $(document).ready(function(){
+	function SplitN(data,ch,n) {
+		var out = []
+		if(data.length == 0) {
+			return out
+		}
+		
+		var lastIndex = 0
+		var j = 0
+		var lastN = 1
+		for(var i = 0; i < data.length; i++) {
+			if(data[i] == ch) {
+				out[j++] = data.substring(lastIndex,i)
+				lastIndex = i
+				if(lastN == n) {
+					break
+				}
+				lastN++
+			}
+		}
+		if(data.length > lastIndex) {
+			out[out.length - 1] += data.substring(lastIndex)
+		}
+		return out
+	}
+	
+	if(window["WebSocket"]) {
+		conn = new WebSocket("ws://" + document.location.host + "/ws/")
+		conn.onopen = function() {
+			conn.send("page " + document.location.pathname + '\r')
+		}
+		conn.onclose = function() {
+			conn = false
+		}
+		conn.onmessage = function(event) {
+			//console.log("WS_Message:")
+			//console.log(event.data)
+			var messages = event.data.split('\r')
+			for(var i = 0; i < messages.length; i++) {
+				//console.log("Message:")
+				//console.log(messages[i])
+				if(messages[i].startsWith("set ")) {
+					//msgblocks = messages[i].split(' ',3)
+					msgblocks = SplitN(messages[i]," ",3)
+					if(msgblocks.length < 3) {
+						continue
+					}
+					document.querySelector(msgblocks[1]).innerHTML = msgblocks[2]
+				} else if(messages[i].startsWith("set-class ")) {
+					msgblocks = SplitN(messages[i]," ",3)
+					if(msgblocks.length < 3) {
+						continue
+					}
+					document.querySelector(msgblocks[1]).className = msgblocks[2]
+				}
+			}
+		}
+	} else {
+		conn = false
+	}
+	
 	$(".open_edit").click(function(event){
 		//console.log("Clicked on edit");
 		event.preventDefault();

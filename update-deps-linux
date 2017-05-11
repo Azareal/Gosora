@@ -4,3 +4,5 @@ echo "Updating bcrypt"
 go get -u golang.org/x/crypto/bcrypt
 echo "Updating gopsutil"
 go get -u github.com/shirou/gopsutil
+echo "Updating Gorilla WebSockets"
+go get -u github.com/gorilla/websocket

@@ -4,6 +4,8 @@ echo "Installing bcrypt"
 go get -u golang.org/x/crypto/bcrypt
 echo "Installing gopsutil"
 go get -u github.com/shirou/gopsutil
+echo "Installing Gorilla WebSockets"
+go get -u github.com/gorilla/websocket
 
 echo "Preparing the installer"
 go generate

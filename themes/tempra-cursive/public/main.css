@@ -515,8 +515,11 @@ button.username
 	.menu_right { padding-right: 5px; }
 	.menu_create_topic { display: none;}
 	.menu_alerts { padding-left: 4px; padding-right: 4px; }
+	
 	.hide_on_mobile { display: none; }
 	.prev_button, .next_button { top: auto; bottom: 5px; }
+	.colstack_grid { grid-template-columns: none; grid-gap: 8px; }
+	.grid_istat { margin-bottom: 0px; }
 }
 
 @media (max-width: 470px) {

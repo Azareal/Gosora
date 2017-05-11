@@ -27,6 +27,7 @@ const gigabyte int = megabyte * 1024
 const terabyte int = gigabyte * 1024
 const saltLength int = 32
 const sessionLength int = 80
+var enable_websockets bool = false // Don't change this, the value is overwritten by an initialiser
 
 var templates = template.New("")
 var no_css_tmpl = template.CSS("")
@@ -273,6 +274,7 @@ func main(){
 	///router.HandleFunc("/api/", route_api)
 	//router.HandleFunc("/exit/", route_exit)
 	///router.HandleFunc("/", default_route)
+	router.HandleFunc("/ws/", route_websockets)
 	defer db.Close()
 	
 	//if profiling {

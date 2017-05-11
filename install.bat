@@ -20,6 +20,11 @@ if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+go get -u github.com/gorilla/websocket
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
 
 echo Preparing the installer
 go generate
@@ -27,7 +32,7 @@ if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
-go build
+go build -o gosora.exe
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

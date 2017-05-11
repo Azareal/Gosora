@@ -34,19 +34,9 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		cpustr = "Unknown"
 	} else {
-		/*cpures, _ := cpu.Times(true)
-		totcpu := cpures[0].Idle + cpures[0].System + cpures[0].User
-		fmt.Println("System",cpures[0].System)
-		fmt.Println("User",cpures[0].User)
-		fmt.Println("Usage",cpures[0].System + cpures[0].User)
-		fmt.Println("Idle",cpures[0].Idle)
-		fmt.Println("Gap",totcpu - (cpures[0].System  + cpures[0].User))
-		perc := ((cpures[0].System +  + cpures[0].User) * 100) / totcpu
-		fmt.Println("Perc",perc)
-		fmt.Println("Perc2",perc2)*/
 		calcperc := int(perc2[0]) / runtime.NumCPU()
 		cpustr = strconv.Itoa(calcperc)
-		if calcperc < 25 {
+		if calcperc < 30 {
 			cpuColour = "stat_green"
 		} else if calcperc < 75 {
 			cpuColour = "stat_orange"
@@ -99,9 +89,9 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	var postInterval string = "day"
 	
 	var postColour string
-	if postCount > 10 {
+	if postCount > 25 {
 		postColour = "stat_green"
-	} else if postCount > 0 {
+	} else if postCount > 5 {
 		postColour = "stat_orange"
 	} else {
 		postColour = "stat_red"
@@ -116,7 +106,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	var topicInterval string = "day"
 	
 	var topicColour string
-	if topicCount > 10 {
+	if topicCount > 8 {
 		topicColour = "stat_green"
 	} else if topicCount > 0 {
 		topicColour = "stat_orange"
@@ -141,22 +131,59 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	var newUserInterval string = "week"
 	
 	var gridElements []GridElement = []GridElement{
-		GridElement{"v" + version.String(),0,"grid_istat stat_green","","","Gosora is up-to-date :)"},
-		GridElement{"CPU: " + cpustr + "%",1,"grid_istat " + cpuColour,"","","The global CPU usage of this server"},
-		GridElement{"RAM: " + ramstr,2,"grid_istat " + ramColour,"","","The global RAM usage of this server"},
-		
-		GridElement{strconv.Itoa(postCount) + " posts / " + postInterval,3,"grid_stat " + postColour,"","","The number of new posts over the last 24 hours"},
-		GridElement{strconv.Itoa(topicCount) + " topics / " + topicInterval,4,"grid_stat " + topicColour,"","","The number of new topics over the last 24 hours"},
-		GridElement{"20 online / day",5,"grid_stat stat_disabled","","","Coming Soon!"/*"The people online over the last 24 hours"*/},
-		
-		GridElement{"8 searches / week",6,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of searches over the last 7 days"*/},
-		GridElement{strconv.Itoa(newUserCount) + " new users / " + newUserInterval,7,"grid_stat","","","The number of new users over the last 7 days"},
-		GridElement{strconv.Itoa(reportCount) + " reports / " + reportInterval,8,"grid_stat","","","The number of reports over the last 7 days"},
-		
-		GridElement{"2 minutes / user / week",9,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of number of minutes spent by each active user over the last 7 days"*/},
-		GridElement{"2 visitors / week",10,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of unique visitors we've had over the last 7 days"*/},
-		GridElement{"5 posts / user / week",11,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of posts made by each active user over the past week"*/},
+		GridElement{"dash-version","v" + version.String(),0,"grid_istat stat_green","","","Gosora is up-to-date :)"},
+		GridElement{"dash-cpu","CPU: " + cpustr + "%",1,"grid_istat " + cpuColour,"","","The global CPU usage of this server"},
+		GridElement{"dash-ram","RAM: " + ramstr,2,"grid_istat " + ramColour,"","","The global RAM usage of this server"},
 	}
+	
+	if enable_websockets {
+		uonline := ws_hub.UserCount()
+		gonline := ws_hub.GuestCount()
+		totonline := uonline + gonline
+		
+		var onlineColour string
+		if totonline > 10 {
+			onlineColour = "stat_green"
+		} else if totonline > 3 {
+			onlineColour = "stat_orange"
+		} else {
+			onlineColour = "stat_red"
+		}
+		
+		var onlineGuestsColour string
+		if gonline > 10 {
+			onlineGuestsColour = "stat_green"
+		} else if gonline > 1 {
+			onlineGuestsColour = "stat_orange"
+		} else {
+			onlineGuestsColour = "stat_red"
+		}
+		
+		var onlineUsersColour string
+		if uonline > 5 {
+			onlineUsersColour = "stat_green"
+		} else if uonline > 1 {
+			onlineUsersColour = "stat_orange"
+		} else {
+			onlineUsersColour = "stat_red"
+		}
+		
+		gridElements = append(gridElements, GridElement{"dash-totonline",strconv.Itoa(totonline) + " online",3,"grid_stat " + onlineColour,"","","The number of people who are currently online"})
+		gridElements = append(gridElements, GridElement{"dash-gonline",strconv.Itoa(gonline) + " guests online",4,"grid_stat " + onlineGuestsColour,"","","The number of guests who are currently online"})
+		gridElements = append(gridElements, GridElement{"dash-uonline",strconv.Itoa(uonline) + " users online",5,"grid_stat " + onlineUsersColour,"","","The number of logged-in users who are currently online"})
+	}
+	
+	gridElements = append(gridElements, GridElement{"dash-postsperday",strconv.Itoa(postCount) + " posts / " + postInterval,6,"grid_stat " + postColour,"","","The number of new posts over the last 24 hours"})
+	gridElements = append(gridElements, GridElement{"dash-topicsperday",strconv.Itoa(topicCount) + " topics / " + topicInterval,7,"grid_stat " + topicColour,"","","The number of new topics over the last 24 hours"})
+	gridElements = append(gridElements, GridElement{"dash-totonlineperday","20 online / day",8,"grid_stat stat_disabled","","","Coming Soon!"/*"The people online over the last 24 hours"*/})
+		
+	gridElements = append(gridElements, GridElement{"dash-searches","8 searches / week",9,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of searches over the last 7 days"*/})
+	gridElements = append(gridElements, GridElement{"dash-newusers",strconv.Itoa(newUserCount) + " new users / " + newUserInterval,10,"grid_stat","","","The number of new users over the last 7 days"})
+	gridElements = append(gridElements, GridElement{"dash-reports",strconv.Itoa(reportCount) + " reports / " + reportInterval,11,"grid_stat","","","The number of reports over the last 7 days"})
+		
+	gridElements = append(gridElements, GridElement{"dash-minperuser","2 minutes / user / week",12,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of number of minutes spent by each active user over the last 7 days"*/})
+	gridElements = append(gridElements, GridElement{"dash-visitorsperweek","2 visitors / week",13,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of unique visitors we've had over the last 7 days"*/})
+	gridElements = append(gridElements, GridElement{"dash-postsperuser","5 posts / user / week",14,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of posts made by each active user over the past week"*/})
 	
 	pi := PanelDashboardPage{"Control Panel Dashboard",user,noticeList,gridElements,nil}
 	templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
@@ -388,7 +415,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 	if is_js == "0" {
 		http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 	} else {
-		fmt.Fprintf(w,`{"success":"1"}`)
+		w.Write(success_json_bytes)
 	}
 }
 
