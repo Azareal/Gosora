@@ -168,9 +168,13 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 			onlineUsersColour = "stat_red"
 		}
 		
-		gridElements = append(gridElements, GridElement{"dash-totonline",strconv.Itoa(totonline) + " online",3,"grid_stat " + onlineColour,"","","The number of people who are currently online"})
-		gridElements = append(gridElements, GridElement{"dash-gonline",strconv.Itoa(gonline) + " guests online",4,"grid_stat " + onlineGuestsColour,"","","The number of guests who are currently online"})
-		gridElements = append(gridElements, GridElement{"dash-uonline",strconv.Itoa(uonline) + " users online",5,"grid_stat " + onlineUsersColour,"","","The number of logged-in users who are currently online"})
+		totonline, totunit := convert_friendly_unit(totonline)
+		uonline, uunit := convert_friendly_unit(uonline)
+		gonline, gunit := convert_friendly_unit(gonline)
+		
+		gridElements = append(gridElements, GridElement{"dash-totonline",strconv.Itoa(totonline) + totunit + " online",3,"grid_stat " + onlineColour,"","","The number of people who are currently online"})
+		gridElements = append(gridElements, GridElement{"dash-gonline",strconv.Itoa(gonline) + gunit + " guests online",4,"grid_stat " + onlineGuestsColour,"","","The number of guests who are currently online"})
+		gridElements = append(gridElements, GridElement{"dash-uonline",strconv.Itoa(uonline) + uunit + " users online",5,"grid_stat " + onlineUsersColour,"","","The number of logged-in users who are currently online"})
 	}
 	
 	gridElements = append(gridElements, GridElement{"dash-postsperday",strconv.Itoa(postCount) + " posts / " + postInterval,6,"grid_stat " + postColour,"","","The number of new posts over the last 24 hours"})

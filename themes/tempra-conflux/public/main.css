@@ -12,7 +12,7 @@ body
 	background-size: cover;
 }
 
-/* Patch for Edge */
+/* Patch for Edge, until they fix emojis in arial x.x */
 @supports (-ms-ime-align:auto) {
 .user_content { font-family: Segoe UI Emoji, arial; }
 }
@@ -23,27 +23,27 @@ ul
 {
 	padding-left: 0px;
 	padding-right: 0px;
-	height: 28px;
+	height: 36px;
 	list-style-type: none;
 	border: 1px solid #ccc;
 	background-color: white;
+	margin-bottom: 12px;
 }
 li
 {
-	height: 26px;
+	height: 35px;
 	padding-left: 10px;
-	padding-top: 5px;
-	padding-bottom: 5px;
-	font-weight: bold;
-	text-transform: uppercase;
+	padding-top: 8px;
+	padding-bottom: 8px;
 }
 li:hover { background: rgb(250,250,250); }
 li a
 {
 	text-decoration: none;
-	color: #515151;
+	/*color: #515151;*/
+	color: black;
+	font-size: 17px;
 }
-/*li a:hover { color: #7a7a7a; }*/
 .menu_left
 {
 	float: left;
@@ -58,25 +58,24 @@ li a
 }
 
 .menu_alerts {
-	padding-left: 7px;
+	/*padding-left: 7px;*/
+	font-size: 20px;
 	padding-top: 2px;
 	color: rgb(80,80,80);
 }
 .menu_alerts .alert_counter {
-	position:relative;
-	font-size: 9px;
-	top: -24px;
-	background-color: rgb(140,0,0);
+	position: relative;
+	font-size: 8px;
+	top: -25px;
+	background-color: rgb(190,0,0);
 	color: white;
-	padding: 3px;
 	width: 14px;
 	left: 10px;
 	line-height: 8px;
-	border-radius: 20px;
 	padding-top: 2.5px;
 	height: 14px;
-	opacity: 0.8;
 	text-align: center;
+	border: white solid 1px;
 }
 .menu_alerts .alert_counter:empty {
 	display: none;
@@ -100,7 +99,7 @@ li a
 }
 .selectedAlert .alertList {
 	position: absolute;
-	top: 43px;
+	top: 51px;
 	display: block;
 	background: white;
 	font-size: 10px;
@@ -135,6 +134,8 @@ li a
 	height: 30px;
 	width: 100%;
 	color: black;
+	font-size: 10px;
+	font-weight: bold;
 }
 .alertItem .text.smaller {
 	font-size: 9px;
@@ -197,7 +198,7 @@ li a
 	padding: 0px;
 	padding-top: 0px;
 	width: 100%;
-	margin-bottom: 8px;
+	margin-bottom: 12px;
 	overflow: hidden;
 	word-wrap: break-word;
 }
@@ -208,7 +209,6 @@ li a
 .colstack_grid {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	/*grid-gap: 15px;*/
 	grid-gap: 12px;
 	margin-left: 5px;
 }
@@ -220,16 +220,12 @@ li a
 	overflow: hidden;
 }
 .grid_stat, .grid_istat {
-	/*padding-top: 15px;*/
 	text-align: center;
-	/*padding-bottom: 15px;
-	font-size: 20px;*/
 	padding-top: 12px;
 	padding-bottom: 12px;
 	font-size: 16px;
 }
 .grid_istat {
-	/*margin-bottom: 10px;*/
 	margin-bottom: 5px;
 }
 
@@ -302,16 +298,14 @@ li a
 	width: 100%;
 	background-color: white;
 }
+
 /* Clearfix */
 .formrow:before, .formrow:after {
 	content: " ";
 	display: table;
 }
 .formrow:after { clear: both; }
-.formrow:not(:last-child)
-{
-	border-bottom: 1px dotted #ccc;
-}
+.formrow:not(:last-child) { border-bottom: 1px dotted #ccc; }
 
 .formitem
 {
@@ -322,18 +316,10 @@ li a
 	padding-bottom: 8px;
 	font-weight: bold;
 }
-.formitem:first-child
-{
-	font-weight: bold;
-}
-.formitem:not(:last-child)
-{
-	border-right: 1px dotted #ccc;
-}
-.formitem.invisible_border
-{
-	border: none;
-}
+.formitem:first-child { font-weight: bold; }
+.formitem:not(:last-child) { border-right: 1px dotted #ccc; }
+.formitem.invisible_border { border: none; }
+
 /* Mostly for textareas */
 .formitem:only-child { width: 100%; }
 .formitem textarea
@@ -414,10 +400,6 @@ button.username
 	border-width: 1px;
 }
 
-.mention {
-	font-weight: bold;
-}
-
 .tag-mini
 {
 	text-transform: none;
@@ -434,10 +416,8 @@ button.username
 	font-size: 10px;
 }
 
-.show_on_edit
-{
-	display: none;
-}
+.mention { font-weight: bold; }
+.show_on_edit { display: none; }
 
 .alert
 {
@@ -589,37 +569,54 @@ button.username
 
 /* Media Queries from Simple. Probably useless in Conflux */
 @media (max-width: 880px) {
-	li { height: 25px; font-size: 15px; padding-left: 7px; }
-	ul { height: 26px; margin-top: 8px; }
-	.menu_left { padding-right: 7px; }
-	.menu_right { padding-right: 7px; }
+	li {
+		height: 29px;
+		font-size: 15px;
+		padding-left: 9px;
+		padding-top: 6px;
+		padding-bottom: 6px;
+	}
+	ul {
+		height: 30px;
+		margin-top: 8px;
+	}
+	.menu_left { padding-right: 9px; }
+	.menu_right { padding-right: 9px; }
+	.menu_alerts {
+		padding-left: 7px;
+		padding-right: 7px;
+		font-size: 18px;
+	}
+	
 	body { padding-left: 4px; padding-right: 4px; margin: 0px !important; width: 100% !important; height: 100% !important; overflow-x: hidden; }
 	.container { width: auto; }
-	.selectedAlert .alertList { top: 33px; right: 4px; }
+	.selectedAlert .alertList { top: 37px; right: 4px; }
 }
 
 @media (max-width: 810px) {
-	li
-	{
-		font-weight: normal;
-		text-transform: none;
-	}
 	.rowitem { text-transform: none; }
 }
 
-@media (max-width: 620px) {
-	li
-	{
+@media (max-width: 680px) {
+	li {
 		padding-left: 5px;
-		padding-top: 2px;
+		padding-top: 3px;
 		padding-bottom: 2px;
-		height: 23px;
+		height: 25px;
 	}
-	ul { height: 24px; }
-	.menu_left { padding-right: 5px; }
-	.menu_right { padding-right: 5px; }
+	li a { font-size: 14px; }
+	ul { height: 26px; }
+	.menu_left { padding-right: 7px; }
+	.menu_right { padding-right: 7px; }
 	.menu_create_topic { display: none; }
-	.menu_alerts { padding-left: 4px; padding-right: 4px; }
+	
+	.menu_alerts {
+		padding-left: 4px;
+		padding-right: 4px;
+		font-size: 16px;
+		padding-top: 1px;
+	}
+	.selectedAlert .alertList { top: 33px; }
 	
 	.hide_on_mobile { display: none; }
 	.prev_button, .next_button { top: auto;bottom: 5px; }
@@ -628,12 +625,9 @@ button.username
 }
 
 @media (max-width: 470px) {
-	.menu_overview { display: none; }
-	.menu_profile { display: none; }
-	.hide_on_micro { display: none; }
-	.post_container {
-		overflow: visible !important;
-	}
+	.menu_overview, .menu_profile, .hide_on_micro { display: none; }
+	.post_container { overflow: visible !important; }
+	
 	.post_item {
 		background-position: 0px 2px !important;
 		background-size: 64px 64px !important;
@@ -661,9 +655,7 @@ button.username
 		width: 60px;
 		font-size: 15px;
 	}
-	.userinfo {
-		width: 70px;
-	}
+	.userinfo { width: 70px; }
 	.userinfo .avatar_item {
 		background-size: 64px;
 		width: 64px;
@@ -679,4 +671,9 @@ button.username
 	.post_tag { font-size: 12px; }
 	
 	.container { width: 100% !important; }
+}
+
+@media (max-width: 330px) {
+	li { padding-left: 6px; }
+	.menu_left { padding-right: 6px; }
 }

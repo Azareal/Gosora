@@ -18,7 +18,7 @@
 		</div>
 	</form>
 </div>
-<div class="rowblock post_container">
+<div class="rowblock post_container top_post">
 	<div class="rowitem passive editable_parent post_item" style="border-bottom: none;{{if .Topic.Avatar}}background-image:url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;{{.Topic.Css}}{{end}}">
 		<p class="hide_on_edit topic_content user_content" style="margin:0;padding:0;">{{.Topic.Content}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
@@ -31,7 +31,7 @@
 		{{if .Topic.LikeCount}}<a class="username hide_on_micro" style="float: right;color:#505050;border-left:none;padding-left:5px;padding-right:5px;font-size:17px;">{{.Topic.LikeCount}}</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;margin-left:5px;" title="Like Count">😀</a>{{end}}
 		{{if .Topic.Tag}}<a class="username hide_on_micro" style="float:right;color:#505050;font-size:16px;">{{.Topic.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Topic.Level}}</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;" title="Level">👑</a>{{end}}
 	</div>
-</div><br />
+</div>
 <div class="rowblock post_container" style="overflow: hidden;">{{range .ItemList}}{{if .ActionType}}
 	<div class="rowitem passive deletable_block editable_parent post_item" style="padding:14px;text-align:center;background-color:rgb(255,245,245);">
 		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>

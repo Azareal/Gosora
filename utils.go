@@ -1,15 +1,17 @@
 package main
 
-import "fmt"
-import "time"
-import "os"
-import "math"
-import "strings"
-import "unicode"
-import "strconv"
-import "encoding/base64"
-import "crypto/rand"
-import "net/smtp"
+import (
+	"fmt"
+	"time"
+	"os"
+	"math"
+	"strings"
+	"unicode"
+	"strconv"
+	"encoding/base64"
+	"crypto/rand"
+	"net/smtp"
+)
 
 type Version struct
 {
@@ -60,36 +62,23 @@ func relative_time(in string) (string, error) {
 		case months > 11:
 			//return t.Format("Mon Jan 2 2006"), err
 			return t.Format("Jan 2 2006"), err
-		case months > 1:
-			return fmt.Sprintf("%d months ago", months), err
-		case months == 1:
-			return "a month ago", err
-		case weeks > 1:
-			return fmt.Sprintf("%d weeks ago", weeks), err
-		case int(hours / 24) == 7:
-			return "a week ago", err
-		case int(hours / 24) == 1:
-			return "1 day ago", err
-		case int(hours / 24) > 1:
-			return fmt.Sprintf("%d days ago", int(hours / 24)), err
-		case seconds <= 1:
-			return "a moment ago", err
-		case seconds < 60:
-			return fmt.Sprintf("%d seconds ago", int(seconds)), err
-		case seconds < 120:
-			return "a minute ago", err
-		case seconds < 3600:
-			return fmt.Sprintf("%d minutes ago", int(seconds / 60)), err
-		case seconds < 7200:
-			return "an hour ago", err
-		default:
-			return fmt.Sprintf("%d hours ago", int(seconds / 60 / 60)), err
+		case months > 1: return fmt.Sprintf("%d months ago", months), err
+		case months == 1: return "a month ago", err
+		case weeks > 1: return fmt.Sprintf("%d weeks ago", weeks), err
+		case int(hours / 24) == 7: return "a week ago", err
+		case int(hours / 24) == 1: return "1 day ago", err
+		case int(hours / 24) > 1: return fmt.Sprintf("%d days ago", int(hours / 24)), err
+		case seconds <= 1: return "a moment ago", err
+		case seconds < 60: return fmt.Sprintf("%d seconds ago", int(seconds)), err
+		case seconds < 120: return "a minute ago", err
+		case seconds < 3600: return fmt.Sprintf("%d minutes ago", int(seconds / 60)), err
+		case seconds < 7200: return "an hour ago", err
+		default: return fmt.Sprintf("%d hours ago", int(seconds / 60 / 60)), err
 	}
 }
 
 func convert_byte_unit(bytes float64) (float64,string) {
-	switch
-	{
+	switch {
 		case bytes >= float64(terabyte): return bytes / float64(terabyte), "TB"
 		case bytes >= float64(gigabyte): return bytes / float64(gigabyte), "GB"
 		case bytes >= float64(megabyte): return bytes / float64(megabyte), "MB"
@@ -111,6 +100,26 @@ func convert_byte_in_unit(bytes float64,unit string) (count float64) {
 		count = 0.1
 	}
 	return
+}
+
+func convert_unit(num int) (int,string) {
+	switch {
+		case num >= 1000000000000: return 0, "∞"
+		case num >= 1000000000: return num / 1000000000, "B"
+		case num >= 1000000: return num / 1000000, "M"
+		case num >= 1000: return num / 1000, "K"
+		default: return num, ""
+	}
+}
+
+func convert_friendly_unit(num int) (int,string) {
+	switch {
+		case num >= 1000000000000: return 0, " zillion"
+		case num >= 1000000000: return num / 1000000000, " billion"
+		case num >= 1000000: return num / 1000000, " million"
+		case num >= 1000: return num / 1000, " thousand"
+		default: return num, ""
+	}
 }
 
 func SendEmail(email string, subject string, msg string) (res bool) {

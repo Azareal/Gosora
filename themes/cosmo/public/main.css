@@ -1,5 +1,5 @@
 /* AtomBB Cosmo Port. Copyright Azareal 2017 */
-/* I'm currently converting the CSS over. Don't use this yet! */
+/* I'm currently converting the CSS over from one of my previous projects. Don't use this yet! */
 
 * {
 	box-sizing: border-box;
@@ -269,8 +269,7 @@ hr { color: silver; border: 1px solid silver; }
 {
 	padding: 0px;
 	padding-top: 0px;
-	width: 100%;
-	margin-bottom: 8px;
+	margin-bottom: 16px;
 	overflow: hidden;
 	word-wrap: break-word;
 }

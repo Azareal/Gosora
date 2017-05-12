@@ -10,7 +10,7 @@ body
 	padding-bottom: 8px;
 }
 
-/* Patch for Edge */
+/* Patch for Edge, until they fix emojis in arial x.x */
 @supports (-ms-ime-align:auto) {
 .user_content { font-family: Segoe UI Emoji, arial; }
 }
@@ -19,34 +19,34 @@ ul
 {
 	padding-left: 0px;
 	padding-right: 0px;
-	height: 28px;
+	height: 36px;
 	list-style-type: none;
 	border: 1px solid #ccc;
 	background-color: white;
+	margin-bottom: 12px;
 }
 li
 {
-	height: 26px;
+	height: 35px;
 	padding-left: 10px;
-	padding-top: 5px;
-	padding-bottom: 5px;
-	font-weight: bold;
-	text-transform: uppercase;
+	padding-top: 8px;
+	padding-bottom: 8px;
 }
 li:hover { background: rgb(250,250,250); }
 li a
 {
 	text-decoration: none;
-	color: #515151;
+	/*color: #515151;*/
+	color: black;
+	font-size: 17px;
 }
-/*li a:hover { color: #7a7a7a; }*/
 .menu_left
 {
 	float: left;
 	border-right: 1px solid #ccc;
 	padding-right: 10px;
 	font-family: cursive;
-	padding-top: 2px;
+	padding-top: 4px;
 }
 .menu_right
 {
@@ -56,25 +56,26 @@ li a
 }
 
 .menu_alerts {
-	padding-left: 7px;
+	/*padding-left: 7px;*/
+	font-size: 20px;
 	padding-top: 2px;
 	color: rgb(80,80,80);
 }
 .menu_alerts .alert_counter {
-	position:relative;
-	font-size: 9px;
-	top: -24px;
-	background-color: rgb(140,0,0);
+	position: relative;
+	font-family: arial;
+	font-size: 8px;
+	top: -25px;
+	background-color: rgb(190,0,0);
 	color: white;
-	padding: 3px;
 	width: 14px;
 	left: 10px;
 	line-height: 8px;
-	border-radius: 20px;
 	padding-top: 2.5px;
 	height: 14px;
-	opacity: 0.8;
 	text-align: center;
+	
+	border: white solid 1px;
 }
 .menu_alerts .alert_counter:empty {
 	display: none;
@@ -94,7 +95,7 @@ li a
 }
 .selectedAlert .alertList {
 	position: absolute;
-	top: 43px;
+	top: 51px;
 	display: block;
 	background: white;
 	font-size: 10px;
@@ -127,6 +128,10 @@ li a
 	float: right;
 	width: calc(100% - 20px);
 	height: 30px;
+}
+.alertItem .text {
+	font-size: 10px;
+	font-weight: bold;
 }
 
 .container
@@ -186,7 +191,7 @@ li a
 	padding: 0px;
 	padding-top: 0px;
 	width: 100%;
-	margin-bottom: 8px;
+	margin-bottom: 12px;
 	overflow: hidden;
 	word-wrap: break-word;
 }
@@ -233,7 +238,7 @@ li a
 	width: 100%;
 	padding-left: 8px;
 	padding-right: 8px;
-	padding-top: 17px;
+	padding-top: 12px;
 	padding-bottom: 12px;
 	font-weight: bold;
 	text-transform: uppercase;
@@ -254,6 +259,7 @@ li a
 	color: black;
 }
 .rowitem a:hover { color: silver; }
+.top_post { margin-bottom: 16px; }
 .opthead { display: none; }
 
 .col_left
@@ -484,17 +490,31 @@ button.username
 .next_button { right: 14px; }
 
 @media (max-width: 880px) {
-	li { height: 25px; font-size: 15px; padding-left: 7px; }
-	ul { height: 26px; margin-top: 8px; }
-	.menu_left { padding-right: 7px; }
-	.menu_right { padding-right: 7px; }
+	li {
+		height: 29px;
+		font-size: 15px;
+		padding-left: 9px;
+		padding-top: 2px;
+		padding-bottom: 6px;
+	}
+	ul {
+		height: 30px;
+		margin-top: 8px;
+	}
+	.menu_left { padding-right: 9px; padding-top: 2px; }
+	.menu_right { padding-right: 9px; }
+	.menu_alerts {
+		padding-left: 7px;
+		padding-right: 7px;
+		font-size: 18px;
+	}
+	
 	body { padding-left: 4px; padding-right: 4px; margin: 0px !important; width: 100% !important; height: 100% !important; overflow-x: hidden; }
 	.container { width: auto; }
-	.selectedAlert .alertList { top: 33px; right: 4px; }
+	.selectedAlert .alertList { top: 37px; right: 4px; }
 }
 
 @media (max-width: 810px) {
-	li { font-weight: normal; text-transform: none; }
 	.rowitem { text-transform: none; }
 	/*.rowhead { font-family: arial; }
 	.menu_left { font-family: arial; }*/
@@ -502,19 +522,30 @@ button.username
 	.level { font-size: 17px; }
 }
 
-@media (max-width: 620px) {
-	li
-	{
+@media (max-width: 700px) {
+	li {
 		padding-left: 5px;
-		padding-top: 2px;
+		padding-top: 3px;
 		padding-bottom: 2px;
-		height: 23px;
+		height: 25px;
 	}
-	ul { height: 24px; }
-	.menu_left { padding-right: 5px; }
+	li a { font-size: 14px; }
+	ul { height: 26px; }
+	.menu_left { padding-right: 5px; padding-top: 1px; }
 	.menu_right { padding-right: 5px; }
 	.menu_create_topic { display: none;}
-	.menu_alerts { padding-left: 4px; padding-right: 4px; }
+	
+	.menu_alerts {
+		padding-left: 4px;
+		padding-right: 4px;
+		font-size: 16px;
+		padding-top: 1px;
+	}
+	.menu_alerts .alert_counter {
+		top: -23px;
+		left: 8px;
+	}
+	.selectedAlert .alertList { top: 33px; }
 	
 	.hide_on_mobile { display: none; }
 	.prev_button, .next_button { top: auto; bottom: 5px; }
@@ -561,4 +592,10 @@ button.username
 		text-align: center;
 	}
 	.container { width: 100% !important; }
+}
+
+@media (max-width: 330px) {
+	li { padding-left: 6px; }
+	.menu_left { padding-right: 6px; }
+	.menu_alerts { border-left: none; }
 }

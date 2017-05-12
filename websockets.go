@@ -129,7 +129,7 @@ func ws_page_responses(ws_user *WS_User, page []byte) {
 	switch(string(page)) {
 		case "/panel/":
 			//fmt.Println("/panel/ WS Route")
-			w, err := ws_user.conn.NextWriter(websocket.TextMessage)
+			/*w, err := ws_user.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				//fmt.Println(err.Error())
 				return
@@ -143,7 +143,7 @@ func ws_page_responses(ws_user *WS_User, page []byte) {
 			w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + " online\r"))
 			w.Write([]byte("set #dash-gonline " + strconv.Itoa(gonline) + " guests online\r"))
 			w.Write([]byte("set #dash-uonline " + strconv.Itoa(uonline) + " users online\r"))
-			w.Close()
+			w.Close()*/
 			
 			// Listen for changes and inform the admins...
 			admin_stats_mutex.Lock()
@@ -176,11 +176,14 @@ func admin_stats_ticker() {
 	var last_cpu_perc int = -1
 	var last_available_ram int64 = -1
 	var no_stat_updates bool = false
+	var no_ram_updates bool = false
 	
 	var onlineColour, onlineGuestsColour, onlineUsersColour, cpustr, cpuColour, ramstr, ramColour string
 	var cpuerr, ramerr error
 	var memres *mem.VirtualMemoryStat
 	var cpu_perc []float64
+	
+	var totunit, uunit, gunit string
 	
 AdminStatLoop:
 	for {
@@ -200,7 +203,8 @@ AdminStatLoop:
 		
 		// It's far more likely that the CPU Usage will change than the other stats, so we'll optimise them seperately...
 		no_stat_updates = (uonline == last_uonline && gonline == last_gonline && totonline == last_totonline)
-		if no_stat_updates && int(cpu_perc[0]) == last_cpu_perc && last_available_ram == int64(memres.Available) {
+		no_ram_updates = (last_available_ram == int64(memres.Available))
+		if int(cpu_perc[0]) == last_cpu_perc && no_stat_updates && no_ram_updates {
 			time.Sleep(time.Second)
 			continue
 		}
@@ -229,6 +233,10 @@ AdminStatLoop:
 			} else {
 				onlineUsersColour = "stat_red"
 			}
+			
+			totonline, totunit = convert_friendly_unit(totonline)
+			uonline, uunit = convert_friendly_unit(uonline)
+			gonline, gunit = convert_friendly_unit(gonline)
 		}
 		
 		if cpuerr != nil {
@@ -245,33 +253,35 @@ AdminStatLoop:
 			}
 		}
 		
-		if ramerr != nil {
-			ramstr = "Unknown"
-		} else {
-			total_count, total_unit := convert_byte_unit(float64(memres.Total))
-			used_count := convert_byte_in_unit(float64(memres.Total - memres.Available),total_unit)
-			
-			// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
-			var totstr string
-			if (total_count - float64(int(total_count))) > 0.85 {
-				used_count += 1.0 - (total_count - float64(int(total_count)))
-				totstr = strconv.Itoa(int(total_count) + 1)
+		if !no_ram_updates {
+			if ramerr != nil {
+				ramstr = "Unknown"
 			} else {
-				totstr = fmt.Sprintf("%.1f",total_count)
-			}
-			
-			if used_count > total_count {
-				used_count = total_count
-			}
-			ramstr = fmt.Sprintf("%.1f",used_count) + " / " + totstr + total_unit
-			
-			ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
-			if ramperc < 50 {
-				ramColour = "stat_green"
-			} else if ramperc < 75 {
-				ramColour = "stat_orange"
-			} else {
-				ramColour = "stat_red"
+				total_count, total_unit := convert_byte_unit(float64(memres.Total))
+				used_count := convert_byte_in_unit(float64(memres.Total - memres.Available),total_unit)
+				
+				// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
+				var totstr string
+				if (total_count - float64(int(total_count))) > 0.85 {
+					used_count += 1.0 - (total_count - float64(int(total_count)))
+					totstr = strconv.Itoa(int(total_count) + 1)
+				} else {
+					totstr = fmt.Sprintf("%.1f",total_count)
+				}
+				
+				if used_count > total_count {
+					used_count = total_count
+				}
+				ramstr = fmt.Sprintf("%.1f",used_count) + " / " + totstr + total_unit
+				
+				ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
+				if ramperc < 50 {
+					ramColour = "stat_green"
+				} else if ramperc < 75 {
+					ramColour = "stat_orange"
+				} else {
+					ramColour = "stat_red"
+				}
 			}
 		}
 		
@@ -290,20 +300,22 @@ AdminStatLoop:
 			}
 			
 			if !no_stat_updates {
-				w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + " online\r"))
-				w.Write([]byte("set #dash-gonline " + strconv.Itoa(gonline) + " guests online\r"))
-				w.Write([]byte("set #dash-uonline " + strconv.Itoa(uonline) + " users online\r"))
+				w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + totunit + " online\r"))
+				w.Write([]byte("set #dash-gonline " + strconv.Itoa(gonline) + gunit + " guests online\r"))
+				w.Write([]byte("set #dash-uonline " + strconv.Itoa(uonline) + uunit + " users online\r"))
 			
-				w.Write([]byte("set-class #dash-totonline grid_stat " + onlineColour + "\r"))
-				w.Write([]byte("set-class #dash-gonline grid_stat " + onlineGuestsColour + "\r"))
-				w.Write([]byte("set-class #dash-uonline grid_stat " + onlineUsersColour + "\r"))
+				w.Write([]byte("set-class #dash-totonline grid_item grid_stat " + onlineColour + "\r"))
+				w.Write([]byte("set-class #dash-gonline grid_item grid_stat " + onlineGuestsColour + "\r"))
+				w.Write([]byte("set-class #dash-uonline grid_item grid_stat " + onlineUsersColour + "\r"))
 			}
 			
 			w.Write([]byte("set #dash-cpu CPU: " + cpustr + "%\r"))
-			w.Write([]byte("set-class #dash-cpu grid_istat " + cpuColour + "\r"))
+			w.Write([]byte("set-class #dash-cpu grid_item grid_istat " + cpuColour + "\r"))
 			
-			w.Write([]byte("set #dash-ram RAM: " + ramstr + "\r"))
-			w.Write([]byte("set-class #dash-ram grid_istat " + ramColour + "\r"))
+			if !no_ram_updates {
+				w.Write([]byte("set #dash-ram RAM: " + ramstr + "\r"))
+				w.Write([]byte("set-class #dash-ram grid_item grid_istat " + ramColour + "\r"))
+			}
 			
 			w.Close()
 		}
