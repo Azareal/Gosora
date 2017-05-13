@@ -395,6 +395,12 @@ button.username { position: relative; top: -0.25px; }
 	opacity: 0.9;
 }
 
+.action_item {
+	padding: 14px;
+	text-align: center;
+	background-color: rgb(255,245,245);
+}
+
 .postQuote {
 	border: 1px solid #ccc;
 	background: white;
@@ -534,9 +540,9 @@ button.username { position: relative; top: -0.25px; }
 	.menu_overview, .menu_profile { display: none; }
 	.hide_on_micro { display: none !important; }
 	.post_container { overflow: visible !important; }
-	.post_item {
+	.post_item:not(.action_item) {
 		background-position: 0px 2px !important;
-		background-size: 64px 64px !important;
+		background-size: 64px auto !important;
 		padding-left: 2px !important;
 		min-height: 96px;
 		position: relative !important;
@@ -552,15 +558,22 @@ button.username { position: relative; top: -0.25px; }
 	}
 	.post_item > .mod_button > button { opacity: 1; }
 	.post_item > .real_username {
-		position: absolute;
+		/*position: absolute;
 		top: 70px;
 		float: left;
-		margin-top: -2px;
-		padding-top: 3px !important;
+		margin-top: -2px;*/
+		margin-top: 0px;
+		/*padding-top: 3px !important;
 		margin-right: 2px;
-		width: 60px;
+		width: 60px;*/
+		margin-left: 74px;
+		margin-right: 0px;
 		font-size: 15px;
-		text-align: center;
+		/*text-align: center;*/
+		color: black;
+		max-width: 61px;
+		/*overflow: hidden;*/
+		text-overflow: ellipsis;
 	}
 	.container { width: 100% !important; }
 }

@@ -150,62 +150,80 @@ w.Write(topic_alt_47)
 if len(tmpl_topic_alt_vars.ItemList) != 0 {
 for _, item := range tmpl_topic_alt_vars.ItemList {
 w.Write(topic_alt_48)
-w.Write([]byte(item.Avatar))
+if item.ActionType != "" {
 w.Write(topic_alt_49)
-w.Write([]byte(strconv.Itoa(item.CreatedBy)))
-w.Write(topic_alt_50)
-w.Write([]byte(item.CreatedByName))
-w.Write(topic_alt_51)
-if item.Tag != "" {
-w.Write(topic_alt_52)
-w.Write([]byte(item.Tag))
-w.Write(topic_alt_53)
-} else {
-w.Write(topic_alt_54)
-w.Write([]byte(strconv.Itoa(item.Level)))
-w.Write(topic_alt_55)
 }
+w.Write(topic_alt_50)
+w.Write([]byte(item.Avatar))
+w.Write(topic_alt_51)
+w.Write([]byte(strconv.Itoa(item.CreatedBy)))
+w.Write(topic_alt_52)
+w.Write([]byte(item.CreatedByName))
+w.Write(topic_alt_53)
+if item.Tag != "" {
+w.Write(topic_alt_54)
+w.Write([]byte(item.Tag))
+w.Write(topic_alt_55)
+} else {
 w.Write(topic_alt_56)
-w.Write([]byte(item.ContentHtml))
+w.Write([]byte(strconv.Itoa(item.Level)))
 w.Write(topic_alt_57)
-if tmpl_topic_alt_vars.CurrentUser.Perms.LikeItem {
+}
 w.Write(topic_alt_58)
-w.Write([]byte(strconv.Itoa(item.ID)))
+if item.ActionType != "" {
 w.Write(topic_alt_59)
 }
-if tmpl_topic_alt_vars.CurrentUser.Perms.EditReply {
 w.Write(topic_alt_60)
-w.Write([]byte(strconv.Itoa(item.ID)))
+if item.ActionType != "" {
 w.Write(topic_alt_61)
+w.Write([]byte(item.ActionIcon))
+w.Write(topic_alt_62)
+w.Write([]byte(item.ActionType))
+w.Write(topic_alt_63)
+} else {
+w.Write(topic_alt_64)
+w.Write([]byte(item.ContentHtml))
+w.Write(topic_alt_65)
+if tmpl_topic_alt_vars.CurrentUser.Perms.LikeItem {
+w.Write(topic_alt_66)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(topic_alt_67)
+}
+if tmpl_topic_alt_vars.CurrentUser.Perms.EditReply {
+w.Write(topic_alt_68)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(topic_alt_69)
 }
 if tmpl_topic_alt_vars.CurrentUser.Perms.DeleteReply {
-w.Write(topic_alt_62)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_alt_63)
-}
-w.Write(topic_alt_64)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_alt_65)
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(topic_alt_66)
-if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
-w.Write(topic_alt_67)
-w.Write([]byte(item.IpAddress))
-w.Write(topic_alt_68)
-}
-if item.LikeCount > 0 {
-w.Write(topic_alt_69)
-w.Write([]byte(strconv.Itoa(item.LikeCount)))
 w.Write(topic_alt_70)
-}
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_alt_71)
 }
-}
 w.Write(topic_alt_72)
-if tmpl_topic_alt_vars.CurrentUser.Perms.CreateReply {
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_alt_73)
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_74)
+if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
+w.Write(topic_alt_75)
+w.Write([]byte(item.IpAddress))
+w.Write(topic_alt_76)
+}
+if item.LikeCount > 0 {
+w.Write(topic_alt_77)
+w.Write([]byte(strconv.Itoa(item.LikeCount)))
+w.Write(topic_alt_78)
+}
+w.Write(topic_alt_79)
+}
+w.Write(topic_alt_80)
+}
+}
+w.Write(topic_alt_81)
+if tmpl_topic_alt_vars.CurrentUser.Perms.CreateReply {
+w.Write(topic_alt_82)
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
+w.Write(topic_alt_83)
 }
 w.Write(footer_0)
 }

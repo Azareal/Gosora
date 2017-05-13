@@ -736,6 +736,15 @@ blockquote p
 	border-radius: 4px;
 }
 
+.action_item .userinfo {
+	display: none;
+}
+.action_item .content_container {
+	min-height: auto;
+	padding: 15px;
+	text-align: center;
+}
+
 .prev_button, .next_button {
 	position: fixed;
 	top: 50%;

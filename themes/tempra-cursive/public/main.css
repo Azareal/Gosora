@@ -417,6 +417,12 @@ button.username
 	opacity: 0.9;
 }
 
+.action_item {
+	padding: 14px;
+	text-align: center;
+	background-color: rgb(255,245,245);
+}
+
 .postQuote {
 	border: 1px solid #ccc;
 	background: white;

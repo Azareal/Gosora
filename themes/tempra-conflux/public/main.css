@@ -543,6 +543,15 @@ button.username
 	box-shadow:0 1px 2px rgba(0,0,0,.1);
 }
 
+.action_item .userinfo {
+	display: none;
+}
+.action_item .content_container {
+	min-height: auto;
+	padding: 15px;
+	text-align: center;
+}
+
 .prev_button, .next_button {
 	position: fixed;
 	top: 50%;
@@ -625,6 +634,7 @@ button.username
 }
 
 @media (max-width: 470px) {
+	ul { margin-bottom: 10px; }
 	.menu_overview, .menu_profile, .hide_on_micro { display: none; }
 	.post_container { overflow: visible !important; }
 	

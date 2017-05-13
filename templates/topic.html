@@ -33,7 +33,7 @@
 	</div>
 </div>
 <div class="rowblock post_container" style="overflow: hidden;">{{range .ItemList}}{{if .ActionType}}
-	<div class="rowitem passive deletable_block editable_parent post_item" style="padding:14px;text-align:center;background-color:rgb(255,245,245);">
+	<div class="rowitem passive deletable_block editable_parent post_item action_item">
 		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>
 		<span>{{.ActionType}}</span>
 	</div>
@@ -49,6 +49,7 @@
 		{{if .Tag}}<a class="username hide_on_micro" style="float: right;color:#505050;font-size:16px;">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Level}}</a><a class="username hide_on_micro" style="color:#505050;float:right;opacity:0.85;" title="Level">👑{{end}}</a>
 	</div>
 {{end}}{{end}}</div>
+
 {{if .CurrentUser.Perms.CreateReply}}
 <div class="rowblock">
 	<form action="/reply/create/" method="post">
