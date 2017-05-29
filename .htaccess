@@ -1,0 +1,3 @@
+# Gosora doesn't use Apache, this file is just here to stop Apache from blindly serving our config files, etc. when this program isn't intended to be served in such a manner at all
+
+deny from all

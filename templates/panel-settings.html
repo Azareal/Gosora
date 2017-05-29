@@ -4,10 +4,10 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem rowhead"><a>Settings</a></div>
 	</div>
-	<div class="colstack_item">
+	<div id="panel_settings" class="colstack_item">
 		{{range $key, $value := .Something}}
-		<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
-			<a href="/panel/settings/edit/{{$key}}" class="editable_block" style="font-size: 20px;position:relative;top: -2px;">{{$key}}</a>
+		<div class="rowitem editable_parent">
+			<a href="/panel/settings/edit/{{$key}}" class="editable_block panel_upshift">{{$key}}</a>
 			<a style="float: right;">{{$value}}</a>
 		</div>
 		{{end}}

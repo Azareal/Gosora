@@ -4,23 +4,23 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem rowhead"><a>User Editor</a></div>
 	</div>
-	<div class="colstack_item">
+	<div id="panel_user" class="colstack_item">
 		<form action="/panel/users/edit/submit/{{.Something.ID}}?session={{.CurrentUser.Session}}" method="post">
 		<div class="formrow">
-			<div class="formitem"><a>Name</a></div>
+			<div class="formitem formlabel"><a>Name</a></div>
 			<div class="formitem"><input name="user-name" type="text" value="{{.Something.Name}}" placeholder="Jane Doe" /></div>
 		</div>
 		{{if .CurrentUser.Perms.EditUserPassword}}<div class="formrow">
-			<div class="formitem"><a>Password</a></div>
+			<div class="formitem formlabel"><a>Password</a></div>
 			<div class="formitem"><input name="user-password" type="password" placeholder="*****" /></div>
 		</div>{{end}}
 		{{if .CurrentUser.Perms.EditUserEmail}}<div class="formrow">
-			<div class="formitem"><a>Email</a></div>
+			<div class="formitem formlabel"><a>Email</a></div>
 			<div class="formitem"><input name="user-email" type="email" value="{{.Something.Email}}" placeholder="example@localhost" /></div>
 		</div>{{end}}
 		{{if .CurrentUser.Perms.EditUserGroup}}
 		<div class="formrow">
-			<div class="formitem"><a>Group</a></div>
+			<div class="formitem formlabel"><a>Group</a></div>
 			<div class="formitem">
 				<select name="user-group">
 				{{range .ItemList}}<option {{if eq .ID $.Something.Group}}selected {{end}}value="{{.ID}}">{{.Name}}</option>{{end}}

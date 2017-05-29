@@ -172,6 +172,7 @@ func bbcode_parse_without_code(data interface{}) interface{} {
 		msg = bbcode_url_label.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$4</i>")
 		msg = bbcode_quotes.ReplaceAllString(msg,"<span class=\"postQuote\">$1</span>")
 	}
+	
 	return string(msgbytes)
 }
 
@@ -181,6 +182,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 	//fmt.Println("BBCode PrePre String:")
 	//fmt.Println("`"+msg+"`")
 	//fmt.Println("----")
+	
 	msgbytes := []byte(msg)
 	has_u := false
 	has_b := false
@@ -189,6 +191,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 	has_c := false
 	complex_bbc := false
 	msgbytes = append(msgbytes,space_gap...)
+	
 	//fmt.Println("BBCode Simple Pre:")
 	//fmt.Println("`"+string(msgbytes)+"`")
 	//fmt.Println("----")
@@ -272,8 +275,7 @@ func bbcode_full_parse(data interface{}) interface{} {
 	
 	if complex_bbc {
 		i := 0
-		var start int
-		var lastTag int
+		var start, lastTag int
 		var outbytes []byte
 		//fmt.Println("BBCode Pre:")
 		//fmt.Println("`"+string(msgbytes)+"`")
@@ -366,5 +368,6 @@ func bbcode_full_parse(data interface{}) interface{} {
 	} else {
 		msg = string(msgbytes[0:len(msgbytes) - 10])
 	}
+	
 	return msg
 }

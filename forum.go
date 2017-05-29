@@ -13,9 +13,7 @@ type ForumAdmin struct
 	Active bool
 	Preset string
 	TopicCount int
-	
 	PresetLang string
-	PresetEmoji string
 }
 
 type Forum struct

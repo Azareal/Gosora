@@ -1,32 +1,42 @@
 {{template "header.html" . }}
-<div class="colblock_left" style="max-width: 220px;">
-	<div class="rowitem" style="padding: 0;"><img src="{{.ProfileOwner.Avatar}}" style="max-width: 100%;margin: 0;display: block;" /></div>
-	<div class="rowitem" style="text-transform: capitalize;">
+
+<div id="profile_left_pane" class="colblock_left" style="max-width: 220px;">
+	<div class="rowitem" style="padding: 0;">
+		<img src="{{.ProfileOwner.Avatar}}" style="max-width: 100%;margin: 0;display: block;" />
+	</div>
+	<div class="rowitem">
 	<span style="font-size: 18px;">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username" style="float: right;font-weight: normal;">{{.ProfileOwner.Tag}}</span>{{end}}
 	</div>
 	<div class="rowitem passive">
-		<a class="username">Add Friend</a>
+		<a class="profile_menu_item">Add Friend</a>
+	</div>
+	<div class="rowitem passive"
 		{{if (.CurrentUser.Is_Super_Mod) and not (.ProfileOwner.Is_Super_Mod) }}
 		{{if .ProfileOwner.Is_Banned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="username">Unban</a>{{else}}<a href="/users/ban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="username">Ban</a>{{end}}
 		{{end}}
-		<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="username report_item">Report</a>
+		<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item">Report</a>
 	</div>
 </div>
-<div class="colblock_right">
+
+<div class="colblock_right" style="width: calc(95% - 210px);">
 	<div class="rowitem rowhead"><a>Comments</a></div>
 </div>
-<div class="colblock_right" style="overflow: hidden;border-top: none;">{{range .ItemList}}
+<div id="profile_comments" class="colblock_right" style="overflow: hidden;border-top: none;width:calc(95% - 210px);">{{range .ItemList}}
 <div class="rowitem passive deletable_block editable_parent simple" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{.Css}}{{end}}">
-		<span class="editable_block user_content simple">{{.ContentHtml}}</span>
-		<br /><br />
-		<a href="/user/{{.CreatedBy}}" class="username">{{.CreatedByName}}</a>&nbsp;
-		{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Item"><button class="username edit_item">Edit</button></a>&nbsp;
-		<a href="/profile/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Item"><button class="username delete_item">Delete</button></a>&nbsp;{{end}}
-		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item">Report</button></a>
+		<span class="editable_block user_content simple">{{.ContentHtml}}</span><br /><br />
+		<a href="/user/{{.CreatedBy}}" class="real_username username">{{.CreatedByName}}</a>&nbsp;&nbsp;
+
+		{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
+
+		<a href="/profile/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>{{end}}
+
+		<a class="mod_button" href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item flag_label"></button></a>
+
 		{{if .Tag}}<a class="username hide_on_mobile" style="float: right;">{{.Tag}}</a>{{end}}
 	</div>
 {{end}}</div>
-<div class="colblock_right" style="border-top: none;">
+
+<div class="colblock_right" style="border-top: none;width: calc(95% - 210px);">
 {{if not .CurrentUser.Is_Banned}}
 <form action="/profile/reply/create/" method="post">
 	<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
@@ -39,4 +49,5 @@
 </form>
 {{end}}
 </div>
+
 {{template "footer.html" . }}

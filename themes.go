@@ -1,16 +1,18 @@
-/* Copyright Azareal 2016 - 2017 */
+/* Copyright Azareal 2016 - 2018 */
 package main
 
-//import "fmt"
-import "log"
-import "io"
-import "os"
-import "strings"
-import "mime"
-import "io/ioutil"
-import "path/filepath"
-import "encoding/json"
-import "net/http"
+import (
+	//"fmt"
+	"log"
+	"io"
+	"os"
+	"strings"
+	"mime"
+	"io/ioutil"
+	"path/filepath"
+	"encoding/json"
+	"net/http"
+)
 
 var defaultTheme string
 var themes map[string]Theme = make(map[string]Theme)
@@ -29,9 +31,10 @@ type Theme struct
 	HideFromThemes bool
 	ForkOf string
 	Tag string
+	URL string
 	Settings map[string]ThemeSetting
 	Templates []TemplateMapping
-	
+
 	// This variable should only be set and unset by the system, not the theme meta file
 	Active bool
 }
@@ -54,28 +57,28 @@ func init_themes() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	for _, themeFile := range themeFiles {
 		if !themeFile.IsDir() {
 			continue
 		}
-		
+
 		themeName := themeFile.Name()
 		log.Print("Adding theme '" + themeName + "'")
 		themeFile, err := ioutil.ReadFile("./themes/" + themeName + "/theme.json")
 		if err != nil {
 			log.Fatal(err)
 		}
-		
+
 		var theme Theme
 		err = json.Unmarshal(themeFile, &theme)
 		if err != nil {
 			log.Fatal(err)
 		}
-		
-		
+
+
 		theme.Active = false // Set this to false, just in case someone explicitly overrode this value in the JSON file
-		
+
 		if theme.FullImage != "" {
 			if debug {
 				log.Print("Adding theme image")
@@ -85,7 +88,7 @@ func init_themes() {
 				log.Fatal(err)
 			}
 		}
-		
+
 		themes[theme.Name] = theme
 	}
 }
@@ -99,22 +102,22 @@ func add_theme_static_files(themeName string) {
 			return nil
 		}
 		path = strings.Replace(path,"\\","/",-1)
-		
+
 		if debug {
 			log.Print("Attempting to add static file '" + path + "' for default theme '" + themeName + "'")
 		}
-		
+
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		
+
 		path = strings.TrimPrefix(path,"themes/" + themeName + "/public")
 		if debug {
 			log.Print("Added the '" + path + "' static file for default theme " + themeName + ".")
 		}
 		gzip_data := compress_bytes_gzip(data)
-		
+
 		static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext("/themes/" + themeName + "/public" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
 		return nil
 	})
@@ -132,9 +135,9 @@ func map_theme_templates(theme Theme) {
 			if themeTmpl.Source == "" {
 				log.Fatal("Invalid source template name")
 			}
-			
+
 			// `go generate` is one possibility for letting plugins inject custom page structs, but it would simply add another step of compilation. It might be simpler than the current build process from the perspective of the administrator?
-			
+
 			dest_tmpl_ptr, ok := tmpl_ptr_map[themeTmpl.Name]
 			if !ok {
 				log.Fatal("The destination template doesn't exist!")
@@ -143,7 +146,7 @@ func map_theme_templates(theme Theme) {
 			if !ok {
 				log.Fatal("The source template doesn't exist!")
 			}
-			
+
 			switch d_tmpl_ptr := dest_tmpl_ptr.(type) {
 				case *func(TopicPage,io.Writer):
 					switch s_tmpl_ptr := source_tmpl_ptr.(type) {
@@ -208,24 +211,24 @@ func map_theme_templates(theme Theme) {
 
 func reset_template_overrides() {
 	log.Print("Resetting the template overrides")
-	
+
 	for name, _ := range overriden_templates {
 		log.Print("Resetting '" + name + "' template override")
-		
+
 		origin_pointer, ok := tmpl_ptr_map["o_" + name]
 		if !ok {
 			//log.Fatal("The origin template doesn't exist!")
 			log.Print("The origin template doesn't exist!")
 			return
 		}
-		
+
 		dest_tmpl_ptr, ok := tmpl_ptr_map[name]
 		if !ok {
 			//log.Fatal("The destination template doesn't exist!")
 			log.Print("The destination template doesn't exist!")
 			return
 		}
-		
+
 		// Not really a pointer, more of a function handle, an artifact from one of the earlier versions of themes.go
 		switch o_ptr := origin_pointer.(type) {
 			case func(TopicPage,io.Writer):

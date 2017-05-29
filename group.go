@@ -12,7 +12,7 @@ type GroupAdmin struct
 	ID int
 	Name string
 	Rank string
-	RankEmoji string
+	RankClass string
 	CanEdit bool
 	CanDelete bool
 }

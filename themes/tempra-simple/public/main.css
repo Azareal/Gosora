@@ -4,8 +4,7 @@
 	-webkit-box-sizing: border-box;
 }
 
-body
-{
+body {
 	font-family: arial;
 	padding-bottom: 8px;
 }
@@ -15,10 +14,7 @@ body
 .user_content { font-family: Segoe UI Emoji, arial; }
 }
 
-/*.move_left{float: left;position: relative;left: 50%;}
-.move_right{float: left;position: relative;left: -50%;}*/
-ul
-{
+ul {
 	padding-left: 0px;
 	padding-right: 0px;
 	height: 36px;
@@ -27,29 +23,25 @@ ul
 	background-color: white;
 	margin-bottom: 12px;
 }
-li
-{
+li {
 	height: 35px;
 	padding-left: 10px;
 	padding-top: 8px;
 	padding-bottom: 8px;
 }
 li:hover { background: rgb(250,250,250); }
-li a
-{
+li a {
 	text-decoration: none;
 	/*color: #515151;*/
 	color: black;
 	font-size: 17px;
 }
-.menu_left
-{
+.menu_left {
 	float: left;
 	border-right: 1px solid #ccc;
 	padding-right: 10px;
 }
-.menu_right
-{
+.menu_right {
 	float: right;
 	border-left: 1px solid #ccc;
 	padding-right: 10px;
@@ -89,7 +81,6 @@ li a
 }
 .menu_alerts .alertList {
 	display: none;
-	text-transform: none;
 }
 .selectedAlert .alertList {
 	position: absolute;
@@ -98,24 +89,27 @@ li a
 	background: white;
 	font-size: 10px;
 	line-height: 16px;
-	width: 135px;
+	width: 300px;
 	right: calc(5% + 7px);
 	border-top: 1px solid #ccc;
 	border-left: 1px solid #ccc;
 	border-right: 1px solid #ccc;
 	border-bottom: 1px solid #ccc;
+	margin-bottom: 10px;
 }
 .alertItem {
 	padding: 8px;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	padding-top: 15px;
+	padding-bottom: 16px;
 }
 .alertItem.withAvatar {
-	background-size: auto 56px;
+	background-size: 60px;
 	background-repeat: no-repeat;
-	text-align: right;
 	padding-right: 12px;
-	height: 46px;
+	padding-left: 68px;
+	height: 50px;
 }
 .alertItem.withAvatar:not(:last-child) {
 	border-bottom: 1px solid rgb(230,230,230);
@@ -124,24 +118,24 @@ li a
 	overflow: hidden;
 	text-overflow: ellipsis;
 	float: right;
-	width: calc(100% - 20px);
-	height: 30px;
+	height: 40px;
+	width: 100%;
+	white-space: nowrap;
 }
 .alertItem .text {
-	font-size: 10px;
-	font-weight: bold;
+	font-size: 13px;
+	font-weight: normal;
+	margin-left: 5px;
 }
 
-.container
-{
+.container {
 	width: 90%;
 	padding: 0px;
 	margin-left: auto;
 	margin-right: auto;
 }
 
-.rowblock
-{
+.rowblock {
 	border: 1px solid #ccc;
 	width: 100%;
 	padding: 0px;
@@ -149,8 +143,7 @@ li a
 }
 .rowblock:empty { display: none; }
 
-.colblock_left
-{
+.colblock_left {
 	border: 1px solid #ccc;
 	padding: 0px;
 	padding-top: 0px;
@@ -158,8 +151,7 @@ li a
 	float: left;
 	margin-right: 8px;
 }
-.colblock_right
-{
+.colblock_right {
 	border: 1px solid #ccc;
 	padding: 0px;
 	padding-top: 0px;
@@ -167,24 +159,20 @@ li a
 	overflow: hidden;
 	word-wrap: break-word;
 }
-.colblock_left:empty { display: none; }
-.colblock_right:empty { display: none; }
+.colblock_left:empty, .colblock_right:empty { display: none; }
 
 /* The new method of doing columns layouts, colblock is now deprecated :( */
-.colstack_left
-{
+.colstack_left {
 	float: left;
 	width: 30%;
 	margin-right: 8px;
 }
-.colstack_right
-{
+.colstack_right {
 	float: left;
 	width: 65%;
 	width: calc(70% - 15px);
 }
-.colstack_item
-{
+.colstack_item {
 	border: 1px solid #ccc;
 	padding: 0px;
 	padding-top: 0px;
@@ -203,6 +191,7 @@ li a
 	/*grid-gap: 15px;*/
 	grid-gap: 12px;
 	margin-left: 5px;
+	margin-top: 2px;
 }
 .grid_item {
 	border: 1px solid #ccc;
@@ -230,28 +219,26 @@ li a
 .stat_red { background-color: #ffb2b2; border-color: #ffb2b2; }
 .stat_disabled { background-color: lightgray; border-color: lightgray; }
 
-.rowitem
-{
+.rowitem {
 	width: 100%;
-	padding-left: 8px;
+	/*padding-left: 8px;
 	padding-right: 8px;
 	padding-top: 17px;
+	padding-bottom: 12px;*/
+	padding-left: 10px;
+	padding-top: 14px;
 	padding-bottom: 12px;
-	font-weight: bold;
-	text-transform: uppercase;
+	padding-right: 10px;
+	/*font-weight: bold;*/
 	background-color: white;
 }
-.rowitem.passive
-{
-	font-weight: normal;
-	text-transform: none;
-}
-.rowitem:not(:last-child)
-{
+/*.rowitem:not(.passive) {
+	font-size: 17px;
+}*/
+.rowitem:not(:last-child) {
 	border-bottom: 1px dotted #ccc;
 }
-.rowitem a
-{
+.rowitem a {
 	text-decoration: none;
 	color: black;
 }
@@ -259,31 +246,7 @@ li a
 .top_post { margin-bottom: 12px; }
 .opthead { display: none; }
 
-.col_left
-{
-	width: 30%;
-	float: left;
-}
-.col_right
-{
-	width: 69%;
-	overflow: hidden;
-}
-.colitem
-{
-	padding-left: 8px;
-	padding-right: 8px;
-	padding-top: 17px;
-	padding-bottom: 12px;
-	font-weight: bold;
-	text-transform: uppercase;
-}
-.colitem.passive { font-weight: normal; text-transform: none; }
-.colitem a { text-decoration: none; color: black; }
-.colitem a:hover { color: silver; }
-
-.formrow
-{
+.formrow {
 	width: 100%;
 	background-color: white;
 }
@@ -296,43 +259,49 @@ li a
 .formrow:after { clear: both; }
 .formrow:not(:last-child) { border-bottom: 1px dotted #ccc; }
 
-.formitem
-{
+.formitem {
 	float: left;
-	padding-left: 8px;
-	padding-right: 8px;
-	padding-top: 13px;
-	padding-bottom: 8px;
-	font-weight: bold;
+	padding: 10px;
+	min-width: 20%;
+	/*font-size: 17px;*/
+	font-weight: normal;
 }
-
-.formitem:first-child { font-weight: bold; }
 .formitem:not(:last-child) { border-right: 1px dotted #ccc; }
 .formitem.invisible_border { border: none; }
 
 /* Mostly for textareas */
 .formitem:only-child { width: 100%; }
-.formitem textarea
-{
+.formitem textarea {
 	width: 100%;
 	height: 100px;
 	outline-color: #8e8e8e;
 }
-.formitem:has-child()
-{
+.formitem:has-child() {
 	margin: 0 auto;
 	float: none;
 }
+.formitem:not(:only-child) input, .formitem:not(:only-child) select { padding: 3px;/*5px;*/ }
+.formitem:not(:only-child).formlabel {
+	padding-top: 15px;/*18px;*/
+	padding-bottom: 12px;/*16px;*/
+	/*padding-left: 15px;*/
+}
+.formbutton {
+	padding: 7px;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	font-size: 15px;
+	border-color: #ccc;
+}
 
-button
-{
+button {
 	background: white;
 	border: 1px solid #8e8e8e;
 }
 
 /* Topics */
-.topic_status
-{
+.topic_status {
 	text-transform: none;
 	margin-left: 8px;
 	padding-left: 2px;
@@ -345,8 +314,7 @@ button
 }
 .topic_status:empty { display: none; }
 
-.username
-{
+.username, .panel_tag {
 	text-transform: none;
 	margin-left: 0px;
 	padding-left: 4px;
@@ -370,8 +338,7 @@ button.username { position: relative; top: -0.25px; }
     display: inline-block;
 }
 
-.tag-mini
-{
+.tag-mini {
 	text-transform: none;
 	margin-left: 0px;
 	padding-left: 3px;
@@ -395,6 +362,55 @@ button.username { position: relative; top: -0.25px; }
 	opacity: 0.9;
 }
 
+.mod_button {
+	margin-right: 4px;
+}
+
+.like_label:before, .like_count_label:before {
+	content: "😀";
+}
+.like_count_label {
+	color: #505050;
+	float: right;
+	opacity: 0.85;
+	margin-left: 5px;
+}
+.like_count {
+	float: right;
+	color: #505050;
+	border-left: none;
+	padding-left: 5px;
+	padding-right: 5px;
+	font-size: 17px;
+}
+.edit_label:before {
+	content: "🖊️";
+}
+.trash_label:before {
+	content: "🗑️";
+}
+.pin_label:before {
+	content: "📌";
+}
+.unpin_label:before {
+	content: "📌";
+}
+.unpin_label {
+	background-color: #D6FFD6;
+}
+.flag_label:before {
+	content: "🚩";
+}
+.level_label:before {
+	content: "👑";
+}
+
+.controls {
+	margin-top: 23px;
+	display: inline-block;
+	width: 100%;
+}
+
 .action_item {
 	padding: 14px;
 	text-align: center;
@@ -411,10 +427,6 @@ button.username { position: relative; top: -0.25px; }
 	margin-bottom: 8px;
 }
 
-.mention {
-	font-weight: bold;
-}
-
 .level {
 	float: right;
 	color: #505050;
@@ -424,24 +436,23 @@ button.username { position: relative; top: -0.25px; }
 	font-size: 17px;
 }
 
+.mention { font-weight: bold; }
 .show_on_edit { display: none; }
-.alert
-{
+
+.alert {
 	display: block;
 	padding: 5px;
 	margin-bottom: 10px;
 	border: 1px solid #ccc;
 }
-.alert_success
-{
+.alert_success {
 	display: block;
 	padding: 5px;
 	border: 1px solid A2FC00;
 	margin-bottom: 10px;
 	background-color: DAF7A6;
 }
-.alert_error
-{
+.alert_error {
 	display: block;
 	padding: 5px;
 	border: 1px solid #FF004B;
@@ -472,6 +483,72 @@ button.username { position: relative; top: -0.25px; }
 }
 .prev_button { left: 14px; }
 .next_button { right: 14px; }
+.head_tag_upshift {
+	float: right;
+	position: relative;
+	top: -2px;
+}
+
+/* Control Panel */
+
+.panel_upshift {
+	font-size: 18px;
+	position: relative;
+	top: -2px;
+}
+.panel_upshift:visited {
+	color: black;
+}
+/*.panel_tag_upshift {
+	margin-left: 2px;
+	position: relative;
+	top:-3px;
+	color: #505050;
+}*/
+
+.panel_floater {
+	float: right;
+}
+.panel_rank_tag_admin:before {
+	content: "👑";
+}
+.panel_rank_tag_mod:before {
+	content: "👮";
+}
+.panel_rank_tag_banned:before {
+	content: "⛓️";
+}
+.panel_rank_tag_guest:before {
+	content: "👽";
+}
+.panel_rank_tag_member:before {
+	content: "👪";
+}
+
+.forum_preset_announce:before {
+	content: "📣";
+}
+.forum_preset_members:before {
+	content: "👪";
+}
+.forum_preset_staff:before {
+	content: "👮";
+}
+.forum_preset_admins:before {
+	content: "👑";
+}
+.forum_preset_archive:before {
+	content: "☠️";
+}
+.forum_preset_all, .forum_preset_custom, .forum_preset_ {
+	display: none !important;
+}
+.forum_active_Hide:before {
+	content: "🕵️";
+}
+.forum_active_Show {
+	display: none !important;
+}
 
 @media (max-width: 880px) {
 	li {
@@ -492,7 +569,7 @@ button.username { position: relative; top: -0.25px; }
 		padding-right: 7px;
 		font-size: 18px;
 	}
-	
+
 	body {
 		padding-left: 4px;
 		padding-right: 4px;
@@ -503,10 +580,6 @@ button.username { position: relative; top: -0.25px; }
 	}
 	.container { width: auto; }
 	.selectedAlert .alertList { top: 37px; right: 4px; }
-}
-
-@media (max-width: 810px) {
-	.rowitem { text-transform: none; }
 }
 
 @media (max-width: 680px) {
@@ -521,7 +594,7 @@ button.username { position: relative; top: -0.25px; }
 	.menu_left { padding-right: 7px; }
 	.menu_right { padding-right: 7px; }
 	.menu_create_topic { display: none;}
-	
+
 	.menu_alerts {
 		padding-left: 4px;
 		padding-right: 4px;
@@ -529,7 +602,7 @@ button.username { position: relative; top: -0.25px; }
 		padding-top: 1px;
 	}
 	.selectedAlert .alertList { top: 33px; }
-	
+
 	.hide_on_mobile { display: none !important; }
 	.prev_button, .next_button { top: auto; bottom: 5px; }
 	.colstack_grid { grid-template-columns: none; grid-gap: 8px; }
@@ -538,6 +611,30 @@ button.username { position: relative; top: -0.25px; }
 
 @media (max-width: 470px) {
 	.menu_overview, .menu_profile { display: none; }
+	.selectedAlert .alertList {
+		width: 135px;
+		margin-bottom: 5px;
+	}
+	.alertItem.withAvatar {
+		background-size: 36px;
+		text-align: right;
+		padding-left: 10px;
+		height: 46px;
+	}
+	.alertItem {
+		padding: 8px;
+	}
+	.alertItem.withAvatar .text {
+		width: calc(100% - 20px);
+		height: 30px;
+		white-space: normal;
+	}
+	.alertItem .text {
+		font-size: 10px;
+		font-weight: bold;
+		margin-left: 0px;
+	}
+
 	.hide_on_micro { display: none !important; }
 	.post_container { overflow: visible !important; }
 	.post_item:not(.action_item) {
@@ -552,28 +649,28 @@ button.username { position: relative; top: -0.25px; }
 		width: 100% !important;
 		min-height: 45px;
 	}
-	.post_item > .mod_button {
+	.post_item > .controls > .mod_button {
 		float: right !important;
 		margin-left: 2px !important;
+		margin-right: 3px;
 	}
-	.post_item > .mod_button > button { opacity: 1; }
-	.post_item > .real_username {
-		/*position: absolute;
-		top: 70px;
-		float: left;
-		margin-top: -2px;*/
+	.post_item > .controls > .mod_button > button {
+		opacity: 1;
+		padding-left: 3px;
+		padding-right: 3px;
+	}
+	.post_item > .controls > .real_username {
 		margin-top: 0px;
-		/*padding-top: 3px !important;
-		margin-right: 2px;
-		width: 60px;*/
-		margin-left: 74px;
 		margin-right: 0px;
 		font-size: 15px;
-		/*text-align: center;*/
 		color: black;
 		max-width: 61px;
-		/*overflow: hidden;*/
 		text-overflow: ellipsis;
+	}
+	.post_item > .controls {
+		margin-top: 0px;
+		margin-left: 74px;
+		width: calc(100% - 74px);
 	}
 	.container { width: 100% !important; }
 }
@@ -581,4 +678,20 @@ button.username { position: relative; top: -0.25px; }
 @media (max-width: 330px) {
 	li { padding-left: 6px; }
 	.menu_left { padding-right: 6px; }
+	.post_item > .controls > .real_username {
+		display: inline-block;
+		overflow: hidden;
+		margin-right: -3px;
+		text-overflow: clip;
+		max-width: 84px;
+	}
+	.post_item > .controls {
+		margin-left: 72px;
+	}
+	.top_post > .post_item > .controls > .real_username {
+		max-width: 57px;
+	}
+	.top_post > .post_item {
+		padding-right: 4px;
+	}
 }

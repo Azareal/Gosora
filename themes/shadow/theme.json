@@ -4,5 +4,6 @@
 	"Version": "0.0.1",
 	"Creator": "Azareal",
 	"Disabled": true,
-	"HideFromThemes": true
+	"HideFromThemes": true,
+	"URL": "github.com/Azareal/Gosora"
 }

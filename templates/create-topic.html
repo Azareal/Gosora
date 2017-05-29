@@ -5,13 +5,13 @@
 <div class="rowblock">
 	<form action="/topic/create/submit/" method="post">
 		<div class="formrow">
-			<div class="formitem"><a>Board</a></div>
+			<div class="formitem formlabel"><a>Board</a></div>
 			<div class="formitem"><select name="topic-board">
                 {{range .ItemList}}<option {{if eq .ID $.FID}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
             </select></div>
 		</div>
         <div class="formrow">
-			<div class="formitem"><a>Topic Name</a></div>
+			<div class="formitem formlabel"><a>Topic Name</a></div>
 			<div class="formitem"><input name="topic-name" type="text" placeholder="Topic Name" /></div>
 		</div>
 		<div class="formrow">

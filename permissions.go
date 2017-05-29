@@ -1,4 +1,5 @@
 package main
+
 import "log"
 import "fmt"
 import "sync"
@@ -78,7 +79,7 @@ type Perms struct
 	ManagePlugins bool
 	ViewAdminLogs bool
 	ViewIPs bool
-	
+
 	// Forum permissions
 	ViewTopic bool
 	LikeItem bool
@@ -93,7 +94,7 @@ type Perms struct
 	PinTopic bool
 	CloseTopic bool
 	//CloseOwnTopic bool
-	
+
 	ExtData interface{}
 }
 
@@ -113,7 +114,7 @@ type ForumPerms struct
 	PinTopic bool
 	CloseTopic bool
 	//CloseOwnTopic bool
-	
+
 	Overrides bool
 	ExtData map[string]bool
 }
@@ -122,16 +123,16 @@ func init() {
 	BlankPerms = Perms{
 		ExtData: make(map[string]bool),
 	}
-	
+
 	BlankForumPerms = ForumPerms{
 		ExtData: make(map[string]bool),
 	}
-	
+
 	GuestPerms = Perms{
 		ViewTopic: true,
 		ExtData: make(map[string]bool),
 	}
-	
+
 	AllPerms = Perms{
 		BanUsers: true,
 		ActivateUsers: true,
@@ -152,7 +153,7 @@ func init() {
 		ManagePlugins: true,
 		ViewAdminLogs: true,
 		ViewIPs: true,
-		
+
 		ViewTopic: true,
 		LikeItem: true,
 		CreateTopic: true,
@@ -163,10 +164,10 @@ func init() {
 		DeleteReply: true,
 		PinTopic: true,
 		CloseTopic: true,
-		
+
 		ExtData: make(map[string]bool),
 	}
-	
+
 	AllForumPerms = ForumPerms{
 		ViewTopic: true,
 		LikeItem: true,
@@ -178,11 +179,11 @@ func init() {
 		DeleteReply: true,
 		PinTopic: true,
 		CloseTopic: true,
-		
+
 		Overrides: true,
 		ExtData: make(map[string]bool),
 	}
-	
+
 	ReadWriteForumPerms = ForumPerms{
 		ViewTopic: true,
 		LikeItem: true,
@@ -191,7 +192,7 @@ func init() {
 		Overrides: true,
 		ExtData: make(map[string]bool),
 	}
-	
+
 	ReadReplyForumPerms = ForumPerms{
 		ViewTopic: true,
 		LikeItem: true,
@@ -199,15 +200,15 @@ func init() {
 		Overrides: true,
 		ExtData: make(map[string]bool),
 	}
-	
+
 	ReadForumPerms = ForumPerms{
 		ViewTopic: true,
 		Overrides: true,
 		ExtData: make(map[string]bool),
 	}
-	
+
 	guest_user.Perms = GuestPerms
-	
+
 	if debug {
 		fmt.Printf("Guest Perms: ")
 		fmt.Printf("%+v\n", GuestPerms)
@@ -262,12 +263,12 @@ var permupdate_mutex sync.Mutex
 func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 	permupdate_mutex.Lock()
 	defer permupdate_mutex.Unlock()
-	
+
 	_, err := delete_forum_perms_by_forum_stmt.Exec(fid)
 	if err != nil {
 		return err
 	}
-	
+
 	perms, err := json.Marshal(permmap["admins"])
 	if err != nil {
 		return err
@@ -276,7 +277,7 @@ func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	
+
 	perms, err = json.Marshal(permmap["staff"])
 	if err != nil {
 		return err
@@ -285,7 +286,7 @@ func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	
+
 	perms, err = json.Marshal(permmap["members"])
 	if err != nil {
 		return err
@@ -294,7 +295,7 @@ func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	
+
 	perms, err = json.Marshal(permmap["guests"])
 	if err != nil {
 		return err
@@ -303,7 +304,7 @@ func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return rebuild_forum_permissions(fid)
 }
 
@@ -314,7 +315,7 @@ func rebuild_forum_permissions(fid int) error {
 		return err
 	}
 	defer rows.Close()
-	
+
 	log.Print("Updating the forum permissions")
 	for rows.Next() {
 		var gid int
@@ -342,7 +343,7 @@ func rebuild_forum_permissions(fid int) error {
 		var blank_int_list []int
 		groups[gid].Forums = blank_list
 		groups[gid].CanSee = blank_int_list
-		
+
 		for ffid, _ := range forums {
 			forum_perm, ok := forum_perms[gid][ffid]
 			if ok {
@@ -353,7 +354,7 @@ func rebuild_forum_permissions(fid int) error {
 				forum_perm = BlankForumPerms
 				groups[gid].Forums = append(groups[gid].Forums,forum_perm)
 			}
-			
+
 			if forum_perm.Overrides {
 				if forum_perm.ViewTopic {
 					groups[gid].CanSee = append(groups[gid].CanSee, ffid)
@@ -375,7 +376,7 @@ func build_forum_permissions() error {
 
 func strip_invalid_preset(preset string) string {
 	switch(preset) {
-		case "all","announce","members","staff","admins","archive":
+		case "all","announce","members","staff","admins","archive","custom":
 			break
 		default: return ""
 	}
@@ -384,17 +385,18 @@ func strip_invalid_preset(preset string) string {
 
 func preset_to_lang(preset string) string {
 	switch(preset) {
-		case "all": return ""//return "Everyone"
+		case "all": return "Public"
 		case "announce": return "Announcements"
 		case "members": return "Member Only"
 		case "staff": return "Staff Only"
 		case "admins": return "Admin Only"
 		case "archive": return "Archive"
+		case "custom": return "Custom"
 	}
 	return ""
 }
 
-func preset_to_emoji(preset string) string {
+/*func preset_to_emoji(preset string) string {
 	switch(preset) {
 		case "all": return ""//return "Everyone"
 		case "announce": return "📣"
@@ -404,7 +406,7 @@ func preset_to_emoji(preset string) string {
 		case "archive": return "☠️"
 	}
 	return ""
-}
+}*/
 
 func rebuild_group_permissions(gid int) error {
 	var permstr []byte
@@ -413,13 +415,13 @@ func rebuild_group_permissions(gid int) error {
 	if err != nil {
 		return err
 	}
-	
+
 	tmp_perms := Perms{ExtData: make(map[string]bool)}
 	err = json.Unmarshal(permstr, &tmp_perms)
 	if err != nil {
 		return err
 	}
-	
+
 	groups[gid].Perms = tmp_perms
 	return nil
 }

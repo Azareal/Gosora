@@ -6,6 +6,8 @@
 	"FullImage": "cosmo-conflux.png",
 	"ForkOf": "cosmo",
 	"MobileFriendly": true,
+	"Tag": "🏗️",
+	"URL": "github.com/Azareal/Gosora",
 	"Templates": [
 		{
 			"Name": "topic",

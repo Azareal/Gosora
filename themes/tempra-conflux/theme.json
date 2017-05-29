@@ -1,10 +1,11 @@
 {
 	"Name": "tempra-conflux",
 	"FriendlyName": "Tempra Conflux",
-	"Version": "0.0.1",
+	"Version": "0.1.0-dev",
 	"Creator": "Azareal",
 	"FullImage": "tempra-conflux.png",
 	"MobileFriendly": true,
+	"URL": "github.com/Azareal/Gosora",
 	"Templates": [
 		{
 			"Name": "topic",

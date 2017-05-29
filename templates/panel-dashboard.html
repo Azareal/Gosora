@@ -1,7 +1,7 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
 <div class="colstack_right">
-	<div class="colstack_grid">
+	<div id="panel_dashboard" class="colstack_grid">
 {{range .GridItems}}
 		<div id="{{.ID}}" class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color: {{.TextColour}};{{end}}
 		{{if .Background}}background-color: {{.Background}};{{end}}">{{.Body}}</div>

@@ -21,12 +21,12 @@ function load_alerts(menu_alerts)
 					menu_alerts.find(".alertList").html("<div class='alertItem'>"+data.errmsg+"</div>");
 					return;
 				}
-				
+
 				var alist = "";
 				for(var i in data.msgs) {
 					var msg = data.msgs[i];
 					var mmsg = msg.msg;
-					
+
 					if("sub" in msg) {
 						for(var i = 0; i < msg.sub.length; i++) {
 							mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
@@ -34,11 +34,11 @@ function load_alerts(menu_alerts)
 							console.log(msg.sub[i]);
 						}
 					}
-					
+
 					if(mmsg.length > 46) mmsg = mmsg.substring(0,43) + "...";
 					else if(mmsg.length > 35) size_dial = " smaller"; //9px
 					else size_dial = ""; // 10px
-					
+
 					if("avatar" in msg) {
 						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text"+size_dial+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
 						console.log(msg.avatar);
@@ -48,10 +48,8 @@ function load_alerts(menu_alerts)
 					console.log(msg);
 					//console.log(mmsg);
 				}
-				
-				if(alist == "") {
-					alist = "<div class='alertItem'>You don't have any alerts</div>"
-				}
+
+				if(alist == "") alist = "<div class='alertItem'>You don't have any alerts</div>";
 				menu_alerts.find(".alertList").html(alist);
 				if(data.msgs.length != 0) {
 					menu_alerts.find(".alert_counter").text(data.msgs.length);
@@ -65,7 +63,7 @@ function load_alerts(menu_alerts)
 						console.log(data.errmsg);
 						errtxt = data.errmsg;
 					}
-					else errtxt = "Unable to get the alerts"
+					else errtxt = "Unable to get the alerts";
 				} catch(e) { errtxt = "Unable to get the alerts"; }
 				menu_alerts.find(".alertList").html("<div class='alertItem'>"+errtxt+"</div>");
 			}
@@ -74,81 +72,77 @@ function load_alerts(menu_alerts)
 
 $(document).ready(function(){
 	function SplitN(data,ch,n) {
-		var out = []
-		if(data.length == 0) {
-			return out
-		}
-		
-		var lastIndex = 0
-		var j = 0
-		var lastN = 1
+		var out = [];
+		if(data.length == 0) return out;
+
+		var lastIndex = 0;
+		var j = 0;
+		var lastN = 1;
 		for(var i = 0; i < data.length; i++) {
 			if(data[i] == ch) {
-				out[j++] = data.substring(lastIndex,i)
-				lastIndex = i
-				if(lastN == n) {
-					break
-				}
-				lastN++
+				out[j++] = data.substring(lastIndex,i);
+				lastIndex = i;
+				if(lastN == n) break;
+				lastN++;
 			}
 		}
 		if(data.length > lastIndex) {
-			out[out.length - 1] += data.substring(lastIndex)
+			out[out.length - 1] += data.substring(lastIndex);
 		}
-		return out
+		return out;
 	}
-	
+
 	if(window["WebSocket"]) {
-		conn = new WebSocket("ws://" + document.location.host + "/ws/")
+		conn = new WebSocket("ws://" + document.location.host + "/ws/");
 		conn.onopen = function() {
-			conn.send("page " + document.location.pathname + '\r')
+			conn.send("page " + document.location.pathname + '\r');
 		}
 		conn.onclose = function() {
-			conn = false
+			conn = false;
 		}
 		conn.onmessage = function(event) {
-			//console.log("WS_Message:")
-			//console.log(event.data)
-			var messages = event.data.split('\r')
+			//console.log("WS_Message:");
+			//console.log(event.data);
+			var messages = event.data.split('\r');
 			for(var i = 0; i < messages.length; i++) {
-				//console.log("Message:")
-				//console.log(messages[i])
+				//console.log("Message:");
+				//console.log(messages[i]);
 				if(messages[i].startsWith("set ")) {
-					//msgblocks = messages[i].split(' ',3)
-					msgblocks = SplitN(messages[i]," ",3)
+					//msgblocks = messages[i].split(' ',3);
+					msgblocks = SplitN(messages[i]," ",3);
 					if(msgblocks.length < 3) {
-						continue
+						continue;
 					}
-					document.querySelector(msgblocks[1]).innerHTML = msgblocks[2]
+					document.querySelector(msgblocks[1]).innerHTML = msgblocks[2];
 				} else if(messages[i].startsWith("set-class ")) {
-					msgblocks = SplitN(messages[i]," ",3)
+					msgblocks = SplitN(messages[i]," ",3);
 					if(msgblocks.length < 3) {
-						continue
+						continue;
 					}
-					document.querySelector(msgblocks[1]).className = msgblocks[2]
+					document.querySelector(msgblocks[1]).className = msgblocks[2];
 				}
 			}
 		}
 	} else {
 		conn = false
 	}
-	
+
 	$(".open_edit").click(function(event){
 		//console.log("Clicked on edit");
 		event.preventDefault();
 		$(".hide_on_edit").hide();
 		$(".show_on_edit").show();
 	});
-	
+
 	$(".topic_item .submit_edit").click(function(event){
 		event.preventDefault();
 		$(".topic_name").html($(".topic_name_input").val());
 		$(".topic_content").html($(".topic_content_input").val());
 		$(".topic_status_e:not(.open_edit)").html($(".topic_status_input").val());
-		
+
 		$(".hide_on_edit").show();
 		$(".show_on_edit").hide();
-		
+
 		var topic_name_input = $('.topic_name_input').val();
 		var topic_status_input = $('.topic_status_input').val();
 		var topic_content_input = $('.topic_content_input').val();
@@ -158,31 +152,31 @@ $(document).ready(function(){
 		//console.log("Form Action: " + form_action);
 		$.ajax({
 			url: form_action,
+			type: "POST",
+			dataType: "json",
 			data: {
 				topic_name: topic_name_input,
 				topic_status: topic_status_input,
 				topic_content: topic_content_input,
 				topic_js: 1
-			},
-			type: "POST",
-			dataType: "json"
+			}
 		});
 	});
-	
+
 	$(".delete_item").click(function(event)
 	{
 		post_link(event);
 		var block = $(this).closest('.deletable_block');
 		block.remove();
 	});
-	
+
 	$(".edit_item").click(function(event)
 	{
 		event.preventDefault();
 		var block_parent = $(this).closest('.editable_parent');
 		var block = block_parent.find('.editable_block').eq(0);
 		block.html("<textarea style='width: 99%;' name='edit_item'>" + block.html() + "</textarea><br /><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit' type='submit'>Update</button></a>");
-		
+
 		$(".submit_edit").click(function(event)
 		{
 			event.preventDefault();
@@ -190,21 +184,21 @@ $(document).ready(function(){
 			var block = block_parent.find('.editable_block').eq(0);
 			var newContent = block.find('textarea').eq(0).val();
 			block.html(newContent);
-			
+
 			var form_action = $(this).closest('a').attr("href");
 			//console.log("Form Action: " + form_action);
 			$.ajax({ url: form_action, type: "POST", dataType: "json", data: { is_js: "1", edit_item: newContent }
 			});
 		});
 	});
-	
+
 	$(".edit_field").click(function(event)
 	{
 		event.preventDefault();
 		var block_parent = $(this).closest('.editable_parent');
 		var block = block_parent.find('.editable_block').eq(0);
 		block.html("<input name='edit_field' value='" + block.text() + "' type='text'/><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit' type='submit'>Update</button></a>");
-		
+
 		$(".submit_edit").click(function(event)
 		{
 			event.preventDefault();
@@ -212,7 +206,7 @@ $(document).ready(function(){
 			var block = block_parent.find('.editable_block').eq(0);
 			var newContent = block.find('input').eq(0).val();
 			block.html(newContent);
-			
+
 			var form_action = $(this).closest('a').attr("href");
 			//console.log("Form Action: " + form_action);
 			$.ajax({
@@ -223,25 +217,38 @@ $(document).ready(function(){
 			});
 		});
 	});
-	
+
 	$(".edit_fields").click(function(event)
 	{
 		event.preventDefault();
+		//console.log("clicked .edit_fields");
 		var block_parent = $(this).closest('.editable_parent');
+		//console.log(block_parent);
 		block_parent.find('.hide_on_edit').hide();
 		block_parent.find('.editable_block').show();
 		block_parent.find('.editable_block').each(function(){
 			var field_name = this.getAttribute("data-field");
 			var field_type = this.getAttribute("data-type");
-			if(field_type=="list") {
+			if(field_type=="list")
+			{
 				var field_value = this.getAttribute("data-value");
 				if(field_name in form_vars) var it = form_vars[field_name];
 				else var it = ['No','Yes'];
 				var itLen = it.length;
 				var out = "";
+				//console.log("Field Name '" + field_name + "'")
+				//console.log("Field Type",field_type)
+				//console.log("Field Value '" + field_value + "'")
 				for (var i = 0; i < itLen; i++){
-					if(field_value==i) sel = "selected ";
-					else sel = "";
+					//console.log("Field Possibility '" + it[i] + "'");
+					if(field_value == i || field_value == it[i]) {
+						sel = "selected ";
+						//console.log("Class List: ",this.classList)
+						this.classList.remove(field_name + '_' + it[i]);
+						//console.log("Removing " + field_name + '_' + it[i]);
+						//console.log(this.classList)
+						this.innerHTML = "";
+					} else sel = "";
 					out += "<option "+sel+"value='"+i+"'>"+it[i]+"</option>";
 				}
 				this.innerHTML = "<select data-field='"+field_name+"' name='"+field_name+"'>" + out + "</select>";
@@ -249,22 +256,35 @@ $(document).ready(function(){
 			else this.innerHTML = "<input name='"+field_name+"' value='" + this.textContent + "' type='text'/>";
 		});
 		block_parent.find('.show_on_edit').eq(0).show();
-		
+
+		// Remove any handlers already attached to the submitter
+		$(".submit_edit").unbind("click");
+
 		$(".submit_edit").click(function(event)
 		{
 			event.preventDefault();
+			//console.log("running .submit_edit event");
 			var out_data = {is_js: "1"}
 			var block_parent = $(this).closest('.editable_parent');
 			var block = block_parent.find('.editable_block').each(function(){
 				var field_name = this.getAttribute("data-field");
 				var field_type = this.getAttribute("data-type");
-				if(field_type == "list") var newContent = $(this).find('select :selected').text();
-				else var newContent = $(this).find('input').eq(0).val();
-				
-				this.innerHTML = newContent;
-				out_data[field_name] = newContent
+				if(field_type == "list") {
+					var newContent = $(this).find('select :selected').text();
+					this.classList.add(field_name + '_' + newContent);
+					this.innerHTML = "";
+				} else {
+					var newContent = $(this).find('input').eq(0).val();
+					this.innerHTML = newContent;
+				}
+				//console.log(".submit_edit");
+				//console.log("field_name",field_name);
+				//console.log("field_type",field_type);
+				//console.log("newContent",newContent);
+				this.setAttribute("data-value",newContent);
+				out_data[field_name] = newContent;
 			});
-			
+
 			var form_action = $(this).closest('a').attr("href");
 			//console.log("Form Action: " + form_action);
 			//console.log(out_data);
@@ -273,7 +293,7 @@ $(document).ready(function(){
 			block_parent.find('.show_on_edit').hide();
 		});
 	});
-	
+
 	$(".ip_item").each(function(){
 		var ip = this.textContent;
 		//console.log("IP: " + ip);
@@ -285,22 +305,22 @@ $(document).ready(function(){
 			};
 		}
 	});
-	
+
 	$(this).click(function() {
 		$(".selectedAlert").removeClass("selectedAlert");
 	});
-	
+
 	$(".menu_alerts").ready(function(){
 		load_alerts($(this));
 	});
-	
+
 	$(".menu_alerts").click(function(event) {
 		event.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
 		this.className += " selectedAlert";
 		load_alerts($(this));
 	});
-	
+
 	this.onkeyup = function(event){
 		if(event.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
 		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();

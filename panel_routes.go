@@ -28,7 +28,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	var cpustr, cpuColour string
 	perc2, err := cpu.Percent(time.Duration(time.Second),true)
 	if err != nil {
@@ -44,7 +44,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 			cpuColour = "stat_red"
 		}
 	}
-	
+
 	var ramstr, ramColour string
 	memres, err := mem.VirtualMemory()
 	if err != nil {
@@ -52,7 +52,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	} else {
 		total_count, total_unit := convert_byte_unit(float64(memres.Total))
 		used_count := convert_byte_in_unit(float64(memres.Total - memres.Available),total_unit)
-		
+
 		// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
 		//fmt.Println(used_count)
 		var totstr string
@@ -63,12 +63,12 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 			totstr = fmt.Sprintf("%.1f",total_count)
 		}
 		//fmt.Println(used_count)
-		
+
 		if used_count > total_count {
 			used_count = total_count
 		}
 		ramstr = fmt.Sprintf("%.1f",used_count) + " / " + totstr + total_unit
-		
+
 		ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
 		//fmt.Println(ramperc)
 		if ramperc < 50 {
@@ -79,7 +79,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 			ramColour = "stat_red"
 		}
 	}
-	
+
 	var postCount int
 	err = db.QueryRow("select count(*) from replies where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&postCount)
 	if err != nil && err != sql.ErrNoRows {
@@ -87,7 +87,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	var postInterval string = "day"
-	
+
 	var postColour string
 	if postCount > 25 {
 		postColour = "stat_green"
@@ -96,7 +96,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	} else {
 		postColour = "stat_red"
 	}
-	
+
 	var topicCount int
 	err = db.QueryRow("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&topicCount)
 	if err != nil && err != sql.ErrNoRows {
@@ -104,7 +104,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	var topicInterval string = "day"
-	
+
 	var topicColour string
 	if topicCount > 8 {
 		topicColour = "stat_green"
@@ -113,7 +113,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	} else {
 		topicColour = "stat_red"
 	}
-	
+
 	var reportCount int
 	err = db.QueryRow("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now() and parentID = 1").Scan(&reportCount)
 	if err != nil && err != sql.ErrNoRows {
@@ -121,7 +121,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	var reportInterval string = "week"
-	
+
 	var newUserCount int
 	err = db.QueryRow("select count(*) from users where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&newUserCount)
 	if err != nil && err != sql.ErrNoRows {
@@ -129,18 +129,18 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	var newUserInterval string = "week"
-	
+
 	var gridElements []GridElement = []GridElement{
 		GridElement{"dash-version","v" + version.String(),0,"grid_istat stat_green","","","Gosora is up-to-date :)"},
 		GridElement{"dash-cpu","CPU: " + cpustr + "%",1,"grid_istat " + cpuColour,"","","The global CPU usage of this server"},
 		GridElement{"dash-ram","RAM: " + ramstr,2,"grid_istat " + ramColour,"","","The global RAM usage of this server"},
 	}
-	
+
 	if enable_websockets {
 		uonline := ws_hub.UserCount()
 		gonline := ws_hub.GuestCount()
 		totonline := uonline + gonline
-		
+
 		var onlineColour string
 		if totonline > 10 {
 			onlineColour = "stat_green"
@@ -149,7 +149,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		} else {
 			onlineColour = "stat_red"
 		}
-		
+
 		var onlineGuestsColour string
 		if gonline > 10 {
 			onlineGuestsColour = "stat_green"
@@ -158,7 +158,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		} else {
 			onlineGuestsColour = "stat_red"
 		}
-		
+
 		var onlineUsersColour string
 		if uonline > 5 {
 			onlineUsersColour = "stat_green"
@@ -167,28 +167,28 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 		} else {
 			onlineUsersColour = "stat_red"
 		}
-		
+
 		totonline, totunit := convert_friendly_unit(totonline)
 		uonline, uunit := convert_friendly_unit(uonline)
 		gonline, gunit := convert_friendly_unit(gonline)
-		
+
 		gridElements = append(gridElements, GridElement{"dash-totonline",strconv.Itoa(totonline) + totunit + " online",3,"grid_stat " + onlineColour,"","","The number of people who are currently online"})
 		gridElements = append(gridElements, GridElement{"dash-gonline",strconv.Itoa(gonline) + gunit + " guests online",4,"grid_stat " + onlineGuestsColour,"","","The number of guests who are currently online"})
 		gridElements = append(gridElements, GridElement{"dash-uonline",strconv.Itoa(uonline) + uunit + " users online",5,"grid_stat " + onlineUsersColour,"","","The number of logged-in users who are currently online"})
 	}
-	
+
 	gridElements = append(gridElements, GridElement{"dash-postsperday",strconv.Itoa(postCount) + " posts / " + postInterval,6,"grid_stat " + postColour,"","","The number of new posts over the last 24 hours"})
 	gridElements = append(gridElements, GridElement{"dash-topicsperday",strconv.Itoa(topicCount) + " topics / " + topicInterval,7,"grid_stat " + topicColour,"","","The number of new topics over the last 24 hours"})
 	gridElements = append(gridElements, GridElement{"dash-totonlineperday","20 online / day",8,"grid_stat stat_disabled","","","Coming Soon!"/*"The people online over the last 24 hours"*/})
-		
+
 	gridElements = append(gridElements, GridElement{"dash-searches","8 searches / week",9,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of searches over the last 7 days"*/})
 	gridElements = append(gridElements, GridElement{"dash-newusers",strconv.Itoa(newUserCount) + " new users / " + newUserInterval,10,"grid_stat","","","The number of new users over the last 7 days"})
 	gridElements = append(gridElements, GridElement{"dash-reports",strconv.Itoa(reportCount) + " reports / " + reportInterval,11,"grid_stat","","","The number of reports over the last 7 days"})
-		
+
 	gridElements = append(gridElements, GridElement{"dash-minperuser","2 minutes / user / week",12,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of number of minutes spent by each active user over the last 7 days"*/})
 	gridElements = append(gridElements, GridElement{"dash-visitorsperweek","2 visitors / week",13,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of unique visitors we've had over the last 7 days"*/})
 	gridElements = append(gridElements, GridElement{"dash-postsperuser","5 posts / user / week",14,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of posts made by each active user over the past week"*/})
-	
+
 	pi := PanelDashboardPage{"Control Panel Dashboard",user,noticeList,gridElements,nil}
 	templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
 }
@@ -202,16 +202,22 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	var forumList []interface{}
 	for _, forum := range forums {
 		if forum.Name != "" {
-			fadmin := ForumAdmin{forum.ID,forum.Name,forum.Active,forum.Preset,forum.TopicCount,preset_to_lang(forum.Preset),preset_to_emoji(forum.Preset)}
+			fadmin := ForumAdmin{forum.ID,forum.Name,forum.Active,forum.Preset,forum.TopicCount,preset_to_lang(forum.Preset)}
+			if fadmin.Preset == "" {
+				fadmin.Preset = "custom"
+			}
 			forumList = append(forumList,fadmin)
 		}
 	}
 	pi := Page{"Forum Manager",user,noticeList,forumList,nil}
-	templates.ExecuteTemplate(w,"panel-forums.html",pi)
+	err := templates.ExecuteTemplate(w,"panel-forums.html",pi)
+	if err != nil {
+		InternalError(err,w,r)
+	}
 }
 
 func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
@@ -223,17 +229,17 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form",w,r,user)
-		return          
+		return
 	}
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	var active bool
 	fname := r.PostFormValue("forum-name")
 	fpreset := strip_invalid_preset(r.PostFormValue("forum-preset"))
@@ -243,13 +249,13 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	} else {
 		active = false
 	}
-	
+
 	fid, err := create_forum(fname,active,fpreset)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	permmap_to_query(preset_to_permmap(fpreset),fid)
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
@@ -267,21 +273,21 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, sfid stri
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
 	}
-	
+
 	if !forum_exists(fid) {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	}
-	
+
 	confirm_msg := "Are you sure you want to delete the '" + forums[fid].Name + "' forum?"
 	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
-	
+
 	pi := Page{"Delete Forum",user,noticeList,tList,yousure}
 	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }
@@ -299,7 +305,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, sf
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
@@ -309,7 +315,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, sf
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	}
-	
+
 	err = delete_forum(fid)
 	if err != nil {
 		InternalError(err,w,r)
@@ -327,7 +333,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
@@ -337,7 +343,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string
 		LocalError("The forum you're trying to edit doesn't exist.",w,r,user)
 		return
 	}
-	
+
 	pi := Page{"Forum Editor",user,noticeList,tList,nil}
 	templates.ExecuteTemplate(w,"panel-forum-edit.html",pi)
 }
@@ -351,11 +357,11 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form",w,r,user)
-		return          
+		return
 	}
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
@@ -365,30 +371,30 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 	if is_js == "" {
 		is_js = "0"
 	}
-	
+
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
 		LocalErrorJSQ("The provided Forum ID is not a valid number.",w,r,user,is_js)
 		return
 	}
-	
-	forum_name := r.PostFormValue("forum-name")
-	forum_preset := strip_invalid_preset(r.PostFormValue("forum-preset"))
-	forum_active := r.PostFormValue("forum-active")
+
+	forum_name := r.PostFormValue("forum_name")
+	forum_preset := strip_invalid_preset(r.PostFormValue("forum_preset"))
+	forum_active := r.PostFormValue("forum_active")
     if !forum_exists(fid) {
 		LocalErrorJSQ("The forum you're trying to edit doesn't exist.",w,r,user,is_js)
 		return
 	}
-	
+
 	/*if forum_name == "" && forum_active == "" {
 		LocalErrorJSQ("You haven't changed anything!",w,r,user,is_js)
 		return
 	}*/
-	
+
 	if forum_name == "" {
 		forum_name = forums[fid].Name
 	}
-	
+
 	var active bool
 	if forum_active == "" {
 		active = forums[fid].Active
@@ -397,13 +403,13 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 	} else {
 		active = false
 	}
-	
+
 	_, err = update_forum_stmt.Exec(forum_name,active,forum_preset,fid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
-	
+
 	if forums[fid].Name != forum_name {
 		forums[fid].Name = forum_name
 	}
@@ -413,9 +419,9 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 	if forums[fid].Preset != forum_preset {
 		forums[fid].Preset = forum_preset
 	}
-	
+
 	permmap_to_query(preset_to_permmap(forum_preset),fid)
-	
+
 	if is_js == "0" {
 		http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 	} else {
@@ -432,7 +438,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	var settingList map[string]interface{} = make(map[string]interface{})
 	rows, err := db.Query("select name, content, type from settings")
 	if err != nil {
@@ -440,7 +446,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	defer rows.Close()
-	
+
 	var sname, scontent, stype string
 	for rows.Next() {
 		err := rows.Scan(&sname,&scontent,&stype)
@@ -448,7 +454,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 			InternalError(err,w,r)
 			return
 		}
-		
+
 		if stype == "list" {
 			llist := settingLabels[sname]
 			labels := strings.Split(llist,",")
@@ -472,7 +478,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	pi := Page{"Setting Manager",user,noticeList,tList,settingList}
 	templates.ExecuteTemplate(w,"panel-settings.html",pi)
 }
@@ -487,7 +493,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 		return
 	}
 	setting := Setting{sname,"","",""}
-	
+
 	err := db.QueryRow("select content, type from settings where name = ?", setting.Name).Scan(&setting.Content,&setting.Type)
 	if err == sql.ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
@@ -496,7 +502,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	var itemList []interface{}
 	if setting.Type == "list" {
 		llist, ok := settingLabels[setting.Name]
@@ -504,13 +510,13 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 			LocalError("The labels for this setting don't exist",w,r,user)
 			return
 		}
-		
+
 		conv, err := strconv.Atoi(setting.Content)
 		if err != nil {
 			LocalError("The value of this setting couldn't be converted to an integer",w,r,user)
 			return
 		}
-		
+
 		labels := strings.Split(llist,",")
 		for index, label := range labels {
 			itemList = append(itemList, OptionLabel{
@@ -520,7 +526,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 			})
 		}
 	}
-	
+
 	pi := Page{"Edit Setting",user,noticeList,itemList,setting}
 	templates.ExecuteTemplate(w,"panel-setting.html",pi)
 }
@@ -534,21 +540,21 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname stri
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form",w,r,user)
-		return          
+		return
 	}
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	var stype string
 	var sconstraints string
 	scontent := r.PostFormValue("setting-value")
-	
+
 	err = db.QueryRow("select name, type, constraints from settings where name = ?", sname).Scan(&sname, &stype, &sconstraints)
 	if err == sql.ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
@@ -557,7 +563,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname stri
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	if stype == "bool" {
 		if scontent == "on" || scontent == "1" {
 			scontent = "1"
@@ -565,13 +571,13 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname stri
 			scontent = "0"
 		}
 	}
-	
+
 	_, err = update_setting_stmt.Exec(scontent,sname)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	errmsg := parseSetting(sname, scontent, stype, sconstraints)
 	if errmsg != "" {
 		LocalError(errmsg,w,r,user)
@@ -589,12 +595,12 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	var pluginList []interface{}
 	for _, plugin := range plugins {
 		pluginList = append(pluginList,plugin)
 	}
-	
+
 	pi := Page{"Plugin Manager",user,noticeList,pluginList,nil}
 	templates.ExecuteTemplate(w,"panel-plugins.html",pi)
 }
@@ -612,20 +618,20 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	plugin, ok := plugins[uname]
 	if !ok {
 		LocalError("The plugin isn't registered in the system",w,r,user)
 		return
 	}
-	
+
 	var active bool
 	err := db.QueryRow("select active from plugins where uname = ?", uname).Scan(&active)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	if plugins[uname].Activate != nil {
 		err = plugins[uname].Activate()
 		if err != nil {
@@ -633,7 +639,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 			return
 		}
 	}
-	
+
 	has_plugin := err != sql.ErrNoRows
 	if has_plugin {
 		if active {
@@ -652,7 +658,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 			return
 		}
 	}
-	
+
 	log.Print("Activating plugin '" + plugin.Name + "'")
 	plugin.Active = true
 	plugins[uname] = plugin
@@ -669,18 +675,18 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, unam
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	if r.FormValue("session") != user.Session {
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	plugin, ok := plugins[uname]
 	if !ok {
 		LocalError("The plugin isn't registered in the system",w,r,user)
 		return
 	}
-	
+
 	var active bool
 	err := db.QueryRow("select active from plugins where uname = ?", uname).Scan(&active)
 	if err == sql.ErrNoRows {
@@ -690,7 +696,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, unam
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	if !active {
 		LocalError("The plugin you're trying to deactivate isn't active",w,r,user)
 		return
@@ -700,11 +706,11 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, unam
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	plugin.Active = false
 	plugins[uname] = plugin
 	plugins[uname].Deactivate()
-	
+
 	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
 }
 
@@ -717,7 +723,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	var userList []interface{}
 	rows, err := db.Query("select `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` from users")
 	if err != nil {
@@ -725,7 +731,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	defer rows.Close()
-	
+
 	for rows.Next() {
 		puser := User{ID: 0,}
 		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.Is_Super_Admin, &puser.Avatar)
@@ -733,7 +739,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 			InternalError(err,w,r)
 			return
 		}
-		
+
 		init_user_perms(&puser)
 		if puser.Avatar != "" {
 			if puser.Avatar[0] == '.' {
@@ -742,7 +748,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		} else {
 			puser.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(puser.ID),1)
 		}
-		
+
 		if groups[puser.Group].Tag != "" {
 			puser.Tag = groups[puser.Group].Tag
 		} else {
@@ -755,7 +761,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	pi := Page{"User Manager",user,noticeList,userList,nil}
 	err = templates.ExecuteTemplate(w,"panel-users.html",pi)
 	if err != nil {
@@ -768,19 +774,19 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
 	if !ok {
 		return
 	}
-	
+
 	// Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 	if !user.Is_Super_Mod || !user.Perms.EditUser {
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
 	}
-	
+
 	targetUser, err := users.CascadeGet(uid)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
@@ -789,12 +795,12 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	if targetUser.Is_Admin && !user.Is_Admin {
 		LocalError("Only administrators can edit the account of an administrator.",w,r,user)
 		return
 	}
-	
+
 	var groupList []interface{}
 	for _, group := range groups[1:] {
 		if !user.Perms.EditUserGroupAdmin && group.Is_Admin {
@@ -805,7 +811,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
 		}
 		groupList = append(groupList,group)
 	}
-	
+
 	pi := Page{"User Editor",user,noticeList,groupList,targetUser}
 	err = templates.ExecuteTemplate(w,"panel-user-edit.html",pi)
 	if err != nil {
@@ -826,13 +832,13 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid 
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
 	}
-	
+
 	targetUser, err := users.CascadeGet(uid)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
@@ -841,18 +847,18 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid 
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	if targetUser.Is_Admin && !user.Is_Admin {
 		LocalError("Only administrators can edit the account of an administrator.",w,r,user)
 		return
 	}
-	
+
 	newname := html.EscapeString(r.PostFormValue("user-name"))
 	if newname == "" {
 		LocalError("You didn't put in a username.",w,r,user)
 		return
 	}
-	
+
 	newemail := html.EscapeString(r.PostFormValue("user-email"))
 	if newemail == "" {
 		LocalError("You didn't put in an email address.",w,r,user)
@@ -862,24 +868,24 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid 
 		LocalError("You need the EditUserEmail permission to edit the email address of a user.",w,r,user)
 		return
 	}
-	
+
 	newpassword := r.PostFormValue("user-password")
 	if newpassword != "" && !user.Perms.EditUserPassword {
 		LocalError("You need the EditUserPassword permission to edit the password of a user.",w,r,user)
 		return
 	}
-	
+
 	newgroup, err := strconv.Atoi(r.PostFormValue("user-group"))
 	if err != nil {
 		LocalError("The provided GroupID is not a valid number.",w,r,user)
 		return
 	}
-	
+
 	if (newgroup > groupCapCount) || (newgroup < 0) || groups[newgroup].Name=="" {
 		LocalError("The group you're trying to place this user in doesn't exist.",w,r,user)
 		return
 	}
-	
+
 	if !user.Perms.EditUserGroupAdmin && groups[newgroup].Is_Admin {
 		LocalError("You need the EditUserGroupAdmin permission to assign someone to an administrator group.",w,r,user)
 		return
@@ -888,23 +894,23 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid 
 		LocalError("You need the EditUserGroupAdmin permission to assign someone to a super mod group.",w,r,user)
 		return
 	}
-	
+
 	_, err = update_user_stmt.Exec(newname,newemail,newgroup,targetUser.ID)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	if newpassword != "" {
 		SetPassword(targetUser.ID,newpassword)
 	}
-	
+
 	err = users.Load(targetUser.ID)
 	if err != nil {
 		LocalError("This user no longer exists!",w,r,user)
 		return
 	}
-	
+
 	http.Redirect(w,r,"/panel/users/edit/" + strconv.Itoa(targetUser.ID),http.StatusSeeOther)
 }
 
@@ -917,37 +923,37 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	var groupList []interface{}
 	for _, group := range groups[1:] {
 		var rank string
-		var rank_emoji string
+		var rank_class string
 		var can_edit bool
 		var can_delete bool = false
-		
+
 		if group.Is_Admin {
 			rank = "Admin"
-			rank_emoji = "👑"
+			rank_class = "admin"
 		} else if group.Is_Mod {
 			rank = "Mod"
-			rank_emoji = "👮"
+			rank_class = "mod"
 		} else if group.Is_Banned {
 			rank = "Banned"
-			rank_emoji = "⛓️"
+			rank_class = "banned"
 		} else if group.ID == 6 {
 			rank = "Guest"
-			rank_emoji = "👽"
+			rank_class = "guest"
 		} else {
 			rank = "Member"
-			rank_emoji = "👪"
+			rank_class = "member"
 		}
-		
+
 		can_edit = user.Perms.EditGroup && (!group.Is_Admin || user.Perms.EditGroupAdmin) && (!group.Is_Mod || user.Perms.EditGroupSuperMod)
-		
-		groupList = append(groupList, GroupAdmin{group.ID,group.Name,rank,rank_emoji,can_edit,can_delete})
+
+		groupList = append(groupList, GroupAdmin{group.ID,group.Name,rank,rank_class,can_edit,can_delete})
 	}
 	//fmt.Printf("%+v\n", groupList)
-	
+
 	pi := Page{"Group Manager",user,noticeList,groupList,nil}
 	templates.ExecuteTemplate(w,"panel-groups.html",pi)
 }
@@ -961,19 +967,19 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
 		LocalError("The Group ID is not a valid integer.",w,r,user)
 		return
 	}
-	
+
 	if !group_exists(gid) {
 		//fmt.Println("aaaaa monsters")
 		NotFound(w,r)
 		return
 	}
-	
+
 	group := groups[gid]
 	if group.Is_Admin && !user.Perms.EditGroupAdmin {
 		LocalError("You need the EditGroupAdmin permission to edit an admin group.",w,r,user)
@@ -983,7 +989,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string
 		LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.",w,r,user)
 		return
 	}
-	
+
 	var rank string
 	if group.Is_Admin {
 		rank = "Admin"
@@ -996,9 +1002,9 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string
 	} else {
 		rank = "Member"
 	}
-	
+
 	disable_rank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
-	
+
 	pi := EditGroupPage{"Group Editor",user,noticeList,group.ID,group.Name,group.Tag,rank,disable_rank,nil}
 	err = templates.ExecuteTemplate(w,"panel-group-edit.html",pi)
 	if err != nil {
@@ -1015,19 +1021,19 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid 
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
 		LocalError("The Group ID is not a valid integer.",w,r,user)
 		return
 	}
-	
+
 	if !group_exists(gid) {
 		//fmt.Println("aaaaa monsters")
 		NotFound(w,r)
 		return
 	}
-	
+
 	group := groups[gid]
 	if group.Is_Admin && !user.Perms.EditGroupAdmin {
 		LocalError("You need the EditGroupAdmin permission to edit an admin group.",w,r,user)
@@ -1037,7 +1043,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid 
 		LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.",w,r,user)
 		return
 	}
-	
+
 	var localPerms []NameLangToggle
 	localPerms = append(localPerms, NameLangToggle{"ViewTopic",GetLocalPermPhrase("ViewTopic"),group.Perms.ViewTopic})
 	localPerms = append(localPerms, NameLangToggle{"LikeItem",GetLocalPermPhrase("LikeItem"),group.Perms.LikeItem})
@@ -1050,7 +1056,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid 
 	localPerms = append(localPerms, NameLangToggle{"DeleteReply",GetLocalPermPhrase("DeleteReply"),group.Perms.DeleteReply})
 	localPerms = append(localPerms, NameLangToggle{"PinTopic",GetLocalPermPhrase("PinTopic"),group.Perms.PinTopic})
 	localPerms = append(localPerms, NameLangToggle{"CloseTopic",GetLocalPermPhrase("CloseTopic"),group.Perms.CloseTopic})
-	
+
 	var globalPerms []NameLangToggle
 	globalPerms = append(globalPerms, NameLangToggle{"BanUsers",GetGlobalPermPhrase("BanUsers"),group.Perms.BanUsers})
 	globalPerms = append(globalPerms, NameLangToggle{"ActivateUsers",GetGlobalPermPhrase("ActivateUsers"),group.Perms.ActivateUsers})
@@ -1071,7 +1077,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid 
 	globalPerms = append(globalPerms, NameLangToggle{"ManagePlugins",GetGlobalPermPhrase("ManagePlugins"),group.Perms.ManagePlugins})
 	globalPerms = append(globalPerms, NameLangToggle{"ViewAdminLogs",GetGlobalPermPhrase("ViewAdminLogs"),group.Perms.ViewAdminLogs})
 	globalPerms = append(globalPerms, NameLangToggle{"ViewIPs",GetGlobalPermPhrase("ViewIPs"),group.Perms.ViewIPs})
-	
+
 	pi := EditGroupPermsPage{"Group Editor",user,noticeList,group.ID,group.Name,localPerms,globalPerms,nil}
 	err = templates.ExecuteTemplate(w,"panel-group-edit-perms.html",pi)
 	if err != nil {
@@ -1092,19 +1098,19 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
 		LocalError("The Group ID is not a valid integer.",w,r,user)
 		return
 	}
-	
+
 	if !group_exists(gid) {
 		//fmt.Println("aaaaa monsters")
 		NotFound(w,r)
 		return
 	}
-	
+
 	group := groups[gid]
 	if group.Is_Admin && !user.Perms.EditGroupAdmin {
 		LocalError("You need the EditGroupAdmin permission to edit an admin group.",w,r,user)
@@ -1114,7 +1120,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 		LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.",w,r,user)
 		return
 	}
-	
+
 	gname := r.FormValue("group-name")
 	if gname == "" {
 		LocalError("The group name can't be left blank.",w,r,user)
@@ -1122,7 +1128,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 	}
 	gtag := r.FormValue("group-tag")
 	rank := r.FormValue("group-type")
-	
+
 	var original_rank string
 	if group.Is_Admin {
 		original_rank = "Admin"
@@ -1135,7 +1141,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 	} else {
 		original_rank = "Member"
 	}
-	
+
 	group_update_mutex.Lock()
 	defer group_update_mutex.Unlock()
 	if rank != original_rank {
@@ -1143,14 +1149,14 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 			LocalError("You need the EditGroupGlobalPerms permission to change the group type.",w,r,user)
 			return
 		}
-		
+
 		switch(rank) {
 			case "Admin":
 				if !user.Perms.EditGroupAdmin {
 					LocalError("You need the EditGroupAdmin permission to designate this group as an admin group.",w,r,user)
 					return
 				}
-				
+
 				_, err = update_group_rank_stmt.Exec(1,1,0,gid)
 				if err != nil {
 					InternalError(err,w,r)
@@ -1164,7 +1170,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 					LocalError("You need the EditGroupSuperMod permission to designate this group as a super-mod group.",w,r,user)
 					return
 				}
-				
+
 				_, err = update_group_rank_stmt.Exec(0,1,0,gid)
 				if err != nil {
 					InternalError(err,w,r)
@@ -1199,7 +1205,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 				return
 		}
 	}
-	
+
 	_, err = update_group_stmt.Exec(gname,gtag,gid)
 	if err != nil {
 		InternalError(err,w,r)
@@ -1207,7 +1213,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 	}
 	groups[gid].Name = gname
 	groups[gid].Tag = gtag
-	
+
 	http.Redirect(w,r,"/panel/groups/edit/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
@@ -1224,19 +1230,19 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
 		LocalError("The Group ID is not a valid integer.",w,r,user)
 		return
 	}
-	
+
 	if !group_exists(gid) {
 		//fmt.Println("aaaaa monsters")
 		NotFound(w,r)
 		return
 	}
-	
+
 	group := groups[gid]
 	if group.Is_Admin && !user.Perms.EditGroupAdmin {
 		LocalError("You need the EditGroupAdmin permission to edit an admin group.",w,r,user)
@@ -1246,7 +1252,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.",w,r,user)
 		return
 	}
-	
+
 	//var lpmap map[string]bool = make(map[string]bool)
 	var pmap map[string]bool = make(map[string]bool)
 	if user.Perms.EditGroupLocalPerms {
@@ -1256,7 +1262,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 			pmap[perm] = (pvalue == "1")
 		}
 	}
-	
+
 	//var gpmap map[string]bool = make(map[string]bool)
 	if user.Perms.EditGroupGlobalPerms {
 		gplist := GlobalPermList
@@ -1265,25 +1271,25 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 			pmap[perm] = (pvalue == "1")
 		}
 	}
-	
+
 	pjson, err := json.Marshal(pmap)
 	if err != nil {
 		LocalError("Unable to marshal the data",w,r,user)
 		return
 	}
-	
+
 	_, err = update_group_perms_stmt.Exec(pjson,gid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	err = rebuild_group_permissions(gid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	http.Redirect(w,r,"/panel/groups/edit/perms/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
@@ -1300,14 +1306,14 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	group_name := r.PostFormValue("group-name")
 	if group_name == "" {
 		LocalError("You need a name for this group!",w,r,user)
 		return
 	}
 	group_tag := r.PostFormValue("group-tag")
-	
+
 	var is_admin, is_mod, is_banned bool
 	if user.Perms.EditGroupGlobalPerms {
 		group_type := r.PostFormValue("group-type")
@@ -1328,7 +1334,7 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
 			is_banned = true
 		}
 	}
-	
+
 	gid, err := create_group(group_name, group_tag, is_admin, is_mod, is_banned)
 	if err != nil {
 		InternalError(err,w,r)
@@ -1347,7 +1353,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	var pThemeList, vThemeList []Theme
 	for _, theme := range themes {
 		if theme.HideFromThemes {
@@ -1358,9 +1364,9 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 		} else {
 			vThemeList = append(vThemeList,theme)
 		}
-		
+
 	}
-	
+
 	pi := ThemesPage{"Theme Manager",user,noticeList,pThemeList,vThemeList,nil}
 	err := templates.ExecuteTemplate(w,"panel-themes.html",pi)
 	if err != nil {
@@ -1381,7 +1387,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 		SecurityError(w,r,user)
 		return
 	}
-	
+
 	theme, ok := themes[uname]
 	if !ok {
 		LocalError("The theme isn't registered in the system",w,r,user)
@@ -1391,14 +1397,14 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 		LocalError("You must not enable this theme",w,r,user)
 		return
 	}
-	
+
 	var isDefault bool
 	err := db.QueryRow("select `default` from `themes` where `uname` = ?", uname).Scan(&isDefault)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	has_theme := err != sql.ErrNoRows
 	if has_theme {
 		if isDefault {
@@ -1417,17 +1423,17 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 			return
 		}
 	}
-	
+
 	_, err = update_theme_stmt.Exec(0,defaultTheme)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	log.Print("Setting theme '" + theme.Name + "' as the default theme")
 	theme.Active = true
 	themes[uname] = theme
-	
+
 	dTheme, ok := themes[defaultTheme]
 	if !ok {
 		InternalError(errors.New("The default theme is missing"),w,r)
@@ -1435,12 +1441,12 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 	}
 	dTheme.Active = false
 	themes[defaultTheme] = dTheme
-	
+
 	defaultTheme = uname
 	reset_template_overrides()
 	add_theme_static_files(uname)
 	map_theme_templates(theme)
-	
+
 	http.Redirect(w,r,"/panel/themes/",http.StatusSeeOther)
 }
 
@@ -1453,14 +1459,14 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
-	
+
 	rows, err := db.Query("select action, elementID, elementType, ipaddress, actorID, doneAt from moderation_logs")
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 	defer rows.Close()
-	
+
 	var logs []Log
 	var action, elementType, ipaddress, doneAt string
 	var elementID, actorID int
@@ -1470,12 +1476,12 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
 			InternalError(err,w,r)
 			return
 		}
-		
+
 		actor, err := users.CascadeGet(actorID)
 		if err != nil {
 			actor = &User{Name:"Unknown"}
 		}
-		
+
 		switch(action) {
 			case "lock":
 				topic, err := topics.CascadeGet(elementID)
@@ -1539,7 +1545,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	pi := LogsPage{"Moderation Logs",user,noticeList,logs,nil}
 	err = templates.ExecuteTemplate(w,"panel-modlogs.html",pi)
 	if err != nil {

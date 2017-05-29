@@ -1,18 +1,19 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
+
 <div class="colstack_right">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem rowhead"><a>Groups</a></div>
 	</div>
-	<div class="colstack_item">
+	<div id="panel_groups" class="colstack_item">
 		{{range .ItemList}}
-		<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
-			<a href="/panel/groups/edit/{{.ID}}" style="font-size: 20px;position:relative;top: -2px;text-transform: none;">{{.Name}}</a>
-			<span style="float: right;">
-				{{if .RankEmoji}}<a class="username" title="{{.Rank}}">{{.RankEmoji}}</a>
-				{{else}}<span class="username">{{.Rank}}</span>{{end}}
-				
-				{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="username">Edit</a>{{end}}
+		<div class="rowitem editable_parent">
+			<a href="/panel/groups/edit/{{.ID}}" class="panel_upshift">{{.Name}}</a>
+			<span class="panel_floater">
+				{{if .RankClass}}<a class="panel_tag panel_rank_tag panel_rank_tag_{{.RankClass}}" title="{{.Rank}}"></a>
+				{{else}}<span class="panel_tag">{{.Rank}}</span>{{end}}
+
+				{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="panel_tag panel_right_button">Edit</a>{{end}}
 			</span>
 		</div>
 		{{end}}
@@ -23,11 +24,11 @@
 	<div class="colstack_item">
 		<form action="/panel/groups/create/?session={{.CurrentUser.Session}}" method="post">
 			<div class="formrow">
-				<div class="formitem"><a>Name</a></div>
+				<div class="formitem formlabel"><a>Name</a></div>
 				<div class="formitem"><input name="group-name" type="text" /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem"><a>Type</a></div>
+				<div class="formitem formlabel"><a>Type</a></div>
 				<div class="formitem">
 					<select name="group-type"{{if not .CurrentUser.Perms.EditGroupGlobalPerms}} disabled{{end}}>
 						<option selected>Member</option>
@@ -38,7 +39,7 @@
 				</div>
 			</div>
 			<div class="formrow">
-				<div class="formitem"><a>Tag</a></div>
+				<div class="formitem formlabel"><a>Tag</a></div>
 				<div class="formitem"><input name="group-tag" type="text" /></div>
 			</div>
 			<div class="formrow">

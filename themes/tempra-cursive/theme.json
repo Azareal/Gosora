@@ -1,10 +1,10 @@
 {
 	"Name": "tempra-cursive",
 	"FriendlyName": "Tempra Cursive",
-	"Version": "0.0.1",
+	"Version": "0.1.0-dev",
 	"Creator": "Azareal",
 	"FullImage": "tempra-cursive.png",
 	"ForkOf": "tempra-simple",
-	"Tag": "🏗️",
-	"MobileFriendly": true
+	"MobileFriendly": true,
+	"URL": "github.com/Azareal/Gosora"
 }
