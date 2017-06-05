@@ -53,12 +53,7 @@ li {
 }
 li:first-child { border-left: 1px solid #7a7a7a; }
 
-li a {
-	color: white;
-	text-decoration: none;
-}
-
-li:hover a, li a:hover, li a:link, li a:visited {
+li a, li:hover a, li a:hover, li a:link, li a:visited {
 	color: white;
 	text-decoration: none;
 }
@@ -97,9 +92,7 @@ li:hover {
 	opacity: 0.8;
 	text-align: center;
 }
-.menu_alerts .alert_counter:empty {
-	display: none;
-}
+.menu_alerts .alert_counter:empty { display: none; }
 
 .selectedAlert {
 	background: white;
@@ -110,12 +103,8 @@ li:hover {
 	color: black;
 	font-weight: bold;
 }
-.selectedAlert .alert_counter {
-	display: none;
-}
-.menu_alerts .alertList {
-	display: none;
-}
+.selectedAlert .alert_counter { display: none; }
+.menu_alerts .alertList { display: none; }
 .selectedAlert .alertList {
 	position: absolute;
 	top: 41px;
@@ -152,9 +141,7 @@ li:hover {
 	width: 100%;
 	color: black;
 }
-.alertItem .text.smaller {
-	font-size: 9px;
-}
+.alertItem .text.smaller { font-size: 9px; }
 
 #footer {
 	clear: left;
@@ -197,6 +184,14 @@ hr { color: silver; border: 1px solid silver; }
 }
 .rowitem:not(:last-child) { border-bottom: 1px dotted #ccc; }
 .rowblock:first-of-type { margin-top: 8px; }
+
+.datarow {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+.rowsmall {
+	font-size:12px;
+}
 
 .rowhead, .colhead {
 	background: #ce2424;
@@ -265,8 +260,7 @@ hr { color: silver; border: 1px solid silver; }
 	word-wrap: break-word;
 }
 .colstack_head { margin-bottom: 0px; }
-.colstack_left:empty { display: none; }
-.colstack_right:empty { display: none; }
+.colstack_left:empty, .colstack_right:empty { display: none; }
 
 .colstack_grid {
 	display: grid;
@@ -529,9 +523,7 @@ blockquote p {
 	padding-bottom: 0;
 	width: 100%;
 }
-.user_content.nobuttons {
-	min-height: 168px;
-}
+.user_content.nobuttons { min-height: 168px; }
 
 .button_container {
 	border-top: solid 1px #eaeaea;
@@ -560,26 +552,14 @@ blockquote p {
 	border-left: solid 1px #eaeaea;
 }
 
-.like_label:before {
-	content: "😀";
-}
-.edit_label:before {
-	content: "🖊️";
-}
-.trash_label:before {
-	content: "🗑️";
-}
-.flag_label:before {
-	content: "🚩";
-}
+.like_label:before { content: "😀"; }
+.edit_label:before { content: "🖊️"; }
+.trash_label:before { content: "🗑️"; }
+.flag_label:before { content: "🚩"; }
 
-.mod_button {
-	margin-right: 4px;
-}
+.mod_button { margin-right: 4px; }
 
-.post_item:not(.simple) {
-	background-color: #eaeaea;
-}
+.post_item:not(.simple) { background-color: #eaeaea; }
 .post_item {
 	background-color: #eaeaea;
 	padding-top: 4px;
@@ -634,9 +614,7 @@ blockquote p {
 	box-shadow:0 1px 2px rgba(0,0,0,.1);
 }
 
-.action_item .userinfo {
-	display: none;
-}
+.action_item .userinfo { display: none; }
 .action_item .content_container {
 	min-height: auto;
 	padding: 15px;
@@ -690,73 +668,40 @@ blockquote p {
 	font-size: 14px;
 }
 
-.panel_floater {
-	float: right;
-}
-#panel_groups > .rowitem > .panel_floater {
-	float: none;
-}
-#panel_groups > .rowitem > .panel_floater > .panel_right_button {
-	float: right;
-}
-#panel_forums > .rowitem > .panel_floater {
-	float: none;
-}
-#panel_forums > .rowitem > .panel_floater > .panel_buttons {
-	float: right;
-}
+.panel_floater { float: right; }
+#panel_groups > .rowitem > .panel_floater { float: none; }
+#panel_groups > .rowitem > .panel_floater > .panel_right_button { float: right; }
+#panel_forums > .rowitem > .panel_floater { float: none; }
+#panel_forums > .rowitem > .panel_floater > .panel_buttons { float: right; }
 
 .panel_rank_tag, .forum_preset, .forum_active {
 	float: none;
 	color: #202020 !important;
 	font-size: 11px;
 }
-.panel_rank_tag_admin:before {
-	content: "Admins";
-}
-.panel_rank_tag_mod:before {
-	content: "Mods";
-}
-.panel_rank_tag_banned:before {
-	content: "Banned";
-}
-.panel_rank_tag_guest:before {
-	content: "Guests";
-}
-.panel_rank_tag_member:before {
-	content: "Members";
-}
+.panel_rank_tag_admin:before { content: "Admins"; }
+.panel_rank_tag_mod:before { content: "Mods"; }
+.panel_rank_tag_banned:before { content: "Banned"; }
+.panel_rank_tag_guest:before { content: "Guests"; }
+.panel_rank_tag_member:before { content: "Members"; }
 
-.forum_preset_announce:after {
-	content: "Announcements";
-}
-.forum_preset_members:after {
-	content: "Member Only";
-}
-.forum_preset_staff:after {
-	content: "Staff Only";
-}
-.forum_preset_admins:after {
-	content: "Admin Only";
-}
-.forum_preset_archive:after {
-	content: "Archive";
-}
-.forum_preset_all:after {
-	content: "Public";
-}
-.forum_preset_custom, .forum_preset_ {
-	display: none !important;
-}
-.forum_active_Hide:before {
-	content: "Hidden";
-}
-.forum_active_Hide + .forum_preset:before {
-	content: " | ";
-}
-.forum_active_Show {
-	display: none !important;
-}
+.forum_preset_announce:after { content: "Announcements"; }
+.forum_preset_members:after { content: "Member Only"; }
+.forum_preset_staff:after { content: "Staff Only"; }
+.forum_preset_admins:after { content: "Admin Only"; }
+.forum_preset_archive:after { content: "Archive"; }
+.forum_preset_all:after { content: "Public"; }
+.forum_preset_custom, .forum_preset_ { display: none !important; }
+.forum_active_Hide:before { content: "Hidden"; }
+.forum_active_Hide + .forum_preset:before { content: " | "; }
+.forum_active_Show { display: none !important; }
+
+.perm_preset_no_access:before { content: "No Access"; color: maroon; }
+.perm_preset_read_only:before { content: "Read Only"; color: green; }
+.perm_preset_can_post:before { content: "Can Post"; color: green; }
+.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
+.perm_preset_custom:before { content: "Custom"; color: black; }
+.perm_preset_default:before { content: "Default"; }
 
 /* Responsive Layout */
 /* Anything that isn't a small mobile */
@@ -840,9 +785,7 @@ blockquote p {
 	}
 
 	.rowblock { border-left: none; border-right: none; border-bottom: none; }
-	.rowitem { border-left: none; border-right: none; }
-	.rowhead { border-left: none; border-right: none; }
-	.tbody { border-left: none; border-right: none; }
+	.rowitem, .rowhead, .tbody { border-left: none; border-right: none; }
 }
 
 @media(max-width: 620px) {
@@ -1000,9 +943,7 @@ blockquote p {
 		border: 1px solid rgba(90,90,90,0.75);
 		transition: transform 0.7s;
 	}
-	ul:hover {
-		transform: rotateX(-15deg);
-	}
+	ul:hover { transform: rotateX(-15deg); }
 
 	li {
 		font-size: 15px;
@@ -1055,23 +996,13 @@ blockquote p {
 }
 
 @media (min-width: 1603px) {
-	#back {
-		width: 1548px;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
+	#back { width: 1548px; }
 	#main { width: 1250px; }
 	#main:not(.shrink_main) { width: calc(100% - 30px); }
 }
 
 @media (min-width: 2400px) {
-	#back {
-		width: 2000px;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
+	#back { width: 2000px; }
 	#main { width: 1690px; }
 	#main:not(.shrink_main) { width: calc(100% - 30px); }
 	.index_category {
@@ -1089,6 +1020,5 @@ blockquote p {
 	#main:not(.shrink_main) { width: calc(100% - 30px); }
 	.index_category { width: 1230px; }
 	.index_category:only-child { width: 100%; }
-
 	.right_sidebar { width: 350px; }
 }

@@ -8,10 +8,17 @@
 	<div class="rowitem rowhead"><a>{{.Title}}</a>
     {{if ne .CurrentUser.ID 0}}{{if not .CurrentUser.Perms.CreateTopic}}<span class='username head_tag_upshift' title='No Permissions'>&#x1F512;&#xFE0E</span>{{else}}<a href="/topics/create/{{.Forum.ID}}" class='username head_tag_upshift'>New Topic</a>{{end}}{{end}}</div>
 </div>
-<div class="rowblock">
-	{{range .ItemList}}<div class="rowitem passive" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{if .Sticky}}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
-		<a href="/topic/{{.ID}}">{{.Title}}</a> {{if .Is_Closed}}<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;position:relative;top:-5px;margin-left:8px;">&#x1F512;&#xFE0E</span>{{end}}
-		<a style="float: right;font-size:12px;">{{.LastReplyAt}}</a>
+<div id="forum_topic_list" class="rowblock topic_list">
+	{{range .ItemList}}<div class="rowitem passive datarow" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{if .Sticky}}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
+		<span class="rowsmall" style="float: right;">
+			<span class="replyCount">{{.PostCount}} replies</span><br />
+			<span class="lastReplyAt">{{.LastReplyAt}}</span>
+		</span>
+		<span>
+			<a class="rowtopic" href="/topic/{{.ID}}">{{.Title}}</a>
+			<br /><a class="rowsmall" href="/user/{{.CreatedBy}}">Starter: {{.CreatedByName}}</a>
+			{{if .Is_Closed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E{{end}}</span>
+		</span>
 	</div>
 	{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
 </div>

@@ -10,10 +10,11 @@
 	<div class="rowitem passive">
 		<a class="profile_menu_item">Add Friend</a>
 	</div>
-	<div class="rowitem passive"
-		{{if (.CurrentUser.Is_Super_Mod) and not (.ProfileOwner.Is_Super_Mod) }}
-		{{if .ProfileOwner.Is_Banned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="username">Unban</a>{{else}}<a href="/users/ban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="username">Ban</a>{{end}}
-		{{end}}
+	{{if (.CurrentUser.Is_Super_Mod) and not (.ProfileOwner.Is_Super_Mod) }}<div class="rowitem passive">
+		{{if .ProfileOwner.Is_Banned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Unban</a>
+		{{else}}<a href="/users/ban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Ban</a>{{end}}
+	</div>{{end}}
+	<div class="rowitem passive">
 		<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item">Report</a>
 	</div>
 </div>

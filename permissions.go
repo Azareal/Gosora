@@ -6,6 +6,7 @@ import "sync"
 import "strconv"
 import "encoding/json"
 
+var permupdate_mutex sync.Mutex
 var BlankPerms Perms
 var BlankForumPerms ForumPerms
 var GuestPerms Perms
@@ -50,12 +51,6 @@ var GlobalPermList []string = []string{
 	"ViewIPs",
 }
 
-/*type PermMeta struct
-{
-	Name string
-	Type int // 0: global, 1: local
-}*/
-
 // Permission Structure: ActionComponent[Subcomponent]Flag
 type Perms struct
 {
@@ -73,7 +68,7 @@ type Perms struct
 	EditGroupGlobalPerms bool
 	EditGroupSuperMod bool
 	EditGroupAdmin bool
-	ManageForums bool // This could be local, albeit limited for per-forum managers
+	ManageForums bool // This could be local, albeit limited for per-forum managers?
 	EditSettings bool
 	ManageThemes bool
 	ManagePlugins bool
@@ -259,7 +254,6 @@ func preset_to_permmap(preset string) (out map[string]ForumPerms) {
 	return out
 }
 
-var permupdate_mutex sync.Mutex
 func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 	permupdate_mutex.Lock()
 	defer permupdate_mutex.Unlock()
@@ -374,6 +368,59 @@ func build_forum_permissions() error {
 	return nil
 }
 
+func forum_perms_to_group_forum_preset(fperms ForumPerms) string {
+	if !fperms.Overrides {
+		return "default"
+	}
+	if !fperms.ViewTopic {
+		return "no_access"
+	}
+	var can_post bool = (fperms.LikeItem && fperms.CreateTopic && fperms.CreateReply)
+	var can_moderate bool = (can_post && fperms.EditTopic && fperms.DeleteTopic && fperms.EditReply && fperms.DeleteReply && fperms.PinTopic && fperms.CloseTopic)
+	if can_moderate {
+		return "can_moderate"
+	}
+	if (fperms.EditTopic || fperms.DeleteTopic || fperms.EditReply || fperms.DeleteReply || fperms.PinTopic || fperms.CloseTopic) {
+		if !can_post {
+			return "custom"
+		}
+		return "quasi_mod"
+	}
+
+	if can_post {
+		return "can_post"
+	}
+	if fperms.ViewTopic && !fperms.LikeItem && !fperms.CreateTopic && !fperms.CreateReply {
+		return "read_only"
+	}
+	return "custom"
+}
+
+func group_forum_preset_to_forum_perms(preset string) (fperms ForumPerms, changed bool) {
+	switch(preset) {
+		case "read_only":
+			return ReadForumPerms, true
+		case "can_post":
+			return ReadWriteForumPerms, true
+		case "can_moderate":
+			return AllForumPerms, true
+		case "no_access":
+			return ForumPerms{Overrides: true}, true
+		case "default":
+			return BlankForumPerms, true
+		//case "custom": return fperms, false
+	}
+	return fperms, false
+}
+
+func strip_invalid_group_forum_preset(preset string) string {
+	switch(preset) {
+	case "read_only","can_post","can_moderate","no_access","default","custom":
+			return preset
+	}
+	return ""
+}
+
 func strip_invalid_preset(preset string) string {
 	switch(preset) {
 		case "all","announce","members","staff","admins","archive","custom":
@@ -395,18 +442,6 @@ func preset_to_lang(preset string) string {
 	}
 	return ""
 }
-
-/*func preset_to_emoji(preset string) string {
-	switch(preset) {
-		case "all": return ""//return "Everyone"
-		case "announce": return "📣"
-		case "members": return "👪"
-		case "staff": return "👮"
-		case "admins": return "👑"
-		case "archive": return "☠️"
-	}
-	return ""
-}*/
 
 func rebuild_group_permissions(gid int) error {
 	var permstr []byte

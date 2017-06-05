@@ -120,6 +120,26 @@ type EditGroupPage struct
 	ExtData interface{}
 }
 
+type GroupForumPermPreset struct
+{
+	Group Group
+	Preset string
+}
+
+type EditForumPage struct
+{
+	Title string
+	CurrentUser User
+	NoticeList []string
+	ID int
+	Name string
+	Desc string
+	Active bool
+	Preset string
+	Groups []GroupForumPermPreset
+	ExtData interface{}
+}
+
 type NameLangPair struct
 {
 	Name string
@@ -318,7 +338,7 @@ func shortcode_to_unicode(msg string) string {
 	msg = strings.Replace(msg,":frowning2:","☹️",-1)
 	msg = strings.Replace(msg,":information_source:","ℹ️",-1)
 	msg = strings.Replace(msg,":interrobang:","⁉️",-1)
-	
+
 	return msg
 }
 
@@ -339,7 +359,7 @@ func parse_message(msg string/*, user User*/) string {
 	msg = strings.Replace(msg,":p","😛",-1)
 	msg = strings.Replace(msg,":o","😲",-1)
 	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
-	
+
 	// Search for URLs, mentions and hashlinks in the messages...
 	//fmt.Println("Parser Loop!")
 	var msgbytes = []byte(msg)
@@ -367,7 +387,7 @@ func parse_message(msg string/*, user User*/) string {
 			if (i != 0) || msgbytes[i] < 33 {
 				i++
 			}
-			
+
 			if msgbytes[i]=='#' {
 				//fmt.Println("IN #")
 				if bytes.Equal(msgbytes[i+1:i+5],[]byte("tid-")) {
@@ -376,14 +396,14 @@ func parse_message(msg string/*, user User*/) string {
 					start := i
 					tid, int_len := coerce_int_bytes(msgbytes[start:])
 					i += int_len
-					
+
 					topic, err := topics.CascadeGet(tid)
 					if err != nil || !forum_exists(topic.ParentID) {
 						outbytes = append(outbytes,invalid_topic...)
 						lastItem = i
 						continue
 					}
-					
+
 					outbytes = append(outbytes, url_open...)
 					var url_bit []byte = []byte(build_topic_url(tid))
 					outbytes = append(outbytes, url_bit...)
@@ -392,7 +412,7 @@ func parse_message(msg string/*, user User*/) string {
 					outbytes = append(outbytes, tid_bit...)
 					outbytes = append(outbytes, url_close...)
 					lastItem = i
-					
+
 					//fmt.Println(string(msgbytes))
 					//fmt.Println(msgbytes)
 					//fmt.Println(msgbytes[lastItem - 1])
@@ -405,14 +425,14 @@ func parse_message(msg string/*, user User*/) string {
 					start := i
 					rid, int_len := coerce_int_bytes(msgbytes[start:])
 					i += int_len
-					
+
 					topic, err := get_topic_by_reply(rid)
 					if err != nil || !forum_exists(topic.ParentID) {
 						outbytes = append(outbytes,invalid_topic...)
 						lastItem = i
 						continue
 					}
-					
+
 					outbytes = append(outbytes, url_open...)
 					var url_bit []byte = []byte(build_topic_url(topic.ID))
 					outbytes = append(outbytes, url_bit...)
@@ -427,13 +447,13 @@ func parse_message(msg string/*, user User*/) string {
 					start := i
 					fid, int_len := coerce_int_bytes(msgbytes[start:])
 					i += int_len
-					
+
 					if !forum_exists(fid) {
 						outbytes = append(outbytes,invalid_forum...)
 						lastItem = i
 						continue
 					}
-					
+
 					outbytes = append(outbytes, url_open...)
 					var url_bit []byte = []byte(build_forum_url(fid))
 					outbytes = append(outbytes, url_bit...)
@@ -452,14 +472,14 @@ func parse_message(msg string/*, user User*/) string {
 				start := i
 				uid, int_len := coerce_int_bytes(msgbytes[start:])
 				i += int_len
-				
+
 				menUser, err := users.CascadeGet(uid)
 				if err != nil {
 					outbytes = append(outbytes,invalid_profile...)
 					lastItem = i
 					continue
 				}
-				
+
 				outbytes = append(outbytes, url_open...)
 				var url_bit []byte = []byte(build_profile_url(uid))
 				outbytes = append(outbytes, url_bit...)
@@ -470,7 +490,7 @@ func parse_message(msg string/*, user User*/) string {
 				outbytes = append(outbytes, uid_bit...)
 				outbytes = append(outbytes, url_close...)
 				lastItem = i
-				
+
 				//fmt.Println(string(msgbytes))
 				//fmt.Println(msgbytes)
 				//fmt.Println(msgbytes[lastItem - 1])
@@ -494,7 +514,7 @@ func parse_message(msg string/*, user User*/) string {
 				} else {
 					continue
 				}
-				
+
 				outbytes = append(outbytes,msgbytes[lastItem:i]...)
 				url_len := partial_url_bytes_len(msgbytes[i:])
 				if msgbytes[i + url_len] != ' ' && msgbytes[i + url_len] != 10 {
@@ -512,7 +532,7 @@ func parse_message(msg string/*, user User*/) string {
 			}
 		}
 	}
-	
+
 	if lastItem != i && len(outbytes) != 0 {
 		//fmt.Println("lastItem:")
 		//fmt.Println(msgbytes[lastItem])
@@ -532,7 +552,7 @@ func parse_message(msg string/*, user User*/) string {
 	}
 	//fmt.Println(`"`+string(outbytes)+`"`)
 	//fmt.Println(`"`+msg+`"`)
-	
+
 	msg = strings.Replace(msg,"\n","<br>",-1)
 	if hooks["parse_assign"] != nil {
 		out := run_hook("parse_assign", msg)
@@ -559,7 +579,7 @@ func regex_parse_message(msg string) string {
 func validate_url_bytes(data []byte) bool {
 	datalen := len(data)
 	i := 0
-	
+
 	if datalen >= 6 {
 		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
 			i = 6
@@ -569,7 +589,7 @@ func validate_url_bytes(data []byte) bool {
 			i = 8
 		}
 	}
-	
+
 	for ;datalen > i; i++ {
 		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			return false
@@ -581,7 +601,7 @@ func validate_url_bytes(data []byte) bool {
 func validated_url_bytes(data []byte) (url []byte) {
 	datalen := len(data)
 	i := 0
-	
+
 	if datalen >= 6 {
 		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
 			i = 6
@@ -591,13 +611,13 @@ func validated_url_bytes(data []byte) (url []byte) {
 			i = 8
 		}
 	}
-	
+
 	for ;datalen > i; i++ {
 		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			return invalid_url
 		}
 	}
-	
+
 	url = append(url, data...)
 	return url
 }
@@ -606,7 +626,7 @@ func partial_url_bytes(data []byte) (url []byte) {
 	datalen := len(data)
 	i := 0
 	end := datalen - 1
-	
+
 	if datalen >= 6 {
 		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
 			i = 6
@@ -616,13 +636,13 @@ func partial_url_bytes(data []byte) (url []byte) {
 			i = 8
 		}
 	}
-	
+
 	for ;end >= i; i++ {
 		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			end = i
 		}
 	}
-	
+
 	url = append(url, data[0:end]...)
 	return url
 }
@@ -630,7 +650,7 @@ func partial_url_bytes(data []byte) (url []byte) {
 func partial_url_bytes_len(data []byte) int {
 	datalen := len(data)
 	i := 0
-	
+
 	if datalen >= 6 {
 		//fmt.Println(string(data[0:5]))
 		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
@@ -641,7 +661,7 @@ func partial_url_bytes_len(data []byte) int {
 			i = 8
 		}
 	}
-	
+
 	for ;datalen > i; i++ {
 		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			//fmt.Println("Bad Character:")
@@ -649,7 +669,7 @@ func partial_url_bytes_len(data []byte) int {
 			return i
 		}
 	}
-	
+
 	//fmt.Println("Data Length:")
 	//fmt.Println(datalen)
 	return datalen
@@ -658,7 +678,7 @@ func partial_url_bytes_len(data []byte) int {
 func parse_media_bytes(data []byte) (protocol []byte, url []byte) {
 	datalen := len(data)
 	i := 0
-	
+
 	if datalen >= 6 {
 		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
 			i = 6
@@ -671,13 +691,13 @@ func parse_media_bytes(data []byte) (protocol []byte, url []byte) {
 			protocol = []byte("https")
 		}
 	}
-	
+
 	for ;datalen > i; i++ {
 		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			return []byte(""), invalid_url
 		}
 	}
-	
+
 	if len(protocol) == 0 {
 		protocol = []byte("http")
 	}
@@ -688,7 +708,7 @@ func coerce_int_bytes(data []byte) (res int, length int) {
 	if !(data[0] > 47 && data[0] < 58) {
 		return 0, 1
 	}
-	
+
 	i := 0
 	for ;len(data) > i; i++ {
 		if !(data[i] > 47 && data[i] < 58) {
@@ -699,7 +719,7 @@ func coerce_int_bytes(data []byte) (res int, length int) {
 			return conv, i
 		}
 	}
-	
+
 	conv, err := strconv.Atoi(string(data))
 	if err != nil {
 		return 0, i

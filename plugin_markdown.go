@@ -7,14 +7,10 @@ import "regexp"
 var markdown_max_depth int = 25 // How deep the parser will go when parsing Markdown strings
 var markdown_unclosed_element []byte
 
-var markdown_bold_tag_open []byte
-var markdown_bold_tag_close []byte
-var markdown_italic_tag_open []byte
-var markdown_italic_tag_close []byte
-var markdown_underline_tag_open []byte
-var markdown_underline_tag_close []byte
-var markdown_strike_tag_open []byte
-var markdown_strike_tag_close []byte
+var markdown_bold_tag_open, markdown_bold_tag_close []byte
+var markdown_italic_tag_open, markdown_italic_tag_close []byte
+var markdown_underline_tag_open, markdown_underline_tag_close []byte
+var markdown_strike_tag_open, markdown_strike_tag_close []byte
 
 var markdown_bold_italic *regexp.Regexp
 var markdown_bold *regexp.Regexp
@@ -29,9 +25,9 @@ func init() {
 func init_markdown() {
 	//plugins["markdown"].AddHook("parse_assign", markdown_regex_parse)
 	plugins["markdown"].AddHook("parse_assign", markdown_parse)
-	
+
 	markdown_unclosed_element = []byte("<span style='color: red;'>[Unclosed Element]</span>")
-	
+
 	markdown_bold_tag_open = []byte("<b>")
 	markdown_bold_tag_close = []byte("</b>")
 	markdown_italic_tag_open = []byte("<i>")
@@ -40,7 +36,7 @@ func init_markdown() {
 	markdown_underline_tag_close = []byte("</u>")
 	markdown_strike_tag_open = []byte("<s>")
 	markdown_strike_tag_close = []byte("</s>")
-	
+
 	markdown_bold_italic = regexp.MustCompile(`\*\*\*(.*)\*\*\*`)
 	markdown_bold = regexp.MustCompile(`\*\*(.*)\*\*`)
 	markdown_italic = regexp.MustCompile(`\*(.*)\*`)
@@ -77,12 +73,12 @@ func _markdown_parse(msg string, n int) string {
 	if n > markdown_max_depth {
 		return "<span style='color: red;'>[Markdown Error: Overflowed the max depth of 20]</span>"
 	}
-	
+
 	var outbytes []byte
 	var lastElement int
 	//fmt.Println("enter message loop")
 	//fmt.Printf("Message: %v\n",strings.Replace(msg,"\r","\\r",-1))
-	
+
 	for index := 0; index < len(msg); index++ {
 		/*//fmt.Println("--OUTER MARKDOWN LOOP START--")
 		//fmt.Println("index",index)
@@ -90,29 +86,29 @@ func _markdown_parse(msg string, n int) string {
 		//fmt.Println("string(msg[index])",string(msg[index]))
 		//fmt.Println("--OUTER MARKDOWN LOOP END--")
 		//fmt.Println(" ")*/
-		
+
 		switch(msg[index]) {
 			case '_':
 				var startIndex int = index
 				if (index + 1) >= len(msg) {
 					break
 				}
-				
+
 				index++
 				index = markdown_skip_until_char(msg, index, '_')
 				if (index - (startIndex + 1)) < 2 || index >= len(msg) {
 					break
 				}
-				
+
 				sIndex := startIndex + 1
 				lIndex := index
 				index++
-				
+
 				outbytes = append(outbytes, msg[lastElement:startIndex]...)
 				outbytes = append(outbytes, markdown_underline_tag_open...)
 				outbytes = append(outbytes, msg[sIndex:lIndex]...)
 				outbytes = append(outbytes, markdown_underline_tag_close...)
-				
+
 				lastElement = index
 				index--
 			case '~':
@@ -120,22 +116,22 @@ func _markdown_parse(msg string, n int) string {
 				if (index + 1) >= len(msg) {
 					break
 				}
-				
+
 				index++
 				index = markdown_skip_until_char(msg, index, '~')
 				if (index - (startIndex + 1)) < 2 || index >= len(msg) {
 					break
 				}
-				
+
 				sIndex := startIndex + 1
 				lIndex := index
 				index++
-				
+
 				outbytes = append(outbytes, msg[lastElement:startIndex]...)
 				outbytes = append(outbytes, markdown_strike_tag_open...)
 				outbytes = append(outbytes, msg[sIndex:lIndex]...)
 				outbytes = append(outbytes, markdown_strike_tag_close...)
-				
+
 				lastElement = index
 				index--
 			case '*':
@@ -146,7 +142,7 @@ func _markdown_parse(msg string, n int) string {
 				//fmt.Println("start msg[index]",msg[index])
 				//fmt.Println("start string(msg[index])",string(msg[index]))
 				//fmt.Println("start []byte(msg[:index])",[]byte(msg[:index]))
-				
+
 				var startIndex int = index
 				var italic bool = true
 				var bold bool
@@ -154,7 +150,7 @@ func _markdown_parse(msg string, n int) string {
 					//fmt.Println("start index + 1",index + 1)
 					//fmt.Println("start msg[index]",msg[index + 1])
 					//fmt.Println("start string(msg[index])",string(msg[index + 1]))
-					
+
 					if msg[index + 1] == '*' {
 						//fmt.Println("two asterisks")
 						bold = true
@@ -167,39 +163,39 @@ func _markdown_parse(msg string, n int) string {
 						}
 					}
 				}
-				
+
 				//fmt.Println("lastElement",lastElement)
 				//fmt.Println("startIndex:",startIndex)
 				//fmt.Println("msg[startIndex]",msg[startIndex])
 				//fmt.Println("string(msg[startIndex])",string(msg[startIndex]))
-				
+
 				//fmt.Println("preabrupt index",index)
 				//fmt.Println("preabrupt msg[index]",msg[index])
 				//fmt.Println("preabrupt string(msg[index])",string(msg[index]))
 				//fmt.Println("preabrupt []byte(msg[:index])",[]byte(msg[:index]))
 				//fmt.Println("preabrupt msg[:index]",msg[:index])
-				
+
 				// Does the string terminate abruptly?
 				if (index + 1) >= len(msg) {
 					break
 				}
-				
+
 				index++
-				
+
 				//fmt.Println("preskip index",index)
 				//fmt.Println("preskip msg[index]",msg[index])
 				//fmt.Println("preskip string(msg[index])",string(msg[index]))
-				
+
 				index = markdown_skip_until_asterisk(msg,index)
-				
+
 				if index >= len(msg) {
 					break
 				}
-				
+
 				//fmt.Println("index",index)
 				//fmt.Println("[]byte(msg[:index])",[]byte(msg[:index]))
 				//fmt.Println("msg[index]",msg[index])
-				
+
 				sIndex := startIndex
 				lIndex := index
 				if bold && italic {
@@ -236,10 +232,10 @@ func _markdown_parse(msg string, n int) string {
 					index++
 					sIndex++
 				}
-				
+
 				//fmt.Println("sIndex",sIndex)
 				//fmt.Println("lIndex",lIndex)
-				
+
 				if lIndex <= sIndex {
 					//fmt.Println("unclosed markdown element @ lIndex <= sIndex")
 					outbytes = append(outbytes, msg[lastElement:startIndex]...)
@@ -247,7 +243,7 @@ func _markdown_parse(msg string, n int) string {
 					lastElement = startIndex
 					break
 				}
-				
+
 				if sIndex < 0 || lIndex < 0 {
 					//fmt.Println("unclosed markdown element @ sIndex < 0 || lIndex < 0")
 					outbytes = append(outbytes, msg[lastElement:startIndex]...)
@@ -255,39 +251,39 @@ func _markdown_parse(msg string, n int) string {
 					lastElement = startIndex
 					break
 				}
-				
+
 				//fmt.Println("final sIndex",sIndex)
 				//fmt.Println("final lIndex",lIndex)
 				//fmt.Println("final index",index)
 				//fmt.Println("final msg[index]",msg[index])
 				//fmt.Println("final string(msg[index])",string(msg[index]))
-				
+
 				//fmt.Println("final msg[sIndex]",msg[sIndex])
 				//fmt.Println("final string(msg[sIndex])",string(msg[sIndex]))
 				//fmt.Println("final msg[lIndex]",msg[lIndex])
 				//fmt.Println("final string(msg[lIndex])",string(msg[lIndex]))
-				
+
 				//fmt.Println("[]byte(msg[:sIndex])",[]byte(msg[:sIndex]))
 				//fmt.Println("[]byte(msg[:lIndex])",[]byte(msg[:lIndex]))
-				
+
 				outbytes = append(outbytes, msg[lastElement:startIndex]...)
-				
+
 				if bold {
 					outbytes = append(outbytes, markdown_bold_tag_open...)
 				}
 				if italic {
 					outbytes = append(outbytes, markdown_italic_tag_open...)
 				}
-				
+
 				outbytes = append(outbytes, msg[sIndex:lIndex]...)
-				
+
 				if bold {
 					outbytes = append(outbytes, markdown_bold_tag_close...)
 				}
 				if italic {
 					outbytes = append(outbytes, markdown_italic_tag_close...)
 				}
-				
+
 				lastElement = index
 				index--
 			//case '`':
@@ -296,10 +292,10 @@ func _markdown_parse(msg string, n int) string {
 			//case 10: // newline
 		}
 	}
-	
+
 	//fmt.Println("exit message loop")
 	//fmt.Println(" ")
-	
+
 	if len(outbytes) == 0 {
 		return msg
 	} else if lastElement < (len(msg) - 1) {
@@ -345,7 +341,7 @@ SwitchLoop:
 func markdown_skip_list(data string, index int) int {
 	var lastNewline int
 	var datalen int = len(data)
-	
+
 	for ; index < datalen; index++ {
 	SkipListInnerLoop:
 		if data[index] == 10 {
@@ -357,7 +353,7 @@ func markdown_skip_list(data string, index int) int {
 					goto SkipListInnerLoop
 				}
 			}
-			
+
 			if index >= datalen {
 				if data[index] != '*' && data[index] != '-' {
 					if (lastNewline + 1) < datalen {
@@ -368,6 +364,6 @@ func markdown_skip_list(data string, index int) int {
 			}
 		}
 	}
-	
+
 	return index
 }

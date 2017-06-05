@@ -56,11 +56,13 @@ func route_static(w http.ResponseWriter, r *http.Request){
 	//io.CopyN(w, bytes.NewReader(file.Data), static_files[r.URL.Path].Length)
 }
 
+// Deprecated: Test route for stopping the server during a performance analysis
 /*func route_exit(w http.ResponseWriter, r *http.Request){
 	db.Close()
 	os.Exit(0)
 }
 
+// Deprecated: Test route to see which is faster
 func route_fstatic(w http.ResponseWriter, r *http.Request){
 	http.ServeFile(w,r,r.URL.Path)
 }*/
@@ -109,7 +111,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 
 	var topicList []TopicsRow
-	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.likeCount, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	//rows, err := get_topic_list_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r)
@@ -118,7 +120,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 
 	topicItem := TopicsRow{ID: 0}
 	for rows.Next() {
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -206,9 +208,9 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 	}
 
 	var topicList []TopicUser
-	topicItem := TopicUser{ID: 0}
+	var topicItem TopicUser = TopicUser{ID: 0}
 	for rows.Next() {
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -262,7 +264,7 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	//fmt.Println(group.CanSee)
 	for _, fid := range group.CanSee {
 		//fmt.Println(forums[fid])
-		forum := forums[fid]
+		var forum Forum = forums[fid]
 		if forum.Active && forum.Name != "" {
 			if forum.LastTopicID != 0 {
 				forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
@@ -1099,7 +1101,6 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 		return
 	}
 
-	title = "Report: " + title
 	res, err := create_report_stmt.Exec(title,content,parse_message(content),user.ID,item_type + "_" + strconv.Itoa(item_id))
 	if err != nil {
 		InternalError(err,w,r)
@@ -1526,9 +1527,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var uid int
-	var real_password string
-	var salt string
-	var session string
+	var real_password, salt, session string
 	username := html.EscapeString(r.PostFormValue("username"))
 	password := r.PostFormValue("password")
 
@@ -1579,11 +1578,11 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := http.Cookie{Name: "uid",Value: strconv.Itoa(uid),Path: "/",MaxAge: year}
+	cookie := http.Cookie{Name:"uid",Value:strconv.Itoa(uid),Path:"/",MaxAge:year}
 	http.SetCookie(w,&cookie)
-	cookie = http.Cookie{Name: "session",Value: session,Path: "/",MaxAge: year}
+	cookie = http.Cookie{Name:"session",Value:session,Path:"/",MaxAge:year}
 	http.SetCookie(w,&cookie)
-	http.Redirect(w,r, "/", http.StatusSeeOther)
+	http.Redirect(w,r,"/",http.StatusSeeOther)
 }
 
 func route_register(w http.ResponseWriter, r *http.Request) {

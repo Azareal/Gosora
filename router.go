@@ -1,4 +1,5 @@
 package main
+
 //import "fmt"
 import "strings"
 import "sync"
@@ -33,7 +34,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte(""))
 		return
 	}
-	
+
 	var /*extra_data, */prefix string
 	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
 		//extra_data = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
@@ -41,11 +42,11 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	} else {
 		prefix = req.URL.Path
 	}
-	
+
 	router.RLock()
 	handle, ok := router.routes[prefix]
 	router.RUnlock()
-	
+
 	if ok {
 		handle(w,req)
 		return

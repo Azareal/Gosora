@@ -87,9 +87,7 @@ li:hover {
 	opacity: 0.8;
 	text-align: center;
 }
-.menu_alerts .alert_counter:empty {
-	display: none;
-}
+.menu_alerts .alert_counter:empty { display: none; }
 
 .selectedAlert {
 	background: white;
@@ -100,12 +98,8 @@ li:hover {
 	color: black;
 	font-weight: bold;
 }
-.selectedAlert .alert_counter {
-	display: none;
-}
-.menu_alerts .alertList {
-	display: none;
-}
+.selectedAlert .alert_counter { display: none; }
+.menu_alerts .alertList { display: none; }
 .selectedAlert .alertList {
 	position: absolute;
 	top: 41px;
@@ -142,9 +136,7 @@ li:hover {
 	width: 100%;
 	color: black;
 }
-.alertItem .text.smaller {
-	font-size: 9px;
-}
+.alertItem .text.smaller { font-size: 9px; }
 
 hr { color: silver; border: 1px solid silver; }
 
@@ -179,6 +171,14 @@ hr { color: silver; border: 1px solid silver; }
 }
 .rowblock:first-of-type { margin-top: 8px; }
 .rowitem:not(:last-child) { border-bottom: 1px dotted #ccc; }
+
+.datarow {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+.rowsmall {
+	font-size:12px;
+}
 
 .rowhead, .colhead {
 	background: #ce2424;
@@ -247,8 +247,7 @@ hr { color: silver; border: 1px solid silver; }
 	word-wrap: break-word;
 }
 .colstack_head { margin-bottom: 0px; }
-.colstack_left:empty { display: none; }
-.colstack_right:empty { display: none; }
+.colstack_left:empty, .colstack_right:empty { display: none; }
 
 .colstack_grid {
 	display: grid;
@@ -492,7 +491,6 @@ blockquote p {
 	top: 44px;
 }
 .gadget { padding-bottom: 20px; }
-
 .cell_author img { margin-right: 8px; }
 .cell_last img { margin-right: 8px; }
 
@@ -542,10 +540,7 @@ blockquote p {
 	border-top-right-radius: 3px;
 	right: -1px;
 }
-
-.tag_block.groupRibbon {
-	display: none;
-}
+.tag_block.groupRibbon { display: none; }
 
 /* From Tempra Conflux */
 .user_content:not(.simple) {
@@ -558,9 +553,7 @@ blockquote p {
 	width: 100%;
 	border-radius: 4px;
 }
-.user_content.nobuttons {
-	min-height: 190px;
-}
+.user_content.nobuttons { min-height: 190px; }
 
 .button_container {
 	border-top: solid 1px #eaeaea;
@@ -589,26 +582,14 @@ blockquote p {
 	border-left: solid 1px #eaeaea;
 }
 
-.like_label:before {
-	content: "😀";
-}
-.edit_label:before {
-	content: "🖊️";
-}
-.trash_label:before {
-	content: "🗑️";
-}
-.flag_label:before {
-	content: "🚩";
-}
+.like_label:before { content: "😀"; }
+.edit_label:before { content: "🖊️"; }
+.trash_label:before { content: "🗑️"; }
+.flag_label:before { content: "🚩"; }
 
-.mod_button {
-	margin-right: 4px;
-}
+.mod_button { margin-right: 4px; }
 
-.post_item:not(.simple) {
-	background-color: #eaeaea;
-}
+.post_item:not(.simple) { background-color: #eaeaea; }
 .post_item {
 	padding-top: 4px;
 	padding-left: 7px !important;
@@ -618,9 +599,7 @@ blockquote p {
 	padding-right: 7px !important;
 	padding-bottom: 2px;
 }
-.post_item:last-child {
-	padding-bottom: 7px;
-}
+.post_item:last-child { padding-bottom: 7px; }
 .the_name {
 	margin-top: 3px;
 	text-align: center;
@@ -630,7 +609,6 @@ blockquote p {
 
 .userinfo {
 	border-radius: 5px;
-
 	background: white;
 	width: 132px;
 	padding: 2px;
@@ -661,9 +639,7 @@ blockquote p {
 	border-radius: 4px;
 }
 
-.action_item .userinfo {
-	display: none;
-}
+.action_item .userinfo { display: none; }
 .action_item .content_container {
 	min-height: auto;
 	padding: 15px;
@@ -717,73 +693,40 @@ blockquote p {
 	font-size: 14px;
 }
 
-.panel_floater {
-	float: right;
-}
-#panel_groups > .rowitem > .panel_floater {
-	float: none;
-}
-#panel_groups > .rowitem > .panel_floater > .panel_right_button {
-	float: right;
-}
-#panel_forums > .rowitem > .panel_floater {
-	float: none;
-}
-#panel_forums > .rowitem > .panel_floater > .panel_buttons {
-	float: right;
-}
+.panel_floater { float: right; }
+#panel_groups > .rowitem > .panel_floater { float: none; }
+#panel_groups > .rowitem > .panel_floater > .panel_right_button { float: right; }
+#panel_forums > .rowitem > .panel_floater { float: none; }
+#panel_forums > .rowitem > .panel_floater > .panel_buttons { float: right; }
 
 .panel_rank_tag, .forum_preset, .forum_active {
 	float: none;
 	color: #202020 !important;
 	font-size: 11px;
 }
-.panel_rank_tag_admin:before {
-	content: "Admins";
-}
-.panel_rank_tag_mod:before {
-	content: "Mods";
-}
-.panel_rank_tag_banned:before {
-	content: "Banned";
-}
-.panel_rank_tag_guest:before {
-	content: "Guests";
-}
-.panel_rank_tag_member:before {
-	content: "Members";
-}
+.panel_rank_tag_admin:before { content: "Admins"; }
+.panel_rank_tag_mod:before { content: "Mods"; }
+.panel_rank_tag_banned:before { content: "Banned"; }
+.panel_rank_tag_guest:before { content: "Guests"; }
+.panel_rank_tag_member:before { content: "Members"; }
 
-.forum_preset_announce:after {
-	content: "Announcements";
-}
-.forum_preset_members:after {
-	content: "Member Only";
-}
-.forum_preset_staff:after {
-	content: "Staff Only";
-}
-.forum_preset_admins:after {
-	content: "Admin Only";
-}
-.forum_preset_archive:after {
-	content: "Archive";
-}
-.forum_preset_all:after {
-	content: "Public";
-}
-.forum_preset_custom, .forum_preset_ {
-	display: none !important;
-}
-.forum_active_Hide:before {
-	content: "Hidden";
-}
-.forum_active_Hide + .forum_preset:before {
-	content: " | ";
-}
-.forum_active_Show {
-	display: none !important;
-}
+.forum_preset_announce:after { content: "Announcements"; }
+.forum_preset_members:after { content: "Member Only"; }
+.forum_preset_staff:after { content: "Staff Only"; }
+.forum_preset_admins:after { content: "Admin Only"; }
+.forum_preset_archive:after { content: "Archive"; }
+.forum_preset_all:after { content: "Public"; }
+.forum_preset_custom, .forum_preset_ { display: none !important; }
+.forum_active_Hide:before { content: "Hidden"; }
+.forum_active_Hide + .forum_preset:before { content: " | "; }
+.forum_active_Show { display: none !important; }
+
+.perm_preset_no_access:before { content: "No Access"; color: maroon; }
+.perm_preset_read_only:before { content: "Read Only"; color: green; }
+.perm_preset_can_post:before { content: "Can Post"; color: green; }
+.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
+.perm_preset_custom:before { content: "Custom"; color: black; }
+.perm_preset_default:before { content: "Default"; }
 
 /* Responsive Layout */
 /* Anything that isn't a small mobile */

@@ -40,7 +40,8 @@ var menu_6 []byte = []byte(`
 		<li class="menu_left menu_login"><a href="/accounts/login/">Login</a></li>
 		`)
 var menu_7 []byte = []byte(`
-		<li class="menu_right menu_alerts">🔔︎
+		<li class="menu_right menu_alerts">
+			<div class="alert_bell">🔔︎</div>
 			<div class="alert_counter"></div>
 			<div class="alertList"></div>
 		</li>
@@ -48,7 +49,8 @@ var menu_7 []byte = []byte(`
 	</div>
 	</div>
 	<div style="clear: both;"></div>
-</div>`)
+</div>
+`)
 var header_3 []byte = []byte(`
 <div id="back"><div id="main">
 `)
@@ -389,18 +391,23 @@ var profile_5 []byte = []byte(`
 	<div class="rowitem passive">
 		<a class="profile_menu_item">Add Friend</a>
 	</div>
-	<div class="rowitem passive"
+	`)
+var profile_6 []byte = []byte(`<div class="rowitem passive">
 		`)
-var profile_6 []byte = []byte(`<a href="/users/unban/`)
-var profile_7 []byte = []byte(`?session=`)
-var profile_8 []byte = []byte(`" class="username">Unban</a>`)
-var profile_9 []byte = []byte(`<a href="/users/ban/`)
-var profile_10 []byte = []byte(`?session=`)
-var profile_11 []byte = []byte(`" class="username">Ban</a>`)
-var profile_12 []byte = []byte(`
+var profile_7 []byte = []byte(`<a href="/users/unban/`)
+var profile_8 []byte = []byte(`?session=`)
+var profile_9 []byte = []byte(`" class="profile_menu_item">Unban</a>
+		`)
+var profile_10 []byte = []byte(`<a href="/users/ban/`)
+var profile_11 []byte = []byte(`?session=`)
+var profile_12 []byte = []byte(`" class="profile_menu_item">Ban</a>`)
+var profile_13 []byte = []byte(`
+	</div>`)
+var profile_14 []byte = []byte(`
+	<div class="rowitem passive">
 		<a href="/report/submit/`)
-var profile_13 []byte = []byte(`?session=`)
-var profile_14 []byte = []byte(`&type=user" class="profile_menu_item report_item">Report</a>
+var profile_15 []byte = []byte(`?session=`)
+var profile_16 []byte = []byte(`&type=user" class="profile_menu_item report_item">Report</a>
 	</div>
 </div>
 
@@ -408,45 +415,45 @@ var profile_14 []byte = []byte(`&type=user" class="profile_menu_item report_item
 	<div class="rowitem rowhead"><a>Comments</a></div>
 </div>
 <div id="profile_comments" class="colblock_right" style="overflow: hidden;border-top: none;width:calc(95% - 210px);">`)
-var profile_15 []byte = []byte(`
+var profile_17 []byte = []byte(`
 <div class="rowitem passive deletable_block editable_parent simple" style="`)
-var profile_16 []byte = []byte(`background-image: url(`)
-var profile_17 []byte = []byte(`), url(/static/white-dot.jpg);background-position: 0px `)
-var profile_18 []byte = []byte(`-1`)
-var profile_19 []byte = []byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;`)
-var profile_20 []byte = []byte(`">
+var profile_18 []byte = []byte(`background-image: url(`)
+var profile_19 []byte = []byte(`), url(/static/white-dot.jpg);background-position: 0px `)
+var profile_20 []byte = []byte(`-1`)
+var profile_21 []byte = []byte(`0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;`)
+var profile_22 []byte = []byte(`">
 		<span class="editable_block user_content simple">`)
-var profile_21 []byte = []byte(`</span><br /><br />
+var profile_23 []byte = []byte(`</span><br /><br />
 		<a href="/user/`)
-var profile_22 []byte = []byte(`" class="real_username username">`)
-var profile_23 []byte = []byte(`</a>&nbsp;&nbsp;
+var profile_24 []byte = []byte(`" class="real_username username">`)
+var profile_25 []byte = []byte(`</a>&nbsp;&nbsp;
 
 		`)
-var profile_24 []byte = []byte(`<a href="/profile/reply/edit/submit/`)
-var profile_25 []byte = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
+var profile_26 []byte = []byte(`<a href="/profile/reply/edit/submit/`)
+var profile_27 []byte = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
 
 		<a href="/profile/reply/delete/submit/`)
-var profile_26 []byte = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>`)
-var profile_27 []byte = []byte(`
+var profile_28 []byte = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>`)
+var profile_29 []byte = []byte(`
 
 		<a class="mod_button" href="/report/submit/`)
-var profile_28 []byte = []byte(`?session=`)
-var profile_29 []byte = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>
+var profile_30 []byte = []byte(`?session=`)
+var profile_31 []byte = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>
 
 		`)
-var profile_30 []byte = []byte(`<a class="username hide_on_mobile" style="float: right;">`)
-var profile_31 []byte = []byte(`</a>`)
-var profile_32 []byte = []byte(`
+var profile_32 []byte = []byte(`<a class="username hide_on_mobile" style="float: right;">`)
+var profile_33 []byte = []byte(`</a>`)
+var profile_34 []byte = []byte(`
 	</div>
 `)
-var profile_33 []byte = []byte(`</div>
+var profile_35 []byte = []byte(`</div>
 
 <div class="colblock_right" style="border-top: none;width: calc(95% - 210px);">
 `)
-var profile_34 []byte = []byte(`
+var profile_36 []byte = []byte(`
 <form action="/profile/reply/create/" method="post">
 	<input name="uid" value='`)
-var profile_35 []byte = []byte(`' type="hidden" />
+var profile_37 []byte = []byte(`' type="hidden" />
 	<div class="formrow">
 		<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
 	</div>
@@ -455,7 +462,7 @@ var profile_35 []byte = []byte(`' type="hidden" />
 	</div>
 </form>
 `)
-var profile_36 []byte = []byte(`
+var profile_38 []byte = []byte(`
 </div>
 
 `)
@@ -465,48 +472,84 @@ var forums_0 []byte = []byte(`
 </div>
 <div class="rowblock">
 	`)
-var forums_1 []byte = []byte(`<div class="rowitem">
-		<a href="/forum/`)
-var forums_2 []byte = []byte(`" class="panel_upshift">`)
-var forums_3 []byte = []byte(`</a>
-		<a href="/topic/`)
-var forums_4 []byte = []byte(`" style="float: right;">`)
-var forums_5 []byte = []byte(` <small style="font-size: 12px;">`)
-var forums_6 []byte = []byte(`</small></a>
+var forums_1 []byte = []byte(`<div class="rowitem `)
+var forums_2 []byte = []byte(`datarow`)
+var forums_3 []byte = []byte(`">
+		`)
+var forums_4 []byte = []byte(`<span style="float: left;">
+			<a href="/forum/`)
+var forums_5 []byte = []byte(`" style="">`)
+var forums_6 []byte = []byte(`</a>
+			<br /><span class="rowsmall">`)
+var forums_7 []byte = []byte(`</span>
+		</span>`)
+var forums_8 []byte = []byte(`<span style="float: left;padding-top: 8px;font-size: 18px;">
+			<a href="/forum/`)
+var forums_9 []byte = []byte(`">`)
+var forums_10 []byte = []byte(`</a>
+		</span>`)
+var forums_11 []byte = []byte(`<span style="float: left;">
+			<a href="/forum/`)
+var forums_12 []byte = []byte(`">`)
+var forums_13 []byte = []byte(`</a>
+		</span>`)
+var forums_14 []byte = []byte(`
+
+		<span style="float: right;">
+			<a href="/topic/`)
+var forums_15 []byte = []byte(`" style="float: right;font-size: 14px;">`)
+var forums_16 []byte = []byte(`</a>
+			`)
+var forums_17 []byte = []byte(`<br /><span class="rowsmall">`)
+var forums_18 []byte = []byte(`</span>`)
+var forums_19 []byte = []byte(`
+		</span>
+		<div style="clear: both;"></div>
 	</div>
 	`)
-var forums_7 []byte = []byte(`<div class="rowitem passive">You don't have access to any forums.</div>`)
-var forums_8 []byte = []byte(`
+var forums_20 []byte = []byte(`<div class="rowitem passive">You don't have access to any forums.</div>`)
+var forums_21 []byte = []byte(`
 </div>
 `)
 var topics_0 []byte = []byte(`
 <div class="rowblock">
 	<div class="rowitem rowhead"><a>Topic List</a></div>
 </div>
-<div class="rowblock">
+<div id="topic_list" class="rowblock topic_list">
 	`)
-var topics_1 []byte = []byte(`<div class="rowitem passive" style="`)
+var topics_1 []byte = []byte(`<div class="rowitem passive datarow" style="`)
 var topics_2 []byte = []byte(`background-image: url(`)
 var topics_3 []byte = []byte(`);background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;`)
 var topics_4 []byte = []byte(`background-color: #FFFFCC;`)
 var topics_5 []byte = []byte(`background-color: #eaeaea;`)
 var topics_6 []byte = []byte(`">
-		<a href="/topic/`)
-var topics_7 []byte = []byte(`">`)
-var topics_8 []byte = []byte(`</a> `)
-var topics_9 []byte = []byte(`<a href="/forum/`)
-var topics_10 []byte = []byte(`" style="font-size:12px;">`)
-var topics_11 []byte = []byte(`</a> `)
-var topics_12 []byte = []byte(`<span class="username topic_status_e topic_status_closed" style="float: right;position:relative;top:-5px;margin-left:8px;" title="Status: Closed">&#x1F512;&#xFE0E</span>`)
-var topics_13 []byte = []byte(`
-		<a style="float: right;font-size:12px;">`)
-var topics_14 []byte = []byte(`</a>
+		<span class="rowsmall" style="float: right;">
+			<span class="replyCount">`)
+var topics_7 []byte = []byte(` replies</span><br />
+			<span class="lastReplyAt">`)
+var topics_8 []byte = []byte(`</span>
+		</span>
+		<span>
+			<a class="rowtopic" href="/topic/`)
+var topics_9 []byte = []byte(`">`)
+var topics_10 []byte = []byte(`</a> `)
+var topics_11 []byte = []byte(`<a class="rowsmall" href="/forum/`)
+var topics_12 []byte = []byte(`">`)
+var topics_13 []byte = []byte(`</a>`)
+var topics_14 []byte = []byte(`
+			<br /><a class="rowsmall" href="/user/`)
+var topics_15 []byte = []byte(`">Starter: `)
+var topics_16 []byte = []byte(`</a>
+			`)
+var topics_17 []byte = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E`)
+var topics_18 []byte = []byte(`</span>
+		</span>
 	</div>
 	`)
-var topics_15 []byte = []byte(`<div class="rowitem passive">There aren't any topics yet.`)
-var topics_16 []byte = []byte(` <a href="/topics/create/">Start one?</a>`)
-var topics_17 []byte = []byte(`</div>`)
-var topics_18 []byte = []byte(`
+var topics_19 []byte = []byte(`<div class="rowitem passive">There aren't any topics yet.`)
+var topics_20 []byte = []byte(` <a href="/topics/create/">Start one?</a>`)
+var topics_21 []byte = []byte(`</div>`)
+var topics_22 []byte = []byte(`
 </div>
 `)
 var forum_0 []byte = []byte(`<div id="prevFloat" class="prev_button"><a class="prev_link" href="/forum/`)
@@ -529,27 +572,37 @@ var forum_11 []byte = []byte(`<a href="/topics/create/`)
 var forum_12 []byte = []byte(`" class='username head_tag_upshift'>New Topic</a>`)
 var forum_13 []byte = []byte(`</div>
 </div>
-<div class="rowblock">
+<div id="forum_topic_list" class="rowblock topic_list">
 	`)
-var forum_14 []byte = []byte(`<div class="rowitem passive" style="`)
+var forum_14 []byte = []byte(`<div class="rowitem passive datarow" style="`)
 var forum_15 []byte = []byte(`background-image: url(`)
 var forum_16 []byte = []byte(`);background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;`)
 var forum_17 []byte = []byte(`background-color: #FFFFCC;`)
 var forum_18 []byte = []byte(`background-color: #eaeaea;`)
 var forum_19 []byte = []byte(`">
-		<a href="/topic/`)
-var forum_20 []byte = []byte(`">`)
-var forum_21 []byte = []byte(`</a> `)
-var forum_22 []byte = []byte(`<span class="username topic_status_e topic_status_closed" title="Status: Closed" style="float: right;position:relative;top:-5px;margin-left:8px;">&#x1F512;&#xFE0E</span>`)
-var forum_23 []byte = []byte(`
-		<a style="float: right;font-size:12px;">`)
-var forum_24 []byte = []byte(`</a>
+		<span class="rowsmall" style="float: right;">
+			<span class="replyCount">`)
+var forum_20 []byte = []byte(` replies</span><br />
+			<span class="lastReplyAt">`)
+var forum_21 []byte = []byte(`</span>
+		</span>
+		<span>
+			<a class="rowtopic" href="/topic/`)
+var forum_22 []byte = []byte(`">`)
+var forum_23 []byte = []byte(`</a>
+			<br /><a class="rowsmall" href="/user/`)
+var forum_24 []byte = []byte(`">Starter: `)
+var forum_25 []byte = []byte(`</a>
+			`)
+var forum_26 []byte = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E`)
+var forum_27 []byte = []byte(`</span>
+		</span>
 	</div>
 	`)
-var forum_25 []byte = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.`)
-var forum_26 []byte = []byte(` <a href="/topics/create/`)
-var forum_27 []byte = []byte(`">Start one?</a>`)
-var forum_28 []byte = []byte(`</div>`)
-var forum_29 []byte = []byte(`
+var forum_28 []byte = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.`)
+var forum_29 []byte = []byte(` <a href="/topics/create/`)
+var forum_30 []byte = []byte(`">Start one?</a>`)
+var forum_31 []byte = []byte(`</div>`)
+var forum_32 []byte = []byte(`
 </div>
 `)

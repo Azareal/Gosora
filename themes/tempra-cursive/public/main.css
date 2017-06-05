@@ -49,11 +49,15 @@ li a {
 	padding-right: 10px;
 }
 
+.menu_bell {
+	cursor: default;
+}
 .menu_alerts {
 	/*padding-left: 7px;*/
 	font-size: 20px;
 	padding-top: 2px;
 	color: rgb(80,80,80);
+	z-index: 500;
 }
 .menu_alerts .alert_counter {
 	position: relative;
@@ -138,6 +142,7 @@ li a {
 	padding-top: 0px;
 }
 .rowblock:empty { display: none; }
+.rowsmall { font-size:12px; }
 
 .colblock_left {
 	border: 1px solid #ccc;
@@ -234,6 +239,11 @@ li a {
 .rowitem a:hover { color: silver; }
 .top_post { margin-bottom: 16px; }
 .opthead { display: none; }
+
+.datarow {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
 
 .formrow {
 	width: 100%;
@@ -501,21 +511,11 @@ button.username {
 	opacity: 0.7;
 }
 
-.panel_floater {
-	float: right;
-}
-#panel_groups > .rowitem > .panel_floater {
-	float: none;
-}
-#panel_groups > .rowitem > .panel_floater > .panel_right_button {
-	float: right;
-}
-#panel_forums > .rowitem > .panel_floater {
-	float: none;
-}
-#panel_forums > .rowitem > .panel_floater > .panel_buttons {
-	float: right;
-}
+.panel_floater { float: right; }
+#panel_groups > .rowitem > .panel_floater { float: none; }
+#panel_groups > .rowitem > .panel_floater > .panel_right_button { float: right; }
+#panel_forums > .rowitem > .panel_floater { float: none; }
+#panel_forums > .rowitem > .panel_floater > .panel_buttons { float: right; }
 #panel_forums > .rowitem > .panel_floater > .panel_buttons > .panel_right_button {
 	color: #505050;
 	font-size: 14px;
@@ -526,52 +526,30 @@ button.username {
 	opacity: 0.7;
 	font-size: 10px;
 }
-.panel_rank_tag_admin:before {
-	content: "Admin Group";
-}
-.panel_rank_tag_mod:before {
-	content: "Mod Group";
-}
-.panel_rank_tag_banned:before {
-	content: "Banned Group";
-}
-.panel_rank_tag_guest:before {
-	content: "Guest Group";
-}
-.panel_rank_tag_member:before {
-	content: "Member Group";
-}
+.panel_rank_tag_admin:before { content: "Admin Group"; }
+.panel_rank_tag_mod:before { content: "Mod Group"; }
+.panel_rank_tag_banned:before { content: "Banned Group"; }
+.panel_rank_tag_guest:before { content: "Guest Group"; }
+.panel_rank_tag_member:before { content: "Member Group"; }
 
-.forum_preset_announce:after {
-	content: "Announcements";
-}
-.forum_preset_members:after {
-	content: "Member Only";
-}
-.forum_preset_staff:after {
-	content: "Staff Only";
-}
-.forum_preset_admins:after {
-	content: "Admin Only";
-}
-.forum_preset_archive:after {
-	content: "Archive";
-}
-.forum_preset_all:after {
-	content: "Public";
-}
-.forum_preset_custom, .forum_preset_ {
-	display: none !important;
-}
-.forum_active_Hide:before {
-	content: "Hidden";
-}
-.forum_active_Hide + .forum_preset:before {
-	content: " | ";
-}
-.forum_active_Show {
-	display: none !important;
-}
+.forum_preset_announce:after { content: "Announcements"; }
+.forum_preset_members:after { content: "Member Only"; }
+.forum_preset_staff:after { content: "Staff Only"; }
+.forum_preset_admins:after { content: "Admin Only"; }
+.forum_preset_archive:after { content: "Archive"; }
+.forum_preset_all:after { content: "Public"; }
+.forum_preset_custom, .forum_preset_ { display: none !important; }
+.forum_active_Hide:before { content: "Hidden"; }
+.forum_active_Hide + .forum_preset:before { content: " | "; }
+.forum_active_Show { display: none !important; }
+
+.perm_preset_no_access:before { content: "No Access"; color: maroon; }
+.perm_preset_read_only:before { content: "Read Only"; color: green; }
+.perm_preset_can_post:before { content: "Can Post"; color: green; }
+.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
+.perm_preset_custom:before { content: "Custom"; color: black; }
+.perm_preset_default:before { content: "Default"; }
+
 @media(max-width: 1300px) {
 	.theme_row {
 			background-image: none !important;

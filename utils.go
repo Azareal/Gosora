@@ -48,11 +48,11 @@ func relative_time(in string) (string, error) {
 		return "", nil
 	}
 	layout := "2006-01-02 15:04:05"
-	t, err := time.Parse(layout, in)
+	t, err := time.ParseInLocation(layout, in, timeLocation)
 	if err != nil {
 		return "", err
 	}
-	
+
 	diff := time.Since(t)
 	hours := diff.Hours()
 	seconds := diff.Seconds()
@@ -95,7 +95,7 @@ func convert_byte_in_unit(bytes float64,unit string) (count float64) {
 		case "KB": count = bytes / float64(kilobyte)
 		default: count = 0.1
 	}
-	
+
 	if count < 0.1 {
 		count = 0.1
 	}
@@ -128,12 +128,12 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 		return vhooks["email_send_intercept"](email, subject, msg).(bool)
 	}
 	body := "Subject: " + subject + "\n\n" + msg + "\n"
-	
+
 	con, err := smtp.Dial(smtp_server + ":" + smtp_port)
 	if err != nil {
 		return
 	}
-	
+
 	if smtp_username != "" {
 		auth := smtp.PlainAuth("",smtp_username,smtp_password,smtp_server)
 		err = con.Auth(auth)
@@ -141,7 +141,7 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 			return
 		}
 	}
-	
+
 	err = con.Mail(site_email)
 	if err != nil {
 		return
@@ -150,7 +150,7 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 	if err != nil {
 		return
 	}
-	
+
 	email_data, err := con.Data()
 	if err != nil {
 		return
@@ -159,7 +159,7 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 	if err != nil {
 		return
 	}
-	
+
 	err = email_data.Close()
 	if err != nil {
 		return
@@ -208,7 +208,7 @@ func getLevel(score int) (level int) {
 	var base float64 = 25
 	var current, prev float64
 	exp_factor := 2.8
-	
+
 	for i := 1;;i++ {
 		_, bit := math.Modf(float64(i) / 10)
 		if bit == 0 {
@@ -229,7 +229,7 @@ func getLevelScore(getLevel int) (score int) {
 	var current, prev float64
 	var level int
 	exp_factor := 2.8
-	
+
 	for i := 1;;i++ {
 		_, bit := math.Modf(float64(i) / 10)
 		if bit == 0 {
@@ -251,7 +251,7 @@ func getLevels(maxLevel int) []float64 {
 	exp_factor := 2.8
 	var out []float64
 	out = append(out, 0)
-	
+
 	for i := 1;i <= maxLevel;i++ {
 		_, bit := math.Modf(float64(i) / 10)
 		if bit == 0 {

@@ -1,4 +1,8 @@
 echo "Building Gosora"
+go generate
 go build -o Gosora
 echo "Building the installer"
-go build ./install
+cd ./install
+go build -o Install
+mv ./Install ..
+cd ..

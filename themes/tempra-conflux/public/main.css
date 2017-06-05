@@ -12,9 +12,7 @@ body {
 }
 
 /* Patch for Edge, until they fix emojis in arial x.x */
-@supports (-ms-ime-align:auto) {
-.user_content { font-family: Segoe UI Emoji, arial; }
-}
+@supports (-ms-ime-align:auto) { .user_content { font-family: Segoe UI Emoji, arial; } }
 
 ul {
 	padding-left: 0px;
@@ -49,11 +47,15 @@ li a {
 	padding-right: 10px;
 }
 
+.menu_bell {
+	cursor: default;
+}
 .menu_alerts {
 	/*padding-left: 7px;*/
 	font-size: 20px;
 	padding-top: 2px;
 	color: rgb(80,80,80);
+	z-index: 500;
 }
 .menu_alerts .alert_counter {
 	position: relative;
@@ -69,9 +71,7 @@ li a {
 	text-align: center;
 	border: white solid 1px;
 }
-.menu_alerts .alert_counter:empty {
-	display: none;
-}
+.menu_alerts .alert_counter:empty { display: none; }
 
 .selectedAlert {
 	background: white;
@@ -126,9 +126,7 @@ li a {
 	white-space: nowrap;
 	font-weight: normal;
 }
-.alertItem:not(.withAvatar) {
-	margin-left: 5px;
-}
+.alertItem:not(.withAvatar) { margin-left: 5px; }
 
 .container {
 	width: 90%;
@@ -144,6 +142,9 @@ li a {
 	padding-top: 0px;
 }
 .rowblock:empty { display: none; }
+.rowsmall {
+	font-size:12px;
+}
 
 .colblock_left {
 	border: 1px solid #ccc;
@@ -184,8 +185,7 @@ li a {
 	word-wrap: break-word;
 }
 .colstack_head { margin-bottom: 0px; }
-.colstack_left:empty { display: none; }
-.colstack_right:empty { display: none; }
+.colstack_left:empty, .colstack_right:empty { display: none; }
 
 .colstack_grid {
 	display: grid;
@@ -241,6 +241,10 @@ li a {
 }
 .rowitem a:hover { color: silver; }
 .opthead { display: none; }
+.datarow {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
 
 .formrow {
 	width: 100%;
@@ -310,9 +314,7 @@ button {
 }
 .topic_status:empty { display: none; }
 
-.rowhead {
-	background: linear-gradient(to bottom, white, hsl(0, 0%, 93%));
-}
+.rowhead { background: linear-gradient(to bottom, white, hsl(0, 0%, 93%)); }
 .topic_sticky_head {
 	background-color: #FFFFEA;
 	background: linear-gradient(to bottom, hsl(60, 70%, 96%), hsl(60, 70%, 89%)), url('/static/fabric-base-simple-alpha.png');
@@ -395,9 +397,7 @@ button.username {
 	padding-bottom: 0;
 	width: 100%;
 }
-.user_content.nobuttons {
-	min-height: 168px;
-}
+.user_content.nobuttons { min-height: 168px; }
 
 .button_container {
 	border-top: solid 1px #eaeaea;
@@ -426,29 +426,17 @@ button.username {
 	border-left: solid 1px #eaeaea;
 }
 
-.like_label:before {
-	content: "😀";
-}
-.edit_label:before {
-	content: "🖊️";
-}
-.trash_label:before {
-	content: "🗑️";
-}
-.flag_label:before {
-	content: "🚩";
-}
+.like_label:before { content: "😀"; }
+.edit_label:before { content: "🖊️"; }
+.trash_label:before { content: "🗑️"; }
+.flag_label:before { content: "🚩"; }
 
-.mod_button {
-	margin-right: 4px;
-}
+.mod_button { margin-right: 4px; }
 .simple > .real_username { color: #404040; font-size: 17px; }
 .simple > .user_content { background: none; }
 
 .simple { background-color: white; }
-.post_item:not(.simple) {
-	background-color: #eaeaea;
-}
+.post_item:not(.simple) { background-color: #eaeaea; }
 .post_item {
 	padding-top: 4px;
 	padding-left: 5px;
@@ -457,9 +445,7 @@ button.username {
 	padding-right: 4px;
 	padding-bottom: 2px;
 }
-.post_item:last-child {
-	padding-bottom: 7px;
-}
+.post_item:last-child { padding-bottom: 7px; }
 .post_tag {
 	margin-top: 0px;
 	text-align: center;
@@ -504,9 +490,7 @@ button.username {
 	box-shadow:0 1px 2px rgba(0,0,0,.1);
 }
 
-.action_item .userinfo {
-	display: none;
-}
+.action_item .userinfo { display: none; }
 .action_item .content_container {
 	min-height: auto;
 	padding: 15px;
@@ -544,9 +528,7 @@ button.username {
 }
 
 /* Control Panel */
-.panel_upshift:visited {
-	color: black;
-}
+.panel_upshift:visited { color: black; }
 
 .tag-mini {
 	margin-left: 0px;
@@ -568,82 +550,48 @@ button.username {
 	font-size: 14px;
 }
 
-.panel_floater {
-	float: right;
-}
-#panel_groups > .rowitem > .panel_floater {
-	float: none;
-}
-#panel_groups > .rowitem > .panel_floater > .panel_right_button {
-	float: right;
-}
-#panel_forums > .rowitem > .panel_floater {
-	float: none;
-}
-#panel_forums > .rowitem > .panel_floater > .panel_buttons {
-	float: right;
-}
+.panel_floater { float: right; }
+#panel_groups > .rowitem > .panel_floater { float: none; }
+#panel_groups > .rowitem > .panel_floater > .panel_right_button { float: right; }
+#panel_forums > .rowitem > .panel_floater { float: none; }
+#panel_forums > .rowitem > .panel_floater > .panel_buttons { float: right; }
+#panel_forums > .rowitem > span > .forum_name { margin-right: 4px; }
+#panel_forum_quick_perms > .formrow > .formitem > a { margin-right: 4px; }
+.forum_active > select { margin-bottom: 3px } /* Quick fix, need to properly patch this */
 
 .panel_rank_tag, .forum_preset, .forum_active {
 	float: none;
 	color: #202020 !important;
 	font-size: 11px;
 }
-.panel_rank_tag_admin:before {
-	content: "Admins";
-}
-.panel_rank_tag_mod:before {
-	content: "Mods";
-}
-.panel_rank_tag_banned:before {
-	content: "Banned";
-}
-.panel_rank_tag_guest:before {
-	content: "Guests";
-}
-.panel_rank_tag_member:before {
-	content: "Members";
-}
+.panel_rank_tag_admin:before { content: "Admins"; }
+.panel_rank_tag_mod:before { content: "Mods"; }
+.panel_rank_tag_banned:before { content: "Banned"; }
+.panel_rank_tag_guest:before { content: "Guests"; }
+.panel_rank_tag_member:before { content: "Members"; }
 
-.forum_preset_announce:after {
-	content: "Announcements";
-}
-.forum_preset_members:after {
-	content: "Member Only";
-}
-.forum_preset_staff:after {
-	content: "Staff Only";
-}
-.forum_preset_admins:after {
-	content: "Admin Only";
-}
-.forum_preset_archive:after {
-	content: "Archive";
-}
-.forum_preset_all:after {
-	content: "Public";
-}
-.forum_preset_custom, .forum_preset_ {
-	display: none !important;
-}
-.forum_active_Hide:before {
-	content: "Hidden";
-}
-.forum_active_Hide + .forum_preset:before {
-	content: " | ";
-}
-.forum_active_Show {
-	display: none !important;
-}
+.forum_preset_announce:after { content: "Announcements"; }
+.forum_preset_members:after { content: "Member Only"; }
+.forum_preset_staff:after { content: "Staff Only"; }
+.forum_preset_admins:after { content: "Admin Only"; }
+.forum_preset_archive:after { content: "Archive"; }
+.forum_preset_all:after { content: "Public"; }
+.forum_preset_custom, .forum_preset_ { display: none !important; }
+.forum_active_Hide:before { content: "Hidden"; }
+.forum_active_Hide + .forum_preset:before { content: " | "; }
+.forum_active_Show { display: none !important; }
 
-.theme_row > .panel_floater > .panel_right_button {
-	margin-left: 5px;
-}
+.perm_preset_no_access:before { content: "No Access"; color: maroon; }
+.perm_preset_read_only:before { content: "Read Only"; color: green; }
+.perm_preset_can_post:before { content: "Can Post"; color: green; }
+.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
+.perm_preset_custom:before { content: "Custom"; color: black; }
+.perm_preset_default:before { content: "Default"; }
+
+.theme_row > .panel_floater > .panel_right_button { margin-left: 5px; }
 
 @media(max-width: 1300px) {
-	.theme_row {
-			background-image: none !important;
-	}
+	.theme_row { background-image: none !important; }
 }
 
 /* The Media Queries */
@@ -717,18 +665,14 @@ button.username {
 		padding-left: 42px;
 		height: 46px;
 	}
-	.alertItem {
-		padding: 8px;
-	}
+	.alertItem { padding: 8px; }
 	.alertItem .text {
 		height: 30px;
 		font-size: 10px;
 		font-weight: bold;
 		white-space: normal;
 	}
-	.alertItem .text.smaller {
-		font-size: 9px;
-	}
+	.alertItem .text.smaller { font-size: 9px; }
 	.post_container { overflow: visible !important; }
 
 	.post_item {
@@ -772,6 +716,7 @@ button.username {
 	.user_content.nobuttons { min-height: 100.5px !important; }
 	.the_name { font-size: 15px; }
 	.post_tag { font-size: 12px; }
+	.rowtopic { font-size: 14px; }
 
 	.container { width: 100% !important; }
 }

@@ -1,14 +1,16 @@
 package main
 
-//import "fmt"
-import "sync"
-import "strings"
-import "strconv"
-import "net"
-import "net/http"
-import "golang.org/x/crypto/bcrypt"
-import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
+import (
+	//"fmt"
+	"sync"
+	"strings"
+	"strconv"
+	"net"
+	"net/http"
+	"golang.org/x/crypto/bcrypt"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
+)
 
 var guest_user User = User{ID:0,Group:6,Perms:GuestPerms}
 

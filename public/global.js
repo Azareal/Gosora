@@ -17,12 +17,13 @@ function load_alerts(menu_alerts)
 			url:'/api/?action=get&module=alerts&format=json',
 			success: function(data) {
 				if("errmsg" in data) {
-					console.log(data.errmsg);
+					//console.log(data.errmsg);
 					menu_alerts.find(".alertList").html("<div class='alertItem'>"+data.errmsg+"</div>");
 					return;
 				}
 
 				var alist = "";
+				var anyAvatar = false
 				for(var i in data.msgs) {
 					var msg = data.msgs[i];
 					var mmsg = msg.msg;
@@ -30,8 +31,8 @@ function load_alerts(menu_alerts)
 					if("sub" in msg) {
 						for(var i = 0; i < msg.sub.length; i++) {
 							mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
-							console.log("Sub #" + i);
-							console.log(msg.sub[i]);
+							//console.log("Sub #" + i);
+							//console.log(msg.sub[i]);
 						}
 					}
 
@@ -39,30 +40,28 @@ function load_alerts(menu_alerts)
 					else if(mmsg.length > 35) size_dial = " smaller"; //9px
 					else size_dial = ""; // 10px
 
-					if("avatar" in msg) {
+					if("avatar" in msg)
+					{
 						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text"+size_dial+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
-						console.log(msg.avatar);
-					} else {
-						alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text"+size_dial+"'>"+mmsg+"</a></div>";
+						anyAvatar = true
 					}
-					console.log(msg);
+					else alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text"+size_dial+"'>"+mmsg+"</a></div>";
+					//console.log(msg);
 					//console.log(mmsg);
 				}
 
 				if(alist == "") alist = "<div class='alertItem'>You don't have any alerts</div>";
-				menu_alerts.find(".alertList").html(alist);
-				if(data.msgs.length != 0) {
-					menu_alerts.find(".alert_counter").text(data.msgs.length);
+				else {
+					//menu_alerts.removeClass("hasAvatars");
+					//if(anyAvatar) menu_alerts.addClass("hasAvatars");
 				}
+				menu_alerts.find(".alertList").html(alist);
+				if(data.msgs.length != 0) menu_alerts.find(".alert_counter").text(data.msgs.length);
 			},
 			error: function(magic,theStatus,error) {
 				try {
 					var data = JSON.parse(magic.responseText);
-					if("errmsg" in data)
-					{
-						console.log(data.errmsg);
-						errtxt = data.errmsg;
-					}
+					if("errmsg" in data) errtxt = data.errmsg;
 					else errtxt = "Unable to get the alerts";
 				} catch(e) { errtxt = "Unable to get the alerts"; }
 				menu_alerts.find(".alertList").html("<div class='alertItem'>"+errtxt+"</div>");
@@ -110,22 +109,17 @@ $(document).ready(function(){
 				if(messages[i].startsWith("set ")) {
 					//msgblocks = messages[i].split(' ',3);
 					msgblocks = SplitN(messages[i]," ",3);
-					if(msgblocks.length < 3) {
-						continue;
-					}
+					if(msgblocks.length < 3) continue;
 					document.querySelector(msgblocks[1]).innerHTML = msgblocks[2];
 				} else if(messages[i].startsWith("set-class ")) {
 					msgblocks = SplitN(messages[i]," ",3);
-					if(msgblocks.length < 3) {
-						continue;
-					}
+					if(msgblocks.length < 3) continue;
 					document.querySelector(msgblocks[1]).className = msgblocks[2];
 				}
 			}
 		}
-	} else {
-		conn = false
 	}
+	else conn = false;
 
 	$(".open_edit").click(function(event){
 		//console.log("Clicked on edit");
@@ -239,21 +233,18 @@ $(document).ready(function(){
 				//console.log("Field Name '" + field_name + "'")
 				//console.log("Field Type",field_type)
 				//console.log("Field Value '" + field_value + "'")
-				for (var i = 0; i < itLen; i++){
-					//console.log("Field Possibility '" + it[i] + "'");
+				for (var i = 0; i < itLen; i++) {
 					if(field_value == i || field_value == it[i]) {
 						sel = "selected ";
-						//console.log("Class List: ",this.classList)
 						this.classList.remove(field_name + '_' + it[i]);
-						//console.log("Removing " + field_name + '_' + it[i]);
-						//console.log(this.classList)
 						this.innerHTML = "";
 					} else sel = "";
 					out += "<option "+sel+"value='"+i+"'>"+it[i]+"</option>";
 				}
-				this.innerHTML = "<select data-field='"+field_name+"' name='"+field_name+"'>" + out + "</select>";
+				this.innerHTML = "<select data-field='"+field_name+"' name='"+field_name+"'>"+out+"</select>";
 			}
-			else this.innerHTML = "<input name='"+field_name+"' value='" + this.textContent + "' type='text'/>";
+			else if(field_type=="hidden") {}
+			else this.innerHTML = "<input name='"+field_name+"' value='"+this.textContent+"' type='text'/>";
 		});
 		block_parent.find('.show_on_edit').eq(0).show();
 
@@ -269,15 +260,16 @@ $(document).ready(function(){
 			var block = block_parent.find('.editable_block').each(function(){
 				var field_name = this.getAttribute("data-field");
 				var field_type = this.getAttribute("data-type");
-				if(field_type == "list") {
+				if(field_type=="list") {
 					var newContent = $(this).find('select :selected').text();
 					this.classList.add(field_name + '_' + newContent);
 					this.innerHTML = "";
+				} else if(field_type=="hidden") {
+					var newContent = $(this).val();
 				} else {
 					var newContent = $(this).find('input').eq(0).val();
 					this.innerHTML = newContent;
 				}
-				//console.log(".submit_edit");
 				//console.log("field_name",field_name);
 				//console.log("field_type",field_type);
 				//console.log("newContent",newContent);
@@ -296,7 +288,6 @@ $(document).ready(function(){
 
 	$(".ip_item").each(function(){
 		var ip = this.textContent;
-		//console.log("IP: " + ip);
 		if(ip.length > 10){
 			this.innerHTML = "Show IP";
 			this.onclick = function(event){
@@ -308,6 +299,15 @@ $(document).ready(function(){
 
 	$(this).click(function() {
 		$(".selectedAlert").removeClass("selectedAlert");
+		$("#back").removeClass("alertActive");
+	});
+	$(".alert_bell").click(function(){
+		var menu_alerts = $(this).parent();
+		if(menu_alerts.hasClass("selectedAlert")) {
+			event.stopPropagation();
+			menu_alerts.removeClass("selectedAlert");
+			$("#back").removeClass("alertActive");
+		}
 	});
 
 	$(".menu_alerts").ready(function(){
@@ -317,8 +317,9 @@ $(document).ready(function(){
 	$(".menu_alerts").click(function(event) {
 		event.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
-		this.className += " selectedAlert";
 		load_alerts($(this));
+		this.className += " selectedAlert";
+		document.getElementById("back").className += " alertActive"
 	});
 
 	this.onkeyup = function(event){

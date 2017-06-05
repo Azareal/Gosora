@@ -7,6 +7,7 @@ func init() {
 // init_helloworld is separate from init() as we don't want the plugin to run if the plugin is disabled
 func init_helloworld() {
 	plugins["helloworld"].AddHook("rrow_assign", helloworld_reply)
+	// TO-DO: Add a route injection example here
 }
 
 func deactivate_helloworld() {

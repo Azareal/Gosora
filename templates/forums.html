@@ -3,9 +3,21 @@
 	<div class="rowitem rowhead"><a>Forums</a></div>
 </div>
 <div class="rowblock">
-	{{range .ItemList}}<div class="rowitem">
-		<a href="/forum/{{.ID}}" class="panel_upshift">{{.Name}}</a>
-		<a href="/topic/{{.LastTopicID}}" style="float: right;">{{.LastTopic}} <small style="font-size: 12px;">{{.LastTopicTime}}</small></a>
+	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopicTime)}}datarow{{end}}">
+		{{if .Desc}}<span style="float: left;">
+			<a href="/forum/{{.ID}}" style="">{{.Name}}</a>
+			<br /><span class="rowsmall">{{.Desc}}</span>
+		</span>{{else if .LastTopicTime}}<span style="float: left;padding-top: 8px;font-size: 18px;">
+			<a href="/forum/{{.ID}}">{{.Name}}</a>
+		</span>{{else}}<span style="float: left;">
+			<a href="/forum/{{.ID}}">{{.Name}}</a>
+		</span>{{end}}
+
+		<span style="float: right;">
+			<a href="/topic/{{.LastTopicID}}" style="float: right;font-size: 14px;">{{.LastTopic}}</a>
+			{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}
+		</span>
+		<div style="clear: both;"></div>
 	</div>
 	{{else}}<div class="rowitem passive">You don't have access to any forums.</div>{{end}}
 </div>

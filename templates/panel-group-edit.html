@@ -18,7 +18,7 @@
 		<form action="/panel/groups/edit/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
 		<div class="formrow">
 			<div class="formitem formlabel"><a>Name</a></div>
-			<div class="formitem"><input name="group-name" type="text" value="{{.Name}}" placeholder="General Forum" /></div>
+			<div class="formitem"><input name="group-name" type="text" value="{{.Name}}" placeholder="Random Group" /></div>
 		</div>
 		{{if .CurrentUser.Perms.EditGroup}}
 		<div class="formrow">

@@ -10,9 +10,7 @@ body {
 }
 
 /* Patch for Edge, until they fix emojis in arial x.x */
-@supports (-ms-ime-align:auto) {
-.user_content { font-family: Segoe UI Emoji, arial; }
-}
+@supports (-ms-ime-align:auto) { .user_content { font-family: Segoe UI Emoji, arial; } }
 
 ul {
 	padding-left: 0px;
@@ -47,6 +45,7 @@ li a {
 	padding-right: 10px;
 }
 
+.menu_bell { cursor: default; }
 .menu_alerts {
 	/*padding-left: 7px;*/
 	font-size: 20px;
@@ -67,9 +66,7 @@ li a {
 	text-align: center;
 	border: white solid 1px;
 }
-.menu_alerts .alert_counter:empty {
-	display: none;
-}
+.menu_alerts .alert_counter:empty { display: none; }
 
 .selectedAlert {
 	background: white;
@@ -79,9 +76,12 @@ li a {
 	background: white;
 	color: black;
 }
+.selectedAlert .alert_counter { display: none; }
 .menu_alerts .alertList {
 	display: none;
+	z-index: 500;
 }
+
 .selectedAlert .alertList {
 	position: absolute;
 	top: 51px;
@@ -142,6 +142,9 @@ li a {
 	padding-top: 0px;
 }
 .rowblock:empty { display: none; }
+.rowsmall {
+	font-size:12px;
+}
 
 .colblock_left {
 	border: 1px solid #ccc;
@@ -182,8 +185,7 @@ li a {
 	word-wrap: break-word;
 }
 .colstack_head { margin-bottom: 0px; }
-.colstack_left:empty { display: none; }
-.colstack_right:empty { display: none; }
+.colstack_left:empty, .colstack_right:empty { display: none; }
 
 .colstack_grid {
 	display: grid;
@@ -229,15 +231,10 @@ li a {
 	padding-top: 14px;
 	padding-bottom: 12px;
 	padding-right: 10px;
-	/*font-weight: bold;*/
 	background-color: white;
 }
-/*.rowitem:not(.passive) {
-	font-size: 17px;
-}*/
-.rowitem:not(:last-child) {
-	border-bottom: 1px dotted #ccc;
-}
+/*.rowitem:not(.passive) { font-size: 17px; }*/
+.rowitem:not(:last-child) { border-bottom: 1px dotted #ccc; }
 .rowitem a {
 	text-decoration: none;
 	color: black;
@@ -245,6 +242,11 @@ li a {
 .rowitem a:hover { color: silver; }
 .top_post { margin-bottom: 12px; }
 .opthead { display: none; }
+
+.datarow {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
 
 .formrow {
 	width: 100%;
@@ -332,11 +334,7 @@ button.username { position: relative; top: -0.25px; }
 .username.level { color: #303030; }
 .username.real_username { color: #404040; font-size: 17px; }
 .username.real_username:hover { color: black; }
-
-.post_item > .username {
-    margin-top: 20px;
-    display: inline-block;
-}
+.post_item > .username { margin-top: 20px; display: inline-block; }
 
 .tag-mini {
 	text-transform: none;
@@ -358,17 +356,13 @@ button.username { position: relative; top: -0.25px; }
 	color: #202020;
 	opacity: 0.7;
 }
-.post_item > .mod_button > button:hover {
-	opacity: 0.9;
-}
+.post_item > .mod_button > button:hover { opacity: 0.9; }
 
 .mod_button {
 	margin-right: 4px;
+	/*z-index: 10;*/
 }
-
-.like_label:before, .like_count_label:before {
-	content: "😀";
-}
+.like_label:before, .like_count_label:before { content: "😀"; }
 .like_count_label {
 	color: #505050;
 	float: right;
@@ -383,27 +377,14 @@ button.username { position: relative; top: -0.25px; }
 	padding-right: 5px;
 	font-size: 17px;
 }
-.edit_label:before {
-	content: "🖊️";
-}
-.trash_label:before {
-	content: "🗑️";
-}
-.pin_label:before {
-	content: "📌";
-}
-.unpin_label:before {
-	content: "📌";
-}
-.unpin_label {
-	background-color: #D6FFD6;
-}
-.flag_label:before {
-	content: "🚩";
-}
-.level_label:before {
-	content: "👑";
-}
+
+.edit_label:before { content: "🖊️"; }
+.trash_label:before { content: "🗑️"; }
+.pin_label:before { content: "📌"; }
+.unpin_label:before { content: "📌"; }
+.unpin_label { background-color: #D6FFD6; }
+.flag_label:before { content: "🚩"; }
+.level_label:before { content: "👑"; }
 
 .controls {
 	margin-top: 23px;
@@ -496,9 +477,7 @@ button.username { position: relative; top: -0.25px; }
 	position: relative;
 	top: -2px;
 }
-.panel_upshift:visited {
-	color: black;
-}
+.panel_upshift:visited { color: black; }
 /*.panel_tag_upshift {
 	margin-left: 2px;
 	position: relative;
@@ -506,49 +485,28 @@ button.username { position: relative; top: -0.25px; }
 	color: #505050;
 }*/
 
-.panel_floater {
-	float: right;
-}
-.panel_rank_tag_admin:before {
-	content: "👑";
-}
-.panel_rank_tag_mod:before {
-	content: "👮";
-}
-.panel_rank_tag_banned:before {
-	content: "⛓️";
-}
-.panel_rank_tag_guest:before {
-	content: "👽";
-}
-.panel_rank_tag_member:before {
-	content: "👪";
-}
+.panel_floater { float: right; }
+.panel_rank_tag_admin:before { content: "👑"; }
+.panel_rank_tag_mod:before { content: "👮"; }
+.panel_rank_tag_banned:before { content: "⛓️"; }
+.panel_rank_tag_guest:before { content: "👽"; }
+.panel_rank_tag_member:before { content: "👪"; }
 
-.forum_preset_announce:before {
-	content: "📣";
-}
-.forum_preset_members:before {
-	content: "👪";
-}
-.forum_preset_staff:before {
-	content: "👮";
-}
-.forum_preset_admins:before {
-	content: "👑";
-}
-.forum_preset_archive:before {
-	content: "☠️";
-}
-.forum_preset_all, .forum_preset_custom, .forum_preset_ {
-	display: none !important;
-}
-.forum_active_Hide:before {
-	content: "🕵️";
-}
-.forum_active_Show {
-	display: none !important;
-}
+.forum_preset_announce:before { content: "📣"; }
+.forum_preset_members:before { content: "👪"; }
+.forum_preset_staff:before { content: "👮"; }
+.forum_preset_admins:before { content: "👑"; }
+.forum_preset_archive:before { content: "☠️"; }
+.forum_preset_all, .forum_preset_custom, .forum_preset_ { display: none !important; }
+.forum_active_Hide:before { content: "🕵️"; }
+.forum_active_Show { display: none !important; }
+
+.perm_preset_no_access:before { content: "No Access"; color: maroon; }
+.perm_preset_read_only:before { content: "Read Only"; color: green; }
+.perm_preset_can_post:before { content: "Can Post"; color: green; }
+.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
+.perm_preset_custom:before { content: "Custom"; color: black; }
+.perm_preset_default:before { content: "Default"; }
 
 @media (max-width: 880px) {
 	li {
@@ -562,8 +520,7 @@ button.username { position: relative; top: -0.25px; }
 		height: 30px;
 		margin-top: 8px;
 	}
-	.menu_left { padding-right: 9px; }
-	.menu_right { padding-right: 9px; }
+	.menu_left, .menu_right { padding-right: 9px; }
 	.menu_alerts {
 		padding-left: 7px;
 		padding-right: 7px;
@@ -591,9 +548,8 @@ button.username { position: relative; top: -0.25px; }
 	}
 	li a { font-size: 14px; }
 	ul { height: 26px; }
-	.menu_left { padding-right: 7px; }
-	.menu_right { padding-right: 7px; }
-	.menu_create_topic { display: none;}
+	.menu_left, .menu_right { padding-right: 7px; }
+	.menu_create_topic { display: none; }
 
 	.menu_alerts {
 		padding-left: 4px;
@@ -615,24 +571,33 @@ button.username { position: relative; top: -0.25px; }
 		width: 135px;
 		margin-bottom: 5px;
 	}
+	.selectedAlert.hasAvatars .alertList { width: calc(100% - 8px); }
 	.alertItem.withAvatar {
 		background-size: 36px;
 		text-align: right;
 		padding-left: 10px;
 		height: 46px;
 	}
-	.alertItem {
-		padding: 8px;
+	.hasAvatars > .alertList > .alertItem.withAvatar {
+		background-size: 46px;
+		text-align: inherit;
+		padding-left: 56px;
+		height: 42px;
 	}
-	.alertItem.withAvatar .text {
+	.alertItem { padding: 8px; }
+	.hasAvatars > .alertList > .alertItem { padding-top: 11px; }
+	.selectedAlert:not(.hasAvatars) > .alertList > .alertItem.withAvatar .text {
 		width: calc(100% - 20px);
 		height: 30px;
 		white-space: normal;
 	}
-	.alertItem .text {
+	.selectedAlert:not(.hasAvatars) > .alertList > .alertItem .text {
 		font-size: 10px;
 		font-weight: bold;
 		margin-left: 0px;
+	}
+	.alertActive {
+		opacity: 0.7;
 	}
 
 	.hide_on_micro { display: none !important; }
@@ -672,6 +637,9 @@ button.username { position: relative; top: -0.25px; }
 		margin-left: 74px;
 		width: calc(100% - 74px);
 	}
+	.rowtopic {
+		font-size: 14px;
+	}
 	.container { width: 100% !important; }
 }
 
@@ -685,13 +653,7 @@ button.username { position: relative; top: -0.25px; }
 		text-overflow: clip;
 		max-width: 84px;
 	}
-	.post_item > .controls {
-		margin-left: 72px;
-	}
-	.top_post > .post_item > .controls > .real_username {
-		max-width: 57px;
-	}
-	.top_post > .post_item {
-		padding-right: 4px;
-	}
+	.post_item > .controls { margin-left: 72px; }
+	.top_post > .post_item > .controls > .real_username { max-width: 57px; }
+	.top_post > .post_item { padding-right: 4px; }
 }

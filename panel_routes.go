@@ -206,7 +206,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	var forumList []interface{}
 	for _, forum := range forums {
 		if forum.Name != "" {
-			fadmin := ForumAdmin{forum.ID,forum.Name,forum.Active,forum.Preset,forum.TopicCount,preset_to_lang(forum.Preset)}
+			fadmin := ForumAdmin{forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,forum.TopicCount,preset_to_lang(forum.Preset)}
 			if fadmin.Preset == "" {
 				fadmin.Preset = "custom"
 			}
@@ -240,17 +240,13 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	var active bool
 	fname := r.PostFormValue("forum-name")
+	fdesc := r.PostFormValue("forum-desc")
 	fpreset := strip_invalid_preset(r.PostFormValue("forum-preset"))
 	factive := r.PostFormValue("forum-name")
-	if factive == "on" || factive == "1" {
-		active = true
-	} else {
-		active = false
-	}
+	active := (factive == "on" || factive == "1" )
 
-	fid, err := create_forum(fname,active,fpreset)
+	fid, err := create_forum(fname,fdesc,active,fpreset)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -344,8 +340,25 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string
 		return
 	}
 
-	pi := Page{"Forum Editor",user,noticeList,tList,nil}
-	templates.ExecuteTemplate(w,"panel-forum-edit.html",pi)
+	var forum Forum = forums[fid]
+	if forum.Preset == "" {
+		forum.Preset = "custom"
+	}
+
+	var glist []Group = groups
+	var gplist []GroupForumPermPreset
+	for gid, group := range glist {
+		if gid == 0 {
+			continue
+		}
+		gplist = append(gplist,GroupForumPermPreset{group,forum_perms_to_group_forum_preset(group.Forums[fid])})
+	}
+
+	pi := EditForumPage{"Forum Editor",user,noticeList,forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,gplist,nil}
+	err = templates.ExecuteTemplate(w,"panel-forum-edit.html",pi)
+	if err != nil {
+		InternalError(err,w,r)
+	}
 }
 
 func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid string) {
@@ -379,17 +392,13 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 	}
 
 	forum_name := r.PostFormValue("forum_name")
+	forum_desc := r.PostFormValue("forum_desc")
 	forum_preset := strip_invalid_preset(r.PostFormValue("forum_preset"))
 	forum_active := r.PostFormValue("forum_active")
     if !forum_exists(fid) {
 		LocalErrorJSQ("The forum you're trying to edit doesn't exist.",w,r,user,is_js)
 		return
 	}
-
-	/*if forum_name == "" && forum_active == "" {
-		LocalErrorJSQ("You haven't changed anything!",w,r,user,is_js)
-		return
-	}*/
 
 	if forum_name == "" {
 		forum_name = forums[fid].Name
@@ -404,7 +413,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 		active = false
 	}
 
-	_, err = update_forum_stmt.Exec(forum_name,active,forum_preset,fid)
+	_, err = update_forum_stmt.Exec(forum_name,forum_desc,active,forum_preset,fid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,is_js)
 		return
@@ -412,6 +421,9 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 
 	if forums[fid].Name != forum_name {
 		forums[fid].Name = forum_name
+	}
+	if forums[fid].Desc != forum_desc {
+		forums[fid].Desc = forum_desc
 	}
 	if forums[fid].Active != active {
 		forums[fid].Active = active
@@ -424,6 +436,70 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 
 	if is_js == "0" {
 		http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
+	} else {
+		w.Write(success_json_bytes)
+	}
+}
+
+func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request, sfid string){
+	user, ok := SimpleSessionCheck(w,r)
+	if !ok {
+		return
+	}
+	if !user.Is_Super_Mod || !user.Perms.ManageForums {
+		NoPermissions(w,r,user)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		LocalError("Bad Form",w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+	is_js := r.PostFormValue("js")
+	if is_js == "" {
+		is_js = "0"
+	}
+
+	fid, err := strconv.Atoi(sfid)
+	if err != nil {
+		LocalErrorJSQ("The provided Forum ID is not a valid number.",w,r,user,is_js)
+		return
+	}
+
+	gid, err := strconv.Atoi("gid")
+	if err != nil {
+		LocalErrorJSQ("Invalid Group ID",w,r,user,is_js)
+		return
+	}
+
+	perm_preset := strip_invalid_group_forum_preset(r.PostFormValue("perm_preset"))
+	fperms, changed := group_forum_preset_to_forum_perms(perm_preset)
+	if changed {
+		permupdate_mutex.Lock()
+		groups[gid].Forums[fid] = fperms
+
+		perms, err := json.Marshal(fperms)
+		if err != nil {
+			InternalErrorJSQ(err,w,r,is_js)
+			return
+		}
+
+		//_, err = update_forum_perms_for_group_stmt.Exec(perm_preset,perms,gid,fid)
+		_, err = add_forum_perms_to_group_stmt.Exec(gid,fid,perm_preset,perms)
+		if err != nil {
+			InternalErrorJSQ(err,w,r,is_js)
+			return
+		}
+		permupdate_mutex.Unlock()
+	}
+
+	if is_js == "0" {
+		http.Redirect(w,r,"/panel/forums/edit/" + strconv.Itoa(fid),http.StatusSeeOther)
 	} else {
 		w.Write(success_json_bytes)
 	}

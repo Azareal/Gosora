@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"mime"
+	"time"
 	"strings"
 	"path/filepath"
 	"io"
@@ -32,6 +33,8 @@ const saltLength int = 32
 const sessionLength int = 80
 var enable_websockets bool = false // Don't change this, the value is overwritten by an initialiser
 
+var startTime time.Time
+var timeLocation *time.Location
 var templates = template.New("")
 var no_css_tmpl = template.CSS("")
 var staff_css_tmpl = template.CSS(staff_css)
@@ -40,8 +43,7 @@ var external_sites map[string]string = make(map[string]string)
 var groups []Group
 var forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency
 var forum_perms map[int]map[int]ForumPerms // [gid][fid]Perms
-var groupCapCount int
-var forumCapCount int
+var groupCapCount, forumCapCount int
 var static_files map[string]SFile = make(map[string]SFile)
 
 var template_topic_handle func(TopicPage,io.Writer) = nil
@@ -56,22 +58,22 @@ func compile_templates() {
 	var c CTemplateSet
 	user := User{62,"","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"0.0.0.0.0"}
 	noticeList := []string{"test"}
-	
+
 	log.Print("Compiling the templates")
-	
-	topic := TopicUser{1,"Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"",default_group,"",no_css_tmpl,0,"","","","",58,false}
+
+	topic := TopicUser{1,"Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"classname","",default_group,"",no_css_tmpl,0,"","","","",58,false}
 	var replyList []Reply
 	replyList = append(replyList, Reply{0,0,"","Yo!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	
+
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title",user,noticeList,replyList,topic,1,1,false}
 	topic_id_tmpl := c.compile_template("topic.html","templates/","TopicPage", tpage, varList)
 	topic_id_alt_tmpl := c.compile_template("topic_alt.html","templates/","TopicPage", tpage, varList)
-	
+
 	varList = make(map[string]VarItem)
 	ppage := ProfilePage{"User 526",user,noticeList,replyList,user,false}
 	profile_tmpl := c.compile_template("profile.html","templates/","ProfilePage", ppage, varList)
-	
+
 	var forumList []Forum
 	for _, forum := range forums {
 		if forum.Active {
@@ -81,18 +83,18 @@ func compile_templates() {
 	varList = make(map[string]VarItem)
 	forums_page := ForumsPage{"Forum List",user,noticeList,forumList,0}
 	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage", forums_page, varList)
-	
+
 	var topicsList []TopicsRow
-	topicsList = append(topicsList,TopicsRow{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"Admin","","",0,"","","","",58,"General"})
+	topicsList = append(topicsList,TopicsRow{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","Admin","","",0,"","","","",58,"General"})
 	topics_page := TopicsPage{"Topic List",user,noticeList,topicsList,""}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
-	
+
 	var topicList []TopicUser
-	topicList = append(topicList,TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"Admin",default_group,"","",0,"","","","",58,false})
-	forum_item := Forum{1,"General Forum",true,"all",0,"",0,"",0,""}
+	topicList = append(topicList,TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","Admin",default_group,"","",0,"","","","",58,false})
+	forum_item := Forum{1,"General Forum","Where the general stuff happens",true,"all",0,"",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,noticeList,topicList,forum_item,1,1,nil}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)
-	
+
 	log.Print("Writing the templates")
 	go write_template("topic", topic_id_tmpl)
 	go write_template("topic_alt", topic_id_alt_tmpl)
@@ -112,7 +114,7 @@ func write_template(name string, content string) {
 
 func init_templates() {
 	compile_templates()
-	
+
 	// Filler functions for now...
 	filler_func := func(in interface{}, in2 interface{})interface{} {
 		return 1
@@ -122,7 +124,7 @@ func init_templates() {
 	fmap["subtract"] = filler_func
 	fmap["multiply"] = filler_func
 	fmap["divide"] = filler_func
-	
+
 	// The interpreted templates...
 	templates.Funcs(fmap)
 	template.Must(templates.ParseGlob("templates/*"))
@@ -135,19 +137,19 @@ func init_static_files() {
 		if f.IsDir() {
 			return nil
 		}
-		
+
 		path = strings.Replace(path,"\\","/",-1)
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		
+
 		path = strings.TrimPrefix(path,"public/")
 		if debug {
 			log.Print("Added the '" + path + "' static file.")
 		}
 		gzip_data := compress_bytes_gzip(data)
-		
+
 		static_files["/static/" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext("/public/" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
 		return nil
 	})
@@ -164,22 +166,24 @@ func main(){
 	//	}
 	//	pprof.StartCPUProfile(f)
 	//}
-	
+
 	log.Print("Running Gosora v" + version.String())
 	fmt.Println("")
-	
+	startTime = time.Now()
+	timeLocation = startTime.Location()
+
 	init_themes()
 	err := init_database()
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	init_templates()
 	err = init_errors()
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	if cache_topicuser == CACHE_STATIC {
 		users = NewStaticUserStore(user_cache_capacity)
 		topics = NewStaticTopicStore(topic_cache_capacity)
@@ -187,13 +191,13 @@ func main(){
 		users = NewSqlUserStore()
 		topics = NewSqlTopicStore()
 	}
-	
+
 	init_static_files()
 	external_sites["YT"] = "https://www.youtube.com/"
 	hooks["trow_assign"] = nil
 	hooks["rrow_assign"] = nil
 	init_plugins()
-	
+
 	router := NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	///router.HandleFunc("/static/", route_static)
 	///router.HandleFunc("/overview/", route_overview)
@@ -215,17 +219,17 @@ func main(){
 	router.HandleFunc("/topic/stick/submit/", route_stick_topic)
 	router.HandleFunc("/topic/unstick/submit/", route_unstick_topic)
 	router.HandleFunc("/topic/like/submit/", route_like_topic)
-	
+
 	// Custom Pages
 	router.HandleFunc("/pages/", route_custom_page)
-	
+
 	// Accounts
 	router.HandleFunc("/accounts/login/", route_login)
 	router.HandleFunc("/accounts/create/", route_register)
 	router.HandleFunc("/accounts/logout/", route_logout)
 	router.HandleFunc("/accounts/login/submit/", route_login_submit)
 	router.HandleFunc("/accounts/create/submit/", route_register_submit)
-	
+
 	//router.HandleFunc("/accounts/list/", route_login) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
 	//router.HandleFunc("/accounts/create/full/", route_logout) // Advanced account creator for admins?
 	//router.HandleFunc("/user/edit/", route_logout)
@@ -246,7 +250,7 @@ func main(){
 	router.HandleFunc("/users/ban/submit/", route_ban_submit)
 	router.HandleFunc("/users/unban/", route_unban)
 	router.HandleFunc("/users/activate/", route_activate)
-	
+
 	// The Control Panel
 	///router.HandleFunc("/panel/", route_panel)
 	///router.HandleFunc("/panel/forums/", route_panel_forums)
@@ -255,6 +259,7 @@ func main(){
 	///router.HandleFunc("/panel/forums/delete/submit/", route_panel_forums_delete_submit)
 	///router.HandleFunc("/panel/forums/edit/", route_panel_forums_edit)
 	///router.HandleFunc("/panel/forums/edit/submit/", route_panel_forums_edit_submit)
+	///router.HandleFunc("/panel/forums/edit/perms/submit/", route_panel_forums_edit_perms_submit)
 	///router.HandleFunc("/panel/settings/", route_panel_settings)
 	///router.HandleFunc("/panel/settings/edit/", route_panel_setting)
 	///router.HandleFunc("/panel/settings/edit/submit/", route_panel_setting_edit)
@@ -273,17 +278,17 @@ func main(){
 	///router.HandleFunc("/panel/groups/edit/perms/submit/", route_panel_groups_edit_perms_submit)
 	///router.HandleFunc("/panel/groups/create/", route_panel_groups_create_submit)
 	///router.HandleFunc("/panel/logs/mod/", route_panel_logs_mod)
-	
+
 	///router.HandleFunc("/api/", route_api)
 	//router.HandleFunc("/exit/", route_exit)
 	///router.HandleFunc("/", default_route)
 	router.HandleFunc("/ws/", route_websockets)
 	defer db.Close()
-	
+
 	//if profiling {
 	//	pprof.StopCPUProfile()
 	//}
-	
+
 	if !enable_ssl {
 		if server_port == "" {
 			 server_port = "80"

@@ -15,11 +15,13 @@ type Topic struct
 	Sticky bool
 	CreatedAt string
 	LastReplyAt string
+	//LastReplyBy int
 	ParentID int
 	Status string // Deprecated. Marked for removal.
 	IpAddress string
 	PostCount int
 	LikeCount int
+	ClassName string // CSS Class Name
 }
 
 type TopicUser struct
@@ -32,12 +34,14 @@ type TopicUser struct
 	Sticky bool
 	CreatedAt string
 	LastReplyAt string
+	//LastReplyBy int
 	ParentID int
 	Status string // Deprecated. Marked for removal.
 	IpAddress string
 	PostCount int
 	LikeCount int
-	
+	ClassName string
+
 	CreatedByName string
 	Group int
 	Avatar string
@@ -61,12 +65,14 @@ type TopicsRow struct
 	Sticky bool
 	CreatedAt string
 	LastReplyAt string
+	//LastReplyBy int
 	ParentID int
 	Status string // Deprecated. Marked for removal.
 	IpAddress string
 	PostCount int
 	LikeCount int
-	
+	ClassName string
+
 	CreatedByName string
 	Avatar string
 	Css template.CSS
@@ -76,7 +82,7 @@ type TopicsRow struct
 	URLPrefix string
 	URLName string
 	Level int
-	
+
 	ForumName string //TopicsRow
 }
 
@@ -131,7 +137,7 @@ func (sts *StaticTopicStore) CascadeGet(id int) (*Topic, error) {
 	if ok {
 		return topic, nil
 	}
-	
+
 	topic = &Topic{ID:id}
 	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
 	if err == nil {
@@ -292,7 +298,7 @@ func get_topicuser(tid int) (TopicUser,error) {
 				return TopicUser{ID:tid}, err
 			}
 			init_user_perms(user)
-			
+
 			// We might be better off just passing seperate topic and user structs to the caller?
 			return copy_topic_to_topicuser(topic, user), nil
 		} else if users.GetLength() < users.GetCapacity() {
@@ -309,10 +315,10 @@ func get_topicuser(tid int) (TopicUser,error) {
 			return tu, nil
 		}
 	}
-	
+
 	tu := TopicUser{ID:tid}
 	err := get_topic_user_stmt.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
-	
+
 	the_topic := Topic{ID:tu.ID, Title:tu.Title, Content:tu.Content, CreatedBy:tu.CreatedBy, Is_Closed:tu.Is_Closed, Sticky:tu.Sticky, CreatedAt:tu.CreatedAt, LastReplyAt:tu.LastReplyAt, ParentID:tu.ParentID, IpAddress:tu.IpAddress, PostCount:tu.PostCount, LikeCount:tu.LikeCount}
 	//fmt.Printf("%+v\n", the_topic)
 	tu.Tag = groups[tu.Group].Tag
@@ -328,7 +334,7 @@ func copy_topic_to_topicuser(topic *Topic, user *User) (tu TopicUser) {
 	tu.URLPrefix = user.URLPrefix
 	tu.URLName = user.URLName
 	tu.Level = user.Level
-	
+
 	tu.ID = topic.ID
 	tu.Title = topic.Title
 	tu.Content = topic.Content

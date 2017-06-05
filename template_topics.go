@@ -58,31 +58,38 @@ w.Write(topics_5)
 }
 }
 w.Write(topics_6)
-w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write([]byte(strconv.Itoa(item.PostCount)))
 w.Write(topics_7)
-w.Write([]byte(item.Title))
-w.Write(topics_8)
-if item.ForumName != "" {
-w.Write(topics_9)
-w.Write([]byte(strconv.Itoa(item.ParentID)))
-w.Write(topics_10)
-w.Write([]byte(item.ForumName))
-w.Write(topics_11)
-}
-if item.Is_Closed {
-w.Write(topics_12)
-}
-w.Write(topics_13)
 w.Write([]byte(item.LastReplyAt))
+w.Write(topics_8)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(topics_9)
+w.Write([]byte(item.Title))
+w.Write(topics_10)
+if item.ForumName != "" {
+w.Write(topics_11)
+w.Write([]byte(strconv.Itoa(item.ParentID)))
+w.Write(topics_12)
+w.Write([]byte(item.ForumName))
+w.Write(topics_13)
+}
 w.Write(topics_14)
-}
-} else {
+w.Write([]byte(strconv.Itoa(item.CreatedBy)))
 w.Write(topics_15)
-if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+w.Write([]byte(item.CreatedByName))
 w.Write(topics_16)
-}
+if item.Is_Closed {
 w.Write(topics_17)
 }
 w.Write(topics_18)
+}
+} else {
+w.Write(topics_19)
+if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+w.Write(topics_20)
+}
+w.Write(topics_21)
+}
+w.Write(topics_22)
 w.Write(footer_0)
 }

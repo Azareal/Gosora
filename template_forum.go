@@ -88,26 +88,32 @@ w.Write(forum_18)
 }
 }
 w.Write(forum_19)
-w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write([]byte(strconv.Itoa(item.PostCount)))
 w.Write(forum_20)
-w.Write([]byte(item.Title))
-w.Write(forum_21)
-if item.Is_Closed {
-w.Write(forum_22)
-}
-w.Write(forum_23)
 w.Write([]byte(item.LastReplyAt))
+w.Write(forum_21)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(forum_22)
+w.Write([]byte(item.Title))
+w.Write(forum_23)
+w.Write([]byte(strconv.Itoa(item.CreatedBy)))
 w.Write(forum_24)
-}
-} else {
+w.Write([]byte(item.CreatedByName))
 w.Write(forum_25)
-if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+if item.Is_Closed {
 w.Write(forum_26)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+}
 w.Write(forum_27)
 }
+} else {
 w.Write(forum_28)
-}
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
 w.Write(forum_29)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write(forum_30)
+}
+w.Write(forum_31)
+}
+w.Write(forum_32)
 w.Write(footer_0)
 }

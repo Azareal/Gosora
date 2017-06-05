@@ -10,6 +10,7 @@ type ForumAdmin struct
 {
 	ID int
 	Name string
+	Desc string
 	Active bool
 	Preset string
 	TopicCount int
@@ -20,6 +21,7 @@ type Forum struct
 {
 	ID int
 	Name string
+	Desc string
 	Active bool
 	Preset string
 	TopicCount int
@@ -39,7 +41,7 @@ type ForumSimple struct
 }
 
 var forum_update_mutex sync.Mutex
-func create_forum(forum_name string, active bool, preset string) (int, error) {
+func create_forum(forum_name string, forum_desc string, active bool, preset string) (int, error) {
 	var fid int
 	err := forum_entry_exists_stmt.QueryRow().Scan(&fid)
 	if err != nil && err != sql.ErrNoRows {
@@ -47,29 +49,30 @@ func create_forum(forum_name string, active bool, preset string) (int, error) {
 	}
 	if err != sql.ErrNoRows {
 		forum_update_mutex.Lock()
-		_, err = update_forum_stmt.Exec(forum_name, active, preset, fid)
+		_, err = update_forum_stmt.Exec(forum_name, forum_desc, active, preset, fid)
 		if err != nil {
 			return fid, err
 		}
 		forums[fid].Name = forum_name
+		forums[fid].Desc = forum_desc
 		forums[fid].Active = active
 		forums[fid].Preset = preset
 		forum_update_mutex.Unlock()
 		return fid, nil
 	}
-	
-	res, err := create_forum_stmt.Exec(forum_name, active, preset)
+
+	res, err := create_forum_stmt.Exec(forum_name, forum_desc, active, preset)
 	if err != nil {
 		return 0, err
 	}
-	
+
 	fid64, err := res.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
 	fid = int(fid64)
-	
-	forums = append(forums, Forum{fid,forum_name,active,preset,0,"",0,"",0,""})
+
+	forums = append(forums, Forum{fid,forum_name,forum_desc,active,preset,0,"",0,"",0,""})
 	return fid, nil
 }
 
@@ -90,14 +93,14 @@ func get_forum(fid int) (forum *Forum, res bool) {
 }
 
 func get_forum_copy(fid int) (forum Forum, res bool) {
-	if !((fid <= forumCapCount) && (fid >= 0) && forums[fid].Name!="") {
+	if !((fid <= forumCapCount) && (fid >= 0) && forums[fid].Name != "") {
 		return forum, false
 	}
 	return forums[fid], true
 }
 
 func forum_exists(fid int) bool {
-	return (fid <= forumCapCount) && (fid >= 0) && forums[fid].Name!=""
+	return (fid <= forumCapCount) && (fid >= 0) && forums[fid].Name != ""
 }
 
 func build_forum_url(fid int) string {
