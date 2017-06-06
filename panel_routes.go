@@ -81,7 +81,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	}
 
 	var postCount int
-	err = db.QueryRow("select count(*) from replies where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&postCount)
+	err = todays_post_count_stmt.QueryRow().Scan(&postCount)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -98,7 +98,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	}
 
 	var topicCount int
-	err = db.QueryRow("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&topicCount)
+	err = todays_topic_count_stmt.QueryRow().Scan(&topicCount)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -115,7 +115,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	}
 
 	var reportCount int
-	err = db.QueryRow("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now() and parentID = 1").Scan(&reportCount)
+	err = todays_report_count_stmt.QueryRow().Scan(&reportCount)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -123,7 +123,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	var reportInterval string = "week"
 
 	var newUserCount int
-	err = db.QueryRow("select count(*) from users where createdAt BETWEEN (now() - interval 1 day) and now()").Scan(&newUserCount)
+	err = todays_newuser_count_stmt.QueryRow().Scan(&newUserCount)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -770,7 +770,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, unam
 	}
 
 	var active bool
-	err := db.QueryRow("select active from plugins where uname = ?", uname).Scan(&active)
+	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
 	if err == sql.ErrNoRows {
 		LocalError("The plugin you're trying to deactivate isn't active",w,r,user)
 		return
@@ -807,7 +807,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	}
 
 	var userList []interface{}
-	rows, err := db.Query("select `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` from users")
+	rows, err := get_users_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -1481,7 +1481,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 	}
 
 	var isDefault bool
-	err := db.QueryRow("select `default` from `themes` where `uname` = ?", uname).Scan(&isDefault)
+	err := is_theme_default_stmt.QueryRow(uname).Scan(&isDefault)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -1542,7 +1542,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	rows, err := db.Query("select action, elementID, elementType, ipaddress, actorID, doneAt from moderation_logs")
+	rows, err := get_modlogs_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r)
 		return

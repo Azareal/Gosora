@@ -91,6 +91,7 @@ type TopicStore interface {
 	Get(id int) (*Topic, error)
 	GetUnsafe(id int) (*Topic, error)
 	CascadeGet(id int) (*Topic, error)
+	BypassGet(id int) (*Topic, error)
 	Set(item *Topic) error
 	Add(item *Topic) error
 	AddUnsafe(item *Topic) error
@@ -143,6 +144,12 @@ func (sts *StaticTopicStore) CascadeGet(id int) (*Topic, error) {
 	if err == nil {
 		sts.Add(topic)
 	}
+	return topic, err
+}
+
+func (sts *StaticTopicStore) BypassGet(id int) (*Topic, error) {
+	topic := &Topic{ID:id}
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
 	return topic, err
 }
 
@@ -252,6 +259,12 @@ func (sus *SqlTopicStore) CascadeGet(id int) (*Topic, error) {
 	topic := Topic{ID:id}
 	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
 	return &topic, err
+}
+
+func (sts *SqlTopicStore) BypassGet(id int) (*Topic, error) {
+	topic := &Topic{ID:id}
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	return topic, err
 }
 
 func (sus *SqlTopicStore) Load(id int) error {

@@ -15,6 +15,7 @@ type DataStore interface {
 	Get(id int) (interface{}, error)
 	GetUnsafe(id int) (interface{}, error)
 	CascadeGet(id int) (interface{}, error)
+	BypassGet(id int) (interface{}, error)
 	Set(item interface{}) error
 	Add(item interface{}) error
 	AddUnsafe(item interface{}) error

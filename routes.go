@@ -487,7 +487,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	}
 
 	// Get the replies..
-	rows, err := db.Query("select users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group from users_replies left join users ON users_replies.createdBy = users.uid where users_replies.uid = ?", puser.ID)
+	rows, err := get_profile_replies_stmt.Query(puser.ID)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -765,9 +765,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var words int
-	var fid int
-	var createdBy int
+	var words, fid, createdBy int
 	err = db.QueryRow("select parentID, words, createdBy from topics where tid = ?", tid).Scan(&fid,&words,&createdBy)
 	if err == sql.ErrNoRows {
 		PreError("The requested topic doesn't exist.",w,r)
@@ -786,7 +784,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.QueryRow("select targetItem from likes where sentBy = ? and targetItem = ? and targetType = 'topics'", user.ID, tid).Scan(&tid)
+	err = has_liked_topic_stmt.QueryRow(user.ID, tid).Scan(&tid)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -866,9 +864,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tid int
-	var words int
-	var createdBy int
+	var tid, words, createdBy int
 	err = db.QueryRow("select tid, words, createdBy from replies where rid = ?", rid).Scan(&tid, &words, &createdBy)
 	if err == sql.ErrNoRows {
 		PreError("You can't like something which doesn't exist!",w,r)
@@ -879,7 +875,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fid int
-	err = db.QueryRow("select parentID from topics where tid = ?", tid).Scan(&fid)
+	err = get_topic_fid_stmt.QueryRow(tid).Scan(&fid)
 	if err == sql.ErrNoRows {
 		PreError("The parent topic doesn't exist.",w,r)
 		return

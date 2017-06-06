@@ -1,4 +1,5 @@
 /* Copyright Azareal 2016 - 2017 */
+// +build !pgsql !sqlite !mssql
 package main
 
 import "database/sql"
@@ -12,13 +13,8 @@ var db *sql.DB
 var db_version string
 var db_collation string = "utf8mb4_general_ci"
 
-var get_topic_user_stmt *sql.Stmt
-var get_topic_by_reply_stmt *sql.Stmt
-var get_topic_replies_stmt *sql.Stmt
-var get_topic_replies_offset_stmt *sql.Stmt
-var get_forum_topics_stmt *sql.Stmt
+var get_topic_replies_offset_stmt *sql.Stmt // I'll need to rewrite this one to stop it hard-coding the per page setting before moving it to the query generator
 var get_forum_topics_offset_stmt *sql.Stmt
-var create_topic_stmt *sql.Stmt
 var create_report_stmt *sql.Stmt
 var create_reply_stmt *sql.Stmt
 var create_action_reply_stmt *sql.Stmt
@@ -88,6 +84,10 @@ var add_theme_stmt *sql.Stmt
 var update_theme_stmt *sql.Stmt
 var add_modlog_entry_stmt *sql.Stmt
 var add_adminlog_entry_stmt *sql.Stmt
+var todays_post_count_stmt *sql.Stmt
+var todays_topic_count_stmt *sql.Stmt
+var todays_report_count_stmt *sql.Stmt
+var todays_newuser_count_stmt *sql.Stmt
 
 func init_database() (err error) {
 	if(dbpassword != ""){
@@ -118,44 +118,14 @@ func init_database() (err error) {
 		return err
 	}
 
-	log.Print("Preparing get_topic_user statement.")
-	get_topic_user_stmt, err = db.Prepare("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing get_topic_by_reply statement.")
-	get_topic_by_reply_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount from replies left join topics on replies.tid = topics.tid where rid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing get_topic_replies statement.")
-	get_topic_replies_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?")
-	if err != nil {
-		return err
-	}
-
 	log.Print("Preparing get_topic_replies_offset statement.")
 	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType from replies left join users on replies.createdBy = users.uid where tid = ? limit ?, " + strconv.Itoa(items_per_page))
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing get_forum_topics statement.")
-	get_forum_topics_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc")
-	if err != nil {
-		return err
-	}
-
 	log.Print("Preparing get_forum_topics_offset statement.")
 	get_forum_topics_offset_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC limit ?, " + strconv.Itoa(items_per_page))
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("insert into topics(parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,words,createdBy) VALUES(?,?,?,?,NOW(),NOW(),?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -556,6 +526,30 @@ func init_database() (err error) {
 
 	log.Print("Preparing add_adminlog_entry statement.")
 	add_adminlog_entry_stmt, err = db.Prepare("INSERT INTO moderation_logs(action,elementID,elementType,ipaddress,actorID,doneAt) VALUES(?,?,?,?,?,NOW())")
+	if err != nil {
+		return err
+	}
+
+	log.Print("Preparing todays_post_count statement.")
+	todays_post_count_stmt, err = db.Prepare("select count(*) from replies where createdAt BETWEEN (now() - interval 1 day) and now()")
+	if err != nil {
+		return err
+	}
+
+	log.Print("Preparing todays_topic_count statement.")
+	todays_topic_count_stmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now()")
+	if err != nil {
+		return err
+	}
+
+	log.Print("Preparing todays_report_count statement.")
+	todays_report_count_stmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now() and parentID = 1")
+	if err != nil {
+		return err
+	}
+
+	log.Print("Preparing todays_newuser_count statement.")
+	todays_newuser_count_stmt, err = db.Prepare("select count(*) from users where createdAt BETWEEN (now() - interval 1 day) and now()")
 	if err != nil {
 		return err
 	}

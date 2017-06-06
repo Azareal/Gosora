@@ -54,6 +54,7 @@ type UserStore interface {
 	Get(id int) (*User, error)
 	GetUnsafe(id int) (*User, error)
 	CascadeGet(id int) (*User, error)
+	BypassGet(id int) (*User, error)
 	Set(item *User) error
 	Add(item *User) error
 	AddUnsafe(item *User) error
@@ -101,10 +102,10 @@ func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
 	if ok {
 		return user, nil
 	}
-	
+
 	user = &User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
-	
+
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
@@ -120,6 +121,22 @@ func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
 	return user, err
 }
 
+func (sts *StaticUserStore) BypassGet(id int) (*User, error) {
+	user := &User{ID:id,Loggedin:true}
+	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	}
+	user.Tag = groups[user.Group].Tag
+	init_user_perms(user)
+	return user, err
+}
+
 func (sts *StaticUserStore) Load(id int) error {
 	user := &User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
@@ -127,7 +144,7 @@ func (sts *StaticUserStore) Load(id int) error {
 		sts.Remove(id)
 		return err
 	}
-	
+
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
@@ -230,7 +247,7 @@ func NewSqlUserStore() *SqlUserStore {
 func (sus *SqlUserStore) Get(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
-	
+
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
@@ -246,7 +263,7 @@ func (sus *SqlUserStore) Get(id int) (*User, error) {
 func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
-	
+
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
@@ -262,7 +279,23 @@ func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
 	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
-	
+
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+	}
+	user.Tag = groups[user.Group].Tag
+	init_user_perms(&user)
+	return &user, err
+}
+
+func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
+	user := User{ID:id,Loggedin:true}
+	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
@@ -312,13 +345,13 @@ func SetPassword(uid int, password string) (error) {
 	if err != nil {
 		return err
 	}
-	
+
 	password = password + salt
 	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = set_password_stmt.Exec(string(hashed_password), salt, uid)
 	if err != nil {
 		return err
@@ -331,10 +364,10 @@ func SendValidationEmail(username string, email string, token string) bool {
 	if enable_ssl {
 		schema = "s"
 	}
-	
+
 	subject := "Validate Your Email @ " + site_name
 	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. http" + schema + "://" + site_url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
-	
+
 	return SendEmail(email, subject, msg)
 }
 
@@ -409,7 +442,7 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (User,bool) {
 	if err != nil {
 		return guest_user, true
 	}
-	
+
 	// Is this session valid..?
 	user, err := users.CascadeGet(uid)
 	if err == sql.ErrNoRows {
@@ -418,17 +451,17 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (User,bool) {
 		InternalError(err,w,r)
 		return guest_user, false
 	}
-	
+
 	if user.Session == "" || cookie.Value != user.Session {
 		return guest_user, true
 	}
-	
+
 	if user.Is_Super_Admin {
 		user.Perms = AllPerms
 	} else {
 		user.Perms = groups[user.Group].Perms
 	}
-	
+
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		PreError("Bad IP",w,r)
@@ -450,7 +483,7 @@ func words_to_score(wcount int, topic bool) (score int) {
 	} else {
 		score = 1
 	}
-	
+
 	if wcount > settings["megapost_min_chars"].(int) {
 		score += 4
 	} else if wcount > settings["bigpost_min_chars"].(int) {
@@ -469,7 +502,7 @@ func increase_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		}
 		base_score = 2
 	}
-	
+
 	if wcount > settings["megapost_min_chars"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(1,1,1,uid)
 		if err != nil {
@@ -508,7 +541,7 @@ func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		}
 		base_score = -2
 	}
-	
+
 	if wcount > settings["megapost_min_chars"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(-1,-1,-1,uid)
 		if err != nil {

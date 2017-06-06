@@ -1,7 +1,7 @@
 /* WIP Under Construction */
 package main
 
-//import "fmt"
+import "fmt"
 import "strings"
 import "log"
 import "os"
@@ -17,10 +17,18 @@ type DB_Column struct
 	Type string // function or column
 }
 
+type DB_Field struct
+{
+	Name string
+	Type string
+}
+
 type DB_Where struct
 {
-	Left string
-	Right string
+	LeftTable string
+	LeftColumn string
+	RightTable string
+	RightColumn string
 	Operator string
 	LeftType string
 	RightType string
@@ -42,8 +50,8 @@ type DB_Order struct
 
 type DB_Adapter interface {
 	get_name() string
-	simple_insert(string,string,string,[]string,[]bool) error
-	//simple_replace(string,string,[]string,[]string,[]bool) error
+	simple_insert(string,string,string,string) error
+	//simple_replace(string,string,[]string,string) error
 	simple_update() error
 	simple_select(string,string,string,string,string/*,int,int*/) error
 	simple_left_join(string,string,string,string,string,string,string/*,int,int*/) error
@@ -76,6 +84,7 @@ func write_statements(adapter DB_Adapter) error {
 	
 	adapter.simple_select("username_exists","users","name","name = ?","")
 	
+	
 	adapter.simple_select("get_settings","settings","name, content, type","","")
 	
 	adapter.simple_select("get_setting","settings","content, type","name = ?","")
@@ -84,9 +93,37 @@ func write_statements(adapter DB_Adapter) error {
 	
 	adapter.simple_select("is_plugin_active","plugins","active","uname = ?","")
 	
+	adapter.simple_select("get_users","users","uid, name, group, active, is_super_admin, avatar","","")
+	
+	adapter.simple_select("is_theme_default","themes","default","uname = ?","")
+	
+	adapter.simple_select("get_modlogs","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","","")
+	
+	adapter.simple_select("get_reply_tid","replies","tid","rid = ?","")
+	
+	adapter.simple_select("get_topic_fid","topics","parentID","tid = ?","")
+	
+	adapter.simple_select("get_user_reply_uid","users_replies","uid","rid = ?","")
+	
+	adapter.simple_select("has_liked_topic","likes","targetItem","sentBy = ? and targetItem = ? and targetType = 'topics'","")
+	
+	/*"select targetItem from likes where sentBy = ? and targetItem = ? and targetType = 'replies'"*/
+	
+	
+	
 	adapter.simple_left_join("get_topic_list","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	
+	adapter.simple_left_join("get_topic_user","topics","users","topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level","topics.createdBy = users.uid","tid = ?","")
 	
+	adapter.simple_left_join("get_topic_by_reply","replies","topics","topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount","replies.tid = topics.tid","rid = ?","")
+	
+	adapter.simple_left_join("get_topic_replies","replies","users","replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress","replies.createdBy = users.uid","tid = ?","")
+	
+	adapter.simple_left_join("get_forum_topics","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","topics.parentID = ?","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc")
+	
+	adapter.simple_left_join("get_profile_replies","users_replies","users","users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group","users_replies.createdBy = users.uid","users_replies.uid = ?","")
+	
+	adapter.simple_insert("create_topic","topics","parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,words,createdBy","?,?,?,?,NOW(),NOW(),?,?,?")
 	
 	return nil
 }
@@ -175,14 +212,71 @@ func _process_where(wherestr string) (where []DB_Where) {
 		// TO-DO: Subparse the contents of a function and spit out a DB_Function struct
 		var outwhere DB_Where
 		var parseOffset int
-		outwhere.Left, parseOffset = _get_identifier(segment, parseOffset)
+		var left, right string
+		
+		
+		left, parseOffset = _get_identifier(segment, parseOffset)
 		outwhere.Operator, parseOffset = _get_operator(segment, parseOffset + 1)
-		outwhere.Right, parseOffset = _get_identifier(segment, parseOffset + 1)
-		outwhere.LeftType = _get_identifier_type(outwhere.Left)
-		outwhere.RightType = _get_identifier_type(outwhere.Right)
+		right, parseOffset = _get_identifier(segment, parseOffset + 1)
+		outwhere.LeftType = _get_identifier_type(left)
+		outwhere.RightType = _get_identifier_type(right)
+		
+		left_operand := strings.Split(left,".")
+		right_operand := strings.Split(right,".")
+		
+		if len(left_operand) == 2 {
+			outwhere.LeftTable = strings.TrimSpace(left_operand[0])
+			outwhere.LeftColumn = strings.TrimSpace(left_operand[1])
+		} else {
+			outwhere.LeftColumn = strings.TrimSpace(left_operand[0])
+		}
+		
+		if len(right_operand) == 2 {
+			outwhere.RightTable = strings.TrimSpace(right_operand[0])
+			outwhere.RightColumn = strings.TrimSpace(right_operand[1])
+		} else {
+			outwhere.RightColumn = strings.TrimSpace(right_operand[0])
+		}
+		
 		where = append(where,outwhere)
 	}
 	return where
+}
+
+func _process_fields(fieldstr string) (fields []DB_Field) {
+	fmt.Println("_Entering _process_fields")
+	if fieldstr == "" {
+		return fields
+	}
+	var buffer string
+	var last_item int
+	fieldstr += ","
+	for i := 0; i < len(fieldstr); i++  {
+		if fieldstr[i] == '(' {
+			var pre_i int
+			pre_i = i
+			i = _skip_function_call(fieldstr,i-1)
+			fmt.Println("msg prior to i",fieldstr[0:i])
+			fmt.Println("len(fieldstr)",len(fieldstr))
+			fmt.Println("pre_i",pre_i)
+			fmt.Println("last_item",last_item)
+			fmt.Println("pre_i",string(fieldstr[pre_i]))
+			fmt.Println("last_item",string(fieldstr[last_item]))
+			fmt.Println("fieldstr[pre_i:i+1]",fieldstr[pre_i:i+1])
+			fmt.Println("fieldstr[last_item:i+1]",fieldstr[last_item:i+1])
+			fields = append(fields,DB_Field{Name:fieldstr[last_item:i+1],Type:_get_identifier_type(fieldstr[last_item:i+1])})
+			buffer = ""
+			last_item = i + 2
+		} else if fieldstr[i] == ',' && buffer != "" {
+			fields = append(fields,DB_Field{Name:buffer,Type:_get_identifier_type(buffer)})
+			buffer = ""
+			last_item = i + 1
+		} else if (fieldstr[i] > 32) && fieldstr[i] != ',' && fieldstr[i] != ')' {
+			buffer += string(fieldstr[i])
+		}
+	}
+	fmt.Println("fields",fields)
+	return fields
 }
 
 func _get_identifier_type(identifier string) string {
@@ -229,19 +323,23 @@ func _get_operator(segment string, startOffset int) (out string, i int) {
 	return strings.TrimSpace(segment[startOffset:]), (i - 1)
 }
 
-func _skip_function_call(segment string, i int) int {
-	var brace_count int = 1
-	for ; i < len(segment); i++ {
-		if segment[i] == '(' {
+func _skip_function_call(data string, index int) int {
+	var brace_count int
+	for ;index < len(data); index++{
+		char := data[index]
+		if char == '(' {
+			fmt.Println("Enter brace")
 			brace_count++
-		} else if segment[i] == ')' {
+		} else if char == ')' {
 			brace_count--
-		}
-		if brace_count == 0 {
-			return i
+			fmt.Println("Exit brace")
+			if brace_count == 0 {
+				fmt.Println("Exit function segment")
+				return index
+			}
 		}
 	}
-	return i
+	return index
 }
 
 func write_file(name string, content string) (err error) {
