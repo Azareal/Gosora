@@ -1,25 +1,22 @@
 /* Copyright Azareal 2017 - 2018 */
 package main
 
-import "fmt"
-import "os"
-import "bytes"
-import "bufio"
-import "strconv"
-import "io/ioutil"
-import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
+import (
+	"fmt"
+	"os"
+	"bytes"
+	"bufio"
+	"strconv"
+	"io/ioutil"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
+)
 
 var scanner *bufio.Scanner
-var db_host string
-var db_username string
-var db_password string
-var db_name string
+var db_host, db_username, db_password, db_name string
 //var db_collation string = "utf8mb4_general_ci"
 var db_port string = "3306"
-var site_name string
-var site_url string
-var server_port string
+var site_name, site_url, server_port string
 
 var default_host string = "localhost"
 var default_username string = "root"
@@ -43,7 +40,7 @@ func main() {
 		press_any_key()
 		return
 	}
-	
+
 	if !get_site_details() {
 		err := scanner.Err()
 		if err != nil {
@@ -55,7 +52,7 @@ func main() {
 		press_any_key()
 		return
 	}
-	
+
 	_db_password := db_password
 	if(_db_password != ""){
 		_db_password = ":" + _db_password
@@ -67,7 +64,7 @@ func main() {
 		press_any_key()
 		return
 	}
-	
+
 	// Make sure that the connection is alive..
 	err = db.Ping()
 	if err != nil {
@@ -79,14 +76,14 @@ func main() {
 	
 	fmt.Println("Successfully connected to the database")
 	fmt.Println("Opening the database seed file")
-	sqlContents, err := ioutil.ReadFile("./data.sql")
+	sqlContents, err := ioutil.ReadFile("./mysql.sql")
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
 		press_any_key()
 		return
 	}
-	
+
 	var waste string
 	err = db.QueryRow("SHOW DATABASES LIKE '" + db_name + "'").Scan(&waste)
 	if err != nil && err != sql.ErrNoRows {
@@ -95,7 +92,7 @@ func main() {
 		press_any_key()
 		return
 	}
-	
+
 	if err == sql.ErrNoRows {
 		fmt.Println("Unable to find the database. Attempting to create it")
 		_,err = db.Exec("CREATE DATABASE IF NOT EXISTS " + db_name + "")
@@ -107,7 +104,7 @@ func main() {
 		}
 		fmt.Println("The database was successfully created")
 	}
-	
+
 	fmt.Println("Switching to database " + db_name)
 	_, err = db.Exec("USE " + db_name)
 	if err != nil {
@@ -116,7 +113,7 @@ func main() {
 		press_any_key()
 		return
 	}
-	
+
 	fmt.Println("Preparing installation queries")
 	sqlContents = bytes.TrimSpace(sqlContents)
 	statements := bytes.Split(sqlContents, []byte(";"))
@@ -124,7 +121,7 @@ func main() {
 		if len(statement) == 0 {
 			continue
 		}
-		
+
 		fmt.Println("Executing query #" + strconv.Itoa(key) + " " + string(statement))
 		_, err = db.Exec(string(statement))
 		if err != nil {
@@ -135,7 +132,7 @@ func main() {
 		}
 	}
 	fmt.Println("Finished inserting the database data")
-	
+
 	configContents := []byte(`package main
 
 // Site Info
@@ -186,7 +183,7 @@ var debug = true
 var super_debug = false
 var profiling = false
 `)
-	
+
 	fmt.Println("Opening the configuration file")
 	configFile, err := os.Create("./config.go")
 	if err != nil {
@@ -195,7 +192,7 @@ var profiling = false
 		press_any_key()
 		return
 	}
-	
+
 	fmt.Println("Writing to the configuration file...")
 	_, err = configFile.Write(configContents)
 	if err != nil {
@@ -204,11 +201,11 @@ var profiling = false
 		press_any_key()
 		return
 	}
-	
+
 	configFile.Sync()
 	configFile.Close()
 	fmt.Println("Finished writing to the configuration file")
-	
+
 	fmt.Println("Yay, you have successfully installed Gosora!")
 	fmt.Println("Your name is Admin and you can login with the password 'password'. Don't forget to change it! Seriously. It's really insecure.")
 	press_any_key()
@@ -224,7 +221,7 @@ func get_database_details() bool {
 		db_host = default_host
 	}
 	fmt.Println("Set database host to " + db_host)
-	
+
 	fmt.Println("Database Username? Default: " + default_username)
 	if !scanner.Scan() {
 		return false
@@ -234,7 +231,7 @@ func get_database_details() bool {
 		db_username = default_username
 	}
 	fmt.Println("Set database username to " + db_username)
-	
+
 	fmt.Println("Database Password? Default: ''")
 	if !scanner.Scan() {
 		return false
@@ -245,7 +242,7 @@ func get_database_details() bool {
 	} else {
 		fmt.Println("Set password to " + obfuscate_password(db_password))
 	}
-	
+
 	fmt.Println("Database Name? Pick a name you like or one provided to you. Default: " + default_dbname)
 	if !scanner.Scan() {
 		return false
@@ -269,7 +266,7 @@ func get_site_details() bool {
 		site_name = default_site_name
 	}
 	fmt.Println("Set the site name to " + site_name)
-	
+
 	fmt.Println("What's your site's url? Default: " + default_site_url)
 	if !scanner.Scan() {
 		return false
@@ -279,7 +276,7 @@ func get_site_details() bool {
 		site_url = default_site_url
 	}
 	fmt.Println("Set the site url to " + site_url)
-	
+
 	fmt.Println("What port do you want the server to listen on? If you don't know what this means, you should probably leave it on the default. Default: " + default_server_port)
 	if !scanner.Scan() {
 		return false

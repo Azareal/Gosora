@@ -1,13 +1,21 @@
 /* WIP Under Construction */
 package main
 
-import "fmt"
+//import "fmt"
 import "strings"
 import "log"
 import "os"
 
 var db_registry []DB_Adapter
 var blank_order []DB_Order
+
+type DB_Column struct
+{
+	Table string
+	Left string // Could be a function or a column, so I'm naming this Left
+	Alias string // aka AS Blah, if it's present
+	Type string // function or column
+}
 
 type DB_Where struct
 {
@@ -20,8 +28,10 @@ type DB_Where struct
 
 type DB_Joiner struct
 {
-	Left string
-	Right string
+	LeftTable string
+	LeftColumn string
+	RightTable string
+	RightColumn string
 }
 
 type DB_Order struct
@@ -35,8 +45,8 @@ type DB_Adapter interface {
 	simple_insert(string,string,string,[]string,[]bool) error
 	//simple_replace(string,string,[]string,[]string,[]bool) error
 	simple_update() error
-	simple_select(string,string,string,string,[]DB_Order/*,int,int*/) error
-	simple_left_join(string,string,string,string,[]DB_Joiner,string,[]DB_Order/*,int,int*/) error
+	simple_select(string,string,string,string,string/*,int,int*/) error
+	simple_left_join(string,string,string,string,string,string,string/*,int,int*/) error
 	write() error
 	// TO-DO: Add a simple query builder
 }
@@ -52,46 +62,108 @@ func main() {
 
 func write_statements(adapter DB_Adapter) error {
 	// url_prefix and url_name will be removed from this query in a later commit
-	adapter.simple_select("get_user","users","name, group, is_super_admin, avatar, message, url_prefix, url_name, level","uid = ?",blank_order)
+	adapter.simple_select("get_user","users","name, group, is_super_admin, avatar, message, url_prefix, url_name, level","uid = ?","")
 	
-	adapter.simple_select("get_full_user","users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?",blank_order)
+	adapter.simple_select("get_full_user","users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","")
 		
-	adapter.simple_select("get_topic","topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount","tid = ?",blank_order)
+	adapter.simple_select("get_topic","topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount","tid = ?","")
 	
-	adapter.simple_select("get_reply","replies","content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount","rid = ?",blank_order)
+	adapter.simple_select("get_reply","replies","content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount","rid = ?","")
 		
-	adapter.simple_select("login","users","uid, name, password, salt","name = ?",blank_order)
+	adapter.simple_select("login","users","uid, name, password, salt","name = ?","")
 		
-	adapter.simple_select("get_password","users","password,salt","uid = ?",blank_order)
+	adapter.simple_select("get_password","users","password,salt","uid = ?","")
 	
-	adapter.simple_select("username_exists","users","name","name = ?",blank_order)
+	adapter.simple_select("username_exists","users","name","name = ?","")
 	
-	/*
-get_topic_list_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
-// A visual reference for me to glance at while I design this thing
-*/
-	//func (adapter *Mysql_Adapter) simple_left_join(name string, table1 string, table2 string, columns string, joiners []DB_Joiner, where []DB_Where, orderby []DB_Order/*, offset int, maxCount int*/) error {
+	adapter.simple_select("get_settings","settings","name, content, type","","")
 	
-	/*adapter.simple_left_join("get_topic_list","topics","users",
-		"topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar",
-		[]DB_Joiner{}
-	)*/
+	adapter.simple_select("get_setting","settings","content, type","name = ?","")
+	
+	adapter.simple_select("get_full_setting","settings","name, type, constraints","name = ?","")
+	
+	adapter.simple_select("is_plugin_active","plugins","active","uname = ?","")
+	
+	adapter.simple_left_join("get_topic_list","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	
+	
 	
 	return nil
 }
 
-func write_file(name string, content string) (err error) {
-	f, err := os.Create(name)
-	if err != nil {
-		return err
+func _process_columns(colstr string) (columns []DB_Column) {
+	if colstr == "" {
+		return columns
 	}
-	_, err = f.WriteString(content)
-	if err != nil {
-		return err
+	colstr = strings.Replace(colstr," as "," AS ",-1)
+	for _, segment := range strings.Split(colstr,",") {
+		var outcol DB_Column
+		dothalves := strings.Split(strings.TrimSpace(segment),".")
+		
+		var halves []string
+		if len(dothalves) == 2 {
+			outcol.Table = dothalves[0]
+			halves = strings.Split(dothalves[1]," AS ")
+		} else {
+			halves = strings.Split(dothalves[0]," AS ")
+		}
+		
+		halves[0] = strings.TrimSpace(halves[0])
+		if len(halves) == 2 {
+			outcol.Alias = strings.TrimSpace(halves[1])
+		}
+		if halves[0][len(halves[0]) - 1] == ')' {
+			outcol.Type = "function"
+		} else {
+			outcol.Type = "column"
+		}
+		
+		outcol.Left = halves[0]
+		columns = append(columns,outcol)
 	}
-	f.Sync()
-	f.Close()
-	return
+	return columns
+}
+
+func _process_orderby(orderstr string) (order []DB_Order) {
+	if orderstr == "" {
+		return order
+	}
+	for _, segment := range strings.Split(orderstr,",") {
+		var outorder DB_Order
+		halves := strings.Split(strings.TrimSpace(segment)," ")
+		if len(halves) != 2 {
+			continue
+		}
+		outorder.Column = halves[0]
+		outorder.Order = strings.ToLower(halves[1])
+		order = append(order,outorder)
+	}
+	return order
+}
+
+func _process_joiner(joinstr string) (joiner []DB_Joiner) {
+	if joinstr == "" {
+		return joiner
+	}
+	joinstr = strings.Replace(joinstr," on "," ON ",-1)
+	joinstr = strings.Replace(joinstr," and "," AND ",-1)
+	for _, segment := range strings.Split(joinstr," AND ") {
+		var outjoin DB_Joiner
+		halves := strings.Split(segment,"=")
+		if len(halves) != 2 {
+			continue
+		}
+		
+		left_column := strings.Split(halves[0],".")
+		right_column := strings.Split(halves[1],".")
+		outjoin.LeftTable = strings.TrimSpace(left_column[0])
+		outjoin.RightTable = strings.TrimSpace(right_column[0])
+		outjoin.LeftColumn = strings.TrimSpace(left_column[1])
+		outjoin.RightColumn = strings.TrimSpace(right_column[1])
+		
+		joiner = append(joiner,outjoin)
+	}
+	return joiner
 }
 
 func _process_where(wherestr string) (where []DB_Where) {
@@ -127,7 +199,7 @@ func _get_identifier_type(identifier string) string {
 }
 
 func _get_identifier(segment string, startOffset int) (out string, i int) {
-	fmt.Println("entering _get_identifier")
+	//fmt.Println("entering _get_identifier")
 	segment = strings.TrimSpace(segment)
 	segment += " " // Avoid overflow bugs with slicing
 	for i = startOffset; i < len(segment); i++ {
@@ -136,10 +208,10 @@ func _get_identifier(segment string, startOffset int) (out string, i int) {
 			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
 		}
 		if segment[i] == ' ' && i != startOffset {
-			fmt.Println("segment[startOffset:i]",segment[startOffset:i])
-			fmt.Println("startOffset",startOffset)
-			fmt.Println("segment[startOffset]",string(segment[startOffset]))
-			fmt.Println("i",i)
+			//fmt.Println("segment[startOffset:i]",segment[startOffset:i])
+			//fmt.Println("startOffset",startOffset)
+			//fmt.Println("segment[startOffset]",string(segment[startOffset]))
+			//fmt.Println("i",i)
 			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
 		}
 	}
@@ -170,4 +242,18 @@ func _skip_function_call(segment string, i int) int {
 		}
 	}
 	return i
+}
+
+func write_file(name string, content string) (err error) {
+	f, err := os.Create(name)
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString(content)
+	if err != nil {
+		return err
+	}
+	f.Sync()
+	f.Close()
+	return
 }

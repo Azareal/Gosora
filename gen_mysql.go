@@ -11,6 +11,11 @@ var get_reply_stmt *sql.Stmt
 var login_stmt *sql.Stmt
 var get_password_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
+var get_settings_stmt *sql.Stmt
+var get_setting_stmt *sql.Stmt
+var get_full_setting_stmt *sql.Stmt
+var is_plugin_active_stmt *sql.Stmt
+var get_topic_list_stmt *sql.Stmt
 
 func gen_mysql() (err error) {
 	if debug {
@@ -18,43 +23,73 @@ func gen_mysql() (err error) {
 	}
 	
 	log.Print("Preparing get_user statement.")
-	get_user_stmt, err = db.Prepare("SELECT `name`,`group`,`is_super_admin`,`avatar`,`message`,`url_prefix`,`url_name`,`level` FROM users WHERE `uid`= ?")
+	get_user_stmt, err = db.Prepare("SELECT `name`,`group`,`is_super_admin`,`avatar`,`message`,`url_prefix`,`url_name`,`level` FROM users WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing get_full_user statement.")
-	get_full_user_stmt, err = db.Prepare("SELECT `name`,`group`,`is_super_admin`,`session`,`email`,`avatar`,`message`,`url_prefix`,`url_name`,`level`,`score`,`last_ip` FROM users WHERE `uid`= ?")
+	get_full_user_stmt, err = db.Prepare("SELECT `name`,`group`,`is_super_admin`,`session`,`email`,`avatar`,`message`,`url_prefix`,`url_name`,`level`,`score`,`last_ip` FROM users WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing get_topic statement.")
-	get_topic_stmt, err = db.Prepare("SELECT `title`,`content`,`createdBy`,`createdAt`,`is_closed`,`sticky`,`parentID`,`ipaddress`,`postCount`,`likeCount` FROM topics WHERE `tid`= ?")
+	get_topic_stmt, err = db.Prepare("SELECT `title`,`content`,`createdBy`,`createdAt`,`is_closed`,`sticky`,`parentID`,`ipaddress`,`postCount`,`likeCount` FROM topics WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing get_reply statement.")
-	get_reply_stmt, err = db.Prepare("SELECT `content`,`createdBy`,`createdAt`,`lastEdit`,`lastEditBy`,`ipaddress`,`likeCount` FROM replies WHERE `rid`= ?")
+	get_reply_stmt, err = db.Prepare("SELECT `content`,`createdBy`,`createdAt`,`lastEdit`,`lastEditBy`,`ipaddress`,`likeCount` FROM replies WHERE `rid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing login statement.")
-	login_stmt, err = db.Prepare("SELECT `uid`,`name`,`password`,`salt` FROM users WHERE `name`= ?")
+	login_stmt, err = db.Prepare("SELECT `uid`,`name`,`password`,`salt` FROM users WHERE `name` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing get_password statement.")
-	get_password_stmt, err = db.Prepare("SELECT `password`,`salt` FROM users WHERE `uid`= ?")
+	get_password_stmt, err = db.Prepare("SELECT `password`,`salt` FROM users WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing username_exists statement.")
-	username_exists_stmt, err = db.Prepare("SELECT `name` FROM users WHERE `name`= ?")
+	username_exists_stmt, err = db.Prepare("SELECT `name` FROM users WHERE `name` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_settings statement.")
+	get_settings_stmt, err = db.Prepare("SELECT `name`,`content`,`type` FROM settings")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_setting statement.")
+	get_setting_stmt, err = db.Prepare("SELECT `content`,`type` FROM settings WHERE `name` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_full_setting statement.")
+	get_full_setting_stmt, err = db.Prepare("SELECT `name`,`type`,`constraints` FROM settings WHERE `name` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing is_plugin_active statement.")
+	is_plugin_active_stmt, err = db.Prepare("SELECT `active` FROM plugins WHERE `uname` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_topic_list statement.")
+	get_topic_list_stmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`parentID`,`users`.`name`,`users`.`avatar` FROM topics LEFT JOIN users ON `topics`.`createdBy`=`users`.`uid`  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
 	if err != nil {
 		return err
 	}

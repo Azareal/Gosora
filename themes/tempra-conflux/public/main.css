@@ -636,7 +636,7 @@ button.username {
 	li a { font-size: 14px; }
 	ul { height: 26px; }
 	.menu_left, .menu_right { padding-right: 7px; }
-	.menu_create_topic { display: none; }
+	.menu_create_topic, .hide_on_mobile { display: none; }
 
 	.menu_alerts {
 		padding-left: 4px;
@@ -646,7 +646,6 @@ button.username {
 	}
 	.selectedAlert .alertList { top: 33px; }
 
-	.hide_on_mobile { display: none; }
 	.prev_button, .next_button { top: auto;bottom: 5px; }
 	.colstack_grid { grid-template-columns: none; grid-gap: 8px; }
 	.grid_istat { margin-bottom: 0px; }
@@ -672,7 +671,6 @@ button.username {
 		font-weight: bold;
 		white-space: normal;
 	}
-	.alertItem .text.smaller { font-size: 9px; }
 	.post_container { overflow: visible !important; }
 
 	.post_item {

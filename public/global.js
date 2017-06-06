@@ -36,16 +36,12 @@ function load_alerts(menu_alerts)
 						}
 					}
 
-					if(mmsg.length > 46) mmsg = mmsg.substring(0,43) + "...";
-					else if(mmsg.length > 35) size_dial = " smaller"; //9px
-					else size_dial = ""; // 10px
-
 					if("avatar" in msg)
 					{
-						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text"+size_dial+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
+						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' href=\""+msg.path+"\">"+mmsg+"</a></div>";
 						anyAvatar = true
 					}
-					else alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text"+size_dial+"'>"+mmsg+"</a></div>";
+					else alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
 					//console.log(msg);
 					//console.log(mmsg);
 				}
@@ -219,6 +215,7 @@ $(document).ready(function(){
 		var block_parent = $(this).closest('.editable_parent');
 		//console.log(block_parent);
 		block_parent.find('.hide_on_edit').hide();
+		block_parent.find('.show_on_edit').show();
 		block_parent.find('.editable_block').show();
 		block_parent.find('.editable_block').each(function(){
 			var field_name = this.getAttribute("data-field");
@@ -246,7 +243,6 @@ $(document).ready(function(){
 			else if(field_type=="hidden") {}
 			else this.innerHTML = "<input name='"+field_name+"' value='"+this.textContent+"' type='text'/>";
 		});
-		block_parent.find('.show_on_edit').eq(0).show();
 
 		// Remove any handlers already attached to the submitter
 		$(".submit_edit").unbind("click");

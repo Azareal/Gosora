@@ -12,7 +12,6 @@ var db *sql.DB
 var db_version string
 var db_collation string = "utf8mb4_general_ci"
 
-var get_topic_list_stmt *sql.Stmt
 var get_topic_user_stmt *sql.Stmt
 var get_topic_by_reply_stmt *sql.Stmt
 var get_topic_replies_stmt *sql.Stmt
@@ -115,12 +114,6 @@ func init_database() (err error) {
 
 	// Build the generated prepared statements, we are going to slowly move the queries over to the query generator rather than writing them all by hand, this'll make it easier for us to implement database adapters for other databases like PostgreSQL, MSSQL, SQlite, etc.
 	err = gen_mysql()
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing get_topic_list statement.")
-	get_topic_list_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	if err != nil {
 		return err
 	}

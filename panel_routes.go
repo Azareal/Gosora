@@ -471,7 +471,7 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	gid, err := strconv.Atoi("gid")
+	gid, err := strconv.Atoi(r.PostFormValue("gid"))
 	if err != nil {
 		LocalErrorJSQ("Invalid Group ID",w,r,user,is_js)
 		return
@@ -496,6 +496,13 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 			return
 		}
 		permupdate_mutex.Unlock()
+
+		_, err = update_forum_stmt.Exec(forums[fid].Name,forums[fid].Desc,forums[fid].Active,"",fid)
+		if err != nil {
+			InternalErrorJSQ(err,w,r,is_js)
+			return
+		}
+		forums[fid].Preset = ""
 	}
 
 	if is_js == "0" {
@@ -516,7 +523,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	}
 
 	var settingList map[string]interface{} = make(map[string]interface{})
-	rows, err := db.Query("select name, content, type from settings")
+	rows, err := get_settings_stmt.Query()
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -570,7 +577,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 	}
 	setting := Setting{sname,"","",""}
 
-	err := db.QueryRow("select content, type from settings where name = ?", setting.Name).Scan(&setting.Content,&setting.Type)
+	err := get_setting_stmt.QueryRow(setting.Name).Scan(&setting.Content,&setting.Type)
 	if err == sql.ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
@@ -627,11 +634,10 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname stri
 		return
 	}
 
-	var stype string
-	var sconstraints string
+	var stype, sconstraints string
 	scontent := r.PostFormValue("setting-value")
 
-	err = db.QueryRow("select name, type, constraints from settings where name = ?", sname).Scan(&sname, &stype, &sconstraints)
+	err = get_full_setting_stmt.QueryRow(sname).Scan(&sname, &stype, &sconstraints)
 	if err == sql.ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
@@ -702,7 +708,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 	}
 
 	var active bool
-	err := db.QueryRow("select active from plugins where uname = ?", uname).Scan(&active)
+	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return

@@ -1,7 +1,7 @@
 /* WIP Under Construction */
 package main
 
-import "fmt"
+//import "fmt"
 import "strings"
 import "errors"
 
@@ -67,7 +67,7 @@ func (adapter *Mysql_Adapter) simple_update() error {
 	return nil
 }
 
-func (adapter *Mysql_Adapter) simple_select(name string, table string, columns string, where string, orderby []DB_Order/*, offset int, maxCount int*/) error {
+func (adapter *Mysql_Adapter) simple_select(name string, table string, columns string, where string, orderby string/*, offset int, maxCount int*/) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -94,8 +94,8 @@ func (adapter *Mysql_Adapter) simple_select(name string, table string, columns s
 	querystr += " FROM " + table
 	if len(where) != 0 {
 		querystr += " WHERE"
-		fmt.Println("where",where)
-		fmt.Println("_process_where(where)",_process_where(where))
+		//fmt.Println("where",where)
+		//fmt.Println("_process_where(where)",_process_where(where))
 		for _, loc := range _process_where(where) {
 			var lquote, rquote string
 			if loc.LeftType == "column" {
@@ -104,25 +104,25 @@ func (adapter *Mysql_Adapter) simple_select(name string, table string, columns s
 			if loc.RightType == "column" {
 				rquote = "`"
 			}
-			querystr += " " + lquote + loc.Left + lquote + loc.Operator + " " + rquote + loc.Right + rquote + " AND "
+			querystr += " " + lquote + loc.Left + lquote + " " + loc.Operator + " " + rquote + loc.Right + rquote + " AND "
 		}
+		// Remove the trailing AND
+		querystr = querystr[0:len(querystr) - 4]
 	}
-	// Remove the trailing AND
-	querystr = querystr[0:len(querystr) - 4]
 	
 	if len(orderby) != 0 {
 		querystr += " ORDER BY "
-		for _, column := range orderby {
-			querystr += column.Column + " " + column.Order + ","
+		for _, column := range _process_orderby(orderby) {
+			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
 		}
+		querystr = querystr[0:len(querystr) - 1]
 	}
-	querystr = querystr[0:len(querystr) - 1]
 	
-	adapter.write_statement(name,querystr)
+	adapter.write_statement(name,strings.TrimSpace(querystr))
 	return nil
 }
 
-func (adapter *Mysql_Adapter) simple_left_join(name string, table1 string, table2 string, columns string, joiners []DB_Joiner, where string, orderby []DB_Order/*, offset int, maxCount int*/) error {
+func (adapter *Mysql_Adapter) simple_left_join(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string/*, offset int, maxCount int*/) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -139,22 +139,32 @@ func (adapter *Mysql_Adapter) simple_left_join(name string, table1 string, table
 		return errors.New("No joiners found for simple_left_join")
 	}
 	
-	// Slice up the user friendly strings into something easier to process
-	var colslice []string = strings.Split(strings.TrimSpace(columns),",")
-	
 	var querystr string = "SELECT "
 	
-	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range colslice {
-		querystr += "`" + strings.TrimSpace(column) + "`,"
+	for _, column := range _process_columns(columns) {
+		var source, alias string
+		
+		// Escape the column names, just in case we've used a reserved keyword
+		if column.Table != "" {
+			source = "`" + column.Table + "`.`" + column.Left + "`"
+		} else if column.Type == "function" {
+			source = column.Left
+		} else {
+			source = "`" + column.Left + "`"
+		}
+		
+		if column.Alias != "" {
+			alias = " AS `" + column.Alias + "`"
+		}
+		querystr += source + alias + ","
 	}
 	
 	// Remove the trailing comma
 	querystr = querystr[0:len(querystr) - 1]
 	
 	querystr += " FROM " + table1 + " LEFT JOIN " + table2 + " ON "
-	for _, joiner := range joiners {
-		querystr += "`" + joiner.Left + "`=`" + joiner.Right + "` AND "
+	for _, joiner := range _process_joiner(joiners) {
+		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "`=`" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
 	}
 	// Remove the trailing AND
 	querystr = querystr[0:len(querystr) - 4]
@@ -169,20 +179,20 @@ func (adapter *Mysql_Adapter) simple_left_join(name string, table1 string, table
 			if loc.RightType == "column" {
 				rquote = "`"
 			}
-			querystr += " " + lquote + loc.Left + lquote + loc.Operator + " " + rquote + loc.Right + rquote + " AND "
+			querystr += " " + lquote + loc.Left + lquote + " " + loc.Operator + " " + rquote + loc.Right + rquote + " AND "
 		}
+		querystr = querystr[0:len(querystr) - 3]
 	}
-	querystr = querystr[0:len(querystr) - 3]
 	
 	if len(orderby) != 0 {
 		querystr += " ORDER BY "
-		for _, column := range orderby {
-			querystr += column.Column + " " + column.Order + ","
+		for _, column := range _process_orderby(orderby) {
+			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
 		}
+		querystr = querystr[0:len(querystr) - 1]
 	}
-	querystr = querystr[0:len(querystr) - 1]
 	
-	adapter.write_statement(name,querystr)
+	adapter.write_statement(name,strings.TrimSpace(querystr))
 	return nil
 }
 
