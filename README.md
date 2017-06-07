@@ -1,10 +1,8 @@
-# Gosora
+# Gosora [![Azareal's Discord Chat](https://img.shields.io/badge/style-Invite-7289DA.svg?style=flat&label=Discord)](https://discord.gg/eyYvtTf)
 
 A super fast forum software written in Go.
 
 The initial code-base was forked from one of my side projects, but has now gone far beyond that. We're still fairly early in development, so the code-base might change at an incredible rate. We plan to start stabilising it somewhat once we enter alpha.
-
-Azareal's Discord Chat: https://discord.gg/eyYvtTf
 
 If you like this software, please give it a star and give us some feedback :)
 
@@ -12,23 +10,23 @@ If you dislike it, please give us some feedback on how to make it better! We're 
 
 
 # Features
-Basic Forum Functionality. All of the little things you would expect of any forum software. E.g. Moderation, Custom Themes, Avatars, and so on.
+Basic Forum Functionality. All of the little things you would expect of any forum software. E.g. Common Moderation features, modlogs, theme system, avatars, bbcode parser, markdown parser, report system, per-forum permissions, group permissions and so on.
 
 Custom Pages. Under development. The Control Panel portion is incomplete, but you can create them by hand today. They're basically html/templates templates in the /pages/ folder.
 
 Emojis. Allow your users to express themselves without resorting to serving tons upon tons of image files.
 
-In-memory static file, forum and group caches. We're pondering over extending this solution over to topics, users, etc.
+In-memory static file, forum and group caches. We have a slightly more dynamic cache for users and topics.
 
-A profile system including profile comments and moderation tools for the profile owner.
+A profile system, including profile comments and moderation tools for the profile owner.
 
-A template engine which compiles templates down into machine code. Over ten times faster than html/templates. Compatible with templates written for html/templates, you don't need to learn any new templating language.
+A template engine which compiles templates down to machine code. Over thirty times faster than html/templates, although it does remove some of the hand holding to achieve this. Compatible with templates written for html/templates, you don't need to learn any new templating language.
 
 A plugin system. More on this to come.
 
 A responsive design. Looks great on mobile phones, tablets, laptops, desktops and more!
 
-Other modern features like alerts, advanced dashboard, etc.
+Other modern features like alerts, likes, advanced dashboard with live stats (CPU, RAM, online user count, and so on), etc.
 
 
 # Dependencies
@@ -86,6 +84,43 @@ You might have to run run.bat or ./run-gosora-linux twice after changing a templ
 Several important features for saving memory in the templates system may have to be implemented before the new compiled template system is rolled out to every route. These features are coming fairly soon, but not before the higher priority items.
 
 
+# Advanced Installation
+
+An example of running the commands directly on Windows.
+
+Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms.
+
+```bash
+go get -u github.com/go-sql-driver/mysql
+
+go get -u golang.org/x/crypto/bcrypt
+
+go get -u github.com/StackExchange/wmi
+
+go get -u github.com/shirou/gopsutil
+
+go get -u github.com/gorilla/websocket
+
+
+go generate
+
+go build ./router_gen
+
+router_gen.exe
+
+go build ./query_gen
+
+query_gen.exe
+
+go build -o gosora.exe
+
+go build ./install
+
+install.exe
+
+gosora.exe```
+
+
 # How do I install plugins?
 
 For the default plugins like Markdown and Helloworld, you can find them in the Plugin Manager of your Control Panel. For ones which aren't included by default, you will need to drag them from your /extend/ directory and into the / directory (the root directory of your Gosora installation, where the executable and most of the main Go files are).
@@ -120,7 +155,7 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 * Go 1.8
 
-* MariaDB (or any other MySQL compatible database engine)
+* MariaDB (or any other MySQL compatible database engine). We'll allow other database engines in the future.
 
 * github.com/go-sql-driver/mysql For interfacing with MariaDB.
 

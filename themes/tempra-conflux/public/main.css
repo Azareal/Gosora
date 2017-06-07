@@ -371,6 +371,7 @@ button.username {
 	padding: 5px;
 	margin-bottom: 10px;
 	border: 1px solid #ccc;
+	background-color: white;
 }
 .alert_success {
 	display: block;

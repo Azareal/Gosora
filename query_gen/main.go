@@ -1,7 +1,7 @@
 /* WIP Under Construction */
 package main
 
-import "fmt"
+//import "fmt"
 import "strings"
 import "log"
 import "os"
@@ -48,11 +48,21 @@ type DB_Order struct
 	Order string
 }
 
+type DB_Token struct {
+	Contents string
+	Type string // function, operator, column, number, string, substitute
+}
+
+type DB_Setter struct {
+	Column string
+	Expr []DB_Token // Simple expressions, the innards of functions are opaque for now.
+}
+
 type DB_Adapter interface {
 	get_name() string
 	simple_insert(string,string,string,string) error
 	//simple_replace(string,string,[]string,string) error
-	simple_update() error
+	simple_update(string,string,string,string) error
 	simple_select(string,string,string,string,string/*,int,int*/) error
 	simple_left_join(string,string,string,string,string,string,string/*,int,int*/) error
 	write() error
@@ -107,9 +117,13 @@ func write_statements(adapter DB_Adapter) error {
 	
 	adapter.simple_select("has_liked_topic","likes","targetItem","sentBy = ? and targetItem = ? and targetType = 'topics'","")
 	
-	/*"select targetItem from likes where sentBy = ? and targetItem = ? and targetType = 'replies'"*/
+	adapter.simple_select("has_liked_reply","likes","targetItem","sentBy = ? and targetItem = ? and targetType = 'replies'","")
 	
+	adapter.simple_select("get_user_name","users","name","uid = ?","")
 	
+	adapter.simple_select("get_emails_by_user","emails","email, validated","uid = ?","")
+	
+	adapter.simple_select("get_topic_basic","topics","title, content","tid = ?","")
 	
 	adapter.simple_left_join("get_topic_list","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	
@@ -124,6 +138,59 @@ func write_statements(adapter DB_Adapter) error {
 	adapter.simple_left_join("get_profile_replies","users_replies","users","users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group","users_replies.createdBy = users.uid","users_replies.uid = ?","")
 	
 	adapter.simple_insert("create_topic","topics","parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,words,createdBy","?,?,?,?,NOW(),NOW(),?,?,?")
+	
+	adapter.simple_insert("create_report","topics","title,content,parsed_content,createdAt,lastReplyAt,createdBy,data,parentID,css_class","?,?,?,NOW(),NOW(),?,?,1,'report'")
+
+	adapter.simple_insert("create_reply","replies","tid,content,parsed_content,createdAt,ipaddress,words,createdBy","?,?,?,NOW(),?,?,?")
+	
+	adapter.simple_insert("create_action_reply","replies","tid,actionType,ipaddress,createdBy","?,?,?,?")
+	
+	adapter.simple_insert("create_like","likes","weight, targetItem, targetType, sentBy","?,?,?,?")
+	
+	adapter.simple_insert("add_activity","activity_stream","actor,targetUser,event,elementType,elementID","?,?,?,?,?")
+	
+	// Add an admin version of register_stmt with more flexibility?
+	// create_account_stmt, err = db.Prepare("INSERT INTO
+	adapter.simple_insert("register","users","name, email, password, salt, group, is_super_admin, session, active, message","?,?,?,?,?,0,?,?,''")
+	
+	
+	adapter.simple_update("add_replies_to_topic","topics","postCount = postCount + ?, lastReplyAt = NOW()","tid = ?")
+	
+	adapter.simple_update("remove_replies_from_topic","topics","postCount = postCount - ?","tid = ?")
+	
+	adapter.simple_update("add_topics_to_forum","forums","topicCount = topicCount + ?","fid = ?")
+	
+	adapter.simple_update("remove_topics_from_forum","forums","topicCount = topicCount - ?","fid = ?")
+	
+	adapter.simple_update("update_forum_cache","forums","lastTopic = ?, lastTopicID = ?, lastReplyer = ?, lastReplyerID = ?, lastTopicTime = NOW()","fid = ?")
+
+	adapter.simple_update("add_likes_to_topic","topics","likeCount = likeCount + ?","tid = ?")
+	
+	adapter.simple_update("add_likes_to_reply","replies","likeCount = likeCount + ?","rid = ?")
+	
+	adapter.simple_update("edit_topic","topics","title = ?, content = ?, parsed_content = ?, is_closed = ?","tid = ?")
+	
+	adapter.simple_update("edit_reply","replies","content = ?, parsed_content = ?","rid = ?")
+	
+	adapter.simple_update("stick_topic","topics","sticky = 1","tid = ?")
+	
+	adapter.simple_update("unstick_topic","topics","sticky = 0","tid = ?")
+	
+	adapter.simple_update("update_last_ip","users","last_ip = ?","uid = ?")
+
+	adapter.simple_update("update_session","users","session = ?","uid = ?")
+	
+	adapter.simple_update("logout","users","session = ''","uid = ?")
+
+	adapter.simple_update("set_password","users","password = ?, salt = ?","uid = ?")
+	
+	adapter.simple_update("set_avatar","users","avatar = ?","uid = ?")
+	
+	adapter.simple_update("set_username","users","name = ?","uid = ?")
+	
+	adapter.simple_update("change_group","users","group = ?","uid = ?")
+	
+	adapter.simple_update("activate_user","users","active = 1","uid = ?")
 	
 	return nil
 }
@@ -203,6 +270,7 @@ func _process_joiner(joinstr string) (joiner []DB_Joiner) {
 	return joiner
 }
 
+// TO-DO: Add support for keywords like BETWEEN. We'll probably need an arbitrary expression parser like with the update setters.
 func _process_where(wherestr string) (where []DB_Where) {
 	if wherestr == "" {
 		return where
@@ -243,8 +311,131 @@ func _process_where(wherestr string) (where []DB_Where) {
 	return where
 }
 
+func _process_set(setstr string) (setter []DB_Setter) {
+	if setstr == "" {
+		return setter
+	}
+	//fmt.Println("setstr",setstr)
+	
+	// First pass, splitting the string by commas while ignoring the innards of functions
+	var setset []string
+	var buffer string
+	var last_item int
+	setstr += ","
+	for i := 0; i < len(setstr); i++  {
+		if setstr[i] == '(' {
+			i = _skip_function_call(setstr,i-1)
+			setset = append(setset,setstr[last_item:i+1])
+			buffer = ""
+			last_item = i + 2
+		} else if setstr[i] == ',' && buffer != "" {
+			setset = append(setset,buffer)
+			buffer = ""
+			last_item = i + 1
+		} else if (setstr[i] > 32) && setstr[i] != ',' && setstr[i] != ')' {
+			buffer += string(setstr[i])
+		}
+	}
+	
+	// Second pass. Break this setitem into manageable chunks
+	buffer = ""
+	for _, setitem := range setset {
+		var tmp_setter DB_Setter
+		halves := strings.Split(setitem,"=")
+		if len(halves) != 2 {
+			continue
+		}
+		tmp_setter.Column = strings.TrimSpace(halves[0])
+		
+		halves[1] += ")"
+		var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
+		//fmt.Println("halves[1]",halves[1])
+		for i := 0; i < len(halves[1]); i++ {
+			char := halves[1][i]
+			//fmt.Println("optype",optype)
+			switch(optype) {
+			case 0: // unknown
+				if ('0' <= char && char <= '9') {
+					optype = 1
+					buffer = string(char)
+				} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') {
+					optype = 2
+					buffer = string(char)
+				} else if char == '\'' {
+					optype = 4
+				} else if _is_op_byte(char) {
+					optype = 5
+					buffer = string(char)
+				} else if char == '?' {
+					//fmt.Println("Expr:","?")
+					tmp_setter.Expr = append(tmp_setter.Expr,DB_Token{"?","substitute"})
+				}
+			case 1: // number
+				if ('0' <= char && char <= '9') {
+					buffer += string(char)
+				} else {
+					optype = 0
+					i--
+					//fmt.Println("Expr:",buffer)
+					tmp_setter.Expr = append(tmp_setter.Expr,DB_Token{buffer,"number"})
+				}
+			case 2: // column
+				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') {
+					buffer += string(char)
+				} else if char == '(' {
+					optype = 3
+					i--
+				} else {
+					optype = 0
+					i--
+					//fmt.Println("Expr:",buffer)
+					tmp_setter.Expr = append(tmp_setter.Expr,DB_Token{buffer,"column"})
+				}
+			case 3: // function
+				var pre_i int = i
+				//fmt.Println("buffer",buffer)
+				//fmt.Println("len(halves)",len(halves[1]))
+				//fmt.Println("pre_i",string(halves[1][pre_i]))
+				//fmt.Println("msg prior to pre_i",halves[1][0:pre_i])
+				i = _skip_function_call(halves[1],i-1)
+				//fmt.Println("i",i)
+				//fmt.Println("msg prior to i-1",halves[1][0:i-1])
+				//fmt.Println("string(i-1)",string(halves[1][i-1]))
+				//fmt.Println("string(i)",string(halves[1][i]))
+				buffer += halves[1][pre_i:i] + string(halves[1][i])
+				//fmt.Println("Expr:",buffer)
+				tmp_setter.Expr = append(tmp_setter.Expr,DB_Token{buffer,"function"})
+				optype = 0
+			case 4: // string
+				if char != '\'' {
+					buffer += string(char)
+				} else {
+					optype = 0
+					//fmt.Println("Expr:",buffer)
+					tmp_setter.Expr = append(tmp_setter.Expr,DB_Token{buffer,"string"})
+				}
+			case 5: // operator
+				if _is_op_byte(char) {
+					buffer += string(char)
+				} else {
+					optype = 0
+					i--
+					//fmt.Println("Expr:",buffer)
+					tmp_setter.Expr = append(tmp_setter.Expr,DB_Token{buffer,"operator"})
+				}
+			}
+		}
+		setter = append(setter,tmp_setter)
+	}
+	//fmt.Println("setter",setter)
+	return setter
+}
+
+func _is_op_byte(char byte) bool {
+	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
+}
+
 func _process_fields(fieldstr string) (fields []DB_Field) {
-	fmt.Println("_Entering _process_fields")
 	if fieldstr == "" {
 		return fields
 	}
@@ -253,17 +444,7 @@ func _process_fields(fieldstr string) (fields []DB_Field) {
 	fieldstr += ","
 	for i := 0; i < len(fieldstr); i++  {
 		if fieldstr[i] == '(' {
-			var pre_i int
-			pre_i = i
 			i = _skip_function_call(fieldstr,i-1)
-			fmt.Println("msg prior to i",fieldstr[0:i])
-			fmt.Println("len(fieldstr)",len(fieldstr))
-			fmt.Println("pre_i",pre_i)
-			fmt.Println("last_item",last_item)
-			fmt.Println("pre_i",string(fieldstr[pre_i]))
-			fmt.Println("last_item",string(fieldstr[last_item]))
-			fmt.Println("fieldstr[pre_i:i+1]",fieldstr[pre_i:i+1])
-			fmt.Println("fieldstr[last_item:i+1]",fieldstr[last_item:i+1])
 			fields = append(fields,DB_Field{Name:fieldstr[last_item:i+1],Type:_get_identifier_type(fieldstr[last_item:i+1])})
 			buffer = ""
 			last_item = i + 2
@@ -275,7 +456,6 @@ func _process_fields(fieldstr string) (fields []DB_Field) {
 			buffer += string(fieldstr[i])
 		}
 	}
-	fmt.Println("fields",fields)
 	return fields
 }
 
@@ -293,7 +473,6 @@ func _get_identifier_type(identifier string) string {
 }
 
 func _get_identifier(segment string, startOffset int) (out string, i int) {
-	//fmt.Println("entering _get_identifier")
 	segment = strings.TrimSpace(segment)
 	segment += " " // Avoid overflow bugs with slicing
 	for i = startOffset; i < len(segment); i++ {
@@ -302,10 +481,6 @@ func _get_identifier(segment string, startOffset int) (out string, i int) {
 			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
 		}
 		if segment[i] == ' ' && i != startOffset {
-			//fmt.Println("segment[startOffset:i]",segment[startOffset:i])
-			//fmt.Println("startOffset",startOffset)
-			//fmt.Println("segment[startOffset]",string(segment[startOffset]))
-			//fmt.Println("i",i)
 			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
 		}
 	}
@@ -328,13 +503,10 @@ func _skip_function_call(data string, index int) int {
 	for ;index < len(data); index++{
 		char := data[index]
 		if char == '(' {
-			fmt.Println("Enter brace")
 			brace_count++
 		} else if char == ')' {
 			brace_count--
-			fmt.Println("Exit brace")
 			if brace_count == 0 {
-				fmt.Println("Exit function segment")
 				return index
 			}
 		}

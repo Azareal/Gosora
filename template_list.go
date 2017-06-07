@@ -32,7 +32,7 @@ var menu_2 []byte = []byte(`">Profile</a></li>
 		`)
 var menu_3 []byte = []byte(`<li class="menu_left menu_account"><a href="/panel/">Panel</a></li>`)
 var menu_4 []byte = []byte(`
-		<li class="menu_left menu_logout"><a href="/accounts/logout?session=`)
+		<li class="menu_left menu_logout"><a href="/accounts/logout/?session=`)
 var menu_5 []byte = []byte(`">Logout</a></li>
 		`)
 var menu_6 []byte = []byte(`

@@ -15,40 +15,15 @@ var db_collation string = "utf8mb4_general_ci"
 
 var get_topic_replies_offset_stmt *sql.Stmt // I'll need to rewrite this one to stop it hard-coding the per page setting before moving it to the query generator
 var get_forum_topics_offset_stmt *sql.Stmt
-var create_report_stmt *sql.Stmt
-var create_reply_stmt *sql.Stmt
-var create_action_reply_stmt *sql.Stmt
-var add_replies_to_topic_stmt *sql.Stmt
-var remove_replies_from_topic_stmt *sql.Stmt
-var add_topics_to_forum_stmt *sql.Stmt
-var remove_topics_from_forum_stmt *sql.Stmt
-var update_forum_cache_stmt *sql.Stmt
-var create_like_stmt *sql.Stmt
-var add_likes_to_topic_stmt *sql.Stmt
-var add_likes_to_reply_stmt *sql.Stmt
-var add_activity_stmt *sql.Stmt
 var notify_watchers_stmt *sql.Stmt
 var notify_one_stmt *sql.Stmt
 var add_subscription_stmt *sql.Stmt
-var edit_topic_stmt *sql.Stmt
-var edit_reply_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
 var delete_topic_stmt *sql.Stmt
-var stick_topic_stmt *sql.Stmt
-var unstick_topic_stmt *sql.Stmt
 var get_activity_feed_by_watcher_stmt *sql.Stmt
-var update_last_ip_stmt *sql.Stmt
-var update_session_stmt *sql.Stmt
-var logout_stmt *sql.Stmt
-var set_password_stmt *sql.Stmt
-var set_avatar_stmt *sql.Stmt
-var set_username_stmt *sql.Stmt
 var add_email_stmt *sql.Stmt
 var update_email_stmt *sql.Stmt
 var verify_email_stmt *sql.Stmt
-var register_stmt *sql.Stmt
-var change_group_stmt *sql.Stmt
-var activate_user_stmt *sql.Stmt
 var update_user_level_stmt *sql.Stmt
 var increment_user_score_stmt *sql.Stmt
 var increment_user_posts_stmt *sql.Stmt
@@ -88,6 +63,7 @@ var todays_post_count_stmt *sql.Stmt
 var todays_topic_count_stmt *sql.Stmt
 var todays_report_count_stmt *sql.Stmt
 var todays_newuser_count_stmt *sql.Stmt
+var report_exists_stmt *sql.Stmt
 
 func init_database() (err error) {
 	if(dbpassword != ""){
@@ -130,78 +106,6 @@ func init_database() (err error) {
 		return err
 	}
 
-	log.Print("Preparing create_report statement.")
-	create_report_stmt, err = db.Prepare("INSERT INTO topics(title,content,parsed_content,createdAt,lastReplyAt,createdBy,data,parentID,css_class) VALUES(?,?,?,NOW(),NOW(),?,?,1,'report')")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing create_reply statement.")
-	create_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,content,parsed_content,createdAt,ipaddress,words,createdBy) VALUES(?,?,?,NOW(),?,?,?)")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing create_action_reply statement.")
-	create_action_reply_stmt, err = db.Prepare("INSERT INTO replies(tid,actionType,ipaddress,createdBy) VALUES(?,?,?,?)")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing add_replies_to_topic statement.")
-	add_replies_to_topic_stmt, err = db.Prepare("UPDATE topics SET postCount = postCount + ?, lastReplyAt = NOW() WHERE tid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing remove_replies_from_topic statement.")
-	remove_replies_from_topic_stmt, err = db.Prepare("UPDATE topics SET postCount = postCount - ? WHERE tid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing add_topics_to_forum statement.")
-	add_topics_to_forum_stmt, err = db.Prepare("UPDATE forums SET topicCount = topicCount + ? WHERE fid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing remove_topics_from_forum statement.")
-	remove_topics_from_forum_stmt, err = db.Prepare("UPDATE forums SET topicCount = topicCount - ? WHERE fid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing update_forum_cache statement.")
-	update_forum_cache_stmt, err = db.Prepare("UPDATE forums SET lastTopic = ?, lastTopicID = ?, lastReplyer = ?, lastReplyerID = ?, lastTopicTime = NOW() WHERE fid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing create_like statement.")
-	create_like_stmt, err = db.Prepare("INSERT INTO likes(weight, targetItem, targetType, sentBy) VALUES(?,?,?,?)")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing add_likes_to_topic statement.")
-	add_likes_to_topic_stmt, err = db.Prepare("UPDATE topics SET likeCount = likeCount + ? WHERE tid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing add_likes_to_reply statement.")
-	add_likes_to_reply_stmt, err = db.Prepare("UPDATE replies SET likeCount = likeCount + ? WHERE rid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing add_activity statement.")
-	add_activity_stmt, err = db.Prepare("INSERT INTO activity_stream(actor,targetUser,event,elementType,elementID) VALUES(?,?,?,?,?)")
-	if err != nil {
-		return err
-	}
-
 	log.Print("Preparing notify_watchers statement.")
 	notify_watchers_stmt, err = db.Prepare("INSERT INTO activity_stream_matches(watcher, asid) SELECT activity_subscriptions.user, activity_stream.asid FROM activity_stream INNER JOIN activity_subscriptions ON activity_subscriptions.targetType = activity_stream.elementType and activity_subscriptions.targetID = activity_stream.elementID and activity_subscriptions.user != activity_stream.actor where asid = ?")
 	if err != nil {
@@ -220,18 +124,6 @@ func init_database() (err error) {
 		return err
 	}
 
-	log.Print("Preparing edit_topic statement.")
-	edit_topic_stmt, err = db.Prepare("UPDATE topics SET title = ?, content = ?, parsed_content = ?, is_closed = ? WHERE tid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing edit_reply statement.")
-	edit_reply_stmt, err = db.Prepare("UPDATE replies SET content = ?, parsed_content = ? WHERE rid = ?")
-	if err != nil {
-		return err
-	}
-
 	log.Print("Preparing delete_reply statement.")
 	delete_reply_stmt, err = db.Prepare("DELETE FROM replies WHERE rid = ?")
 	if err != nil {
@@ -244,71 +136,8 @@ func init_database() (err error) {
 		return err
 	}
 
-	log.Print("Preparing stick_topic statement.")
-	stick_topic_stmt, err = db.Prepare("UPDATE topics SET sticky = 1 WHERE tid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing unstick_topic statement.")
-	unstick_topic_stmt, err = db.Prepare("UPDATE topics SET sticky = 0 WHERE tid = ?")
-	if err != nil {
-		return err
-	}
-
 	log.Print("Preparing get_activity_feed_by_watcher statement.")
 	get_activity_feed_by_watcher_stmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing update_last_ip statement.")
-	update_last_ip_stmt, err = db.Prepare("UPDATE users SET last_ip = ? WHERE uid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing update_session statement.")
-	update_session_stmt, err = db.Prepare("UPDATE users SET session = ? WHERE uid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing logout statement.")
-	logout_stmt, err = db.Prepare("UPDATE users SET session = '' WHERE uid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing set_password statement.")
-	set_password_stmt, err = db.Prepare("UPDATE users SET password = ?, salt = ? WHERE uid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing set_avatar statement.")
-	set_avatar_stmt, err = db.Prepare("UPDATE users SET avatar = ? WHERE uid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing set_username statement.")
-	set_username_stmt, err = db.Prepare("UPDATE users SET name = ? WHERE uid = ?")
-	if err != nil {
-		return err
-	}
-
-	// Add an admin version of register_stmt with more flexibility
-	// create_account_stmt, err = db.Prepare("INSERT INTO
-
-	log.Print("Preparing register statement.")
-	register_stmt, err = db.Prepare("INSERT INTO users(`name`,`email`,`password`,`salt`,`group`,`is_super_admin`,`session`,`active`,`message`) VALUES(?,?,?,?,?,0,?,?,'')")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing change_group statement.")
-	change_group_stmt, err = db.Prepare("update `users` set `group` = ? where `uid` = ?")
 	if err != nil {
 		return err
 	}
@@ -327,12 +156,6 @@ func init_database() (err error) {
 
 	log.Print("Preparing verify_email statement.")
 	verify_email_stmt, err = db.Prepare("UPDATE emails SET validated = 1, token = '' WHERE email = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing activate_user statement.")
-	activate_user_stmt, err = db.Prepare("UPDATE users SET active = 1 WHERE uid = ?")
 	if err != nil {
 		return err
 	}
@@ -550,6 +373,12 @@ func init_database() (err error) {
 
 	log.Print("Preparing todays_newuser_count statement.")
 	todays_newuser_count_stmt, err = db.Prepare("select count(*) from users where createdAt BETWEEN (now() - interval 1 day) and now()")
+	if err != nil {
+		return err
+	}
+
+	log.Print("Preparing report_exists statement.")
+	report_exists_stmt, err = db.Prepare("select count(*) as count from topics where data = ? and data != '' and parentID = 1")
 	if err != nil {
 		return err
 	}

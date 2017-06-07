@@ -672,8 +672,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var topic_name string
-	var fid int
-	var createdBy int
+	var fid, createdBy int
 	err = db.QueryRow("select title, parentID, createdBy from topics where tid = ?",tid).Scan(&topic_name,&fid,&createdBy)
 	if err == sql.ErrNoRows {
 		PreError("Couldn't find the parent topic",w,r)
@@ -700,7 +699,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wcount := word_count(content)
-	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),ipaddress,wcount, user.ID)
+	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),ipaddress,wcount,user.ID)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -893,7 +892,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.QueryRow("select targetItem from likes where sentBy = ? and targetItem = ? and targetType = 'replies'", user.ID, rid).Scan(&rid)
+	err = has_liked_reply_stmt.QueryRow(user.ID, rid).Scan(&rid)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -973,7 +972,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user_name string
-	err = db.QueryRow("select name from users where uid = ?", uid).Scan(&user_name)
+	err = get_user_name_stmt.QueryRow(uid).Scan(&user_name)
 	if err == sql.ErrNoRows {
 		LocalError("The profile you're trying to post on doesn't exist.",w,r,user)
 		return
@@ -1038,6 +1037,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 			InternalError(err,w,r)
 			return
 		}
+		title = "Reply: " + title
 		content = content + "\n\nOriginal Post: #rid-" + strconv.Itoa(item_id)
 	} else if item_type == "user-reply" {
 		err = db.QueryRow("select uid, content from users_replies where rid = ?", item_id).Scan(&tid, &content)
@@ -1049,7 +1049,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 			return
 		}
 
-		err = db.QueryRow("select name from users where uid = ?", tid).Scan(&title)
+		err = get_user_name_stmt.QueryRow(tid).Scan(&title)
 		if err == sql.ErrNoRows {
 			LocalError("We were unable to find the profile which the reported post is supposed to be on",w,r,user)
 			return
@@ -1057,9 +1057,10 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 			InternalError(err,w,r)
 			return
 		}
+		title = "Profile: " + title
 		content = content + "\n\nOriginal Post: @" + strconv.Itoa(tid)
 	} else if item_type == "topic" {
-		err = db.QueryRow("select title, content from topics where tid = ?", item_id).Scan(&title,&content)
+		err = get_topic_basic_stmt.QueryRow(item_id).Scan(&title,&content)
 		if err == sql.ErrNoRows {
 			NotFound(w,r)
 			return
@@ -1067,6 +1068,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 			InternalError(err,w,r)
 			return
 		}
+		title = "Topic: " + title
 		content = content + "\n\nOriginal Post: #tid-" + strconv.Itoa(item_id)
 	} else {
 		if vhooks["report_preassign"] != nil {
@@ -1079,7 +1081,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 	}
 
 	var count int
-	rows, err := db.Query("select count(*) as count from topics where data = ? and data != '' and parentID = 1", item_type + "_" + strconv.Itoa(item_id))
+	rows, err := report_exists_stmt.Query(item_type + "_" + strconv.Itoa(item_id))
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -1152,8 +1154,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var real_password string
-	var salt string
+	var real_password, salt string
 	current_password := r.PostFormValue("account-current-password")
 	new_password := r.PostFormValue("account-new-password")
 	confirm_password := r.PostFormValue("account-confirm-password")
@@ -1186,6 +1187,13 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	_, err = logout_stmt.Exec(user.ID)
 	if err != nil {
 		InternalError(err,w,r)
+		return
+	}
+
+	// Reload the user data
+	err = users.Load(user.ID)
+	if err != nil {
+		LocalError("Your account no longer exists!",w,r,user)
 		return
 	}
 
@@ -1359,7 +1367,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 
 	email := Email{UserID: user.ID}
 	var emailList []interface{}
-	rows, err := db.Query("select email, validated from emails where uid = ?", user.ID)
+	rows, err := get_emails_by_user_stmt.Query(user.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1381,7 +1389,8 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// Was this site migrated from another forum software? Most of them don't have multiple emails for a single user. This also applies when the admin switches enable_emails on after having it off for a while
+	// Was this site migrated from another forum software? Most of them don't have multiple emails for a single user.
+	// This also applies when the admin switches enable_emails on after having it off for a while.
 	if len(emailList) == 0 {
 		email.Email = user.Email
 		email.Validated = false
@@ -1390,7 +1399,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !enable_emails {
-		noticeList = append(noticeList, "The email system has been turned off. All features involving sending emails have been disabled.")
+		noticeList = append(noticeList,"The mail system is currently disabled.")
 	}
 	pi := Page{"Email Manager",user,noticeList,emailList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
@@ -1463,7 +1472,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	}
 
 	if !enable_emails {
-		noticeList = append(noticeList,"The email system has been turned off. All features involving sending emails have been disabled.")
+		noticeList = append(noticeList,"The mail system is currently disabled.")
 	}
 	noticeList = append(noticeList,"Your email was successfully verified")
 	pi := Page{"Email Manager",user,noticeList,emailList,nil}
@@ -1574,6 +1583,13 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Reload the user data
+	err = users.Load(uid)
+	if err != nil {
+		LocalError("Your account no longer exists!",w,r,user)
+		return
+	}
+
 	cookie := http.Cookie{Name:"uid",Value:strconv.Itoa(uid),Path:"/",MaxAge:year}
 	http.SetCookie(w,&cookie)
 	cookie = http.Cookie{Name:"session",Value:session,Path:"/",MaxAge:year}
@@ -1662,8 +1678,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var active int
-	var group int
+	var active, group int
 	switch settings["activation_type"] {
 		case 1: // Activate All
 			active = 1
@@ -1750,11 +1765,8 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 			}
 
 			var msglist string
-			var asid int
-			var actor_id int
-			var targetUser_id int
-			var event string
-			var elementType string
+			var asid, actor_id, targetUser_id int
+			var event, elementType string
 			var elementID int
 			//---
 			var targetUser *User
@@ -1805,12 +1817,8 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 				"{x}{created a new topic}{topic}"
 				*/
 
-				var act string
-				var post_act string
-				var url string
-				var area string
-				var start_frag string
-				var end_frag string
+				var act, post_act, url, area string
+				var start_frag, end_frag string
 				switch(elementType) {
 					case "forum":
 						if event == "reply" {
