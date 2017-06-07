@@ -118,7 +118,8 @@ go build ./install
 
 install.exe
 
-gosora.exe```
+gosora.exe
+```
 
 
 # How do I install plugins?
