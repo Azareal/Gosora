@@ -1,4 +1,6 @@
 var form_vars = {};
+var alertList = [];
+var alertCount = 0;
 
 function post_link(event)
 {
@@ -17,7 +19,6 @@ function load_alerts(menu_alerts)
 			url:'/api/?action=get&module=alerts&format=json',
 			success: function(data) {
 				if("errmsg" in data) {
-					//console.log(data.errmsg);
 					menu_alerts.find(".alertList").html("<div class='alertItem'>"+data.errmsg+"</div>");
 					return;
 				}
@@ -36,12 +37,14 @@ function load_alerts(menu_alerts)
 						}
 					}
 
-					if("avatar" in msg)
-					{
+					if("avatar" in msg) {
 						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' href=\""+msg.path+"\">"+mmsg+"</a></div>";
+						alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' href=\""+msg.path+"\">"+mmsg+"</a></div>");
 						anyAvatar = true
+					} else {
+						alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
+						alertList.push("<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>");
 					}
-					else alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
 					//console.log(msg);
 					//console.log(mmsg);
 				}
@@ -52,14 +55,19 @@ function load_alerts(menu_alerts)
 					//if(anyAvatar) menu_alerts.addClass("hasAvatars");
 				}
 				menu_alerts.find(".alertList").html(alist);
-				if(data.msgs.length != 0) menu_alerts.find(".alert_counter").text(data.msgs.length);
+				if(data.msgCount != 0) menu_alerts.find(".alert_counter").text(data.msgCount);
+				alertCount = data.msgCount;
 			},
 			error: function(magic,theStatus,error) {
 				try {
 					var data = JSON.parse(magic.responseText);
 					if("errmsg" in data) errtxt = data.errmsg;
 					else errtxt = "Unable to get the alerts";
-				} catch(e) { errtxt = "Unable to get the alerts"; }
+				} catch(err) {
+					errtxt = "Unable to get the alerts";
+					console.log(magic.responseText);
+					console.log(err);
+				}
 				menu_alerts.find(".alertList").html("<div class='alertItem'>"+errtxt+"</div>");
 			}
 		});
@@ -81,9 +89,7 @@ $(document).ready(function(){
 				lastN++;
 			}
 		}
-		if(data.length > lastIndex) {
-			out[out.length - 1] += data.substring(lastIndex);
-		}
+		if(data.length > lastIndex) out[out.length - 1] += data.substring(lastIndex);
 		return out;
 	}
 
@@ -96,8 +102,37 @@ $(document).ready(function(){
 			conn = false;
 		}
 		conn.onmessage = function(event) {
-			//console.log("WS_Message:");
-			//console.log(event.data);
+			//console.log("WS_Message: ",event.data);
+			if(event.data[0] == "{") {
+				try {
+					var data = JSON.parse(event.data);
+				} catch(err) { console.log(err); }
+
+				if ("msg" in data) {
+					var msg = data.msg
+					if("sub" in data) {
+						for(var i = 0; i < data.sub.length; i++) {
+							msg = msg.replace("\{"+i+"\}", data.sub[i]);
+						}
+					}
+
+					if("avatar" in data) alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+data.avatar+"\");'><a class='text' href=\""+data.path+"\">"+msg+"</a></div>");
+					else alertList.push("<div class='alertItem'><a href=\""+data.path+"\" class='text'>"+msg+"</a></div>");
+					if(alertList.length > 8) alertList.shift();
+					//console.log("post alertList",alertList);
+					alertCount++;
+
+					var alist = ""
+					for (var i = 0; i < alertList.length; i++) {
+						alist += alertList[i];
+					}
+
+					//console.log(alist);
+					$("#general_alerts").find(".alertList").html(alist); // Add support for other alert feeds like PM Alerts
+					$("#general_alerts").find(".alert_counter").text(alertCount);
+				}
+			}
+
 			var messages = event.data.split('\r');
 			for(var i = 0; i < messages.length; i++) {
 				//console.log("Message:");
@@ -266,9 +301,6 @@ $(document).ready(function(){
 					var newContent = $(this).find('input').eq(0).val();
 					this.innerHTML = newContent;
 				}
-				//console.log("field_name",field_name);
-				//console.log("field_type",field_type);
-				//console.log("newContent",newContent);
 				this.setAttribute("data-value",newContent);
 				out_data[field_name] = newContent;
 			});

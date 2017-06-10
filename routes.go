@@ -3,7 +3,7 @@ package main
 
 import (
 	"log"
-//	"fmt"
+	"fmt"
 	"strconv"
 	"bytes"
 	"regexp"
@@ -705,12 +705,12 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = add_replies_to_topic_stmt.Exec(1, tid)
+	_, err = add_replies_to_topic_stmt.Exec(1,tid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	_, err = update_forum_cache_stmt.Exec(topic_name, tid, user.Name, user.ID, 1)
+	_, err = update_forum_cache_stmt.Exec(topic_name,tid,user.Name,user.ID,1)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -783,6 +783,11 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if createdBy == user.ID {
+		LocalError("You can't like your own topics",w,r,user)
+		return
+	}
+
 	err = has_liked_topic_stmt.QueryRow(user.ID, tid).Scan(&tid)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
@@ -801,7 +806,6 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//score := words_to_score(words,true)
 	score := 1
 	_, err = create_like_stmt.Exec(score,tid,"topics",user.ID)
 	if err != nil {
@@ -826,16 +830,14 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/*_, err = notify_watchers_stmt.Exec(lastId)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}*/
 	_, err = notify_one_stmt.Exec(createdBy,lastId)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
+
+	// Live alerts, if the poster is online and WebSockets is enabled
+	_ = ws_hub.push_alert(createdBy,"like","topic",user.ID,createdBy,tid)
 
 	// Reload the topic...
 	err = topics.Load(tid)
@@ -892,6 +894,11 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if createdBy == user.ID {
+		LocalError("You can't like your own replies",w,r,user)
+		return
+	}
+
 	err = has_liked_reply_stmt.QueryRow(user.ID, rid).Scan(&rid)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
@@ -910,7 +917,6 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//score := words_to_score(words,false)
 	score := 1
 	_, err = create_like_stmt.Exec(score,rid,"replies",user.ID)
 	if err != nil {
@@ -939,6 +945,13 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		InternalError(err,w,r)
 		return
+	}
+
+	// Live alerts, if the poster is online and WebSockets is enabled
+	fmt.Println("Calling push_alert")
+	err = ws_hub.push_alert(createdBy,"like","post",user.ID,createdBy,rid)
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
@@ -1764,12 +1777,18 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			var msglist string
-			var asid, actor_id, targetUser_id int
-			var event, elementType string
-			var elementID int
-			//---
-			var targetUser *User
+			var msglist, event, elementType string
+			var asid, actor_id, targetUser_id, elementID int
+			var msgCount int
+
+			err = get_activity_count_by_watcher_stmt.QueryRow(user.ID).Scan(&msgCount)
+			if err == sql.ErrNoRows {
+				PreError("Couldn't find the parent topic",w,r)
+				return
+			} else if err != nil {
+				InternalError(err,w,r)
+				return
+			}
 
 			rows, err := get_activity_feed_by_watcher_stmt.Query(user.ID)
 			if err != nil {
@@ -1783,116 +1802,12 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 					InternalErrorJS(err,w,r)
 					return
 				}
-
-				actor, err := users.CascadeGet(actor_id)
+				res, err := build_alert(event, elementType, actor_id, targetUser_id, elementID, user)
 				if err != nil {
-					LocalErrorJS("Unable to find the actor",w,r)
+					LocalErrorJS(err.Error(),w,r)
 					return
 				}
-
-				/*if elementType != "forum" {
-					targetUser, err = users.CascadeGet(targetUser_id)
-					if err != nil {
-						LocalErrorJS("Unable to find the target user",w,r)
-						return
-					}
-				}*/
-
-				if event == "friend_invite" {
-					msglist += `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"\/user\/`+strconv.Itoa(actor.ID)+`","avatar":"`+strings.Replace(actor.Avatar,"/","\\/",-1)+`"},`
-					continue
-				}
-
-				/*
-				"You received a friend invite from {user}"
-				"{x}{mentioned you on}{user}{'s profile}"
-				"{x}{mentioned you in}{topic}"
-				"{x}{likes}{you}"
-				"{x}{liked}{your topic}{topic}"
-				"{x}{liked}{your post on}{user}{'s profile}" todo
-				"{x}{liked}{your post in}{topic}"
-				"{x}{replied to}{your post in}{topic}" todo
-				"{x}{replied to}{topic}"
-				"{x}{replied to}{your topic}{topic}"
-				"{x}{created a new topic}{topic}"
-				*/
-
-				var act, post_act, url, area string
-				var start_frag, end_frag string
-				switch(elementType) {
-					case "forum":
-						if event == "reply" {
-							act = "created a new topic"
-							topic, err := topics.CascadeGet(elementID)
-							if err != nil {
-								LocalErrorJS("Unable to find the linked topic",w,r)
-								return
-							}
-							url = build_topic_url(elementID)
-							area = topic.Title
-							// Store the forum ID in the targetUser column instead of making a new one? o.O
-							// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now..
-						} else {
-							act = "did something in a forum"
-						}
-					case "topic":
-						topic, err := topics.CascadeGet(elementID)
-						if err != nil {
-							LocalErrorJS("Unable to find the linked topic",w,r)
-							return
-						}
-						url = build_topic_url(elementID)
-						area = topic.Title
-
-						if targetUser_id == user.ID {
-							post_act = " your topic"
-						}
-					case "user":
-						targetUser, err = users.CascadeGet(elementID)
-						if err != nil {
-							LocalErrorJS("Unable to find the target user",w,r)
-							return
-						}
-						area = targetUser.Name
-						end_frag = "'s profile"
-						url = build_profile_url(elementID)
-					case "post":
-						topic, err := get_topic_by_reply(elementID)
-						if err != nil {
-							LocalErrorJS("Unable to find the target reply or parent topic",w,r)
-							return
-						}
-						url = build_topic_url(topic.ID)
-						area = topic.Title
-						if targetUser_id == user.ID {
-							post_act = " your post in"
-						}
-					default:
-						LocalErrorJS("Invalid elementType",w,r)
-				}
-
-				switch(event) {
-					case "like":
-						if elementType == "user" {
-							act = "likes"
-							end_frag = ""
-							if targetUser.ID == user.ID {
-								area = "you"
-							}
-						} else {
-							act = "liked"
-						}
-					case "mention":
-						if elementType == "user" {
-							act = "mentioned you on"
-						} else {
-							act = "mentioned you in"
-							post_act = ""
-						}
-					case "reply": act = "replied to"
-				}
-
-				msglist += `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `"},`
+				msglist += res + ","
 			}
 
 			err = rows.Err()
@@ -1905,8 +1820,8 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 			if len(msglist) != 0 {
 				msglist = msglist[0:len(msglist)-1]
 			}
-			w.Write([]byte(`{"msgs":[`+msglist+`]}`))
-			//fmt.Println(`{"msgs":[`+msglist+`]}`)
+			w.Write([]byte(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`))
+			//fmt.Println(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`)
 		//case "topics":
 		//case "forums":
 		//case "users":

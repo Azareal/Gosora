@@ -40,7 +40,17 @@ var create_reply_stmt *sql.Stmt
 var create_action_reply_stmt *sql.Stmt
 var create_like_stmt *sql.Stmt
 var add_activity_stmt *sql.Stmt
+var notify_one_stmt *sql.Stmt
 var register_stmt *sql.Stmt
+var create_profile_reply_stmt *sql.Stmt
+var create_forum_stmt *sql.Stmt
+var add_forum_perms_to_forum_stmt *sql.Stmt
+var add_plugin_stmt *sql.Stmt
+var add_theme_stmt *sql.Stmt
+var create_group_stmt *sql.Stmt
+var add_modlog_entry_stmt *sql.Stmt
+var add_adminlog_entry_stmt *sql.Stmt
+var add_forum_perms_to_group_stmt *sql.Stmt
 var add_replies_to_topic_stmt *sql.Stmt
 var remove_replies_from_topic_stmt *sql.Stmt
 var add_topics_to_forum_stmt *sql.Stmt
@@ -60,6 +70,22 @@ var set_avatar_stmt *sql.Stmt
 var set_username_stmt *sql.Stmt
 var change_group_stmt *sql.Stmt
 var activate_user_stmt *sql.Stmt
+var update_user_level_stmt *sql.Stmt
+var increment_user_score_stmt *sql.Stmt
+var increment_user_posts_stmt *sql.Stmt
+var increment_user_bigposts_stmt *sql.Stmt
+var increment_user_megaposts_stmt *sql.Stmt
+var increment_user_topics_stmt *sql.Stmt
+var edit_profile_reply_stmt *sql.Stmt
+var delete_forum_stmt *sql.Stmt
+var update_forum_stmt *sql.Stmt
+var update_setting_stmt *sql.Stmt
+var update_plugin_stmt *sql.Stmt
+var update_theme_stmt *sql.Stmt
+var update_user_stmt *sql.Stmt
+var update_group_perms_stmt *sql.Stmt
+var update_group_rank_stmt *sql.Stmt
+var update_group_stmt *sql.Stmt
 
 func gen_mysql() (err error) {
 	if debug {
@@ -270,8 +296,68 @@ func gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing notify_one statement.")
+	notify_one_stmt, err = db.Prepare("INSERT INTO `activity_stream_matches`(`watcher`,`asid`) VALUES (?,?)")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing register statement.")
 	register_stmt, err = db.Prepare("INSERT INTO `users`(`name`,`email`,`password`,`salt`,`group`,`is_super_admin`,`session`,`active`,`message`) VALUES (?,?,?,?,?,0,?,?,'')")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing create_profile_reply statement.")
+	create_profile_reply_stmt, err = db.Prepare("INSERT INTO `users_replies`(`uid`,`content`,`parsed_content`,`createdAt`,`createdBy`) VALUES (?,?,?,NOW(),?)")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing create_forum statement.")
+	create_forum_stmt, err = db.Prepare("INSERT INTO `forums`(`name`,`desc`,`active`,`preset`) VALUES (?,?,?,?)")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_forum_perms_to_forum statement.")
+	add_forum_perms_to_forum_stmt, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) VALUES (?,?,?,?)")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_plugin statement.")
+	add_plugin_stmt, err = db.Prepare("INSERT INTO `plugins`(`uname`,`active`) VALUES (?,?)")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_theme statement.")
+	add_theme_stmt, err = db.Prepare("INSERT INTO `themes`(`uname`,`default`) VALUES (?,?)")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing create_group statement.")
+	create_group_stmt, err = db.Prepare("INSERT INTO `users_groups`(`name`,`tag`,`is_admin`,`is_mod`,`is_banned`,`permissions`) VALUES (?,?,?,?,?,?)")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_modlog_entry statement.")
+	add_modlog_entry_stmt, err = db.Prepare("INSERT INTO `moderation_logs`(`action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt`) VALUES (?,?,?,?,?,NOW())")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_adminlog_entry statement.")
+	add_adminlog_entry_stmt, err = db.Prepare("INSERT INTO `administration_logs`(`action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt`) VALUES (?,?,?,?,?,NOW())")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_forum_perms_to_group statement.")
+	add_forum_perms_to_group_stmt, err = db.Prepare("REPLACE INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) VALUES (?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -386,6 +472,102 @@ func gen_mysql() (err error) {
 		
 	log.Print("Preparing activate_user statement.")
 	activate_user_stmt, err = db.Prepare("UPDATE `users` SET `active` = 1 WHERE `uid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_user_level statement.")
+	update_user_level_stmt, err = db.Prepare("UPDATE `users` SET `level` = ? WHERE `uid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing increment_user_score statement.")
+	increment_user_score_stmt, err = db.Prepare("UPDATE `users` SET `score` = `score` + ? WHERE `uid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing increment_user_posts statement.")
+	increment_user_posts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ? WHERE `uid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing increment_user_bigposts statement.")
+	increment_user_bigposts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ?,`bigposts` = `bigposts` + ? WHERE `uid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing increment_user_megaposts statement.")
+	increment_user_megaposts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ?,`bigposts` = `bigposts` + ?,`megaposts` = `megaposts` + ? WHERE `uid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing increment_user_topics statement.")
+	increment_user_topics_stmt, err = db.Prepare("UPDATE `users` SET `topics` = `topics` + ? WHERE `uid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing edit_profile_reply statement.")
+	edit_profile_reply_stmt, err = db.Prepare("UPDATE `users_replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing delete_forum statement.")
+	delete_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = '',`active` = 0 WHERE `fid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_forum statement.")
+	update_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = ?,`desc` = ?,`active` = ?,`preset` = ? WHERE `fid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_setting statement.")
+	update_setting_stmt, err = db.Prepare("UPDATE `settings` SET `content` = ? WHERE `name` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_plugin statement.")
+	update_plugin_stmt, err = db.Prepare("UPDATE `plugins` SET `active` = ? WHERE `uname` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_theme statement.")
+	update_theme_stmt, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_user statement.")
+	update_user_stmt, err = db.Prepare("UPDATE `users` SET `name` = ?,`email` = ?,`group` = ? WHERE `uid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_group_perms statement.")
+	update_group_perms_stmt, err = db.Prepare("UPDATE `users_groups` SET `permissions` = ? WHERE `gid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_group_rank statement.")
+	update_group_rank_stmt, err = db.Prepare("UPDATE `users_groups` SET `is_admin` = ?,`is_mod` = ?,`is_banned` = ? WHERE `gid` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_group statement.")
+	update_group_stmt, err = db.Prepare("UPDATE `users_groups` SET `name` = ?,`tag` = ? WHERE `gid` = ? ")
 	if err != nil {
 		return err
 	}

@@ -1,33 +1,39 @@
 package main
-import "os"
-import "fmt"
-import "log"
-import "bytes"
-import "strings"
-import "strconv"
-import "math/rand"
-import "testing"
-import "net/http"
-import "net/http/httptest"
-import "io/ioutil"
-import "database/sql"
-import "runtime/pprof"
 
-//import _ "github.com/go-sql-driver/mysql"
-//import "github.com/erikstmartin/go-testdb"
-//import "github.com/husobee/vestigo"
+import (
+	"os"
+	"fmt"
+	"log"
+	"bytes"
+	"strings"
+	"strconv"
+	//"math/rand"
+	"testing"
+	"time"
+	"net/http"
+	"net/http/httptest"
+	"io/ioutil"
+	"database/sql"
+	"runtime/pprof"
+	
+	//_ "github.com/go-sql-driver/mysql"
+	//"github.com/erikstmartin/go-testdb"
+	//"github.com/husobee/vestigo"
+)
 
-var db_test *sql.DB
-var db_prod *sql.DB
+var db_test, db_prod *sql.DB
 var gloinited bool = false
 
 func gloinit() {
 	debug = false
-	nogrouplog = true
+	//nogrouplog = true
 	
 	// init_database is a little noisy for a benchmark
 	//discard := ioutil.Discard
 	//log.SetOutput(discard)
+	
+	startTime = time.Now()
+	timeLocation = startTime.Location()
 	
 	init_themes()
 	err := init_database()
@@ -352,7 +358,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 }
 
 
-func BenchmarkRoutesSerial(b *testing.B) {
+/*func BenchmarkRoutesSerial(b *testing.B) {
 	b.ReportAllocs()
 	admin, err := users.CascadeGet(1)
 	if err != nil {
@@ -404,13 +410,13 @@ func BenchmarkRoutesSerial(b *testing.B) {
 		gloinit()
 	}
 	
-	/*f, err := os.Create("routes_bench_cpu.prof")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.StartCPUProfile(f)*/
-	//defer pprof.StopCPUProfile()
-	//pprof.StopCPUProfile()
+	//f, err := os.Create("routes_bench_cpu.prof")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//pprof.StartCPUProfile(f)
+	///defer pprof.StopCPUProfile()
+	///pprof.StopCPUProfile()
 	
 	b.Run("static_recorder", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -490,11 +496,11 @@ func BenchmarkRoutesSerial(b *testing.B) {
 		}
 	})
 	b.Run("forums_guest_recorder", func(b *testing.B) {
-		/*f, err := os.Create("routes_bench_forums_cpu_2.prof")
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)*/
+		//f, err := os.Create("routes_bench_forums_cpu_2.prof")
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
 			//forums_w.Code = 200
 			forums_w.Body.Reset()
@@ -508,11 +514,11 @@ func BenchmarkRoutesSerial(b *testing.B) {
 	}
 	
 	b.Run("topic_admin_recorder_with_plugins", func(b *testing.B) {
-		/*f, err := os.Create("routes_bench_topic_cpu.prof")
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)*/
+		//f, err := os.Create("routes_bench_topic_cpu.prof")
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
 			//topic_w.Code = 200
 			topic_w.Body.Reset()
@@ -525,11 +531,11 @@ func BenchmarkRoutesSerial(b *testing.B) {
 		//pprof.StopCPUProfile()
 	})
 	b.Run("topic_guest_recorder_with_plugins", func(b *testing.B) {
-		/*f, err := os.Create("routes_bench_topic_cpu_2.prof")
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)*/
+		//f, err := os.Create("routes_bench_topic_cpu_2.prof")
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
 			//topic_w.Code = 200
 			topic_w.Body.Reset()
@@ -573,11 +579,11 @@ func BenchmarkRoutesSerial(b *testing.B) {
 		}
 	})
 	b.Run("forums_guest_recorder_with_plugins", func(b *testing.B) {
-		/*f, err := os.Create("routes_bench_forums_cpu_2.prof")
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)*/
+		//f, err := os.Create("routes_bench_forums_cpu_2.prof")
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
 			//forums_w.Code = 200
 			forums_w.Body.Reset()
@@ -585,7 +591,7 @@ func BenchmarkRoutesSerial(b *testing.B) {
 		}
 		//pprof.StopCPUProfile()
 	})
-}
+}*/
 
 func BenchmarkQueryTopicParallel(b *testing.B) {
 	b.ReportAllocs()
@@ -1224,7 +1230,7 @@ func TestStaticRoute(t *testing.T) {
 	fmt.Println("No problems found in the static route!")
 }
 
-func TestTopicAdminRoute(t *testing.T) {
+/*func TestTopicAdminRoute(t *testing.T) {
 	if !gloinited {
 		gloinit()
 	}
@@ -1256,9 +1262,9 @@ func TestTopicAdminRoute(t *testing.T) {
 		panic("HTTP Error!")
 	}
 	fmt.Println("No problems found in the topic-admin route!")
-}
+}*/
 
-func TestTopicGuestRoute(t *testing.T) {
+/*func TestTopicGuestRoute(t *testing.T) {
 	if !gloinited {
 		gloinit()
 	}
@@ -1276,7 +1282,7 @@ func TestTopicGuestRoute(t *testing.T) {
 		panic("HTTP Error!")
 	}
 	fmt.Println("No problems found in the topic-guest route!")
-}
+}*/
 
 func TestForumsAdminRoute(t *testing.T) {
 	if !gloinited {
@@ -1331,7 +1337,7 @@ func TestForumsGuestRoute(t *testing.T) {
 	fmt.Println("No problems found in the forums-guest route!")
 }
 
-func TestForumAdminRoute(t *testing.T) {
+/*func TestForumAdminRoute(t *testing.T) {
 	if !gloinited {
 		gloinit()
 	}
@@ -1362,9 +1368,9 @@ func TestForumAdminRoute(t *testing.T) {
 		panic("HTTP Error!")
 	}
 	fmt.Println("No problems found in the forum-admin route!")
-}
+}*/
 
-func TestForumGuestRoute(t *testing.T) {
+/*func TestForumGuestRoute(t *testing.T) {
 	if !gloinited {
 		gloinit()
 	}
@@ -1382,7 +1388,7 @@ func TestForumGuestRoute(t *testing.T) {
 		panic("HTTP Error!")
 	}
 	fmt.Println("No problems found in the forum-guest route!")
-}
+}*/
 
 /*func TestAlerts(t *testing.T) {
 	if !gloinited {

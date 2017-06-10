@@ -484,9 +484,9 @@ func words_to_score(wcount int, topic bool) (score int) {
 		score = 1
 	}
 
-	if wcount > settings["megapost_min_chars"].(int) {
+	if wcount >= settings["megapost_min_words"].(int) {
 		score += 4
-	} else if wcount > settings["bigpost_min_chars"].(int) {
+	} else if wcount >= settings["bigpost_min_words"].(int) {
 		score += 1
 	}
 	return score
@@ -503,13 +503,13 @@ func increase_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		base_score = 2
 	}
 
-	if wcount > settings["megapost_min_chars"].(int) {
+	if wcount >= settings["megapost_min_words"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(1,1,1,uid)
 		if err != nil {
 			return err
 		}
 		mod = 4
-	} else if wcount > settings["bigpost_min_chars"].(int) {
+	} else if wcount >= settings["bigpost_min_words"].(int) {
 		_, err := increment_user_bigposts_stmt.Exec(1,1,uid)
 		if err != nil {
 			return err
@@ -542,13 +542,13 @@ func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		base_score = -2
 	}
 
-	if wcount > settings["megapost_min_chars"].(int) {
+	if wcount >= settings["megapost_min_chars"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(-1,-1,-1,uid)
 		if err != nil {
 			return err
 		}
 		mod = 4
-	} else if wcount > settings["bigpost_min_chars"].(int) {
+	} else if wcount >= settings["bigpost_min_chars"].(int) {
 		_, err := increment_user_bigposts_stmt.Exec(-1,-1,uid)
 		if err != nil {
 			return err

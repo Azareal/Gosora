@@ -137,8 +137,8 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	}
 
 	if enable_websockets {
-		uonline := ws_hub.UserCount()
-		gonline := ws_hub.GuestCount()
+		uonline := ws_hub.user_count()
+		gonline := ws_hub.guest_count()
 		totonline := uonline + gonline
 
 		var onlineColour string
@@ -489,7 +489,6 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		//_, err = update_forum_perms_for_group_stmt.Exec(perm_preset,perms,gid,fid)
 		_, err = add_forum_perms_to_group_stmt.Exec(gid,fid,perm_preset,perms)
 		if err != nil {
 			InternalErrorJSQ(err,w,r,is_js)

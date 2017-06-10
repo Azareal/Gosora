@@ -58,6 +58,44 @@ func (adapter *Mysql_Adapter) simple_insert(name string, table string, columns s
 	return nil
 }
 
+func (adapter *Mysql_Adapter) simple_replace(name string, table string, columns string, fields string) error {
+	if name == "" {
+		return errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return errors.New("You need a name for this table")
+	}
+	if len(columns) == 0 {
+		return errors.New("No columns found for simple_insert")
+	}
+	if len(fields) == 0 {
+		return errors.New("No input data found for simple_insert")
+	}
+	
+	var querystr string = "REPLACE INTO `" + table + "`("
+	
+	// Escape the column names, just in case we've used a reserved keyword
+	for _, column := range _process_columns(columns) {
+		if column.Type == "function" {
+			querystr += column.Left + ","
+		} else {
+			querystr += "`" + column.Left + "`,"
+		}
+	}
+	
+	// Remove the trailing comma
+	querystr = querystr[0:len(querystr) - 1]
+	
+	querystr += ") VALUES ("
+	for _, field := range _process_fields(fields) {
+		querystr += field.Name + ","
+	}
+	querystr = querystr[0:len(querystr) - 1]
+	
+	adapter.write_statement(name,querystr + ")")
+	return nil
+}
+
 func (adapter *Mysql_Adapter) simple_update(name string, table string, set string, where string) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")

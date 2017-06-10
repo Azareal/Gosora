@@ -40,7 +40,7 @@ var menu_6 []byte = []byte(`
 		<li class="menu_left menu_login"><a href="/accounts/login/">Login</a></li>
 		`)
 var menu_7 []byte = []byte(`
-		<li class="menu_right menu_alerts">
+		<li id="general_alerts" class="menu_right menu_alerts">
 			<div class="alert_bell">🔔︎</div>
 			<div class="alert_counter"></div>
 			<div class="alertList"></div>

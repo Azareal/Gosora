@@ -61,7 +61,7 @@ type DB_Setter struct {
 type DB_Adapter interface {
 	get_name() string
 	simple_insert(string,string,string,string) error
-	//simple_replace(string,string,[]string,string) error
+	simple_replace(string,string,string,string) error
 	simple_update(string,string,string,string) error
 	simple_select(string,string,string,string,string/*,int,int*/) error
 	simple_left_join(string,string,string,string,string,string,string/*,int,int*/) error
@@ -79,6 +79,30 @@ func main() {
 }
 
 func write_statements(adapter DB_Adapter) error {
+	err := write_selects(adapter)
+	if err != nil {
+		return err
+	}
+	err = write_joins(adapter)
+	if err != nil {
+		return err
+	}
+	err = write_inserts(adapter)
+	if err != nil {
+		return err
+	}
+	err = write_replaces(adapter)
+	if err != nil {
+		return err
+	}
+	err = write_updates(adapter)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func write_selects(adapter DB_Adapter) error {
 	// url_prefix and url_name will be removed from this query in a later commit
 	adapter.simple_select("get_user","users","name, group, is_super_admin, avatar, message, url_prefix, url_name, level","uid = ?","")
 	
@@ -124,7 +148,10 @@ func write_statements(adapter DB_Adapter) error {
 	adapter.simple_select("get_emails_by_user","emails","email, validated","uid = ?","")
 	
 	adapter.simple_select("get_topic_basic","topics","title, content","tid = ?","")
-	
+	return nil
+}
+
+func write_joins(adapter DB_Adapter) error {
 	adapter.simple_left_join("get_topic_list","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
 	
 	adapter.simple_left_join("get_topic_user","topics","users","topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level","topics.createdBy = users.uid","tid = ?","")
@@ -136,7 +163,10 @@ func write_statements(adapter DB_Adapter) error {
 	adapter.simple_left_join("get_forum_topics","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","topics.parentID = ?","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc")
 	
 	adapter.simple_left_join("get_profile_replies","users_replies","users","users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group","users_replies.createdBy = users.uid","users_replies.uid = ?","")
-	
+	return nil
+}
+
+func write_inserts(adapter DB_Adapter) error {
 	adapter.simple_insert("create_topic","topics","parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,words,createdBy","?,?,?,?,NOW(),NOW(),?,?,?")
 	
 	adapter.simple_insert("create_report","topics","title,content,parsed_content,createdAt,lastReplyAt,createdBy,data,parentID,css_class","?,?,?,NOW(),NOW(),?,?,1,'report'")
@@ -149,11 +179,39 @@ func write_statements(adapter DB_Adapter) error {
 	
 	adapter.simple_insert("add_activity","activity_stream","actor,targetUser,event,elementType,elementID","?,?,?,?,?")
 	
+	adapter.simple_insert("notify_one","activity_stream_matches","watcher,asid","?,?")
+	
 	// Add an admin version of register_stmt with more flexibility?
 	// create_account_stmt, err = db.Prepare("INSERT INTO
 	adapter.simple_insert("register","users","name, email, password, salt, group, is_super_admin, session, active, message","?,?,?,?,?,0,?,?,''")
 	
+	adapter.simple_insert("create_profile_reply","users_replies","uid,content,parsed_content,createdAt,createdBy","?,?,?,NOW(),?")
 	
+	adapter.simple_insert("create_forum","forums","name, desc, active, preset","?,?,?,?")
+	
+	adapter.simple_insert("add_forum_perms_to_forum","forums_permissions","gid,fid,preset,permissions","?,?,?,?")
+	
+	adapter.simple_insert("add_plugin","plugins","uname,active","?,?")
+	
+	adapter.simple_insert("add_theme","themes","uname,default","?,?")
+
+	
+	adapter.simple_insert("create_group","users_groups","name, tag, is_admin, is_mod, is_banned, permissions","?,?,?,?,?,?")
+	
+	adapter.simple_insert("add_modlog_entry","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","?,?,?,?,?,NOW()")
+	
+	adapter.simple_insert("add_adminlog_entry","administration_logs","action, elementID, elementType, ipaddress, actorID, doneAt","?,?,?,?,?,NOW()")
+	
+	return nil
+}
+
+func write_replaces(adapter DB_Adapter) error {
+	adapter.simple_replace("add_forum_perms_to_group","forums_permissions","gid,fid,preset,permissions","?,?,?,?")
+	
+	return nil
+}
+
+func write_updates(adapter DB_Adapter) error {
 	adapter.simple_update("add_replies_to_topic","topics","postCount = postCount + ?, lastReplyAt = NOW()","tid = ?")
 	
 	adapter.simple_update("remove_replies_from_topic","topics","postCount = postCount - ?","tid = ?")
@@ -191,6 +249,39 @@ func write_statements(adapter DB_Adapter) error {
 	adapter.simple_update("change_group","users","group = ?","uid = ?")
 	
 	adapter.simple_update("activate_user","users","active = 1","uid = ?")
+	
+	adapter.simple_update("update_user_level","users","level = ?","uid = ?")
+	
+	adapter.simple_update("increment_user_score","users","score = score + ?","uid = ?")
+	
+	adapter.simple_update("increment_user_posts","users","posts = posts + ?","uid = ?")
+	
+	adapter.simple_update("increment_user_bigposts","users","posts = posts + ?, bigposts = bigposts + ?","uid = ?")
+	
+	adapter.simple_update("increment_user_megaposts","users","posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?","uid = ?")
+	
+	adapter.simple_update("increment_user_topics","users","topics =  topics + ?","uid = ?")
+
+	adapter.simple_update("edit_profile_reply","users_replies","content = ?, parsed_content = ?","rid = ?")
+	
+	//delete_forum_stmt, err = db.Prepare("delete from forums where fid = ?")
+	adapter.simple_update("delete_forum","forums","name= '', active = 0","fid = ?")
+	
+	adapter.simple_update("update_forum","forums","name = ?, desc = ?, active = ?, preset = ?","fid = ?")
+	
+	adapter.simple_update("update_setting","settings","content = ?","name = ?")
+	
+	adapter.simple_update("update_plugin","plugins","active = ?","uname = ?")
+	
+	adapter.simple_update("update_theme","themes","default = ?","uname = ?")
+	
+	adapter.simple_update("update_user","users","name = ?, email = ?, group = ?","uid = ?")
+
+	adapter.simple_update("update_group_perms","users_groups","permissions = ?","gid = ?")
+	
+	adapter.simple_update("update_group_rank","users_groups","is_admin = ?, is_mod = ?, is_banned = ?","gid = ?")
+	
+	adapter.simple_update("update_group","users_groups","name = ?, tag = ?","gid = ?")
 	
 	return nil
 }

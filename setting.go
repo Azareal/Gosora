@@ -43,7 +43,7 @@ func parseSetting(sname string, scontent string, stype string, constraint string
 		if len(cons) < 2 {
 			return "Invalid constraint! The second field wasn't set!"
 		}
-		
+
 		con1, err := strconv.Atoi(cons[0])
 		if err != nil {
 			return "Invalid contraint! The constraint field wasn't an integer!"
@@ -52,12 +52,12 @@ func parseSetting(sname string, scontent string, stype string, constraint string
 		if err != nil {
 			return "Invalid contraint! The constraint field wasn't an integer!"
 		}
-		
+
 		value, err  := strconv.Atoi(scontent)
 		if err != nil {
 			return "Only integers are allowed in this setting x.x\nType mismatch in " + sname
 		}
-		
+
 		if value < con1 || value > con2 {
 			return "Only integers between a certain range are allowed in this setting"
 		}
