@@ -195,17 +195,6 @@ func (sts *StaticUserStore) AddUnsafe(item *User) error {
 	return nil
 }
 
-/*func (sts *StaticUserStore) SetConn(id int, conn interface{}) *User, error {
-	sts.Lock()
-	user, err := sts.CascadeGet(id)
-	sts.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	user.WS_Conn = conn
-	return user, nil
-}*/
-
 func (sts *StaticUserStore) Remove(id int) error {
 	sts.Lock()
 	delete(sts.items,id)
@@ -336,8 +325,7 @@ func (sus *SqlUserStore) GetCapacity() int {
 }
 
 func (sus *SqlUserStore) GetLength() int {
-	// Return the total number of users registered on the forums
-	return 0
+	return 0 // Return the total number of users registered on the forums?
 }
 
 func SetPassword(uid int, password string) (error) {
@@ -364,10 +352,8 @@ func SendValidationEmail(username string, email string, token string) bool {
 	if enable_ssl {
 		schema = "s"
 	}
-
 	subject := "Validate Your Email @ " + site_name
 	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. http" + schema + "://" + site_url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
-
 	return SendEmail(email, subject, msg)
 }
 
@@ -542,13 +528,13 @@ func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		base_score = -2
 	}
 
-	if wcount >= settings["megapost_min_chars"].(int) {
+	if wcount >= settings["megapost_min_words"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(-1,-1,-1,uid)
 		if err != nil {
 			return err
 		}
 		mod = 4
-	} else if wcount >= settings["bigpost_min_chars"].(int) {
+	} else if wcount >= settings["bigpost_min_words"].(int) {
 		_, err := increment_user_bigposts_stmt.Exec(-1,-1,uid)
 		if err != nil {
 			return err

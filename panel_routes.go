@@ -1030,7 +1030,6 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 		}
 
 		can_edit = user.Perms.EditGroup && (!group.Is_Admin || user.Perms.EditGroupAdmin) && (!group.Is_Mod || user.Perms.EditGroupSuperMod)
-
 		groupList = append(groupList, GroupAdmin{group.ID,group.Name,rank,rank_class,can_edit,can_delete})
 	}
 	//fmt.Printf("%+v\n", groupList)

@@ -108,9 +108,52 @@ func(hub *WS_Hub) push_alert(targetUser int, event string, elementType string, a
 		return err
 	}
 
-	//fmt.Println("Writing to the client")
 	w.Write([]byte(alert))
 	w.Close()
+	return nil
+}
+
+func(hub *WS_Hub) push_alerts(users []int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
+	//fmt.Println("In push_alerts")
+	var ws_users []*WS_User
+	hub.users.RLock()
+	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
+	for _, uid := range users {
+		ws_users = append(ws_users, hub.online_users[uid])
+	}
+	hub.users.RUnlock()
+	if len(ws_users) == 0 {
+		return ws_nouser
+	}
+
+	var errs []error
+	for _, ws_user := range ws_users {
+		if ws_user == nil {
+			continue
+		}
+
+		//fmt.Println("Building alert")
+		alert, err := build_alert(event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
+		if err != nil {
+			errs = append(errs,err)
+		}
+
+		//fmt.Println("Getting WS Writer")
+		w, err := ws_user.conn.NextWriter(websocket.TextMessage)
+		if err != nil {
+			errs = append(errs,err)
+		}
+
+		w.Write([]byte(alert))
+		w.Close()
+	}
+
+	// Return the first error
+	if len(errs) != 0 {
+		for _, err := range errs {
+			return err
+		}
+	}
 	return nil
 }
 

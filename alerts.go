@@ -1,8 +1,10 @@
 package main
 
+import "log"
 import "strings"
 import "strconv"
 import "errors"
+import "database/sql"
 
 /*
 "You received a friend invite from {user}"
@@ -110,4 +112,39 @@ func build_alert(event string, elementType string, actor_id int, targetUser_id i
   }
 
   return `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `"}`, nil
+}
+
+func notify_watchers(asid int64) {
+  rows, err := get_watchers_stmt.Query(asid)
+  if err != nil && err != sql.ErrNoRows {
+		log.Fatal(err.Error())
+		return
+	}
+
+  var uid int
+  var uids []int
+  for rows.Next() {
+    err := rows.Scan(&uid)
+    if err != nil {
+      log.Fatal(err.Error())
+      return
+    }
+    uids = append(uids,uid)
+  }
+  err = rows.Err()
+  if err != nil {
+    log.Fatal(err.Error())
+    return
+  }
+  rows.Close()
+
+  var actor_id, targetUser_id, elementID int
+  var event, elementType string
+  err = get_activity_entry_stmt.QueryRow(asid).Scan(&actor_id, &targetUser_id, &event, &elementType, &elementID)
+  if err != nil && err != sql.ErrNoRows {
+    log.Fatal(err.Error())
+    return
+  }
+
+  _ = ws_hub.push_alerts(uids, event, elementType, actor_id, targetUser_id, elementID)
 }

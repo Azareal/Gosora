@@ -16,19 +16,12 @@ var db_collation string = "utf8mb4_general_ci"
 var get_topic_replies_offset_stmt *sql.Stmt // I'll need to rewrite this one to stop it hard-coding the per page setting before moving it to the query generator
 var get_forum_topics_offset_stmt *sql.Stmt
 var notify_watchers_stmt *sql.Stmt
-var add_subscription_stmt *sql.Stmt
-var delete_reply_stmt *sql.Stmt
-var delete_topic_stmt *sql.Stmt
 var get_activity_feed_by_watcher_stmt *sql.Stmt
 var get_activity_count_by_watcher_stmt *sql.Stmt
-var add_email_stmt *sql.Stmt
-var update_email_stmt *sql.Stmt
-var verify_email_stmt *sql.Stmt
-var delete_profile_reply_stmt *sql.Stmt
+var update_email_stmt, verify_email_stmt *sql.Stmt
 
 var forum_entry_exists_stmt *sql.Stmt
 var group_entry_exists_stmt *sql.Stmt
-var delete_forum_perms_by_forum_stmt *sql.Stmt
 var add_forum_perms_to_forum_admins_stmt *sql.Stmt
 var add_forum_perms_to_forum_staff_stmt *sql.Stmt
 var add_forum_perms_to_forum_members_stmt *sql.Stmt
@@ -86,24 +79,6 @@ func init_database() (err error) {
 		return err
 	}
 
-	log.Print("Preparing add_subscription statement.")
-	add_subscription_stmt, err = db.Prepare("INSERT INTO activity_subscriptions(user,targetID,targetType,level) VALUES(?,?,?,2)")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing delete_reply statement.")
-	delete_reply_stmt, err = db.Prepare("DELETE FROM replies WHERE rid = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing delete_topic statement.")
-	delete_topic_stmt, err = db.Prepare("DELETE FROM topics WHERE tid = ?")
-	if err != nil {
-		return err
-	}
-
 	log.Print("Preparing get_activity_feed_by_watcher statement.")
 	get_activity_feed_by_watcher_stmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid ASC LIMIT 8")
 	if err != nil {
@@ -112,12 +87,6 @@ func init_database() (err error) {
 
 	log.Print("Preparing get_activity_count_by_watcher statement.")
 	get_activity_count_by_watcher_stmt, err = db.Prepare("SELECT count(*) FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing add_email statement.")
-	add_email_stmt, err = db.Prepare("INSERT INTO emails(`email`,`uid`,`validated`,`token`) VALUES(?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -134,12 +103,6 @@ func init_database() (err error) {
 		return err
 	}
 
-	log.Print("Preparing delete_profile_reply statement.")
-	delete_profile_reply_stmt, err = db.Prepare("DELETE FROM users_replies WHERE rid = ?")
-	if err != nil {
-		return err
-	}
-
 	log.Print("Preparing forum_entry_exists statement.")
 	forum_entry_exists_stmt, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = '' order by fid asc limit 1")
 	if err != nil {
@@ -148,12 +111,6 @@ func init_database() (err error) {
 
 	log.Print("Preparing group_entry_exists statement.")
 	group_entry_exists_stmt, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = '' order by gid asc limit 1")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing delete_forum_perms_by_forum statement.")
-	delete_forum_perms_by_forum_stmt, err = db.Prepare("DELETE FROM forums_permissions WHERE fid = ?")
 	if err != nil {
 		return err
 	}

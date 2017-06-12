@@ -22,15 +22,14 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		is_js = "0"
 	}
 
-	var tid, fid int
+	var tid int
 	tid, err = strconv.Atoi(r.URL.Path[len("/topic/edit/submit/"):])
 	if err != nil {
 		PreErrorJSQ("The provided TopicID is not a valid number.",w,r,is_js)
 		return
 	}
 
-	var old_is_closed bool
-	err = db.QueryRow("select parentID, is_closed from topics where tid = ?", tid).Scan(&fid,&old_is_closed)
+	old_topic, err := topics.CascadeGet(tid)
 	if err == sql.ErrNoRows {
 		PreErrorJSQ("The topic you tried to edit doesn't exist.",w,r,is_js)
 		return
@@ -39,7 +38,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	user, ok := SimpleForumSessionCheck(w,r,old_topic.ParentID)
 	if !ok {
 		return
 	}
@@ -65,7 +64,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if old_is_closed != is_closed {
+	if old_topic.Is_Closed != is_closed {
 		var action string
 		if is_closed {
 			action = "lock"
@@ -97,8 +96,11 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = topics.Load(tid)
-	if err != nil {
+	if err == sql.ErrNoRows {
 		LocalErrorJSQ("This topic no longer exists!",w,r,user,is_js)
+		return
+	} else if err != nil {
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 
@@ -116,9 +118,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var content string
-	var createdBy, fid int
-	err = db.QueryRow("select content, createdBy, parentID from topics where tid = ?", tid).Scan(&content, &createdBy, &fid)
+	topic, err := topics.CascadeGet(tid)
 	if err == sql.ErrNoRows {
 		PreError("The topic you tried to delete doesn't exist.",w,r)
 		return
@@ -127,7 +127,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -163,20 +163,20 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	//log.Print("Topic #" + strconv.Itoa(tid) + " was deleted by User #" + strconv.Itoa(user.ID))
 	http.Redirect(w,r,"/",http.StatusSeeOther)
 
-	wcount := word_count(content)
-	err = decrease_post_user_stats(wcount,createdBy,true,user)
+	wcount := word_count(topic.Content)
+	err = decrease_post_user_stats(wcount,topic.CreatedBy,true,user)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 
-	_, err = remove_topics_from_forum_stmt.Exec(1, fid)
+	_, err = remove_topics_from_forum_stmt.Exec(1, topic.ParentID)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 
-	forums[fid].TopicCount -= 1
+	forums[topic.ParentID].TopicCount -= 1
 	topics.Remove(tid)
 }
 
@@ -553,7 +553,7 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var uname string
-	err = db.QueryRow("select name from users where uid = ?", uid).Scan(&uname)
+	err = get_user_name_stmt.QueryRow(uid).Scan(&uname)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
@@ -588,14 +588,14 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
 	}
-	if uid == -2 {
+	/*if uid == -2 {
 		LocalError("Sigh, are you really trying to ban me? Do you despise so much? Despite all of our adventures over at /arcane-tower/...?",w,r,user)
 		return
-	}
+	}*/
 
 	var group int
 	var is_super_admin bool
-	err = db.QueryRow("select `group`,`is_super_admin` from `users` where `uid` = ?", uid).Scan(&group, &is_super_admin)
+	err = get_user_rank_stmt.QueryRow(uid).Scan(&group, &is_super_admin)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
@@ -663,9 +663,8 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var uname string
 	var group int
-	err = db.QueryRow("select `name`, `group` from users where `uid` = ?", uid).Scan(&uname, &group)
+	err = get_user_group_stmt.QueryRow(uid).Scan(&group)
 	if err == sql.ErrNoRows {
 		LocalError("The user you're trying to unban no longer exists.",w,r,user)
 		return
@@ -697,10 +696,14 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = users.Load(uid)
-	if err != nil {
+	if err != nil && err == sql.ErrNoRows {
 		LocalError("This user no longer exists!",w,r,user)
 		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
 	}
+
 	http.Redirect(w,r,"/user/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
@@ -724,9 +727,8 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var uname string
 	var active bool
-	err = db.QueryRow("select `name`,`active` from users where `uid` = ?", uid).Scan(&uname, &active)
+	err = get_user_active_stmt.QueryRow(uid).Scan(&active)
 	if err == sql.ErrNoRows {
 		LocalError("The account you're trying to activate no longer exists.",w,r,user)
 		return

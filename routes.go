@@ -3,7 +3,7 @@ package main
 
 import (
 	"log"
-	"fmt"
+	//"fmt"
 	"strconv"
 	"bytes"
 	"regexp"
@@ -142,7 +142,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 
 		/*topicItem.CreatedAt, err = relative_time(topicItem.CreatedAt)
 		if err != nil {
-			InternalError(err,w,r)
+			replyItem.CreatedAt = ""
 		}*/
 		topicItem.LastReplyAt, err = relative_time(topicItem.LastReplyAt)
 		if err != nil {
@@ -347,6 +347,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		}
 	}*/
 
+	topic.CreatedAt, err = relative_time(topic.CreatedAt)
+	if err != nil {
+		topic.CreatedAt = ""
+	}
+
 	// Calculate the offset
 	last_page := int(topic.PostCount / items_per_page) + 1
 	if page > 1 {
@@ -406,6 +411,11 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 				replyItem.URL = replyItem.URL + replyItem.URLName
 			}
 		}*/
+
+		replyItem.CreatedAt, err = relative_time(replyItem.CreatedAt)
+		if err != nil {
+			replyItem.CreatedAt = ""
+		}
 
 		// We really shouldn't have inline HTML, we should do something about this...
 		if replyItem.ActionType != "" {
@@ -671,9 +681,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var topic_name string
-	var fid, createdBy int
-	err = db.QueryRow("select title, parentID, createdBy from topics where tid = ?",tid).Scan(&topic_name,&fid,&createdBy)
+	topic, err := topics.CascadeGet(tid)
 	if err == sql.ErrNoRows {
 		PreError("Couldn't find the parent topic",w,r)
 		return
@@ -682,7 +690,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -710,13 +718,13 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		InternalError(err,w,r)
 		return
 	}
-	_, err = update_forum_cache_stmt.Exec(topic_name,tid,user.Name,user.ID,1)
+	_, err = update_forum_cache_stmt.Exec(topic.Title,tid,user.Name,user.ID,1)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 
-	res, err := add_activity_stmt.Exec(user.ID,createdBy,"reply","topic",tid)
+	res, err := add_activity_stmt.Exec(user.ID,topic.CreatedBy,"reply","topic",tid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -733,9 +741,14 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Alert the subscribers about this post without blocking this post from being posted
+	if enable_websockets {
+		go notify_watchers(lastId)
+	}
+
 	// Reload the topic...
 	err = topics.Load(tid)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err == sql.ErrNoRows {
 		LocalError("The destination no longer exists",w,r,user)
 		return
 	} else if err != nil {
@@ -764,8 +777,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var words, fid, createdBy int
-	err = db.QueryRow("select parentID, words, createdBy from topics where tid = ?", tid).Scan(&fid,&words,&createdBy)
+	topic, err := topics.CascadeGet(tid)
 	if err == sql.ErrNoRows {
 		PreError("The requested topic doesn't exist.",w,r)
 		return
@@ -774,7 +786,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -783,12 +795,12 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if createdBy == user.ID {
+	if topic.CreatedBy == user.ID {
 		LocalError("You can't like your own topics",w,r,user)
 		return
 	}
 
-	err = has_liked_topic_stmt.QueryRow(user.ID, tid).Scan(&tid)
+	err = has_liked_topic_stmt.QueryRow(user.ID,tid).Scan(&tid)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
 		return
@@ -797,7 +809,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = users.CascadeGet(createdBy)
+	_, err = users.CascadeGet(topic.CreatedBy)
 	if err != nil && err == sql.ErrNoRows {
 		LocalError("The target user doesn't exist",w,r,user)
 		return
@@ -819,7 +831,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := add_activity_stmt.Exec(user.ID,createdBy,"like","topic",tid)
+	res, err := add_activity_stmt.Exec(user.ID,topic.CreatedBy,"like","topic",tid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -830,18 +842,18 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = notify_one_stmt.Exec(createdBy,lastId)
+	_, err = notify_one_stmt.Exec(topic.CreatedBy,lastId)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 
 	// Live alerts, if the poster is online and WebSockets is enabled
-	_ = ws_hub.push_alert(createdBy,"like","topic",user.ID,createdBy,tid)
+	_ = ws_hub.push_alert(topic.CreatedBy,"like","topic",user.ID,topic.CreatedBy,tid)
 
 	// Reload the topic...
 	err = topics.Load(tid)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err == sql.ErrNoRows {
 		LocalError("The liked topic no longer exists",w,r,user)
 		return
 	} else if err != nil {
@@ -948,11 +960,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Live alerts, if the poster is online and WebSockets is enabled
-	fmt.Println("Calling push_alert")
-	err = ws_hub.push_alert(createdBy,"like","post",user.ID,createdBy,rid)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	_ = ws_hub.push_alert(createdBy,"like","post",user.ID,createdBy,rid)
 
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
@@ -1031,7 +1039,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 
 	var fid int = 1
 	var tid int
-	var title, content, data string
+	var title, content string
 	if item_type == "reply" {
 		err = db.QueryRow("select tid, content from replies where rid = ?", item_id).Scan(&tid, &content)
 		if err == sql.ErrNoRows {
@@ -1042,20 +1050,21 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 			return
 		}
 
-		err = db.QueryRow("select title, data from topics where tid = ?",tid).Scan(&title,&data)
+		topic, err := topics.CascadeGet(tid)
 		if err == sql.ErrNoRows {
-			LocalError("We were unable to find the topic which the reported post is supposed to be in",w,r,user)
+			LocalError("We weren't able to find the topic the reported post is supposed to be in",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r)
 			return
 		}
-		title = "Reply: " + title
+
+		title = "Reply: " + topic.Title
 		content = content + "\n\nOriginal Post: #rid-" + strconv.Itoa(item_id)
 	} else if item_type == "user-reply" {
 		err = db.QueryRow("select uid, content from users_replies where rid = ?", item_id).Scan(&tid, &content)
 		if err == sql.ErrNoRows {
-			LocalError("We were unable to find the reported post",w,r,user)
+			LocalError("We weren't able to find the reported post",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r)
@@ -1064,7 +1073,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 
 		err = get_user_name_stmt.QueryRow(tid).Scan(&title)
 		if err == sql.ErrNoRows {
-			LocalError("We were unable to find the profile which the reported post is supposed to be on",w,r,user)
+			LocalError("We weren't able to find the profile the reported post is supposed to be on",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r)
@@ -1315,8 +1324,8 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		LocalError("This user no longer exists!",w,r,user)
 		return
 	}
-	noticeList = append(noticeList, "Your avatar was successfully updated")
 
+	noticeList = append(noticeList, "Your avatar was successfully updated")
 	pi := Page{"Edit Avatar",user,noticeList,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
@@ -1558,7 +1567,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Emergency password reset mechanism..
+	// Admin password reset mechanism...
 	if salt == "" {
 		if password != real_password {
 			LocalError("That's not the correct password.",w,r,user)
@@ -1566,22 +1575,32 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Re-encrypt the password
-		SetPassword(uid, password)
-	} else { // Normal login..
-		password = password + salt
-		if err != nil {
-			InternalError(err,w,r)
-			return
-		}
+		SetPassword(uid, real_password)
 
-		err := bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password))
-		if err == bcrypt.ErrMismatchedHashAndPassword {
-			LocalError("That's not the correct password.",w,r,user)
+		// Fe-fetch the user data...
+		err = login_stmt.QueryRow(username).Scan(&uid, &username, &real_password, &salt)
+		if err == sql.ErrNoRows {
+			LocalError("That username doesn't exist anymore.",w,r,user)
 			return
 		} else if err != nil {
 			InternalError(err,w,r)
 			return
 		}
+	}
+
+	password = password + salt
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password))
+	if err == bcrypt.ErrMismatchedHashAndPassword {
+		LocalError("That's not the correct password.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
 	}
 
 	session, err = GenerateSafeString(sessionLength)

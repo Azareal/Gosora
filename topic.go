@@ -22,6 +22,7 @@ type Topic struct
 	PostCount int
 	LikeCount int
 	ClassName string // CSS Class Name
+	Data string // Used for report metadata
 }
 
 type TopicUser struct
@@ -41,6 +42,7 @@ type TopicUser struct
 	PostCount int
 	LikeCount int
 	ClassName string
+	Data string // Used for report metadata
 
 	CreatedByName string
 	Group int
@@ -140,7 +142,7 @@ func (sts *StaticTopicStore) CascadeGet(id int) (*Topic, error) {
 	}
 
 	topic = &Topic{ID:id}
-	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
 		sts.Add(topic)
 	}
@@ -149,13 +151,13 @@ func (sts *StaticTopicStore) CascadeGet(id int) (*Topic, error) {
 
 func (sts *StaticTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID:id}
-	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	return topic, err
 }
 
 func (sts *StaticTopicStore) Load(id int) error {
 	topic := &Topic{ID:id}
-	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
 		sts.Set(topic)
 	} else {
@@ -245,31 +247,31 @@ func NewSqlTopicStore() *SqlTopicStore {
 
 func (sus *SqlTopicStore) Get(id int) (*Topic, error) {
 	topic := Topic{ID:id}
-	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	return &topic, err
 }
 
 func (sus *SqlTopicStore) GetUnsafe(id int) (*Topic, error) {
 	topic := Topic{ID:id}
-	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	return &topic, err
 }
 
 func (sus *SqlTopicStore) CascadeGet(id int) (*Topic, error) {
 	topic := Topic{ID:id}
-	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	return &topic, err
 }
 
 func (sts *SqlTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID:id}
-	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	return topic, err
 }
 
 func (sus *SqlTopicStore) Load(id int) error {
 	topic := Topic{ID:id}
-	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_stmt.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	return err
 }
 
@@ -336,7 +338,6 @@ func get_topicuser(tid int) (TopicUser,error) {
 	//fmt.Printf("%+v\n", the_topic)
 	tu.Tag = groups[tu.Group].Tag
 	topics.Add(&the_topic)
-	//err = errors.Error("Loaded data via query")
 	return tu, err
 }
 
@@ -360,12 +361,13 @@ func copy_topic_to_topicuser(topic *Topic, user *User) (tu TopicUser) {
 	tu.IpAddress = topic.IpAddress
 	tu.PostCount = topic.PostCount
 	tu.LikeCount = topic.LikeCount
+	tu.Data = topic.Data
 	return tu
 }
 
 func get_topic_by_reply(rid int) (*Topic, error) {
 	topic := Topic{ID:0}
-	err := get_topic_by_reply_stmt.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount)
+	err := get_topic_by_reply_stmt.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	return &topic, err
 }
 

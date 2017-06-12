@@ -1,6 +1,7 @@
 var form_vars = {};
 var alertList = [];
 var alertCount = 0;
+var conn;
 
 function post_link(event)
 {
@@ -345,7 +346,7 @@ $(document).ready(function(){
 	$(".menu_alerts").click(function(event) {
 		event.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
-		load_alerts($(this));
+		if(!conn) load_alerts($(this));
 		this.className += " selectedAlert";
 		document.getElementById("back").className += " alertActive"
 	});
