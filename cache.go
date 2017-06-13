@@ -7,9 +7,6 @@ const CACHE_SQL int = 2
 
 var ErrStoreCapacityOverflow = errors.New("This datastore has already reached it's max capacity")
 
-var users UserStore
-var topics TopicStore
-
 type DataStore interface {
 	Load(id int) error
 	Get(id int) (interface{}, error)

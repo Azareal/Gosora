@@ -1,26 +1,38 @@
 /* WIP Under Construction */
-package main
+package qgen
 
 //import "fmt"
 import "strings"
 import "errors"
 
 func init() {
-	db_registry = append(db_registry,&Mysql_Adapter{Name:"mysql"})
+	DB_Registry = append(DB_Registry,
+		&Mysql_Adapter{Name:"mysql",Buffer:make(map[string]string)},
+	)
 }
+
+
 
 type Mysql_Adapter struct
 {
 	Name string
-	Stmts string
-	Body string
+	Buffer map[string]string
+	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
-func (adapter *Mysql_Adapter) get_name() string {
+func (adapter *Mysql_Adapter) GetName() string {
 	return adapter.Name
 }
 
-func (adapter *Mysql_Adapter) simple_insert(name string, table string, columns string, fields string) error {
+func (adapter *Mysql_Adapter) GetStmt(name string) string {
+	return adapter.Buffer[name]
+}
+
+func (adapter *Mysql_Adapter) GetStmts() map[string]string {
+	return adapter.Buffer
+}
+
+func (adapter *Mysql_Adapter) SimpleInsert(name string, table string, columns string, fields string) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -28,10 +40,10 @@ func (adapter *Mysql_Adapter) simple_insert(name string, table string, columns s
 		return errors.New("You need a name for this table")
 	}
 	if len(columns) == 0 {
-		return errors.New("No columns found for simple_insert")
+		return errors.New("No columns found for SimpleInsert")
 	}
 	if len(fields) == 0 {
-		return errors.New("No input data found for simple_insert")
+		return errors.New("No input data found for SimpleInsert")
 	}
 	
 	var querystr string = "INSERT INTO `" + table + "`("
@@ -54,11 +66,11 @@ func (adapter *Mysql_Adapter) simple_insert(name string, table string, columns s
 	}
 	querystr = querystr[0:len(querystr) - 1]
 	
-	adapter.write_statement(name,querystr + ")")
+	adapter.push_statement(name,querystr + ")")
 	return nil
 }
 
-func (adapter *Mysql_Adapter) simple_replace(name string, table string, columns string, fields string) error {
+func (adapter *Mysql_Adapter) SimpleReplace(name string, table string, columns string, fields string) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -66,10 +78,10 @@ func (adapter *Mysql_Adapter) simple_replace(name string, table string, columns 
 		return errors.New("You need a name for this table")
 	}
 	if len(columns) == 0 {
-		return errors.New("No columns found for simple_insert")
+		return errors.New("No columns found for SimpleInsert")
 	}
 	if len(fields) == 0 {
-		return errors.New("No input data found for simple_insert")
+		return errors.New("No input data found for SimpleInsert")
 	}
 	
 	var querystr string = "REPLACE INTO `" + table + "`("
@@ -92,11 +104,11 @@ func (adapter *Mysql_Adapter) simple_replace(name string, table string, columns 
 	}
 	querystr = querystr[0:len(querystr) - 1]
 	
-	adapter.write_statement(name,querystr + ")")
+	adapter.push_statement(name,querystr + ")")
 	return nil
 }
 
-func (adapter *Mysql_Adapter) simple_update(name string, table string, set string, where string) error {
+func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string, where string) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -148,11 +160,11 @@ func (adapter *Mysql_Adapter) simple_update(name string, table string, set strin
 		querystr = querystr[0:len(querystr) - 4]
 	}
 	
-	adapter.write_statement(name,querystr)
+	adapter.push_statement(name,querystr)
 	return nil
 }
 
-func (adapter *Mysql_Adapter) simple_delete(name string, table string, where string) error {
+func (adapter *Mysql_Adapter) SimpleDelete(name string, table string, where string) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -183,23 +195,23 @@ func (adapter *Mysql_Adapter) simple_delete(name string, table string, where str
 	}
 	querystr = querystr[0:len(querystr) - 4]
 	
-	adapter.write_statement(name,strings.TrimSpace(querystr))
+	adapter.push_statement(name,strings.TrimSpace(querystr))
 	return nil
 }
 
 // We don't want to accidentally wipe tables, so we'll have a seperate method for purging tables instead
-func (adapter *Mysql_Adapter) purge(name string, table string) error {
+func (adapter *Mysql_Adapter) Purge(name string, table string) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
 	if table == "" {
 		return errors.New("You need a name for this table")
 	}
-	adapter.write_statement(name,"DELETE FROM `" + table + "`")
+	adapter.push_statement(name,"DELETE FROM `" + table + "`")
 	return nil
 }
 
-func (adapter *Mysql_Adapter) simple_select(name string, table string, columns string, where string, orderby string/*, offset int, maxCount int*/) error {
+func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns string, where string, orderby string/*, offset int, maxCount int*/) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -207,7 +219,7 @@ func (adapter *Mysql_Adapter) simple_select(name string, table string, columns s
 		return errors.New("You need a name for this table")
 	}
 	if len(columns) == 0 {
-		return errors.New("No columns found for simple_select")
+		return errors.New("No columns found for SimpleSelect")
 	}
 	
 	// Slice up the user friendly strings into something easier to process
@@ -254,11 +266,11 @@ func (adapter *Mysql_Adapter) simple_select(name string, table string, columns s
 		querystr = querystr[0:len(querystr) - 1]
 	}
 	
-	adapter.write_statement(name,strings.TrimSpace(querystr))
+	adapter.push_statement(name,strings.TrimSpace(querystr))
 	return nil
 }
 
-func (adapter *Mysql_Adapter) simple_left_join(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string/*, offset int, maxCount int*/) error {
+func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string/*, offset int, maxCount int*/) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -269,10 +281,10 @@ func (adapter *Mysql_Adapter) simple_left_join(name string, table1 string, table
 		return errors.New("You need a name for the right table")
 	}
 	if len(columns) == 0 {
-		return errors.New("No columns found for simple_left_join")
+		return errors.New("No columns found for SimpleLeftJoin")
 	}
 	if len(joiners) == 0 {
-		return errors.New("No joiners found for simple_left_join")
+		return errors.New("No joiners found for SimpleLeftJoin")
 	}
 	
 	var querystr string = "SELECT "
@@ -339,11 +351,11 @@ func (adapter *Mysql_Adapter) simple_left_join(name string, table1 string, table
 		querystr = querystr[0:len(querystr) - 1]
 	}
 	
-	adapter.write_statement(name,strings.TrimSpace(querystr))
+	adapter.push_statement(name,strings.TrimSpace(querystr))
 	return nil
 }
 
-func (adapter *Mysql_Adapter) simple_inner_join(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string/*, offset int, maxCount int*/) error {
+func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string/*, offset int, maxCount int*/) error {
 	if name == "" {
 		return errors.New("You need a name for this statement")
 	}
@@ -354,10 +366,10 @@ func (adapter *Mysql_Adapter) simple_inner_join(name string, table1 string, tabl
 		return errors.New("You need a name for the right table")
 	}
 	if len(columns) == 0 {
-		return errors.New("No columns found for simple_inner_join")
+		return errors.New("No columns found for SimpleInnerJoin")
 	}
 	if len(joiners) == 0 {
-		return errors.New("No joiners found for simple_inner_join")
+		return errors.New("No joiners found for SimpleInnerJoin")
 	}
 	
 	var querystr string = "SELECT "
@@ -424,11 +436,24 @@ func (adapter *Mysql_Adapter) simple_inner_join(name string, table1 string, tabl
 		querystr = querystr[0:len(querystr) - 1]
 	}
 	
-	adapter.write_statement(name,strings.TrimSpace(querystr))
+	adapter.push_statement(name,strings.TrimSpace(querystr))
 	return nil
 }
 
-func (adapter *Mysql_Adapter) write() error {
+func (adapter *Mysql_Adapter) Write() error {
+	var stmts, body string
+	
+	for _, name := range adapter.BufferOrder {
+		stmts += "var " + name + "_stmt *sql.Stmt\n"
+		body += `	
+	log.Print("Preparing ` + name + ` statement.")
+	` + name + `_stmt, err = db.Prepare("` + adapter.Buffer[name] + `")
+	if err != nil {
+		return err
+	}
+	`
+	}
+	
 	out := `// Code generated by. DO NOT EDIT.
 /* This file was generated by Gosora's Query Generator. The thing above is to tell GH this file is generated. */
 // +build !pgsql !sqlite !mssql
@@ -437,12 +462,12 @@ package main
 import "log"
 import "database/sql"
 
-` + adapter.Stmts + `
+` + stmts + `
 func gen_mysql() (err error) {
 	if debug {
 		log.Print("Building the generated statements")
 	}
-` + adapter.Body + `
+` + body + `
 	return nil
 }
 `
@@ -450,14 +475,7 @@ func gen_mysql() (err error) {
 }
 
 // Internal method, not exposed in the interface
-func (adapter *Mysql_Adapter) write_statement(name string, querystr string ) {
-	adapter.Stmts += "var " + name + "_stmt *sql.Stmt\n"
-	
-	adapter.Body += `	
-	log.Print("Preparing ` + name + ` statement.")
-	` + name + `_stmt, err = db.Prepare("` + querystr + `")
-	if err != nil {
-		return err
-	}
-	`
+func (adapter *Mysql_Adapter) push_statement(name string, querystr string ) {
+	adapter.Buffer[name] = querystr
+	adapter.BufferOrder = append(adapter.BufferOrder,name)
 }

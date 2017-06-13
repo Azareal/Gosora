@@ -2,12 +2,12 @@
 // +build !pgsql !sqlite !mssql
 package main
 
-import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
 import "log"
 import "fmt"
 import "strconv"
 import "encoding/json"
+import "database/sql"
+import _ "github.com/go-sql-driver/mysql"
 
 var db *sql.DB
 var db_version string
