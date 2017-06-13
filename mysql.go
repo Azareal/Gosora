@@ -8,6 +8,7 @@ import "strconv"
 import "encoding/json"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
+import "./query_gen/lib"
 
 var db *sql.DB
 var db_version string
@@ -57,6 +58,13 @@ func init_database() (err error) {
 
 	// Build the generated prepared statements, we are going to slowly move the queries over to the query generator rather than writing them all by hand, this'll make it easier for us to implement database adapters for other databases like PostgreSQL, MSSQL, SQlite, etc.
 	err = gen_mysql()
+	if err != nil {
+		return err
+	}
+
+	// Ready the query builder
+	qgen.Builder.SetConn(db)
+	err = qgen.Builder.SetAdapter("mysql")
 	if err != nil {
 		return err
 	}

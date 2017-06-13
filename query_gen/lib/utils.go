@@ -5,12 +5,6 @@ package qgen
 import "strings"
 import "os"
 
-type _statement struct
-{
-	Name string
-	Body string
-}
-
 func _process_columns(colstr string) (columns []DB_Column) {
 	if colstr == "" {
 		return columns

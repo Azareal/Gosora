@@ -1,7 +1,9 @@
 package main
 
+import "log"
 import "sync"
 import "database/sql"
+import "./query_gen/lib"
 
 var topics TopicStore
 
@@ -30,7 +32,15 @@ type StaticTopicStore struct {
 }
 
 func NewStaticTopicStore(capacity int) *StaticTopicStore {
-	return &StaticTopicStore{items:make(map[int]*Topic),capacity:capacity,get:get_topic_stmt}
+	stmt, err := qgen.Builder.SimpleSelect("topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &StaticTopicStore{
+		items:make(map[int]*Topic),
+		capacity:capacity,
+		get:stmt,
+	}
 }
 
 func (sts *StaticTopicStore) Get(id int) (*Topic, error) {
@@ -161,7 +171,11 @@ type SqlTopicStore struct {
 }
 
 func NewSqlTopicStore() *SqlTopicStore {
-	return &SqlTopicStore{get_topic_stmt}
+	stmt, err := qgen.Builder.SimpleSelect("topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &SqlTopicStore{stmt}
 }
 
 func (sts *SqlTopicStore) Get(id int) (*Topic, error) {

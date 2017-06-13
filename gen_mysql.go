@@ -7,8 +7,6 @@ import "log"
 import "database/sql"
 
 var get_user_stmt *sql.Stmt
-var get_full_user_stmt *sql.Stmt
-var get_topic_stmt *sql.Stmt
 var get_reply_stmt *sql.Stmt
 var login_stmt *sql.Stmt
 var get_password_stmt *sql.Stmt
@@ -105,18 +103,6 @@ func gen_mysql() (err error) {
 	
 	log.Print("Preparing get_user statement.")
 	get_user_stmt, err = db.Prepare("SELECT `name`,`group`,`is_super_admin`,`avatar`,`message`,`url_prefix`,`url_name`,`level` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing get_full_user statement.")
-	get_full_user_stmt, err = db.Prepare("SELECT `name`,`group`,`is_super_admin`,`session`,`email`,`avatar`,`message`,`url_prefix`,`url_name`,`level`,`score`,`last_ip` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing get_topic statement.")
-	get_topic_stmt, err = db.Prepare("SELECT `title`,`content`,`createdBy`,`createdAt`,`is_closed`,`sticky`,`parentID`,`ipaddress`,`postCount`,`likeCount`,`data` FROM `topics` WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}

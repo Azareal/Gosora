@@ -58,14 +58,14 @@ type DB_Setter struct {
 
 type DB_Adapter interface {
 	GetName() string
-	SimpleInsert(string,string,string,string) error
-	SimpleReplace(string,string,string,string) error
-	SimpleUpdate(string,string,string,string) error
-	SimpleDelete(string,string,string) error
-	Purge(string,string) error
-	SimpleSelect(string,string,string,string,string/*,int,int*/) error
-	SimpleLeftJoin(string,string,string,string,string,string,string/*,int,int*/) error
-	SimpleInnerJoin(string,string,string,string,string,string,string/*,int,int*/) error
+	SimpleInsert(string,string,string,string) (string, error)
+	SimpleReplace(string,string,string,string) (string, error)
+	SimpleUpdate(string,string,string,string) (string, error)
+	SimpleDelete(string,string,string) (string, error)
+	Purge(string,string) (string, error)
+	SimpleSelect(string,string,string,string,string/*,int,int*/) (string, error)
+	SimpleLeftJoin(string,string,string,string,string,string,string/*,int,int*/) (string, error)
+	SimpleInnerJoin(string,string,string,string,string,string,string/*,int,int*/) (string, error)
 	Write() error
 	
 	// TO-DO: Add a simple query builder

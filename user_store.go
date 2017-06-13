@@ -1,9 +1,11 @@
 package main
 
+import "log"
 import "sync"
 import "strings"
 import "strconv"
 import "database/sql"
+import "./query_gen/lib"
 
 var users UserStore
 
@@ -28,41 +30,50 @@ type StaticUserStore struct {
 	items map[int]*User
 	length int
 	capacity int
+	get *sql.Stmt
 	sync.RWMutex
 }
 
 func NewStaticUserStore(capacity int) *StaticUserStore {
-	return &StaticUserStore{items:make(map[int]*User),capacity:capacity}
+	stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &StaticUserStore{
+		items:make(map[int]*User),
+		capacity:capacity,
+		get:stmt,
+	}
 }
 
-func (sts *StaticUserStore) Get(id int) (*User, error) {
-	sts.RLock()
-	item, ok := sts.items[id]
-	sts.RUnlock()
+func (sus *StaticUserStore) Get(id int) (*User, error) {
+	sus.RLock()
+	item, ok := sus.items[id]
+	sus.RUnlock()
 	if ok {
 		return item, nil
 	}
 	return item, sql.ErrNoRows
 }
 
-func (sts *StaticUserStore) GetUnsafe(id int) (*User, error) {
-	item, ok := sts.items[id]
+func (sus *StaticUserStore) GetUnsafe(id int) (*User, error) {
+	item, ok := sus.items[id]
 	if ok {
 		return item, nil
 	}
 	return item, sql.ErrNoRows
 }
 
-func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
-	sts.RLock()
-	user, ok := sts.items[id]
-	sts.RUnlock()
+func (sus *StaticUserStore) CascadeGet(id int) (*User, error) {
+	sus.RLock()
+	user, ok := sus.items[id]
+	sus.RUnlock()
 	if ok {
 		return user, nil
 	}
 
 	user = &User{ID:id,Loggedin:true}
-	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -74,14 +85,14 @@ func (sts *StaticUserStore) CascadeGet(id int) (*User, error) {
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
 	if err == nil {
-		sts.Set(user)
+		sus.Set(user)
 	}
 	return user, err
 }
 
-func (sts *StaticUserStore) BypassGet(id int) (*User, error) {
+func (sus *StaticUserStore) BypassGet(id int) (*User, error) {
 	user := &User{ID:id,Loggedin:true}
-	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -95,11 +106,11 @@ func (sts *StaticUserStore) BypassGet(id int) (*User, error) {
 	return user, err
 }
 
-func (sts *StaticUserStore) Load(id int) error {
+func (sus *StaticUserStore) Load(id int) error {
 	user := &User{ID:id,Loggedin:true}
-	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	if err != nil {
-		sts.Remove(id)
+		sus.Remove(id)
 		return err
 	}
 
@@ -112,71 +123,71 @@ func (sts *StaticUserStore) Load(id int) error {
 	}
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
-	sts.Set(user)
+	sus.Set(user)
 	return nil
 }
 
-func (sts *StaticUserStore) Set(item *User) error {
-	sts.Lock()
-	user, ok := sts.items[item.ID]
+func (sus *StaticUserStore) Set(item *User) error {
+	sus.Lock()
+	user, ok := sus.items[item.ID]
 	if ok {
-		sts.Unlock()
+		sus.Unlock()
 		*user = *item
-	} else if sts.length >= sts.capacity {
-		sts.Unlock()
+	} else if sus.length >= sus.capacity {
+		sus.Unlock()
 		return ErrStoreCapacityOverflow
 	} else {
-		sts.items[item.ID] = item
-		sts.Unlock()
-		sts.length++
+		sus.items[item.ID] = item
+		sus.Unlock()
+		sus.length++
 	}
 	return nil
 }
 
-func (sts *StaticUserStore) Add(item *User) error {
-	if sts.length >= sts.capacity {
+func (sus *StaticUserStore) Add(item *User) error {
+	if sus.length >= sus.capacity {
 		return ErrStoreCapacityOverflow
 	}
-	sts.Lock()
-	sts.items[item.ID] = item
-	sts.Unlock()
-	sts.length++
+	sus.Lock()
+	sus.items[item.ID] = item
+	sus.Unlock()
+	sus.length++
 	return nil
 }
 
-func (sts *StaticUserStore) AddUnsafe(item *User) error {
-	if sts.length >= sts.capacity {
+func (sus *StaticUserStore) AddUnsafe(item *User) error {
+	if sus.length >= sus.capacity {
 		return ErrStoreCapacityOverflow
 	}
-	sts.items[item.ID] = item
-	sts.length++
+	sus.items[item.ID] = item
+	sus.length++
 	return nil
 }
 
-func (sts *StaticUserStore) Remove(id int) error {
-	sts.Lock()
-	delete(sts.items,id)
-	sts.Unlock()
-	sts.length--
+func (sus *StaticUserStore) Remove(id int) error {
+	sus.Lock()
+	delete(sus.items,id)
+	sus.Unlock()
+	sus.length--
 	return nil
 }
 
-func (sts *StaticUserStore) RemoveUnsafe(id int) error {
-	delete(sts.items,id)
-	sts.length--
+func (sus *StaticUserStore) RemoveUnsafe(id int) error {
+	delete(sus.items,id)
+	sus.length--
 	return nil
 }
 
-func (sts *StaticUserStore) GetLength() int {
-	return sts.length
+func (sus *StaticUserStore) GetLength() int {
+	return sus.length
 }
 
-func (sts *StaticUserStore) SetCapacity(capacity int) {
-	sts.capacity = capacity
+func (sus *StaticUserStore) SetCapacity(capacity int) {
+	sus.capacity = capacity
 }
 
-func (sts *StaticUserStore) GetCapacity() int {
-	return sts.capacity
+func (sus *StaticUserStore) GetCapacity() int {
+	return sus.capacity
 }
 
 //type DynamicUserStore struct {
@@ -185,15 +196,20 @@ func (sts *StaticUserStore) GetCapacity() int {
 //}
 
 type SqlUserStore struct {
+		get *sql.Stmt
 }
 
 func NewSqlUserStore() *SqlUserStore {
-	return &SqlUserStore{}
+	stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &SqlUserStore{stmt}
 }
 
 func (sus *SqlUserStore) Get(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
-	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -209,7 +225,7 @@ func (sus *SqlUserStore) Get(id int) (*User, error) {
 
 func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
-	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -225,7 +241,7 @@ func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 
 func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
-	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -241,7 +257,7 @@ func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 
 func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
-	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -258,7 +274,7 @@ func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
 func (sus *SqlUserStore) Load(id int) error {
 	user := &User{ID:id}
 	// Simplify this into a quick check whether the user exists
-	err := get_full_user_stmt.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	return err
 }
 

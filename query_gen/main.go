@@ -48,10 +48,8 @@ func write_statements(adapter qgen.DB_Adapter) error {
 func write_selects(adapter qgen.DB_Adapter) error {
 	// url_prefix and url_name will be removed from this query in a later commit
 	adapter.SimpleSelect("get_user","users","name, group, is_super_admin, avatar, message, url_prefix, url_name, level","uid = ?","")
-	
-	adapter.SimpleSelect("get_full_user","users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","")
 		
-	adapter.SimpleSelect("get_topic","topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","")
+	// Looking for get_topic? Your statement is in another castle
 	
 	adapter.SimpleSelect("get_reply","replies","content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount","rid = ?","")
 		
