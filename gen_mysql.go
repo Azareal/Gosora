@@ -8,12 +8,19 @@ import "database/sql"
 
 var get_user_stmt *sql.Stmt
 var get_reply_stmt *sql.Stmt
+var get_user_reply_stmt *sql.Stmt
 var login_stmt *sql.Stmt
 var get_password_stmt *sql.Stmt
 var username_exists_stmt *sql.Stmt
 var get_settings_stmt *sql.Stmt
 var get_setting_stmt *sql.Stmt
 var get_full_setting_stmt *sql.Stmt
+var get_full_settings_stmt *sql.Stmt
+var get_groups_stmt *sql.Stmt
+var get_forums_stmt *sql.Stmt
+var get_forums_permissions_stmt *sql.Stmt
+var get_plugins_stmt *sql.Stmt
+var get_themes_stmt *sql.Stmt
 var is_plugin_active_stmt *sql.Stmt
 var get_users_stmt *sql.Stmt
 var is_theme_default_stmt *sql.Stmt
@@ -91,10 +98,13 @@ var update_user_stmt *sql.Stmt
 var update_group_perms_stmt *sql.Stmt
 var update_group_rank_stmt *sql.Stmt
 var update_group_stmt *sql.Stmt
+var update_email_stmt *sql.Stmt
+var verify_email_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
 var delete_topic_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
 var delete_forum_perms_by_forum_stmt *sql.Stmt
+var report_exists_stmt *sql.Stmt
 
 func gen_mysql() (err error) {
 	if debug {
@@ -108,7 +118,13 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing get_reply statement.")
-	get_reply_stmt, err = db.Prepare("SELECT `content`,`createdBy`,`createdAt`,`lastEdit`,`lastEditBy`,`ipaddress`,`likeCount` FROM `replies` WHERE `rid` = ?")
+	get_reply_stmt, err = db.Prepare("SELECT `tid`,`content`,`createdBy`,`createdAt`,`lastEdit`,`lastEditBy`,`ipaddress`,`likeCount` FROM `replies` WHERE `rid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_user_reply statement.")
+	get_user_reply_stmt, err = db.Prepare("SELECT `uid`,`content`,`createdBy`,`createdAt`,`lastEdit`,`lastEditBy`,`ipaddress` FROM `users_replies` WHERE `rid` = ?")
 	if err != nil {
 		return err
 	}
@@ -145,6 +161,42 @@ func gen_mysql() (err error) {
 		
 	log.Print("Preparing get_full_setting statement.")
 	get_full_setting_stmt, err = db.Prepare("SELECT `name`,`type`,`constraints` FROM `settings` WHERE `name` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_full_settings statement.")
+	get_full_settings_stmt, err = db.Prepare("SELECT `name`,`content`,`type`,`constraints` FROM `settings`")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_groups statement.")
+	get_groups_stmt, err = db.Prepare("SELECT `gid`,`name`,`permissions`,`is_mod`,`is_admin`,`is_banned`,`tag` FROM `users_groups`")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_forums statement.")
+	get_forums_stmt, err = db.Prepare("SELECT `fid`,`name`,`desc`,`active`,`preset`,`topicCount`,`lastTopic`,`lastTopicID`,`lastReplyer`,`lastReplyerID`,`lastTopicTime` FROM `forums` ORDER BY fid ASC")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_forums_permissions statement.")
+	get_forums_permissions_stmt, err = db.Prepare("SELECT `gid`,`fid`,`permissions` FROM `forums_permissions` ORDER BY gid ASC,fid ASC")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_plugins statement.")
+	get_plugins_stmt, err = db.Prepare("SELECT `uname`,`active` FROM `plugins`")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_themes statement.")
+	get_themes_stmt, err = db.Prepare("SELECT `uname`,`default` FROM `themes`")
 	if err != nil {
 		return err
 	}
@@ -228,7 +280,7 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing get_emails_by_user statement.")
-	get_emails_by_user_stmt, err = db.Prepare("SELECT `email`,`validated` FROM `emails` WHERE `uid` = ?")
+	get_emails_by_user_stmt, err = db.Prepare("SELECT `email`,`validated`,`token` FROM `emails` WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
@@ -342,7 +394,7 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing create_profile_reply statement.")
-	create_profile_reply_stmt, err = db.Prepare("INSERT INTO `users_replies`(`uid`,`content`,`parsed_content`,`createdAt`,`createdBy`) VALUES (?,?,?,NOW(),?)")
+	create_profile_reply_stmt, err = db.Prepare("INSERT INTO `users_replies`(`uid`,`content`,`parsed_content`,`createdAt`,`createdBy`,`ipaddress`) VALUES (?,?,?,NOW(),?,?)")
 	if err != nil {
 		return err
 	}
@@ -611,6 +663,18 @@ func gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing update_email statement.")
+	update_email_stmt, err = db.Prepare("UPDATE `emails` SET `email` = ?,`uid` = ?,`validated` = ?,`token` = ? WHERE `email` = ? ")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing verify_email statement.")
+	verify_email_stmt, err = db.Prepare("UPDATE `emails` SET `validated` = 1,`token` = '1' WHERE `email` = ? ")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing delete_reply statement.")
 	delete_reply_stmt, err = db.Prepare("DELETE FROM `replies` WHERE `rid` = ?")
 	if err != nil {
@@ -631,6 +695,12 @@ func gen_mysql() (err error) {
 		
 	log.Print("Preparing delete_forum_perms_by_forum statement.")
 	delete_forum_perms_by_forum_stmt, err = db.Prepare("DELETE FROM `forums_permissions` WHERE `fid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing report_exists statement.")
+	report_exists_stmt, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `topics` WHERE `data` = ? AND  `data` != '' AND  `parentID` = 1")
 	if err != nil {
 		return err
 	}

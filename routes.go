@@ -877,8 +877,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tid, words, createdBy int
-	err = db.QueryRow("select tid, words, createdBy from replies where rid = ?", rid).Scan(&tid, &words, &createdBy)
+	reply, err := get_reply(rid)
 	if err == sql.ErrNoRows {
 		PreError("You can't like something which doesn't exist!",w,r)
 		return
@@ -888,7 +887,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fid int
-	err = get_topic_fid_stmt.QueryRow(tid).Scan(&fid)
+	err = get_topic_fid_stmt.QueryRow(reply.ParentID).Scan(&fid)
 	if err == sql.ErrNoRows {
 		PreError("The parent topic doesn't exist.",w,r)
 		return
@@ -906,7 +905,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if createdBy == user.ID {
+	if reply.CreatedBy == user.ID {
 		LocalError("You can't like your own replies",w,r,user)
 		return
 	}
@@ -920,7 +919,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = users.CascadeGet(createdBy)
+	_, err = users.CascadeGet(reply.CreatedBy)
 	if err != nil && err != sql.ErrNoRows {
 		LocalError("The target user doesn't exist",w,r,user)
 		return
@@ -942,7 +941,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := add_activity_stmt.Exec(user.ID,createdBy,"like","post",rid)
+	res, err := add_activity_stmt.Exec(user.ID,reply.CreatedBy,"like","post",rid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -953,16 +952,16 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = notify_one_stmt.Exec(createdBy,lastId)
+	_, err = notify_one_stmt.Exec(reply.CreatedBy,lastId)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 
 	// Live alerts, if the poster is online and WebSockets is enabled
-	_ = ws_hub.push_alert(createdBy,"like","post",user.ID,createdBy,rid)
+	_ = ws_hub.push_alert(reply.CreatedBy,"like","post",user.ID,reply.CreatedBy,rid)
 
-	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
+	http.Redirect(w,r,"/topic/" + strconv.Itoa(reply.ParentID),http.StatusSeeOther)
 }
 
 func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
@@ -986,7 +985,13 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = create_profile_reply_stmt.Exec(uid,html.EscapeString(preparse_message(r.PostFormValue("reply-content"))),parse_message(html.EscapeString(preparse_message(r.PostFormValue("reply-content")))),user.ID)
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP",w,r,user)
+		return
+	}
+
+	_, err = create_profile_reply_stmt.Exec(uid,html.EscapeString(preparse_message(r.PostFormValue("reply-content"))),parse_message(html.EscapeString(preparse_message(r.PostFormValue("reply-content")))),user.ID,ipaddress)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -1038,10 +1043,9 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 	item_type := r.FormValue("type")
 
 	var fid int = 1
-	var tid int
 	var title, content string
 	if item_type == "reply" {
-		err = db.QueryRow("select tid, content from replies where rid = ?", item_id).Scan(&tid, &content)
+		reply, err := get_reply(item_id)
 		if err == sql.ErrNoRows {
 			LocalError("We were unable to find the reported post",w,r,user)
 			return
@@ -1050,7 +1054,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 			return
 		}
 
-		topic, err := topics.CascadeGet(tid)
+		topic, err := topics.CascadeGet(reply.ParentID)
 		if err == sql.ErrNoRows {
 			LocalError("We weren't able to find the topic the reported post is supposed to be in",w,r,user)
 			return
@@ -1060,9 +1064,9 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 		}
 
 		title = "Reply: " + topic.Title
-		content = content + "\n\nOriginal Post: #rid-" + strconv.Itoa(item_id)
+		content = reply.Content + "\n\nOriginal Post: #rid-" + strconv.Itoa(item_id)
 	} else if item_type == "user-reply" {
-		err = db.QueryRow("select uid, content from users_replies where rid = ?", item_id).Scan(&tid, &content)
+		user_reply, err := get_user_reply(item_id)
 		if err == sql.ErrNoRows {
 			LocalError("We weren't able to find the reported post",w,r,user)
 			return
@@ -1071,7 +1075,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 			return
 		}
 
-		err = get_user_name_stmt.QueryRow(tid).Scan(&title)
+		err = get_user_name_stmt.QueryRow(user_reply.ParentID).Scan(&title)
 		if err == sql.ErrNoRows {
 			LocalError("We weren't able to find the profile the reported post is supposed to be on",w,r,user)
 			return
@@ -1080,7 +1084,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 			return
 		}
 		title = "Profile: " + title
-		content = content + "\n\nOriginal Post: @" + strconv.Itoa(tid)
+		content = user_reply.Content + "\n\nOriginal Post: @" + strconv.Itoa(user_reply.ParentID)
 	} else if item_type == "topic" {
 		err = get_topic_basic_stmt.QueryRow(item_id).Scan(&title,&content)
 		if err == sql.ErrNoRows {
@@ -1396,7 +1400,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&email.Email, &email.Validated)
+		err := rows.Scan(&email.Email, &email.Validated, &email.Token)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -1441,7 +1445,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	email := Email{UserID: user.ID}
 	targetEmail := Email{UserID: user.ID}
 	var emailList []interface{}
-	rows, err := db.Query("select email, validated, token from emails where uid = ?", user.ID)
+	rows, err := get_emails_by_user_stmt.Query(user.ID)
 	if err != nil {
 		InternalError(err,w,r)
 		return

@@ -47,6 +47,12 @@ type ReplyShort struct
 
 func get_reply(id int) (*ReplyShort, error) {
 	reply := ReplyShort{ID:id}
-	err := get_reply_stmt.QueryRow(id).Scan(&reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IpAddress, &reply.LikeCount)
+	err := get_reply_stmt.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IpAddress, &reply.LikeCount)
+	return &reply, err
+}
+
+func get_user_reply(id int) (*ReplyShort, error) {
+	reply := ReplyShort{ID:id}
+	err := get_user_reply_stmt.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IpAddress)
 	return &reply, err
 }

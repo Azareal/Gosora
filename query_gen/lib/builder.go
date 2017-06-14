@@ -35,3 +35,36 @@ func (build *builder) SimpleSelect(table string, columns string, where string, o
 	}
 	return build.conn.Prepare(res)
 }
+
+func (build *builder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInsert("_builder", table, columns, fields)
+	if err != nil {
+		return stmt, err
+	}
+	return build.conn.Prepare(res)
+}
+
+func (build *builder) SimpleUpdate(table string, set string, where string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleUpdate("_builder", table, set, where)
+	if err != nil {
+		return stmt, err
+	}
+	return build.conn.Prepare(res)
+}
+
+func (build *builder) SimpleDelete(table string, where string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleDelete("_builder", table, where)
+	if err != nil {
+		return stmt, err
+	}
+	return build.conn.Prepare(res)
+}
+
+// I don't know why you need this, but here it is x.x
+func (build *builder) Purge(table string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.Purge("_builder", table)
+	if err != nil {
+		return stmt, err
+	}
+	return build.conn.Prepare(res)
+}

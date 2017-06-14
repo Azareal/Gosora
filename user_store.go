@@ -196,7 +196,7 @@ func (sus *StaticUserStore) GetCapacity() int {
 //}
 
 type SqlUserStore struct {
-		get *sql.Stmt
+	get *sql.Stmt
 }
 
 func NewSqlUserStore() *SqlUserStore {

@@ -42,6 +42,10 @@ func write_statements(adapter qgen.DB_Adapter) error {
 	if err != nil {
 		return err
 	}
+	err = write_simple_counts(adapter)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -51,7 +55,9 @@ func write_selects(adapter qgen.DB_Adapter) error {
 		
 	// Looking for get_topic? Your statement is in another castle
 	
-	adapter.SimpleSelect("get_reply","replies","content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount","rid = ?","")
+	adapter.SimpleSelect("get_reply","replies","tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount","rid = ?","")
+	
+	adapter.SimpleSelect("get_user_reply","users_replies","uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress","rid = ?","")
 		
 	adapter.SimpleSelect("login","users","uid, name, password, salt","name = ?","")
 		
@@ -65,6 +71,18 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleSelect("get_setting","settings","content, type","name = ?","")
 	
 	adapter.SimpleSelect("get_full_setting","settings","name, type, constraints","name = ?","")
+	
+	adapter.SimpleSelect("get_full_settings","settings","name, content, type, constraints","","")
+	
+	adapter.SimpleSelect("get_groups","users_groups","gid, name, permissions, is_mod, is_admin, is_banned, tag","","")
+	
+	adapter.SimpleSelect("get_forums","forums","fid, name, desc, active, preset, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","","fid ASC")
+	
+	adapter.SimpleSelect("get_forums_permissions","forums_permissions","gid, fid, permissions","","gid ASC, fid ASC")
+	
+	adapter.SimpleSelect("get_plugins","plugins","uname, active","","")
+	
+	adapter.SimpleSelect("get_themes","themes","uname, default","","")
 	
 	adapter.SimpleSelect("is_plugin_active","plugins","active","uname = ?","")
 	
@@ -92,7 +110,7 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleSelect("get_user_group","users","group","uid = ?","")
 	
-	adapter.SimpleSelect("get_emails_by_user","emails","email, validated","uid = ?","")
+	adapter.SimpleSelect("get_emails_by_user","emails","email, validated, token","uid = ?","")
 	
 	adapter.SimpleSelect("get_topic_basic","topics","title, content","tid = ?","")
 	
@@ -144,7 +162,7 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleInsert("add_email","emails","email, uid, validated, token","?,?,?,?")
 	
-	adapter.SimpleInsert("create_profile_reply","users_replies","uid,content,parsed_content,createdAt,createdBy","?,?,?,NOW(),?")
+	adapter.SimpleInsert("create_profile_reply","users_replies","uid, content, parsed_content, createdAt, createdBy, ipaddress","?,?,?,NOW(),?,?")
 	
 	adapter.SimpleInsert("add_subscription","activity_subscriptions","user,targetID,targetType,level","?,?,?,2")
 	
@@ -244,6 +262,10 @@ func write_updates(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleUpdate("update_group","users_groups","name = ?, tag = ?","gid = ?")
 	
+	adapter.SimpleUpdate("update_email","emails","email = ?, uid = ?, validated = ?, token = ?","email = ?")
+	
+	adapter.SimpleUpdate("verify_email","emails","validated = 1, token = ''","email = ?") // Need to fix this: Empty string isn't working, it gets set to 1 instead x.x
+	
 	return nil
 }
 
@@ -256,6 +278,12 @@ func write_deletes(adapter qgen.DB_Adapter) error {
 	adapter.SimpleDelete("delete_profile_reply","users_replies","rid = ?")
 	
 	adapter.SimpleDelete("delete_forum_perms_by_forum","forums_permissions","fid = ?")
+	
+	return nil
+}
+
+func write_simple_counts(adapter qgen.DB_Adapter) error {
+	adapter.SimpleCount("report_exists","topics","data = ? and data != '' and parentID = 1")
 	
 	return nil
 }

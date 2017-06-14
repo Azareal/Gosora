@@ -66,6 +66,7 @@ type DB_Adapter interface {
 	SimpleSelect(string,string,string,string,string/*,int,int*/) (string, error)
 	SimpleLeftJoin(string,string,string,string,string,string,string/*,int,int*/) (string, error)
 	SimpleInnerJoin(string,string,string,string,string,string,string/*,int,int*/) (string, error)
+	SimpleCount(string,string,string/*,int,int*/) (string, error)
 	Write() error
 	
 	// TO-DO: Add a simple query builder

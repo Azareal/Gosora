@@ -90,7 +90,7 @@ type Perms struct
 	CloseTopic bool
 	//CloseOwnTopic bool
 
-	ExtData interface{}
+	ExtData map[string]bool
 }
 
 /* Inherit from group permissions for ones we don't have */
@@ -405,7 +405,7 @@ func group_forum_preset_to_forum_perms(preset string) (fperms ForumPerms, change
 		case "can_moderate":
 			return AllForumPerms, true
 		case "no_access":
-			return ForumPerms{Overrides: true}, true
+			return ForumPerms{Overrides: true,ExtData: make(map[string]bool)}, true
 		case "default":
 			return BlankForumPerms, true
 		//case "custom": return fperms, false

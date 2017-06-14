@@ -441,6 +441,42 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	return querystr, nil
 }
 
+func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where string/*, offset int, maxCount int*/) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	
+	var querystr string = "SELECT COUNT(*) AS `count` FROM `" + table + "`"
+	if len(where) != 0 {
+		querystr += " WHERE"
+		for _, loc := range _process_where(where) {
+			var left, right string
+			
+			if loc.LeftType == "column" {
+				left = "`" + loc.LeftColumn + "`"
+			} else {
+				left = loc.LeftColumn
+			}
+			
+			if loc.RightType == "column" {
+				right = "`" + loc.RightColumn + "`"
+			} else {
+				right = loc.RightColumn
+			}
+			
+			querystr += " " + left + " " + loc.Operator + " " + right + " AND "
+		}
+		querystr = querystr[0:len(querystr) - 4]
+	}
+	
+	querystr = strings.TrimSpace(querystr)
+	adapter.push_statement(name,querystr)
+	return querystr, nil
+}
+
 func (adapter *Mysql_Adapter) Write() error {
 	var stmts, body string
 	

@@ -365,9 +365,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tid, createdBy int
-	var content string
-	err = db.QueryRow("select tid, content, createdBy from replies where rid = ?", rid).Scan(&tid, &content, &createdBy)
+	reply, err := get_reply(rid)
 	if err == sql.ErrNoRows {
 		PreErrorJSQ("The reply you tried to delete doesn't exist.",w,r,is_js)
 		return
@@ -377,7 +375,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fid int
-	err = get_topic_fid_stmt.QueryRow(tid).Scan(&fid)
+	err = get_topic_fid_stmt.QueryRow(reply.ParentID).Scan(&fid)
 	if err == sql.ErrNoRows {
 		PreErrorJSQ("The parent topic doesn't exist.",w,r,is_js)
 		return
@@ -407,13 +405,13 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		w.Write(success_json_bytes)
 	}
 
-	wcount := word_count(content)
-	err = decrease_post_user_stats(wcount, createdBy, false, user)
+	wcount := word_count(reply.Content)
+	err = decrease_post_user_stats(wcount, reply.CreatedBy, false, user)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
-	_, err = remove_replies_from_topic_stmt.Exec(1,tid)
+	_, err = remove_replies_from_topic_stmt.Exec(1,reply.ParentID)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,is_js)
 	}
@@ -423,13 +421,13 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("Bad IP",w,r,user)
 		return
 	}
-	err = addModLog("delete",tid,"reply",ipaddress,user.ID)
+	err = addModLog("delete",reply.ParentID,"reply",ipaddress,user.ID)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 
-	err = topics.Load(tid)
+	err = topics.Load(reply.ParentID)
 	if err != nil {
 		LocalError("This topic no longer exists!",w,r,user)
 		return

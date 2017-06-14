@@ -94,6 +94,12 @@ func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (u
 		user.Perms.DeleteReply = fperms.DeleteReply
 		user.Perms.PinTopic = fperms.PinTopic
 		user.Perms.CloseTopic = fperms.CloseTopic
+
+		if len(fperms.ExtData) != 0 {
+			for name, perm := range fperms.ExtData {
+				user.Perms.ExtData[name] = perm
+			}
+		}
 	}
 	return user, success
 }
@@ -118,6 +124,12 @@ func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user Us
 		user.Perms.DeleteReply = fperms.DeleteReply
 		user.Perms.PinTopic = fperms.PinTopic
 		user.Perms.CloseTopic = fperms.CloseTopic
+
+		if len(fperms.ExtData) != 0 {
+			for name, perm := range fperms.ExtData {
+				user.Perms.ExtData[name] = perm
+			}
+		}
 	}
 	if user.Is_Banned {
 		noticeList = append(noticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
@@ -178,6 +190,7 @@ func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (User,bool) {
 			InternalError(err,w,r)
 			return *user, false
 		}
+		user.Last_IP = host
 	}
 	return *user, true
 }
