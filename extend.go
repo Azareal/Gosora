@@ -6,6 +6,36 @@ var plugins map[string]*Plugin = make(map[string]*Plugin)
 var hooks map[string][]func(interface{})interface{} = make(map[string][]func(interface{})interface{})
 var vhooks map[string]func(...interface{})interface{} = make(map[string]func(...interface{})interface{})
 
+func LoadPlugins() error {
+	rows, err := get_plugins_stmt.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var uname string
+	var active bool
+	for rows.Next() {
+		err = rows.Scan(&uname, &active)
+		if err != nil {
+			return err
+		}
+
+		// Was the plugin deleted at some point?
+		plugin, ok := plugins[uname]
+		if !ok {
+			continue
+		}
+		plugin.Active = active
+		plugins[uname] = plugin
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type Plugin struct
 {
 	UName string

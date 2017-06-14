@@ -192,6 +192,11 @@ CREATE TABLE `administration_logs`(
 	`doneAt` datetime not null
 );
 
+CREATE TABLE `sync`(
+	`last_update` int not null,
+	`node_id` int not null
+);
+
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('url_tags','1','bool');
 INSERT INTO settings(`name`,`content`,`type`,`constraints`) VALUES ('activation_type','1','list','1-3');
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('bigpost_min_words','250','int');

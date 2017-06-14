@@ -1,5 +1,6 @@
 package main
 
+import "log"
 //import "fmt"
 import "sync"
 import "strconv"
@@ -38,6 +39,59 @@ type ForumSimple struct
 	Name string
 	Active bool
 	Preset string
+}
+
+/*type ForumStore interface
+{
+	Get(int) (*Forum, error)
+	CascadeGet(int) (*Forum, error)
+	Update(Forum) error
+	CascadeUpdate(Forum) error
+	Delete(int) error
+	CascadeDelete(int) error
+}*/
+
+func LoadForums() error {
+	//if debug {
+		log.Print("Adding the uncategorised forum")
+	//}
+	forums = append(forums, Forum{0,"Uncategorised","",uncategorised_forum_visible,"all",0,"",0,"",0,""})
+
+  rows, err := get_forums_stmt.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var i int = 1
+	for ;rows.Next();i++ {
+		forum := Forum{ID:0,Name:"",Active:true,Preset:"all"}
+		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+		if err != nil {
+			return err
+		}
+
+		// Ugh, you really shouldn't physically delete these items, it makes a big mess of things
+		if forum.ID != i {
+			log.Print("Stop physically deleting forums. You are messing up the IDs. Use the Forum Manager or delete_forum() instead x.x")
+			fill_forum_id_gap(i, forum.ID)
+		}
+
+		if forum.Name == "" {
+			if debug {
+				log.Print("Adding a placeholder forum")
+			}
+		} else {
+			log.Print("Adding the " + forum.Name + " forum")
+		}
+		forums = append(forums,forum)
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	forumCapCount = i
+	return nil
 }
 
 var forum_update_mutex sync.Mutex

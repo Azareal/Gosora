@@ -24,6 +24,31 @@ func init() {
 	settingLabels["activation_type"] = "Activate All,Email Activation,Admin Approval"
 }
 
+func LoadSettings() error {
+	rows, err := get_full_settings_stmt.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var sname, scontent, stype, sconstraints string
+	for rows.Next() {
+		err = rows.Scan(&sname, &scontent, &stype, &sconstraints)
+		if err != nil {
+			return err
+		}
+		errmsg := parseSetting(sname, scontent, stype, sconstraints)
+		if errmsg != "" {
+			return err
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func parseSetting(sname string, scontent string, stype string, constraint string) string {
 	var err error
 	if stype == "bool" {

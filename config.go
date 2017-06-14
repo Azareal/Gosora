@@ -37,7 +37,8 @@ var default_group = 3 // Should be a setting in the database
 var activation_group = 5 // Should be a setting in the database
 var staff_css = " background-color: #ffeaff;"
 var uncategorised_forum_visible = true
-var minify_templates = true
+var minify_templates = false
+var multi_server = false // Experimental: Enable Cross-Server Synchronisation and several other features
 
 //var noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
 var noavatar = "https://api.adorable.io/avatars/285/{id}@" + site_url + ".png"

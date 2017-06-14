@@ -303,14 +303,18 @@ func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 }
 
 func rebuild_forum_permissions(fid int) error {
-	log.Print("Loading the forum permissions")
+	if debug {
+		log.Print("Loading the forum permissions")
+	}
 	rows, err := db.Query("select gid, permissions from forums_permissions where fid = ? order by gid asc", fid)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
-	log.Print("Updating the forum permissions")
+	if debug {
+		log.Print("Updating the forum permissions")
+	}
 	for rows.Next() {
 		var gid int
 		var perms []byte
@@ -332,7 +336,9 @@ func rebuild_forum_permissions(fid int) error {
 		forum_perms[gid][fid] = pperms
 	}
 	for gid, _ := range groups {
-		log.Print("Updating the forum permissions for Group #" + strconv.Itoa(gid))
+		if debug {
+			log.Print("Updating the forum permissions for Group #" + strconv.Itoa(gid))
+		}
 		var blank_list []ForumPerms
 		var blank_int_list []int
 		groups[gid].Forums = blank_list
@@ -357,14 +363,80 @@ func rebuild_forum_permissions(fid int) error {
 				groups[gid].CanSee = append(groups[gid].CanSee, ffid)
 			}
 		}
-		//fmt.Printf("%+v\n", groups[gid].CanSee)
-		//fmt.Printf("%+v\n", groups[gid].Forums)
-		//fmt.Println(len(groups[gid].Forums))
+		if super_debug {
+			fmt.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
+			fmt.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
+			fmt.Println("len(groups[gid].Forums)",len(groups[gid].Forums))
+		}
 	}
 	return nil
 }
 
 func build_forum_permissions() error {
+	rows, err := get_forums_permissions_stmt.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if debug {
+		log.Print("Adding the forum permissions")
+	}
+	// Temporarily store the forum perms in a map before transferring it to a much faster and thread-safe slice
+	forum_perms = make(map[int]map[int]ForumPerms)
+	for rows.Next() {
+		var gid, fid int
+		var perms []byte
+		var pperms ForumPerms
+		err = rows.Scan(&gid, &fid, &perms)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(perms, &pperms)
+		if err != nil {
+			return err
+		}
+		pperms.ExtData = make(map[string]bool)
+		pperms.Overrides = true
+		_, ok := forum_perms[gid]
+		if !ok {
+			forum_perms[gid] = make(map[int]ForumPerms)
+		}
+		forum_perms[gid][fid] = pperms
+	}
+	for gid, _ := range groups {
+		if debug {
+			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid) + " - " + groups[gid].Name)
+		}
+		//groups[gid].Forums = append(groups[gid].Forums,BlankForumPerms) // GID 0. No longer needed now that Uncategorised occupies that slot
+		for fid, _ := range forums {
+			forum_perm, ok := forum_perms[gid][fid]
+			if ok {
+				// Override group perms
+				//log.Print("Overriding permissions for forum #" + strconv.Itoa(fid))
+				groups[gid].Forums = append(groups[gid].Forums,forum_perm)
+			} else {
+				// Inherit from Group
+				//log.Print("Inheriting from default for forum #" + strconv.Itoa(fid))
+				forum_perm = BlankForumPerms
+				groups[gid].Forums = append(groups[gid].Forums,forum_perm)
+			}
+
+			if forum_perm.Overrides {
+				if forum_perm.ViewTopic {
+					groups[gid].CanSee = append(groups[gid].CanSee, fid)
+				}
+			} else if groups[gid].Perms.ViewTopic {
+				groups[gid].CanSee = append(groups[gid].CanSee, fid)
+			}
+		}
+		if super_debug {
+			//fmt.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
+			//fmt.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
+			//fmt.Println("len(groups[gid].CanSee)",len(groups[gid].CanSee))
+			//fmt.Println("len(groups[gid].Forums)",len(groups[gid].Forums))
+		}
+	}
 	return nil
 }
 

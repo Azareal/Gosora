@@ -52,6 +52,45 @@ type TemplateMapping struct
 	//When string
 }
 
+func LoadThemes() error {
+	rows, err := get_themes_stmt.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var uname string
+	var defaultThemeSwitch bool
+	for rows.Next() {
+		err = rows.Scan(&uname, &defaultThemeSwitch)
+		if err != nil {
+			return err
+		}
+
+		// Was the theme deleted at some point?
+		theme, ok := themes[uname]
+		if !ok {
+			continue
+		}
+
+		if defaultThemeSwitch {
+			log.Print("Loading the theme '" + theme.Name + "'")
+			theme.Active = true
+			defaultTheme = uname
+			add_theme_static_files(uname)
+			map_theme_templates(theme)
+		} else {
+			theme.Active = false
+		}
+		themes[uname] = theme
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func init_themes() {
 	themeFiles, err := ioutil.ReadDir("./themes")
 	if err != nil {
