@@ -26,7 +26,7 @@ type UserStore interface {
 	GetCapacity() int
 }
 
-type StaticUserStore struct {
+type MemoryUserStore struct {
 	items map[int]*User
 	length int
 	capacity int
@@ -34,19 +34,19 @@ type StaticUserStore struct {
 	sync.RWMutex
 }
 
-func NewStaticUserStore(capacity int) *StaticUserStore {
-	stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","")
+func NewMemoryUserStore(capacity int) *MemoryUserStore {
+	stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &StaticUserStore{
+	return &MemoryUserStore{
 		items:make(map[int]*User),
 		capacity:capacity,
 		get:stmt,
 	}
 }
 
-func (sus *StaticUserStore) Get(id int) (*User, error) {
+func (sus *MemoryUserStore) Get(id int) (*User, error) {
 	sus.RLock()
 	item, ok := sus.items[id]
 	sus.RUnlock()
@@ -56,7 +56,7 @@ func (sus *StaticUserStore) Get(id int) (*User, error) {
 	return item, sql.ErrNoRows
 }
 
-func (sus *StaticUserStore) GetUnsafe(id int) (*User, error) {
+func (sus *MemoryUserStore) GetUnsafe(id int) (*User, error) {
 	item, ok := sus.items[id]
 	if ok {
 		return item, nil
@@ -64,7 +64,7 @@ func (sus *StaticUserStore) GetUnsafe(id int) (*User, error) {
 	return item, sql.ErrNoRows
 }
 
-func (sus *StaticUserStore) CascadeGet(id int) (*User, error) {
+func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
 	sus.RLock()
 	user, ok := sus.items[id]
 	sus.RUnlock()
@@ -90,7 +90,7 @@ func (sus *StaticUserStore) CascadeGet(id int) (*User, error) {
 	return user, err
 }
 
-func (sus *StaticUserStore) BypassGet(id int) (*User, error) {
+func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	user := &User{ID:id,Loggedin:true}
 	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 
@@ -106,7 +106,7 @@ func (sus *StaticUserStore) BypassGet(id int) (*User, error) {
 	return user, err
 }
 
-func (sus *StaticUserStore) Load(id int) error {
+func (sus *MemoryUserStore) Load(id int) error {
 	user := &User{ID:id,Loggedin:true}
 	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	if err != nil {
@@ -127,7 +127,7 @@ func (sus *StaticUserStore) Load(id int) error {
 	return nil
 }
 
-func (sus *StaticUserStore) Set(item *User) error {
+func (sus *MemoryUserStore) Set(item *User) error {
 	sus.Lock()
 	user, ok := sus.items[item.ID]
 	if ok {
@@ -144,7 +144,7 @@ func (sus *StaticUserStore) Set(item *User) error {
 	return nil
 }
 
-func (sus *StaticUserStore) Add(item *User) error {
+func (sus *MemoryUserStore) Add(item *User) error {
 	if sus.length >= sus.capacity {
 		return ErrStoreCapacityOverflow
 	}
@@ -155,7 +155,7 @@ func (sus *StaticUserStore) Add(item *User) error {
 	return nil
 }
 
-func (sus *StaticUserStore) AddUnsafe(item *User) error {
+func (sus *MemoryUserStore) AddUnsafe(item *User) error {
 	if sus.length >= sus.capacity {
 		return ErrStoreCapacityOverflow
 	}
@@ -164,7 +164,7 @@ func (sus *StaticUserStore) AddUnsafe(item *User) error {
 	return nil
 }
 
-func (sus *StaticUserStore) Remove(id int) error {
+func (sus *MemoryUserStore) Remove(id int) error {
 	sus.Lock()
 	delete(sus.items,id)
 	sus.Unlock()
@@ -172,35 +172,30 @@ func (sus *StaticUserStore) Remove(id int) error {
 	return nil
 }
 
-func (sus *StaticUserStore) RemoveUnsafe(id int) error {
+func (sus *MemoryUserStore) RemoveUnsafe(id int) error {
 	delete(sus.items,id)
 	sus.length--
 	return nil
 }
 
-func (sus *StaticUserStore) GetLength() int {
+func (sus *MemoryUserStore) GetLength() int {
 	return sus.length
 }
 
-func (sus *StaticUserStore) SetCapacity(capacity int) {
+func (sus *MemoryUserStore) SetCapacity(capacity int) {
 	sus.capacity = capacity
 }
 
-func (sus *StaticUserStore) GetCapacity() int {
+func (sus *MemoryUserStore) GetCapacity() int {
 	return sus.capacity
 }
-
-//type DynamicUserStore struct {
-//	items_expiries list.List
-//	items map[int]*User
-//}
 
 type SqlUserStore struct {
 	get *sql.Stmt
 }
 
 func NewSqlUserStore() *SqlUserStore {
-	stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","")
+	stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}

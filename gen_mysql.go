@@ -37,6 +37,10 @@ var get_user_group_stmt *sql.Stmt
 var get_emails_by_user_stmt *sql.Stmt
 var get_topic_basic_stmt *sql.Stmt
 var get_activity_entry_stmt *sql.Stmt
+var forum_entry_exists_stmt *sql.Stmt
+var group_entry_exists_stmt *sql.Stmt
+var get_topic_replies_offset_stmt *sql.Stmt
+var get_forum_topics_offset_stmt *sql.Stmt
 var get_topic_list_stmt *sql.Stmt
 var get_topic_user_stmt *sql.Stmt
 var get_topic_by_reply_stmt *sql.Stmt
@@ -293,6 +297,30 @@ func gen_mysql() (err error) {
 		
 	log.Print("Preparing get_activity_entry statement.")
 	get_activity_entry_stmt, err = db.Prepare("SELECT `actor`,`targetUser`,`event`,`elementType`,`elementID` FROM `activity_stream` WHERE `asid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing forum_entry_exists statement.")
+	forum_entry_exists_stmt, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = ''  ORDER BY fid ASC LIMIT 0,1")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing group_entry_exists statement.")
+	group_entry_exists_stmt, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = ''  ORDER BY gid ASC LIMIT 0,1")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_topic_replies_offset statement.")
+	get_topic_replies_offset_stmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ?  LIMIT ?,?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_forum_topics_offset statement.")
+	get_forum_topics_offset_stmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`lastReplyAt`,`topics`.`parentID`,`topics`.`postCount`,`topics`.`likeCount`,`users`.`name`,`users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ?  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC LIMIT ?,?")
 	if err != nil {
 		return err
 	}

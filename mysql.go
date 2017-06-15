@@ -3,23 +3,14 @@
 package main
 
 import "log"
-import "strconv"
+import "strings"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 import "./query_gen/lib"
 
-var db *sql.DB
-var db_version string
-var db_collation string = "utf8mb4_general_ci"
-
-var get_topic_replies_offset_stmt *sql.Stmt // I'll need to rewrite this one to stop it hard-coding the per page setting before moving it to the query generator
-var get_forum_topics_offset_stmt *sql.Stmt
 var notify_watchers_stmt *sql.Stmt
 var get_activity_feed_by_watcher_stmt *sql.Stmt
 var get_activity_count_by_watcher_stmt *sql.Stmt
-
-var forum_entry_exists_stmt *sql.Stmt
-var group_entry_exists_stmt *sql.Stmt
 var add_forum_perms_to_forum_admins_stmt *sql.Stmt
 var add_forum_perms_to_forum_staff_stmt *sql.Stmt
 var add_forum_perms_to_forum_members_stmt *sql.Stmt
@@ -65,18 +56,6 @@ func _init_database() (err error) {
 		return err
 	}
 
-	log.Print("Preparing get_topic_replies_offset statement.")
-	get_topic_replies_offset_stmt, err = db.Prepare("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType from replies left join users on replies.createdBy = users.uid where tid = ? limit ?, " + strconv.Itoa(items_per_page))
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing get_forum_topics_offset statement.")
-	get_forum_topics_offset_stmt, err = db.Prepare("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid WHERE topics.parentID = ? order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC limit ?, " + strconv.Itoa(items_per_page))
-	if err != nil {
-		return err
-	}
-
 	log.Print("Preparing notify_watchers statement.")
 	notify_watchers_stmt, err = db.Prepare("INSERT INTO activity_stream_matches(watcher, asid) SELECT activity_subscriptions.user, activity_stream.asid FROM activity_stream INNER JOIN activity_subscriptions ON activity_subscriptions.targetType = activity_stream.elementType and activity_subscriptions.targetID = activity_stream.elementID and activity_subscriptions.user != activity_stream.actor where asid = ?")
 	if err != nil {
@@ -91,18 +70,6 @@ func _init_database() (err error) {
 
 	log.Print("Preparing get_activity_count_by_watcher statement.")
 	get_activity_count_by_watcher_stmt, err = db.Prepare("SELECT count(*) FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing forum_entry_exists statement.")
-	forum_entry_exists_stmt, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = '' order by fid asc limit 1")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing group_entry_exists statement.")
-	group_entry_exists_stmt, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = '' order by gid asc limit 1")
 	if err != nil {
 		return err
 	}
@@ -150,4 +117,9 @@ func _init_database() (err error) {
 	}
 
 	return nil
+}
+
+// Temporary hack so that we can move all the raw queries out of the other files and into here
+func topic_list_query(visible_fids []string) string {
+	return "select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(visible_fids,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC"
 }

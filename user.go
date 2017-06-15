@@ -11,6 +11,7 @@ import (
 )
 
 var guest_user User = User{ID:0,Group:6,Perms:GuestPerms}
+var SimpleSessionCheck func(http.ResponseWriter, *http.Request) (User,bool) = _simple_session_check
 
 type User struct
 {
@@ -145,7 +146,7 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList
 	return user, noticeList, success
 }
 
-func SimpleSessionCheck(w http.ResponseWriter, r *http.Request) (User,bool) {
+func _simple_session_check(w http.ResponseWriter, r *http.Request) (User,bool) {
 	// Are there any session cookies..?
 	cookie, err := r.Cookie("uid")
 	if err != nil {

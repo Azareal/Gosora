@@ -43,6 +43,7 @@ var external_sites map[string]string = make(map[string]string)
 var groups []Group
 var forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency
 var forum_perms map[int]map[int]ForumPerms // [gid][fid]Perms
+var fstore ForumStore // :soon:
 var groupCapCount, forumCapCount int
 var static_files map[string]SFile = make(map[string]SFile)
 
@@ -185,8 +186,8 @@ func main(){
 	}
 
 	if cache_topicuser == CACHE_STATIC {
-		users = NewStaticUserStore(user_cache_capacity)
-		topics = NewStaticTopicStore(topic_cache_capacity)
+		users = NewMemoryUserStore(user_cache_capacity)
+		topics = NewMemoryTopicStore(topic_cache_capacity)
 	} else {
 		users = NewSqlUserStore()
 		topics = NewSqlTopicStore()

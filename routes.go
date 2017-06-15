@@ -111,8 +111,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 
 	var topicList []TopicsRow
-	rows, err := db.Query("select topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar from topics left join users ON topics.createdBy = users.uid where parentID in("+strings.Join(fidList,",")+") order by topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
-	//rows, err := get_topic_list_stmt.Query()
+	rows, err := db.Query(topic_list_query(fidList))
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -201,7 +200,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 	} else {
 		page = 1
 	}
-	rows, err := get_forum_topics_offset_stmt.Query(fid,offset)
+	rows, err := get_forum_topics_offset_stmt.Query(fid,offset,items_per_page)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -364,7 +363,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 
 	// Get the replies..
-	rows, err := get_topic_replies_offset_stmt.Query(topic.ID, offset)
+	rows, err := get_topic_replies_offset_stmt.Query(topic.ID, offset, items_per_page)
 	if err == sql.ErrNoRows {
 		LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.",w,r,user)
 		return

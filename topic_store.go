@@ -23,7 +23,7 @@ type TopicStore interface {
 	GetCapacity() int
 }
 
-type StaticTopicStore struct {
+type MemoryTopicStore struct {
 	items map[int]*Topic
 	length int
 	capacity int
@@ -31,19 +31,19 @@ type StaticTopicStore struct {
 	sync.RWMutex
 }
 
-func NewStaticTopicStore(capacity int) *StaticTopicStore {
-	stmt, err := qgen.Builder.SimpleSelect("topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","")
+func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
+	stmt, err := qgen.Builder.SimpleSelect("topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &StaticTopicStore{
+	return &MemoryTopicStore{
 		items:make(map[int]*Topic),
 		capacity:capacity,
 		get:stmt,
 	}
 }
 
-func (sts *StaticTopicStore) Get(id int) (*Topic, error) {
+func (sts *MemoryTopicStore) Get(id int) (*Topic, error) {
 	sts.RLock()
 	item, ok := sts.items[id]
 	sts.RUnlock()
@@ -53,7 +53,7 @@ func (sts *StaticTopicStore) Get(id int) (*Topic, error) {
 	return item, sql.ErrNoRows
 }
 
-func (sts *StaticTopicStore) GetUnsafe(id int) (*Topic, error) {
+func (sts *MemoryTopicStore) GetUnsafe(id int) (*Topic, error) {
 	item, ok := sts.items[id]
 	if ok {
 		return item, nil
@@ -61,7 +61,7 @@ func (sts *StaticTopicStore) GetUnsafe(id int) (*Topic, error) {
 	return item, sql.ErrNoRows
 }
 
-func (sts *StaticTopicStore) CascadeGet(id int) (*Topic, error) {
+func (sts *MemoryTopicStore) CascadeGet(id int) (*Topic, error) {
 	sts.RLock()
 	topic, ok := sts.items[id]
 	sts.RUnlock()
@@ -77,13 +77,13 @@ func (sts *StaticTopicStore) CascadeGet(id int) (*Topic, error) {
 	return topic, err
 }
 
-func (sts *StaticTopicStore) BypassGet(id int) (*Topic, error) {
+func (sts *MemoryTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	return topic, err
 }
 
-func (sts *StaticTopicStore) Load(id int) error {
+func (sts *MemoryTopicStore) Load(id int) error {
 	topic := &Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
@@ -94,7 +94,7 @@ func (sts *StaticTopicStore) Load(id int) error {
 	return err
 }
 
-func (sts *StaticTopicStore) Set(item *Topic) error {
+func (sts *MemoryTopicStore) Set(item *Topic) error {
 	sts.Lock()
 	_, ok := sts.items[item.ID]
 	if ok {
@@ -110,7 +110,7 @@ func (sts *StaticTopicStore) Set(item *Topic) error {
 	return nil
 }
 
-func (sts *StaticTopicStore) Add(item *Topic) error {
+func (sts *MemoryTopicStore) Add(item *Topic) error {
 	if sts.length >= sts.capacity {
 		return ErrStoreCapacityOverflow
 	}
@@ -121,7 +121,7 @@ func (sts *StaticTopicStore) Add(item *Topic) error {
 	return nil
 }
 
-func (sts *StaticTopicStore) AddUnsafe(item *Topic) error {
+func (sts *MemoryTopicStore) AddUnsafe(item *Topic) error {
 	if sts.length >= sts.capacity {
 		return ErrStoreCapacityOverflow
 	}
@@ -130,7 +130,7 @@ func (sts *StaticTopicStore) AddUnsafe(item *Topic) error {
 	return nil
 }
 
-func (sts *StaticTopicStore) Remove(id int) error {
+func (sts *MemoryTopicStore) Remove(id int) error {
 	sts.Lock()
 	delete(sts.items,id)
 	sts.Unlock()
@@ -138,40 +138,35 @@ func (sts *StaticTopicStore) Remove(id int) error {
 	return nil
 }
 
-func (sts *StaticTopicStore) RemoveUnsafe(id int) error {
+func (sts *MemoryTopicStore) RemoveUnsafe(id int) error {
 	delete(sts.items,id)
 	sts.length--
 	return nil
 }
 
-func (sts *StaticTopicStore) AddLastTopic(item *Topic, fid int) error {
+func (sts *MemoryTopicStore) AddLastTopic(item *Topic, fid int) error {
 	// Coming Soon...
 	return nil
 }
 
-func (sts *StaticTopicStore) GetLength() int {
+func (sts *MemoryTopicStore) GetLength() int {
 	return sts.length
 }
 
-func (sts *StaticTopicStore) SetCapacity(capacity int) {
+func (sts *MemoryTopicStore) SetCapacity(capacity int) {
 	sts.capacity = capacity
 }
 
-func (sts *StaticTopicStore) GetCapacity() int {
+func (sts *MemoryTopicStore) GetCapacity() int {
 	return sts.capacity
 }
-
-//type DynamicTopicStore struct {
-//	items_expiries list.List
-//	items map[int]*Topic
-//}
 
 type SqlTopicStore struct {
 		get *sql.Stmt
 }
 
 func NewSqlTopicStore() *SqlTopicStore {
-	stmt, err := qgen.Builder.SimpleSelect("topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","")
+	stmt, err := qgen.Builder.SimpleSelect("topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}

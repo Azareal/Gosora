@@ -55,8 +55,8 @@ func gloinit() {
 	}
 	
 	if cache_topicuser == CACHE_STATIC {
-		users = NewStaticUserStore(user_cache_capacity)
-		topics = NewStaticTopicStore(topic_cache_capacity)
+		users = NewMemoryUserStore(user_cache_capacity)
+		topics = NewMemoryTopicStore(topic_cache_capacity)
 	} else {
 		users = NewSqlUserStore()
 		topics = NewSqlTopicStore()

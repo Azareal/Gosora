@@ -11,8 +11,6 @@ func init() {
 	)
 }
 
-
-
 type Mysql_Adapter struct
 {
 	Name string
@@ -210,7 +208,7 @@ func (adapter *Mysql_Adapter) Purge(name string, table string) (string, error) {
 	return "DELETE FROM `" + table + "`", nil
 }
 
-func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns string, where string, orderby string/*, offset int, maxCount int*/) (string, error) {
+func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -264,12 +262,16 @@ func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns st
 		querystr = querystr[0:len(querystr) - 1]
 	}
 	
+	if limit != "" {
+		querystr += " LIMIT " + limit
+	}
+	
 	querystr = strings.TrimSpace(querystr)
 	adapter.push_statement(name,querystr)
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string/*, offset int, maxCount int*/) (string, error) {
+func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -350,12 +352,16 @@ func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 		querystr = querystr[0:len(querystr) - 1]
 	}
 	
+	if limit != "" {
+		querystr += " LIMIT " + limit
+	}
+	
 	querystr = strings.TrimSpace(querystr)
 	adapter.push_statement(name,querystr)
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string/*, offset int, maxCount int*/) (string, error) {
+func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -436,12 +442,16 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 		querystr = querystr[0:len(querystr) - 1]
 	}
 	
+	if limit != "" {
+		querystr += " LIMIT " + limit
+	}
+	
 	querystr = strings.TrimSpace(querystr)
 	adapter.push_statement(name,querystr)
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where string/*, offset int, maxCount int*/) (string, error) {
+func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -470,6 +480,10 @@ func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where strin
 			querystr += " " + left + " " + loc.Operator + " " + right + " AND "
 		}
 		querystr = querystr[0:len(querystr) - 4]
+	}
+	
+	if limit != "" {
+		querystr += " LIMIT " + limit
 	}
 	
 	querystr = strings.TrimSpace(querystr)

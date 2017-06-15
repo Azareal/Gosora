@@ -51,92 +51,100 @@ func write_statements(adapter qgen.DB_Adapter) error {
 
 func write_selects(adapter qgen.DB_Adapter) error {
 	// url_prefix and url_name will be removed from this query in a later commit
-	adapter.SimpleSelect("get_user","users","name, group, is_super_admin, avatar, message, url_prefix, url_name, level","uid = ?","")
+	adapter.SimpleSelect("get_user","users","name, group, is_super_admin, avatar, message, url_prefix, url_name, level","uid = ?","","")
 		
 	// Looking for get_topic? Your statement is in another castle
 	
-	adapter.SimpleSelect("get_reply","replies","tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount","rid = ?","")
+	adapter.SimpleSelect("get_reply","replies","tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount","rid = ?","","")
 	
-	adapter.SimpleSelect("get_user_reply","users_replies","uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress","rid = ?","")
+	adapter.SimpleSelect("get_user_reply","users_replies","uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress","rid = ?","","")
 		
-	adapter.SimpleSelect("login","users","uid, name, password, salt","name = ?","")
+	adapter.SimpleSelect("login","users","uid, name, password, salt","name = ?","","")
 		
-	adapter.SimpleSelect("get_password","users","password,salt","uid = ?","")
+	adapter.SimpleSelect("get_password","users","password,salt","uid = ?","","")
 	
-	adapter.SimpleSelect("username_exists","users","name","name = ?","")
+	adapter.SimpleSelect("username_exists","users","name","name = ?","","")
 	
 	
-	adapter.SimpleSelect("get_settings","settings","name, content, type","","")
+	adapter.SimpleSelect("get_settings","settings","name, content, type","","","")
 	
-	adapter.SimpleSelect("get_setting","settings","content, type","name = ?","")
+	adapter.SimpleSelect("get_setting","settings","content, type","name = ?","","")
 	
-	adapter.SimpleSelect("get_full_setting","settings","name, type, constraints","name = ?","")
+	adapter.SimpleSelect("get_full_setting","settings","name, type, constraints","name = ?","","")
 	
-	adapter.SimpleSelect("get_full_settings","settings","name, content, type, constraints","","")
+	adapter.SimpleSelect("get_full_settings","settings","name, content, type, constraints","","","")
 	
-	adapter.SimpleSelect("get_groups","users_groups","gid, name, permissions, is_mod, is_admin, is_banned, tag","","")
+	adapter.SimpleSelect("get_groups","users_groups","gid, name, permissions, is_mod, is_admin, is_banned, tag","","","")
 	
-	adapter.SimpleSelect("get_forums","forums","fid, name, desc, active, preset, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","","fid ASC")
+	adapter.SimpleSelect("get_forums","forums","fid, name, desc, active, preset, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","","fid ASC","")
 	
-	adapter.SimpleSelect("get_forums_permissions","forums_permissions","gid, fid, permissions","","gid ASC, fid ASC")
+	adapter.SimpleSelect("get_forums_permissions","forums_permissions","gid, fid, permissions","","gid ASC, fid ASC","")
 	
-	adapter.SimpleSelect("get_plugins","plugins","uname, active","","")
+	adapter.SimpleSelect("get_plugins","plugins","uname, active","","","")
 	
-	adapter.SimpleSelect("get_themes","themes","uname, default","","")
+	adapter.SimpleSelect("get_themes","themes","uname, default","","","")
 	
-	adapter.SimpleSelect("is_plugin_active","plugins","active","uname = ?","")
+	adapter.SimpleSelect("is_plugin_active","plugins","active","uname = ?","","")
 	
-	adapter.SimpleSelect("get_users","users","uid, name, group, active, is_super_admin, avatar","","")
+	adapter.SimpleSelect("get_users","users","uid, name, group, active, is_super_admin, avatar","","","")
 	
-	adapter.SimpleSelect("is_theme_default","themes","default","uname = ?","")
+	adapter.SimpleSelect("is_theme_default","themes","default","uname = ?","","")
 	
-	adapter.SimpleSelect("get_modlogs","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","","")
+	adapter.SimpleSelect("get_modlogs","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","","","")
 	
-	adapter.SimpleSelect("get_reply_tid","replies","tid","rid = ?","")
+	adapter.SimpleSelect("get_reply_tid","replies","tid","rid = ?","","")
 	
-	adapter.SimpleSelect("get_topic_fid","topics","parentID","tid = ?","")
+	adapter.SimpleSelect("get_topic_fid","topics","parentID","tid = ?","","")
 	
-	adapter.SimpleSelect("get_user_reply_uid","users_replies","uid","rid = ?","")
+	adapter.SimpleSelect("get_user_reply_uid","users_replies","uid","rid = ?","","")
 	
-	adapter.SimpleSelect("has_liked_topic","likes","targetItem","sentBy = ? and targetItem = ? and targetType = 'topics'","")
+	adapter.SimpleSelect("has_liked_topic","likes","targetItem","sentBy = ? and targetItem = ? and targetType = 'topics'","","")
 	
-	adapter.SimpleSelect("has_liked_reply","likes","targetItem","sentBy = ? and targetItem = ? and targetType = 'replies'","")
+	adapter.SimpleSelect("has_liked_reply","likes","targetItem","sentBy = ? and targetItem = ? and targetType = 'replies'","","")
 	
-	adapter.SimpleSelect("get_user_name","users","name","uid = ?","")
+	adapter.SimpleSelect("get_user_name","users","name","uid = ?","","")
 	
-	adapter.SimpleSelect("get_user_rank","users","group, is_super_admin","uid = ?","")
+	adapter.SimpleSelect("get_user_rank","users","group, is_super_admin","uid = ?","","")
 	
-	adapter.SimpleSelect("get_user_active","users","active","uid = ?","")
+	adapter.SimpleSelect("get_user_active","users","active","uid = ?","","")
 	
-	adapter.SimpleSelect("get_user_group","users","group","uid = ?","")
+	adapter.SimpleSelect("get_user_group","users","group","uid = ?","","")
 	
-	adapter.SimpleSelect("get_emails_by_user","emails","email, validated, token","uid = ?","")
+	adapter.SimpleSelect("get_emails_by_user","emails","email, validated, token","uid = ?","","")
 	
-	adapter.SimpleSelect("get_topic_basic","topics","title, content","tid = ?","")
+	adapter.SimpleSelect("get_topic_basic","topics","title, content","tid = ?","","")
 	
-	adapter.SimpleSelect("get_activity_entry","activity_stream","actor, targetUser, event, elementType, elementID","asid = ?","")
+	adapter.SimpleSelect("get_activity_entry","activity_stream","actor, targetUser, event, elementType, elementID","asid = ?","","")
+	
+	adapter.SimpleSelect("forum_entry_exists","forums","fid","name = ''","fid ASC","0,1") // Is '' empty?
+	
+	adapter.SimpleSelect("group_entry_exists","users_groups","gid","name = ''","gid ASC","0,1") // Is '' empty?
 	
 	return nil
 }
 
 func write_left_joins(adapter qgen.DB_Adapter) error {
-	adapter.SimpleLeftJoin("get_topic_list","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC")
+	adapter.SimpleLeftJoin("get_topic_replies_offset","replies","users","replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType","replies.createdBy = users.uid","tid = ?","","?,?")
 	
-	adapter.SimpleLeftJoin("get_topic_user","topics","users","topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level","topics.createdBy = users.uid","tid = ?","")
+	adapter.SimpleLeftJoin("get_forum_topics_offset","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar","topics.createdBy = users.uid","topics.parentID = ?","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","?,?")
 	
-	adapter.SimpleLeftJoin("get_topic_by_reply","replies","topics","topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.data","replies.tid = topics.tid","rid = ?","")
+	adapter.SimpleLeftJoin("get_topic_list","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","")
 	
-	adapter.SimpleLeftJoin("get_topic_replies","replies","users","replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress","replies.createdBy = users.uid","tid = ?","")
+	adapter.SimpleLeftJoin("get_topic_user","topics","users","topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level","topics.createdBy = users.uid","tid = ?","","")
 	
-	adapter.SimpleLeftJoin("get_forum_topics","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","topics.parentID = ?","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc")
+	adapter.SimpleLeftJoin("get_topic_by_reply","replies","topics","topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.data","replies.tid = topics.tid","rid = ?","","")
 	
-	adapter.SimpleLeftJoin("get_profile_replies","users_replies","users","users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group","users_replies.createdBy = users.uid","users_replies.uid = ?","")
+	adapter.SimpleLeftJoin("get_topic_replies","replies","users","replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress","replies.createdBy = users.uid","tid = ?","","")
+	
+	adapter.SimpleLeftJoin("get_forum_topics","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","topics.parentID = ?","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc","")
+	
+	adapter.SimpleLeftJoin("get_profile_replies","users_replies","users","users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group","users_replies.createdBy = users.uid","users_replies.uid = ?","","")
 	
 	return nil
 }
 
 func write_inner_joins(adapter qgen.DB_Adapter) error {
-	adapter.SimpleInnerJoin("get_watchers","activity_stream","activity_subscriptions","activity_subscriptions.user","activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor","asid = ?","")
+	adapter.SimpleInnerJoin("get_watchers","activity_stream","activity_subscriptions","activity_subscriptions.user","activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor","asid = ?","","")
 	
 	return nil
 }
@@ -283,7 +291,7 @@ func write_deletes(adapter qgen.DB_Adapter) error {
 }
 
 func write_simple_counts(adapter qgen.DB_Adapter) error {
-	adapter.SimpleCount("report_exists","topics","data = ? and data != '' and parentID = 1")
+	adapter.SimpleCount("report_exists","topics","data = ? and data != '' and parentID = 1","")
 	
 	return nil
 }

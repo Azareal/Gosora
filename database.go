@@ -3,6 +3,11 @@ package main
 import "log"
 import "fmt"
 import "encoding/json"
+import "database/sql"
+
+var db *sql.DB
+var db_version string
+var db_collation string = "utf8mb4_general_ci"
 
 func init_database() (err error) {
   // Engine specific code
@@ -66,6 +71,7 @@ func init_database() (err error) {
 	if err != nil {
 		return err
 	}
+  fstore = NewStaticForumStore()
 
 	log.Print("Loading the settings.")
 	err = LoadSettings()

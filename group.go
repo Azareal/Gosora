@@ -31,6 +31,7 @@ type Group struct
 	CanSee []int // The IDs of the forums this group can see
 }
 
+var group_create_mutex sync.Mutex
 func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_banned bool) (int, error) {
 	var gid int
 	err := group_entry_exists_stmt.QueryRow().Scan(&gid)
@@ -47,23 +48,24 @@ func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_
 		if err != nil {
 			return gid, err
 		}
-		
+
 		groups[gid].Name = group_name
 		groups[gid].Tag = tag
 		groups[gid].Is_Banned = is_banned
 		groups[gid].Is_Mod = is_mod
 		groups[gid].Is_Admin = is_admin
-		
+
 		group_update_mutex.Unlock()
 		return gid, nil
 	}
-	
+
+	group_create_mutex.Lock()
 	var permstr string = "{}"
 	res, err := create_group_stmt.Exec(group_name, tag, is_admin, is_mod, is_banned, permstr)
 	if err != nil {
 		return 0, err
 	}
-	
+
 	gid64, err := res.LastInsertId()
 	if err != nil {
 		return 0, err
@@ -73,7 +75,8 @@ func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_
 	var blankForums []ForumPerms
 	var blankIntList []int
 	groups = append(groups, Group{gid,group_name,is_mod,is_admin,is_banned,tag,perms,[]byte(permstr),blankForums,blankIntList})
-	
+	group_create_mutex.Unlock()
+
 	// Generate the forum permissions based on the presets...
 	fdata := forums
 	permupdate_mutex.Lock()
@@ -88,7 +91,7 @@ func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_
 		} else {
 			thePreset = "members"
 		}
-		
+
 		permmap := preset_to_permmap(forum.Preset)
 		permitem := permmap[thePreset]
 		permitem.Overrides = true
@@ -101,7 +104,7 @@ func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_
 		if err != nil {
 			return gid, err
 		}
-		
+
 		err = rebuild_forum_permissions(forum.ID)
 		if err != nil {
 			return gid, err

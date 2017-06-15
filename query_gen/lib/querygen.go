@@ -56,6 +56,11 @@ type DB_Setter struct {
 	Expr []DB_Token // Simple expressions, the innards of functions are opaque for now.
 }
 
+type DB_Limit struct {
+	Offset string // ? or int
+	MaxCount string // ? or int
+}
+
 type DB_Adapter interface {
 	GetName() string
 	SimpleInsert(string,string,string,string) (string, error)
@@ -63,10 +68,10 @@ type DB_Adapter interface {
 	SimpleUpdate(string,string,string,string) (string, error)
 	SimpleDelete(string,string,string) (string, error)
 	Purge(string,string) (string, error)
-	SimpleSelect(string,string,string,string,string/*,int,int*/) (string, error)
-	SimpleLeftJoin(string,string,string,string,string,string,string/*,int,int*/) (string, error)
-	SimpleInnerJoin(string,string,string,string,string,string,string/*,int,int*/) (string, error)
-	SimpleCount(string,string,string/*,int,int*/) (string, error)
+	SimpleSelect(string,string,string,string,string,string) (string, error)
+	SimpleLeftJoin(string,string,string,string,string,string,string,string) (string, error)
+	SimpleInnerJoin(string,string,string,string,string,string,string,string) (string, error)
+	SimpleCount(string,string,string,string) (string, error)
 	Write() error
 	
 	// TO-DO: Add a simple query builder

@@ -243,6 +243,17 @@ func _process_set(setstr string) (setter []DB_Setter) {
 	return setter
 }
 
+func _process_limit(limitstr string) (limiter DB_Limit) {
+	halves := strings.Split(limitstr,",")
+	if len(halves) == 2 {
+		limiter.Offset = halves[0]
+		limiter.MaxCount = halves[1]
+	} else {
+		limiter.MaxCount = halves[0]
+	}
+	return limiter
+}
+
 func _is_op_byte(char byte) bool {
 	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
 }

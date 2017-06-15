@@ -41,16 +41,6 @@ type ForumSimple struct
 	Preset string
 }
 
-/*type ForumStore interface
-{
-	Get(int) (*Forum, error)
-	CascadeGet(int) (*Forum, error)
-	Update(Forum) error
-	CascadeUpdate(Forum) error
-	Delete(int) error
-	CascadeDelete(int) error
-}*/
-
 func LoadForums() error {
 	//if debug {
 		log.Print("Adding the uncategorised forum")
@@ -95,6 +85,7 @@ func LoadForums() error {
 }
 
 var forum_update_mutex sync.Mutex
+var forum_create_mutex sync.Mutex
 func create_forum(forum_name string, forum_desc string, active bool, preset string) (int, error) {
 	var fid int
 	err := forum_entry_exists_stmt.QueryRow().Scan(&fid)
@@ -115,6 +106,7 @@ func create_forum(forum_name string, forum_desc string, active bool, preset stri
 		return fid, nil
 	}
 
+	forum_create_mutex.Lock()
 	res, err := create_forum_stmt.Exec(forum_name, forum_desc, active, preset)
 	if err != nil {
 		return 0, err
@@ -127,15 +119,18 @@ func create_forum(forum_name string, forum_desc string, active bool, preset stri
 	fid = int(fid64)
 
 	forums = append(forums, Forum{fid,forum_name,forum_desc,active,preset,0,"",0,"",0,""})
+	forum_create_mutex.Unlock()
 	return fid, nil
 }
 
 func delete_forum(fid int) error {
+	forum_update_mutex.Lock()
 	_, err := delete_forum_stmt.Exec(fid)
 	if err != nil {
 		return err
 	}
 	forums[fid].Name = ""
+	forum_update_mutex.Unlock()
 	return nil
 }
 

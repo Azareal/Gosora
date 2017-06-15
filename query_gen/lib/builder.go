@@ -28,8 +28,8 @@ func (build *builder) SetAdapter(name string) error {
 	return nil
 }
 
-func (build *builder) SimpleSelect(table string, columns string, where string, orderby string/*, offset int, maxCount int*/) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleSelect("_builder", table, columns, where, orderby /*, offset, maxCount*/)
+func (build *builder) SimpleSelect(table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleSelect("_builder", table, columns, where, orderby, limit)
 	if err != nil {
 		return stmt, err
 	}
