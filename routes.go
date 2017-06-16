@@ -24,6 +24,8 @@ import "golang.org/x/crypto/bcrypt"
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
 var nList []string
+var hvars HeaderVars
+var extData ExtData
 var success_json_bytes []byte = []byte(`{"success":"1"}`)
 
 // GET functions
@@ -68,11 +70,11 @@ func route_fstatic(w http.ResponseWriter, r *http.Request){
 }*/
 
 func route_overview(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
-	pi := Page{"Overview",user,noticeList,tList,nil}
+	pi := Page{"Overview",user,headerVars,tList,nil}
 	err := templates.ExecuteTemplate(w,"overview.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
@@ -80,7 +82,7 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 }
 
 func route_custom_page(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -90,14 +92,14 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	err := templates.ExecuteTemplate(w,"page_" + name,Page{"Page",user,noticeList,tList,nil})
+	err := templates.ExecuteTemplate(w,"page_" + name,Page{"Page",user,headerVars,tList,nil})
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
 func route_topics(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -160,11 +162,15 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 	rows.Close()
 
-	pi := TopicsPage{"Topic List",user,noticeList,topicList,nil}
+	pi := TopicsPage{"Topic List",user,headerVars,topicList,extData}
 	if template_topics_handle != nil {
 		template_topics_handle(pi,w)
 	} else {
-		err = templates.ExecuteTemplate(w,"topics.html",pi)
+		mapping, ok := themes[defaultTheme].TemplatesMap["topic"]
+		if !ok {
+			mapping = "topic"
+		}
+		err = templates.ExecuteTemplate(w,mapping + ".html", pi)
 		if err != nil {
 			InternalError(err,w,r)
 		}
@@ -179,7 +185,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 		return
 	}
 
-	user, noticeList, ok := ForumSessionCheck(w,r,fid)
+	user, headerVars, ok := ForumSessionCheck(w,r,fid)
 	if !ok {
 		return
 	}
@@ -240,11 +246,15 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 	}
 	rows.Close()
 
-	pi := ForumPage{forums[fid].Name,user,noticeList,topicList,forums[fid],page,last_page,nil}
+	pi := ForumPage{forums[fid].Name,user,headerVars,topicList,forums[fid],page,last_page,extData}
 	if template_forum_handle != nil {
 		template_forum_handle(pi,w)
 	} else {
-		err = templates.ExecuteTemplate(w,"forum.html",pi)
+		mapping, ok := themes[defaultTheme].TemplatesMap["forum"]
+		if !ok {
+			mapping = "forum"
+		}
+		err = templates.ExecuteTemplate(w,mapping + ".html", pi)
 		if err != nil {
 			InternalError(err,w,r)
 		}
@@ -252,7 +262,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 }
 
 func route_forums(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -278,11 +288,15 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 		}
 	}
 
-	pi := ForumsPage{"Forum List",user,noticeList,forumList,nil}
+	pi := ForumsPage{"Forum List",user,headerVars,forumList,extData}
 	if template_forums_handle != nil {
 		template_forums_handle(pi,w)
 	} else {
-		err := templates.ExecuteTemplate(w,"forums.html",pi)
+		mapping, ok := themes[defaultTheme].TemplatesMap["forums"]
+		if !ok {
+			mapping = "forums"
+		}
+		err = templates.ExecuteTemplate(w,mapping + ".html", pi)
 		if err != nil {
 			InternalError(err,w,r)
 		}
@@ -312,7 +326,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	topic.Css = no_css_tmpl
 
-	user, noticeList, ok := ForumSessionCheck(w,r,topic.ParentID)
+	user, headerVars, ok := ForumSessionCheck(w,r,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -450,11 +464,15 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	rows.Close()
 
-	tpage := TopicPage{topic.Title,user,noticeList,replyList,topic,page,last_page,nil}
+	tpage := TopicPage{topic.Title,user,headerVars,replyList,topic,page,last_page,extData}
 	if template_topic_handle != nil {
 		template_topic_handle(tpage,w)
 	} else {
-		err = templates.ExecuteTemplate(w,"topic.html", tpage)
+		mapping, ok := themes[defaultTheme].TemplatesMap["topic"]
+		if !ok {
+			mapping = "topic"
+		}
+		err = templates.ExecuteTemplate(w,mapping + ".html", tpage)
 		if err != nil {
 			InternalError(err,w,r)
 		}
@@ -462,7 +480,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 }
 
 func route_profile(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -543,7 +561,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	ppage := ProfilePage{puser.Name + "'s Profile",user,noticeList,replyList,*puser,false}
+	ppage := ProfilePage{puser.Name + "'s Profile",user,headerVars,replyList,*puser,extData}
 	if template_profile_handle != nil {
 		template_profile_handle(ppage,w)
 	} else {
@@ -565,7 +583,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, sfid string){
 		}
 	}
 
-	user, noticeList, ok := ForumSessionCheck(w,r,fid)
+	user, headerVars, ok := ForumSessionCheck(w,r,fid)
 	if !ok {
 		return
 	}
@@ -582,7 +600,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, sfid string){
 		}
 	}
 
-	ctpage := CreateTopicPage{"Create Topic",user,noticeList,forumList,fid,nil}
+	ctpage := CreateTopicPage{"Create Topic",user,headerVars,forumList,fid,extData}
 	if template_create_topic_handle != nil {
 		template_create_topic_handle(ctpage,w)
 	} else {
@@ -1151,7 +1169,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 }
 
 func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1159,12 +1177,12 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	pi := Page{"Edit Password",user,noticeList,tList,nil}
+	pi := Page{"Edit Password",user,headerVars,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
 func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1222,13 +1240,13 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	noticeList = append(noticeList,"Your password was successfully updated")
-	pi := Page{"Edit Password",user,noticeList,tList,nil}
+	headerVars.NoticeList = append(headerVars.NoticeList,"Your password was successfully updated")
+	pi := Page{"Edit Password",user,headerVars,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
 func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1236,7 +1254,7 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	pi := Page{"Edit Avatar",user,noticeList,tList,nil}
+	pi := Page{"Edit Avatar",user,headerVars,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html",pi)
 }
 
@@ -1247,7 +1265,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(max_request_size))
 
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1328,13 +1346,13 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	noticeList = append(noticeList, "Your avatar was successfully updated")
-	pi := Page{"Edit Avatar",user,noticeList,tList,nil}
+	headerVars.NoticeList = append(headerVars.NoticeList, "Your avatar was successfully updated")
+	pi := Page{"Edit Avatar",user,headerVars,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
 
 func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1342,12 +1360,12 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
-	pi := Page{"Edit Username",user,noticeList,tList,user.Name}
+	pi := Page{"Edit Username",user,headerVars,tList,user.Name}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html",pi)
 }
 
 func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1375,13 +1393,13 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	noticeList = append(noticeList,"Your username was successfully updated")
-	pi := Page{"Edit Username",user,noticeList,tList,nil}
+	headerVars.NoticeList = append(headerVars.NoticeList,"Your username was successfully updated")
+	pi := Page{"Edit Username",user,headerVars,tList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
 }
 
 func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1424,14 +1442,14 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !enable_emails {
-		noticeList = append(noticeList,"The mail system is currently disabled.")
+		headerVars.NoticeList = append(headerVars.NoticeList,"The mail system is currently disabled.")
 	}
-	pi := Page{"Email Manager",user,noticeList,emailList,nil}
+	pi := Page{"Email Manager",user,headerVars,emailList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
 func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1497,10 +1515,10 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	}
 
 	if !enable_emails {
-		noticeList = append(noticeList,"The mail system is currently disabled.")
+		headerVars.NoticeList = append(headerVars.NoticeList,"The mail system is currently disabled.")
 	}
-	noticeList = append(noticeList,"Your email was successfully verified")
-	pi := Page{"Email Manager",user,noticeList,emailList,nil}
+	headerVars.NoticeList = append(headerVars.NoticeList,"Your email was successfully verified")
+	pi := Page{"Email Manager",user,headerVars,emailList,nil}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
@@ -1529,7 +1547,7 @@ func route_logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_login(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1537,7 +1555,7 @@ func route_login(w http.ResponseWriter, r *http.Request) {
 		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	pi := Page{"Login",user,noticeList,tList,nil}
+	pi := Page{"Login",user,headerVars,tList,nil}
 	templates.ExecuteTemplate(w,"login.html",pi)
 }
 
@@ -1633,7 +1651,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_register(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -1641,7 +1659,7 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	templates.ExecuteTemplate(w,"register.html",Page{"Registration",user,noticeList,tList,nil})
+	templates.ExecuteTemplate(w,"register.html",Page{"Registration",user,headerVars,tList,nil})
 }
 
 func route_register_submit(w http.ResponseWriter, r *http.Request) {

@@ -34,6 +34,7 @@ type Theme struct
 	URL string
 	Settings map[string]ThemeSetting
 	Templates []TemplateMapping
+	TemplatesMap map[string]string // TO-DO: Make template mapping work without the template compiler
 
 	// This variable should only be set and unset by the system, not the theme meta file
 	Active bool
@@ -71,6 +72,13 @@ func LoadThemes() error {
 		theme, ok := themes[uname]
 		if !ok {
 			continue
+		}
+
+		theme.TemplatesMap = make(map[string]string)
+		if theme.Templates != nil {
+			for _, themeTmpl := range theme.Templates {
+				theme.TemplatesMap[themeTmpl.Name] = themeTmpl.Source
+			}
 		}
 
 		if defaultThemeSwitch {
@@ -114,7 +122,6 @@ func init_themes() {
 		if err != nil {
 			log.Fatal(err)
 		}
-
 
 		theme.Active = false // Set this to false, just in case someone explicitly overrode this value in the JSON file
 
@@ -179,7 +186,7 @@ func map_theme_templates(theme Theme) {
 
 			dest_tmpl_ptr, ok := tmpl_ptr_map[themeTmpl.Name]
 			if !ok {
-				log.Fatal("The destination template doesn't exist!")
+				return
 			}
 			source_tmpl_ptr, ok := tmpl_ptr_map[themeTmpl.Source]
 			if !ok {

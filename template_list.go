@@ -6,9 +6,21 @@ var header_0 []byte = []byte(`<!doctype html>
 		<title>`)
 var header_1 []byte = []byte(`</title>
 		<link href="/static/main.css" rel="stylesheet" type="text/css">
+		`)
+var header_2 []byte = []byte(`
+		<link href="/static/`)
+var header_3 []byte = []byte(`.css" rel="stylesheet" type="text/css">
+		`)
+var header_4 []byte = []byte(`
 		<script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
+		`)
+var header_5 []byte = []byte(`
+		<script type="text/javascript" src="/static/`)
+var header_6 []byte = []byte(`.js"></script>
+		`)
+var header_7 []byte = []byte(`
 		<script type="text/javascript">var session = "`)
-var header_2 []byte = []byte(`";
+var header_8 []byte = []byte(`";
 		</script>
 		<script type="text/javascript" src="/static/global.js"></script>
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
@@ -51,11 +63,11 @@ var menu_7 []byte = []byte(`
 	<div style="clear: both;"></div>
 </div>
 `)
-var header_3 []byte = []byte(`
+var header_9 []byte = []byte(`
 <div id="back"><div id="main">
 `)
-var header_4 []byte = []byte(`<div class="alert">`)
-var header_5 []byte = []byte(`</div>`)
+var header_10 []byte = []byte(`<div class="alert">`)
+var header_11 []byte = []byte(`</div>`)
 var topic_0 []byte = []byte(`<div id="prevFloat" class="prev_button"><a class="prev_link" href="/topic/`)
 var topic_1 []byte = []byte(`?page=`)
 var topic_2 []byte = []byte(`">&lt;</a></div>`)

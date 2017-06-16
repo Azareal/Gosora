@@ -1,8 +1,8 @@
 package main
 
 import (
-//	"log"
-//	"fmt"
+	//"log"
+	//"fmt"
 	"strconv"
 	"net"
 	"net/http"
@@ -535,7 +535,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func route_ban(w http.ResponseWriter, r *http.Request) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := SessionCheck(w,r)
 	if !ok {
 		return
 	}
@@ -563,7 +563,7 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 	confirm_msg := "Are you sure you want to ban '" + uname + "'?"
 	yousure := AreYouSure{"/users/ban/submit/" + strconv.Itoa(uid),confirm_msg}
 
-	pi := Page{"Ban User",user,noticeList,tList,yousure}
+	pi := Page{"Ban User",user,headerVars,tList,yousure}
 	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }
 

@@ -351,7 +351,11 @@ $(document).ready(function(){
 		document.getElementById("back").className += " alertActive"
 	});
 
-	this.onkeyup = function(event){
+	$("input,textarea,select,option").keyup(function(event){
+		event.stopPropagation();
+	})
+
+	this.onkeyup = function(event) {
 		if(event.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
 		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
 	};

@@ -1,4 +1,4 @@
-/* AtomBB Cosmo Port. Copyright Azareal 2017 */
+/* AtomBB Cosmo Port. Copyright Azareal 2017 - 2018 */
 /* I'm currently converting the CSS over from one of my previous projects. Don't use this yet! */
 
 * {
@@ -182,8 +182,8 @@ hr { color: silver; border: 1px solid silver; }
 .rowhead, .colhead {
 	background: #ce2424;
 	background: -webkit-gradient(linear, 0 0, 0 bottom, from(#f97779), to(#ce2424));
-    background: -moz-linear-gradient(#f97779, #ce2424);
-    background: url('/static/fabric-base-simple-alpha.png'), linear-gradient(#f97779, #ce2424);
+	background: -moz-linear-gradient(#f97779, #ce2424);
+	background: url('/static/fabric-base-simple-alpha.png'), linear-gradient(#f97779, #ce2424);
 	border: 0px solid #b32424;
 	border-top-right-radius: 5px;
 	border-top-left-radius: 5px;
@@ -271,8 +271,8 @@ hr { color: silver; border: 1px solid silver; }
 	padding-bottom: 12px;
 	font-size: 16px;
 }
-.grid_istat { margin-bottom: 5px; }
 
+.grid_istat { margin-bottom: 5px; }
 .stat_green { background-color: lightgreen; border-color: green; }
 .stat_orange { background-color: #ffe4b3; border-color: orange; }
 .stat_red { background-color: #ffb2b2; border-color: red; }
@@ -654,8 +654,8 @@ blockquote p {
 	border-style: dotted;
 	border-color: #505050;
 	padding: 0px;
-    padding-left: 5px;
-    padding-right: 5px;
+	padding-left: 5px;
+	padding-right: 5px;
 	z-index: 100;
 }
 
@@ -670,62 +670,6 @@ blockquote p {
 .prev_button { left: 14px; }
 .next_button { right: 14px; }
 .head_tag_upshift { display: none !important; }
-
-/* Control Panel */
-.tag-mini {
-	margin-left: 0px;
-	padding-left: 0px;
-	padding-right: 0px;
-	padding-top: 2px;
-	padding-bottom: 2px;
-
-	color: black;
-	font-size: 12px;
-}
-
-.panel_tag {
-	padding-left: 0px;
-	padding-right: 0px;
-	border: none;
-	background: none;
-	color: #202020;
-	font-size: 14px;
-}
-
-.panel_floater { float: right; }
-#panel_groups > .rowitem > .panel_floater { float: none; }
-#panel_groups > .rowitem > .panel_floater > .panel_right_button { float: right; }
-#panel_forums > .rowitem > .panel_floater { float: none; }
-#panel_forums > .rowitem > .panel_floater > .panel_buttons { float: right; }
-
-.panel_rank_tag, .forum_preset, .forum_active {
-	float: none;
-	color: #202020 !important;
-	font-size: 11px;
-}
-.panel_rank_tag_admin:before { content: "Admins"; }
-.panel_rank_tag_mod:before { content: "Mods"; }
-.panel_rank_tag_banned:before { content: "Banned"; }
-.panel_rank_tag_guest:before { content: "Guests"; }
-.panel_rank_tag_member:before { content: "Members"; }
-
-.forum_preset_announce:after { content: "Announcements"; }
-.forum_preset_members:after { content: "Member Only"; }
-.forum_preset_staff:after { content: "Staff Only"; }
-.forum_preset_admins:after { content: "Admin Only"; }
-.forum_preset_archive:after { content: "Archive"; }
-.forum_preset_all:after { content: "Public"; }
-.forum_preset_custom, .forum_preset_ { display: none !important; }
-.forum_active_Hide:before { content: "Hidden"; }
-.forum_active_Hide + .forum_preset:before { content: " | "; }
-.forum_active_Show { display: none !important; }
-
-.perm_preset_no_access:before { content: "No Access"; color: maroon; }
-.perm_preset_read_only:before { content: "Read Only"; color: green; }
-.perm_preset_can_post:before { content: "Can Post"; color: green; }
-.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
-.perm_preset_custom:before { content: "Custom"; color: black; }
-.perm_preset_default:before { content: "Default"; }
 
 /* Responsive Layout */
 /* Anything that isn't a small mobile */

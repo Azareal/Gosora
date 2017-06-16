@@ -211,11 +211,8 @@ li a {
 	padding-bottom: 12px;
 	font-size: 16px;
 }
-.grid_istat {
-	/*margin-bottom: 10px;*/
-	margin-bottom: 5px;
-}
 
+.grid_istat { margin-bottom: 5px; }
 .stat_green { background-color: lightgreen; border-color: lightgreen; }
 .stat_orange { background-color: #ffe4b3; border-color: #ffe4b3; }
 .stat_red { background-color: #ffb2b2; border-color: #ffb2b2; }
@@ -336,21 +333,6 @@ button.username { position: relative; top: -0.25px; }
 .username.real_username:hover { color: black; }
 .post_item > .username { margin-top: 20px; display: inline-block; }
 
-.tag-mini {
-	text-transform: none;
-	margin-left: 0px;
-	padding-left: 3px;
-	padding-right: 3px;
-	padding-top: 1.5px;
-	padding-bottom: 0px;
-	color: #505050; /* 80,80,80 */
-	background-color: #FFFFFF;
-	border-style: dotted;
-	border-color: #505050; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
-	border-width: 1px;
-	font-size: 10px;
-}
-
 .post_item > .mod_button > button {
 	font-size: 15px;
 	color: #202020;
@@ -358,10 +340,7 @@ button.username { position: relative; top: -0.25px; }
 }
 .post_item > .mod_button > button:hover { opacity: 0.9; }
 
-.mod_button {
-	margin-right: 4px;
-	/*z-index: 10;*/
-}
+.mod_button { margin-right: 4px; }
 .like_label:before, .like_count_label:before { content: "😀"; }
 .like_count_label {
 	color: #505050;
@@ -469,44 +448,6 @@ button.username { position: relative; top: -0.25px; }
 	position: relative;
 	top: -2px;
 }
-
-/* Control Panel */
-
-.panel_upshift {
-	font-size: 18px;
-	position: relative;
-	top: -2px;
-}
-.panel_upshift:visited { color: black; }
-/*.panel_tag_upshift {
-	margin-left: 2px;
-	position: relative;
-	top:-3px;
-	color: #505050;
-}*/
-
-.panel_floater { float: right; }
-.panel_rank_tag_admin:before { content: "👑"; }
-.panel_rank_tag_mod:before { content: "👮"; }
-.panel_rank_tag_banned:before { content: "⛓️"; }
-.panel_rank_tag_guest:before { content: "👽"; }
-.panel_rank_tag_member:before { content: "👪"; }
-
-.forum_preset_announce:before { content: "📣"; }
-.forum_preset_members:before { content: "👪"; }
-.forum_preset_staff:before { content: "👮"; }
-.forum_preset_admins:before { content: "👑"; }
-.forum_preset_archive:before { content: "☠️"; }
-.forum_preset_all, .forum_preset_custom, .forum_preset_ { display: none !important; }
-.forum_active_Hide:before { content: "🕵️"; }
-.forum_active_Show { display: none !important; }
-
-.perm_preset_no_access:before { content: "No Access"; color: maroon; }
-.perm_preset_read_only:before { content: "Read Only"; color: green; }
-.perm_preset_can_post:before { content: "Can Post"; color: green; }
-.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
-.perm_preset_custom:before { content: "Custom"; color: black; }
-.perm_preset_default:before { content: "Default"; }
 
 @media (max-width: 880px) {
 	li {

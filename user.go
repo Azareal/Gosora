@@ -12,6 +12,8 @@ import (
 
 var guest_user User = User{ID:0,Group:6,Perms:GuestPerms}
 var SimpleSessionCheck func(http.ResponseWriter, *http.Request) (User,bool) = _simple_session_check
+var PanelSessionCheck func(http.ResponseWriter, *http.Request) (User,HeaderVars,bool) = _panel_session_check
+var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request) (User,bool) = _simple_panel_session_check
 
 type User struct
 {
@@ -105,10 +107,10 @@ func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (u
 	return user, success
 }
 
-func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, noticeList []string, success bool) {
+func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, headerVars HeaderVars, success bool) {
 	if !forum_exists(fid) {
 		NotFound(w,r)
-		return user, noticeList, false
+		return user, headerVars, false
 	}
 	user, success = SimpleSessionCheck(w,r)
 	fperms := groups[user.Group].Forums[fid]
@@ -133,17 +135,36 @@ func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user Us
 		}
 	}
 	if user.Is_Banned {
-		noticeList = append(noticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
+		headerVars.NoticeList = append(headerVars.NoticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
 	}
-	return user, noticeList, success
+	return user, headerVars, success
 }
 
-func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, noticeList []string, success bool) {
+// Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
+func _panel_session_check(w http.ResponseWriter, r *http.Request) (user User, headerVars HeaderVars, success bool) {
+	user, success = SimpleSessionCheck(w,r)
+	if !user.Is_Super_Mod {
+		NoPermissions(w,r,user)
+		return user, headerVars, false
+	}
+	headerVars.Stylesheets = append(headerVars.Stylesheets,"panel")
+	return user, headerVars, success
+}
+func _simple_panel_session_check(w http.ResponseWriter, r *http.Request) (user User, success bool) {
+	user, success = SimpleSessionCheck(w,r)
+	if !user.Is_Super_Mod {
+		NoPermissions(w,r,user)
+		return user, false
+	}
+	return user, success
+}
+
+func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, headerVars HeaderVars, success bool) {
 	user, success = SimpleSessionCheck(w,r)
 	if user.Is_Banned {
-		noticeList = append(noticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
+		headerVars.NoticeList = append(headerVars.NoticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
 	}
-	return user, noticeList, success
+	return user, headerVars, success
 }
 
 func _simple_session_check(w http.ResponseWriter, r *http.Request) (User,bool) {

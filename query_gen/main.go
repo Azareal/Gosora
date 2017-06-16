@@ -116,9 +116,9 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleSelect("get_activity_entry","activity_stream","actor, targetUser, event, elementType, elementID","asid = ?","","")
 	
-	adapter.SimpleSelect("forum_entry_exists","forums","fid","name = ''","fid ASC","0,1") // Is '' empty?
+	adapter.SimpleSelect("forum_entry_exists","forums","fid","name = ''","fid ASC","0,1")
 	
-	adapter.SimpleSelect("group_entry_exists","users_groups","gid","name = ''","gid ASC","0,1") // Is '' empty?
+	adapter.SimpleSelect("group_entry_exists","users_groups","gid","name = ''","gid ASC","0,1")
 	
 	return nil
 }

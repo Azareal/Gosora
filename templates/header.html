@@ -3,7 +3,13 @@
 	<head>
 		<title>{{.Title}}</title>
 		<link href="/static/main.css" rel="stylesheet" type="text/css">
+		{{range .Header.Stylesheets}}
+		<link href="/static/{{.}}.css" rel="stylesheet" type="text/css">
+		{{end}}
 		<script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
+		{{range .Header.Scripts}}
+		<script type="text/javascript" src="/static/{{.}}.js"></script>
+		{{end}}
 		<script type="text/javascript">var session = "{{.CurrentUser.Session}}";
 		</script>
 		<script type="text/javascript" src="/static/global.js"></script>
@@ -13,4 +19,4 @@
 		<div class="container">
 {{template "menu.html" .}}
 <div id="back"><div id="main">
-{{range .NoticeList}}<div class="alert">{{.}}</div>{{end}}
+{{range .Header.NoticeList}}<div class="alert">{{.}}</div>{{end}}

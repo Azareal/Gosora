@@ -503,8 +503,8 @@ button.username {
 	font-size: 30px;
 	border-width: 1px;
 	background-color: #FFFFFF;
-	border-style: dotted;
-	border-color: #505050;
+	border-style: solid;
+	border-color: #ccc;
 	padding: 0px;
 	padding-left: 5px;
 	padding-right: 5px;
@@ -525,73 +525,6 @@ button.username {
 	float: right;
 	position: relative;
 	top: -2px;
-}
-
-/* Control Panel */
-.panel_upshift:visited { color: black; }
-
-.tag-mini {
-	margin-left: 0px;
-	padding-left: 0px;
-	padding-right: 0px;
-	padding-top: 2px;
-	padding-bottom: 2px;
-
-	color: black;
-	font-size: 12px;
-}
-
-.panel_tag {
-	padding-left: 0px;
-	padding-right: 0px;
-	border: none;
-	background: none;
-	color: #202020;
-	font-size: 14px;
-}
-
-.panel_floater { float: right; }
-#panel_groups > .rowitem > .panel_floater { float: none; }
-#panel_groups > .rowitem > .panel_floater > .panel_right_button { float: right; }
-#panel_forums > .rowitem > .panel_floater { float: none; }
-#panel_forums > .rowitem > .panel_floater > .panel_buttons { float: right; }
-#panel_forums > .rowitem > span > .forum_name { margin-right: 4px; }
-#panel_forum_quick_perms > .formrow > .formitem > a { margin-right: 4px; }
-.forum_active > select { margin-bottom: 3px } /* Quick fix, need to properly patch this */
-
-.panel_rank_tag, .forum_preset, .forum_active {
-	float: none;
-	color: #202020 !important;
-	font-size: 11px;
-}
-.panel_rank_tag_admin:before { content: "Admins"; }
-.panel_rank_tag_mod:before { content: "Mods"; }
-.panel_rank_tag_banned:before { content: "Banned"; }
-.panel_rank_tag_guest:before { content: "Guests"; }
-.panel_rank_tag_member:before { content: "Members"; }
-
-.forum_preset_announce:after { content: "Announcements"; }
-.forum_preset_members:after { content: "Member Only"; }
-.forum_preset_staff:after { content: "Staff Only"; }
-.forum_preset_admins:after { content: "Admin Only"; }
-.forum_preset_archive:after { content: "Archive"; }
-.forum_preset_all:after { content: "Public"; }
-.forum_preset_custom, .forum_preset_ { display: none !important; }
-.forum_active_Hide:before { content: "Hidden"; }
-.forum_active_Hide + .forum_preset:before { content: " | "; }
-.forum_active_Show { display: none !important; }
-
-.perm_preset_no_access:before { content: "No Access"; color: maroon; }
-.perm_preset_read_only:before { content: "Read Only"; color: green; }
-.perm_preset_can_post:before { content: "Can Post"; color: green; }
-.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
-.perm_preset_custom:before { content: "Custom"; color: black; }
-.perm_preset_default:before { content: "Default"; }
-
-.theme_row > .panel_floater > .panel_right_button { margin-left: 5px; }
-
-@media(max-width: 1300px) {
-	.theme_row { background-image: none !important; }
 }
 
 /* The Media Queries */

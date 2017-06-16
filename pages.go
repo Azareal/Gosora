@@ -1,16 +1,31 @@
 package main
+
 //import "fmt"
+import "sync"
 import "bytes"
 import "strings"
 import "strconv"
 import "regexp"
 import "html/template"
 
+type HeaderVars struct
+{
+	NoticeList []string
+	Scripts []string
+	Stylesheets []string
+}
+
+type ExtData struct
+{
+	items map[string]interface{} // Key: pluginname
+	sync.RWMutex
+}
+
 type Page struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ItemList []interface{}
 	Something interface{}
 }
@@ -19,62 +34,62 @@ type TopicPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ItemList []Reply
 	Topic TopicUser
 	Page int
 	LastPage int
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type TopicsPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ItemList []TopicsRow
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type ForumPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ItemList []TopicUser
 	Forum Forum
 	Page int
 	LastPage int
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type ForumsPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ItemList []Forum
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type ProfilePage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ItemList []Reply
 	ProfileOwner User
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type CreateTopicPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ItemList []Forum
 	FID int
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type GridElement struct
@@ -92,32 +107,32 @@ type PanelDashboardPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	GridItems []GridElement
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type ThemesPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	PrimaryThemes []Theme
 	VariantThemes []Theme
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type EditGroupPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ID int
 	Name string
 	Tag string
 	Rank string
 	DisableRank bool
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type GroupForumPermPreset struct
@@ -130,14 +145,14 @@ type EditForumPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ID int
 	Name string
 	Desc string
 	Active bool
 	Preset string
 	Groups []GroupForumPermPreset
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type NameLangPair struct
@@ -157,12 +172,12 @@ type EditGroupPermsPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	ID int
 	Name string
 	LocalPerms []NameLangToggle
 	GlobalPerms []NameLangToggle
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type Log struct {
@@ -175,9 +190,9 @@ type LogsPage struct
 {
 	Title string
 	CurrentUser User
-	NoticeList []string
+	Header HeaderVars
 	Logs []Log
-	ExtData interface{}
+	ExtData ExtData
 }
 
 type PageSimple struct

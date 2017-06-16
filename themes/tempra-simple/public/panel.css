@@ -1,0 +1,52 @@
+/* Control Panel */
+
+.tag-mini {
+	text-transform: none;
+	margin-left: 0px;
+	padding-left: 3px;
+	padding-right: 3px;
+	padding-top: 1.5px;
+	padding-bottom: 0px;
+	color: #505050; /* 80,80,80 */
+	background-color: #FFFFFF;
+	border-style: dotted;
+	border-color: #505050; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
+	border-width: 1px;
+	font-size: 10px;
+}
+
+.panel_upshift {
+	font-size: 18px;
+	position: relative;
+	top: -2px;
+}
+.panel_upshift:visited { color: black; }
+/*.panel_tag_upshift {
+	margin-left: 2px;
+	position: relative;
+	top:-3px;
+	color: #505050;
+}*/
+
+.panel_floater { float: right; }
+.panel_rank_tag_admin:before { content: "👑"; }
+.panel_rank_tag_mod:before { content: "👮"; }
+.panel_rank_tag_banned:before { content: "⛓️"; }
+.panel_rank_tag_guest:before { content: "👽"; }
+.panel_rank_tag_member:before { content: "👪"; }
+
+.forum_preset_announce:before { content: "📣"; }
+.forum_preset_members:before { content: "👪"; }
+.forum_preset_staff:before { content: "👮"; }
+.forum_preset_admins:before { content: "👑"; }
+.forum_preset_archive:before { content: "☠️"; }
+.forum_preset_all, .forum_preset_custom, .forum_preset_ { display: none !important; }
+.forum_active_Hide:before { content: "🕵️"; }
+.forum_active_Show { display: none !important; }
+
+.perm_preset_no_access:before { content: "No Access"; color: maroon; }
+.perm_preset_read_only:before { content: "Read Only"; color: green; }
+.perm_preset_can_post:before { content: "Can Post"; color: green; }
+.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
+.perm_preset_custom:before { content: "Custom"; color: black; }
+.perm_preset_default:before { content: "Default"; }

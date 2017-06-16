@@ -20,12 +20,8 @@ import "github.com/shirou/gopsutil/cpu"
 import "github.com/shirou/gopsutil/mem"
 
 func route_panel(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
-		return
-	}
-	if !user.Is_Super_Mod {
-		NoPermissions(w,r,user)
 		return
 	}
 
@@ -189,16 +185,16 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	gridElements = append(gridElements, GridElement{"dash-visitorsperweek","2 visitors / week",13,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of unique visitors we've had over the last 7 days"*/})
 	gridElements = append(gridElements, GridElement{"dash-postsperuser","5 posts / user / week",14,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of posts made by each active user over the past week"*/})
 
-	pi := PanelDashboardPage{"Control Panel Dashboard",user,noticeList,gridElements,nil}
+	pi := PanelDashboardPage{"Control Panel Dashboard",user,headerVars,gridElements,extData}
 	templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
 }
 
 func route_panel_forums(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageForums {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -213,7 +209,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 			forumList = append(forumList,fadmin)
 		}
 	}
-	pi := Page{"Forum Manager",user,noticeList,forumList,nil}
+	pi := Page{"Forum Manager",user,headerVars,forumList,nil}
 	err := templates.ExecuteTemplate(w,"panel-forums.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
@@ -221,11 +217,11 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 }
 
 func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageForums {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -257,11 +253,11 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 }
 
 func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, sfid string){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageForums {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -284,16 +280,16 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, sfid stri
 	confirm_msg := "Are you sure you want to delete the '" + forums[fid].Name + "' forum?"
 	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
 
-	pi := Page{"Delete Forum",user,noticeList,tList,yousure}
+	pi := Page{"Delete Forum",user,headerVars,tList,yousure}
 	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }
 
 func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, sfid string) {
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageForums {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -321,11 +317,11 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, sf
 }
 
 func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string) {
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageForums {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -354,7 +350,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string
 		gplist = append(gplist,GroupForumPermPreset{group,forum_perms_to_group_forum_preset(group.Forums[fid])})
 	}
 
-	pi := EditForumPage{"Forum Editor",user,noticeList,forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,gplist,nil}
+	pi := EditForumPage{"Forum Editor",user,headerVars,forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,gplist,extData}
 	err = templates.ExecuteTemplate(w,"panel-forum-edit.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
@@ -362,11 +358,11 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string
 }
 
 func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid string) {
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageForums {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -442,11 +438,11 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 }
 
 func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request, sfid string){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageForums {
+	if !user.Perms.ManageForums {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -512,11 +508,11 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 }
 
 func route_panel_settings(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditSettings {
+	if !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -561,16 +557,16 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	pi := Page{"Setting Manager",user,noticeList,tList,settingList}
+	pi := Page{"Setting Manager",user,headerVars,tList,settingList}
 	templates.ExecuteTemplate(w,"panel-settings.html",pi)
 }
 
 func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditSettings {
+	if !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -609,16 +605,16 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 		}
 	}
 
-	pi := Page{"Edit Setting",user,noticeList,itemList,setting}
+	pi := Page{"Edit Setting",user,headerVars,itemList,setting}
 	templates.ExecuteTemplate(w,"panel-setting.html",pi)
 }
 
 func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname string) {
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditSettings {
+	if !user.Perms.EditSettings {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -668,11 +664,11 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname stri
 }
 
 func route_panel_plugins(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManagePlugins {
+	if !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -682,16 +678,16 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 		pluginList = append(pluginList,plugin)
 	}
 
-	pi := Page{"Plugin Manager",user,noticeList,pluginList,nil}
+	pi := Page{"Plugin Manager",user,headerVars,pluginList,nil}
 	templates.ExecuteTemplate(w,"panel-plugins.html",pi)
 }
 
 func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname string){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManagePlugins {
+	if !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -748,11 +744,11 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 }
 
 func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, uname string){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManagePlugins {
+	if !user.Perms.ManagePlugins {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -796,12 +792,8 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, unam
 }
 
 func route_panel_users(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
-		return
-	}
-	if !user.Is_Super_Mod {
-		NoPermissions(w,r,user)
 		return
 	}
 
@@ -843,7 +835,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	pi := Page{"User Manager",user,noticeList,userList,nil}
+	pi := Page{"User Manager",user,headerVars,userList,nil}
 	err = templates.ExecuteTemplate(w,"panel-users.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
@@ -851,13 +843,12 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 }
 
 func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
 
-	// Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
-	if !user.Is_Super_Mod || !user.Perms.EditUser {
+	if !user.Perms.EditUser {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -893,7 +884,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
 		groupList = append(groupList,group)
 	}
 
-	pi := Page{"User Editor",user,noticeList,groupList,targetUser}
+	pi := Page{"User Editor",user,headerVars,groupList,targetUser}
 	err = templates.ExecuteTemplate(w,"panel-user-edit.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
@@ -901,11 +892,11 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
 }
 
 func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid string){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditUser {
+	if !user.Perms.EditUser {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -996,12 +987,8 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid 
 }
 
 func route_panel_groups(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
-		return
-	}
-	if !user.Is_Super_Mod {
-		NoPermissions(w,r,user)
 		return
 	}
 
@@ -1034,16 +1021,16 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 	}
 	//fmt.Printf("%+v\n", groupList)
 
-	pi := Page{"Group Manager",user,noticeList,groupList,nil}
+	pi := Page{"Group Manager",user,headerVars,groupList,nil}
 	templates.ExecuteTemplate(w,"panel-groups.html",pi)
 }
 
 func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+	if !user.Perms.EditGroup {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -1085,7 +1072,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string
 
 	disable_rank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
-	pi := EditGroupPage{"Group Editor",user,noticeList,group.ID,group.Name,group.Tag,rank,disable_rank,nil}
+	pi := EditGroupPage{"Group Editor",user,headerVars,group.ID,group.Name,group.Tag,rank,disable_rank,extData}
 	err = templates.ExecuteTemplate(w,"panel-group-edit.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
@@ -1093,11 +1080,11 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string
 }
 
 func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid string){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+	if !user.Perms.EditGroup {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -1158,7 +1145,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid 
 	globalPerms = append(globalPerms, NameLangToggle{"ViewAdminLogs",GetGlobalPermPhrase("ViewAdminLogs"),group.Perms.ViewAdminLogs})
 	globalPerms = append(globalPerms, NameLangToggle{"ViewIPs",GetGlobalPermPhrase("ViewIPs"),group.Perms.ViewIPs})
 
-	pi := EditGroupPermsPage{"Group Editor",user,noticeList,group.ID,group.Name,localPerms,globalPerms,nil}
+	pi := EditGroupPermsPage{"Group Editor",user,headerVars,group.ID,group.Name,localPerms,globalPerms,extData}
 	err = templates.ExecuteTemplate(w,"panel-group-edit-perms.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
@@ -1166,11 +1153,11 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid 
 }
 
 func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid string){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+	if !user.Perms.EditGroup {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -1298,11 +1285,11 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 }
 
 func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request, sgid string){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+	if !user.Perms.EditGroup {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -1374,11 +1361,11 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 }
 
 func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.EditGroup {
+	if !user.Perms.EditGroup {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -1425,11 +1412,11 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
 }
 
 func route_panel_themes(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageThemes {
+	if !user.Perms.ManageThemes {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -1447,7 +1434,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 
 	}
 
-	pi := ThemesPage{"Theme Manager",user,noticeList,pThemeList,vThemeList,nil}
+	pi := ThemesPage{"Theme Manager",user,headerVars,pThemeList,vThemeList,extData}
 	err := templates.ExecuteTemplate(w,"panel-themes.html",pi)
 	if err != nil {
 		log.Print(err)
@@ -1455,11 +1442,11 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 }
 
 func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname string){
-	user, ok := SimpleSessionCheck(w,r)
+	user, ok := SimplePanelSessionCheck(w,r)
 	if !ok {
 		return
 	}
-	if !user.Is_Super_Mod || !user.Perms.ManageThemes {
+	if !user.Perms.ManageThemes {
 		NoPermissions(w,r,user)
 		return
 	}
@@ -1531,12 +1518,8 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 }
 
 func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
-	user, noticeList, ok := SessionCheck(w,r)
+	user, headerVars, ok := PanelSessionCheck(w,r)
 	if !ok {
-		return
-	}
-	if !user.Is_Super_Mod {
-		NoPermissions(w,r,user)
 		return
 	}
 
@@ -1626,7 +1609,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	pi := LogsPage{"Moderation Logs",user,noticeList,logs,nil}
+	pi := LogsPage{"Moderation Logs",user,headerVars,logs,extData}
 	err = templates.ExecuteTemplate(w,"panel-modlogs.html",pi)
 	if err != nil {
 		log.Print(err)

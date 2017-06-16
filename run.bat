@@ -6,7 +6,6 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
-
 echo Building the router generator
 go build ./router_gen
 if %errorlevel% neq 0 (
