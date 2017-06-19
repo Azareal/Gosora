@@ -6,6 +6,51 @@ import "errors"
 var DB_Registry []DB_Adapter
 var No_Adapter = errors.New("This adapter doesn't exist")
 
+type DB_Select struct
+{
+	Table string
+	Columns string
+	Where string
+	Orderby string
+	Limit string
+}
+
+type DB_Join struct
+{
+	Table1 string
+	Table2 string
+	Columns string
+	Joiners string
+	Where string
+	Orderby string
+	Limit string
+}
+
+type DB_Insert struct
+{
+	Table string
+	Columns string
+	Fields string
+}
+
+/*type DB_Select struct
+{
+	Name string
+	Table string
+	Columns []DB_Column
+	Where []DB_Where
+	Orderby []DB_Order
+	Limit DB_Limit
+}
+
+type DB_Insert struct
+{
+	Name string
+	Table string
+	Columns []DB_Column
+	Fields []DB_Field
+}*/
+
 type DB_Column struct
 {
 	Table string
@@ -22,13 +67,7 @@ type DB_Field struct
 
 type DB_Where struct
 {
-	LeftTable string
-	LeftColumn string
-	RightTable string
-	RightColumn string
-	Operator string
-	LeftType string
-	RightType string
+	Expr []DB_Token // Simple expressions, the innards of functions are opaque for now.
 }
 
 type DB_Joiner struct
@@ -71,6 +110,8 @@ type DB_Adapter interface {
 	SimpleSelect(string,string,string,string,string,string) (string, error)
 	SimpleLeftJoin(string,string,string,string,string,string,string,string) (string, error)
 	SimpleInnerJoin(string,string,string,string,string,string,string,string) (string, error)
+	SimpleInsertSelect(string,DB_Insert,DB_Select) (string,error)
+	SimpleInsertInnerJoin(string,DB_Insert,DB_Join) (string,error)
 	SimpleCount(string,string,string,string) (string, error)
 	Write() error
 	

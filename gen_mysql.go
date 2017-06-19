@@ -21,6 +21,7 @@ var get_forums_stmt *sql.Stmt
 var get_forums_permissions_stmt *sql.Stmt
 var get_plugins_stmt *sql.Stmt
 var get_themes_stmt *sql.Stmt
+var get_widgets_stmt *sql.Stmt
 var is_plugin_active_stmt *sql.Stmt
 var get_users_stmt *sql.Stmt
 var is_theme_default_stmt *sql.Stmt
@@ -109,6 +110,8 @@ var delete_topic_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
 var delete_forum_perms_by_forum_stmt *sql.Stmt
 var report_exists_stmt *sql.Stmt
+var add_forum_perms_to_forum_admins_stmt *sql.Stmt
+var notify_watchers_stmt *sql.Stmt
 
 func gen_mysql() (err error) {
 	if debug {
@@ -205,6 +208,12 @@ func gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing get_widgets statement.")
+	get_widgets_stmt, err = db.Prepare("SELECT `position`,`side`,`type`,`active`,`location`,`data` FROM `widgets` ORDER BY position ASC")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing is_plugin_active statement.")
 	is_plugin_active_stmt, err = db.Prepare("SELECT `active` FROM `plugins` WHERE `uname` = ?")
 	if err != nil {
@@ -248,13 +257,13 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing has_liked_topic statement.")
-	has_liked_topic_stmt, err = db.Prepare("SELECT `targetItem` FROM `likes` WHERE `sentBy` = ? AND  `targetItem` = ? AND  `targetType` = 'topics'")
+	has_liked_topic_stmt, err = db.Prepare("SELECT `targetItem` FROM `likes` WHERE `sentBy` = ? AND `targetItem` = ? AND `targetType` = 'topics'")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing has_liked_reply statement.")
-	has_liked_reply_stmt, err = db.Prepare("SELECT `targetItem` FROM `likes` WHERE `sentBy` = ? AND  `targetItem` = ? AND  `targetType` = 'replies'")
+	has_liked_reply_stmt, err = db.Prepare("SELECT `targetItem` FROM `likes` WHERE `sentBy` = ? AND `targetItem` = ? AND `targetType` = 'replies'")
 	if err != nil {
 		return err
 	}
@@ -302,25 +311,25 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing forum_entry_exists statement.")
-	forum_entry_exists_stmt, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = ''  ORDER BY fid ASC LIMIT 0,1")
+	forum_entry_exists_stmt, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = '' ORDER BY fid ASC LIMIT 0,1")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing group_entry_exists statement.")
-	group_entry_exists_stmt, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = ''  ORDER BY gid ASC LIMIT 0,1")
+	group_entry_exists_stmt, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = '' ORDER BY gid ASC LIMIT 0,1")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing get_topic_replies_offset statement.")
-	get_topic_replies_offset_stmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ?  LIMIT ?,?")
+	get_topic_replies_offset_stmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ? LIMIT ?,?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing get_forum_topics_offset statement.")
-	get_forum_topics_offset_stmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`lastReplyAt`,`topics`.`parentID`,`topics`.`postCount`,`topics`.`likeCount`,`users`.`name`,`users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ?  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC LIMIT ?,?")
+	get_forum_topics_offset_stmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`lastReplyAt`,`topics`.`parentID`,`topics`.`postCount`,`topics`.`likeCount`,`users`.`name`,`users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ? ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC LIMIT ?,?")
 	if err != nil {
 		return err
 	}
@@ -350,7 +359,7 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing get_forum_topics statement.")
-	get_forum_topics_stmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`lastReplyAt`,`topics`.`parentID`,`users`.`name`,`users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ?  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
+	get_forum_topics_stmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`lastReplyAt`,`topics`.`parentID`,`users`.`name`,`users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ? ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
 	if err != nil {
 		return err
 	}
@@ -482,223 +491,223 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing add_replies_to_topic statement.")
-	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyAt` = NOW() WHERE `tid` = ? ")
+	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyAt` = NOW() WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing remove_replies_from_topic statement.")
-	remove_replies_from_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` - ? WHERE `tid` = ? ")
+	remove_replies_from_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` - ? WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing add_topics_to_forum statement.")
-	add_topics_to_forum_stmt, err = db.Prepare("UPDATE `forums` SET `topicCount` = `topicCount` + ? WHERE `fid` = ? ")
+	add_topics_to_forum_stmt, err = db.Prepare("UPDATE `forums` SET `topicCount` = `topicCount` + ? WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing remove_topics_from_forum statement.")
-	remove_topics_from_forum_stmt, err = db.Prepare("UPDATE `forums` SET `topicCount` = `topicCount` - ? WHERE `fid` = ? ")
+	remove_topics_from_forum_stmt, err = db.Prepare("UPDATE `forums` SET `topicCount` = `topicCount` - ? WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_forum_cache statement.")
-	update_forum_cache_stmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = NOW() WHERE `fid` = ? ")
+	update_forum_cache_stmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = NOW() WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing add_likes_to_topic statement.")
-	add_likes_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `likeCount` = `likeCount` + ? WHERE `tid` = ? ")
+	add_likes_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `likeCount` = `likeCount` + ? WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing add_likes_to_reply statement.")
-	add_likes_to_reply_stmt, err = db.Prepare("UPDATE `replies` SET `likeCount` = `likeCount` + ? WHERE `rid` = ? ")
+	add_likes_to_reply_stmt, err = db.Prepare("UPDATE `replies` SET `likeCount` = `likeCount` + ? WHERE `rid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing edit_topic statement.")
-	edit_topic_stmt, err = db.Prepare("UPDATE `topics` SET `title` = ?,`content` = ?,`parsed_content` = ?,`is_closed` = ? WHERE `tid` = ? ")
+	edit_topic_stmt, err = db.Prepare("UPDATE `topics` SET `title` = ?,`content` = ?,`parsed_content` = ?,`is_closed` = ? WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing edit_reply statement.")
-	edit_reply_stmt, err = db.Prepare("UPDATE `replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ? ")
+	edit_reply_stmt, err = db.Prepare("UPDATE `replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing stick_topic statement.")
-	stick_topic_stmt, err = db.Prepare("UPDATE `topics` SET `sticky` = 1 WHERE `tid` = ? ")
+	stick_topic_stmt, err = db.Prepare("UPDATE `topics` SET `sticky` = 1 WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing unstick_topic statement.")
-	unstick_topic_stmt, err = db.Prepare("UPDATE `topics` SET `sticky` = 0 WHERE `tid` = ? ")
+	unstick_topic_stmt, err = db.Prepare("UPDATE `topics` SET `sticky` = 0 WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_last_ip statement.")
-	update_last_ip_stmt, err = db.Prepare("UPDATE `users` SET `last_ip` = ? WHERE `uid` = ? ")
+	update_last_ip_stmt, err = db.Prepare("UPDATE `users` SET `last_ip` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_session statement.")
-	update_session_stmt, err = db.Prepare("UPDATE `users` SET `session` = ? WHERE `uid` = ? ")
+	update_session_stmt, err = db.Prepare("UPDATE `users` SET `session` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing logout statement.")
-	logout_stmt, err = db.Prepare("UPDATE `users` SET `session` = '' WHERE `uid` = ? ")
+	logout_stmt, err = db.Prepare("UPDATE `users` SET `session` = '' WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing set_password statement.")
-	set_password_stmt, err = db.Prepare("UPDATE `users` SET `password` = ?,`salt` = ? WHERE `uid` = ? ")
+	set_password_stmt, err = db.Prepare("UPDATE `users` SET `password` = ?,`salt` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing set_avatar statement.")
-	set_avatar_stmt, err = db.Prepare("UPDATE `users` SET `avatar` = ? WHERE `uid` = ? ")
+	set_avatar_stmt, err = db.Prepare("UPDATE `users` SET `avatar` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing set_username statement.")
-	set_username_stmt, err = db.Prepare("UPDATE `users` SET `name` = ? WHERE `uid` = ? ")
+	set_username_stmt, err = db.Prepare("UPDATE `users` SET `name` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing change_group statement.")
-	change_group_stmt, err = db.Prepare("UPDATE `users` SET `group` = ? WHERE `uid` = ? ")
+	change_group_stmt, err = db.Prepare("UPDATE `users` SET `group` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing activate_user statement.")
-	activate_user_stmt, err = db.Prepare("UPDATE `users` SET `active` = 1 WHERE `uid` = ? ")
+	activate_user_stmt, err = db.Prepare("UPDATE `users` SET `active` = 1 WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_user_level statement.")
-	update_user_level_stmt, err = db.Prepare("UPDATE `users` SET `level` = ? WHERE `uid` = ? ")
+	update_user_level_stmt, err = db.Prepare("UPDATE `users` SET `level` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing increment_user_score statement.")
-	increment_user_score_stmt, err = db.Prepare("UPDATE `users` SET `score` = `score` + ? WHERE `uid` = ? ")
+	increment_user_score_stmt, err = db.Prepare("UPDATE `users` SET `score` = `score` + ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing increment_user_posts statement.")
-	increment_user_posts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ? WHERE `uid` = ? ")
+	increment_user_posts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing increment_user_bigposts statement.")
-	increment_user_bigposts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ?,`bigposts` = `bigposts` + ? WHERE `uid` = ? ")
+	increment_user_bigposts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ?,`bigposts` = `bigposts` + ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing increment_user_megaposts statement.")
-	increment_user_megaposts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ?,`bigposts` = `bigposts` + ?,`megaposts` = `megaposts` + ? WHERE `uid` = ? ")
+	increment_user_megaposts_stmt, err = db.Prepare("UPDATE `users` SET `posts` = `posts` + ?,`bigposts` = `bigposts` + ?,`megaposts` = `megaposts` + ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing increment_user_topics statement.")
-	increment_user_topics_stmt, err = db.Prepare("UPDATE `users` SET `topics` = `topics` + ? WHERE `uid` = ? ")
+	increment_user_topics_stmt, err = db.Prepare("UPDATE `users` SET `topics` = `topics` + ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing edit_profile_reply statement.")
-	edit_profile_reply_stmt, err = db.Prepare("UPDATE `users_replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ? ")
+	edit_profile_reply_stmt, err = db.Prepare("UPDATE `users_replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing delete_forum statement.")
-	delete_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = '',`active` = 0 WHERE `fid` = ? ")
+	delete_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = '',`active` = 0 WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_forum statement.")
-	update_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = ?,`desc` = ?,`active` = ?,`preset` = ? WHERE `fid` = ? ")
+	update_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = ?,`desc` = ?,`active` = ?,`preset` = ? WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_setting statement.")
-	update_setting_stmt, err = db.Prepare("UPDATE `settings` SET `content` = ? WHERE `name` = ? ")
+	update_setting_stmt, err = db.Prepare("UPDATE `settings` SET `content` = ? WHERE `name` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_plugin statement.")
-	update_plugin_stmt, err = db.Prepare("UPDATE `plugins` SET `active` = ? WHERE `uname` = ? ")
+	update_plugin_stmt, err = db.Prepare("UPDATE `plugins` SET `active` = ? WHERE `uname` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_theme statement.")
-	update_theme_stmt, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ? ")
+	update_theme_stmt, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_user statement.")
-	update_user_stmt, err = db.Prepare("UPDATE `users` SET `name` = ?,`email` = ?,`group` = ? WHERE `uid` = ? ")
+	update_user_stmt, err = db.Prepare("UPDATE `users` SET `name` = ?,`email` = ?,`group` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_group_perms statement.")
-	update_group_perms_stmt, err = db.Prepare("UPDATE `users_groups` SET `permissions` = ? WHERE `gid` = ? ")
+	update_group_perms_stmt, err = db.Prepare("UPDATE `users_groups` SET `permissions` = ? WHERE `gid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_group_rank statement.")
-	update_group_rank_stmt, err = db.Prepare("UPDATE `users_groups` SET `is_admin` = ?,`is_mod` = ?,`is_banned` = ? WHERE `gid` = ? ")
+	update_group_rank_stmt, err = db.Prepare("UPDATE `users_groups` SET `is_admin` = ?,`is_mod` = ?,`is_banned` = ? WHERE `gid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_group statement.")
-	update_group_stmt, err = db.Prepare("UPDATE `users_groups` SET `name` = ?,`tag` = ? WHERE `gid` = ? ")
+	update_group_stmt, err = db.Prepare("UPDATE `users_groups` SET `name` = ?,`tag` = ? WHERE `gid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing update_email statement.")
-	update_email_stmt, err = db.Prepare("UPDATE `emails` SET `email` = ?,`uid` = ?,`validated` = ?,`token` = ? WHERE `email` = ? ")
+	update_email_stmt, err = db.Prepare("UPDATE `emails` SET `email` = ?,`uid` = ?,`validated` = ?,`token` = ? WHERE `email` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing verify_email statement.")
-	verify_email_stmt, err = db.Prepare("UPDATE `emails` SET `validated` = 1,`token` = '1' WHERE `email` = ? ")
+	verify_email_stmt, err = db.Prepare("UPDATE `emails` SET `validated` = 1,`token` = '' WHERE `email` = ?")
 	if err != nil {
 		return err
 	}
@@ -728,7 +737,19 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing report_exists statement.")
-	report_exists_stmt, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `topics` WHERE `data` = ? AND  `data` != '' AND  `parentID` = 1")
+	report_exists_stmt, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `topics` WHERE `data` = ? AND `data` != '' AND `parentID` = 1")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_forum_perms_to_forum_admins statement.")
+	add_forum_perms_to_forum_admins_stmt, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) SELECT `gid`, ? AS `fid`, ? AS `preset`, ? AS `permissions` FROM `users_groups` WHERE `is_admin` = 1")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing notify_watchers statement.")
+	notify_watchers_stmt, err = db.Prepare("INSERT INTO `activity_stream_matches`(`watcher`,`asid`) SELECT `activity_subscriptions`.`user`, `activity_stream`.`asid` FROM `activity_stream` INNER JOIN `activity_subscriptions` ON `activity_subscriptions`.`targetType` = `activity_stream`.`elementType` AND `activity_subscriptions`.`targetID` = `activity_stream`.`elementID` AND `activity_subscriptions`.`user` != `activity_stream`.`actor`  WHERE `asid` = ?")
 	if err != nil {
 		return err
 	}

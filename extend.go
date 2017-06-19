@@ -49,7 +49,7 @@ type Plugin struct
 	Init func()
 	Activate func()error
 	Deactivate func()
-	
+
 	Hooks map[string]int
 }
 
@@ -65,7 +65,7 @@ func NewPlugin(uname string, name string, author string, url string, settings st
 		Init: init,
 		Activate: activate,
 		Deactivate: deactivate,
-		
+
 		/*
 		The Active field should never be altered by a plugin. It's used internally by the software to determine whether an admin has enabled a plugin or not and whether to run it. This will be overwritten by the user's preference.
 		*/
@@ -118,7 +118,11 @@ func init_plugins() {
 		log.Print("Added plugin " + name)
 		if body.Active {
 			log.Print("Initialised plugin " + name)
-			plugins[name].Init()
+			if plugins[name].Init != nil {
+				plugins[name].Init()
+			} else {
+				log.Print("Plugin " + name + " doesn't have an initialiser.")
+			}
 		}
 	}
 	plugins_inited = true

@@ -135,24 +135,23 @@ func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string
 	// Remove the trailing comma
 	querystr = querystr[0:len(querystr) - 1]
 	
+	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
 		for _, loc := range _process_where(where) {
-			var left, right string
-			
-			if loc.LeftType == "column" {
-				left = "`" + loc.LeftColumn + "`"
-			} else {
-				left = loc.LeftColumn
+			for _, token := range loc.Expr {
+				switch(token.Type) {
+					case "function","operator","number","substitute":
+						querystr += " " + token.Contents + ""
+					case "column":
+						querystr += " `" + token.Contents + "`"
+					case "string":
+						querystr += " '" + token.Contents + "'"
+					default:
+						panic("This token doesn't exist o_o")
+				}
 			}
-			
-			if loc.RightType == "column" {
-				right = "`" + loc.RightColumn + "`"
-			} else {
-				right = loc.RightColumn
-			}
-			
-			querystr += " " + left + " " + loc.Operator + " " + right + " AND "
+			querystr += " AND"
 		}
 		querystr = querystr[0:len(querystr) - 4]
 	}
@@ -173,22 +172,22 @@ func (adapter *Mysql_Adapter) SimpleDelete(name string, table string, where stri
 	}
 	
 	var querystr string = "DELETE FROM `" + table + "` WHERE"
+	
+	// Add support for BETWEEN x.x
 	for _, loc := range _process_where(where) {
-		var left, right string
-		
-		if loc.LeftType == "column" {
-			left = "`" + loc.LeftColumn + "`"
-		} else {
-			left = loc.LeftColumn
+		for _, token := range loc.Expr {
+			switch(token.Type) {
+				case "function","operator","number","substitute":
+					querystr += " " + token.Contents + ""
+				case "column":
+					querystr += " `" + token.Contents + "`"
+				case "string":
+					querystr += " '" + token.Contents + "'"
+				default:
+					panic("This token doesn't exist o_o")
+			}
 		}
-		
-		if loc.RightType == "column" {
-			right = "`" + loc.RightColumn + "`"
-		} else {
-			right = loc.RightColumn
-		}
-		
-		querystr += " " + left + " " + loc.Operator + " " + right + " AND "
+		querystr += " AND"
 	}
 	
 	querystr = strings.TrimSpace(querystr[0:len(querystr) - 4])
@@ -232,24 +231,24 @@ func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns st
 	querystr = querystr[0:len(querystr) - 1]
 	
 	querystr += " FROM `" + table + "`"
+	
+	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
 		for _, loc := range _process_where(where) {
-			var left, right string
-			
-			if loc.LeftType == "column" {
-				left = "`" + loc.LeftColumn + "`"
-			} else {
-				left = loc.LeftColumn
+			for _, token := range loc.Expr {
+				switch(token.Type) {
+					case "function","operator","number","substitute":
+						querystr += " " + token.Contents + ""
+					case "column":
+						querystr += " `" + token.Contents + "`"
+					case "string":
+						querystr += " '" + token.Contents + "'"
+					default:
+						panic("This token doesn't exist o_o")
+				}
 			}
-			
-			if loc.RightType == "column" {
-				right = "`" + loc.RightColumn + "`"
-			} else {
-				right = loc.RightColumn
-			}
-			
-			querystr += " " + left + " " + loc.Operator + " " + right + " AND "
+			querystr += " AND"
 		}
 		querystr = querystr[0:len(querystr) - 4]
 	}
@@ -318,28 +317,28 @@ func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 	// Remove the trailing AND
 	querystr = querystr[0:len(querystr) - 4]
 	
+	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
 		for _, loc := range _process_where(where) {
-			var left, right string
-			
-			if loc.LeftTable != "" {
-				left = "`" + loc.LeftTable + "`.`" + loc.LeftColumn + "`"
-			} else if loc.LeftType == "column" {
-				left = "`" + loc.LeftColumn + "`"
-			} else {
-				left = loc.LeftColumn
+			for _, token := range loc.Expr {
+				switch(token.Type) {
+					case "function","operator","number","substitute":
+						querystr += " " + token.Contents + ""
+					case "column":
+						halves := strings.Split(token.Contents,".")
+						if len(halves) == 2 {
+							querystr += " `" + halves[0] + "`.`" + halves[1] + "`"
+						} else {
+							querystr += " `" + token.Contents + "`"
+						}
+					case "string":
+						querystr += " '" + token.Contents + "'"
+					default:
+						panic("This token doesn't exist o_o")
+				}
 			}
-			
-			if loc.RightTable != "" {
-				right = "`" + loc.RightTable + "`.`" + loc.RightColumn + "`"
-			} else if loc.RightType == "column" {
-				right = "`" + loc.RightColumn + "`"
-			} else {
-				right = loc.RightColumn
-			}
-			
-			querystr += " " + left + " " + loc.Operator + " " + right + " AND "
+			querystr += " AND"
 		}
 		querystr = querystr[0:len(querystr) - 4]
 	}
@@ -408,28 +407,28 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	// Remove the trailing AND
 	querystr = querystr[0:len(querystr) - 4]
 	
+	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
 		for _, loc := range _process_where(where) {
-			var left, right string
-			
-			if loc.LeftTable != "" {
-				left = "`" + loc.LeftTable + "`.`" + loc.LeftColumn + "`"
-			} else if loc.LeftType == "column" {
-				left = "`" + loc.LeftColumn + "`"
-			} else {
-				left = loc.LeftColumn
+			for _, token := range loc.Expr {
+				switch(token.Type) {
+					case "function","operator","number","substitute":
+						querystr += " " + token.Contents + ""
+					case "column":
+						halves := strings.Split(token.Contents,".")
+						if len(halves) == 2 {
+							querystr += " `" + halves[0] + "`.`" + halves[1] + "`"
+						} else {
+							querystr += " `" + token.Contents + "`"
+						}
+					case "string":
+						querystr += " '" + token.Contents + "'"
+					default:
+						panic("This token doesn't exist o_o")
+				}
 			}
-			
-			if loc.RightTable != "" {
-				right = "`" + loc.RightTable + "`.`" + loc.RightColumn + "`"
-			} else if loc.RightType == "column" {
-				right = "`" + loc.RightColumn + "`"
-			} else {
-				right = loc.RightColumn
-			}
-			
-			querystr += " " + left + " " + loc.Operator + " " + right + " AND "
+			querystr += " AND"
 		}
 		querystr = querystr[0:len(querystr) - 4]
 	}
@@ -451,6 +450,163 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	return querystr, nil
 }
 
+func (adapter *Mysql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
+	/* Insert Portion */
+	var querystr string = "INSERT INTO `" + ins.Table + "`("
+	
+	// Escape the column names, just in case we've used a reserved keyword
+	for _, column := range _process_columns(ins.Columns) {
+		if column.Type == "function" {
+			querystr += column.Left + ","
+		} else {
+			querystr += "`" + column.Left + "`,"
+		}
+	}
+	querystr = querystr[0:len(querystr) - 1] + ") SELECT"
+	
+	/* Select Portion */
+	
+	for _, column := range _process_columns(sel.Columns) {
+		var source, alias string
+		
+		// Escape the column names, just in case we've used a reserved keyword
+		if column.Type == "function" || column.Type == "substitute" {
+			source = column.Left
+		} else {
+			source = "`" + column.Left + "`"
+		}
+		
+		if column.Alias != "" {
+			alias = " AS `" + column.Alias + "`"
+		}
+		querystr += " " + source + alias + ","
+	}
+	querystr = querystr[0:len(querystr) - 1]
+	
+	querystr += " FROM `" + sel.Table + "`"
+	
+	// Add support for BETWEEN x.x
+	if len(sel.Where) != 0 {
+		querystr += " WHERE"
+		for _, loc := range _process_where(sel.Where) {
+			for _, token := range loc.Expr {
+				switch(token.Type) {
+					case "function","operator","number","substitute":
+						querystr += " " + token.Contents + ""
+					case "column":
+						querystr += " `" + token.Contents + "`"
+					case "string":
+						querystr += " '" + token.Contents + "'"
+					default:
+						panic("This token doesn't exist o_o")
+				}
+			}
+			querystr += " AND"
+		}
+		querystr = querystr[0:len(querystr) - 4]
+	}
+	
+	if len(sel.Orderby) != 0 {
+		querystr += " ORDER BY "
+		for _, column := range _process_orderby(sel.Orderby) {
+			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
+		}
+		querystr = querystr[0:len(querystr) - 1]
+	}
+	
+	if sel.Limit != "" {
+		querystr += " LIMIT " + sel.Limit
+	}
+	
+	querystr = strings.TrimSpace(querystr)
+	adapter.push_statement(name,querystr)
+	return querystr, nil
+}
+
+func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+	/* Insert Portion */
+	var querystr string = "INSERT INTO `" + ins.Table + "`("
+	
+	// Escape the column names, just in case we've used a reserved keyword
+	for _, column := range _process_columns(ins.Columns) {
+		if column.Type == "function" {
+			querystr += column.Left + ","
+		} else {
+			querystr += "`" + column.Left + "`,"
+		}
+	}
+	querystr = querystr[0:len(querystr) - 1] + ") SELECT"
+	
+	/* Select Portion */
+	
+	for _, column := range _process_columns(sel.Columns) {
+		var source, alias string
+		
+		// Escape the column names, just in case we've used a reserved keyword
+		if column.Table != "" {
+			source = "`" + column.Table + "`.`" + column.Left + "`"
+		} else if column.Type == "function" {
+			source = column.Left
+		} else {
+			source = "`" + column.Left + "`"
+		}
+		
+		if column.Alias != "" {
+			alias = " AS `" + column.Alias + "`"
+		}
+		querystr += " " + source + alias + ","
+	}
+	querystr = querystr[0:len(querystr) - 1]
+	
+	querystr += " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON "
+	for _, joiner := range _process_joiner(sel.Joiners) {
+		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
+	}
+	querystr = querystr[0:len(querystr) - 4]
+	
+	// Add support for BETWEEN x.x
+	if len(sel.Where) != 0 {
+		querystr += " WHERE"
+		for _, loc := range _process_where(sel.Where) {
+			for _, token := range loc.Expr {
+				switch(token.Type) {
+					case "function","operator","number","substitute":
+						querystr += " " + token.Contents + ""
+					case "column":
+						halves := strings.Split(token.Contents,".")
+						if len(halves) == 2 {
+							querystr += " `" + halves[0] + "`.`" + halves[1] + "`"
+						} else {
+							querystr += " `" + token.Contents + "`"
+						}
+					case "string":
+						querystr += " '" + token.Contents + "'"
+					default:
+						panic("This token doesn't exist o_o")
+				}
+			}
+			querystr += " AND"
+		}
+		querystr = querystr[0:len(querystr) - 4]
+	}
+	
+	if len(sel.Orderby) != 0 {
+		querystr += " ORDER BY "
+		for _, column := range _process_orderby(sel.Orderby) {
+			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
+		}
+		querystr = querystr[0:len(querystr) - 1]
+	}
+	
+	if sel.Limit != "" {
+		querystr += " LIMIT " + sel.Limit
+	}
+	
+	querystr = strings.TrimSpace(querystr)
+	adapter.push_statement(name,querystr)
+	return querystr, nil
+}
+
 func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -460,24 +616,27 @@ func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where strin
 	}
 	
 	var querystr string = "SELECT COUNT(*) AS `count` FROM `" + table + "`"
+	
+	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
+		//fmt.Println("SimpleCount:",name)
+		//fmt.Println("where:",where)
+		//fmt.Println("_process_where:",_process_where(where))
 		for _, loc := range _process_where(where) {
-			var left, right string
-			
-			if loc.LeftType == "column" {
-				left = "`" + loc.LeftColumn + "`"
-			} else {
-				left = loc.LeftColumn
+			for _, token := range loc.Expr {
+				switch(token.Type) {
+					case "function","operator","number","substitute":
+						querystr += " " + token.Contents + ""
+					case "column":
+						querystr += " `" + token.Contents + "`"
+					case "string":
+						querystr += " '" + token.Contents + "'"
+					default:
+						panic("This token doesn't exist o_o")
+				}
 			}
-			
-			if loc.RightType == "column" {
-				right = "`" + loc.RightColumn + "`"
-			} else {
-				right = loc.RightColumn
-			}
-			
-			querystr += " " + left + " " + loc.Operator + " " + right + " AND "
+			querystr += " AND"
 		}
 		querystr = querystr[0:len(querystr) - 4]
 	}

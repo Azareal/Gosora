@@ -274,6 +274,9 @@ func (c *CTemplateSet) compile_switch(varholder string, holdreflect reflect.Valu
 						out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compile_switch("item", item, template_name, node.List) + "}\n}"
 					}
 				case reflect.Slice:
+					if outVal.Len() == 0 {
+						panic("The sample data needs at-least one or more elements for the slices. We're looking into removing this requirement at some point!")
+					}
 					item := outVal.Index(0)
 					out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compile_switch("item", item, template_name, node.List) + "}\n}"
 				case reflect.Invalid:
@@ -323,7 +326,7 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 				fmt.Println("Field Node:",n.Ident)
 			}
 
-			/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
+			/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Variable declarations are coming soon! */
 			cur := holdreflect
 
 			var varbit string
@@ -780,7 +783,6 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 			fmt.Println("Variable Field!")
 			fmt.Println(bit)
 		}
-
 		if bit == "" {
 			continue
 		}
@@ -791,6 +793,10 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 			out += "." + bit + ".(" + cur.Type().Name() + ")"
 		} else {
 			out += "." + bit
+		}
+
+		if !cur.IsValid() {
+			panic(out + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}
 
 		if super_debug {

@@ -5,5 +5,12 @@
 	"Creator": "Azareal",
 	"FullImage": "tempra-simple.png",
 	"MobileFriendly": true,
-	"URL": "github.com/Azareal/Gosora"
+	"URL": "github.com/Azareal/Gosora",
+	"Sidebars":"false",
+	"Resources": [
+		{
+			"Name": "sample.css",
+			"Location": "none"
+		}
+	]
 }

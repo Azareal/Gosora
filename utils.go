@@ -5,6 +5,7 @@ import (
 	"time"
 	"os"
 	"math"
+	"errors"
 	"strings"
 	"unicode"
 	"strconv"
@@ -169,6 +170,57 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 		return
 	}
 	return true
+}
+
+func weak_password(password string) error {
+	if len(password) < 8 {
+		return errors.New("Your password needs to be at-least eight characters long.")
+	}
+	var charMap map[rune]int = make(map[rune]int)
+	var numbers, /*letters, */symbols, upper, lower int
+	for _, char := range password {
+		charItem, ok := charMap[char]
+		if ok {
+			charItem++
+		} else {
+			charItem = 1
+		}
+		charMap[char] = charItem
+
+		if unicode.IsLetter(char) {
+			//letters++
+			if unicode.IsUpper(char) {
+				upper++
+			} else {
+				lower++
+			}
+		} else if unicode.IsNumber(char) {
+			numbers++
+		} else {
+			symbols++
+		}
+	}
+
+	if numbers == 0 {
+		return errors.New("You don't have any numbers in your password.")
+	}
+	/*if letters == 0 {
+		return errors.New("You don't have any letters in your password.")
+	}*/
+	if upper == 0 {
+		return errors.New("You don't have any uppercase characters in your password.")
+	}
+	if lower == 0 {
+		return errors.New("You don't have any lowercase characters in your password.")
+	}
+	if (len(password) / 2) < len(charMap) {
+		return errors.New("You don't have enough unique characters in your password.")
+	}
+
+	if strings.Contains(strings.ToLower(password),"test") || /*strings.Contains(strings.ToLower(password),"123456") || */strings.Contains(strings.ToLower(password),"123") || strings.Contains(strings.ToLower(password),"password") || strings.Contains(strings.ToLower(password),"qwerty") {
+		return errors.New("You may not have 'test', '123', 'password' or 'qwerty' in your password.")
+	}
+	return nil
 }
 
 func write_file(name string, content string) (err error) {

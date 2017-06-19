@@ -174,6 +174,15 @@ CREATE TABLE `themes`(
 	unique(`uname`)
 );
 
+CREATE TABLE `widgets`(
+	`position` int not null,
+	`side` varchar(100) not null,
+	`type` varchar(100) not null,
+	`active` tinyint(1) DEFAULT 0 not null,
+	`location` varchar(100) not null,
+	`data` text DEFAULT '' not null
+);
+
 CREATE TABLE `moderation_logs`(
 	`action` varchar(100) not null,
 	`elementID` int not null,

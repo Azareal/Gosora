@@ -13,6 +13,13 @@ type HeaderVars struct
 	NoticeList []string
 	Scripts []string
 	Stylesheets []string
+	Sidebars HeaderSidebars
+}
+
+type HeaderSidebars struct
+{
+	Left template.HTML
+	Right template.HTML
 }
 
 type ExtData struct

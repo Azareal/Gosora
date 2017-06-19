@@ -9,14 +9,14 @@ var header_1 []byte = []byte(`</title>
 		`)
 var header_2 []byte = []byte(`
 		<link href="/static/`)
-var header_3 []byte = []byte(`.css" rel="stylesheet" type="text/css">
+var header_3 []byte = []byte(`" rel="stylesheet" type="text/css">
 		`)
 var header_4 []byte = []byte(`
 		<script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
 		`)
 var header_5 []byte = []byte(`
 		<script type="text/javascript" src="/static/`)
-var header_6 []byte = []byte(`.js"></script>
+var header_6 []byte = []byte(`"></script>
 		`)
 var header_7 []byte = []byte(`
 		<script type="text/javascript">var session = "`)
@@ -64,10 +64,12 @@ var menu_7 []byte = []byte(`
 </div>
 `)
 var header_9 []byte = []byte(`
-<div id="back"><div id="main">
+<div id="back"><div id="main" `)
+var header_10 []byte = []byte(`class="shrink_main"`)
+var header_11 []byte = []byte(`>
 `)
-var header_10 []byte = []byte(`<div class="alert">`)
-var header_11 []byte = []byte(`</div>`)
+var header_12 []byte = []byte(`<div class="alert">`)
+var header_13 []byte = []byte(`</div>`)
 var topic_0 []byte = []byte(`<div id="prevFloat" class="prev_button"><a class="prev_link" href="/topic/`)
 var topic_1 []byte = []byte(`?page=`)
 var topic_2 []byte = []byte(`">&lt;</a></div>`)
@@ -226,7 +228,14 @@ var topic_83 []byte = []byte(`' type="hidden" />
 	</form>
 </div>
 `)
-var footer_0 []byte = []byte(`		</div><div style="clear: both;"></div></div></div>
+var footer_0 []byte = []byte(`					</div>
+				`)
+var footer_1 []byte = []byte(`<div class="sidebar">`)
+var footer_2 []byte = []byte(`</div>`)
+var footer_3 []byte = []byte(`
+				<div style="clear: both;"></div>
+			</div>
+		</div>
 	</body>
 </html>
 `)

@@ -32,9 +32,11 @@ type Theme struct
 	ForkOf string
 	Tag string
 	URL string
+	Sidebars string // Allowed Values: left, right, both, false
 	Settings map[string]ThemeSetting
 	Templates []TemplateMapping
-	TemplatesMap map[string]string // TO-DO: Make template mapping work without the template compiler
+	TemplatesMap map[string]string
+	Resources []ThemeResource
 
 	// This variable should only be set and unset by the system, not the theme meta file
 	Active bool
@@ -51,6 +53,12 @@ type TemplateMapping struct
 	Name string
 	Source string
 	//When string
+}
+
+type ThemeResource struct
+{
+	Name string
+	Location string
 }
 
 func LoadThemes() error {

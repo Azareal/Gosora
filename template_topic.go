@@ -51,11 +51,15 @@ w.Write(menu_6)
 }
 w.Write(menu_7)
 w.Write(header_9)
+if tmpl_topic_vars.Header.Sidebars.Right != "" {
+w.Write(header_10)
+}
+w.Write(header_11)
 if len(tmpl_topic_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_topic_vars.Header.NoticeList {
-w.Write(header_10)
+w.Write(header_12)
 w.Write([]byte(item))
-w.Write(header_11)
+w.Write(header_13)
 }
 }
 if tmpl_topic_vars.Page > 1 {
@@ -247,4 +251,10 @@ w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_83)
 }
 w.Write(footer_0)
+if tmpl_topic_vars.Header.Sidebars.Right != "" {
+w.Write(footer_1)
+w.Write([]byte(string(tmpl_topic_vars.Header.Sidebars.Right)))
+w.Write(footer_2)
+}
+w.Write(footer_3)
 }

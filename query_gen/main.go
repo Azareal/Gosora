@@ -18,34 +18,57 @@ func write_statements(adapter qgen.DB_Adapter) error {
 	if err != nil {
 		return err
 	}
+	
 	err = write_left_joins(adapter)
 	if err != nil {
 		return err
 	}
+	
 	err = write_inner_joins(adapter)
 	if err != nil {
 		return err
 	}
+	
 	err = write_inserts(adapter)
 	if err != nil {
 		return err
 	}
+	
 	err = write_replaces(adapter)
 	if err != nil {
 		return err
 	}
+	
 	err = write_updates(adapter)
 	if err != nil {
 		return err
 	}
+	
 	err = write_deletes(adapter)
 	if err != nil {
 		return err
 	}
+	
 	err = write_simple_counts(adapter)
 	if err != nil {
 		return err
 	}
+	
+	err = write_insert_selects(adapter)
+	if err != nil {
+		return err
+	}
+	
+	err = write_insert_left_joins(adapter)
+	if err != nil {
+		return err
+	}
+	
+	err = write_insert_inner_joins(adapter)
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
@@ -83,6 +106,8 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleSelect("get_plugins","plugins","uname, active","","","")
 	
 	adapter.SimpleSelect("get_themes","themes","uname, default","","","")
+	
+	adapter.SimpleSelect("get_widgets","widgets","position, side, type, active,  location, data","","position ASC","")
 	
 	adapter.SimpleSelect("is_plugin_active","plugins","active","uname = ?","","")
 	
@@ -291,7 +316,29 @@ func write_deletes(adapter qgen.DB_Adapter) error {
 }
 
 func write_simple_counts(adapter qgen.DB_Adapter) error {
-	adapter.SimpleCount("report_exists","topics","data = ? and data != '' and parentID = 1","")
+	adapter.SimpleCount("report_exists","topics","data = ? AND data != '' AND parentID = 1","")
+	
+	return nil
+}
+
+func write_insert_selects(adapter qgen.DB_Adapter) error {
+	adapter.SimpleInsertSelect("add_forum_perms_to_forum_admins",
+		qgen.DB_Insert{"forums_permissions","gid,fid,preset,permissions",""},
+		qgen.DB_Select{"users_groups","gid, ? AS fid, ? AS preset, ? AS permissions","is_admin = 1","",""},
+	)
+	
+	return nil
+}
+
+func write_insert_left_joins(adapter qgen.DB_Adapter) error {
+	return nil
+}
+
+func write_insert_inner_joins(adapter qgen.DB_Adapter) error {
+	adapter.SimpleInsertInnerJoin("notify_watchers",
+		qgen.DB_Insert{"activity_stream_matches","watcher, asid",""},
+		qgen.DB_Join{"activity_stream","activity_subscriptions","activity_subscriptions.user, activity_stream.asid","activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor","asid = ?","",""},
+	)
 	
 	return nil
 }

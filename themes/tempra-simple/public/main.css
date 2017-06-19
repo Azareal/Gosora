@@ -141,7 +141,9 @@ li a {
 	padding: 0px;
 	padding-top: 0px;
 }
-.rowblock:empty { display: none; }
+.rowblock:empty {
+	display: none;
+}
 .rowsmall {
 	font-size:12px;
 }
@@ -449,6 +451,18 @@ button.username { position: relative; top: -0.25px; }
 	top: -2px;
 }
 
+@media(min-width: 881px) {
+	.shrink_main {
+		float: left;
+		width: calc(75% - 12px);
+	}
+	.sidebar {
+		float: left;
+		width: 25%;
+		margin-left: 12px;
+	}
+}
+
 @media (max-width: 880px) {
 	li {
 		height: 29px;
@@ -477,6 +491,7 @@ button.username { position: relative; top: -0.25px; }
 		overflow-x: hidden;
 	}
 	.container { width: auto; }
+	.sidebar { display: none; }
 	.selectedAlert .alertList { top: 37px; right: 4px; }
 }
 

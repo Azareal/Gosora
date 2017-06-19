@@ -2,9 +2,11 @@ package main
 
 import (
 	//"fmt"
+	"strings"
 	"strconv"
 	"net"
 	"net/http"
+	"html/template"
 	"golang.org/x/crypto/bcrypt"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
@@ -80,11 +82,12 @@ func SendValidationEmail(username string, email string, token string) bool {
 }
 
 func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, success bool) {
+	user, success = SimpleSessionCheck(w,r)
 	if !forum_exists(fid) {
 		PreError("The target forum doesn't exist.",w,r)
 		return user, false
 	}
-	user, success = SimpleSessionCheck(w,r)
+
 	fperms := groups[user.Group].Forums[fid]
 	if fperms.Overrides && !user.Is_Super_Admin {
 		user.Perms.ViewTopic = fperms.ViewTopic
@@ -108,11 +111,12 @@ func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (u
 }
 
 func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, headerVars HeaderVars, success bool) {
+	user, headerVars, success = SessionCheck(w,r)
 	if !forum_exists(fid) {
 		NotFound(w,r)
 		return user, headerVars, false
 	}
-	user, success = SimpleSessionCheck(w,r)
+
 	fperms := groups[user.Group].Forums[fid]
 	//fmt.Printf("%+v\n", user.Perms)
 	//fmt.Printf("%+v\n", fperms)
@@ -134,9 +138,6 @@ func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user Us
 			}
 		}
 	}
-	if user.Is_Banned {
-		headerVars.NoticeList = append(headerVars.NoticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
-	}
 	return user, headerVars, success
 }
 
@@ -147,7 +148,25 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request) (user User, he
 		NoPermissions(w,r,user)
 		return user, headerVars, false
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets,"panel")
+
+	headerVars.Stylesheets = append(headerVars.Stylesheets,"panel.css")
+	if len(themes[defaultTheme].Resources) != 0 {
+		rlist := themes[defaultTheme].Resources
+		for _, resource := range rlist {
+			if resource.Location == "global" || resource.Location == "panel" {
+				halves := strings.Split(resource.Name,".")
+				if len(halves) != 2 {
+					continue
+				}
+				if halves[1] == "css" {
+					headerVars.Stylesheets = append(headerVars.Stylesheets,resource.Name)
+				} else if halves[1] == "js" {
+					headerVars.Scripts = append(headerVars.Scripts,resource.Name)
+				}
+			}
+		}
+	}
+
 	return user, headerVars, success
 }
 func _simple_panel_session_check(w http.ResponseWriter, r *http.Request) (user User, success bool) {
@@ -164,6 +183,40 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, headerVars
 	if user.Is_Banned {
 		headerVars.NoticeList = append(headerVars.NoticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
 	}
+
+	if len(themes[defaultTheme].Resources) != 0 {
+		rlist := themes[defaultTheme].Resources
+		for _, resource := range rlist {
+			if resource.Location == "global" || resource.Location == "frontend" {
+				halves := strings.Split(resource.Name,".")
+				if len(halves) != 2 {
+					continue
+				}
+				if halves[1] == "css" {
+					headerVars.Stylesheets = append(headerVars.Stylesheets,resource.Name)
+				} else if halves[1] == "js" {
+					headerVars.Scripts = append(headerVars.Scripts,resource.Name)
+				}
+			}
+		}
+	}
+
+	// TO-DO: Support for left sidebars and sidebars on both sides
+	//fmt.Println("themes[defaultTheme].Sidebars",themes[defaultTheme].Sidebars)
+	if themes[defaultTheme].Sidebars == "right" {
+			if len(docks.RightSidebar) != 0 {
+				var sbody string
+				for _, widget := range docks.RightSidebar {
+					//fmt.Println("widget",widget)
+					if widget.Enabled && widget.Location == "global" {
+						sbody += widget.Body
+						//fmt.Println("sbody",sbody)
+					}
+				}
+				headerVars.Sidebars.Right = template.HTML(sbody)
+			}
+	}
+
 	return user, headerVars, success
 }
 

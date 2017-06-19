@@ -16,6 +16,8 @@ import (
 	"html"
 	"html/template"
 	"database/sql"
+
+	"./query_gen/lib"
 )
 
 import _ "github.com/go-sql-driver/mysql"
@@ -104,16 +106,25 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	var fidList []string
+	var qlist string
+	var fidList []interface{}
 	group := groups[user.Group]
 	for _, fid := range group.CanSee {
 		if forums[fid].Name != "" {
 			fidList = append(fidList,strconv.Itoa(fid))
+			qlist += "?,"
 		}
 	}
+	qlist = qlist[0:len(qlist) - 1]
 
 	var topicList []TopicsRow
-	rows, err := db.Query(topic_list_query(fidList))
+	stmt, err := qgen.Builder.SimpleLeftJoin("topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar","topics.createdBy = users.uid","parentID IN("+qlist+")","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","")
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+
+	rows, err := stmt.Query(fidList...)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -166,9 +177,9 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	if template_topics_handle != nil {
 		template_topics_handle(pi,w)
 	} else {
-		mapping, ok := themes[defaultTheme].TemplatesMap["topic"]
+		mapping, ok := themes[defaultTheme].TemplatesMap["topics"]
 		if !ok {
-			mapping = "topic"
+			mapping = "topics"
 		}
 		err = templates.ExecuteTemplate(w,mapping + ".html", pi)
 		if err != nil {
@@ -1689,8 +1700,20 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		LocalError("You didn't put in a password.",w,r,user)
 		return
 	}
-	if password == "test" || password == "123456" || password == "123" || password == "password" {
-		LocalError("Your password is too weak.",w,r,user)
+
+	if password == username {
+		LocalError("You can't use your username as your password.",w,r,user)
+		return
+	}
+
+	if password == email {
+		LocalError("You can't use your email as your password.",w,r,user)
+		return
+	}
+
+	err = weak_password(password)
+	if err != nil {
+		LocalError(err.Error(),w,r,user)
 		return
 	}
 

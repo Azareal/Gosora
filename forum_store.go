@@ -6,6 +6,10 @@ import "errors"
 import "database/sql"
 import "./query_gen/lib"
 
+var forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency
+var forum_perms map[int]map[int]ForumPerms // [gid][fid]Perms
+var fstore ForumStore // :soon:
+var forumCapCount int
 var err_noforum = errors.New("This forum doesn't exist")
 
 type ForumStore interface

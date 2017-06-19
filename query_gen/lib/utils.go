@@ -28,6 +28,8 @@ func _process_columns(colstr string) (columns []DB_Column) {
 		}
 		if halves[0][len(halves[0]) - 1] == ')' {
 			outcol.Type = "function"
+		} else if halves[0] == "?" {
+			outcol.Type = "substitute"
 		} else {
 			outcol.Type = "column"
 		}
@@ -83,42 +85,97 @@ func _process_joiner(joinstr string) (joiner []DB_Joiner) {
 	return joiner
 }
 
-// TO-DO: Add support for keywords like BETWEEN. We'll probably need an arbitrary expression parser like with the update setters.
 func _process_where(wherestr string) (where []DB_Where) {
 	if wherestr == "" {
 		return where
 	}
 	wherestr = strings.Replace(wherestr," and "," AND ",-1)
+	
+	var buffer string
+	var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
 	for _, segment := range strings.Split(wherestr," AND ") {
-		// TO-DO: Subparse the contents of a function and spit out a DB_Function struct
-		var outwhere DB_Where
-		var parseOffset int
-		var left, right string
-		
-		left, parseOffset = _get_identifier(segment, parseOffset)
-		outwhere.Operator, parseOffset = _get_operator(segment, parseOffset + 1)
-		right, parseOffset = _get_identifier(segment, parseOffset + 1)
-		outwhere.LeftType = _get_identifier_type(left)
-		outwhere.RightType = _get_identifier_type(right)
-		
-		left_operand := strings.Split(left,".")
-		right_operand := strings.Split(right,".")
-		
-		if len(left_operand) == 2 {
-			outwhere.LeftTable = strings.TrimSpace(left_operand[0])
-			outwhere.LeftColumn = strings.TrimSpace(left_operand[1])
-		} else {
-			outwhere.LeftColumn = strings.TrimSpace(left_operand[0])
+		var tmp_where DB_Where
+		segment += ")"
+		for i := 0; i < len(segment); i++ {
+			char := segment[i]
+			//fmt.Println("optype",optype)
+			switch(optype) {
+			case 0: // unknown
+				//fmt.Println("case 0:",char,string(char))
+				if ('0' <= char && char <= '9') {
+					optype = 1
+					buffer = string(char)
+				} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
+					optype = 2
+					buffer = string(char)
+				} else if char == '\'' {
+					optype = 4
+					buffer = ""
+				} else if _is_op_byte(char) {
+					optype = 5
+					buffer = string(char)
+				} else if char == '?' {
+					//fmt.Println("Expr:","?")
+					tmp_where.Expr = append(tmp_where.Expr,DB_Token{"?","substitute"})
+				}
+			case 1: // number
+				if ('0' <= char && char <= '9') {
+					buffer += string(char)
+				} else {
+					optype = 0
+					i--
+					//fmt.Println("Expr:",buffer)
+					tmp_where.Expr = append(tmp_where.Expr,DB_Token{buffer,"number"})
+				}
+			case 2: // column
+				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_' {
+					buffer += string(char)
+				} else if char == '(' {
+					optype = 3
+					i--
+				} else {
+					optype = 0
+					i--
+					//fmt.Println("Expr:",buffer)
+					tmp_where.Expr = append(tmp_where.Expr,DB_Token{buffer,"column"})
+				}
+			case 3: // function
+				var pre_i int = i
+				//fmt.Println("buffer",buffer)
+				//fmt.Println("len(halves)",len(halves[1]))
+				//fmt.Println("pre_i",string(halves[1][pre_i]))
+				//fmt.Println("msg prior to pre_i",halves[1][0:pre_i])
+				i = _skip_function_call(segment,i-1)
+				//fmt.Println("i",i)
+				//fmt.Println("msg prior to i-1",halves[1][0:i-1])
+				//fmt.Println("string(i-1)",string(halves[1][i-1]))
+				//fmt.Println("string(i)",string(halves[1][i]))
+				buffer += segment[pre_i:i] + string(segment[i])
+				//fmt.Println("Expr:",buffer)
+				tmp_where.Expr = append(tmp_where.Expr,DB_Token{buffer,"function"})
+				optype = 0
+			case 4: // string
+				if char != '\'' {
+					buffer += string(char)
+				} else {
+					optype = 0
+					//fmt.Println("Expr:",buffer)
+					tmp_where.Expr = append(tmp_where.Expr,DB_Token{buffer,"string"})
+				}
+			case 5: // operator
+				if _is_op_byte(char) {
+					buffer += string(char)
+				} else {
+					optype = 0
+					i--
+					//fmt.Println("Expr:",buffer)
+					tmp_where.Expr = append(tmp_where.Expr,DB_Token{buffer,"operator"})
+				}
+			default:
+				panic("Bad optype in _process_where")
+			}
 		}
-		
-		if len(right_operand) == 2 {
-			outwhere.RightTable = strings.TrimSpace(right_operand[0])
-			outwhere.RightColumn = strings.TrimSpace(right_operand[1])
-		} else {
-			outwhere.RightColumn = strings.TrimSpace(right_operand[0])
-		}
-		
-		where = append(where,outwhere)
+		where = append(where,tmp_where)
 	}
 	return where
 }
@@ -170,11 +227,12 @@ func _process_set(setstr string) (setter []DB_Setter) {
 				if ('0' <= char && char <= '9') {
 					optype = 1
 					buffer = string(char)
-				} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') {
+				} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
 					optype = 2
 					buffer = string(char)
 				} else if char == '\'' {
 					optype = 4
+					buffer = ""
 				} else if _is_op_byte(char) {
 					optype = 5
 					buffer = string(char)
@@ -192,7 +250,7 @@ func _process_set(setstr string) (setter []DB_Setter) {
 					tmp_setter.Expr = append(tmp_setter.Expr,DB_Token{buffer,"number"})
 				}
 			case 2: // column
-				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') {
+				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
 					buffer += string(char)
 				} else if char == '(' {
 					optype = 3
@@ -235,6 +293,8 @@ func _process_set(setstr string) (setter []DB_Setter) {
 					//fmt.Println("Expr:",buffer)
 					tmp_setter.Expr = append(tmp_setter.Expr,DB_Token{buffer,"operator"})
 				}
+			default:
+				panic("Bad optype in _process_set")
 			}
 		}
 		setter = append(setter,tmp_setter)
@@ -255,6 +315,10 @@ func _process_limit(limitstr string) (limiter DB_Limit) {
 }
 
 func _is_op_byte(char byte) bool {
+	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
+}
+
+func _is_op_rune(char rune) bool {
 	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
 }
 

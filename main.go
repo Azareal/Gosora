@@ -36,15 +36,12 @@ var enable_websockets bool = false // Don't change this, the value is overwritte
 var startTime time.Time
 var timeLocation *time.Location
 var templates = template.New("")
-var no_css_tmpl = template.CSS("")
-var staff_css_tmpl = template.CSS(staff_css)
+var no_css_tmpl template.CSS = template.CSS("")
+var staff_css_tmpl template.CSS = template.CSS(staff_css)
 var settings map[string]interface{} = make(map[string]interface{})
 var external_sites map[string]string = make(map[string]string)
 var groups []Group
-var forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency
-var forum_perms map[int]map[int]ForumPerms // [gid][fid]Perms
-var fstore ForumStore // :soon:
-var groupCapCount, forumCapCount int
+var groupCapCount int
 var static_files map[string]SFile = make(map[string]SFile)
 
 var template_topic_handle func(TopicPage,io.Writer) = nil
@@ -62,6 +59,9 @@ func compile_templates() {
 		NoticeList:[]string{"test"},
 		Stylesheets:[]string{"panel"},
 		Scripts:[]string{"whatever"},
+		Sidebars:HeaderSidebars{
+			Left: template.HTML("lalala"),
+		},
 	}
 
 	log.Print("Compiling the templates")
@@ -87,18 +87,18 @@ func compile_templates() {
 	}
 	varList = make(map[string]VarItem)
 	forums_page := ForumsPage{"Forum List",user,headerVars,forumList,extData}
-	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage", forums_page, varList)
+	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage",forums_page,varList)
 
 	var topicsList []TopicsRow
 	topicsList = append(topicsList,TopicsRow{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","Admin","","",0,"","","","",58,"General"})
 	topics_page := TopicsPage{"Topic List",user,headerVars,topicsList,extData}
-	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage", topics_page, varList)
+	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage",topics_page,varList)
 
 	var topicList []TopicUser
 	topicList = append(topicList,TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","Admin",default_group,"","",0,"","","","",58,false})
 	forum_item := Forum{1,"General Forum","Where the general stuff happens",true,"all",0,"",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,headerVars,topicList,forum_item,1,1,extData}
-	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage", forum_page, varList)
+	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage",forum_page,varList)
 
 	log.Print("Writing the templates")
 	go write_template("topic", topic_id_tmpl)
@@ -209,6 +209,13 @@ func main(){
 	hooks["rrow_assign"] = nil
 	init_plugins()
 
+	log.Print("Initialising the widgets")
+	err = init_widgets()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print("Initialising the router")
 	router := NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	///router.HandleFunc("/static/", route_static)
 	///router.HandleFunc("/overview/", route_overview)
@@ -300,6 +307,7 @@ func main(){
 	//	pprof.StopCPUProfile()
 	//}
 
+	log.Print("Initialising the HTTP server")
 	if !enable_ssl {
 		if server_port == "" {
 			 server_port = "80"
