@@ -81,12 +81,8 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleSelect("get_reply","replies","tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount","rid = ?","","")
 	
 	adapter.SimpleSelect("get_user_reply","users_replies","uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress","rid = ?","","")
-		
-	adapter.SimpleSelect("login","users","uid, name, password, salt","name = ?","","")
-		
-	adapter.SimpleSelect("get_password","users","password,salt","uid = ?","","")
 	
-	adapter.SimpleSelect("username_exists","users","name","name = ?","","")
+	adapter.SimpleSelect("get_password","users","password,salt","uid = ?","","")
 	
 	
 	adapter.SimpleSelect("get_settings","settings","name, content, type","","","")
@@ -189,10 +185,6 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleInsert("notify_one","activity_stream_matches","watcher,asid","?,?")
 	
-	// Add an admin version of register_stmt with more flexibility?
-	// create_account_stmt, err = db.Prepare("INSERT INTO
-	adapter.SimpleInsert("register","users","name, email, password, salt, group, is_super_admin, session, active, message","?,?,?,?,?,0,?,?,''")
-	
 	adapter.SimpleInsert("add_email","emails","email, uid, validated, token","?,?,?,?")
 	
 	adapter.SimpleInsert("create_profile_reply","users_replies","uid, content, parsed_content, createdAt, createdBy, ipaddress","?,?,?,NOW(),?,?")
@@ -249,8 +241,6 @@ func write_updates(adapter qgen.DB_Adapter) error {
 	adapter.SimpleUpdate("update_last_ip","users","last_ip = ?","uid = ?")
 
 	adapter.SimpleUpdate("update_session","users","session = ?","uid = ?")
-	
-	adapter.SimpleUpdate("logout","users","session = ''","uid = ?")
 
 	adapter.SimpleUpdate("set_password","users","password = ?, salt = ?","uid = ?")
 	
@@ -325,6 +315,16 @@ func write_insert_selects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleInsertSelect("add_forum_perms_to_forum_admins",
 		qgen.DB_Insert{"forums_permissions","gid,fid,preset,permissions",""},
 		qgen.DB_Select{"users_groups","gid, ? AS fid, ? AS preset, ? AS permissions","is_admin = 1","",""},
+	)
+	
+	adapter.SimpleInsertSelect("add_forum_perms_to_forum_staff",
+		qgen.DB_Insert{"forums_permissions","gid,fid,preset,permissions",""},
+		qgen.DB_Select{"users_groups","gid, ? AS fid, ? AS preset, ? AS permissions","is_admin = 0 AND is_mod = 1","",""},
+	)
+	
+	adapter.SimpleInsertSelect("add_forum_perms_to_forum_members",
+		qgen.DB_Insert{"forums_permissions","gid,fid,preset,permissions",""},
+		qgen.DB_Select{"users_groups","gid, ? AS fid, ? AS preset, ? AS permissions","is_admin = 0 AND is_mod = 0 AND is_banned = 0","",""},
 	)
 	
 	return nil

@@ -9,9 +9,7 @@ import "database/sql"
 var get_user_stmt *sql.Stmt
 var get_reply_stmt *sql.Stmt
 var get_user_reply_stmt *sql.Stmt
-var login_stmt *sql.Stmt
 var get_password_stmt *sql.Stmt
-var username_exists_stmt *sql.Stmt
 var get_settings_stmt *sql.Stmt
 var get_setting_stmt *sql.Stmt
 var get_full_setting_stmt *sql.Stmt
@@ -56,7 +54,6 @@ var create_action_reply_stmt *sql.Stmt
 var create_like_stmt *sql.Stmt
 var add_activity_stmt *sql.Stmt
 var notify_one_stmt *sql.Stmt
-var register_stmt *sql.Stmt
 var add_email_stmt *sql.Stmt
 var create_profile_reply_stmt *sql.Stmt
 var add_subscription_stmt *sql.Stmt
@@ -81,7 +78,6 @@ var stick_topic_stmt *sql.Stmt
 var unstick_topic_stmt *sql.Stmt
 var update_last_ip_stmt *sql.Stmt
 var update_session_stmt *sql.Stmt
-var logout_stmt *sql.Stmt
 var set_password_stmt *sql.Stmt
 var set_avatar_stmt *sql.Stmt
 var set_username_stmt *sql.Stmt
@@ -111,6 +107,8 @@ var delete_profile_reply_stmt *sql.Stmt
 var delete_forum_perms_by_forum_stmt *sql.Stmt
 var report_exists_stmt *sql.Stmt
 var add_forum_perms_to_forum_admins_stmt *sql.Stmt
+var add_forum_perms_to_forum_staff_stmt *sql.Stmt
+var add_forum_perms_to_forum_members_stmt *sql.Stmt
 var notify_watchers_stmt *sql.Stmt
 
 func gen_mysql() (err error) {
@@ -136,20 +134,8 @@ func gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing login statement.")
-	login_stmt, err = db.Prepare("SELECT `uid`,`name`,`password`,`salt` FROM `users` WHERE `name` = ?")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing get_password statement.")
 	get_password_stmt, err = db.Prepare("SELECT `password`,`salt` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing username_exists statement.")
-	username_exists_stmt, err = db.Prepare("SELECT `name` FROM `users` WHERE `name` = ?")
 	if err != nil {
 		return err
 	}
@@ -418,12 +404,6 @@ func gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing register statement.")
-	register_stmt, err = db.Prepare("INSERT INTO `users`(`name`,`email`,`password`,`salt`,`group`,`is_super_admin`,`session`,`active`,`message`) VALUES (?,?,?,?,?,0,?,?,'')")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing add_email statement.")
 	add_email_stmt, err = db.Prepare("INSERT INTO `emails`(`email`,`uid`,`validated`,`token`) VALUES (?,?,?,?)")
 	if err != nil {
@@ -564,12 +544,6 @@ func gen_mysql() (err error) {
 		
 	log.Print("Preparing update_session statement.")
 	update_session_stmt, err = db.Prepare("UPDATE `users` SET `session` = ? WHERE `uid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing logout statement.")
-	logout_stmt, err = db.Prepare("UPDATE `users` SET `session` = '' WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
@@ -744,6 +718,18 @@ func gen_mysql() (err error) {
 		
 	log.Print("Preparing add_forum_perms_to_forum_admins statement.")
 	add_forum_perms_to_forum_admins_stmt, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) SELECT `gid`, ? AS `fid`, ? AS `preset`, ? AS `permissions` FROM `users_groups` WHERE `is_admin` = 1")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_forum_perms_to_forum_staff statement.")
+	add_forum_perms_to_forum_staff_stmt, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) SELECT `gid`, ? AS `fid`, ? AS `preset`, ? AS `permissions` FROM `users_groups` WHERE `is_admin` = 0 AND `is_mod` = 1")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing add_forum_perms_to_forum_members statement.")
+	add_forum_perms_to_forum_members_stmt, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) SELECT `gid`, ? AS `fid`, ? AS `preset`, ? AS `permissions` FROM `users_groups` WHERE `is_admin` = 0 AND `is_mod` = 0 AND `is_banned` = 0")
 	if err != nil {
 		return err
 	}

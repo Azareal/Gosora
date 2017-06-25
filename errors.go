@@ -26,6 +26,10 @@ func init_errors() error {
 	return nil
 }
 
+func LogError(err error) {
+	log.Fatal(err)
+}
+
 func InternalError(err error, w http.ResponseWriter, r *http.Request) {
 	w.Write(error_internal)
 	log.Fatal(err)

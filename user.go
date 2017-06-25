@@ -52,6 +52,10 @@ type Email struct
 	Token string
 }
 
+func CheckPassword(real_password string, password string, salt string) (err error) {
+	return bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password + salt))
+}
+
 func SetPassword(uid int, password string) (error) {
 	salt, err := GenerateSafeString(saltLength)
 	if err != nil {
@@ -72,12 +76,13 @@ func SetPassword(uid int, password string) (error) {
 }
 
 func SendValidationEmail(username string, email string, token string) bool {
-	var schema string
+	var schema string = "http"
 	if enable_ssl {
-		schema = "s"
+		schema += "s"
 	}
+
 	subject := "Validate Your Email @ " + site_name
-	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. http" + schema + "://" + site_url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
+	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + site_url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
 	return SendEmail(email, subject, msg)
 }
 
@@ -207,13 +212,11 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, headerVars
 			if len(docks.RightSidebar) != 0 {
 				var sbody string
 				for _, widget := range docks.RightSidebar {
-					//fmt.Println("widget",widget)
 					if widget.Enabled && widget.Location == "global" {
 						sbody += widget.Body
-						//fmt.Println("sbody",sbody)
 					}
 				}
-				headerVars.Sidebars.Right = template.HTML(sbody)
+				headerVars.Widgets.RightSidebar = template.HTML(sbody)
 			}
 	}
 

@@ -6,12 +6,14 @@ import (
 	"log"
 	"io"
 	"os"
+	"bytes"
 	"strings"
 	"mime"
 	"io/ioutil"
 	"path/filepath"
 	"encoding/json"
 	"net/http"
+	"text/template"
 )
 
 var defaultTheme string
@@ -37,6 +39,7 @@ type Theme struct
 	Templates []TemplateMapping
 	TemplatesMap map[string]string
 	Resources []ThemeResource
+	ResourceTemplates *template.Template
 
 	// This variable should only be set and unset by the system, not the theme meta file
 	Active bool
@@ -89,11 +92,14 @@ func LoadThemes() error {
 			}
 		}
 
+		theme.ResourceTemplates = template.New("")
+		template.Must(theme.ResourceTemplates.ParseGlob("./themes/" + uname + "/public/*.css"))
+
 		if defaultThemeSwitch {
 			log.Print("Loading the theme '" + theme.Name + "'")
 			theme.Active = true
 			defaultTheme = uname
-			add_theme_static_files(uname)
+			add_theme_static_files(theme)
 			map_theme_templates(theme)
 		} else {
 			theme.Active = false
@@ -147,32 +153,46 @@ func init_themes() {
 	}
 }
 
-func add_theme_static_files(themeName string) {
-	err := filepath.Walk("./themes/" + themeName + "/public", func(path string, f os.FileInfo, err error) error {
+func add_theme_static_files(theme Theme) {
+	err := filepath.Walk("./themes/" + theme.Name + "/public", func(path string, f os.FileInfo, err error) error {
+		if debug {
+			log.Print("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
+		}
 		if err != nil {
 			return err
 		}
 		if f.IsDir() {
 			return nil
 		}
+
 		path = strings.Replace(path,"\\","/",-1)
-
-		if debug {
-			log.Print("Attempting to add static file '" + path + "' for default theme '" + themeName + "'")
-		}
-
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
 
-		path = strings.TrimPrefix(path,"themes/" + themeName + "/public")
-		if debug {
-			log.Print("Added the '" + path + "' static file for default theme " + themeName + ".")
+		var ext string = filepath.Ext(path)
+		//log.Print("path ",path)
+		//log.Print("ext ",ext)
+		if ext == ".css" {
+			var b bytes.Buffer
+			var pieces []string = strings.Split(path,"/")
+			var filename string = pieces[len(pieces) - 1]
+			//log.Print("filename ", filename)
+			err = theme.ResourceTemplates.ExecuteTemplate(&b,filename, CssData{ComingSoon:"We don't have any data to pass you yet!"})
+			if err != nil {
+				return err
+			}
+			data = b.Bytes()
 		}
-		gzip_data := compress_bytes_gzip(data)
 
-		static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext("/themes/" + themeName + "/public" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
+		path = strings.TrimPrefix(path,"themes/" + theme.Name + "/public")
+		gzip_data := compress_bytes_gzip(data)
+		static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(ext),f,f.ModTime().UTC().Format(http.TimeFormat)}
+
+		if debug {
+			log.Print("Added the '" + path + "' static file for default theme " + theme.Name + ".")
+		}
 		return nil
 	})
 	if err != nil {

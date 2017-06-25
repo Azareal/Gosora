@@ -9,9 +9,6 @@ import "./query_gen/lib"
 
 var get_activity_feed_by_watcher_stmt *sql.Stmt
 var get_activity_count_by_watcher_stmt *sql.Stmt
-var add_forum_perms_to_forum_staff_stmt *sql.Stmt
-var add_forum_perms_to_forum_members_stmt *sql.Stmt
-var update_forum_perms_for_group_stmt *sql.Stmt
 var todays_post_count_stmt *sql.Stmt
 var todays_topic_count_stmt *sql.Stmt
 var todays_report_count_stmt *sql.Stmt
@@ -61,18 +58,6 @@ func _init_database() (err error) {
 
 	log.Print("Preparing get_activity_count_by_watcher statement.")
 	get_activity_count_by_watcher_stmt, err = db.Prepare("SELECT count(*) FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing add_forum_perms_to_forum_staff statement.")
-	add_forum_perms_to_forum_staff_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset,? AS permissions FROM users_groups WHERE is_admin = 0 AND is_mod = 1")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing add_forum_perms_to_forum_members statement.")
-	add_forum_perms_to_forum_members_stmt, err = db.Prepare("INSERT INTO forums_permissions(gid,fid,preset,permissions) SELECT `gid`,? AS fid,? AS preset,? AS permissions FROM users_groups WHERE is_admin = 0 AND is_mod = 0 AND is_banned = 0")
 	if err != nil {
 		return err
 	}

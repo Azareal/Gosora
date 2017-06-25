@@ -65,3 +65,9 @@
 .perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
 .perm_preset_custom:before { content: "Custom"; color: black; }
 .perm_preset_default:before { content: "Default"; }
+
+@media(max-width: 1300px) {
+	.theme_row {
+			background-image: none !important;
+	}
+}

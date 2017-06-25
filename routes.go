@@ -190,7 +190,13 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 
 func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	fid, err := strconv.Atoi(sfid)
+
+	// SEO URLs...
+	halves := strings.Split(sfid,".")
+	if len(halves) < 2 {
+		halves = append(halves,halves[0])
+	}
+	fid, err := strconv.Atoi(halves[1])
 	if err != nil {
 		PreError("The provided ForumID is not a valid number.",w,r)
 		return
@@ -1238,18 +1244,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	SetPassword(user.ID, new_password)
 
 	// Log the user out as a safety precaution
-	_, err = logout_stmt.Exec(user.ID)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-
-	// Reload the user data
-	err = users.Load(user.ID)
-	if err != nil {
-		LocalError("Your account no longer exists!",w,r,user)
-		return
-	}
+	auth.ForceLogout(user.ID)
 
 	headerVars.NoticeList = append(headerVars.NoticeList,"Your password was successfully updated")
 	pi := Page{"Edit Password",user,headerVars,tList,nil}
@@ -1542,18 +1537,7 @@ func route_logout(w http.ResponseWriter, r *http.Request) {
 		LocalError("You can't logout without logging in first.",w,r,user)
 		return
 	}
-
-	_, err := logout_stmt.Exec(user.ID)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-
-	err = users.Load(user.ID)
-	if err != nil {
-		LocalError("Your account doesn't exist!",w,r,user)
-		return
-	}
+	auth.Logout(w, user.ID)
 	http.Redirect(w,r, "/", http.StatusSeeOther)
 }
 
@@ -1585,79 +1569,24 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var uid int
-	var real_password, salt, session string
-	username := html.EscapeString(r.PostFormValue("username"))
-	password := r.PostFormValue("password")
-
-	err = login_stmt.QueryRow(username).Scan(&uid, &username, &real_password, &salt)
-	if err == sql.ErrNoRows {
-		LocalError("That username doesn't exist.",w,r,user)
-		return
-	} else if err != nil {
-		InternalError(err,w,r)
+	uid, err := auth.Authenticate(html.EscapeString(r.PostFormValue("username")), r.PostFormValue("password"))
+	if err != nil {
+		LocalError(err.Error(),w,r,user)
 		return
 	}
 
-	// Admin password reset mechanism...
-	if salt == "" {
-		if password != real_password {
-			LocalError("That's not the correct password.",w,r,user)
-			return
-		}
-
-		// Re-encrypt the password
-		SetPassword(uid, real_password)
-
-		// Fe-fetch the user data...
-		err = login_stmt.QueryRow(username).Scan(&uid, &username, &real_password, &salt)
-		if err == sql.ErrNoRows {
-			LocalError("That username doesn't exist anymore.",w,r,user)
-			return
-		} else if err != nil {
+	var session string
+	if user.Session == "" {
+		session, err = auth.CreateSession(uid)
+		if err != nil {
 			InternalError(err,w,r)
 			return
 		}
+	} else {
+		session = user.Session
 	}
 
-	password = password + salt
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password))
-	if err == bcrypt.ErrMismatchedHashAndPassword {
-		LocalError("That's not the correct password.",w,r,user)
-		return
-	} else if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-
-	session, err = GenerateSafeString(sessionLength)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-
-	_, err = update_session_stmt.Exec(session, uid)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-
-	// Reload the user data
-	err = users.Load(uid)
-	if err != nil {
-		LocalError("Your account no longer exists!",w,r,user)
-		return
-	}
-
-	cookie := http.Cookie{Name:"uid",Value:strconv.Itoa(uid),Path:"/",MaxAge:year}
-	http.SetCookie(w,&cookie)
-	cookie = http.Cookie{Name:"session",Value:session,Path:"/",MaxAge:year}
-	http.SetCookie(w,&cookie)
+	auth.SetCookies(w,uid,session)
 	http.Redirect(w,r,"/",http.StatusSeeOther)
 }
 
@@ -1726,34 +1655,6 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Is this username already taken..?
-	err = username_exists_stmt.QueryRow(username).Scan(&username)
-	if err != nil && err != sql.ErrNoRows {
-		InternalError(err,w,r)
-		return
-	} else if err != sql.ErrNoRows {
-		LocalError("This username isn't available. Try another.",w,r,user)
-		return
-	}
-
-	salt, err := GenerateSafeString(saltLength)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-	session, err := GenerateSafeString(sessionLength)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-
-	password = password + salt
-	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-
 	var active, group int
 	switch settings["activation_type"] {
 		case 1: // Activate All
@@ -1763,13 +1664,11 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 			group = activation_group
 	}
 
-	res, err := register_stmt.Exec(username,email,string(hashed_password),salt,group,session,active)
-	if err != nil {
-		InternalError(err,w,r)
+	uid, err := users.CreateUser(username, password, email, group, active)
+	if err == err_account_exists {
+		LocalError("This username isn't available. Try another.",w,r,user)
 		return
-	}
-	lastId, err := res.LastInsertId()
-	if err != nil {
+	} else if err != nil {
 		InternalError(err,w,r)
 		return
 	}
@@ -1781,7 +1680,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 			InternalError(err,w,r)
 			return
 		}
-		_, err = add_email_stmt.Exec(email, lastId, 0, token)
+		_, err = add_email_stmt.Exec(email, uid, 0, token)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -1793,11 +1692,14 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cookie := http.Cookie{Name: "uid",Value: strconv.FormatInt(lastId, 10),Path: "/",MaxAge: year}
-	http.SetCookie(w,&cookie)
-	cookie = http.Cookie{Name: "session",Value: session,Path: "/",MaxAge: year}
-	http.SetCookie(w,&cookie)
-	http.Redirect(w,r, "/", http.StatusSeeOther)
+	session, err := auth.CreateSession(uid)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+
+	auth.SetCookies(w,uid,session)
+	http.Redirect(w,r,"/",http.StatusSeeOther)
 }
 
 var phrase_login_alerts []byte = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)

@@ -1,5 +1,15 @@
 {{template "header.html" . }}
-{{template "panel-menu.html" . }}
+<div class="colstack_left">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem rowhead"><a href="/panel/themes/">Theme Manager</a></div>
+	</div>
+	<div class="colstack_item">
+		<div class="rowitem passive"><a href="#">Widgets</a></div>
+	</div>
+{{template "panel-inner-menu.html" . }}
+</div>
+
+<!-- Stop inlining this x.x -->
 <style type="text/css">
 .rowitem::after {
 	content: "";

@@ -51,7 +51,7 @@ w.Write(menu_6)
 }
 w.Write(menu_7)
 w.Write(header_9)
-if tmpl_forum_vars.Header.Sidebars.Right != "" {
+if tmpl_forum_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_10)
 }
 w.Write(header_11)
@@ -137,9 +137,9 @@ w.Write(forum_31)
 }
 w.Write(forum_32)
 w.Write(footer_0)
-if tmpl_forum_vars.Header.Sidebars.Right != "" {
+if tmpl_forum_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)
-w.Write([]byte(string(tmpl_forum_vars.Header.Sidebars.Right)))
+w.Write([]byte(string(tmpl_forum_vars.Header.Widgets.RightSidebar)))
 w.Write(footer_2)
 }
 w.Write(footer_3)

@@ -1466,6 +1466,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 	}
 
 	var isDefault bool
+	fmt.Println("uname",uname)
 	err := is_theme_default_stmt.QueryRow(uname).Scan(&isDefault)
 	if err != nil && err != sql.ErrNoRows {
 		InternalError(err,w,r)
@@ -1474,6 +1475,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 
 	has_theme := err != sql.ErrNoRows
 	if has_theme {
+		fmt.Println("isDefault",isDefault)
 		if isDefault {
 			LocalError("The theme is already active",w,r,user)
 			return
@@ -1511,7 +1513,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 
 	defaultTheme = uname
 	reset_template_overrides()
-	add_theme_static_files(uname)
+	add_theme_static_files(themes[uname])
 	map_theme_templates(theme)
 
 	http.Redirect(w,r,"/panel/themes/",http.StatusSeeOther)

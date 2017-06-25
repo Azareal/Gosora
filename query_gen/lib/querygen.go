@@ -33,24 +33,6 @@ type DB_Insert struct
 	Fields string
 }
 
-/*type DB_Select struct
-{
-	Name string
-	Table string
-	Columns []DB_Column
-	Where []DB_Where
-	Orderby []DB_Order
-	Limit DB_Limit
-}
-
-type DB_Insert struct
-{
-	Name string
-	Table string
-	Columns []DB_Column
-	Fields []DB_Field
-}*/
-
 type DB_Column struct
 {
 	Table string
@@ -111,6 +93,7 @@ type DB_Adapter interface {
 	SimpleLeftJoin(string,string,string,string,string,string,string,string) (string, error)
 	SimpleInnerJoin(string,string,string,string,string,string,string,string) (string, error)
 	SimpleInsertSelect(string,DB_Insert,DB_Select) (string,error)
+	SimpleInsertLeftJoin(string,DB_Insert,DB_Join) (string,error)
 	SimpleInsertInnerJoin(string,DB_Insert,DB_Join) (string,error)
 	SimpleCount(string,string,string,string) (string, error)
 	Write() error

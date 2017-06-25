@@ -2,12 +2,15 @@ package main
 
 import "log"
 import "sync"
+import "errors"
 import "strings"
 import "strconv"
 import "database/sql"
 import "./query_gen/lib"
+import "golang.org/x/crypto/bcrypt"
 
 var users UserStore
+var err_account_exists = errors.New("This username is already in use.")
 
 type UserStore interface {
 	Load(id int) error
@@ -22,6 +25,7 @@ type UserStore interface {
 	//GetConn() interface{}
 	Remove(id int) error
 	RemoveUnsafe(id int) error
+	CreateUser(username string, password string, email string, group int, active int) (int, error)
 	GetLength() int
 	GetCapacity() int
 }
@@ -31,18 +35,35 @@ type MemoryUserStore struct {
 	length int
 	capacity int
 	get *sql.Stmt
+	register *sql.Stmt
+	username_exists *sql.Stmt
 	sync.RWMutex
 }
 
 func NewMemoryUserStore(capacity int) *MemoryUserStore {
-	stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","","")
+	get_stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Add an admin version of register_stmt with more flexibility?
+	// create_account_stmt, err = db.Prepare("INSERT INTO
+	register_stmt, err := qgen.Builder.SimpleInsert("users","name, email, password, salt, group, is_super_admin, session, active, message","?,?,?,?,?,0,'',?,''")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	username_exists_stmt, err := qgen.Builder.SimpleSelect("users","name","name = ?","","")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &MemoryUserStore{
 		items:make(map[int]*User),
 		capacity:capacity,
-		get:stmt,
+		get:get_stmt,
+		register:register_stmt,
+		username_exists:username_exists_stmt,
 	}
 }
 
@@ -178,6 +199,32 @@ func (sus *MemoryUserStore) RemoveUnsafe(id int) error {
 	return nil
 }
 
+func (sus *MemoryUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
+	// Is this username already taken..?
+	err := sus.username_exists.QueryRow(username).Scan(&username)
+	if err != sql.ErrNoRows {
+		return 0, err_account_exists
+	}
+
+	salt, err := GenerateSafeString(saltLength)
+	if err != nil {
+		return 0, err
+	}
+
+	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password + salt), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := sus.register.Exec(username,email,string(hashed_password),salt,group,active)
+	if err != nil {
+		return 0, err
+	}
+
+	lastId, err := res.LastInsertId()
+	return int(lastId), err
+}
+
 func (sus *MemoryUserStore) GetLength() int {
 	return sus.length
 }
@@ -192,14 +239,33 @@ func (sus *MemoryUserStore) GetCapacity() int {
 
 type SqlUserStore struct {
 	get *sql.Stmt
+	register *sql.Stmt
+	username_exists *sql.Stmt
 }
 
 func NewSqlUserStore() *SqlUserStore {
-	stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","","")
+	get_stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &SqlUserStore{stmt}
+
+	// Add an admin version of register_stmt with more flexibility?
+	// create_account_stmt, err = db.Prepare("INSERT INTO
+	register_stmt, err := qgen.Builder.SimpleInsert("users","name, email, password, salt, group, is_super_admin, session, active, message","?,?,?,?,?,0,'',?,''")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	username_exists_stmt, err := qgen.Builder.SimpleSelect("users","name","name = ?","","")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &SqlUserStore{
+		get:get_stmt,
+		register:register_stmt,
+		username_exists:username_exists_stmt,
+	}
 }
 
 func (sus *SqlUserStore) Get(id int) (*User, error) {
@@ -271,6 +337,32 @@ func (sus *SqlUserStore) Load(id int) error {
 	// Simplify this into a quick check whether the user exists
 	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
 	return err
+}
+
+func (sus *SqlUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
+	// Is this username already taken..?
+	err := sus.username_exists.QueryRow(username).Scan(&username)
+	if err != sql.ErrNoRows {
+		return 0, err_account_exists
+	}
+
+	salt, err := GenerateSafeString(saltLength)
+	if err != nil {
+		return 0, err
+	}
+
+	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password + salt), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := sus.register.Exec(username,email,string(hashed_password),salt,group,active)
+	if err != nil {
+		return 0, err
+	}
+
+	lastId, err := res.LastInsertId()
+	return int(lastId), err
 }
 
 // Placeholder methods, the actual queries are done elsewhere

@@ -64,6 +64,30 @@ func (build *builder) SimpleInsert(table string, columns string, fields string) 
 	return build.conn.Prepare(res)
 }
 
+func (build *builder) SimpleInsertSelect(ins DB_Insert, sel DB_Select) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInsertSelect("_builder", ins, sel)
+	if err != nil {
+		return stmt, err
+	}
+	return build.conn.Prepare(res)
+}
+
+func (build *builder) SimpleInsertLeftJoin(ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInsertLeftJoin("_builder", ins, sel)
+	if err != nil {
+		return stmt, err
+	}
+	return build.conn.Prepare(res)
+}
+
+func (build *builder) SimpleInsertInnerJoin(ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInsertInnerJoin("_builder", ins, sel)
+	if err != nil {
+		return stmt, err
+	}
+	return build.conn.Prepare(res)
+}
+
 func (build *builder) SimpleUpdate(table string, set string, where string) (stmt *sql.Stmt, err error) {
 	res, err := build.adapter.SimpleUpdate("_builder", table, set, where)
 	if err != nil {

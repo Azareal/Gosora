@@ -481,9 +481,17 @@ button.username {
 	font-size: 12px;
 }
 
-@media(max-width: 1300px) {
-	.theme_row {
-			background-image: none !important;
+/* Media Queries */
+
+@media(min-width: 881px) {
+	.shrink_main {
+		float: left;
+		width: calc(75% - 12px);
+	}
+	.sidebar {
+		float: left;
+		width: 25%;
+		margin-left: 12px;
 	}
 }
 
@@ -516,6 +524,7 @@ button.username {
 		overflow-x: hidden;
 	}
 	.container { width: auto; }
+	.sidebar { display: none; }
 	.selectedAlert .alertList { top: 37px; right: 4px; }
 }
 

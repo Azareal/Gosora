@@ -213,7 +213,7 @@ func weak_password(password string) error {
 	if lower == 0 {
 		return errors.New("You don't have any lowercase characters in your password.")
 	}
-	if (len(password) / 2) < len(charMap) {
+	if (len(password) / 2) > len(charMap) {
 		return errors.New("You don't have enough unique characters in your password.")
 	}
 

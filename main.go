@@ -5,13 +5,8 @@ import (
 	"net/http"
 	"fmt"
 	"log"
-	"mime"
 	"time"
-	"strings"
-	"path/filepath"
 	"io"
-	"io/ioutil"
-	"os"
 	"html/template"
 	//"runtime/pprof"
 )
@@ -26,9 +21,6 @@ const kilobyte int = 1024
 const megabyte int = kilobyte * 1024
 const gigabyte int = megabyte * 1024
 const terabyte int = gigabyte * 1024
-//const thousand int = 1000
-//const million int = 1_000_000
-//const billion int = 1_000_000_000
 const saltLength int = 32
 const sessionLength int = 80
 var enable_websockets bool = false // Don't change this, the value is overwritten by an initialiser
@@ -59,8 +51,8 @@ func compile_templates() {
 		NoticeList:[]string{"test"},
 		Stylesheets:[]string{"panel"},
 		Scripts:[]string{"whatever"},
-		Sidebars:HeaderSidebars{
-			Left: template.HTML("lalala"),
+		Widgets:PageWidgets{
+			LeftSidebar: template.HTML("lalala"),
 		},
 	}
 
@@ -142,33 +134,6 @@ func init_templates() {
 	template.Must(templates.ParseGlob("pages/*"))
 }
 
-func init_static_files() {
-	log.Print("Loading the static files.")
-	err := filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
-		if f.IsDir() {
-			return nil
-		}
-
-		path = strings.Replace(path,"\\","/",-1)
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		path = strings.TrimPrefix(path,"public/")
-		if debug {
-			log.Print("Added the '" + path + "' static file.")
-		}
-		gzip_data := compress_bytes_gzip(data)
-
-		static_files["/static/" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(filepath.Ext("/public/" + path)),f,f.ModTime().UTC().Format(http.TimeFormat)}
-		return nil
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func main(){
 	//if profiling {
 	//	f, err := os.Create("startup_cpu.prof")
@@ -214,6 +179,9 @@ func main(){
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Print("Initialising the authentication system")
+	auth = NewDefaultAuth()
 
 	log.Print("Initialising the router")
 	router := NewGenRouter(http.FileServer(http.Dir("./uploads")))

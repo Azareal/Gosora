@@ -18,5 +18,5 @@
 	<body>
 		<div class="container">
 {{template "menu.html" .}}
-<div id="back"><div id="main" {{if .Header.Sidebars.Right}}class="shrink_main"{{end}}>
+<div id="back"><div id="main" {{if .Header.Widgets.RightSidebar}}class="shrink_main"{{end}}>
 {{range .Header.NoticeList}}<div class="alert">{{.}}</div>{{end}}

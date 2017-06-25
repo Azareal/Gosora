@@ -887,6 +887,9 @@ func (c *CTemplateSet) compile_varsub(varname string, val reflect.Value) string 
 		case reflect.Int64:
 			return "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))"
 		default:
+			if !val.IsValid() {
+				panic(varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+			}
 			fmt.Println("Unknown Variable Name:",varname)
 			fmt.Println("Unknown Kind:",val.Kind())
 			fmt.Println("Unknown Type:",val.Type().Name())
