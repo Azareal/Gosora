@@ -15,7 +15,7 @@ import (
 	"io/ioutil"
 	"database/sql"
 	"runtime/pprof"
-	
+
 	//_ "github.com/go-sql-driver/mysql"
 	//"github.com/erikstmartin/go-testdb"
 	//"github.com/husobee/vestigo"
@@ -27,33 +27,33 @@ var gloinited bool = false
 func gloinit() {
 	debug = false
 	//nogrouplog = true
-	
+
 	// init_database is a little noisy for a benchmark
 	//discard := ioutil.Discard
 	//log.SetOutput(discard)
-	
+
 	startTime = time.Now()
 	timeLocation = startTime.Location()
-	
+
 	init_themes()
 	err := init_database()
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	db_prod = db
 	//db_test, err = sql.Open("testdb","")
 	//if err != nil {
 	//	log.Fatal(err)
 	//}
-	
+
 	init_templates()
 	db_prod.SetMaxOpenConns(64)
 	err = init_errors()
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	if cache_topicuser == CACHE_STATIC {
 		users = NewMemoryUserStore(user_cache_capacity)
 		topics = NewMemoryTopicStore(topic_cache_capacity)
@@ -61,7 +61,7 @@ func gloinit() {
 		users = NewSqlUserStore()
 		topics = NewSqlTopicStore()
 	}
-	
+
 	init_static_files()
 	external_sites["YT"] = "https://www.youtube.com/"
 	hooks["trow_assign"] = nil
@@ -76,13 +76,13 @@ func init() {
 
 func BenchmarkTopicTemplateSerial(b *testing.B) {
 	b.ReportAllocs()
-	
+
 	user := User{0,"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"127.0.0.1"}
 	admin := User{1,"Admin","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","","",-1,58,"127.0.0.1"}
 	noticeList := []string{"test"}
-	
+
 	topic := TopicUser{Title: "Lol",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"}
-	
+
 	var replyList []Reply
 	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
 	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
@@ -94,11 +94,11 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
 	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
 	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	
+
 	tpage := TopicPage{"Topic Blah",user,noticeList,replyList,topic,1,1,false}
 	tpage2 := TopicPage{"Topic Blah",admin,noticeList,replyList,topic,1,1,false}
 	w := ioutil.Discard
-	
+
 	b.Run("compiled_useradmin", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			template_topic(tpage2,w)
@@ -119,7 +119,7 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 			templates.ExecuteTemplate(w,"topic.html", tpage)
 		}
 	})
-	
+
 	w2 := httptest.NewRecorder()
 	b.Run("compiled_useradmin_recorder", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -145,7 +145,7 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 			templates.ExecuteTemplate(w2,"topic.html", tpage)
 		}
 	})
-	
+
 	/*f, err := os.Create("topic_bench.prof")
 	if err != nil {
 		log.Fatal(err)
@@ -156,11 +156,11 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 
 func BenchmarkTopicsTemplateSerial(b *testing.B) {
 	b.ReportAllocs()
-	
+
 	user := User{0,"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"127.0.0.1"}
 	admin := User{1,"Admin","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","","",-1,58,"127.0.0.1"}
 	noticeList := []string{"test"}
-	
+
 	var topicList []TopicsRow
 	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
 	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
@@ -172,11 +172,11 @@ func BenchmarkTopicsTemplateSerial(b *testing.B) {
 	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
 	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
 	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	
+
 	w := ioutil.Discard
 	tpage := TopicsPage{"Topic Blah",user,noticeList,topicList,nil}
 	tpage2 := TopicsPage{"Topic Blah",admin,noticeList,topicList,nil}
-	
+
 	b.Run("compiled_useradmin", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			template_topics(tpage2,w)
@@ -207,7 +207,7 @@ func BenchmarkStaticRouteParallel(b *testing.B) {
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		static_w := httptest.NewRecorder()
 		static_req := httptest.NewRequest("get","/static/global.js",bytes.NewReader(nil))
@@ -229,7 +229,7 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	if !gloinited {
 		gloinit()
 	}
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		admin, err := users.CascadeGet(1)
 		if err != nil {
@@ -240,14 +240,14 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 		}
 		admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 		admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
-		
+
 		topic_w := httptest.NewRecorder()
 		topic_req := httptest.NewRequest("get","/topic/1",bytes.NewReader(nil))
 		topic_req_admin := topic_req
 		topic_req_admin.AddCookie(&admin_uid_cookie)
 		topic_req_admin.AddCookie(&admin_session_cookie)
 		topic_handler := http.HandlerFunc(route_topic_id)
-		
+
 		for pb.Next() {
 			topic_w.Body.Reset()
 			topic_handler.ServeHTTP(topic_w,topic_req_admin)
@@ -260,7 +260,7 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	if !gloinited {
 		gloinit()
 	}
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		topic_w := httptest.NewRecorder()
 		topic_req := httptest.NewRequest("get","/topic/1",bytes.NewReader(nil))
@@ -278,7 +278,7 @@ func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 	if !gloinited {
 		gloinit()
 	}
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		admin, err := users.CascadeGet(1)
 		if err != nil {
@@ -289,14 +289,14 @@ func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 		}
 		admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 		admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
-		
+
 		forums_w := httptest.NewRecorder()
 		forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
 		forums_req_admin := forums_req
 		forums_req_admin.AddCookie(&admin_uid_cookie)
 		forums_req_admin.AddCookie(&admin_session_cookie)
 		forums_handler := http.HandlerFunc(route_forums)
-		
+
 		for pb.Next() {
 			forums_w.Body.Reset()
 			forums_handler.ServeHTTP(forums_w,forums_req_admin)
@@ -309,7 +309,7 @@ func BenchmarkForumsAdminRouteParallelProf(b *testing.B) {
 	if !gloinited {
 		gloinit()
 	}
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		admin, err := users.CascadeGet(1)
 		if err != nil {
@@ -320,7 +320,7 @@ func BenchmarkForumsAdminRouteParallelProf(b *testing.B) {
 		}
 		admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 		admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path: "/",MaxAge: year}
-		
+
 		forums_w := httptest.NewRecorder()
 		forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
 		forums_req_admin := forums_req
@@ -345,7 +345,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	if !gloinited {
 		gloinit()
 	}
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		forums_w := httptest.NewRecorder()
 		forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
@@ -367,49 +367,49 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	if !admin.Is_Admin {
 		panic("UID1 is not an admin")
 	}
-	
+
 	admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 	admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path: "/",MaxAge: year}
-	
+
 	if plugins_inited {
 		b.Log("Plugins have already been initialised, they can't be deinitialised so these tests will run with plugins on")
 	}
 	static_w := httptest.NewRecorder()
 	static_req := httptest.NewRequest("get","/static/global.js",bytes.NewReader(nil))
 	static_handler := http.HandlerFunc(route_static)
-	
+
 	topic_w := httptest.NewRecorder()
 	topic_req := httptest.NewRequest("get","/topic/1",bytes.NewReader(nil))
 	topic_req_admin := topic_req
 	topic_req_admin.AddCookie(&admin_uid_cookie)
 	topic_req_admin.AddCookie(&admin_session_cookie)
 	topic_handler := http.HandlerFunc(route_topic_id)
-	
+
 	topics_w := httptest.NewRecorder()
 	topics_req := httptest.NewRequest("get","/topics/",bytes.NewReader(nil))
 	topics_req_admin := topics_req
 	topics_req_admin.AddCookie(&admin_uid_cookie)
 	topics_req_admin.AddCookie(&admin_session_cookie)
 	topics_handler := http.HandlerFunc(route_topics)
-	
+
 	forum_w := httptest.NewRecorder()
 	forum_req := httptest.NewRequest("get","/forum/1",bytes.NewReader(nil))
 	forum_req_admin := forum_req
 	forum_req_admin.AddCookie(&admin_uid_cookie)
 	forum_req_admin.AddCookie(&admin_session_cookie)
 	forum_handler := http.HandlerFunc(route_forum)
-	
+
 	forums_w := httptest.NewRecorder()
 	forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
 	forums_req_admin := forums_req
 	forums_req_admin.AddCookie(&admin_uid_cookie)
 	forums_req_admin.AddCookie(&admin_session_cookie)
 	forums_handler := http.HandlerFunc(route_forums)
-	
+
 	if !gloinited {
 		gloinit()
 	}
-	
+
 	//f, err := os.Create("routes_bench_cpu.prof")
 	//if err != nil {
 	//	log.Fatal(err)
@@ -417,7 +417,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	//pprof.StartCPUProfile(f)
 	///defer pprof.StopCPUProfile()
 	///pprof.StopCPUProfile()
-	
+
 	b.Run("static_recorder", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			//static_w.Code = 200
@@ -429,7 +429,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 			//}
 		}
 	})
-	
+
 	b.Run("topic_admin_recorder", func(b *testing.B) {
 		//f, err := os.Create("routes_bench_topic_cpu.prof")
 		//if err != nil {
@@ -508,11 +508,11 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 		}
 		//pprof.StopCPUProfile()
 	})
-	
+
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	b.Run("topic_admin_recorder_with_plugins", func(b *testing.B) {
 		//f, err := os.Create("routes_bench_topic_cpu.prof")
 		//if err != nil {
@@ -598,12 +598,12 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 	if !gloinited {
 		gloinit()
 	}
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		tu := TopicUser{Css: no_css_tmpl}
 		for pb.Next() {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
-			if err == sql.ErrNoRows {
+			if err == ErrNoRows {
 				log.Fatal("No rows found!")
 				return
 			} else if err != nil {
@@ -619,12 +619,12 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	if !gloinited {
 		gloinit()
 	}
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		tu := TopicUser{Css: no_css_tmpl}
 		for pb.Next() {
 			err := get_topic_user_stmt.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
-			if err == sql.ErrNoRows {
+			if err == ErrNoRows {
 				log.Fatal("No rows found!")
 				return
 			} else if err != nil {
@@ -641,7 +641,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	b.Run("topic", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
-			if err == sql.ErrNoRows {
+			if err == ErrNoRows {
 				log.Fatal("No rows found!")
 				return
 			} else if err != nil {
@@ -666,7 +666,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 			defer rows.Close()
 		}
 	})
-	
+
 	replyItem := Reply{Css: no_css_tmpl}
 	var is_super_admin bool
 	var group int
@@ -705,7 +705,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("get","/topics/",bytes.NewReader(nil))
 	routes := make([]string, 0)
-	
+
 	routes = append(routes,"/test/")
 	serveMux := http.NewServeMux()
 	serveMux.HandleFunc("/test/", func(_ http.ResponseWriter,_ *http.Request){})
@@ -715,7 +715,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 			serveMux.ServeHTTP(w,req)
 		}
 	})
-	
+
 	routes = append(routes,"/topic/")
 	routes = append(routes,"/forums/")
 	routes = append(routes,"/forum/")
@@ -728,7 +728,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 			serveMux.ServeHTTP(w,req)
 		}
 	})
-	
+
 	serveMux = http.NewServeMux()
 	routes = append(routes,"/panel/plugins/")
 	routes = append(routes,"/panel/groups/")
@@ -742,7 +742,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 			serveMux.ServeHTTP(w,req)
 		}
 	})
-	
+
 	serveMux = http.NewServeMux()
 	routes = append(routes,"/panel/forums/create/submit/")
 	routes = append(routes,"/panel/forums/delete/")
@@ -761,7 +761,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 			serveMux.ServeHTTP(w,req)
 		}
 	})
-	
+
 	serveMux = http.NewServeMux()
 	routes = append(routes,"/panel/plugins/deactivate/")
 	routes = append(routes,"/panel/plugins/install/")
@@ -780,7 +780,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 			serveMux.ServeHTTP(w,req)
 		}
 	})
-	
+
 	serveMux = http.NewServeMux()
 	routes = append(routes,"/panel/themes/create/")
 	routes = append(routes,"/panel/themes/delete/")
@@ -799,7 +799,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 			serveMux.ServeHTTP(w,req)
 		}
 	})
-	
+
 	serveMux = http.NewServeMux()
 	routes = append(routes,"/report/")
 	routes = append(routes,"/report/submit/")
@@ -818,7 +818,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 			serveMux.ServeHTTP(w,req)
 		}
 	})
-	
+
 	serveMux = http.NewServeMux()
 	routes = append(routes,"/topic/delete/submit/")
 	routes = append(routes,"/topic/stick/submit/")
@@ -837,7 +837,7 @@ func BenchmarkDefaultGoRouterSerial(b *testing.B) {
 			serveMux.ServeHTTP(w,req)
 		}
 	})
-	
+
 	serveMux = http.NewServeMux()
 	routes = append(routes,"/user/edit/avatar/")
 	routes = append(routes,"/user/edit/avatar/submit/")
@@ -868,7 +868,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("get","/topics/",bytes.NewReader(nil))
 	routes := make([]string, 0)
-	
+
 	routes = append(routes,"/test/")
 	router := NewRouter()
 	router.HandleFunc("/test/", func(_ http.ResponseWriter,_ *http.Request){})
@@ -878,7 +878,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-	
+
 	routes = append(routes,"/topic/")
 	routes = append(routes,"/forums/")
 	routes = append(routes,"/forum/")
@@ -891,7 +891,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-	
+
 	router = NewRouter()
 	routes = append(routes,"/panel/plugins/")
 	routes = append(routes,"/panel/groups/")
@@ -905,7 +905,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-	
+
 	router = NewRouter()
 	routes = append(routes,"/panel/forums/create/submit/")
 	routes = append(routes,"/panel/forums/delete/")
@@ -924,7 +924,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-	
+
 	router = NewRouter()
 	routes = append(routes,"/panel/plugins/deactivate/")
 	routes = append(routes,"/panel/plugins/install/")
@@ -943,7 +943,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-	
+
 	router = NewRouter()
 	routes = append(routes,"/panel/themes/create/")
 	routes = append(routes,"/panel/themes/delete/")
@@ -962,7 +962,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-	
+
 	router = NewRouter()
 	routes = append(routes,"/report/")
 	routes = append(routes,"/report/submit/")
@@ -981,7 +981,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-	
+
 	router = NewRouter()
 	routes = append(routes,"/topic/delete/submit/")
 	routes = append(routes,"/topic/stick/submit/")
@@ -1000,7 +1000,7 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 			router.ServeHTTP(w,req)
 		}
 	})
-	
+
 	router = NewRouter()
 	routes = append(routes,"/user/edit/avatar/")
 	routes = append(routes,"/user/edit/avatar/submit/")
@@ -1217,11 +1217,11 @@ func TestStaticRoute(t *testing.T) {
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	static_w := httptest.NewRecorder()
 	static_req := httptest.NewRequest("get","/static/global.js",bytes.NewReader(nil))
 	static_handler := http.HandlerFunc(route_static)
-	
+
 	static_handler.ServeHTTP(static_w,static_req)
 	if static_w.Code != 200 {
 		fmt.Println(static_w.Body)
@@ -1237,7 +1237,7 @@ func TestStaticRoute(t *testing.T) {
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	admin, err := users.CascadeGet(1)
 	if err != nil {
 		panic(err)
@@ -1245,17 +1245,17 @@ func TestStaticRoute(t *testing.T) {
 	if !admin.Is_Admin {
 		panic("UID1 is not an admin")
 	}
-	
+
 	admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 	admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
-	
+
 	topic_w := httptest.NewRecorder()
 	topic_req := httptest.NewRequest("get","/topic/1",bytes.NewReader(nil))
 	topic_req_admin := topic_req
 	topic_req_admin.AddCookie(&admin_uid_cookie)
 	topic_req_admin.AddCookie(&admin_session_cookie)
 	topic_handler := http.HandlerFunc(route_topic_id)
-	
+
 	topic_handler.ServeHTTP(topic_w,topic_req_admin)
 	if topic_w.Code != 200 {
 		fmt.Println(topic_w.Body)
@@ -1271,11 +1271,11 @@ func TestStaticRoute(t *testing.T) {
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	topic_w := httptest.NewRecorder()
 	topic_req := httptest.NewRequest("get","/topic/1",bytes.NewReader(nil))
 	topic_handler := http.HandlerFunc(route_topic_id)
-	
+
 	topic_handler.ServeHTTP(topic_w,topic_req)
 	if topic_w.Code != 200 {
 		fmt.Println(topic_w.Body)
@@ -1291,7 +1291,7 @@ func TestForumsAdminRoute(t *testing.T) {
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	admin, err := users.CascadeGet(1)
 	if err != nil {
 		panic(err)
@@ -1301,14 +1301,14 @@ func TestForumsAdminRoute(t *testing.T) {
 	}
 	admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 	admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
-	
+
 	forums_w := httptest.NewRecorder()
 	forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
 	forums_req_admin := forums_req
 	forums_req_admin.AddCookie(&admin_uid_cookie)
 	forums_req_admin.AddCookie(&admin_session_cookie)
 	forums_handler := http.HandlerFunc(route_forums)
-	
+
 	forums_handler.ServeHTTP(forums_w,forums_req_admin)
 	if forums_w.Code != 200 {
 		fmt.Println(forums_w.Body)
@@ -1324,11 +1324,11 @@ func TestForumsGuestRoute(t *testing.T) {
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	forums_w := httptest.NewRecorder()
 	forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
 	forums_handler := http.HandlerFunc(route_forums)
-	
+
 	forums_handler.ServeHTTP(forums_w,forums_req)
 	if forums_w.Code != 200 {
 		fmt.Println(forums_w.Body)
@@ -1344,7 +1344,7 @@ func TestForumsGuestRoute(t *testing.T) {
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	admin, err := users.CascadeGet(1)
 	if err != nil {
 		panic(err)
@@ -1354,14 +1354,14 @@ func TestForumsGuestRoute(t *testing.T) {
 	}
 	admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 	admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
-	
+
 	forum_w := httptest.NewRecorder()
 	forum_req := httptest.NewRequest("get","/forum/1",bytes.NewReader(nil))
 	forum_req_admin := forum_req
 	forum_req_admin.AddCookie(&admin_uid_cookie)
 	forum_req_admin.AddCookie(&admin_session_cookie)
 	forum_handler := http.HandlerFunc(route_forum)
-	
+
 	forum_handler.ServeHTTP(forum_w,forum_req_admin)
 	if forum_w.Code != 200 {
 		fmt.Println(forum_w.Body)
@@ -1377,11 +1377,11 @@ func TestForumsGuestRoute(t *testing.T) {
 	if !plugins_inited {
 		init_plugins()
 	}
-	
+
 	forum_w := httptest.NewRecorder()
 	forum_req := httptest.NewRequest("get","/forum/2",bytes.NewReader(nil))
 	forum_handler := http.HandlerFunc(route_forum)
-	
+
 	forum_handler.ServeHTTP(forum_w,forum_req)
 	if forum_w.Code != 200 {
 		fmt.Println(forum_w.Body)
@@ -1408,19 +1408,19 @@ func TestForumsGuestRoute(t *testing.T) {
 		1,1,0,friend_invite,user,2`
 		return testdb.RowsFromCSVString(cols,rows), nil
 	})
-	
+
 	alert_handler.ServeHTTP(alert_w,alert_req)
 	fmt.Println(alert_w.Body)
 	if alert_w.Code != 200 {
 		panic("HTTP Error!")
 	}
-	
+
 	fmt.Println("No problems found in the alert handler!")
 	db = db_prod
 }*/
 
 /*func TestRoute(t *testing.T) {
-	
+
 }*/
 
 func TestSplittyThing(t *testing.T) {
@@ -1436,8 +1436,8 @@ func TestSplittyThing(t *testing.T) {
 	fmt.Println("Extra Data:", extra_data)
 	fmt.Println("Path Bytes:", []byte(path))
 	fmt.Println("Extra Data Bytes:", []byte(extra_data))
-	
-	
+
+
 	fmt.Println("Splitty thing test")
 	path = "/topics/"
 	extra_data = ""

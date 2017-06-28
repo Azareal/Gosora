@@ -38,18 +38,20 @@ w.Write(header_8)
 w.Write(menu_0)
 if tmpl_forums_vars.CurrentUser.Loggedin {
 w.Write(menu_1)
-w.Write([]byte(strconv.Itoa(tmpl_forums_vars.CurrentUser.ID)))
+w.Write([]byte(tmpl_forums_vars.CurrentUser.Slug))
 w.Write(menu_2)
-if tmpl_forums_vars.CurrentUser.Is_Super_Mod {
+w.Write([]byte(strconv.Itoa(tmpl_forums_vars.CurrentUser.ID)))
 w.Write(menu_3)
-}
+if tmpl_forums_vars.CurrentUser.Is_Super_Mod {
 w.Write(menu_4)
-w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
-w.Write(menu_5)
-} else {
-w.Write(menu_6)
 }
+w.Write(menu_5)
+w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
+w.Write(menu_6)
+} else {
 w.Write(menu_7)
+}
+w.Write(menu_8)
 w.Write(header_9)
 if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_10)
@@ -72,43 +74,51 @@ w.Write(forums_2)
 w.Write(forums_3)
 if item.Desc != "" {
 w.Write(forums_4)
-w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write([]byte(item.Slug))
 w.Write(forums_5)
-w.Write([]byte(item.Name))
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(forums_6)
-w.Write([]byte(item.Desc))
+w.Write([]byte(item.Name))
 w.Write(forums_7)
-} else {
-if item.LastTopicTime != "" {
+w.Write([]byte(item.Desc))
 w.Write(forums_8)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(forums_9)
-w.Write([]byte(item.Name))
-w.Write(forums_10)
 } else {
-w.Write(forums_11)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(forums_12)
-w.Write([]byte(item.Name))
-w.Write(forums_13)
-}
-}
-w.Write(forums_14)
-w.Write([]byte(strconv.Itoa(item.LastTopicID)))
-w.Write(forums_15)
-w.Write([]byte(item.LastTopic))
-w.Write(forums_16)
 if item.LastTopicTime != "" {
-w.Write(forums_17)
-w.Write([]byte(item.LastTopicTime))
-w.Write(forums_18)
+w.Write(forums_9)
+w.Write([]byte(item.Slug))
+w.Write(forums_10)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(forums_11)
+w.Write([]byte(item.Name))
+w.Write(forums_12)
+} else {
+w.Write(forums_13)
+w.Write([]byte(item.Slug))
+w.Write(forums_14)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(forums_15)
+w.Write([]byte(item.Name))
+w.Write(forums_16)
 }
+}
+w.Write(forums_17)
+w.Write([]byte(item.LastTopicSlug))
+w.Write(forums_18)
+w.Write([]byte(strconv.Itoa(item.LastTopicID)))
 w.Write(forums_19)
+w.Write([]byte(item.LastTopic))
+w.Write(forums_20)
+if item.LastTopicTime != "" {
+w.Write(forums_21)
+w.Write([]byte(item.LastTopicTime))
+w.Write(forums_22)
+}
+w.Write(forums_23)
 }
 } else {
-w.Write(forums_20)
+w.Write(forums_24)
 }
-w.Write(forums_21)
+w.Write(forums_25)
 w.Write(footer_0)
 if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)

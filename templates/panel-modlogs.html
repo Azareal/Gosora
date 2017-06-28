@@ -16,12 +16,15 @@
 	</div>
 	<div id="panel_modlogs" class="colstack_item">
 		{{range .Logs}}
-		<div class="rowitem" style="font-weight: normal;text-transform: none;">
-			<a style="font-size: 17px;">{{.Action}}</a><br />
-			<small style="margin-left: 2px;">IP: {{.IPAddress}}</small>
-			<span style="float: right;">
-				<span style="font-size: 16px;">{{.DoneAt}}</span>
+		<div class="rowitem panel_compactrow" style="font-weight: normal;text-transform: none;">
+			<span style="float: left;">
+				<span>{{.Action}}</span><br />
+				<small style="margin-left: 2px;font-size: 12px;">{{.IPAddress}}</small>
 			</span>
+			<span style="float: right;">
+				<span style="font-size: 14px;">{{.DoneAt}}</span>
+			</span>
+			<div style="clear: both;"></div>
 		</div>
 		{{end}}
 	</div>

@@ -7,8 +7,6 @@ import (
 	"net"
 	"net/http"
 	"html"
-	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 func route_edit_topic(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +28,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	old_topic, err := topics.CascadeGet(tid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreErrorJSQ("The topic you tried to edit doesn't exist.",w,r,is_js)
 		return
 	} else if err != nil {
@@ -96,7 +94,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = topics.Load(tid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalErrorJSQ("This topic no longer exists!",w,r,user,is_js)
 		return
 	} else if err != nil {
@@ -119,7 +117,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topic, err := topics.CascadeGet(tid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreError("The topic you tried to delete doesn't exist.",w,r)
 		return
 	} else if err != nil {
@@ -170,13 +168,11 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = remove_topics_from_forum_stmt.Exec(1, topic.ParentID)
-	if err != nil {
+	err = fstore.DecrementTopicCount(topic.ParentID)
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
-
-	forums[topic.ParentID].TopicCount -= 1
 	topics.Remove(tid)
 }
 
@@ -188,7 +184,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topic, err := topics.CascadeGet(tid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreError("The topic you tried to pin doesn't exist.",w,r)
 		return
 	} else if err != nil {
@@ -243,7 +239,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topic, err := topics.CascadeGet(tid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreError("The topic you tried to unpin doesn't exist.",w,r)
 		return
 	} else if err != nil {
@@ -324,7 +320,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 
 	var fid int
 	err = get_topic_fid_stmt.QueryRow(tid).Scan(&fid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreErrorJSQ("The parent topic doesn't exist.",w,r,is_js)
 		return
 	} else if err != nil {
@@ -366,7 +362,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reply, err := get_reply(rid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreErrorJSQ("The reply you tried to delete doesn't exist.",w,r,is_js)
 		return
 	} else if err != nil {
@@ -376,7 +372,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 
 	var fid int
 	err = get_topic_fid_stmt.QueryRow(reply.ParentID).Scan(&fid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreErrorJSQ("The parent topic doesn't exist.",w,r,is_js)
 		return
 	} else if err != nil {
@@ -507,7 +503,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 
 	var uid int
 	err = get_user_reply_uid_stmt.QueryRow(rid).Scan(&uid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalErrorJSQ("The reply you tried to delete doesn't exist.",w,r,user,is_js)
 		return
 	} else if err != nil {
@@ -552,7 +548,7 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 
 	var uname string
 	err = get_user_name_stmt.QueryRow(uid).Scan(&uname)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
@@ -594,7 +590,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 	var group int
 	var is_super_admin bool
 	err = get_user_rank_stmt.QueryRow(uid).Scan(&group, &is_super_admin)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
@@ -663,7 +659,7 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 
 	var group int
 	err = get_user_group_stmt.QueryRow(uid).Scan(&group)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The user you're trying to unban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
@@ -694,7 +690,7 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = users.Load(uid)
-	if err != nil && err == sql.ErrNoRows {
+	if err != nil && err == ErrNoRows {
 		LocalError("This user no longer exists!",w,r,user)
 		return
 	} else if err != nil {
@@ -727,7 +723,7 @@ func route_activate(w http.ResponseWriter, r *http.Request) {
 
 	var active bool
 	err = get_user_active_stmt.QueryRow(uid).Scan(&active)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The account you're trying to activate no longer exists.",w,r,user)
 		return
 	} else if err != nil {

@@ -7,7 +7,7 @@
 	</div>
 	<div id="panel_groups" class="colstack_item">
 		{{range .ItemList}}
-		<div class="rowitem editable_parent">
+		<div class="rowitem panel_compactrow editable_parent">
 			<a href="/panel/groups/edit/{{.ID}}" class="panel_upshift">{{.Name}}</a>
 			<span class="panel_floater">
 				{{if .RankClass}}<a class="panel_tag panel_rank_tag panel_rank_tag_{{.RankClass}}" title="{{.Rank}}"></a>

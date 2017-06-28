@@ -306,6 +306,11 @@ func rebuild_forum_permissions(fid int) error {
 	if debug {
 		log.Print("Loading the forum permissions")
 	}
+	forums, err := fstore.GetAll()
+	if err != nil {
+		return err
+	}
+
 	rows, err := db.Query("select gid, permissions from forums_permissions where fid = ? order by gid asc", fid)
 	if err != nil {
 		return err
@@ -373,6 +378,11 @@ func rebuild_forum_permissions(fid int) error {
 }
 
 func build_forum_permissions() error {
+	forums, err := fstore.GetAll()
+	if err != nil {
+		return err
+	}
+
 	rows, err := get_forums_permissions_stmt.Query()
 	if err != nil {
 		return err

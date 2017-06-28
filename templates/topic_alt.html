@@ -25,7 +25,7 @@
 	<div class="rowitem passive deletable_block editable_parent post_item" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-			<a href="/user/{{.Topic.CreatedBy}}" class="the_name">{{.Topic.CreatedByName}}</a>
+			<a href="/user/{{.Topic.UserSlug}}.{{.Topic.CreatedBy}}" class="the_name">{{.Topic.CreatedByName}}</a>
 			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container">
@@ -50,7 +50,7 @@
 	<div class="rowitem passive deletable_block editable_parent post_item {{if .ActionType}}action_item{{end}}">
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-			<a href="/user/{{.CreatedBy}}" class="the_name">{{.CreatedByName}}</a>
+			<a href="/user/{{.UserSlug}}.{{.CreatedBy}}" class="the_name">{{.CreatedByName}}</a>
 			{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container" {{if .ActionType}}style="margin-left: 0px;"{{end}}>

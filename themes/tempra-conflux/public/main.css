@@ -333,8 +333,8 @@ button {
 	padding-bottom: 2px;
 	color: #505050; /* 80,80,80 */
 	background-color: #FFFFFF;
-	border-style: dotted;
-	border-color: #505050; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
+	border-style: solid;
+	border-color: #ccc;
 	border-width: 1px;
 	font-size: 15px;
 }
@@ -432,12 +432,27 @@ button.username {
 .trash_label:before { content: "🗑️"; }
 .flag_label:before { content: "🚩"; }
 
-.mod_button { margin-right: 4px; }
-.simple > .real_username { color: #404040; font-size: 17px; }
-.simple > .user_content { background: none; }
+.mod_button {
+	margin-right: 4px;
+}
+.simple > .real_username {
+	color: #404040;
+	font-size: 16px;
+	padding-left: 5px;
+	padding-right: 5px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+.simple > .user_content {
+	background: none;
+}
 
-.simple { background-color: white; }
-.post_item:not(.simple) { background-color: #eaeaea; }
+.simple {
+	background-color: white;
+}
+.post_item:not(.simple) {
+	background-color: #eaeaea;
+}
 .post_item {
 	padding-top: 4px;
 	padding-left: 5px;

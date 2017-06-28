@@ -50,7 +50,7 @@ func (sts *MemoryTopicStore) Get(id int) (*Topic, error) {
 	if ok {
 		return item, nil
 	}
-	return item, sql.ErrNoRows
+	return item, ErrNoRows
 }
 
 func (sts *MemoryTopicStore) GetUnsafe(id int) (*Topic, error) {
@@ -58,7 +58,7 @@ func (sts *MemoryTopicStore) GetUnsafe(id int) (*Topic, error) {
 	if ok {
 		return item, nil
 	}
-	return item, sql.ErrNoRows
+	return item, ErrNoRows
 }
 
 func (sts *MemoryTopicStore) CascadeGet(id int) (*Topic, error) {
@@ -72,6 +72,7 @@ func (sts *MemoryTopicStore) CascadeGet(id int) (*Topic, error) {
 	topic = &Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
+		topic.Slug = name_to_slug(topic.Title)
 		sts.Add(topic)
 	}
 	return topic, err
@@ -80,6 +81,7 @@ func (sts *MemoryTopicStore) CascadeGet(id int) (*Topic, error) {
 func (sts *MemoryTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Slug = name_to_slug(topic.Title)
 	return topic, err
 }
 
@@ -87,6 +89,7 @@ func (sts *MemoryTopicStore) Load(id int) error {
 	topic := &Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
+		topic.Slug = name_to_slug(topic.Title)
 		sts.Set(topic)
 	} else {
 		sts.Remove(id)
@@ -176,30 +179,35 @@ func NewSqlTopicStore() *SqlTopicStore {
 func (sts *SqlTopicStore) Get(id int) (*Topic, error) {
 	topic := Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Slug = name_to_slug(topic.Title)
 	return &topic, err
 }
 
 func (sts *SqlTopicStore) GetUnsafe(id int) (*Topic, error) {
 	topic := Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Slug = name_to_slug(topic.Title)
 	return &topic, err
 }
 
 func (sts *SqlTopicStore) CascadeGet(id int) (*Topic, error) {
 	topic := Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Slug = name_to_slug(topic.Title)
 	return &topic, err
 }
 
 func (sts *SqlTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Slug = name_to_slug(topic.Title)
 	return topic, err
 }
 
 func (sts *SqlTopicStore) Load(id int) error {
 	topic := Topic{ID:id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Slug = name_to_slug(topic.Title)
 	return err
 }
 

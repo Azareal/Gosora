@@ -7,18 +7,37 @@
 	padding-right: 3px;
 	padding-top: 1.5px;
 	padding-bottom: 0px;
-	color: #505050; /* 80,80,80 */
+	color: #505050 !important; /* 80,80,80 */
 	background-color: #FFFFFF;
-	border-style: dotted;
-	border-color: #505050; /* 232,232,232. All three RGB colours being the same seems to create a shade of gray */
+	border-style: solid;
+	border-color: #ccc;
 	border-width: 1px;
 	font-size: 10px;
+}
+
+.panel_compactrow .panel_tag {
+	font-size: 14px;
+}
+
+.panel_compactrow {
+	padding-left: 10px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	padding-right: 10px;
+}
+
+.panel_compacttext {
+	font-size: 14px;
 }
 
 .panel_upshift {
 	font-size: 18px;
 	position: relative;
 	top: -2px;
+}
+.panel_compactrow .panel_upshift {
+	font-size: 16px;
+	position: static;
 }
 .panel_upshift:visited { color: black; }
 /*.panel_tag_upshift {

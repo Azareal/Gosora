@@ -123,6 +123,26 @@ func convert_friendly_unit(num int) (int,string) {
 	}
 }
 
+func name_to_slug(name string) (slug string) {
+	name = strings.TrimSpace(name)
+	name = strings.Replace(name,"  "," ",-1)
+
+	for _, char := range name {
+		if unicode.IsLower(char) || unicode.IsNumber(char) {
+			slug += string(char)
+		} else if unicode.IsUpper(char) {
+			slug += string(unicode.ToLower(char))
+		} else if unicode.IsSpace(char) {
+			slug += "-"
+		}
+	}
+
+	if slug == "" {
+		slug = "untitled"
+	}
+	return slug
+}
+
 func SendEmail(email string, subject string, msg string) (res bool) {
 	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
 	if vhooks["email_send_intercept"] != nil {
@@ -314,13 +334,6 @@ func getLevels(maxLevel int) []float64 {
 		out = append(out, current)
 	}
 	return out
-}
-
-func fill_forum_id_gap(biggerID int, smallerID int) {
-	dummy := Forum{ID:0,Name:"",Active:false,Preset:"all"}
-	for i := smallerID; i > biggerID; i++ {
-		forums = append(forums, dummy)
-	}
 }
 
 func fill_group_id_gap(biggerID int, smallerID int) {

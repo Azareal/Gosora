@@ -15,8 +15,8 @@
 			<span class="lastReplyAt">{{.LastReplyAt}}</span>
 		</span>
 		<span>
-			<a class="rowtopic" href="/topic/{{.ID}}">{{.Title}}</a>
-			<br /><a class="rowsmall" href="/user/{{.CreatedBy}}">Starter: {{.CreatedByName}}</a>
+			<a class="rowtopic" href="/topic/{{.Slug}}.{{.ID}}">{{.Title}}</a>
+			<br /><a class="rowsmall" href="/user/{{.UserSlug}}.{{.CreatedBy}}">Starter: {{.CreatedByName}}</a>
 			{{if .Is_Closed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E{{end}}</span>
 		</span>
 	</div>

@@ -8,7 +8,7 @@ var error_internal []byte
 var error_notfound []byte
 func init_errors() error {
 	var b bytes.Buffer
-	user := User{0,"Guest","",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"0.0.0.0.0"}
+	user := User{0,"guest","Guest","",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"0.0.0.0.0"}
 	pi := Page{"Internal Server Error",user,hvars,tList,"A problem has occurred in the system."}
 	err := templates.ExecuteTemplate(&b,"error.html", pi)
 	if err != nil {

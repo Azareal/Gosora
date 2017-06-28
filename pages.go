@@ -420,14 +420,14 @@ func parse_message(msg string/*, user User*/) string {
 					i += int_len
 
 					topic, err := topics.CascadeGet(tid)
-					if err != nil || !forum_exists(topic.ParentID) {
+					if err != nil || !fstore.Exists(topic.ParentID) {
 						outbytes = append(outbytes,invalid_topic...)
 						lastItem = i
 						continue
 					}
 
 					outbytes = append(outbytes, url_open...)
-					var url_bit []byte = []byte(build_topic_url(tid))
+					var url_bit []byte = []byte(build_topic_url("",tid))
 					outbytes = append(outbytes, url_bit...)
 					outbytes = append(outbytes, url_open2...)
 					var tid_bit []byte = []byte("#tid-" + strconv.Itoa(tid))
@@ -449,14 +449,14 @@ func parse_message(msg string/*, user User*/) string {
 					i += int_len
 
 					topic, err := get_topic_by_reply(rid)
-					if err != nil || !forum_exists(topic.ParentID) {
+					if err != nil || !fstore.Exists(topic.ParentID) {
 						outbytes = append(outbytes,invalid_topic...)
 						lastItem = i
 						continue
 					}
 
 					outbytes = append(outbytes, url_open...)
-					var url_bit []byte = []byte(build_topic_url(topic.ID))
+					var url_bit []byte = []byte(build_topic_url("",topic.ID))
 					outbytes = append(outbytes, url_bit...)
 					outbytes = append(outbytes, url_open2...)
 					var rid_bit []byte = []byte("#rid-" + strconv.Itoa(rid))
@@ -470,14 +470,14 @@ func parse_message(msg string/*, user User*/) string {
 					fid, int_len := coerce_int_bytes(msgbytes[start:])
 					i += int_len
 
-					if !forum_exists(fid) {
+					if !fstore.Exists(fid) {
 						outbytes = append(outbytes,invalid_forum...)
 						lastItem = i
 						continue
 					}
 
 					outbytes = append(outbytes, url_open...)
-					var url_bit []byte = []byte(build_forum_url(fid))
+					var url_bit []byte = []byte(build_forum_url("",fid))
 					outbytes = append(outbytes, url_bit...)
 					outbytes = append(outbytes, url_open2...)
 					var fid_bit []byte = []byte("#fid-" + strconv.Itoa(fid))
@@ -503,7 +503,7 @@ func parse_message(msg string/*, user User*/) string {
 				}
 
 				outbytes = append(outbytes, url_open...)
-				var url_bit []byte = []byte(build_profile_url(uid))
+				var url_bit []byte = []byte(build_profile_url(menUser.Slug,uid))
 				outbytes = append(outbytes, url_bit...)
 				outbytes = append(outbytes, bytes_singlequote...)
 				outbytes = append(outbytes, url_mention...)

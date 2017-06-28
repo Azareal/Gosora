@@ -10,7 +10,7 @@
 <div class="rowblock topic_block">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
 		<div class="rowitem rowhead topic_item"{{if .Topic.Sticky}} style="background-color:#FFFFEA;"{{else if .Topic.Is_Closed}} style="background-color:#eaeaea;"{{end}}>
-			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a> 
+			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a>
 			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
 			{{if .CurrentUser.Perms.EditTopic}}
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />
@@ -27,26 +27,24 @@
 	<div class="rowitem passive editable_parent post_item" style="border-bottom: none;{{if .Topic.Avatar}}background-image:url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;{{.Topic.Css}}{{end}}">
 		<p class="hide_on_edit topic_content user_content" style="margin:0;padding:0;">{{.Topic.Content}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
-		
+
 		<span class="controls">
-		
-		<a href="/user/{{.Topic.CreatedBy}}" class="username real_username">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
-		
+
+		<a href="/user/{{.Topic.UserSlug}}.{{.Topic.CreatedBy}}" class="username real_username">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
 		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="mod_button" title="Love it" style="color:#202020;">
 		<button class="username like_label" style="{{if .Topic.Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}"></button></a>{{end}}
-		
+
 		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic"><button class="username edit_label"></button></a>{{end}}
-		
+
 		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Delete Topic"><button class="username trash_label"></button></a>{{end}}
-		
+
 		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}' style="font-weight:normal;" title="Unpin Topic"><button class="username unpin_label"></button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Pin Topic"><button class="username pin_label"></button></a>{{end}}{{end}}
-		
 		<a class="mod_button" href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag Topic"><button class="username flag_label"></button></a>
-		
+
 		{{if .Topic.LikeCount}}<a class="username hide_on_micro like_count">{{.Topic.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>{{end}}
-		
+
 		{{if .Topic.Tag}}<a class="username hide_on_micro" style="float:right;color:#505050;font-size:16px;">{{.Topic.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Topic.Level}}</a><a class="username hide_on_micro level_label" style="color:#505050;float:right;opacity:0.85;" title="Level"></a>{{end}}
-		
+
 		</span>
 	</div>
 </div>
@@ -58,23 +56,21 @@
 {{else}}
 	<div class="rowitem passive deletable_block editable_parent post_item" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;{{.Css}}{{end}}">
 		<p class="editable_block user_content" style="margin:0;padding:0;">{{.ContentHtml}}</p>
-		
+
 		<span class="controls">
-		
-		<a href="/user/{{.CreatedBy}}" class="username real_username">{{.CreatedByName}}</a>&nbsp;&nbsp;
-		
+
+		<a href="/user/{{.UserSlug}}.{{.CreatedBy}}" class="username real_username">{{.CreatedByName}}</a>&nbsp;&nbsp;
 		{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username like_label" style="{{if .Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}"></button></a>{{end}}
-		
+
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Reply"><button class="username edit_item edit_label"></button></a>{{end}}
-		
+
 		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Reply"><button class="username delete_item trash_label"></button></a>{{end}}
-		
 		<a class="mod_button" href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button report_item" title="Flag Reply"><button class="username report_item flag_label"></button></a>
-		
+
 		{{if .LikeCount}}<a class="username hide_on_micro like_count">{{.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>{{end}}
-		
+
 		{{if .Tag}}<a class="username hide_on_micro" style="float: right;color:#505050;font-size:16px;">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Level}}</a><a class="username hide_on_micro level_label" style="color:#505050;float:right;opacity:0.85;" title="Level">{{end}}</a>
-		
+
 		</span>
 	</div>
 {{end}}{{end}}</div>

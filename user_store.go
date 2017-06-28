@@ -6,6 +6,7 @@ import "errors"
 import "strings"
 import "strconv"
 import "database/sql"
+
 import "./query_gen/lib"
 import "golang.org/x/crypto/bcrypt"
 
@@ -21,8 +22,6 @@ type UserStore interface {
 	Set(item *User) error
 	Add(item *User) error
 	AddUnsafe(item *User) error
-	//SetConn(conn interface{}) error
-	//GetConn() interface{}
 	Remove(id int) error
 	RemoveUnsafe(id int) error
 	CreateUser(username string, password string, email string, group int, active int) (int, error)
@@ -74,7 +73,7 @@ func (sus *MemoryUserStore) Get(id int) (*User, error) {
 	if ok {
 		return item, nil
 	}
-	return item, sql.ErrNoRows
+	return item, ErrNoRows
 }
 
 func (sus *MemoryUserStore) GetUnsafe(id int) (*User, error) {
@@ -82,7 +81,7 @@ func (sus *MemoryUserStore) GetUnsafe(id int) (*User, error) {
 	if ok {
 		return item, nil
 	}
-	return item, sql.ErrNoRows
+	return item, ErrNoRows
 }
 
 func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
@@ -103,6 +102,7 @@ func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
+	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
 	if err == nil {
@@ -122,6 +122,7 @@ func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
+	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
 	return user, err
@@ -142,6 +143,7 @@ func (sus *MemoryUserStore) Load(id int) error {
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
+	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
 	sus.Set(user)
@@ -202,7 +204,7 @@ func (sus *MemoryUserStore) RemoveUnsafe(id int) error {
 func (sus *MemoryUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
 	err := sus.username_exists.QueryRow(username).Scan(&username)
-	if err != sql.ErrNoRows {
+	if err != ErrNoRows {
 		return 0, err_account_exists
 	}
 
@@ -279,6 +281,7 @@ func (sus *SqlUserStore) Get(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
+	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err
@@ -295,6 +298,7 @@ func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
+	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err
@@ -311,6 +315,7 @@ func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
+	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err
@@ -327,6 +332,7 @@ func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
+	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err
@@ -342,7 +348,7 @@ func (sus *SqlUserStore) Load(id int) error {
 func (sus *SqlUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
 	err := sus.username_exists.QueryRow(username).Scan(&username)
-	if err != sql.ErrNoRows {
+	if err != ErrNoRows {
 		return 0, err_account_exists
 	}
 
@@ -365,7 +371,7 @@ func (sus *SqlUserStore) CreateUser(username string, password string, email stri
 	return int(lastId), err
 }
 
-// Placeholder methods, the actual queries are done elsewhere
+// Placeholder methods, as we're not don't need to do any cache management with this implementation ofr the UserStore
 func (sus *SqlUserStore) Set(item *User) error {
 	return nil
 }

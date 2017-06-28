@@ -29,7 +29,7 @@ type DefaultAuth struct
 }
 
 func NewDefaultAuth() *DefaultAuth {
-	login_stmt, err := qgen.Builder.SimpleSelect("users","uid, name, password, salt","name = ?","","")
+	login_stmt, err := qgen.Builder.SimpleSelect("users","uid, password, salt","name = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,8 +45,8 @@ func NewDefaultAuth() *DefaultAuth {
 
 func (auth *DefaultAuth) Authenticate(username string, password string) (uid int, err error) {
 	var real_password, salt string
-	err = auth.login.QueryRow(username).Scan(&uid, &username, &real_password, &salt)
-	if err == sql.ErrNoRows {
+	err = auth.login.QueryRow(username).Scan(&uid, &real_password, &salt)
+	if err == ErrNoRows {
 		return 0, errors.New("We couldn't find an account with that username.")
 	} else if err != nil {
 		LogError(err)

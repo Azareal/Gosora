@@ -9,6 +9,7 @@ type Reply struct /* Should probably rename this to ReplyUser and rename ReplySh
 	Content string
 	ContentHtml string
 	CreatedBy int
+	UserSlug string
 	CreatedByName string
 	Group int
 	CreatedAt string

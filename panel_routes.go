@@ -12,12 +12,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"html/template"
-	"database/sql"
-)
 
-import _ "github.com/go-sql-driver/mysql"
-import "github.com/shirou/gopsutil/cpu"
-import "github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
+)
 
 func route_panel(w http.ResponseWriter, r *http.Request){
 	user, headerVars, ok := PanelSessionCheck(w,r)
@@ -78,7 +76,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 
 	var postCount int
 	err = todays_post_count_stmt.QueryRow().Scan(&postCount)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
@@ -95,7 +93,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 
 	var topicCount int
 	err = todays_topic_count_stmt.QueryRow().Scan(&topicCount)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
@@ -112,7 +110,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 
 	var reportCount int
 	err = todays_report_count_stmt.QueryRow().Scan(&reportCount)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
@@ -120,7 +118,7 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 
 	var newUserCount int
 	err = todays_newuser_count_stmt.QueryRow().Scan(&newUserCount)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
@@ -200,6 +198,12 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	}
 
 	var forumList []interface{}
+	forums, err := fstore.GetAll()
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+
 	for _, forum := range forums {
 		if forum.Name != "" {
 			fadmin := ForumAdmin{forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,forum.TopicCount,preset_to_lang(forum.Preset)}
@@ -210,7 +214,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	pi := Page{"Forum Manager",user,headerVars,forumList,nil}
-	err := templates.ExecuteTemplate(w,"panel-forums.html",pi)
+	err = templates.ExecuteTemplate(w,"panel-forums.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
@@ -242,7 +246,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	factive := r.PostFormValue("forum-name")
 	active := (factive == "on" || factive == "1" )
 
-	fid, err := create_forum(fname,fdesc,active,fpreset)
+	fid, err := fstore.CreateForum(fname,fdesc,active,fpreset)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -272,12 +276,16 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, sfid stri
 		return
 	}
 
-	if !forum_exists(fid) {
+	forum, err := fstore.CascadeGet(fid)
+	if err == ErrNoRows {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
 		return
 	}
 
-	confirm_msg := "Are you sure you want to delete the '" + forums[fid].Name + "' forum?"
+	confirm_msg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
 	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
 
 	pi := Page{"Delete Forum",user,headerVars,tList,yousure}
@@ -303,12 +311,12 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, sf
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
 	}
-	if !forum_exists(fid) {
+	if !fstore.Exists(fid) {
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	}
 
-	err = delete_forum(fid)
+	err = fstore.CascadeDelete(fid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -331,12 +339,16 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
 	}
-	if !forum_exists(fid) {
+
+	forum, err := fstore.CascadeGet(fid)
+	if err == ErrNoRows {
 		LocalError("The forum you're trying to edit doesn't exist.",w,r,user)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
 		return
 	}
 
-	var forum Forum = forums[fid]
 	if forum.Preset == "" {
 		forum.Preset = "custom"
 	}
@@ -391,42 +403,48 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 	forum_desc := r.PostFormValue("forum_desc")
 	forum_preset := strip_invalid_preset(r.PostFormValue("forum_preset"))
 	forum_active := r.PostFormValue("forum_active")
-    if !forum_exists(fid) {
+
+	forum, err := fstore.CascadeGet(fid)
+	if err == ErrNoRows {
 		LocalErrorJSQ("The forum you're trying to edit doesn't exist.",w,r,user,is_js)
+		return
+	} else if err != nil {
+		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
 
 	if forum_name == "" {
-		forum_name = forums[fid].Name
+		forum_name = forum.Name
 	}
 
 	var active bool
 	if forum_active == "" {
-		active = forums[fid].Active
+		active = forum.Active
 	} else if forum_active == "1" || forum_active == "Show" {
 		active = true
 	} else {
 		active = false
 	}
 
+	forum_update_mutex.Lock()
 	_, err = update_forum_stmt.Exec(forum_name,forum_desc,active,forum_preset,fid)
 	if err != nil {
 		InternalErrorJSQ(err,w,r,is_js)
 		return
 	}
-
-	if forums[fid].Name != forum_name {
-		forums[fid].Name = forum_name
+	if forum.Name != forum_name {
+		forum.Name = forum_name
 	}
-	if forums[fid].Desc != forum_desc {
-		forums[fid].Desc = forum_desc
+	if forum.Desc != forum_desc {
+		forum.Desc = forum_desc
 	}
-	if forums[fid].Active != active {
-		forums[fid].Active = active
+	if forum.Active != active {
+		forum.Active = active
 	}
-	if forums[fid].Preset != forum_preset {
-		forums[fid].Preset = forum_preset
+	if forum.Preset != forum_preset {
+		forum.Preset = forum_preset
 	}
+	forum_update_mutex.Unlock()
 
 	permmap_to_query(preset_to_permmap(forum_preset),fid)
 
@@ -475,6 +493,17 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 
 	perm_preset := strip_invalid_group_forum_preset(r.PostFormValue("perm_preset"))
 	fperms, changed := group_forum_preset_to_forum_perms(perm_preset)
+
+	forum, err := fstore.CascadeGet(fid)
+	if err == ErrNoRows {
+		LocalErrorJSQ("This forum doesn't exist",w,r,user,is_js)
+		return
+	} else if err != nil {
+		InternalErrorJSQ(err,w,r,is_js)
+		return
+	}
+
+	forum_update_mutex.Lock()
 	if changed {
 		permupdate_mutex.Lock()
 		groups[gid].Forums[fid] = fperms
@@ -492,13 +521,14 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		}
 		permupdate_mutex.Unlock()
 
-		_, err = update_forum_stmt.Exec(forums[fid].Name,forums[fid].Desc,forums[fid].Active,"",fid)
+		_, err = update_forum_stmt.Exec(forum.Name,forum.Desc,forum.Active,"",fid)
 		if err != nil {
 			InternalErrorJSQ(err,w,r,is_js)
 			return
 		}
-		forums[fid].Preset = ""
+		forum.Preset = ""
 	}
+	forum_update_mutex.Unlock()
 
 	if is_js == "0" {
 		http.Redirect(w,r,"/panel/forums/edit/" + strconv.Itoa(fid),http.StatusSeeOther)
@@ -573,7 +603,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 	setting := Setting{sname,"","",""}
 
 	err := get_setting_stmt.QueryRow(setting.Name).Scan(&setting.Content,&setting.Type)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
@@ -633,7 +663,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname stri
 	scontent := r.PostFormValue("setting-value")
 
 	err = get_full_setting_stmt.QueryRow(sname).Scan(&sname, &stype, &sconstraints)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
@@ -704,7 +734,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 
 	var active bool
 	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
@@ -717,7 +747,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 		}
 	}
 
-	has_plugin := err != sql.ErrNoRows
+	has_plugin := err != ErrNoRows
 	if has_plugin {
 		if active {
 			LocalError("The plugin is already active",w,r,user)
@@ -766,7 +796,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, unam
 
 	var active bool
 	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The plugin you're trying to deactivate isn't active",w,r,user)
 		return
 	} else if err != nil {
@@ -860,7 +890,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
 	}
 
 	targetUser, err := users.CascadeGet(uid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
@@ -912,7 +942,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid 
 	}
 
 	targetUser, err := users.CascadeGet(uid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
@@ -1468,12 +1498,12 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 	var isDefault bool
 	fmt.Println("uname",uname)
 	err := is_theme_default_stmt.QueryRow(uname).Scan(&isDefault)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
 
-	has_theme := err != sql.ErrNoRows
+	has_theme := err != ErrNoRows
 	if has_theme {
 		fmt.Println("isDefault",isDefault)
 		if isDefault {
@@ -1544,64 +1574,64 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
 
 		actor, err := users.CascadeGet(actorID)
 		if err != nil {
-			actor = &User{Name:"Unknown"}
+			actor = &User{Name:"Unknown",Slug:"unknown"}
 		}
 
 		switch(action) {
 			case "lock":
 				topic, err := topics.CascadeGet(elementID)
 				if err != nil {
-					topic = &Topic{Title:"Unknown"}
+					topic = &Topic{Title:"Unknown",Slug:"unknown"}
 				}
-				action = "<a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was locked by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + build_topic_url(topic.Slug,elementID) + "'>" + topic.Title + "</a> was locked by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 			case "unlock":
 				topic, err := topics.CascadeGet(elementID)
 				if err != nil {
-					topic = &Topic{Title:"Unknown"}
+					topic = &Topic{Title:"Unknown",Slug:"unknown"}
 				}
-				action = "<a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was reopened by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + build_topic_url(topic.Slug,elementID) + "'>" + topic.Title + "</a> was reopened by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 			case "stick":
 				topic, err := topics.CascadeGet(elementID)
 				if err != nil {
-					topic = &Topic{Title:"Unknown"}
+					topic = &Topic{Title:"Unknown",Slug:"unknown"}
 				}
-				action = "<a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was pinned by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + build_topic_url(topic.Slug,elementID) + "'>" + topic.Title + "</a> was pinned by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 			case "unstick":
 				topic, err := topics.CascadeGet(elementID)
 				if err != nil {
-					topic = &Topic{Title:"Unknown"}
+					topic = &Topic{Title:"Unknown",Slug:"unknown"}
 				}
-				action = "<a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was unpinned by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + build_topic_url(topic.Slug,elementID) + "'>" + topic.Title + "</a> was unpinned by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 			case "delete":
 				if elementType == "topic" {
-					action = "Topic #" + strconv.Itoa(elementID) + " was deleted by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+					action = "Topic #" + strconv.Itoa(elementID) + " was deleted by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 				} else {
 					topic, err := get_topic_by_reply(elementID)
 					if err != nil {
-						topic = &Topic{Title:"Unknown"}
+						topic = &Topic{Title:"Unknown",Slug:"unknown"}
 					}
-					action = "A reply in <a href='" + build_topic_url(elementID) + "'>" + topic.Title + "</a> was deleted by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+					action = "A reply in <a href='" + build_topic_url(topic.Slug,topic.ID) + "'>" + topic.Title + "</a> was deleted by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 				}
 			case "ban":
 				targetUser, err := users.CascadeGet(elementID)
 				if err != nil {
-					targetUser = &User{Name:"Unknown"}
+					targetUser = &User{Name:"Unknown",Slug:"unknown"}
 				}
-				action = "<a href='" + build_profile_url(elementID) + "'>" + targetUser.Name + "</a> was banned by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + build_profile_url(targetUser.Slug,elementID) + "'>" + targetUser.Name + "</a> was banned by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 			case "unban":
 				targetUser, err := users.CascadeGet(elementID)
 				if err != nil {
-					targetUser = &User{Name:"Unknown"}
+					targetUser = &User{Name:"Unknown",Slug:"unknown"}
 				}
-				action = "<a href='" + build_profile_url(elementID) + "'>" + targetUser.Name + "</a> was unbanned by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + build_profile_url(targetUser.Slug,elementID) + "'>" + targetUser.Name + "</a> was unbanned by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 			case "activate":
 				targetUser, err := users.CascadeGet(elementID)
 				if err != nil {
-					targetUser = &User{Name:"Unknown"}
+					targetUser = &User{Name:"Unknown",Slug:"unknown"}
 				}
-				action = "<a href='" + build_profile_url(elementID) + "'>" + targetUser.Name + "</a> was activated by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + build_profile_url(targetUser.Slug,elementID) + "'>" + targetUser.Name + "</a> was activated by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 			default:
-				action = "Unknown action '" + action + "' by <a href='" + build_profile_url(actorID) + "'>"+actor.Name+"</a>"
+				action = "Unknown action '" + action + "' by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
 		}
 		logs = append(logs, Log{Action:template.HTML(action),IPAddress:ipaddress,DoneAt:doneAt})
 	}

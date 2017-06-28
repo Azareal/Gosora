@@ -9,6 +9,8 @@ var db *sql.DB
 var db_version string
 var db_collation string = "utf8mb4_general_ci"
 
+var ErrNoRows = sql.ErrNoRows
+
 func init_database() (err error) {
   // Engine specific code
   err = _init_database()
@@ -61,7 +63,8 @@ func init_database() (err error) {
 	GuestPerms = groups[6].Perms
 
 	log.Print("Loading the forums.")
-	err = LoadForums()
+  fstore = NewStaticForumStore()
+	err = fstore.LoadForums()
 	if err != nil {
 		return err
 	}
@@ -71,7 +74,7 @@ func init_database() (err error) {
 	if err != nil {
 		return err
 	}
-  fstore = NewStaticForumStore()
+
 
 	log.Print("Loading the settings.")
 	err = LoadSettings()

@@ -7,9 +7,8 @@ import (
 	"net"
 	"net/http"
 	"html/template"
+
 	"golang.org/x/crypto/bcrypt"
-	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 var guest_user User = User{ID:0,Group:6,Perms:GuestPerms}
@@ -20,6 +19,7 @@ var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request) (User,bool)
 type User struct
 {
 	ID int
+	Slug string
 	Name string
 	Email string
 	Group int
@@ -40,7 +40,6 @@ type User struct
 	Level int
 	Score int
 	Last_IP string
-	//WS_Conn interface{}
 }
 
 type Email struct
@@ -86,9 +85,27 @@ func SendValidationEmail(username string, email string, token string) bool {
 	return SendEmail(email, subject, msg)
 }
 
+// TO-DO: Support for left sidebars and sidebars on both sides
+func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars) {
+	//fmt.Println("themes[defaultTheme].Sidebars",themes[defaultTheme].Sidebars)
+	if themes[defaultTheme].Sidebars == "right" {
+			if len(docks.RightSidebar) != 0 {
+				var sbody string
+				for _, widget := range docks.RightSidebar {
+					if widget.Enabled {
+						if widget.Location == "global" || widget.Location == zone {
+							sbody += widget.Body
+						}
+					}
+				}
+				headerVars.Widgets.RightSidebar = template.HTML(sbody)
+			}
+	}
+}
+
 func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, success bool) {
 	user, success = SimpleSessionCheck(w,r)
-	if !forum_exists(fid) {
+	if !fstore.Exists(fid) {
 		PreError("The target forum doesn't exist.",w,r)
 		return user, false
 	}
@@ -117,7 +134,7 @@ func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (u
 
 func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, headerVars HeaderVars, success bool) {
 	user, headerVars, success = SessionCheck(w,r)
-	if !forum_exists(fid) {
+	if !fstore.Exists(fid) {
 		NotFound(w,r)
 		return user, headerVars, false
 	}
@@ -206,20 +223,6 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, headerVars
 		}
 	}
 
-	// TO-DO: Support for left sidebars and sidebars on both sides
-	//fmt.Println("themes[defaultTheme].Sidebars",themes[defaultTheme].Sidebars)
-	if themes[defaultTheme].Sidebars == "right" {
-			if len(docks.RightSidebar) != 0 {
-				var sbody string
-				for _, widget := range docks.RightSidebar {
-					if widget.Enabled && widget.Location == "global" {
-						sbody += widget.Body
-					}
-				}
-				headerVars.Widgets.RightSidebar = template.HTML(sbody)
-			}
-	}
-
 	return user, headerVars, success
 }
 
@@ -240,7 +243,7 @@ func _simple_session_check(w http.ResponseWriter, r *http.Request) (User,bool) {
 
 	// Is this session valid..?
 	user, err := users.CascadeGet(uid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		return guest_user, true
 	} else if err != nil {
 		InternalError(err,w,r)
@@ -374,6 +377,9 @@ func init_user_perms(user *User) {
 	}
 }
 
-func build_profile_url(uid int) string {
-	return "/user/" + strconv.Itoa(uid)
+func build_profile_url(slug string, uid int) string {
+	if slug == "" {
+		return "/user/" + strconv.Itoa(uid)
+	}
+	return "/user/" + slug + "." + strconv.Itoa(uid)
 }

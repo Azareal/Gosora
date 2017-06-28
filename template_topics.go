@@ -38,18 +38,20 @@ w.Write(header_8)
 w.Write(menu_0)
 if tmpl_topics_vars.CurrentUser.Loggedin {
 w.Write(menu_1)
-w.Write([]byte(strconv.Itoa(tmpl_topics_vars.CurrentUser.ID)))
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Slug))
 w.Write(menu_2)
-if tmpl_topics_vars.CurrentUser.Is_Super_Mod {
+w.Write([]byte(strconv.Itoa(tmpl_topics_vars.CurrentUser.ID)))
 w.Write(menu_3)
-}
+if tmpl_topics_vars.CurrentUser.Is_Super_Mod {
 w.Write(menu_4)
-w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
-w.Write(menu_5)
-} else {
-w.Write(menu_6)
 }
+w.Write(menu_5)
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
+w.Write(menu_6)
+} else {
 w.Write(menu_7)
+}
+w.Write(menu_8)
 w.Write(header_9)
 if tmpl_topics_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_10)
@@ -83,35 +85,39 @@ w.Write([]byte(strconv.Itoa(item.PostCount)))
 w.Write(topics_7)
 w.Write([]byte(item.LastReplyAt))
 w.Write(topics_8)
-w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write([]byte(item.Slug))
 w.Write(topics_9)
-w.Write([]byte(item.Title))
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topics_10)
-if item.ForumName != "" {
+w.Write([]byte(item.Title))
 w.Write(topics_11)
-w.Write([]byte(strconv.Itoa(item.ParentID)))
+if item.ForumName != "" {
 w.Write(topics_12)
-w.Write([]byte(item.ForumName))
+w.Write([]byte(strconv.Itoa(item.ParentID)))
 w.Write(topics_13)
-}
+w.Write([]byte(item.ForumName))
 w.Write(topics_14)
-w.Write([]byte(strconv.Itoa(item.CreatedBy)))
+}
 w.Write(topics_15)
-w.Write([]byte(item.CreatedByName))
+w.Write([]byte(item.UserSlug))
 w.Write(topics_16)
-if item.Is_Closed {
+w.Write([]byte(strconv.Itoa(item.CreatedBy)))
 w.Write(topics_17)
-}
+w.Write([]byte(item.CreatedByName))
 w.Write(topics_18)
-}
-} else {
+if item.Is_Closed {
 w.Write(topics_19)
-if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+}
 w.Write(topics_20)
 }
+} else {
 w.Write(topics_21)
-}
+if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
 w.Write(topics_22)
+}
+w.Write(topics_23)
+}
+w.Write(topics_24)
 w.Write(footer_0)
 if tmpl_topics_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)

@@ -44,9 +44,9 @@ var template_forums_handle func(ForumsPage,io.Writer) = nil
 var template_profile_handle func(ProfilePage,io.Writer) = nil
 var template_create_topic_handle func(CreateTopicPage,io.Writer) = nil
 
-func compile_templates() {
+func compile_templates() error {
 	var c CTemplateSet
-	user := User{62,"","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"0.0.0.0.0"}
+	user := User{62,"fake-user","Fake User","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"0.0.0.0.0"}
 	headerVars := HeaderVars{
 		NoticeList:[]string{"test"},
 		Stylesheets:[]string{"panel"},
@@ -58,9 +58,9 @@ func compile_templates() {
 
 	log.Print("Compiling the templates")
 
-	topic := TopicUser{1,"Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"classname","","",default_group,"",no_css_tmpl,0,"","","","",58,false}
+	topic := TopicUser{1,"blah","Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"classname","weird-data","fake-user","Fake User",default_group,"",no_css_tmpl,0,"","","","",58,false}
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"","Yo!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Yo!","Yo!",0,"alice","Alice",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
 
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title",user,headerVars,replyList,topic,1,1,extData}
@@ -72,6 +72,11 @@ func compile_templates() {
 	profile_tmpl := c.compile_template("profile.html","templates/","ProfilePage", ppage, varList)
 
 	var forumList []Forum
+	forums, err := fstore.GetAll()
+	if err != nil {
+		return err
+	}
+
 	for _, forum := range forums {
 		if forum.Active {
 			forumList = append(forumList,forum)
@@ -82,13 +87,13 @@ func compile_templates() {
 	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage",forums_page,varList)
 
 	var topicsList []TopicsRow
-	topicsList = append(topicsList,TopicsRow{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","Admin","","",0,"","","","",58,"General"})
+	topicsList = append(topicsList,TopicsRow{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","admin-alice","Admin Alice","","",0,"","","","",58,"General"})
 	topics_page := TopicsPage{"Topic List",user,headerVars,topicsList,extData}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage",topics_page,varList)
 
 	var topicList []TopicUser
-	topicList = append(topicList,TopicUser{1,"Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","Admin",default_group,"","",0,"","","","",58,false})
-	forum_item := Forum{1,"General Forum","Where the general stuff happens",true,"all",0,"",0,"",0,""}
+	topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",default_group,"","",0,"","","","",58,false})
+	forum_item := Forum{1,"general","General Forum","Where the general stuff happens",true,"all",0,"","",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,headerVars,topicList,forum_item,1,1,extData}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage",forum_page,varList)
 
@@ -100,6 +105,8 @@ func compile_templates() {
 	go write_template("topics", topics_tmpl)
 	go write_template("forum", forum_tmpl)
 	go write_file("./template_list.go","package main\n\n" + c.FragOut)
+
+	return nil
 }
 
 func write_template(name string, content string) {

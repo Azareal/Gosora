@@ -2,8 +2,6 @@ package main
 
 import "sync"
 import "encoding/json"
-import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
 
 var group_update_mutex sync.Mutex
 
@@ -35,10 +33,10 @@ var group_create_mutex sync.Mutex
 func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_banned bool) (int, error) {
 	var gid int
 	err := group_entry_exists_stmt.QueryRow().Scan(&gid)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		return 0, err
 	}
-	if err != sql.ErrNoRows {
+	if err != ErrNoRows {
 		group_update_mutex.Lock()
 		_, err = update_group_rank_stmt.Exec(is_admin, is_mod, is_banned, gid)
 		if err != nil {
@@ -78,7 +76,11 @@ func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_
 	group_create_mutex.Unlock()
 
 	// Generate the forum permissions based on the presets...
-	fdata := forums
+	fdata, err := fstore.GetAll()
+	if err != nil {
+		return 0, err
+	}
+
 	permupdate_mutex.Lock()
 	for _, forum := range fdata {
 		var thePreset string

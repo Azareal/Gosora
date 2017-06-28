@@ -4,7 +4,6 @@ import "log"
 import "strings"
 import "strconv"
 import "errors"
-import "database/sql"
 
 /*
 "You received a friend invite from {user}"
@@ -37,7 +36,7 @@ func build_alert(event string, elementType string, actor_id int, targetUser_id i
   }*/
 
   if event == "friend_invite" {
-    return `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"\/user\/`+strconv.Itoa(actor.ID)+`","avatar":"`+strings.Replace(actor.Avatar,"/","\\/",-1)+`"}`, nil
+    return `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"\/user\/`+actor.Slug+`.`+strconv.Itoa(actor.ID)+`","avatar":"`+strings.Replace(actor.Avatar,"/","\\/",-1)+`"}`, nil
   }
 
   var act, post_act, url, area string
@@ -50,7 +49,7 @@ func build_alert(event string, elementType string, actor_id int, targetUser_id i
         if err != nil {
           return "", errors.New("Unable to find the linked topic")
         }
-        url = build_topic_url(elementID)
+        url = build_topic_url(topic.Slug,elementID)
         area = topic.Title
         // Store the forum ID in the targetUser column instead of making a new one? o.O
         // Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
@@ -62,7 +61,7 @@ func build_alert(event string, elementType string, actor_id int, targetUser_id i
       if err != nil {
           return "", errors.New("Unable to find the linked topic")
       }
-      url = build_topic_url(elementID)
+      url = build_topic_url(topic.Slug,elementID)
       area = topic.Title
 
       if targetUser_id == user.ID {
@@ -75,13 +74,13 @@ func build_alert(event string, elementType string, actor_id int, targetUser_id i
       }
       area = targetUser.Name
       end_frag = "'s profile"
-      url = build_profile_url(elementID)
+      url = build_profile_url(targetUser.Slug,elementID)
     case "post":
       topic, err := get_topic_by_reply(elementID)
       if err != nil {
           return "", errors.New("Unable to find the linked reply or parent topic")
       }
-      url = build_topic_url(topic.ID)
+      url = build_topic_url(topic.Slug,topic.ID)
       area = topic.Title
       if targetUser_id == user.ID {
         post_act = " your post in"
@@ -116,7 +115,7 @@ func build_alert(event string, elementType string, actor_id int, targetUser_id i
 
 func notify_watchers(asid int64) {
   rows, err := get_watchers_stmt.Query(asid)
-  if err != nil && err != sql.ErrNoRows {
+  if err != nil && err != ErrNoRows {
 		log.Fatal(err.Error())
 		return
 	}
@@ -141,7 +140,7 @@ func notify_watchers(asid int64) {
   var actor_id, targetUser_id, elementID int
   var event, elementType string
   err = get_activity_entry_stmt.QueryRow(asid).Scan(&actor_id, &targetUser_id, &event, &elementType, &elementID)
-  if err != nil && err != sql.ErrNoRows {
+  if err != nil && err != ErrNoRows {
     log.Fatal(err.Error())
     return
   }

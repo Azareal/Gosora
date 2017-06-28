@@ -5,16 +5,16 @@
 <div class="rowblock">
 	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopicTime)}}datarow{{end}}">
 		{{if .Desc}}<span style="float: left;">
-			<a href="/forum/{{.ID}}" style="">{{.Name}}</a>
+			<a href="/forum/{{.Slug}}.{{.ID}}" style="">{{.Name}}</a>
 			<br /><span class="rowsmall">{{.Desc}}</span>
 		</span>{{else if .LastTopicTime}}<span style="float: left;padding-top: 8px;font-size: 18px;">
-			<a href="/forum/{{.ID}}">{{.Name}}</a>
+			<a href="/forum/{{.Slug}}.{{.ID}}">{{.Name}}</a>
 		</span>{{else}}<span style="float: left;">
-			<a href="/forum/{{.ID}}">{{.Name}}</a>
+			<a href="/forum/{{.Slug}}.{{.ID}}">{{.Name}}</a>
 		</span>{{end}}
 
 		<span style="float: right;">
-			<a href="/topic/{{.LastTopicID}}" style="float: right;font-size: 14px;">{{.LastTopic}}</a>
+			<a href="/topic/{{.LastTopicSlug}}.{{.LastTopicID}}" style="float: right;font-size: 14px;">{{.LastTopic}}</a>
 			{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}
 		</span>
 		<div style="clear: both;"></div>

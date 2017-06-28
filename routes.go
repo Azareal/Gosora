@@ -15,13 +15,10 @@ import (
 	"net/http"
 	"html"
 	"html/template"
-	"database/sql"
 
 	"./query_gen/lib"
+	"golang.org/x/crypto/bcrypt"
 )
-
-import _ "github.com/go-sql-driver/mysql"
-import "golang.org/x/crypto/bcrypt"
 
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
@@ -66,7 +63,7 @@ func route_static(w http.ResponseWriter, r *http.Request){
 	os.Exit(0)
 }
 
-// Deprecated: Test route to see which is faster
+// Deprecated: Test route to see which file serving method is faster
 func route_fstatic(w http.ResponseWriter, r *http.Request){
 	http.ServeFile(w,r,r.URL.Path)
 }*/
@@ -76,6 +73,8 @@ func route_overview(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
+	BuildWidgets("overview",nil,&headerVars)
+
 	pi := Page{"Overview",user,headerVars,tList,nil}
 	err := templates.ExecuteTemplate(w,"overview.html",pi)
 	if err != nil {
@@ -88,11 +87,13 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
+
 	name := r.URL.Path[len("/pages/"):]
 	if templates.Lookup("page_" + name) == nil {
 		NotFound(w,r)
 		return
 	}
+	BuildWidgets("custom_page",name,&headerVars)
 
 	err := templates.ExecuteTemplate(w,"page_" + name,Page{"Page",user,headerVars,tList,nil})
 	if err != nil {
@@ -105,12 +106,13 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
+	BuildWidgets("topics",nil,&headerVars)
 
 	var qlist string
 	var fidList []interface{}
 	group := groups[user.Group]
 	for _, fid := range group.CanSee {
-		if forums[fid].Name != "" {
+		if fstore.DirtyGet(fid).Name != "" {
 			fidList = append(fidList,strconv.Itoa(fid))
 			qlist += "?,"
 		}
@@ -138,6 +140,9 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			return
 		}
 
+		topicItem.Slug = name_to_slug(topicItem.Title)
+		topicItem.UserSlug = name_to_slug(topicItem.CreatedByName)
+
 		if topicItem.Avatar != "" {
 			if topicItem.Avatar[0] == '.' {
 				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
@@ -147,7 +152,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 		}
 
 		if topicItem.ParentID >= 0 {
-			topicItem.ForumName = forums[topicItem.ParentID].Name
+			topicItem.ForumName = fstore.DirtyGet(topicItem.ParentID).Name
 		} else {
 			topicItem.ForumName = ""
 		}
@@ -212,9 +217,21 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 		return
 	}
 
+	// TO-DO: Fix this double-check
+	forum, err := fstore.CascadeGet(fid)
+	if err == ErrNoRows {
+		NotFound(w,r)
+		return
+	} else if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+
+	BuildWidgets("view_forum",&forum,&headerVars)
+
 	// Calculate the offset
 	var offset int
-	last_page := int(forums[fid].TopicCount / items_per_page) + 1
+	last_page := int(forum.TopicCount / items_per_page) + 1
 	if page > 1 {
 		offset = (items_per_page * page) - items_per_page
 	} else if page == -1 {
@@ -237,6 +254,9 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 			InternalError(err,w,r)
 			return
 		}
+
+		topicItem.Slug = name_to_slug(topicItem.Title)
+		topicItem.UserSlug = name_to_slug(topicItem.CreatedByName)
 
 		if topicItem.Avatar != "" {
 			if topicItem.Avatar[0] == '.' {
@@ -263,7 +283,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 	}
 	rows.Close()
 
-	pi := ForumPage{forums[fid].Name,user,headerVars,topicList,forums[fid],page,last_page,extData}
+	pi := ForumPage{forum.Name,user,headerVars,topicList,*forum,page,last_page,extData}
 	if template_forum_handle != nil {
 		template_forum_handle(pi,w)
 	} else {
@@ -283,6 +303,7 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		return
 	}
+	BuildWidgets("forums",nil,&headerVars)
 
 	var forumList []Forum
 	var err error
@@ -290,7 +311,7 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	//fmt.Println(group.CanSee)
 	for _, fid := range group.CanSee {
 		//fmt.Println(forums[fid])
-		var forum Forum = forums[fid]
+		var forum Forum = *fstore.DirtyGet(fid)
 		if forum.Active && forum.Name != "" {
 			if forum.LastTopicID != 0 {
 				forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
@@ -326,7 +347,14 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	var replyList []Reply
 
 	page, _ = strconv.Atoi(r.FormValue("page"))
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/"):])
+
+	// SEO URLs...
+	halves := strings.Split(r.URL.Path[len("/topic/"):],".")
+	if len(halves) < 2 {
+		halves = append(halves,halves[0])
+	}
+
+	tid, err := strconv.Atoi(halves[1])
 	if err != nil {
 		PreError("The provided TopicID is not a valid number.",w,r)
 		return
@@ -334,7 +362,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 
 	// Get the topic...
 	topic, err := get_topicuser(tid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		NotFound(w,r)
 		return
 	} else if err != nil {
@@ -352,6 +380,8 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		NoPermissions(w,r,user)
 		return
 	}
+
+	BuildWidgets("view_topic",&topic,&headerVars)
 
 	topic.Content = parse_message(topic.Content)
 	topic.ContentLines = strings.Count(topic.Content,"\n")
@@ -395,7 +425,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 
 	// Get the replies..
 	rows, err := get_topic_replies_offset_stmt.Query(topic.ID, offset, items_per_page)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.",w,r,user)
 		return
 	} else if err != nil {
@@ -411,6 +441,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 			return
 		}
 
+		replyItem.UserSlug = name_to_slug(replyItem.CreatedByName)
 		replyItem.ParentID = topic.ID
 		replyItem.ContentHtml = parse_message(replyItem.Content)
 		replyItem.ContentLines = strings.Count(replyItem.Content,"\n")
@@ -451,16 +482,16 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		if replyItem.ActionType != "" {
 			switch(replyItem.ActionType) {
 				case "lock":
-					replyItem.ActionType = "This topic has been locked by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic has been locked by <a href='" + build_profile_url(replyItem.UserSlug,replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
 				case "unlock":
-					replyItem.ActionType = "This topic has been reopened by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic has been reopened by <a href='" + build_profile_url(replyItem.UserSlug,replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
 				case "stick":
-					replyItem.ActionType = "This topic has been pinned by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic has been pinned by <a href='" + build_profile_url(replyItem.UserSlug,replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "unstick":
-					replyItem.ActionType = "This topic has been unpinned by <a href='" + build_profile_url(replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic has been unpinned by <a href='" + build_profile_url(replyItem.UserSlug,replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				default:
 					replyItem.ActionType = replyItem.ActionType + " has happened"
@@ -508,7 +539,13 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	var replyCss template.CSS
 	var replyList []Reply
 
-	pid, err := strconv.Atoi(r.URL.Path[len("/user/"):])
+	// SEO URLs...
+	halves := strings.Split(r.URL.Path[len("/user/"):],".")
+	if len(halves) < 2 {
+		halves = append(halves,halves[0])
+	}
+
+	pid, err := strconv.Atoi(halves[1])
 	if err != nil {
 		LocalError("The provided User ID is not a valid number.",w,r,user)
 		return
@@ -521,7 +558,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	} else {
 		// Fetch the user data
 		puser, err = users.CascadeGet(pid)
-		if err == sql.ErrNoRows {
+		if err == ErrNoRows {
 			NotFound(w,r)
 			return
 		} else if err != nil {
@@ -570,7 +607,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		replyLiked := false
 		replyLikeCount := 0
 
-		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount,"",""})
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,name_to_slug(replyCreatedByName),replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount,"",""})
 	}
 	err = rows.Err()
 	if err != nil {
@@ -612,8 +649,9 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, sfid string){
 	var forumList []Forum
 	group := groups[user.Group]
 	for _, fid := range group.CanSee {
-		if forums[fid].Active && forums[fid].Name != "" {
-			forumList = append(forumList, forums[fid])
+		forum := fstore.DirtyGet(fid)
+		if forum.Active && forum.Name != "" {
+			forumList = append(forumList, *forum)
 		}
 	}
 
@@ -671,23 +709,11 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = add_topics_to_forum_stmt.Exec(1,fid)
+	err = fstore.IncrementTopicCount(fid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	forums[fid].TopicCount -= 1
-
-	_, err = update_forum_cache_stmt.Exec(topic_name,lastId,user.Name,user.ID,fid)
-	if err != nil {
-		InternalError(err,w,r)
-		return
-	}
-	forums[fid].LastTopic = topic_name
-	forums[fid].LastTopicID = int(lastId)
-	forums[fid].LastReplyer = user.Name
-	forums[fid].LastReplyerID = user.ID
-	forums[fid].LastTopicTime = ""
 
 	_, err = add_subscription_stmt.Exec(user.ID,lastId,"topic")
 	if err != nil {
@@ -700,6 +726,11 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		InternalError(err,w,r)
 		return
+	}
+
+	err = fstore.UpdateLastTopic(topic_name,int(lastId),user.Name,user.ID,"",fid)
+	if err != nil && err != ErrNoRows {
+		InternalError(err,w,r)
 	}
 }
 
@@ -716,7 +747,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topic, err := topics.CascadeGet(tid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreError("Couldn't find the parent topic",w,r)
 		return
 	} else if err != nil {
@@ -782,7 +813,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 
 	// Reload the topic...
 	err = topics.Load(tid)
-	if err != nil && err == sql.ErrNoRows {
+	if err != nil && err == ErrNoRows {
 		LocalError("The destination no longer exists",w,r,user)
 		return
 	} else if err != nil {
@@ -812,7 +843,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topic, err := topics.CascadeGet(tid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreError("The requested topic doesn't exist.",w,r)
 		return
 	} else if err != nil {
@@ -835,16 +866,16 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = has_liked_topic_stmt.QueryRow(user.ID,tid).Scan(&tid)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
-	} else if err != sql.ErrNoRows {
+	} else if err != ErrNoRows {
 		LocalError("You already liked this!",w,r,user)
 		return
 	}
 
 	_, err = users.CascadeGet(topic.CreatedBy)
-	if err != nil && err == sql.ErrNoRows {
+	if err != nil && err == ErrNoRows {
 		LocalError("The target user doesn't exist",w,r,user)
 		return
 	} else if err != nil {
@@ -887,7 +918,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 
 	// Reload the topic...
 	err = topics.Load(tid)
-	if err != nil && err == sql.ErrNoRows {
+	if err != nil && err == ErrNoRows {
 		LocalError("The liked topic no longer exists",w,r,user)
 		return
 	} else if err != nil {
@@ -912,7 +943,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reply, err := get_reply(rid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreError("You can't like something which doesn't exist!",w,r)
 		return
 	} else if err != nil {
@@ -922,7 +953,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 
 	var fid int
 	err = get_topic_fid_stmt.QueryRow(reply.ParentID).Scan(&fid)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		PreError("The parent topic doesn't exist.",w,r)
 		return
 	} else if err != nil {
@@ -945,16 +976,16 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = has_liked_reply_stmt.QueryRow(user.ID, rid).Scan(&rid)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
-	} else if err != sql.ErrNoRows {
+	} else if err != ErrNoRows {
 		LocalError("You already liked this!",w,r,user)
 		return
 	}
 
 	_, err = users.CascadeGet(reply.CreatedBy)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		LocalError("The target user doesn't exist",w,r,user)
 		return
 	} else if err != nil {
@@ -1033,7 +1064,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 
 	var user_name string
 	err = get_user_name_stmt.QueryRow(uid).Scan(&user_name)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("The profile you're trying to post on doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
@@ -1080,7 +1111,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 	var title, content string
 	if item_type == "reply" {
 		reply, err := get_reply(item_id)
-		if err == sql.ErrNoRows {
+		if err == ErrNoRows {
 			LocalError("We were unable to find the reported post",w,r,user)
 			return
 		} else if err != nil {
@@ -1089,7 +1120,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 		}
 
 		topic, err := topics.CascadeGet(reply.ParentID)
-		if err == sql.ErrNoRows {
+		if err == ErrNoRows {
 			LocalError("We weren't able to find the topic the reported post is supposed to be in",w,r,user)
 			return
 		} else if err != nil {
@@ -1101,7 +1132,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 		content = reply.Content + "\n\nOriginal Post: #rid-" + strconv.Itoa(item_id)
 	} else if item_type == "user-reply" {
 		user_reply, err := get_user_reply(item_id)
-		if err == sql.ErrNoRows {
+		if err == ErrNoRows {
 			LocalError("We weren't able to find the reported post",w,r,user)
 			return
 		} else if err != nil {
@@ -1110,7 +1141,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 		}
 
 		err = get_user_name_stmt.QueryRow(user_reply.ParentID).Scan(&title)
-		if err == sql.ErrNoRows {
+		if err == ErrNoRows {
 			LocalError("We weren't able to find the profile the reported post is supposed to be on",w,r,user)
 			return
 		} else if err != nil {
@@ -1121,7 +1152,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 		content = user_reply.Content + "\n\nOriginal Post: @" + strconv.Itoa(user_reply.ParentID)
 	} else if item_type == "topic" {
 		err = get_topic_basic_stmt.QueryRow(item_id).Scan(&title,&content)
-		if err == sql.ErrNoRows {
+		if err == ErrNoRows {
 			NotFound(w,r)
 			return
 		} else if err != nil {
@@ -1142,7 +1173,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 
 	var count int
 	rows, err := report_exists_stmt.Query(item_type + "_" + strconv.Itoa(item_id))
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w,r)
 		return
 	}
@@ -1220,7 +1251,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	confirm_password := r.PostFormValue("account-confirm-password")
 
 	err = get_password_stmt.QueryRow(user.ID).Scan(&real_password, &salt)
-	if err == sql.ErrNoRows {
+	if err == ErrNoRows {
 		LocalError("Your account no longer exists.",w,r,user)
 		return
 	} else if err != nil {
@@ -1747,7 +1778,7 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 			var msgCount int
 
 			err = get_activity_count_by_watcher_stmt.QueryRow(user.ID).Scan(&msgCount)
-			if err == sql.ErrNoRows {
+			if err == ErrNoRows {
 				PreError("Couldn't find the parent topic",w,r)
 				return
 			} else if err != nil {
