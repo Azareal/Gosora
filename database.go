@@ -7,7 +7,6 @@ import "database/sql"
 
 var db *sql.DB
 var db_version string
-var db_collation string = "utf8mb4_general_ci"
 
 var ErrNoRows = sql.ErrNoRows
 
@@ -30,7 +29,7 @@ func init_database() (err error) {
 	i := 1
 	for ;rows.Next();i++ {
 		group := Group{ID: 0,}
-		err := rows.Scan(&group.ID, &group.Name, &group.PermissionsText, &group.Is_Mod, &group.Is_Admin, &group.Is_Banned, &group.Tag)
+		err := rows.Scan(&group.ID, &group.Name, &group.PermissionsText, &group.PluginPermsText, &group.Is_Mod, &group.Is_Admin, &group.Is_Banned, &group.Tag)
 		if err != nil {
 			return err
 		}
@@ -45,12 +44,21 @@ func init_database() (err error) {
 		if err != nil {
 			return err
 		}
-		if debug {
+		if debug_mode {
 			log.Print(group.Name + ": ")
 			fmt.Printf("%+v\n", group.Perms)
 		}
 
-		group.Perms.ExtData = make(map[string]bool)
+    err = json.Unmarshal(group.PluginPermsText, &group.PluginPerms)
+		if err != nil {
+			return err
+		}
+		if debug_mode {
+			log.Print(group.Name + ": ")
+			fmt.Printf("%+v\n", group.PluginPerms)
+		}
+
+		//group.Perms.ExtData = make(map[string]bool)
 		groups = append(groups, group)
 	}
 	err = rows.Err()

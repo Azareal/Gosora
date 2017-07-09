@@ -1,5 +1,6 @@
-/* Copyright Azareal 2016 - 2017 */
 // +build !pgsql !sqlite !mssql
+
+/* Copyright Azareal 2016 - 2018 */
 package main
 
 import "log"
@@ -7,6 +8,7 @@ import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 import "./query_gen/lib"
 
+var db_collation string = "utf8mb4_general_ci"
 var get_activity_feed_by_watcher_stmt *sql.Stmt
 var get_activity_count_by_watcher_stmt *sql.Stmt
 var todays_post_count_stmt *sql.Stmt
@@ -15,12 +17,13 @@ var todays_report_count_stmt *sql.Stmt
 var todays_newuser_count_stmt *sql.Stmt
 
 func _init_database() (err error) {
+	var _dbpassword string
 	if(dbpassword != ""){
-		dbpassword = ":" + dbpassword
+		_dbpassword = ":" + dbpassword
 	}
 
 	// Open the database connection
-	db, err = sql.Open("mysql",dbuser + dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname + "?collation=" + db_collation)
+	db, err = sql.Open("mysql",dbuser + _dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname + "?collation=" + db_collation)
 	if err != nil {
 		return err
 	}

@@ -29,7 +29,7 @@ func main() {
 		if route.Before != "" {
 			out += "\n\t\t\t" + route.Before
 		}
-		out += "\n\t\t\t" + route.Name + "(w,req"
+		out += "\n\t\t\t" + route.Name + "(w,req,user"
 		for _, item := range route.Vars {
 			out += "," + item
 		}
@@ -57,7 +57,7 @@ func main() {
 			if route.Before != "" {
 				out += "\n\t\t\t\t\t" + route.Before
 			}
-			out += "\n\t\t\t\t\t" + route.Name + "(w,req"
+			out += "\n\t\t\t\t\t" + route.Name + "(w,req,user"
 			for _, item := range route.Vars {
 				out += "," + item
 			}
@@ -69,7 +69,7 @@ func main() {
 			if default_route.Before != "" {
 				out += "\n\t\t\t\t\t" + default_route.Before
 			}
-			out += "\n\t\t\t\t\t" + default_route.Name + "(w,req"
+			out += "\n\t\t\t\t\t" + default_route.Name + "(w,req,user"
 			for _, item := range default_route.Vars {
 				out += ", " + item
 			}
@@ -81,30 +81,46 @@ func main() {
 	fdata += `package main
 
 //import "fmt"
-import "sync"
 import "strings"
+import "sync"
+import "errors"
 import "net/http"
+
+var ErrNoRoute = errors.New("That route doesn't exist.")
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	sync.RWMutex // Temporary Fallback
-	old_routes map[string]func(http.ResponseWriter, *http.Request) // Temporary Fallback
+	extra_routes map[string]func(http.ResponseWriter, *http.Request, User)
+	
+	sync.RWMutex
 }
 
 func NewGenRouter(uploads http.Handler) *GenRouter {
 	return &GenRouter{
 		UploadHandler: http.StripPrefix("/uploads/",uploads).ServeHTTP,
-		old_routes: make(map[string]func(http.ResponseWriter, *http.Request)),
+		extra_routes: make(map[string]func(http.ResponseWriter, *http.Request, User)),
 	}
 }
 
 func (router *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request)) {
+func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, User)) {
 	router.Lock()
-	router.old_routes[pattern] = handle
+	router.extra_routes[pattern] = handle
 	router.Unlock()
+}
+
+func (router *GenRouter) RemoveFunc(pattern string) error {
+	router.Lock()
+	_, ok := router.extra_routes[pattern]
+	if !ok {
+		router.Unlock()
+		return ErrNoRoute
+	}
+	delete(router.extra_routes,pattern)
+	router.Unlock()
+	return nil
 }
 
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -127,6 +143,19 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//fmt.Println("prefix:",prefix)
 	//fmt.Println("req.URL.Path:",req.URL.Path)
 	//fmt.Println("extra_data:",extra_data)
+	
+	if prefix == "/static" {
+		req.URL.Path += extra_data
+		route_static(w,req)
+		return
+	}
+	
+	// Deal with the session stuff, etc.
+	user, ok := PreRoute(w,req)
+	if !ok {
+		return
+	}
+	
 	switch(prefix) {` + out + `
 		case "/uploads":
 			if extra_data == "" {
@@ -137,19 +166,19 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.UploadHandler(w,req)
 			return
 		case "":
-			default_route(w,req)
+			default_route(w,req,user)
 			return
 		//default: NotFound(w,req)
 	}
 	
-	// A fallback for the routes which haven't been converted to the new router yet
+	// A fallback for the routes which haven't been converted to the new router yet or plugins
 	router.RLock()
-	handle, ok := router.old_routes[req.URL.Path]
+	handle, ok := router.extra_routes[req.URL.Path]
 	router.RUnlock()
 	
 	if ok {
 		req.URL.Path += extra_data
-		handle(w,req)
+		handle(w,req,user)
 		return
 	}
 	NotFound(w,req)

@@ -25,6 +25,7 @@ const saltLength int = 32
 const sessionLength int = 80
 var enable_websockets bool = false // Don't change this, the value is overwritten by an initialiser
 
+var router *GenRouter
 var startTime time.Time
 var timeLocation *time.Location
 var templates = template.New("")
@@ -46,7 +47,7 @@ var template_create_topic_handle func(CreateTopicPage,io.Writer) = nil
 
 func compile_templates() error {
 	var c CTemplateSet
-	user := User{62,"fake-user","Fake User","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"0.0.0.0.0"}
+	user := User{62,"fake-user","Fake User","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"0.0.0.0.0"}
 	headerVars := HeaderVars{
 		NoticeList:[]string{"test"},
 		Stylesheets:[]string{"panel"},
@@ -79,7 +80,7 @@ func compile_templates() error {
 
 	for _, forum := range forums {
 		if forum.Active {
-			forumList = append(forumList,forum)
+			forumList = append(forumList,*forum)
 		}
 	}
 	varList = make(map[string]VarItem)
@@ -87,13 +88,13 @@ func compile_templates() error {
 	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage",forums_page,varList)
 
 	var topicsList []TopicsRow
-	topicsList = append(topicsList,TopicsRow{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","admin-alice","Admin Alice","","",0,"","","","",58,"General"})
+	topicsList = append(topicsList,TopicsRow{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","admin-alice","Admin Alice","","",0,"","","","",58,"General","/forum/general.2"})
 	topics_page := TopicsPage{"Topic List",user,headerVars,topicsList,extData}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage",topics_page,varList)
 
 	var topicList []TopicUser
 	topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",default_group,"","",0,"","","","",58,false})
-	forum_item := Forum{1,"general","General Forum","Where the general stuff happens",true,"all",0,"","",0,"",0,""}
+	forum_item := Forum{1,"general","General Forum","Where the general stuff happens",true,"all",0,"",0,"","",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,headerVars,topicList,forum_item,1,1,extData}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage",forum_page,varList)
 
@@ -117,7 +118,7 @@ func write_template(name string, content string) {
 }
 
 func init_templates() {
-	if debug {
+	if debug_mode {
 		log.Print("Initialising the template system")
 	}
 	compile_templates()
@@ -133,7 +134,7 @@ func init_templates() {
 	fmap["divide"] = filler_func
 
 	// The interpreted templates...
-	if debug {
+	if debug_mode {
 		log.Print("Loading the template files...")
 	}
 	templates.Funcs(fmap)
@@ -177,9 +178,6 @@ func main(){
 
 	init_static_files()
 	external_sites["YT"] = "https://www.youtube.com/"
-	hooks["trow_assign"] = nil
-	hooks["rrow_assign"] = nil
-	init_plugins()
 
 	log.Print("Initialising the widgets")
 	err = init_widgets()
@@ -191,7 +189,7 @@ func main(){
 	auth = NewDefaultAuth()
 
 	log.Print("Initialising the router")
-	router := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	///router.HandleFunc("/static/", route_static)
 	///router.HandleFunc("/overview/", route_overview)
 	///router.HandleFunc("/topics/create/", route_topic_create)
@@ -276,6 +274,10 @@ func main(){
 	//router.HandleFunc("/exit/", route_exit)
 	///router.HandleFunc("/", default_route)
 	router.HandleFunc("/ws/", route_websockets)
+
+	log.Print("Initialising the plugins")
+	init_plugins()
+
 	defer db.Close()
 
 	//if profiling {

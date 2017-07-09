@@ -5,6 +5,7 @@ const CACHE_STATIC int = 0
 const CACHE_DYNAMIC int = 1
 const CACHE_SQL int = 2
 
+var ErrCacheDesync = errors.New("The cache is out of synchronisation with the database.") // TO-DO: A cross-server synchronisation mechanism
 var ErrStoreCapacityOverflow = errors.New("This datastore has already reached it's max capacity")
 
 type DataStore interface {

@@ -1,3 +1,4 @@
+/* Obsoleted by gen_router.go :( */
 package main
 
 //import "fmt"
@@ -5,6 +6,7 @@ import "strings"
 import "sync"
 import "net/http"
 
+// TO-DO: Support the new handler signatures created by our efforts to move the PreRoute middleware into the generated router
 type Router struct {
 	sync.RWMutex
 	routes map[string]func(http.ResponseWriter, *http.Request)

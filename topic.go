@@ -71,7 +71,7 @@ type TopicsRow struct
 	LastReplyAt string
 	//LastReplyBy int
 	ParentID int
-	Status string // Deprecated. Marked for removal.
+	Status string // Deprecated. Marked for removal. -Is there anything we could use it for?
 	IpAddress string
 	PostCount int
 	LikeCount int
@@ -89,6 +89,7 @@ type TopicsRow struct
 	Level int
 
 	ForumName string //TopicsRow
+	ForumLink string
 }
 
 func get_topicuser(tid int) (TopicUser,error) {
@@ -169,4 +170,8 @@ func build_topic_url(slug string, tid int) string {
 		return "/topic/" + strconv.Itoa(tid)
 	}
 	return "/topic/" + slug + "." + strconv.Itoa(tid)
+}
+
+func get_topic_url_prefix() string {
+	return "/topic/"
 }

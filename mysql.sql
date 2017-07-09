@@ -29,6 +29,7 @@ CREATE TABLE `users_groups`(
 	`gid` int not null AUTO_INCREMENT,
 	`name` varchar(100) not null,
 	`permissions` text not null,
+	`plugin_perms` text not null,
 	`is_mod` tinyint DEFAULT 0 not null,
 	`is_admin` tinyint DEFAULT 0 not null,
 	`is_banned` tinyint DEFAULT 0 not null,
@@ -50,6 +51,8 @@ CREATE TABLE `forums`(
 	`active` tinyint DEFAULT 1 not null,
 	`topicCount` int DEFAULT 0 not null,
 	`preset` varchar(100) DEFAULT '' not null,
+	`parentID` int DEFAULT 0 not null, /* TO-DO: Add support for subforums */
+	`parentType` varchar(50) DEFAULT '' not null,
 	`lastTopic` varchar(100) DEFAULT '' not null,
 	`lastTopicID` int DEFAULT 0 not null,
 	`lastReplyer` varchar(100) DEFAULT '' not null,
@@ -165,6 +168,7 @@ CREATE TABLE `settings`(
 CREATE TABLE `plugins`(
 	`uname` varchar(200) not null,
 	`active` tinyint DEFAULT 0 not null,
+	`installed` tinyint DEFAULT 0 not null,
 	unique(`uname`)
 );
 
@@ -251,12 +255,12 @@ PinTopic
 CloseTopic
 */
 
-INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,1,"Admin");
-INSERT INTO users_groups(`name`,`permissions`,`is_mod`,`tag`) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}',1,"Mod");
-INSERT INTO users_groups(`name`,`permissions`) VALUES ('Member','{"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}');
-INSERT INTO users_groups(`name`,`permissions`,`is_banned`) VALUES ('Banned','{"ViewTopic":true}',1);
-INSERT INTO users_groups(`name`,`permissions`) VALUES ('Awaiting Activation','{"ViewTopic":true}');
-INSERT INTO users_groups(`name`,`permissions`,`tag`) VALUES ('Not Loggedin','{"ViewTopic":true}','Guest');
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,1,"Admin");
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`is_mod`,`tag`) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,"Mod");
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`) VALUES ('Member','{"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}','{}');
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`is_banned`) VALUES ('Banned','{"ViewTopic":true}','{}',1);
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`) VALUES ('Awaiting Activation','{"ViewTopic":true}','{}');
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`tag`) VALUES ('Not Loggedin','{"ViewTopic":true}','{}','Guest');
 
 INSERT INTO forums(`name`,`active`) VALUES ('Reports',0);
 INSERT INTO forums(`name`,`lastTopicTime`) VALUES ('General',NOW());

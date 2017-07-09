@@ -5,6 +5,7 @@ import "sync"
 import "database/sql"
 import "./query_gen/lib"
 
+// TO-DO: Add the watchdog goroutine
 var topics TopicStore
 
 type TopicStore interface {

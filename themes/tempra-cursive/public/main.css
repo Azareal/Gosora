@@ -299,6 +299,14 @@ button {
 }
 
 /* Topics */
+
+.topic_sticky {
+	background-color: rgb(255,255,234);
+}
+.topic_closed {
+	background-color: rgb(248,248,248);
+}
+
 .topic_status {
 	text-transform: none;
 	margin-left: 8px;

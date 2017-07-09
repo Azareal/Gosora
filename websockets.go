@@ -157,11 +157,7 @@ func(hub *WS_Hub) push_alerts(users []int, event string, elementType string, act
 	return nil
 }
 
-func route_websockets(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_websockets(w http.ResponseWriter, r *http.Request, user User) {
 	conn, err := ws_upgrader.Upgrade(w,r,nil)
 	if err != nil {
 		return

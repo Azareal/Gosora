@@ -7,7 +7,7 @@ var form_vars = {'perm_preset': ['can_moderate','can_post','read_only','no_acces
 </div>
 <div class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem rowhead"><a>{{.Name}} Forum</a></div>
+		<div class="rowitem"><a>{{.Name}} Forum</a></div>
 	</div>
 	<div id="panel_forum" class="colstack_item">
 		<form action="/panel/forums/edit/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
@@ -46,7 +46,7 @@ var form_vars = {'perm_preset': ['can_moderate','can_post','read_only','no_acces
 		</form>
 	</div>
 	<div class="colstack_item colstack_head">
-		<div class="rowitem rowhead"><a>Forum Permissions</a></div>
+		<div class="rowitem"><a>Forum Permissions</a></div>
 	</div>
 	<div id="forum_quick_perms" class="colstack_item">
 		{{range .Groups}}

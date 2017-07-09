@@ -2,6 +2,7 @@ package main
 import "strconv"
 import "strings"
 
+// TO-DO: Move this into the phrase system
 var settingLabels map[string]string
 
 type OptionLabel struct

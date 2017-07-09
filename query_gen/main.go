@@ -93,19 +93,21 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleSelect("get_full_settings","settings","name, content, type, constraints","","","")
 	
-	adapter.SimpleSelect("get_groups","users_groups","gid, name, permissions, is_mod, is_admin, is_banned, tag","","","")
+	adapter.SimpleSelect("get_groups","users_groups","gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag","","","")
 	
-	adapter.SimpleSelect("get_forums","forums","fid, name, desc, active, preset, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","","fid ASC","")
+	adapter.SimpleSelect("get_forums","forums","fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","","fid ASC","")
 	
 	adapter.SimpleSelect("get_forums_permissions","forums_permissions","gid, fid, permissions","","gid ASC, fid ASC","")
 	
-	adapter.SimpleSelect("get_plugins","plugins","uname, active","","","")
+	adapter.SimpleSelect("get_plugins","plugins","uname, active, installed","","","")
 	
 	adapter.SimpleSelect("get_themes","themes","uname, default","","","")
 	
 	adapter.SimpleSelect("get_widgets","widgets","position, side, type, active,  location, data","","position ASC","")
 	
 	adapter.SimpleSelect("is_plugin_active","plugins","active","uname = ?","","")
+	
+	//adapter.SimpleSelect("is_plugin_installed","plugins","installed","uname = ?","","")
 	
 	adapter.SimpleSelect("get_users","users","uid, name, group, active, is_super_admin, avatar","","","")
 	
@@ -195,7 +197,7 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleInsert("add_forum_perms_to_forum","forums_permissions","gid,fid,preset,permissions","?,?,?,?")
 	
-	adapter.SimpleInsert("add_plugin","plugins","uname,active","?,?")
+	adapter.SimpleInsert("add_plugin","plugins","uname, active, installed","?,?,?")
 	
 	adapter.SimpleInsert("add_theme","themes","uname,default","?,?")
 
@@ -274,6 +276,8 @@ func write_updates(adapter qgen.DB_Adapter) error {
 	adapter.SimpleUpdate("update_setting","settings","content = ?","name = ?")
 	
 	adapter.SimpleUpdate("update_plugin","plugins","active = ?","uname = ?")
+	
+	adapter.SimpleUpdate("update_plugin_install","plugins","installed = ?","uname = ?")
 	
 	adapter.SimpleUpdate("update_theme","themes","default = ?","uname = ?")
 	

@@ -1,0 +1,6 @@
+<div class="rowblock rowhead">
+	<div class="rowitem">{{.Name}}</div>
+</div>
+<div class="rowblock">{{range .MenuList}}
+	<div class="rowitem  {{if .Compact}}datarow{{end}}"><a href="{{.Location}}">{{.Text}}</a></div>
+{{end}}</div>

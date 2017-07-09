@@ -18,11 +18,13 @@ type ForumAdmin struct
 type Forum struct
 {
 	ID int
-	Slug string
+	Link string
 	Name string
 	Desc string
 	Active bool
 	Preset string
+	ParentID int
+	ParentType string
 	TopicCount int
 	LastTopicSlug string
 	LastTopic string
@@ -45,4 +47,8 @@ func build_forum_url(slug string, fid int) string {
 		return "/forum/" + strconv.Itoa(fid)
 	}
 	return "/forum/" + slug + "." + strconv.Itoa(fid)
+}
+
+func get_forum_url_prefix() string {
+	return "/forum/"
 }

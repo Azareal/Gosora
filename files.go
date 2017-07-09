@@ -49,7 +49,7 @@ func init_static_files() {
 
 		static_files["/static/" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(ext),f,f.ModTime().UTC().Format(http.TimeFormat)}
 
-		if debug {
+		if debug_mode {
 			log.Print("Added the '" + path + "' static file.")
 		}
 		return nil
@@ -79,7 +79,7 @@ func add_static_file(path string, prefix string) error {
 
 	static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(ext),f,f.ModTime().UTC().Format(http.TimeFormat)}
 
-	if debug {
+	if debug_mode {
 		log.Print("Added the '" + path + "' static file")
 	}
 	return nil

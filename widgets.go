@@ -25,6 +25,19 @@ type Widget struct
 	Body string
 }
 
+type WidgetMenu struct
+{
+	Name string
+	MenuList []WidgetMenuItem
+}
+
+type WidgetMenuItem struct
+{
+	Text string
+	Location string
+	Compact bool
+}
+
 type NameTextPair struct
 {
 	Name string

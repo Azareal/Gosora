@@ -301,6 +301,14 @@ button {
 }
 
 /* Topics */
+
+.topic_sticky {
+	background-color: rgb(255,255,234);
+}
+.topic_closed {
+	background-color: rgb(248,248,248);
+}
+
 .topic_status {
 	text-transform: none;
 	margin-left: 8px;
@@ -314,7 +322,9 @@ button {
 }
 .topic_status:empty { display: none; }
 
-.rowhead { background: linear-gradient(to bottom, white, hsl(0, 0%, 93%)); }
+.rowhead .rowitem, .opthead .rowitem, .colstack_head .rowitem {
+	background: linear-gradient(to bottom, white, hsl(0, 0%, 93%));
+}
 .topic_sticky_head {
 	background-color: #FFFFEA;
 	background: linear-gradient(to bottom, hsl(60, 70%, 96%), hsl(60, 70%, 89%)), url('/static/fabric-base-simple-alpha.png');

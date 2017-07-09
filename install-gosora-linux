@@ -1,5 +1,7 @@
 echo "Installing the MySQL Driver"
 go get -u github.com/go-sql-driver/mysql
+echo "Installing the PostgreSQL Driver"
+go get -u github.com/lib/pq
 echo "Installing bcrypt"
 go get -u golang.org/x/crypto/bcrypt
 echo "Installing gopsutil"

@@ -1,16 +1,16 @@
 {{template "header.html" . }}
-<div class="rowblock">
-	<div class="rowitem rowhead"><a>Create Topic</a></div>
+<div class="rowblock rowhead">
+	<div class="rowitem"><a>Create Topic</a></div>
 </div>
 <div class="rowblock">
 	<form action="/topic/create/submit/" method="post">
 		<div class="formrow">
 			<div class="formitem formlabel"><a>Board</a></div>
 			<div class="formitem"><select name="topic-board">
-                {{range .ItemList}}<option {{if eq .ID $.FID}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
-            </select></div>
+				{{range .ItemList}}<option {{if eq .ID $.FID}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
+			</select></div>
 		</div>
-        <div class="formrow">
+		<div class="formrow">
 			<div class="formitem formlabel"><a>Topic Name</a></div>
 			<div class="formitem"><input name="topic-name" type="text" placeholder="Topic Name" /></div>
 		</div>

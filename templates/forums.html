@@ -1,20 +1,20 @@
 {{template "header.html" . }}
 <div class="rowblock opthead">
-	<div class="rowitem rowhead"><a>Forums</a></div>
+	<div class="rowitem"><a>Forums</a></div>
 </div>
 <div class="rowblock">
 	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopicTime)}}datarow{{end}}">
 		{{if .Desc}}<span style="float: left;">
-			<a href="/forum/{{.Slug}}.{{.ID}}" style="">{{.Name}}</a>
+			<a href="{{.Link}}" style="">{{.Name}}</a>
 			<br /><span class="rowsmall">{{.Desc}}</span>
 		</span>{{else if .LastTopicTime}}<span style="float: left;padding-top: 8px;font-size: 18px;">
-			<a href="/forum/{{.Slug}}.{{.ID}}">{{.Name}}</a>
+			<a href="{{.Link}}">{{.Name}}</a>
 		</span>{{else}}<span style="float: left;">
-			<a href="/forum/{{.Slug}}.{{.ID}}">{{.Name}}</a>
+			<a href="{{.Link}}">{{.Name}}</a>
 		</span>{{end}}
 
 		<span style="float: right;">
-			<a href="/topic/{{.LastTopicSlug}}.{{.LastTopicID}}" style="float: right;font-size: 14px;">{{.LastTopic}}</a>
+			<a href="/topic/{{.LastTopicSlug}}" style="float: right;font-size: 14px;">{{.LastTopic}}</a>
 			{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}
 		</span>
 		<div style="clear: both;"></div>

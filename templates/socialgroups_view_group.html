@@ -1,0 +1,34 @@
+{{template "header.html" . }}
+{{/** TO-DO: Move this into a CSS file **/}}
+{{template "socialgroups_css.html" . }}
+
+{{/** TO-DO: Port the page template functions to the template interpreter **/}}
+{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" href="/group/{{.SocialGroup.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+{{if ne .LastPage .Page}}<link rel="prerender" href="/group/{{.SocialGroup.ID}}?page={{add .Page 1}}" />
+<div id="nextFloat" class="next_button"><a class="next_link" href="/group/{{.SocialGroup.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
+
+<div class="sgBackdrop">
+	<div class="miniMenu">
+		<div class="menuItem"><a href="#">Test Group</a></div>
+		<div class="menuItem"><a href="#">About</a></div>
+		<div class="menuItem"><a href="#">Members</a></div>
+		<div class="menuItem rightMenu"><a href="#">Edit</a></div>
+		<div class="menuItem rightMenu"><a href="/group/join/{{.SocialGroup.ID}}">Join</a></div>
+	</div>
+	<div style="clear: both;"></div>
+</div>
+<div id="forum_topic_list" class="rowblock topic_list" style="position: relative;z-index: 50;">
+	{{range .ItemList}}<div class="rowitem passive datarow" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{if .Sticky}}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
+		<span class="rowsmall" style="float: right;">
+			<span class="replyCount">{{.PostCount}} replies</span><br />
+			<span class="lastReplyAt">{{.LastReplyAt}}</span>
+		</span>
+		<span>
+			<a class="rowtopic" href="/topic/{{.Slug}}.{{.ID}}">{{.Title}}</a>
+			<br /><a class="rowsmall" href="/user/{{.UserSlug}}.{{.CreatedBy}}">Starter: {{.CreatedByName}}</a>
+			{{if .Is_Closed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E{{end}}</span>
+		</span>
+	</div>
+	{{else}}<div class="rowitem passive">There aren't any topics in here yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
+</div>
+{{template "footer.html" . }}

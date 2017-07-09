@@ -23,7 +23,7 @@ func addRouteGroup(path string, routes ...Route) {
 func routes() {
 	//addRoute("default_route","","")
 	addRoute("route_api","/api/","")
-	addRoute("route_static","/static/","req.URL.Path += extra_data")
+	///addRoute("route_static","/static/","req.URL.Path += extra_data")
 	addRoute("route_overview","/overview/","")
 	//addRoute("route_custom_page","/pages/",""/*,"&extra_data"*/)
 	addRoute("route_forums","/forums/",""/*,"&forums"*/)
@@ -61,6 +61,7 @@ func routes() {
 		Route{"route_panel_plugins","/panel/plugins/","",[]string{}},
 		Route{"route_panel_plugins_activate","/panel/plugins/activate/","",[]string{"extra_data"}},
 		Route{"route_panel_plugins_deactivate","/panel/plugins/deactivate/","",[]string{"extra_data"}},
+		Route{"route_panel_plugins_install","/panel/plugins/install/","",[]string{"extra_data"}},
 
 		Route{"route_panel_users","/panel/users/","",[]string{}},
 		Route{"route_panel_users_edit","/panel/users/edit/","",[]string{"extra_data"}},

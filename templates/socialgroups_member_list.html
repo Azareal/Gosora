@@ -1,0 +1,34 @@
+{{template "header.html" . }}
+{{/** TO-DO: Move this into a CSS file **/}}
+{{template "socialgroups_css.html" . }}
+
+{{/** TO-DO: Port the page template functions to the template interpreter **/}}
+{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" href="/group/members/{{.SocialGroup.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+{{if ne .LastPage .Page}}<link rel="prerender" href="/group/members/{{.SocialGroup.ID}}?page={{add .Page 1}}" />
+<div id="nextFloat" class="next_button"><a class="next_link" href="/group/members/{{.SocialGroup.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
+
+<div class="sgBackdrop">
+	<div class="miniMenu">
+		<div class="menuItem"><a href="#">Test Group</a></div>
+		<div class="menuItem"><a href="#">About</a></div>
+		<div class="menuItem"><a href="#">Members</a></div>
+		<div class="menuItem rightMenu"><a href="#">Edit</a></div>
+		<div class="menuItem rightMenu"><a href="/group/join/{{.SocialGroup.ID}}">Join</a></div>
+	</div>
+	<div style="clear: both;"></div>
+</div>
+<div id="socialgroups_member_list" class="rowblock member_list" style="position: relative;z-index: 50;">
+	{{range .ItemList}}<div class="rowitem passive datarow" style="{{if .User.Avatar}}background-image: url({{.User.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 78px;{{end}}{{if .Offline}}background-color: #eaeaea;{{else if gt .Rank 0}}background-color: #e6f3ff;{{end}}">
+		<span style="float: right;">
+			<span class="rank" style="font-size: 15px;">{{.RankString}}</span><br />
+			<span class="joinedAt rowsmall">{{.JoinedAt}}</span>
+		</span>
+		<span>
+			<a class="rowtopic" href="{{.Link}}">{{.User.Name}}</a>
+      {{/** Use this for badges instead of rank? Both? Group Titles? **/}}
+			<br /><span class="rowsmall postCount">{{.PostCount}} posts</span>
+		</span>
+	</div>
+  {{end}}
+</div>
+{{template "footer.html" . }}

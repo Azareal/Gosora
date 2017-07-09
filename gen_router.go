@@ -3,30 +3,46 @@
 package main
 
 //import "fmt"
-import "sync"
 import "strings"
+import "sync"
+import "errors"
 import "net/http"
+
+var ErrNoRoute = errors.New("That route doesn't exist.")
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	sync.RWMutex // Temporary Fallback
-	old_routes map[string]func(http.ResponseWriter, *http.Request) // Temporary Fallback
+	extra_routes map[string]func(http.ResponseWriter, *http.Request, User)
+	
+	sync.RWMutex
 }
 
 func NewGenRouter(uploads http.Handler) *GenRouter {
 	return &GenRouter{
 		UploadHandler: http.StripPrefix("/uploads/",uploads).ServeHTTP,
-		old_routes: make(map[string]func(http.ResponseWriter, *http.Request)),
+		extra_routes: make(map[string]func(http.ResponseWriter, *http.Request, User)),
 	}
 }
 
 func (router *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request)) {
+func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, User)) {
 	router.Lock()
-	router.old_routes[pattern] = handle
+	router.extra_routes[pattern] = handle
 	router.Unlock()
+}
+
+func (router *GenRouter) RemoveFunc(pattern string) error {
+	router.Lock()
+	_, ok := router.extra_routes[pattern]
+	if !ok {
+		router.Unlock()
+		return ErrNoRoute
+	}
+	delete(router.extra_routes,pattern)
+	router.Unlock()
+	return nil
 }
 
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -49,117 +65,129 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//fmt.Println("prefix:",prefix)
 	//fmt.Println("req.URL.Path:",req.URL.Path)
 	//fmt.Println("extra_data:",extra_data)
+	
+	if prefix == "/static" {
+		req.URL.Path += extra_data
+		route_static(w,req)
+		return
+	}
+	
+	// Deal with the session stuff, etc.
+	user, ok := PreRoute(w,req)
+	if !ok {
+		return
+	}
+	
 	switch(prefix) {
 		case "/api":
-			route_api(w,req)
-			return
-		case "/static":
-			req.URL.Path += extra_data
-			route_static(w,req)
+			route_api(w,req,user)
 			return
 		case "/overview":
-			route_overview(w,req)
+			route_overview(w,req,user)
 			return
 		case "/forums":
-			route_forums(w,req)
+			route_forums(w,req,user)
 			return
 		case "/forum":
-			route_forum(w,req,extra_data)
+			route_forum(w,req,user,extra_data)
 			return
 		case "/report":
 			switch(req.URL.Path) {
 				case "/report/submit/":
-					route_report_submit(w,req,extra_data)
+					route_report_submit(w,req,user,extra_data)
 					return
 			}
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/create/":
-					route_topic_create(w,req,extra_data)
+					route_topic_create(w,req,user,extra_data)
 					return
 				default:
-					route_topics(w,req)
+					route_topics(w,req,user)
 					return
 			}
 		case "/panel":
 			switch(req.URL.Path) {
 				case "/panel/forums/":
-					route_panel_forums(w,req)
+					route_panel_forums(w,req,user)
 					return
 				case "/panel/forums/create/":
-					route_panel_forums_create_submit(w,req)
+					route_panel_forums_create_submit(w,req,user)
 					return
 				case "/panel/forums/delete/":
-					route_panel_forums_delete(w,req,extra_data)
+					route_panel_forums_delete(w,req,user,extra_data)
 					return
 				case "/panel/forums/delete/submit/":
-					route_panel_forums_delete_submit(w,req,extra_data)
+					route_panel_forums_delete_submit(w,req,user,extra_data)
 					return
 				case "/panel/forums/edit/":
-					route_panel_forums_edit(w,req,extra_data)
+					route_panel_forums_edit(w,req,user,extra_data)
 					return
 				case "/panel/forums/edit/submit/":
-					route_panel_forums_edit_submit(w,req,extra_data)
+					route_panel_forums_edit_submit(w,req,user,extra_data)
 					return
 				case "/panel/forums/edit/perms/submit/":
-					route_panel_forums_edit_perms_submit(w,req,extra_data)
+					route_panel_forums_edit_perms_submit(w,req,user,extra_data)
 					return
 				case "/panel/settings/":
-					route_panel_settings(w,req)
+					route_panel_settings(w,req,user)
 					return
 				case "/panel/settings/edit/":
-					route_panel_setting(w,req,extra_data)
+					route_panel_setting(w,req,user,extra_data)
 					return
 				case "/panel/settings/edit/submit/":
-					route_panel_setting_edit(w,req,extra_data)
+					route_panel_setting_edit(w,req,user,extra_data)
 					return
 				case "/panel/themes/":
-					route_panel_themes(w,req)
+					route_panel_themes(w,req,user)
 					return
 				case "/panel/themes/default/":
-					route_panel_themes_default(w,req,extra_data)
+					route_panel_themes_default(w,req,user,extra_data)
 					return
 				case "/panel/plugins/":
-					route_panel_plugins(w,req)
+					route_panel_plugins(w,req,user)
 					return
 				case "/panel/plugins/activate/":
-					route_panel_plugins_activate(w,req,extra_data)
+					route_panel_plugins_activate(w,req,user,extra_data)
 					return
 				case "/panel/plugins/deactivate/":
-					route_panel_plugins_deactivate(w,req,extra_data)
+					route_panel_plugins_deactivate(w,req,user,extra_data)
+					return
+				case "/panel/plugins/install/":
+					route_panel_plugins_install(w,req,user,extra_data)
 					return
 				case "/panel/users/":
-					route_panel_users(w,req)
+					route_panel_users(w,req,user)
 					return
 				case "/panel/users/edit/":
-					route_panel_users_edit(w,req,extra_data)
+					route_panel_users_edit(w,req,user,extra_data)
 					return
 				case "/panel/users/edit/submit/":
-					route_panel_users_edit_submit(w,req,extra_data)
+					route_panel_users_edit_submit(w,req,user,extra_data)
 					return
 				case "/panel/groups/":
-					route_panel_groups(w,req)
+					route_panel_groups(w,req,user)
 					return
 				case "/panel/groups/edit/":
-					route_panel_groups_edit(w,req,extra_data)
+					route_panel_groups_edit(w,req,user,extra_data)
 					return
 				case "/panel/groups/edit/perms/":
-					route_panel_groups_edit_perms(w,req,extra_data)
+					route_panel_groups_edit_perms(w,req,user,extra_data)
 					return
 				case "/panel/groups/edit/submit/":
-					route_panel_groups_edit_submit(w,req,extra_data)
+					route_panel_groups_edit_submit(w,req,user,extra_data)
 					return
 				case "/panel/groups/edit/perms/submit/":
-					route_panel_groups_edit_perms_submit(w,req,extra_data)
+					route_panel_groups_edit_perms_submit(w,req,user,extra_data)
 					return
 				case "/panel/groups/create/":
-					route_panel_groups_create_submit(w,req)
+					route_panel_groups_create_submit(w,req,user)
 					return
 				case "/panel/logs/mod/":
-					route_panel_logs_mod(w,req)
+					route_panel_logs_mod(w,req,user)
 					return
 				default:
-					route_panel(w,req)
+					route_panel(w,req,user)
 					return
 			}
 		case "/uploads":
@@ -171,19 +199,19 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.UploadHandler(w,req)
 			return
 		case "":
-			default_route(w,req)
+			default_route(w,req,user)
 			return
 		//default: NotFound(w,req)
 	}
 	
-	// A fallback for the routes which haven't been converted to the new router yet
+	// A fallback for the routes which haven't been converted to the new router yet or plugins
 	router.RLock()
-	handle, ok := router.old_routes[req.URL.Path]
+	handle, ok := router.extra_routes[req.URL.Path]
 	router.RUnlock()
 	
 	if ok {
 		req.URL.Path += extra_data
-		handle(w,req)
+		handle(w,req,user)
 		return
 	}
 	NotFound(w,req)

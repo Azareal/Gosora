@@ -2,7 +2,7 @@ package main
 
 //import "fmt"
 import "regexp"
-//import "strings"
+import "strings"
 
 var markdown_max_depth int = 25 // How deep the parser will go when parsing Markdown strings
 var markdown_unclosed_element []byte
@@ -19,10 +19,10 @@ var markdown_strike *regexp.Regexp
 var markdown_underline *regexp.Regexp
 
 func init() {
-	plugins["markdown"] = NewPlugin("markdown","Markdown","Azareal","http://github.com/Azareal","","","",init_markdown,nil,deactivate_markdown)
+	plugins["markdown"] = NewPlugin("markdown","Markdown","Azareal","http://github.com/Azareal","","","",init_markdown,nil,deactivate_markdown,nil,nil)
 }
 
-func init_markdown() {
+func init_markdown() error {
 	//plugins["markdown"].AddHook("parse_assign", markdown_regex_parse)
 	plugins["markdown"].AddHook("parse_assign", markdown_parse)
 
@@ -44,6 +44,7 @@ func init_markdown() {
 	markdown_strike = regexp.MustCompile(`\~(.*)\~`)
 	//markdown_underline = regexp.MustCompile(`\_\_(.*)\_\_`)
 	markdown_underline = regexp.MustCompile(`\_(.*)\_`)
+	return nil
 }
 
 func deactivate_markdown() {
@@ -51,8 +52,7 @@ func deactivate_markdown() {
 	plugins["markdown"].RemoveHook("parse_assign", markdown_parse)
 }
 
-func markdown_regex_parse(data interface{}) interface{} {
-	msg := data.(string)
+func markdown_regex_parse(msg string) string {
 	msg = markdown_bold_italic.ReplaceAllString(msg,"<i><b>$1</b></i>")
 	msg = markdown_bold.ReplaceAllString(msg,"<b>$1</b>")
 	msg = markdown_italic.ReplaceAllString(msg,"<i>$1</i>")
@@ -64,8 +64,8 @@ func markdown_regex_parse(data interface{}) interface{} {
 
 // An adapter for the parser, so that the parser can call itself recursively.
 // This is less for the simple Markdown elements like bold and italics and more for the really complicated ones I plan on adding at some point.
-func markdown_parse(data interface{}) interface{} {
-	return _markdown_parse(data.(string) + " ",0)
+func markdown_parse(msg string) string {
+	return strings.TrimSpace(_markdown_parse(msg + " ",0))
 }
 
 // Under Construction!
@@ -277,11 +277,11 @@ func _markdown_parse(msg string, n int) string {
 
 				outbytes = append(outbytes, msg[sIndex:lIndex]...)
 
-				if bold {
-					outbytes = append(outbytes, markdown_bold_tag_close...)
-				}
 				if italic {
 					outbytes = append(outbytes, markdown_italic_tag_close...)
+				}
+				if bold {
+					outbytes = append(outbytes, markdown_bold_tag_close...)
 				}
 
 				lastElement = index

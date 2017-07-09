@@ -15,11 +15,13 @@ var ErrMismatchedHashAndPassword = bcrypt.ErrMismatchedHashAndPassword
 
 type Auth interface
 {
-	Authenticate(username string, password string) (int,error)
+	Authenticate(username string, password string) (uid int, err error)
 	Logout(w http.ResponseWriter, uid int)
 	ForceLogout(uid int) error
 	SetCookies(w http.ResponseWriter, uid int, session string)
-	CreateSession(uid int) (string, error)
+	GetCookies(r *http.Request) (uid int, session string, err error)
+	SessionCheck(w http.ResponseWriter, r *http.Request) (user *User, halt bool)
+	CreateSession(uid int) (session string, err error)
 }
 
 type DefaultAuth struct
@@ -100,8 +102,47 @@ func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session stri
 	http.SetCookie(w,&cookie)
 }
 
-func(auth *DefaultAuth) CreateSession(uid int) (string, error) {
-	session, err := GenerateSafeString(sessionLength)
+func (auth *DefaultAuth) GetCookies(r *http.Request) (uid int, session string, err error) {
+	// Are there any session cookies..?
+	cookie, err := r.Cookie("uid")
+	if err != nil {
+		return 0, "", err
+	}
+	uid, err = strconv.Atoi(cookie.Value)
+	if err != nil {
+		return 0, "", err
+	}
+	cookie, err = r.Cookie("session")
+	if err != nil {
+		return 0, "", err
+	}
+	return uid, cookie.Value, err
+}
+
+func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (user *User, halt bool) {
+	uid, session, err := auth.GetCookies(r)
+	if err != nil {
+		return &guest_user, false
+	}
+
+	// Is this session valid..?
+	user, err = users.CascadeGet(uid)
+	if err == ErrNoRows {
+		return &guest_user, false
+	} else if err != nil {
+		InternalError(err,w,r)
+		return &guest_user, true
+	}
+
+	if user.Session == "" || session != user.Session {
+		return &guest_user, false
+	}
+
+	return user, false
+}
+
+func(auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
+	session, err = GenerateSafeString(sessionLength)
 	if err != nil {
 		return "", err
 	}

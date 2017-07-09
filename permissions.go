@@ -15,6 +15,7 @@ var ReadReplyForumPerms ForumPerms
 var ReadWriteForumPerms ForumPerms
 var AllPerms Perms
 var AllForumPerms ForumPerms
+var AllPluginPerms map[string]bool = make(map[string]bool)
 
 var LocalPermList []string = []string{
 	"ViewTopic",
@@ -90,7 +91,7 @@ type Perms struct
 	CloseTopic bool
 	//CloseOwnTopic bool
 
-	ExtData map[string]bool
+	//ExtData map[string]bool
 }
 
 /* Inherit from group permissions for ones we don't have */
@@ -116,7 +117,7 @@ type ForumPerms struct
 
 func init() {
 	BlankPerms = Perms{
-		ExtData: make(map[string]bool),
+		//ExtData: make(map[string]bool),
 	}
 
 	BlankForumPerms = ForumPerms{
@@ -125,7 +126,7 @@ func init() {
 
 	GuestPerms = Perms{
 		ViewTopic: true,
-		ExtData: make(map[string]bool),
+		//ExtData: make(map[string]bool),
 	}
 
 	AllPerms = Perms{
@@ -160,7 +161,7 @@ func init() {
 		PinTopic: true,
 		CloseTopic: true,
 
-		ExtData: make(map[string]bool),
+		//ExtData: make(map[string]bool),
 	}
 
 	AllForumPerms = ForumPerms{
@@ -204,7 +205,7 @@ func init() {
 
 	guest_user.Perms = GuestPerms
 
-	if debug {
+	if debug_mode {
 		fmt.Printf("Guest Perms: ")
 		fmt.Printf("%+v\n", GuestPerms)
 		fmt.Printf("All Perms: ")
@@ -303,7 +304,7 @@ func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 }
 
 func rebuild_forum_permissions(fid int) error {
-	if debug {
+	if debug_mode {
 		log.Print("Loading the forum permissions")
 	}
 	forums, err := fstore.GetAll()
@@ -317,7 +318,7 @@ func rebuild_forum_permissions(fid int) error {
 	}
 	defer rows.Close()
 
-	if debug {
+	if debug_mode {
 		log.Print("Updating the forum permissions")
 	}
 	for rows.Next() {
@@ -341,7 +342,7 @@ func rebuild_forum_permissions(fid int) error {
 		forum_perms[gid][fid] = pperms
 	}
 	for gid, _ := range groups {
-		if debug {
+		if debug_mode {
 			log.Print("Updating the forum permissions for Group #" + strconv.Itoa(gid))
 		}
 		var blank_list []ForumPerms
@@ -389,7 +390,7 @@ func build_forum_permissions() error {
 	}
 	defer rows.Close()
 
-	if debug {
+	if debug_mode {
 		log.Print("Adding the forum permissions")
 	}
 	// Temporarily store the forum perms in a map before transferring it to a much faster and thread-safe slice
@@ -415,7 +416,7 @@ func build_forum_permissions() error {
 		forum_perms[gid][fid] = pperms
 	}
 	for gid, _ := range groups {
-		if debug {
+		if debug_mode {
 			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid) + " - " + groups[gid].Name)
 		}
 		//groups[gid].Forums = append(groups[gid].Forums,BlankForumPerms) // GID 0. No longer needed now that Uncategorised occupies that slot
@@ -533,7 +534,9 @@ func rebuild_group_permissions(gid int) error {
 		return err
 	}
 
-	tmp_perms := Perms{ExtData: make(map[string]bool)}
+	tmp_perms := Perms{
+		//ExtData: make(map[string]bool),
+	}
 	err = json.Unmarshal(permstr, &tmp_perms)
 	if err != nil {
 		return err
@@ -541,4 +544,34 @@ func rebuild_group_permissions(gid int) error {
 
 	groups[gid].Perms = tmp_perms
 	return nil
+}
+
+func override_perms(perms *Perms, status bool) {
+	if status {
+		*perms = AllPerms
+	} else {
+		*perms = BlankPerms
+	}
+}
+
+// TO-DO: We need a better way of overriding forum perms rather than setting them one by one
+func override_forum_perms(perms *Perms, status bool) {
+	perms.ViewTopic = status
+	perms.LikeItem = status
+	perms.CreateTopic = status
+	perms.EditTopic = status
+	perms.DeleteTopic = status
+	perms.CreateReply = status
+	perms.EditReply = status
+	perms.DeleteReply = status
+	perms.PinTopic = status
+	perms.CloseTopic = status
+}
+
+func register_plugin_perm(name string) {
+	AllPluginPerms[name] = true
+}
+
+func deregister_plugin_perm(name string) {
+	delete(AllPluginPerms,name)
 }

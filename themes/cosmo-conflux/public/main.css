@@ -151,12 +151,13 @@ li:hover {
 
 hr { color: silver; border: 1px solid silver; }
 
-.rowhead {
+/* I HATE CSS for being so incompetently designed that I have to declare this for THREE different elements rather than just having a statement go back up the tree. What on earth is the W3C doing?! */
+.rowhead .rowitem, .colstack_head .rowitem, .opthead .rowitem {
 	border-top: none;
 	font-weight: bold;
 	color: white;
 }
-.rowhead:hover {
+.rowhead .rowitem:hover, .colstack_head .rowItem:hover, .opthead .rowitem:hover {
 	color: rgba(200,200,200,1);
 	transition: color 1s;
 	-moz-transition: color 1s;
@@ -192,7 +193,7 @@ hr { color: silver; border: 1px solid silver; }
 	font-size:12px;
 }
 
-.rowhead, .colhead {
+.rowhead .rowitem, .colhead, .opthead .rowitem, .colstack_head .rowitem {
 	background: #ce2424;
 	background: -webkit-gradient(linear, 0 0, 0 bottom, from(#f97779), to(#ce2424));
 	background: -moz-linear-gradient(#f97779, #ce2424);
@@ -213,13 +214,45 @@ hr { color: silver; border: 1px solid silver; }
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-.rowhead a { color: white; display: block; padding-top: 5px; }
-.rowhead span { display: block; padding-top: 5px; }
-.colhead a { color: white; display: block; padding-top: 5px; }
-.colhead span { display: block; padding-top: 5px; }
-.show_on_edit { display: none; }
-.rowhead .topic_status_e { display: none !important; }
-.topic_button { float: right; position: relative; top: -22px; margin-right: 2px; border-style: solid !important; }
+.rowhead a, .opthead a, .colstack_head a {
+	color: white;
+	display: block;
+	padding-top: 5px;
+}
+.rowhead span, .opthead span, .colstack_head span {
+	display: block;
+	padding-top: 5px;
+}
+.colhead a {
+	color: white;
+	display: block;
+	padding-top: 5px;
+}
+.colhead span {
+	display: block;
+	padding-top: 5px;
+}
+.show_on_edit {
+	display: none;
+}
+.rowhead .topic_status_e, .opthead .topic_status_e, .colstack_head .topic_status_e {
+	display: none !important;
+}
+
+.topic_sticky {
+	background-color: rgb(255,255,234);
+}
+.topic_closed {
+	background-color: rgb(248,248,248);
+}
+
+.topic_button {
+	float: right;
+	position: relative;
+	top: -22px;
+	margin-right: 2px;
+	border-style: solid !important;
+}
 
 .colblock_left {
 	padding: 0px;
@@ -736,8 +769,15 @@ blockquote p {
 		background-image: -webkit-linear-gradient(bottom, #4c4c4c, #2e2e2e);
 	}
 
-	.rowblock { border-left: none; border-right: none; border-bottom: none; }
-	.rowitem, .rowhead, .tbody { border-left: none; border-right: none; }
+	.rowblock {
+		border-left: none;
+		border-right: none;
+		border-bottom: none;
+	}
+	.rowitem, .tbody {
+		border-left: none;
+		border-right: none;
+	}
 }
 
 @media(max-width: 620px) {

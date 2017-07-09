@@ -83,65 +83,71 @@ w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Page + 1)))
 w.Write(forum_7)
 }
 w.Write(forum_8)
-w.Write([]byte(tmpl_forum_vars.Title))
-w.Write(forum_9)
 if tmpl_forum_vars.CurrentUser.ID != 0 {
-if !tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+w.Write(forum_9)
+}
 w.Write(forum_10)
-} else {
+w.Write([]byte(tmpl_forum_vars.Title))
 w.Write(forum_11)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+if tmpl_forum_vars.CurrentUser.ID != 0 {
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
 w.Write(forum_12)
-}
-}
+} else {
 w.Write(forum_13)
+}
+w.Write(forum_14)
+}
+w.Write(forum_15)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write(forum_16)
 if len(tmpl_forum_vars.ItemList) != 0 {
 for _, item := range tmpl_forum_vars.ItemList {
-w.Write(forum_14)
-if item.Avatar != "" {
-w.Write(forum_15)
-w.Write([]byte(item.Avatar))
-w.Write(forum_16)
-}
-if item.Sticky {
 w.Write(forum_17)
-} else {
-if item.Is_Closed {
+if item.Sticky {
 w.Write(forum_18)
-}
-}
-w.Write(forum_19)
-w.Write([]byte(strconv.Itoa(item.PostCount)))
-w.Write(forum_20)
-w.Write([]byte(item.LastReplyAt))
-w.Write(forum_21)
-w.Write([]byte(item.Slug))
-w.Write(forum_22)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(forum_23)
-w.Write([]byte(item.Title))
-w.Write(forum_24)
-w.Write([]byte(item.UserSlug))
-w.Write(forum_25)
-w.Write([]byte(strconv.Itoa(item.CreatedBy)))
-w.Write(forum_26)
-w.Write([]byte(item.CreatedByName))
-w.Write(forum_27)
-if item.Is_Closed {
-w.Write(forum_28)
-}
-w.Write(forum_29)
-}
 } else {
+if item.Is_Closed {
+w.Write(forum_19)
+}
+}
+w.Write(forum_20)
+if item.Avatar != "" {
+w.Write(forum_21)
+w.Write([]byte(item.Avatar))
+w.Write(forum_22)
+}
+w.Write(forum_23)
+w.Write([]byte(strconv.Itoa(item.PostCount)))
+w.Write(forum_24)
+w.Write([]byte(item.LastReplyAt))
+w.Write(forum_25)
+w.Write([]byte(item.Slug))
+w.Write(forum_26)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(forum_27)
+w.Write([]byte(item.Title))
+w.Write(forum_28)
+w.Write([]byte(item.UserSlug))
+w.Write(forum_29)
+w.Write([]byte(strconv.Itoa(item.CreatedBy)))
 w.Write(forum_30)
-if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+w.Write([]byte(item.CreatedByName))
 w.Write(forum_31)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+if item.Is_Closed {
 w.Write(forum_32)
 }
 w.Write(forum_33)
 }
+} else {
 w.Write(forum_34)
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+w.Write(forum_35)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write(forum_36)
+}
+w.Write(forum_37)
+}
+w.Write(forum_38)
 w.Write(footer_0)
 if tmpl_forum_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)

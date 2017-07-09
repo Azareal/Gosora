@@ -2,7 +2,7 @@
 {{template "panel-menu.html" . }}
 <div class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem rowhead"><a>Plugins</a></div>
+		<div class="rowitem"><a>Plugins</a></div>
 	</div>
 	<div id="panel_plugins" class="colstack_item">
 		{{range .ItemList}}
@@ -12,6 +12,9 @@
 			<span style="float: right;">
 				{{if .Settings}}<a href="/panel/settings/" class="panel_tag">Settings</a>{{end}}
 				{{if .Active}}<a href="/panel/plugins/deactivate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Deactivate</a>
+				{{else if .Installable}}
+					{{/** TO-DO: Write a custom template interpreter to fix this nonsense **/}}
+					{{if .Installed}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Activate</a>{{else}}<a href="/panel/plugins/install/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Install</a>{{end}}
 				{{else}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Activate</a>{{end}}
 			</span>
 		</div>

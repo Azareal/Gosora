@@ -3,6 +3,7 @@ package qgen
 
 //import "fmt"
 import "strings"
+import "strconv"
 import "errors"
 
 func init() {
@@ -28,6 +29,74 @@ func (adapter *Mysql_Adapter) GetStmt(name string) string {
 
 func (adapter *Mysql_Adapter) GetStmts() map[string]string {
 	return adapter.Buffer
+}
+
+func (adapter *Mysql_Adapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if len(columns) == 0 {
+		return "", errors.New("You can't have a table with no columns")
+	}
+	
+	var querystr string = "CREATE TABLE `" + table + "` ("
+	for _, column := range columns {
+		// Make it easier to support Cassandra in the future
+		if column.Type == "createdAt" {
+			column.Type = "datetime"
+		}
+		
+		var size string
+		if column.Size > 0 {
+			size = "(" + strconv.Itoa(column.Size) + ")"
+		}
+		
+		var end string
+		if column.Default != "" {
+			end = " DEFAULT "
+			if adapter.stringy_type(column.Type) {
+				end += "'" + column.Default + "'"
+			} else {
+				end += column.Default
+			}
+		}
+		
+		if column.Null {
+			end += " null"
+		} else {
+			end += " not null"
+		}
+		
+		if column.Auto_Increment {
+			end += " AUTO_INCREMENT"
+		}
+		
+		querystr += "\n\t`"+column.Name+"` " + column.Type + size + end + ","
+	}
+	
+	if len(keys) > 0 {
+		for _, key := range keys {
+			querystr += "\n\t" + key.Type + " key("
+			for _, column := range strings.Split(key.Columns,",") {
+				querystr += "`" + column + "`,"
+			}
+			querystr = querystr[0:len(querystr) - 1] + "),"
+		}
+	}
+	
+	querystr = querystr[0:len(querystr) - 1] + "\n)"
+	if charset != "" {
+		querystr += " CHARSET=" + charset
+	}
+	if collation != "" {
+		querystr += " COLLATE " + collation
+	}
+	
+	adapter.push_statement(name,querystr + ";")
+	return querystr + ";", nil
 }
 
 func (adapter *Mysql_Adapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
@@ -761,7 +830,7 @@ import "database/sql"
 
 ` + stmts + `
 func gen_mysql() (err error) {
-	if debug {
+	if debug_mode {
 		log.Print("Building the generated statements")
 	}
 ` + body + `
@@ -771,8 +840,13 @@ func gen_mysql() (err error) {
 	return write_file("./gen_mysql.go", out)
 }
 
-// Internal method, not exposed in the interface
-func (adapter *Mysql_Adapter) push_statement(name string, querystr string ) {
+// Internal methods, not exposed in the interface
+func (adapter *Mysql_Adapter) push_statement(name string, querystr string) {
 	adapter.Buffer[name] = querystr
 	adapter.BufferOrder = append(adapter.BufferOrder,name)
+}
+
+func (adapter *Mysql_Adapter) stringy_type(ctype string) bool {
+	ctype = strings.ToLower(ctype)
+	return ctype == "varchar" || ctype == "tinytext" || ctype == "text" || ctype == "mediumtext" || ctype == "longtext" || ctype == "char" || ctype == "datetime" || ctype == "timestamp" || ctype == "time" || ctype == "date"
 }

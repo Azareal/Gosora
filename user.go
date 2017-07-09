@@ -12,9 +12,13 @@ import (
 )
 
 var guest_user User = User{ID:0,Group:6,Perms:GuestPerms}
-var SimpleSessionCheck func(http.ResponseWriter, *http.Request) (User,bool) = _simple_session_check
-var PanelSessionCheck func(http.ResponseWriter, *http.Request) (User,HeaderVars,bool) = _panel_session_check
-var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request) (User,bool) = _simple_panel_session_check
+var PreRoute func(http.ResponseWriter, *http.Request) (User,bool) = _pre_route
+var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderVars,bool) = _panel_session_check
+var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) bool = _simple_panel_session_check
+var SimpleForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (success bool) = _simple_forum_session_check
+var ForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars HeaderVars, success bool) = _forum_session_check
+var SessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) = _session_check
+var CheckPassword func(real_password string, password string, salt string) (err error) = BcryptCheckPassword
 
 type User struct
 {
@@ -30,11 +34,12 @@ type User struct
 	Is_Super_Admin bool
 	Is_Banned bool
 	Perms Perms
+	PluginPerms map[string]bool
 	Session string
 	Loggedin bool
 	Avatar string
 	Message string
-	URLPrefix string
+	URLPrefix string // Move this to another table? Create a user lite?
 	URLName string
 	Tag string
 	Level int
@@ -51,7 +56,7 @@ type Email struct
 	Token string
 }
 
-func CheckPassword(real_password string, password string, salt string) (err error) {
+func BcryptCheckPassword(real_password string, password string, salt string) (err error) {
 	return bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password + salt))
 }
 
@@ -86,7 +91,14 @@ func SendValidationEmail(username string, email string, token string) bool {
 }
 
 // TO-DO: Support for left sidebars and sidebars on both sides
-func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars) {
+// http.Request is for context.Context middleware. Mostly for plugin_socialgroups right now
+func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http.Request) {
+	if vhooks["intercept_build_widgets"] != nil {
+		if run_vhook("intercept_build_widgets", zone, data, headerVars, r).(bool) {
+			return
+		}
+	}
+
 	//fmt.Println("themes[defaultTheme].Sidebars",themes[defaultTheme].Sidebars)
 	if themes[defaultTheme].Sidebars == "right" {
 			if len(docks.RightSidebar) != 0 {
@@ -103,11 +115,17 @@ func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars) {
 	}
 }
 
-func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, success bool) {
-	user, success = SimpleSessionCheck(w,r)
+func _simple_forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fid int) (success bool) {
 	if !fstore.Exists(fid) {
 		PreError("The target forum doesn't exist.",w,r)
-		return user, false
+		return false
+	}
+
+	// Is there a better way of doing the skip AND the success flag on this hook like multiple returns?
+	if vhooks["simple_forum_check_pre_perms"] != nil {
+		if run_vhook("simple_forum_check_pre_perms", w, r, user, &fid, &success).(bool) {
+			return success
+		}
 	}
 
 	fperms := groups[user.Group].Forums[fid]
@@ -125,18 +143,24 @@ func SimpleForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (u
 
 		if len(fperms.ExtData) != 0 {
 			for name, perm := range fperms.ExtData {
-				user.Perms.ExtData[name] = perm
+				user.PluginPerms[name] = perm
 			}
 		}
 	}
-	return user, success
+	return true
 }
 
-func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user User, headerVars HeaderVars, success bool) {
-	user, headerVars, success = SessionCheck(w,r)
+func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars HeaderVars, success bool) {
+	headerVars, success = SessionCheck(w,r,user)
 	if !fstore.Exists(fid) {
 		NotFound(w,r)
-		return user, headerVars, false
+		return headerVars, false
+	}
+
+	if vhooks["forum_check_pre_perms"] != nil {
+		if run_vhook("forum_check_pre_perms", w, r, user, &fid, &success, &headerVars).(bool) {
+			return headerVars, success
+		}
 	}
 
 	fperms := groups[user.Group].Forums[fid]
@@ -156,19 +180,18 @@ func ForumSessionCheck(w http.ResponseWriter, r *http.Request, fid int) (user Us
 
 		if len(fperms.ExtData) != 0 {
 			for name, perm := range fperms.ExtData {
-				user.Perms.ExtData[name] = perm
+				user.PluginPerms[name] = perm
 			}
 		}
 	}
-	return user, headerVars, success
+	return headerVars, success
 }
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
-func _panel_session_check(w http.ResponseWriter, r *http.Request) (user User, headerVars HeaderVars, success bool) {
-	user, success = SimpleSessionCheck(w,r)
+func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) {
 	if !user.Is_Super_Mod {
-		NoPermissions(w,r,user)
-		return user, headerVars, false
+		NoPermissions(w,r,*user)
+		return headerVars, false
 	}
 
 	headerVars.Stylesheets = append(headerVars.Stylesheets,"panel.css")
@@ -189,19 +212,17 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request) (user User, he
 		}
 	}
 
-	return user, headerVars, success
+	return headerVars, true
 }
-func _simple_panel_session_check(w http.ResponseWriter, r *http.Request) (user User, success bool) {
-	user, success = SimpleSessionCheck(w,r)
+func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (success bool) {
 	if !user.Is_Super_Mod {
-		NoPermissions(w,r,user)
-		return user, false
+		NoPermissions(w,r,*user)
+		return false
 	}
-	return user, success
+	return true
 }
 
-func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, headerVars HeaderVars, success bool) {
-	user, success = SimpleSessionCheck(w,r)
+func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) {
 	if user.Is_Banned {
 		headerVars.NoticeList = append(headerVars.NoticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
 	}
@@ -223,41 +244,24 @@ func SessionCheck(w http.ResponseWriter, r *http.Request) (user User, headerVars
 		}
 	}
 
-	return user, headerVars, success
+	return headerVars, true
 }
 
-func _simple_session_check(w http.ResponseWriter, r *http.Request) (User,bool) {
-	// Are there any session cookies..?
-	cookie, err := r.Cookie("uid")
-	if err != nil {
-		return guest_user, true
+func _pre_route(w http.ResponseWriter, r *http.Request) (User,bool) {
+	user, halt := auth.SessionCheck(w,r)
+	if halt {
+		return *user, false
 	}
-	uid, err := strconv.Atoi(cookie.Value)
-	if err != nil {
-		return guest_user, true
-	}
-	cookie, err = r.Cookie("session")
-	if err != nil {
-		return guest_user, true
-	}
-
-	// Is this session valid..?
-	user, err := users.CascadeGet(uid)
-	if err == ErrNoRows {
-		return guest_user, true
-	} else if err != nil {
-		InternalError(err,w,r)
-		return guest_user, false
-	}
-
-	if user.Session == "" || cookie.Value != user.Session {
-		return guest_user, true
+	if user == &guest_user {
+		return *user, true
 	}
 
 	if user.Is_Super_Admin {
 		user.Perms = AllPerms
+		user.PluginPerms = AllPluginPerms
 	} else {
 		user.Perms = groups[user.Group].Perms
+		user.PluginPerms = groups[user.Group].PluginPerms
 	}
 
 	host, _, err := net.SplitHostPort(r.RemoteAddr)

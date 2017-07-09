@@ -343,6 +343,13 @@ func fill_group_id_gap(biggerID int, smallerID int) {
 	}
 }
 
+func build_slug(slug string, id int) string {
+	if slug == "" {
+		return strconv.Itoa(id)
+	}
+	return slug + "." + strconv.Itoa(id)
+}
+
 func addModLog(action string, elementID int, elementType string, ipaddress string,  actorID int) (err error) {
 	_, err = add_modlog_entry_stmt.Exec(action,elementID,elementType,ipaddress,actorID)
 	if err != nil {

@@ -56,6 +56,14 @@ func (build *builder) SimpleInnerJoin(table1 string, table2 string, columns stri
 	return build.conn.Prepare(res)
 }
 
+func (build *builder) CreateTable(table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.CreateTable("_builder", table, charset, collation, columns, keys)
+	if err != nil {
+		return stmt, err
+	}
+	return build.conn.Prepare(res)
+}
+
 func (build *builder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
 	res, err := build.adapter.SimpleInsert("_builder", table, columns, fields)
 	if err != nil {

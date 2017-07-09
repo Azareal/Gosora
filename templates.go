@@ -168,7 +168,7 @@ w.Write([]byte(`," + ",-1)
 	//whitespace_writes := regexp.MustCompile(`(?s)w.Write\(\[\]byte\(`+spstr+`\)\)`)
 	//fout = whitespace_writes.ReplaceAllString(fout,"")
 
-	if debug {
+	if debug_mode {
 		for index, count := range c.stats {
 			fmt.Println(index + ": " + strconv.Itoa(count))
 		}

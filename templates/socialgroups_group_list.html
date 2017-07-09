@@ -1,0 +1,19 @@
+{{template "header.html" . }}
+<div class="rowblock opthead">
+	<div class="rowitem"><a>Group List</a></div>
+</div>
+<div class="rowblock">
+	{{range .GroupList}}<div class="rowitem datarow">
+		<span style="float: left;">
+			<a href="{{.Link}}" style="">{{.Name}}</a>
+			<br /><span class="rowsmall">{{.Desc}}</span>
+		</span>
+		<span style="float: right;">
+			<span style="float: right;font-size: 14px;">{{.MemberCount}} members</span>
+			<br /><span class="rowsmall">{{.LastUpdateTime}}</span>
+		</span>
+		<div style="clear: both;"></div>
+	</div>
+	{{else}}<div class="rowitem passive">There aren't any visible groups.</div>{{end}}
+</div>
+{{template "footer.html" . }}

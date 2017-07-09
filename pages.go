@@ -14,6 +14,7 @@ type HeaderVars struct
 	Scripts []string
 	Stylesheets []string
 	Widgets PageWidgets
+	ExtData ExtData
 }
 
 type PageWidgets struct
@@ -21,6 +22,11 @@ type PageWidgets struct
 	LeftSidebar template.HTML
 	RightSidebar template.HTML
 }
+
+/*type UnsafeExtData struct
+{
+	items map[string]interface{} // Key: pluginname
+}*/
 
 type ExtData struct
 {
@@ -365,9 +371,8 @@ func shortcode_to_unicode(msg string) string {
 }
 
 func preparse_message(msg string) string {
-	if hooks["preparse_preassign"] != nil {
-		out := run_hook("preparse_preassign", msg)
-		msg = out.(string)
+	if sshooks["preparse_preassign"] != nil {
+		msg = run_sshook("preparse_preassign", msg)
 	}
 	return shortcode_to_unicode(msg)
 }
@@ -516,9 +521,9 @@ func parse_message(msg string/*, user User*/) string {
 				//fmt.Println(string(msgbytes))
 				//fmt.Println(msgbytes)
 				//fmt.Println(msgbytes[lastItem - 1])
-				//fmt.Println(lastItem - 1)
-				//fmt.Println(msgbytes[lastItem])
-				//fmt.Println(lastItem)
+				//fmt.Println("lastItem - 1",lastItem - 1)
+				//fmt.Println("msgbytes[lastItem]",msgbytes[lastItem])
+				//fmt.Println("lastItem",lastItem)
 			} else if msgbytes[i]=='h' || msgbytes[i]=='f' || msgbytes[i]=='g' {
 				//fmt.Println("IN hfg")
 				if msgbytes[i + 1]=='t' && msgbytes[i + 2]=='t' && msgbytes[i + 3]=='p' {
@@ -556,8 +561,7 @@ func parse_message(msg string/*, user User*/) string {
 	}
 
 	if lastItem != i && len(outbytes) != 0 {
-		//fmt.Println("lastItem:")
-		//fmt.Println(msgbytes[lastItem])
+		//fmt.Println("lastItem:",msgbytes[lastItem])
 		//fmt.Println("lastItem index:")
 		//fmt.Println(lastItem)
 		//fmt.Println("i:")
@@ -576,9 +580,8 @@ func parse_message(msg string/*, user User*/) string {
 	//fmt.Println(`"`+msg+`"`)
 
 	msg = strings.Replace(msg,"\n","<br>",-1)
-	if hooks["parse_assign"] != nil {
-		out := run_hook("parse_assign", msg)
-		msg = out.(string)
+	if sshooks["parse_assign"] != nil {
+		msg = run_sshook("parse_assign", msg)
 	}
 	return msg
 }
@@ -589,9 +592,8 @@ func regex_parse_message(msg string) string {
 	msg = strings.Replace(msg,":P","😛",-1)
 	msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 	msg = strings.Replace(msg,"\n","<br>",-1)
-	if hooks["parse_assign"] != nil {
-		out := run_hook("parse_assign", msg)
-		msg = out.(string)
+	if sshooks["parse_assign"] != nil {
+		msg = run_sshook("parse_assign", msg)
 	}
 	return msg
 }

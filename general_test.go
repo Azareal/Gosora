@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"fmt"
 	"log"
 	"bytes"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"time"
 	"net/http"
 	"net/http/httptest"
+	"html/template"
 	"io/ioutil"
 	"database/sql"
 	"runtime/pprof"
@@ -21,11 +21,12 @@ import (
 	//"github.com/husobee/vestigo"
 )
 
-var db_test, db_prod *sql.DB
-var gloinited bool = false
+var db_test *sql.DB
+var db_prod *sql.DB
+var gloinited bool
 
 func gloinit() {
-	debug = false
+	debug_mode = false
 	//nogrouplog = true
 
 	// init_database is a little noisy for a benchmark
@@ -64,8 +65,6 @@ func gloinit() {
 
 	init_static_files()
 	external_sites["YT"] = "https://www.youtube.com/"
-	hooks["trow_assign"] = nil
-	hooks["rrow_assign"] = nil
 	//log.SetOutput(os.Stdout)
 	gloinited = true
 }
@@ -77,26 +76,34 @@ func init() {
 func BenchmarkTopicTemplateSerial(b *testing.B) {
 	b.ReportAllocs()
 
-	user := User{0,"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"127.0.0.1"}
-	admin := User{1,"Admin","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","","",-1,58,"127.0.0.1"}
-	noticeList := []string{"test"}
+	user := User{0,"bob","Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"127.0.0.1"}
+	admin := User{1,"admin-alice","Admin Alice","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","","",-1,58,"127.0.0.1"}
 
 	topic := TopicUser{Title: "Lol",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"}
 
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry","Jerry",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry2","Jerry2",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry3","Jerry3",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry4","Jerry4",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry5","Jerry5",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry6","Jerry6",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry7","Jerry7",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry8","Jerry8",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry9","Jerry9",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry10","Jerry10",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
 
-	tpage := TopicPage{"Topic Blah",user,noticeList,replyList,topic,1,1,false}
-	tpage2 := TopicPage{"Topic Blah",admin,noticeList,replyList,topic,1,1,false}
+	headerVars := HeaderVars{
+		NoticeList:[]string{"test"},
+		Stylesheets:[]string{"panel"},
+		Scripts:[]string{"whatever"},
+		Widgets:PageWidgets{
+			LeftSidebar: template.HTML("lalala"),
+		},
+	}
+
+	tpage := TopicPage{"Topic Blah",user,headerVars,replyList,topic,1,1,extData}
+	tpage2 := TopicPage{"Topic Blah",admin,headerVars,replyList,topic,1,1,extData}
 	w := ioutil.Discard
 
 	b.Run("compiled_useradmin", func(b *testing.B) {
@@ -157,25 +164,33 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 func BenchmarkTopicsTemplateSerial(b *testing.B) {
 	b.ReportAllocs()
 
-	user := User{0,"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"127.0.0.1"}
-	admin := User{1,"Admin","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","","",-1,58,"127.0.0.1"}
-	noticeList := []string{"test"}
+	user := User{0,"bob","Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,"",false,"","","","","",0,0,"127.0.0.1"}
+	admin := User{1,"admin-alice","Admin Alice","admin@localhost",0,true,true,true,true,true,false,AllPerms,"",false,"","","","","",-1,58,"127.0.0.1"}
 
 	var topicList []TopicsRow
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+
+	headerVars := HeaderVars{
+		NoticeList:[]string{"test"},
+		Stylesheets:[]string{"panel"},
+		Scripts:[]string{"whatever"},
+		Widgets:PageWidgets{
+			LeftSidebar: template.HTML("lalala"),
+		},
+	}
 
 	w := ioutil.Discard
-	tpage := TopicsPage{"Topic Blah",user,noticeList,topicList,nil}
-	tpage2 := TopicsPage{"Topic Blah",admin,noticeList,topicList,nil}
+	tpage := TopicsPage{"Topic Blah",user,headerVars,topicList,extData}
+	tpage2 := TopicsPage{"Topic Blah",admin,headerVars,topicList,extData}
 
 	b.Run("compiled_useradmin", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -1206,7 +1221,7 @@ func TestLevels(t *testing.T) {
 	levels := getLevels(40)
 	for level, score := range levels {
 		sscore := strconv.FormatFloat(score, 'f', -1, 64)
-		log.Print("Level: " + strconv.Itoa(level) + " Score: " + sscore)
+		t.Log("Level: " + strconv.Itoa(level) + " Score: " + sscore)
 	}
 }
 
@@ -1224,10 +1239,8 @@ func TestStaticRoute(t *testing.T) {
 
 	static_handler.ServeHTTP(static_w,static_req)
 	if static_w.Code != 200 {
-		fmt.Println(static_w.Body)
-		panic("HTTP Error!")
+		t.Fatal(static_w.Body)
 	}
-	fmt.Println("No problems found in the static route!")
 }
 
 /*func TestTopicAdminRoute(t *testing.T) {
@@ -1294,10 +1307,10 @@ func TestForumsAdminRoute(t *testing.T) {
 
 	admin, err := users.CascadeGet(1)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	if !admin.Is_Admin {
-		panic("UID1 is not an admin")
+		t.Fatal("UID1 is not an admin")
 	}
 	admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 	admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
@@ -1311,10 +1324,8 @@ func TestForumsAdminRoute(t *testing.T) {
 
 	forums_handler.ServeHTTP(forums_w,forums_req_admin)
 	if forums_w.Code != 200 {
-		fmt.Println(forums_w.Body)
-		panic("HTTP Error!")
+		t.Fatal(forums_w.Body)
 	}
-	fmt.Println("No problems found in the forums-admin route!")
 }
 
 func TestForumsGuestRoute(t *testing.T) {
@@ -1331,10 +1342,8 @@ func TestForumsGuestRoute(t *testing.T) {
 
 	forums_handler.ServeHTTP(forums_w,forums_req)
 	if forums_w.Code != 200 {
-		fmt.Println(forums_w.Body)
-		panic("HTTP Error!")
+		t.Fatal(forums_w.Body)
 	}
-	fmt.Println("No problems found in the forums-guest route!")
 }
 
 /*func TestForumAdminRoute(t *testing.T) {
@@ -1419,35 +1428,29 @@ func TestForumsGuestRoute(t *testing.T) {
 	db = db_prod
 }*/
 
-/*func TestRoute(t *testing.T) {
-
-}*/
-
 func TestSplittyThing(t *testing.T) {
-	fmt.Println("Splitty thing test")
 	var extra_data string
 	var path string = "/pages/hohoho"
-	fmt.Println("Raw Path:",path)
+	t.Log("Raw Path:",path)
 	if path[len(path) - 1] != '/' {
 		extra_data = path[strings.LastIndexByte(path,'/') + 1:]
 		path = path[:strings.LastIndexByte(path,'/') + 1]
 	}
-	fmt.Println("Path:", path)
-	fmt.Println("Extra Data:", extra_data)
-	fmt.Println("Path Bytes:", []byte(path))
-	fmt.Println("Extra Data Bytes:", []byte(extra_data))
+	t.Log("Path:", path)
+	t.Log("Extra Data:", extra_data)
+	t.Log("Path Bytes:", []byte(path))
+	t.Log("Extra Data Bytes:", []byte(extra_data))
 
-
-	fmt.Println("Splitty thing test")
+	t.Log("Splitty thing test")
 	path = "/topics/"
 	extra_data = ""
-	fmt.Println("Raw Path:",path)
+	t.Log("Raw Path:",path)
 	if path[len(path) - 1] != '/' {
 		extra_data = path[strings.LastIndexByte(path,'/') + 1:]
 		path = path[:strings.LastIndexByte(path,'/') + 1]
 	}
-	fmt.Println("Path:", path)
-	fmt.Println("Extra Data:", extra_data)
-	fmt.Println("Path Bytes:", []byte(path))
-	fmt.Println("Extra Data Bytes:", []byte(extra_data))
+	t.Log("Path:", path)
+	t.Log("Extra Data:", extra_data)
+	t.Log("Path Bytes:", []byte(path))
+	t.Log("Extra Data Bytes:", []byte(extra_data))
 }

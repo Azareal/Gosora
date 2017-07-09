@@ -94,6 +94,7 @@ var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
+var update_plugin_install_stmt *sql.Stmt
 var update_theme_stmt *sql.Stmt
 var update_user_stmt *sql.Stmt
 var update_group_perms_stmt *sql.Stmt
@@ -112,7 +113,7 @@ var add_forum_perms_to_forum_members_stmt *sql.Stmt
 var notify_watchers_stmt *sql.Stmt
 
 func gen_mysql() (err error) {
-	if debug {
+	if debug_mode {
 		log.Print("Building the generated statements")
 	}
 	
@@ -165,13 +166,13 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing get_groups statement.")
-	get_groups_stmt, err = db.Prepare("SELECT `gid`,`name`,`permissions`,`is_mod`,`is_admin`,`is_banned`,`tag` FROM `users_groups`")
+	get_groups_stmt, err = db.Prepare("SELECT `gid`,`name`,`permissions`,`plugin_perms`,`is_mod`,`is_admin`,`is_banned`,`tag` FROM `users_groups`")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing get_forums statement.")
-	get_forums_stmt, err = db.Prepare("SELECT `fid`,`name`,`desc`,`active`,`preset`,`topicCount`,`lastTopic`,`lastTopicID`,`lastReplyer`,`lastReplyerID`,`lastTopicTime` FROM `forums` ORDER BY fid ASC")
+	get_forums_stmt, err = db.Prepare("SELECT `fid`,`name`,`desc`,`active`,`preset`,`parentID`,`parentType`,`topicCount`,`lastTopic`,`lastTopicID`,`lastReplyer`,`lastReplyerID`,`lastTopicTime` FROM `forums` ORDER BY fid ASC")
 	if err != nil {
 		return err
 	}
@@ -183,7 +184,7 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing get_plugins statement.")
-	get_plugins_stmt, err = db.Prepare("SELECT `uname`,`active` FROM `plugins`")
+	get_plugins_stmt, err = db.Prepare("SELECT `uname`,`active`,`installed` FROM `plugins`")
 	if err != nil {
 		return err
 	}
@@ -435,7 +436,7 @@ func gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing add_plugin statement.")
-	add_plugin_stmt, err = db.Prepare("INSERT INTO `plugins`(`uname`,`active`) VALUES (?,?)")
+	add_plugin_stmt, err = db.Prepare("INSERT INTO `plugins`(`uname`,`active`,`installed`) VALUES (?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -640,6 +641,12 @@ func gen_mysql() (err error) {
 		
 	log.Print("Preparing update_plugin statement.")
 	update_plugin_stmt, err = db.Prepare("UPDATE `plugins` SET `active` = ? WHERE `uname` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_plugin_install statement.")
+	update_plugin_install_stmt, err = db.Prepare("UPDATE `plugins` SET `installed` = ? WHERE `uname` = ?")
 	if err != nil {
 		return err
 	}

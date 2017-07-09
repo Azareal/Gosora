@@ -17,8 +17,8 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
-func route_panel(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -184,11 +184,16 @@ func route_panel(w http.ResponseWriter, r *http.Request){
 	gridElements = append(gridElements, GridElement{"dash-postsperuser","5 posts / user / week",14,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of posts made by each active user over the past week"*/})
 
 	pi := PanelDashboardPage{"Control Panel Dashboard",user,headerVars,gridElements,extData}
+	if pre_render_hooks["pre_render_panel_dashboard"] != nil {
+		if run_pre_render_hook("pre_render_panel_dashboard", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
 }
 
-func route_panel_forums(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_forums(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -205,7 +210,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 	}
 
 	for _, forum := range forums {
-		if forum.Name != "" {
+		if forum.Name != "" && forum.ParentID == 0 {
 			fadmin := ForumAdmin{forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,forum.TopicCount,preset_to_lang(forum.Preset)}
 			if fadmin.Preset == "" {
 				fadmin.Preset = "custom"
@@ -214,14 +219,19 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	pi := Page{"Forum Manager",user,headerVars,forumList,nil}
+	if pre_render_hooks["pre_render_panel_forums"] != nil {
+		if run_pre_render_hook("pre_render_panel_forums", w, r, &user, &pi) {
+			return
+		}
+	}
 	err = templates.ExecuteTemplate(w,"panel-forums.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
-func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request, user User){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -246,18 +256,17 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request){
 	factive := r.PostFormValue("forum-name")
 	active := (factive == "on" || factive == "1" )
 
-	fid, err := fstore.CreateForum(fname,fdesc,active,fpreset)
+	_, err = fstore.CreateForum(fname,fdesc,active,fpreset)
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
 
-	permmap_to_query(preset_to_permmap(fpreset),fid)
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 
-func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, sfid string){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User, sfid string){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -289,11 +298,16 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, sfid stri
 	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
 
 	pi := Page{"Delete Forum",user,headerVars,tList,yousure}
+	if pre_render_hooks["pre_render_panel_delete_forum"] != nil {
+		if run_pre_render_hook("pre_render_panel_delete_forum", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }
 
-func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, sfid string) {
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -324,8 +338,8 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, sf
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 
-func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string) {
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -363,14 +377,19 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, sfid string
 	}
 
 	pi := EditForumPage{"Forum Editor",user,headerVars,forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,gplist,extData}
+	if pre_render_hooks["pre_render_panel_edit_forum"] != nil {
+		if run_pre_render_hook("pre_render_panel_edit_forum", w, r, &user, &pi) {
+			return
+		}
+	}
 	err = templates.ExecuteTemplate(w,"panel-forum-edit.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
-func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid string) {
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -455,8 +474,8 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, sfid
 	}
 }
 
-func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request, sfid string){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request, user User, sfid string){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -537,8 +556,8 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func route_panel_settings(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_settings(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -588,11 +607,16 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request){
 	}
 
 	pi := Page{"Setting Manager",user,headerVars,tList,settingList}
+	if pre_render_hooks["pre_render_panel_settings"] != nil {
+		if run_pre_render_hook("pre_render_panel_settings", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"panel-settings.html",pi)
 }
 
-func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, sname string){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -636,11 +660,16 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, sname string){
 	}
 
 	pi := Page{"Edit Setting",user,headerVars,itemList,setting}
+	if pre_render_hooks["pre_render_panel_setting"] != nil {
+		if run_pre_render_hook("pre_render_panel_setting", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"panel-setting.html",pi)
 }
 
-func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname string) {
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User, sname string) {
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -693,8 +722,8 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, sname stri
 	http.Redirect(w,r,"/panel/settings/",http.StatusSeeOther)
 }
 
-func route_panel_plugins(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -705,15 +734,22 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request){
 
 	var pluginList []interface{}
 	for _, plugin := range plugins {
+		//fmt.Println("plugin.Name",plugin.Name)
+		//fmt.Println("plugin.Installed",plugin.Installed)
 		pluginList = append(pluginList,plugin)
 	}
 
 	pi := Page{"Plugin Manager",user,headerVars,pluginList,nil}
+	if pre_render_hooks["pre_render_panel_plugins"] != nil {
+		if run_pre_render_hook("pre_render_panel_plugins", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"panel-plugins.html",pi)
 }
 
-func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname string){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user User, uname string){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -726,9 +762,15 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 		return
 	}
 
+	//fmt.Println("uname","'"+uname+"'")
 	plugin, ok := plugins[uname]
 	if !ok {
 		LocalError("The plugin isn't registered in the system",w,r,user)
+		return
+	}
+
+	if plugin.Installable && !plugin.Installed {
+		LocalError("You can't activate this plugin without installing it first",w,r,user)
 		return
 	}
 
@@ -738,6 +780,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 		InternalError(err,w,r)
 		return
 	}
+	var has_plugin bool = (err == nil)
 
 	if plugins[uname].Activate != nil {
 		err = plugins[uname].Activate()
@@ -747,19 +790,22 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 		}
 	}
 
-	has_plugin := err != ErrNoRows
+	//fmt.Println("err",err)
+	//fmt.Println("active",active)
 	if has_plugin {
 		if active {
 			LocalError("The plugin is already active",w,r,user)
 			return
 		}
+		//fmt.Println("update_plugin")
 		_, err = update_plugin_stmt.Exec(1,uname)
 		if err != nil {
 			InternalError(err,w,r)
 			return
 		}
 	} else {
-		_, err := add_plugin_stmt.Exec(uname,1)
+		//fmt.Println("add_plugin")
+		_, err := add_plugin_stmt.Exec(uname,1,0)
 		if err != nil {
 			InternalError(err,w,r)
 			return
@@ -769,12 +815,17 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, uname 
 	log.Print("Activating plugin '" + plugin.Name + "'")
 	plugin.Active = true
 	plugins[uname] = plugin
-	plugins[uname].Init()
+	err = plugins[uname].Init()
+	if err != nil {
+		LocalError(err.Error(),w,r,user)
+		return
+	}
+
 	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
 }
 
-func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, uname string){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, user User, uname string){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -821,8 +872,95 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, unam
 	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
 }
 
-func route_panel_users(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user User, uname string){
+	ok := SimplePanelSessionCheck(w,r,&user)
+	if !ok {
+		return
+	}
+	if !user.Perms.ManagePlugins {
+		NoPermissions(w,r,user)
+		return
+	}
+	if r.FormValue("session") != user.Session {
+		SecurityError(w,r,user)
+		return
+	}
+
+	plugin, ok := plugins[uname]
+	if !ok {
+		LocalError("The plugin isn't registered in the system",w,r,user)
+		return
+	}
+
+	if !plugin.Installable {
+		LocalError("This plugin is not installable",w,r,user)
+		return
+	}
+
+	if plugin.Installed {
+		LocalError("This plugin has already been installed",w,r,user)
+		return
+	}
+
+	var active bool
+	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
+	if err != nil && err != ErrNoRows {
+		InternalError(err,w,r)
+		return
+	}
+	var has_plugin bool = (err == nil)
+
+	if plugins[uname].Install != nil {
+		err = plugins[uname].Install()
+		if err != nil {
+			LocalError(err.Error(),w,r,user)
+			return
+		}
+	}
+
+	if plugins[uname].Activate != nil {
+		err = plugins[uname].Activate()
+		if err != nil {
+			LocalError(err.Error(),w,r,user)
+			return
+		}
+	}
+
+
+	if has_plugin {
+		_, err = update_plugin_install_stmt.Exec(1,uname)
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
+		_, err = update_plugin_stmt.Exec(1,uname)
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
+	} else {
+		_, err := add_plugin_stmt.Exec(uname,1,1)
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
+	}
+
+	log.Print("Installing plugin '" + plugin.Name + "'")
+	plugin.Active = true
+	plugin.Installed = true
+	plugins[uname] = plugin
+	err = plugins[uname].Init()
+	if err != nil {
+		LocalError(err.Error(),w,r,user)
+		return
+	}
+
+	http.Redirect(w,r,"/panel/plugins/",http.StatusSeeOther)
+}
+
+func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -866,14 +1004,19 @@ func route_panel_users(w http.ResponseWriter, r *http.Request){
 	}
 
 	pi := Page{"User Manager",user,headerVars,userList,nil}
+	if pre_render_hooks["pre_render_panel_users"] != nil {
+		if run_pre_render_hook("pre_render_panel_users", w, r, &user, &pi) {
+			return
+		}
+	}
 	err = templates.ExecuteTemplate(w,"panel-users.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
-func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, suid string){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -915,14 +1058,19 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request,suid string){
 	}
 
 	pi := Page{"User Editor",user,headerVars,groupList,targetUser}
+	if pre_render_hooks["pre_render_panel_edit_user"] != nil {
+		if run_pre_render_hook("pre_render_panel_edit_user", w, r, &user, &pi) {
+			return
+		}
+	}
 	err = templates.ExecuteTemplate(w,"panel-user-edit.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
-func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid string){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, user User, suid string){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1016,8 +1164,8 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, suid 
 	http.Redirect(w,r,"/panel/users/edit/" + strconv.Itoa(targetUser.ID),http.StatusSeeOther)
 }
 
-func route_panel_groups(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_groups(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1052,11 +1200,16 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request){
 	//fmt.Printf("%+v\n", groupList)
 
 	pi := Page{"Group Manager",user,headerVars,groupList,nil}
+	if pre_render_hooks["pre_render_panel_groups"] != nil {
+		if run_pre_render_hook("pre_render_panel_groups", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"panel-groups.html",pi)
 }
 
-func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, sgid string){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1103,14 +1256,19 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, sgid string
 	disable_rank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
 	pi := EditGroupPage{"Group Editor",user,headerVars,group.ID,group.Name,group.Tag,rank,disable_rank,extData}
+	if pre_render_hooks["pre_render_panel_edit_group"] != nil {
+		if run_pre_render_hook("pre_render_panel_edit_group", w, r, &user, &pi) {
+			return
+		}
+	}
 	err = templates.ExecuteTemplate(w,"panel-group-edit.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
-func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid string){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user User, sgid string){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1176,14 +1334,19 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, sgid 
 	globalPerms = append(globalPerms, NameLangToggle{"ViewIPs",GetGlobalPermPhrase("ViewIPs"),group.Perms.ViewIPs})
 
 	pi := EditGroupPermsPage{"Group Editor",user,headerVars,group.ID,group.Name,localPerms,globalPerms,extData}
+	if pre_render_hooks["pre_render_panel_edit_group_perms"] != nil {
+		if run_pre_render_hook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
+			return
+		}
+	}
 	err = templates.ExecuteTemplate(w,"panel-group-edit-perms.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
-func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid string){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user User, sgid string){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1314,8 +1477,8 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, sgid
 	http.Redirect(w,r,"/panel/groups/edit/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
-func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request, sgid string){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request, user User, sgid string){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1335,7 +1498,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 	}
 
 	if !group_exists(gid) {
-		//fmt.Println("aaaaa monsters")
+		//fmt.Println("aaaaa monsters o.o")
 		NotFound(w,r)
 		return
 	}
@@ -1390,8 +1553,8 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 	http.Redirect(w,r,"/panel/groups/edit/perms/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
-func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request, user User){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1441,8 +1604,8 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request){
 	http.Redirect(w,r,"/panel/groups/edit/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
-func route_panel_themes(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_themes(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1465,14 +1628,19 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request){
 	}
 
 	pi := ThemesPage{"Theme Manager",user,headerVars,pThemeList,vThemeList,extData}
+	if pre_render_hooks["pre_render_panel_themes"] != nil {
+		if run_pre_render_hook("pre_render_panel_themes", w, r, &user, &pi) {
+			return
+		}
+	}
 	err := templates.ExecuteTemplate(w,"panel-themes.html",pi)
 	if err != nil {
 		log.Print(err)
 	}
 }
 
-func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname string){
-	user, ok := SimplePanelSessionCheck(w,r)
+func route_panel_themes_default(w http.ResponseWriter, r *http.Request, user User, uname string){
+	ok := SimplePanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1549,8 +1717,8 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, uname st
 	http.Redirect(w,r,"/panel/themes/",http.StatusSeeOther)
 }
 
-func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := PanelSessionCheck(w,r)
+func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1642,6 +1810,11 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request){
 	}
 
 	pi := LogsPage{"Moderation Logs",user,headerVars,logs,extData}
+	if pre_render_hooks["pre_render_panel_mod_log"] != nil {
+		if run_pre_render_hook("pre_render_panel_mod_log", w, r, &user, &pi) {
+			return
+		}
+	}
 	err = templates.ExecuteTemplate(w,"panel-modlogs.html",pi)
 	if err != nil {
 		log.Print(err)

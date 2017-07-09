@@ -6,6 +6,22 @@ import "errors"
 var DB_Registry []DB_Adapter
 var No_Adapter = errors.New("This adapter doesn't exist")
 
+type DB_Table_Column struct
+{
+	Name string
+	Type string
+	Size int
+	Null bool
+	Auto_Increment bool
+	Default string
+}
+
+type DB_Table_Key struct
+{
+	Columns string
+	Type string
+}
+
 type DB_Select struct
 {
 	Table string
@@ -84,7 +100,8 @@ type DB_Limit struct {
 
 type DB_Adapter interface {
 	GetName() string
-	SimpleInsert(string,string,string,string) (string, error)
+	CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error)
+	SimpleInsert(name string, table string, columns string, fields string) (string, error)
 	SimpleReplace(string,string,string,string) (string, error)
 	SimpleUpdate(string,string,string,string) (string, error)
 	SimpleDelete(string,string,string) (string, error)

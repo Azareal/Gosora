@@ -1,15 +1,15 @@
 {{template "header.html" . }}
-<div class="rowblock">
-	<div class="rowitem rowhead"><a>Topic List</a></div>
+<div class="rowblock rowhead">
+	<div class="rowitem"><a>Topic List</a></div>
 </div>
 <div id="topic_list" class="rowblock topic_list">
-	{{range .ItemList}}<div class="rowitem passive datarow" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{if .Sticky}}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
+	{{range .ItemList}}<div class="rowitem passive datarow {{if .Sticky}}topic_sticky{{else if .Is_Closed}}topic_closed{{end}}" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
 		<span class="rowsmall" style="float: right;">
 			<span class="replyCount">{{.PostCount}} replies</span><br />
 			<span class="lastReplyAt">{{.LastReplyAt}}</span>
 		</span>
 		<span>
-			<a class="rowtopic" href="/topic/{{.Slug}}.{{.ID}}">{{.Title}}</a> {{if .ForumName}}<a class="rowsmall" href="/forum/{{.ParentID}}">{{.ForumName}}</a>{{end}}
+			<a class="rowtopic" href="/topic/{{.Slug}}.{{.ID}}">{{.Title}}</a> {{if .ForumName}}<a class="rowsmall" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
 			<br /><a class="rowsmall" href="/user/{{.UserSlug}}.{{.CreatedBy}}">Starter: {{.CreatedByName}}</a>
 			{{if .Is_Closed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E{{end}}</span>
 		</span>

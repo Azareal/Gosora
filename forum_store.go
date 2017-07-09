@@ -2,8 +2,9 @@
 package main
 
 import "log"
-import "sync"
 import "errors"
+import "sync"
+//import "sync/atomic"
 import "database/sql"
 import "./query_gen/lib"
 
@@ -22,6 +23,8 @@ type ForumStore interface
 	CascadeGet(id int) (*Forum, error)
 	CascadeGetCopy(id int) (Forum, error)
 	BypassGet(id int) (*Forum, error)
+	Load(id int) error
+	Set(forum *Forum) error
 	//Update(Forum) error
 	//CascadeUpdate(Forum) error
 	Delete(id int) error
@@ -30,14 +33,17 @@ type ForumStore interface
 	DecrementTopicCount(id int) error
 	UpdateLastTopic(topic_name string, tid int, username string, uid int, time string, fid int) error
 	Exists(id int) bool
-	GetAll() ([]Forum,error)
+	GetAll() ([]*Forum,error)
+	GetAllIDs() ([]int,error)
+	//GetChildren(parentID int, parentType string) ([]*Forum,error)
+	//GetFirstChild(parentID int, parentType string) (*Forum,error)
 	CreateForum(forum_name string, forum_desc string, active bool, preset string) (int, error)
-	//QuickCreate(string, string, bool, string) (*Forum, error)
 }
 
 type StaticForumStore struct
 {
-	forums []Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency
+	forums []*Forum // The IDs for a forum tend to be low and sequential for the most part, so we can get more performance out of using a slice instead of a map AND it has better concurrency
+	//fids []int
 	forumCapCount int
 
 	get *sql.Stmt
@@ -45,11 +51,11 @@ type StaticForumStore struct
 }
 
 func NewStaticForumStore() *StaticForumStore {
-	get_stmt, err := qgen.Builder.SimpleSelect("forums","name, desc, active, preset, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","fid = ?","","")
+	get_stmt, err := qgen.Builder.SimpleSelect("forums","name, desc, active, preset, parentID, parentType, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","fid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}
-	get_all_stmt, err := qgen.Builder.SimpleSelect("forums","fid, name, desc, active, preset, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","","fid ASC","")
+	get_all_stmt, err := qgen.Builder.SimpleSelect("forums","fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime","","fid ASC","")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -60,11 +66,9 @@ func NewStaticForumStore() *StaticForumStore {
 }
 
 func (sfs *StaticForumStore) LoadForums() error {
-	//if debug {
-		log.Print("Adding the uncategorised forum")
-	//}
-	var forums []Forum = []Forum{
-		Forum{0,"uncategorised","Uncategorised","",uncategorised_forum_visible,"all",0,"","",0,"",0,""},
+	log.Print("Adding the uncategorised forum")
+	var forums []*Forum = []*Forum{
+		&Forum{0,"uncategorised","Uncategorised","",uncategorised_forum_visible,"all",0,"",0,"","",0,"",0,""},
 	}
 
   rows, err := get_forums_stmt.Query()
@@ -76,7 +80,7 @@ func (sfs *StaticForumStore) LoadForums() error {
 	var i int = 1
 	for ;rows.Next();i++ {
 		forum := Forum{ID:0,Active:true,Preset:"all"}
-		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
 		if err != nil {
 			return err
 		}
@@ -88,16 +92,16 @@ func (sfs *StaticForumStore) LoadForums() error {
 		}
 
 		if forum.Name == "" {
-			if debug {
+			if debug_mode {
 				log.Print("Adding a placeholder forum")
 			}
 		} else {
 			log.Print("Adding the " + forum.Name + " forum")
 		}
 
-		forum.Slug = name_to_slug(forum.Name)
-		forum.LastTopicSlug = name_to_slug(forum.LastTopic)
-		forums = append(forums,forum)
+		forum.Link = build_forum_url(name_to_slug(forum.Name),forum.ID)
+		forum.LastTopicSlug = build_slug(name_to_slug(forum.LastTopic),forum.LastTopicID)
+		forums = append(forums,&forum)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -113,28 +117,28 @@ func (sfs *StaticForumStore) DirtyGet(id int) *Forum {
 	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name!="") {
 		return &Forum{ID:-1,Name:""}
 	}
-	return &sfs.forums[id]
+	return sfs.forums[id]
 }
 
 func (sfs *StaticForumStore) Get(id int) (*Forum, error) {
 	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name!="") {
 		return nil, err_noforum
 	}
-	return &sfs.forums[id], nil
+	return sfs.forums[id], nil
 }
 
 func (sfs *StaticForumStore) CascadeGet(id int) (*Forum, error) {
 	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name != "") {
 		return nil, err_noforum
 	}
-	return &sfs.forums[id], nil
+	return sfs.forums[id], nil
 }
 
 func (sfs *StaticForumStore) CascadeGetCopy(id int) (forum Forum, err error) {
 	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name != "") {
 		return forum, err_noforum
 	}
-	return sfs.forums[id], nil
+	return *sfs.forums[id], nil
 }
 
 func (sfs *StaticForumStore) BypassGet(id int) (*Forum, error) {
@@ -146,12 +150,53 @@ func (sfs *StaticForumStore) BypassGet(id int) (*Forum, error) {
 	return &forum, nil
 }
 
-func (sfs *StaticForumStore) Exists(id int) bool {
-	return (id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name != ""
+func (sfs *StaticForumStore) Load(id int) error {
+	var forum Forum = Forum{ID:id}
+	err := sfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+	if err != nil {
+		return err
+	}
+	sfs.Set(&forum)
+	return nil
 }
 
-func (sfs *StaticForumStore) GetAll() ([]Forum,error) {
+// TO-DO: Set should be able to add new indices not just replace existing ones for consistency with UserStore and TopicStore
+func (sfs *StaticForumStore) Set(forum *Forum) error {
+	forum_update_mutex.Lock()
+	if !sfs.Exists(forum.ID) {
+		forum_update_mutex.Unlock()
+		return ErrNoRows
+	}
+	sfs.forums[forum.ID] = forum
+	forum_update_mutex.Unlock()
+	return nil
+}
+
+func (sfs *StaticForumStore) GetAll() ([]*Forum,error) {
 	return sfs.forums, nil
+}
+
+// TO-DO: Implement sub-forums.
+/*func (sfs *StaticForumStore) GetChildren(parentID int, parentType string) ([]*Forum,error) {
+	return nil, nil
+}
+func (sfs *StaticForumStore) GetFirstChild(parentID int, parentType string) (*Forum,error) {
+	return nil, nil
+}*/
+
+// We can cheat slightly, as the StaticForumStore has all the IDs under the cap ;)
+// Should we cache this? Well, it's only really used for superadmins right now.
+func (sfs *StaticForumStore) GetAllIDs() ([]int,error) {
+	var max int = sfs.forumCapCount
+	var ids []int = make([]int,max)
+	for i := 0; i < max; i++ {
+		ids[i] = i
+	}
+	return ids, nil
+}
+
+func (sfs *StaticForumStore) Exists(id int) bool {
+	return (id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name != ""
 }
 
 func (sfs *StaticForumStore) Delete(id int) error {
@@ -240,10 +285,14 @@ func (sfs *StaticForumStore) CreateForum(forum_name string, forum_desc string, a
 		if err != nil {
 			return fid, err
 		}
-		sfs.forums[fid].Name = forum_name
-		sfs.forums[fid].Desc = forum_desc
-		sfs.forums[fid].Active = active
-		sfs.forums[fid].Preset = preset
+		forum, err := sfs.Get(fid)
+		if err != nil {
+			return 0, ErrCacheDesync
+		}
+		forum.Name = forum_name
+		forum.Desc = forum_desc
+		forum.Active = active
+		forum.Preset = preset
 		forum_update_mutex.Unlock()
 		return fid, nil
 	}
@@ -260,8 +309,11 @@ func (sfs *StaticForumStore) CreateForum(forum_name string, forum_desc string, a
 	}
 	fid = int(fid64)
 
-	sfs.forums = append(sfs.forums, Forum{fid,name_to_slug(forum_name),forum_name,forum_desc,active,preset,0,"","",0,"",0,""})
+	sfs.forums = append(sfs.forums, &Forum{fid,name_to_slug(forum_name),forum_name,forum_desc,active,preset,0,"",0,"","",0,"",0,""})
 	sfs.forumCapCount++
+
+	// TO-DO: Add a GroupStore. How would it interact with the ForumStore?
+	permmap_to_query(preset_to_permmap(preset),fid)
 	forum_create_mutex.Unlock()
 	return fid, nil
 }
@@ -269,6 +321,10 @@ func (sfs *StaticForumStore) CreateForum(forum_name string, forum_desc string, a
 func (sfs *StaticForumStore) fill_forum_id_gap(biggerID int, smallerID int) {
 	dummy := Forum{ID:0,Name:"",Active:false,Preset:"all"}
 	for i := smallerID; i > biggerID; i++ {
-		sfs.forums = append(sfs.forums, dummy)
+		sfs.forums = append(sfs.forums, &dummy)
 	}
 }
+
+// TO-DO: Work on MapForumStore
+
+// TO-DO: Work on SqlForumStore

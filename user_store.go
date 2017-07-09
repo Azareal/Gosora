@@ -10,6 +10,7 @@ import "database/sql"
 import "./query_gen/lib"
 import "golang.org/x/crypto/bcrypt"
 
+// TO-DO: Add the watchdog goroutine
 var users UserStore
 var err_account_exists = errors.New("This username is already in use.")
 

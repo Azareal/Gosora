@@ -9,7 +9,7 @@ import (
 	"html"
 )
 
-func route_edit_topic(w http.ResponseWriter, r *http.Request) {
+func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form",w,r)
@@ -36,7 +36,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,old_topic.ParentID)
+	ok := SimpleForumSessionCheck(w,r,&user,old_topic.ParentID)
 	if !ok {
 		return
 	}
@@ -109,7 +109,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func route_delete_topic(w http.ResponseWriter, r *http.Request) {
+func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
 	if err != nil {
 		PreError("The provided TopicID is not a valid number.",w,r)
@@ -125,7 +125,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
+	ok := SimpleForumSessionCheck(w,r,&user,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -176,7 +176,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request) {
 	topics.Remove(tid)
 }
 
-func route_stick_topic(w http.ResponseWriter, r *http.Request) {
+func route_stick_topic(w http.ResponseWriter, r *http.Request, user User) {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/stick/submit/"):])
 	if err != nil {
 		PreError("The provided TopicID is not a valid number.",w,r)
@@ -192,7 +192,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
+	ok := SimpleForumSessionCheck(w,r,&user,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -231,7 +231,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
-func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
+func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unstick/submit/"):])
 	if err != nil {
 		PreError("The provided TopicID is not a valid number.",w,r)
@@ -247,7 +247,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
+	ok := SimpleForumSessionCheck(w,r,&user,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -286,7 +286,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
-func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
+func route_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form",w,r)
@@ -328,7 +328,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	ok := SimpleForumSessionCheck(w,r,&user,fid)
 	if !ok {
 		return
 	}
@@ -344,7 +344,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
+func route_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form",w,r)
@@ -380,7 +380,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	ok := SimpleForumSessionCheck(w,r,&user,fid)
 	if !ok {
 		return
 	}
@@ -430,12 +430,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
-
+func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form",w,r,user)
@@ -479,12 +474,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
-
+func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form",w,r,user)
@@ -530,8 +520,8 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func route_ban(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_ban(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -560,14 +550,15 @@ func route_ban(w http.ResponseWriter, r *http.Request) {
 	yousure := AreYouSure{"/users/ban/submit/" + strconv.Itoa(uid),confirm_msg}
 
 	pi := Page{"Ban User",user,headerVars,tList,yousure}
+	if pre_render_hooks["pre_render_ban"] != nil {
+		if run_pre_render_hook("pre_render_ban", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }
 
-func route_ban_submit(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Perms.BanUsers {
 		NoPermissions(w,r,user)
 		return
@@ -637,11 +628,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/user/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
-func route_unban(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Perms.BanUsers {
 		NoPermissions(w,r,user)
 		return
@@ -701,11 +688,7 @@ func route_unban(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/user/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
-func route_activate(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_activate(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Perms.ActivateUsers {
 		NoPermissions(w,r,user)
 		return

@@ -25,6 +25,8 @@ type Group struct
 	Tag string
 	Perms Perms
 	PermissionsText []byte
+	PluginPerms map[string]bool // Custom permissions defined by plugins. What if two plugins declare the same permission, but they handle them in incompatible ways? Very unlikely, we probably don't need to worry about this, the plugin authors should be aware of each other to some extent
+	PluginPermsText []byte
 	Forums []ForumPerms
 	CanSee []int // The IDs of the forums this group can see
 }
@@ -69,10 +71,17 @@ func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_
 		return 0, err
 	}
 	gid = int(gid64)
-	perms := BlankPerms
+
+	var perms Perms = BlankPerms
 	var blankForums []ForumPerms
 	var blankIntList []int
-	groups = append(groups, Group{gid,group_name,is_mod,is_admin,is_banned,tag,perms,[]byte(permstr),blankForums,blankIntList})
+	var plugin_perms map[string]bool = make(map[string]bool)
+	var plugin_perms_bytes []byte = []byte("{}")
+	if vhooks["create_group_preappend"] != nil {
+		run_vhook("create_group_preappend", &plugin_perms, &plugin_perms_bytes)
+	}
+
+	groups = append(groups, Group{gid,group_name,is_mod,is_admin,is_banned,tag,perms,[]byte(permstr),plugin_perms,plugin_perms_bytes,blankForums,blankIntList})
 	group_create_mutex.Unlock()
 
 	// Generate the forum permissions based on the presets...
@@ -117,5 +126,5 @@ func create_group(group_name string, tag string, is_admin bool, is_mod bool, is_
 }
 
 func group_exists(gid int) bool {
-	return (gid <= groupCapCount) && (gid > 0) && groups[gid].Name!=""
+	return (gid <= groupCapCount) && (gid > 0) && groups[gid].Name != ""
 }

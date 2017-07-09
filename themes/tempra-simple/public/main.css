@@ -18,7 +18,7 @@ ul {
 	height: 36px;
 	list-style-type: none;
 	border: 1px solid #ccc;
-	background-color: white;
+	background-color: rgb(248,248,248);
 	margin-bottom: 12px;
 }
 li {
@@ -26,6 +26,8 @@ li {
 	padding-left: 10px;
 	padding-top: 8px;
 	padding-bottom: 8px;
+	background: white;
+	border-bottom: 1px solid #ccc;
 }
 li:hover { background: rgb(250,250,250); }
 li a {
@@ -101,7 +103,7 @@ li a {
 	padding: 8px;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	padding-top: 15px;
+	padding-top: 17px;
 	padding-bottom: 16px;
 }
 .alertItem.withAvatar {
@@ -220,6 +222,13 @@ li a {
 .stat_red { background-color: #ffb2b2; border-color: #ffb2b2; }
 .stat_disabled { background-color: lightgray; border-color: lightgray; }
 
+.rowhead {
+	border-bottom: none;
+}
+.rowhead .rowitem, .colstack_head .rowitem {
+	background-color: rgb(252,252,252);
+}
+
 .rowitem {
 	width: 100%;
 	/*padding-left: 8px;
@@ -241,6 +250,27 @@ li a {
 .rowitem a:hover { color: silver; }
 .top_post { margin-bottom: 12px; }
 .opthead { display: none; }
+
+.rowitem.has_opt {
+	float: left;
+	width: calc(100% - 50px);
+	border-right: 1px solid #ccc;
+	border-bottom: none;
+}
+.opt {
+	float: left;
+	font-size: 32px;
+	height: 100%;
+	background-color: white;
+	width: 50px;
+	text-align: center;
+}
+.create_topic_opt {
+	color: rgb(120,120,120);
+}
+.locked_opt {
+	color: rgb(80,80,80);
+}
 
 .datarow {
 	padding-top: 10px;
@@ -302,6 +332,14 @@ button {
 }
 
 /* Topics */
+
+.topic_sticky {
+	background-color: rgb(255,255,234);
+}
+.topic_closed {
+	background-color: rgb(248,248,248);
+}
+
 .topic_status {
 	text-transform: none;
 	margin-left: 8px;

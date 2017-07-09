@@ -5,6 +5,11 @@ if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+go get -u github.com/lib/pq
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
 go get -u golang.org/x/crypto/bcrypt
 if %errorlevel% neq 0 (
 	pause

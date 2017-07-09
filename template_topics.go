@@ -68,56 +68,57 @@ w.Write(topics_0)
 if len(tmpl_topics_vars.ItemList) != 0 {
 for _, item := range tmpl_topics_vars.ItemList {
 w.Write(topics_1)
-if item.Avatar != "" {
+if item.Sticky {
 w.Write(topics_2)
-w.Write([]byte(item.Avatar))
+} else {
+if item.Is_Closed {
 w.Write(topics_3)
 }
-if item.Sticky {
+}
 w.Write(topics_4)
-} else {
-if item.Is_Closed {
+if item.Avatar != "" {
 w.Write(topics_5)
-}
-}
+w.Write([]byte(item.Avatar))
 w.Write(topics_6)
-w.Write([]byte(strconv.Itoa(item.PostCount)))
+}
 w.Write(topics_7)
-w.Write([]byte(item.LastReplyAt))
+w.Write([]byte(strconv.Itoa(item.PostCount)))
 w.Write(topics_8)
-w.Write([]byte(item.Slug))
+w.Write([]byte(item.LastReplyAt))
 w.Write(topics_9)
-w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write([]byte(item.Slug))
 w.Write(topics_10)
-w.Write([]byte(item.Title))
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topics_11)
-if item.ForumName != "" {
+w.Write([]byte(item.Title))
 w.Write(topics_12)
-w.Write([]byte(strconv.Itoa(item.ParentID)))
+if item.ForumName != "" {
 w.Write(topics_13)
-w.Write([]byte(item.ForumName))
+w.Write([]byte(item.ForumLink))
 w.Write(topics_14)
-}
+w.Write([]byte(item.ForumName))
 w.Write(topics_15)
-w.Write([]byte(item.UserSlug))
-w.Write(topics_16)
-w.Write([]byte(strconv.Itoa(item.CreatedBy)))
-w.Write(topics_17)
-w.Write([]byte(item.CreatedByName))
-w.Write(topics_18)
-if item.Is_Closed {
-w.Write(topics_19)
 }
+w.Write(topics_16)
+w.Write([]byte(item.UserSlug))
+w.Write(topics_17)
+w.Write([]byte(strconv.Itoa(item.CreatedBy)))
+w.Write(topics_18)
+w.Write([]byte(item.CreatedByName))
+w.Write(topics_19)
+if item.Is_Closed {
 w.Write(topics_20)
 }
-} else {
 w.Write(topics_21)
-if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
-w.Write(topics_22)
 }
+} else {
+w.Write(topics_22)
+if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
 w.Write(topics_23)
 }
 w.Write(topics_24)
+}
+w.Write(topics_25)
 w.Write(footer_0)
 if tmpl_topics_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)

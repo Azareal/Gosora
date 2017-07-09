@@ -5,6 +5,12 @@ if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+echo Updating the PostgreSQL Driver
+go get -u github.com/lib/pq
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
 
 echo Updating bcrypt
 go get -u golang.org/x/crypto/bcrypt
