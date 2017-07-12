@@ -1,30 +1,3 @@
-CREATE TABLE `users`(
-	`uid` int not null AUTO_INCREMENT,
-	`name` varchar(100) not null,
-	`password` varchar(100) not null,
-	`salt` varchar(80) default '' not null,
-	`group` int not null,
-	`active` tinyint default 0 not null,
-	`is_super_admin` tinyint(1) not null,
-	`createdAt` datetime not null,
-	`lastActiveAt` datetime not null,
-	`session` varchar(200) default '' not null,
-	`last_ip` varchar(200) default '0.0.0.0.0' not null,
-	`email` varchar(200) default '' not null,
-	`avatar` varchar(20) default '' not null,
-	`message` text not null,
-	`url_prefix` varchar(20) default '' not null,
-	`url_name` varchar(100) default '' not null,
-	`level` tinyint default 0 not null,
-	`score` int default 0 not null,
-	`posts` int default 0 not null,
-	`bigposts` int default 0 not null,
-	`megaposts` int default 0 not null,
-	`topics` int default 0 not null,
-	primary key(`uid`),
-	unique(`name`)
-) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
-
 CREATE TABLE `users_groups`(
 	`gid` int not null AUTO_INCREMENT,
 	`name` varchar(100) not null,
@@ -157,8 +130,9 @@ CREATE TABLE `activity_subscriptions`(
 	`level` tinyint DEFAULT 0 not null /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
 );
 
+/* Due to MySQL's design, we have to drop the unique keys for table settings, plugins, and themes down from 200 to 180 or it will error */
 CREATE TABLE `settings`(
-	`name` varchar(200) not null,
+	`name` varchar(180) not null,
 	`content` varchar(250) not null,
 	`type` varchar(50) not null,
 	`constraints` varchar(200) DEFAULT '' not null,
@@ -166,14 +140,14 @@ CREATE TABLE `settings`(
 );
 
 CREATE TABLE `plugins`(
-	`uname` varchar(200) not null,
+	`uname` varchar(180) not null,
 	`active` tinyint DEFAULT 0 not null,
 	`installed` tinyint DEFAULT 0 not null,
 	unique(`uname`)
 );
 
 CREATE TABLE `themes`(
-	`uname` varchar(200) not null,
+	`uname` varchar(180) not null,
 	`default` tinyint DEFAULT 0 not null,
 	unique(`uname`)
 );
@@ -215,9 +189,6 @@ INSERT INTO settings(`name`,`content`,`type`,`constraints`) VALUES ('activation_
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('bigpost_min_words','250','int');
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('megapost_min_words','1000','int');
 INSERT INTO themes(`uname`,`default`) VALUES ('tempra-simple',1);
-
-INSERT INTO users(`name`,`password`,`email`,`group`,`is_super_admin`,`createdAt`,`lastActiveAt`,`message`,`last_ip`)
-VALUES ('Admin','password','admin@localhost',1,1,NOW(),NOW(),'','127.0.0.1');
 INSERT INTO emails(`email`,`uid`,`validated`) VALUES ('admin@localhost',1,1);
 
 /*

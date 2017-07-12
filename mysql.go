@@ -41,7 +41,7 @@ func _init_database() (err error) {
 	db.SetMaxOpenConns(64)
 
 	// Build the generated prepared statements, we are going to slowly move the queries over to the query generator rather than writing them all by hand, this'll make it easier for us to implement database adapters for other databases like PostgreSQL, MSSQL, SQlite, etc.
-	err = gen_mysql()
+	err = _gen_mysql()
 	if err != nil {
 		return err
 	}

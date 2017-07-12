@@ -374,7 +374,13 @@ func bbcode_full_parse(msg string) string {
 							goto MainLoop
 						}
 
-						dat := []byte(strconv.FormatInt((random.Int63n(number)),10))
+						var dat []byte
+						if number == 0 {
+							dat = []byte("0")
+						} else {
+							dat = []byte(strconv.FormatInt((random.Int63n(number)),10))
+						}
+
 						outbytes = append(outbytes, dat...)
 						//log.Print("Outputted the random number")
 						i += 7

@@ -17,7 +17,6 @@ import (
 	"html/template"
 
 	"./query_gen/lib"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -68,22 +67,28 @@ func route_fstatic(w http.ResponseWriter, r *http.Request){
 	http.ServeFile(w,r,r.URL.Path)
 }*/
 
-func route_overview(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := SessionCheck(w,r)
+func route_overview(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
-	BuildWidgets("overview",nil,&headerVars)
+	BuildWidgets("overview",nil,&headerVars,r)
 
 	pi := Page{"Overview",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_overview"] != nil {
+		if run_pre_render_hook("pre_render_overview", w, r, &user, &pi) {
+			return
+		}
+	}
+
 	err := templates.ExecuteTemplate(w,"overview.html",pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
-func route_custom_page(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := SessionCheck(w,r)
+func route_custom_page(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -93,20 +98,27 @@ func route_custom_page(w http.ResponseWriter, r *http.Request){
 		NotFound(w,r)
 		return
 	}
-	BuildWidgets("custom_page",name,&headerVars)
+	BuildWidgets("custom_page",name,&headerVars,r)
 
-	err := templates.ExecuteTemplate(w,"page_" + name,Page{"Page",user,headerVars,tList,nil})
+	pi := Page{"Page",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_custom_page"] != nil {
+		if run_pre_render_hook("pre_render_custom_page", w, r, &user, &pi) {
+			return
+		}
+	}
+
+	err := templates.ExecuteTemplate(w,"page_" + name,pi)
 	if err != nil {
 		InternalError(err,w,r)
 	}
 }
 
-func route_topics(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := SessionCheck(w,r)
+func route_topics(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
-	BuildWidgets("topics",nil,&headerVars)
+	BuildWidgets("topics",nil,&headerVars,r)
 
 	var qlist string
 	var fidList []interface{}
@@ -151,8 +163,10 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			topicItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
 		}
 
+		forum := fstore.DirtyGet(topicItem.ParentID)
 		if topicItem.ParentID >= 0 {
-			topicItem.ForumName = fstore.DirtyGet(topicItem.ParentID).Name
+			topicItem.ForumName = forum.Name
+			topicItem.ForumLink = forum.Link
 		} else {
 			topicItem.ForumName = ""
 		}
@@ -166,8 +180,8 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 			InternalError(err,w,r)
 		}
 
-		if hooks["trow_assign"] != nil {
-			topicItem = run_hook("trow_assign", topicItem).(TopicsRow)
+		if hooks["topics_trow_assign"] != nil {
+			run_vhook("topics_trow_assign", &topicItem, &forum)
 		}
 		topicList = append(topicList, topicItem)
 	}
@@ -179,6 +193,12 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	rows.Close()
 
 	pi := TopicsPage{"Topic List",user,headerVars,topicList,extData}
+	if pre_render_hooks["pre_render_topic_list"] != nil {
+		if run_pre_render_hook("pre_render_topic_list", w, r, &user, &pi) {
+			return
+		}
+	}
+
 	if template_topics_handle != nil {
 		template_topics_handle(pi,w)
 	} else {
@@ -193,7 +213,7 @@ func route_topics(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
+func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string){
 	page, _ := strconv.Atoi(r.FormValue("page"))
 
 	// SEO URLs...
@@ -207,7 +227,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 		return
 	}
 
-	user, headerVars, ok := ForumSessionCheck(w,r,fid)
+	headerVars, ok := ForumSessionCheck(w,r,&user,fid)
 	if !ok {
 		return
 	}
@@ -227,7 +247,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 		return
 	}
 
-	BuildWidgets("view_forum",&forum,&headerVars)
+	BuildWidgets("view_forum",forum,&headerVars,r)
 
 	// Calculate the offset
 	var offset int
@@ -271,8 +291,8 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 			InternalError(err,w,r)
 		}
 
-		if hooks["trow_assign"] != nil {
-			topicItem = run_hook("trow_assign", topicItem).(TopicUser)
+		if hooks["forum_trow_assign"] != nil {
+			run_vhook("forum_trow_assign", &topicItem, &forum)
 		}
 		topicList = append(topicList, topicItem)
 	}
@@ -284,6 +304,12 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 	rows.Close()
 
 	pi := ForumPage{forum.Name,user,headerVars,topicList,*forum,page,last_page,extData}
+	if pre_render_hooks["pre_render_view_forum"] != nil {
+		if run_pre_render_hook("pre_render_view_forum", w, r, &user, &pi) {
+			return
+		}
+	}
+
 	if template_forum_handle != nil {
 		template_forum_handle(pi,w)
 	} else {
@@ -298,21 +324,33 @@ func route_forum(w http.ResponseWriter, r *http.Request, sfid string){
 	}
 }
 
-func route_forums(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := SessionCheck(w,r)
+func route_forums(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
-	BuildWidgets("forums",nil,&headerVars)
+	BuildWidgets("forums",nil,&headerVars,r)
 
-	var forumList []Forum
 	var err error
-	group := groups[user.Group]
-	//fmt.Println(group.CanSee)
-	for _, fid := range group.CanSee {
+	var forumList []Forum
+	var canSee []int
+	if user.Is_Super_Admin {
+		canSee, err = fstore.GetAllIDs()
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
+		//fmt.Println("canSee",canSee)
+	} else {
+		group := groups[user.Group]
+		canSee = group.CanSee
+		//fmt.Println("group.CanSee",group.CanSee)
+	}
+
+	for _, fid := range canSee {
 		//fmt.Println(forums[fid])
 		var forum Forum = *fstore.DirtyGet(fid)
-		if forum.Active && forum.Name != "" {
+		if forum.Active && forum.Name != "" && forum.ParentID == 0 {
 			if forum.LastTopicID != 0 {
 				forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
 				if err != nil {
@@ -322,11 +360,20 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 				forum.LastTopic = "None"
 				forum.LastTopicTime = ""
 			}
+			if hooks["forums_frow_assign"] != nil {
+				run_hook("forums_frow_assign", &forum)
+			}
 			forumList = append(forumList, forum)
 		}
 	}
 
 	pi := ForumsPage{"Forum List",user,headerVars,forumList,extData}
+	if pre_render_hooks["pre_render_forum_list"] != nil {
+		if run_pre_render_hook("pre_render_forum_list", w, r, &user, &pi) {
+			return
+		}
+	}
+
 	if template_forums_handle != nil {
 		template_forums_handle(pi,w)
 	} else {
@@ -341,7 +388,7 @@ func route_forums(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_topic_id(w http.ResponseWriter, r *http.Request){
+func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 	var err error
 	var page, offset int
 	var replyList []Reply
@@ -371,7 +418,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 	topic.Css = no_css_tmpl
 
-	user, headerVars, ok := ForumSessionCheck(w,r,topic.ParentID)
+	headerVars, ok := ForumSessionCheck(w,r,&user,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -381,7 +428,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	BuildWidgets("view_topic",&topic,&headerVars)
+	BuildWidgets("view_topic",&topic,&headerVars,r)
 
 	topic.Content = parse_message(topic.Content)
 	topic.ContentLines = strings.Count(topic.Content,"\n")
@@ -500,8 +547,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 		}
 		replyItem.Liked = false
 
+		// TO-DO: Rename this to topic_rrow_assign
 		if hooks["rrow_assign"] != nil {
-			replyItem = run_hook("rrow_assign", replyItem).(Reply)
+			run_hook("rrow_assign", &replyItem)
 		}
 		replyList = append(replyList, replyItem)
 	}
@@ -513,6 +561,12 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	rows.Close()
 
 	tpage := TopicPage{topic.Title,user,headerVars,replyList,topic,page,last_page,extData}
+	if pre_render_hooks["pre_render_view_topic"] != nil {
+		if run_pre_render_hook("pre_render_view_topic", w, r, &user, &tpage) {
+			return
+		}
+	}
+
 	if template_topic_handle != nil {
 		template_topic_handle(tpage,w)
 	} else {
@@ -527,8 +581,8 @@ func route_topic_id(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_profile(w http.ResponseWriter, r *http.Request){
-	user, headerVars, ok := SessionCheck(w,r)
+func route_profile(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -607,6 +661,8 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 		replyLiked := false
 		replyLikeCount := 0
 
+		// TO-DO: Add a hook here
+
 		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,name_to_slug(replyCreatedByName),replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount,"",""})
 	}
 	err = rows.Err()
@@ -616,6 +672,12 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	}
 
 	ppage := ProfilePage{puser.Name + "'s Profile",user,headerVars,replyList,*puser,extData}
+	if pre_render_hooks["pre_render_profile"] != nil {
+		if run_pre_render_hook("pre_render_profile", w, r, &user, &ppage) {
+			return
+		}
+	}
+
 	if template_profile_handle != nil {
 		template_profile_handle(ppage,w)
 	} else {
@@ -626,7 +688,7 @@ func route_profile(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func route_topic_create(w http.ResponseWriter, r *http.Request, sfid string){
+func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid string){
 	var fid int
 	var err error
 	if sfid != "" {
@@ -637,7 +699,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, sfid string){
 		}
 	}
 
-	user, headerVars, ok := ForumSessionCheck(w,r,fid)
+	headerVars, ok := ForumSessionCheck(w,r,&user,fid)
 	if !ok {
 		return
 	}
@@ -646,16 +708,56 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, sfid string){
 		return
 	}
 
+	BuildWidgets("create_topic",nil,&headerVars,r)
+
+	// Lock this to the forum being linked?
+	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
+	var strictmode bool
+	if vhooks["topic_create_pre_loop"] != nil {
+		run_vhook("topic_create_pre_loop", w, r, fid, &headerVars, &user, &strictmode)
+	}
+
 	var forumList []Forum
-	group := groups[user.Group]
-	for _, fid := range group.CanSee {
-		forum := fstore.DirtyGet(fid)
+	var canSee []int
+	if user.Is_Super_Admin {
+		canSee, err = fstore.GetAllIDs()
+		if err != nil {
+			InternalError(err,w,r)
+			return
+		}
+	} else {
+		group := groups[user.Group]
+		canSee = group.CanSee
+	}
+
+	// TO-DO: plugin_superadmin needs to be able to override this loop. Skip flag on topic_create_pre_loop?
+	for _, ffid := range canSee {
+		// TO-DO: Surely, there's a better way of doing this. I've added it in for now to support plugin_socialgroups, but we really need to clean this up
+		if strictmode && ffid != fid {
+			continue
+		}
+
+		// Do a bulk forum fetch, just in case it's the SqlForumStore?
+		forum := fstore.DirtyGet(ffid)
 		if forum.Active && forum.Name != "" {
-			forumList = append(forumList, *forum)
+			fcopy := *forum
+			if hooks["topic_create_frow_assign"] != nil {
+				// TO-DO: Add the skip feature to all the other row based hooks?
+				if run_hook("topic_create_frow_assign", &fcopy).(bool) {
+					continue
+				}
+			}
+			forumList = append(forumList, fcopy)
 		}
 	}
 
 	ctpage := CreateTopicPage{"Create Topic",user,headerVars,forumList,fid,extData}
+	if pre_render_hooks["pre_render_create_topic"] != nil {
+		if run_pre_render_hook("pre_render_create_topic", w, r, &user, &ctpage) {
+			return
+		}
+	}
+
 	if template_create_topic_handle != nil {
 		template_create_topic_handle(ctpage,w)
 	} else {
@@ -667,7 +769,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, sfid string){
 }
 
 // POST functions. Authorised users only.
-func route_create_topic(w http.ResponseWriter, r *http.Request) {
+func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form",w,r)
@@ -680,7 +782,7 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	ok := SimpleForumSessionCheck(w,r,&user,fid)
 	if !ok {
 		return
 	}
@@ -734,7 +836,7 @@ func route_create_topic(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func route_create_reply(w http.ResponseWriter, r *http.Request) {
+func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form",w,r)
@@ -755,7 +857,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
+	ok := SimpleForumSessionCheck(w,r,&user,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -829,7 +931,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func route_like_topic(w http.ResponseWriter, r *http.Request) {
+func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form",w,r)
@@ -851,7 +953,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,topic.ParentID)
+	ok := SimpleForumSessionCheck(w,r,&user,topic.ParentID)
 	if !ok {
 		return
 	}
@@ -929,7 +1031,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid),http.StatusSeeOther)
 }
 
-func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
+func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form",w,r)
@@ -961,7 +1063,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := SimpleForumSessionCheck(w,r,fid)
+	ok := SimpleForumSessionCheck(w,r,&user,fid)
 	if !ok {
 		return
 	}
@@ -1029,11 +1131,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(reply.ParentID),http.StatusSeeOther)
 }
 
-func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_profile_reply_create(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Loggedin || !user.Perms.CreateReply {
 		NoPermissions(w,r,user)
 		return
@@ -1075,11 +1173,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/user/" + strconv.Itoa(uid), http.StatusSeeOther)
 }
 
-func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_report_submit(w http.ResponseWriter, r *http.Request, user User, sitem_id string) {
 	if !user.Loggedin {
 		LoginRequired(w,r,user)
 		return
@@ -1216,8 +1310,8 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, sitem_id string
 	http.Redirect(w,r,"/topic/" + strconv.FormatInt(lastId, 10), http.StatusSeeOther)
 }
 
-func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1225,12 +1319,18 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request) {
 		LocalError("You need to login to edit your account.",w,r,user)
 		return
 	}
+
 	pi := Page{"Edit Password",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_account_own_edit_critical"] != nil {
+		if run_pre_render_hook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
-func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1259,9 +1359,8 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	current_password = current_password + salt
-	err = bcrypt.CompareHashAndPassword([]byte(real_password), []byte(current_password))
-	if err == bcrypt.ErrMismatchedHashAndPassword {
+	err = CheckPassword(real_password,current_password,salt)
+	if err == ErrMismatchedHashAndPassword {
 		LocalError("That's not the correct password.",w,r,user)
 		return
 	} else if err != nil {
@@ -1279,11 +1378,16 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 
 	headerVars.NoticeList = append(headerVars.NoticeList,"Your password was successfully updated")
 	pi := Page{"Edit Password",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_account_own_edit_critical"] != nil {
+		if run_pre_render_hook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"account-own-edit.html", pi)
 }
 
-func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1292,17 +1396,22 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pi := Page{"Edit Avatar",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_account_own_edit_avatar"] != nil {
+		if run_pre_render_hook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html",pi)
 }
 
-func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request) {
+func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request, user User) {
 	if r.ContentLength > int64(max_request_size) {
 		http.Error(w,"Request too large",http.StatusExpectationFailed)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(max_request_size))
 
-	user, headerVars, ok := SessionCheck(w,r)
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1385,11 +1494,16 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your avatar was successfully updated")
 	pi := Page{"Edit Avatar",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_account_own_edit_avatar"] != nil {
+		if run_pre_render_hook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"account-own-edit-avatar.html", pi)
 }
 
-func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_account_own_edit_username(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1398,11 +1512,16 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pi := Page{"Edit Username",user,headerVars,tList,user.Name}
+	if pre_render_hooks["pre_render_account_own_edit_username"] != nil {
+		if run_pre_render_hook("pre_render_account_own_edit_username", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html",pi)
 }
 
-func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1432,11 +1551,16 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 
 	headerVars.NoticeList = append(headerVars.NoticeList,"Your username was successfully updated")
 	pi := Page{"Edit Username",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_account_own_edit_username"] != nil {
+		if run_pre_render_hook("pre_render_account_own_edit_username", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"account-own-edit-username.html", pi)
 }
 
-func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_account_own_edit_email(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1482,11 +1606,16 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request) {
 		headerVars.NoticeList = append(headerVars.NoticeList,"The mail system is currently disabled.")
 	}
 	pi := Page{"Email Manager",user,headerVars,emailList,nil}
+	if pre_render_hooks["pre_render_account_own_edit_email"] != nil {
+		if run_pre_render_hook("pre_render_account_own_edit_email", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
-func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1556,14 +1685,15 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	}
 	headerVars.NoticeList = append(headerVars.NoticeList,"Your email was successfully verified")
 	pi := Page{"Email Manager",user,headerVars,emailList,nil}
+	if pre_render_hooks["pre_render_account_own_edit_email"] != nil {
+		if run_pre_render_hook("pre_render_account_own_edit_email", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"account-own-edit-email.html", pi)
 }
 
-func route_logout(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_logout(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Loggedin {
 		LocalError("You can't logout without logging in first.",w,r,user)
 		return
@@ -1572,8 +1702,8 @@ func route_logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r, "/", http.StatusSeeOther)
 }
 
-func route_login(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_login(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1582,14 +1712,15 @@ func route_login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pi := Page{"Login",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_login"] != nil {
+		if run_pre_render_hook("pre_render_login", w, r, &user, &pi) {
+			return
+		}
+	}
 	templates.ExecuteTemplate(w,"login.html",pi)
 }
 
-func route_login_submit(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
 	if user.Loggedin {
 		LocalError("You're already logged in.",w,r,user)
 		return
@@ -1621,8 +1752,8 @@ func route_login_submit(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r,"/",http.StatusSeeOther)
 }
 
-func route_register(w http.ResponseWriter, r *http.Request) {
-	user, headerVars, ok := SessionCheck(w,r)
+func route_register(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1630,14 +1761,16 @@ func route_register(w http.ResponseWriter, r *http.Request) {
 		LocalError("You're already logged in.",w,r,user)
 		return
 	}
-	templates.ExecuteTemplate(w,"register.html",Page{"Registration",user,headerVars,tList,nil})
+	pi := Page{"Registration",user,headerVars,tList,nil}
+	if pre_render_hooks["pre_render_register"] != nil {
+		if run_pre_render_hook("pre_render_register", w, r, &user, &pi) {
+			return
+		}
+	}
+	templates.ExecuteTemplate(w,"register.html",pi)
 }
 
-func route_register_submit(w http.ResponseWriter, r *http.Request) {
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
-		return
-	}
+func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form",w,r,user)
@@ -1734,9 +1867,10 @@ func route_register_submit(w http.ResponseWriter, r *http.Request) {
 }
 
 var phrase_login_alerts []byte = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
-func route_api(w http.ResponseWriter, r *http.Request) {
+func route_api(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	format := r.FormValue("format")
+	// TO-DO: Change is_js from a string to a boolean value
 	var is_js string
 	if format == "json" {
 		is_js = "1"
@@ -1745,11 +1879,6 @@ func route_api(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		PreErrorJSQ("Bad Form",w,r,is_js)
-		return
-	}
-
-	user, ok := SimpleSessionCheck(w,r)
-	if !ok {
 		return
 	}
 

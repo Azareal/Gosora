@@ -151,7 +151,6 @@ li:hover {
 
 hr { color: silver; border: 1px solid silver; }
 
-/* I HATE CSS for being so incompetently designed that I have to declare this for THREE different elements rather than just having a statement go back up the tree. What on earth is the W3C doing?! */
 .rowhead .rowitem, .colstack_head .rowitem, .opthead .rowitem {
 	border-top: none;
 	font-weight: bold;

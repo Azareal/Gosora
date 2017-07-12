@@ -98,6 +98,12 @@ type DB_Limit struct {
 	MaxCount string // ? or int
 }
 
+type DB_Stmt struct
+{
+	Contents string
+	Type string // create-table, insert, update, delete
+}
+
 type DB_Adapter interface {
 	GetName() string
 	CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error)

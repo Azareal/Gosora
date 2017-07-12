@@ -325,16 +325,16 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, us
 		LocalError("The provided Forum ID is not a valid number.",w,r,user)
 		return
 	}
-	if !fstore.Exists(fid) {
-		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
-		return
-	}
 
 	err = fstore.CascadeDelete(fid)
-	if err != nil {
+	if err == ErrNoRows {
+		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
+		return
+	} else if err != nil {
 		InternalError(err,w,r)
 		return
 	}
+	
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 

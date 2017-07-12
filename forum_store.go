@@ -2,7 +2,6 @@
 package main
 
 import "log"
-import "errors"
 import "sync"
 //import "sync/atomic"
 import "database/sql"
@@ -12,8 +11,6 @@ var forum_update_mutex sync.Mutex
 var forum_create_mutex sync.Mutex
 var forum_perms map[int]map[int]ForumPerms // [gid][fid]Perms
 var fstore ForumStore
-
-var err_noforum = errors.New("This forum doesn't exist")
 
 type ForumStore interface
 {
@@ -122,21 +119,21 @@ func (sfs *StaticForumStore) DirtyGet(id int) *Forum {
 
 func (sfs *StaticForumStore) Get(id int) (*Forum, error) {
 	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name!="") {
-		return nil, err_noforum
+		return nil, ErrNoRows
 	}
 	return sfs.forums[id], nil
 }
 
 func (sfs *StaticForumStore) CascadeGet(id int) (*Forum, error) {
 	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name != "") {
-		return nil, err_noforum
+		return nil, ErrNoRows
 	}
 	return sfs.forums[id], nil
 }
 
 func (sfs *StaticForumStore) CascadeGetCopy(id int) (forum Forum, err error) {
 	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name != "") {
-		return forum, err_noforum
+		return forum, ErrNoRows
 	}
 	return *sfs.forums[id], nil
 }

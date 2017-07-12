@@ -9,10 +9,9 @@ go get -u github.com/shirou/gopsutil
 echo "Installing Gorilla WebSockets"
 go get -u github.com/gorilla/websocket
 
-echo "Preparing the installer"
-go generate
-go build -o Gosora
+echo "Building the installer"
 cd ./install
+go generate
 go build -o Install
 mv ./Install ..
 cd ..

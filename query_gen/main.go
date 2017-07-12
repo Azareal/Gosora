@@ -8,13 +8,25 @@ func main() {
 	log.Println("Running the query generator")
 	for _, adapter := range qgen.DB_Registry {
 		log.Println("Building the queries for the " + adapter.GetName() + " adapter")
+		qgen.Install.SetAdapterInstance(adapter)
 		write_statements(adapter)
+		qgen.Install.Write()
 		adapter.Write()
 	}
 }
 
 func write_statements(adapter qgen.DB_Adapter) error {
-	err := write_selects(adapter)
+	err := create_tables(adapter)
+	if err != nil {
+		return err
+	}
+	
+	err = seed_tables(adapter)
+	if err != nil {
+		return err
+	}
+	
+	err = write_selects(adapter)
 	if err != nil {
 		return err
 	}
@@ -69,6 +81,45 @@ func write_statements(adapter qgen.DB_Adapter) error {
 		return err
 	}
 	
+	return nil
+}
+
+func create_tables(adapter qgen.DB_Adapter) error {
+	qgen.Install.CreateTable("users","utf8mb4","utf8mb4_general_ci",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"uid","int",0,false,true,""},
+			qgen.DB_Table_Column{"name","varchar",100,false,false,""},
+			qgen.DB_Table_Column{"password","varchar",100,false,false,""},
+			qgen.DB_Table_Column{"salt","varchar",80,false,false,"''"},
+			qgen.DB_Table_Column{"group","int",0,false,false,""},
+			qgen.DB_Table_Column{"active","boolean",0,false,false,"0"},
+			qgen.DB_Table_Column{"is_super_admin","boolean",0,false,false,"0"},
+			qgen.DB_Table_Column{"createdAt","createdAt",0,false,false,""},
+			qgen.DB_Table_Column{"lastActiveAt","datetime",0,false,false,""},
+			qgen.DB_Table_Column{"session","varchar",200,false,false,"''"},
+			qgen.DB_Table_Column{"last_ip","varchar",200,false,false,"0.0.0.0.0"},
+			qgen.DB_Table_Column{"email","varchar",200,false,false,"''"},
+			qgen.DB_Table_Column{"avatar","varchar",100,false,false,"''"},
+			qgen.DB_Table_Column{"message","text",0,false,false,"''"},
+			qgen.DB_Table_Column{"url_prefix","varchar",20,false,false,"''"},
+			qgen.DB_Table_Column{"url_name","varchar",100,false,false,"''"},
+			qgen.DB_Table_Column{"level","smallint",0,false,false,"0"},
+			qgen.DB_Table_Column{"score","int",0,false,false,"0"},
+			qgen.DB_Table_Column{"posts","int",0,false,false,"0"},
+			qgen.DB_Table_Column{"bigposts","int",0,false,false,"0"},
+			qgen.DB_Table_Column{"megaposts","int",0,false,false,"0"},
+			qgen.DB_Table_Column{"topics","int",0,false,false,"0"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"uid","primary"},
+			qgen.DB_Table_Key{"name","unique"},
+		},
+	)
+	
+	return nil
+}
+
+func seed_tables(adapter qgen.DB_Adapter) error {
 	return nil
 }
 

@@ -30,9 +30,13 @@ func TestBBCodeRender(t *testing.T) {
   msgList = addMEPair(msgList,"[b]hi[/i]","[b]hi[/i]")
   msgList = addMEPair(msgList,"[/b]hi[b]","[/b]hi[b]")
   msgList = addMEPair(msgList,"[/b]hi[/b]","[/b]hi[/b]")
+  msgList = addMEPair(msgList,"[b][b]hi[/b]","<b>hi</b>")
+  msgList = addMEPair(msgList,"[b][b]hi","[b][b]hi")
+  msgList = addMEPair(msgList,"[b][b][b]hi","[b][b][b]hi")
   msgList = addMEPair(msgList,"[/b]hi","[/b]hi")
   msgList = addMEPair(msgList,"[code]hi[/code]","<span class='codequotes'>hi</span>")
   msgList = addMEPair(msgList,"[code][b]hi[/b][/code]","<span class='codequotes'>[b]hi[/b]</span>")
+  msgList = addMEPair(msgList,"[code][b]hi[/code][/b]","<span class='codequotes'>[b]hi</span>[/b]")
   msgList = addMEPair(msgList,"[quote]hi[/quote]","<span class='postQuote'>hi</span>")
   msgList = addMEPair(msgList,"[quote][b]hi[/b][/quote]","<span class='postQuote'><b>hi</b></span>")
   msgList = addMEPair(msgList,"[quote][b]h[/b][/quote]","<span class='postQuote'><b>h</b></span>")
@@ -41,7 +45,7 @@ func TestBBCodeRender(t *testing.T) {
   t.Log("Testing bbcode_full_parse")
   for _, item := range msgList {
     t.Log("Testing string '"+item.Msg+"'")
-    res = bbcode_full_parse(item.Msg).(string)
+    res = bbcode_full_parse(item.Msg)
     if res != item.Expects {
       t.Error("Bad output:","'"+res+"'")
       t.Error("Expected:",item.Expects)
@@ -54,7 +58,7 @@ func TestBBCodeRender(t *testing.T) {
   msg = "[rand][/rand]"
   expects = "<span style='color: red;'>[Invalid Number]</span>[rand][/rand]"
   t.Log("Testing string '"+msg+"'")
-  res = bbcode_full_parse(msg).(string)
+  res = bbcode_full_parse(msg)
   if res != expects {
     t.Error("Bad output:","'"+res+"'")
     t.Error("Expected:",expects)
@@ -63,7 +67,52 @@ func TestBBCodeRender(t *testing.T) {
   msg = "[rand]-1[/rand]"
   expects = "<span style='color: red;'>[No Negative Numbers]</span>[rand]-1[/rand]"
   t.Log("Testing string '"+msg+"'")
-  res = bbcode_full_parse(msg).(string)
+  res = bbcode_full_parse(msg)
+  if res != expects {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected:",expects)
+  }
+
+  msg = "[rand]-01[/rand]"
+  expects = "<span style='color: red;'>[No Negative Numbers]</span>[rand]-01[/rand]"
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  if res != expects {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected:",expects)
+  }
+
+  msg = "[rand]NaN[/rand]"
+  expects = "<span style='color: red;'>[Invalid Number]</span>[rand]NaN[/rand]"
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  if res != expects {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected:",expects)
+  }
+
+  msg = "[rand]Inf[/rand]"
+  expects = "<span style='color: red;'>[Invalid Number]</span>[rand]Inf[/rand]"
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  if res != expects {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected:",expects)
+  }
+
+  msg = "[rand]+[/rand]"
+  expects = "<span style='color: red;'>[Invalid Number]</span>[rand]+[/rand]"
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  if res != expects {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected:",expects)
+  }
+
+  msg = "[rand]1+1[/rand]"
+  expects = "<span style='color: red;'>[Invalid Number]</span>[rand]1+1[/rand]"
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
   if res != expects {
     t.Error("Bad output:","'"+res+"'")
     t.Error("Expected:",expects)
@@ -72,17 +121,62 @@ func TestBBCodeRender(t *testing.T) {
   var conv int
   msg = "[rand]1[/rand]"
   t.Log("Testing string '"+msg+"'")
-  res = bbcode_full_parse(msg).(string)
+  res = bbcode_full_parse(msg)
   conv, err = strconv.Atoi(res)
-  if err != nil && (conv > 1 || conv < 0) {
+  if err != nil || (conv > 1 || conv < 0) {
     t.Error("Bad output:","'"+res+"'")
     t.Error("Expected a number in the range 0-1")
+  }
+
+  msg = "[rand]0[/rand]"
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  conv, err = strconv.Atoi(res)
+  if err != nil || conv != 0 {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected the number 0")
+  }
+
+  msg = "[rand]2147483647[/rand]" // Signed 32-bit MAX
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  conv, err = strconv.Atoi(res)
+  if err != nil || (conv > 2147483647 || conv < 0) {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected a number between 0 and 2147483647")
+  }
+
+  msg = "[rand]9223372036854775807[/rand]" // Signed 64-bit MAX
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  conv, err = strconv.Atoi(res)
+  if err != nil || (conv > 9223372036854775807 || conv < 0) {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected a number between 0 and 9223372036854775807")
+  }
+
+  // Note: conv is commented out in these two, as these numbers overflow int
+  msg = "[rand]18446744073709551615[/rand]" // Unsigned 64-bit MAX
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  conv, err = strconv.Atoi(res)
+  if err != nil || (/*conv > 18446744073709551615 || */conv < 0) {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected a number between 0 and 18446744073709551615")
+  }
+  msg = "[rand]170141183460469231731687303715884105727[/rand]" // Signed 128-bit MAX
+  t.Log("Testing string '"+msg+"'")
+  res = bbcode_full_parse(msg)
+  conv, err = strconv.Atoi(res)
+  if err != nil || (/*conv > 170141183460469231731687303715884105727 || */conv < 0) {
+    t.Error("Bad output:","'"+res+"'")
+    t.Error("Expected a number between 0 and 170141183460469231731687303715884105727")
   }
 
   t.Log("Testing bbcode_regex_parse")
   for _, item := range msgList {
     t.Log("Testing string '"+item.Msg+"'")
-    res = bbcode_regex_parse(item.Msg).(string)
+    res = bbcode_regex_parse(item.Msg)
     if res != item.Expects {
       t.Error("Bad output:","'"+res+"'")
       t.Error("Expected:",item.Expects)
@@ -123,7 +217,7 @@ func TestMarkdownRender(t *testing.T) {
 
   for _, item := range msgList {
     t.Log("Testing string '"+item.Msg+"'")
-    res = markdown_parse(item.Msg).(string)
+    res = markdown_parse(item.Msg)
     if res != item.Expects {
       t.Error("Bad output:","'"+res+"'")
       t.Error("Expected:",item.Expects)

@@ -30,12 +30,13 @@ func _init_database() (err error) {
 		return err
 	}
 
-	// TO-DO: Get the version number
+	// Fetch the database version
+	db.QueryRow("SELECT VERSION()").Scan(&db_version)
 
 	// Set the number of max open connections. How many do we need? Might need to do some tests.
 	db.SetMaxOpenConns(64)
 
-	err = gen_pgsql()
+	err = _gen_pgsql()
 	if err != nil {
 		return err
 	}

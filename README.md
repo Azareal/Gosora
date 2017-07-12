@@ -165,6 +165,8 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 * github.com/shirou/gopsutil For pulling information on CPU and memory usage.
 
   * github.com/StackExchange/wmi Dependency for gopsutil on Windows.
+ 
+  * golang.org/x/sys/windows Also a dependency for gopsutil on Windows.
 
 * github.com/gorilla/websocket Needed for Gosora's Optional WebSockets Module.
 

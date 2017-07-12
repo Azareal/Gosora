@@ -19,6 +19,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Updating /x/system/windows (dependency for gopsutil)
+go get -u golang.org/x/sys/windows
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo Updating wmi (dependency for gopsutil)
 go get -u github.com/StackExchange/wmi
 if %errorlevel% neq 0 (

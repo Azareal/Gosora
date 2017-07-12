@@ -12,6 +12,7 @@ import "golang.org/x/crypto/bcrypt"
 
 var auth Auth
 var ErrMismatchedHashAndPassword = bcrypt.ErrMismatchedHashAndPassword
+var ErrPasswordTooLong = errors.New("The password you selected is too long") // Silly, but we don't want bcrypt to bork on us
 
 type Auth interface
 {

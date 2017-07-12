@@ -8,14 +8,14 @@ import "errors"
 
 func init() {
 	DB_Registry = append(DB_Registry,
-		&Mysql_Adapter{Name:"mysql",Buffer:make(map[string]string)},
+		&Mysql_Adapter{Name:"mysql",Buffer:make(map[string]DB_Stmt)},
 	)
 }
 
 type Mysql_Adapter struct
 {
 	Name string
-	Buffer map[string]string
+	Buffer map[string]DB_Stmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
@@ -23,11 +23,11 @@ func (adapter *Mysql_Adapter) GetName() string {
 	return adapter.Name
 }
 
-func (adapter *Mysql_Adapter) GetStmt(name string) string {
+func (adapter *Mysql_Adapter) GetStmt(name string) DB_Stmt {
 	return adapter.Buffer[name]
 }
 
-func (adapter *Mysql_Adapter) GetStmts() map[string]string {
+func (adapter *Mysql_Adapter) GetStmts() map[string]DB_Stmt {
 	return adapter.Buffer
 }
 
@@ -55,9 +55,10 @@ func (adapter *Mysql_Adapter) CreateTable(name string, table string, charset str
 		}
 		
 		var end string
-		if column.Default != "" {
+		// TO-DO: Exclude the other variants of text like mediumtext and longtext too
+		if column.Default != "" && column.Type != "text" {
 			end = " DEFAULT "
-			if adapter.stringy_type(column.Type) {
+			if adapter.stringy_type(column.Type) && column.Default != "''" {
 				end += "'" + column.Default + "'"
 			} else {
 				end += column.Default
@@ -79,7 +80,11 @@ func (adapter *Mysql_Adapter) CreateTable(name string, table string, charset str
 	
 	if len(keys) > 0 {
 		for _, key := range keys {
-			querystr += "\n\t" + key.Type + " key("
+			querystr += "\n\t" + key.Type
+			if key.Type != "unique" {
+				querystr += " key"
+			}
+			querystr += "("
 			for _, column := range strings.Split(key.Columns,",") {
 				querystr += "`" + column + "`,"
 			}
@@ -95,7 +100,7 @@ func (adapter *Mysql_Adapter) CreateTable(name string, table string, charset str
 		querystr += " COLLATE " + collation
 	}
 	
-	adapter.push_statement(name,querystr + ";")
+	adapter.push_statement(name,"create-table",querystr + ";")
 	return querystr + ";", nil
 }
 
@@ -133,7 +138,7 @@ func (adapter *Mysql_Adapter) SimpleInsert(name string, table string, columns st
 	}
 	querystr = querystr[0:len(querystr) - 1]
 	
-	adapter.push_statement(name,querystr + ")")
+	adapter.push_statement(name,"insert",querystr + ")")
 	return querystr + ")", nil
 }
 
@@ -170,7 +175,7 @@ func (adapter *Mysql_Adapter) SimpleReplace(name string, table string, columns s
 	}
 	querystr = querystr[0:len(querystr) - 1]
 	
-	adapter.push_statement(name,querystr + ")")
+	adapter.push_statement(name,"replace",querystr + ")")
 	return querystr + ")", nil
 }
 
@@ -225,7 +230,7 @@ func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string
 		querystr = querystr[0:len(querystr) - 4]
 	}
 	
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"update",querystr)
 	return querystr, nil
 }
 
@@ -260,7 +265,7 @@ func (adapter *Mysql_Adapter) SimpleDelete(name string, table string, where stri
 	}
 	
 	querystr = strings.TrimSpace(querystr[0:len(querystr) - 4])
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"delete",querystr)
 	return querystr, nil
 }
 
@@ -272,7 +277,7 @@ func (adapter *Mysql_Adapter) Purge(name string, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	adapter.push_statement(name,"DELETE FROM `" + table + "`")
+	adapter.push_statement(name,"purge","DELETE FROM `" + table + "`")
 	return "DELETE FROM `" + table + "`", nil
 }
 
@@ -335,7 +340,7 @@ func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns st
 	}
 	
 	querystr = strings.TrimSpace(querystr)
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"select",querystr)
 	return querystr, nil
 }
 
@@ -425,7 +430,7 @@ func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 	}
 	
 	querystr = strings.TrimSpace(querystr)
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"select",querystr)
 	return querystr, nil
 }
 
@@ -515,7 +520,7 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	}
 	
 	querystr = strings.TrimSpace(querystr)
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"select",querystr)
 	return querystr, nil
 }
 
@@ -589,7 +594,7 @@ func (adapter *Mysql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel
 	}
 	
 	querystr = strings.TrimSpace(querystr)
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"insert",querystr)
 	return querystr, nil
 }
 
@@ -674,7 +679,7 @@ func (adapter *Mysql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, s
 	}
 	
 	querystr = strings.TrimSpace(querystr)
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"insert",querystr)
 	return querystr, nil
 }
 
@@ -759,7 +764,7 @@ func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, 
 	}
 	
 	querystr = strings.TrimSpace(querystr)
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"insert",querystr)
 	return querystr, nil
 }
 
@@ -802,34 +807,38 @@ func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where strin
 	}
 	
 	querystr = strings.TrimSpace(querystr)
-	adapter.push_statement(name,querystr)
+	adapter.push_statement(name,"select",querystr)
 	return querystr, nil
 }
 
 func (adapter *Mysql_Adapter) Write() error {
 	var stmts, body string
-	
 	for _, name := range adapter.BufferOrder {
-		stmts += "var " + name + "_stmt *sql.Stmt\n"
-		body += `	
+		stmt := adapter.Buffer[name]
+		// TO-DO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
+		if stmt.Type != "create-table" {
+			stmts += "var " + name + "_stmt *sql.Stmt\n"
+			body += `	
 	log.Print("Preparing ` + name + ` statement.")
-	` + name + `_stmt, err = db.Prepare("` + adapter.Buffer[name] + `")
+	` + name + `_stmt, err = db.Prepare("` + stmt.Contents + `")
 	if err != nil {
 		return err
 	}
 	`
+		}
 	}
 	
-	out := `// Code generated by Gosora. More below:
+	out := `// +build !pgsql !sqlite !mssql
+
 /* This file was generated by Gosora's Query Generator. Please try to avoid modifying this file, as it might change at any time. */
-// +build !pgsql !sqlite !mssql
+
 package main
 
 import "log"
 import "database/sql"
 
 ` + stmts + `
-func gen_mysql() (err error) {
+func _gen_mysql() (err error) {
 	if debug_mode {
 		log.Print("Building the generated statements")
 	}
@@ -841,8 +850,8 @@ func gen_mysql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (adapter *Mysql_Adapter) push_statement(name string, querystr string) {
-	adapter.Buffer[name] = querystr
+func (adapter *Mysql_Adapter) push_statement(name string, stype string, querystr string) {
+	adapter.Buffer[name] = DB_Stmt{querystr,stype}
 	adapter.BufferOrder = append(adapter.BufferOrder,name)
 }
 

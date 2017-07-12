@@ -9,10 +9,11 @@
 
 <div class="sgBackdrop">
 	<div class="miniMenu">
-		<div class="menuItem"><a href="#">Test Group</a></div>
+		<div class="menuItem"><a href="/group/{{.SocialGroup.ID}}">{{.SocialGroup.Name}}</a></div>
 		<div class="menuItem"><a href="#">About</a></div>
-		<div class="menuItem"><a href="#">Members</a></div>
+		<div class="menuItem"><a href="/group/members/{{.SocialGroup.ID}}">Members</a></div>
 		<div class="menuItem rightMenu"><a href="#">Edit</a></div>
+		<div class="menuItem rightMenu"><a href="/topics/create/{{.Forum.ID}}">Reply</a></div>
 		<div class="menuItem rightMenu"><a href="/group/join/{{.SocialGroup.ID}}">Join</a></div>
 	</div>
 	<div style="clear: both;"></div>

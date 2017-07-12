@@ -40,6 +40,7 @@ type SocialGroup struct
 	CreatedAt string
 	LastUpdateTime string
 
+	MainForumID int
 	MainForum *Forum
 	Forums []*Forum
 	ExtData ExtData
@@ -316,6 +317,12 @@ func socialgroups_group_list(w http.ResponseWriter, r *http.Request, user User) 
 	}
 }
 
+func socialgroups_get_group(sgid int) (sgItem SocialGroup, err error) {
+	sgItem = SocialGroup{ID:sgid}
+	err = socialgroups_get_group_stmt.QueryRow(sgid).Scan(&sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Owner, &sgItem.MemberCount, &sgItem.MainForumID, &sgItem.Backdrop, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
+	return sgItem, err
+}
+
 func socialgroups_view_group(w http.ResponseWriter, r *http.Request, user User) {
 	// SEO URLs...
 	halves := strings.Split(r.URL.Path[len("/group/"):],".")
@@ -328,9 +335,7 @@ func socialgroups_view_group(w http.ResponseWriter, r *http.Request, user User) 
 		return
 	}
 
-	var sgItem SocialGroup = SocialGroup{ID:sgid}
-	var mainForum int
-	err = socialgroups_get_group_stmt.QueryRow(sgid).Scan(&sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Owner, &sgItem.MemberCount, &mainForum, &sgItem.Backdrop, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
+	sgItem, err := socialgroups_get_group(sgid)
 	if err != nil {
 		LocalError("Bad group",w,r,user)
 		return
@@ -341,7 +346,7 @@ func socialgroups_view_group(w http.ResponseWriter, r *http.Request, user User) 
 
 	// Re-route the request to route_forums
 	var ctx context.Context = context.WithValue(r.Context(),"socialgroups_current_group",sgItem)
-	route_forum(w,r.WithContext(ctx),user,strconv.Itoa(mainForum))
+	route_forum(w,r.WithContext(ctx),user,strconv.Itoa(sgItem.MainForumID))
 }
 
 func socialgroups_create_group(w http.ResponseWriter, r *http.Request, user User) {
@@ -557,21 +562,35 @@ func socialgroups_topic_create_pre_loop(args ...interface{}) interface{} {
 	return nil
 }
 
-// TO-DO: Permissions Override. It doesn't quite work yet.
+// TO-DO: Add privacy options
+// TO-DO: Add support for multiple boards and add per-board simplified permissions
+// TO-DO: Take is_js into account for routes which expect JSON responses
 func socialgroups_forum_check(args ...interface{}) (skip interface{}) {
 	var r = args[1].(*http.Request)
 	var fid *int = args[3].(*int)
-	if fstore.DirtyGet(*fid).ParentType == "socialgroup" {
+	var forum *Forum = fstore.DirtyGet(*fid)
+
+	if forum.ParentType == "socialgroup" {
+		var err error
+		var w = args[0].(http.ResponseWriter)
+		var success *bool = args[4].(*bool)
 		sgItem, ok := r.Context().Value("socialgroups_current_group").(SocialGroup)
 		if !ok {
-			LogError(errors.New("Unable to find a parent group in the context data"))
-			return false
+			sgItem, err = socialgroups_get_group(forum.ParentID)
+			if err != nil {
+				InternalError(errors.New("Unable to find the parent group for a forum"),w,r)
+				*success = false
+				return false
+			}
+			if !sgItem.Active {
+				NotFound(w,r)
+				*success = false
+				return false
+			}
+			r = r.WithContext(context.WithValue(r.Context(),"socialgroups_current_group",sgItem))
 		}
 
-		//run_vhook("simple_forum_check_pre_perms", w, r, user, &fid, &success).(bool)
-		var w = args[0].(http.ResponseWriter)
 		var user *User = args[2].(*User)
-		var success *bool = args[4].(*bool)
 		var rank int
 		var posts int
 		var joinedAt string
@@ -583,18 +602,18 @@ func socialgroups_forum_check(args ...interface{}) (skip interface{}) {
 		override_forum_perms(&user.Perms, false)
 		user.Perms.ViewTopic = true
 
-		err := socialgroups_get_member_stmt.QueryRow(sgItem.ID,user.ID).Scan(&rank,&posts,&joinedAt)
+		err = socialgroups_get_member_stmt.QueryRow(sgItem.ID,user.ID).Scan(&rank,&posts,&joinedAt)
 		if err != nil && err != ErrNoRows {
 			*success = false
 			InternalError(err,w,r)
 			return false
 		} else if err != nil {
-			return false
+			return true
 		}
 
 		// TO-DO: Implement bans properly by adding the Local Ban API in the next commit
 		if rank < 0 {
-			return false
+			return true
 		}
 
 		// Basic permissions for members, more complicated permissions coming in the next commit!
@@ -607,6 +626,7 @@ func socialgroups_forum_check(args ...interface{}) (skip interface{}) {
 		} else {
 			override_forum_perms(&user.Perms,true)
 		}
+		return true
 	}
 
 	return false

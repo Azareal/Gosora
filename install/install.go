@@ -4,20 +4,27 @@ package main
 import (
 	"fmt"
 	"os"
-	"bytes"
 	"bufio"
 	"strconv"
-	"io/ioutil"
 	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
+	"runtime/debug"
+	
+	"../query_gen/lib"
 )
 
+const saltLength int = 32
+var db *sql.DB
 var scanner *bufio.Scanner
-var db_host, db_username, db_password, db_name string
-//var db_collation string = "utf8mb4_general_ci"
-var db_port string = "3306"
+
+var db_adapter string = "mysql"
+var db_host string
+var db_username string
+var db_password string
+var db_name string
+var db_port string
 var site_name, site_url, server_port string
 
+var default_adapter string = "mysql"
 var default_host string = "localhost"
 var default_username string = "root"
 var default_dbname string = "gosora"
@@ -25,7 +32,22 @@ var default_site_name string = "Site Name"
 var default_site_url string = "localhost"
 var default_server_port string = "80" // 8080's a good one, if you're testing and don't want it to clash with port 80
 
+var init_database func()error = _init_mysql
+var table_defs func()error = _table_defs_mysql
+var initial_data func()error = _initial_data_mysql
+
 func main() {
+	// Capture panics rather than immediately closing the window on Windows
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Println(r)
+			debug.PrintStack()
+			press_any_key()
+			return
+		}
+	}()
+	
 	scanner = bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to Gosora's Installer")
 	fmt.Println("We're going to take you through a few steps to help you get started :)")
@@ -52,21 +74,8 @@ func main() {
 		press_any_key()
 		return
 	}
-
-	_db_password := db_password
-	if(_db_password != ""){
-		_db_password = ":" + _db_password
-	}
-	db, err := sql.Open("mysql",db_username + _db_password + "@tcp(" + db_host + ":" + db_port + ")/")
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		press_any_key()
-		return
-	}
-
-	// Make sure that the connection is alive..
-	err = db.Ping()
+	
+	err := init_database()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
@@ -74,56 +83,50 @@ func main() {
 		return
 	}
 	
-	fmt.Println("Successfully connected to the database")
-	fmt.Println("Opening the database seed file")
-	sqlContents, err := ioutil.ReadFile("./mysql.sql")
+	err = table_defs()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
 		press_any_key()
 		return
 	}
-
-	var waste string
-	err = db.QueryRow("SHOW DATABASES LIKE '" + db_name + "'").Scan(&waste)
-	if err != nil && err != sql.ErrNoRows {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		press_any_key()
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		fmt.Println("Unable to find the database. Attempting to create it")
-		_,err = db.Exec("CREATE DATABASE IF NOT EXISTS " + db_name + "")
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("Aborting installation...")
-			press_any_key()
-			return
-		}
-		fmt.Println("The database was successfully created")
-	}
-
-	fmt.Println("Switching to database " + db_name)
-	_, err = db.Exec("USE " + db_name)
+	
+	hashed_password, salt, err := BcryptGeneratePassword("password")
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
 		press_any_key()
 		return
 	}
-
-	fmt.Println("Preparing installation queries")
-	sqlContents = bytes.TrimSpace(sqlContents)
-	statements := bytes.Split(sqlContents, []byte(";"))
-	for key, statement := range statements {
-		if len(statement) == 0 {
-			continue
-		}
-
-		fmt.Println("Executing query #" + strconv.Itoa(key) + " " + string(statement))
-		_, err = db.Exec(string(statement))
+	
+	// Build the admin user query
+	admin_user_stmt, err := qgen.Builder.SimpleInsert("users","name, password, salt, email, group, is_super_admin, active, createdAt, lastActiveAt, message, last_ip","'Admin',?,?,'admin@localhost',1,1,1,NOW(),NOW(),'','127.0.0.1'")
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Aborting installation...")
+		press_any_key()
+		return
+	}
+	
+	// Run the admin user query
+	_, err = admin_user_stmt.Exec(hashed_password,salt)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Aborting installation...")
+		press_any_key()
+		return
+	}
+	
+	err = initial_data()
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Aborting installation...")
+		press_any_key()
+		return
+	}
+	
+	if db_adapter == "mysql" {
+		err = _mysql_seed_database()
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("Aborting installation...")
@@ -131,8 +134,7 @@ func main() {
 			return
 		}
 	}
-	fmt.Println("Finished inserting the database data")
-
+	
 	configContents := []byte(`package main
 
 // Site Info
@@ -213,6 +215,17 @@ var profiling = false
 }
 
 func get_database_details() bool {
+	fmt.Println("Which database driver do you wish to use? mysql, mysql, or mysql? Default: mysql")
+	if !scanner.Scan() {
+		return false
+	}
+	db_adapter = scanner.Text()
+	if db_adapter == "" {
+		db_adapter = default_adapter
+	}
+	db_adapter = set_db_adapter(db_adapter)
+	fmt.Println("Set database adapter to " + db_adapter)
+	
 	fmt.Println("Database Host? Default: " + default_host)
 	if !scanner.Scan() {
 		return false
@@ -293,6 +306,16 @@ func get_site_details() bool {
 	}
 	fmt.Println("Set the server port to " + server_port)
 	return true
+}
+
+func set_db_adapter(name string) string {
+	switch(name) {
+		//case "wip-pgsql":
+		//	set_pgsql_adapter()
+		//	return "wip-pgsql"	
+	}
+	_set_mysql_adapter()
+	return "mysql"
 }
 
 func obfuscate_password(password string) (out string) {

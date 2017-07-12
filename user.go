@@ -12,13 +12,16 @@ import (
 )
 
 var guest_user User = User{ID:0,Group:6,Perms:GuestPerms}
+
 var PreRoute func(http.ResponseWriter, *http.Request) (User,bool) = _pre_route
 var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderVars,bool) = _panel_session_check
 var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) bool = _simple_panel_session_check
 var SimpleForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (success bool) = _simple_forum_session_check
 var ForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars HeaderVars, success bool) = _forum_session_check
 var SessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) = _session_check
+
 var CheckPassword func(real_password string, password string, salt string) (err error) = BcryptCheckPassword
+var GeneratePassword func(password string) (hashed_password string, salt string, err error) = BcryptGeneratePassword
 
 type User struct
 {
@@ -60,19 +63,35 @@ func BcryptCheckPassword(real_password string, password string, salt string) (er
 	return bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password + salt))
 }
 
-func SetPassword(uid int, password string) (error) {
-	salt, err := GenerateSafeString(saltLength)
+// Investigate. Do we need the extra salt?
+func BcryptGeneratePassword(password string) (hashed_password string, salt string, err error) {
+	salt, err = GenerateSafeString(saltLength)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
 	password = password + salt
+	hashed_password, err = BcryptGeneratePasswordNoSalt(password)
+	if err != nil {
+		return "", "", err
+	}
+	return hashed_password, salt, nil
+}
+
+func BcryptGeneratePasswordNoSalt(password string) (hash string, err error) {
 	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashed_password), nil
+}
+
+func SetPassword(uid int, password string) error {
+	hashed_password, salt, err := GeneratePassword(password)
 	if err != nil {
 		return err
 	}
-
-	_, err = set_password_stmt.Exec(string(hashed_password), salt, uid)
+	_, err = set_password_stmt.Exec(hashed_password, salt, uid)
 	if err != nil {
 		return err
 	}
@@ -120,6 +139,7 @@ func _simple_forum_session_check(w http.ResponseWriter, r *http.Request, user *U
 		PreError("The target forum doesn't exist.",w,r)
 		return false
 	}
+	success = true
 
 	// Is there a better way of doing the skip AND the success flag on this hook like multiple returns?
 	if vhooks["simple_forum_check_pre_perms"] != nil {
