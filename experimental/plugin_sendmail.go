@@ -19,7 +19,7 @@ func init_sendmail() {
 
 // Sendmail is only available on Linux
 func activate_sendmail() error {
-	if !enable_emails {
+	if !site.EnableEmails {
 		return errors.New("You have emails disabled in your configuration file")
 	}
 	if runtime.GOOS != "linux" {
@@ -37,7 +37,7 @@ func send_sendmail(data ...interface{}) interface{} {
 	subject := data[1].(string)
 	body := data[2].(string)
 	
-	msg := "From: " + site_email + "\n"
+	msg := "From: " + site.Email + "\n"
 	msg += "To: " + to + "\n"
 	msg += "Subject: " + subject + "\n\n"
 	msg += body + "\n"

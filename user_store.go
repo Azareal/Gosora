@@ -101,7 +101,7 @@ func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 		}
 	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
@@ -121,7 +121,7 @@ func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 		}
 	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
@@ -142,7 +142,7 @@ func (sus *MemoryUserStore) Load(id int) error {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 		}
 	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
@@ -280,7 +280,7 @@ func (sus *SqlUserStore) Get(id int) (*User, error) {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 		}
 	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
@@ -297,7 +297,7 @@ func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 		}
 	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
@@ -314,7 +314,7 @@ func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 		}
 	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag
@@ -331,7 +331,7 @@ func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 		}
 	} else {
-		user.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(user.ID),1)
+		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
 	user.Slug = name_to_slug(user.Name)
 	user.Tag = groups[user.Group].Tag

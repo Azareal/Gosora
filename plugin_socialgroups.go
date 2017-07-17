@@ -34,6 +34,10 @@ type SocialGroup struct
 	Desc string
 	Active bool
 	Privacy int /* 0: Public, 1: Protected, 2: Private */
+
+	// Who should be able to accept applications and create invites? Mods+ or just admins? Mods is a good start, we can ponder over whether we should make this more flexible in the future.
+	Joinable int  /* 0: Private, 1: Anyone can join, 2: Applications, 3: Invite-only */
+
 	MemberCount int
 	Owner int
 	Backdrop string
@@ -97,7 +101,7 @@ func init() {
 }
 
 func init_socialgroups() (err error) {
-  plugins["socialgroups"].AddHook("intercept_build_widgets", socialgroups_widgets)
+	plugins["socialgroups"].AddHook("intercept_build_widgets", socialgroups_widgets)
 	plugins["socialgroups"].AddHook("trow_assign", socialgroups_trow_assign)
 	plugins["socialgroups"].AddHook("topic_create_pre_loop", socialgroups_topic_create_pre_loop)
 	plugins["socialgroups"].AddHook("pre_render_view_forum", socialgroups_pre_render_view_forum)
@@ -111,11 +115,11 @@ func init_socialgroups() (err error) {
 	router.HandleFunc("/group/create/submit/", socialgroups_create_group_submit)
 	router.HandleFunc("/group/members/", socialgroups_member_list)
 
-	socialgroups_list_stmt, err = qgen.Builder.SimpleSelect("socialgroups","sgid, name, desc, active, privacy, owner, memberCount, createdAt, lastUpdateTime","","","")
+	socialgroups_list_stmt, err = qgen.Builder.SimpleSelect("socialgroups","sgid, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime","","","")
 	if err != nil {
 		return err
 	}
-	socialgroups_get_group_stmt, err = qgen.Builder.SimpleSelect("socialgroups","name, desc, active, privacy, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime","sgid = ?","","")
+	socialgroups_get_group_stmt, err = qgen.Builder.SimpleSelect("socialgroups","name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime","sgid = ?","","")
 	if err != nil {
 		return err
 	}
@@ -131,7 +135,7 @@ func init_socialgroups() (err error) {
 	if err != nil {
 		return err
 	}
-	socialgroups_create_group_stmt, err = qgen.Builder.SimpleInsert("socialgroups","name, desc, active, privacy, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime","?,?,?,?,?,1,?,'',NOW(),NOW()")
+	socialgroups_create_group_stmt, err = qgen.Builder.SimpleInsert("socialgroups","name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime","?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
 	if err != nil {
 		return err
 	}
@@ -143,7 +147,7 @@ func init_socialgroups() (err error) {
 	if err != nil {
 		return err
 	}
-	socialgroups_add_member_stmt, err = qgen.Builder.SimpleInsert("socialgroups_members","sgid, uid, rank, posts, joinedAt","?,?,?,0,NOW()")
+	socialgroups_add_member_stmt, err = qgen.Builder.SimpleInsert("socialgroups_members","sgid, uid, rank, posts, joinedAt","?,?,?,0,UTC_TIMESTAMP()")
 	if err != nil {
 		return err
 	}
@@ -181,12 +185,13 @@ func install_socialgroups() error {
 			qgen.DB_Table_Column{"sgid","int",0,false,true,""},
 			qgen.DB_Table_Column{"name","varchar",100,false,false,""},
 			qgen.DB_Table_Column{"desc","varchar",200,false,false,""},
-			qgen.DB_Table_Column{"active","tinyint",1,false,false,""},
-			qgen.DB_Table_Column{"privacy","tinyint",1,false,false,""},
+			qgen.DB_Table_Column{"active","boolean",1,false,false,""},
+			qgen.DB_Table_Column{"privacy","smallint",0,false,false,""},
+			qgen.DB_Table_Column{"joinable","smallint",0,false,false,"0"},
 			qgen.DB_Table_Column{"owner","int",0,false,false,""},
 			qgen.DB_Table_Column{"memberCount","int",0,false,false,""},
 			qgen.DB_Table_Column{"mainForum","int",0,false,false,"0"}, // The board the user lands on when they click ona group, we'll make it possible for group admins to change what users land on
-			//qgen.DB_Table_Column{"boards","varchar",200,false,false,""}, // Cap the max number of boards at 8 to avoid overflowing the confines of a 64-bit integer?
+			//qgen.DB_Table_Column{"boards","varchar",255,false,false,""}, // Cap the max number of boards at 8 to avoid overflowing the confines of a 64-bit integer?
 			qgen.DB_Table_Column{"backdrop","varchar",200,false,false,""}, // File extension for the uploaded file, or an external link
 			qgen.DB_Table_Column{"createdAt","createdAt",0,false,false,""},
 			qgen.DB_Table_Column{"lastUpdateTime","datetime",0,false,false,""},
@@ -295,7 +300,7 @@ func socialgroups_group_list(w http.ResponseWriter, r *http.Request, user User) 
 	var sgList []SocialGroup
 	for rows.Next() {
 		sgItem := SocialGroup{ID:0}
-		err := rows.Scan(&sgItem.ID, &sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Owner, &sgItem.MemberCount, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
+		err := rows.Scan(&sgItem.ID, &sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Joinable, &sgItem.Owner, &sgItem.MemberCount, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
     if err != nil {
       InternalError(err,w,r)
       return
@@ -319,7 +324,7 @@ func socialgroups_group_list(w http.ResponseWriter, r *http.Request, user User) 
 
 func socialgroups_get_group(sgid int) (sgItem SocialGroup, err error) {
 	sgItem = SocialGroup{ID:sgid}
-	err = socialgroups_get_group_stmt.QueryRow(sgid).Scan(&sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Owner, &sgItem.MemberCount, &sgItem.MainForumID, &sgItem.Backdrop, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
+	err = socialgroups_get_group_stmt.QueryRow(sgid).Scan(&sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Joinable, &sgItem.Owner, &sgItem.MemberCount, &sgItem.MainForumID, &sgItem.Backdrop, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
 	return sgItem, err
 }
 
@@ -441,7 +446,7 @@ func socialgroups_member_list(w http.ResponseWriter, r *http.Request, user User)
 
 	var sgItem SocialGroup = SocialGroup{ID:sgid}
 	var mainForum int // Unused
-	err = socialgroups_get_group_stmt.QueryRow(sgid).Scan(&sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Owner, &sgItem.MemberCount, &mainForum, &sgItem.Backdrop, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
+	err = socialgroups_get_group_stmt.QueryRow(sgid).Scan(&sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Joinable, &sgItem.Owner, &sgItem.MemberCount, &mainForum, &sgItem.Backdrop, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
 	if err != nil {
 		LocalError("Bad group",w,r,user)
 		return
@@ -470,7 +475,7 @@ func socialgroups_member_list(w http.ResponseWriter, r *http.Request, user User)
 				sgMember.User.Avatar = "/uploads/avatar_" + strconv.Itoa(sgMember.User.ID) + sgMember.User.Avatar
 			}
 		} else {
-			sgMember.User.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(sgMember.User.ID),1)
+			sgMember.User.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(sgMember.User.ID),1)
 		}
 		sgMember.JoinedAt, _ = relative_time(sgMember.JoinedAt)
 		if sgItem.Owner == sgMember.User.ID {

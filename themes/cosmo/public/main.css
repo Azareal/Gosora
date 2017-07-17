@@ -71,6 +71,10 @@ li:hover {
 	border-left: 1px solid #7a7a7a;
 }
 
+.alert_bell:before {
+	content: '🔔︎';
+}
+
 .menu_alerts .alert_counter {
 	position: relative;
 	font-size: 9px;

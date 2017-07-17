@@ -13,8 +13,8 @@ import(
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
+	"github.com/Azareal/gopsutil/cpu"
+	"github.com/Azareal/gopsutil/mem"
 )
 
 type WS_User struct

@@ -659,7 +659,7 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = change_group_stmt.Exec(default_group, uid)
+	_, err = change_group_stmt.Exec(config.DefaultGroup, uid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -724,7 +724,7 @@ func route_activate(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = change_group_stmt.Exec(default_group, uid)
+	_, err = change_group_stmt.Exec(config.DefaultGroup, uid)
 	if err != nil {
 		InternalError(err,w,r)
 		return

@@ -44,7 +44,7 @@ func init_database() (err error) {
 		if err != nil {
 			return err
 		}
-		if debug_mode {
+		if dev.DebugMode {
 			log.Print(group.Name + ": ")
 			fmt.Printf("%+v\n", group.Perms)
 		}
@@ -53,7 +53,7 @@ func init_database() (err error) {
 		if err != nil {
 			return err
 		}
-		if debug_mode {
+		if dev.DebugMode {
 			log.Print(group.Name + ": ")
 			fmt.Printf("%+v\n", group.PluginPerms)
 		}

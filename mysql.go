@@ -18,12 +18,12 @@ var todays_newuser_count_stmt *sql.Stmt
 
 func _init_database() (err error) {
 	var _dbpassword string
-	if(dbpassword != ""){
-		_dbpassword = ":" + dbpassword
+	if(db_config.Password != ""){
+		_dbpassword = ":" + db_config.Password
 	}
 
 	// Open the database connection
-	db, err = sql.Open("mysql",dbuser + _dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname + "?collation=" + db_collation)
+	db, err = sql.Open("mysql", db_config.Username + _dbpassword + "@tcp(" + db_config.Host + ":" + db_config.Port + ")/" + db_config.Dbname + "?collation=" + db_collation)
 	if err != nil {
 		return err
 	}
@@ -66,25 +66,25 @@ func _init_database() (err error) {
 	}
 
 	log.Print("Preparing todays_post_count statement.")
-	todays_post_count_stmt, err = db.Prepare("select count(*) from replies where createdAt BETWEEN (now() - interval 1 day) and now()")
+	todays_post_count_stmt, err = db.Prepare("select count(*) from replies where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todays_topic_count statement.")
-	todays_topic_count_stmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now()")
+	todays_topic_count_stmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todays_report_count statement.")
-	todays_report_count_stmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (now() - interval 1 day) and now() and parentID = 1")
+	todays_report_count_stmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() and parentID = 1")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todays_newuser_count statement.")
-	todays_newuser_count_stmt, err = db.Prepare("select count(*) from users where createdAt BETWEEN (now() - interval 1 day) and now()")
+	todays_newuser_count_stmt, err = db.Prepare("select count(*) from users where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}

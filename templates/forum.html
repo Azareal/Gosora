@@ -9,11 +9,10 @@
 	</div>
 	{{if ne .CurrentUser.ID 0}}
 		{{if .CurrentUser.Perms.CreateTopic}}
-		<div class="opt create_topic_opt" title="Create Topic">&#x1F58A;&#xFE0E</div>
+		<div class="opt create_topic_opt" title="Create Topic"><a href="/topics/create/{{.Forum.ID}}">&#x1F58A;&#xFE0E</a></div>
 		{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic">&#x1F512;&#xFE0E</div>{{end}}
 		<div style="clear: both;"></div>
 	{{end}}
-	<!--href="/topics/create/{{.Forum.ID}}"-->
 </div>
 <div id="forum_topic_list" class="rowblock topic_list">
 	{{range .ItemList}}<div class="rowitem passive datarow {{if .Sticky}}topic_sticky{{else if .Is_Closed}}topic_closed{{end}}" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">

@@ -1,7 +1,9 @@
 tmp/*
 tmp2/*
 uploads/avatar_*
+uploads/socialgroup_*
 bin/*
 *.exe
+*.exe~
 *.prof
 .DS_Store

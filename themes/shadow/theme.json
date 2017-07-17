@@ -3,7 +3,6 @@
 	"FriendlyName": "Shadow",
 	"Version": "0.0.1",
 	"Creator": "Azareal",
-	"Disabled": true,
-	"HideFromThemes": true,
-	"URL": "github.com/Azareal/Gosora"
+	"URL": "github.com/Azareal/Gosora",
+	"Tag": "WIP"
 }

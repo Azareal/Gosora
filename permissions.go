@@ -205,7 +205,7 @@ func init() {
 
 	guest_user.Perms = GuestPerms
 
-	if debug_mode {
+	if dev.DebugMode {
 		fmt.Printf("Guest Perms: ")
 		fmt.Printf("%+v\n", GuestPerms)
 		fmt.Printf("All Perms: ")
@@ -304,7 +304,7 @@ func permmap_to_query(permmap map[string]ForumPerms, fid int) error {
 }
 
 func rebuild_forum_permissions(fid int) error {
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Loading the forum permissions")
 	}
 	forums, err := fstore.GetAll()
@@ -318,7 +318,7 @@ func rebuild_forum_permissions(fid int) error {
 	}
 	defer rows.Close()
 
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Updating the forum permissions")
 	}
 	for rows.Next() {
@@ -342,7 +342,7 @@ func rebuild_forum_permissions(fid int) error {
 		forum_perms[gid][fid] = pperms
 	}
 	for gid, _ := range groups {
-		if debug_mode {
+		if dev.DebugMode {
 			log.Print("Updating the forum permissions for Group #" + strconv.Itoa(gid))
 		}
 		var blank_list []ForumPerms
@@ -369,7 +369,7 @@ func rebuild_forum_permissions(fid int) error {
 				groups[gid].CanSee = append(groups[gid].CanSee, ffid)
 			}
 		}
-		if super_debug {
+		if dev.SuperDebug {
 			fmt.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
 			fmt.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
 			fmt.Println("len(groups[gid].Forums)",len(groups[gid].Forums))
@@ -390,7 +390,7 @@ func build_forum_permissions() error {
 	}
 	defer rows.Close()
 
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Adding the forum permissions")
 	}
 	// Temporarily store the forum perms in a map before transferring it to a much faster and thread-safe slice
@@ -416,7 +416,7 @@ func build_forum_permissions() error {
 		forum_perms[gid][fid] = pperms
 	}
 	for gid, _ := range groups {
-		if debug_mode {
+		if dev.DebugMode {
 			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid) + " - " + groups[gid].Name)
 		}
 		//groups[gid].Forums = append(groups[gid].Forums,BlankForumPerms) // GID 0. No longer needed now that Uncategorised occupies that slot
@@ -441,7 +441,7 @@ func build_forum_permissions() error {
 				groups[gid].CanSee = append(groups[gid].CanSee, fid)
 			}
 		}
-		if super_debug {
+		if dev.SuperDebug {
 			//fmt.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
 			//fmt.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
 			//fmt.Println("len(groups[gid].CanSee)",len(groups[gid].CanSee))

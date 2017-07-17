@@ -26,7 +26,7 @@ var db_prod *sql.DB
 var gloinited bool
 
 func gloinit() {
-	debug_mode = false
+	dev.DebugMode = false
 	//nogrouplog = true
 
 	// init_database is a little noisy for a benchmark
@@ -34,8 +34,9 @@ func gloinit() {
 	//log.SetOutput(discard)
 
 	startTime = time.Now()
-	timeLocation = startTime.Location()
-
+	//timeLocation = startTime.Location()
+	process_config()
+	
 	init_themes()
 	err := init_database()
 	if err != nil {
@@ -55,7 +56,7 @@ func gloinit() {
 		log.Fatal(err)
 	}
 
-	if cache_topicuser == CACHE_STATIC {
+	if config.CacheTopicUser == CACHE_STATIC {
 		users = NewMemoryUserStore(user_cache_capacity)
 		topics = NewMemoryTopicStore(topic_cache_capacity)
 	} else {
@@ -84,16 +85,16 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 	topic := TopicUser{Title: "Lol",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"}
 
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry","Jerry",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry2","Jerry2",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry3","Jerry3",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry4","Jerry4",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry5","Jerry5",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry6","Jerry6",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry7","Jerry7",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry8","Jerry8",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry9","Jerry9",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry10","Jerry10",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry","Jerry",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry2","Jerry2",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry3","Jerry3",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry4","Jerry4",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry5","Jerry5",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry6","Jerry6",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry7","Jerry7",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry8","Jerry8",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry9","Jerry9",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry10","Jerry10",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
 
 	headerVars := HeaderVars{
 		NoticeList:[]string{"test"},

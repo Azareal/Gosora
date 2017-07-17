@@ -18,7 +18,7 @@ ul {
 	height: 36px;
 	list-style-type: none;
 	border: 1px solid #ccc;
-	background-color: rgb(248,248,248);
+	background-color: rgb(252,252,252);
 	margin-bottom: 12px;
 }
 li {
@@ -29,7 +29,7 @@ li {
 	background: white;
 	border-bottom: 1px solid #ccc;
 }
-li:hover { background: rgb(250,250,250); }
+li:hover { background: rgb(252,252,252); }
 li a {
 	text-decoration: none;
 	/*color: #515151;*/
@@ -46,8 +46,20 @@ li a {
 	border-left: 1px solid #ccc;
 	padding-right: 10px;
 }
+.menu_overview {
+	background: none;
+	padding-right: 13px;
+}
+.menu_overview a {
+	padding-left: 3px;
+}
 
-.menu_bell { cursor: default; }
+.alert_bell:before {
+	content: '🔔︎';
+}
+.menu_bell {
+	cursor: default;
+}
 .menu_alerts {
 	/*padding-left: 7px;*/
 	font-size: 20px;
@@ -222,7 +234,7 @@ li a {
 .stat_red { background-color: #ffb2b2; border-color: #ffb2b2; }
 .stat_disabled { background-color: lightgray; border-color: lightgray; }
 
-.rowhead {
+.rowhead, .colstack_head {
 	border-bottom: none;
 }
 .rowhead .rowitem, .colstack_head .rowitem {
@@ -265,8 +277,9 @@ li a {
 	width: 50px;
 	text-align: center;
 }
-.create_topic_opt {
+.create_topic_opt, .create_topic_opt a {
 	color: rgb(120,120,120);
+	text-decoration: none;
 }
 .locked_opt {
 	color: rgb(80,80,80);
@@ -339,6 +352,12 @@ button {
 .topic_closed {
 	background-color: rgb(248,248,248);
 }
+.topic_sticky_head {
+	background-color:#FFFFEA;
+}
+.topic_closed_head {
+	background-color:#eaeaea;
+}
 
 .topic_status {
 	text-transform: none;
@@ -397,6 +416,19 @@ button.username {
 }
 .post_item > .mod_button > button:hover { opacity: 0.9; }
 
+.user_tag {
+	float: right;
+	color: #505050;
+	font-size: 16px;
+}
+.post_item {
+	background-size: 128px;
+	padding-left: 136px;
+}
+.staff_post {
+	background-color: #ffeaff;
+}
+
 .mod_button { margin-right: 4px; }
 .like_label:before, .like_count_label:before { content: "😀"; }
 .like_count_label {
@@ -421,6 +453,7 @@ button.username {
 .unpin_label { background-color: #D6FFD6; }
 .flag_label:before { content: "🚩"; }
 .level_label:before { content: "👑"; }
+.level_label { color: #505050; opacity:0.85; }
 
 .controls {
 	margin-top: 23px;

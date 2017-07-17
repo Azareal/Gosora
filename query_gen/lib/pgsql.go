@@ -164,7 +164,14 @@ func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string
 		for _, loc := range _process_where(where) {
 			for _, token := range loc.Expr {
 				switch(token.Type) {
-					case "function","operator","number","substitute":
+					case "function":
+						// TO-DO: Write a more sophisticated function parser on the utils side. What's the situation in regards to case sensitivity?
+						// TO-DO: Change things on the MySQL and Gosora side to timestamps
+						if token.Contents == "UTC_TIMESTAMP()" {
+							token.Contents = "LOCALTIMESTAMP()"
+						}
+						querystr += " " + token.Contents + ""
+					case "operator","number","substitute":
 						querystr += " " + token.Contents + ""
 					case "column":
 						querystr += " `" + token.Contents + "`"
@@ -316,7 +323,7 @@ import "database/sql"
 
 ` + stmts + `
 func _gen_pgsql() (err error) {
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Building the generated statements")
 	}
 ` + body + `

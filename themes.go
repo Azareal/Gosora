@@ -140,7 +140,7 @@ func init_themes() {
 		theme.Active = false // Set this to false, just in case someone explicitly overrode this value in the JSON file
 
 		if theme.FullImage != "" {
-			if debug_mode {
+			if dev.DebugMode {
 				log.Print("Adding theme image")
 			}
 			err = add_static_file("./themes/" + themeName + "/" + theme.FullImage, "./themes/" + themeName)
@@ -155,7 +155,7 @@ func init_themes() {
 
 func add_theme_static_files(theme Theme) {
 	err := filepath.Walk("./themes/" + theme.Name + "/public", func(path string, f os.FileInfo, err error) error {
-		if debug_mode {
+		if dev.DebugMode {
 			log.Print("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
 		}
 		if err != nil {
@@ -174,7 +174,7 @@ func add_theme_static_files(theme Theme) {
 		var ext string = filepath.Ext(path)
 		//log.Print("path ",path)
 		//log.Print("ext ",ext)
-		if ext == ".css" {
+		if ext == ".css" && len(data) != 0 {
 			var b bytes.Buffer
 			var pieces []string = strings.Split(path,"/")
 			var filename string = pieces[len(pieces) - 1]
@@ -190,7 +190,7 @@ func add_theme_static_files(theme Theme) {
 		gzip_data := compress_bytes_gzip(data)
 		static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(ext),f,f.ModTime().UTC().Format(http.TimeFormat)}
 
-		if debug_mode {
+		if dev.DebugMode {
 			log.Print("Added the '" + path + "' static file for default theme " + theme.Name + ".")
 		}
 		return nil

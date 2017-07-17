@@ -49,6 +49,9 @@ li a {
 	padding-right: 10px;
 }
 
+.alert_bell:before {
+	content: '🔔︎';
+}
 .menu_bell {
 	cursor: default;
 }
@@ -348,6 +351,23 @@ button.username {
 	display: inline-block;
 }
 
+.user_tag {
+	float: right;
+	color: #505050;
+	font-size: 16px;
+}
+
+.post_item {
+	background-size: 128px;
+	padding-left: calc(128px + 12px);
+}
+
+.controls {
+	width: 100%;
+	display: inline-block;
+	/*margin-top: 20px;*/
+}
+
 .controls > .username {
 	display: inline-block;
 	padding-bottom: 0px;
@@ -399,8 +419,8 @@ button.username {
 .pin_label:before { content: "Pin"; }
 .unpin_label:before { content: "Unpin"; }
 .flag_label:before { content: "Flag"; }
-.level_label { margin-right: 1px; }
-.level_label:before { content: "Level"; }
+.level_label { margin-right: 1px; color: #505050; }
+.level_label:before { content: "Level"; opacity:0.85; }
 
 .controls {
 	margin-top: 23px;

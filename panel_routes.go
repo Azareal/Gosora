@@ -7,14 +7,11 @@ import (
 	"strings"
 	"strconv"
 	"html"
-	"time"
-	"runtime"
 	"encoding/json"
 	"net/http"
 	"html/template"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
+	"github.com/Azareal/gopsutil/mem"
 )
 
 func route_panel(w http.ResponseWriter, r *http.Request, user User){
@@ -23,21 +20,13 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	var cpustr, cpuColour string
-	perc2, err := cpu.Percent(time.Duration(time.Second),true)
-	if err != nil {
-		cpustr = "Unknown"
-	} else {
-		calcperc := int(perc2[0]) / runtime.NumCPU()
-		cpustr = strconv.Itoa(calcperc)
-		if calcperc < 30 {
-			cpuColour = "stat_green"
-		} else if calcperc < 75 {
-			cpuColour = "stat_orange"
-		} else {
-			cpuColour = "stat_red"
-		}
+	if dev.SuperDebug {
+		fmt.Println("past PanelSessionCheck")
 	}
+
+	// We won't calculate this on the spot anymore, as the system doesn't seem to like it if we do multiple fetches simultaneously. Should we constantly calculate this on a background thread? Perhaps, the watchdog to scale back heavy features under load? One plus side is that we'd get immediate CPU percentages here instead of waiting it to kick in with WebSockets
+	var cpustr string = "Unknown"
+	var cpuColour string
 
 	var ramstr, ramColour string
 	memres, err := mem.VirtualMemory()
@@ -126,7 +115,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 
 	var gridElements []GridElement = []GridElement{
 		GridElement{"dash-version","v" + version.String(),0,"grid_istat stat_green","","","Gosora is up-to-date :)"},
-		GridElement{"dash-cpu","CPU: " + cpustr + "%",1,"grid_istat " + cpuColour,"","","The global CPU usage of this server"},
+		GridElement{"dash-cpu","CPU: " + cpustr,1,"grid_istat " + cpuColour,"","","The global CPU usage of this server"},
 		GridElement{"dash-ram","RAM: " + ramstr,2,"grid_istat " + ramColour,"","","The global RAM usage of this server"},
 	}
 
@@ -189,7 +178,10 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 			return
 		}
 	}
-	templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
+	err = templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
+	if err != nil {
+		InternalError(err,w,r)
+	}
 }
 
 func route_panel_forums(w http.ResponseWriter, r *http.Request, user User){
@@ -334,7 +326,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, us
 		InternalError(err,w,r)
 		return
 	}
-	
+
 	http.Redirect(w,r,"/panel/forums/",http.StatusSeeOther)
 }
 
@@ -987,7 +979,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 				puser.Avatar = "/uploads/avatar_" + strconv.Itoa(puser.ID) + puser.Avatar
 			}
 		} else {
-			puser.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(puser.ID),1)
+			puser.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(puser.ID),1)
 		}
 
 		if groups[puser.Group].Tag != "" {

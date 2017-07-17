@@ -1,6 +1,5 @@
 /* Copyright Azareal 2016 - 2017 */
 package main
-import "html/template"
 
 // Should we add a reply store to centralise all the reply logic? Would this cover profile replies too or would that be seperate?
 
@@ -18,7 +17,7 @@ type Reply struct /* Should probably rename this to ReplyUser and rename ReplySh
 	LastEdit int
 	LastEditBy int
 	Avatar string
-	Css template.CSS
+	ClassName string
 	ContentLines int
 	Tag string
 	URL string

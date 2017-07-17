@@ -11,7 +11,7 @@ import _ "github.com/go-sql-driver/mysql"
 var db_sslmode = "disable"
 
 func _set_pgsql_adapter() {
-	db_port = "3306"
+	db_port = "5432"
 	init_database = _init_pgsql
 }
 

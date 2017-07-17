@@ -9,7 +9,7 @@
 
 <div class="rowblock rowhead topic_block">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
-		<div class="rowitem topic_item"{{if .Topic.Sticky}} style="background-color:#FFFFEA;"{{else if .Topic.Is_Closed}} style="background-color:#eaeaea;"{{end}}>
+		<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
 			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a>
 			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
 			{{if .CurrentUser.Perms.EditTopic}}
@@ -24,7 +24,7 @@
 	</form>
 </div>
 <div class="rowblock post_container top_post">
-	<div class="rowitem passive editable_parent post_item" style="border-bottom: none;{{if .Topic.Avatar}}background-image:url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;{{.Topic.Css}}{{end}}">
+	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="{{if .Topic.Avatar}}background-image:url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
 		<p class="hide_on_edit topic_content user_content" style="margin:0;padding:0;">{{.Topic.Content}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 
@@ -43,7 +43,7 @@
 
 		{{if .Topic.LikeCount}}<a class="username hide_on_micro like_count">{{.Topic.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>{{end}}
 
-		{{if .Topic.Tag}}<a class="username hide_on_micro" style="float:right;color:#505050;font-size:16px;">{{.Topic.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Topic.Level}}</a><a class="username hide_on_micro level_label" style="color:#505050;float:right;opacity:0.85;" title="Level"></a>{{end}}
+		{{if .Topic.Tag}}<a class="username hide_on_micro user_tag">{{.Topic.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Topic.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="Level"></a>{{end}}
 
 		</span>
 	</div>
@@ -54,7 +54,7 @@
 		<span>{{.ActionType}}</span>
 	</div>
 {{else}}
-	<div class="rowitem passive deletable_block editable_parent post_item" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;background-size:128px;padding-left:136px;{{.Css}}{{end}}">
+	<div class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
 		<p class="editable_block user_content" style="margin:0;padding:0;">{{.ContentHtml}}</p>
 
 		<span class="controls">
@@ -69,17 +69,17 @@
 
 		{{if .LikeCount}}<a class="username hide_on_micro like_count">{{.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>{{end}}
 
-		{{if .Tag}}<a class="username hide_on_micro" style="float: right;color:#505050;font-size:16px;">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Level}}</a><a class="username hide_on_micro level_label" style="color:#505050;float:right;opacity:0.85;" title="Level">{{end}}</a>
+		{{if .Tag}}<a class="username hide_on_micro user_tag">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="Level">{{end}}</a>
 
 		</span>
 	</div>
 {{end}}{{end}}</div>
 
 {{if .CurrentUser.Perms.CreateReply}}
-<div class="rowblock">
+<div class="rowblock topic_reply_form">
 	<form action="/reply/create/" method="post">
 		<input name="tid" value='{{.Topic.ID}}' type="hidden" />
-		<div class="formrow">
+		<div class="formrow real_first_child">
 			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
 		</div>
 		<div class="formrow">

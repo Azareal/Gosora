@@ -49,7 +49,8 @@ func relative_time(in string) (string, error) {
 		return "", nil
 	}
 	layout := "2006-01-02 15:04:05"
-	t, err := time.ParseInLocation(layout, in, timeLocation)
+	t, err := time.Parse(layout, in)
+	//t, err := time.ParseInLocation(layout, in, timeLocation)
 	if err != nil {
 		return "", err
 	}
@@ -150,20 +151,20 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 	}
 	body := "Subject: " + subject + "\n\n" + msg + "\n"
 
-	con, err := smtp.Dial(smtp_server + ":" + smtp_port)
+	con, err := smtp.Dial(config.SmtpServer + ":" + config.SmtpPort)
 	if err != nil {
 		return
 	}
 
-	if smtp_username != "" {
-		auth := smtp.PlainAuth("",smtp_username,smtp_password,smtp_server)
+	if config.SmtpUsername != "" {
+		auth := smtp.PlainAuth("",config.SmtpUsername,config.SmtpPassword,config.SmtpServer)
 		err = con.Auth(auth)
 		if err != nil {
 			return
 		}
 	}
 
-	err = con.Mail(site_email)
+	err = con.Mail(site.Email)
 	if err != nil {
 		return
 	}

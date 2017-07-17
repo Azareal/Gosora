@@ -14,6 +14,7 @@ type HeaderVars struct
 	Scripts []string
 	Stylesheets []string
 	Widgets PageWidgets
+	Site *Site
 	ExtData ExtData
 }
 

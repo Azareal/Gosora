@@ -17,15 +17,14 @@ var todays_post_count_stmt *sql.Stmt
 var todays_topic_count_stmt *sql.Stmt
 var todays_report_count_stmt *sql.Stmt
 var todays_newuser_count_stmt *sql.Stmt
-// Note to self: PostgreSQL listens on a different port than MySQL does
 
 func _init_database() (err error) {
 	// TO-DO: Investigate connect_timeout to see what it does exactly and whether it's relevant to us
 	var _dbpassword string
 	if(dbpassword != ""){
-		_dbpassword = " password='" + _escape_bit(dbpassword) + "'"
+		_dbpassword = " password='" + _escape_bit(db_config.Password) + "'"
 	}
-	db, err = sql.Open("postgres", "host='" + _escape_bit(dbhost) + "' port='" + _escape_bit(dbport) + "' user='" + _escape_bit(dbuser) + "' dbname='" + _escape_bit(dbname) + "'" + _dbpassword + " sslmode='" + db_sslmode + "'")
+	db, err = sql.Open("postgres", "host='" + _escape_bit(db_config.Host) + "' port='" + _escape_bit(db_config.Port) + "' user='" + _escape_bit(db_config.Username) + "' dbname='" + _escape_bit(config.Dbname) + "'" + _dbpassword + " sslmode='" + db_sslmode + "'")
 	if err != nil {
 		return err
 	}

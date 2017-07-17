@@ -114,7 +114,7 @@ var add_forum_perms_to_forum_members_stmt *sql.Stmt
 var notify_watchers_stmt *sql.Stmt
 
 func _gen_mysql() (err error) {
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Building the generated statements")
 	}
 	
@@ -365,19 +365,19 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("INSERT INTO `topics`(`parentID`,`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,?,NOW(),NOW(),?,?,?)")
+	create_topic_stmt, err = db.Prepare("INSERT INTO `topics`(`parentID`,`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?)")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing create_report statement.")
-	create_report_stmt, err = db.Prepare("INSERT INTO `topics`(`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`createdBy`,`data`,`parentID`,`css_class`) VALUES (?,?,?,NOW(),NOW(),?,?,1,'report')")
+	create_report_stmt, err = db.Prepare("INSERT INTO `topics`(`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`createdBy`,`data`,`parentID`,`css_class`) VALUES (?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,1,'report')")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing create_reply statement.")
-	create_reply_stmt, err = db.Prepare("INSERT INTO `replies`(`tid`,`content`,`parsed_content`,`createdAt`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,NOW(),?,?,?)")
+	create_reply_stmt, err = db.Prepare("INSERT INTO `replies`(`tid`,`content`,`parsed_content`,`createdAt`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,UTC_TIMESTAMP(),?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -413,7 +413,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing create_profile_reply statement.")
-	create_profile_reply_stmt, err = db.Prepare("INSERT INTO `users_replies`(`uid`,`content`,`parsed_content`,`createdAt`,`createdBy`,`ipaddress`) VALUES (?,?,?,NOW(),?,?)")
+	create_profile_reply_stmt, err = db.Prepare("INSERT INTO `users_replies`(`uid`,`content`,`parsed_content`,`createdAt`,`createdBy`,`ipaddress`) VALUES (?,?,?,UTC_TIMESTAMP(),?,?)")
 	if err != nil {
 		return err
 	}
@@ -455,13 +455,13 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing add_modlog_entry statement.")
-	add_modlog_entry_stmt, err = db.Prepare("INSERT INTO `moderation_logs`(`action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt`) VALUES (?,?,?,?,?,NOW())")
+	add_modlog_entry_stmt, err = db.Prepare("INSERT INTO `moderation_logs`(`action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt`) VALUES (?,?,?,?,?,UTC_TIMESTAMP())")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing add_adminlog_entry statement.")
-	add_adminlog_entry_stmt, err = db.Prepare("INSERT INTO `administration_logs`(`action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt`) VALUES (?,?,?,?,?,NOW())")
+	add_adminlog_entry_stmt, err = db.Prepare("INSERT INTO `administration_logs`(`action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt`) VALUES (?,?,?,?,?,UTC_TIMESTAMP())")
 	if err != nil {
 		return err
 	}
@@ -473,7 +473,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing add_replies_to_topic statement.")
-	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyAt` = NOW() WHERE `tid` = ?")
+	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyAt` = UTC_TIMESTAMP() WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
@@ -497,7 +497,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing update_forum_cache statement.")
-	update_forum_cache_stmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = NOW() WHERE `fid` = ?")
+	update_forum_cache_stmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = UTC_TIMESTAMP() WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}

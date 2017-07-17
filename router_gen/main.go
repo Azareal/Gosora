@@ -80,7 +80,7 @@ func main() {
 	
 	fdata += `package main
 
-//import "fmt"
+import "fmt"
 import "strings"
 import "sync"
 import "errors"
@@ -150,10 +150,18 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	
+	if dev.SuperDebug {
+		fmt.Println("before PreRoute")
+	}
+	
 	// Deal with the session stuff, etc.
 	user, ok := PreRoute(w,req)
 	if !ok {
 		return
+	}
+	
+	if dev.SuperDebug {
+		fmt.Println("after PreRoute")
 	}
 	
 	switch(prefix) {` + out + `
@@ -166,7 +174,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.UploadHandler(w,req)
 			return
 		case "":
-			default_route(w,req,user)
+			config.DefaultRoute(w,req,user)
 			return
 		//default: NotFound(w,req)
 	}

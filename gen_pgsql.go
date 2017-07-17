@@ -45,12 +45,12 @@ var update_email_stmt *sql.Stmt
 var verify_email_stmt *sql.Stmt
 
 func _gen_pgsql() (err error) {
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Building the generated statements")
 	}
 	
 	log.Print("Preparing add_replies_to_topic statement.")
-	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyAt` = NOW() WHERE `tid` = ?")
+	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyAt` = UTC_TIMESTAMP() WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func _gen_pgsql() (err error) {
 	}
 		
 	log.Print("Preparing update_forum_cache statement.")
-	update_forum_cache_stmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = NOW() WHERE `fid` = ?")
+	update_forum_cache_stmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = UTC_TIMESTAMP() WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}

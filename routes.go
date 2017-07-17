@@ -14,7 +14,6 @@ import (
 	"net"
 	"net/http"
 	"html"
-	"html/template"
 
 	"./query_gen/lib"
 )
@@ -25,6 +24,10 @@ var nList []string
 var hvars HeaderVars
 var extData ExtData
 var success_json_bytes []byte = []byte(`{"success":"1"}`)
+
+func init() {
+	hvars.Site = site
+}
 
 // GET functions
 func route_static(w http.ResponseWriter, r *http.Request){
@@ -160,7 +163,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
 			}
 		} else {
-			topicItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
+			topicItem.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
 		}
 
 		forum := fstore.DirtyGet(topicItem.ParentID)
@@ -251,16 +254,16 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 
 	// Calculate the offset
 	var offset int
-	last_page := int(forum.TopicCount / items_per_page) + 1
+	last_page := int(forum.TopicCount / config.ItemsPerPage) + 1
 	if page > 1 {
-		offset = (items_per_page * page) - items_per_page
+		offset = (config.ItemsPerPage * page) - config.ItemsPerPage
 	} else if page == -1 {
 		page = last_page
-		offset = (items_per_page * page) - items_per_page
+		offset = (config.ItemsPerPage * page) - config.ItemsPerPage
 	} else {
 		page = 1
 	}
-	rows, err := get_forum_topics_offset_stmt.Query(fid,offset,items_per_page)
+	rows, err := get_forum_topics_offset_stmt.Query(fid,offset,config.ItemsPerPage)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -283,7 +286,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
 			}
 		} else {
-			topicItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
+			topicItem.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
 		}
 
 		topicItem.LastReplyAt, err = relative_time(topicItem.LastReplyAt)
@@ -416,7 +419,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		InternalError(err,w,r)
 		return
 	}
-	topic.Css = no_css_tmpl
+	topic.ClassName = ""
 
 	headerVars, ok := ForumSessionCheck(w,r,&user,topic.ParentID)
 	if !ok {
@@ -440,7 +443,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 
 	topic.Tag = groups[topic.Group].Tag
 	if groups[topic.Group].Is_Mod || groups[topic.Group].Is_Admin {
-		topic.Css = staff_css_tmpl
+		topic.ClassName = config.StaffCss
 	}
 
 	/*if settings["url_tags"] == false {
@@ -460,18 +463,18 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 	}
 
 	// Calculate the offset
-	last_page := int(topic.PostCount / items_per_page) + 1
+	last_page := int(topic.PostCount / config.ItemsPerPage) + 1
 	if page > 1 {
-		offset = (items_per_page * page) - items_per_page
+		offset = (config.ItemsPerPage * page) - config.ItemsPerPage
 	} else if page == -1 {
 		page = last_page
-		offset = (items_per_page * page) - items_per_page
+		offset = (config.ItemsPerPage * page) - config.ItemsPerPage
 	} else {
 		page = 1
 	}
 
 	// Get the replies..
-	rows, err := get_topic_replies_offset_stmt.Query(topic.ID, offset, items_per_page)
+	rows, err := get_topic_replies_offset_stmt.Query(topic.ID, offset, config.ItemsPerPage)
 	if err == ErrNoRows {
 		LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.",w,r,user)
 		return
@@ -480,7 +483,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	replyItem := Reply{Css: no_css_tmpl}
+	replyItem := Reply{ClassName:""}
 	for rows.Next() {
 		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress, &replyItem.LikeCount, &replyItem.ActionType)
 		if err != nil {
@@ -494,9 +497,9 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		replyItem.ContentLines = strings.Count(replyItem.Content,"\n")
 
 		if groups[replyItem.Group].Is_Mod || groups[replyItem.Group].Is_Admin {
-			replyItem.Css = staff_css_tmpl
+			replyItem.ClassName = config.StaffCss
 		} else {
-			replyItem.Css = no_css_tmpl
+			replyItem.ClassName = ""
 		}
 
 		if replyItem.Avatar != "" {
@@ -504,7 +507,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 				replyItem.Avatar = "/uploads/avatar_" + strconv.Itoa(replyItem.CreatedBy) + replyItem.Avatar
 			}
 		} else {
-			replyItem.Avatar = strings.Replace(noavatar,"{id}",strconv.Itoa(replyItem.CreatedBy),1)
+			replyItem.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(replyItem.CreatedBy),1)
 		}
 
 		replyItem.Tag = groups[replyItem.Group].Tag
@@ -588,9 +591,8 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 	}
 
 	var err error
-	var replyContent, replyCreatedByName, replyCreatedAt, replyAvatar, replyTag string
+	var replyContent, replyCreatedByName, replyCreatedAt, replyAvatar, replyTag, replyClassName string
 	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyLines, replyGroup int
-	var replyCss template.CSS
 	var replyList []Reply
 
 	// SEO URLs...
@@ -638,16 +640,16 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 
 		replyLines = strings.Count(replyContent,"\n")
 		if groups[replyGroup].Is_Mod || groups[replyGroup].Is_Admin {
-			replyCss = staff_css_tmpl
+			replyClassName = config.StaffCss
 		} else {
-			replyCss = no_css_tmpl
+			replyClassName = ""
 		}
 		if replyAvatar != "" {
 			if replyAvatar[0] == '.' {
 				replyAvatar = "/uploads/avatar_" + strconv.Itoa(replyCreatedBy) + replyAvatar
 			}
 		} else {
-			replyAvatar = strings.Replace(noavatar,"{id}",strconv.Itoa(replyCreatedBy),1)
+			replyAvatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(replyCreatedBy),1)
 		}
 
 		if groups[replyGroup].Tag != "" {
@@ -663,7 +665,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 
 		// TO-DO: Add a hook here
 
-		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,name_to_slug(replyCreatedByName),replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyCss,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount,"",""})
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,name_to_slug(replyCreatedByName),replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyClassName,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount,"",""})
 	}
 	err = rows.Err()
 	if err != nil {
@@ -1405,11 +1407,11 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request, user 
 }
 
 func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request, user User) {
-	if r.ContentLength > int64(max_request_size) {
+	if r.ContentLength > int64(config.MaxRequestSize) {
 		http.Error(w,"Request too large",http.StatusExpectationFailed)
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, int64(max_request_size))
+	r.Body = http.MaxBytesReader(w, r.Body, int64(config.MaxRequestSize))
 
 	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
@@ -1420,7 +1422,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err := r.ParseMultipartForm(int64(max_request_size))
+	err := r.ParseMultipartForm(int64(config.MaxRequestSize))
 	if  err != nil {
 		LocalError("Upload failed",w,r,user)
 		return
@@ -1594,7 +1596,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request, user U
 	}
 
 	// Was this site migrated from another forum software? Most of them don't have multiple emails for a single user.
-	// This also applies when the admin switches enable_emails on after having it off for a while.
+	// This also applies when the admin switches site.EnableEmails on after having it off for a while.
 	if len(emailList) == 0 {
 		email.Email = user.Email
 		email.Validated = false
@@ -1602,7 +1604,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request, user U
 		emailList = append(emailList, email)
 	}
 
-	if !enable_emails {
+	if !site.EnableEmails {
 		headerVars.NoticeList = append(headerVars.NoticeList,"The mail system is currently disabled.")
 	}
 	pi := Page{"Email Manager",user,headerVars,emailList,nil}
@@ -1680,7 +1682,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	if !enable_emails {
+	if !site.EnableEmails {
 		headerVars.NoticeList = append(headerVars.NoticeList,"The mail system is currently disabled.")
 	}
 	headerVars.NoticeList = append(headerVars.NoticeList,"Your email was successfully verified")
@@ -1823,9 +1825,9 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 	switch settings["activation_type"] {
 		case 1: // Activate All
 			active = 1
-			group = default_group
+			group = config.DefaultGroup
 		default: // Anything else. E.g. Admin Activation or Email Activation.
-			group = activation_group
+			group = config.ActivationGroup
 	}
 
 	uid, err := users.CreateUser(username, password, email, group, active)
@@ -1838,7 +1840,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Check if this user actually owns this email, if email activation is on, automatically flip their account to active when the email is validated. Validation is also useful for determining whether this user should receive any alerts, etc. via email
-	if enable_emails {
+	if site.EnableEmails {
 		token, err := GenerateSafeString(80)
 		if err != nil {
 			InternalError(err,w,r)

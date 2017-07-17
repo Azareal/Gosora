@@ -99,7 +99,7 @@ func init_widgets() error {
 	docks.RightSidebar = rightWidgets
 	widget_update_mutex.Unlock()
 
-	if super_debug {
+	if dev.SuperDebug {
 		fmt.Println("docks.LeftSidebar",docks.LeftSidebar)
 		fmt.Println("docks.RightSidebar",docks.RightSidebar)
 	}

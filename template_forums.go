@@ -36,22 +36,24 @@ w.Write(header_7)
 w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
 w.Write(header_8)
 w.Write(menu_0)
-if tmpl_forums_vars.CurrentUser.Loggedin {
+w.Write([]byte(tmpl_forums_vars.Header.Site.Name))
 w.Write(menu_1)
-w.Write([]byte(tmpl_forums_vars.CurrentUser.Slug))
+if tmpl_forums_vars.CurrentUser.Loggedin {
 w.Write(menu_2)
-w.Write([]byte(strconv.Itoa(tmpl_forums_vars.CurrentUser.ID)))
+w.Write([]byte(tmpl_forums_vars.CurrentUser.Slug))
 w.Write(menu_3)
-if tmpl_forums_vars.CurrentUser.Is_Super_Mod {
+w.Write([]byte(strconv.Itoa(tmpl_forums_vars.CurrentUser.ID)))
 w.Write(menu_4)
-}
+if tmpl_forums_vars.CurrentUser.Is_Super_Mod {
 w.Write(menu_5)
-w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
-w.Write(menu_6)
-} else {
-w.Write(menu_7)
 }
+w.Write(menu_6)
+w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
+w.Write(menu_7)
+} else {
 w.Write(menu_8)
+}
+w.Write(menu_9)
 w.Write(header_9)
 if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_10)
@@ -81,36 +83,28 @@ w.Write(forums_6)
 w.Write([]byte(item.Desc))
 w.Write(forums_7)
 } else {
-if item.LastTopicTime != "" {
 w.Write(forums_8)
 w.Write([]byte(item.Link))
 w.Write(forums_9)
 w.Write([]byte(item.Name))
 w.Write(forums_10)
-} else {
+}
 w.Write(forums_11)
-w.Write([]byte(item.Link))
-w.Write(forums_12)
-w.Write([]byte(item.Name))
-w.Write(forums_13)
-}
-}
-w.Write(forums_14)
 w.Write([]byte(item.LastTopicSlug))
-w.Write(forums_15)
+w.Write(forums_12)
 w.Write([]byte(item.LastTopic))
-w.Write(forums_16)
+w.Write(forums_13)
 if item.LastTopicTime != "" {
-w.Write(forums_17)
+w.Write(forums_14)
 w.Write([]byte(item.LastTopicTime))
-w.Write(forums_18)
+w.Write(forums_15)
 }
-w.Write(forums_19)
+w.Write(forums_16)
 }
 } else {
-w.Write(forums_20)
+w.Write(forums_17)
 }
-w.Write(forums_21)
+w.Write(forums_18)
 w.Write(footer_0)
 if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)

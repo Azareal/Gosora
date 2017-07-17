@@ -36,22 +36,24 @@ w.Write(header_7)
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(header_8)
 w.Write(menu_0)
-if tmpl_topic_alt_vars.CurrentUser.Loggedin {
+w.Write([]byte(tmpl_topic_alt_vars.Header.Site.Name))
 w.Write(menu_1)
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Slug))
+if tmpl_topic_alt_vars.CurrentUser.Loggedin {
 w.Write(menu_2)
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.CurrentUser.ID)))
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Slug))
 w.Write(menu_3)
-if tmpl_topic_alt_vars.CurrentUser.Is_Super_Mod {
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.CurrentUser.ID)))
 w.Write(menu_4)
-}
+if tmpl_topic_alt_vars.CurrentUser.Is_Super_Mod {
 w.Write(menu_5)
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(menu_6)
-} else {
-w.Write(menu_7)
 }
+w.Write(menu_6)
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+w.Write(menu_7)
+} else {
 w.Write(menu_8)
+}
+w.Write(menu_9)
 w.Write(header_9)
 if tmpl_topic_alt_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_10)

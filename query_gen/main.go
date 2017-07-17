@@ -109,11 +109,40 @@ func create_tables(adapter qgen.DB_Adapter) error {
 			qgen.DB_Table_Column{"bigposts","int",0,false,false,"0"},
 			qgen.DB_Table_Column{"megaposts","int",0,false,false,"0"},
 			qgen.DB_Table_Column{"topics","int",0,false,false,"0"},
+			//qgen.DB_Table_Column{"penalty_count","int",0,false,false,"0"},
 		},
 		[]qgen.DB_Table_Key{
 			qgen.DB_Table_Key{"uid","primary"},
 			qgen.DB_Table_Key{"name","unique"},
 		},
+	)
+	
+	// What should we do about global penalties? Put them on the users table for speed? Or keep them here?
+	// Should we add IP Penalties?
+	qgen.Install.CreateTable("users_penalties","","",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"uid","int",0,false,false,""},
+			qgen.DB_Table_Column{"element_id","int",0,false,false,""},
+			qgen.DB_Table_Column{"element_type","varchar",50,false,false,""}, //global,forum,profile?,social_group
+			qgen.DB_Table_Column{"overrides","text",0,false,false,"{}"}, // Perm overrides. Coming Soon
+			qgen.DB_Table_Column{"mod_queue","boolean",0,false,false,"0"}, // All of this user's posts will go through the mod_queue. Coming Soon
+			// TO-DO: Add a mod-queue and other basic auto-mod features. This is needed for awaiting activation and the mod_queue penalty flag
+			// TO-DO: Add a penalty type where a user is stopped from creating plugin_socialgroups social groups
+			
+			qgen.DB_Table_Column{"shadow_ban","boolean",0,false,false,"0"}, // Coming Soon. CanShadowBan permission.
+			qgen.DB_Table_Column{"no_avatar","boolean",0,false,false,"0"}, // Coming Soon. Should this be a perm override instead?
+			
+			//qgen.DB_Table_Column{"posts_per_hour","int",0,false,false,"0"}, // Rate-limit penalty type. Coming soon
+			//qgen.DB_Table_Column{"topics_per_hour","int",0,false,false,"0"}, // Coming Soon
+			
+			//qgen.DB_Table_Column{"posts_count","int",0,false,false,"0"}, // Coming soon
+			//qgen.DB_Table_Column{"topic_count","int",0,false,false,"0"}, // Coming Soon
+			//qgen.DB_Table_Column{"last_hour","int",0,false,false,"0"}, // UNIX Time, as we don't need to do anything too fancy here. When an hour has elapsed since that time, reset the hourly penalty counters.
+			qgen.DB_Table_Column{"issued_by","int",0,false,false,""},
+			qgen.DB_Table_Column{"issued_at","createdAt",0,false,false,""},
+			qgen.DB_Table_Column{"expiry","duration",0,false,false,""}, // TO-DO: Implement the duration parsing code on the adapter side
+		},
+		[]qgen.DB_Table_Key{},
 	)
 	
 	return nil
@@ -224,11 +253,11 @@ func write_inner_joins(adapter qgen.DB_Adapter) error {
 }
 
 func write_inserts(adapter qgen.DB_Adapter) error {
-	adapter.SimpleInsert("create_topic","topics","parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,words,createdBy","?,?,?,?,NOW(),NOW(),?,?,?")
+	adapter.SimpleInsert("create_topic","topics","parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,words,createdBy","?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?")
 	
-	adapter.SimpleInsert("create_report","topics","title,content,parsed_content,createdAt,lastReplyAt,createdBy,data,parentID,css_class","?,?,?,NOW(),NOW(),?,?,1,'report'")
+	adapter.SimpleInsert("create_report","topics","title,content,parsed_content,createdAt,lastReplyAt,createdBy,data,parentID,css_class","?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,1,'report'")
 
-	adapter.SimpleInsert("create_reply","replies","tid,content,parsed_content,createdAt,ipaddress,words,createdBy","?,?,?,NOW(),?,?,?")
+	adapter.SimpleInsert("create_reply","replies","tid,content,parsed_content,createdAt,ipaddress,words,createdBy","?,?,?,UTC_TIMESTAMP(),?,?,?")
 	
 	adapter.SimpleInsert("create_action_reply","replies","tid,actionType,ipaddress,createdBy","?,?,?,?")
 	
@@ -240,7 +269,7 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleInsert("add_email","emails","email, uid, validated, token","?,?,?,?")
 	
-	adapter.SimpleInsert("create_profile_reply","users_replies","uid, content, parsed_content, createdAt, createdBy, ipaddress","?,?,?,NOW(),?,?")
+	adapter.SimpleInsert("create_profile_reply","users_replies","uid, content, parsed_content, createdAt, createdBy, ipaddress","?,?,?,UTC_TIMESTAMP(),?,?")
 	
 	adapter.SimpleInsert("add_subscription","activity_subscriptions","user,targetID,targetType,level","?,?,?,2")
 	
@@ -255,9 +284,9 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleInsert("create_group","users_groups","name, tag, is_admin, is_mod, is_banned, permissions","?,?,?,?,?,?")
 	
-	adapter.SimpleInsert("add_modlog_entry","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","?,?,?,?,?,NOW()")
+	adapter.SimpleInsert("add_modlog_entry","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","?,?,?,?,?,UTC_TIMESTAMP()")
 	
-	adapter.SimpleInsert("add_adminlog_entry","administration_logs","action, elementID, elementType, ipaddress, actorID, doneAt","?,?,?,?,?,NOW()")
+	adapter.SimpleInsert("add_adminlog_entry","administration_logs","action, elementID, elementType, ipaddress, actorID, doneAt","?,?,?,?,?,UTC_TIMESTAMP()")
 	
 	return nil
 }
@@ -269,7 +298,7 @@ func write_replaces(adapter qgen.DB_Adapter) error {
 }
 
 func write_updates(adapter qgen.DB_Adapter) error {
-	adapter.SimpleUpdate("add_replies_to_topic","topics","postCount = postCount + ?, lastReplyAt = NOW()","tid = ?")
+	adapter.SimpleUpdate("add_replies_to_topic","topics","postCount = postCount + ?, lastReplyAt = UTC_TIMESTAMP()","tid = ?")
 	
 	adapter.SimpleUpdate("remove_replies_from_topic","topics","postCount = postCount - ?","tid = ?")
 	
@@ -277,7 +306,7 @@ func write_updates(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleUpdate("remove_topics_from_forum","forums","topicCount = topicCount - ?","fid = ?")
 	
-	adapter.SimpleUpdate("update_forum_cache","forums","lastTopic = ?, lastTopicID = ?, lastReplyer = ?, lastReplyerID = ?, lastTopicTime = NOW()","fid = ?")
+	adapter.SimpleUpdate("update_forum_cache","forums","lastTopic = ?, lastTopicID = ?, lastReplyer = ?, lastReplyerID = ?, lastTopicTime = UTC_TIMESTAMP()","fid = ?")
 
 	adapter.SimpleUpdate("add_likes_to_topic","topics","likeCount = likeCount + ?","tid = ?")
 	

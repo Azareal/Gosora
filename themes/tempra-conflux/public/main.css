@@ -47,6 +47,9 @@ li a {
 	padding-right: 10px;
 }
 
+.alert_bell:before {
+	content: '🔔︎';
+}
 .menu_bell {
 	cursor: default;
 }

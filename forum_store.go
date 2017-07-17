@@ -65,7 +65,7 @@ func NewStaticForumStore() *StaticForumStore {
 func (sfs *StaticForumStore) LoadForums() error {
 	log.Print("Adding the uncategorised forum")
 	var forums []*Forum = []*Forum{
-		&Forum{0,"uncategorised","Uncategorised","",uncategorised_forum_visible,"all",0,"",0,"","",0,"",0,""},
+		&Forum{0,build_forum_url(name_to_slug("Uncategorised"),0),"Uncategorised","",config.UncategorisedForumVisible,"all",0,"",0,"","",0,"",0,""},
 	}
 
   rows, err := get_forums_stmt.Query()
@@ -89,7 +89,7 @@ func (sfs *StaticForumStore) LoadForums() error {
 		}
 
 		if forum.Name == "" {
-			if debug_mode {
+			if dev.DebugMode {
 				log.Print("Adding a placeholder forum")
 			}
 		} else {
@@ -111,14 +111,14 @@ func (sfs *StaticForumStore) LoadForums() error {
 }
 
 func (sfs *StaticForumStore) DirtyGet(id int) *Forum {
-	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name!="") {
+	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name != "") {
 		return &Forum{ID:-1,Name:""}
 	}
 	return sfs.forums[id]
 }
 
 func (sfs *StaticForumStore) Get(id int) (*Forum, error) {
-	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name!="") {
+	if !((id <= sfs.forumCapCount) && (id >= 0) && sfs.forums[id].Name != "") {
 		return nil, ErrNoRows
 	}
 	return sfs.forums[id], nil

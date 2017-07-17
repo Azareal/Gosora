@@ -7,10 +7,9 @@
 		{{if .Desc}}<span style="float: left;">
 			<a href="{{.Link}}" style="">{{.Name}}</a>
 			<br /><span class="rowsmall">{{.Desc}}</span>
-		</span>{{else if .LastTopicTime}}<span style="float: left;padding-top: 8px;font-size: 18px;">
-			<a href="{{.Link}}">{{.Name}}</a>
 		</span>{{else}}<span style="float: left;">
 			<a href="{{.Link}}">{{.Name}}</a>
+			<br /><span class="rowsmall" style="font-style: italic;">No description</span>
 		</span>{{end}}
 
 		<span style="float: right;">

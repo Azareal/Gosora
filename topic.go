@@ -48,7 +48,6 @@ type TopicUser struct
 	CreatedByName string
 	Group int
 	Avatar string
-	Css template.CSS
 	ContentLines int
 	Tag string
 	URL string
@@ -93,7 +92,7 @@ type TopicsRow struct
 }
 
 func get_topicuser(tid int) (TopicUser,error) {
-	if cache_topicuser != CACHE_SQL {
+	if config.CacheTopicUser != CACHE_SQL {
 		topic, err := topics.Get(tid)
 		if err == nil {
 			user, err := users.CascadeGet(topic.CreatedBy)

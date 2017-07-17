@@ -2,7 +2,7 @@
 	<div class="move_left">
 	<div class="move_right">
 	<ul>
-		<li class="menu_left menu_overview"><a href="/">Overview</a></li>
+		<li class="menu_left menu_overview"><a href="/">{{.Header.Site.Name}}</a></li>
 		<li class="menu_left menu_forums"><a href="/forums/">Forums</a></li>
 		<li class="menu_left menu_topics"><a href="/">Topics</a></li>
 		<li class="menu_left menu_create_topic"><a href="/topics/create/">Create Topic</a></li>
@@ -16,8 +16,9 @@
 		<li class="menu_left menu_login"><a href="/accounts/login/">Login</a></li>
 		{{end}}
 		<li id="general_alerts" class="menu_right menu_alerts">
-			<div class="alert_bell">🔔︎</div>
+			<div class="alert_bell"></div>
 			<div class="alert_counter"></div>
+			<div class="alert_aftercounter"></div>
 			<div class="alertList"></div>
 		</li>
 	</ul>

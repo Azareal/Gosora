@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 	"io"
 	"html/template"
@@ -27,10 +28,9 @@ var enable_websockets bool = false // Don't change this, the value is overwritte
 
 var router *GenRouter
 var startTime time.Time
-var timeLocation *time.Location
+//var timeLocation *time.Location
 var templates = template.New("")
-var no_css_tmpl template.CSS = template.CSS("")
-var staff_css_tmpl template.CSS = template.CSS(staff_css)
+//var no_css_tmpl template.CSS = template.CSS("")
 var settings map[string]interface{} = make(map[string]interface{})
 var external_sites map[string]string = make(map[string]string)
 var groups []Group
@@ -49,6 +49,7 @@ func compile_templates() error {
 	var c CTemplateSet
 	user := User{62,"fake-user","Fake User","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"0.0.0.0.0"}
 	headerVars := HeaderVars{
+		Site:site,
 		NoticeList:[]string{"test"},
 		Stylesheets:[]string{"panel"},
 		Scripts:[]string{"whatever"},
@@ -59,9 +60,9 @@ func compile_templates() error {
 
 	log.Print("Compiling the templates")
 
-	topic := TopicUser{1,"blah","Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"classname","weird-data","fake-user","Fake User",default_group,"",no_css_tmpl,0,"","","","",58,false}
+	topic := TopicUser{1,"blah","Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"classname","weird-data","fake-user","Fake User",config.DefaultGroup,"",0,"","","","",58,false}
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"Yo!","Yo!",0,"alice","Alice",default_group,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Yo!","Yo!",0,"alice","Alice",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
 
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title",user,headerVars,replyList,topic,1,1,extData}
@@ -93,7 +94,7 @@ func compile_templates() error {
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage",topics_page,varList)
 
 	var topicList []TopicUser
-	topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",default_group,"","",0,"","","","",58,false})
+	topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
 	forum_item := Forum{1,"general","General Forum","Where the general stuff happens",true,"all",0,"",0,"","",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,headerVars,topicList,forum_item,1,1,extData}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage",forum_page,varList)
@@ -118,7 +119,7 @@ func write_template(name string, content string) {
 }
 
 func init_templates() {
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Initialising the template system")
 	}
 	compile_templates()
@@ -134,12 +135,22 @@ func init_templates() {
 	fmap["divide"] = filler_func
 
 	// The interpreted templates...
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Loading the template files...")
 	}
 	templates.Funcs(fmap)
 	template.Must(templates.ParseGlob("templates/*"))
 	template.Must(templates.ParseGlob("pages/*"))
+}
+
+func process_config() {
+	config.Noavatar = strings.Replace(config.Noavatar,"{site_url}",site.Url,-1)
+	if site.Port != "80" && site.Port != "443" {
+		site.Url = strings.TrimSuffix(site.Url,"/")
+		site.Url = strings.TrimSuffix(site.Url,"\\")
+		site.Url = strings.TrimSuffix(site.Url,":")
+		site.Url = site.Url + ":" + site.Port
+	}
 }
 
 func main(){
@@ -154,7 +165,10 @@ func main(){
 	log.Print("Running Gosora v" + version.String())
 	fmt.Println("")
 	startTime = time.Now()
-	timeLocation = startTime.Location()
+	//timeLocation = startTime.Location()
+
+	fmt.Println("Processing configuration data")
+	process_config()
 
 	init_themes()
 	err := init_database()
@@ -168,9 +182,9 @@ func main(){
 		log.Fatal(err)
 	}
 
-	if cache_topicuser == CACHE_STATIC {
-		users = NewMemoryUserStore(user_cache_capacity)
-		topics = NewMemoryTopicStore(topic_cache_capacity)
+	if config.CacheTopicUser == CACHE_STATIC {
+		users = NewMemoryUserStore(config.UserCacheCapacity)
+		topics = NewMemoryTopicStore(config.TopicCacheCapacity)
 	} else {
 		users = NewSqlUserStore()
 		topics = NewSqlTopicStore()
@@ -285,15 +299,20 @@ func main(){
 	//}
 
 	log.Print("Initialising the HTTP server")
-	if !enable_ssl {
-		if server_port == "" {
-			 server_port = "80"
+	if !site.EnableSsl {
+		if site.Port == "" {
+			 site.Port = "80"
 		}
-		http.ListenAndServe(":" + server_port, router)
+		err = http.ListenAndServe(":" + site.Port, router)
 	} else {
-		if server_port == "" {
-			 server_port = "443"
+		if site.Port == "" {
+			 site.Port = "443"
 		}
-		http.ListenAndServeTLS(":" + server_port, ssl_fullchain, ssl_privkey, router)
+		err = http.ListenAndServeTLS(":" + site.Port, config.SslFullchain, config.SslPrivkey, router)
+	}
+
+	// Why did the server stop?
+	if err != nil {
+		log.Fatal(err)
 	}
 }

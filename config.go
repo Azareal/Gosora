@@ -1,50 +1,52 @@
 package main
 
+func init() {
 // Site Info
-var site_name = "Test Install" // Should be a setting in the database
-var site_url = "localhost:8080"
-var server_port = "8080"
-var enable_ssl = false
-var ssl_privkey = ""
-var ssl_fullchain = ""
+site.Name = "Test Site" // Should be a setting in the database
+site.Email = "" // Should be a setting in the database
+site.Url = "localhost"
+site.Port = "8080"
+site.EnableSsl = false
+site.EnableEmails = false
+config.SslPrivkey = ""
+config.SslFullchain = ""
 
 // Database details
-var dbhost = "localhost"
-var dbuser = "root"
-var dbpassword = "password"
-var dbname = "gosora"
-var dbport = "3306" // You probably won't need to change this
+db_config.Host = "localhost"
+db_config.Username = "root"
+db_config.Password = "password"
+db_config.Dbname = "gosora"
+db_config.Port = "3306" // You probably won't need to change this
 
 // Limiters
-var max_request_size = 5 * megabyte
+config.MaxRequestSize = 5 * megabyte
 
 // Caching
-var cache_topicuser = CACHE_STATIC
-var user_cache_capacity = 100 // The max number of users held in memory
-var topic_cache_capacity = 100 // The max number of topics held in memory
+config.CacheTopicUser = CACHE_STATIC
+config.UserCacheCapacity = 100 // The max number of users held in memory
+config.TopicCacheCapacity = 100 // The max number of topics held in memory
 
 // Email
-var site_email = "" // Should be a setting in the database
-var smtp_server = ""
-var smtp_username = ""
-var smtp_password = ""
-var smtp_port = "25"
-var enable_emails = false
+config.SmtpServer = ""
+config.SmtpUsername = ""
+config.SmtpPassword = ""
+config.SmtpPort = "25"
 
 // Misc
-var default_route = route_topics
-var default_group = 3 // Should be a setting in the database
-var activation_group = 5 // Should be a setting in the database
-var staff_css = " background-color: #ffeaff;"
-var uncategorised_forum_visible = true
-var minify_templates = false
-var multi_server = false // Experimental: Enable Cross-Server Synchronisation and several other features
+config.DefaultRoute = route_topics
+config.DefaultGroup = 3 // Should be a setting in the database
+config.ActivationGroup = 5 // Should be a setting in the database
+config.StaffCss = "staff_post"
+config.UncategorisedForumVisible = true
+config.MinifyTemplates = false
+config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
 
-//var noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
-var noavatar = "https://api.adorable.io/avatars/285/{id}@" + site_url + ".png"
-var items_per_page = 25
+//config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
+config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"
+config.ItemsPerPage = 25
 
-// Developer flags
-var debug_mode = false
-var super_debug = false
-var profiling = false
+// Developer flag
+dev.DebugMode = true
+//dev.SuperDebug = true
+//dev.Profiling = true
+}

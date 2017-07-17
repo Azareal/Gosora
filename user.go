@@ -100,12 +100,12 @@ func SetPassword(uid int, password string) error {
 
 func SendValidationEmail(username string, email string, token string) bool {
 	var schema string = "http"
-	if enable_ssl {
+	if site.EnableSsl {
 		schema += "s"
 	}
 
-	subject := "Validate Your Email @ " + site_name
-	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + site_url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
+	subject := "Validate Your Email @ " + site.Name
+	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + site.Url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
 	return SendEmail(email, subject, msg)
 }
 
@@ -209,6 +209,7 @@ func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fi
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) {
+	headerVars.Site = site
 	if !user.Is_Super_Mod {
 		NoPermissions(w,r,*user)
 		return headerVars, false
@@ -243,6 +244,7 @@ func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *U
 }
 
 func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) {
+	headerVars.Site = site
 	if user.Is_Banned {
 		headerVars.NoticeList = append(headerVars.NoticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
 	}

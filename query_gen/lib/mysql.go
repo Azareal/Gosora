@@ -839,7 +839,7 @@ import "database/sql"
 
 ` + stmts + `
 func _gen_mysql() (err error) {
-	if debug_mode {
+	if dev.DebugMode {
 		log.Print("Building the generated statements")
 	}
 ` + body + `

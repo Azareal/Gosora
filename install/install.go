@@ -100,7 +100,7 @@ func main() {
 	}
 	
 	// Build the admin user query
-	admin_user_stmt, err := qgen.Builder.SimpleInsert("users","name, password, salt, email, group, is_super_admin, active, createdAt, lastActiveAt, message, last_ip","'Admin',?,?,'admin@localhost',1,1,1,NOW(),NOW(),'','127.0.0.1'")
+	admin_user_stmt, err := qgen.Builder.SimpleInsert("users","name, password, salt, email, group, is_super_admin, active, createdAt, lastActiveAt, message, last_ip","'Admin',?,?,'admin@localhost',1,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'','127.0.0.1'")
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
@@ -137,54 +137,56 @@ func main() {
 	
 	configContents := []byte(`package main
 
+func init() {
 // Site Info
-var site_name = "` + site_name + `" // Should be a setting in the database
-var site_url = "` + site_url + `"
-var server_port = "` + server_port + `"
-var enable_ssl = false
-var ssl_privkey = ""
-var ssl_fullchain = ""
+site.Name = "` + site_name + `" // Should be a setting in the database
+site.Email = "" // Should be a setting in the database
+site.Url = "` + site_url + `"
+site.Port = "` + server_port + `"
+site.EnableSsl = false
+site.EnableEmails = false
+config.SslPrivkey = ""
+config.SslFullchain = ""
 
 // Database details
-var dbhost = "` + db_host + `"
-var dbuser = "` + db_username + `"
-var dbpassword = "` + db_password + `"
-var dbname = "` + db_name + `"
-var dbport = "` + db_port + `" // You probably won't need to change this
+db_config.Host = "` + db_host + `"
+db_config.Username = "` + db_username + `"
+db_config.Password = "` + db_password + `"
+db_config.Dbname = "` + db_name + `"
+db_config.Port = "` + db_port + `" // You probably won't need to change this
 
 // Limiters
-var max_request_size = 5 * megabyte
+config.MaxRequestSize = 5 * megabyte
 
 // Caching
-var cache_topicuser = CACHE_STATIC
-var user_cache_capacity = 100 // The max number of users held in memory
-var topic_cache_capacity = 100 // The max number of topics held in memory
+config.CacheTopicUser = CACHE_STATIC
+config.UserCacheCapacity = 100 // The max number of users held in memory
+config.TopicCacheCapacity = 100 // The max number of topics held in memory
 
 // Email
-var site_email = "" // Should be a setting in the database
-var smtp_server = ""
-var smtp_username = ""
-var smtp_password = ""
-var smtp_port = "25"
-var enable_emails = false
+config.SmtpServer = ""
+config.SmtpUsername = ""
+config.SmtpPassword = ""
+config.SmtpPort = "25"
 
 // Misc
-var default_route = route_topics
-var default_group = 3 // Should be a setting in the database
-var activation_group = 5 // Should be a setting in the database
-var staff_css = " background-color: #ffeaff;"
-var uncategorised_forum_visible = true
-var minify_templates = true
-var multi_server = false // Experimental: Enable Cross-Server Synchronisation and several other features
+config.DefaultRoute = route_topics
+config.DefaultGroup = 3 // Should be a setting in the database
+config.ActivationGroup = 5 // Should be a setting in the database
+config.StaffCss = "staff_post"
+config.UncategorisedForumVisible = true
+config.MinifyTemplates = true
+config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
 
-//var noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
-var noavatar = "https://api.adorable.io/avatars/285/{id}@" + site_url + ".png"
-var items_per_page = 25
+//config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
+config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"
+config.ItemsPerPage = 25
 
 // Developer flag
-var debug_mode = true
-var super_debug = false
-var profiling = false
+dev.DebugMode = true
+//dev.SuperDebug = true
+//dev.Profiling = true
+}
 `)
 
 	fmt.Println("Opening the configuration file")

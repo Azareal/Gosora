@@ -1,0 +1,266 @@
+/* Patch for Edge, until they fix emojis in arial x.x */
+@supports (-ms-ime-align:auto) { .user_content { font-family: Segoe UI Emoji, arial; } }
+
+body {
+	font-family: arial;
+	color: white;
+	background-color: #222222;
+	margin: 0;
+}
+
+#back {
+	margin-left: auto;
+	margin-right: auto;
+	width: 70%;
+	background-color: #333333;
+	position: relative;
+	top: -2px;
+}
+
+ul {
+	list-style-type: none;
+	background-color: rgb(61,61,61);
+	border-bottom: 1px solid #222222;
+	padding-left: 15%;
+	padding-right: 15%;
+	margin: 0;
+	height: 45px;
+}
+
+li {
+	float: left;
+	height: 35px;
+	padding-top: 12px;
+	margin: 0;
+}
+
+.menu_left {
+	margin-right: 10px;
+}
+
+.menu_right {
+	float: right;
+}
+
+.menu_overview {
+	margin-right: 13px;
+	margin-left: 10px;
+}
+
+.menu_left:not(.menu_overview) {
+	font-size: 15px;
+	padding-top: 13px;
+}
+
+.alert_bell {
+	float: right;
+}
+
+.menu_alerts {
+	float: none;
+	padding-top: 14px;
+}
+
+.alert_counter {
+	background-color: rgb(200,0,0);
+	border-radius: 2px;
+	font-size: 12px;
+	padding: 3px;
+	float: right;
+	position: relative;
+	top: -1px;
+}
+
+.alert_aftercounter {
+	float: right;
+	margin-right: 4px;
+	font-size: 15px;
+}
+.alert_aftercounter:before {
+	content: "Alerts";
+}
+
+.menu_alerts .alertList {
+	display: none;
+}
+
+.selectedAlert .alertList {
+	/* Coming Soon. Hidden so it doesn't distract me while I design this theme */
+	display: none;
+}
+
+a {
+	text-decoration: none;
+	color: white;
+}
+
+.rowblock {
+	margin-left: 8px;
+	margin-right: 8px;
+}
+
+.opthead, .rowhead, .colstack_head {
+	padding-bottom: 0px;
+	padding-top: 3px !important;
+}
+
+.rowblock:not(.opthead):not(.colstack_head):not(.rowhead) .rowitem {
+	font-size: 15px;
+}
+
+.rowblock:last-child {
+	padding-bottom: 10px;
+}
+
+.rowitem, .formitem {
+    padding-bottom: 12px;
+		background-color: rgb(61,61,61);
+		margin-top: 8px;
+		padding: 12px;
+}
+
+.rowsmall {
+	font-size: 12px;
+}
+
+.colstack_left, .colstack_right {
+	margin-left: 8px;
+}
+.colstack_left {
+	float: left;
+	width: 30%;
+}
+.colstack_right {
+	float: left;
+	width: calc(70% - 24px);
+}
+.colstack_left:empty, .colstack_right:empty {
+	display: none;
+}
+
+.show_on_edit {
+	display: none;
+}
+
+.topic_sticky_head {
+
+}
+.topic_closed_head {
+
+}
+
+.post_item {
+	background-size: 128px;
+	padding-left: calc(128px + 12px);
+}
+
+.controls {
+	width: 100%;
+	display: inline-block;
+	margin-top: 20px;
+}
+
+.staff_post {
+	border: 1px solid rgb(101, 71, 101)
+}
+
+.user_tag {
+	float: right;
+	color: rgb(205,205,205);
+}
+
+.real_username {
+	float: left;
+	margin-right: 7px;
+}
+
+.mod_button {
+	margin-right: 5px;
+	display: block;
+	float: left;
+}
+
+.mod_button button {
+	border: none;
+	background: none;
+	color: white;
+	font-size: 12px;
+	padding: 0;
+}
+
+.like_label:before {
+	content: "+1";
+}
+.edit_label:before { content: "Edit"; }
+.trash_label:before { content: "Delete"; }
+.pin_label:before { content: "Pin"; }
+.unpin_label:before { content: "Unpin"; }
+.flag_label:before { content: "Flag"; }
+.level_label:before { content: "Level"; }
+
+.like_count_label:before {
+	content: "likes";
+}
+.like_count_label {
+	font-size: 12px;
+	display: block;
+	float: left;
+	line-height: 19px;
+}
+.like_count {
+	font-size: 12px;
+	display: block;
+	float: left;
+	line-height: 19px;
+	margin-right: 2px;
+}
+.like_count:before {
+	content: "|";
+	margin-right: 5px;
+}
+
+.level_label, .level {
+	color: rgb(205,205,205);
+	float: right;
+}
+
+.level {
+	margin-left: 3px;
+}
+
+.topic_reply_form {
+		margin-top: 8px;
+}
+
+.formitem {
+	margin-top: 0px;
+	padding-bottom: 2px;
+	padding-top: 3px;
+}
+
+.formrow.real_first_child .formitem {
+	padding-top: 12px;
+}
+
+.formrow:last-child .formitem {
+	padding-bottom: 12px;
+}
+
+textarea {
+	background-color: #444444;
+	border-color: #555555;
+}
+
+.topic_reply_form textarea {
+	width: calc(100% - 5px);
+	min-height: 80px;
+}
+
+.formitem button {
+	background-color: #444444;
+	border: 1px solid #555555;
+	color: #999999;
+	padding: 7px;
+	padding-bottom: 6px;
+	font-size: 13px;
+}
