@@ -36,7 +36,7 @@ func gloinit() {
 	startTime = time.Now()
 	//timeLocation = startTime.Location()
 	process_config()
-	
+
 	init_themes()
 	err := init_database()
 	if err != nil {
@@ -171,16 +171,16 @@ func BenchmarkTopicsTemplateSerial(b *testing.B) {
 	admin := User{1,"admin-alice","Admin Alice","admin@localhost",0,true,true,true,true,true,false,AllPerms,make(map[string]bool),"",false,"","","","","",-1,58,"127.0.0.1"}
 
 	var topicList []TopicsRow
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserSlug:"admin-alice",CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
 
 	headerVars := HeaderVars{
 		NoticeList:[]string{"test"},

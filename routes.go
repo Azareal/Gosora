@@ -155,8 +155,8 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 			return
 		}
 
-		topicItem.Slug = name_to_slug(topicItem.Title)
-		topicItem.UserSlug = name_to_slug(topicItem.CreatedByName)
+		topicItem.Link = build_topic_url(name_to_slug(topicItem.Title),topicItem.ID)
+		topicItem.UserLink = build_profile_url(name_to_slug(topicItem.CreatedByName),topicItem.CreatedBy)
 
 		if topicItem.Avatar != "" {
 			if topicItem.Avatar[0] == '.' {
@@ -278,8 +278,8 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 			return
 		}
 
-		topicItem.Slug = name_to_slug(topicItem.Title)
-		topicItem.UserSlug = name_to_slug(topicItem.CreatedByName)
+		topicItem.Link = build_topic_url(name_to_slug(topicItem.Title),topicItem.ID)
+		topicItem.UserLink = build_profile_url(name_to_slug(topicItem.CreatedByName),topicItem.CreatedBy)
 
 		if topicItem.Avatar != "" {
 			if topicItem.Avatar[0] == '.' {
@@ -491,7 +491,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 			return
 		}
 
-		replyItem.UserSlug = name_to_slug(replyItem.CreatedByName)
+		replyItem.UserLink = build_profile_url(name_to_slug(replyItem.CreatedByName),replyItem.CreatedBy)
 		replyItem.ParentID = topic.ID
 		replyItem.ContentHtml = parse_message(replyItem.Content)
 		replyItem.ContentLines = strings.Count(replyItem.Content,"\n")
@@ -532,16 +532,16 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		if replyItem.ActionType != "" {
 			switch(replyItem.ActionType) {
 				case "lock":
-					replyItem.ActionType = "This topic has been locked by <a href='" + build_profile_url(replyItem.UserSlug,replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic has been locked by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
 				case "unlock":
-					replyItem.ActionType = "This topic has been reopened by <a href='" + build_profile_url(replyItem.UserSlug,replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic has been reopened by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
 				case "stick":
-					replyItem.ActionType = "This topic has been pinned by <a href='" + build_profile_url(replyItem.UserSlug,replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic has been pinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "unstick":
-					replyItem.ActionType = "This topic has been unpinned by <a href='" + build_profile_url(replyItem.UserSlug,replyItem.CreatedBy) + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic has been unpinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				default:
 					replyItem.ActionType = replyItem.ActionType + " has happened"
@@ -665,7 +665,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 
 		// TO-DO: Add a hook here
 
-		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,name_to_slug(replyCreatedByName),replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyClassName,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount,"",""})
+		replyList = append(replyList, Reply{rid,puser.ID,replyContent,parse_message(replyContent),replyCreatedBy,build_profile_url(name_to_slug(replyCreatedByName),replyCreatedBy),replyCreatedByName,replyGroup,replyCreatedAt,replyLastEdit,replyLastEditBy,replyAvatar,replyClassName,replyLines,replyTag,"","","",0,"",replyLiked,replyLikeCount,"",""})
 	}
 	err = rows.Err()
 	if err != nil {

@@ -97,7 +97,7 @@ func (sfs *StaticForumStore) LoadForums() error {
 		}
 
 		forum.Link = build_forum_url(name_to_slug(forum.Name),forum.ID)
-		forum.LastTopicSlug = build_slug(name_to_slug(forum.LastTopic),forum.LastTopicID)
+		forum.LastTopicLink = build_topic_url(name_to_slug(forum.LastTopic),forum.LastTopicID)
 		forums = append(forums,&forum)
 	}
 	err = rows.Err()
@@ -306,7 +306,7 @@ func (sfs *StaticForumStore) CreateForum(forum_name string, forum_desc string, a
 	}
 	fid = int(fid64)
 
-	sfs.forums = append(sfs.forums, &Forum{fid,name_to_slug(forum_name),forum_name,forum_desc,active,preset,0,"",0,"","",0,"",0,""})
+	sfs.forums = append(sfs.forums, &Forum{fid,build_forum_url(name_to_slug(forum_name),fid),forum_name,forum_desc,active,preset,0,"",0,"","",0,"",0,""})
 	sfs.forumCapCount++
 
 	// TO-DO: Add a GroupStore. How would it interact with the ForumStore?

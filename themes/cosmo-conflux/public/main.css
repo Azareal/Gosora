@@ -467,6 +467,12 @@ button .big { padding: 6px; }*/
 	padding-bottom: 3px;
 }
 
+#profile_comments .rowitem {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	padding-left: 136px;
+}
+
 .postQuote {
 	padding: 5px;
 	border: 1px solid rgb(200,200,200);

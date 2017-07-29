@@ -446,6 +446,12 @@ input, select, textarea {
 .simple .user_tag {
 	font-size: 14px;
 }
+/* TO-DO: Have a has_avatar class for profile comments and topic replies to allow posts without avatars? Won't that look inconsistent next to everything else for just about every theme though? */
+#profile_comments .rowitem {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	padding-left: 136px;
+}
 
 @media(max-width: 935px) {
 	.simple .user_tag {
@@ -530,15 +536,49 @@ input, select, textarea {
 	}
 }
 
-@media(max-width: 470px) {
-	.menu_create_topic {
+@media(max-width: 520px) {
+	.user_tag, .level_label, .level {
 		display: none;
+	}
+	#profile_left_lane {
+		width: 100px;
+	}
+	#profile_comments .rowitem {
+		background-size: 80px;
+		padding-left: calc(80px + 12px);
+	}
+	#profile_left_lane .avatarRow {
+		max-height: 100px;
+	}
+	#profile_right_lane {
+		width: calc(100% - 125px);
+	}
+}
+
+@media(max-width: 470px) {
+	.menu_create_topic, .like_count_label, .like_count {
+		display: none;
+	}
+	.post_item {
+		background-size: 100px;
+		padding-left: calc(100px + 12px);
 	}
 }
 
 @media(max-width: 370px) {
 	.menu_profile {
 		display: none;
+	}
+	.post_item {
+		background-size: 80px;
+		padding-left: calc(80px + 12px);
+	}
+	.controls {
+		margin-top: 14px;
+	}
+	#profile_comments .rowitem {
+		background-image: none !important;
+		padding-left: 10px !important;
 	}
 }
 

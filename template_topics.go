@@ -35,35 +35,33 @@ w.Write(header_6)
 w.Write(header_7)
 w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
 w.Write(header_8)
+if !tmpl_topics_vars.CurrentUser.Is_Super_Mod {
+w.Write(header_9)
+}
+w.Write(header_10)
 w.Write(menu_0)
 w.Write([]byte(tmpl_topics_vars.Header.Site.Name))
 w.Write(menu_1)
 if tmpl_topics_vars.CurrentUser.Loggedin {
 w.Write(menu_2)
-w.Write([]byte(tmpl_topics_vars.CurrentUser.Slug))
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Link))
 w.Write(menu_3)
-w.Write([]byte(strconv.Itoa(tmpl_topics_vars.CurrentUser.ID)))
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
 w.Write(menu_4)
-if tmpl_topics_vars.CurrentUser.Is_Super_Mod {
+} else {
 w.Write(menu_5)
 }
 w.Write(menu_6)
-w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
-w.Write(menu_7)
-} else {
-w.Write(menu_8)
-}
-w.Write(menu_9)
-w.Write(header_9)
-if tmpl_topics_vars.Header.Widgets.RightSidebar != "" {
-w.Write(header_10)
-}
 w.Write(header_11)
+if tmpl_topics_vars.Header.Widgets.RightSidebar != "" {
+w.Write(header_12)
+}
+w.Write(header_13)
 if len(tmpl_topics_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_topics_vars.Header.NoticeList {
-w.Write(header_12)
+w.Write(header_14)
 w.Write([]byte(item))
-w.Write(header_13)
+w.Write(header_15)
 }
 }
 w.Write(topics_0)
@@ -88,39 +86,35 @@ w.Write([]byte(strconv.Itoa(item.PostCount)))
 w.Write(topics_8)
 w.Write([]byte(item.LastReplyAt))
 w.Write(topics_9)
-w.Write([]byte(item.Slug))
+w.Write([]byte(item.Link))
 w.Write(topics_10)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topics_11)
 w.Write([]byte(item.Title))
-w.Write(topics_12)
+w.Write(topics_11)
 if item.ForumName != "" {
-w.Write(topics_13)
+w.Write(topics_12)
 w.Write([]byte(item.ForumLink))
-w.Write(topics_14)
+w.Write(topics_13)
 w.Write([]byte(item.ForumName))
+w.Write(topics_14)
+}
 w.Write(topics_15)
-}
+w.Write([]byte(item.UserLink))
 w.Write(topics_16)
-w.Write([]byte(item.UserSlug))
-w.Write(topics_17)
-w.Write([]byte(strconv.Itoa(item.CreatedBy)))
-w.Write(topics_18)
 w.Write([]byte(item.CreatedByName))
-w.Write(topics_19)
+w.Write(topics_17)
 if item.Is_Closed {
-w.Write(topics_20)
+w.Write(topics_18)
 }
-w.Write(topics_21)
+w.Write(topics_19)
 }
 } else {
-w.Write(topics_22)
+w.Write(topics_20)
 if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+w.Write(topics_21)
+}
+w.Write(topics_22)
+}
 w.Write(topics_23)
-}
-w.Write(topics_24)
-}
-w.Write(topics_25)
 w.Write(footer_0)
 if tmpl_topics_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)

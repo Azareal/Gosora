@@ -35,35 +35,33 @@ w.Write(header_6)
 w.Write(header_7)
 w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
 w.Write(header_8)
+if !tmpl_topic_vars.CurrentUser.Is_Super_Mod {
+w.Write(header_9)
+}
+w.Write(header_10)
 w.Write(menu_0)
 w.Write([]byte(tmpl_topic_vars.Header.Site.Name))
 w.Write(menu_1)
 if tmpl_topic_vars.CurrentUser.Loggedin {
 w.Write(menu_2)
-w.Write([]byte(tmpl_topic_vars.CurrentUser.Slug))
+w.Write([]byte(tmpl_topic_vars.CurrentUser.Link))
 w.Write(menu_3)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.CurrentUser.ID)))
+w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
 w.Write(menu_4)
-if tmpl_topic_vars.CurrentUser.Is_Super_Mod {
+} else {
 w.Write(menu_5)
 }
 w.Write(menu_6)
-w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
-w.Write(menu_7)
-} else {
-w.Write(menu_8)
-}
-w.Write(menu_9)
-w.Write(header_9)
-if tmpl_topic_vars.Header.Widgets.RightSidebar != "" {
-w.Write(header_10)
-}
 w.Write(header_11)
+if tmpl_topic_vars.Header.Widgets.RightSidebar != "" {
+w.Write(header_12)
+}
+w.Write(header_13)
 if len(tmpl_topic_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_topic_vars.Header.NoticeList {
-w.Write(header_12)
+w.Write(header_14)
 w.Write([]byte(item))
-w.Write(header_13)
+w.Write(header_15)
 }
 }
 w.Write(topic_0)
@@ -127,139 +125,135 @@ w.Write([]byte(tmpl_topic_vars.Topic.Content))
 w.Write(topic_27)
 w.Write([]byte(tmpl_topic_vars.Topic.Content))
 w.Write(topic_28)
-w.Write([]byte(tmpl_topic_vars.Topic.UserSlug))
+w.Write([]byte(tmpl_topic_vars.Topic.UserLink))
 w.Write(topic_29)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.CreatedBy)))
-w.Write(topic_30)
 w.Write([]byte(tmpl_topic_vars.Topic.CreatedByName))
-w.Write(topic_31)
+w.Write(topic_30)
 if tmpl_topic_vars.CurrentUser.Perms.LikeItem {
-w.Write(topic_32)
+w.Write(topic_31)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_33)
+w.Write(topic_32)
 if tmpl_topic_vars.Topic.Liked {
+w.Write(topic_33)
+}
 w.Write(topic_34)
 }
-w.Write(topic_35)
-}
 if tmpl_topic_vars.CurrentUser.Perms.EditTopic {
-w.Write(topic_36)
+w.Write(topic_35)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_37)
+w.Write(topic_36)
 }
 if tmpl_topic_vars.CurrentUser.Perms.DeleteTopic {
-w.Write(topic_38)
+w.Write(topic_37)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_39)
+w.Write(topic_38)
 }
 if tmpl_topic_vars.CurrentUser.Perms.PinTopic {
 if tmpl_topic_vars.Topic.Sticky {
+w.Write(topic_39)
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_40)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_41)
 } else {
+w.Write(topic_41)
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_42)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
+}
+}
 w.Write(topic_43)
-}
-}
-w.Write(topic_44)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_45)
+w.Write(topic_44)
 w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
-w.Write(topic_46)
+w.Write(topic_45)
 if tmpl_topic_vars.Topic.LikeCount > 0 {
-w.Write(topic_47)
+w.Write(topic_46)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.LikeCount)))
-w.Write(topic_48)
+w.Write(topic_47)
 }
 if tmpl_topic_vars.Topic.Tag != "" {
-w.Write(topic_49)
+w.Write(topic_48)
 w.Write([]byte(tmpl_topic_vars.Topic.Tag))
-w.Write(topic_50)
+w.Write(topic_49)
 } else {
-w.Write(topic_51)
+w.Write(topic_50)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.Level)))
-w.Write(topic_52)
+w.Write(topic_51)
 }
-w.Write(topic_53)
+w.Write(topic_52)
 if len(tmpl_topic_vars.ItemList) != 0 {
 for _, item := range tmpl_topic_vars.ItemList {
 if item.ActionType != "" {
-w.Write(topic_54)
+w.Write(topic_53)
 w.Write([]byte(item.ActionIcon))
-w.Write(topic_55)
+w.Write(topic_54)
 w.Write([]byte(item.ActionType))
-w.Write(topic_56)
+w.Write(topic_55)
 } else {
-w.Write(topic_57)
+w.Write(topic_56)
 w.Write([]byte(item.ClassName))
-w.Write(topic_58)
+w.Write(topic_57)
 if item.Avatar != "" {
-w.Write(topic_59)
+w.Write(topic_58)
 w.Write([]byte(item.Avatar))
-w.Write(topic_60)
+w.Write(topic_59)
 if item.ContentLines <= 5 {
+w.Write(topic_60)
+}
 w.Write(topic_61)
 }
 w.Write(topic_62)
-}
-w.Write(topic_63)
 w.Write([]byte(item.ContentHtml))
+w.Write(topic_63)
+w.Write([]byte(item.UserLink))
 w.Write(topic_64)
-w.Write([]byte(item.UserSlug))
-w.Write(topic_65)
-w.Write([]byte(strconv.Itoa(item.CreatedBy)))
-w.Write(topic_66)
 w.Write([]byte(item.CreatedByName))
-w.Write(topic_67)
+w.Write(topic_65)
 if tmpl_topic_vars.CurrentUser.Perms.LikeItem {
-w.Write(topic_68)
+w.Write(topic_66)
 w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_69)
+w.Write(topic_67)
 if item.Liked {
-w.Write(topic_70)
+w.Write(topic_68)
 }
-w.Write(topic_71)
+w.Write(topic_69)
 }
 if tmpl_topic_vars.CurrentUser.Perms.EditReply {
+w.Write(topic_70)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(topic_71)
+}
+if tmpl_topic_vars.CurrentUser.Perms.DeleteReply {
 w.Write(topic_72)
 w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_73)
 }
-if tmpl_topic_vars.CurrentUser.Perms.DeleteReply {
 w.Write(topic_74)
 w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_75)
-}
-w.Write(topic_76)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_77)
 w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
-w.Write(topic_78)
+w.Write(topic_76)
 if item.LikeCount > 0 {
-w.Write(topic_79)
+w.Write(topic_77)
 w.Write([]byte(strconv.Itoa(item.LikeCount)))
-w.Write(topic_80)
+w.Write(topic_78)
 }
 if item.Tag != "" {
-w.Write(topic_81)
+w.Write(topic_79)
 w.Write([]byte(item.Tag))
-w.Write(topic_82)
+w.Write(topic_80)
 } else {
-w.Write(topic_83)
+w.Write(topic_81)
 w.Write([]byte(strconv.Itoa(item.Level)))
+w.Write(topic_82)
+}
+w.Write(topic_83)
+}
+}
+}
 w.Write(topic_84)
-}
-w.Write(topic_85)
-}
-}
-}
-w.Write(topic_86)
 if tmpl_topic_vars.CurrentUser.Perms.CreateReply {
-w.Write(topic_87)
+w.Write(topic_85)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_88)
+w.Write(topic_86)
 }
 w.Write(footer_0)
 if tmpl_topic_vars.Header.Widgets.RightSidebar != "" {

@@ -509,7 +509,7 @@ func parse_message(msg string/*, user User*/) string {
 				}
 
 				outbytes = append(outbytes, url_open...)
-				var url_bit []byte = []byte(build_profile_url(menUser.Slug,uid))
+				var url_bit []byte = []byte(menUser.Link)
 				outbytes = append(outbytes, url_bit...)
 				outbytes = append(outbytes, bytes_singlequote...)
 				outbytes = append(outbytes, url_mention...)

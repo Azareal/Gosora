@@ -520,6 +520,12 @@ button.username {
 	font-size: 12px;
 }
 
+#profile_comments .rowitem {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	padding-left: 136px;
+}
+
 /* Media Queries */
 
 @media(min-width: 881px) {

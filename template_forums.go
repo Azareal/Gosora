@@ -3,7 +3,6 @@
 // +build !no_templategen
 package main
 import "io"
-import "strconv"
 
 func init() {
 	template_forums_handle = template_forums
@@ -35,35 +34,33 @@ w.Write(header_6)
 w.Write(header_7)
 w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
 w.Write(header_8)
+if !tmpl_forums_vars.CurrentUser.Is_Super_Mod {
+w.Write(header_9)
+}
+w.Write(header_10)
 w.Write(menu_0)
 w.Write([]byte(tmpl_forums_vars.Header.Site.Name))
 w.Write(menu_1)
 if tmpl_forums_vars.CurrentUser.Loggedin {
 w.Write(menu_2)
-w.Write([]byte(tmpl_forums_vars.CurrentUser.Slug))
+w.Write([]byte(tmpl_forums_vars.CurrentUser.Link))
 w.Write(menu_3)
-w.Write([]byte(strconv.Itoa(tmpl_forums_vars.CurrentUser.ID)))
+w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
 w.Write(menu_4)
-if tmpl_forums_vars.CurrentUser.Is_Super_Mod {
+} else {
 w.Write(menu_5)
 }
 w.Write(menu_6)
-w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
-w.Write(menu_7)
-} else {
-w.Write(menu_8)
-}
-w.Write(menu_9)
-w.Write(header_9)
-if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
-w.Write(header_10)
-}
 w.Write(header_11)
+if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
+w.Write(header_12)
+}
+w.Write(header_13)
 if len(tmpl_forums_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_forums_vars.Header.NoticeList {
-w.Write(header_12)
+w.Write(header_14)
 w.Write([]byte(item))
-w.Write(header_13)
+w.Write(header_15)
 }
 }
 w.Write(forums_0)
@@ -90,7 +87,7 @@ w.Write([]byte(item.Name))
 w.Write(forums_10)
 }
 w.Write(forums_11)
-w.Write([]byte(item.LastTopicSlug))
+w.Write([]byte(item.LastTopicLink))
 w.Write(forums_12)
 w.Write([]byte(item.LastTopic))
 w.Write(forums_13)

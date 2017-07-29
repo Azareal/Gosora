@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var guest_user User = User{ID:0,Group:6,Perms:GuestPerms}
+var guest_user User = User{ID:0,Link:"#",Group:6,Perms:GuestPerms}
 
 var PreRoute func(http.ResponseWriter, *http.Request) (User,bool) = _pre_route
 var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderVars,bool) = _panel_session_check
@@ -26,7 +26,7 @@ var GeneratePassword func(password string) (hashed_password string, salt string,
 type User struct
 {
 	ID int
-	Slug string
+	Link string
 	Name string
 	Email string
 	Group int

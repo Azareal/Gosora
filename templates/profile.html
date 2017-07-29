@@ -29,17 +29,20 @@
 		<div class="rowitem"><a>Comments</a></div>
 	</div>
 	<div id="profile_comments" class="colstack_item" style="overflow: hidden;border-top: none;">{{range .ItemList}}
-		<div class="rowitem passive deletable_block editable_parent simple {{.ClassName}}" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat: no-repeat, repeat-y;background-size: 128px;padding-left: 136px;{{end}}">
-			<span class="editable_block user_content simple">{{.ContentHtml}}</span><br /><br />
-			<a href="/user/{{.UserSlug}}.{{.CreatedBy}}" class="real_username username">{{.CreatedByName}}</a>&nbsp;&nbsp;
+		<div class="rowitem passive deletable_block editable_parent simple {{.ClassName}}" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;{{end}}">
+			<span class="editable_block user_content simple">{{.ContentHtml}}</span>
 
-			{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
+			<span class="controls">
+				<a href="{{.UserLink}}" class="real_username username">{{.CreatedByName}}</a>&nbsp;&nbsp;
 
-			<a href="/profile/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>{{end}}
+				{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
 
-			<a class="mod_button" href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item flag_label"></button></a>
+				<a href="/profile/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>{{end}}
 
-			{{if .Tag}}<a class="username hide_on_mobile user_tag" style="float: right;">{{.Tag}}</a>{{end}}
+				<a class="mod_button" href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item flag_label"></button></a>
+
+				{{if .Tag}}<a class="username hide_on_mobile user_tag" style="float: right;">{{.Tag}}</a>{{end}}
+			</span>
 		</div>
 	{{end}}</div>
 

@@ -1734,64 +1734,64 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
 
 		actor, err := users.CascadeGet(actorID)
 		if err != nil {
-			actor = &User{Name:"Unknown",Slug:"unknown"}
+			actor = &User{Name:"Unknown",Link:build_profile_url("unknown",0)}
 		}
 
 		switch(action) {
 			case "lock":
 				topic, err := topics.CascadeGet(elementID)
 				if err != nil {
-					topic = &Topic{Title:"Unknown",Slug:"unknown"}
+					topic = &Topic{Title:"Unknown",Link:build_profile_url("unknown",0)}
 				}
-				action = "<a href='" + build_topic_url(topic.Slug,elementID) + "'>" + topic.Title + "</a> was locked by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was locked by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 			case "unlock":
 				topic, err := topics.CascadeGet(elementID)
 				if err != nil {
-					topic = &Topic{Title:"Unknown",Slug:"unknown"}
+					topic = &Topic{Title:"Unknown",Link:build_profile_url("unknown",0)}
 				}
-				action = "<a href='" + build_topic_url(topic.Slug,elementID) + "'>" + topic.Title + "</a> was reopened by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was reopened by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 			case "stick":
 				topic, err := topics.CascadeGet(elementID)
 				if err != nil {
-					topic = &Topic{Title:"Unknown",Slug:"unknown"}
+					topic = &Topic{Title:"Unknown",Link:build_profile_url("unknown",0)}
 				}
-				action = "<a href='" + build_topic_url(topic.Slug,elementID) + "'>" + topic.Title + "</a> was pinned by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was pinned by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 			case "unstick":
 				topic, err := topics.CascadeGet(elementID)
 				if err != nil {
-					topic = &Topic{Title:"Unknown",Slug:"unknown"}
+					topic = &Topic{Title:"Unknown",Link:build_profile_url("unknown",0)}
 				}
-				action = "<a href='" + build_topic_url(topic.Slug,elementID) + "'>" + topic.Title + "</a> was unpinned by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was unpinned by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 			case "delete":
 				if elementType == "topic" {
-					action = "Topic #" + strconv.Itoa(elementID) + " was deleted by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+					action = "Topic #" + strconv.Itoa(elementID) + " was deleted by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 				} else {
 					topic, err := get_topic_by_reply(elementID)
 					if err != nil {
-						topic = &Topic{Title:"Unknown",Slug:"unknown"}
+						topic = &Topic{Title:"Unknown",Link:build_profile_url("unknown",0)}
 					}
-					action = "A reply in <a href='" + build_topic_url(topic.Slug,topic.ID) + "'>" + topic.Title + "</a> was deleted by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+					action = "A reply in <a href='" + topic.Link + "'>" + topic.Title + "</a> was deleted by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 				}
 			case "ban":
 				targetUser, err := users.CascadeGet(elementID)
 				if err != nil {
-					targetUser = &User{Name:"Unknown",Slug:"unknown"}
+					targetUser = &User{Name:"Unknown",Link:build_profile_url("unknown",0)}
 				}
-				action = "<a href='" + build_profile_url(targetUser.Slug,elementID) + "'>" + targetUser.Name + "</a> was banned by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + targetUser.Link + "'>" + targetUser.Name + "</a> was banned by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 			case "unban":
 				targetUser, err := users.CascadeGet(elementID)
 				if err != nil {
-					targetUser = &User{Name:"Unknown",Slug:"unknown"}
+					targetUser = &User{Name:"Unknown",Link:build_profile_url("unknown",0)}
 				}
-				action = "<a href='" + build_profile_url(targetUser.Slug,elementID) + "'>" + targetUser.Name + "</a> was unbanned by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + targetUser.Link + "'>" + targetUser.Name + "</a> was unbanned by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 			case "activate":
 				targetUser, err := users.CascadeGet(elementID)
 				if err != nil {
-					targetUser = &User{Name:"Unknown",Slug:"unknown"}
+					targetUser = &User{Name:"Unknown",Link:build_profile_url("unknown",0)}
 				}
-				action = "<a href='" + build_profile_url(targetUser.Slug,elementID) + "'>" + targetUser.Name + "</a> was activated by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+				action = "<a href='" + targetUser.Link + "'>" + targetUser.Name + "</a> was activated by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 			default:
-				action = "Unknown action '" + action + "' by <a href='" + build_profile_url(actor.Slug,actorID) + "'>"+actor.Name+"</a>"
+				action = "Unknown action '" + action + "' by <a href='" + actor.Link + "'>"+actor.Name+"</a>"
 		}
 		logs = append(logs, Log{Action:template.HTML(action),IPAddress:ipaddress,DoneAt:doneAt})
 	}

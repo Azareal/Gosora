@@ -14,8 +14,8 @@
 		</li>
 		{{if .CurrentUser.Loggedin}}
 		<li class="menu_left menu_account"><a href="/user/edit/critical/">Account</a></li>
-		<li class="menu_left menu_profile"><a href="/user/{{.CurrentUser.Slug}}.{{.CurrentUser.ID}}">Profile</a></li>
-		{{if .CurrentUser.Is_Super_Mod}}<li class="menu_left menu_account"><a href="/panel/">Panel</a></li>{{end}}
+		<li class="menu_left menu_profile"><a href="{{.CurrentUser.Link}}">Profile</a></li>
+		<li class="menu_left menu_account supermod_only"><a href="/panel/">Panel</a></li>
 		<li class="menu_left menu_logout"><a href="/accounts/logout/?session={{.CurrentUser.Session}}">Logout</a></li>
 		{{else}}
 		<li class="menu_left menu_register"><a href="/accounts/create/">Register</a></li>

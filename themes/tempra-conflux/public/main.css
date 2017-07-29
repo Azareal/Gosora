@@ -473,6 +473,12 @@ button.username {
 	background: none;
 }
 
+#profile_comments .rowitem {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	padding-left: 136px;
+}
+
 .simple {
 	background-color: white;
 }

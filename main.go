@@ -47,7 +47,7 @@ var template_create_topic_handle func(CreateTopicPage,io.Writer) = nil
 
 func compile_templates() error {
 	var c CTemplateSet
-	user := User{62,"fake-user","Fake User","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"0.0.0.0.0"}
+	user := User{62,build_profile_url("fake-user",62),"Fake User","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"0.0.0.0.0"}
 	headerVars := HeaderVars{
 		Site:site,
 		NoticeList:[]string{"test"},
@@ -60,7 +60,7 @@ func compile_templates() error {
 
 	log.Print("Compiling the templates")
 
-	topic := TopicUser{1,"blah","Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"classname","weird-data","fake-user","Fake User",config.DefaultGroup,"",0,"","","","",58,false}
+	topic := TopicUser{1,"blah","Blah","Hey there!",0,false,false,"Date","Date",0,"","127.0.0.1",0,1,"classname","weird-data",build_profile_url("fake-user",62),"Fake User",config.DefaultGroup,"",0,"","","","",58,false}
 	var replyList []Reply
 	replyList = append(replyList, Reply{0,0,"Yo!","Yo!",0,"alice","Alice",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
 

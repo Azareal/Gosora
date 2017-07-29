@@ -2,7 +2,7 @@ package main
 
 func init() {
 // Site Info
-site.Name = "Test Site" // Should be a setting in the database
+site.Name = "TS" // Should be a setting in the database
 site.Email = "" // Should be a setting in the database
 site.Url = "localhost"
 site.Port = "8080"

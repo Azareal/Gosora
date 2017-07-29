@@ -10,12 +10,14 @@
 		{{range .Header.Scripts}}
 		<script type="text/javascript" src="/static/{{.}}"></script>
 		{{end}}
-		<script type="text/javascript">var session = "{{.CurrentUser.Session}}";
-		</script>
+		<script type="text/javascript">var session = "{{.CurrentUser.Session}}";</script>
 		<script type="text/javascript" src="/static/global.js"></script>
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
 	</head>
 	<body>
+		<style>
+			{{if not .CurrentUser.Is_Super_Mod}}.supermod_only { display: none !important; }{{end}}
+		</style>
 		<div class="container">
 {{template "menu.html" .}}
 <div id="back"><div id="main" {{if .Header.Widgets.RightSidebar}}class="shrink_main"{{end}}>

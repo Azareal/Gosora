@@ -136,6 +136,8 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 
 # Images
+![Shadow Theme](https://github.com/Azareal/Gosora/blob/master/images/shadow.png)
+
 ![Tempra Simple Theme](https://github.com/Azareal/Gosora/blob/master/images/tempra-simple.png)
 
 ![Tempra Simple Topic List](https://github.com/Azareal/Gosora/blob/master/images/topic-list.png)
@@ -153,6 +155,8 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 ![Cosmo Conflux Theme](https://github.com/Azareal/Gosora/blob/master/images/cosmo-conflux.png)
 
 ![Cosmo Theme](https://github.com/Azareal/Gosora/blob/master/images/cosmo.png)
+
+More images in the /images/ folder. Beware though, some of them are *really* outdated.
 
 # Dependencies
 

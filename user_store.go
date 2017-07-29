@@ -103,7 +103,7 @@ func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
-	user.Slug = name_to_slug(user.Name)
+	user.Link = build_profile_url(name_to_slug(user.Name),id)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
 	if err == nil {
@@ -123,7 +123,7 @@ func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
-	user.Slug = name_to_slug(user.Name)
+	user.Link = build_profile_url(name_to_slug(user.Name),id)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
 	return user, err
@@ -144,7 +144,7 @@ func (sus *MemoryUserStore) Load(id int) error {
 	} else {
 		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
-	user.Slug = name_to_slug(user.Name)
+	user.Link = build_profile_url(name_to_slug(user.Name),id)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(user)
 	sus.Set(user)
@@ -282,7 +282,7 @@ func (sus *SqlUserStore) Get(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
-	user.Slug = name_to_slug(user.Name)
+	user.Link = build_profile_url(name_to_slug(user.Name),id)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err
@@ -299,7 +299,7 @@ func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
-	user.Slug = name_to_slug(user.Name)
+	user.Link = build_profile_url(name_to_slug(user.Name),id)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err
@@ -316,7 +316,7 @@ func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
-	user.Slug = name_to_slug(user.Name)
+	user.Link = build_profile_url(name_to_slug(user.Name),id)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err
@@ -333,7 +333,7 @@ func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
 	} else {
 		user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
 	}
-	user.Slug = name_to_slug(user.Name)
+	user.Link = build_profile_url(name_to_slug(user.Name),id)
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err

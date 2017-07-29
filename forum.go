@@ -26,7 +26,7 @@ type Forum struct
 	ParentID int
 	ParentType string
 	TopicCount int
-	LastTopicSlug string
+	LastTopicLink string
 	LastTopic string
 	LastTopicID int
 	LastReplyer string

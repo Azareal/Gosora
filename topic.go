@@ -6,7 +6,7 @@ import "html/template"
 type Topic struct
 {
 	ID int
-	Slug string
+	Link string
 	Title string
 	Content string
 	CreatedBy int
@@ -27,7 +27,7 @@ type Topic struct
 type TopicUser struct
 {
 	ID int
-	Slug string
+	Link string
 	Title string
 	Content string
 	CreatedBy int
@@ -44,7 +44,7 @@ type TopicUser struct
 	ClassName string
 	Data string // Used for report metadata
 
-	UserSlug string
+	UserLink string
 	CreatedByName string
 	Group int
 	Avatar string
@@ -60,7 +60,7 @@ type TopicUser struct
 type TopicsRow struct
 {
 	ID int
-	Slug string
+	Link string
 	Title string
 	Content string
 	CreatedBy int
@@ -76,7 +76,7 @@ type TopicsRow struct
 	LikeCount int
 	ClassName string
 
-	UserSlug string
+	UserLink string
 	CreatedByName string
 	Avatar string
 	Css template.CSS
@@ -120,10 +120,10 @@ func get_topicuser(tid int) (TopicUser,error) {
 
 	tu := TopicUser{ID:tid}
 	err := get_topic_user_stmt.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
-	tu.Slug = name_to_slug(tu.Title)
-	tu.UserSlug = name_to_slug(tu.CreatedByName)
+	tu.Link = build_topic_url(name_to_slug(tu.Title),tu.ID)
+	tu.UserLink = build_profile_url(name_to_slug(tu.CreatedByName),tu.CreatedBy)
 
-	the_topic := Topic{ID:tu.ID, Slug:tu.Slug, Title:tu.Title, Content:tu.Content, CreatedBy:tu.CreatedBy, Is_Closed:tu.Is_Closed, Sticky:tu.Sticky, CreatedAt:tu.CreatedAt, LastReplyAt:tu.LastReplyAt, ParentID:tu.ParentID, IpAddress:tu.IpAddress, PostCount:tu.PostCount, LikeCount:tu.LikeCount}
+	the_topic := Topic{ID:tu.ID, Link:tu.Link, Title:tu.Title, Content:tu.Content, CreatedBy:tu.CreatedBy, Is_Closed:tu.Is_Closed, Sticky:tu.Sticky, CreatedAt:tu.CreatedAt, LastReplyAt:tu.LastReplyAt, ParentID:tu.ParentID, IpAddress:tu.IpAddress, PostCount:tu.PostCount, LikeCount:tu.LikeCount}
 	//fmt.Printf("%+v\n", the_topic)
 	tu.Tag = groups[tu.Group].Tag
 	topics.Add(&the_topic)
@@ -131,7 +131,7 @@ func get_topicuser(tid int) (TopicUser,error) {
 }
 
 func copy_topic_to_topicuser(topic *Topic, user *User) (tu TopicUser) {
-	tu.UserSlug = user.Slug
+	tu.UserLink = user.Link
 	tu.CreatedByName = user.Name
 	tu.Group = user.Group
 	tu.Avatar = user.Avatar
@@ -140,7 +140,7 @@ func copy_topic_to_topicuser(topic *Topic, user *User) (tu TopicUser) {
 	tu.Level = user.Level
 
 	tu.ID = topic.ID
-	tu.Slug = topic.Slug
+	tu.Link = topic.Link
 	tu.Title = topic.Title
 	tu.Content = topic.Content
 	tu.CreatedBy = topic.CreatedBy
@@ -160,7 +160,7 @@ func copy_topic_to_topicuser(topic *Topic, user *User) (tu TopicUser) {
 func get_topic_by_reply(rid int) (*Topic, error) {
 	topic := Topic{ID:0}
 	err := get_topic_by_reply_stmt.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Slug = name_to_slug(topic.Title)
+	topic.Link = build_topic_url(name_to_slug(topic.Title),topic.ID)
 	return &topic, err
 }
 

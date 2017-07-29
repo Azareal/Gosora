@@ -78,7 +78,6 @@ func (c *CTemplateSet) compile_template(name string, dir string, expects string,
 
 	c.importMap = map[string]string{
 		"io":"io",
-		"strconv":"strconv",
 	}
 	c.varList = varList
 	//c.pVarList = ""
@@ -889,6 +888,7 @@ func (c *CTemplateSet) compile_varsub(varname string, val reflect.Value) string 
 
 	switch val.Kind() {
 		case reflect.Int:
+			c.importMap["strconv"] = "strconv"
 			return "w.Write([]byte(strconv.Itoa(" + varname + ")))\n"
 		case reflect.Bool:
 			return "if " + varname + " {\nw.Write([]byte(\"true\"))} else {\nw.Write([]byte(\"false\"))\n}\n"
@@ -899,6 +899,7 @@ func (c *CTemplateSet) compile_varsub(varname string, val reflect.Value) string 
 				return "w.Write([]byte(" + varname + "))\n"
 			}
 		case reflect.Int64:
+			c.importMap["strconv"] = "strconv"
 			return "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))"
 		default:
 			if !val.IsValid() {

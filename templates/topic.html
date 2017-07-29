@@ -30,7 +30,7 @@
 
 		<span class="controls">
 
-		<a href="/user/{{.Topic.UserSlug}}.{{.Topic.CreatedBy}}" class="username real_username">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
+		<a href="{{.Topic.UserLink}}" class="username real_username">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
 		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="mod_button" title="Love it" style="color:#202020;">
 		<button class="username like_label" style="{{if .Topic.Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}"></button></a>{{end}}
 
@@ -59,7 +59,7 @@
 
 		<span class="controls">
 
-		<a href="/user/{{.UserSlug}}.{{.CreatedBy}}" class="username real_username">{{.CreatedByName}}</a>&nbsp;&nbsp;
+		<a href="{{.UserLink}}" class="username real_username">{{.CreatedByName}}</a>&nbsp;&nbsp;
 		{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username like_label" style="{{if .Liked}}background-color:/*#eaffea*/#D6FFD6;{{end}}"></button></a>{{end}}
 
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Reply"><button class="username edit_item edit_label"></button></a>{{end}}

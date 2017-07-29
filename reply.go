@@ -10,7 +10,7 @@ type Reply struct /* Should probably rename this to ReplyUser and rename ReplySh
 	Content string
 	ContentHtml string
 	CreatedBy int
-	UserSlug string
+	UserLink string
 	CreatedByName string
 	Group int
 	CreatedAt string

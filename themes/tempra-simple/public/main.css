@@ -553,4 +553,10 @@ button.username {
 	top: -2px;
 }
 
+#profile_comments .rowitem {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	padding-left: 136px;
+}
+
 {{template "media.partial.css" }}
