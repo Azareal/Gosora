@@ -88,16 +88,18 @@ Several important features for saving memory in the templates system may have to
 
 An example of running the commands directly on Windows.
 
-Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms.
+Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms. Additionally, Linux doesn't require `StackExchange/wmi` or ``/x/sys/windows`
 
 ```bash
+git clone https://github.com/Azareal/Gosora
+
 go get -u github.com/go-sql-driver/mysql
 
 go get -u golang.org/x/crypto/bcrypt
 
 go get -u github.com/StackExchange/wmi
 
-go get -u github.com/shirou/gopsutil
+go get -u github.com/Azareal/gopsutil
 
 go get -u github.com/gorilla/websocket
 
@@ -162,11 +164,11 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 * golang.org/x/crypto/bcrypt For hashing passwords.
 
-* github.com/shirou/gopsutil For pulling information on CPU and memory usage.
+* github.com/Azareal/gopsutil For pulling information on CPU and memory usage. I've temporarily forked this, as we were having stability issues with the latest build.
 
   * github.com/StackExchange/wmi Dependency for gopsutil on Windows.
- 
-  * golang.org/x/sys/windows Also a dependency for gopsutil on Windows.
+
+  * golang.org/x/sys/windows Also a dependency for gopsutil on Windows. This isn't needed at the moment, as I've rolled things back to an older more stable build.
 
 * github.com/gorilla/websocket Needed for Gosora's Optional WebSockets Module.
 

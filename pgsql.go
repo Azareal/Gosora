@@ -29,6 +29,12 @@ func _init_database() (err error) {
 		return err
 	}
 
+	// Make sure that the connection is alive
+	err = db.Ping()
+	if err != nil {
+		return err
+	}
+
 	// Fetch the database version
 	db.QueryRow("SELECT VERSION()").Scan(&db_version)
 

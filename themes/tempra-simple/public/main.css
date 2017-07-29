@@ -277,6 +277,9 @@ li a {
 	width: 50px;
 	text-align: center;
 }
+.create_topic_opt a:before {
+	content '🖊︎';
+}
 .create_topic_opt, .create_topic_opt a {
 	color: rgb(120,120,120);
 	text-decoration: none;
@@ -284,10 +287,21 @@ li a {
 .locked_opt {
 	color: rgb(80,80,80);
 }
+.locked_opt:before {
+	content: '🔒︎';
+}
 
-.datarow {
+.rowlist {
+	font-size: 15px;
+}
+.datarow, .rowlist .rowitem {
 	padding-top: 10px;
 	padding-bottom: 10px;
+}
+.rowlist.bgavatars .rowitem {
+	background-repeat: no-repeat;
+	background-size: 40px;
+	padding-left: 46px;
 }
 
 .formrow {

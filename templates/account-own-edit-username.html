@@ -6,7 +6,7 @@
 	</div>
 	<div class="colstack_item">
 		<form action="/user/edit/username/submit/" method="post">
-			<div class="formrow">
+			<div class="formrow real_first_child">
 				<div class="formitem formlabel"><a>Current Username</a></div>
 				<div class="formitem formlabel">{{.CurrentUser.Name}}</div>
 			</div>
@@ -15,7 +15,7 @@
 				<div class="formitem"><input name="account-new-username" type="text" /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem"><button name="account-button" class="formbutton">Update</button></div>
+				<div class="formitem"><button name="account-button" class="formbutton form_middle_button">Update</button></div>
 			</div>
 		</form>
 	</div>

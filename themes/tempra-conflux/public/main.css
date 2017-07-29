@@ -149,6 +149,19 @@ li a {
 	font-size:12px;
 }
 
+.rowlist {
+	font-size: 14px;
+}
+.rowlist .rowitem {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+.rowlist.bgavatars .rowitem {
+	background-repeat: no-repeat;
+	background-size: 40px;
+	padding-left: 48px;
+}
+
 .colblock_left {
 	border: 1px solid #ccc;
 	padding: 0px;

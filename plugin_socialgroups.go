@@ -190,7 +190,7 @@ func install_socialgroups() error {
 			qgen.DB_Table_Column{"joinable","smallint",0,false,false,"0"},
 			qgen.DB_Table_Column{"owner","int",0,false,false,""},
 			qgen.DB_Table_Column{"memberCount","int",0,false,false,""},
-			qgen.DB_Table_Column{"mainForum","int",0,false,false,"0"}, // The board the user lands on when they click ona group, we'll make it possible for group admins to change what users land on
+			qgen.DB_Table_Column{"mainForum","int",0,false,false,"0"}, // The board the user lands on when they click on a group, we'll make it possible for group admins to change what users land on
 			//qgen.DB_Table_Column{"boards","varchar",255,false,false,""}, // Cap the max number of boards at 8 to avoid overflowing the confines of a 64-bit integer?
 			qgen.DB_Table_Column{"backdrop","varchar",200,false,false,""}, // File extension for the uploaded file, or an external link
 			qgen.DB_Table_Column{"createdAt","createdAt",0,false,false,""},

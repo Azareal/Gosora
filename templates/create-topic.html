@@ -4,7 +4,7 @@
 </div>
 <div class="rowblock">
 	<form action="/topic/create/submit/" method="post">
-		<div class="formrow">
+		<div class="formrow real_first_child">
 			<div class="formitem formlabel"><a>Board</a></div>
 			<div class="formitem"><select name="topic-board">
 				{{range .ItemList}}<option {{if eq .ID $.FID}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
@@ -15,10 +15,11 @@
 			<div class="formitem"><input name="topic-name" type="text" placeholder="Topic Name" /></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem"><textarea name="topic-content" placeholder="Insert content here"></textarea></div>
+			<div class="formitem formlabel"><a>Content</a></div>
+			<div class="formitem"><textarea class="large" name="topic-content" placeholder="Insert content here"></textarea></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem"><button name="topic-button" class="formbutton">Create Topic</button></div>
+			<div class="formitem"><button name="topic-button" class="formbutton form_middle_button">Create Topic</button></div>
 		</div>
 	</form>
 </div>

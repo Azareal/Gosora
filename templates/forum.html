@@ -9,8 +9,8 @@
 	</div>
 	{{if ne .CurrentUser.ID 0}}
 		{{if .CurrentUser.Perms.CreateTopic}}
-		<div class="opt create_topic_opt" title="Create Topic"><a href="/topics/create/{{.Forum.ID}}">&#x1F58A;&#xFE0E</a></div>
-		{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic">&#x1F512;&#xFE0E</div>{{end}}
+		<div class="opt create_topic_opt" title="Create Topic"><a href="/topics/create/{{.Forum.ID}}"></a></div>
+		{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic"><a></a></div>{{end}}
 		<div style="clear: both;"></div>
 	{{end}}
 </div>

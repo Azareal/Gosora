@@ -71,7 +71,9 @@ CREATE TABLE `replies`(
 	`createdAt` datetime not null,
 	`createdBy` int not null,
 	`lastEdit` int not null,
-	`lastEditBy` int not null,
+	`lastEditBy` int not null, /* Do we need this? */
+	/*`editIndex` int not null,*/ /* For append edits, e.g. auto-merges? Is this enough for this feature? */
+	`lastUpdated` datetime not null,
 	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
 	`likeCount` int DEFAULT 0 not null,
 	`words` int DEFAULT 1 not null,

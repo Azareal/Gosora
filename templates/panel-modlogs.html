@@ -3,7 +3,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a href="/panel/logs/mod/">Logs</a></div>
 	</div>
-	<div class="colstack_item">
+	<div class="colstack_item rowmenu">
 		<div class="rowitem passive"><a href="/panel/logs/mod/">Moderation Logs</a></div>
 		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>Administration Logs</a></div>{{end}}
 		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>System Logs</a></div>{{end}}
@@ -14,7 +14,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a>Moderation Logs</a></div>
 	</div>
-	<div id="panel_modlogs" class="colstack_item">
+	<div id="panel_modlogs" class="colstack_item rowlist">
 		{{range .Logs}}
 		<div class="rowitem panel_compactrow" style="font-weight: normal;text-transform: none;">
 			<span style="float: left;">

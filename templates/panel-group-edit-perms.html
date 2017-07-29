@@ -3,7 +3,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a href="/panel/groups/edit/{{.ID}}">Group Editor</a></div>
 	</div>
-	<div class="colstack_item">
+	<div class="colstack_item rowmenu">
 		<div class="rowitem passive"><a href="/panel/groups/edit/{{.ID}}">General</a></div>
 		<div class="rowitem passive"><a>Promotions</a></div>
 		<div class="rowitem passive"><a href="/panel/groups/edit/perms/{{.ID}}">Permissions</a></div>
@@ -15,7 +15,7 @@
 		<div class="rowitem"><a>{{.Name}} Group</a></div>
 	</div>
 	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
-	<div id="panel_group" class="colstack_item">
+	<div id="panel_group" class="colstack_item rowlist">
 		{{if .CurrentUser.Perms.EditGroupLocalPerms}}
 		{{range .LocalPerms}}
 		<div class="formrow">
@@ -32,13 +32,13 @@
 		{{end}}
 		{{end}}
 		<div class="formrow">
-			<div class="formitem"><button name="panel-button" class="formbutton">Update Group</button></div>
+			<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">Update Group</button></div>
 		</div>
 	</div>
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a>Extended Permissions</a></div>
 	</div>
-	<div class="colstack_item">
+	<div class="colstack_item rowlist">
 		{{if .CurrentUser.Perms.EditGroupGlobalPerms}}
 		{{range .GlobalPerms}}
 		<div class="formrow">
@@ -55,7 +55,7 @@
 		{{end}}
 		{{end}}
 		<div class="formrow">
-			<div class="formitem"><button name="panel-button" class="formbutton">Update Group</button></div>
+			<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">Update Group</button></div>
 		</div>
 	</div>
 	</form>

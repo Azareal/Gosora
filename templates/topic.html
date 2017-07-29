@@ -1,5 +1,6 @@
 {{template "header.html" . }}
 
+<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}' method="post" />
 {{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
 
 {{if ne .LastPage .Page}}<link rel="prerender" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}" />
@@ -8,23 +9,22 @@
 </div>{{end}}
 
 <div class="rowblock rowhead topic_block">
-	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
-		<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
-			<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a>
-			{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
-			{{if .CurrentUser.Perms.EditTopic}}
-			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />
-			{{if .CurrentUser.Perms.CloseTopic}}<select name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
-				<option>open</option>
-				<option>closed</option>
-			</select>{{end}}
-			<button name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
-			{{end}}
-		</div>
-	</form>
+	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
+		<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a>
+		{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
+		{{if .CurrentUser.Perms.EditTopic}}
+		<input form='edit_topic_form' class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />
+		{{if .CurrentUser.Perms.CloseTopic}}<select form='edit_topic_form' name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
+			<option>open</option>
+			<option>closed</option>
+		</select>{{end}}
+		<button form='edit_topic_form' name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
+		{{end}}
+	</div>
 </div>
+
 <div class="rowblock post_container top_post">
-	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="{{if .Topic.Avatar}}background-image:url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
+	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="{{if .Topic.Avatar}}background-image:url({{.Topic.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
 		<p class="hide_on_edit topic_content user_content" style="margin:0;padding:0;">{{.Topic.Content}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 
@@ -54,7 +54,7 @@
 		<span>{{.ActionType}}</span>
 	</div>
 {{else}}
-	<div class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
+	<div class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
 		<p class="editable_block user_content" style="margin:0;padding:0;">{{.ContentHtml}}</p>
 
 		<span class="controls">

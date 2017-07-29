@@ -5,6 +5,6 @@ go get -u github.com/lib/pq
 echo "Updating bcrypt"
 go get -u golang.org/x/crypto/bcrypt
 echo "Updating gopsutil"
-go get -u github.com/shirou/gopsutil
+go get -u github.com/Azareal/gopsutil
 echo "Updating Gorilla WebSockets"
 go get -u github.com/gorilla/websocket

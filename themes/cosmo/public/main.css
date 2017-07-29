@@ -175,12 +175,18 @@ hr { color: silver; border: 1px solid silver; }
 .rowblock:first-of-type { margin-top: 8px; }
 .rowitem:not(:last-child) { border-bottom: 1px dotted #ccc; }
 
-.datarow {
+.datarow, .rowlist .rowitem {
 	padding-top: 10px;
 	padding-bottom: 10px;
 }
 .rowsmall {
 	font-size:12px;
+}
+
+.rowlist.bgavatars .rowitem {
+	background-repeat: no-repeat;
+	background-size: 40px;
+	padding-left: 47px;
 }
 
 .rowhead .rowitem, .opthead .rowitem, .colstack_head .rowitem, .colhead {

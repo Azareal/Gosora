@@ -77,13 +77,17 @@ li a {
 	text-align: center;
 	border: white solid 1px;
 }
-.menu_alerts .alert_counter:empty { display: none; }
+.menu_alerts .alert_counter:empty {
+	display: none;
+}
 
 .selectedAlert, .selectedAlert:hover {
 	background: white;
 	color: black;
 }
-.menu_alerts .alertList { display: none; }
+.menu_alerts .alertList {
+	display: none;
+}
 
 .selectedAlert .alertList {
 	position: absolute;
@@ -94,10 +98,7 @@ li a {
 	line-height: 16px;
 	width: 300px;
 	right: calc(5% + 7px);
-	border-top: 1px solid #ccc;
-	border-left: 1px solid #ccc;
-	border-right: 1px solid #ccc;
-	border-bottom: 1px solid #ccc;
+	border: 1px solid #ccc;
 	margin-bottom: 10px;
 }
 .alertItem {
@@ -144,8 +145,18 @@ li a {
 	padding: 0px;
 	padding-top: 0px;
 }
-.rowblock:empty { display: none; }
-.rowsmall { font-size:12px; }
+.rowblock:empty {
+	display: none;
+}
+.rowsmall {
+	font-size: 12px;
+}
+
+.rowlist.bgavatars .rowitem {
+	background-repeat: no-repeat;
+	background-size: 50px;
+	padding-left: 58px;
+}
 
 .colblock_left {
 	border: 1px solid #ccc;

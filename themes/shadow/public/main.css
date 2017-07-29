@@ -45,6 +45,7 @@ li {
 .menu_overview {
 	margin-right: 13px;
 	margin-left: 10px;
+	font-size: 16px;
 }
 
 .menu_left:not(.menu_overview) {
@@ -57,7 +58,7 @@ li {
 }
 
 .menu_alerts {
-	float: none;
+	float: right;
 	padding-top: 14px;
 }
 
@@ -94,6 +95,13 @@ a {
 	color: white;
 }
 
+.alert {
+	padding-bottom: 12px;
+	background-color: rgb(61,61,61);
+	padding: 12px;
+	display: block;
+}
+
 .rowblock {
 	margin-left: 8px;
 	margin-right: 8px;
@@ -108,15 +116,15 @@ a {
 	font-size: 15px;
 }
 
-.rowblock:last-child {
+.rowblock:last-child, .colstack_item:last-child {
 	padding-bottom: 10px;
 }
 
 .rowitem, .formitem {
-    padding-bottom: 12px;
-		background-color: rgb(61,61,61);
-		margin-top: 8px;
-		padding: 12px;
+	padding-bottom: 12px;
+	background-color: rgb(61,61,61);
+	margin-top: 8px;
+	padding: 12px;
 }
 
 .rowsmall {
@@ -228,17 +236,11 @@ a {
 	margin-left: 3px;
 }
 
-.topic_reply_form {
-		margin-top: 8px;
+.formrow.real_first_child, .formrow:first-child {
+	margin-top: 8px;
 }
 
-.formitem {
-	margin-top: 0px;
-	padding-bottom: 2px;
-	padding-top: 3px;
-}
-
-.formrow.real_first_child .formitem {
+.formrow.real_first_child .formitem, .formrow:first-child .formitem {
 	padding-top: 12px;
 }
 
@@ -249,6 +251,19 @@ a {
 textarea {
 	background-color: #444444;
 	border-color: #555555;
+	width: calc(100% - 15px);
+	min-height: 80px;
+}
+
+textarea:focus, input:focus, select:focus {
+	outline-color: rgb(95,95,95);
+}
+
+textarea.large {
+	min-height: 120px;
+	margin-top: 1px;
+	padding: 5px;
+	display: block;
 }
 
 .topic_reply_form textarea {
@@ -263,4 +278,272 @@ textarea {
 	padding: 7px;
 	padding-bottom: 6px;
 	font-size: 13px;
+}
+
+.formrow {
+	flex-direction: row;
+	display: flex;
+}
+
+.formitem {
+	margin-top: 0px;
+	padding-bottom: 2px;
+	padding-top: 3px;
+	flex-grow: 2;
+}
+
+.formlabel {
+	flex-grow: 0;
+	width: 20%;
+	padding-top: 9px;
+}
+
+/* If the form label is on the right */
+.formlabel:not(:first-child) {
+	font-size: 15px;
+	flex-grow: 2;
+}
+
+.formrow.real_first_child .formlabel, .formrow:first-child .formlabel {
+	padding-top: 17px;
+}
+
+/* Too big compared to the other items in the Control Panel and Account Panel */
+/*.colstack_item .formrow.real_first_child, .colstack_item .formrow:first-child {
+	margin-top: 8px;
+}*/
+.colstack_item .formrow.real_first_child, .colstack_item .formrow:first-child {
+	margin-top: 3px;
+}
+
+.thin_margins .formrow.real_first_child, .thin_margins .formrow:first-child {
+	margin-top: 5px;
+}
+
+.formitem a {
+	font-size: 14px;
+}
+
+.rowmenu .rowitem, .rowlist .rowitem, .rowlist .formitem {
+	margin-top: 3px;
+	font-size: 13px;
+	padding: 10px;
+}
+
+.rowlist.bgavatars .rowitem {
+	background-repeat: no-repeat;
+	background-size: 40px;
+	padding-left: 46px;
+}
+
+.rowlist .formrow, .rowlist .formrow:first-child {
+	margin-top: 0px;
+}
+
+.formitem input {
+	background-color: #444444;
+	border: 1px solid #555555;
+	color: #999999;
+	padding-bottom: 6px;
+	font-size: 13px;
+
+	padding: 5px;
+ 	width: calc(100% - 16px);
+}
+
+.formitem select {
+	background-color: #444444;
+	border: 1px solid #555555;
+	color: #999999;
+	font-size: 13px;
+	padding: 4px;
+}
+
+.rowlist .formitem select {
+	padding: 2px;
+	font-size: 11px;
+	margin-top: -5px;
+}
+
+input, select, textarea {
+	caret-color: rgb(95,95,95);
+}
+
+.form_middle_button {
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+	margin-top: 5px;
+}
+
+/* Forum View */
+.rowhead {
+	display: flex;
+	flex-direction: row;
+}
+
+.has_opt {
+	margin-right: 0px;
+	display: inline-block;
+	float: left;
+	padding-right: 0px;
+}
+.rowhead .rowitem:not(.has_opt) {
+	width: 100%;
+}
+
+.opt {
+	float: left;
+	margin-top: 8px;
+	height: 30.4px;
+	padding-left: 5px;
+	width: 100%;
+	background-color: rgb(61,61,61);
+	padding-top: 11px;
+}
+.opt a {
+	font-size: 11px;
+}
+
+.create_topic_opt a:before {
+	content: "New Topic";
+}
+.locked_opt a:before {
+	content: "Locked";
+}
+
+/* Profiles */
+#profile_left_lane {
+	width: 220px;
+	margin-top: 5px;
+}
+#profile_left_lane .avatarRow {
+	overflow: hidden;
+	max-height: 220px;
+}
+#profile_left_lane .avatar {
+	width: 100%;
+	margin: 0;
+	display: block;
+}
+#profile_left_lane .username {
+	font-size: 14px;
+	display: block;
+	margin-top: 3px;
+}
+#profile_left_lane .profileName {
+	font-size: 18px;
+}
+#profile_right_lane {
+	width: calc(100% - 245px);
+}
+#profile_right_lane .rowitem {
+	margin-top: 5px;
+}
+#profile_right_lane .colstack_item .formrow.real_first_child, #profile_right_lane .colstack_item .formrow:first-child {
+	margin-top: 5px;
+}
+.simple .user_tag {
+	font-size: 14px;
+}
+
+@media(max-width: 935px) {
+	.simple .user_tag {
+		display: none;
+	}
+	#profile_left_lane {
+		width: 160px;
+	}
+	#profile_left_lane .avatarRow {
+		max-height: 160px;
+	}
+	#profile_left_lane .profileName {
+		font-size: 16px;
+	}
+	#profile_right_lane {
+		width: calc(100% - 185px);
+	}
+}
+
+@media(max-width: 830px) {
+	ul {
+		padding-left: 10px;
+		padding-right: 0px;
+		height: 35px;
+	}
+	li {
+		height: 26px;
+	}
+
+	.menu_overview {
+		margin-right: 9px;
+		margin-left: 0px;
+		font-size: 15px;
+		width: 32px;
+		text-align: center;
+	}
+	.menu_left {
+		margin-right: 7px;
+	}
+	.menu_left:not(.menu_overview) {
+		font-size: 13px;
+		padding-top: 10px;
+	}
+
+	.menu_alerts {
+		padding-top: 9px;
+		float: left;
+		margin-right: 6px;
+	}
+	.alert_counter {
+		border-radius: 8px;
+		font-size: 0px;
+		color: #c80000;
+		left: 2px;
+	}
+	.alert_aftercounter {
+		float: none;
+		margin-right: 0px;
+		font-size: 13px;
+		padding-top: 1.5px;
+	}
+	.has_alerts .alert_aftercounter {
+		position: relative;
+		top: -5px;
+	}
+	.menu_alerts:not(.has_alerts) .alert_counter {
+		display: none;
+	}
+
+	#back {
+		width: calc(100% - 20px);
+	}
+	.opthead, .rowhead, .colstack_head {
+		padding-top: 0px !important;
+		font-size 15px;
+	}
+	.rowblock:not(.opthead):not(.colstack_head):not(.rowhead) .rowitem {
+		font-size: 14px;
+	}
+	.rowsmall {
+		font-size: 11px;
+	}
+}
+
+@media(max-width: 470px) {
+	.menu_create_topic {
+		display: none;
+	}
+}
+
+@media(max-width: 370px) {
+	.menu_profile {
+		display: none;
+	}
+}
+
+@media(max-width: 324px) {
+	ul {
+		padding-left: 5px;
+	}
 }

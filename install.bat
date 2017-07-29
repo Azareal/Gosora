@@ -29,7 +29,7 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 echo Installing the gopsutil library
-go get -u github.com/shirou/gopsutil
+go get -u github.com/Azareal/gopsutil
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

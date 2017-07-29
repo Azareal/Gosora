@@ -5,15 +5,15 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a>Users</a></div>
 	</div>
-	<div id="panel_users" class="colstack_item">
+	<div id="panel_users" class="colstack_item rowlist bgavatars">
 		{{range .ItemList}}
-		<div class="rowitem editable_parent" style="font-weight: normal;text-transform: none;">
+		<div class="rowitem editable_parent" style="{{if .Avatar}}background-image: url('{{.Avatar}}');{{end}}">
 			<a {{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}} "{{end}}class="editable_block">{{.Name}}</a>
 			<a href="/user/{{.ID}}" class="tag-mini">Profile</a>
 			{{if (.Tag) and (.Is_Super_Mod)}}<span style="float: right;"><span class="panel_tag" style="margin-left 4px;">{{.Tag}}</span></span>{{end}}
 
 			<span class="panel_floater">
-				{{if .Is_Banned}}<a href="/users/unban/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">Unban</a>{{else if not .Is_Super_Mod}}<a href="/users/ban/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">Ban</a>{{end}}
+				{{if .Is_Banned}}<a href="/users/unban/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button ban_button">Unban</a>{{else if not .Is_Super_Mod}}<a href="/users/ban/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button ban_button">Ban</a>{{end}}
 				{{if not .Active}}<a href="/users/activate/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">Activate</a>{{end}}
 			</span>
 		</div>

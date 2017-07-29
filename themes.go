@@ -35,6 +35,7 @@ type Theme struct
 	Tag string
 	URL string
 	Sidebars string // Allowed Values: left, right, both, false
+	//DisableMinifier // Is this really a good idea? I don't think themes should be fighting against the minifier
 	Settings map[string]ThemeSetting
 	Templates []TemplateMapping
 	TemplatesMap map[string]string
@@ -154,6 +155,7 @@ func init_themes() {
 }
 
 func add_theme_static_files(theme Theme) {
+	// TO-DO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
 	err := filepath.Walk("./themes/" + theme.Name + "/public", func(path string, f os.FileInfo, err error) error {
 		if dev.DebugMode {
 			log.Print("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")

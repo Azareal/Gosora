@@ -1,0 +1,24 @@
+.rowlist .tag-mini {
+	font-size: 10px;
+	margin-left: 2px;
+}
+
+.panel_right_button {
+	float: right;
+	margin-left: 5px;
+}
+
+#panel_users .ban_button {
+	font-size: 10px;
+	float: none;
+	margin-left: 0px;
+}
+
+#panel_users .ban_button:before {
+	content: "|";
+	margin-right: 4px;
+}
+
+#forum_quick_perms .edit_fields {
+	float: right;
+}
