@@ -1,14 +1,17 @@
 package main
 
-import "log"
-import "sync"
-import "errors"
-import "strings"
-import "strconv"
-import "database/sql"
+import (
+	"fmt"
+	"log"
+	"sync"
+	"errors"
+	"strings"
+	"strconv"
+	"database/sql"
 
-import "./query_gen/lib"
-import "golang.org/x/crypto/bcrypt"
+	"./query_gen/lib"
+	"golang.org/x/crypto/bcrypt"
+)
 
 // TO-DO: Add the watchdog goroutine
 var users UserStore
@@ -19,6 +22,8 @@ type UserStore interface {
 	Get(id int) (*User, error)
 	GetUnsafe(id int) (*User, error)
 	CascadeGet(id int) (*User, error)
+	//BulkCascadeGet(ids []int) ([]*User, error)
+	BulkCascadeGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
 	Set(item *User) error
 	Add(item *User) error
@@ -110,6 +115,114 @@ func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
 		sus.Set(user)
 	}
 	return user, err
+}
+
+// WARNING: We did a little hack to make this as thin and quick as possible to reduce lock contention, use the * Cascade* methods instead for normal use
+func (sus *MemoryUserStore) bulkGet(ids []int) (list []*User) {
+	list = make([]*User,len(ids))
+	sus.RLock()
+	for i, id := range ids {
+		list[i] = sus.items[id]
+	}
+	sus.RUnlock()
+	return list
+}
+
+// TO-DO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
+// TO-DO: ID of 0 should always error?
+func (sus *MemoryUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err error) {
+	var id_count int = len(ids)
+	list = make(map[int]*User)
+	if id_count == 0 {
+		return list, nil
+	}
+
+	var still_here []int
+	slice_list := sus.bulkGet(ids)
+	for i, slice_item := range slice_list {
+		if slice_item != nil {
+			list[slice_item.ID] = slice_item
+		} else {
+			still_here = append(still_here,ids[i])
+		}
+	}
+	ids = still_here
+
+	// If every user is in the cache, then return immediately
+	if len(ids) == 0 {
+		return list, nil
+	}
+
+	var qlist string
+	var uidList []interface{}
+	for _, id := range ids {
+		uidList = append(uidList,strconv.Itoa(id))
+		qlist += "?,"
+	}
+	qlist = qlist[0:len(qlist) - 1]
+
+	stmt, err := qgen.Builder.SimpleSelect("users","uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid IN("+qlist+")","","")
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := stmt.Query(uidList...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		user := &User{Loggedin:true}
+		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+		if err != nil {
+			return nil, err
+		}
+
+		// Initialise the user
+		if user.Avatar != "" {
+			if user.Avatar[0] == '.' {
+				user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+			}
+		} else {
+			user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
+		}
+		user.Link = build_profile_url(name_to_slug(user.Name),user.ID)
+		user.Tag = groups[user.Group].Tag
+		init_user_perms(user)
+
+		// Add it to the cache...
+		sus.Set(user)
+
+		// Add it to the list to be returned
+		list[user.ID] = user
+	}
+
+	// Did we miss any users?
+	if id_count > len(list) {
+		var sid_list string
+		for _, id := range ids {
+			_, ok := list[id]
+			if !ok {
+				sid_list += strconv.Itoa(id) + ","
+			}
+		}
+
+		// We probably don't need this, but it might be useful in case of bugs in BulkCascadeGetMap
+		if sid_list == "" {
+			if dev.DebugMode {
+				fmt.Println("This data is sampled later in the BulkCascadeGetMap function, so it might miss the cached IDs")
+				fmt.Println("id_count",id_count)
+				fmt.Println("ids",ids)
+				fmt.Println("list",list)
+			}
+			return list, errors.New("We weren't able to find a user, but we don't know which one")
+		}
+		sid_list = sid_list[0:len(sid_list) - 1]
+
+		return list, errors.New("Unable to find the users with the following IDs: " + sid_list)
+	}
+
+	return list, nil
 }
 
 func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
@@ -320,6 +433,53 @@ func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 	user.Tag = groups[user.Group].Tag
 	init_user_perms(&user)
 	return &user, err
+}
+
+// TO-DO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
+func (sus *SqlUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err error) {
+	var qlist string
+	var uidList []interface{}
+	for _, id := range ids {
+		uidList = append(uidList,strconv.Itoa(id))
+		qlist += "?,"
+	}
+	qlist = qlist[0:len(qlist) - 1]
+
+	stmt, err := qgen.Builder.SimpleSelect("users","uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid IN("+qlist+")","","")
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := stmt.Query(uidList...)
+	if err != nil {
+		return nil, err
+	}
+
+	list = make(map[int]*User)
+	for rows.Next() {
+		user := &User{Loggedin:true}
+		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+		if err != nil {
+			return nil, err
+		}
+
+		// Initialise the user
+		if user.Avatar != "" {
+			if user.Avatar[0] == '.' {
+				user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+			}
+		} else {
+			user.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(user.ID),1)
+		}
+		user.Link = build_profile_url(name_to_slug(user.Name),user.ID)
+		user.Tag = groups[user.Group].Tag
+		init_user_perms(user)
+
+		// Add it to the list to be returned
+		list[user.ID] = user
+	}
+
+	return list, nil
 }
 
 func (sus *SqlUserStore) BypassGet(id int) (*User, error) {

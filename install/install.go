@@ -160,8 +160,8 @@ config.MaxRequestSize = 5 * megabyte
 
 // Caching
 config.CacheTopicUser = CACHE_STATIC
-config.UserCacheCapacity = 100 // The max number of users held in memory
-config.TopicCacheCapacity = 100 // The max number of topics held in memory
+config.UserCacheCapacity = 120 // The max number of users held in memory
+config.TopicCacheCapacity = 200 // The max number of topics held in memory
 
 // Email
 config.SmtpServer = ""

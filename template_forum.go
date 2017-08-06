@@ -111,9 +111,9 @@ w.Write(forum_19)
 }
 }
 w.Write(forum_20)
-if item.Avatar != "" {
+if item.Creator.Avatar != "" {
 w.Write(forum_21)
-w.Write([]byte(item.Avatar))
+w.Write([]byte(item.Creator.Avatar))
 w.Write(forum_22)
 }
 w.Write(forum_23)
@@ -125,25 +125,40 @@ w.Write([]byte(item.Link))
 w.Write(forum_26)
 w.Write([]byte(item.Title))
 w.Write(forum_27)
-w.Write([]byte(item.UserLink))
+w.Write([]byte(item.Creator.Link))
 w.Write(forum_28)
-w.Write([]byte(item.CreatedByName))
+w.Write([]byte(item.Creator.Name))
 w.Write(forum_29)
 if item.Is_Closed {
 w.Write(forum_30)
 }
+if item.Sticky {
 w.Write(forum_31)
 }
-} else {
 w.Write(forum_32)
-if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+if item.LastUser.Avatar != "" {
 w.Write(forum_33)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write([]byte(item.LastUser.Avatar))
 w.Write(forum_34)
 }
 w.Write(forum_35)
-}
+w.Write([]byte(item.LastUser.Link))
 w.Write(forum_36)
+w.Write([]byte(item.LastUser.Name))
+w.Write(forum_37)
+w.Write([]byte(item.LastReplyAt))
+w.Write(forum_38)
+}
+} else {
+w.Write(forum_39)
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+w.Write(forum_40)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write(forum_41)
+}
+w.Write(forum_42)
+}
+w.Write(forum_43)
 w.Write(footer_0)
 if tmpl_forum_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)

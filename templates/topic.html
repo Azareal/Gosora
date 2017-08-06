@@ -1,6 +1,6 @@
 {{template "header.html" . }}
 
-<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}' method="post" />
+<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}' method="post"></form>
 {{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
 
 {{if ne .LastPage .Page}}<link rel="prerender" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}" />

@@ -61,7 +61,7 @@ type TopicsPage struct
 	Title string
 	CurrentUser User
 	Header HeaderVars
-	ItemList []TopicsRow
+	ItemList []*TopicsRow
 	ExtData ExtData
 }
 
@@ -70,7 +70,7 @@ type ForumPage struct
 	Title string
 	CurrentUser User
 	Header HeaderVars
-	ItemList []TopicUser
+	ItemList []*TopicsRow
 	Forum Forum
 	Page int
 	LastPage int

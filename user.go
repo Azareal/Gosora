@@ -233,6 +233,16 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 		}
 	}
 
+	pusher, ok := w.(http.Pusher)
+	if ok {
+		pusher.Push("/static/main.css", nil)
+		pusher.Push("/static/global.js", nil)
+		pusher.Push("/static/jquery-3.1.1.min.js", nil)
+		// TO-DO: Push the theme CSS files
+		// TO-DO: Push the theme scripts
+		// TO-DO: Push avatars?
+	}
+
 	return headerVars, true
 }
 func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (success bool) {
@@ -266,6 +276,16 @@ func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		}
 	}
 
+	pusher, ok := w.(http.Pusher)
+	if ok {
+		pusher.Push("/static/main.css", nil)
+		pusher.Push("/static/global.js", nil)
+		pusher.Push("/static/jquery-3.1.1.min.js", nil)
+		// TO-DO: Push the theme CSS files
+		// TO-DO: Push the theme scripts
+		// TO-DO: Push avatars?
+	}
+
 	return headerVars, true
 }
 
@@ -276,14 +296,6 @@ func _pre_route(w http.ResponseWriter, r *http.Request) (User,bool) {
 	}
 	if user == &guest_user {
 		return *user, true
-	}
-
-	if user.Is_Super_Admin {
-		user.Perms = AllPerms
-		user.PluginPerms = AllPluginPerms
-	} else {
-		user.Perms = groups[user.Group].Perms
-		user.PluginPerms = groups[user.Group].PluginPerms
 	}
 
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -394,6 +406,14 @@ func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error 
 }
 
 func init_user_perms(user *User) {
+	if user.Is_Super_Admin {
+		user.Perms = AllPerms
+		user.PluginPerms = AllPluginPerms
+	} else {
+		user.Perms = groups[user.Group].Perms
+		user.PluginPerms = groups[user.Group].PluginPerms
+	}
+
 	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin
 	user.Is_Super_Mod = user.Is_Admin || groups[user.Group].Is_Mod
 	user.Is_Mod = user.Is_Super_Mod

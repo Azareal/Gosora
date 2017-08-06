@@ -70,6 +70,18 @@ func route_fstatic(w http.ResponseWriter, r *http.Request){
 	http.ServeFile(w,r,r.URL.Path)
 }*/
 
+// TO-DO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
+// TO-DO: Add a sitemap
+// TO-DO: Add an API so that plugins can register disallowed areas. E.g. /groups/join for plugin_socialgroups
+func route_robots_txt(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(`User-agent: *
+Disallow: /panel/
+Disallow: /topics/create/
+Disallow: /user/edit/
+Disallow: /accounts/
+`))
+}
+
 func route_overview(w http.ResponseWriter, r *http.Request, user User){
 	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
@@ -134,8 +146,9 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 	}
 	qlist = qlist[0:len(qlist) - 1]
 
-	var topicList []TopicsRow
-	stmt, err := qgen.Builder.SimpleLeftJoin("topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar","topics.createdBy = users.uid","parentID IN("+qlist+")","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","")
+	var topicList []*TopicsRow
+	//stmt, err := qgen.Builder.SimpleLeftJoin("topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar","topics.createdBy = users.uid","parentID IN("+qlist+")","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","")
+	stmt, err := qgen.Builder.SimpleSelect("topics","tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount","parentID IN("+qlist+")","sticky DESC, lastReplyAt DESC, createdBy DESC","")
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -146,25 +159,18 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 		InternalError(err,w,r)
 		return
 	}
+	defer rows.Close()
 
-	topicItem := TopicsRow{ID: 0}
+	var reqUserList map[int]bool = make(map[int]bool)
 	for rows.Next() {
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
+		topicItem := TopicsRow{ID: 0}
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount)
 		if err != nil {
 			InternalError(err,w,r)
 			return
 		}
 
 		topicItem.Link = build_topic_url(name_to_slug(topicItem.Title),topicItem.ID)
-		topicItem.UserLink = build_profile_url(name_to_slug(topicItem.CreatedByName),topicItem.CreatedBy)
-
-		if topicItem.Avatar != "" {
-			if topicItem.Avatar[0] == '.' {
-				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
-			}
-		} else {
-			topicItem.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
-		}
 
 		forum := fstore.DirtyGet(topicItem.ParentID)
 		if topicItem.ParentID >= 0 {
@@ -183,17 +189,40 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 			InternalError(err,w,r)
 		}
 
-		if hooks["topics_trow_assign"] != nil {
-			run_vhook("topics_trow_assign", &topicItem, &forum)
+		if hooks["topics_topic_row_assign"] != nil {
+			run_vhook("topics_topic_row_assign", &topicItem, &forum)
 		}
-		topicList = append(topicList, topicItem)
+		topicList = append(topicList, &topicItem)
+		reqUserList[topicItem.CreatedBy] = true
+		reqUserList[topicItem.LastReplyBy] = true
 	}
 	err = rows.Err()
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	rows.Close()
+
+	// Convert the user ID map to a slice, then bulk load the users
+	var idSlice []int = make([]int,len(reqUserList))
+	var i int
+	for userID, _ := range reqUserList {
+		idSlice[i] = userID
+		i++
+	}
+
+	// TO-DO: What if a user is deleted via the Control Panel?
+	userList, err := users.BulkCascadeGetMap(idSlice)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+
+	// Second pass to the add the user data
+	// TO-DO: Use a pointer to TopicsRow instead of TopicsRow itself?
+	for _, topicItem := range topicList {
+		topicItem.Creator = userList[topicItem.CreatedBy]
+		topicItem.LastUser = userList[topicItem.LastReplyBy]
+	}
 
 	pi := TopicsPage{"Topic List",user,headerVars,topicList,extData}
 	if pre_render_hooks["pre_render_topic_list"] != nil {
@@ -268,27 +297,20 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 		InternalError(err,w,r)
 		return
 	}
+	defer rows.Close()
 
-	var topicList []TopicUser
-	var topicItem TopicUser = TopicUser{ID: 0}
+	// TO-DO: Use something other than TopicsRow as we don't need to store the forum name and link on each and every topic item?
+	var topicList []*TopicsRow
+	var reqUserList map[int]bool = make(map[int]bool)
 	for rows.Next() {
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount, &topicItem.CreatedByName, &topicItem.Avatar)
+		var topicItem TopicsRow = TopicsRow{ID: 0}
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount)
 		if err != nil {
 			InternalError(err,w,r)
 			return
 		}
 
 		topicItem.Link = build_topic_url(name_to_slug(topicItem.Title),topicItem.ID)
-		topicItem.UserLink = build_profile_url(name_to_slug(topicItem.CreatedByName),topicItem.CreatedBy)
-
-		if topicItem.Avatar != "" {
-			if topicItem.Avatar[0] == '.' {
-				topicItem.Avatar = "/uploads/avatar_" + strconv.Itoa(topicItem.CreatedBy) + topicItem.Avatar
-			}
-		} else {
-			topicItem.Avatar = strings.Replace(config.Noavatar,"{id}",strconv.Itoa(topicItem.CreatedBy),1)
-		}
-
 		topicItem.LastReplyAt, err = relative_time(topicItem.LastReplyAt)
 		if err != nil {
 			InternalError(err,w,r)
@@ -297,14 +319,37 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 		if hooks["forum_trow_assign"] != nil {
 			run_vhook("forum_trow_assign", &topicItem, &forum)
 		}
-		topicList = append(topicList, topicItem)
+		topicList = append(topicList, &topicItem)
+		reqUserList[topicItem.CreatedBy] = true
+		reqUserList[topicItem.LastReplyBy] = true
 	}
 	err = rows.Err()
 	if err != nil {
 		InternalError(err,w,r)
 		return
 	}
-	rows.Close()
+
+	// Convert the user ID map to a slice, then bulk load the users
+	var idSlice []int = make([]int,len(reqUserList))
+	var i int
+	for userID, _ := range reqUserList {
+		idSlice[i] = userID
+		i++
+	}
+
+	// TO-DO: What if a user is deleted via the Control Panel?
+	userList, err := users.BulkCascadeGetMap(idSlice)
+	if err != nil {
+		InternalError(err,w,r)
+		return
+	}
+
+	// Second pass to the add the user data
+	// TO-DO: Use a pointer to TopicsRow instead of TopicsRow itself?
+	for _, topicItem := range topicList {
+		topicItem.Creator = userList[topicItem.CreatedBy]
+		topicItem.LastUser = userList[topicItem.LastReplyBy]
+	}
 
 	pi := ForumPage{forum.Name,user,headerVars,topicList,*forum,page,last_page,extData}
 	if pre_render_hooks["pre_render_view_forum"] != nil {
@@ -482,6 +527,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		InternalError(err,w,r)
 		return
 	}
+	defer rows.Close()
 
 	replyItem := Reply{ClassName:""}
 	for rows.Next() {
@@ -561,7 +607,6 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		InternalError(err,w,r)
 		return
 	}
-	rows.Close()
 
 	tpage := TopicPage{topic.Title,user,headerVars,replyList,topic,page,last_page,extData}
 	if pre_render_hooks["pre_render_view_topic"] != nil {
@@ -802,7 +847,7 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 	}
 
 	wcount := word_count(content)
-	res, err := create_topic_stmt.Exec(fid,topic_name,content,parse_message(content),ipaddress,wcount,user.ID)
+	res, err := create_topic_stmt.Exec(fid,topic_name,content,parse_message(content),user.ID,ipaddress,wcount,user.ID)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -882,7 +927,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = add_replies_to_topic_stmt.Exec(1,tid)
+	_, err = add_replies_to_topic_stmt.Exec(1,user.ID,tid)
 	if err != nil {
 		InternalError(err,w,r)
 		return
@@ -1922,6 +1967,7 @@ func route_api(w http.ResponseWriter, r *http.Request, user User) {
 				InternalErrorJS(err,w,r)
 				return
 			}
+			defer rows.Close()
 
 			for rows.Next() {
 				err = rows.Scan(&asid,&actor_id,&targetUser_id,&event,&elementType,&elementID)
@@ -1942,7 +1988,6 @@ func route_api(w http.ResponseWriter, r *http.Request, user User) {
 				InternalErrorJS(err,w,r)
 				return
 			}
-			rows.Close()
 
 			if len(msglist) != 0 {
 				msglist = msglist[0:len(msglist)-1]

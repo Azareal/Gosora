@@ -32,7 +32,9 @@ var startTime time.Time
 var templates = template.New("")
 //var no_css_tmpl template.CSS = template.CSS("")
 var settings map[string]interface{} = make(map[string]interface{})
-var external_sites map[string]string = make(map[string]string)
+var external_sites map[string]string = map[string]string{
+	"YT":"https://www.youtube.com/",
+}
 var groups []Group
 var groupCapCount int
 var static_files map[string]SFile = make(map[string]SFile)
@@ -48,6 +50,9 @@ var template_create_topic_handle func(CreateTopicPage,io.Writer) = nil
 func compile_templates() error {
 	var c CTemplateSet
 	user := User{62,build_profile_url("fake-user",62),"Fake User","compiler@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"0.0.0.0.0"}
+	// TO-DO: Do a more accurate level calculation for this?
+	user2 := User{1,build_profile_url("admin-alice",1),"Admin Alice","alice@localhost",1,true,true,true,true,false,false,AllPerms,make(map[string]bool),"",true,"","","","","",58,1000,"127.0.0.1"}
+	user3 := User{2,build_profile_url("admin-fred",62),"Admin Fred","fred@localhost",1,true,true,true,true,false,false,AllPerms,make(map[string]bool),"",true,"","","","","",42,900,"::1"}
 	headerVars := HeaderVars{
 		Site:site,
 		NoticeList:[]string{"test"},
@@ -88,15 +93,15 @@ func compile_templates() error {
 	forums_page := ForumsPage{"Forum List",user,headerVars,forumList,extData}
 	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage",forums_page,varList)
 
-	var topicsList []TopicsRow
-	topicsList = append(topicsList,TopicsRow{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","admin-alice","Admin Alice","","",0,"","","","",58,"General","/forum/general.2"})
+	var topicsList []*TopicsRow
+	topicsList = append(topicsList,&TopicsRow{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",user3.ID,1,"","127.0.0.1",0,1,"classname","",&user2,"",0,&user3,"General","/forum/general.2"})
 	topics_page := TopicsPage{"Topic List",user,headerVars,topicsList,extData}
 	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage",topics_page,varList)
 
-	var topicList []TopicUser
-	topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
+	//var topicList []TopicUser
+	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
 	forum_item := Forum{1,"general","General Forum","Where the general stuff happens",true,"all",0,"",0,"","",0,"",0,""}
-	forum_page := ForumPage{"General Forum",user,headerVars,topicList,forum_item,1,1,extData}
+	forum_page := ForumPage{"General Forum",user,headerVars,topicsList,forum_item,1,1,extData}
 	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage",forum_page,varList)
 
 	log.Print("Writing the templates")
@@ -191,7 +196,6 @@ func main(){
 	}
 
 	init_static_files()
-	external_sites["YT"] = "https://www.youtube.com/"
 
 	log.Print("Initialising the widgets")
 	err = init_widgets()
@@ -298,6 +302,7 @@ func main(){
 	//	pprof.StopCPUProfile()
 	//}
 
+	// TO-DO: Let users run *both* HTTP and HTTPS
 	log.Print("Initialising the HTTP server")
 	if !site.EnableSsl {
 		if site.Port == "" {

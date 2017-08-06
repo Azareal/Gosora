@@ -223,13 +223,13 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleSelect("group_entry_exists","users_groups","gid","name = ''","gid ASC","0,1")
 	
+	adapter.SimpleSelect("get_forum_topics_offset","topics","tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount","parentID = ?","sticky DESC, lastReplyAt DESC, createdBy DESC","?,?")
+	
 	return nil
 }
 
 func write_left_joins(adapter qgen.DB_Adapter) error {
 	adapter.SimpleLeftJoin("get_topic_replies_offset","replies","users","replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType","replies.createdBy = users.uid","tid = ?","","?,?")
-	
-	adapter.SimpleLeftJoin("get_forum_topics_offset","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar","topics.createdBy = users.uid","topics.parentID = ?","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","?,?")
 	
 	adapter.SimpleLeftJoin("get_topic_list","topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar","topics.createdBy = users.uid","","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","")
 	
@@ -253,7 +253,7 @@ func write_inner_joins(adapter qgen.DB_Adapter) error {
 }
 
 func write_inserts(adapter qgen.DB_Adapter) error {
-	adapter.SimpleInsert("create_topic","topics","parentID,title,content,parsed_content,createdAt,lastReplyAt,ipaddress,words,createdBy","?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?")
+	adapter.SimpleInsert("create_topic","topics","parentID,title,content,parsed_content,createdAt,lastReplyAt,lastReplyBy,ipaddress,words,createdBy","?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?")
 	
 	adapter.SimpleInsert("create_report","topics","title,content,parsed_content,createdAt,lastReplyAt,createdBy,data,parentID,css_class","?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,1,'report'")
 
@@ -298,7 +298,7 @@ func write_replaces(adapter qgen.DB_Adapter) error {
 }
 
 func write_updates(adapter qgen.DB_Adapter) error {
-	adapter.SimpleUpdate("add_replies_to_topic","topics","postCount = postCount + ?, lastReplyAt = UTC_TIMESTAMP()","tid = ?")
+	adapter.SimpleUpdate("add_replies_to_topic","topics","postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()","tid = ?")
 	
 	adapter.SimpleUpdate("remove_replies_from_topic","topics","postCount = postCount - ?","tid = ?")
 	

@@ -18,7 +18,8 @@ var vhooks map[string]func(...interface{})interface{} = map[string]func(...inter
 	"forum_check_pre_perms": nil,
 	"intercept_build_widgets": nil,
 	"forum_trow_assign": nil,
-	"topics_trow_assign": nil,
+	"topics_topic_row_assign": nil,
+	//"topics_user_row_assign": nil,
 	"create_group_preappend": nil, // What is this? Investigate!
 	"topic_create_pre_loop": nil,
 }

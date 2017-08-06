@@ -68,24 +68,19 @@ type TopicsRow struct
 	Sticky bool
 	CreatedAt string
 	LastReplyAt string
-	//LastReplyBy int
+	LastReplyBy int
 	ParentID int
 	Status string // Deprecated. Marked for removal. -Is there anything we could use it for?
 	IpAddress string
 	PostCount int
 	LikeCount int
 	ClassName string
+	Data string // Used for report metadata
 
-	UserLink string
-	CreatedByName string
-	Avatar string
+	Creator *User
 	Css template.CSS
 	ContentLines int
-	Tag string
-	URL string
-	URLPrefix string
-	URLName string
-	Level int
+	LastUser *User
 
 	ForumName string //TopicsRow
 	ForumLink string
@@ -99,7 +94,6 @@ func get_topicuser(tid int) (TopicUser,error) {
 			if err != nil {
 				return TopicUser{ID:tid}, err
 			}
-			init_user_perms(user)
 
 			// We might be better off just passing seperate topic and user structs to the caller?
 			return copy_topic_to_topicuser(topic, user), nil
@@ -112,9 +106,7 @@ func get_topicuser(tid int) (TopicUser,error) {
 			if err != nil {
 				return TopicUser{ID:tid}, err
 			}
-			init_user_perms(user)
-			tu := copy_topic_to_topicuser(topic, user)
-			return tu, nil
+			return copy_topic_to_topicuser(topic, user), nil
 		}
 	}
 

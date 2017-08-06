@@ -55,7 +55,7 @@ type SocialGroupPage struct
 	Title string
 	CurrentUser User
 	Header HeaderVars
-	ItemList []TopicUser
+	ItemList []*TopicsRow
 	Forum Forum
 	SocialGroup SocialGroup
 	Page int

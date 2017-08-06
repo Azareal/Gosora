@@ -965,6 +965,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 	}
 	defer rows.Close()
 
+	// TO-DO: Add a UserStore method for iterating over global users
 	for rows.Next() {
 		puser := User{ID: 0,}
 		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.Is_Super_Admin, &puser.Avatar)

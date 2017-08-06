@@ -3,15 +3,23 @@
 	<div class="rowitem"><a>Topic List</a></div>
 </div>
 <div id="topic_list" class="rowblock topic_list">
-	{{range .ItemList}}<div class="rowitem passive datarow {{if .Sticky}}topic_sticky{{else if .Is_Closed}}topic_closed{{end}}" style="{{if .Avatar}}background-image: url({{.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
-		<span class="rowsmall" style="float: right;">
+	{{range .ItemList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .Is_Closed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
+		<span class="topic_inner_right rowsmall" style="float: right;">
 			<span class="replyCount">{{.PostCount}} replies</span><br />
 			<span class="lastReplyAt">{{.LastReplyAt}}</span>
 		</span>
 		<span>
 			<a class="rowtopic" href="{{.Link}}">{{.Title}}</a> {{if .ForumName}}<a class="rowsmall" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
-			<br /><a class="rowsmall" href="{{.UserLink}}">Starter: {{.CreatedByName}}</a>
-			{{if .Is_Closed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E{{end}}</span>
+			<br /><a class="rowsmall" href="{{.Creator.Link}}">Starter: {{.Creator.Name}}</a>
+			{{/** TO-DO: Avoid the double '|' when both .Is_Closed and .Sticky are set to true. We could probably do this with CSS **/}}
+			{{if .Is_Closed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>{{end}}
+			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>{{end}}
+		</span>
+	</div>
+	<div class="rowitem topic_right passive datarow" style="{{if .LastUser.Avatar}}background-image: url({{.LastUser.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
+		<span>
+			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
+			<span class="rowsmall lastReplyAt">Last: {{.LastReplyAt}}</span>
 		</span>
 	</div>
 	{{else}}<div class="rowitem passive">There aren't any topics yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">Start one?</a>{{end}}</div>{{end}}

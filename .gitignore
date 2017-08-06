@@ -1,5 +1,7 @@
 tmp/*
 tmp2/*
+cert_test/*
+
 uploads/avatar_*
 uploads/socialgroup_*
 bin/*

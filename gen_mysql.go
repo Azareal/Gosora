@@ -39,8 +39,8 @@ var get_topic_basic_stmt *sql.Stmt
 var get_activity_entry_stmt *sql.Stmt
 var forum_entry_exists_stmt *sql.Stmt
 var group_entry_exists_stmt *sql.Stmt
-var get_topic_replies_offset_stmt *sql.Stmt
 var get_forum_topics_offset_stmt *sql.Stmt
+var get_topic_replies_offset_stmt *sql.Stmt
 var get_topic_list_stmt *sql.Stmt
 var get_topic_user_stmt *sql.Stmt
 var get_topic_by_reply_stmt *sql.Stmt
@@ -310,14 +310,14 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing get_topic_replies_offset statement.")
-	get_topic_replies_offset_stmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ? LIMIT ?,?")
+	log.Print("Preparing get_forum_topics_offset statement.")
+	get_forum_topics_offset_stmt, err = db.Prepare("SELECT `tid`,`title`,`content`,`createdBy`,`is_closed`,`sticky`,`createdAt`,`lastReplyAt`,`lastReplyBy`,`parentID`,`postCount`,`likeCount` FROM `topics` WHERE `parentID` = ? ORDER BY sticky DESC,lastReplyAt DESC,createdBy DESC LIMIT ?,?")
 	if err != nil {
 		return err
 	}
 		
-	log.Print("Preparing get_forum_topics_offset statement.")
-	get_forum_topics_offset_stmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`lastReplyAt`,`topics`.`parentID`,`topics`.`postCount`,`topics`.`likeCount`,`users`.`name`,`users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ? ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC LIMIT ?,?")
+	log.Print("Preparing get_topic_replies_offset statement.")
+	get_topic_replies_offset_stmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ? LIMIT ?,?")
 	if err != nil {
 		return err
 	}
@@ -365,7 +365,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing create_topic statement.")
-	create_topic_stmt, err = db.Prepare("INSERT INTO `topics`(`parentID`,`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?)")
+	create_topic_stmt, err = db.Prepare("INSERT INTO `topics`(`parentID`,`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`lastReplyBy`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -473,7 +473,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing add_replies_to_topic statement.")
-	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyAt` = UTC_TIMESTAMP() WHERE `tid` = ?")
+	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyBy` = ?,`lastReplyAt` = UTC_TIMESTAMP() WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}

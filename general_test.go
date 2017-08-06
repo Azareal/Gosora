@@ -57,16 +57,16 @@ func gloinit() {
 	}
 
 	if config.CacheTopicUser == CACHE_STATIC {
-		users = NewMemoryUserStore(user_cache_capacity)
-		topics = NewMemoryTopicStore(topic_cache_capacity)
+		users = NewMemoryUserStore(config.UserCacheCapacity)
+		topics = NewMemoryTopicStore(config.TopicCacheCapacity)
 	} else {
 		users = NewSqlUserStore()
 		topics = NewSqlTopicStore()
 	}
 
 	init_static_files()
-	external_sites["YT"] = "https://www.youtube.com/"
 	//log.SetOutput(os.Stdout)
+	auth = NewDefaultAuth()
 
 	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	gloinited = true
@@ -82,19 +82,19 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 	user := User{0,"bob","Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"127.0.0.1"}
 	admin := User{1,"admin-alice","Admin Alice","admin@localhost",0,true,true,true,true,true,false,AllPerms,make(map[string]bool),"",false,"","","","","",-1,58,"127.0.0.1"}
 
-	topic := TopicUser{Title: "Lol",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"}
+	topic := TopicUser{Title: "Lol",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",ClassName: "",Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"}
 
 	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry","Jerry",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry2","Jerry2",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry3","Jerry3",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry4","Jerry4",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry5","Jerry5",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry6","Jerry6",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry7","Jerry7",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry8","Jerry8",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry9","Jerry9",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry10","Jerry10",config.DefaultGroup,"",0,0,"",no_css_tmpl,0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry","Jerry",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry2","Jerry2",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry3","Jerry3",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry4","Jerry4",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry5","Jerry5",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry6","Jerry6",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry7","Jerry7",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry8","Jerry8",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry9","Jerry9",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
+	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry10","Jerry10",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
 
 	headerVars := HeaderVars{
 		NoticeList:[]string{"test"},
@@ -103,6 +103,7 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 		Widgets:PageWidgets{
 			LeftSidebar: template.HTML("lalala"),
 		},
+		Site:site,
 	}
 
 	tpage := TopicPage{"Topic Blah",user,headerVars,replyList,topic,1,1,extData}
@@ -167,20 +168,20 @@ func BenchmarkTopicTemplateSerial(b *testing.B) {
 func BenchmarkTopicsTemplateSerial(b *testing.B) {
 	b.ReportAllocs()
 
-	user := User{0,"bob","Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"127.0.0.1"}
-	admin := User{1,"admin-alice","Admin Alice","admin@localhost",0,true,true,true,true,true,false,AllPerms,make(map[string]bool),"",false,"","","","","",-1,58,"127.0.0.1"}
+	user := User{0,build_profile_url("bob",0),"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"127.0.0.1"}
+	admin := User{1,build_profile_url("admin-alice",1),"Admin Alice","admin@localhost",0,true,true,true,true,true,false,AllPerms,make(map[string]bool),"",false,"","","","","Admin",58,580,"127.0.0.1"}
 
-	var topicList []TopicsRow
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
-	topicList = append(topicList, TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,UserLink:build_profile_url("admin-alice",1),CreatedByName:"Admin Alice",Css: no_css_tmpl,Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"})
+	var topicList []*TopicsRow
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
+	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
 
 	headerVars := HeaderVars{
 		NoticeList:[]string{"test"},
@@ -189,6 +190,7 @@ func BenchmarkTopicsTemplateSerial(b *testing.B) {
 		Widgets:PageWidgets{
 			LeftSidebar: template.HTML("lalala"),
 		},
+		Site:site,
 	}
 
 	w := ioutil.Discard
@@ -242,8 +244,7 @@ func BenchmarkStaticRouteParallel(b *testing.B) {
 	})
 }
 
-// TO-DO: Make these routes compatible with the changes to the router
-/*
+// TO-DO: Swap out LocalError for a panic for this?
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	b.ReportAllocs()
 	if !gloinited {
@@ -253,10 +254,10 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		admin, err := users.CascadeGet(1)
 		if err != nil {
-			panic(err)
+			b.Fatal(err)
 		}
 		if !admin.Is_Admin {
-			panic("UID1 is not an admin")
+			b.Fatal("UID1 is not an admin")
 		}
 		admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
 		admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
@@ -266,11 +267,16 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 		topic_req_admin := topic_req
 		topic_req_admin.AddCookie(&admin_uid_cookie)
 		topic_req_admin.AddCookie(&admin_session_cookie)
-		topic_handler := http.HandlerFunc(route_topic_id)
+
+		// Deal with the session stuff, etc.
+		user, ok := PreRoute(topic_w,topic_req_admin)
+		if !ok {
+			b.Fatal("Mysterious error!")
+		}
 
 		for pb.Next() {
 			topic_w.Body.Reset()
-			topic_handler.ServeHTTP(topic_w,topic_req_admin)
+			route_topic_id(topic_w,topic_req_admin,user)
 		}
 	})
 }
@@ -284,14 +290,15 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		topic_w := httptest.NewRecorder()
 		topic_req := httptest.NewRequest("get","/topic/1",bytes.NewReader(nil))
-		topic_handler := http.HandlerFunc(route_topic_id)
 		for pb.Next() {
 			topic_w.Body.Reset()
-			topic_handler.ServeHTTP(topic_w,topic_req)
+			route_topic_id(topic_w,topic_req,guest_user)
 		}
 	})
 }
 
+// TO-DO: Make these routes compatible with the changes to the router
+/*
 func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 	b.ReportAllocs()
 	if !gloinited {
@@ -619,7 +626,7 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		tu := TopicUser{Css: no_css_tmpl}
+		var tu TopicUser
 		for pb.Next() {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
@@ -640,7 +647,7 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		tu := TopicUser{Css: no_css_tmpl}
+		var tu TopicUser
 		for pb.Next() {
 			err := get_topic_user_stmt.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
@@ -656,7 +663,7 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 
 func BenchmarkQueriesSerial(b *testing.B) {
 	b.ReportAllocs()
-	tu := TopicUser{Css: no_css_tmpl}
+	var tu TopicUser
 	b.Run("topic", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
@@ -686,7 +693,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 		}
 	})
 
-	replyItem := Reply{Css: no_css_tmpl}
+	var replyItem Reply
 	var is_super_admin bool
 	var group int
 	b.Run("topic_replies_scan", func(b *testing.B) {

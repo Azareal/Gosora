@@ -140,9 +140,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		extra_data = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
 		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
 	}
-	//fmt.Println("prefix:",prefix)
-	//fmt.Println("req.URL.Path:",req.URL.Path)
-	//fmt.Println("extra_data:",extra_data)
+	
+	if dev.SuperDebug {
+		fmt.Println("before route_static")
+		fmt.Println("prefix:",prefix)
+		fmt.Println("req.URL.Path:",req.URL.Path)
+		fmt.Println("extra_data:",extra_data)
+	}
 	
 	if prefix == "/static" {
 		req.URL.Path += extra_data
@@ -174,6 +178,18 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.UploadHandler(w,req)
 			return
 		case "":
+			// Stop the favicons, robots.txt file, etc. resolving to the topics list
+			// TO-DO: Add support for favicons and robots.txt files
+			switch(extra_data) {
+				case "robots.txt":
+					route_robots_txt(w,req)
+					return
+			}
+			
+			if extra_data != "" {
+				NotFound(w,req)
+				return
+			}
 			config.DefaultRoute(w,req,user)
 			return
 		//default: NotFound(w,req)

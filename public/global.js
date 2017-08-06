@@ -95,7 +95,10 @@ $(document).ready(function(){
 	}
 
 	if(window["WebSocket"]) {
-		conn = new WebSocket("ws://" + document.location.host + "/ws/");
+		if(window.location.protocol == "https:")
+			conn = new WebSocket("wss://" + document.location.host + "/ws/");
+		else conn = new WebSocket("ws://" + document.location.host + "/ws/");
+		
 		conn.onopen = function() {
 			conn.send("page " + document.location.pathname + '\r');
 		}

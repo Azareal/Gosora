@@ -251,6 +251,7 @@ a {
 textarea {
 	background-color: #444444;
 	border-color: #555555;
+	color: #999999;
 	width: calc(100% - 15px);
 	min-height: 80px;
 }
@@ -412,6 +413,23 @@ input, select, textarea {
 	content: "Locked";
 }
 
+/* Temporary hack, so that I don't break the topic lists of the other themes */
+.topic_list .topic_inner_right {
+	display: none;
+}
+.topic_list .rowitem {
+	float: left;
+	overflow: hidden;
+}
+.topic_list .topic_left {
+	width: calc(100% - 284px);
+}
+.topic_list .topic_right {
+	height: 35px;
+	margin-left: 8px;
+	width: 108px;
+}
+
 /* Profiles */
 #profile_left_lane {
 	width: 220px;
@@ -451,6 +469,32 @@ input, select, textarea {
 	background-repeat: no-repeat, repeat-y;
 	background-size: 128px;
 	padding-left: 136px;
+}
+
+.colstack_grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	margin-top: 3px;
+	grid-gap: 3px;
+	text-align: center;
+}
+
+.grid_stat, .grid_istat {
+	padding-top: 10px;
+	padding-bottom: 10px;
+	font-size: 13px;
+	background-color: rgb(61,61,61);
+}
+
+#panel_dashboard_right .colstack_head .rowitem {
+	padding: 10px;
+}
+
+#panel_dashboard_right .colstack_head a {
+	text-align: center;
+	width: 100%;
+	display: block;
+	font-size: 15px;
 }
 
 @media(max-width: 935px) {
@@ -552,6 +596,21 @@ input, select, textarea {
 	}
 	#profile_right_lane {
 		width: calc(100% - 125px);
+	}
+}
+
+@media(max-width: 500px) {
+	.topic_list .topic_inner_right {
+		display: block;
+	}
+	.topic_list .rowitem {
+		float: none;
+	}
+	.topic_list .topic_left {
+		width: calc(100% - 84px);
+	}
+	.topic_list .topic_right {
+		display: none;
 	}
 }
 

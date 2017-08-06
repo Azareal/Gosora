@@ -3,6 +3,7 @@ package main
 import "strconv"
 import "testing"
 
+// TO-DO: Replace the soft tabs with hard ones
 // go test -v
 
 type ME_Pair struct
@@ -16,6 +17,7 @@ func addMEPair(msgList []ME_Pair, msg string, expects string) []ME_Pair {
 }
 
 func TestBBCodeRender(t *testing.T) {
+  //t.Skip()
   var res string
   var msgList []ME_Pair
   msgList = addMEPair(msgList,"hi","hi")
@@ -27,10 +29,12 @@ func TestBBCodeRender(t *testing.T) {
   msgList = addMEPair(msgList,"[i]hi[/i]","<i>hi</i>")
   msgList = addMEPair(msgList,"[s]hi[/s]","<s>hi</s>")
   msgList = addMEPair(msgList,"[c]hi[/c]","[c]hi[/c]")
-  msgList = addMEPair(msgList,"[b]hi[/i]","[b]hi[/i]")
-  msgList = addMEPair(msgList,"[/b]hi[b]","[/b]hi[b]")
-  msgList = addMEPair(msgList,"[/b]hi[/b]","[/b]hi[/b]")
-  msgList = addMEPair(msgList,"[b][b]hi[/b]","<b>hi</b>")
+  if !testing.Short() {
+    msgList = addMEPair(msgList,"[b]hi[/i]","[b]hi[/i]")
+    msgList = addMEPair(msgList,"[/b]hi[b]","[/b]hi[b]")
+    msgList = addMEPair(msgList,"[/b]hi[/b]","[/b]hi[/b]")
+    msgList = addMEPair(msgList,"[b][b]hi[/b]","<b>hi</b>")
+  }
   msgList = addMEPair(msgList,"[b][b]hi","[b][b]hi")
   msgList = addMEPair(msgList,"[b][b][b]hi","[b][b][b]hi")
   msgList = addMEPair(msgList,"[/b]hi","[/b]hi")
@@ -185,6 +189,7 @@ func TestBBCodeRender(t *testing.T) {
 }
 
 func TestMarkdownRender(t *testing.T) {
+  //t.Skip()
   var res string
   var msgList []ME_Pair
   msgList = addMEPair(msgList,"hi","hi")

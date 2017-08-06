@@ -50,7 +50,7 @@ func _gen_pgsql() (err error) {
 	}
 	
 	log.Print("Preparing add_replies_to_topic statement.")
-	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyAt` = UTC_TIMESTAMP() WHERE `tid` = ?")
+	add_replies_to_topic_stmt, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` + ?,`lastReplyBy` = ?,`lastReplyAt` = LOCALTIMESTAMP() WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func _gen_pgsql() (err error) {
 	}
 		
 	log.Print("Preparing update_forum_cache statement.")
-	update_forum_cache_stmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = UTC_TIMESTAMP() WHERE `fid` = ?")
+	update_forum_cache_stmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = LOCALTIMESTAMP() WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}

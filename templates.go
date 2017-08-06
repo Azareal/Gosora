@@ -13,6 +13,7 @@ import (
 	"text/template/parse"
 )
 
+// TO-DO: Turn this file into a library
 var ctemplates []string
 var tmpl_ptr_map map[string]interface{} = make(map[string]interface{})
 var text_overlap_list map[string]int
@@ -58,6 +59,10 @@ type CTemplateSet struct
 }
 
 func (c *CTemplateSet) compile_template(name string, dir string, expects string, expectsInt interface{}, varList map[string]VarItem) (out string) {
+	if dev.DebugMode {
+		fmt.Println("Compiling template '" + name + "'")
+	}
+
 	c.dir = dir
 	c.doImports = true
 	c.funcMap = map[string]interface{}{
@@ -354,9 +359,14 @@ func (c *CTemplateSet) compile_subswitch(varholder string, holdreflect reflect.V
 					}
 				}
 
+				if !cur.IsValid() {
+					panic(varholder + varbit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+				}
+
 				cur = cur.FieldByName(id)
 				if cur.Kind() == reflect.Interface {
 					cur = cur.Elem()
+					// TO-DO: Surely, there's a better way of detecting this?
 					/*if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
 						varbit = "string(" + varbit + "." + id + ")"*/
 					//if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
@@ -798,6 +808,21 @@ func (c *CTemplateSet) compile_if_varsub(varname string, varholder string, templ
 		}
 		if bit == "" {
 			continue
+		}
+
+		// TO-DO: Fix this up so that it works for regular pointers and not just struct pointers. Ditto for the other cur.Kind() == reflect.Ptr we have in this file
+		if cur.Kind() == reflect.Ptr {
+			if dev.SuperDebug {
+				fmt.Println("Looping over pointer")
+			}
+			for cur.Kind() == reflect.Ptr {
+				cur = cur.Elem()
+			}
+
+			if dev.SuperDebug {
+				fmt.Println("Data Kind:",cur.Kind().String())
+				fmt.Println("Field Bit:",bit)
+			}
 		}
 
 		cur = cur.FieldByName(bit)

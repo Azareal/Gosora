@@ -37,7 +37,42 @@ func TestUserStore(t *testing.T) {
   }
 
   if user.ID != 1 {
-    t.Error("user.ID doesn't not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
+    t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
+  }
+
+  // TO-DO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
+  var userList map[int]*User
+  userList, err = users.BulkCascadeGetMap([]int{-1})
+  if err == nil {
+    t.Error("UID #-1 shouldn't exist")
+  }
+
+  userList, err = users.BulkCascadeGetMap([]int{0})
+  if err == nil {
+    t.Error("UID #0 shouldn't exist")
+  }
+
+  userList, err = users.BulkCascadeGetMap([]int{1})
+  if err == ErrNoRows {
+    t.Error("Couldn't find UID #1")
+  } else if err != nil {
+    t.Fatal(err)
+  }
+
+  if len(userList) == 0 {
+    t.Error("The returned map is empty for UID #0")
+  } else if len(userList) > 1 {
+    t.Error("Too many results were returned for UID #0")
+  }
+
+  user, ok := userList[1]
+  if !ok {
+    t.Error("We couldn't find UID #0 in the returned map")
+    t.Error("userList",userList)
+  }
+
+  if user.ID != 1 {
+    t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
   }
 }
 
