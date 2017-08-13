@@ -34,7 +34,7 @@ func LogError(err error) {
 	log.Fatal("")
 }
 
-func InternalError(err error, w http.ResponseWriter, r *http.Request) {
+func InternalError(err error, w http.ResponseWriter) {
 	w.Write(error_internal)
 	log.Print(err)
 	debug.PrintStack()

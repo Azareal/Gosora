@@ -117,9 +117,10 @@ func create_tables(adapter qgen.DB_Adapter) error {
 		},
 	)
 	
+	// Coming Soon!
 	// What should we do about global penalties? Put them on the users table for speed? Or keep them here?
 	// Should we add IP Penalties?
-	qgen.Install.CreateTable("users_penalties","","",
+	/*qgen.Install.CreateTable("users_penalties","","",
 		[]qgen.DB_Table_Column{
 			qgen.DB_Table_Column{"uid","int",0,false,false,""},
 			qgen.DB_Table_Column{"element_id","int",0,false,false,""},
@@ -143,7 +144,7 @@ func create_tables(adapter qgen.DB_Adapter) error {
 			qgen.DB_Table_Column{"expiry","duration",0,false,false,""}, // TO-DO: Implement the duration parsing code on the adapter side
 		},
 		[]qgen.DB_Table_Key{},
-	)
+	)*/
 	
 	return nil
 }

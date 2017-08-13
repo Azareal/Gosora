@@ -76,16 +76,16 @@ func _markdown_parse(msg string, n int) string {
 
 	var outbytes []byte
 	var lastElement int
-	//fmt.Println("enter message loop")
-	//fmt.Printf("Message: %v\n",strings.Replace(msg,"\r","\\r",-1))
+	//log.Print("enter message loop")
+	//log.Print("Message: %v\n",strings.Replace(msg,"\r","\\r",-1))
 
 	for index := 0; index < len(msg); index++ {
-		/*//fmt.Println("--OUTER MARKDOWN LOOP START--")
-		//fmt.Println("index",index)
-		//fmt.Println("msg[index]",msg[index])
-		//fmt.Println("string(msg[index])",string(msg[index]))
-		//fmt.Println("--OUTER MARKDOWN LOOP END--")
-		//fmt.Println(" ")*/
+		/*//log.Print("--OUTER MARKDOWN LOOP START--")
+		//log.Print("index",index)
+		//log.Print("msg[index]",msg[index])
+		//log.Print("string(msg[index])",string(msg[index]))
+		//log.Print("--OUTER MARKDOWN LOOP END--")
+		//log.Print(" ")*/
 
 		switch(msg[index]) {
 			case '_':
@@ -135,45 +135,45 @@ func _markdown_parse(msg string, n int) string {
 				lastElement = index
 				index--
 			case '*':
-				//fmt.Println("------")
-				//fmt.Println("[]byte(msg):",[]byte(msg))
-				//fmt.Println("len(msg)",len(msg))
-				//fmt.Println("start index",index)
-				//fmt.Println("start msg[index]",msg[index])
-				//fmt.Println("start string(msg[index])",string(msg[index]))
-				//fmt.Println("start []byte(msg[:index])",[]byte(msg[:index]))
+				//log.Print("------")
+				//log.Print("[]byte(msg):",[]byte(msg))
+				//log.Print("len(msg)",len(msg))
+				//log.Print("start index",index)
+				//log.Print("start msg[index]",msg[index])
+				//log.Print("start string(msg[index])",string(msg[index]))
+				//log.Print("start []byte(msg[:index])",[]byte(msg[:index]))
 
 				var startIndex int = index
 				var italic bool = true
 				var bold bool
 				if (index + 2) < len(msg) {
-					//fmt.Println("start index + 1",index + 1)
-					//fmt.Println("start msg[index]",msg[index + 1])
-					//fmt.Println("start string(msg[index])",string(msg[index + 1]))
+					//log.Print("start index + 1",index + 1)
+					//log.Print("start msg[index]",msg[index + 1])
+					//log.Print("start string(msg[index])",string(msg[index + 1]))
 
 					if msg[index + 1] == '*' {
-						//fmt.Println("two asterisks")
+						//log.Print("two asterisks")
 						bold = true
 						index++
 						if msg[index + 1] != '*' {
 							italic = false
 						} else {
-							//fmt.Println("three asterisks")
+							//log.Print("three asterisks")
 							index++
 						}
 					}
 				}
 
-				//fmt.Println("lastElement",lastElement)
-				//fmt.Println("startIndex:",startIndex)
-				//fmt.Println("msg[startIndex]",msg[startIndex])
-				//fmt.Println("string(msg[startIndex])",string(msg[startIndex]))
+				//log.Print("lastElement",lastElement)
+				//log.Print("startIndex:",startIndex)
+				//log.Print("msg[startIndex]",msg[startIndex])
+				//log.Print("string(msg[startIndex])",string(msg[startIndex]))
 
-				//fmt.Println("preabrupt index",index)
-				//fmt.Println("preabrupt msg[index]",msg[index])
-				//fmt.Println("preabrupt string(msg[index])",string(msg[index]))
-				//fmt.Println("preabrupt []byte(msg[:index])",[]byte(msg[:index]))
-				//fmt.Println("preabrupt msg[:index]",msg[:index])
+				//log.Print("preabrupt index",index)
+				//log.Print("preabrupt msg[index]",msg[index])
+				//log.Print("preabrupt string(msg[index])",string(msg[index]))
+				//log.Print("preabrupt []byte(msg[:index])",[]byte(msg[:index]))
+				//log.Print("preabrupt msg[:index]",msg[:index])
 
 				// Does the string terminate abruptly?
 				if (index + 1) >= len(msg) {
@@ -182,9 +182,9 @@ func _markdown_parse(msg string, n int) string {
 
 				index++
 
-				//fmt.Println("preskip index",index)
-				//fmt.Println("preskip msg[index]",msg[index])
-				//fmt.Println("preskip string(msg[index])",string(msg[index]))
+				//log.Print("preskip index",index)
+				//log.Print("preskip msg[index]",msg[index])
+				//log.Print("preskip string(msg[index])",string(msg[index]))
 
 				index = markdown_skip_until_asterisk(msg,index)
 
@@ -192,16 +192,16 @@ func _markdown_parse(msg string, n int) string {
 					break
 				}
 
-				//fmt.Println("index",index)
-				//fmt.Println("[]byte(msg[:index])",[]byte(msg[:index]))
-				//fmt.Println("msg[index]",msg[index])
+				//log.Print("index",index)
+				//log.Print("[]byte(msg[:index])",[]byte(msg[:index]))
+				//log.Print("msg[index]",msg[index])
 
 				sIndex := startIndex
 				lIndex := index
 				if bold && italic {
-					//fmt.Println("bold & italic final code")
+					//log.Print("bold & italic final code")
 					if (index + 3) >= len(msg) {
-						//fmt.Println("unclosed markdown element @ exit element")
+						//log.Print("unclosed markdown element @ exit element")
 						outbytes = append(outbytes, msg[lastElement:startIndex]...)
 						outbytes = append(outbytes, markdown_unclosed_element...)
 						lastElement = startIndex
@@ -210,9 +210,9 @@ func _markdown_parse(msg string, n int) string {
 					index += 3
 					sIndex += 3
 				} else if bold {
-					//fmt.Println("bold final code")
+					//log.Print("bold final code")
 					if (index + 2) >= len(msg) {
-						//fmt.Println("true unclosed markdown element @ exit element")
+						//log.Print("true unclosed markdown element @ exit element")
 						outbytes = append(outbytes, msg[lastElement:startIndex]...)
 						outbytes = append(outbytes, markdown_unclosed_element...)
 						lastElement = startIndex
@@ -221,9 +221,9 @@ func _markdown_parse(msg string, n int) string {
 					index += 2
 					sIndex += 2
 				} else {
-					//fmt.Println("italic final code")
+					//log.Print("italic final code")
 					if (index + 1) >= len(msg) {
-						//fmt.Println("true unclosed markdown element @ exit element")
+						//log.Print("true unclosed markdown element @ exit element")
 						outbytes = append(outbytes, msg[lastElement:startIndex]...)
 						outbytes = append(outbytes, markdown_unclosed_element...)
 						lastElement = startIndex
@@ -233,11 +233,11 @@ func _markdown_parse(msg string, n int) string {
 					sIndex++
 				}
 
-				//fmt.Println("sIndex",sIndex)
-				//fmt.Println("lIndex",lIndex)
+				//log.Print("sIndex",sIndex)
+				//log.Print("lIndex",lIndex)
 
 				if lIndex <= sIndex {
-					//fmt.Println("unclosed markdown element @ lIndex <= sIndex")
+					//log.Print("unclosed markdown element @ lIndex <= sIndex")
 					outbytes = append(outbytes, msg[lastElement:startIndex]...)
 					outbytes = append(outbytes, markdown_unclosed_element...)
 					lastElement = startIndex
@@ -245,26 +245,26 @@ func _markdown_parse(msg string, n int) string {
 				}
 
 				if sIndex < 0 || lIndex < 0 {
-					//fmt.Println("unclosed markdown element @ sIndex < 0 || lIndex < 0")
+					//log.Print("unclosed markdown element @ sIndex < 0 || lIndex < 0")
 					outbytes = append(outbytes, msg[lastElement:startIndex]...)
 					outbytes = append(outbytes, markdown_unclosed_element...)
 					lastElement = startIndex
 					break
 				}
 
-				//fmt.Println("final sIndex",sIndex)
-				//fmt.Println("final lIndex",lIndex)
-				//fmt.Println("final index",index)
-				//fmt.Println("final msg[index]",msg[index])
-				//fmt.Println("final string(msg[index])",string(msg[index]))
+				//log.Print("final sIndex",sIndex)
+				//log.Print("final lIndex",lIndex)
+				//log.Print("final index",index)
+				//log.Print("final msg[index]",msg[index])
+				//log.Print("final string(msg[index])",string(msg[index]))
 
-				//fmt.Println("final msg[sIndex]",msg[sIndex])
-				//fmt.Println("final string(msg[sIndex])",string(msg[sIndex]))
-				//fmt.Println("final msg[lIndex]",msg[lIndex])
-				//fmt.Println("final string(msg[lIndex])",string(msg[lIndex]))
+				//log.Print("final msg[sIndex]",msg[sIndex])
+				//log.Print("final string(msg[sIndex])",string(msg[sIndex]))
+				//log.Print("final msg[lIndex]",msg[lIndex])
+				//log.Print("final string(msg[lIndex])",string(msg[lIndex]))
 
-				//fmt.Println("[]byte(msg[:sIndex])",[]byte(msg[:sIndex]))
-				//fmt.Println("[]byte(msg[:lIndex])",[]byte(msg[:lIndex]))
+				//log.Print("[]byte(msg[:sIndex])",[]byte(msg[:sIndex]))
+				//log.Print("[]byte(msg[:lIndex])",[]byte(msg[:lIndex]))
 
 				outbytes = append(outbytes, msg[lastElement:startIndex]...)
 
@@ -293,8 +293,7 @@ func _markdown_parse(msg string, n int) string {
 		}
 	}
 
-	//fmt.Println("exit message loop")
-	//fmt.Println(" ")
+	//log.Print("exit message loop")
 
 	if len(outbytes) == 0 {
 		return msg

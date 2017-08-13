@@ -2,7 +2,6 @@
 package main
 
 import "log"
-import "fmt"
 //import "strings"
 import "os"
 
@@ -10,7 +9,7 @@ var route_list []Route
 var route_groups []RouteGroup
 
 func main() {
-	fmt.Println("Generating the router...")
+	log.Println("Generating the router...")
 	
 	// Load all the routes...
 	routes()
@@ -80,7 +79,7 @@ func main() {
 	
 	fdata += `package main
 
-import "fmt"
+import "log"
 import "strings"
 import "sync"
 import "errors"
@@ -142,10 +141,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	if dev.SuperDebug {
-		fmt.Println("before route_static")
-		fmt.Println("prefix:",prefix)
-		fmt.Println("req.URL.Path:",req.URL.Path)
-		fmt.Println("extra_data:",extra_data)
+		log.Print("before route_static")
+		log.Print("prefix:", prefix)
+		log.Print("req.URL.Path:", req.URL.Path)
+		log.Print("extra_data:", extra_data)
 	}
 	
 	if prefix == "/static" {
@@ -155,7 +154,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	if dev.SuperDebug {
-		fmt.Println("before PreRoute")
+		log.Print("before PreRoute")
 	}
 	
 	// Deal with the session stuff, etc.
@@ -165,7 +164,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	if dev.SuperDebug {
-		fmt.Println("after PreRoute")
+		log.Print("after PreRoute")
 	}
 	
 	switch(prefix) {` + out + `
@@ -209,7 +208,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 `
 	write_file("./gen_router.go",fdata)
-	fmt.Println("Successfully generated the router")
+	log.Println("Successfully generated the router")
 }
 
 func write_file(name string, content string) {

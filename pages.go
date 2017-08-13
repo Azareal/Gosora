@@ -389,35 +389,33 @@ func parse_message(msg string/*, user User*/) string {
 	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 
 	// Search for URLs, mentions and hashlinks in the messages...
-	//fmt.Println("Parser Loop!")
+	//log.Print("Parser Loop!")
 	var msgbytes = []byte(msg)
 	var outbytes []byte
 	msgbytes = append(msgbytes,space_gap...)
-	//fmt.Println(`"`+string(msgbytes)+`"`)
+	//log.Print(`"`+string(msgbytes)+`"`)
 	lastItem := 0
 	i := 0
 	for ; len(msgbytes) > (i + 1); i++ {
-		//fmt.Println("Index:")
-		//fmt.Println(i)
-		//fmt.Println("Index Item:")
-		//fmt.Println(msgbytes[i])
+		//log.Print("Index:",i)
+		//log.Print("Index Item:",msgbytes[i])
 		//if msgbytes[i] == 10 {
-		//	fmt.Println("NEWLINE")
+		//	log.Print("NEWLINE")
 		//} else if msgbytes[i] == 32 {
-		//	fmt.Println("SPACE")
+		//	log.Print("SPACE")
 		//} else {
-		//	fmt.Println(string(msgbytes[i]))
+		//	log.Print("string(msgbytes[i])",string(msgbytes[i]))
 		//}
-		//fmt.Println("End Index")
+		//log.Print("End Index")
 		if (i==0 && (msgbytes[0] > 32)) || ((msgbytes[i] < 33) && (msgbytes[i + 1] > 32)) {
-			//fmt.Println("IN")
-			//fmt.Println(msgbytes[i])
+			//log.Print("IN")
+			//log.Print(msgbytes[i])
 			if (i != 0) || msgbytes[i] < 33 {
 				i++
 			}
 
 			if msgbytes[i]=='#' {
-				//fmt.Println("IN #")
+				//log.Print("IN #")
 				if bytes.Equal(msgbytes[i+1:i+5],[]byte("tid-")) {
 					outbytes = append(outbytes,msgbytes[lastItem:i]...)
 					i += 5
@@ -441,12 +439,12 @@ func parse_message(msg string/*, user User*/) string {
 					outbytes = append(outbytes, url_close...)
 					lastItem = i
 
-					//fmt.Println(string(msgbytes))
-					//fmt.Println(msgbytes)
-					//fmt.Println(msgbytes[lastItem - 1])
-					//fmt.Println(lastItem - 1)
-					//fmt.Println(msgbytes[lastItem])
-					//fmt.Println(lastItem)
+					//log.Print("string(msgbytes)",string(msgbytes))
+					//log.Print(msgbytes)
+					//log.Print(msgbytes[lastItem - 1])
+					//log.Print(lastItem - 1)
+					//log.Print(msgbytes[lastItem])
+					//log.Print(lastItem)
 				} else if bytes.Equal(msgbytes[i+1:i+5],[]byte("rid-")) {
 					outbytes = append(outbytes,msgbytes[lastItem:i]...)
 					i += 5
@@ -494,7 +492,7 @@ func parse_message(msg string/*, user User*/) string {
 					// TO-DO: Forum Shortcode Link
 				}
 			} else if msgbytes[i]=='@' {
-				//fmt.Println("IN @")
+				//log.Print("IN @")
 				outbytes = append(outbytes,msgbytes[lastItem:i]...)
 				i++
 				start := i
@@ -519,14 +517,14 @@ func parse_message(msg string/*, user User*/) string {
 				outbytes = append(outbytes, url_close...)
 				lastItem = i
 
-				//fmt.Println(string(msgbytes))
-				//fmt.Println(msgbytes)
-				//fmt.Println(msgbytes[lastItem - 1])
-				//fmt.Println("lastItem - 1",lastItem - 1)
-				//fmt.Println("msgbytes[lastItem]",msgbytes[lastItem])
-				//fmt.Println("lastItem",lastItem)
+				//log.Print(string(msgbytes))
+				//log.Print(msgbytes)
+				//log.Print(msgbytes[lastItem - 1])
+				//log.Print("lastItem - 1",lastItem - 1)
+				//log.Print("msgbytes[lastItem]",msgbytes[lastItem])
+				//log.Print("lastItem",lastItem)
 			} else if msgbytes[i]=='h' || msgbytes[i]=='f' || msgbytes[i]=='g' {
-				//fmt.Println("IN hfg")
+				//log.Print("IN hfg")
 				if msgbytes[i + 1]=='t' && msgbytes[i + 2]=='t' && msgbytes[i + 3]=='p' {
 					if msgbytes[i + 4] == 's' && msgbytes[i + 5] == ':' && msgbytes[i + 6] == '/' && msgbytes[i + 7] == '/' {
 						// Do nothing
@@ -562,14 +560,14 @@ func parse_message(msg string/*, user User*/) string {
 	}
 
 	if lastItem != i && len(outbytes) != 0 {
-		//fmt.Println("lastItem:",msgbytes[lastItem])
-		//fmt.Println("lastItem index:")
-		//fmt.Println(lastItem)
-		//fmt.Println("i:")
-		//fmt.Println(i)
-		//fmt.Println("lastItem to end:")
-		//fmt.Println(msgbytes[lastItem:])
-		//fmt.Println("-----")
+		//log.Print("lastItem:",msgbytes[lastItem])
+		//log.Print("lastItem index:")
+		//log.Print(lastItem)
+		//log.Print("i:")
+		//log.Print(i)
+		//log.Print("lastItem to end:")
+		//log.Print(msgbytes[lastItem:])
+		//log.Print("-----")
 		calclen := len(msgbytes) - 10
 		if calclen <= lastItem {
 			calclen = lastItem
@@ -577,8 +575,8 @@ func parse_message(msg string/*, user User*/) string {
 		outbytes = append(outbytes, msgbytes[lastItem:calclen]...)
 		msg = string(outbytes)
 	}
-	//fmt.Println(`"`+string(outbytes)+`"`)
-	//fmt.Println(`"`+msg+`"`)
+	//log.Print(`"`+string(outbytes)+`"`)
+	//log.Print("msg",`"`+msg+`"`)
 
 	msg = strings.Replace(msg,"\n","<br>",-1)
 	if sshooks["parse_assign"] != nil {
@@ -677,7 +675,7 @@ func partial_url_bytes_len(data []byte) int {
 	i := 0
 
 	if datalen >= 6 {
-		//fmt.Println(string(data[0:5]))
+		//log.Print(string(data[0:5]))
 		if bytes.Equal(data[0:6],[]byte("ftp://")) || bytes.Equal(data[0:6],[]byte("git://")) {
 			i = 6
 		} else if datalen >= 7 && bytes.Equal(data[0:7],http_prot_b) {
@@ -689,14 +687,12 @@ func partial_url_bytes_len(data []byte) int {
 
 	for ;datalen > i; i++ {
 		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
-			//fmt.Println("Bad Character:")
-			//fmt.Println(data[i])
+			//log.Print("Bad Character:",data[i])
 			return i
 		}
 	}
 
-	//fmt.Println("Data Length:")
-	//fmt.Println(datalen)
+	//log.Print("Data Length:",datalen)
 	return datalen
 }
 

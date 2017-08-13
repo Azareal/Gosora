@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"sync"
 	"errors"
@@ -210,10 +209,10 @@ func (sus *MemoryUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, er
 		// We probably don't need this, but it might be useful in case of bugs in BulkCascadeGetMap
 		if sid_list == "" {
 			if dev.DebugMode {
-				fmt.Println("This data is sampled later in the BulkCascadeGetMap function, so it might miss the cached IDs")
-				fmt.Println("id_count",id_count)
-				fmt.Println("ids",ids)
-				fmt.Println("list",list)
+				log.Print("This data is sampled later in the BulkCascadeGetMap function, so it might miss the cached IDs")
+				log.Print("id_count",id_count)
+				log.Print("ids",ids)
+				log.Print("list",list)
 			}
 			return list, errors.New("We weren't able to find a user, but we don't know which one")
 		}

@@ -1,7 +1,7 @@
 /* Copyright Azareal 2017 - 2018 */
 package main
 
-import "fmt"
+import "log"
 import "bytes"
 import "sync"
 import "encoding/json"
@@ -100,8 +100,8 @@ func init_widgets() error {
 	widget_update_mutex.Unlock()
 
 	if dev.SuperDebug {
-		fmt.Println("docks.LeftSidebar",docks.LeftSidebar)
-		fmt.Println("docks.RightSidebar",docks.RightSidebar)
+		log.Print("docks.LeftSidebar",docks.LeftSidebar)
+		log.Print("docks.RightSidebar",docks.RightSidebar)
 	}
 
 	return nil

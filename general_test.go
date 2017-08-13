@@ -237,7 +237,7 @@ func BenchmarkStaticRouteParallel(b *testing.B) {
 			static_w.Body.Reset()
 			static_handler.ServeHTTP(static_w,static_req)
 			//if static_w.Code != 200 {
-			//	fmt.Println(static_w.Body)
+			//	pb.Print(static_w.Body)
 			//	panic("HTTP Error!")
 			//}
 		}
@@ -450,8 +450,8 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 			static_w.Body.Reset()
 			static_handler.ServeHTTP(static_w,static_req)
 			//if static_w.Code != 200 {
-			//	fmt.Println(static_w.Body)
-			//	panic("HTTP Error!")
+			//	b.Print(static_w.Body)
+			//	b.Fatal("HTTP Error!")
 			//}
 		}
 	})
@@ -459,7 +459,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	b.Run("topic_admin_recorder", func(b *testing.B) {
 		//f, err := os.Create("routes_bench_topic_cpu.prof")
 		//if err != nil {
-		//	log.Fatal(err)
+		//	b.Fatal(err)
 		//}
 		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
@@ -467,8 +467,8 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 			topic_w.Body.Reset()
 			topic_handler.ServeHTTP(topic_w,topic_req_admin)
 			//if topic_w.Code != 200 {
-			//	fmt.Println(topic_w.Body)
-			//	panic("HTTP Error!")
+			//	b.Print(topic_w.Body)
+			//	b.Fatal("HTTP Error!")
 			//}
 		}
 		//pprof.StopCPUProfile()
@@ -476,7 +476,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	b.Run("topic_guest_recorder", func(b *testing.B) {
 		f, err := os.Create("routes_bench_topic_cpu_2.prof")
 		if err != nil {
-			log.Fatal(err)
+			b.Fatal(err)
 		}
 		pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
@@ -524,7 +524,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	b.Run("forums_guest_recorder", func(b *testing.B) {
 		//f, err := os.Create("routes_bench_forums_cpu_2.prof")
 		//if err != nil {
-		//	log.Fatal(err)
+		//	b.Fatal(err)
 		//}
 		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
@@ -542,7 +542,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	b.Run("topic_admin_recorder_with_plugins", func(b *testing.B) {
 		//f, err := os.Create("routes_bench_topic_cpu.prof")
 		//if err != nil {
-		//	log.Fatal(err)
+		//	b.Fatal(err)
 		//}
 		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
@@ -550,8 +550,8 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 			topic_w.Body.Reset()
 			topic_handler.ServeHTTP(topic_w,topic_req_admin)
 			//if topic_w.Code != 200 {
-			//	fmt.Println(topic_w.Body)
-			//	panic("HTTP Error!")
+			//	b.Print(topic_w.Body)
+			//	b.Fatal("HTTP Error!")
 			//}
 		}
 		//pprof.StopCPUProfile()
@@ -559,7 +559,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	b.Run("topic_guest_recorder_with_plugins", func(b *testing.B) {
 		//f, err := os.Create("routes_bench_topic_cpu_2.prof")
 		//if err != nil {
-		//	log.Fatal(err)
+		//	b.Fatal(err)
 		//}
 		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
@@ -607,7 +607,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 	b.Run("forums_guest_recorder_with_plugins", func(b *testing.B) {
 		//f, err := os.Create("routes_bench_forums_cpu_2.prof")
 		//if err != nil {
-		//	log.Fatal(err)
+		//	b.Fatal(err)
 		//}
 		//pprof.StartCPUProfile(f)
 		for i := 0; i < b.N; i++ {
@@ -651,10 +651,10 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 		for pb.Next() {
 			err := get_topic_user_stmt.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
-				log.Fatal("No rows found!")
+				b.Fatal("No rows found!")
 				return
 			} else if err != nil {
-				log.Fatal(err)
+				b.Fatal(err)
 				return
 			}
 		}
@@ -668,10 +668,10 @@ func BenchmarkQueriesSerial(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
-				log.Fatal("No rows found!")
+				b.Fatal("No rows found!")
 				return
 			} else if err != nil {
-				log.Fatal(err)
+				b.Fatal(err)
 				return
 			}
 		}
@@ -680,16 +680,17 @@ func BenchmarkQueriesSerial(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
 			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			for rows.Next() {}
-			err = rows.Err()
-			if err != nil {
-				log.Fatal(err)
+				b.Fatal(err)
 				return
 			}
 			defer rows.Close()
+
+			for rows.Next() {}
+			err = rows.Err()
+			if err != nil {
+				b.Fatal(err)
+				return
+			}
 		}
 	})
 
@@ -700,22 +701,23 @@ func BenchmarkQueriesSerial(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
 			if err != nil {
-				log.Fatal(err)
+				b.Fatal(err)
 				return
 			}
 			for rows.Next() {
 				err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &is_super_admin, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress)
 				if err != nil {
-					log.Fatal(err)
+					b.Fatal(err)
 					return
 				}
 			}
+			defer rows.Close()
+
 			err = rows.Err()
 			if err != nil {
-				log.Fatal(err)
+				b.Fatal(err)
 				return
 			}
-			defer rows.Close()
 		}
 	})
 }
@@ -1285,10 +1287,10 @@ func TestStaticRoute(t *testing.T) {
 
 	topic_handler.ServeHTTP(topic_w,topic_req_admin)
 	if topic_w.Code != 200 {
-		fmt.Println(topic_w.Body)
-		panic("HTTP Error!")
+		t.Print(topic_w.Body)
+		t.Fatal("HTTP Error!")
 	}
-	fmt.Println("No problems found in the topic-admin route!")
+	t.Print("No problems found in the topic-admin route!")
 }*/
 
 /*func TestTopicGuestRoute(t *testing.T) {
@@ -1305,10 +1307,10 @@ func TestStaticRoute(t *testing.T) {
 
 	topic_handler.ServeHTTP(topic_w,topic_req)
 	if topic_w.Code != 200 {
-		fmt.Println(topic_w.Body)
-		panic("HTTP Error!")
+		t.Print(topic_w.Body)
+		t.Fatal("HTTP Error!")
 	}
-	fmt.Println("No problems found in the topic-guest route!")
+	t.Print("No problems found in the topic-guest route!")
 }*/
 
 // TO-DO: Make these routes compatible with the changes to the router
@@ -1390,10 +1392,9 @@ func TestForumsGuestRoute(t *testing.T) {
 
 	forum_handler.ServeHTTP(forum_w,forum_req_admin)
 	if forum_w.Code != 200 {
-		fmt.Println(forum_w.Body)
-		panic("HTTP Error!")
+		t.Print(forum_w.Body)
+		t.Fatal("HTTP Error!")
 	}
-	fmt.Println("No problems found in the forum-admin route!")
 }*/
 
 /*func TestForumGuestRoute(t *testing.T) {
@@ -1410,10 +1411,9 @@ func TestForumsGuestRoute(t *testing.T) {
 
 	forum_handler.ServeHTTP(forum_w,forum_req)
 	if forum_w.Code != 200 {
-		fmt.Println(forum_w.Body)
-		panic("HTTP Error!")
+		t.Print(forum_w.Body)
+		t.Fatal("HTTP Error!")
 	}
-	fmt.Println("No problems found in the forum-guest route!")
 }*/
 
 /*func TestAlerts(t *testing.T) {
@@ -1436,12 +1436,10 @@ func TestForumsGuestRoute(t *testing.T) {
 	})
 
 	alert_handler.ServeHTTP(alert_w,alert_req)
-	fmt.Println(alert_w.Body)
+	t.Print(alert_w.Body)
 	if alert_w.Code != 200 {
-		panic("HTTP Error!")
+		t.Fatal("HTTP Error!")
 	}
-
-	fmt.Println("No problems found in the alert handler!")
 	db = db_prod
 }*/
 

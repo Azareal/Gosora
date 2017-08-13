@@ -2,12 +2,13 @@
 package main
 
 import (
-	"net/http"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 	"io"
+	"os"
+	"net/http"
 	"html/template"
 	//"runtime/pprof"
 )
@@ -38,14 +39,71 @@ var external_sites map[string]string = map[string]string{
 var groups []Group
 var groupCapCount int
 var static_files map[string]SFile = make(map[string]SFile)
+var logWriter io.Writer = io.MultiWriter(os.Stderr)
 
-var template_topic_handle func(TopicPage,io.Writer) = nil
-var template_topic_alt_handle func(TopicPage,io.Writer) = nil
-var template_topics_handle func(TopicsPage,io.Writer) = nil
-var template_forum_handle func(ForumPage,io.Writer) = nil
-var template_forums_handle func(ForumsPage,io.Writer) = nil
-var template_profile_handle func(ProfilePage,io.Writer) = nil
-var template_create_topic_handle func(CreateTopicPage,io.Writer) = nil
+func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) {
+	mapping, ok := themes[defaultTheme].TemplatesMap["topic"]
+	if !ok {
+		mapping = "topic"
+	}
+	err := templates.ExecuteTemplate(w,mapping + ".html", pi)
+	if err != nil {
+		InternalError(err,w)
+	}
+}
+
+var template_topic_handle func(TopicPage,http.ResponseWriter) = interpreted_topic_template
+var template_topic_alt_handle func(TopicPage,http.ResponseWriter) = interpreted_topic_template
+var template_topics_handle func(TopicsPage,http.ResponseWriter) = func(pi TopicsPage, w http.ResponseWriter) {
+	mapping, ok := themes[defaultTheme].TemplatesMap["topics"]
+	if !ok {
+		mapping = "topics"
+	}
+	err := templates.ExecuteTemplate(w,mapping + ".html", pi)
+	if err != nil {
+		InternalError(err,w)
+	}
+}
+var template_forum_handle func(ForumPage,http.ResponseWriter) = func(pi ForumPage, w http.ResponseWriter) {
+	mapping, ok := themes[defaultTheme].TemplatesMap["forum"]
+	if !ok {
+		mapping = "forum"
+	}
+	err := templates.ExecuteTemplate(w,mapping + ".html", pi)
+	if err != nil {
+		InternalError(err,w)
+	}
+}
+var template_forums_handle func(ForumsPage,http.ResponseWriter) = func(pi ForumsPage, w http.ResponseWriter) {
+	mapping, ok := themes[defaultTheme].TemplatesMap["forums"]
+	if !ok {
+		mapping = "forums"
+	}
+	err := templates.ExecuteTemplate(w,mapping + ".html", pi)
+	if err != nil {
+		InternalError(err,w)
+	}
+}
+var template_profile_handle func(ProfilePage,http.ResponseWriter) = func(pi ProfilePage, w http.ResponseWriter) {
+	mapping, ok := themes[defaultTheme].TemplatesMap["profile"]
+	if !ok {
+		mapping = "profile"
+	}
+	err := templates.ExecuteTemplate(w,mapping + ".html", pi)
+	if err != nil {
+		InternalError(err,w)
+	}
+}
+var template_create_topic_handle func(CreateTopicPage,http.ResponseWriter) = func(pi CreateTopicPage, w http.ResponseWriter) {
+	mapping, ok := themes[defaultTheme].TemplatesMap["create-topic"]
+	if !ok {
+		mapping = "create-topic"
+	}
+	err := templates.ExecuteTemplate(w,mapping + ".html", pi)
+	if err != nil {
+		InternalError(err,w)
+	}
+}
 
 func compile_templates() error {
 	var c CTemplateSet
@@ -71,12 +129,21 @@ func compile_templates() error {
 
 	var varList map[string]VarItem = make(map[string]VarItem)
 	tpage := TopicPage{"Title",user,headerVars,replyList,topic,1,1,extData}
-	topic_id_tmpl := c.compile_template("topic.html","templates/","TopicPage", tpage, varList)
-	topic_id_alt_tmpl := c.compile_template("topic_alt.html","templates/","TopicPage", tpage, varList)
+	topic_id_tmpl, err := c.compile_template("topic.html","templates/","TopicPage", tpage, varList)
+	if err != nil {
+		return err
+	}
+	topic_id_alt_tmpl, err := c.compile_template("topic_alt.html","templates/","TopicPage", tpage, varList)
+	if err != nil {
+		return err
+	}
 
 	varList = make(map[string]VarItem)
 	ppage := ProfilePage{"User 526",user,headerVars,replyList,user,extData}
-	profile_tmpl := c.compile_template("profile.html","templates/","ProfilePage", ppage, varList)
+	profile_tmpl, err := c.compile_template("profile.html","templates/","ProfilePage", ppage, varList)
+	if err != nil {
+		return err
+	}
 
 	var forumList []Forum
 	forums, err := fstore.GetAll()
@@ -91,18 +158,27 @@ func compile_templates() error {
 	}
 	varList = make(map[string]VarItem)
 	forums_page := ForumsPage{"Forum List",user,headerVars,forumList,extData}
-	forums_tmpl := c.compile_template("forums.html","templates/","ForumsPage",forums_page,varList)
+	forums_tmpl, err := c.compile_template("forums.html","templates/","ForumsPage",forums_page,varList)
+	if err != nil {
+		return err
+	}
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList,&TopicsRow{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",user3.ID,1,"","127.0.0.1",0,1,"classname","",&user2,"",0,&user3,"General","/forum/general.2"})
 	topics_page := TopicsPage{"Topic List",user,headerVars,topicsList,extData}
-	topics_tmpl := c.compile_template("topics.html","templates/","TopicsPage",topics_page,varList)
+	topics_tmpl, err := c.compile_template("topics.html","templates/","TopicsPage",topics_page,varList)
+	if err != nil {
+		return err
+	}
 
 	//var topicList []TopicUser
 	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
 	forum_item := Forum{1,"general","General Forum","Where the general stuff happens",true,"all",0,"",0,"","",0,"",0,""}
 	forum_page := ForumPage{"General Forum",user,headerVars,topicsList,forum_item,1,1,extData}
-	forum_tmpl := c.compile_template("forum.html","templates/","ForumPage",forum_page,varList)
+	forum_tmpl, err := c.compile_template("forum.html","templates/","ForumPage",forum_page,varList)
+	if err != nil {
+		return err
+	}
 
 	log.Print("Writing the templates")
 	go write_template("topic", topic_id_tmpl)
@@ -111,7 +187,12 @@ func compile_templates() error {
 	go write_template("forums", forums_tmpl)
 	go write_template("topics", topics_tmpl)
 	go write_template("forum", forum_tmpl)
-	go write_file("./template_list.go","package main\n\n" + c.FragOut)
+	go func() {
+		err := write_file("./template_list.go","package main\n\n" + c.FragOut)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	return nil
 }
@@ -159,6 +240,15 @@ func process_config() {
 }
 
 func main(){
+	// TO-DO: Have a file for each run with the time/date the server started as the file name?
+	// TO-DO: Log panics with recover()
+	f, err := os.OpenFile("./operations.log",os.O_WRONLY|os.O_APPEND|os.O_CREATE,0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logWriter = io.MultiWriter(os.Stderr,f)
+	log.SetOutput(logWriter)
+
 	//if profiling {
 	//	f, err := os.Create("startup_cpu.prof")
 	//	if err != nil {
@@ -172,11 +262,11 @@ func main(){
 	startTime = time.Now()
 	//timeLocation = startTime.Location()
 
-	fmt.Println("Processing configuration data")
+	log.Print("Processing configuration data")
 	process_config()
 
 	init_themes()
-	err := init_database()
+	err = init_database()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -306,12 +396,22 @@ func main(){
 	log.Print("Initialising the HTTP server")
 	if !site.EnableSsl {
 		if site.Port == "" {
-			 site.Port = "80"
+			site.Port = "80"
 		}
 		err = http.ListenAndServe(":" + site.Port, router)
 	} else {
 		if site.Port == "" {
-			 site.Port = "443"
+			site.Port = "443"
+		}
+		if site.Port == "80" || site.Port == "443" {
+			// We should also run the server on port 80
+			// TO-DO: Redirect to port 443
+			go func() {
+				err = http.ListenAndServe(":80", &HttpsRedirect{})
+				if err != nil {
+					log.Fatal(err)
+				}
+			}()
 		}
 		err = http.ListenAndServeTLS(":" + site.Port, config.SslFullchain, config.SslPrivkey, router)
 	}

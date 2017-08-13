@@ -293,7 +293,7 @@ func socialgroups_group_list(w http.ResponseWriter, r *http.Request, user User) 
 
 	rows, err := socialgroups_list_stmt.Query()
   if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -302,7 +302,7 @@ func socialgroups_group_list(w http.ResponseWriter, r *http.Request, user User) 
 		sgItem := SocialGroup{ID:0}
 		err := rows.Scan(&sgItem.ID, &sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Joinable, &sgItem.Owner, &sgItem.MemberCount, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
     if err != nil {
-      InternalError(err,w,r)
+      InternalError(err,w)
       return
     }
 		sgItem.Link = socialgroups_build_group_url(name_to_slug(sgItem.Name),sgItem.ID)
@@ -310,7 +310,7 @@ func socialgroups_group_list(w http.ResponseWriter, r *http.Request, user User) 
   }
   err = rows.Err()
   if err != nil {
-    InternalError(err,w,r)
+    InternalError(err,w)
     return
   }
   rows.Close()
@@ -318,7 +318,7 @@ func socialgroups_group_list(w http.ResponseWriter, r *http.Request, user User) 
 	pi := SocialGroupListPage{"Group List",user,headerVars,sgList,extData}
 	err = templates.ExecuteTemplate(w,"socialgroups_group_list.html", pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -369,7 +369,7 @@ func socialgroups_create_group(w http.ResponseWriter, r *http.Request, user User
 	pi := Page{"Create Group",user,headerVars,tList,nil}
 	err := templates.ExecuteTemplate(w,"socialgroups_create_group.html", pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -396,31 +396,31 @@ func socialgroups_create_group_submit(w http.ResponseWriter, r *http.Request, us
 	// Create the backing forum
 	fid, err := fstore.CreateForum(group_name,"",true,"")
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	res, err := socialgroups_create_group_stmt.Exec(group_name, group_desc, group_active, group_privacy, user.ID, fid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	// Add the main backing forum to the forum list
 	err = socialgroups_attach_forum(int(lastId),fid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = socialgroups_add_member_stmt.Exec(lastId,user.ID,2)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -457,7 +457,7 @@ func socialgroups_member_list(w http.ResponseWriter, r *http.Request, user User)
 
 	rows, err := socialgroups_member_list_join_stmt.Query(sgid)
   if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -466,7 +466,7 @@ func socialgroups_member_list(w http.ResponseWriter, r *http.Request, user User)
 		sgMember := SocialGroupMember{PostCount:0}
 		err := rows.Scan(&sgMember.User.ID,&sgMember.Rank,&sgMember.PostCount,&sgMember.JoinedAt,&sgMember.User.Name, &sgMember.User.Avatar)
     if err != nil {
-      InternalError(err,w,r)
+      InternalError(err,w)
       return
     }
 		sgMember.Link = build_profile_url(name_to_slug(sgMember.User.Name),sgMember.User.ID)
@@ -491,7 +491,7 @@ func socialgroups_member_list(w http.ResponseWriter, r *http.Request, user User)
   }
   err = rows.Err()
   if err != nil {
-    InternalError(err,w,r)
+    InternalError(err,w)
     return
   }
   rows.Close()
@@ -505,7 +505,7 @@ func socialgroups_member_list(w http.ResponseWriter, r *http.Request, user User)
 	}
 	err = templates.ExecuteTemplate(w,"socialgroups_member_list.html", pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -583,7 +583,7 @@ func socialgroups_forum_check(args ...interface{}) (skip interface{}) {
 		if !ok {
 			sgItem, err = socialgroups_get_group(forum.ParentID)
 			if err != nil {
-				InternalError(errors.New("Unable to find the parent group for a forum"),w,r)
+				InternalError(errors.New("Unable to find the parent group for a forum"),w)
 				*success = false
 				return false
 			}
@@ -610,7 +610,7 @@ func socialgroups_forum_check(args ...interface{}) (skip interface{}) {
 		err = socialgroups_get_member_stmt.QueryRow(sgItem.ID,user.ID).Scan(&rank,&posts,&joinedAt)
 		if err != nil && err != ErrNoRows {
 			*success = false
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return false
 		} else if err != nil {
 			return true

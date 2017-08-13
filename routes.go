@@ -29,6 +29,17 @@ func init() {
 	hvars.Site = site
 }
 
+type HttpsRedirect struct {
+}
+
+func (red *HttpsRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	dest := "https://" + req.Host + req.URL.Path
+	if len(req.URL.RawQuery) > 0 {
+		dest += "?" + req.URL.RawQuery
+	}
+	http.Redirect(w,req,dest,http.StatusTemporaryRedirect)
+}
+
 // GET functions
 func route_static(w http.ResponseWriter, r *http.Request){
 	//log.Print("Outputting static file '" + r.URL.Path + "'")
@@ -98,7 +109,7 @@ func route_overview(w http.ResponseWriter, r *http.Request, user User){
 
 	err := templates.ExecuteTemplate(w,"overview.html",pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -124,7 +135,7 @@ func route_custom_page(w http.ResponseWriter, r *http.Request, user User){
 
 	err := templates.ExecuteTemplate(w,"page_" + name,pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -150,13 +161,13 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 	//stmt, err := qgen.Builder.SimpleLeftJoin("topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar","topics.createdBy = users.uid","parentID IN("+qlist+")","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","")
 	stmt, err := qgen.Builder.SimpleSelect("topics","tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount","parentID IN("+qlist+")","sticky DESC, lastReplyAt DESC, createdBy DESC","")
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	rows, err := stmt.Query(fidList...)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
@@ -166,7 +177,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 		topicItem := TopicsRow{ID: 0}
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -178,6 +189,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 			topicItem.ForumLink = forum.Link
 		} else {
 			topicItem.ForumName = ""
+			//topicItem.ForumLink = ""
 		}
 
 		/*topicItem.CreatedAt, err = relative_time(topicItem.CreatedAt)
@@ -186,7 +198,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 		}*/
 		topicItem.LastReplyAt, err = relative_time(topicItem.LastReplyAt)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 		}
 
 		if hooks["topics_topic_row_assign"] != nil {
@@ -198,7 +210,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -213,7 +225,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 	// TO-DO: What if a user is deleted via the Control Panel?
 	userList, err := users.BulkCascadeGetMap(idSlice)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -231,18 +243,12 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User){
 		}
 	}
 
-	if template_topics_handle != nil {
-		template_topics_handle(pi,w)
-	} else {
-		mapping, ok := themes[defaultTheme].TemplatesMap["topics"]
-		if !ok {
-			mapping = "topics"
-		}
-		err = templates.ExecuteTemplate(w,mapping + ".html", pi)
-		if err != nil {
-			InternalError(err,w,r)
-		}
-	}
+	// TO-DO: Is there a more type-safe way of doing this?
+	//RunThemeTemplate(defaultTheme,"topics",pi,w)
+	//RunTemplate(GetThemeTemplate(defaultTheme,"topics"),pi,w)
+	//GetThemeTemplate(defaultTheme,"topics").(func(TopicsPage,http.ResponseWriter))(pi,w)
+	//GetThemeTemplate(defaultTheme,"topics").Execute(pi,w)
+	template_topics_handle(pi,w)
 }
 
 func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string){
@@ -263,7 +269,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 	if !ok {
 		return
 	}
-	//fmt.Printf("%+v\n", groups[user.Group].Forums)
+	//log.Printf("groups[user.Group]: %+v\n", groups[user.Group].Forums)
 	if !user.Perms.ViewTopic {
 		NoPermissions(w,r,user)
 		return
@@ -275,7 +281,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 		NotFound(w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -294,7 +300,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 	}
 	rows, err := get_forum_topics_offset_stmt.Query(fid,offset,config.ItemsPerPage)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
@@ -306,14 +312,14 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 		var topicItem TopicsRow = TopicsRow{ID: 0}
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.Is_Closed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
 		topicItem.Link = build_topic_url(name_to_slug(topicItem.Title),topicItem.ID)
 		topicItem.LastReplyAt, err = relative_time(topicItem.LastReplyAt)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 		}
 
 		if hooks["forum_trow_assign"] != nil {
@@ -325,7 +331,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -340,7 +346,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 	// TO-DO: What if a user is deleted via the Control Panel?
 	userList, err := users.BulkCascadeGetMap(idSlice)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -358,18 +364,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 		}
 	}
 
-	if template_forum_handle != nil {
-		template_forum_handle(pi,w)
-	} else {
-		mapping, ok := themes[defaultTheme].TemplatesMap["forum"]
-		if !ok {
-			mapping = "forum"
-		}
-		err = templates.ExecuteTemplate(w,mapping + ".html", pi)
-		if err != nil {
-			InternalError(err,w,r)
-		}
-	}
+	template_forum_handle(pi,w)
 }
 
 func route_forums(w http.ResponseWriter, r *http.Request, user User){
@@ -385,24 +380,24 @@ func route_forums(w http.ResponseWriter, r *http.Request, user User){
 	if user.Is_Super_Admin {
 		canSee, err = fstore.GetAllIDs()
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
-		//fmt.Println("canSee",canSee)
+		//log.Print("canSee",canSee)
 	} else {
 		group := groups[user.Group]
 		canSee = group.CanSee
-		//fmt.Println("group.CanSee",group.CanSee)
+		//log.Print("group.CanSee",group.CanSee)
 	}
 
 	for _, fid := range canSee {
-		//fmt.Println(forums[fid])
+		//log.Print(forums[fid])
 		var forum Forum = *fstore.DirtyGet(fid)
 		if forum.Active && forum.Name != "" && forum.ParentID == 0 {
 			if forum.LastTopicID != 0 {
 				forum.LastTopicTime, err = relative_time(forum.LastTopicTime)
 				if err != nil {
-					InternalError(err,w,r)
+					InternalError(err,w)
 				}
 			} else {
 				forum.LastTopic = "None"
@@ -422,18 +417,7 @@ func route_forums(w http.ResponseWriter, r *http.Request, user User){
 		}
 	}
 
-	if template_forums_handle != nil {
-		template_forums_handle(pi,w)
-	} else {
-		mapping, ok := themes[defaultTheme].TemplatesMap["forums"]
-		if !ok {
-			mapping = "forums"
-		}
-		err = templates.ExecuteTemplate(w,mapping + ".html", pi)
-		if err != nil {
-			InternalError(err,w,r)
-		}
-	}
+	template_forums_handle(pi,w)
 }
 
 func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
@@ -461,7 +445,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		NotFound(w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	topic.ClassName = ""
@@ -471,7 +455,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 	if !user.Perms.ViewTopic {
-		//fmt.Printf("%+v\n", user.Perms)
+		//log.Printf("user.Perms: %+v\n", user.Perms)
 		NoPermissions(w,r,user)
 		return
 	}
@@ -524,7 +508,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
@@ -533,7 +517,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 	for rows.Next() {
 		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress, &replyItem.LikeCount, &replyItem.ActionType)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -604,7 +588,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -615,18 +599,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		}
 	}
 
-	if template_topic_handle != nil {
-		template_topic_handle(tpage,w)
-	} else {
-		mapping, ok := themes[defaultTheme].TemplatesMap["topic"]
-		if !ok {
-			mapping = "topic"
-		}
-		err = templates.ExecuteTemplate(w,mapping + ".html", tpage)
-		if err != nil {
-			InternalError(err,w,r)
-		}
-	}
+	template_topic_handle(tpage,w)
 }
 
 func route_profile(w http.ResponseWriter, r *http.Request, user User){
@@ -663,7 +636,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 			NotFound(w,r)
 			return
 		} else if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	}
@@ -671,7 +644,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 	// Get the replies..
 	rows, err := get_profile_replies_stmt.Query(puser.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
@@ -679,7 +652,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 	for rows.Next() {
 		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &replyGroup)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -714,7 +687,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -725,14 +698,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User){
 		}
 	}
 
-	if template_profile_handle != nil {
-		template_profile_handle(ppage,w)
-	} else {
-		err = templates.ExecuteTemplate(w,"profile.html",ppage)
-		if err != nil {
-			InternalError(err,w,r)
-		}
-	}
+	template_profile_handle(ppage,w)
 }
 
 func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid string){
@@ -769,7 +735,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid 
 	if user.Is_Super_Admin {
 		canSee, err = fstore.GetAllIDs()
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	} else {
@@ -805,14 +771,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid 
 		}
 	}
 
-	if template_create_topic_handle != nil {
-		template_create_topic_handle(ctpage,w)
-	} else {
-		err = templates.ExecuteTemplate(w,"create-topic.html",ctpage)
-		if err != nil {
-			InternalError(err,w,r)
-		}
-	}
+	template_create_topic_handle(ctpage,w)
 }
 
 // POST functions. Authorised users only.
@@ -849,37 +808,37 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 	wcount := word_count(content)
 	res, err := create_topic_stmt.Exec(fid,topic_name,content,parse_message(content),user.ID,ipaddress,wcount,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	err = fstore.IncrementTopicCount(fid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = add_subscription_stmt.Exec(user.ID,lastId,"topic")
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	http.Redirect(w,r,"/topic/" + strconv.FormatInt(lastId,10), http.StatusSeeOther)
 	err = increase_post_user_stats(wcount,user.ID,true,user)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	err = fstore.UpdateLastTopic(topic_name,int(lastId),user.Name,user.ID,"",fid)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -900,7 +859,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 		PreError("Couldn't find the parent topic",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -923,35 +882,35 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 	wcount := word_count(content)
 	_, err = create_reply_stmt.Exec(tid,content,parse_message(content),ipaddress,wcount,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = add_replies_to_topic_stmt.Exec(1,user.ID,tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	_, err = update_forum_cache_stmt.Exec(topic.Title,tid,user.Name,user.ID,1)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	res, err := add_activity_stmt.Exec(user.ID,topic.CreatedBy,"reply","topic",tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = notify_watchers_stmt.Exec(lastId)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -966,14 +925,14 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("The destination no longer exists",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	err = increase_post_user_stats(wcount, user.ID, false, user)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 }
@@ -996,7 +955,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 		PreError("The requested topic doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1016,7 +975,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 
 	err = has_liked_topic_stmt.QueryRow(user.ID,tid).Scan(&tid)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	} else if err != ErrNoRows {
 		LocalError("You already liked this!",w,r,user)
@@ -1028,37 +987,37 @@ func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("The target user doesn't exist",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	score := 1
 	_, err = create_like_stmt.Exec(score,tid,"topics",user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = add_likes_to_topic_stmt.Exec(1,tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	res, err := add_activity_stmt.Exec(user.ID,topic.CreatedBy,"like","topic",tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = notify_one_stmt.Exec(topic.CreatedBy,lastId)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1071,7 +1030,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("The liked topic no longer exists",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1096,7 +1055,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) 
 		PreError("You can't like something which doesn't exist!",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1106,7 +1065,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) 
 		PreError("The parent topic doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1126,7 +1085,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) 
 
 	err = has_liked_reply_stmt.QueryRow(user.ID, rid).Scan(&rid)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	} else if err != ErrNoRows {
 		LocalError("You already liked this!",w,r,user)
@@ -1138,37 +1097,37 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) 
 		LocalError("The target user doesn't exist",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	score := 1
 	_, err = create_like_stmt.Exec(score,rid,"replies",user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = add_likes_to_reply_stmt.Exec(1,rid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	res, err := add_activity_stmt.Exec(user.ID,reply.CreatedBy,"like","post",rid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = notify_one_stmt.Exec(reply.CreatedBy,lastId)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1203,7 +1162,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request, user Use
 
 	_, err = create_profile_reply_stmt.Exec(uid,html.EscapeString(preparse_message(r.PostFormValue("reply-content"))),parse_message(html.EscapeString(preparse_message(r.PostFormValue("reply-content")))),user.ID,ipaddress)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1213,7 +1172,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request, user Use
 		LocalError("The profile you're trying to post on doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1256,7 +1215,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 			LocalError("We were unable to find the reported post",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -1265,7 +1224,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 			LocalError("We weren't able to find the topic the reported post is supposed to be in",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -1277,7 +1236,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 			LocalError("We weren't able to find the reported post",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -1286,7 +1245,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 			LocalError("We weren't able to find the profile the reported post is supposed to be on",w,r,user)
 			return
 		} else if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 		title = "Profile: " + title
@@ -1297,7 +1256,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 			NotFound(w,r)
 			return
 		} else if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 		title = "Topic: " + title
@@ -1315,14 +1274,14 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 	var count int
 	rows, err := report_exists_stmt.Query(item_type + "_" + strconv.Itoa(item_id))
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	for rows.Next() {
 		err = rows.Scan(&count)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	}
@@ -1333,24 +1292,24 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 
 	res, err := create_report_stmt.Exec(title,content,parse_message(content),user.ID,item_type + "_" + strconv.Itoa(item_id))
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	lastId, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = add_topics_to_forum_stmt.Exec(1, fid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	_, err = update_forum_cache_stmt.Exec(title, lastId, user.Name, user.ID, fid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1402,7 +1361,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		LocalError("Your account no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1411,7 +1370,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 		LocalError("That's not the correct password.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	if new_password != confirm_password {
@@ -1529,7 +1488,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 
 	_, err = set_avatar_stmt.Exec("." + ext, strconv.Itoa(user.ID))
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
@@ -1677,7 +1636,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	var emailList []interface{}
 	rows, err := get_emails_by_user_stmt.Query(user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
@@ -1685,7 +1644,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	for rows.Next() {
 		err := rows.Scan(&email.Email, &email.Validated, &email.Token)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -1699,7 +1658,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1714,7 +1673,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 
 	_, err = verify_email_stmt.Exec(user.Email)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1722,7 +1681,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	if settings["activation_type"] == 2 {
 		_, err = activate_user_stmt.Exec(user.ID)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	}
@@ -1788,7 +1747,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
 	if user.Session == "" {
 		session, err = auth.CreateSession(uid)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	} else {
@@ -1880,7 +1839,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("This username isn't available. Try another.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1888,12 +1847,12 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 	if site.EnableEmails {
 		token, err := GenerateSafeString(80)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 		_, err = add_email_stmt.Exec(email, uid, 0, token)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -1905,7 +1864,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 
 	session, err := auth.CreateSession(uid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1958,7 +1917,7 @@ func route_api(w http.ResponseWriter, r *http.Request, user User) {
 				PreError("Couldn't find the parent topic",w,r)
 				return
 			} else if err != nil {
-				InternalError(err,w,r)
+				InternalError(err,w)
 				return
 			}
 
@@ -1993,7 +1952,7 @@ func route_api(w http.ResponseWriter, r *http.Request, user User) {
 				msglist = msglist[0:len(msglist)-1]
 			}
 			w.Write([]byte(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`))
-			//fmt.Println(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`)
+			//log.Print(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`)
 		//case "topics":
 		//case "forums":
 		//case "users":

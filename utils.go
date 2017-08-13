@@ -244,6 +244,12 @@ func weak_password(password string) error {
 	return nil
 }
 
+func create_file(name string) error {
+	f, err := os.Create(name)
+	f.Close()
+	return err
+}
+
 func write_file(name string, content string) (err error) {
 	f, err := os.Create(name)
 	if err != nil {

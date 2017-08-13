@@ -131,7 +131,7 @@ func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (u
 	if err == ErrNoRows {
 		return &guest_user, false
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return &guest_user, true
 	}
 

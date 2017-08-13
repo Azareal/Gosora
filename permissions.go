@@ -1,7 +1,6 @@
 package main
 
 import "log"
-import "fmt"
 import "sync"
 import "strconv"
 import "encoding/json"
@@ -206,10 +205,8 @@ func init() {
 	guest_user.Perms = GuestPerms
 
 	if dev.DebugMode {
-		fmt.Printf("Guest Perms: ")
-		fmt.Printf("%+v\n", GuestPerms)
-		fmt.Printf("All Perms: ")
-		fmt.Printf("%+v\n", AllPerms)
+		log.Printf("Guest Perms: %+v\n", GuestPerms)
+		log.Printf("All Perms: %+v\n", AllPerms)
 	}
 }
 
@@ -370,9 +367,9 @@ func rebuild_forum_permissions(fid int) error {
 			}
 		}
 		if dev.SuperDebug {
-			fmt.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
-			fmt.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
-			fmt.Println("len(groups[gid].Forums)",len(groups[gid].Forums))
+			log.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
+			log.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
+			log.Print("len(groups[gid].Forums)",len(groups[gid].Forums))
 		}
 	}
 	return nil
@@ -442,10 +439,10 @@ func build_forum_permissions() error {
 			}
 		}
 		if dev.SuperDebug {
-			//fmt.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
-			//fmt.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
-			//fmt.Println("len(groups[gid].CanSee)",len(groups[gid].CanSee))
-			//fmt.Println("len(groups[gid].Forums)",len(groups[gid].Forums))
+			//log.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
+			//log.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
+			//log.Print("len(groups[gid].CanSee)",len(groups[gid].CanSee))
+			//log.Print("len(groups[gid].Forums)",len(groups[gid].Forums))
 		}
 	}
 	return nil

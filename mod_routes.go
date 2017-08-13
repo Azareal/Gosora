@@ -72,23 +72,23 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
 
 		err = addModLog(action,tid,"topic",ipaddress,user.ID)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 		_, err = create_action_reply_stmt.Exec(tid,action,ipaddress,user.ID)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
 		_, err = add_replies_to_topic_stmt.Exec(1, tid)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 		_, err = update_forum_cache_stmt.Exec(topic_name, tid, user.Name, user.ID, 1)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	}
@@ -121,7 +121,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 		PreError("The topic you tried to delete doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -136,7 +136,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 
 	_, err = delete_topic_stmt.Exec(tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -147,14 +147,14 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = addModLog("delete",tid,"topic",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	// Might need soft-delete before we can do an action reply for this
 	/*_, err = create_action_reply_stmt.Exec(tid,"delete",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}*/
 
@@ -164,13 +164,13 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 	wcount := word_count(topic.Content)
 	err = decrease_post_user_stats(wcount,topic.CreatedBy,true,user)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	err = fstore.DecrementTopicCount(topic.ParentID)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	topics.Remove(tid)
@@ -188,7 +188,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request, user User) {
 		PreError("The topic you tried to pin doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -203,7 +203,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request, user User) {
 
 	_, err = stick_topic_stmt.Exec(tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -214,12 +214,12 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = addModLog("stick",tid,"topic",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	_, err = create_action_reply_stmt.Exec(tid,"stick",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -243,7 +243,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
 		PreError("The topic you tried to unpin doesn't exist.",w,r)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -258,7 +258,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
 
 	_, err = unstick_topic_stmt.Exec(tid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -269,12 +269,12 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = addModLog("unstick",tid,"topic",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	_, err = create_action_reply_stmt.Exec(tid,"unstick",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -419,7 +419,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User
 	}
 	err = addModLog("delete",reply.ParentID,"reply",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -542,7 +542,7 @@ func route_ban(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -585,7 +585,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -605,7 +605,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 
 	_, err = change_group_stmt.Exec(4, uid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -616,7 +616,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = addModLog("ban",uid,"user",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -650,7 +650,7 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("The user you're trying to unban no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -661,7 +661,7 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 
 	_, err = change_group_stmt.Exec(config.DefaultGroup, uid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -672,7 +672,7 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = addModLog("unban",uid,"user",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -681,7 +681,7 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("This user no longer exists!",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -710,7 +710,7 @@ func route_activate(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("The account you're trying to activate no longer exists.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -720,13 +720,13 @@ func route_activate(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	_, err = activate_user_stmt.Exec(uid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	_, err = change_group_stmt.Exec(config.DefaultGroup, uid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -737,7 +737,7 @@ func route_activate(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = addModLog("activate",uid,"user",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 

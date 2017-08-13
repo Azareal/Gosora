@@ -116,7 +116,7 @@ func get_topicuser(tid int) (TopicUser,error) {
 	tu.UserLink = build_profile_url(name_to_slug(tu.CreatedByName),tu.CreatedBy)
 
 	the_topic := Topic{ID:tu.ID, Link:tu.Link, Title:tu.Title, Content:tu.Content, CreatedBy:tu.CreatedBy, Is_Closed:tu.Is_Closed, Sticky:tu.Sticky, CreatedAt:tu.CreatedAt, LastReplyAt:tu.LastReplyAt, ParentID:tu.ParentID, IpAddress:tu.IpAddress, PostCount:tu.PostCount, LikeCount:tu.LikeCount}
-	//fmt.Printf("%+v\n", the_topic)
+	//log.Printf("the_topic: %+v\n", the_topic)
 	tu.Tag = groups[tu.Group].Tag
 	topics.Add(&the_topic)
 	return tu, err

@@ -118,7 +118,7 @@ func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http
 		}
 	}
 
-	//fmt.Println("themes[defaultTheme].Sidebars",themes[defaultTheme].Sidebars)
+	//log.Print("themes[defaultTheme].Sidebars",themes[defaultTheme].Sidebars)
 	if themes[defaultTheme].Sidebars == "right" {
 			if len(docks.RightSidebar) != 0 {
 				var sbody string
@@ -184,8 +184,8 @@ func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fi
 	}
 
 	fperms := groups[user.Group].Forums[fid]
-	//fmt.Printf("%+v\n", user.Perms)
-	//fmt.Printf("%+v\n", fperms)
+	//log.Printf("user.Perms: %+v\n", user.Perms)
+	//log.Printf("fperms: %+v\n", fperms)
 	if fperms.Overrides && !user.Is_Super_Admin {
 		user.Perms.ViewTopic = fperms.ViewTopic
 		user.Perms.LikeItem = fperms.LikeItem
@@ -306,7 +306,7 @@ func _pre_route(w http.ResponseWriter, r *http.Request) (User,bool) {
 	if host != user.Last_IP {
 		_, err = update_last_ip_stmt.Exec(host, user.ID)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return *user, false
 		}
 		user.Last_IP = host
@@ -362,8 +362,8 @@ func increase_post_user_stats(wcount int, uid int, topic bool, user User) error 
 	if err != nil {
 		return err
 	}
-	//fmt.Println(user.Score + base_score + mod)
-	//fmt.Println(getLevel(user.Score + base_score + mod))
+	//log.Print(user.Score + base_score + mod)
+	//log.Print(getLevel(user.Score + base_score + mod))
 	_, err = update_user_level_stmt.Exec(getLevel(user.Score + base_score + mod), uid)
 	return err
 }

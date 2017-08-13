@@ -8,4 +8,5 @@ bin/*
 *.exe
 *.exe~
 *.prof
+*.log
 .DS_Store

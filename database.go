@@ -1,7 +1,6 @@
 package main
 
 import "log"
-import "fmt"
 import "encoding/json"
 import "database/sql"
 
@@ -46,7 +45,7 @@ func init_database() (err error) {
 		}
 		if dev.DebugMode {
 			log.Print(group.Name + ": ")
-			fmt.Printf("%+v\n", group.Perms)
+			log.Printf("%+v\n", group.Perms)
 		}
 
     err = json.Unmarshal(group.PluginPermsText, &group.PluginPerms)
@@ -55,7 +54,7 @@ func init_database() (err error) {
 		}
 		if dev.DebugMode {
 			log.Print(group.Name + ": ")
-			fmt.Printf("%+v\n", group.PluginPerms)
+			log.Printf("%+v\n", group.PluginPerms)
 		}
 
 		//group.Perms.ExtData = make(map[string]bool)

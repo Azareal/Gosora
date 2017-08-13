@@ -24,12 +24,12 @@ ul {
 	padding-left: 15%;
 	padding-right: 15%;
 	margin: 0;
-	height: 45px;
+	height: 41px;
 }
 
 li {
 	float: left;
-	height: 35px;
+	height: 29.5px;
 	padding-top: 12px;
 	margin: 0;
 }
@@ -65,7 +65,7 @@ li {
 .alert_counter {
 	background-color: rgb(200,0,0);
 	border-radius: 2px;
-	font-size: 12px;
+	font-size: 11px;
 	padding: 3px;
 	float: right;
 	position: relative;
@@ -75,7 +75,7 @@ li {
 .alert_aftercounter {
 	float: right;
 	margin-right: 4px;
-	font-size: 15px;
+	font-size: 14px;
 }
 .alert_aftercounter:before {
 	content: "Alerts";
@@ -577,6 +577,23 @@ input, select, textarea {
 	}
 	.rowsmall {
 		font-size: 11px;
+	}
+
+	@media(min-width: 400px) {
+		ul {
+			height: 40px;
+		}
+		.menu_overview {
+			font-size: 16px;
+		}
+		.menu_left:not(.menu_overview) {
+			font-size: 14px;
+			padding-top: 13px;
+		}
+		.alert_aftercounter {
+			font-size: 14px;
+			padding-top: 4px;
+		}
 	}
 }
 

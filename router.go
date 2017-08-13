@@ -53,6 +53,6 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		handle(w,req)
 		return
 	}
-	//fmt.Println(req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')])
+	//log.Print("req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')]",req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')])
 	NotFound(w,req)
 }

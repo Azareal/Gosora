@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"database/sql"
-	
+
 	"../query_gen/lib"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -39,7 +39,7 @@ func _init_mysql() (err error) {
 		return err
 	}
 	fmt.Println("Successfully connected to the database")
-	
+
 	var waste string
 	err = db.QueryRow("SHOW DATABASES LIKE '" + db_name + "'").Scan(&waste)
 	if err != nil && err != sql.ErrNoRows {
@@ -60,14 +60,14 @@ func _init_mysql() (err error) {
 	if err != nil {
 		return err
 	}
-	
+
 	// Ready the query builder
 	qgen.Builder.SetConn(db)
 	err = qgen.Builder.SetAdapter("mysql")
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -78,7 +78,7 @@ func _table_defs_mysql() error {
 		if !strings.HasPrefix(f.Name(),"query_") {
 			continue
 		}
-		
+
 		var table string
 		var ext string
 		table = strings.TrimPrefix(f.Name(),"query_")
@@ -87,14 +87,14 @@ func _table_defs_mysql() error {
 			continue
 		}
 		table = strings.TrimSuffix(table,ext)
-		
+
 		fmt.Println("Creating table '" + table + "'")
 		data, err := ioutil.ReadFile("./schema/mysql/" + f.Name())
 		if err != nil {
 			return err
 		}
 		data = bytes.TrimSpace(data)
-		
+
 		_, err = db.Exec(string(data))
 		if err != nil {
 			fmt.Println("Failed query:",string(data))
@@ -107,20 +107,20 @@ func _table_defs_mysql() error {
 
 func _initial_data_mysql() error {
 	return nil // Coming Soon
-	
+
 	fmt.Println("Seeding the tables")
 	data, err := ioutil.ReadFile("./schema/mysql/inserts.sql")
 	if err != nil {
 		return err
 	}
 	data = bytes.TrimSpace(data)
-	
+
 	fmt.Println("Executing query",string(data))
 	_, err = db.Exec(string(data))
 	if err != nil {
 		return err
 	}
-	
+
 	//fmt.Println("Finished inserting the database data")
 	return nil
 }

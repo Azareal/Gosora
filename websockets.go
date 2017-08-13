@@ -88,7 +88,7 @@ func (hub *WS_Hub) push_message(targetUser int, msg string) error {
 }
 
 func(hub *WS_Hub) push_alert(targetUser int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
-	//fmt.Println("In push_alert")
+	//log.Print("In push_alert")
 	hub.users.RLock()
 	ws_user, ok := hub.online_users[targetUser]
 	hub.users.RUnlock()
@@ -96,13 +96,13 @@ func(hub *WS_Hub) push_alert(targetUser int, event string, elementType string, a
 		return ws_nouser
 	}
 
-	//fmt.Println("Building alert")
+	//log.Print("Building alert")
 	alert, err := build_alert(event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
 	if err != nil {
 		return err
 	}
 
-	//fmt.Println("Getting WS Writer")
+	//log.Print("Getting WS Writer")
 	w, err := ws_user.conn.NextWriter(websocket.TextMessage)
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func(hub *WS_Hub) push_alert(targetUser int, event string, elementType string, a
 }
 
 func(hub *WS_Hub) push_alerts(users []int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
-	//fmt.Println("In push_alerts")
+	//log.Print("In push_alerts")
 	var ws_users []*WS_User
 	hub.users.RLock()
 	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
@@ -132,13 +132,13 @@ func(hub *WS_Hub) push_alerts(users []int, event string, elementType string, act
 			continue
 		}
 
-		//fmt.Println("Building alert")
+		//log.Print("Building alert")
 		alert, err := build_alert(event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
 		if err != nil {
 			errs = append(errs,err)
 		}
 
-		//fmt.Println("Getting WS Writer")
+		//log.Print("Getting WS Writer")
 		w, err := ws_user.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			errs = append(errs,err)
@@ -196,12 +196,12 @@ func route_websockets(w http.ResponseWriter, r *http.Request, user User) {
 			break
 		}
 
-		//fmt.Println("Message",message)
-		//fmt.Println("Message",string(message))
+		//log.Print("Message",message)
+		//log.Print("string(Message)",string(message))
 		messages := bytes.Split(message,[]byte("\r"))
 		for _, msg := range messages {
-			//fmt.Println("Submessage",msg)
-			//fmt.Println("Submessage",string(msg))
+			//log.Print("Submessage",msg)
+			//log.Print("Submessage",string(msg))
 			if bytes.HasPrefix(msg,[]byte("page ")) {
 				msgblocks := bytes.SplitN(msg,[]byte(" "),2)
 				if len(msgblocks) < 2 {
@@ -211,8 +211,8 @@ func route_websockets(w http.ResponseWriter, r *http.Request, user User) {
 				if !bytes.Equal(msgblocks[1],current_page) {
 					ws_leave_page(ws_user, current_page)
 					current_page = msgblocks[1]
-					//fmt.Println("Current Page: ",current_page)
-					//fmt.Println("Current Page: ",string(current_page))
+					//log.Print("Current Page:",current_page)
+					//log.Print("Current Page:",string(current_page))
 					ws_page_responses(ws_user, current_page)
 				}
 			}
@@ -229,14 +229,14 @@ func route_websockets(w http.ResponseWriter, r *http.Request, user User) {
 func ws_page_responses(ws_user *WS_User, page []byte) {
 	switch(string(page)) {
 		case "/panel/":
-			//fmt.Println("/panel/ WS Route")
+			//log.Print("/panel/ WS Route")
 			/*w, err := ws_user.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				//fmt.Println(err.Error())
+				//log.Print(err.Error())
 				return
 			}
 
-			fmt.Println(ws_hub.online_users)
+			log.Print(ws_hub.online_users)
 			uonline := ws_hub.user_count()
 			gonline := ws_hub.guest_count()
 			totonline := uonline + gonline
@@ -392,7 +392,7 @@ AdminStatLoop:
 		for watcher, _ := range watchers {
 			w, err := watcher.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				//fmt.Println(err.Error())
+				//log.Print(err.Error())
 				admin_stats_mutex.Lock()
 				delete(admin_stats_watchers,watcher)
 				admin_stats_mutex.Unlock()

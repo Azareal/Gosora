@@ -211,9 +211,8 @@ func bbcode_full_parse(msg string) string {
 
 	msgbytes := []byte(msg)
 	msgbytes = append(msgbytes,space_gap...)
-	//fmt.Println("BBCode Simple Pre:")
-	//fmt.Println("`"+string(msgbytes)+"`")
-	//fmt.Println("----")
+	//log.Print("BBCode Simple Pre:","`"+string(msgbytes)+"`")
+	//log.Print("----")
 
 	for i := 0; i < len(msgbytes); i++ {
 		if msgbytes[i] == '[' {
@@ -246,10 +245,10 @@ func bbcode_full_parse(msg string) string {
 							i += 7
 						}
 						//if msglen >= (i+6) {
-						//	fmt.Println("boo")
-						//	fmt.Println(msglen)
-						//	fmt.Println(i+6)
-						//	fmt.Println(string(msgbytes[i:i+6]))
+						//	log.Print("boo")
+						//	log.Print(msglen)
+						//	log.Print(i+6)
+						//	log.Print(string(msgbytes[i:i+6]))
 						//}
 						complex_bbc = true
 					}
@@ -259,8 +258,8 @@ func bbcode_full_parse(msg string) string {
 						i += 6
 					}
 					//if msglen >= (i+5) {
-					//	fmt.Println("boo2")
-					//	fmt.Println(string(msgbytes[i:i+5]))
+					//	log.Print("boo2")
+					//	log.Print(string(msgbytes[i:i+5]))
 					//}
 					complex_bbc = true
 				}
@@ -312,9 +311,8 @@ func bbcode_full_parse(msg string) string {
 		i := 0
 		var start, lastTag int
 		var outbytes []byte
-		//fmt.Println("BBCode Pre:")
-		//fmt.Println("`"+string(msgbytes)+"`")
-		//fmt.Println("----")
+		//log.Print("BBCode Pre:","`"+string(msgbytes)+"`")
+		//log.Print("----")
 		for ; i < len(msgbytes); i++ {
 			MainLoop:
 			if msgbytes[i] == '[' {
@@ -325,13 +323,11 @@ func bbcode_full_parse(msg string) string {
 						outbytes = append(outbytes, msgbytes[lastTag:i]...)
 						i = start
 						i += partial_url_bytes_len(msgbytes[start:])
-						//fmt.Println("Partial Bytes:")
-						//fmt.Println(string(msgbytes[start:]))
-						//fmt.Println("-----")
+						//log.Print("Partial Bytes:",string(msgbytes[start:]))
+						//log.Print("-----")
 						if !bytes.Equal(msgbytes[i:i+6],[]byte("[/url]")) {
-							//fmt.Println("Invalid Bytes:")
-							//fmt.Println(string(msgbytes[i:i+6]))
-							//fmt.Println("-----")
+							//log.Print("Invalid Bytes:",string(msgbytes[i:i+6]))
+							//log.Print("-----")
 							outbytes = append(outbytes, invalid_url...)
 							goto MainLoop
 						}
@@ -389,16 +385,16 @@ func bbcode_full_parse(msg string) string {
 				}
 			}
 		}
-		//fmt.Println(string(outbytes))
+		//log.Print(string(outbytes))
 		if lastTag != i {
 			outbytes = append(outbytes, msgbytes[lastTag:]...)
-			//fmt.Println("Outbytes:",`"`+string(outbytes)+`"`)
-			//fmt.Println("----")
+			//log.Print("Outbytes:",`"`+string(outbytes)+`"`)
+			//log.Print("----")
 		}
 
 		if len(outbytes) != 0 {
-			//fmt.Println("BBCode Post:",`"`+string(outbytes[0:len(outbytes) - 10])+`"`)
-			//fmt.Println("----")
+			//log.Print("BBCode Post:",`"`+string(outbytes[0:len(outbytes) - 10])+`"`)
+			//log.Print("----")
 			msg = string(outbytes[0:len(outbytes) - 10])
 		} else {
 			msg = string(msgbytes[0:len(msgbytes) - 10])

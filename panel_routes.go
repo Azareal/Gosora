@@ -20,10 +20,6 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	if dev.SuperDebug {
-		fmt.Println("past PanelSessionCheck")
-	}
-
 	// We won't calculate this on the spot anymore, as the system doesn't seem to like it if we do multiple fetches simultaneously. Should we constantly calculate this on a background thread? Perhaps, the watchdog to scale back heavy features under load? One plus side is that we'd get immediate CPU percentages here instead of waiting it to kick in with WebSockets
 	var cpustr string = "Unknown"
 	var cpuColour string
@@ -37,7 +33,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 		used_count := convert_byte_in_unit(float64(memres.Total - memres.Available),total_unit)
 
 		// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
-		//fmt.Println(used_count)
+		//log.Print("pre used_count",used_count)
 		var totstr string
 		if (total_count - float64(int(total_count))) > 0.85 {
 			used_count += 1.0 - (total_count - float64(int(total_count)))
@@ -45,7 +41,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 		} else {
 			totstr = fmt.Sprintf("%.1f",total_count)
 		}
-		//fmt.Println(used_count)
+		//log.Print("post used_count",used_count)
 
 		if used_count > total_count {
 			used_count = total_count
@@ -53,7 +49,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 		ramstr = fmt.Sprintf("%.1f",used_count) + " / " + totstr + total_unit
 
 		ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
-		//fmt.Println(ramperc)
+		//log.Print("ramperc",ramperc)
 		if ramperc < 50 {
 			ramColour = "stat_green"
 		} else if ramperc < 75 {
@@ -66,7 +62,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 	var postCount int
 	err = todays_post_count_stmt.QueryRow().Scan(&postCount)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	var postInterval string = "day"
@@ -83,7 +79,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 	var topicCount int
 	err = todays_topic_count_stmt.QueryRow().Scan(&topicCount)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	var topicInterval string = "day"
@@ -100,7 +96,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 	var reportCount int
 	err = todays_report_count_stmt.QueryRow().Scan(&reportCount)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	var reportInterval string = "week"
@@ -108,7 +104,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 	var newUserCount int
 	err = todays_newuser_count_stmt.QueryRow().Scan(&newUserCount)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	var newUserInterval string = "week"
@@ -180,7 +176,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = templates.ExecuteTemplate(w,"panel-dashboard.html",pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -197,7 +193,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request, user User){
 	var forumList []interface{}
 	forums, err := fstore.GetAll()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -218,7 +214,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = templates.ExecuteTemplate(w,"panel-forums.html",pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -250,7 +246,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request, us
 
 	_, err = fstore.CreateForum(fname,fdesc,active,fpreset)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -282,7 +278,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -295,7 +291,10 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User
 			return
 		}
 	}
-	templates.ExecuteTemplate(w,"areyousure.html",pi)
+	err = templates.ExecuteTemplate(w,"areyousure.html",pi)
+	if err != nil {
+		InternalError(err,w)
+	}
 }
 
 func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
@@ -323,7 +322,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, us
 		LocalError("The forum you're trying to delete doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -351,7 +350,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, 
 		LocalError("The forum you're trying to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -376,7 +375,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, 
 	}
 	err = templates.ExecuteTemplate(w,"panel-forum-edit.html",pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -515,6 +514,7 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 	}
 
 	forum_update_mutex.Lock()
+	defer forum_update_mutex.Unlock()
 	if changed {
 		permupdate_mutex.Lock()
 		groups[gid].Forums[fid] = fperms
@@ -539,7 +539,6 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		}
 		forum.Preset = ""
 	}
-	forum_update_mutex.Unlock()
 
 	if is_js == "0" {
 		http.Redirect(w,r,"/panel/forums/edit/" + strconv.Itoa(fid),http.StatusSeeOther)
@@ -561,7 +560,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User){
 	var settingList map[string]interface{} = make(map[string]interface{})
 	rows, err := get_settings_stmt.Query()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
@@ -570,7 +569,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User){
 	for rows.Next() {
 		err := rows.Scan(&sname,&scontent,&stype)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -594,7 +593,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -604,7 +603,10 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User){
 			return
 		}
 	}
-	templates.ExecuteTemplate(w,"panel-settings.html",pi)
+	err = templates.ExecuteTemplate(w,"panel-settings.html",pi)
+	if err != nil {
+		InternalError(err,w)
+	}
 }
 
 func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, sname string){
@@ -623,7 +625,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, snam
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -657,7 +659,10 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, snam
 			return
 		}
 	}
-	templates.ExecuteTemplate(w,"panel-setting.html",pi)
+	err = templates.ExecuteTemplate(w,"panel-setting.html",pi)
+	if err != nil {
+		InternalError(err,w)
+	}
 }
 
 func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User, sname string) {
@@ -688,7 +693,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User,
 		LocalError("The setting you want to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -702,7 +707,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User,
 
 	_, err = update_setting_stmt.Exec(scontent,sname)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -726,8 +731,8 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User){
 
 	var pluginList []interface{}
 	for _, plugin := range plugins {
-		//fmt.Println("plugin.Name",plugin.Name)
-		//fmt.Println("plugin.Installed",plugin.Installed)
+		//log.Print("plugin.Name",plugin.Name)
+		//log.Print("plugin.Installed",plugin.Installed)
 		pluginList = append(pluginList,plugin)
 	}
 
@@ -737,7 +742,10 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User){
 			return
 		}
 	}
-	templates.ExecuteTemplate(w,"panel-plugins.html",pi)
+	err := templates.ExecuteTemplate(w,"panel-plugins.html",pi)
+	if err != nil {
+		InternalError(err,w)
+	}
 }
 
 func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user User, uname string){
@@ -754,7 +762,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user U
 		return
 	}
 
-	//fmt.Println("uname","'"+uname+"'")
+	//log.Print("uname","'"+uname+"'")
 	plugin, ok := plugins[uname]
 	if !ok {
 		LocalError("The plugin isn't registered in the system",w,r,user)
@@ -769,7 +777,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user U
 	var active bool
 	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	var has_plugin bool = (err == nil)
@@ -782,24 +790,24 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user U
 		}
 	}
 
-	//fmt.Println("err",err)
-	//fmt.Println("active",active)
+	//log.Print("err",err)
+	//log.Print("active",active)
 	if has_plugin {
 		if active {
 			LocalError("The plugin is already active",w,r,user)
 			return
 		}
-		//fmt.Println("update_plugin")
+		//log.Print("update_plugin")
 		_, err = update_plugin_stmt.Exec(1,uname)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	} else {
-		//fmt.Println("add_plugin")
+		//log.Print("add_plugin")
 		_, err := add_plugin_stmt.Exec(uname,1,0)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	}
@@ -843,7 +851,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, user
 		LocalError("The plugin you're trying to deactivate isn't active",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -853,7 +861,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, user
 	}
 	_, err = update_plugin_stmt.Exec(0,uname)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -897,7 +905,7 @@ func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user Us
 	var active bool
 	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	var has_plugin bool = (err == nil)
@@ -922,18 +930,18 @@ func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user Us
 	if has_plugin {
 		_, err = update_plugin_install_stmt.Exec(1,uname)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 		_, err = update_plugin_stmt.Exec(1,uname)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	} else {
 		_, err := add_plugin_stmt.Exec(uname,1,1)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	}
@@ -960,7 +968,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 	var userList []interface{}
 	rows, err := get_users_stmt.Query()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
@@ -970,7 +978,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 		puser := User{ID: 0,}
 		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.Is_Super_Admin, &puser.Avatar)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -992,7 +1000,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1004,7 +1012,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = templates.ExecuteTemplate(w,"panel-users.html",pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -1030,7 +1038,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, s
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1058,7 +1066,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, s
 	}
 	err = templates.ExecuteTemplate(w,"panel-user-edit.html",pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -1087,7 +1095,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, user 
 		LocalError("The user you're trying to edit doesn't exist.",w,r,user)
 		return
 	} else if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1140,7 +1148,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, user 
 
 	_, err = update_user_stmt.Exec(newname,newemail,newgroup,targetUser.ID)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1190,7 +1198,7 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request, user User){
 		can_edit = user.Perms.EditGroup && (!group.Is_Admin || user.Perms.EditGroupAdmin) && (!group.Is_Mod || user.Perms.EditGroupSuperMod)
 		groupList = append(groupList, GroupAdmin{group.ID,group.Name,rank,rank_class,can_edit,can_delete})
 	}
-	//fmt.Printf("%+v\n", groupList)
+	//log.Printf("groupList: %+v\n", groupList)
 
 	pi := Page{"Group Manager",user,headerVars,groupList,nil}
 	if pre_render_hooks["pre_render_panel_groups"] != nil {
@@ -1198,7 +1206,11 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request, user User){
 			return
 		}
 	}
-	templates.ExecuteTemplate(w,"panel-groups.html",pi)
+
+	err := templates.ExecuteTemplate(w,"panel-groups.html",pi)
+	if err != nil {
+		InternalError(err,w)
+	}
 }
 
 func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, sgid string){
@@ -1218,7 +1230,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, 
 	}
 
 	if !group_exists(gid) {
-		//fmt.Println("aaaaa monsters")
+		//log.Print("aaaaa monsters")
 		NotFound(w,r)
 		return
 	}
@@ -1256,7 +1268,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, 
 	}
 	err = templates.ExecuteTemplate(w,"panel-group-edit.html",pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -1277,7 +1289,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user 
 	}
 
 	if !group_exists(gid) {
-		//fmt.Println("aaaaa monsters")
+		//log.Print("aaaaa monsters")
 		NotFound(w,r)
 		return
 	}
@@ -1334,7 +1346,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user 
 	}
 	err = templates.ExecuteTemplate(w,"panel-group-edit-perms.html",pi)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 	}
 }
 
@@ -1359,7 +1371,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user
 	}
 
 	if !group_exists(gid) {
-		//fmt.Println("aaaaa monsters")
+		//log.Print("aaaaa monsters")
 		NotFound(w,r)
 		return
 	}
@@ -1412,7 +1424,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user
 
 				_, err = update_group_rank_stmt.Exec(1,1,0,gid)
 				if err != nil {
-					InternalError(err,w,r)
+					InternalError(err,w)
 					return
 				}
 				groups[gid].Is_Admin = true
@@ -1426,7 +1438,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user
 
 				_, err = update_group_rank_stmt.Exec(0,1,0,gid)
 				if err != nil {
-					InternalError(err,w,r)
+					InternalError(err,w)
 					return
 				}
 				groups[gid].Is_Admin = false
@@ -1435,7 +1447,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user
 			case "Banned":
 				_, err = update_group_rank_stmt.Exec(0,0,1,gid)
 				if err != nil {
-					InternalError(err,w,r)
+					InternalError(err,w)
 					return
 				}
 				groups[gid].Is_Admin = false
@@ -1447,7 +1459,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user
 			case "Member":
 				_, err = update_group_rank_stmt.Exec(0,0,0,gid)
 				if err != nil {
-					InternalError(err,w,r)
+					InternalError(err,w)
 					return
 				}
 				groups[gid].Is_Admin = false
@@ -1461,7 +1473,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user
 
 	_, err = update_group_stmt.Exec(gname,gtag,gid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	groups[gid].Name = gname
@@ -1491,7 +1503,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 	}
 
 	if !group_exists(gid) {
-		//fmt.Println("aaaaa monsters o.o")
+		//log.Print("aaaaa monsters o.o")
 		NotFound(w,r)
 		return
 	}
@@ -1533,13 +1545,13 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 
 	_, err = update_group_perms_stmt.Exec(pjson,gid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	err = rebuild_group_permissions(gid)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1590,10 +1602,9 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request, us
 
 	gid, err := create_group(group_name, group_tag, is_admin, is_mod, is_banned)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
-	fmt.Println(groups)
 	http.Redirect(w,r,"/panel/groups/edit/" + strconv.Itoa(gid),http.StatusSeeOther)
 }
 
@@ -1628,7 +1639,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err := templates.ExecuteTemplate(w,"panel-themes.html",pi)
 	if err != nil {
-		log.Print(err)
+		InternalError(err,w)
 	}
 }
 
@@ -1657,36 +1668,36 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, user Use
 	}
 
 	var isDefault bool
-	fmt.Println("uname",uname)
+	log.Print("uname",uname)
 	err := is_theme_default_stmt.QueryRow(uname).Scan(&isDefault)
 	if err != nil && err != ErrNoRows {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
 	has_theme := err != ErrNoRows
 	if has_theme {
-		fmt.Println("isDefault",isDefault)
+		log.Print("isDefault",isDefault)
 		if isDefault {
 			LocalError("The theme is already active",w,r,user)
 			return
 		}
 		_, err = update_theme_stmt.Exec(1,uname)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	} else {
 		_, err := add_theme_stmt.Exec(uname,1)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 	}
 
 	_, err = update_theme_stmt.Exec(0,defaultTheme)
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
@@ -1696,7 +1707,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, user Use
 
 	dTheme, ok := themes[defaultTheme]
 	if !ok {
-		InternalError(errors.New("The default theme is missing"),w,r)
+		InternalError(errors.New("The default theme is missing"),w)
 		return
 	}
 	dTheme.Active = false
@@ -1718,7 +1729,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
 
 	rows, err := get_modlogs_stmt.Query()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
@@ -1729,7 +1740,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
 	for rows.Next() {
 		err := rows.Scan(&action,&elementID,&elementType, &ipaddress, &actorID, &doneAt)
 		if err != nil {
-			InternalError(err,w,r)
+			InternalError(err,w)
 			return
 		}
 
@@ -1798,7 +1809,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err,w,r)
+		InternalError(err,w)
 		return
 	}
 
