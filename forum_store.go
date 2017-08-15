@@ -35,6 +35,8 @@ type ForumStore interface
 	//GetChildren(parentID int, parentType string) ([]*Forum,error)
 	//GetFirstChild(parentID int, parentType string) (*Forum,error)
 	CreateForum(forum_name string, forum_desc string, active bool, preset string) (int, error)
+
+	GetGlobalCount() int
 }
 
 type StaticForumStore struct
@@ -45,6 +47,7 @@ type StaticForumStore struct
 
 	get *sql.Stmt
 	get_all *sql.Stmt
+	forum_count *sql.Stmt
 }
 
 func NewStaticForumStore() *StaticForumStore {
@@ -56,9 +59,14 @@ func NewStaticForumStore() *StaticForumStore {
 	if err != nil {
 		log.Fatal(err)
 	}
+	forum_count_stmt, err := qgen.Builder.SimpleCount("forums","name != ''","")
+	if err != nil {
+		log.Fatal(err)
+	}
 	return &StaticForumStore{
 		get: get_stmt,
 		get_all: get_all_stmt,
+		forum_count: forum_count_stmt,
 	}
 }
 
@@ -320,6 +328,17 @@ func (sfs *StaticForumStore) fill_forum_id_gap(biggerID int, smallerID int) {
 	for i := smallerID; i > biggerID; i++ {
 		sfs.forums = append(sfs.forums, &dummy)
 	}
+}
+
+// Return the total number of forums
+// TO-DO: Get the total count of forums in the forum store minus the blanked forums rather than doing a heavy query for this?
+func (sfs *StaticForumStore) GetGlobalCount() int {
+	var fcount int
+	err := sfs.forum_count.QueryRow().Scan(&fcount)
+	if err != nil {
+		LogError(err)
+	}
+	return fcount
 }
 
 // TO-DO: Work on MapForumStore

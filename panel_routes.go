@@ -15,7 +15,7 @@ import (
 )
 
 func route_panel(w http.ResponseWriter, r *http.Request, user User){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -168,7 +168,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 	gridElements = append(gridElements, GridElement{"dash-visitorsperweek","2 visitors / week",13,"grid_stat stat_disabled","","","Coming Soon!"/*"The number of unique visitors we've had over the last 7 days"*/})
 	gridElements = append(gridElements, GridElement{"dash-postsperuser","5 posts / user / week",14,"grid_stat stat_disabled","","","Coming Soon!"/*"The average number of posts made by each active user over the past week"*/})
 
-	pi := PanelDashboardPage{"Control Panel Dashboard",user,headerVars,gridElements,extData}
+	pi := PanelDashboardPage{"Control Panel Dashboard",user,headerVars,stats,gridElements,extData}
 	if pre_render_hooks["pre_render_panel_dashboard"] != nil {
 		if run_pre_render_hook("pre_render_panel_dashboard", w, r, &user, &pi) {
 			return
@@ -181,7 +181,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User){
 }
 
 func route_panel_forums(w http.ResponseWriter, r *http.Request, user User){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -206,7 +206,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request, user User){
 			forumList = append(forumList,fadmin)
 		}
 	}
-	pi := Page{"Forum Manager",user,headerVars,forumList,nil}
+	pi := PanelPage{"Forum Manager",user,headerVars,stats,forumList,nil}
 	if pre_render_hooks["pre_render_panel_forums"] != nil {
 		if run_pre_render_hook("pre_render_panel_forums", w, r, &user, &pi) {
 			return
@@ -254,7 +254,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request, us
 }
 
 func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User, sfid string){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -285,7 +285,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User
 	confirm_msg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
 	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid),confirm_msg}
 
-	pi := Page{"Delete Forum",user,headerVars,tList,yousure}
+	pi := PanelPage{"Delete Forum",user,headerVars,stats,tList,yousure}
 	if pre_render_hooks["pre_render_panel_delete_forum"] != nil {
 		if run_pre_render_hook("pre_render_panel_delete_forum", w, r, &user, &pi) {
 			return
@@ -330,7 +330,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, us
 }
 
 func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -367,7 +367,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, 
 		gplist = append(gplist,GroupForumPermPreset{group,forum_perms_to_group_forum_preset(group.Forums[fid])})
 	}
 
-	pi := EditForumPage{"Forum Editor",user,headerVars,forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,gplist,extData}
+	pi := PanelEditForumPage{"Forum Editor",user,headerVars,stats,forum.ID,forum.Name,forum.Desc,forum.Active,forum.Preset,gplist,extData}
 	if pre_render_hooks["pre_render_panel_edit_forum"] != nil {
 		if run_pre_render_hook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 			return
@@ -548,7 +548,7 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 }
 
 func route_panel_settings(w http.ResponseWriter, r *http.Request, user User){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -597,7 +597,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	pi := Page{"Setting Manager",user,headerVars,tList,settingList}
+	pi := PanelPage{"Setting Manager",user,headerVars,stats,tList,settingList}
 	if pre_render_hooks["pre_render_panel_settings"] != nil {
 		if run_pre_render_hook("pre_render_panel_settings", w, r, &user, &pi) {
 			return
@@ -610,7 +610,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User){
 }
 
 func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, sname string){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -653,7 +653,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, snam
 		}
 	}
 
-	pi := Page{"Edit Setting",user,headerVars,itemList,setting}
+	pi := PanelPage{"Edit Setting",user,headerVars,stats,itemList,setting}
 	if pre_render_hooks["pre_render_panel_setting"] != nil {
 		if run_pre_render_hook("pre_render_panel_setting", w, r, &user, &pi) {
 			return
@@ -720,7 +720,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User,
 }
 
 func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -736,7 +736,7 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User){
 		pluginList = append(pluginList,plugin)
 	}
 
-	pi := Page{"Plugin Manager",user,headerVars,pluginList,nil}
+	pi := PanelPage{"Plugin Manager",user,headerVars,stats,pluginList,nil}
 	if pre_render_hooks["pre_render_panel_plugins"] != nil {
 		if run_pre_render_hook("pre_render_panel_plugins", w, r, &user, &pi) {
 			return
@@ -926,7 +926,6 @@ func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user Us
 		}
 	}
 
-
 	if has_plugin {
 		_, err = update_plugin_install_stmt.Exec(1,uname)
 		if err != nil {
@@ -960,7 +959,7 @@ func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user Us
 }
 
 func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1004,7 +1003,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	pi := Page{"User Manager",user,headerVars,userList,nil}
+	pi := PanelPage{"User Manager",user,headerVars,stats,userList,nil}
 	if pre_render_hooks["pre_render_panel_users"] != nil {
 		if run_pre_render_hook("pre_render_panel_users", w, r, &user, &pi) {
 			return
@@ -1017,7 +1016,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 }
 
 func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, suid string){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1058,7 +1057,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, s
 		groupList = append(groupList,group)
 	}
 
-	pi := Page{"User Editor",user,headerVars,groupList,targetUser}
+	pi := PanelPage{"User Editor",user,headerVars,stats,groupList,targetUser}
 	if pre_render_hooks["pre_render_panel_edit_user"] != nil {
 		if run_pre_render_hook("pre_render_panel_edit_user", w, r, &user, &pi) {
 			return
@@ -1166,13 +1165,25 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, user 
 }
 
 func route_panel_groups(w http.ResponseWriter, r *http.Request, user User){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
 
-	var groupList []interface{}
-	for _, group := range groups[1:] {
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	perPage := 9
+	offset, page, lastPage := page_offset(stats.Groups, page, perPage)
+
+	// Skip the System group
+	offset++
+
+	var count int
+	var groupList []GroupAdmin
+	for _, group := range groups[offset:] {
+		if count == perPage {
+			break
+		}
+
 		var rank string
 		var rank_class string
 		var can_edit bool
@@ -1197,10 +1208,12 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request, user User){
 
 		can_edit = user.Perms.EditGroup && (!group.Is_Admin || user.Perms.EditGroupAdmin) && (!group.Is_Mod || user.Perms.EditGroupSuperMod)
 		groupList = append(groupList, GroupAdmin{group.ID,group.Name,rank,rank_class,can_edit,can_delete})
+		count++
 	}
 	//log.Printf("groupList: %+v\n", groupList)
 
-	pi := Page{"Group Manager",user,headerVars,groupList,nil}
+	pageList := paginate(stats.Groups, perPage, 5)
+	pi := PanelGroupPage{"Group Manager",user,headerVars,stats,groupList,pageList,page,lastPage,extData}
 	if pre_render_hooks["pre_render_panel_groups"] != nil {
 		if run_pre_render_hook("pre_render_panel_groups", w, r, &user, &pi) {
 			return
@@ -1214,7 +1227,7 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request, user User){
 }
 
 func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, sgid string){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1260,7 +1273,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, 
 
 	disable_rank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
-	pi := EditGroupPage{"Group Editor",user,headerVars,group.ID,group.Name,group.Tag,rank,disable_rank,extData}
+	pi := PanelEditGroupPage{"Group Editor",user,headerVars,stats,group.ID,group.Name,group.Tag,rank,disable_rank,extData}
 	if pre_render_hooks["pre_render_panel_edit_group"] != nil {
 		if run_pre_render_hook("pre_render_panel_edit_group", w, r, &user, &pi) {
 			return
@@ -1273,7 +1286,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, 
 }
 
 func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user User, sgid string){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1338,7 +1351,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user 
 	globalPerms = append(globalPerms, NameLangToggle{"ViewAdminLogs",GetGlobalPermPhrase("ViewAdminLogs"),group.Perms.ViewAdminLogs})
 	globalPerms = append(globalPerms, NameLangToggle{"ViewIPs",GetGlobalPermPhrase("ViewIPs"),group.Perms.ViewIPs})
 
-	pi := EditGroupPermsPage{"Group Editor",user,headerVars,group.ID,group.Name,localPerms,globalPerms,extData}
+	pi := PanelEditGroupPermsPage{"Group Editor",user,headerVars,stats,group.ID,group.Name,localPerms,globalPerms,extData}
 	if pre_render_hooks["pre_render_panel_edit_group_perms"] != nil {
 		if run_pre_render_hook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
 			return
@@ -1609,7 +1622,7 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request, us
 }
 
 func route_panel_themes(w http.ResponseWriter, r *http.Request, user User){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1631,7 +1644,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request, user User){
 
 	}
 
-	pi := ThemesPage{"Theme Manager",user,headerVars,pThemeList,vThemeList,extData}
+	pi := PanelThemesPage{"Theme Manager",user,headerVars,stats,pThemeList,vThemeList,extData}
 	if pre_render_hooks["pre_render_panel_themes"] != nil {
 		if run_pre_render_hook("pre_render_panel_themes", w, r, &user, &pi) {
 			return
@@ -1722,7 +1735,7 @@ func route_panel_themes_default(w http.ResponseWriter, r *http.Request, user Use
 }
 
 func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
-	headerVars, ok := PanelSessionCheck(w,r,&user)
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {
 		return
 	}
@@ -1813,7 +1826,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	pi := LogsPage{"Moderation Logs",user,headerVars,logs,extData}
+	pi := PanelLogsPage{"Moderation Logs",user,headerVars,stats,logs,extData}
 	if pre_render_hooks["pre_render_panel_mod_log"] != nil {
 		if run_pre_render_hook("pre_render_panel_mod_log", w, r, &user, &pi) {
 			return
@@ -1821,6 +1834,28 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
 	}
 	err = templates.ExecuteTemplate(w,"panel-modlogs.html",pi)
 	if err != nil {
-		log.Print(err)
+		InternalError(err,w)
+	}
+}
+
+func route_panel_debug(w http.ResponseWriter, r *http.Request, user User) {
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
+	if !ok {
+		return
+	}
+	if !user.Is_Admin {
+		NoPermissions(w,r,user)
+		return
+	}
+
+	uptime := "..."
+	db_stats := db.Stats()
+	open_conn_count := db_stats.OpenConnections
+	// Disk I/O?
+
+	pi := PanelDebugPage{"Debug",user,headerVars,stats,uptime,open_conn_count,db_adapter,extData}
+	err := templates.ExecuteTemplate(w,"panel-debug.html",pi)
+	if err != nil {
+		InternalError(err,w)
 	}
 }

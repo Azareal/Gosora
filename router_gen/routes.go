@@ -75,5 +75,6 @@ func routes() {
 		Route{"route_panel_groups_create_submit","/panel/groups/create/","",[]string{}},
 
 		Route{"route_panel_logs_mod","/panel/logs/mod/","",[]string{}},
+		Route{"route_panel_debug","/panel/debug/","",[]string{}},
 	)
 }

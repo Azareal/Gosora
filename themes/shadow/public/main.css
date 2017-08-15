@@ -330,6 +330,23 @@ textarea.large {
 	font-size: 13px;
 	padding: 10px;
 }
+.menu_stats {
+	font-size: 12px;
+}
+
+/* Mini paginators aka panel paginators */
+.pageset {
+	margin-top: 4px;
+	clear: both;
+	height: 32px;
+}
+.pageitem {
+	background-color: rgb(61,61,61);
+	padding: 10px;
+	margin-right: 4px;
+	font-size: 13px;
+	float: left;
+}
 
 .rowlist.bgavatars .rowitem {
 	background-repeat: no-repeat;
@@ -428,6 +445,9 @@ input, select, textarea {
 	height: 35px;
 	margin-left: 8px;
 	width: 108px;
+}
+.topic_list .rowitem:last-child {
+	margin-bottom: 10px;
 }
 
 /* Profiles */

@@ -50,7 +50,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//	default_route(w,req)
 	//	return
 	//}
-	if req.URL.Path[0] != '/' {
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
 		w.WriteHeader(405)
 		w.Write([]byte(""))
 		return
@@ -197,6 +197,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					return
 				case "/panel/logs/mod/":
 					route_panel_logs_mod(w,req,user)
+					return
+				case "/panel/debug/":
+					route_panel_debug(w,req,user)
 					return
 				default:
 					route_panel(w,req,user)

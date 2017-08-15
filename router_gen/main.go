@@ -127,7 +127,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//	default_route(w,req)
 	//	return
 	//}
-	if req.URL.Path[0] != '/' {
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
 		w.WriteHeader(405)
 		w.Write([]byte(""))
 		return

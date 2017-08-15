@@ -1,7 +1,7 @@
 /* WIP Under Construction */
 package qgen
 
-//import "fmt"
+//import "log"
 import "database/sql"
 
 var Builder *builder
@@ -38,12 +38,21 @@ func (build *builder) SimpleSelect(table string, columns string, where string, o
 	return build.conn.Prepare(res)
 }
 
+func (build *builder) SimpleCount(table string, where string, limit string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleCount("_builder", table, where, limit)
+	if err != nil {
+		return stmt, err
+	}
+	//log.Print("res",res)
+	return build.conn.Prepare(res)
+}
+
 func (build *builder) SimpleLeftJoin(table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
 	res, err := build.adapter.SimpleLeftJoin("_builder", table1, table2, columns, joiners, where, orderby, limit)
 	if err != nil {
 		return stmt, err
 	}
-	//fmt.Println("res",res)
+	//log.Print("res",res)
 	return build.conn.Prepare(res)
 }
 
@@ -52,7 +61,7 @@ func (build *builder) SimpleInnerJoin(table1 string, table2 string, columns stri
 	if err != nil {
 		return stmt, err
 	}
-	//fmt.Println("res",res)
+	//log.Print("res",res)
 	return build.conn.Prepare(res)
 }
 

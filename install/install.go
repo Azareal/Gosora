@@ -145,6 +145,7 @@ site.Url = "` + site_url + `"
 site.Port = "` + server_port + `"
 site.EnableSsl = false
 site.EnableEmails = false
+site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
 config.SslPrivkey = ""
 config.SslFullchain = ""
 

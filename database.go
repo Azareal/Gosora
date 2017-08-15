@@ -6,6 +6,7 @@ import "database/sql"
 
 var db *sql.DB
 var db_version string
+var db_adapter string
 
 var ErrNoRows = sql.ErrNoRows
 

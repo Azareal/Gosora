@@ -14,7 +14,7 @@ import (
 var guest_user User = User{ID:0,Link:"#",Group:6,Perms:GuestPerms}
 
 var PreRoute func(http.ResponseWriter, *http.Request) (User,bool) = _pre_route
-var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderVars,bool) = _panel_session_check
+var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderVars,PanelStats,bool) = _panel_session_check
 var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) bool = _simple_panel_session_check
 var SimpleForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (success bool) = _simple_forum_session_check
 var ForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars HeaderVars, success bool) = _forum_session_check
@@ -208,11 +208,11 @@ func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fi
 }
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
-func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) {
+func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, stats PanelStats, success bool) {
 	headerVars.Site = site
 	if !user.Is_Super_Mod {
 		NoPermissions(w,r,*user)
-		return headerVars, false
+		return headerVars, stats, false
 	}
 
 	headerVars.Stylesheets = append(headerVars.Stylesheets,"panel.css")
@@ -233,9 +233,22 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 		}
 	}
 
+	err := group_count_stmt.QueryRow().Scan(&stats.Groups)
+	if err != nil {
+		InternalError(err,w)
+		return headerVars, stats, false
+	}
+
+	stats.Users = users.GetGlobalCount()
+	stats.Forums = fstore.GetGlobalCount() // TO-DO: Stop it from showing the blanked forums
+	stats.Settings = len(settings) // TO-DO: IS this racey?
+	stats.Themes = len(themes)
+	stats.Reports = 0 // TO-DO: Do the report count. Only show open threads?
+
 	pusher, ok := w.(http.Pusher)
 	if ok {
 		pusher.Push("/static/main.css", nil)
+		pusher.Push("/static/panel.css", nil)
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
 		// TO-DO: Push the theme CSS files
@@ -243,7 +256,7 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 		// TO-DO: Push avatars?
 	}
 
-	return headerVars, true
+	return headerVars, stats, true
 }
 func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (success bool) {
 	if !user.Is_Super_Mod {

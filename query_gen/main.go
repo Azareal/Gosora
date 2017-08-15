@@ -393,6 +393,8 @@ func write_deletes(adapter qgen.DB_Adapter) error {
 func write_simple_counts(adapter qgen.DB_Adapter) error {
 	adapter.SimpleCount("report_exists","topics","data = ? AND data != '' AND parentID = 1","")
 	
+	adapter.SimpleCount("group_count","users_groups","","")
+	
 	return nil
 }
 

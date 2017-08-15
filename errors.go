@@ -6,6 +6,9 @@ import "bytes"
 import "net/http"
 import "runtime/debug"
 
+//var notfound_count_per_second int
+//var noperms_count_per_second int
+
 var error_internal []byte
 var error_notfound []byte
 func init_errors() error {

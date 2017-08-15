@@ -210,15 +210,59 @@ func init_templates() {
 	}
 	compile_templates()
 
-	// Filler functions for now...
-	filler_func := func(in interface{}, in2 interface{})interface{} {
-		return 1
-	}
+	// TO-DO: Add support for 64-bit integers
+	// TO-DO: Add support for floats
 	fmap := make(map[string]interface{})
-	fmap["add"] = filler_func
-	fmap["subtract"] = filler_func
-	fmap["multiply"] = filler_func
-	fmap["divide"] = filler_func
+	fmap["add"] = func(left interface{}, right interface{})interface{} {
+		var left_int int
+		var right_int int
+		switch left := left.(type) {
+			case uint, uint8, uint16, int, int32: left_int = left.(int)
+		}
+		switch right := right.(type) {
+			case uint, uint8, uint16, int, int32: right_int = right.(int)
+		}
+		return left_int + right_int
+	}
+
+	fmap["subtract"] = func(left interface{}, right interface{})interface{} {
+		var left_int int
+		var right_int int
+		switch left := left.(type) {
+			case uint, uint8, uint16, int, int32: left_int = left.(int)
+		}
+		switch right := right.(type) {
+			case uint, uint8, uint16, int, int32: right_int = right.(int)
+		}
+		return left_int - right_int
+	}
+
+	fmap["multiply"] = func(left interface{}, right interface{})interface{} {
+		var left_int int
+		var right_int int
+		switch left := left.(type) {
+			case uint, uint8, uint16, int, int32: left_int = left.(int)
+		}
+		switch right := right.(type) {
+			case uint, uint8, uint16, int, int32: right_int = right.(int)
+		}
+		return left_int * right_int
+	}
+
+	fmap["divide"] = func(left interface{}, right interface{})interface{} {
+		var left_int int
+		var right_int int
+		switch left := left.(type) {
+			case uint, uint8, uint16, int, int32: left_int = left.(int)
+		}
+		switch right := right.(type) {
+			case uint, uint8, uint16, int, int32: right_int = right.(int)
+		}
+		if left_int == 0 || right_int == 0 {
+			return 0
+		}
+		return left_int / right_int
+	}
 
 	// The interpreted templates...
 	if dev.DebugMode {
@@ -377,6 +421,7 @@ func main(){
 	///router.HandleFunc("/panel/groups/edit/perms/submit/", route_panel_groups_edit_perms_submit)
 	///router.HandleFunc("/panel/groups/create/", route_panel_groups_create_submit)
 	///router.HandleFunc("/panel/logs/mod/", route_panel_logs_mod)
+	///router.HandleFunc("/panel/debug/", route_panel_debug)
 
 	///router.HandleFunc("/api/", route_api)
 	//router.HandleFunc("/exit/", route_exit)

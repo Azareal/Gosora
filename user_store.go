@@ -32,6 +32,7 @@ type UserStore interface {
 	CreateUser(username string, password string, email string, group int, active int) (int, error)
 	GetLength() int
 	GetCapacity() int
+	GetGlobalCount() int
 }
 
 type MemoryUserStore struct {
@@ -41,6 +42,7 @@ type MemoryUserStore struct {
 	get *sql.Stmt
 	register *sql.Stmt
 	username_exists *sql.Stmt
+	user_count *sql.Stmt
 	sync.RWMutex
 }
 
@@ -62,12 +64,18 @@ func NewMemoryUserStore(capacity int) *MemoryUserStore {
 		log.Fatal(err)
 	}
 
+	user_count_stmt, err := qgen.Builder.SimpleCount("users","","")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &MemoryUserStore{
 		items:make(map[int]*User),
 		capacity:capacity,
 		get:get_stmt,
 		register:register_stmt,
 		username_exists:username_exists_stmt,
+		user_count:user_count_stmt,
 	}
 }
 
@@ -352,10 +360,21 @@ func (sus *MemoryUserStore) GetCapacity() int {
 	return sus.capacity
 }
 
+// Return the total number of users registered on the forums
+func (sus *MemoryUserStore) GetGlobalCount() int {
+	var ucount int
+	err := sus.user_count.QueryRow().Scan(&ucount)
+	if err != nil {
+		LogError(err)
+	}
+	return ucount
+}
+
 type SqlUserStore struct {
 	get *sql.Stmt
 	register *sql.Stmt
 	username_exists *sql.Stmt
+	user_count *sql.Stmt
 }
 
 func NewSqlUserStore() *SqlUserStore {
@@ -376,10 +395,16 @@ func NewSqlUserStore() *SqlUserStore {
 		log.Fatal(err)
 	}
 
+	user_count_stmt, err := qgen.Builder.SimpleCount("users","","")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &SqlUserStore{
-		get:get_stmt,
-		register:register_stmt,
-		username_exists:username_exists_stmt,
+		get: get_stmt,
+		register: register_stmt,
+		username_exists: username_exists_stmt,
+		user_count: user_count_stmt,
 	}
 }
 
@@ -551,6 +576,20 @@ func (sus *SqlUserStore) GetCapacity() int {
 	return 0
 }
 
+// Return the total number of users registered on the forums
 func (sus *SqlUserStore) GetLength() int {
-	return 0 // Return the total number of users registered on the forums?
+	var ucount int
+	err := sus.user_count.QueryRow().Scan(&ucount)
+	if err != nil {
+		LogError(err)
+	}
+	return ucount
+}
+func (sus *SqlUserStore) GetGlobalCount() int {
+	var ucount int
+	err := sus.user_count.QueryRow().Scan(&ucount)
+	if err != nil {
+		LogError(err)
+	}
+	return ucount
 }

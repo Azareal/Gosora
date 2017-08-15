@@ -15,6 +15,7 @@ type Site struct
 	Port string
 	EnableSsl bool
 	EnableEmails bool
+	HasProxy bool
 }
 
 type DB_Config struct

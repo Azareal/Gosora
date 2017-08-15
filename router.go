@@ -31,7 +31,7 @@ func (router *Router) HandleFunc(pattern string, handle func(http.ResponseWriter
 }
 
 func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if req.URL.Path[0] != '/' {
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
 		w.WriteHeader(405)
 		w.Write([]byte(""))
 		return

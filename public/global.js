@@ -13,14 +13,16 @@ function post_link(event)
 
 function load_alerts(menu_alerts)
 {
-	menu_alerts.find(".alert_counter").text("");
+	var alertListNode = menu_alerts.getElementsByClassName("alertList")[0];
+	var alertCounterNode = menu_alerts.getElementsByClassName("alert_counter")[0];
+	alertCounterNode.textContent = "";
 	$.ajax({
 			type: 'get',
 			dataType: 'json',
 			url:'/api/?action=get&module=alerts&format=json',
 			success: function(data) {
 				if("errmsg" in data) {
-					menu_alerts.find(".alertList").html("<div class='alertItem'>"+data.errmsg+"</div>");
+					alertListNode.innerHTML = "<div class='alertItem'>"+data.errmsg+"</div>";
 					return;
 				}
 
@@ -55,8 +57,13 @@ function load_alerts(menu_alerts)
 					//menu_alerts.removeClass("hasAvatars");
 					//if(anyAvatar) menu_alerts.addClass("hasAvatars");
 				}
-				menu_alerts.find(".alertList").html(alist);
-				if(data.msgCount != 0) menu_alerts.find(".alert_counter").text(data.msgCount);
+				alertListNode.innerHTML = alist;
+				if(data.msgCount != 0) {
+					alertCounterNode.textContent = data.msgCount;
+					menu_alerts.classList.add("has_alerts");
+				} else {
+					menu_alerts.classList.remove("has_alerts");
+				}
 				alertCount = data.msgCount;
 			},
 			error: function(magic,theStatus,error) {
@@ -69,36 +76,36 @@ function load_alerts(menu_alerts)
 					console.log(magic.responseText);
 					console.log(err);
 				}
-				menu_alerts.find(".alertList").html("<div class='alertItem'>"+errtxt+"</div>");
+				alertListNode.innerHTML = "<div class='alertItem'>"+errtxt+"</div>";
 			}
 		});
 }
 
-$(document).ready(function(){
-	function SplitN(data,ch,n) {
-		var out = [];
-		if(data.length == 0) return out;
+function SplitN(data,ch,n) {
+	var out = [];
+	if(data.length == 0) return out;
 
-		var lastIndex = 0;
-		var j = 0;
-		var lastN = 1;
-		for(var i = 0; i < data.length; i++) {
-			if(data[i] == ch) {
-				out[j++] = data.substring(lastIndex,i);
-				lastIndex = i;
-				if(lastN == n) break;
-				lastN++;
-			}
+	var lastIndex = 0;
+	var j = 0;
+	var lastN = 1;
+	for(var i = 0; i < data.length; i++) {
+		if(data[i] == ch) {
+			out[j++] = data.substring(lastIndex,i);
+			lastIndex = i;
+			if(lastN == n) break;
+			lastN++;
 		}
-		if(data.length > lastIndex) out[out.length - 1] += data.substring(lastIndex);
-		return out;
 	}
+	if(data.length > lastIndex) out[out.length - 1] += data.substring(lastIndex);
+	return out;
+}
 
+$(document).ready(function(){
 	if(window["WebSocket"]) {
 		if(window.location.protocol == "https:")
 			conn = new WebSocket("wss://" + document.location.host + "/ws/");
 		else conn = new WebSocket("ws://" + document.location.host + "/ws/");
-		
+
 		conn.onopen = function() {
 			conn.send("page " + document.location.pathname + '\r');
 		}
@@ -342,14 +349,15 @@ $(document).ready(function(){
 		}
 	});
 
-	$(".menu_alerts").ready(function(){
-		load_alerts($(this));
-	});
+	var alert_menu_list = document.getElementsByClassName("menu_alerts");
+	for(var i = 0; i < alert_menu_list.length; i++) {
+		load_alerts(alert_menu_list[i]);
+	}
 
 	$(".menu_alerts").click(function(event) {
 		event.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
-		if(!conn) load_alerts($(this));
+		if(!conn) load_alerts(this);
 		this.className += " selectedAlert";
 		document.getElementById("back").className += " alertActive"
 	});

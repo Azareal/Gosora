@@ -1,0 +1,17 @@
+{{template "header.html" . }}
+{{template "panel-menu.html" . }}
+<div id="panel_dashboard_right" class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem"><a>Debug</a></div>
+	</div>
+	<div id="panel_debug" class="colstack_grid">
+		<div class="grid_item grid_stat">Uptime</div>
+		<div class="grid_item grid_stat">Open DB Conns</div>
+		<div class="grid_item grid_stat">Adapter</div>
+
+		<div class="grid_item grid_stat">{{.Uptime}}</div>
+		<div class="grid_item grid_stat">{{.OpenConns}}</div>
+		<div class="grid_item grid_stat">{{.DBAdapter}}</div>
+	</div>
+</div>
+{{template "footer.html" . }}

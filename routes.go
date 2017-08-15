@@ -62,6 +62,9 @@ func route_static(w http.ResponseWriter, r *http.Request){
 	if strings.Contains(r.Header.Get("Accept-Encoding"),"gzip") {
 		h.Set("Content-Encoding","gzip")
 		h.Set("Content-Length", strconv.FormatInt(file.GzipLength, 10))
+		if site.HasProxy {
+			h.Set("Vary","Accept-Encoding")
+		}
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?
 	} else {
 		h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
@@ -139,6 +142,7 @@ func route_custom_page(w http.ResponseWriter, r *http.Request, user User){
 	}
 }
 
+// TO-DO: Paginate this
 func route_topics(w http.ResponseWriter, r *http.Request, user User){
 	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
@@ -1726,6 +1730,9 @@ func route_login(w http.ResponseWriter, r *http.Request, user User) {
 	templates.ExecuteTemplate(w,"login.html",pi)
 }
 
+// TO-DO: Log failed attempted logins?
+// TO-DO: Lock IPS out if they have too many failed attempts?
+// TO-DO: Log unusual countries in comparison to the country a user usually logs in from? Alert the user about this?
 func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
 	if user.Loggedin {
 		LocalError("You're already logged in.",w,r,user)
@@ -1743,6 +1750,13 @@ func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
+	userPtr, err := users.CascadeGet(uid)
+	if err != nil {
+		LocalError("Bad account",w,r,user)
+		return
+	}
+	user = *userPtr
+
 	var session string
 	if user.Session == "" {
 		session, err = auth.CreateSession(uid)
@@ -1755,6 +1769,15 @@ func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	auth.SetCookies(w,uid,session)
+	if user.Is_Admin {
+		// Is this error check reundant? We already check for the error in PreRoute for the same IP
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			InternalError(err,w)
+			return
+		}
+		log.Print("#" + strconv.Itoa(uid) + " has logged in with IP " + host)
+	}
 	http.Redirect(w,r,"/",http.StatusSeeOther)
 }
 

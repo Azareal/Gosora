@@ -5,6 +5,7 @@
 package main
 
 import "strings"
+//import "time"
 import "database/sql"
 import _ "github.com/lib/pq"
 import "./query_gen/lib"
@@ -17,6 +18,10 @@ var todays_post_count_stmt *sql.Stmt
 var todays_topic_count_stmt *sql.Stmt
 var todays_report_count_stmt *sql.Stmt
 var todays_newuser_count_stmt *sql.Stmt
+
+func init() {
+	db_adapter = "pgsql"
+}
 
 func _init_database() (err error) {
 	// TO-DO: Investigate connect_timeout to see what it does exactly and whether it's relevant to us
@@ -40,6 +45,10 @@ func _init_database() (err error) {
 
 	// Set the number of max open connections. How many do we need? Might need to do some tests.
 	db.SetMaxOpenConns(64)
+	db.SetMaxIdleConns(32)
+
+	// Only hold connections open for five seconds to avoid accumulating a large number of stale connections
+	//db.SetConnMaxLifetime(5 * time.Second)
 
 	err = _gen_pgsql()
 	if err != nil {

@@ -106,6 +106,39 @@ type CreateTopicPage struct
 	ExtData ExtData
 }
 
+type PanelStats struct
+{
+	Users int
+	Groups int
+	Forums int
+	Settings int
+	Themes int
+	Reports int
+}
+
+type PanelPage struct
+{
+	Title string
+	CurrentUser User
+	Header HeaderVars
+	Stats PanelStats
+	ItemList []interface{}
+	Something interface{}
+}
+
+type PanelGroupPage struct
+{
+	Title string
+	CurrentUser User
+	Header HeaderVars
+	Stats PanelStats
+	ItemList []GroupAdmin
+	PageList []int
+	Page int
+	LastPage int
+	ExtData ExtData
+}
+
 type GridElement struct
 {
 	ID string
@@ -122,25 +155,28 @@ type PanelDashboardPage struct
 	Title string
 	CurrentUser User
 	Header HeaderVars
+	Stats PanelStats
 	GridItems []GridElement
 	ExtData ExtData
 }
 
-type ThemesPage struct
+type PanelThemesPage struct
 {
 	Title string
 	CurrentUser User
 	Header HeaderVars
+	Stats PanelStats
 	PrimaryThemes []Theme
 	VariantThemes []Theme
 	ExtData ExtData
 }
 
-type EditGroupPage struct
+type PanelEditGroupPage struct
 {
 	Title string
 	CurrentUser User
 	Header HeaderVars
+	Stats PanelStats
 	ID int
 	Name string
 	Tag string
@@ -155,11 +191,12 @@ type GroupForumPermPreset struct
 	Preset string
 }
 
-type EditForumPage struct
+type PanelEditForumPage struct
 {
 	Title string
 	CurrentUser User
 	Header HeaderVars
+	Stats PanelStats
 	ID int
 	Name string
 	Desc string
@@ -182,11 +219,12 @@ type NameLangToggle struct
 	Toggle bool
 }
 
-type EditGroupPermsPage struct
+type PanelEditGroupPermsPage struct
 {
 	Title string
 	CurrentUser User
 	Header HeaderVars
+	Stats PanelStats
 	ID int
 	Name string
 	LocalPerms []NameLangToggle
@@ -200,12 +238,25 @@ type Log struct {
 	DoneAt string
 }
 
-type LogsPage struct
+type PanelLogsPage struct
 {
 	Title string
 	CurrentUser User
 	Header HeaderVars
+	Stats PanelStats
 	Logs []Log
+	ExtData ExtData
+}
+
+type PanelDebugPage struct
+{
+	Title string
+	CurrentUser User
+	Header HeaderVars
+	Stats PanelStats
+	Uptime string
+	OpenConns int
+	DBAdapter string
 	ExtData ExtData
 }
 
@@ -746,4 +797,42 @@ func coerce_int_bytes(data []byte) (res int, length int) {
 		return 0, i
 	}
 	return conv, i
+}
+
+// TO-DO: Write tests for this
+func paginate(count int, per_page int, maxPages int) []int {
+	if count < per_page {
+		return []int{1}
+	}
+
+	var page int
+	var out []int
+	for current := 0; current < count; current += per_page {
+		page++
+		out = append(out,page)
+		if len(out) >= maxPages {
+			break
+		}
+	}
+	return out
+}
+
+// TO-DO: Write tests for this
+func page_offset(count int, page int, perPage int) (int, int, int) {
+	var offset int
+	lastPage := int(count / perPage) + 1
+	if page > 1 {
+		offset = (perPage * page) - perPage
+	} else if page == -1 {
+		page = lastPage
+		offset = (perPage * page) - perPage
+	} else {
+		page = 1
+	}
+
+	// We don't want the offset to overflow the slices, if everything's in memory
+	if offset >= (count - 1) {
+		offset = 0
+	}
+	return offset, page, lastPage
 }

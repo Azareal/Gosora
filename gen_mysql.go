@@ -108,6 +108,7 @@ var delete_topic_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
 var delete_forum_perms_by_forum_stmt *sql.Stmt
 var report_exists_stmt *sql.Stmt
+var group_count_stmt *sql.Stmt
 var add_forum_perms_to_forum_admins_stmt *sql.Stmt
 var add_forum_perms_to_forum_staff_stmt *sql.Stmt
 var add_forum_perms_to_forum_members_stmt *sql.Stmt
@@ -720,6 +721,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing report_exists statement.")
 	report_exists_stmt, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `topics` WHERE `data` = ? AND `data` != '' AND `parentID` = 1")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing group_count statement.")
+	group_count_stmt, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `users_groups`")
 	if err != nil {
 		return err
 	}

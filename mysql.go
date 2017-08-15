@@ -4,6 +4,7 @@
 package main
 
 import "log"
+//import "time"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 import "./query_gen/lib"
@@ -15,6 +16,10 @@ var todays_post_count_stmt *sql.Stmt
 var todays_topic_count_stmt *sql.Stmt
 var todays_report_count_stmt *sql.Stmt
 var todays_newuser_count_stmt *sql.Stmt
+
+func init() {
+	db_adapter = "mysql"
+}
 
 func _init_database() (err error) {
 	var _dbpassword string
@@ -39,6 +44,10 @@ func _init_database() (err error) {
 
 	// Set the number of max open connections
 	db.SetMaxOpenConns(64)
+	db.SetMaxIdleConns(32)
+
+	// Only hold connections open for five seconds to avoid accumulating a large number of stale connections
+	//db.SetConnMaxLifetime(5 * time.Second)
 
 	// Build the generated prepared statements, we are going to slowly move the queries over to the query generator rather than writing them all by hand, this'll make it easier for us to implement database adapters for other databases like PostgreSQL, MSSQL, SQlite, etc.
 	err = _gen_mysql()

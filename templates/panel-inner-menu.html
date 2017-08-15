@@ -2,12 +2,36 @@
 	<div class="rowitem"><a href="/panel/">Control Panel</a></div>
 </div>
 <div class="colstack_item rowmenu">
-	<div class="rowitem passive"><a href="/panel/users/">Users</a></div>
-	<div class="rowitem passive"><a href="/panel/groups/">Groups</a></div>
-	{{if .CurrentUser.Perms.ManageForums}}<div class="rowitem passive"><a href="/panel/forums/">Forums</a></div>{{end}}
-	{{if .CurrentUser.Perms.EditSettings}}<div class="rowitem passive"><a href="/panel/settings/">Settings</a></div>{{end}}
-	{{if .CurrentUser.Perms.ManageThemes}}<div class="rowitem passive"><a href="/panel/themes/">Themes</a></div>{{end}}
-	{{if .CurrentUser.Perms.ManagePlugins}}<div class="rowitem passive"><a href="/panel/plugins/">Plugins</a></div>{{end}}
-	<div class="rowitem passive"><a href="/forum/1">Reports</a></div>
-	<div class="rowitem passive"><a href="/panel/logs/mod/">Logs</a></div>
+	<div class="rowitem passive">
+		<a href="/panel/users/">Users</a> <a class="menu_stats" href="#">({{.Stats.Users}})</a>
+	</div>
+	<div class="rowitem passive">
+		<a href="/panel/groups/">Groups</a> <a class="menu_stats" href="#">({{.Stats.Groups}})</a>
+	</div>
+	{{if .CurrentUser.Perms.ManageForums}}<div class="rowitem passive">
+		<a href="/panel/forums/">Forums</a> <a class="menu_stats" href="#">({{.Stats.Forums}})</a>
+	</div>{{end}}
+	{{if .CurrentUser.Perms.EditSettings}}<div class="rowitem passive">
+		<a href="/panel/settings/">Settings</a> <a class="menu_stats" href="#">({{.Stats.Settings}})</a>
+	</div>{{end}}
+	{{if .CurrentUser.Perms.ManageThemes}}<div class="rowitem passive">
+		<a href="/panel/themes/">Themes</a> <a class="menu_stats" href="#">({{.Stats.Themes}})</a>
+	</div>{{end}}
+	<div class="rowitem passive">
+		<a href="/forum/1">Reports</a> <a class="menu_stats" href="#">({{.Stats.Reports}})</a>
+	</div>
+</div>
+<div class="colstack_item colstack_head">
+	<div class="rowitem"><a href="#">System</a></div>
+</div>
+<div class="colstack_item rowmenu">
+	{{if .CurrentUser.Perms.ManagePlugins}}<div class="rowitem passive">
+		<a href="/panel/plugins/">Plugins</a>
+	</div>{{end}}
+	<div class="rowitem passive">
+		<a href="/panel/logs/mod/">Logs</a>
+	</div>
+	{{if .CurrentUser.Is_Admin}}<div class="rowitem passive">
+		<a href="/panel/debug/">Debug</a>
+	</div>{{end}}
 </div>
