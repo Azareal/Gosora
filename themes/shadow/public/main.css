@@ -86,8 +86,27 @@ li {
 }
 
 .selectedAlert .alertList {
-	/* Coming Soon. Hidden so it doesn't distract me while I design this theme */
-	display: none;
+	display: block;
+	position: absolute;
+	top: 44px;
+	float: left;
+	width: 200px;
+	z-index: 50;
+	right: 15%;
+	font-size: 13px;
+	background-color: #333333;
+}
+
+.alertItem {
+	margin-bottom: 2px;
+}
+.alertItem.withAvatar {
+	height: 40px;
+	background-size: 48px;
+	background-repeat: no-repeat;
+	background-color: rgb(61,61,61);
+	padding-left: 56px;
+	padding-top: 8px;
 }
 
 a {
@@ -142,19 +161,13 @@ a {
 	float: left;
 	width: calc(70% - 24px);
 }
-.colstack_left:empty, .colstack_right:empty {
-	display: none;
-}
-
-.show_on_edit {
+.colstack_left:empty, .colstack_right:empty, .show_on_edit {
 	display: none;
 }
 
 .topic_sticky_head {
-
 }
 .topic_closed_head {
-
 }
 
 .post_item {
@@ -583,6 +596,22 @@ input, select, textarea {
 	}
 	.menu_alerts:not(.has_alerts) .alert_counter {
 		display: none;
+	}
+
+	.selectedAlert .alertList {
+		right: 10px;
+		top: 42px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.alertItem.withAvatar {
+		height: 28px;
+		background-size: 38px;
+		padding-left: 46px;
+		padding-top: 10px;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	#back {

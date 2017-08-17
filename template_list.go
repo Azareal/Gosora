@@ -149,7 +149,7 @@ var topic_40 []byte = []byte(`' style="font-weight:normal;" title="Unpin Topic">
 var topic_41 []byte = []byte(`<a href='/topic/stick/submit/`)
 var topic_42 []byte = []byte(`' class="mod_button" style="font-weight:normal;" title="Pin Topic"><button class="username pin_label"></button></a>`)
 var topic_43 []byte = []byte(`
-		<a class="mod_button" href="/report/submit/`)
+		<a href="/report/submit/`)
 var topic_44 []byte = []byte(`?session=`)
 var topic_45 []byte = []byte(`&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag Topic"><button class="username flag_label"></button></a>
 
@@ -200,7 +200,7 @@ var topic_71 []byte = []byte(`" class="mod_button" title="Edit Reply"><button cl
 var topic_72 []byte = []byte(`<a href="/reply/delete/submit/`)
 var topic_73 []byte = []byte(`" class="mod_button" title="Delete Reply"><button class="username delete_item trash_label"></button></a>`)
 var topic_74 []byte = []byte(`
-		<a class="mod_button" href="/report/submit/`)
+		<a href="/report/submit/`)
 var topic_75 []byte = []byte(`?session=`)
 var topic_76 []byte = []byte(`&type=reply" class="mod_button report_item" title="Flag Reply"><button class="username report_item flag_label"></button></a>
 
@@ -210,8 +210,8 @@ var topic_78 []byte = []byte(`</a><a class="username hide_on_micro like_count_la
 var topic_79 []byte = []byte(`<a class="username hide_on_micro user_tag">`)
 var topic_80 []byte = []byte(`</a>`)
 var topic_81 []byte = []byte(`<a class="username hide_on_micro level">`)
-var topic_82 []byte = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="Level">`)
-var topic_83 []byte = []byte(`</a>
+var topic_82 []byte = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="Level"></a>`)
+var topic_83 []byte = []byte(`
 
 		</span>
 	</div>

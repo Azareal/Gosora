@@ -15,7 +15,7 @@ function load_alerts(menu_alerts)
 {
 	var alertListNode = menu_alerts.getElementsByClassName("alertList")[0];
 	var alertCounterNode = menu_alerts.getElementsByClassName("alert_counter")[0];
-	alertCounterNode.textContent = "";
+	alertCounterNode.textContent = "0";
 	$.ajax({
 			type: 'get',
 			dataType: 'json',
@@ -58,7 +58,7 @@ function load_alerts(menu_alerts)
 					//if(anyAvatar) menu_alerts.addClass("hasAvatars");
 				}
 				alertListNode.innerHTML = alist;
-				if(data.msgCount != 0) {
+				if(data.msgCount != 0 && data.msgCount != undefined) {
 					alertCounterNode.textContent = data.msgCount;
 					menu_alerts.classList.add("has_alerts");
 				} else {
@@ -108,6 +108,8 @@ $(document).ready(function(){
 
 		conn.onopen = function() {
 			conn.send("page " + document.location.pathname + '\r');
+			// TO-DO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
+			Notification.requestPermission();
 		}
 		conn.onclose = function() {
 			conn = false;
@@ -141,6 +143,16 @@ $(document).ready(function(){
 					//console.log(alist);
 					$("#general_alerts").find(".alertList").html(alist); // Add support for other alert feeds like PM Alerts
 					$("#general_alerts").find(".alert_counter").text(alertCount);
+
+					// TO-DO: Add some sort of notification queue to avoid flooding the end-user with notices?
+					// TO-DO: Use the site name instead of "Something Happened"
+					if(Notification.permission === "granted") {
+						var n = new Notification("Something Happened",{
+							body: msg,
+							icon: data.avatar,
+						});
+						setTimeout(n.close.bind(n), 8000);
+					}
 				}
 			}
 

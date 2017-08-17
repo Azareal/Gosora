@@ -60,6 +60,8 @@
 .forum_active_Hide:before { content: "Hidden"; }
 .forum_active_Hide + .forum_preset:before { content: " | "; }
 .forum_active_Show { display: none !important; }
+.forum_active_name { color: #707070; }
+.builtin_forum_divider { border-bottom-style: solid; }
 
 .perm_preset_no_access:before { content: "No Access"; color: maroon; }
 .perm_preset_read_only:before { content: "Read Only"; color: green; }

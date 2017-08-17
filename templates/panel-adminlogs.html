@@ -6,7 +6,6 @@
 	<div class="colstack_item rowmenu">
 		<div class="rowitem passive"><a href="/panel/logs/mod/">Moderation Logs</a></div>
 		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>Administration Logs</a></div>{{end}}
-		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>System Logs</a></div>{{end}}
 	</div>
 {{template "panel-inner-menu.html" . }}
 </div>

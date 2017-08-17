@@ -3,14 +3,18 @@ package main
 import "fmt"
 import "log"
 import "bytes"
+import "sync"
 import "net/http"
 import "runtime/debug"
 
+// TO-DO: Use the error_buffer variable to construct the system log in the Control Panel. Should we log errors caused by users too? Or just collect statistics on those or do nothing? Intercept recover()? Could we intercept the logger instead here? We might get too much information, if we intercept the logger, maybe make it part of the Debug page?
+var error_buffer_mutex sync.RWMutex
+var error_buffer []error
 //var notfound_count_per_second int
 //var noperms_count_per_second int
-
 var error_internal []byte
 var error_notfound []byte
+
 func init_errors() error {
 	var b bytes.Buffer
 	user := User{0,"guest","Guest","",0,false,false,false,false,false,false,GuestPerms,nil,"",false,"","","","","",0,0,"0.0.0.0.0"}
@@ -34,6 +38,9 @@ func init_errors() error {
 func LogError(err error) {
 	log.Print(err)
 	debug.PrintStack()
+	error_buffer_mutex.Lock()
+	defer error_buffer_mutex.Unlock()
+	error_buffer = append(error_buffer,err)
 	log.Fatal("")
 }
 
@@ -41,6 +48,9 @@ func InternalError(err error, w http.ResponseWriter) {
 	w.Write(error_internal)
 	log.Print(err)
 	debug.PrintStack()
+	error_buffer_mutex.Lock()
+	defer error_buffer_mutex.Unlock()
+	error_buffer = append(error_buffer,err)
 	log.Fatal("")
 }
 
@@ -53,12 +63,18 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, is_js s
 	}
 	log.Print(err)
 	debug.PrintStack()
+	error_buffer_mutex.Lock()
+	defer error_buffer_mutex.Unlock()
+	error_buffer = append(error_buffer,err)
 	log.Fatal("")
 }
 
 func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(500)
 	w.Write([]byte(`{"errmsg":"A problem has occured in the system."}`))
+	error_buffer_mutex.Lock()
+	defer error_buffer_mutex.Unlock()
+	error_buffer = append(error_buffer,err)
 	log.Fatal(err)
 }
 

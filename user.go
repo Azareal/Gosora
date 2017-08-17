@@ -324,6 +324,8 @@ func _pre_route(w http.ResponseWriter, r *http.Request) (User,bool) {
 		}
 		user.Last_IP = host
 	}
+
+	// TO-DO: Set the X-Frame-Options header
 	return *user, true
 }
 

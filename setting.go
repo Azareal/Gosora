@@ -50,6 +50,7 @@ func LoadSettings() error {
 	return nil
 }
 
+// TO-DO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
 func parseSetting(sname string, scontent string, stype string, constraint string) string {
 	var err error
 	if stype == "bool" {

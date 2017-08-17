@@ -964,15 +964,19 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	var userList []interface{}
-	rows, err := get_users_stmt.Query()
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	perPage := 10
+	offset, page, lastPage := page_offset(stats.Users, page, perPage)
+
+	var userList []User
+	rows, err := get_users_offset_stmt.Query(offset,perPage)
 	if err != nil {
 		InternalError(err,w)
 		return
 	}
 	defer rows.Close()
 
-	// TO-DO: Add a UserStore method for iterating over global users
+	// TO-DO: Add a UserStore method for iterating over global users and global user offsets
 	for rows.Next() {
 		puser := User{ID: 0,}
 		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.Is_Super_Admin, &puser.Avatar)
@@ -1003,7 +1007,8 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	pi := PanelPage{"User Manager",user,headerVars,stats,userList,nil}
+	pageList := paginate(stats.Users, perPage, 5)
+	pi := PanelUserPage{"User Manager",user,headerVars,stats,userList,pageList,page,lastPage,extData}
 	if pre_render_hooks["pre_render_panel_users"] != nil {
 		if run_pre_render_hook("pre_render_panel_users", w, r, &user, &pi) {
 			return
@@ -1740,7 +1745,18 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	rows, err := get_modlogs_stmt.Query()
+	var logCount int
+	err := modlog_count_stmt.QueryRow().Scan(&logCount)
+	if err != nil {
+		InternalError(err,w)
+		return
+	}
+
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	perPage := 10
+	offset, page, lastPage := page_offset(logCount, page, perPage)
+
+	rows, err := get_modlogs_offset_stmt.Query(offset,perPage)
 	if err != nil {
 		InternalError(err,w)
 		return
@@ -1826,7 +1842,8 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User){
 		return
 	}
 
-	pi := PanelLogsPage{"Moderation Logs",user,headerVars,stats,logs,extData}
+	pageList := paginate(logCount, perPage, 5)
+	pi := PanelLogsPage{"Moderation Logs",user,headerVars,stats,logs,pageList,page,lastPage,extData}
 	if pre_render_hooks["pre_render_panel_mod_log"] != nil {
 		if run_pre_render_hook("pre_render_panel_mod_log", w, r, &user, &pi) {
 			return

@@ -22,3 +22,10 @@
 #forum_quick_perms .edit_fields {
 	float: right;
 }
+
+.forum_active_name {
+	color: rgb(200,200,200);
+}
+.builtin_forum_divider {
+	margin-bottom: 5px;
+}

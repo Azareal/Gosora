@@ -39,7 +39,7 @@
 		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Delete Topic"><button class="username trash_label"></button></a>{{end}}
 
 		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}' style="font-weight:normal;" title="Unpin Topic"><button class="username unpin_label"></button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Pin Topic"><button class="username pin_label"></button></a>{{end}}{{end}}
-		<a class="mod_button" href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag Topic"><button class="username flag_label"></button></a>
+		<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag Topic"><button class="username flag_label"></button></a>
 
 		{{if .Topic.LikeCount}}<a class="username hide_on_micro like_count">{{.Topic.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>{{end}}
 
@@ -65,11 +65,11 @@
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Reply"><button class="username edit_item edit_label"></button></a>{{end}}
 
 		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Reply"><button class="username delete_item trash_label"></button></a>{{end}}
-		<a class="mod_button" href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button report_item" title="Flag Reply"><button class="username report_item flag_label"></button></a>
+		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button report_item" title="Flag Reply"><button class="username report_item flag_label"></button></a>
 
 		{{if .LikeCount}}<a class="username hide_on_micro like_count">{{.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>{{end}}
 
-		{{if .Tag}}<a class="username hide_on_micro user_tag">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="Level">{{end}}</a>
+		{{if .Tag}}<a class="username hide_on_micro user_tag">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="Level"></a>{{end}}
 
 		</span>
 	</div>

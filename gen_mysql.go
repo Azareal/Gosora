@@ -23,8 +23,10 @@ var get_themes_stmt *sql.Stmt
 var get_widgets_stmt *sql.Stmt
 var is_plugin_active_stmt *sql.Stmt
 var get_users_stmt *sql.Stmt
+var get_users_offset_stmt *sql.Stmt
 var is_theme_default_stmt *sql.Stmt
 var get_modlogs_stmt *sql.Stmt
+var get_modlogs_offset_stmt *sql.Stmt
 var get_reply_tid_stmt *sql.Stmt
 var get_topic_fid_stmt *sql.Stmt
 var get_user_reply_uid_stmt *sql.Stmt
@@ -109,6 +111,7 @@ var delete_profile_reply_stmt *sql.Stmt
 var delete_forum_perms_by_forum_stmt *sql.Stmt
 var report_exists_stmt *sql.Stmt
 var group_count_stmt *sql.Stmt
+var modlog_count_stmt *sql.Stmt
 var add_forum_perms_to_forum_admins_stmt *sql.Stmt
 var add_forum_perms_to_forum_staff_stmt *sql.Stmt
 var add_forum_perms_to_forum_members_stmt *sql.Stmt
@@ -215,6 +218,12 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing get_users_offset statement.")
+	get_users_offset_stmt, err = db.Prepare("SELECT `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` FROM `users` LIMIT ?,?")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing is_theme_default statement.")
 	is_theme_default_stmt, err = db.Prepare("SELECT `default` FROM `themes` WHERE `uname` = ?")
 	if err != nil {
@@ -223,6 +232,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing get_modlogs statement.")
 	get_modlogs_stmt, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs`")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_modlogs_offset statement.")
+	get_modlogs_offset_stmt, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs` LIMIT ?,?")
 	if err != nil {
 		return err
 	}
@@ -727,6 +742,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing group_count statement.")
 	group_count_stmt, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `users_groups`")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing modlog_count statement.")
+	modlog_count_stmt, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `moderation_logs`")
 	if err != nil {
 		return err
 	}

@@ -192,9 +192,13 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleSelect("get_users","users","uid, name, group, active, is_super_admin, avatar","","","")
 	
+	adapter.SimpleSelect("get_users_offset","users","uid, name, group, active, is_super_admin, avatar","","","?,?")
+	
 	adapter.SimpleSelect("is_theme_default","themes","default","uname = ?","","")
 	
 	adapter.SimpleSelect("get_modlogs","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","","","")
+	
+	adapter.SimpleSelect("get_modlogs_offset","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","","","?,?")
 	
 	adapter.SimpleSelect("get_reply_tid","replies","tid","rid = ?","","")
 	
@@ -394,6 +398,8 @@ func write_simple_counts(adapter qgen.DB_Adapter) error {
 	adapter.SimpleCount("report_exists","topics","data = ? AND data != '' AND parentID = 1","")
 	
 	adapter.SimpleCount("group_count","users_groups","","")
+	
+	adapter.SimpleCount("modlog_count","moderation_logs","","")
 	
 	return nil
 }

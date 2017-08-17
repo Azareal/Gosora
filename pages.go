@@ -126,19 +126,6 @@ type PanelPage struct
 	Something interface{}
 }
 
-type PanelGroupPage struct
-{
-	Title string
-	CurrentUser User
-	Header HeaderVars
-	Stats PanelStats
-	ItemList []GroupAdmin
-	PageList []int
-	Page int
-	LastPage int
-	ExtData ExtData
-}
-
 type GridElement struct
 {
 	ID string
@@ -168,6 +155,32 @@ type PanelThemesPage struct
 	Stats PanelStats
 	PrimaryThemes []Theme
 	VariantThemes []Theme
+	ExtData ExtData
+}
+
+type PanelUserPage struct
+{
+	Title string
+	CurrentUser User
+	Header HeaderVars
+	Stats PanelStats
+	ItemList []User
+	PageList []int
+	Page int
+	LastPage int
+	ExtData ExtData
+}
+
+type PanelGroupPage struct
+{
+	Title string
+	CurrentUser User
+	Header HeaderVars
+	Stats PanelStats
+	ItemList []GroupAdmin
+	PageList []int
+	Page int
+	LastPage int
 	ExtData ExtData
 }
 
@@ -245,6 +258,9 @@ type PanelLogsPage struct
 	Header HeaderVars
 	Stats PanelStats
 	Logs []Log
+	PageList []int
+	Page int
+	LastPage int
 	ExtData ExtData
 }
 

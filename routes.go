@@ -24,6 +24,7 @@ var nList []string
 var hvars HeaderVars
 var extData ExtData
 var success_json_bytes []byte = []byte(`{"success":"1"}`)
+var cacheControlMaxAge string = "max-age=" + strconv.Itoa(day)
 
 func init() {
 	hvars.Site = site
@@ -57,14 +58,14 @@ func route_static(w http.ResponseWriter, r *http.Request){
 	h := w.Header()
 	h.Set("Last-Modified", file.FormattedModTime)
 	h.Set("Content-Type", file.Mimetype)
+	//Cache-Control: max-age=31536000
+	h.Set("Cache-Control", cacheControlMaxAge)
+	h.Set("Vary","Accept-Encoding")
 	//http.ServeContent(w,r,r.URL.Path,file.Info.ModTime(),file)
 	//w.Write(file.Data)
 	if strings.Contains(r.Header.Get("Accept-Encoding"),"gzip") {
 		h.Set("Content-Encoding","gzip")
 		h.Set("Content-Length", strconv.FormatInt(file.GzipLength, 10))
-		if site.HasProxy {
-			h.Set("Vary","Accept-Encoding")
-		}
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?
 	} else {
 		h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?

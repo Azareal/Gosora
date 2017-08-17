@@ -11,7 +11,7 @@
 	</div>
 	<div id="panel_forums" class="colstack_item rowlist">
 		{{range .ItemList}}
-		<div class="rowitem editable_parent" style="{{if eq .ID 1}}border-bottom-style:solid;{{end}}">
+		<div class="rowitem editable_parent{{if eq .ID 1}} builtin_forum_divider{{end}}">
 			<span class="panel_floater">
 			<span data-field="forum_active" data-type="list" class="panel_tag editable_block forum_active {{if .Active}}forum_active_Show" data-value="1{{else}}forum_active_Hide" data-value="0{{end}}" title="Hidden"></span>
 			<span data-field="forum_preset" data-type="list" data-value="{{.Preset}}" class="panel_tag editable_block forum_preset forum_preset_{{.Preset}}" title="{{.PresetLang}}"></span>
@@ -24,7 +24,8 @@
 			</span>
 			</span>
 			<span style="float: left;">
-				<a data-field="forum_name" data-type="text" class="editable_block forum_name" style="{{if not .Active}}color:#707070;{{end}}">{{.Name}}</a>
+				{{/** TO-DO: Make sure the forum_active_name class is set and unset when the activity status of this forum is changed **/}}
+				<a data-field="forum_name" data-type="text" class="editable_block forum_name{{if not .Active}} forum_active_name{{end}}">{{.Name}}</a>
 			</span>
 			<br /><span data-field="forum_desc" data-type="text" class="editable_block forum_desc rowsmall">{{.Desc}}</span>
 			<div style="clear: both;"></div>

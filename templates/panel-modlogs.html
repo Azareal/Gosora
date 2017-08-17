@@ -6,7 +6,6 @@
 	<div class="colstack_item rowmenu">
 		<div class="rowitem passive"><a href="/panel/logs/mod/">Moderation Logs</a></div>
 		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>Administration Logs</a></div>{{end}}
-		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>System Logs</a></div>{{end}}
 	</div>
 {{template "panel-inner-menu.html" . }}
 </div>
@@ -28,5 +27,14 @@
 		</div>
 		{{end}}
 	</div>
+	{{if gt .LastPage 1}}
+	<div class="pageset">
+		{{if gt .Page 1}}<div class="pageitem"><a href="?page={{subtract .Page 1}}">Prev</a></div>{{end}}
+		{{range .PageList}}
+		<div class="pageitem"><a href="?page={{.}}">{{.}}</a></div>
+		{{end}}
+		{{if ne .LastPage .Page}}<div class="pageitem"><a href="?page={{add .Page 1}}">Next</a></div>{{end}}
+	</div>
+	{{end}}
 </div>
 {{template "footer.html" . }}
