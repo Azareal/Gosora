@@ -28,11 +28,11 @@ func (hub *WS_Hub) push_message(_ int, _ string) error {
 	return ws_nouser
 }
 
-func(hub *WS_Hub) push_alert(_ int, _ string, _ string, _ int, _ int, _ int) error {
+func(hub *WS_Hub) push_alert(_ int, _ int, _ string, _ string, _ int, _ int, _ int) error {
 	return ws_nouser
 }
 
-func(hub *WS_Hub) push_alerts(_ []int, _ string, _ string, _ int, _ int, _ int) error {
+func(hub *WS_Hub) push_alerts(_ []int, _ int, _ string, _ string, _ int, _ int, _ int) error {
 	return ws_nouser
 }
 

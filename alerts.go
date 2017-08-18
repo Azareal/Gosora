@@ -2,8 +2,10 @@ package main
 
 import "log"
 import "strings"
+import "strconv"
 import "errors"
 
+// These notes are for me, don't worry about it too much ^_^
 /*
 "You received a friend invite from {user}"
 "{x}{mentioned you on}{user}{'s profile}"
@@ -18,7 +20,7 @@ import "errors"
 "{x}{created a new topic}{topic}"
 */
 
-func build_alert(event string, elementType string, actor_id int, targetUser_id int, elementID int, user User /* The current user */) (string, error) {
+func build_alert(asid int, event string, elementType string, actor_id int, targetUser_id int, elementID int, user User /* The current user */) (string, error) {
 	var targetUser *User
 
 	actor, err := users.CascadeGet(actor_id)
@@ -35,7 +37,7 @@ func build_alert(event string, elementType string, actor_id int, targetUser_id i
 	}*/
 
 	if event == "friend_invite" {
-		return `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"`+actor.Link+`","avatar":"`+strings.Replace(actor.Avatar,"/","\\/",-1)+`"}`, nil
+		return `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"`+actor.Link+`","avatar":"`+strings.Replace(actor.Avatar,"/","\\/",-1)+`","asid":"`+strconv.Itoa(asid)+`"}`, nil
 	}
 
 	var act, post_act, url, area string
@@ -109,7 +111,7 @@ func build_alert(event string, elementType string, actor_id int, targetUser_id i
 		case "reply": act = "replied to"
 	}
 
-	return `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `"}`, nil
+	return `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `","asid":"`+strconv.Itoa(asid)+`"}`, nil
 }
 
 func notify_watchers(asid int64) {
@@ -144,5 +146,5 @@ func notify_watchers(asid int64) {
 		return
 	}
 
-	_ = ws_hub.push_alerts(uids, event, elementType, actor_id, targetUser_id, elementID)
+	_ = ws_hub.push_alerts(uids, int(asid), event, elementType, actor_id, targetUser_id, elementID)
 }

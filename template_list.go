@@ -25,11 +25,9 @@ var header_8 []byte = []byte(`";</script>
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
 	</head>
 	<body>
-		<style>
-			`)
+		<style>`)
 var header_9 []byte = []byte(`.supermod_only { display: none !important; }`)
-var header_10 []byte = []byte(`
-		</style>
+var header_10 []byte = []byte(`</style>
 		<div class="container">
 `)
 var menu_0 []byte = []byte(`<div class="nav">
@@ -618,9 +616,9 @@ var forum_6 []byte = []byte(`?page=`)
 var forum_7 []byte = []byte(`">&gt;</a></div>`)
 var forum_8 []byte = []byte(`
 
-<div class="rowblock rowhead">
-	<div class="rowitem `)
-var forum_9 []byte = []byte(`has_opt`)
+<div id="forum_head_block" class="rowblock rowhead">
+	<div class="rowitem forum_title`)
+var forum_9 []byte = []byte(` has_opt`)
 var forum_10 []byte = []byte(`"><a>`)
 var forum_11 []byte = []byte(`</a>
 	</div>

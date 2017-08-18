@@ -129,6 +129,7 @@ a {
 .opthead, .rowhead, .colstack_head {
 	padding-bottom: 0px;
 	padding-top: 3px !important;
+	white-space: nowrap;
 }
 
 .rowblock:not(.opthead):not(.colstack_head):not(.rowhead) .rowitem {
@@ -212,12 +213,24 @@ a {
 .like_label:before {
 	content: "+1";
 }
-.edit_label:before { content: "Edit"; }
-.trash_label:before { content: "Delete"; }
-.pin_label:before { content: "Pin"; }
-.unpin_label:before { content: "Unpin"; }
-.flag_label:before { content: "Flag"; }
-.level_label:before { content: "Level"; }
+.edit_label:before {
+	content: "Edit";
+}
+.trash_label:before {
+	content: "Delete";
+}
+.pin_label:before {
+	content: "Pin";
+}
+.unpin_label:before {
+	content: "Unpin";
+}
+.flag_label:before {
+	content: "Flag";
+}
+.level_label:before {
+	content: "Level";
+}
 
 .like_count_label:before {
 	content: "likes";
@@ -252,11 +265,9 @@ a {
 .formrow.real_first_child, .formrow:first-child {
 	margin-top: 8px;
 }
-
 .formrow.real_first_child .formitem, .formrow:first-child .formitem {
 	padding-top: 12px;
 }
-
 .formrow:last-child .formitem {
 	padding-bottom: 12px;
 }

@@ -1,3 +1,4 @@
+'use strict';
 var form_vars = {};
 var alertList = [];
 var alertCount = 0;
@@ -11,6 +12,14 @@ function post_link(event)
 	$.ajax({ url: form_action, type: "POST", dataType: "json", data: {js: "1"} });
 }
 
+function bind_to_alerts() {
+	$(".alertItem.withAvatar a").click(function(event) {
+		event.stopPropagation();
+		$.ajax({ url: "/api/?action=set&module=dismiss-alert", type: "POST", dataType: "json", data: { asid: $(this).attr("data-asid") } });
+	});
+}
+
+// TO-DO: Add the ability for users to dismiss alerts
 function load_alerts(menu_alerts)
 {
 	var alertListNode = menu_alerts.getElementsByClassName("alertList")[0];
@@ -19,7 +28,7 @@ function load_alerts(menu_alerts)
 	$.ajax({
 			type: 'get',
 			dataType: 'json',
-			url:'/api/?action=get&module=alerts&format=json',
+			url:'/api/?action=get&module=alerts',
 			success: function(data) {
 				if("errmsg" in data) {
 					alertListNode.innerHTML = "<div class='alertItem'>"+data.errmsg+"</div>";
@@ -41,8 +50,8 @@ function load_alerts(menu_alerts)
 					}
 
 					if("avatar" in msg) {
-						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' href=\""+msg.path+"\">"+mmsg+"</a></div>";
-						alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' href=\""+msg.path+"\">"+mmsg+"</a></div>");
+						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
+						alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>");
 						anyAvatar = true
 					} else {
 						alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
@@ -65,6 +74,8 @@ function load_alerts(menu_alerts)
 					menu_alerts.classList.remove("has_alerts");
 				}
 				alertCount = data.msgCount;
+
+				bind_to_alerts();
 			},
 			error: function(magic,theStatus,error) {
 				try {
@@ -123,26 +134,26 @@ $(document).ready(function(){
 
 				if ("msg" in data) {
 					var msg = data.msg
-					if("sub" in data) {
-						for(var i = 0; i < data.sub.length; i++) {
+					if("sub" in data)
+						for(var i = 0; i < data.sub.length; i++)
 							msg = msg.replace("\{"+i+"\}", data.sub[i]);
-						}
-					}
 
-					if("avatar" in data) alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+data.avatar+"\");'><a class='text' href=\""+data.path+"\">"+msg+"</a></div>");
+					if("avatar" in data) alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+data.avatar+"\");'><a class='text' data-asid='"+data.asid+"' href=\""+data.path+"\">"+msg+"</a></div>");
 					else alertList.push("<div class='alertItem'><a href=\""+data.path+"\" class='text'>"+msg+"</a></div>");
 					if(alertList.length > 8) alertList.shift();
 					//console.log("post alertList",alertList);
 					alertCount++;
 
 					var alist = ""
-					for (var i = 0; i < alertList.length; i++) {
-						alist += alertList[i];
-					}
+					for (var i = 0; i < alertList.length; i++) alist += alertList[i];
 
 					//console.log(alist);
-					$("#general_alerts").find(".alertList").html(alist); // Add support for other alert feeds like PM Alerts
-					$("#general_alerts").find(".alert_counter").text(alertCount);
+					// TO-DO: Add support for other alert feeds like PM Alerts
+					var general_alerts = document.getElementById("general_alerts");
+					var alertListNode = general_alerts.getElementsByClassName("alertList")[0];
+					var alertCounterNode = general_alerts.getElementsByClassName("alert_counter")[0];
+					alertListNode.innerHTML = alist;
+					alertCounterNode.textContent = alertCount;
 
 					// TO-DO: Add some sort of notification queue to avoid flooding the end-user with notices?
 					// TO-DO: Use the site name instead of "Something Happened"
@@ -153,6 +164,8 @@ $(document).ready(function(){
 						});
 						setTimeout(n.close.bind(n), 8000);
 					}
+
+					bind_to_alerts();
 				}
 			}
 
@@ -337,6 +350,7 @@ $(document).ready(function(){
 		});
 	});
 
+	// This one's for Tempra Conflux
 	$(".ip_item").each(function(){
 		var ip = this.textContent;
 		if(ip.length > 10){

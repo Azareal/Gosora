@@ -87,7 +87,7 @@ func (hub *WS_Hub) push_message(targetUser int, msg string) error {
 	return nil
 }
 
-func(hub *WS_Hub) push_alert(targetUser int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
+func(hub *WS_Hub) push_alert(targetUser int, asid int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
 	//log.Print("In push_alert")
 	hub.users.RLock()
 	ws_user, ok := hub.online_users[targetUser]
@@ -97,7 +97,7 @@ func(hub *WS_Hub) push_alert(targetUser int, event string, elementType string, a
 	}
 
 	//log.Print("Building alert")
-	alert, err := build_alert(event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
+	alert, err := build_alert(asid, event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func(hub *WS_Hub) push_alert(targetUser int, event string, elementType string, a
 	return nil
 }
 
-func(hub *WS_Hub) push_alerts(users []int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
+func(hub *WS_Hub) push_alerts(users []int, asid int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
 	//log.Print("In push_alerts")
 	var ws_users []*WS_User
 	hub.users.RLock()
@@ -133,7 +133,7 @@ func(hub *WS_Hub) push_alerts(users []int, event string, elementType string, act
 		}
 
 		//log.Print("Building alert")
-		alert, err := build_alert(event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
+		alert, err := build_alert(asid, event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
 		if err != nil {
 			errs = append(errs,err)
 		}

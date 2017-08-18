@@ -391,6 +391,10 @@ func write_deletes(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleDelete("delete_forum_perms_by_forum","forums_permissions","fid = ?")
 	
+	adapter.SimpleDelete("delete_activity_stream_match","activity_stream_matches","watcher = ? AND asid = ?")
+	
+	//adapter.SimpleDelete("delete_activity_stream_matches_by_watcher","activity_stream_matches","watcher = ?")
+	
 	return nil
 }
 

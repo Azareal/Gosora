@@ -109,6 +109,7 @@ var delete_reply_stmt *sql.Stmt
 var delete_topic_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
 var delete_forum_perms_by_forum_stmt *sql.Stmt
+var delete_activity_stream_match_stmt *sql.Stmt
 var report_exists_stmt *sql.Stmt
 var group_count_stmt *sql.Stmt
 var modlog_count_stmt *sql.Stmt
@@ -730,6 +731,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing delete_forum_perms_by_forum statement.")
 	delete_forum_perms_by_forum_stmt, err = db.Prepare("DELETE FROM `forums_permissions` WHERE `fid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing delete_activity_stream_match statement.")
+	delete_activity_stream_match_stmt, err = db.Prepare("DELETE FROM `activity_stream_matches` WHERE `watcher` = ? AND `asid` = ?")
 	if err != nil {
 		return err
 	}

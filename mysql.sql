@@ -238,7 +238,7 @@ INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`) VALUES ('Awaiting 
 INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`tag`) VALUES ('Not Loggedin','{"ViewTopic":true}','{}','Guest');
 
 INSERT INTO forums(`name`,`active`) VALUES ('Reports',0);
-INSERT INTO forums(`name`,`lastTopicTime`) VALUES ('General',UTC_TIMESTAMP());
+INSERT INTO forums(`name`,`lastTopicTime`,`lastTopicID`,`lastReplyer`,`lastReplyerID`,`lastTopic`) VALUES ('General',UTC_TIMESTAMP(),1,"Admin",1,'Test Topic');
 INSERT INTO forums_permissions(`gid`,`fid`,`permissions`) VALUES (1,1,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"PinTopic":true,"CloseTopic":true}');
 INSERT INTO forums_permissions(`gid`,`fid`,`permissions`) VALUES (2,1,'{"ViewTopic":true,"CreateReply":true,"CloseTopic":true}');
 INSERT INTO forums_permissions(`gid`,`fid`,`permissions`) VALUES (3,1,'{}');

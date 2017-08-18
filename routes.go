@@ -841,7 +841,7 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	err = fstore.UpdateLastTopic(topic_name,int(lastId),user.Name,user.ID,"",fid)
+	err = fstore.UpdateLastTopic(topic_name,int(lastId),user.Name,user.ID,time.Now().Format("2006-01-02 15:04:05"),fid)
 	if err != nil && err != ErrNoRows {
 		InternalError(err,w)
 	}
@@ -896,8 +896,8 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 		InternalError(err,w)
 		return
 	}
-	_, err = update_forum_cache_stmt.Exec(topic.Title,tid,user.Name,user.ID,1)
-	if err != nil {
+	err = fstore.UpdateLastTopic(topic.Title,tid,user.Name,user.ID,time.Now().Format("2006-01-02 15:04:05"),topic.ParentID)
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w)
 		return
 	}
@@ -1027,7 +1027,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Live alerts, if the poster is online and WebSockets is enabled
-	_ = ws_hub.push_alert(topic.CreatedBy,"like","topic",user.ID,topic.CreatedBy,tid)
+	_ = ws_hub.push_alert(topic.CreatedBy,int(lastId),"like","topic",user.ID,topic.CreatedBy,tid)
 
 	// Reload the topic...
 	err = topics.Load(tid)
@@ -1137,7 +1137,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	// Live alerts, if the poster is online and WebSockets is enabled
-	_ = ws_hub.push_alert(reply.CreatedBy,"like","post",user.ID,reply.CreatedBy,rid)
+	_ = ws_hub.push_alert(reply.CreatedBy,int(lastId),"like","post",user.ID,reply.CreatedBy,rid)
 
 	http.Redirect(w,r,"/topic/" + strconv.Itoa(reply.ParentID),http.StatusSeeOther)
 }
@@ -1896,37 +1896,37 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w,r,"/",http.StatusSeeOther)
 }
 
+// TO-DO: We don't need support XML here to support sitemaps, we could handle those elsewhere
 var phrase_login_alerts []byte = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
 func route_api(w http.ResponseWriter, r *http.Request, user User) {
+	w.Header().Set("Content-Type","application/json")
 	err := r.ParseForm()
-	format := r.FormValue("format")
-	// TO-DO: Change is_js from a string to a boolean value
-	var is_js string
-	if format == "json" {
-		is_js = "1"
-	} else { // html
-		is_js = "0"
-	}
 	if err != nil {
-		PreErrorJSQ("Bad Form",w,r,is_js)
+		PreErrorJS("Bad Form",w,r)
 		return
 	}
 
 	action := r.FormValue("action")
 	if action != "get" && action != "set" {
-		PreErrorJSQ("Invalid Action",w,r,is_js)
+		PreErrorJS("Invalid Action",w,r)
 		return
 	}
 
 	module := r.FormValue("module")
 	switch(module) {
-		case "alerts": // A feed of events tailored for a specific user
-			if format != "json" {
-				PreError("You can only fetch alerts in the JSON format!",w,r)
+		case "dismiss-alert":
+			asid, err := strconv.Atoi(r.FormValue("asid"))
+			if err != nil {
+				PreErrorJS("Invalid asid",w,r)
 				return
 			}
 
-			w.Header().Set("Content-Type","application/json")
+			_, err = delete_activity_stream_match_stmt.Exec(user.ID,asid)
+			if err != nil {
+				InternalError(err,w)
+				return
+			}
+		case "alerts": // A feed of events tailored for a specific user
 			if !user.Loggedin {
 				w.Write(phrase_login_alerts)
 				return
@@ -1938,10 +1938,10 @@ func route_api(w http.ResponseWriter, r *http.Request, user User) {
 
 			err = get_activity_count_by_watcher_stmt.QueryRow(user.ID).Scan(&msgCount)
 			if err == ErrNoRows {
-				PreError("Couldn't find the parent topic",w,r)
+				PreErrorJS("Couldn't find the parent topic",w,r)
 				return
 			} else if err != nil {
-				InternalError(err,w)
+				InternalErrorJS(err,w,r)
 				return
 			}
 
@@ -1958,7 +1958,7 @@ func route_api(w http.ResponseWriter, r *http.Request, user User) {
 					InternalErrorJS(err,w,r)
 					return
 				}
-				res, err := build_alert(event, elementType, actor_id, targetUser_id, elementID, user)
+				res, err := build_alert(asid, event, elementType, actor_id, targetUser_id, elementID, user)
 				if err != nil {
 					LocalErrorJS(err.Error(),w,r)
 					return
@@ -1988,6 +1988,6 @@ func route_api(w http.ResponseWriter, r *http.Request, user User) {
 				return
 			}*/
 		default:
-			PreErrorJSQ("Invalid Module",w,r,is_js)
+			PreErrorJS("Invalid Module",w,r)
 	}
 }

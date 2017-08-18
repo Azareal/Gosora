@@ -118,6 +118,11 @@ func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
 	fmt.Fprintln(w,b.String())
 }
 
+func PreErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(500)
+	w.Write([]byte(`{"errmsg":"` + errmsg + `"}`))
+}
+
 func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, is_js string) {
 	w.WriteHeader(500)
 	if is_js == "0" {
