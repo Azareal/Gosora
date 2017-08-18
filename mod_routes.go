@@ -4,12 +4,14 @@ import (
 	//"log"
 	//"fmt"
 	"strconv"
+	"time"
 	"net"
 	"net/http"
 	"html"
 )
 
 func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
+	//log.Print("in route_edit_topic")
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form",w,r)
@@ -80,14 +82,13 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
 			InternalError(err,w)
 			return
 		}
-
-		_, err = add_replies_to_topic_stmt.Exec(1, tid)
+		_, err = add_replies_to_topic_stmt.Exec(1, user.ID, tid)
 		if err != nil {
 			InternalError(err,w)
 			return
 		}
-		_, err = update_forum_cache_stmt.Exec(topic_name, tid, user.Name, user.ID, 1)
-		if err != nil {
+		err = fstore.UpdateLastTopic(topic_name,tid,user.Name,user.ID,time.Now().Format("2006-01-02 15:04:05"),old_topic.ParentID)
+		if err != nil && err != ErrNoRows {
 			InternalError(err,w)
 			return
 		}

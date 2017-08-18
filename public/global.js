@@ -189,7 +189,7 @@ $(document).ready(function(){
 	else conn = false;
 
 	$(".open_edit").click(function(event){
-		//console.log("Clicked on edit");
+		//console.log("clicked on .open_edit");
 		event.preventDefault();
 		$(".hide_on_edit").hide();
 		$(".show_on_edit").show();
@@ -197,6 +197,7 @@ $(document).ready(function(){
 
 	$(".topic_item .submit_edit").click(function(event){
 		event.preventDefault();
+		console.log("clicked on .topic_item .submit_edit");
 		$(".topic_name").html($(".topic_name_input").val());
 		$(".topic_content").html($(".topic_content_input").val());
 		$(".topic_status_e:not(.open_edit)").html($(".topic_status_input").val());
@@ -207,9 +208,10 @@ $(document).ready(function(){
 		var topic_name_input = $('.topic_name_input').val();
 		var topic_status_input = $('.topic_status_input').val();
 		var topic_content_input = $('.topic_content_input').val();
-		var form_action = $(this).closest('form').attr("action");
+		var form_action = this.form.getAttribute("action");
 		//console.log("New Topic Name: " + topic_name_input);
 		//console.log("New Topic Status: " + topic_status_input);
+		//console.log("New Topic Content: " + topic_content_input);
 		//console.log("Form Action: " + form_action);
 		$.ajax({
 			url: form_action,

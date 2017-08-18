@@ -1312,8 +1312,8 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 		InternalError(err,w)
 		return
 	}
-	_, err = update_forum_cache_stmt.Exec(title, lastId, user.Name, user.ID, fid)
-	if err != nil {
+	err = fstore.UpdateLastTopic(title,int(lastId),user.Name,user.ID,time.Now().Format("2006-01-02 15:04:05"),fid)
+	if err != nil && err != ErrNoRows {
 		InternalError(err,w)
 		return
 	}

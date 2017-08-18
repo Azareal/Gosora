@@ -473,6 +473,9 @@ input, select, textarea {
 .topic_list .rowitem:last-child {
 	margin-bottom: 10px;
 }
+.topic_list .lastReplyAt {
+	white-space: nowrap;
+}
 
 /* Profiles */
 #profile_left_lane {
