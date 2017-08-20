@@ -1,5 +1,5 @@
 {{template "header.html" . }}
-<div class="colstack_left">
+<nav class="colstack_left">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a href="/panel/themes/">Theme Manager</a></div>
 	</div>
@@ -7,7 +7,7 @@
 		<div class="rowitem passive"><a href="#">Widgets</a></div>
 	</div>
 {{template "panel-inner-menu.html" . }}
-</div>
+</nav>
 
 <!-- Stop inlining this x.x -->
 <style type="text/css">
@@ -18,7 +18,7 @@
 }
 </style>
 
-<div class="colstack_right">
+<main class="colstack_right">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a>Primary Themes</a></div>
 	</div>
@@ -55,5 +55,5 @@
 		</div>
 		{{end}}
 	</div>
-</div>
+</main>
 {{template "footer.html" . }}

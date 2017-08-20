@@ -197,7 +197,7 @@ $(document).ready(function(){
 
 	$(".topic_item .submit_edit").click(function(event){
 		event.preventDefault();
-		console.log("clicked on .topic_item .submit_edit");
+		//console.log("clicked on .topic_item .submit_edit");
 		$(".topic_name").html($(".topic_name_input").val());
 		$(".topic_content").html($(".topic_content_input").val());
 		$(".topic_status_e:not(.open_edit)").html($(".topic_status_input").val());

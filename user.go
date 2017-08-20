@@ -14,10 +14,13 @@ import (
 var guest_user User = User{ID:0,Link:"#",Group:6,Perms:GuestPerms}
 
 var PreRoute func(http.ResponseWriter, *http.Request) (User,bool) = _pre_route
+
+// TO-DO: Are these even session checks anymore? We might need to rethink these names
 var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderVars,PanelStats,bool) = _panel_session_check
-var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) bool = _simple_panel_session_check
+var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderLite,bool) = _simple_panel_session_check
 var SimpleForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (success bool) = _simple_forum_session_check
 var ForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars HeaderVars, success bool) = _forum_session_check
+var SimpleSessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite HeaderLite, success bool) = _simple_session_check
 var SessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) = _session_check
 
 var CheckPassword func(real_password string, password string, salt string) (err error) = BcryptCheckPassword
@@ -210,6 +213,7 @@ func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fi
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, stats PanelStats, success bool) {
 	headerVars.Site = site
+	headerVars.Settings = settingBox.Load().(SettingBox)
 	if !user.Is_Super_Mod {
 		NoPermissions(w,r,*user)
 		return headerVars, stats, false
@@ -241,7 +245,7 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 
 	stats.Users = users.GetGlobalCount()
 	stats.Forums = fstore.GetGlobalCount() // TO-DO: Stop it from showing the blanked forums
-	stats.Settings = len(settings) // TO-DO: IS this racey?
+	stats.Settings = len(headerVars.Settings) // TO-DO: IS this racey?
 	stats.Themes = len(themes)
 	stats.Reports = 0 // TO-DO: Do the report count. Only show open threads?
 
@@ -258,16 +262,27 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 
 	return headerVars, stats, true
 }
-func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (success bool) {
+
+func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerLite HeaderLite, success bool) {
 	if !user.Is_Super_Mod {
 		NoPermissions(w,r,*user)
-		return false
+		return headerLite, false
 	}
-	return true
+	headerLite.Site = site
+	headerLite.Settings = settingBox.Load().(SettingBox)
+	return headerLite, true
+}
+
+// SimpleSessionCheck is back from the grave, yay :D
+func _simple_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerLite HeaderLite, success bool) {
+	headerLite.Site = site
+	headerLite.Settings = settingBox.Load().(SettingBox)
+	return headerLite, true
 }
 
 func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) {
 	headerVars.Site = site
+	headerVars.Settings = settingBox.Load().(SettingBox)
 	if user.Is_Banned {
 		headerVars.NoticeList = append(headerVars.NoticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
 	}
@@ -336,6 +351,7 @@ func words_to_score(wcount int, topic bool) (score int) {
 		score = 1
 	}
 
+	settings := settingBox.Load().(map[string]interface{})
 	if wcount >= settings["megapost_min_words"].(int) {
 		score += 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
@@ -355,6 +371,7 @@ func increase_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		base_score = 2
 	}
 
+	settings := settingBox.Load().(map[string]interface{})
 	if wcount >= settings["megapost_min_words"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(1,1,1,uid)
 		if err != nil {
@@ -394,6 +411,7 @@ func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		base_score = -2
 	}
 
+	settings := settingBox.Load().(map[string]interface{})
 	if wcount >= settings["megapost_min_words"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(-1,-1,-1,uid)
 		if err != nil {

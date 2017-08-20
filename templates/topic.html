@@ -8,6 +8,8 @@
 	<a class="next_link" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}">&gt;</a>
 </div>{{end}}
 
+<main>
+
 <div class="rowblock rowhead topic_block">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
 		<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a>
@@ -23,7 +25,7 @@
 	</div>
 </div>
 
-<div class="rowblock post_container top_post">
+<article class="rowblock post_container top_post">
 	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="{{if .Topic.Avatar}}background-image:url({{.Topic.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
 		<p class="hide_on_edit topic_content user_content" style="margin:0;padding:0;">{{.Topic.Content}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
@@ -47,14 +49,14 @@
 
 		</span>
 	</div>
-</div>
+</article>
 <div class="rowblock post_container" style="overflow: hidden;">{{range .ItemList}}{{if .ActionType}}
-	<div class="rowitem passive deletable_block editable_parent post_item action_item">
+	<article class="rowitem passive deletable_block editable_parent post_item action_item">
 		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>
 		<span>{{.ActionType}}</span>
-	</div>
+	</article>
 {{else}}
-	<div class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
+	<article class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
 		<p class="editable_block user_content" style="margin:0;padding:0;">{{.ContentHtml}}</p>
 
 		<span class="controls">
@@ -72,7 +74,7 @@
 		{{if .Tag}}<a class="username hide_on_micro user_tag">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level">{{.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="Level"></a>{{end}}
 
 		</span>
-	</div>
+	</article>
 {{end}}{{end}}</div>
 
 {{if .CurrentUser.Perms.CreateReply}}
@@ -88,4 +90,7 @@
 	</form>
 </div>
 {{end}}
+
+</main>
+
 {{template "footer.html" . }}

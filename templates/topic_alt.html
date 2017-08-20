@@ -3,6 +3,8 @@
 {{if ne .LastPage .Page}}<link rel="prerender" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}" />
 <div id="nextFloat" class="next_button"><a class="next_link" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 
+<main>
+
 <div class="rowblock rowhead topic_block">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
 		<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
@@ -20,9 +22,10 @@
 	</form>
 </div>
 
+<!-- Stop inling this x.x -->
 <style type="text/css">.rowitem:last-child .content_container { margin-bottom: 5px !important; }</style>
 <div class="rowblock post_container" style="border-top: none;">
-	<div class="rowitem passive deletable_block editable_parent post_item top_post" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
+	<article class="rowitem passive deletable_block editable_parent post_item top_post" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="{{.Topic.UserLink}}" class="the_name">{{.Topic.CreatedByName}}</a>
@@ -45,9 +48,9 @@
 				{{if .Topic.LikeCount}}<a class="action_button action_button_right hide_on_micro">{{.Topic.LikeCount}} up</a>{{end}}
 			</div>
 		</div><div style="clear:both;"></div>
-	</div>
+	</article>
 	{{range .ItemList}}
-	<div class="rowitem passive deletable_block editable_parent post_item {{if .ActionType}}action_item{{end}}">
+	<article class="rowitem passive deletable_block editable_parent post_item {{if .ActionType}}action_item{{end}}">
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="{{.UserLink}}" class="the_name">{{.CreatedByName}}</a>
@@ -73,7 +76,7 @@
 			{{end}}
 		</div>
 		<div style="clear:both;"></div>
-	</div>
+	</article>
 {{end}}</div>
 {{if .CurrentUser.Perms.CreateReply}}
 <div class="rowblock topic_reply_form" style="border-top: none;">
@@ -88,4 +91,7 @@
 	</form>
 </div>
 {{end}}
+
+</main>
+
 {{template "footer.html" . }}

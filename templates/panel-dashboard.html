@@ -1,6 +1,6 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
-<div id="panel_dashboard_right" class="colstack_right">
+<main id="panel_dashboard_right" class="colstack_right">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a>Dashboard</a></div>
 	</div>
@@ -10,5 +10,5 @@
 		{{if .Background}}background-color: {{.Background}};{{end}}">{{.Body}}</div>
 {{end}}
 	</div>
-</div>
+</main>
 {{template "footer.html" . }}

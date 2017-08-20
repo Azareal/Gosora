@@ -1,10 +1,12 @@
 {{template "header.html" . }}
-<div class="rowblock rowhead">
-	<div class="rowitem"><a>Are you sure?</a></div>
-</div>
-<div class="rowblock">
-	<div class="rowitem passive">{{.Something.Message}}<br /><br />
-		<a class="username" href="{{.Something.URL}}?session={{.CurrentUser.Session}}">Continue</a>
+<main>
+	<div class="rowblock rowhead">
+		<div class="rowitem"><a>Are you sure?</a></div>
 	</div>
-</div>
+	<div class="rowblock">
+		<div class="rowitem passive">{{.Something.Message}}<br /><br />
+			<a class="username" href="{{.Something.URL}}?session={{.CurrentUser.Session}}">Continue</a>
+		</div>
+	</div>
+</main>
 {{template "footer.html" . }}

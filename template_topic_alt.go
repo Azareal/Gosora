@@ -259,6 +259,7 @@ w.Write(topic_alt_86)
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_87)
 }
+w.Write(topic_alt_88)
 w.Write(footer_0)
 if tmpl_topic_alt_vars.Header.Widgets.RightSidebar != "" {
 w.Write(footer_1)

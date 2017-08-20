@@ -32,7 +32,6 @@ var startTime time.Time
 //var timeLocation *time.Location
 var templates = template.New("")
 //var no_css_tmpl template.CSS = template.CSS("")
-var settings map[string]interface{} = make(map[string]interface{})
 var external_sites map[string]string = map[string]string{
 	"YT":"https://www.youtube.com/",
 }
@@ -339,6 +338,28 @@ func main(){
 
 	log.Print("Initialising the authentication system")
 	auth = NewDefaultAuth()
+
+	// Run this goroutine once a second
+	second_ticker := time.NewTicker(1 * time.Second)
+	fifteen_minute_ticker := time.NewTicker(15 * time.Minute)
+	//hour_ticker := time.NewTicker(1 * time.Hour)
+	go func() {
+		for {
+			select {
+				case <- second_ticker.C:
+					// TO-DO: Handle delayed moderation tasks
+					// TO-DO: Handle the daily clean-up. Move this to a 24 hour task?
+					// TO-DO: Sync with the database, if there are any changes
+					// TO-DO: Manage the TopicStore, UserStore, and ForumStore
+					// TO-DO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
+					// TO-DO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
+				case <- fifteen_minute_ticker.C:
+					// TO-DO: Handle temporary bans.
+					// TO-DO: Automatically lock topics, if they're really old, and the associated setting is enabled.
+					// TO-DO: Publish scheduled posts. Move this to a 15 minute task?
+			}
+		}
+	}()
 
 	log.Print("Initialising the router")
 	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))

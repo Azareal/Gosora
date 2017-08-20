@@ -1,4 +1,6 @@
 {{template "header.html" . }}
+<main>
+
 <div class="rowblock rowhead">
 	<div class="rowitem"><a>Topic List</a></div>
 </div>
@@ -24,4 +26,6 @@
 	</div>
 	{{else}}<div class="rowitem passive">There aren't any topics yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">Start one?</a>{{end}}</div>{{end}}
 </div>
+
+</main>
 {{template "footer.html" . }}

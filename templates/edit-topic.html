@@ -1,29 +1,29 @@
 {{template "header.html" . }}
-<div class="rowblock">
-	<form action='/topic/edit/{{index .Something "ID"}}/submit/' method="post">
-		<div class="rowitem">
-			<input name="topic_name" value='{{index .Something "content"}}' type="text" />
-			<select name="topic_status" class='show_on_edit'>
-			{{range .StatusList}}<option>{{.}}</option>{{end}}
-			</select>
-			<button name="topic-button" class="formbutton">Update</button>
+<main>
+	<div class="rowblock">
+		<form action='/topic/edit/{{index .Something "ID"}}/submit/' method="post">
+			<div class="rowitem">
+				<input name="topic_name" value='{{index .Something "content"}}' type="text" />
+				<select name="topic_status" class='show_on_edit'>
+					{{range .StatusList}}<option>{{.}}</option>{{end}}
+				</select>
+				<button name="topic-button" class="formbutton">Update</button>
+			</div>
+		</form>
+	</div>
+	<div class="rowblock">
+		{{range $index, $element := .ItemList}}<div class="rowitem passive">{{$element.Content}}</div>{{end}}
+	</div>
+	<div class="rowblock">
+		<form action="/reply/create/" method="post">
+			<input name="tid" value='{{index .Something "tid"}}' type="hidden" />
+			<div class="formrow">
+				<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</div></div>
+				</div>
+			</form>
 		</div>
-	</form>
-</div>
-<div class="rowblock">
-	{{range $index, $element := .ItemList}}<div class="rowitem passive">
-		{{$element.Content}}
-	</div>{{end}}
-</div>
-<div class="rowblock">
-	<form action="/reply/create/" method="post">
-		<input name="tid" value='{{index .Something "tid"}}' type="hidden" />
-		<div class="formrow">
-			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</div></div>
-		</div>
-	</form>
-</div>
+</main>
 {{template "footer.html" . }}

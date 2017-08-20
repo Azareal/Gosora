@@ -1,7 +1,7 @@
 {{template "header.html" . }}
 {{template "panel-menu.html" . }}
 
-<div class="colstack_right">
+<main class="colstack_right">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a>Users</a></div>
 	</div>
@@ -28,5 +28,5 @@
 		{{if ne .LastPage .Page}}<div class="pageitem"><a href="?page={{add .Page 1}}">Next</a></div>{{end}}
 	</div>
 	{{end}}
-</div>
+</main>
 {{template "footer.html" . }}

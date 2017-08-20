@@ -8,17 +8,17 @@
 <div id="nextFloat" class="next_button"><a class="next_link" href="/group/{{.SocialGroup.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 
 <div class="sgBackdrop">
-	<div class="miniMenu">
+	<nav class="miniMenu">
 		<div class="menuItem"><a href="/group/{{.SocialGroup.ID}}">{{.SocialGroup.Name}}</a></div>
 		<div class="menuItem"><a href="#">About</a></div>
 		<div class="menuItem"><a href="/group/members/{{.SocialGroup.ID}}">Members</a></div>
 		<div class="menuItem rightMenu"><a href="#">Edit</a></div>
 		<div class="menuItem rightMenu"><a href="/topics/create/{{.Forum.ID}}">Reply</a></div>
 		<div class="menuItem rightMenu"><a href="/group/join/{{.SocialGroup.ID}}">Join</a></div>
-	</div>
+	</nav>
 	<div style="clear: both;"></div>
 </div>
-<div id="forum_topic_list" class="rowblock topic_list" style="position: relative;z-index: 50;">
+<main id="forum_topic_list" class="rowblock topic_list" style="position: relative;z-index: 50;">
 	{{range .ItemList}}<div class="rowitem topic_left passive datarow" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}{{if .Sticky}}background-color: #FFFFCC;{{else if .Is_Closed}}background-color: #eaeaea;{{end}}">
 		<span class="topic_inner_right rowsmall" style="float: right;">
 			<span class="replyCount">{{.PostCount}} replies</span><br />
@@ -37,5 +37,5 @@
 		</span>
 	</div>
 	{{else}}<div class="rowitem passive">There aren't any topics in here yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
-</div>
+</main>
 {{template "footer.html" . }}

@@ -30,7 +30,7 @@ var header_9 []byte = []byte(`.supermod_only { display: none !important; }`)
 var header_10 []byte = []byte(`</style>
 		<div class="container">
 `)
-var menu_0 []byte = []byte(`<div class="nav">
+var menu_0 []byte = []byte(`<nav class="nav">
 	<div class="move_left">
 	<div class="move_right">
 	<ul>
@@ -63,7 +63,7 @@ var menu_6 []byte = []byte(`
 	</div>
 	</div>
 	<div style="clear: both;"></div>
-</div>
+</nav>
 `)
 var header_11 []byte = []byte(`
 <div id="back"><div id="main" `)
@@ -90,6 +90,8 @@ var topic_9 []byte = []byte(`">&gt;</a>
 </div>`)
 var topic_10 []byte = []byte(`
 
+<main>
+
 <div class="rowblock rowhead topic_block">
 	<div class="rowitem topic_item`)
 var topic_11 []byte = []byte(` topic_sticky_head`)
@@ -114,7 +116,7 @@ var topic_20 []byte = []byte(`
 	</div>
 </div>
 
-<div class="rowblock post_container top_post">
+<article class="rowblock post_container top_post">
 	<div class="rowitem passive editable_parent post_item `)
 var topic_21 []byte = []byte(`" style="`)
 var topic_22 []byte = []byte(`background-image:url(`)
@@ -162,18 +164,18 @@ var topic_52 []byte = []byte(`
 
 		</span>
 	</div>
-</div>
+</article>
 <div class="rowblock post_container" style="overflow: hidden;">`)
 var topic_53 []byte = []byte(`
-	<div class="rowitem passive deletable_block editable_parent post_item action_item">
+	<article class="rowitem passive deletable_block editable_parent post_item action_item">
 		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">`)
 var topic_54 []byte = []byte(`</span>
 		<span>`)
 var topic_55 []byte = []byte(`</span>
-	</div>
+	</article>
 `)
 var topic_56 []byte = []byte(`
-	<div class="rowitem passive deletable_block editable_parent post_item `)
+	<article class="rowitem passive deletable_block editable_parent post_item `)
 var topic_57 []byte = []byte(`" style="`)
 var topic_58 []byte = []byte(`background-image:url(`)
 var topic_59 []byte = []byte(`), url(/static/post-avatar-bg.jpg);background-position: 0px `)
@@ -212,7 +214,7 @@ var topic_82 []byte = []byte(`</a><a class="username hide_on_micro level_label" 
 var topic_83 []byte = []byte(`
 
 		</span>
-	</div>
+	</article>
 `)
 var topic_84 []byte = []byte(`</div>
 
@@ -230,6 +232,11 @@ var topic_86 []byte = []byte(`' type="hidden" />
 		</div>
 	</form>
 </div>
+`)
+var topic_87 []byte = []byte(`
+
+</main>
+
 `)
 var footer_0 []byte = []byte(`					</div>
 				`)
@@ -252,6 +259,8 @@ var topic_alt_5 []byte = []byte(`" />
 var topic_alt_6 []byte = []byte(`?page=`)
 var topic_alt_7 []byte = []byte(`">&gt;</a></div>`)
 var topic_alt_8 []byte = []byte(`
+
+<main>
 
 <div class="rowblock rowhead topic_block">
 	<form action='/topic/edit/submit/`)
@@ -280,9 +289,10 @@ var topic_alt_19 []byte = []byte(`
 	</form>
 </div>
 
+<!-- Stop inling this x.x -->
 <style type="text/css">.rowitem:last-child .content_container { margin-bottom: 5px !important; }</style>
 <div class="rowblock post_container" style="border-top: none;">
-	<div class="rowitem passive deletable_block editable_parent post_item top_post" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
+	<article class="rowitem passive deletable_block editable_parent post_item top_post" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url(`)
 var topic_alt_20 []byte = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
@@ -329,10 +339,10 @@ var topic_alt_48 []byte = []byte(` up</a>`)
 var topic_alt_49 []byte = []byte(`
 			</div>
 		</div><div style="clear:both;"></div>
-	</div>
+	</article>
 	`)
 var topic_alt_50 []byte = []byte(`
-	<div class="rowitem passive deletable_block editable_parent post_item `)
+	<article class="rowitem passive deletable_block editable_parent post_item `)
 var topic_alt_51 []byte = []byte(`action_item`)
 var topic_alt_52 []byte = []byte(`">
 		<div class="userinfo">
@@ -388,7 +398,7 @@ var topic_alt_83 []byte = []byte(`
 var topic_alt_84 []byte = []byte(`
 		</div>
 		<div style="clear:both;"></div>
-	</div>
+	</article>
 `)
 var topic_alt_85 []byte = []byte(`</div>
 `)
@@ -405,6 +415,11 @@ var topic_alt_87 []byte = []byte(`' type="hidden" />
 		</div>
 	</form>
 </div>
+`)
+var topic_alt_88 []byte = []byte(`
+
+</main>
+
 `)
 var profile_0 []byte = []byte(`
 
@@ -510,6 +525,8 @@ var profile_39 []byte = []byte(`
 
 `)
 var forums_0 []byte = []byte(`
+<main>
+
 <div class="rowblock opthead">
 	<div class="rowitem"><a>Forums</a></div>
 </div>
@@ -549,8 +566,12 @@ var forums_16 []byte = []byte(`
 var forums_17 []byte = []byte(`<div class="rowitem passive">You don't have access to any forums.</div>`)
 var forums_18 []byte = []byte(`
 </div>
+
+</main>
 `)
 var topics_0 []byte = []byte(`
+<main>
+
 <div class="rowblock rowhead">
 	<div class="rowitem"><a>Topic List</a></div>
 </div>
@@ -604,6 +625,8 @@ var topics_28 []byte = []byte(` <a href="/topics/create/">Start one?</a>`)
 var topics_29 []byte = []byte(`</div>`)
 var topics_30 []byte = []byte(`
 </div>
+
+</main>
 `)
 var forum_0 []byte = []byte(`<div id="prevFloat" class="prev_button"><a class="prev_link" href="/forum/`)
 var forum_1 []byte = []byte(`?page=`)
@@ -616,6 +639,8 @@ var forum_6 []byte = []byte(`?page=`)
 var forum_7 []byte = []byte(`">&gt;</a></div>`)
 var forum_8 []byte = []byte(`
 
+<main>
+	
 <div id="forum_head_block" class="rowblock rowhead">
 	<div class="rowitem forum_title`)
 var forum_9 []byte = []byte(` has_opt`)
@@ -680,4 +705,6 @@ var forum_41 []byte = []byte(`">Start one?</a>`)
 var forum_42 []byte = []byte(`</div>`)
 var forum_43 []byte = []byte(`
 </div>
+
+</main>
 `)

@@ -1,5 +1,5 @@
 {{template "header.html" . }}
-<div class="colstack_left">
+<nav class="colstack_left">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a href="/panel/logs/mod/">Logs</a></div>
 	</div>
@@ -8,8 +8,8 @@
 		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>Administration Logs</a></div>{{end}}
 	</div>
 {{template "panel-inner-menu.html" . }}
-</div>
-<div class="colstack_right">
+</nav>
+<main class="colstack_right">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a>Moderation Logs</a></div>
 	</div>
@@ -36,5 +36,5 @@
 		{{if ne .LastPage .Page}}<div class="pageitem"><a href="?page={{add .Page 1}}">Next</a></div>{{end}}
 	</div>
 	{{end}}
-</div>
+</main>
 {{template "footer.html" . }}

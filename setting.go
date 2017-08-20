@@ -1,9 +1,12 @@
 package main
 import "strconv"
 import "strings"
+import "sync/atomic"
 
 // TO-DO: Move this into the phrase system
 var settingLabels map[string]string
+type SettingBox map[string]interface{}
+var settingBox atomic.Value // An atomic value pointing to a SettingBox
 
 type OptionLabel struct
 {
@@ -23,6 +26,8 @@ type Setting struct
 func init() {
 	settingLabels = make(map[string]string)
 	settingLabels["activation_type"] = "Activate All,Email Activation,Admin Approval"
+	settingBox.Store(SettingBox(make(map[string]interface{})))
+	//settingBox.Store(make(map[string]interface{}))
 }
 
 func LoadSettings() error {
@@ -32,13 +37,15 @@ func LoadSettings() error {
 	}
 	defer rows.Close()
 
+	sBox := settingBox.Load().(SettingBox)
+	//sBox := settingBox.Load().(map[string]interface{})
 	var sname, scontent, stype, sconstraints string
 	for rows.Next() {
 		err = rows.Scan(&sname, &scontent, &stype, &sconstraints)
 		if err != nil {
 			return err
 		}
-		errmsg := parseSetting(sname, scontent, stype, sconstraints)
+		errmsg := sBox.ParseSetting(sname, scontent, stype, sconstraints)
 		if errmsg != "" {
 			return err
 		}
@@ -47,21 +54,24 @@ func LoadSettings() error {
 	if err != nil {
 		return err
 	}
+
+	settingBox.Store(sBox)
 	return nil
 }
 
 // TO-DO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
-func parseSetting(sname string, scontent string, stype string, constraint string) string {
+func (sBox SettingBox) ParseSetting(sname string, scontent string, stype string, constraint string) string {
 	var err error
+	var ssBox map[string]interface{} = map[string]interface{}(sBox)
 	if stype == "bool" {
-		settings[sname] = (scontent == "1")
+		ssBox[sname] = (scontent == "1")
 	} else if stype == "int" {
-		settings[sname], err = strconv.Atoi(scontent)
+		ssBox[sname], err = strconv.Atoi(scontent)
 		if err != nil {
 			return "You were supposed to enter an integer x.x\nType mismatch in " + sname
 		}
 	} else if stype == "int64" {
-		settings[sname], err = strconv.ParseInt(scontent, 10, 64)
+		ssBox[sname], err = strconv.ParseInt(scontent, 10, 64)
 		if err != nil {
 			return "You were supposed to enter an integer x.x\nType mismatch in " + sname
 		}
@@ -88,9 +98,9 @@ func parseSetting(sname string, scontent string, stype string, constraint string
 		if value < con1 || value > con2 {
 			return "Only integers between a certain range are allowed in this setting"
 		}
-		settings[sname] = value
+		ssBox[sname] = value
 	} else {
-		settings[sname] = scontent
+		ssBox[sname] = scontent
 	}
 	return ""
 }

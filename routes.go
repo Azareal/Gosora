@@ -480,7 +480,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 		topic.ClassName = config.StaffCss
 	}
 
-	/*if settings["url_tags"] == false {
+	/*if headerVars.Settings["url_tags"] == false {
 		topic.URLName = ""
 	} else {
 		topic.URL, ok = external_sites[topic.URLPrefix]
@@ -547,7 +547,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User){
 
 		replyItem.Tag = groups[replyItem.Group].Tag
 
-		/*if settings["url_tags"] == false {
+		/*if headerVars.Settings["url_tags"] == false {
 			replyItem.URLName = ""
 		} else {
 			replyItem.URL, ok = external_sites[replyItem.URLPrefix]
@@ -1683,7 +1683,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	}
 
 	// If Email Activation is on, then activate the account while we're here
-	if settings["activation_type"] == 2 {
+	if headerVars.Settings["activation_type"] == 2 {
 		_, err = activate_user_stmt.Exec(user.ID)
 		if err != nil {
 			InternalError(err,w)
@@ -1801,6 +1801,8 @@ func route_register(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
+	headerLite, _ := SimpleSessionCheck(w,r,&user)
+
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form",w,r,user)
@@ -1850,7 +1852,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	var active, group int
-	switch settings["activation_type"] {
+	switch headerLite.Settings["activation_type"] {
 		case 1: // Activate All
 			active = 1
 			group = config.DefaultGroup

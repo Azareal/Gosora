@@ -15,7 +15,15 @@ type HeaderVars struct
 	Stylesheets []string
 	Widgets PageWidgets
 	Site *Site
+	Settings map[string]interface{}
 	ExtData ExtData
+}
+
+// TO-DO: Add this to routes which don't use templates. E.g. Json APIs.
+type HeaderLite struct
+{
+	Site *Site
+	Settings SettingBox
 }
 
 type PageWidgets struct

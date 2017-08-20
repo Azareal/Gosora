@@ -8,16 +8,16 @@
 <div id="nextFloat" class="next_button"><a class="next_link" href="/group/members/{{.SocialGroup.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 
 <div class="sgBackdrop">
-	<div class="miniMenu">
+	<nav class="miniMenu">
 		<div class="menuItem"><a href="/group/{{.SocialGroup.ID}}">{{.SocialGroup.Name}}</a></div>
 		<div class="menuItem"><a href="#">About</a></div>
 		<div class="menuItem"><a href="/group/members/{{.SocialGroup.ID}}">Members</a></div>
 		<div class="menuItem rightMenu"><a href="#">Edit</a></div>
 		<div class="menuItem rightMenu"><a href="/group/join/{{.SocialGroup.ID}}">Join</a></div>
-	</div>
+	</nav>
 	<div style="clear: both;"></div>
 </div>
-<div id="socialgroups_member_list" class="rowblock member_list" style="position: relative;z-index: 50;">
+<main id="socialgroups_member_list" class="rowblock member_list" style="position: relative;z-index: 50;">
 	{{range .ItemList}}<div class="rowitem passive datarow" style="{{if .User.Avatar}}background-image: url({{.User.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 78px;{{end}}{{if .Offline}}background-color: #eaeaea;{{else if gt .Rank 0}}background-color: #e6f3ff;{{end}}">
 		<span style="float: right;">
 			<span class="rank" style="font-size: 15px;">{{.RankString}}</span><br />
@@ -30,5 +30,5 @@
 		</span>
 	</div>
   {{end}}
-</div>
+</main>
 {{template "footer.html" . }}

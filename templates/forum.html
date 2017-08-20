@@ -4,6 +4,8 @@
 {{if ne .LastPage .Page}}<link rel="prerender" href="/forum/{{.Forum.ID}}?page={{add .Page 1}}" />
 <div id="nextFloat" class="next_button"><a class="next_link" href="/forum/{{.Forum.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 
+<main>
+	
 <div id="forum_head_block" class="rowblock rowhead">
 	<div class="rowitem forum_title{{if ne .CurrentUser.ID 0}} has_opt{{end}}"><a>{{.Title}}</a>
 	</div>
@@ -36,4 +38,6 @@
 	</div>
 	{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
 </div>
+
+</main>
 {{template "footer.html" . }}

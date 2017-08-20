@@ -166,9 +166,16 @@ a {
 	display: none;
 }
 
+/* Topic View */
+
+/* TO-DO: How should we handle the sticky headers? */
 .topic_sticky_head {
 }
-.topic_closed_head {
+
+/* TO-DO: Rewrite the closed topic header so that it looks more consistent with the rest of the theme */
+.topic_closed_head .topic_status_closed {
+	margin-bottom: -10px;
+	font-size: 19px;
 }
 
 .post_item {
