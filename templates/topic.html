@@ -82,7 +82,7 @@
 	<form action="/reply/create/" method="post">
 		<input name="tid" value='{{.Topic.ID}}' type="hidden" />
 		<div class="formrow real_first_child">
-			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
+			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here" required></textarea></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>

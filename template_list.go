@@ -225,7 +225,7 @@ var topic_85 []byte = []byte(`
 		<input name="tid" value='`)
 var topic_86 []byte = []byte(`' type="hidden" />
 		<div class="formrow real_first_child">
-			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
+			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here" required></textarea></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
@@ -408,7 +408,7 @@ var topic_alt_86 []byte = []byte(`
 		<input name="tid" value='`)
 var topic_alt_87 []byte = []byte(`' type="hidden" />
 		<div class="formrow">
-			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
+			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here" required></textarea></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>

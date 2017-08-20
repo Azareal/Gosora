@@ -351,7 +351,7 @@ func words_to_score(wcount int, topic bool) (score int) {
 		score = 1
 	}
 
-	settings := settingBox.Load().(map[string]interface{})
+	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
 		score += 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
@@ -371,7 +371,7 @@ func increase_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		base_score = 2
 	}
 
-	settings := settingBox.Load().(map[string]interface{})
+	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(1,1,1,uid)
 		if err != nil {
@@ -411,7 +411,7 @@ func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error 
 		base_score = -2
 	}
 
-	settings := settingBox.Load().(map[string]interface{})
+	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
 		_, err := increment_user_megaposts_stmt.Exec(-1,-1,-1,uid)
 		if err != nil {

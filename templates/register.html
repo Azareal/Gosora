@@ -8,19 +8,19 @@
 	<form action="/accounts/create/submit/" method="post">
 		<div class="formrow">
 			<div class="formitem formlabel"><a>Account Name</a></div>
-			<div class="formitem"><input name="username" type="text" placeholder="Account Name" /></div>
+			<div class="formitem"><input name="username" type="text" placeholder="Account Name" required /></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>Email</a></div>
-			<div class="formitem"><input name="email" type="email" placeholder="joe.doe@example.com" /></div>
+			<div class="formitem"><input name="email" type="email" placeholder="joe.doe@example.com" required /></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>Password</a></div>
-			<div class="formitem"><input name="password" type="password" autocomplete="new-password" placeholder="*****" /></div>
+			<div class="formitem"><input name="password" type="password" autocomplete="new-password" placeholder="*****" required /></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>Confirm Password</a></div>
-			<div class="formitem"><input name="confirm_password" type="password" placeholder="*****" /></div>
+			<div class="formitem"><input name="confirm_password" type="password" placeholder="*****" required /></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem"><button name="register-button" class="formbutton">Create Account</div></div>
