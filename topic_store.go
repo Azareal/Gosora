@@ -38,9 +38,9 @@ func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
 		log.Fatal(err)
 	}
 	return &MemoryTopicStore{
-		items:make(map[int]*Topic),
-		capacity:capacity,
-		get:stmt,
+		items: make(map[int]*Topic),
+		capacity: capacity,
+		get: stmt,
 	}
 }
 

@@ -54,6 +54,12 @@ func routes() {
 		Route{"route_panel_settings","/panel/settings/","",[]string{}},
 		Route{"route_panel_setting","/panel/settings/edit/","",[]string{"extra_data"}},
 		Route{"route_panel_setting_edit","/panel/settings/edit/submit/","",[]string{"extra_data"}},
+		
+		Route{"route_panel_word_filters","/panel/settings/word-filters/","",[]string{}},
+		Route{"route_panel_word_filters_create","/panel/settings/word-filters/create/","",[]string{}},
+		Route{"route_panel_word_filters_edit","/panel/settings/word-filters/edit/","",[]string{"extra_data"}},
+		Route{"route_panel_word_filters_edit_submit","/panel/settings/word-filters/edit/submit/","",[]string{"extra_data"}},
+		Route{"route_panel_word_filters_delete_submit","/panel/settings/word-filters/delete/submit/","",[]string{"extra_data"}},
 
 		Route{"route_panel_themes","/panel/themes/","",[]string{}},
 		Route{"route_panel_themes_default","/panel/themes/default/","",[]string{"extra_data"}},

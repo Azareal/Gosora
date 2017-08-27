@@ -13,6 +13,9 @@
 	</div>{{end}}
 	{{if .CurrentUser.Perms.EditSettings}}<div class="rowitem passive">
 		<a href="/panel/settings/">Settings</a> <a class="menu_stats" href="#">({{.Stats.Settings}})</a>
+	</div>
+	<div class="rowitem passive">
+		<a href="/panel/settings/word-filters/">Word Filters</a> <a class="menu_stats" href="#">({{.Stats.WordFilters}})</a>
 	</div>{{end}}
 	{{if .CurrentUser.Perms.ManageThemes}}<div class="rowitem passive">
 		<a href="/panel/themes/">Themes</a> <a class="menu_stats" href="#">({{.Stats.Themes}})</a>

@@ -1,18 +1,18 @@
 {{template "header.html" . }}
 
 <form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}' method="post"></form>
-{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="Go to the previous page" rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
 
 {{if ne .LastPage .Page}}<link rel="prerender" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}" />
 <div id="nextFloat" class="next_button">
-	<a class="next_link" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}">&gt;</a>
+	<a class="next_link" aria-label="Go to the next page" rel="next" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}">&gt;</a>
 </div>{{end}}
 
 <main>
 
 <div class="rowblock rowhead topic_block">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.Is_Closed}} topic_closed_head{{end}}">
-		<a class='topic_name hide_on_edit'>{{.Topic.Title}}</a>
+		<h1 class='topic_name hide_on_edit'>{{.Topic.Title}}</h1>
 		{{if .Topic.Is_Closed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
 		{{if .CurrentUser.Perms.EditTopic}}
 		<input form='edit_topic_form' class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />

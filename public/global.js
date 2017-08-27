@@ -284,6 +284,7 @@ $(document).ready(function(){
 	$(".edit_fields").click(function(event)
 	{
 		event.preventDefault();
+		if($(this).find("input").length !== 0) return;
 		//console.log("clicked .edit_fields");
 		var block_parent = $(this).closest('.editable_parent');
 		//console.log(block_parent);
@@ -353,6 +354,7 @@ $(document).ready(function(){
 	});
 
 	// This one's for Tempra Conflux
+	// TO-DO: We might want to use pure JS here
 	$(".ip_item").each(function(){
 		var ip = this.textContent;
 		if(ip.length > 10){

@@ -2,7 +2,7 @@
 {{template "panel-menu.html" . }}
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>User Editor</a></div>
+		<div class="rowitem"><h1>User Editor</h1></div>
 	</div>
 	<div id="panel_user" class="colstack_item">
 		<form action="/panel/users/edit/submit/{{.Something.ID}}?session={{.CurrentUser.Session}}" method="post">

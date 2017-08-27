@@ -7,7 +7,7 @@
 
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>Forums</a></div>
+		<div class="rowitem"><h1>Forums</h1></div>
 	</div>
 	<div id="panel_forums" class="colstack_item rowlist">
 		{{range .ItemList}}
@@ -34,7 +34,7 @@
 	</div>
 
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>Add Forum</a></div>
+		<div class="rowitem"><h1>Add Forum</h1></div>
 	</div>
 	<div class="colstack_item">
 		<form action="/panel/forums/create/?session={{.CurrentUser.Session}}" method="post">

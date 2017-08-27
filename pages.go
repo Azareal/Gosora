@@ -120,6 +120,7 @@ type PanelStats struct
 	Groups int
 	Forums int
 	Settings int
+	WordFilters int
 	Themes int
 	Reports int
 }
@@ -462,6 +463,12 @@ func parse_message(msg string/*, user User*/) string {
 	msg = strings.Replace(msg,":p","😛",-1)
 	msg = strings.Replace(msg,":o","😲",-1)
 	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
+
+	// Word filter list. E.g. Swear words and other things the admins don't like
+	wordFilters := wordFilterBox.Load().(WordFilterBox)
+	for _, filter := range wordFilters {
+		msg = strings.Replace(msg,filter.Find,filter.Replacement,-1)
+	}
 
 	// Search for URLs, mentions and hashlinks in the messages...
 	//log.Print("Parser Loop!")

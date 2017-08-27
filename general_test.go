@@ -25,7 +25,7 @@ var db_test *sql.DB
 var db_prod *sql.DB
 var gloinited bool
 
-func gloinit() {
+func gloinit() error {
 	dev.DebugMode = false
 	//nogrouplog = true
 
@@ -40,20 +40,20 @@ func gloinit() {
 	init_themes()
 	err := init_database()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	db_prod = db
 	//db_test, err = sql.Open("testdb","")
 	//if err != nil {
-	//	log.Fatal(err)
+	//	return err
 	//}
 
 	init_templates()
 	db_prod.SetMaxOpenConns(64)
 	err = init_errors()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if config.CacheTopicUser == CACHE_STATIC {
@@ -68,8 +68,14 @@ func gloinit() {
 	//log.SetOutput(os.Stdout)
 	auth = NewDefaultAuth()
 
+	err = init_word_filters()
+	if err != nil {
+		return err
+	}
+
 	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	gloinited = true
+	return nil
 }
 
 func init() {

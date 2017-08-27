@@ -43,6 +43,8 @@ var update_group_rank_stmt *sql.Stmt
 var update_group_stmt *sql.Stmt
 var update_email_stmt *sql.Stmt
 var verify_email_stmt *sql.Stmt
+var set_temp_group_stmt *sql.Stmt
+var update_word_filter_stmt *sql.Stmt
 
 func _gen_pgsql() (err error) {
 	if dev.DebugMode {
@@ -267,6 +269,18 @@ func _gen_pgsql() (err error) {
 		
 	log.Print("Preparing verify_email statement.")
 	verify_email_stmt, err = db.Prepare("UPDATE `emails` SET `validated` = 1,`token` = '' WHERE `email` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing set_temp_group statement.")
+	set_temp_group_stmt, err = db.Prepare("UPDATE `users` SET `temp_group` = ? WHERE `uid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_word_filter statement.")
+	update_word_filter_stmt, err = db.Prepare("UPDATE `word_filters` SET `find` = ?,`replacement` = ? WHERE `wfid` = ?")
 	if err != nil {
 		return err
 	}

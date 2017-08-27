@@ -47,7 +47,7 @@ type MemoryUserStore struct {
 }
 
 func NewMemoryUserStore(capacity int) *MemoryUserStore {
-	get_stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","","")
+	get_stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group","uid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,12 +70,12 @@ func NewMemoryUserStore(capacity int) *MemoryUserStore {
 	}
 
 	return &MemoryUserStore{
-		items:make(map[int]*User),
-		capacity:capacity,
-		get:get_stmt,
-		register:register_stmt,
-		username_exists:username_exists_stmt,
-		user_count:user_count_stmt,
+		items: make(map[int]*User),
+		capacity: capacity,
+		get: get_stmt,
+		register: register_stmt,
+		username_exists: username_exists_stmt,
+		user_count: user_count_stmt,
 	}
 }
 
@@ -106,7 +106,7 @@ func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
 	}
 
 	user = &User{ID:id,Loggedin:true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -168,7 +168,7 @@ func (sus *MemoryUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, er
 	}
 	qlist = qlist[0:len(qlist) - 1]
 
-	stmt, err := qgen.Builder.SimpleSelect("users","uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid IN("+qlist+")","","")
+	stmt, err := qgen.Builder.SimpleSelect("users","uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group","uid IN("+qlist+")","","")
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (sus *MemoryUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, er
 
 	for rows.Next() {
 		user := &User{Loggedin:true}
-		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 		if err != nil {
 			return nil, err
 		}
@@ -234,7 +234,7 @@ func (sus *MemoryUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, er
 
 func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	user := &User{ID:id,Loggedin:true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -251,7 +251,7 @@ func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
 
 func (sus *MemoryUserStore) Load(id int) error {
 	user := &User{ID:id,Loggedin:true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 	if err != nil {
 		sus.Remove(id)
 		return err
@@ -378,7 +378,7 @@ type SqlUserStore struct {
 }
 
 func NewSqlUserStore() *SqlUserStore {
-	get_stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid = ?","","")
+	get_stmt, err := qgen.Builder.SimpleSelect("users","name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group","uid = ?","","")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -410,7 +410,7 @@ func NewSqlUserStore() *SqlUserStore {
 
 func (sus *SqlUserStore) Get(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -427,7 +427,7 @@ func (sus *SqlUserStore) Get(id int) (*User, error) {
 
 func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -444,7 +444,7 @@ func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 
 func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -469,7 +469,7 @@ func (sus *SqlUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err e
 	}
 	qlist = qlist[0:len(qlist) - 1]
 
-	stmt, err := qgen.Builder.SimpleSelect("users","uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip","uid IN("+qlist+")","","")
+	stmt, err := qgen.Builder.SimpleSelect("users","uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group","uid IN("+qlist+")","","")
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +482,7 @@ func (sus *SqlUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err e
 	list = make(map[int]*User)
 	for rows.Next() {
 		user := &User{Loggedin:true}
-		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 		if err != nil {
 			return nil, err
 		}
@@ -508,7 +508,7 @@ func (sus *SqlUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err e
 
 func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
 	user := User{ID:id,Loggedin:true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
+	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -525,9 +525,8 @@ func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
 
 func (sus *SqlUserStore) Load(id int) error {
 	user := &User{ID:id}
-	// Simplify this into a quick check whether the user exists
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP)
-	return err
+	// Simplify this into a quick check to see whether the user exists. Add an Exists method to facilitate this?
+	return sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Is_Super_Admin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Last_IP, &user.TempGroup)
 }
 
 func (sus *SqlUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {

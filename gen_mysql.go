@@ -24,6 +24,7 @@ var get_widgets_stmt *sql.Stmt
 var is_plugin_active_stmt *sql.Stmt
 var get_users_stmt *sql.Stmt
 var get_users_offset_stmt *sql.Stmt
+var get_word_filters_stmt *sql.Stmt
 var is_theme_default_stmt *sql.Stmt
 var get_modlogs_stmt *sql.Stmt
 var get_modlogs_offset_stmt *sql.Stmt
@@ -33,15 +34,14 @@ var get_user_reply_uid_stmt *sql.Stmt
 var has_liked_topic_stmt *sql.Stmt
 var has_liked_reply_stmt *sql.Stmt
 var get_user_name_stmt *sql.Stmt
-var get_user_rank_stmt *sql.Stmt
 var get_user_active_stmt *sql.Stmt
-var get_user_group_stmt *sql.Stmt
 var get_emails_by_user_stmt *sql.Stmt
 var get_topic_basic_stmt *sql.Stmt
 var get_activity_entry_stmt *sql.Stmt
 var forum_entry_exists_stmt *sql.Stmt
 var group_entry_exists_stmt *sql.Stmt
 var get_forum_topics_offset_stmt *sql.Stmt
+var get_expired_scheduled_groups_stmt *sql.Stmt
 var get_topic_replies_offset_stmt *sql.Stmt
 var get_topic_list_stmt *sql.Stmt
 var get_topic_user_stmt *sql.Stmt
@@ -67,7 +67,9 @@ var add_theme_stmt *sql.Stmt
 var create_group_stmt *sql.Stmt
 var add_modlog_entry_stmt *sql.Stmt
 var add_adminlog_entry_stmt *sql.Stmt
+var create_word_filter_stmt *sql.Stmt
 var add_forum_perms_to_group_stmt *sql.Stmt
+var replace_schedule_group_stmt *sql.Stmt
 var add_replies_to_topic_stmt *sql.Stmt
 var remove_replies_from_topic_stmt *sql.Stmt
 var add_topics_to_forum_stmt *sql.Stmt
@@ -105,11 +107,14 @@ var update_group_rank_stmt *sql.Stmt
 var update_group_stmt *sql.Stmt
 var update_email_stmt *sql.Stmt
 var verify_email_stmt *sql.Stmt
+var set_temp_group_stmt *sql.Stmt
+var update_word_filter_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
 var delete_topic_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
 var delete_forum_perms_by_forum_stmt *sql.Stmt
 var delete_activity_stream_match_stmt *sql.Stmt
+var delete_word_filter_stmt *sql.Stmt
 var report_exists_stmt *sql.Stmt
 var group_count_stmt *sql.Stmt
 var modlog_count_stmt *sql.Stmt
@@ -225,6 +230,12 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing get_word_filters statement.")
+	get_word_filters_stmt, err = db.Prepare("SELECT `wfid`,`find`,`replacement` FROM `word_filters`")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing is_theme_default statement.")
 	is_theme_default_stmt, err = db.Prepare("SELECT `default` FROM `themes` WHERE `uname` = ?")
 	if err != nil {
@@ -279,20 +290,8 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing get_user_rank statement.")
-	get_user_rank_stmt, err = db.Prepare("SELECT `group`,`is_super_admin` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing get_user_active statement.")
 	get_user_active_stmt, err = db.Prepare("SELECT `active` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing get_user_group statement.")
-	get_user_group_stmt, err = db.Prepare("SELECT `group` FROM `users` WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
@@ -329,6 +328,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing get_forum_topics_offset statement.")
 	get_forum_topics_offset_stmt, err = db.Prepare("SELECT `tid`,`title`,`content`,`createdBy`,`is_closed`,`sticky`,`createdAt`,`lastReplyAt`,`lastReplyBy`,`parentID`,`postCount`,`likeCount` FROM `topics` WHERE `parentID` = ? ORDER BY sticky DESC,lastReplyAt DESC,createdBy DESC LIMIT ?,?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_expired_scheduled_groups statement.")
+	get_expired_scheduled_groups_stmt, err = db.Prepare("SELECT `uid` FROM `users_groups_scheduler` WHERE UTC_TIMESTAMP() > `revert_at` AND `temporary` = 1")
 	if err != nil {
 		return err
 	}
@@ -483,8 +488,20 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing create_word_filter statement.")
+	create_word_filter_stmt, err = db.Prepare("INSERT INTO `word_filters`(`find`,`replacement`) VALUES (?,?)")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing add_forum_perms_to_group statement.")
 	add_forum_perms_to_group_stmt, err = db.Prepare("REPLACE INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) VALUES (?,?,?,?)")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing replace_schedule_group statement.")
+	replace_schedule_group_stmt, err = db.Prepare("REPLACE INTO `users_groups_scheduler`(`uid`,`set_group`,`issued_by`,`issued_at`,`revert_at`,`temporary`) VALUES (?,?,?,UTC_TIMESTAMP(),?,?)")
 	if err != nil {
 		return err
 	}
@@ -711,6 +728,18 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing set_temp_group statement.")
+	set_temp_group_stmt, err = db.Prepare("UPDATE `users` SET `temp_group` = ? WHERE `uid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing update_word_filter statement.")
+	update_word_filter_stmt, err = db.Prepare("UPDATE `word_filters` SET `find` = ?,`replacement` = ? WHERE `wfid` = ?")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing delete_reply statement.")
 	delete_reply_stmt, err = db.Prepare("DELETE FROM `replies` WHERE `rid` = ?")
 	if err != nil {
@@ -737,6 +766,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing delete_activity_stream_match statement.")
 	delete_activity_stream_match_stmt, err = db.Prepare("DELETE FROM `activity_stream_matches` WHERE `watcher` = ? AND `asid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing delete_word_filter statement.")
+	delete_word_filter_stmt, err = db.Prepare("DELETE FROM `word_filters` WHERE `wfid` = ?")
 	if err != nil {
 		return err
 	}

@@ -521,7 +521,8 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request, u
 	}
 }
 
-func route_ban(w http.ResponseWriter, r *http.Request, user User) {
+// TO-DO: This is being replaced with the new ban route system
+/*func route_ban(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {
 		return
@@ -557,7 +558,7 @@ func route_ban(w http.ResponseWriter, r *http.Request, user User) {
 		}
 	}
 	templates.ExecuteTemplate(w,"areyousure.html",pi)
-}
+}*/
 
 func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Perms.BanUsers {
@@ -575,13 +576,11 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 	/*if uid == -2 {
-		LocalError("Sigh, are you really trying to ban me? Do you despise so much? Despite all of our adventures over at /arcane-tower/...?",w,r,user)
+		LocalError("Stop trying to ban Merlin! Ban admin! Bad! No!",w,r,user)
 		return
 	}*/
 
-	var group int
-	var is_super_admin bool
-	err = get_user_rank_stmt.QueryRow(uid).Scan(&group, &is_super_admin)
+	targetUser, err := users.CascadeGet(uid)
 	if err == ErrNoRows {
 		LocalError("The user you're trying to ban no longer exists.",w,r,user)
 		return
@@ -590,7 +589,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	if is_super_admin || groups[group].Is_Admin || groups[group].Is_Mod {
+	if targetUser.Is_Super_Admin || targetUser.Is_Admin || targetUser.Is_Mod {
 		LocalError("You may not ban another staff member.",w,r,user)
 		return
 	}
@@ -599,13 +598,45 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	if groups[group].Is_Banned {
+	if targetUser.Is_Banned {
 		LocalError("The user you're trying to unban is already banned.",w,r,user)
 		return
 	}
 
-	_, err = change_group_stmt.Exec(4, uid)
+	duration_days, err := strconv.Atoi(r.FormValue("ban-duration-days"))
 	if err != nil {
+		LocalError("You can only use whole numbers for the number of days",w,r,user)
+		return
+	}
+
+	duration_weeks, err := strconv.Atoi(r.FormValue("ban-duration-weeks"))
+	if err != nil {
+		LocalError("You can only use whole numbers for the number of weeks",w,r,user)
+		return
+	}
+
+	duration_months, err := strconv.Atoi(r.FormValue("ban-duration-months"))
+	if err != nil {
+		LocalError("You can only use whole numbers for the number of months",w,r,user)
+		return
+	}
+
+	var duration time.Duration
+	if duration_days > 1 && duration_weeks > 1 && duration_months > 1 {
+		duration, _ = time.ParseDuration("0")
+	} else {
+		var seconds int
+		seconds += duration_days * day
+		seconds += duration_weeks * week
+		seconds += duration_months * month
+		duration, _ = time.ParseDuration(strconv.Itoa(seconds) + "s")
+	}
+
+	err = targetUser.Ban(duration,user.ID)
+	if err == ErrNoRows {
+		LocalError("The user you're trying to ban no longer exists.",w,r,user)
+		return
+	} else if err != nil {
 		InternalError(err,w)
 		return
 	}
@@ -621,11 +652,6 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = users.Load(uid)
-	if err != nil {
-		LocalError("This user no longer exists!",w,r,user)
-		return
-	}
 	http.Redirect(w,r,"/user/" + strconv.Itoa(uid),http.StatusSeeOther)
 }
 
@@ -645,8 +671,7 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	var group int
-	err = get_user_group_stmt.QueryRow(uid).Scan(&group)
+	targetUser, err := users.CascadeGet(uid)
 	if err == ErrNoRows {
 		LocalError("The user you're trying to unban no longer exists.",w,r,user)
 		return
@@ -655,13 +680,16 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	if !groups[group].Is_Banned {
+	if !targetUser.Is_Banned {
 		LocalError("The user you're trying to unban isn't banned.",w,r,user)
 		return
 	}
 
-	_, err = change_group_stmt.Exec(config.DefaultGroup, uid)
-	if err != nil {
+	err = targetUser.Unban()
+	if err == ErrNoRows {
+		LocalError("The user you're trying to unban no longer exists.",w,r,user)
+		return
+	} else if err != nil {
 		InternalError(err,w)
 		return
 	}
@@ -673,15 +701,6 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = addModLog("unban",uid,"user",ipaddress,user.ID)
 	if err != nil {
-		InternalError(err,w)
-		return
-	}
-
-	err = users.Load(uid)
-	if err != nil && err == ErrNoRows {
-		LocalError("This user no longer exists!",w,r,user)
-		return
-	} else if err != nil {
 		InternalError(err,w)
 		return
 	}

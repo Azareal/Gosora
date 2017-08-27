@@ -2,7 +2,7 @@
 <main>
 
 <div class="rowblock rowhead">
-	<div class="rowitem"><a>Topic List</a></div>
+	<div class="rowitem"><h1>Topic List</h1></div>
 </div>
 <div id="topic_list" class="rowblock topic_list">
 	{{range .ItemList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .Is_Closed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">

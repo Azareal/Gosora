@@ -12,7 +12,7 @@
 </nav>
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>{{.Name}} Group</a></div>
+		<div class="rowitem"><h1>{{.Name}} Group</h1></div>
 	</div>
 	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
 	<div id="panel_group" class="colstack_item rowlist">
@@ -36,7 +36,7 @@
 		</div>
 	</div>
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>Extended Permissions</a></div>
+		<div class="rowitem"><h1>Extended Permissions</h1></div>
 	</div>
 	<div class="colstack_item rowlist">
 		{{if .CurrentUser.Perms.EditGroupGlobalPerms}}

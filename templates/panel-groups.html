@@ -3,7 +3,7 @@
 
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>Groups</a></div>
+		<div class="rowitem"><h1>Groups</h1></div>
 	</div>
 	<div id="panel_groups" class="colstack_item rowlist">
 		{{range .ItemList}}
@@ -28,7 +28,7 @@
 	</div>
 	{{end}}
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>Create Group</a></div>
+		<div class="rowitem"><h1>Create Group</h1></div>
 	</div>
 	<div class="colstack_item">
 		<form action="/panel/groups/create/?session={{.CurrentUser.Session}}" method="post">

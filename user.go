@@ -1,9 +1,11 @@
 package main
 
 import (
+	//"log"
 	//"fmt"
 	"strings"
 	"strconv"
+	"time"
 	"net"
 	"net/http"
 	"html/template"
@@ -51,6 +53,7 @@ type User struct
 	Level int
 	Score int
 	Last_IP string
+	TempGroup int
 }
 
 type Email struct
@@ -60,6 +63,52 @@ type Email struct
 	Validated bool
 	Primary bool
 	Token string
+}
+
+// duration in seconds
+func (user *User) Ban(duration time.Duration, issuedBy int) error {
+	return user.ScheduleGroupUpdate(4,issuedBy,duration)
+}
+
+func (user *User) Unban() error {
+	err := user.RevertGroupUpdate()
+	if err != nil {
+		return err
+	}
+	return users.Load(user.ID)
+}
+
+// TO-DO: Use a transaction to avoid race conditions
+// Make this more stateless?
+func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Duration) error {
+	var temporary bool
+	if duration.Nanoseconds() != 0 {
+		temporary = true
+	}
+
+	revertAt := time.Now().Add(duration)
+	_, err := replace_schedule_group_stmt.Exec(user.ID, gid, issuedBy, revertAt, temporary)
+	if err != nil {
+		return err
+	}
+	_, err = set_temp_group_stmt.Exec(gid,user.ID)
+	if err != nil {
+		return err
+	}
+	return users.Load(user.ID)
+}
+
+// TO-DO: Use a transaction to avoid race conditions
+func (user *User) RevertGroupUpdate() error {
+	_, err := replace_schedule_group_stmt.Exec(user.ID, 0, 0, time.Now(), false)
+	if err != nil {
+		return err
+	}
+	_, err = set_temp_group_stmt.Exec(0,user.ID)
+	if err != nil {
+		return err
+	}
+	return users.Load(user.ID)
 }
 
 func BcryptCheckPassword(real_password string, password string, salt string) (err error) {
@@ -245,7 +294,8 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 
 	stats.Users = users.GetGlobalCount()
 	stats.Forums = fstore.GetGlobalCount() // TO-DO: Stop it from showing the blanked forums
-	stats.Settings = len(headerVars.Settings) // TO-DO: IS this racey?
+	stats.Settings = len(headerVars.Settings)
+	stats.WordFilters = len(wordFilterBox.Load().(WordFilterBox))
 	stats.Themes = len(themes)
 	stats.Reports = 0 // TO-DO: Do the report count. Only show open threads?
 
@@ -445,6 +495,10 @@ func init_user_perms(user *User) {
 	} else {
 		user.Perms = groups[user.Group].Perms
 		user.PluginPerms = groups[user.Group].PluginPerms
+	}
+
+	if user.TempGroup != 0 {
+		user.Group = user.TempGroup
 	}
 
 	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin

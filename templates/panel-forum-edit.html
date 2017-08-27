@@ -6,7 +6,7 @@ var form_vars = {'perm_preset': ['can_moderate','can_post','read_only','no_acces
 
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>{{.Name}} Forum</a></div>
+		<div class="rowitem"><h1>{{.Name}} Forum</h1></div>
 	</div>
 	<div id="panel_forum" class="colstack_item">
 		<form action="/panel/forums/edit/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">

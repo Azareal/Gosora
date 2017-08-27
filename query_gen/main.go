@@ -110,6 +110,7 @@ func create_tables(adapter qgen.DB_Adapter) error {
 			qgen.DB_Table_Column{"megaposts","int",0,false,false,"0"},
 			qgen.DB_Table_Column{"topics","int",0,false,false,"0"},
 			//qgen.DB_Table_Column{"penalty_count","int",0,false,false,"0"},
+			qgen.DB_Table_Column{"temp_group","int",0,false,false,"0"}, // For temporary groups, set this to zero when a temporary group isn't in effect
 		},
 		[]qgen.DB_Table_Key{
 			qgen.DB_Table_Key{"uid","primary"},
@@ -117,34 +118,62 @@ func create_tables(adapter qgen.DB_Adapter) error {
 		},
 	)
 	
-	// Coming Soon!
 	// What should we do about global penalties? Put them on the users table for speed? Or keep them here?
-	// Should we add IP Penalties?
+	// Should we add IP Penalties? No, that's a stupid idea, just implement IP Bans properly. What about shadowbans?
+	// TO-DO: Perm overrides
+	// TO-DO: Add a mod-queue and other basic auto-mod features. This is needed for awaiting activation and the mod_queue penalty flag
+	// TO-DO: Add a penalty type where a user is stopped from creating plugin_socialgroups social groups
+	// TO-DO: Shadow bans. We will probably have a CanShadowBan permission for this, as we *really* don't want people using this lightly.
 	/*qgen.Install.CreateTable("users_penalties","","",
 		[]qgen.DB_Table_Column{
 			qgen.DB_Table_Column{"uid","int",0,false,false,""},
 			qgen.DB_Table_Column{"element_id","int",0,false,false,""},
-			qgen.DB_Table_Column{"element_type","varchar",50,false,false,""}, //global,forum,profile?,social_group
-			qgen.DB_Table_Column{"overrides","text",0,false,false,"{}"}, // Perm overrides. Coming Soon
-			qgen.DB_Table_Column{"mod_queue","boolean",0,false,false,"0"}, // All of this user's posts will go through the mod_queue. Coming Soon
-			// TO-DO: Add a mod-queue and other basic auto-mod features. This is needed for awaiting activation and the mod_queue penalty flag
-			// TO-DO: Add a penalty type where a user is stopped from creating plugin_socialgroups social groups
+			qgen.DB_Table_Column{"element_type","varchar",50,false,false,""}, //forum, profile?, and social_group. Leave blank for global.
+			qgen.DB_Table_Column{"overrides","text",0,false,false,"{}"},
 			
-			qgen.DB_Table_Column{"shadow_ban","boolean",0,false,false,"0"}, // Coming Soon. CanShadowBan permission.
+			qgen.DB_Table_Column{"mod_queue","boolean",0,false,false,"0"},
+			qgen.DB_Table_Column{"shadow_ban","boolean",0,false,false,"0"},
 			qgen.DB_Table_Column{"no_avatar","boolean",0,false,false,"0"}, // Coming Soon. Should this be a perm override instead?
 			
-			//qgen.DB_Table_Column{"posts_per_hour","int",0,false,false,"0"}, // Rate-limit penalty type. Coming soon
-			//qgen.DB_Table_Column{"topics_per_hour","int",0,false,false,"0"}, // Coming Soon
-			
-			//qgen.DB_Table_Column{"posts_count","int",0,false,false,"0"}, // Coming soon
-			//qgen.DB_Table_Column{"topic_count","int",0,false,false,"0"}, // Coming Soon
+			// Do we *really* need rate-limit penalty types? Are we going to be allowing bots or something?
+			//qgen.DB_Table_Column{"posts_per_hour","int",0,false,false,"0"},
+			//qgen.DB_Table_Column{"topics_per_hour","int",0,false,false,"0"},
+			//qgen.DB_Table_Column{"posts_count","int",0,false,false,"0"},
+			//qgen.DB_Table_Column{"topic_count","int",0,false,false,"0"},
 			//qgen.DB_Table_Column{"last_hour","int",0,false,false,"0"}, // UNIX Time, as we don't need to do anything too fancy here. When an hour has elapsed since that time, reset the hourly penalty counters.
+			
 			qgen.DB_Table_Column{"issued_by","int",0,false,false,""},
 			qgen.DB_Table_Column{"issued_at","createdAt",0,false,false,""},
-			qgen.DB_Table_Column{"expiry","duration",0,false,false,""}, // TO-DO: Implement the duration parsing code on the adapter side
+			qgen.DB_Table_Column{"expires_at","datetime",0,false,false,""},
 		},
 		[]qgen.DB_Table_Key{},
 	)*/
+	
+	qgen.Install.CreateTable("users_groups_scheduler","","",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"uid","int",0,false,false,""},
+			qgen.DB_Table_Column{"set_group","int",0,false,false,""},
+			
+			qgen.DB_Table_Column{"issued_by","int",0,false,false,""},
+			qgen.DB_Table_Column{"issued_at","createdAt",0,false,false,""},
+			qgen.DB_Table_Column{"revert_at","datetime",0,false,false,""},
+			qgen.DB_Table_Column{"temporary","boolean",0,false,false,""}, // special case for permanent bans to do the necessary bookkeeping, might be removed in the future
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"uid","primary"},
+		},
+	)
+	
+	qgen.Install.CreateTable("word_filters","","",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"wfid","int",0,false,true,""},
+			qgen.DB_Table_Column{"find","varchar",200,false,false,""},
+			qgen.DB_Table_Column{"replacement","varchar",200,false,false,""},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"wfid","primary"},
+		},
+	)
 	
 	return nil
 }
@@ -194,6 +223,8 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleSelect("get_users_offset","users","uid, name, group, active, is_super_admin, avatar","","","?,?")
 	
+	adapter.SimpleSelect("get_word_filters","word_filters","wfid, find, replacement","","","")
+	
 	adapter.SimpleSelect("is_theme_default","themes","default","uname = ?","","")
 	
 	adapter.SimpleSelect("get_modlogs","moderation_logs","action, elementID, elementType, ipaddress, actorID, doneAt","","","")
@@ -212,11 +243,7 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleSelect("get_user_name","users","name","uid = ?","","")
 	
-	adapter.SimpleSelect("get_user_rank","users","group, is_super_admin","uid = ?","","")
-	
 	adapter.SimpleSelect("get_user_active","users","active","uid = ?","","")
-	
-	adapter.SimpleSelect("get_user_group","users","group","uid = ?","","")
 	
 	adapter.SimpleSelect("get_emails_by_user","emails","email, validated, token","uid = ?","","")
 	
@@ -229,6 +256,8 @@ func write_selects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleSelect("group_entry_exists","users_groups","gid","name = ''","gid ASC","0,1")
 	
 	adapter.SimpleSelect("get_forum_topics_offset","topics","tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount","parentID = ?","sticky DESC, lastReplyAt DESC, createdBy DESC","?,?")
+	
+	adapter.SimpleSelect("get_expired_scheduled_groups","users_groups_scheduler","uid","UTC_TIMESTAMP() > revert_at AND temporary = 1","","")
 	
 	return nil
 }
@@ -293,11 +322,15 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleInsert("add_adminlog_entry","administration_logs","action, elementID, elementType, ipaddress, actorID, doneAt","?,?,?,?,?,UTC_TIMESTAMP()")
 	
+	adapter.SimpleInsert("create_word_filter","word_filters","find, replacement","?,?")
+	
 	return nil
 }
 
 func write_replaces(adapter qgen.DB_Adapter) error {
 	adapter.SimpleReplace("add_forum_perms_to_group","forums_permissions","gid,fid,preset,permissions","?,?,?,?")
+	
+	adapter.SimpleReplace("replace_schedule_group","users_groups_scheduler","uid, set_group, issued_by, issued_at, revert_at, temporary","?,?,?,UTC_TIMESTAMP(),?,?")
 	
 	return nil
 }
@@ -376,7 +409,11 @@ func write_updates(adapter qgen.DB_Adapter) error {
 	
 	adapter.SimpleUpdate("update_email","emails","email = ?, uid = ?, validated = ?, token = ?","email = ?")
 	
-	adapter.SimpleUpdate("verify_email","emails","validated = 1, token = ''","email = ?") // Need to fix this: Empty string isn't working, it gets set to 1 instead x.x
+	adapter.SimpleUpdate("verify_email","emails","validated = 1, token = ''","email = ?") // Need to fix this: Empty string isn't working, it gets set to 1 instead x.x -- Has this been fixed?
+	
+	adapter.SimpleUpdate("set_temp_group","users","temp_group = ?","uid = ?")
+	
+	adapter.SimpleUpdate("update_word_filter","word_filters","find = ?, replacement = ?","wfid = ?")
 	
 	return nil
 }
@@ -392,8 +429,9 @@ func write_deletes(adapter qgen.DB_Adapter) error {
 	adapter.SimpleDelete("delete_forum_perms_by_forum","forums_permissions","fid = ?")
 	
 	adapter.SimpleDelete("delete_activity_stream_match","activity_stream_matches","watcher = ? AND asid = ?")
-	
 	//adapter.SimpleDelete("delete_activity_stream_matches_by_watcher","activity_stream_matches","watcher = ?")
+	
+	adapter.SimpleDelete("delete_word_filter","word_filters","wfid = ?")
 	
 	return nil
 }

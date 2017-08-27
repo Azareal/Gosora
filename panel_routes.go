@@ -722,6 +722,184 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User,
 	http.Redirect(w,r,"/panel/settings/",http.StatusSeeOther)
 }
 
+func route_panel_word_filters(w http.ResponseWriter, r *http.Request, user User){
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
+	if !ok {
+		return
+	}
+	if !user.Perms.EditSettings {
+		NoPermissions(w,r,user)
+		return
+	}
+
+	var filterList WordFilterBox = wordFilterBox.Load().(WordFilterBox)
+	pi := PanelPage{"Word Filter Manager",user,headerVars,stats,tList,filterList}
+	if pre_render_hooks["pre_render_panel_word_filters"] != nil {
+		if run_pre_render_hook("pre_render_panel_word_filters", w, r, &user, &pi) {
+			return
+		}
+	}
+	err := templates.ExecuteTemplate(w,"panel-word-filters.html",pi)
+	if err != nil {
+		InternalError(err,w)
+	}
+}
+
+func route_panel_word_filters_create(w http.ResponseWriter, r *http.Request, user User){
+	_, ok := SimplePanelSessionCheck(w,r,&user)
+	if !ok {
+		return
+	}
+	if !user.Perms.EditSettings {
+		NoPermissions(w,r,user)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form",w,r)
+		return
+	}
+	is_js := r.PostFormValue("js")
+	if is_js == "" {
+		is_js = "0"
+	}
+
+	find := strings.TrimSpace(r.PostFormValue("find"))
+	if find == "" {
+		LocalErrorJSQ("You need to specify what word you want to match",w,r,user,is_js)
+		return
+	}
+
+	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
+	replacement := strings.TrimSpace(r.PostFormValue("replacement"))
+
+	res, err := create_word_filter_stmt.Exec(find,replacement)
+	if err != nil {
+		InternalErrorJSQ(err,w,r,is_js)
+		return
+	}
+	lastId, err := res.LastInsertId()
+	if err != nil {
+		InternalErrorJSQ(err,w,r,is_js)
+		return
+	}
+
+	add_word_filter(int(lastId),find,replacement)
+	http.Redirect(w,r,"/panel/settings/word-filters/",http.StatusSeeOther)
+}
+
+func route_panel_word_filters_edit(w http.ResponseWriter, r *http.Request, user User, wfid string){
+	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
+	if !ok {
+		return
+	}
+	if !user.Perms.EditSettings {
+		NoPermissions(w,r,user)
+		return
+	}
+
+	_ = wfid
+
+	pi := PanelPage{"Edit Word Filter",user,headerVars,stats,tList,nil}
+	if pre_render_hooks["pre_render_panel_word_filters_edit"] != nil {
+		if run_pre_render_hook("pre_render_panel_word_filters_edit", w, r, &user, &pi) {
+			return
+		}
+	}
+	err := templates.ExecuteTemplate(w,"panel-word-filters-edit.html",pi)
+	if err != nil {
+		InternalError(err,w)
+	}
+}
+
+func route_panel_word_filters_edit_submit(w http.ResponseWriter, r *http.Request, user User, wfid string){
+	_, ok := SimplePanelSessionCheck(w,r,&user)
+	if !ok {
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form",w,r)
+		return
+	}
+	is_js := r.PostFormValue("is_js")
+	if is_js == "" {
+		is_js = "0"
+	}
+	if !user.Perms.EditSettings {
+		NoPermissionsJSQ(w,r,user,is_js)
+		return
+	}
+
+	id, err := strconv.Atoi(wfid)
+	if err != nil {
+		LocalErrorJSQ("The word filter ID must be an integer.",w,r,user,is_js)
+		return
+	}
+
+	find := strings.TrimSpace(r.PostFormValue("find"))
+	if find == "" {
+		LocalErrorJSQ("You need to specify what word you want to match",w,r,user,is_js)
+		return
+	}
+
+	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
+	replacement := strings.TrimSpace(r.PostFormValue("replacement"))
+
+	_, err = update_word_filter_stmt.Exec(find,replacement,id)
+	if err != nil {
+		InternalErrorJSQ(err,w,r,is_js)
+		return
+	}
+
+	wordFilters := wordFilterBox.Load().(WordFilterBox)
+	wordFilters[id] = WordFilter{ID:id,Find:find,Replacement:replacement}
+	wordFilterBox.Store(wordFilters)
+
+	http.Redirect(w,r,"/panel/settings/word-filters/",http.StatusSeeOther)
+}
+
+func route_panel_word_filters_delete_submit(w http.ResponseWriter, r *http.Request, user User, wfid string){
+	_, ok := SimplePanelSessionCheck(w,r,&user)
+	if !ok {
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form",w,r)
+		return
+	}
+	is_js := r.PostFormValue("is_js")
+	if is_js == "" {
+		is_js = "0"
+	}
+	if !user.Perms.EditSettings {
+		NoPermissionsJSQ(w,r,user,is_js)
+		return
+	}
+
+	id, err := strconv.Atoi(wfid)
+	if err != nil {
+		LocalErrorJSQ("The word filter ID must be an integer.",w,r,user,is_js)
+		return
+	}
+
+	_, err = delete_word_filter_stmt.Exec(id)
+	if err != nil {
+		InternalErrorJSQ(err,w,r,is_js)
+		return
+	}
+
+	wordFilters := wordFilterBox.Load().(WordFilterBox)
+	delete(wordFilters,id)
+	wordFilterBox.Store(wordFilters)
+
+	http.Redirect(w,r,"/panel/settings/word-filters/",http.StatusSeeOther)
+}
+
 func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User){
 	headerVars, stats, ok := PanelSessionCheck(w,r,&user)
 	if !ok {

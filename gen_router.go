@@ -150,6 +150,21 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				case "/panel/settings/edit/submit/":
 					route_panel_setting_edit(w,req,user,extra_data)
 					return
+				case "/panel/settings/word-filters/":
+					route_panel_word_filters(w,req,user)
+					return
+				case "/panel/settings/word-filters/create/":
+					route_panel_word_filters_create(w,req,user)
+					return
+				case "/panel/settings/word-filters/edit/":
+					route_panel_word_filters_edit(w,req,user,extra_data)
+					return
+				case "/panel/settings/word-filters/edit/submit/":
+					route_panel_word_filters_edit_submit(w,req,user,extra_data)
+					return
+				case "/panel/settings/word-filters/delete/submit/":
+					route_panel_word_filters_delete_submit(w,req,user,extra_data)
+					return
 				case "/panel/themes/":
 					route_panel_themes(w,req,user)
 					return

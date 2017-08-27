@@ -57,6 +57,8 @@ var pre_render_hooks map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_panel_edit_forum": nil,
 	"pre_render_panel_settings": nil,
 	"pre_render_panel_setting": nil,
+	"pre_render_panel_word_filters": nil,
+	"pre_render_panel_word_filters_edit": nil,
 	"pre_render_panel_plugins": nil,
 	"pre_render_panel_users": nil,
 	"pre_render_panel_edit_user": nil,

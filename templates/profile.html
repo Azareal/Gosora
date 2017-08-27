@@ -1,9 +1,9 @@
 {{template "header.html" . }}
 
 <div id="profile_left_lane" class="colstack_left">
-	<!--<div class="colstack_item colstack_head rowhead">
-		<div class="rowitem"><a>Profile</a></div>
-	</div>-->
+	<!--<header class="colstack_item colstack_head rowhead">
+		<div class="rowitem"><h1>Profile</h1></div>
+	</header>-->
 	<div id="profile_left_pane" class="rowmenu">
 		<div class="rowitem avatarRow" style="padding: 0;">
 			<img src="{{.ProfileOwner.Avatar}}" class="avatar" />
@@ -16,7 +16,7 @@
 		</div>
 		{{if (.CurrentUser.Is_Super_Mod) and not (.ProfileOwner.Is_Super_Mod) }}<div class="rowitem passive">
 			{{if .ProfileOwner.Is_Banned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Unban</a>
-		{{else}}<a href="/users/ban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Ban</a>{{end}}
+		{{else}}<a href="#ban_user" class="profile_menu_item">Ban</a>{{end}}
 		</div>{{end}}
 		<div class="rowitem passive">
 			<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item">Report</a>
@@ -25,10 +25,48 @@
 </div>
 
 <div id="profile_right_lane" class="colstack_right">
-	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>Comments</a></div>
+	{{if .CurrentUser.Perms.BanUsers}}
+	<!-- TO-DO: Inline the display: none; CSS -->
+	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
+			<div class="rowitem"><h1>Ban User</h1></div>
 	</div>
-	<div id="profile_comments" class="colstack_item" style="overflow: hidden;border-top: none;">{{range .ItemList}}
+	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" method="post"  style="display: none;">
+		{{/** TO-DO: Put a JS duration calculator here instead of this text? **/}}
+		<div class="colline">If all the fields are left blank, the ban will be permanent.</div>
+		<div class="colstack_item">
+			<div class="formrow real_first_child">
+				<div class="formitem formlabel"><a>Days</a></div>
+				<div class="formitem">
+					<input name="ban-duration-days" type="number" value="0" min="0" />
+				</div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>Weeks</a></div>
+				<div class="formitem">
+					<input name="ban-duration-weeks" type="number" value="0" min="0" />
+				</div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>Months</a></div>
+				<div class="formitem">
+					<input name="ban-duration-months" type="number" value="0" min="0" />
+				</div>
+			</div>
+			<!--<div class="formrow">
+				<div class="formitem formlabel"><a>Reason</a></div>
+				<div class="formitem"><textarea name="ban-reason" placeholder="A really horrible person" required></textarea></div>
+			</div>-->
+			<div class="formrow">
+				<div class="formitem"><button name="ban-button" class="formbutton form_middle_button">Ban User</button></div>
+			</div>
+		</div>
+	</form>
+	{{end}}
+
+	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
+		<div class="rowitem"><h1>Comments</h1></div>
+	</div>
+	<div id="profile_comments" class="colstack_item hash_hide" style="overflow: hidden;border-top: none;">{{range .ItemList}}
 		<div class="rowitem passive deletable_block editable_parent simple {{.ClassName}}" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;{{end}}">
 			<span class="editable_block user_content simple">{{.ContentHtml}}</span>
 
@@ -47,7 +85,7 @@
 	{{end}}</div>
 
 {{if not .CurrentUser.Is_Banned}}
-	<form action="/profile/reply/create/" method="post">
+	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/" method="post">
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top: none;">
 			<div class="formrow">
@@ -60,5 +98,25 @@
 	</form>
 {{end}}
 </div>
+
+{{/** Quick subpage switcher **/}}
+{{/** TO-DO: Stop inlining this **/}}
+<script type="text/javascript">
+function handle_profile_hashbit() {
+	var hash_class = ""
+	switch(window.location.hash.substr(1)) {
+		case "ban_user":
+			hash_class = "ban_user_hash"
+			break
+		default:
+			console.log("Unknown hashbit")
+			return
+	}
+	$(".hash_hide").hide()
+	$("." + hash_class).show()
+}
+if(window.location.hash) handle_profile_hashbit()
+window.addEventListener("hashchange", handle_profile_hashbit, false)
+</script>
 
 {{template "footer.html" . }}
