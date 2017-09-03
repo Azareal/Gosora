@@ -4,31 +4,35 @@
 package main
 
 import "log"
+
 //import "time"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 import "./query_gen/lib"
 
-var db_collation string = "utf8mb4_general_ci"
+var dbCollation = "utf8mb4_general_ci"
 var get_activity_feed_by_watcher_stmt *sql.Stmt
 var get_activity_count_by_watcher_stmt *sql.Stmt
 var todays_post_count_stmt *sql.Stmt
 var todays_topic_count_stmt *sql.Stmt
 var todays_report_count_stmt *sql.Stmt
 var todays_newuser_count_stmt *sql.Stmt
+var find_users_by_ip_users_stmt *sql.Stmt
+var find_users_by_ip_topics_stmt *sql.Stmt
+var find_users_by_ip_replies_stmt *sql.Stmt
 
 func init() {
-	db_adapter = "mysql"
+	dbAdapter = "mysql"
 }
 
-func _init_database() (err error) {
+func _initDatabase() (err error) {
 	var _dbpassword string
-	if(db_config.Password != ""){
+	if db_config.Password != "" {
 		_dbpassword = ":" + db_config.Password
 	}
 
 	// Open the database connection
-	db, err = sql.Open("mysql", db_config.Username + _dbpassword + "@tcp(" + db_config.Host + ":" + db_config.Port + ")/" + db_config.Dbname + "?collation=" + db_collation)
+	db, err = sql.Open("mysql", db_config.Username+_dbpassword+"@tcp("+db_config.Host+":"+db_config.Port+")/"+db_config.Dbname+"?collation="+dbCollation)
 	if err != nil {
 		return err
 	}
@@ -40,7 +44,7 @@ func _init_database() (err error) {
 	}
 
 	// Fetch the database version
-	db.QueryRow("SELECT VERSION()").Scan(&db_version)
+	db.QueryRow("SELECT VERSION()").Scan(&dbVersion)
 
 	// Set the number of max open connections
 	db.SetMaxOpenConns(64)
@@ -62,6 +66,7 @@ func _init_database() (err error) {
 		return err
 	}
 
+	// TO-DO: Is there a less noisy way of doing this for tests?
 	log.Print("Preparing get_activity_feed_by_watcher statement.")
 	get_activity_feed_by_watcher_stmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid ASC LIMIT 8")
 	if err != nil {
@@ -98,5 +103,19 @@ func _init_database() (err error) {
 		return err
 	}
 
-	return nil
+	log.Print("Preparing find_users_by_ip_users statement.")
+	find_users_by_ip_users_stmt, err = db.Prepare("select uid from users where last_ip = ?")
+	if err != nil {
+		return err
+	}
+
+	log.Print("Preparing find_users_by_ip_topics statement.")
+	find_users_by_ip_topics_stmt, err = db.Prepare("select uid from users where uid in(select createdBy from topics where ipaddress = ?)")
+	if err != nil {
+		return err
+	}
+
+	log.Print("Preparing find_users_by_ip_replies statement.")
+	find_users_by_ip_replies_stmt, err = db.Prepare("select uid from users where uid in(select createdBy from replies where ipaddress = ?)")
+	return err
 }

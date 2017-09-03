@@ -5,7 +5,7 @@
 	<div class="rowitem"><h1>Topic List</h1></div>
 </div>
 <div id="topic_list" class="rowblock topic_list">
-	{{range .ItemList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .Is_Closed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
+	{{range .ItemList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
 		<span class="topic_inner_right rowsmall" style="float: right;">
 			<span class="replyCount">{{.PostCount}} replies</span><br />
 			<span class="lastReplyAt">{{.LastReplyAt}}</span>
@@ -13,8 +13,8 @@
 		<span>
 			<a class="rowtopic" href="{{.Link}}">{{.Title}}</a> {{if .ForumName}}<a class="rowsmall" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
 			<br /><a class="rowsmall" href="{{.Creator.Link}}">Starter: {{.Creator.Name}}</a>
-			{{/** TO-DO: Avoid the double '|' when both .Is_Closed and .Sticky are set to true. We could probably do this with CSS **/}}
-			{{if .Is_Closed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>{{end}}
+			{{/** TO-DO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
+			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>{{end}}
 			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>{{end}}
 		</span>
 	</div>

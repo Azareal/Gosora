@@ -169,7 +169,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					route_panel_themes(w,req,user)
 					return
 				case "/panel/themes/default/":
-					route_panel_themes_default(w,req,user,extra_data)
+					route_panel_themes_set_default(w,req,user,extra_data)
 					return
 				case "/panel/plugins/":
 					route_panel_plugins(w,req,user)

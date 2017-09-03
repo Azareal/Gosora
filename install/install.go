@@ -1,40 +1,47 @@
-/* Copyright Azareal 2017 - 2018 */
+/*
+*
+* Gosora Installer
+* Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import (
+	"bufio"
+	"database/sql"
 	"fmt"
 	"os"
-	"bufio"
-	"strconv"
-	"database/sql"
 	"runtime/debug"
-	
+	"strconv"
+
 	"../query_gen/lib"
 )
 
 const saltLength int = 32
+
 var db *sql.DB
 var scanner *bufio.Scanner
 
-var db_adapter string = "mysql"
-var db_host string
-var db_username string
-var db_password string
-var db_name string
-var db_port string
-var site_name, site_url, server_port string
+var dbAdapter = "mysql"
+var dbHost string
+var dbUsername string
+var dbPassword string
+var dbName string
+var dbPort string
+var siteName, siteURL, serverPort string
 
-var default_adapter string = "mysql"
-var default_host string = "localhost"
-var default_username string = "root"
-var default_dbname string = "gosora"
-var default_site_name string = "Site Name"
-var default_site_url string = "localhost"
-var default_server_port string = "80" // 8080's a good one, if you're testing and don't want it to clash with port 80
+var defaultAdapter = "mysql"
+var defaultHost = "localhost"
+var defaultUsername = "root"
+var defaultDbname = "gosora"
+var defaultSiteName = "Site Name"
+var defaultsiteURL = "localhost"
+var defaultServerPort = "80" // 8080's a good one, if you're testing and don't want it to clash with port 80
 
-var init_database func()error = _init_mysql
-var table_defs func()error = _table_defs_mysql
-var initial_data func()error = _initial_data_mysql
+// func() error, removing type to satisfy lint
+var initDatabase = _initMysql
+var tableDefs = _tableDefsMysql
+var initialData = _initialDataMysql
 
 func main() {
 	// Capture panics rather than immediately closing the window on Windows
@@ -43,15 +50,15 @@ func main() {
 		if r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
-			press_any_key()
+			pressAnyKey()
 			return
 		}
 	}()
-	
+
 	scanner = bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to Gosora's Installer")
 	fmt.Println("We're going to take you through a few steps to help you get started :)")
-	if !get_database_details() {
+	if !getDatabaseDetails() {
 		err := scanner.Err()
 		if err != nil {
 			fmt.Println(err)
@@ -59,11 +66,11 @@ func main() {
 			fmt.Println("Something went wrong!")
 		}
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
 
-	if !get_site_details() {
+	if !getSiteDetails() {
 		err := scanner.Err()
 		if err != nil {
 			fmt.Println(err)
@@ -71,78 +78,78 @@ func main() {
 			fmt.Println("Something went wrong!")
 		}
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
-	
-	err := init_database()
+
+	err := initDatabase()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
-	
-	err = table_defs()
+
+	err = tableDefs()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
-	
-	hashed_password, salt, err := BcryptGeneratePassword("password")
+
+	hashedPassword, salt, err := BcryptGeneratePassword("password")
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
-	
+
 	// Build the admin user query
-	admin_user_stmt, err := qgen.Builder.SimpleInsert("users","name, password, salt, email, group, is_super_admin, active, createdAt, lastActiveAt, message, last_ip","'Admin',?,?,'admin@localhost',1,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'','127.0.0.1'")
+	adminUserStmt, err := qgen.Builder.SimpleInsert("users", "name, password, salt, email, group, is_super_admin, active, createdAt, lastActiveAt, message, last_ip", "'Admin',?,?,'admin@localhost',1,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'','127.0.0.1'")
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
-	
+
 	// Run the admin user query
-	_, err = admin_user_stmt.Exec(hashed_password,salt)
+	_, err = adminUserStmt.Exec(hashedPassword, salt)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
-	
-	err = initial_data()
+
+	err = initialData()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
-	
-	if db_adapter == "mysql" {
-		err = _mysql_seed_database()
+
+	if dbAdapter == "mysql" {
+		err = _mysqlSeedDatabase()
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("Aborting installation...")
-			press_any_key()
+			pressAnyKey()
 			return
 		}
 	}
-	
+
 	configContents := []byte(`package main
 
 func init() {
 // Site Info
-site.Name = "` + site_name + `" // Should be a setting in the database
+site.Name = "` + siteName + `" // Should be a setting in the database
 site.Email = "" // Should be a setting in the database
-site.Url = "` + site_url + `"
-site.Port = "` + server_port + `"
+site.Url = "` + siteURL + `"
+site.Port = "` + serverPort + `"
 site.EnableSsl = false
 site.EnableEmails = false
 site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
@@ -150,11 +157,11 @@ config.SslPrivkey = ""
 config.SslFullchain = ""
 
 // Database details
-db_config.Host = "` + db_host + `"
-db_config.Username = "` + db_username + `"
-db_config.Password = "` + db_password + `"
-db_config.Dbname = "` + db_name + `"
-db_config.Port = "` + db_port + `" // You probably won't need to change this
+db_config.Host = "` + dbHost + `"
+db_config.Username = "` + dbUsername + `"
+db_config.Password = "` + dbPassword + `"
+db_config.Dbname = "` + dbName + `"
+db_config.Port = "` + dbPort + `" // You probably won't need to change this
 
 // Limiters
 config.MaxRequestSize = 5 * megabyte
@@ -195,7 +202,7 @@ dev.DebugMode = true
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
 
@@ -204,7 +211,7 @@ dev.DebugMode = true
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Aborting installation...")
-		press_any_key()
+		pressAnyKey()
 		return
 	}
 
@@ -214,121 +221,122 @@ dev.DebugMode = true
 
 	fmt.Println("Yay, you have successfully installed Gosora!")
 	fmt.Println("Your name is Admin and you can login with the password 'password'. Don't forget to change it! Seriously. It's really insecure.")
-	press_any_key()
+	pressAnyKey()
 }
 
-func get_database_details() bool {
+func getDatabaseDetails() bool {
 	fmt.Println("Which database driver do you wish to use? mysql, mysql, or mysql? Default: mysql")
 	if !scanner.Scan() {
 		return false
 	}
-	db_adapter = scanner.Text()
-	if db_adapter == "" {
-		db_adapter = default_adapter
+	dbAdapter = scanner.Text()
+	if dbAdapter == "" {
+		dbAdapter = defaultAdapter
 	}
-	db_adapter = set_db_adapter(db_adapter)
-	fmt.Println("Set database adapter to " + db_adapter)
-	
-	fmt.Println("Database Host? Default: " + default_host)
-	if !scanner.Scan() {
-		return false
-	}
-	db_host = scanner.Text()
-	if db_host == "" {
-		db_host = default_host
-	}
-	fmt.Println("Set database host to " + db_host)
+	dbAdapter = setDBAdapter(dbAdapter)
+	fmt.Println("Set database adapter to " + dbAdapter)
 
-	fmt.Println("Database Username? Default: " + default_username)
+	fmt.Println("Database Host? Default: " + defaultHost)
 	if !scanner.Scan() {
 		return false
 	}
-	db_username = scanner.Text()
-	if db_username == "" {
-		db_username = default_username
+	dbHost = scanner.Text()
+	if dbHost == "" {
+		dbHost = defaultHost
 	}
-	fmt.Println("Set database username to " + db_username)
+	fmt.Println("Set database host to " + dbHost)
+
+	fmt.Println("Database Username? Default: " + defaultUsername)
+	if !scanner.Scan() {
+		return false
+	}
+	dbUsername = scanner.Text()
+	if dbUsername == "" {
+		dbUsername = defaultUsername
+	}
+	fmt.Println("Set database username to " + dbUsername)
 
 	fmt.Println("Database Password? Default: ''")
 	if !scanner.Scan() {
 		return false
 	}
-	db_password = scanner.Text()
-	if len(db_password) == 0 {
-		fmt.Println("You didn't set a password for this user. This won't block the installation process, but it might create security issues in the future.\n")
+	dbPassword = scanner.Text()
+	if len(dbPassword) == 0 {
+		fmt.Println("You didn't set a password for this user. This won't block the installation process, but it might create security issues in the future.")
+		fmt.Println("")
 	} else {
-		fmt.Println("Set password to " + obfuscate_password(db_password))
+		fmt.Println("Set password to " + obfuscatePassword(dbPassword))
 	}
 
-	fmt.Println("Database Name? Pick a name you like or one provided to you. Default: " + default_dbname)
+	fmt.Println("Database Name? Pick a name you like or one provided to you. Default: " + defaultDbname)
 	if !scanner.Scan() {
 		return false
 	}
-	db_name = scanner.Text()
-	if db_name == "" {
-		db_name = default_dbname
+	dbName = scanner.Text()
+	if dbName == "" {
+		dbName = defaultDbname
 	}
-	fmt.Println("Set database name to " + db_name)
+	fmt.Println("Set database name to " + dbName)
 	return true
 }
 
-func get_site_details() bool {
+func getSiteDetails() bool {
 	fmt.Println("Okay. We also need to know some actual information about your site!")
-	fmt.Println("What's your site's name? Default: " + default_site_name)
+	fmt.Println("What's your site's name? Default: " + defaultSiteName)
 	if !scanner.Scan() {
 		return false
 	}
-	site_name = scanner.Text()
-	if site_name == "" {
-		site_name = default_site_name
+	siteName = scanner.Text()
+	if siteName == "" {
+		siteName = defaultSiteName
 	}
-	fmt.Println("Set the site name to " + site_name)
+	fmt.Println("Set the site name to " + siteName)
 
-	fmt.Println("What's your site's url? Default: " + default_site_url)
+	fmt.Println("What's your site's url? Default: " + defaultsiteURL)
 	if !scanner.Scan() {
 		return false
 	}
-	site_url = scanner.Text()
-	if site_url == "" {
-		site_url = default_site_url
+	siteURL = scanner.Text()
+	if siteURL == "" {
+		siteURL = defaultsiteURL
 	}
-	fmt.Println("Set the site url to " + site_url)
+	fmt.Println("Set the site url to " + siteURL)
 
-	fmt.Println("What port do you want the server to listen on? If you don't know what this means, you should probably leave it on the default. Default: " + default_server_port)
+	fmt.Println("What port do you want the server to listen on? If you don't know what this means, you should probably leave it on the default. Default: " + defaultServerPort)
 	if !scanner.Scan() {
 		return false
 	}
-	server_port = scanner.Text()
-	if server_port == "" {
-		server_port = default_server_port
+	serverPort = scanner.Text()
+	if serverPort == "" {
+		serverPort = defaultServerPort
 	}
-	_, err := strconv.Atoi(server_port)
+	_, err := strconv.Atoi(serverPort)
 	if err != nil {
 		fmt.Println("That's not a valid number!")
 		return false
 	}
-	fmt.Println("Set the server port to " + server_port)
+	fmt.Println("Set the server port to " + serverPort)
 	return true
 }
 
-func set_db_adapter(name string) string {
-	switch(name) {
-		//case "wip-pgsql":
-		//	set_pgsql_adapter()
-		//	return "wip-pgsql"	
+func setDBAdapter(name string) string {
+	switch name {
+	//case "wip-pgsql":
+	//	set_pgsql_adapter()
+	//	return "wip-pgsql"
 	}
-	_set_mysql_adapter()
+	_setMysqlAdapter()
 	return "mysql"
 }
 
-func obfuscate_password(password string) (out string) {
+func obfuscatePassword(password string) (out string) {
 	for i := 0; i < len(password); i++ {
 		out += "*"
 	}
 	return out
 }
 
-func press_any_key() {
+func pressAnyKey() {
 	//fmt.Println("Press any key to exit...")
 	fmt.Println("Please press enter to exit...")
 	for scanner.Scan() {

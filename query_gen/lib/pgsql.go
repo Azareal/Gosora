@@ -7,14 +7,13 @@ import "errors"
 
 func init() {
 	DB_Registry = append(DB_Registry,
-		&Pgsql_Adapter{Name:"pgsql",Buffer:make(map[string]DB_Stmt)},
+		&Pgsql_Adapter{Name: "pgsql", Buffer: make(map[string]DB_Stmt)},
 	)
 }
 
-type Pgsql_Adapter struct
-{
-	Name string
-	Buffer map[string]DB_Stmt
+type Pgsql_Adapter struct {
+	Name        string
+	Buffer      map[string]DB_Stmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
@@ -42,8 +41,8 @@ func (adapter *Pgsql_Adapter) CreateTable(name string, table string, charset str
 	if len(columns) == 0 {
 		return "", errors.New("You can't have a table with no columns")
 	}
-	
-	var querystr string = "CREATE TABLE `" + table + "` ("
+
+	var querystr = "CREATE TABLE `" + table + "` ("
 	for _, column := range columns {
 		if column.Auto_Increment {
 			column.Type = "serial"
@@ -52,29 +51,29 @@ func (adapter *Pgsql_Adapter) CreateTable(name string, table string, charset str
 		} else if column.Type == "datetime" {
 			column.Type = "timestamp"
 		}
-		
+
 		var size string
 		if column.Size > 0 {
 			size = " (" + strconv.Itoa(column.Size) + ")"
 		}
-		
+
 		var end string
 		if column.Default != "" {
 			end = " DEFAULT "
-			if adapter.stringy_type(column.Type) && column.Default != "''" {
+			if adapter.stringyType(column.Type) && column.Default != "''" {
 				end += "'" + column.Default + "'"
 			} else {
 				end += column.Default
 			}
 		}
-		
+
 		if !column.Null {
 			end += " not null"
 		}
-		
-		querystr += "\n\t`"+column.Name+"` " + column.Type + size + end + ","
+
+		querystr += "\n\t`" + column.Name + "` " + column.Type + size + end + ","
 	}
-	
+
 	if len(keys) > 0 {
 		for _, key := range keys {
 			querystr += "\n\t" + key.Type
@@ -82,15 +81,15 @@ func (adapter *Pgsql_Adapter) CreateTable(name string, table string, charset str
 				querystr += " key"
 			}
 			querystr += "("
-			for _, column := range strings.Split(key.Columns,",") {
+			for _, column := range strings.Split(key.Columns, ",") {
 				querystr += "`" + column + "`,"
 			}
-			querystr = querystr[0:len(querystr) - 1] + "),"
+			querystr = querystr[0:len(querystr)-1] + "),"
 		}
 	}
-	
-	querystr = querystr[0:len(querystr) - 1] + "\n);"
-	adapter.push_statement(name,"create-table",querystr)
+
+	querystr = querystr[0:len(querystr)-1] + "\n);"
+	adapter.pushStatement(name, "create-table", querystr)
 	return querystr, nil
 }
 
@@ -139,59 +138,59 @@ func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string
 	if set == "" {
 		return "", errors.New("You need to set data in this update statement")
 	}
-	var querystr string = "UPDATE `" + table + "` SET "
+	var querystr = "UPDATE `" + table + "` SET "
 	for _, item := range _process_set(set) {
 		querystr += "`" + item.Column + "` ="
 		for _, token := range item.Expr {
-			switch(token.Type) {
-				case "function":
-					// TO-DO: Write a more sophisticated function parser on the utils side.
-					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
-						token.Contents = "LOCALTIMESTAMP()"
-					}
-					querystr += " " + token.Contents + ""
-				case "operator","number","substitute":
-					querystr += " " + token.Contents + ""
-				case "column":
-					querystr += " `" + token.Contents + "`"
-				case "string":
-					querystr += " '" + token.Contents + "'"
+			switch token.Type {
+			case "function":
+				// TO-DO: Write a more sophisticated function parser on the utils side.
+				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
+					token.Contents = "LOCALTIMESTAMP()"
+				}
+				querystr += " " + token.Contents
+			case "operator", "number", "substitute":
+				querystr += " " + token.Contents
+			case "column":
+				querystr += " `" + token.Contents + "`"
+			case "string":
+				querystr += " '" + token.Contents + "'"
 			}
 		}
 		querystr += ","
 	}
-	
+
 	// Remove the trailing comma
-	querystr = querystr[0:len(querystr) - 1]
-	
+	querystr = querystr[0 : len(querystr)-1]
+
 	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _process_where(where) {
+		for _, loc := range _processWhere(where) {
 			for _, token := range loc.Expr {
-				switch(token.Type) {
-					case "function":
-						// TO-DO: Write a more sophisticated function parser on the utils side. What's the situation in regards to case sensitivity?
-						if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
-							token.Contents = "LOCALTIMESTAMP()"
-						}
-						querystr += " " + token.Contents + ""
-					case "operator","number","substitute":
-						querystr += " " + token.Contents + ""
-					case "column":
-						querystr += " `" + token.Contents + "`"
-					case "string":
-						querystr += " '" + token.Contents + "'"
-					default:
-						panic("This token doesn't exist o_o")
+				switch token.Type {
+				case "function":
+					// TO-DO: Write a more sophisticated function parser on the utils side. What's the situation in regards to case sensitivity?
+					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
+						token.Contents = "LOCALTIMESTAMP()"
+					}
+					querystr += " " + token.Contents
+				case "operator", "number", "substitute":
+					querystr += " " + token.Contents
+				case "column":
+					querystr += " `" + token.Contents + "`"
+				case "string":
+					querystr += " '" + token.Contents + "'"
+				default:
+					panic("This token doesn't exist o_o")
 				}
 			}
 			querystr += " AND"
 		}
-		querystr = querystr[0:len(querystr) - 4]
+		querystr = querystr[0 : len(querystr)-4]
 	}
-	
-	adapter.push_statement(name,"update",querystr)
+
+	adapter.pushStatement(name, "update", querystr)
 	return querystr, nil
 }
 
@@ -317,7 +316,7 @@ func (adapter *Pgsql_Adapter) Write() error {
 	`
 		}
 	}
-	
+
 	out := `// +build pgsql
 
 // This file was generated by Gosora's Query Generator. Please try to avoid modifying this file, as it might change at any time.
@@ -326,7 +325,9 @@ package main
 import "log"
 import "database/sql"
 
+// nolint
 ` + stmts + `
+// nolint
 func _gen_pgsql() (err error) {
 	if dev.DebugMode {
 		log.Print("Building the generated statements")
@@ -335,16 +336,16 @@ func _gen_pgsql() (err error) {
 	return nil
 }
 `
-	return write_file("./gen_pgsql.go", out)
+	return writeFile("./gen_pgsql.go", out)
 }
 
 // Internal methods, not exposed in the interface
-func (adapter *Pgsql_Adapter) push_statement(name string, stype string, querystr string) {
-	adapter.Buffer[name] = DB_Stmt{querystr,stype}
-	adapter.BufferOrder = append(adapter.BufferOrder,name)
+func (adapter *Pgsql_Adapter) pushStatement(name string, stype string, querystr string) {
+	adapter.Buffer[name] = DB_Stmt{querystr, stype}
+	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }
 
-func (adapter *Pgsql_Adapter) stringy_type(ctype string) bool {
+func (adapter *Pgsql_Adapter) stringyType(ctype string) bool {
 	ctype = strings.ToLower(ctype)
 	return ctype == "char" || ctype == "varchar" || ctype == "timestamp" || ctype == "text"
 }

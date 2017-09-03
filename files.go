@@ -1,65 +1,59 @@
 package main
 
 import (
-	"log"
 	"bytes"
-	"strings"
+	"log"
 	"mime"
+	"strings"
 	//"errors"
-	"os"
-	"io/ioutil"
-	"path/filepath"
-	"net/http"
 	"compress/gzip"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
 )
 
-type SFile struct
-{
-	Data []byte
-	GzipData []byte
-	Pos int64
-	Length int64
-	GzipLength int64
-	Mimetype string
-	Info os.FileInfo
+type SFile struct {
+	Data             []byte
+	GzipData         []byte
+	Pos              int64
+	Length           int64
+	GzipLength       int64
+	Mimetype         string
+	Info             os.FileInfo
 	FormattedModTime string
 }
 
-type CssData struct
-{
+type CssData struct {
 	ComingSoon string
 }
 
-func init_static_files() {
-	log.Print("Loading the static files.")
-	err := filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
+func initStaticFiles() error {
+	return filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
 			return nil
 		}
 
-		path = strings.Replace(path,"\\","/",-1)
+		path = strings.Replace(path, "\\", "/", -1)
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
 
-		path = strings.TrimPrefix(path,"public/")
-		var ext string = filepath.Ext("/public/" + path)
-		gzip_data := compress_bytes_gzip(data)
+		path = strings.TrimPrefix(path, "public/")
+		var ext = filepath.Ext("/public/" + path)
+		gzipData := compressBytesGzip(data)
 
-		static_files["/static/" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(ext),f,f.ModTime().UTC().Format(http.TimeFormat)}
+		staticFiles["/static/"+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
 
 		if dev.DebugMode {
 			log.Print("Added the '" + path + "' static file.")
 		}
 		return nil
 	})
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
-func add_static_file(path string, prefix string) error {
+func addStaticFile(path string, prefix string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -73,11 +67,11 @@ func add_static_file(path string, prefix string) error {
 		return err
 	}
 
-	var ext string = filepath.Ext(path)
+	var ext = filepath.Ext(path)
 	path = strings.TrimPrefix(path, prefix)
-	gzip_data := compress_bytes_gzip(data)
+	gzipData := compressBytesGzip(data)
 
-	static_files["/static" + path] = SFile{data,gzip_data,0,int64(len(data)),int64(len(gzip_data)),mime.TypeByExtension(ext),f,f.ModTime().UTC().Format(http.TimeFormat)}
+	staticFiles["/static"+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
 
 	if dev.DebugMode {
 		log.Print("Added the '" + path + "' static file")
@@ -85,10 +79,10 @@ func add_static_file(path string, prefix string) error {
 	return nil
 }
 
-func compress_bytes_gzip(in []byte) []byte {
+func compressBytesGzip(in []byte) []byte {
 	var buff bytes.Buffer
 	gz := gzip.NewWriter(&buff)
-	gz.Write(in)
-	gz.Close()
+	_, _ = gz.Write(in) // TO-DO: What if this errors? What circumstances could it error under? Should we add a second return value?
+	_ = gz.Close()
 	return buff.Bytes()
 }

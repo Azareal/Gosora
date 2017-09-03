@@ -3,71 +3,72 @@ package main
 import (
 	//"log"
 	//"fmt"
-	"strings"
-	"strconv"
-	"time"
+	"html/template"
 	"net"
 	"net/http"
-	"html/template"
+	"strconv"
+	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-var guest_user User = User{ID:0,Link:"#",Group:6,Perms:GuestPerms}
+var guestUser = User{ID: 0, Link: "#", Group: 6, Perms: GuestPerms}
 
-var PreRoute func(http.ResponseWriter, *http.Request) (User,bool) = _pre_route
+var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = _pre_route
 
 // TO-DO: Are these even session checks anymore? We might need to rethink these names
-var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderVars,PanelStats,bool) = _panel_session_check
-var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (HeaderLite,bool) = _simple_panel_session_check
-var SimpleForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (success bool) = _simple_forum_session_check
-var ForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars HeaderVars, success bool) = _forum_session_check
-var SimpleSessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite HeaderLite, success bool) = _simple_session_check
-var SessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) = _session_check
+var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderVars, PanelStats, bool) = _panel_session_check
+var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, bool) = _simple_panel_session_check
+var SimpleForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, success bool) = _simple_forum_session_check
+var ForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, success bool) = _forum_session_check
+var SimpleSessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) = _simple_session_check
+var SessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) = _session_check
 
-var CheckPassword func(real_password string, password string, salt string) (err error) = BcryptCheckPassword
-var GeneratePassword func(password string) (hashed_password string, salt string, err error) = BcryptGeneratePassword
+//func(real_password string, password string, salt string) (err error)
+var CheckPassword = BcryptCheckPassword
 
-type User struct
-{
-	ID int
-	Link string
-	Name string
-	Email string
-	Group int
-	Active bool
-	Is_Mod bool
-	Is_Super_Mod bool
-	Is_Admin bool
-	Is_Super_Admin bool
-	Is_Banned bool
-	Perms Perms
-	PluginPerms map[string]bool
-	Session string
-	Loggedin bool
-	Avatar string
-	Message string
-	URLPrefix string // Move this to another table? Create a user lite?
-	URLName string
-	Tag string
-	Level int
-	Score int
-	Last_IP string
-	TempGroup int
+//func(password string) (hashed_password string, salt string, err error)
+var GeneratePassword = BcryptGeneratePassword
+
+type User struct {
+	ID           int
+	Link         string
+	Name         string
+	Email        string
+	Group        int
+	Active       bool
+	IsMod        bool
+	IsSuperMod   bool
+	IsAdmin      bool
+	IsSuperAdmin bool
+	IsBanned     bool
+	Perms        Perms
+	PluginPerms  map[string]bool
+	Session      string
+	Loggedin     bool
+	Avatar       string
+	Message      string
+	URLPrefix    string // Move this to another table? Create a user lite?
+	URLName      string
+	Tag          string
+	Level        int
+	Score        int
+	LastIP       string
+	TempGroup    int
 }
 
-type Email struct
-{
-	UserID int
-	Email string
+type Email struct {
+	UserID    int
+	Email     string
 	Validated bool
-	Primary bool
-	Token string
+	Primary   bool
+	Token     string
 }
 
 // duration in seconds
 func (user *User) Ban(duration time.Duration, issuedBy int) error {
-	return user.ScheduleGroupUpdate(4,issuedBy,duration)
+	return user.ScheduleGroupUpdate(4, issuedBy, duration)
 }
 
 func (user *User) Unban() error {
@@ -91,7 +92,7 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	if err != nil {
 		return err
 	}
-	_, err = set_temp_group_stmt.Exec(gid,user.ID)
+	_, err = set_temp_group_stmt.Exec(gid, user.ID)
 	if err != nil {
 		return err
 	}
@@ -104,15 +105,15 @@ func (user *User) RevertGroupUpdate() error {
 	if err != nil {
 		return err
 	}
-	_, err = set_temp_group_stmt.Exec(0,user.ID)
+	_, err = set_temp_group_stmt.Exec(0, user.ID)
 	if err != nil {
 		return err
 	}
 	return users.Load(user.ID)
 }
 
-func BcryptCheckPassword(real_password string, password string, salt string) (err error) {
-	return bcrypt.CompareHashAndPassword([]byte(real_password), []byte(password + salt))
+func BcryptCheckPassword(realPassword string, password string, salt string) (err error) {
+	return bcrypt.CompareHashAndPassword([]byte(realPassword), []byte(password+salt))
 }
 
 // Investigate. Do we need the extra salt?
@@ -131,23 +132,20 @@ func BcryptGeneratePassword(password string) (hashed_password string, salt strin
 }
 
 func BcryptGeneratePasswordNoSalt(password string) (hash string, err error) {
-	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
-	return string(hashed_password), nil
+	return string(hashedPassword), nil
 }
 
 func SetPassword(uid int, password string) error {
-	hashed_password, salt, err := GeneratePassword(password)
+	hashedPassword, salt, err := GeneratePassword(password)
 	if err != nil {
 		return err
 	}
-	_, err = set_password_stmt.Exec(hashed_password, salt, uid)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err = set_password_stmt.Exec(hashedPassword, salt, uid)
+	return err
 }
 
 func SendValidationEmail(username string, email string, token string) bool {
@@ -165,43 +163,43 @@ func SendValidationEmail(username string, email string, token string) bool {
 // http.Request is for context.Context middleware. Mostly for plugin_socialgroups right now
 func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http.Request) {
 	if vhooks["intercept_build_widgets"] != nil {
-		if run_vhook("intercept_build_widgets", zone, data, headerVars, r).(bool) {
+		if runVhook("intercept_build_widgets", zone, data, headerVars, r).(bool) {
 			return
 		}
 	}
 
 	//log.Print("themes[defaultTheme].Sidebars",themes[defaultTheme].Sidebars)
 	if themes[defaultTheme].Sidebars == "right" {
-			if len(docks.RightSidebar) != 0 {
-				var sbody string
-				for _, widget := range docks.RightSidebar {
-					if widget.Enabled {
-						if widget.Location == "global" || widget.Location == zone {
-							sbody += widget.Body
-						}
+		if len(docks.RightSidebar) != 0 {
+			var sbody string
+			for _, widget := range docks.RightSidebar {
+				if widget.Enabled {
+					if widget.Location == "global" || widget.Location == zone {
+						sbody += widget.Body
 					}
 				}
-				headerVars.Widgets.RightSidebar = template.HTML(sbody)
 			}
+			headerVars.Widgets.RightSidebar = template.HTML(sbody)
+		}
 	}
 }
 
-func _simple_forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fid int) (success bool) {
+func _simple_forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, success bool) {
 	if !fstore.Exists(fid) {
-		PreError("The target forum doesn't exist.",w,r)
-		return false
+		PreError("The target forum doesn't exist.", w, r)
+		return nil, false
 	}
 	success = true
 
 	// Is there a better way of doing the skip AND the success flag on this hook like multiple returns?
 	if vhooks["simple_forum_check_pre_perms"] != nil {
-		if run_vhook("simple_forum_check_pre_perms", w, r, user, &fid, &success).(bool) {
-			return success
+		if runVhook("simple_forum_check_pre_perms", w, r, user, &fid, &success, &headerLite).(bool) {
+			return headerLite, success
 		}
 	}
 
 	fperms := groups[user.Group].Forums[fid]
-	if fperms.Overrides && !user.Is_Super_Admin {
+	if fperms.Overrides && !user.IsSuperAdmin {
 		user.Perms.ViewTopic = fperms.ViewTopic
 		user.Perms.LikeItem = fperms.LikeItem
 		user.Perms.CreateTopic = fperms.CreateTopic
@@ -219,18 +217,18 @@ func _simple_forum_session_check(w http.ResponseWriter, r *http.Request, user *U
 			}
 		}
 	}
-	return true
+	return headerLite, true
 }
 
-func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars HeaderVars, success bool) {
-	headerVars, success = SessionCheck(w,r,user)
+func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, success bool) {
+	headerVars, success = SessionCheck(w, r, user)
 	if !fstore.Exists(fid) {
-		NotFound(w,r)
+		NotFound(w, r)
 		return headerVars, false
 	}
 
 	if vhooks["forum_check_pre_perms"] != nil {
-		if run_vhook("forum_check_pre_perms", w, r, user, &fid, &success, &headerVars).(bool) {
+		if runVhook("forum_check_pre_perms", w, r, user, &fid, &success, &headerVars).(bool) {
 			return headerVars, success
 		}
 	}
@@ -238,7 +236,7 @@ func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fi
 	fperms := groups[user.Group].Forums[fid]
 	//log.Printf("user.Perms: %+v\n", user.Perms)
 	//log.Printf("fperms: %+v\n", fperms)
-	if fperms.Overrides && !user.Is_Super_Admin {
+	if fperms.Overrides && !user.IsSuperAdmin {
 		user.Perms.ViewTopic = fperms.ViewTopic
 		user.Perms.LikeItem = fperms.LikeItem
 		user.Perms.CreateTopic = fperms.CreateTopic
@@ -260,27 +258,32 @@ func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fi
 }
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
-func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, stats PanelStats, success bool) {
-	headerVars.Site = site
-	headerVars.Settings = settingBox.Load().(SettingBox)
-	if !user.Is_Super_Mod {
-		NoPermissions(w,r,*user)
+func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, stats PanelStats, success bool) {
+	headerVars = &HeaderVars{
+		Site:      site,
+		Settings:  settingBox.Load().(SettingBox),
+		ThemeName: defaultTheme, // TO-DO: Is this racey?
+	}
+	// TO-DO: We should probably initialise headerVars.ExtData
+
+	if !user.IsSuperMod {
+		NoPermissions(w, r, *user)
 		return headerVars, stats, false
 	}
 
-	headerVars.Stylesheets = append(headerVars.Stylesheets,"panel.css")
+	headerVars.Stylesheets = append(headerVars.Stylesheets, headerVars.ThemeName+"/panel.css")
 	if len(themes[defaultTheme].Resources) != 0 {
 		rlist := themes[defaultTheme].Resources
 		for _, resource := range rlist {
 			if resource.Location == "global" || resource.Location == "panel" {
-				halves := strings.Split(resource.Name,".")
+				halves := strings.Split(resource.Name, ".")
 				if len(halves) != 2 {
 					continue
 				}
 				if halves[1] == "css" {
-					headerVars.Stylesheets = append(headerVars.Stylesheets,resource.Name)
+					headerVars.Stylesheets = append(headerVars.Stylesheets, resource.Name)
 				} else if halves[1] == "js" {
-					headerVars.Scripts = append(headerVars.Scripts,resource.Name)
+					headerVars.Scripts = append(headerVars.Scripts, resource.Name)
 				}
 			}
 		}
@@ -288,7 +291,7 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 
 	err := group_count_stmt.QueryRow().Scan(&stats.Groups)
 	if err != nil {
-		InternalError(err,w)
+		InternalError(err, w)
 		return headerVars, stats, false
 	}
 
@@ -301,8 +304,8 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 
 	pusher, ok := w.(http.Pusher)
 	if ok {
-		pusher.Push("/static/main.css", nil)
-		pusher.Push("/static/panel.css", nil)
+		pusher.Push("/static/"+headerVars.ThemeName+"/main.css", nil)
+		pusher.Push("/static/"+headerVars.ThemeName+"/panel.css", nil)
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
 		// TO-DO: Push the theme CSS files
@@ -313,42 +316,50 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 	return headerVars, stats, true
 }
 
-func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerLite HeaderLite, success bool) {
-	if !user.Is_Super_Mod {
-		NoPermissions(w,r,*user)
+func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) {
+	if !user.IsSuperMod {
+		NoPermissions(w, r, *user)
 		return headerLite, false
 	}
-	headerLite.Site = site
-	headerLite.Settings = settingBox.Load().(SettingBox)
+	headerLite = &HeaderLite{
+		Site:     site,
+		Settings: settingBox.Load().(SettingBox),
+	}
 	return headerLite, true
 }
 
 // SimpleSessionCheck is back from the grave, yay :D
-func _simple_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerLite HeaderLite, success bool) {
-	headerLite.Site = site
-	headerLite.Settings = settingBox.Load().(SettingBox)
+func _simple_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) {
+	headerLite = &HeaderLite{
+		Site:     site,
+		Settings: settingBox.Load().(SettingBox),
+	}
 	return headerLite, true
 }
 
-func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars HeaderVars, success bool) {
-	headerVars.Site = site
-	headerVars.Settings = settingBox.Load().(SettingBox)
-	if user.Is_Banned {
-		headerVars.NoticeList = append(headerVars.NoticeList,"Your account has been suspended. Some of your permissions may have been revoked.")
+func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) {
+	headerVars = &HeaderVars{
+		Site:      site,
+		Settings:  settingBox.Load().(SettingBox),
+		ThemeName: defaultTheme, // TO-DO: Is this racey?
+	}
+
+	if user.IsBanned {
+		headerVars.NoticeList = append(headerVars.NoticeList, "Your account has been suspended. Some of your permissions may have been revoked.")
 	}
 
 	if len(themes[defaultTheme].Resources) != 0 {
 		rlist := themes[defaultTheme].Resources
 		for _, resource := range rlist {
 			if resource.Location == "global" || resource.Location == "frontend" {
-				halves := strings.Split(resource.Name,".")
+				halves := strings.Split(resource.Name, ".")
 				if len(halves) != 2 {
 					continue
 				}
 				if halves[1] == "css" {
-					headerVars.Stylesheets = append(headerVars.Stylesheets,resource.Name)
+					headerVars.Stylesheets = append(headerVars.Stylesheets, resource.Name)
 				} else if halves[1] == "js" {
-					headerVars.Scripts = append(headerVars.Scripts,resource.Name)
+					headerVars.Scripts = append(headerVars.Scripts, resource.Name)
 				}
 			}
 		}
@@ -356,7 +367,7 @@ func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerV
 
 	pusher, ok := w.(http.Pusher)
 	if ok {
-		pusher.Push("/static/main.css", nil)
+		pusher.Push("/static/"+headerVars.ThemeName+"/main.css", nil)
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
 		// TO-DO: Push the theme CSS files
@@ -367,27 +378,27 @@ func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerV
 	return headerVars, true
 }
 
-func _pre_route(w http.ResponseWriter, r *http.Request) (User,bool) {
-	user, halt := auth.SessionCheck(w,r)
+func _pre_route(w http.ResponseWriter, r *http.Request) (User, bool) {
+	user, halt := auth.SessionCheck(w, r)
 	if halt {
 		return *user, false
 	}
-	if user == &guest_user {
+	if user == &guestUser {
 		return *user, true
 	}
 
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		PreError("Bad IP",w,r)
+		PreError("Bad IP", w, r)
 		return *user, false
 	}
-	if host != user.Last_IP {
+	if host != user.LastIP {
 		_, err = update_last_ip_stmt.Exec(host, user.ID)
 		if err != nil {
-			InternalError(err,w)
+			InternalError(err, w)
 			return *user, false
 		}
-		user.Last_IP = host
+		user.LastIP = host
 	}
 
 	// TO-DO: Set the X-Frame-Options header
@@ -405,91 +416,91 @@ func words_to_score(wcount int, topic bool) (score int) {
 	if wcount >= settings["megapost_min_words"].(int) {
 		score += 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		score += 1
+		score++
 	}
 	return score
 }
 
 func increase_post_user_stats(wcount int, uid int, topic bool, user User) error {
 	var mod int
-	base_score := 1
+	baseScore := 1
 	if topic {
 		_, err := increment_user_topics_stmt.Exec(1, uid)
 		if err != nil {
 			return err
 		}
-		base_score = 2
+		baseScore = 2
 	}
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := increment_user_megaposts_stmt.Exec(1,1,1,uid)
+		_, err := increment_user_megaposts_stmt.Exec(1, 1, 1, uid)
 		if err != nil {
 			return err
 		}
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := increment_user_bigposts_stmt.Exec(1,1,uid)
+		_, err := increment_user_bigposts_stmt.Exec(1, 1, uid)
 		if err != nil {
 			return err
 		}
 		mod = 1
 	} else {
-		_, err := increment_user_posts_stmt.Exec(1,uid)
+		_, err := increment_user_posts_stmt.Exec(1, uid)
 		if err != nil {
 			return err
 		}
 	}
-	_, err := increment_user_score_stmt.Exec(base_score + mod, uid)
+	_, err := increment_user_score_stmt.Exec(baseScore+mod, uid)
 	if err != nil {
 		return err
 	}
 	//log.Print(user.Score + base_score + mod)
 	//log.Print(getLevel(user.Score + base_score + mod))
-	_, err = update_user_level_stmt.Exec(getLevel(user.Score + base_score + mod), uid)
+	_, err = update_user_level_stmt.Exec(getLevel(user.Score+baseScore+mod), uid)
 	return err
 }
 
 func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error {
 	var mod int
-	base_score := -1
+	baseScore := -1
 	if topic {
 		_, err := increment_user_topics_stmt.Exec(-1, uid)
 		if err != nil {
 			return err
 		}
-		base_score = -2
+		baseScore = -2
 	}
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := increment_user_megaposts_stmt.Exec(-1,-1,-1,uid)
+		_, err := increment_user_megaposts_stmt.Exec(-1, -1, -1, uid)
 		if err != nil {
 			return err
 		}
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := increment_user_bigposts_stmt.Exec(-1,-1,uid)
+		_, err := increment_user_bigposts_stmt.Exec(-1, -1, uid)
 		if err != nil {
 			return err
 		}
 		mod = 1
 	} else {
-		_, err := increment_user_posts_stmt.Exec(-1,uid)
+		_, err := increment_user_posts_stmt.Exec(-1, uid)
 		if err != nil {
 			return err
 		}
 	}
-	_, err := increment_user_score_stmt.Exec(base_score - mod, uid)
+	_, err := increment_user_score_stmt.Exec(baseScore-mod, uid)
 	if err != nil {
 		return err
 	}
-	_, err = update_user_level_stmt.Exec(getLevel(user.Score - base_score - mod), uid)
+	_, err = update_user_level_stmt.Exec(getLevel(user.Score-baseScore-mod), uid)
 	return err
 }
 
-func init_user_perms(user *User) {
-	if user.Is_Super_Admin {
+func initUserPerms(user *User) {
+	if user.IsSuperAdmin {
 		user.Perms = AllPerms
 		user.PluginPerms = AllPluginPerms
 	} else {
@@ -501,16 +512,16 @@ func init_user_perms(user *User) {
 		user.Group = user.TempGroup
 	}
 
-	user.Is_Admin = user.Is_Super_Admin || groups[user.Group].Is_Admin
-	user.Is_Super_Mod = user.Is_Admin || groups[user.Group].Is_Mod
-	user.Is_Mod = user.Is_Super_Mod
-	user.Is_Banned = groups[user.Group].Is_Banned
-	if user.Is_Banned && user.Is_Super_Mod {
-		user.Is_Banned = false
+	user.IsAdmin = user.IsSuperAdmin || groups[user.Group].IsAdmin
+	user.IsSuperMod = user.IsAdmin || groups[user.Group].IsMod
+	user.IsMod = user.IsSuperMod
+	user.IsBanned = groups[user.Group].IsBanned
+	if user.IsBanned && user.IsSuperMod {
+		user.IsBanned = false
 	}
 }
 
-func build_profile_url(slug string, uid int) string {
+func buildProfileURL(slug string, uid int) string {
 	if slug == "" {
 		return "/user/" + strconv.Itoa(uid)
 	}

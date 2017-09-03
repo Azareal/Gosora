@@ -1,4 +1,9 @@
-/* Work in progress */
+/*
+*
+* Gosora Authentication Interface
+* Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import "log"
@@ -11,11 +16,15 @@ import "./query_gen/lib"
 import "golang.org/x/crypto/bcrypt"
 
 var auth Auth
-var ErrMismatchedHashAndPassword = bcrypt.ErrMismatchedHashAndPassword
-var ErrPasswordTooLong = errors.New("The password you selected is too long") // Silly, but we don't want bcrypt to bork on us
 
-type Auth interface
-{
+// ErrMismatchedHashAndPassword is thrown whenever a hash doesn't match it's unhashed password
+var ErrMismatchedHashAndPassword = bcrypt.ErrMismatchedHashAndPassword
+
+// ErrPasswordTooLong is silly, but we don't want bcrypt to bork on us
+var ErrPasswordTooLong = errors.New("The password you selected is too long")
+
+// Auth is the main authentication interface.
+type Auth interface {
 	Authenticate(username string, password string) (uid int, err error)
 	Logout(w http.ResponseWriter, uid int)
 	ForceLogout(uid int) error
@@ -25,82 +34,86 @@ type Auth interface
 	CreateSession(uid int) (session string, err error)
 }
 
-type DefaultAuth struct
-{
-	login *sql.Stmt
+// DefaultAuth is the default authenticator used by Gosora, may be swapped with an alternate authenticator in some situations. E.g. To support LDAP.
+type DefaultAuth struct {
+	login  *sql.Stmt
 	logout *sql.Stmt
 }
 
+// NewDefaultAuth is a factory for spitting out DefaultAuths
 func NewDefaultAuth() *DefaultAuth {
-	login_stmt, err := qgen.Builder.SimpleSelect("users","uid, password, salt","name = ?","","")
+	loginStmt, err := qgen.Builder.SimpleSelect("users", "uid, password, salt", "name = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
-	logout_stmt, err := qgen.Builder.SimpleUpdate("users","session = ''","uid = ?")
+	logoutStmt, err := qgen.Builder.SimpleUpdate("users", "session = ''", "uid = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	return &DefaultAuth{
-		login: login_stmt,
-		logout: logout_stmt,
+		login:  loginStmt,
+		logout: logoutStmt,
 	}
 }
 
+// Authenticate checks if a specific username and password is valid and returns the UID for the corresponding user, if so. Otherwise, a user safe error.
 func (auth *DefaultAuth) Authenticate(username string, password string) (uid int, err error) {
-	var real_password, salt string
-	err = auth.login.QueryRow(username).Scan(&uid, &real_password, &salt)
+	var realPassword, salt string
+	err = auth.login.QueryRow(username).Scan(&uid, &realPassword, &salt)
 	if err == ErrNoRows {
-		return 0, errors.New("We couldn't find an account with that username.")
+		return 0, errors.New("We couldn't find an account with that username.") // nolint
 	} else if err != nil {
 		LogError(err)
-		return 0, errors.New("There was a glitch in the system. Please contact the system administrator.")
+		return 0, errors.New("There was a glitch in the system. Please contact your local administrator.") // nolint
 	}
 
 	if salt == "" {
 		// Send an email to admin for this?
 		LogError(errors.New("Missing salt for user #" + strconv.Itoa(uid) + ". Potential security breach."))
-		return 0, errors.New("There was a glitch in the system. Please contact the system administrator.")
+		return 0, errors.New("There was a glitch in the system. Please contact your local administrator")
 	}
 
-	err = CheckPassword(real_password,password,salt)
+	err = CheckPassword(realPassword, password, salt)
 	if err == ErrMismatchedHashAndPassword {
 		return 0, errors.New("That's not the correct password.")
 	} else if err != nil {
 		LogError(err)
-		return 0, errors.New("There was a glitch in the system. Please contact the system administrator.")
+		return 0, errors.New("There was a glitch in the system. Please contact your local administrator.")
 	}
 
 	return uid, nil
 }
 
+// ForceLogout logs the user out of every computer, not just the one they logged out of
 func (auth *DefaultAuth) ForceLogout(uid int) error {
 	_, err := auth.logout.Exec(uid)
 	if err != nil {
 		LogError(err)
-		return errors.New("There was a glitch in the system. Please contact the system administrator.")
+		return errors.New("There was a glitch in the system. Please contact your local administrator.")
 	}
 
 	// Flush the user out of the cache and reload
 	err = users.Load(uid)
 	if err != nil {
-		return errors.New("Your account no longer exists!")
+		return errors.New("Your account no longer exists.")
 	}
 
 	return nil
 }
 
+// Logout logs you out of the computer you requested the logout for, but not the other computers you're logged in with
 func (auth *DefaultAuth) Logout(w http.ResponseWriter, _ int) {
-	cookie := http.Cookie{Name:"uid",Value:"",Path:"/",MaxAge: year}
-	http.SetCookie(w,&cookie)
-	cookie = http.Cookie{Name:"session",Value:"",Path:"/",MaxAge: year}
-	http.SetCookie(w,&cookie)
+	cookie := http.Cookie{Name: "uid", Value: "", Path: "/", MaxAge: year}
+	http.SetCookie(w, &cookie)
+	cookie = http.Cookie{Name: "session", Value: "", Path: "/", MaxAge: year}
+	http.SetCookie(w, &cookie)
 }
 
 func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session string) {
-	cookie := http.Cookie{Name: "uid",Value: strconv.Itoa(uid),Path: "/",MaxAge: year}
-	http.SetCookie(w,&cookie)
-	cookie = http.Cookie{Name: "session",Value: session,Path: "/",MaxAge: year}
-	http.SetCookie(w,&cookie)
+	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: year}
+	http.SetCookie(w, &cookie)
+	cookie = http.Cookie{Name: "session", Value: session, Path: "/", MaxAge: year}
+	http.SetCookie(w, &cookie)
 }
 
 func (auth *DefaultAuth) GetCookies(r *http.Request) (uid int, session string, err error) {
@@ -123,26 +136,26 @@ func (auth *DefaultAuth) GetCookies(r *http.Request) (uid int, session string, e
 func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (user *User, halt bool) {
 	uid, session, err := auth.GetCookies(r)
 	if err != nil {
-		return &guest_user, false
+		return &guestUser, false
 	}
 
 	// Is this session valid..?
 	user, err = users.CascadeGet(uid)
 	if err == ErrNoRows {
-		return &guest_user, false
+		return &guestUser, false
 	} else if err != nil {
-		InternalError(err,w)
-		return &guest_user, true
+		InternalError(err, w)
+		return &guestUser, true
 	}
 
 	if user.Session == "" || session != user.Session {
-		return &guest_user, false
+		return &guestUser, false
 	}
 
 	return user, false
 }
 
-func(auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
+func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 	session, err = GenerateSafeString(sessionLength)
 	if err != nil {
 		return "", err

@@ -6,63 +6,68 @@ package main
 import "net/http"
 import "strconv"
 
+// nolint
 func init() {
 	template_topic_alt_handle = template_topic_alt
 	//o_template_topic_alt_handle = template_topic_alt
 	ctemplates = append(ctemplates,"topic_alt")
-	tmpl_ptr_map["topic_alt"] = &template_topic_alt_handle
-	tmpl_ptr_map["o_topic_alt"] = template_topic_alt
+	tmplPtrMap["topic_alt"] = &template_topic_alt_handle
+	tmplPtrMap["o_topic_alt"] = template_topic_alt
 }
 
+// nolint
 func template_topic_alt(tmpl_topic_alt_vars TopicPage, w http.ResponseWriter) {
 w.Write(header_0)
 w.Write([]byte(tmpl_topic_alt_vars.Title))
 w.Write(header_1)
+w.Write([]byte(tmpl_topic_alt_vars.Header.ThemeName))
+w.Write(header_2)
 if len(tmpl_topic_alt_vars.Header.Stylesheets) != 0 {
 for _, item := range tmpl_topic_alt_vars.Header.Stylesheets {
-w.Write(header_2)
-w.Write([]byte(item))
 w.Write(header_3)
-}
-}
+w.Write([]byte(item))
 w.Write(header_4)
+}
+}
+w.Write(header_5)
 if len(tmpl_topic_alt_vars.Header.Scripts) != 0 {
 for _, item := range tmpl_topic_alt_vars.Header.Scripts {
-w.Write(header_5)
-w.Write([]byte(item))
 w.Write(header_6)
-}
-}
+w.Write([]byte(item))
 w.Write(header_7)
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+}
+}
 w.Write(header_8)
-if !tmpl_topic_alt_vars.CurrentUser.Is_Super_Mod {
-w.Write(header_9)
-}
-w.Write(header_10)
-w.Write(menu_0)
-w.Write([]byte(tmpl_topic_alt_vars.Header.Site.Name))
-w.Write(menu_1)
-if tmpl_topic_alt_vars.CurrentUser.Loggedin {
-w.Write(menu_2)
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Link))
-w.Write(menu_3)
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(menu_4)
-} else {
-w.Write(menu_5)
+w.Write(header_9)
+if !tmpl_topic_alt_vars.CurrentUser.IsSuperMod {
+w.Write(header_10)
 }
-w.Write(menu_6)
 w.Write(header_11)
-if tmpl_topic_alt_vars.Header.Widgets.RightSidebar != "" {
-w.Write(header_12)
+w.Write(menu_0)
+w.Write(menu_1)
+w.Write([]byte(tmpl_topic_alt_vars.Header.Site.Name))
+w.Write(menu_2)
+if tmpl_topic_alt_vars.CurrentUser.Loggedin {
+w.Write(menu_3)
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Link))
+w.Write(menu_4)
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+w.Write(menu_5)
+} else {
+w.Write(menu_6)
 }
+w.Write(menu_7)
+w.Write(header_12)
+if tmpl_topic_alt_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_13)
+}
+w.Write(header_14)
 if len(tmpl_topic_alt_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_topic_alt_vars.Header.NoticeList {
-w.Write(header_14)
-w.Write([]byte(item))
 w.Write(header_15)
+w.Write([]byte(item))
+w.Write(header_16)
 }
 }
 if tmpl_topic_alt_vars.Page > 1 {
@@ -89,14 +94,14 @@ w.Write(topic_alt_9)
 if tmpl_topic_alt_vars.Topic.Sticky {
 w.Write(topic_alt_10)
 } else {
-if tmpl_topic_alt_vars.Topic.Is_Closed {
+if tmpl_topic_alt_vars.Topic.IsClosed {
 w.Write(topic_alt_11)
 }
 }
 w.Write(topic_alt_12)
 w.Write([]byte(tmpl_topic_alt_vars.Topic.Title))
 w.Write(topic_alt_13)
-if tmpl_topic_alt_vars.Topic.Is_Closed {
+if tmpl_topic_alt_vars.Topic.IsClosed {
 w.Write(topic_alt_14)
 }
 if tmpl_topic_alt_vars.CurrentUser.Perms.EditTopic {
@@ -163,7 +168,7 @@ w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_42)
 if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_43)
-w.Write([]byte(tmpl_topic_alt_vars.Topic.IpAddress))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.IPAddress))
 w.Write(topic_alt_44)
 }
 }
@@ -236,7 +241,7 @@ w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_76)
 if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_77)
-w.Write([]byte(item.IpAddress))
+w.Write([]byte(item.IPAddress))
 w.Write(topic_alt_78)
 }
 }

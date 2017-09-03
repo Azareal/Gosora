@@ -6,7 +6,7 @@ import "golang.org/x/crypto/bcrypt"
 
 // Generate a cryptographically secure set of random bytes..
 func GenerateSafeString(length int) (string, error) {
-	rb := make([]byte,length)
+	rb := make([]byte, length)
 	_, err := rand.Read(rb)
 	if err != nil {
 		return "", err
@@ -14,24 +14,25 @@ func GenerateSafeString(length int) (string, error) {
 	return base64.URLEncoding.EncodeToString(rb), nil
 }
 
-func BcryptGeneratePassword(password string) (hashed_password string, salt string, err error) {
+// Generate a bcrypt hash from a password and a salt
+func BcryptGeneratePassword(password string) (hashedPassword string, salt string, err error) {
 	salt, err = GenerateSafeString(saltLength)
 	if err != nil {
 		return "", "", err
 	}
 
 	password = password + salt
-	hashed_password, err = BcryptGeneratePasswordNoSalt(password)
+	hashedPassword, err = bcryptGeneratePasswordNoSalt(password)
 	if err != nil {
 		return "", "", err
 	}
-	return hashed_password, salt, nil
+	return hashedPassword, salt, nil
 }
 
-func BcryptGeneratePasswordNoSalt(password string) (hash string, err error) {
-	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func bcryptGeneratePasswordNoSalt(password string) (hash string, err error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
-	return string(hashed_password), nil
+	return string(hashedPassword), nil
 }

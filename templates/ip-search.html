@@ -1,0 +1,18 @@
+{{template "header.html" . }}
+<main>
+
+<div class="rowblock opthead">
+	<div class="rowitem"><a>IP Search</a></div>
+</div>
+<div class="rowblock">
+	<div class="rowitem passive">Searching for {{.IP}}</div>
+</div>
+<div class="rowblock rowlist bgavatars">
+	{{range .ItemList}}<div class="rowitem" style="{{if .Avatar}}background-image: url('{{.Avatar}}');{{end}}">
+		<a href="{{.Link}}">{{.Name}}</a>
+	</div>
+	{{else}}<div class="rowitem passive">No users found.</div>{{end}}
+</div>
+
+</main>
+{{template "footer.html" . }}

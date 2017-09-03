@@ -1,3 +1,9 @@
+/*
+*
+* Gosora Alerts System
+* Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import "log"
@@ -20,10 +26,10 @@ import "errors"
 "{x}{created a new topic}{topic}"
 */
 
-func build_alert(asid int, event string, elementType string, actor_id int, targetUser_id int, elementID int, user User /* The current user */) (string, error) {
+func buildAlert(asid int, event string, elementType string, actorID int, targetUserID int, elementID int, user User /* The current user */) (string, error) {
 	var targetUser *User
 
-	actor, err := users.CascadeGet(actor_id)
+	actor, err := users.CascadeGet(actorID)
 	if err != nil {
 		return "", errors.New("Unable to find the actor")
 	}
@@ -37,84 +43,85 @@ func build_alert(asid int, event string, elementType string, actor_id int, targe
 	}*/
 
 	if event == "friend_invite" {
-		return `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"`+actor.Link+`","avatar":"`+strings.Replace(actor.Avatar,"/","\\/",-1)+`","asid":"`+strconv.Itoa(asid)+`"}`, nil
+		return `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"` + actor.Link + `","avatar":"` + strings.Replace(actor.Avatar, "/", "\\/", -1) + `","asid":"` + strconv.Itoa(asid) + `"}`, nil
 	}
 
-	var act, post_act, url, area string
-	var start_frag, end_frag string
-	switch(elementType) {
-		case "forum":
-			if event == "reply" {
-				act = "created a new topic"
-				topic, err := topics.CascadeGet(elementID)
-				if err != nil {
-					return "", errors.New("Unable to find the linked topic")
-				}
-				url = topic.Link
-				area = topic.Title
-				// Store the forum ID in the targetUser column instead of making a new one? o.O
-				// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
-			} else {
-				act = "did something in a forum"
-			}
-		case "topic":
+	var act, postAct, url, area string
+	var startFrag, endFrag string
+	switch elementType {
+	case "forum":
+		if event == "reply" {
+			act = "created a new topic"
 			topic, err := topics.CascadeGet(elementID)
 			if err != nil {
 				return "", errors.New("Unable to find the linked topic")
 			}
 			url = topic.Link
 			area = topic.Title
+			// Store the forum ID in the targetUser column instead of making a new one? o.O
+			// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
+		} else {
+			act = "did something in a forum"
+		}
+	case "topic":
+		topic, err := topics.CascadeGet(elementID)
+		if err != nil {
+			return "", errors.New("Unable to find the linked topic")
+		}
+		url = topic.Link
+		area = topic.Title
 
-			if targetUser_id == user.ID {
-				post_act = " your topic"
-			}
-		case "user":
-			targetUser, err = users.CascadeGet(elementID)
-			if err != nil {
-				return "", errors.New("Unable to find the target user")
-			}
-			area = targetUser.Name
-			end_frag = "'s profile"
-			url = targetUser.Link
-		case "post":
-			topic, err := get_topic_by_reply(elementID)
-			if err != nil {
-				return "", errors.New("Unable to find the linked reply or parent topic")
-			}
-			url = topic.Link
-			area = topic.Title
-			if targetUser_id == user.ID {
-				post_act = " your post in"
-			}
-		default:
-			return "", errors.New("Invalid elementType")
+		if targetUserID == user.ID {
+			postAct = " your topic"
+		}
+	case "user":
+		targetUser, err = users.CascadeGet(elementID)
+		if err != nil {
+			return "", errors.New("Unable to find the target user")
+		}
+		area = targetUser.Name
+		endFrag = "'s profile"
+		url = targetUser.Link
+	case "post":
+		topic, err := getTopicByReply(elementID)
+		if err != nil {
+			return "", errors.New("Unable to find the linked reply or parent topic")
+		}
+		url = topic.Link
+		area = topic.Title
+		if targetUserID == user.ID {
+			postAct = " your post in"
+		}
+	default:
+		return "", errors.New("Invalid elementType")
 	}
 
-	switch(event) {
-		case "like":
-			if elementType == "user" {
-				act = "likes"
-				end_frag = ""
-				if targetUser.ID == user.ID {
-					area = "you"
-				}
-			} else {
-				act = "liked"
+	switch event {
+	case "like":
+		if elementType == "user" {
+			act = "likes"
+			endFrag = ""
+			if targetUser.ID == user.ID {
+				area = "you"
 			}
-		case "mention":
-			if elementType == "user" {
-				act = "mentioned you on"
-			} else {
-				act = "mentioned you in"
-				post_act = ""
-			}
-		case "reply": act = "replied to"
+		} else {
+			act = "liked"
+		}
+	case "mention":
+		if elementType == "user" {
+			act = "mentioned you on"
+		} else {
+			act = "mentioned you in"
+			postAct = ""
+		}
+	case "reply":
+		act = "replied to"
 	}
 
-	return `{"msg":"{0} ` + start_frag + act + post_act + ` {1}` + end_frag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `","asid":"`+strconv.Itoa(asid)+`"}`, nil
+	return `{"msg":"{0} ` + startFrag + act + postAct + ` {1}` + endFrag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `","asid":"` + strconv.Itoa(asid) + `"}`, nil
 }
 
-func notify_watchers(asid int64) {
+func notifyWatchers(asid int64) {
 	rows, err := get_watchers_stmt.Query(asid)
 	if err != nil && err != ErrNoRows {
 		log.Fatal(err.Error())
@@ -129,22 +136,22 @@ func notify_watchers(asid int64) {
 			log.Fatal(err.Error())
 			return
 		}
-		uids = append(uids,uid)
+		uids = append(uids, uid)
 	}
 	err = rows.Err()
 	if err != nil {
 		log.Fatal(err.Error())
 		return
 	}
-	rows.Close()
+	_ = rows.Close()
 
-	var actor_id, targetUser_id, elementID int
+	var actorID, targetUserID, elementID int
 	var event, elementType string
-	err = get_activity_entry_stmt.QueryRow(asid).Scan(&actor_id, &targetUser_id, &event, &elementType, &elementID)
+	err = get_activity_entry_stmt.QueryRow(asid).Scan(&actorID, &targetUserID, &event, &elementType, &elementID)
 	if err != nil && err != ErrNoRows {
 		log.Fatal(err.Error())
 		return
 	}
 
-	_ = ws_hub.push_alerts(uids, int(asid), event, elementType, actor_id, targetUser_id, elementID)
+	_ = wsHub.pushAlerts(uids, int(asid), event, elementType, actorID, targetUserID, elementID)
 }

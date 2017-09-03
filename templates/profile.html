@@ -14,8 +14,8 @@
 		<div class="rowitem passive">
 			<a class="profile_menu_item">Add Friend</a>
 		</div>
-		{{if (.CurrentUser.Is_Super_Mod) and not (.ProfileOwner.Is_Super_Mod) }}<div class="rowitem passive">
-			{{if .ProfileOwner.Is_Banned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Unban</a>
+		{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod) }}<div class="rowitem passive">
+			{{if .ProfileOwner.IsBanned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Unban</a>
 		{{else}}<a href="#ban_user" class="profile_menu_item">Ban</a>{{end}}
 		</div>{{end}}
 		<div class="rowitem passive">
@@ -73,7 +73,7 @@
 			<span class="controls">
 				<a href="{{.UserLink}}" class="real_username username">{{.CreatedByName}}</a>&nbsp;&nbsp;
 
-				{{if $.CurrentUser.Is_Mod}}<a href="/profile/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
+				{{if $.CurrentUser.IsMod}}<a href="/profile/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
 
 				<a href="/profile/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>{{end}}
 
@@ -84,7 +84,7 @@
 		</div>
 	{{end}}</div>
 
-{{if not .CurrentUser.Is_Banned}}
+{{if not .CurrentUser.IsBanned}}
 	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/" method="post">
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top: none;">

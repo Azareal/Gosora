@@ -6,63 +6,68 @@ package main
 import "net/http"
 import "strconv"
 
+// nolint
 func init() {
 	template_profile_handle = template_profile
 	//o_template_profile_handle = template_profile
 	ctemplates = append(ctemplates,"profile")
-	tmpl_ptr_map["profile"] = &template_profile_handle
-	tmpl_ptr_map["o_profile"] = template_profile
+	tmplPtrMap["profile"] = &template_profile_handle
+	tmplPtrMap["o_profile"] = template_profile
 }
 
+// nolint
 func template_profile(tmpl_profile_vars ProfilePage, w http.ResponseWriter) {
 w.Write(header_0)
 w.Write([]byte(tmpl_profile_vars.Title))
 w.Write(header_1)
+w.Write([]byte(tmpl_profile_vars.Header.ThemeName))
+w.Write(header_2)
 if len(tmpl_profile_vars.Header.Stylesheets) != 0 {
 for _, item := range tmpl_profile_vars.Header.Stylesheets {
-w.Write(header_2)
-w.Write([]byte(item))
 w.Write(header_3)
-}
-}
+w.Write([]byte(item))
 w.Write(header_4)
+}
+}
+w.Write(header_5)
 if len(tmpl_profile_vars.Header.Scripts) != 0 {
 for _, item := range tmpl_profile_vars.Header.Scripts {
-w.Write(header_5)
-w.Write([]byte(item))
 w.Write(header_6)
-}
-}
+w.Write([]byte(item))
 w.Write(header_7)
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+}
+}
 w.Write(header_8)
-if !tmpl_profile_vars.CurrentUser.Is_Super_Mod {
-w.Write(header_9)
-}
-w.Write(header_10)
-w.Write(menu_0)
-w.Write([]byte(tmpl_profile_vars.Header.Site.Name))
-w.Write(menu_1)
-if tmpl_profile_vars.CurrentUser.Loggedin {
-w.Write(menu_2)
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Link))
-w.Write(menu_3)
 w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(menu_4)
-} else {
-w.Write(menu_5)
+w.Write(header_9)
+if !tmpl_profile_vars.CurrentUser.IsSuperMod {
+w.Write(header_10)
 }
-w.Write(menu_6)
 w.Write(header_11)
-if tmpl_profile_vars.Header.Widgets.RightSidebar != "" {
-w.Write(header_12)
+w.Write(menu_0)
+w.Write(menu_1)
+w.Write([]byte(tmpl_profile_vars.Header.Site.Name))
+w.Write(menu_2)
+if tmpl_profile_vars.CurrentUser.Loggedin {
+w.Write(menu_3)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Link))
+w.Write(menu_4)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(menu_5)
+} else {
+w.Write(menu_6)
 }
+w.Write(menu_7)
+w.Write(header_12)
+if tmpl_profile_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_13)
+}
+w.Write(header_14)
 if len(tmpl_profile_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_profile_vars.Header.NoticeList {
-w.Write(header_14)
-w.Write([]byte(item))
 w.Write(header_15)
+w.Write([]byte(item))
+w.Write(header_16)
 }
 }
 w.Write(profile_0)
@@ -76,9 +81,9 @@ w.Write([]byte(tmpl_profile_vars.ProfileOwner.Tag))
 w.Write(profile_4)
 }
 w.Write(profile_5)
-if tmpl_profile_vars.CurrentUser.Is_Super_Mod && !tmpl_profile_vars.ProfileOwner.Is_Super_Mod {
+if tmpl_profile_vars.CurrentUser.IsSuperMod && !tmpl_profile_vars.ProfileOwner.IsSuperMod {
 w.Write(profile_6)
-if tmpl_profile_vars.ProfileOwner.Is_Banned {
+if tmpl_profile_vars.ProfileOwner.IsBanned {
 w.Write(profile_7)
 w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
 w.Write(profile_8)
@@ -124,7 +129,7 @@ w.Write([]byte(item.UserLink))
 w.Write(profile_28)
 w.Write([]byte(item.CreatedByName))
 w.Write(profile_29)
-if tmpl_profile_vars.CurrentUser.Is_Mod {
+if tmpl_profile_vars.CurrentUser.IsMod {
 w.Write(profile_30)
 w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(profile_31)
@@ -145,7 +150,7 @@ w.Write(profile_38)
 }
 }
 w.Write(profile_39)
-if !tmpl_profile_vars.CurrentUser.Is_Banned {
+if !tmpl_profile_vars.CurrentUser.IsBanned {
 w.Write(profile_40)
 w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
 w.Write(profile_41)

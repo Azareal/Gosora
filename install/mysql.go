@@ -1,34 +1,39 @@
-/* Copyright Azareal 2017 - 2018 */
+/*
+*
+* Gosora MySQL Interface
+* Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import (
-	"fmt"
 	"bytes"
-	"strings"
-	"strconv"
+	"database/sql"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"database/sql"
+	"strconv"
+	"strings"
 
 	"../query_gen/lib"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-//var db_collation string = "utf8mb4_general_ci"
+//var dbCollation string = "utf8mb4_general_ci"
 
-func _set_mysql_adapter() {
-	db_port = "3306"
-	init_database = _init_mysql
-	table_defs = _table_defs_mysql
-	initial_data = _initial_data_mysql
+func _setMysqlAdapter() {
+	dbPort = "3306"
+	initDatabase = _initMysql
+	tableDefs = _tableDefsMysql
+	initialData = _initialDataMysql
 }
 
-func _init_mysql() (err error) {
-	_db_password := db_password
-	if _db_password != "" {
-		_db_password = ":" + _db_password
+func _initMysql() (err error) {
+	_dbPassword := dbPassword
+	if _dbPassword != "" {
+		_dbPassword = ":" + _dbPassword
 	}
-	db, err = sql.Open("mysql",db_username + _db_password + "@tcp(" + db_host + ":" + db_port + ")/")
+	db, err = sql.Open("mysql", dbUsername+_dbPassword+"@tcp("+dbHost+":"+dbPort+")/")
 	if err != nil {
 		return err
 	}
@@ -41,22 +46,22 @@ func _init_mysql() (err error) {
 	fmt.Println("Successfully connected to the database")
 
 	var waste string
-	err = db.QueryRow("SHOW DATABASES LIKE '" + db_name + "'").Scan(&waste)
+	err = db.QueryRow("SHOW DATABASES LIKE '" + dbName + "'").Scan(&waste)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
 	if err == sql.ErrNoRows {
 		fmt.Println("Unable to find the database. Attempting to create it")
-		_,err = db.Exec("CREATE DATABASE IF NOT EXISTS " + db_name + "")
+		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName + "")
 		if err != nil {
 			return err
 		}
 		fmt.Println("The database was successfully created")
 	}
 
-	fmt.Println("Switching to database " + db_name)
-	_, err = db.Exec("USE " + db_name)
+	fmt.Println("Switching to database " + dbName)
+	_, err = db.Exec("USE " + dbName)
 	if err != nil {
 		return err
 	}
@@ -71,22 +76,22 @@ func _init_mysql() (err error) {
 	return nil
 }
 
-func _table_defs_mysql() error {
+func _tableDefsMysql() error {
 	//fmt.Println("Creating the tables")
 	files, _ := ioutil.ReadDir("./schema/mysql/")
 	for _, f := range files {
-		if !strings.HasPrefix(f.Name(),"query_") {
+		if !strings.HasPrefix(f.Name(), "query_") {
 			continue
 		}
 
 		var table string
 		var ext string
-		table = strings.TrimPrefix(f.Name(),"query_")
+		table = strings.TrimPrefix(f.Name(), "query_")
 		ext = filepath.Ext(table)
 		if ext != ".sql" {
 			continue
 		}
-		table = strings.TrimSuffix(table,ext)
+		table = strings.TrimSuffix(table, ext)
 
 		fmt.Println("Creating table '" + table + "'")
 		data, err := ioutil.ReadFile("./schema/mysql/" + f.Name())
@@ -97,7 +102,7 @@ func _table_defs_mysql() error {
 
 		_, err = db.Exec(string(data))
 		if err != nil {
-			fmt.Println("Failed query:",string(data))
+			fmt.Println("Failed query:", string(data))
 			return err
 		}
 	}
@@ -105,10 +110,10 @@ func _table_defs_mysql() error {
 	return nil
 }
 
-func _initial_data_mysql() error {
+func _initialDataMysql() error {
 	return nil // Coming Soon
 
-	fmt.Println("Seeding the tables")
+	/*fmt.Println("Seeding the tables")
 	data, err := ioutil.ReadFile("./schema/mysql/inserts.sql")
 	if err != nil {
 		return err
@@ -122,10 +127,10 @@ func _initial_data_mysql() error {
 	}
 
 	//fmt.Println("Finished inserting the database data")
-	return nil
+	return nil*/
 }
 
-func _mysql_seed_database() error {
+func _mysqlSeedDatabase() error {
 	fmt.Println("Opening the database seed file")
 	sqlContents, err := ioutil.ReadFile("./mysql.sql")
 	if err != nil {

@@ -26,12 +26,12 @@ func init() {
 
 		That Uninstallation field which is currently unused is for not only deactivating this plugin, but for purging any data associated with it such a new tables or data produced by the end-user.
 	*/
-	plugins["skeleton"] = NewPlugin("skeleton","Skeleton","Azareal","","","","",init_skeleton, activate_skeleton, deactivate_skeleton,nil,nil)
+	plugins["skeleton"] = NewPlugin("skeleton", "Skeleton", "Azareal", "", "", "", "", initSkeleton, activateSkeleton, deactivateSkeleton, nil, nil)
 }
 
-func init_skeleton() error { return nil; }
+func initSkeleton() error { return nil }
 
 // Any errors encountered while trying to activate the plugin are reported back to the admin and the activation is aborted
-func activate_skeleton() error { return nil; }
+func activateSkeleton() error { return nil }
 
-func deactivate_skeleton() {}
+func deactivateSkeleton() {}

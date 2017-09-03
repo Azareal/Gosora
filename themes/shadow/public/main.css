@@ -247,6 +247,9 @@ a {
 .unpin_label:before {
 	content: "Unpin";
 }
+.ip_label:before {
+	content: "IP";
+}
 .flag_label:before {
 	content: "Flag";
 }

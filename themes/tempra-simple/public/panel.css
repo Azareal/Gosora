@@ -71,3 +71,7 @@
 .perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
 .perm_preset_custom:before { content: "Custom"; color: black; }
 .perm_preset_default:before { content: "Default"; }
+
+#panel_dashboard_right .colstack_head {
+	display: none;
+}

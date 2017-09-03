@@ -250,7 +250,7 @@ $(document).ready(function(){
 
 			var form_action = $(this).closest('a').attr("href");
 			//console.log("Form Action: " + form_action);
-			$.ajax({ url: form_action, type: "POST", dataType: "json", data: { is_js: "1", edit_item: newContent }
+			$.ajax({ url: form_action, type: "POST", dataType: "json", data: { isJs: "1", edit_item: newContent }
 			});
 		});
 	});
@@ -276,7 +276,7 @@ $(document).ready(function(){
 				url: form_action + "?session=" + session,
 				type: "POST",
 				dataType: "json",
-				data: {is_js: "1",edit_item: newContent}
+				data: {isJs: "1",edit_item: newContent}
 			});
 		});
 	});
@@ -325,7 +325,7 @@ $(document).ready(function(){
 		{
 			event.preventDefault();
 			//console.log("running .submit_edit event");
-			var out_data = {is_js: "1"}
+			var out_data = {isJs: "1"}
 			var block_parent = $(this).closest('.editable_parent');
 			var block = block_parent.find('.editable_block').each(function(){
 				var field_name = this.getAttribute("data-field");

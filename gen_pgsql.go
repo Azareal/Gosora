@@ -6,6 +6,7 @@ package main
 import "log"
 import "database/sql"
 
+// nolint
 var add_replies_to_topic_stmt *sql.Stmt
 var remove_replies_from_topic_stmt *sql.Stmt
 var add_topics_to_forum_stmt *sql.Stmt
@@ -46,6 +47,7 @@ var verify_email_stmt *sql.Stmt
 var set_temp_group_stmt *sql.Stmt
 var update_word_filter_stmt *sql.Stmt
 
+// nolint
 func _gen_pgsql() (err error) {
 	if dev.DebugMode {
 		log.Print("Building the generated statements")

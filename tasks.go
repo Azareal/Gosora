@@ -2,7 +2,7 @@ package main
 
 import "time"
 
-func handle_expired_scheduled_groups() error {
+func handleExpiredScheduledGroups() error {
 	rows, err := get_expired_scheduled_groups_stmt.Query()
 	if err != nil {
 		return err
@@ -19,7 +19,7 @@ func handle_expired_scheduled_groups() error {
 		if err != nil {
 			return err
 		}
-		_, err = set_temp_group_stmt.Exec(0,uid)
+		_, err = set_temp_group_stmt.Exec(0, uid)
 		if err != nil {
 			return err
 		}

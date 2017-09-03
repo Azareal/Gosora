@@ -25,22 +25,22 @@ type TopicStore interface {
 }
 
 type MemoryTopicStore struct {
-	items map[int]*Topic
-	length int
+	items    map[int]*Topic
+	length   int
 	capacity int
-	get *sql.Stmt
+	get      *sql.Stmt
 	sync.RWMutex
 }
 
 func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
-	stmt, err := qgen.Builder.SimpleSelect("topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","","")
+	stmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 	return &MemoryTopicStore{
-		items: make(map[int]*Topic),
+		items:    make(map[int]*Topic),
 		capacity: capacity,
-		get: stmt,
+		get:      stmt,
 	}
 }
 
@@ -70,30 +70,30 @@ func (sts *MemoryTopicStore) CascadeGet(id int) (*Topic, error) {
 		return topic, nil
 	}
 
-	topic = &Topic{ID:id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic = &Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
-		topic.Link = build_topic_url(name_to_slug(topic.Title),id)
-		sts.Add(topic)
+		topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
+		_ = sts.Add(topic)
 	}
 	return topic, err
 }
 
 func (sts *MemoryTopicStore) BypassGet(id int) (*Topic, error) {
-	topic := &Topic{ID:id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = build_topic_url(name_to_slug(topic.Title),id)
+	topic := &Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return topic, err
 }
 
 func (sts *MemoryTopicStore) Load(id int) error {
-	topic := &Topic{ID:id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic := &Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
-		topic.Link = build_topic_url(name_to_slug(topic.Title),id)
-		sts.Set(topic)
+		topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
+		_ = sts.Set(topic)
 	} else {
-		sts.Remove(id)
+		_ = sts.Remove(id)
 	}
 	return err
 }
@@ -136,14 +136,14 @@ func (sts *MemoryTopicStore) AddUnsafe(item *Topic) error {
 
 func (sts *MemoryTopicStore) Remove(id int) error {
 	sts.Lock()
-	delete(sts.items,id)
+	delete(sts.items, id)
 	sts.Unlock()
 	sts.length--
 	return nil
 }
 
 func (sts *MemoryTopicStore) RemoveUnsafe(id int) error {
-	delete(sts.items,id)
+	delete(sts.items, id)
 	sts.length--
 	return nil
 }
@@ -166,11 +166,11 @@ func (sts *MemoryTopicStore) GetCapacity() int {
 }
 
 type SqlTopicStore struct {
-		get *sql.Stmt
+	get *sql.Stmt
 }
 
 func NewSqlTopicStore() *SqlTopicStore {
-	stmt, err := qgen.Builder.SimpleSelect("topics","title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data","tid = ?","","")
+	stmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -178,37 +178,37 @@ func NewSqlTopicStore() *SqlTopicStore {
 }
 
 func (sts *SqlTopicStore) Get(id int) (*Topic, error) {
-	topic := Topic{ID:id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = build_topic_url(name_to_slug(topic.Title),id)
+	topic := Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return &topic, err
 }
 
 func (sts *SqlTopicStore) GetUnsafe(id int) (*Topic, error) {
-	topic := Topic{ID:id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = build_topic_url(name_to_slug(topic.Title),id)
+	topic := Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return &topic, err
 }
 
 func (sts *SqlTopicStore) CascadeGet(id int) (*Topic, error) {
-	topic := Topic{ID:id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = build_topic_url(name_to_slug(topic.Title),id)
+	topic := Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return &topic, err
 }
 
 func (sts *SqlTopicStore) BypassGet(id int) (*Topic, error) {
-	topic := &Topic{ID:id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = build_topic_url(name_to_slug(topic.Title),id)
+	topic := &Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return topic, err
 }
 
 func (sts *SqlTopicStore) Load(id int) error {
-	topic := Topic{ID:id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.Is_Closed, &topic.Sticky, &topic.ParentID, &topic.IpAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = build_topic_url(name_to_slug(topic.Title),id)
+	topic := Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return err
 }
 

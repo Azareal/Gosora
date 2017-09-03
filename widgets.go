@@ -5,46 +5,42 @@ import "log"
 import "bytes"
 import "sync"
 import "encoding/json"
+
 //import "html/template"
 
 var docks WidgetDocks
-var widget_update_mutex sync.RWMutex
+var widgetUpdateMutex sync.RWMutex
 
-type WidgetDocks struct
-{
-	LeftSidebar []Widget
+type WidgetDocks struct {
+	LeftSidebar  []Widget
 	RightSidebar []Widget
 	//PanelLeft []Menus
 }
 
-type Widget struct
-{
-	Enabled bool
+type Widget struct {
+	Enabled  bool
 	Location string // Coming Soon: overview, topics, topic / topic_view, forums, forum, global
 	Position int
-	Body string
+	Body     string
 }
 
-type WidgetMenu struct
-{
-	Name string
+type WidgetMenu struct {
+	Name     string
 	MenuList []WidgetMenuItem
 }
 
-type WidgetMenuItem struct
-{
-	Text string
+type WidgetMenuItem struct {
+	Text     string
 	Location string
-	Compact bool
+	Compact  bool
 }
 
-type NameTextPair struct
-{
+type NameTextPair struct {
 	Name string
 	Text string
 }
 
-func init_widgets() error {
+func initWidgets() error {
 	rows, err := get_widgets_stmt.Query()
 	if err != nil {
 		return err
@@ -65,28 +61,28 @@ func init_widgets() error {
 		}
 
 		sbytes = []byte(data)
-		switch(wtype) {
+		switch wtype {
 		case "simple":
-				var tmp NameTextPair
-				err = json.Unmarshal(sbytes, &tmp)
-				if err != nil {
-					return err
-				}
+			var tmp NameTextPair
+			err = json.Unmarshal(sbytes, &tmp)
+			if err != nil {
+				return err
+			}
 
-				var b bytes.Buffer
-				err = templates.ExecuteTemplate(&b,"widget_simple.html",tmp)
-				if err != nil {
-					return err
-				}
-				widget.Body = string(b.Bytes())
-			default:
-				widget.Body = data
+			var b bytes.Buffer
+			err = templates.ExecuteTemplate(&b, "widget_simple.html", tmp)
+			if err != nil {
+				return err
+			}
+			widget.Body = string(b.Bytes())
+		default:
+			widget.Body = data
 		}
 
 		if side == "left" {
-			leftWidgets = append(leftWidgets,widget)
+			leftWidgets = append(leftWidgets, widget)
 		} else if side == "right" {
-			rightWidgets = append(rightWidgets,widget)
+			rightWidgets = append(rightWidgets, widget)
 		}
 	}
 	err = rows.Err()
@@ -94,14 +90,14 @@ func init_widgets() error {
 		return err
 	}
 
-	widget_update_mutex.Lock()
+	widgetUpdateMutex.Lock()
 	docks.LeftSidebar = leftWidgets
 	docks.RightSidebar = rightWidgets
-	widget_update_mutex.Unlock()
+	widgetUpdateMutex.Unlock()
 
 	if dev.SuperDebug {
-		log.Print("docks.LeftSidebar",docks.LeftSidebar)
-		log.Print("docks.RightSidebar",docks.RightSidebar)
+		log.Print("docks.LeftSidebar", docks.LeftSidebar)
+		log.Print("docks.RightSidebar", docks.RightSidebar)
 	}
 
 	return nil

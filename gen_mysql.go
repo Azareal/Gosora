@@ -7,6 +7,7 @@ package main
 import "log"
 import "database/sql"
 
+// nolint
 var get_user_stmt *sql.Stmt
 var get_reply_stmt *sql.Stmt
 var get_user_reply_stmt *sql.Stmt
@@ -123,6 +124,7 @@ var add_forum_perms_to_forum_staff_stmt *sql.Stmt
 var add_forum_perms_to_forum_members_stmt *sql.Stmt
 var notify_watchers_stmt *sql.Stmt
 
+// nolint
 func _gen_mysql() (err error) {
 	if dev.DebugMode {
 		log.Print("Building the generated statements")

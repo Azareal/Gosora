@@ -3,17 +3,17 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"strings"
-	"time"
 	"io"
-	"os"
-	"sync/atomic"
+	"log"
 	"net/http"
+	"os"
+	"strings"
+	"sync/atomic"
+	"time"
 	//"runtime/pprof"
 )
 
-var version Version = Version{Major:0,Minor:1,Patch:0,Tag:"dev"}
+var version = Version{Major: 0, Minor: 1, Patch: 0, Tag: "dev"}
 
 const hour int = 60 * 60
 const day int = hour * 24
@@ -26,38 +26,40 @@ const gigabyte int = megabyte * 1024
 const terabyte int = gigabyte * 1024
 const saltLength int = 32
 const sessionLength int = 80
-var enable_websockets bool = false // Don't change this, the value is overwritten by an initialiser
+
+var enableWebsockets = false // Don't change this, the value is overwritten by an initialiser
 
 var router *GenRouter
 var startTime time.Time
-var external_sites map[string]string = map[string]string{
-	"YT":"https://www.youtube.com/",
+var externalSites = map[string]string{
+	"YT": "https://www.youtube.com/",
 }
 var groups []Group
 var groupCapCount int
-var static_files map[string]SFile = make(map[string]SFile)
-var logWriter io.Writer = io.MultiWriter(os.Stderr)
+var staticFiles = make(map[string]SFile)
+var logWriter = io.MultiWriter(os.Stderr)
 
 type WordFilter struct {
-	ID int
-	Find string
+	ID          int
+	Find        string
 	Replacement string
 }
 type WordFilterBox map[int]WordFilter
+
 var wordFilterBox atomic.Value // An atomic value holding a WordFilterBox
 
 func init() {
 	wordFilterBox.Store(WordFilterBox(make(map[int]WordFilter)))
 }
 
-func init_word_filters() error {
+func initWordFilters() error {
 	rows, err := get_word_filters_stmt.Query()
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
-	var wordFilters WordFilterBox = wordFilterBox.Load().(WordFilterBox)
+	var wordFilters = wordFilterBox.Load().(WordFilterBox)
 	var wfid int
 	var find string
 	var replacement string
@@ -67,36 +69,36 @@ func init_word_filters() error {
 		if err != nil {
 			return err
 		}
-		wordFilters[wfid] = WordFilter{ID:wfid,Find:find,Replacement:replacement}
+		wordFilters[wfid] = WordFilter{ID: wfid, Find: find, Replacement: replacement}
 	}
 	wordFilterBox.Store(wordFilters)
 	return rows.Err()
 }
 
-func add_word_filter(id int, find string, replacement string) {
+func addWordFilter(id int, find string, replacement string) {
 	wordFilters := wordFilterBox.Load().(WordFilterBox)
-	wordFilters[id] = WordFilter{ID:id,Find:find,Replacement:replacement}
+	wordFilters[id] = WordFilter{ID: id, Find: find, Replacement: replacement}
 	wordFilterBox.Store(wordFilters)
 }
 
-func process_config() {
-	config.Noavatar = strings.Replace(config.Noavatar,"{site_url}",site.Url,-1)
+func processConfig() {
+	config.Noavatar = strings.Replace(config.Noavatar, "{site_url}", site.Url, -1)
 	if site.Port != "80" && site.Port != "443" {
-		site.Url = strings.TrimSuffix(site.Url,"/")
-		site.Url = strings.TrimSuffix(site.Url,"\\")
-		site.Url = strings.TrimSuffix(site.Url,":")
+		site.Url = strings.TrimSuffix(site.Url, "/")
+		site.Url = strings.TrimSuffix(site.Url, "\\")
+		site.Url = strings.TrimSuffix(site.Url, ":")
 		site.Url = site.Url + ":" + site.Port
 	}
 }
 
-func main(){
+func main() {
 	// TO-DO: Have a file for each run with the time/date the server started as the file name?
 	// TO-DO: Log panics with recover()
-	f, err := os.OpenFile("./operations.log",os.O_WRONLY|os.O_APPEND|os.O_CREATE,0755)
+	f, err := os.OpenFile("./operations.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
-	logWriter = io.MultiWriter(os.Stderr,f)
+	logWriter = io.MultiWriter(os.Stderr, f)
 	log.SetOutput(logWriter)
 
 	//if profiling {
@@ -113,16 +115,20 @@ func main(){
 	//timeLocation = startTime.Location()
 
 	log.Print("Processing configuration data")
-	process_config()
+	processConfig()
 
-	init_themes()
-	err = init_database()
+	err = initThemes()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	init_templates()
-	err = init_errors()
+	err = initDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	initTemplates()
+	err = initErrors()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -135,10 +141,14 @@ func main(){
 		topics = NewSqlTopicStore()
 	}
 
-	init_static_files()
+	log.Print("Loading the static files.")
+	err = initStaticFiles()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	log.Print("Initialising the widgets")
-	err = init_widgets()
+	err = initWidgets()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -146,34 +156,34 @@ func main(){
 	log.Print("Initialising the authentication system")
 	auth = NewDefaultAuth()
 
-	err = init_word_filters()
+	err = initWordFilters()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Run this goroutine once a second
-	second_ticker := time.NewTicker(1 * time.Second)
-	fifteen_minute_ticker := time.NewTicker(15 * time.Minute)
+	secondTicker := time.NewTicker(1 * time.Second)
+	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
 	//hour_ticker := time.NewTicker(1 * time.Hour)
 	go func() {
 		for {
 			select {
-				case <- second_ticker.C:
-					//log.Print("Running the second ticker")
-					err := handle_expired_scheduled_groups()
-					if err != nil {
-						LogError(err)
-					}
-					// TO-DO: Handle delayed moderation tasks
-					// TO-DO: Handle the daily clean-up. Move this to a 24 hour task?
-					// TO-DO: Sync with the database, if there are any changes
-					// TO-DO: Manage the TopicStore, UserStore, and ForumStore
-					// TO-DO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
-					// TO-DO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
-				case <- fifteen_minute_ticker.C:
-					// TO-DO: Automatically lock topics, if they're really old, and the associated setting is enabled.
-					// TO-DO: Publish scheduled posts.
-					// TO-DO: Delete the empty users_groups_scheduler entries
+			case <-secondTicker.C:
+				//log.Print("Running the second ticker")
+				err := handleExpiredScheduledGroups()
+				if err != nil {
+					LogError(err)
+				}
+				// TO-DO: Handle delayed moderation tasks
+				// TO-DO: Handle the daily clean-up. Move this to a 24 hour task?
+				// TO-DO: Sync with the database, if there are any changes
+				// TO-DO: Manage the TopicStore, UserStore, and ForumStore
+				// TO-DO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
+				// TO-DO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
+			case <-fifteenMinuteTicker.C:
+				// TO-DO: Automatically lock topics, if they're really old, and the associated setting is enabled.
+				// TO-DO: Publish scheduled posts.
+				// TO-DO: Delete the empty users_groups_scheduler entries
 			}
 		}
 	}()
@@ -231,6 +241,7 @@ func main(){
 	router.HandleFunc("/users/ban/submit/", route_ban_submit)
 	router.HandleFunc("/users/unban/", route_unban)
 	router.HandleFunc("/users/activate/", route_activate)
+	router.HandleFunc("/users/ips/", route_ips)
 
 	// The Control Panel
 	///router.HandleFunc("/panel/", route_panel)
@@ -267,7 +278,7 @@ func main(){
 	router.HandleFunc("/ws/", route_websockets)
 
 	log.Print("Initialising the plugins")
-	init_plugins()
+	initPlugins()
 
 	defer db.Close()
 
@@ -281,7 +292,7 @@ func main(){
 		if site.Port == "" {
 			site.Port = "80"
 		}
-		err = http.ListenAndServe(":" + site.Port, router)
+		err = http.ListenAndServe(":"+site.Port, router)
 	} else {
 		if site.Port == "" {
 			site.Port = "443"
@@ -296,7 +307,7 @@ func main(){
 				}
 			}()
 		}
-		err = http.ListenAndServeTLS(":" + site.Port, config.SslFullchain, config.SslPrivkey, router)
+		err = http.ListenAndServeTLS(":"+site.Port, config.SslFullchain, config.SslPrivkey, router)
 	}
 
 	// Why did the server stop?

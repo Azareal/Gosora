@@ -158,6 +158,9 @@ li a {
 .rowblock:empty {
 	display: none;
 }
+.rowmenu {
+	border: 1px solid #ccc;
+}
 .rowsmall {
 	font-size: 12px;
 }
@@ -234,11 +237,14 @@ li a {
 .stat_red { background-color: #ffb2b2; border-color: #ffb2b2; }
 .stat_disabled { background-color: lightgray; border-color: lightgray; }
 
-.rowhead, .colstack_head {
-	border-bottom: none;
-}
 .rowhead .rowitem, .colstack_head .rowitem {
 	background-color: rgb(252,252,252);
+}
+.rowhead h1, .colstack_head h1 {
+	-webkit-margin-before: 0;
+	-webkit-margin-after: 0;
+	font-weight: normal;
+	font-size: 16px;
 }
 
 .rowitem {
@@ -465,6 +471,7 @@ button.username {
 .pin_label:before { content: "📌"; }
 .unpin_label:before { content: "📌"; }
 .unpin_label { background-color: #D6FFD6; }
+.ip_label:before { content: "🔍"; }
 .flag_label:before { content: "🚩"; }
 .level_label:before { content: "👑"; }
 .level_label { color: #505050; opacity:0.85; }
@@ -557,6 +564,34 @@ button.username {
 	background-repeat: no-repeat, repeat-y;
 	background-size: 128px;
 	padding-left: 136px;
+}
+/* Profiles */
+#profile_left_lane {
+	width: 220px;
+	margin-top: 5px;
+}
+#profile_left_lane .avatarRow {
+	overflow: hidden;
+	max-height: 220px;
+}
+#profile_left_lane .avatar {
+	width: 100%;
+	margin: 0;
+	display: block;
+}
+#profile_left_lane .username {
+	font-size: 14px;
+	display: block;
+	margin-top: 3px;
+}
+#profile_left_lane .profileName {
+	font-size: 18px;
+}
+#profile_right_lane {
+	width: calc(100% - 245px);
+}
+.simple .user_tag {
+	font-size: 14px;
 }
 
 {{template "media.partial.css" }}

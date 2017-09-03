@@ -1,6 +1,9 @@
 tmp/*
 tmp2/*
 cert_test/*
+tmp.txt
+run_notemplategen.bat
+brun.bat
 
 uploads/avatar_*
 uploads/socialgroup_*
@@ -10,3 +13,4 @@ bin/*
 *.prof
 *.log
 .DS_Store
+.vscode/launch.json

@@ -2,56 +2,52 @@ package main
 
 import (
 	//"os"
-	"log"
 	"bytes"
-	"strings"
+	"log"
 	"strconv"
+	"strings"
 	//"math/rand"
-	"testing"
-	"time"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
-	"html/template"
-	"io/ioutil"
-	"database/sql"
+	"testing"
+	"time"
 	//"runtime/pprof"
-
 	//_ "github.com/go-sql-driver/mysql"
 	//"github.com/erikstmartin/go-testdb"
 	//"github.com/husobee/vestigo"
 )
 
-var db_test *sql.DB
-var db_prod *sql.DB
+var dbTest *sql.DB
+var dbProd *sql.DB
 var gloinited bool
 
 func gloinit() error {
 	dev.DebugMode = false
 	//nogrouplog = true
 
-	// init_database is a little noisy for a benchmark
-	//discard := ioutil.Discard
-	//log.SetOutput(discard)
-
 	startTime = time.Now()
-	//timeLocation = startTime.Location()
-	process_config()
+	processConfig()
 
-	init_themes()
-	err := init_database()
+	err := initThemes()
 	if err != nil {
 		return err
 	}
 
-	db_prod = db
+	err = initDatabase()
+	if err != nil {
+		return err
+	}
+
+	dbProd = db
 	//db_test, err = sql.Open("testdb","")
 	//if err != nil {
 	//	return err
 	//}
 
-	init_templates()
-	db_prod.SetMaxOpenConns(64)
-	err = init_errors()
+	initTemplates()
+	dbProd.SetMaxOpenConns(64)
+	err = initErrors()
 	if err != nil {
 		return err
 	}
@@ -64,11 +60,14 @@ func gloinit() error {
 		topics = NewSqlTopicStore()
 	}
 
-	init_static_files()
-	//log.SetOutput(os.Stdout)
+	log.Print("Loading the static files.")
+	err = initStaticFiles()
+	if err != nil {
+		return err
+	}
 	auth = NewDefaultAuth()
 
-	err = init_word_filters()
+	err = initWordFilters()
 	if err != nil {
 		return err
 	}
@@ -79,182 +78,20 @@ func gloinit() error {
 }
 
 func init() {
-	gloinit()
-}
-
-func BenchmarkTopicTemplateSerial(b *testing.B) {
-	b.ReportAllocs()
-
-	user := User{0,"bob","Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"127.0.0.1"}
-	admin := User{1,"admin-alice","Admin Alice","admin@localhost",0,true,true,true,true,true,false,AllPerms,make(map[string]bool),"",false,"","","","","",-1,58,"127.0.0.1"}
-
-	topic := TopicUser{Title: "Lol",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,CreatedByName:"Admin",ClassName: "",Tag: "Admin", Level: 58, IpAddress: "127.0.0.1"}
-
-	var replyList []Reply
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry","Jerry",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry2","Jerry2",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry3","Jerry3",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry4","Jerry4",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry5","Jerry5",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry6","Jerry6",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry7","Jerry7",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry8","Jerry8",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry9","Jerry9",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-	replyList = append(replyList, Reply{0,0,"Hey everyone!","Hey everyone!",0,"jerry10","Jerry10",config.DefaultGroup,"",0,0,"","",0,"","","","",0,"127.0.0.1",false,1,"",""})
-
-	headerVars := HeaderVars{
-		NoticeList:[]string{"test"},
-		Stylesheets:[]string{"panel"},
-		Scripts:[]string{"whatever"},
-		Widgets:PageWidgets{
-			LeftSidebar: template.HTML("lalala"),
-		},
-		Site:site,
-	}
-
-	tpage := TopicPage{"Topic Blah",user,headerVars,replyList,topic,1,1,extData}
-	tpage2 := TopicPage{"Topic Blah",admin,headerVars,replyList,topic,1,1,extData}
-	w := ioutil.Discard
-
-	b.Run("compiled_useradmin", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			template_topic(tpage2,w)
-		}
-	})
-	b.Run("interpreted_useradmin", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			templates.ExecuteTemplate(w,"topic.html", tpage2)
-		}
-	})
-	b.Run("compiled_userguest", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			template_topic(tpage,w)
-		}
-	})
-	b.Run("interpreted_userguest", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			templates.ExecuteTemplate(w,"topic.html", tpage)
-		}
-	})
-
-	w2 := httptest.NewRecorder()
-	b.Run("compiled_useradmin_recorder", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			w2.Body.Reset()
-			template_topic(tpage2,w2)
-		}
-	})
-	b.Run("interpreted_useradmin_recorder", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			w2.Body.Reset()
-			templates.ExecuteTemplate(w2,"topic.html", tpage2)
-		}
-	})
-	b.Run("compiled_userguest_recorder", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			w2.Body.Reset()
-			template_topic(tpage,w2)
-		}
-	})
-	b.Run("interpreted_userguest_recorder", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			w2.Body.Reset()
-			templates.ExecuteTemplate(w2,"topic.html", tpage)
-		}
-	})
-
-	/*f, err := os.Create("topic_bench.prof")
+	err := gloinit()
 	if err != nil {
 		log.Fatal(err)
 	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()*/
-}
-
-func BenchmarkTopicsTemplateSerial(b *testing.B) {
-	b.ReportAllocs()
-
-	user := User{0,build_profile_url("bob",0),"Bob","bob@localhost",0,false,false,false,false,false,false,GuestPerms,make(map[string]bool),"",false,"","","","","",0,0,"127.0.0.1"}
-	admin := User{1,build_profile_url("admin-alice",1),"Admin Alice","admin@localhost",0,true,true,true,true,true,false,AllPerms,make(map[string]bool),"",false,"","","","","Admin",58,580,"127.0.0.1"}
-
-	var topicList []*TopicsRow
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-	topicList = append(topicList, &TopicsRow{Title: "Hey everyone!",Content: "Hey everyone!",CreatedBy: 1,CreatedAt: "0000-00-00 00:00:00",ParentID: 1,Creator:&admin,LastUser:&user,ClassName:"", IpAddress: "127.0.0.1"})
-
-	headerVars := HeaderVars{
-		NoticeList:[]string{"test"},
-		Stylesheets:[]string{"panel"},
-		Scripts:[]string{"whatever"},
-		Widgets:PageWidgets{
-			LeftSidebar: template.HTML("lalala"),
-		},
-		Site:site,
-	}
-
-	w := ioutil.Discard
-	tpage := TopicsPage{"Topic Blah",user,headerVars,topicList,extData}
-	tpage2 := TopicsPage{"Topic Blah",admin,headerVars,topicList,extData}
-
-	b.Run("compiled_useradmin", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			template_topics(tpage2,w)
-		}
-	})
-	b.Run("interpreted_useradmin",func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			templates.ExecuteTemplate(w,"topics.html", tpage2)
-		}
-	})
-	b.Run("compiled_userguest",func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			template_topics(tpage,w)
-		}
-	})
-	b.Run("interpreted_userguest",func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			templates.ExecuteTemplate(w,"topics.html", tpage)
-		}
-	})
-}
-
-func BenchmarkStaticRouteParallel(b *testing.B) {
-	b.ReportAllocs()
-	if !gloinited {
-		gloinit()
-	}
-	if !plugins_inited {
-		init_plugins()
-	}
-
-	b.RunParallel(func(pb *testing.PB) {
-		static_w := httptest.NewRecorder()
-		static_req := httptest.NewRequest("get","/static/global.js",bytes.NewReader(nil))
-		static_handler := http.HandlerFunc(route_static)
-		for pb.Next() {
-			//static_w.Code = 200
-			static_w.Body.Reset()
-			static_handler.ServeHTTP(static_w,static_req)
-			//if static_w.Code != 200 {
-			//	pb.Print(static_w.Body)
-			//	panic("HTTP Error!")
-			//}
-		}
-	})
 }
 
 // TO-DO: Swap out LocalError for a panic for this?
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	b.ReportAllocs()
 	if !gloinited {
-		gloinit()
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -262,27 +99,27 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		if !admin.Is_Admin {
+		if !admin.IsAdmin {
 			b.Fatal("UID1 is not an admin")
 		}
-		admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
-		admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
+		adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: year}
+		adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: year}
 
-		topic_w := httptest.NewRecorder()
-		topic_req := httptest.NewRequest("get","/topic/1",bytes.NewReader(nil))
-		topic_req_admin := topic_req
-		topic_req_admin.AddCookie(&admin_uid_cookie)
-		topic_req_admin.AddCookie(&admin_session_cookie)
+		topicW := httptest.NewRecorder()
+		topicReq := httptest.NewRequest("get", "/topic/1", bytes.NewReader(nil))
+		topicReqAdmin := topicReq
+		topicReqAdmin.AddCookie(&adminUIDCookie)
+		topicReqAdmin.AddCookie(&adminSessionCookie)
 
 		// Deal with the session stuff, etc.
-		user, ok := PreRoute(topic_w,topic_req_admin)
+		user, ok := PreRoute(topicW, topicReqAdmin)
 		if !ok {
 			b.Fatal("Mysterious error!")
 		}
 
 		for pb.Next() {
-			topic_w.Body.Reset()
-			route_topic_id(topic_w,topic_req_admin,user)
+			topicW.Body.Reset()
+			route_topic_id(topicW, topicReqAdmin, user)
 		}
 	})
 }
@@ -290,15 +127,18 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	b.ReportAllocs()
 	if !gloinited {
-		gloinit()
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		topic_w := httptest.NewRecorder()
-		topic_req := httptest.NewRequest("get","/topic/1",bytes.NewReader(nil))
+		topicW := httptest.NewRecorder()
+		topicReq := httptest.NewRequest("get", "/topic/1", bytes.NewReader(nil))
 		for pb.Next() {
-			topic_w.Body.Reset()
-			route_topic_id(topic_w,topic_req,guest_user)
+			topicW.Body.Reset()
+			route_topic_id(topicW, topicReq, guestUser)
 		}
 	})
 }
@@ -628,13 +468,16 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 func BenchmarkQueryTopicParallel(b *testing.B) {
 	b.ReportAllocs()
 	if !gloinited {
-		gloinit()
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
 		var tu TopicUser
 		for pb.Next() {
-			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
 				log.Fatal("No rows found!")
 				return
@@ -649,13 +492,16 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	b.ReportAllocs()
 	if !gloinited {
-		gloinit()
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
 		var tu TopicUser
 		for pb.Next() {
-			err := get_topic_user_stmt.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+			err := get_topic_user_stmt.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
 				b.Fatal("No rows found!")
 				return
@@ -672,7 +518,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	var tu TopicUser
 	b.Run("topic", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.Is_Closed, &tu.Sticky, &tu.ParentID, &tu.IpAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
 				b.Fatal("No rows found!")
 				return
@@ -691,7 +537,8 @@ func BenchmarkQueriesSerial(b *testing.B) {
 			}
 			defer rows.Close()
 
-			for rows.Next() {}
+			for rows.Next() {
+			}
 			err = rows.Err()
 			if err != nil {
 				b.Fatal(err)
@@ -701,7 +548,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	})
 
 	var replyItem Reply
-	var is_super_admin bool
+	var isSuperAdmin bool
 	var group int
 	b.Run("topic_replies_scan", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -711,7 +558,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 				return
 			}
 			for rows.Next() {
-				err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &is_super_admin, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IpAddress)
+				err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &isSuperAdmin, &group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress)
 				if err != nil {
 					b.Fatal(err)
 					return
@@ -1059,32 +906,32 @@ func BenchmarkParserSerial(b *testing.B) {
 	b.ReportAllocs()
 	b.Run("empty_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parse_message("")
+			_ = parseMessage("")
 		}
 	})
 	b.Run("short_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parse_message("Hey everyone, how's it going?")
+			_ = parseMessage("Hey everyone, how's it going?")
 		}
 	})
 	b.Run("one_smily", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parse_message("Hey everyone, how's it going? :)")
+			_ = parseMessage("Hey everyone, how's it going? :)")
 		}
 	})
 	b.Run("five_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parse_message("Hey everyone, how's it going? :):):):):)")
+			_ = parseMessage("Hey everyone, how's it going? :):):):):)")
 		}
 	})
 	b.Run("ten_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parse_message("Hey everyone, how's it going? :):):):):):):):):):)")
+			_ = parseMessage("Hey everyone, how's it going? :):):):):):):):):):)")
 		}
 	})
 	b.Run("twenty_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parse_message("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+			_ = parseMessage("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
 		}
 	})
 }
@@ -1093,47 +940,47 @@ func BenchmarkBBCodePluginWithRegexpSerial(b *testing.B) {
 	b.ReportAllocs()
 	b.Run("empty_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("")
+			_ = bbcodeRegexParse("")
 		}
 	})
 	b.Run("short_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("Hey everyone, how's it going?")
+			_ = bbcodeRegexParse("Hey everyone, how's it going?")
 		}
 	})
 	b.Run("one_smily", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("Hey everyone, how's it going? :)")
+			_ = bbcodeRegexParse("Hey everyone, how's it going? :)")
 		}
 	})
 	b.Run("five_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("Hey everyone, how's it going? :):):):):)")
+			_ = bbcodeRegexParse("Hey everyone, how's it going? :):):):):)")
 		}
 	})
 	b.Run("ten_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("Hey everyone, how's it going? :):):):):):):):):):)")
+			_ = bbcodeRegexParse("Hey everyone, how's it going? :):):):):):):):):):)")
 		}
 	})
 	b.Run("twenty_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+			_ = bbcodeRegexParse("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
 		}
 	})
 	b.Run("one_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("[b]H[/b]ey everyone, how's it going?")
+			_ = bbcodeRegexParse("[b]H[/b]ey everyone, how's it going?")
 		}
 	})
 	b.Run("five_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+			_ = bbcodeRegexParse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
 		}
 	})
 	b.Run("ten_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_regex_parse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
+			_ = bbcodeRegexParse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 		}
 	})
 }
@@ -1142,47 +989,47 @@ func BenchmarkBBCodePluginWithoutCodeTagSerial(b *testing.B) {
 	b.ReportAllocs()
 	b.Run("empty_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("")
+			_ = bbcodeParseWithoutCode("")
 		}
 	})
 	b.Run("short_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("Hey everyone, how's it going?")
+			_ = bbcodeParseWithoutCode("Hey everyone, how's it going?")
 		}
 	})
 	b.Run("one_smily", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("Hey everyone, how's it going? :)")
+			_ = bbcodeParseWithoutCode("Hey everyone, how's it going? :)")
 		}
 	})
 	b.Run("five_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("Hey everyone, how's it going? :):):):):)")
+			_ = bbcodeParseWithoutCode("Hey everyone, how's it going? :):):):):)")
 		}
 	})
 	b.Run("ten_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("Hey everyone, how's it going? :):):):):):):):):):)")
+			_ = bbcodeParseWithoutCode("Hey everyone, how's it going? :):):):):):):):):):)")
 		}
 	})
 	b.Run("twenty_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+			_ = bbcodeParseWithoutCode("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
 		}
 	})
 	b.Run("one_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("[b]H[/b]ey everyone, how's it going?")
+			_ = bbcodeParseWithoutCode("[b]H[/b]ey everyone, how's it going?")
 		}
 	})
 	b.Run("five_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+			_ = bbcodeParseWithoutCode("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
 		}
 	})
 	b.Run("ten_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_parse_without_code("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
+			_ = bbcodeParseWithoutCode("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 		}
 	})
 }
@@ -1191,47 +1038,47 @@ func BenchmarkBBCodePluginWithFullParserSerial(b *testing.B) {
 	b.ReportAllocs()
 	b.Run("empty_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("")
+			_ = bbcodeFullParse("")
 		}
 	})
 	b.Run("short_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("Hey everyone, how's it going?")
+			_ = bbcodeFullParse("Hey everyone, how's it going?")
 		}
 	})
 	b.Run("one_smily", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("Hey everyone, how's it going? :)")
+			_ = bbcodeFullParse("Hey everyone, how's it going? :)")
 		}
 	})
 	b.Run("five_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("Hey everyone, how's it going? :):):):):)")
+			_ = bbcodeFullParse("Hey everyone, how's it going? :):):):):)")
 		}
 	})
 	b.Run("ten_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("Hey everyone, how's it going? :):):):):):):):):):)")
+			_ = bbcodeFullParse("Hey everyone, how's it going? :):):):):):):):):):)")
 		}
 	})
 	b.Run("twenty_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+			_ = bbcodeFullParse("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
 		}
 	})
 	b.Run("one_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("[b]H[/b]ey everyone, how's it going?")
+			_ = bbcodeFullParse("[b]H[/b]ey everyone, how's it going?")
 		}
 	})
 	b.Run("five_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+			_ = bbcodeFullParse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
 		}
 	})
 	b.Run("ten_bold", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = bbcode_full_parse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
+			_ = bbcodeFullParse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 		}
 	})
 }
@@ -1450,28 +1297,28 @@ func TestForumsGuestRoute(t *testing.T) {
 }*/
 
 func TestSplittyThing(t *testing.T) {
-	var extra_data string
-	var path string = "/pages/hohoho"
-	t.Log("Raw Path:",path)
-	if path[len(path) - 1] != '/' {
-		extra_data = path[strings.LastIndexByte(path,'/') + 1:]
-		path = path[:strings.LastIndexByte(path,'/') + 1]
+	var extraData string
+	var path = "/pages/hohoho"
+	t.Log("Raw Path:", path)
+	if path[len(path)-1] != '/' {
+		extraData = path[strings.LastIndexByte(path, '/')+1:]
+		path = path[:strings.LastIndexByte(path, '/')+1]
 	}
 	t.Log("Path:", path)
-	t.Log("Extra Data:", extra_data)
+	t.Log("Extra Data:", extraData)
 	t.Log("Path Bytes:", []byte(path))
-	t.Log("Extra Data Bytes:", []byte(extra_data))
+	t.Log("Extra Data Bytes:", []byte(extraData))
 
 	t.Log("Splitty thing test")
 	path = "/topics/"
-	extra_data = ""
-	t.Log("Raw Path:",path)
-	if path[len(path) - 1] != '/' {
-		extra_data = path[strings.LastIndexByte(path,'/') + 1:]
-		path = path[:strings.LastIndexByte(path,'/') + 1]
+	extraData = ""
+	t.Log("Raw Path:", path)
+	if path[len(path)-1] != '/' {
+		extraData = path[strings.LastIndexByte(path, '/')+1:]
+		path = path[:strings.LastIndexByte(path, '/')+1]
 	}
 	t.Log("Path:", path)
-	t.Log("Extra Data:", extra_data)
+	t.Log("Extra Data:", extraData)
 	t.Log("Path Bytes:", []byte(path))
-	t.Log("Extra Data Bytes:", []byte(extra_data))
+	t.Log("Extra Data Bytes:", []byte(extraData))
 }

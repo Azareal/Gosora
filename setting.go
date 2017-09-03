@@ -1,31 +1,28 @@
 package main
+
 import "strconv"
 import "strings"
 import "sync/atomic"
 
-// TO-DO: Move this into the phrase system
-var settingLabels map[string]string
+// SettingBox is a map type specifically for holding the various settings admins set to toggle features on and off or to otherwise alter Gosora's behaviour from the Control Panel
 type SettingBox map[string]interface{}
+
 var settingBox atomic.Value // An atomic value pointing to a SettingBox
 
-type OptionLabel struct
-{
-	Label string
-	Value int
+type OptionLabel struct {
+	Label    string
+	Value    int
 	Selected bool
 }
 
-type Setting struct
-{
-	Name string
-	Content string
-	Type string
+type Setting struct {
+	Name       string
+	Content    string
+	Type       string
 	Constraint string
 }
 
 func init() {
-	settingLabels = make(map[string]string)
-	settingLabels["activation_type"] = "Activate All,Email Activation,Admin Approval"
 	settingBox.Store(SettingBox(make(map[string]interface{})))
 	//settingBox.Store(make(map[string]interface{}))
 }
@@ -76,7 +73,7 @@ func (sBox SettingBox) ParseSetting(sname string, scontent string, stype string,
 			return "You were supposed to enter an integer x.x\nType mismatch in " + sname
 		}
 	} else if stype == "list" {
-		cons := strings.Split(constraint,"-")
+		cons := strings.Split(constraint, "-")
 		if len(cons) < 2 {
 			return "Invalid constraint! The second field wasn't set!"
 		}
@@ -90,7 +87,7 @@ func (sBox SettingBox) ParseSetting(sname string, scontent string, stype string,
 			return "Invalid contraint! The constraint field wasn't an integer!"
 		}
 
-		value, err  := strconv.Atoi(scontent)
+		value, err := strconv.Atoi(scontent)
 		if err != nil {
 			return "Only integers are allowed in this setting x.x\nType mismatch in " + sname
 		}

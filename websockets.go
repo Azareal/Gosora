@@ -2,64 +2,62 @@
 
 package main
 
-import(
+import (
+	"bytes"
+	"errors"
 	"fmt"
+	"net/http"
+	"runtime"
+	"strconv"
 	"sync"
 	"time"
-	"bytes"
-	"strconv"
-	"errors"
-	"runtime"
-	"net/http"
 
-	"github.com/gorilla/websocket"
 	"github.com/Azareal/gopsutil/cpu"
 	"github.com/Azareal/gopsutil/mem"
+	"github.com/gorilla/websocket"
 )
 
-type WS_User struct
-{
+type WS_User struct {
 	conn *websocket.Conn
 	User *User
 }
 
-type WS_Hub struct
-{
-	online_users map[int]*WS_User
-	online_guests map[*WS_User]bool
-	guests sync.RWMutex
-	users sync.RWMutex
+type WS_Hub struct {
+	onlineUsers  map[int]*WS_User
+	onlineGuests map[*WS_User]bool
+	guests       sync.RWMutex
+	users        sync.RWMutex
 }
 
-var ws_hub WS_Hub
-var ws_upgrader = websocket.Upgrader{ReadBufferSize:1024,WriteBufferSize:1024}
-var ws_nouser error = errors.New("This user isn't connected via WebSockets")
+var wsHub WS_Hub
+var wsUpgrader = websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
+var errWsNouser = errors.New("This user isn't connected via WebSockets")
 
 func init() {
-	enable_websockets = true
-	admin_stats_watchers = make(map[*WS_User]bool)
-	ws_hub = WS_Hub{
-		online_users: make(map[int]*WS_User),
-		online_guests: make(map[*WS_User]bool),
+	enableWebsockets = true
+	adminStatsWatchers = make(map[*WS_User]bool)
+	wsHub = WS_Hub{
+		onlineUsers:  make(map[int]*WS_User),
+		onlineGuests: make(map[*WS_User]bool),
 	}
 }
 
-func (hub *WS_Hub) guest_count() int {
+func (hub *WS_Hub) guestCount() int {
 	defer hub.guests.RUnlock()
 	hub.guests.RLock()
-	return len(hub.online_guests)
+	return len(hub.onlineGuests)
 }
 
-func (hub *WS_Hub) user_count() int {
+func (hub *WS_Hub) userCount() int {
 	defer hub.users.RUnlock()
 	hub.users.RLock()
-	return len(hub.online_users)
+	return len(hub.onlineUsers)
 }
 
-func (hub *WS_Hub) broadcast_message(msg string) error {
+func (hub *WS_Hub) broadcastMessage(msg string) error {
 	hub.users.RLock()
-	for _, ws_user := range hub.online_users {
-		w, err := ws_user.conn.NextWriter(websocket.TextMessage)
+	for _, wsUser := range hub.onlineUsers {
+		w, err := wsUser.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			return err
 		}
@@ -69,15 +67,15 @@ func (hub *WS_Hub) broadcast_message(msg string) error {
 	return nil
 }
 
-func (hub *WS_Hub) push_message(targetUser int, msg string) error {
+func (hub *WS_Hub) pushMessage(targetUser int, msg string) error {
 	hub.users.RLock()
-	ws_user, ok := hub.online_users[targetUser]
+	wsUser, ok := hub.onlineUsers[targetUser]
 	hub.users.RUnlock()
 	if !ok {
-		return ws_nouser
+		return errWsNouser
 	}
 
-	w, err := ws_user.conn.NextWriter(websocket.TextMessage)
+	w, err := wsUser.conn.NextWriter(websocket.TextMessage)
 	if err != nil {
 		return err
 	}
@@ -87,23 +85,23 @@ func (hub *WS_Hub) push_message(targetUser int, msg string) error {
 	return nil
 }
 
-func(hub *WS_Hub) push_alert(targetUser int, asid int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
+func (hub *WS_Hub) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUser_id int, elementID int) error {
 	//log.Print("In push_alert")
 	hub.users.RLock()
-	ws_user, ok := hub.online_users[targetUser]
+	wsUser, ok := hub.onlineUsers[targetUser]
 	hub.users.RUnlock()
 	if !ok {
-		return ws_nouser
+		return errWsNouser
 	}
 
 	//log.Print("Building alert")
-	alert, err := build_alert(asid, event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
+	alert, err := buildAlert(asid, event, elementType, actorID, targetUser_id, elementID, *wsUser.User)
 	if err != nil {
 		return err
 	}
 
 	//log.Print("Getting WS Writer")
-	w, err := ws_user.conn.NextWriter(websocket.TextMessage)
+	w, err := wsUser.conn.NextWriter(websocket.TextMessage)
 	if err != nil {
 		return err
 	}
@@ -113,35 +111,35 @@ func(hub *WS_Hub) push_alert(targetUser int, asid int, event string, elementType
 	return nil
 }
 
-func(hub *WS_Hub) push_alerts(users []int, asid int, event string, elementType string, actor_id int, targetUser_id int, elementID int) error {
-	//log.Print("In push_alerts")
-	var ws_users []*WS_User
+func (hub *WS_Hub) pushAlerts(users []int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
+	//log.Print("In pushAlerts")
+	var wsUsers []*WS_User
 	hub.users.RLock()
 	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
 	for _, uid := range users {
-		ws_users = append(ws_users, hub.online_users[uid])
+		wsUsers = append(wsUsers, hub.onlineUsers[uid])
 	}
 	hub.users.RUnlock()
-	if len(ws_users) == 0 {
-		return ws_nouser
+	if len(wsUsers) == 0 {
+		return errWsNouser
 	}
 
 	var errs []error
-	for _, ws_user := range ws_users {
-		if ws_user == nil {
+	for _, wsUser := range wsUsers {
+		if wsUser == nil {
 			continue
 		}
 
 		//log.Print("Building alert")
-		alert, err := build_alert(asid, event, elementType, actor_id, targetUser_id, elementID, *ws_user.User)
+		alert, err := buildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
 		if err != nil {
-			errs = append(errs,err)
+			errs = append(errs, err)
 		}
 
 		//log.Print("Getting WS Writer")
-		w, err := ws_user.conn.NextWriter(websocket.TextMessage)
+		w, err := wsUser.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
-			errs = append(errs,err)
+			errs = append(errs, err)
 		}
 
 		w.Write([]byte(alert))
@@ -158,7 +156,7 @@ func(hub *WS_Hub) push_alerts(users []int, asid int, event string, elementType s
 }
 
 func route_websockets(w http.ResponseWriter, r *http.Request, user User) {
-	conn, err := ws_upgrader.Upgrade(w,r,nil)
+	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
@@ -167,53 +165,53 @@ func route_websockets(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	ws_user := &WS_User{conn,userptr}
+	wsUser := &WS_User{conn, userptr}
 	if user.ID == 0 {
-		ws_hub.guests.Lock()
-		ws_hub.online_guests[ws_user] = true
-		ws_hub.guests.Unlock()
+		wsHub.guests.Lock()
+		wsHub.onlineGuests[wsUser] = true
+		wsHub.guests.Unlock()
 	} else {
-		ws_hub.users.Lock()
-		ws_hub.online_users[user.ID] = ws_user
-		ws_hub.users.Unlock()
+		wsHub.users.Lock()
+		wsHub.onlineUsers[user.ID] = wsUser
+		wsHub.users.Unlock()
 	}
 
 	//conn.SetReadLimit(/* put the max request size from earlier here? */)
 	//conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	var current_page []byte
+	var currentPage []byte
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if user.ID == 0 {
-				ws_hub.guests.Lock()
-				delete(ws_hub.online_guests,ws_user)
-				ws_hub.guests.Unlock()
+				wsHub.guests.Lock()
+				delete(wsHub.onlineGuests, wsUser)
+				wsHub.guests.Unlock()
 			} else {
-				ws_hub.users.Lock()
-				delete(ws_hub.online_users,user.ID)
-				ws_hub.users.Unlock()
+				wsHub.users.Lock()
+				delete(wsHub.onlineUsers, user.ID)
+				wsHub.users.Unlock()
 			}
 			break
 		}
 
 		//log.Print("Message",message)
 		//log.Print("string(Message)",string(message))
-		messages := bytes.Split(message,[]byte("\r"))
+		messages := bytes.Split(message, []byte("\r"))
 		for _, msg := range messages {
 			//log.Print("Submessage",msg)
 			//log.Print("Submessage",string(msg))
-			if bytes.HasPrefix(msg,[]byte("page ")) {
-				msgblocks := bytes.SplitN(msg,[]byte(" "),2)
+			if bytes.HasPrefix(msg, []byte("page ")) {
+				msgblocks := bytes.SplitN(msg, []byte(" "), 2)
 				if len(msgblocks) < 2 {
 					continue
 				}
 
-				if !bytes.Equal(msgblocks[1],current_page) {
-					ws_leave_page(ws_user, current_page)
-					current_page = msgblocks[1]
-					//log.Print("Current Page:",current_page)
-					//log.Print("Current Page:",string(current_page))
-					ws_page_responses(ws_user, current_page)
+				if !bytes.Equal(msgblocks[1], currentPage) {
+					wsLeavePage(wsUser, currentPage)
+					currentPage = msgblocks[1]
+					//log.Print("Current Page:",currentPage)
+					//log.Print("Current Page:",string(currentPage))
+					wsPageResponses(wsUser, currentPage)
 				}
 			}
 			/*if bytes.Equal(message,[]byte(`start-view`)) {
@@ -226,49 +224,50 @@ func route_websockets(w http.ResponseWriter, r *http.Request, user User) {
 	conn.Close()
 }
 
-func ws_page_responses(ws_user *WS_User, page []byte) {
-	switch(string(page)) {
-		case "/panel/":
-			//log.Print("/panel/ WS Route")
-			/*w, err := ws_user.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				//log.Print(err.Error())
-				return
-			}
+func wsPageResponses(wsUser *WS_User, page []byte) {
+	switch string(page) {
+	case "/panel/":
+		//log.Print("/panel/ WS Route")
+		/*w, err := wsUser.conn.NextWriter(websocket.TextMessage)
+		if err != nil {
+			//log.Print(err.Error())
+			return
+		}
 
-			log.Print(ws_hub.online_users)
-			uonline := ws_hub.user_count()
-			gonline := ws_hub.guest_count()
-			totonline := uonline + gonline
+		log.Print(wsHub.online_users)
+		uonline := wsHub.userCount()
+		gonline := wsHub.guestCount()
+		totonline := uonline + gonline
 
-			w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + " online\r"))
-			w.Write([]byte("set #dash-gonline " + strconv.Itoa(gonline) + " guests online\r"))
-			w.Write([]byte("set #dash-uonline " + strconv.Itoa(uonline) + " users online\r"))
-			w.Close()*/
+		w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + " online\r"))
+		w.Write([]byte("set #dash-gonline " + strconv.Itoa(gonline) + " guests online\r"))
+		w.Write([]byte("set #dash-uonline " + strconv.Itoa(uonline) + " users online\r"))
+		w.Close()*/
 
-			// Listen for changes and inform the admins...
-			admin_stats_mutex.Lock()
-			watchers := len(admin_stats_watchers)
-			admin_stats_watchers[ws_user] = true
-			if watchers == 0 {
-				go admin_stats_ticker()
-			}
-			admin_stats_mutex.Unlock()
+		// Listen for changes and inform the admins...
+		adminStatsMutex.Lock()
+		watchers := len(adminStatsWatchers)
+		adminStatsWatchers[wsUser] = true
+		if watchers == 0 {
+			go adminStatsTicker()
+		}
+		adminStatsMutex.Unlock()
 	}
 }
 
-func ws_leave_page(ws_user *WS_User, page []byte) {
-	switch(string(page)) {
-		case "/panel/":
-			admin_stats_mutex.Lock()
-			delete(admin_stats_watchers,ws_user)
-			admin_stats_mutex.Unlock()
+func wsLeavePage(wsUser *WS_User, page []byte) {
+	switch string(page) {
+	case "/panel/":
+		adminStatsMutex.Lock()
+		delete(adminStatsWatchers, wsUser)
+		adminStatsMutex.Unlock()
 	}
 }
 
-var admin_stats_watchers map[*WS_User]bool
-var admin_stats_mutex sync.RWMutex
-func admin_stats_ticker() {
+var adminStatsWatchers map[*WS_User]bool
+var adminStatsMutex sync.RWMutex
+
+func adminStatsTicker() {
 	time.Sleep(time.Second)
 
 	var last_uonline int = -1
@@ -288,17 +287,17 @@ func admin_stats_ticker() {
 
 AdminStatLoop:
 	for {
-		admin_stats_mutex.RLock()
-		watch_count := len(admin_stats_watchers)
-		admin_stats_mutex.RUnlock()
+		adminStatsMutex.RLock()
+		watch_count := len(adminStatsWatchers)
+		adminStatsMutex.RUnlock()
 		if watch_count == 0 {
 			break AdminStatLoop
 		}
 
-		cpu_perc, cpuerr = cpu.Percent(time.Duration(time.Second),true)
+		cpu_perc, cpuerr = cpu.Percent(time.Duration(time.Second), true)
 		memres, ramerr = mem.VirtualMemory()
-		uonline := ws_hub.user_count()
-		gonline := ws_hub.guest_count()
+		uonline := wsHub.userCount()
+		gonline := wsHub.guestCount()
 		totonline := uonline + gonline
 
 		// It's far more likely that the CPU Usage will change than the other stats, so we'll optimise them seperately...
@@ -319,7 +318,7 @@ AdminStatLoop:
 			}
 
 			if gonline > 10 {
-			onlineGuestsColour = "stat_green"
+				onlineGuestsColour = "stat_green"
 			} else if gonline > 1 {
 				onlineGuestsColour = "stat_orange"
 			} else {
@@ -334,9 +333,9 @@ AdminStatLoop:
 				onlineUsersColour = "stat_red"
 			}
 
-			totonline, totunit = convert_friendly_unit(totonline)
-			uonline, uunit = convert_friendly_unit(uonline)
-			gonline, gunit = convert_friendly_unit(gonline)
+			totonline, totunit = convertFriendlyUnit(totonline)
+			uonline, uunit = convertFriendlyUnit(uonline)
+			gonline, gunit = convertFriendlyUnit(gonline)
 		}
 
 		if cpuerr != nil {
@@ -357,8 +356,8 @@ AdminStatLoop:
 			if ramerr != nil {
 				ramstr = "Unknown"
 			} else {
-				total_count, total_unit := convert_byte_unit(float64(memres.Total))
-				used_count := convert_byte_in_unit(float64(memres.Total - memres.Available),total_unit)
+				total_count, total_unit := convertByteUnit(float64(memres.Total))
+				used_count := convertByteInUnit(float64(memres.Total-memres.Available), total_unit)
 
 				// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
 				var totstr string
@@ -366,13 +365,13 @@ AdminStatLoop:
 					used_count += 1.0 - (total_count - float64(int(total_count)))
 					totstr = strconv.Itoa(int(total_count) + 1)
 				} else {
-					totstr = fmt.Sprintf("%.1f",total_count)
+					totstr = fmt.Sprintf("%.1f", total_count)
 				}
 
 				if used_count > total_count {
 					used_count = total_count
 				}
-				ramstr = fmt.Sprintf("%.1f",used_count) + " / " + totstr + total_unit
+				ramstr = fmt.Sprintf("%.1f", used_count) + " / " + totstr + total_unit
 
 				ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
 				if ramperc < 50 {
@@ -385,17 +384,17 @@ AdminStatLoop:
 			}
 		}
 
-		admin_stats_mutex.RLock()
-		watchers := admin_stats_watchers
-		admin_stats_mutex.RUnlock()
+		adminStatsMutex.RLock()
+		watchers := adminStatsWatchers
+		adminStatsMutex.RUnlock()
 
 		for watcher, _ := range watchers {
 			w, err := watcher.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				//log.Print(err.Error())
-				admin_stats_mutex.Lock()
-				delete(admin_stats_watchers,watcher)
-				admin_stats_mutex.Unlock()
+				adminStatsMutex.Lock()
+				delete(adminStatsWatchers, watcher)
+				adminStatsMutex.Unlock()
 				continue
 			}
 
