@@ -282,7 +282,7 @@ func socialgroupsGroupWidgets(headerVars *HeaderVars, sgItem *SocialGroup) (succ
 */
 
 func socialgroupsGroupList(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -352,7 +352,7 @@ func socialgroupsViewGroup(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func socialgroupsCreateGroup(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -429,7 +429,7 @@ func socialgroupsCreateGroupSubmit(w http.ResponseWriter, r *http.Request, user 
 }
 
 func socialgroupsMemberList(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}

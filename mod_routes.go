@@ -38,7 +38,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, oldTopic.ParentID)
+	_, ok := SimpleForumUserCheck(w, r, &user, oldTopic.ParentID)
 	if !ok {
 		return
 	}
@@ -128,7 +128,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
+	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
 	}
@@ -202,7 +202,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
+	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
 	}
@@ -258,7 +258,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
+	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
 	}
@@ -339,7 +339,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, fid)
+	_, ok := SimpleForumUserCheck(w, r, &user, fid)
 	if !ok {
 		return
 	}
@@ -390,7 +390,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, fid)
+	_, ok := SimpleForumUserCheck(w, r, &user, fid)
 	if !ok {
 		return
 	}
@@ -531,7 +531,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request, u
 }
 
 func route_ips(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -636,7 +636,7 @@ func route_ips(w http.ResponseWriter, r *http.Request, user User) {
 
 // TODO: This is being replaced with the new ban route system
 /*func route_ban(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w,r,&user)
+	headerVars, ok := UserCheck(w,r,&user)
 	if !ok {
 		return
 	}

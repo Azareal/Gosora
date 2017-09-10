@@ -11,14 +11,13 @@ import (
 // nolint
 var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = preRoute
 
-// TODO: Are these even session checks anymore? We might need to rethink these names
 // nolint We need these types so people can tell what they are without scrolling to the bottom of the file
-var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderVars, PanelStats, bool) = _panel_session_check
-var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, bool) = _simple_panel_session_check
-var SimpleForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, success bool) = _simple_forum_session_check
-var ForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, success bool) = _forum_session_check
-var SimpleSessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) = _simple_session_check
-var SessionCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) = _session_check
+var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderVars, PanelStats, bool) = panelUserCheck
+var SimplePanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, bool) = simplePanelUserCheck
+var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, success bool) = simpleForumUserCheck
+var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, success bool) = forumUserCheck
+var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) = simpleUserCheck
+var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) = userCheck
 
 // TODO: Support for left sidebars and sidebars on both sides
 // http.Request is for context.Context middleware. Mostly for plugin_socialgroups right now
@@ -45,7 +44,7 @@ func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http
 	}
 }
 
-func _simple_forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, success bool) {
+func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, success bool) {
 	if !fstore.Exists(fid) {
 		PreError("The target forum doesn't exist.", w, r)
 		return nil, false
@@ -81,8 +80,8 @@ func _simple_forum_session_check(w http.ResponseWriter, r *http.Request, user *U
 	return headerLite, true
 }
 
-func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, success bool) {
-	headerVars, success = SessionCheck(w, r, user)
+func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, success bool) {
+	headerVars, success = UserCheck(w, r, user)
 	if !fstore.Exists(fid) {
 		NotFound(w, r)
 		return headerVars, false
@@ -120,7 +119,7 @@ func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fi
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
-func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, stats PanelStats, success bool) {
+func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, stats PanelStats, success bool) {
 	var themeName = defaultThemeBox.Load().(string)
 
 	cookie, err := r.Cookie("current_theme")
@@ -190,7 +189,7 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 	return headerVars, stats, true
 }
 
-func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) {
+func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) {
 	if !user.IsSuperMod {
 		NoPermissions(w, r, *user)
 		return headerLite, false
@@ -202,8 +201,8 @@ func _simple_panel_session_check(w http.ResponseWriter, r *http.Request, user *U
 	return headerLite, true
 }
 
-// SimpleSessionCheck is back from the grave, yay :D
-func _simple_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) {
+// SimpleUserCheck is back from the grave, yay :D
+func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) {
 	headerLite = &HeaderLite{
 		Site:     site,
 		Settings: settingBox.Load().(SettingBox),
@@ -212,7 +211,7 @@ func _simple_session_check(w http.ResponseWriter, r *http.Request, user *User) (
 }
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
-func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) {
+func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) {
 	var themeName = defaultThemeBox.Load().(string)
 
 	cookie, err := r.Cookie("current_theme")

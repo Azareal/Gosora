@@ -15,7 +15,7 @@ import (
 )
 
 func route_panel(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -181,7 +181,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_panel_forums(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -219,7 +219,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request, user User) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -255,7 +255,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request, us
 
 // TODO: Revamp this
 func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User, sfid string) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -299,7 +299,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User
 }
 
 func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -331,7 +331,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, us
 }
 
 func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -381,7 +381,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, 
 }
 
 func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -464,7 +464,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, user
 }
 
 func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -543,7 +543,7 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 }
 
 func route_panel_settings(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -608,7 +608,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, sname string) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -659,7 +659,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, snam
 }
 
 func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User, sname string) {
-	headerLite, ok := SimplePanelSessionCheck(w, r, &user)
+	headerLite, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -715,7 +715,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User,
 }
 
 func route_panel_word_filters(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -738,7 +738,7 @@ func route_panel_word_filters(w http.ResponseWriter, r *http.Request, user User)
 }
 
 func route_panel_word_filters_create(w http.ResponseWriter, r *http.Request, user User) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -779,7 +779,7 @@ func route_panel_word_filters_create(w http.ResponseWriter, r *http.Request, use
 }
 
 func route_panel_word_filters_edit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -803,7 +803,7 @@ func route_panel_word_filters_edit(w http.ResponseWriter, r *http.Request, user 
 }
 
 func route_panel_word_filters_edit_submit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -849,7 +849,7 @@ func route_panel_word_filters_edit_submit(w http.ResponseWriter, r *http.Request
 }
 
 func route_panel_word_filters_delete_submit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -885,7 +885,7 @@ func route_panel_word_filters_delete_submit(w http.ResponseWriter, r *http.Reque
 }
 
 func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -914,7 +914,7 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user User, uname string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -990,7 +990,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user U
 }
 
 func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, user User, uname string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1038,7 +1038,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, user
 }
 
 func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user User, uname string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1124,7 +1124,7 @@ func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user Us
 }
 
 func route_panel_users(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1186,7 +1186,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, suid string) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1240,7 +1240,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, s
 }
 
 func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, user User, suid string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1335,7 +1335,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, user 
 }
 
 func route_panel_groups(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1397,7 +1397,7 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1456,7 +1456,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, 
 }
 
 func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user User, sgid string) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1535,7 +1535,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user 
 }
 
 func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1667,7 +1667,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user
 }
 
 func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1743,7 +1743,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 }
 
 func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request, user User) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1793,7 +1793,7 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request, us
 }
 
 func route_panel_themes(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1828,7 +1828,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_panel_themes_set_default(w http.ResponseWriter, r *http.Request, user User, uname string) {
-	_, ok := SimplePanelSessionCheck(w, r, &user)
+	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1909,7 +1909,7 @@ func route_panel_themes_set_default(w http.ResponseWriter, r *http.Request, user
 }
 
 func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -2025,7 +2025,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_panel_debug(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
 	}

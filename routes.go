@@ -104,7 +104,7 @@ Disallow: /accounts/
 }
 
 func route_overview(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -124,7 +124,7 @@ func route_overview(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_custom_page(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -151,7 +151,7 @@ func route_custom_page(w http.ResponseWriter, r *http.Request, user User) {
 
 // TODO: Paginate this
 func route_topics(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -270,7 +270,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 		return
 	}
 
-	headerVars, ok := ForumSessionCheck(w, r, &user, fid)
+	headerVars, ok := ForumUserCheck(w, r, &user, fid)
 	if !ok {
 		return
 	}
@@ -372,7 +372,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 }
 
 func route_forums(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -453,7 +453,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	topic.ClassName = ""
 
-	headerVars, ok := ForumSessionCheck(w, r, &user, topic.ParentID)
+	headerVars, ok := ForumUserCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
 	}
@@ -605,7 +605,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_profile(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -714,7 +714,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid 
 		}
 	}
 
-	headerVars, ok := ForumSessionCheck(w, r, &user, fid)
+	headerVars, ok := ForumUserCheck(w, r, &user, fid)
 	if !ok {
 		return
 	}
@@ -790,7 +790,7 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, fid)
+	_, ok := SimpleForumUserCheck(w, r, &user, fid)
 	if !ok {
 		return
 	}
@@ -866,7 +866,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
+	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
 	}
@@ -963,7 +963,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
+	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
 	}
@@ -1074,7 +1074,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumSessionCheck(w, r, &user, fid)
+	_, ok := SimpleForumUserCheck(w, r, &user, fid)
 	if !ok {
 		return
 	}
@@ -1322,7 +1322,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 }
 
 func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1341,7 +1341,7 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request, use
 }
 
 func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1398,7 +1398,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 }
 
 func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1422,7 +1422,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.MaxRequestSize))
 
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1514,7 +1514,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 }
 
 func route_account_own_edit_username(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1532,7 +1532,7 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request, use
 }
 
 func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1572,7 +1572,7 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 }
 
 func route_account_own_edit_email(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1627,7 +1627,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request, user U
 }
 
 func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1716,7 +1716,7 @@ func route_logout(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_login(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1785,7 +1785,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_register(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := SessionCheck(w, r, &user)
+	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
 	}
@@ -1803,7 +1803,7 @@ func route_register(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
-	headerLite, _ := SimpleSessionCheck(w, r, &user)
+	headerLite, _ := SimpleUserCheck(w, r, &user)
 
 	err := r.ParseForm()
 	if err != nil {
@@ -1902,7 +1902,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 
 // TODO: Set the cookie domain
 func route_change_theme(w http.ResponseWriter, r *http.Request, user User) {
-	//headerLite, _ := SimpleSessionCheck(w, r, &user)
+	//headerLite, _ := SimpleUserCheck(w, r, &user)
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
