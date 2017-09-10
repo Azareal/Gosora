@@ -24,7 +24,7 @@ CREATE TABLE `forums`(
 	`active` tinyint DEFAULT 1 not null,
 	`topicCount` int DEFAULT 0 not null,
 	`preset` varchar(100) DEFAULT '' not null,
-	`parentID` int DEFAULT 0 not null, /* TO-DO: Add support for subforums */
+	`parentID` int DEFAULT 0 not null, /* TODO: Add support for subforums */
 	`parentType` varchar(50) DEFAULT '' not null,
 	`lastTopic` varchar(100) DEFAULT '' not null,
 	`lastTopicID` int DEFAULT 0 not null,
@@ -181,16 +181,13 @@ CREATE TABLE `administration_logs`(
 	`doneAt` datetime not null
 );
 
-CREATE TABLE `sync`(
-	`last_update` int not null,
-	`node_id` int not null
-);
+INSERT INTO sync(`last_update`) VALUES (UTC_TIMESTAMP());
 
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('url_tags','1','bool');
 INSERT INTO settings(`name`,`content`,`type`,`constraints`) VALUES ('activation_type','1','list','1-3');
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('bigpost_min_words','250','int');
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('megapost_min_words','1000','int');
-/* TO-DO: Implement the html-attribute setting type before deploying this */
+/* TODO: Implement the html-attribute setting type before deploying this */
 /*INSERT INTO settings(`name`,`content`,`type`) VALUES ('meta_desc','','html-attribute');*/
 INSERT INTO themes(`uname`,`default`) VALUES ('tempra-simple',1);
 INSERT INTO emails(`email`,`uid`,`validated`) VALUES ('admin@localhost',1,1);

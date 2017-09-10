@@ -6,8 +6,9 @@ import "net/http"
 
 var templates = template.New("")
 
+// nolint
 func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) {
-	mapping, ok := themes[defaultTheme].TemplatesMap["topic"]
+	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["topic"]
 	if !ok {
 		mapping = "topic"
 	}
@@ -17,11 +18,13 @@ func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) {
 	}
 }
 
+// nolint
 var template_topic_handle func(TopicPage, http.ResponseWriter) = interpreted_topic_template
 var template_topic_alt_handle func(TopicPage, http.ResponseWriter) = interpreted_topic_template
 
+// nolint
 var template_topics_handle func(TopicsPage, http.ResponseWriter) = func(pi TopicsPage, w http.ResponseWriter) {
-	mapping, ok := themes[defaultTheme].TemplatesMap["topics"]
+	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["topics"]
 	if !ok {
 		mapping = "topics"
 	}
@@ -31,8 +34,9 @@ var template_topics_handle func(TopicsPage, http.ResponseWriter) = func(pi Topic
 	}
 }
 
+// nolint
 var template_forum_handle func(ForumPage, http.ResponseWriter) = func(pi ForumPage, w http.ResponseWriter) {
-	mapping, ok := themes[defaultTheme].TemplatesMap["forum"]
+	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["forum"]
 	if !ok {
 		mapping = "forum"
 	}
@@ -42,8 +46,9 @@ var template_forum_handle func(ForumPage, http.ResponseWriter) = func(pi ForumPa
 	}
 }
 
+// nolint
 var template_forums_handle func(ForumsPage, http.ResponseWriter) = func(pi ForumsPage, w http.ResponseWriter) {
-	mapping, ok := themes[defaultTheme].TemplatesMap["forums"]
+	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["forums"]
 	if !ok {
 		mapping = "forums"
 	}
@@ -53,8 +58,9 @@ var template_forums_handle func(ForumsPage, http.ResponseWriter) = func(pi Forum
 	}
 }
 
+// nolint
 var template_profile_handle func(ProfilePage, http.ResponseWriter) = func(pi ProfilePage, w http.ResponseWriter) {
-	mapping, ok := themes[defaultTheme].TemplatesMap["profile"]
+	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["profile"]
 	if !ok {
 		mapping = "profile"
 	}
@@ -64,8 +70,9 @@ var template_profile_handle func(ProfilePage, http.ResponseWriter) = func(pi Pro
 	}
 }
 
+// nolint
 var template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) = func(pi CreateTopicPage, w http.ResponseWriter) {
-	mapping, ok := themes[defaultTheme].TemplatesMap["create-topic"]
+	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["create-topic"]
 	if !ok {
 		mapping = "create-topic"
 	}
@@ -77,12 +84,18 @@ var template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) = fu
 
 func compileTemplates() error {
 	var c CTemplateSet
+
+	// Schemas to train the template compiler on what to expect
+	// TODO: Add support for interface{}s
 	user := User{62, buildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", "", "", "", "", 0, 0, "0.0.0.0.0", 0}
-	// TO-DO: Do a more accurate level calculation for this?
+	// TODO: Do a more accurate level calculation for this?
 	user2 := User{1, buildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", "", "", "", "", 58, 1000, "127.0.0.1", 0}
 	user3 := User{2, buildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", "", "", "", "", 42, 900, "::1", 0}
 	headerVars := &HeaderVars{
 		Site:        site,
+		Settings:    settingBox.Load().(SettingBox),
+		Themes:      themes,
+		ThemeName:   defaultThemeBox.Load().(string),
 		NoticeList:  []string{"test"},
 		Stylesheets: []string{"panel"},
 		Scripts:     []string{"whatever"},
@@ -97,66 +110,64 @@ func compileTemplates() error {
 	var replyList []Reply
 	replyList = append(replyList, Reply{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", config.DefaultGroup, "", 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
-	var varList map[string]VarItem = make(map[string]VarItem)
+	var varList = make(map[string]VarItem)
 	tpage := TopicPage{"Title", user, headerVars, replyList, topic, 1, 1}
-	topic_id_tmpl, err := c.compileTemplate("topic.html", "templates/", "TopicPage", tpage, varList)
+	topicIDTmpl, err := c.compileTemplate("topic.html", "templates/", "TopicPage", tpage, varList)
 	if err != nil {
 		return err
 	}
-	topic_id_alt_tmpl, err := c.compileTemplate("topic_alt.html", "templates/", "TopicPage", tpage, varList)
+	topicIDAltTmpl, err := c.compileTemplate("topic_alt.html", "templates/", "TopicPage", tpage, varList)
 	if err != nil {
 		return err
 	}
 
 	varList = make(map[string]VarItem)
 	ppage := ProfilePage{"User 526", user, headerVars, replyList, user}
-	profile_tmpl, err := c.compileTemplate("profile.html", "templates/", "ProfilePage", ppage, varList)
+	profileTmpl, err := c.compileTemplate("profile.html", "templates/", "ProfilePage", ppage, varList)
 	if err != nil {
 		return err
 	}
 
 	var forumList []Forum
-	forums, err := fstore.GetAll()
+	forums, err := fstore.GetAllVisible()
 	if err != nil {
 		return err
 	}
 
 	for _, forum := range forums {
-		if forum.Active {
-			forumList = append(forumList, *forum)
-		}
+		forumList = append(forumList, *forum)
 	}
 	varList = make(map[string]VarItem)
-	forums_page := ForumsPage{"Forum List", user, headerVars, forumList}
-	forums_tmpl, err := c.compileTemplate("forums.html", "templates/", "ForumsPage", forums_page, varList)
+	forumsPage := ForumsPage{"Forum List", user, headerVars, forumList}
+	forumsTmpl, err := c.compileTemplate("forums.html", "templates/", "ForumsPage", forumsPage, varList)
 	if err != nil {
 		return err
 	}
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, "Date", "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
-	topics_page := TopicsPage{"Topic List", user, headerVars, topicsList}
-	topics_tmpl, err := c.compileTemplate("topics.html", "templates/", "TopicsPage", topics_page, varList)
+	topicsPage := TopicsPage{"Topic List", user, headerVars, topicsList}
+	topicsTmpl, err := c.compileTemplate("topics.html", "templates/", "TopicsPage", topicsPage, varList)
 	if err != nil {
 		return err
 	}
 
 	//var topicList []TopicUser
 	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
-	forum_item := Forum{1, "general", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0, "", "", 0, "", 0, ""}
-	forum_page := ForumPage{"General Forum", user, headerVars, topicsList, forum_item, 1, 1}
-	forum_tmpl, err := c.compileTemplate("forum.html", "templates/", "ForumPage", forum_page, varList)
+	forumItem := Forum{1, "general", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0, "", "", 0, "", 0, ""}
+	forumPage := ForumPage{"General Forum", user, headerVars, topicsList, forumItem, 1, 1}
+	forumTmpl, err := c.compileTemplate("forum.html", "templates/", "ForumPage", forumPage, varList)
 	if err != nil {
 		return err
 	}
 
 	log.Print("Writing the templates")
-	go writeTemplate("topic", topic_id_tmpl)
-	go writeTemplate("topic_alt", topic_id_alt_tmpl)
-	go writeTemplate("profile", profile_tmpl)
-	go writeTemplate("forums", forums_tmpl)
-	go writeTemplate("topics", topics_tmpl)
-	go writeTemplate("forum", forum_tmpl)
+	go writeTemplate("topic", topicIDTmpl)
+	go writeTemplate("topic_alt", topicIDAltTmpl)
+	go writeTemplate("profile", profileTmpl)
+	go writeTemplate("forums", forumsTmpl)
+	go writeTemplate("topics", topicsTmpl)
+	go writeTemplate("forum", forumTmpl)
 	go func() {
 		err := writeFile("./template_list.go", "package main\n\n// nolint\n"+c.FragOut)
 		if err != nil {
@@ -180,66 +191,62 @@ func initTemplates() {
 	}
 	compileTemplates()
 
-	// TO-DO: Add support for 64-bit integers
-	// TO-DO: Add support for floats
+	// TODO: Add support for 64-bit integers
+	// TODO: Add support for floats
 	fmap := make(map[string]interface{})
 	fmap["add"] = func(left interface{}, right interface{}) interface{} {
-		var left_int int
-		var right_int int
+		var leftInt, rightInt int
 		switch left := left.(type) {
 		case uint, uint8, uint16, int, int32:
-			left_int = left.(int)
+			leftInt = left.(int)
 		}
 		switch right := right.(type) {
 		case uint, uint8, uint16, int, int32:
-			right_int = right.(int)
+			rightInt = right.(int)
 		}
-		return left_int + right_int
+		return leftInt + rightInt
 	}
 
 	fmap["subtract"] = func(left interface{}, right interface{}) interface{} {
-		var left_int int
-		var right_int int
+		var leftInt, rightInt int
 		switch left := left.(type) {
 		case uint, uint8, uint16, int, int32:
-			left_int = left.(int)
+			leftInt = left.(int)
 		}
 		switch right := right.(type) {
 		case uint, uint8, uint16, int, int32:
-			right_int = right.(int)
+			rightInt = right.(int)
 		}
-		return left_int - right_int
+		return leftInt - rightInt
 	}
 
 	fmap["multiply"] = func(left interface{}, right interface{}) interface{} {
-		var left_int int
-		var right_int int
+		var leftInt, rightInt int
 		switch left := left.(type) {
 		case uint, uint8, uint16, int, int32:
-			left_int = left.(int)
+			leftInt = left.(int)
 		}
 		switch right := right.(type) {
 		case uint, uint8, uint16, int, int32:
-			right_int = right.(int)
+			rightInt = right.(int)
 		}
-		return left_int * right_int
+		return leftInt * rightInt
 	}
 
 	fmap["divide"] = func(left interface{}, right interface{}) interface{} {
-		var left_int int
-		var right_int int
+		var leftInt, rightInt int
 		switch left := left.(type) {
 		case uint, uint8, uint16, int, int32:
-			left_int = left.(int)
+			leftInt = left.(int)
 		}
 		switch right := right.(type) {
 		case uint, uint8, uint16, int, int32:
-			right_int = right.(int)
+			rightInt = right.(int)
 		}
-		if left_int == 0 || right_int == 0 {
+		if leftInt == 0 || rightInt == 0 {
 			return 0
 		}
-		return left_int / right_int
+		return leftInt / rightInt
 	}
 
 	// The interpreted templates...

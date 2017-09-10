@@ -39,7 +39,7 @@ type ForumSimple struct {
 	Preset string
 }
 
-func buildForumUrl(slug string, fid int) string {
+func buildForumURL(slug string, fid int) string {
 	if slug == "" {
 		return "/forum/" + strconv.Itoa(fid)
 	}

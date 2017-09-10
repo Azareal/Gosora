@@ -35,10 +35,10 @@ func init() {
 	hvars = &HeaderVars{Site: site}
 }
 
-type HttpsRedirect struct {
+type HTTPSRedirect struct {
 }
 
-func (red *HttpsRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	dest := "https://" + req.Host + req.URL.Path
 	if len(req.URL.RawQuery) > 0 {
 		dest += "?" + req.URL.RawQuery
@@ -54,13 +54,14 @@ func route_static(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+	h := w.Header()
 
 	// Surely, there's a more efficient way of doing this?
-	if t, err := time.Parse(http.TimeFormat, r.Header.Get("If-Modified-Since")); err == nil && file.Info.ModTime().Before(t.Add(1*time.Second)) {
+	t, err := time.Parse(http.TimeFormat, h.Get("If-Modified-Since"))
+	if err == nil && file.Info.ModTime().Before(t.Add(1*time.Second)) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-	h := w.Header()
 	h.Set("Last-Modified", file.FormattedModTime)
 	h.Set("Content-Type", file.Mimetype)
 	//Cache-Control: max-age=31536000
@@ -68,7 +69,7 @@ func route_static(w http.ResponseWriter, r *http.Request) {
 	h.Set("Vary", "Accept-Encoding")
 	//http.ServeContent(w,r,r.URL.Path,file.Info.ModTime(),file)
 	//w.Write(file.Data)
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+	if strings.Contains(h.Get("Accept-Encoding"), "gzip") {
 		h.Set("Content-Encoding", "gzip")
 		h.Set("Content-Length", strconv.FormatInt(file.GzipLength, 10))
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?
@@ -90,9 +91,9 @@ func route_fstatic(w http.ResponseWriter, r *http.Request){
 	http.ServeFile(w,r,r.URL.Path)
 }*/
 
-// TO-DO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
-// TO-DO: Add a sitemap
-// TO-DO: Add an API so that plugins can register disallowed areas. E.g. /groups/join for plugin_socialgroups
+// TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
+// TODO: Add a sitemap
+// TODO: Add an API so that plugins can register disallowed areas. E.g. /groups/join for plugin_socialgroups
 func route_robots_txt(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(`User-agent: *
 Disallow: /panel/
@@ -148,7 +149,7 @@ func route_custom_page(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-// TO-DO: Paginate this
+// TODO: Paginate this
 func route_topics(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := SessionCheck(w, r, &user)
 	if !ok {
@@ -232,7 +233,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User) {
 		i++
 	}
 
-	// TO-DO: What if a user is deleted via the Control Panel?
+	// TODO: What if a user is deleted via the Control Panel?
 	userList, err := users.BulkCascadeGetMap(idSlice)
 	if err != nil {
 		InternalError(err, w)
@@ -240,7 +241,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Second pass to the add the user data
-	// TO-DO: Use a pointer to TopicsRow instead of TopicsRow itself?
+	// TODO: Use a pointer to TopicsRow instead of TopicsRow itself?
 	for _, topicItem := range topicList {
 		topicItem.Creator = userList[topicItem.CreatedBy]
 		topicItem.LastUser = userList[topicItem.LastReplyBy]
@@ -279,7 +280,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 		return
 	}
 
-	// TO-DO: Fix this double-check
+	// TODO: Fix this double-check
 	forum, err := fstore.CascadeGet(fid)
 	if err == ErrNoRows {
 		NotFound(w, r)
@@ -309,7 +310,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 	}
 	defer rows.Close()
 
-	// TO-DO: Use something other than TopicsRow as we don't need to store the forum name and link on each and every topic item?
+	// TODO: Use something other than TopicsRow as we don't need to store the forum name and link on each and every topic item?
 	var topicList []*TopicsRow
 	var reqUserList = make(map[int]bool)
 	for rows.Next() {
@@ -347,7 +348,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 		i++
 	}
 
-	// TO-DO: What if a user is deleted via the Control Panel?
+	// TODO: What if a user is deleted via the Control Panel?
 	userList, err := users.BulkCascadeGetMap(idSlice)
 	if err != nil {
 		InternalError(err, w)
@@ -355,7 +356,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 	}
 
 	// Second pass to the add the user data
-	// TO-DO: Use a pointer to TopicsRow instead of TopicsRow itself?
+	// TODO: Use a pointer to TopicsRow instead of TopicsRow itself?
 	for _, topicItem := range topicList {
 		topicItem.Creator = userList[topicItem.CreatedBy]
 		topicItem.LastUser = userList[topicItem.LastReplyBy]
@@ -381,7 +382,7 @@ func route_forums(w http.ResponseWriter, r *http.Request, user User) {
 	var forumList []Forum
 	var canSee []int
 	if user.IsSuperAdmin {
-		canSee, err = fstore.GetAllIDs()
+		canSee, err = fstore.GetAllVisibleIDs()
 		if err != nil {
 			InternalError(err, w)
 			return
@@ -396,7 +397,7 @@ func route_forums(w http.ResponseWriter, r *http.Request, user User) {
 	for _, fid := range canSee {
 		//log.Print(forums[fid])
 		var forum = *fstore.DirtyGet(fid)
-		if forum.Active && forum.Name != "" && forum.ParentID == 0 {
+		if forum.ParentID == 0 {
 			if forum.LastTopicID != 0 {
 				forum.LastTopicTime, err = relativeTime(forum.LastTopicTime)
 				if err != nil {
@@ -582,7 +583,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User) {
 		}
 		replyItem.Liked = false
 
-		// TO-DO: Rename this to topic_rrow_assign
+		// TODO: Rename this to topic_rrow_assign
 		if hooks["rrow_assign"] != nil {
 			runHook("rrow_assign", &replyItem)
 		}
@@ -682,7 +683,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User) {
 		replyLiked := false
 		replyLikeCount := 0
 
-		// TO-DO: Add a hook here
+		// TODO: Add a hook here
 
 		replyList = append(replyList, Reply{rid, puser.ID, replyContent, parseMessage(replyContent), replyCreatedBy, buildProfileURL(nameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
 	}
@@ -731,10 +732,11 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid 
 		runVhook("topic_create_pre_loop", w, r, fid, &headerVars, &user, &strictmode)
 	}
 
+	// TODO: Re-add support for plugin_socialgroups
 	var forumList []Forum
 	var canSee []int
 	if user.IsSuperAdmin {
-		canSee, err = fstore.GetAllIDs()
+		canSee, err = fstore.GetAllVisibleIDs()
 		if err != nil {
 			InternalError(err, w)
 			return
@@ -744,25 +746,23 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid 
 		canSee = group.CanSee
 	}
 
-	// TO-DO: plugin_superadmin needs to be able to override this loop. Skip flag on topic_create_pre_loop?
+	// TODO: plugin_superadmin needs to be able to override this loop. Skip flag on topic_create_pre_loop?
 	for _, ffid := range canSee {
-		// TO-DO: Surely, there's a better way of doing this. I've added it in for now to support plugin_socialgroups, but we really need to clean this up
+		// TODO: Surely, there's a better way of doing this. I've added it in for now to support plugin_socialgroups, but we really need to clean this up
 		if strictmode && ffid != fid {
 			continue
 		}
 
 		// Do a bulk forum fetch, just in case it's the SqlForumStore?
 		forum := fstore.DirtyGet(ffid)
-		if forum.Active && forum.Name != "" {
-			fcopy := *forum
-			if hooks["topic_create_frow_assign"] != nil {
-				// TO-DO: Add the skip feature to all the other row based hooks?
-				if runHook("topic_create_frow_assign", &fcopy).(bool) {
-					continue
-				}
+		fcopy := *forum
+		if hooks["topic_create_frow_assign"] != nil {
+			// TODO: Add the skip feature to all the other row based hooks?
+			if runHook("topic_create_frow_assign", &fcopy).(bool) {
+				continue
 			}
-			forumList = append(forumList, fcopy)
 		}
+		forumList = append(forumList, fcopy)
 	}
 
 	ctpage := CreateTopicPage{"Create Topic", user, headerVars, forumList, fid}
@@ -789,7 +789,7 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, fid)
 	if !ok {
 		return
@@ -799,7 +799,7 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	topic_name := html.EscapeString(r.PostFormValue("topic-name"))
+	topicName := html.EscapeString(r.PostFormValue("topic-name"))
 	content := html.EscapeString(preparseMessage(r.PostFormValue("topic-content")))
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -808,7 +808,7 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 	}
 
 	wcount := wordCount(content)
-	res, err := create_topic_stmt.Exec(fid, topic_name, content, parseMessage(content), user.ID, ipaddress, wcount, user.ID)
+	res, err := create_topic_stmt.Exec(fid, topicName, content, parseMessage(content), user.ID, ipaddress, wcount, user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -832,13 +832,13 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 	}
 
 	http.Redirect(w, r, "/topic/"+strconv.FormatInt(lastID, 10), http.StatusSeeOther)
-	err = increase_post_user_stats(wcount, user.ID, true, user)
+	err = user.increasePostStats(wcount, true)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	err = fstore.UpdateLastTopic(topic_name, int(lastID), user.Name, user.ID, time.Now().Format("2006-01-02 15:04:05"), fid)
+	err = fstore.UpdateLastTopic(topicName, int(lastID), user.Name, user.ID, time.Now().Format("2006-01-02 15:04:05"), fid)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 	}
@@ -865,7 +865,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
@@ -933,7 +933,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
-	err = increase_post_user_stats(wcount, user.ID, false, user)
+	err = user.increasePostStats(wcount, false)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -962,7 +962,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
@@ -1073,7 +1073,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) 
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, fid)
 	if !ok {
 		return
@@ -1171,8 +1171,8 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request, user Use
 		return
 	}
 
-	var user_name string
-	err = get_user_name_stmt.QueryRow(uid).Scan(&user_name)
+	var userName string
+	err = get_user_name_stmt.QueryRow(uid).Scan(&userName)
 	if err == ErrNoRows {
 		LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
 		return
@@ -1184,7 +1184,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request, user Use
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
 }
 
-func route_report_submit(w http.ResponseWriter, r *http.Request, user User, sitem_id string) {
+func route_report_submit(w http.ResponseWriter, r *http.Request, user User, sitemID string) {
 	if !user.Loggedin {
 		LoginRequired(w, r, user)
 		return
@@ -1204,18 +1204,18 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 		return
 	}
 
-	item_id, err := strconv.Atoi(sitem_id)
+	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
 		LocalError("Bad ID", w, r, user)
 		return
 	}
 
-	item_type := r.FormValue("type")
+	itemType := r.FormValue("type")
 
-	var fid int = 1
+	var fid = 1
 	var title, content string
-	if item_type == "reply" {
-		reply, err := getReply(item_id)
+	if itemType == "reply" {
+		reply, err := getReply(itemID)
 		if err == ErrNoRows {
 			LocalError("We were unable to find the reported post", w, r, user)
 			return
@@ -1234,9 +1234,9 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 		}
 
 		title = "Reply: " + topic.Title
-		content = reply.Content + "\n\nOriginal Post: #rid-" + strconv.Itoa(item_id)
-	} else if item_type == "user-reply" {
-		userReply, err := getUserReply(item_id)
+		content = reply.Content + "\n\nOriginal Post: #rid-" + strconv.Itoa(itemID)
+	} else if itemType == "user-reply" {
+		userReply, err := getUserReply(itemID)
 		if err == ErrNoRows {
 			LocalError("We weren't able to find the reported post", w, r, user)
 			return
@@ -1255,8 +1255,8 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 		}
 		title = "Profile: " + title
 		content = userReply.Content + "\n\nOriginal Post: @" + strconv.Itoa(userReply.ParentID)
-	} else if item_type == "topic" {
-		err = get_topic_basic_stmt.QueryRow(item_id).Scan(&title, &content)
+	} else if itemType == "topic" {
+		err = get_topic_basic_stmt.QueryRow(itemID).Scan(&title, &content)
 		if err == ErrNoRows {
 			NotFound(w, r)
 			return
@@ -1265,10 +1265,10 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 			return
 		}
 		title = "Topic: " + title
-		content = content + "\n\nOriginal Post: #tid-" + strconv.Itoa(item_id)
+		content = content + "\n\nOriginal Post: #tid-" + strconv.Itoa(itemID)
 	} else {
 		if vhooks["report_preassign"] != nil {
-			runVhookNoreturn("report_preassign", &item_id, &item_type)
+			runVhookNoreturn("report_preassign", &itemID, &itemType)
 			return
 		}
 		// Don't try to guess the type
@@ -1277,7 +1277,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 	}
 
 	var count int
-	rows, err := report_exists_stmt.Query(item_type + "_" + strconv.Itoa(item_id))
+	rows, err := report_exists_stmt.Query(itemType + "_" + strconv.Itoa(itemID))
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -1295,7 +1295,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 		return
 	}
 
-	res, err := create_report_stmt.Exec(title, content, parseMessage(content), user.ID, item_type+"_"+strconv.Itoa(item_id))
+	res, err := create_report_stmt.Exec(title, content, parseMessage(content), user.ID, itemType+"_"+strconv.Itoa(itemID))
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1546,14 +1546,15 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	new_username := html.EscapeString(r.PostFormValue("account-new-username"))
-	_, err = set_username_stmt.Exec(new_username, strconv.Itoa(user.ID))
+	newUsername := html.EscapeString(r.PostFormValue("account-new-username"))
+	_, err = set_username_stmt.Exec(newUsername, strconv.Itoa(user.ID))
 	if err != nil {
 		LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)
 		return
 	}
 
-	user.Name = new_username
+	// TODO: Use the reloaded data instead for the name?
+	user.Name = newUsername
 	err = users.Load(user.ID)
 	if err != nil {
 		LocalError("Your account doesn't exist!", w, r, user)
@@ -1704,6 +1705,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 	templates.ExecuteTemplate(w, "account-own-edit-email.html", pi)
 }
 
+// TODO: Move this into member_routes.go
 func route_logout(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Loggedin {
 		LocalError("You can't logout without logging in first.", w, r, user)
@@ -1731,9 +1733,9 @@ func route_login(w http.ResponseWriter, r *http.Request, user User) {
 	templates.ExecuteTemplate(w, "login.html", pi)
 }
 
-// TO-DO: Log failed attempted logins?
-// TO-DO: Lock IPS out if they have too many failed attempts?
-// TO-DO: Log unusual countries in comparison to the country a user usually logs in from? Alert the user about this?
+// TODO: Log failed attempted logins?
+// TODO: Lock IPS out if they have too many failed attempts?
+// TODO: Log unusual countries in comparison to the country a user usually logs in from? Alert the user about this?
 func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
 	if user.Loggedin {
 		LocalError("You're already logged in.", w, r, user)
@@ -1842,11 +1844,11 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	confirm_password := r.PostFormValue("confirm_password")
-	log.Print("Registration Attempt! Username: " + username)
+	confirmPassword := r.PostFormValue("confirm_password")
+	log.Print("Registration Attempt! Username: " + username) // TODO: Add controls over what is logged when?
 
 	// Do the two inputted passwords match..?
-	if password != confirm_password {
+	if password != confirmPassword {
 		LocalError("The two passwords don't match.", w, r, user)
 		return
 	}
@@ -1898,8 +1900,48 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// TO-DO: We don't need support XML here to support sitemaps, we could handle those elsewhere
-var phrase_login_alerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
+// TODO: Set the cookie domain
+func route_change_theme(w http.ResponseWriter, r *http.Request, user User) {
+	//headerLite, _ := SimpleSessionCheck(w, r, &user)
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form", w, r)
+		return
+	}
+
+	// TODO: Rename isJs to something else, just in case we rewrite the JS side in WebAssembly?
+	isJs := (r.PostFormValue("isJs") == "1")
+
+	newTheme := html.EscapeString(r.PostFormValue("newTheme"))
+
+	theme, ok := themes[newTheme]
+	if !ok || theme.HideFromThemes {
+		log.Print("Bad Theme: ", newTheme)
+		LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
+		return
+	}
+
+	// TODO: Store the current theme in the user's account?
+	/*if user.Loggedin {
+		_, err = change_theme_stmt.Exec(newTheme, user.ID)
+		if err != nil {
+			InternalError(err, w)
+			return
+		}
+	}*/
+
+	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: year}
+	http.SetCookie(w, &cookie)
+
+	if !isJs {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
+	}
+}
+
+// TODO: We don't need support XML here to support sitemaps, we could handle those elsewhere
+var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
 
 func route_api(w http.ResponseWriter, r *http.Request, user User) {
 	w.Header().Set("Content-Type", "application/json")
@@ -1931,7 +1973,7 @@ func route_api(w http.ResponseWriter, r *http.Request, user User) {
 		}
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {
-			w.Write(phrase_login_alerts)
+			w.Write(phraseLoginAlerts)
 			return
 		}
 

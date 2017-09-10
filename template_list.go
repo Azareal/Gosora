@@ -245,11 +245,27 @@ var topic_91 = []byte(`
 </main>
 
 `)
-var footer_0 = []byte(`					</div>
+var footer_0 = []byte(`<div class="footer">
+	<div id="poweredBy" style="float: left;margin-top: 4px;">Powered by Gosora - <span style="font-size: 12px;">Made with love by Azareal</span></div>
+	<form action="/theme/" method="post">
+		<div id="themeSelector" style="float: right;">
+			<select id="themeSelectorSelect" name="themeSelector" aria-label="Change the site's appearance">
 				`)
-var footer_1 = []byte(`<aside class="sidebar">`)
-var footer_2 = []byte(`</aside>`)
-var footer_3 = []byte(`
+var footer_1 = []byte(`<option val="`)
+var footer_2 = []byte(`"`)
+var footer_3 = []byte(` selected`)
+var footer_4 = []byte(`>`)
+var footer_5 = []byte(`</option>`)
+var footer_6 = []byte(`
+			</select>
+		</div>
+	</form>
+</div>
+					</div>
+				`)
+var footer_7 = []byte(`<aside class="sidebar">`)
+var footer_8 = []byte(`</aside>`)
+var footer_9 = []byte(`
 				<div style="clear: both;"></div>
 			</div>
 		</div>
@@ -471,7 +487,7 @@ var profile_14 = []byte(`&type=user" class="profile_menu_item report_item">Repor
 <div id="profile_right_lane" class="colstack_right">
 	`)
 var profile_15 = []byte(`
-	<!-- TO-DO: Inline the display: none; CSS -->
+	<!-- TODO: Inline the display: none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
 			<div class="rowitem"><h1>Ban User</h1></div>
 	</div>
@@ -675,23 +691,26 @@ var topics_19 = []byte(`<span class="rowsmall topic_status_e topic_status_sticky
 var topics_20 = []byte(`
 		</span>
 	</div>
-	<div class="rowitem topic_right passive datarow" style="`)
-var topics_21 = []byte(`background-image: url(`)
-var topics_22 = []byte(`);background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;`)
-var topics_23 = []byte(`">
+	<div class="rowitem topic_right passive datarow `)
+var topics_21 = []byte(`topic_sticky`)
+var topics_22 = []byte(`topic_closed`)
+var topics_23 = []byte(`" style="`)
+var topics_24 = []byte(`background-image: url(`)
+var topics_25 = []byte(`);background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;`)
+var topics_26 = []byte(`">
 		<span>
 			<a href="`)
-var topics_24 = []byte(`" class="lastName" style="font-size: 14px;">`)
-var topics_25 = []byte(`</a><br>
+var topics_27 = []byte(`" class="lastName" style="font-size: 14px;">`)
+var topics_28 = []byte(`</a><br>
 			<span class="rowsmall lastReplyAt">Last: `)
-var topics_26 = []byte(`</span>
+var topics_29 = []byte(`</span>
 		</span>
 	</div>
 	`)
-var topics_27 = []byte(`<div class="rowitem passive">There aren't any topics yet.`)
-var topics_28 = []byte(` <a href="/topics/create/">Start one?</a>`)
-var topics_29 = []byte(`</div>`)
-var topics_30 = []byte(`
+var topics_30 = []byte(`<div class="rowitem passive">There aren't any topics yet.`)
+var topics_31 = []byte(` <a href="/topics/create/">Start one?</a>`)
+var topics_32 = []byte(`</div>`)
+var topics_33 = []byte(`
 </div>
 
 </main>

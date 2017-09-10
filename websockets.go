@@ -61,7 +61,7 @@ func (hub *WS_Hub) broadcastMessage(msg string) error {
 		if err != nil {
 			return err
 		}
-		w.Write([]byte(msg))
+		_, _ = w.Write([]byte(msg))
 	}
 	hub.users.RUnlock()
 	return nil
@@ -85,8 +85,8 @@ func (hub *WS_Hub) pushMessage(targetUser int, msg string) error {
 	return nil
 }
 
-func (hub *WS_Hub) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUser_id int, elementID int) error {
-	//log.Print("In push_alert")
+func (hub *WS_Hub) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
+	//log.Print("In pushAlert")
 	hub.users.RLock()
 	wsUser, ok := hub.onlineUsers[targetUser]
 	hub.users.RUnlock()
@@ -95,7 +95,7 @@ func (hub *WS_Hub) pushAlert(targetUser int, asid int, event string, elementType
 	}
 
 	//log.Print("Building alert")
-	alert, err := buildAlert(asid, event, elementType, actorID, targetUser_id, elementID, *wsUser.User)
+	alert, err := buildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (hub *WS_Hub) pushAlert(targetUser int, asid int, event string, elementType
 	}
 
 	w.Write([]byte(alert))
-	w.Close()
+	_ = w.Close()
 	return nil
 }
 
@@ -270,45 +270,45 @@ var adminStatsMutex sync.RWMutex
 func adminStatsTicker() {
 	time.Sleep(time.Second)
 
-	var last_uonline int = -1
-	var last_gonline int = -1
-	var last_totonline int = -1
-	var last_cpu_perc int = -1
-	var last_available_ram int64 = -1
-	var no_stat_updates bool = false
-	var no_ram_updates bool = false
+	var lastUonline = -1
+	var lastGonline = -1
+	var lastTotonline = -1
+	var lastCPUPerc = -1
+	var lastAvailableRAM int64 = -1
+	var noStatUpdates bool
+	var noRAMUpdates bool
 
 	var onlineColour, onlineGuestsColour, onlineUsersColour, cpustr, cpuColour, ramstr, ramColour string
 	var cpuerr, ramerr error
 	var memres *mem.VirtualMemoryStat
-	var cpu_perc []float64
+	var cpuPerc []float64
 
 	var totunit, uunit, gunit string
 
 AdminStatLoop:
 	for {
 		adminStatsMutex.RLock()
-		watch_count := len(adminStatsWatchers)
+		watchCount := len(adminStatsWatchers)
 		adminStatsMutex.RUnlock()
-		if watch_count == 0 {
+		if watchCount == 0 {
 			break AdminStatLoop
 		}
 
-		cpu_perc, cpuerr = cpu.Percent(time.Duration(time.Second), true)
+		cpuPerc, cpuerr = cpu.Percent(time.Second, true)
 		memres, ramerr = mem.VirtualMemory()
 		uonline := wsHub.userCount()
 		gonline := wsHub.guestCount()
 		totonline := uonline + gonline
 
 		// It's far more likely that the CPU Usage will change than the other stats, so we'll optimise them seperately...
-		no_stat_updates = (uonline == last_uonline && gonline == last_gonline && totonline == last_totonline)
-		no_ram_updates = (last_available_ram == int64(memres.Available))
-		if int(cpu_perc[0]) == last_cpu_perc && no_stat_updates && no_ram_updates {
+		noStatUpdates = (uonline == lastUonline && gonline == lastGonline && totonline == lastTotonline)
+		noRAMUpdates = (lastAvailableRAM == int64(memres.Available))
+		if int(cpuPerc[0]) == lastCPUPerc && noStatUpdates && noRAMUpdates {
 			time.Sleep(time.Second)
 			continue
 		}
 
-		if !no_stat_updates {
+		if !noStatUpdates {
 			if totonline > 10 {
 				onlineColour = "stat_green"
 			} else if totonline > 3 {
@@ -341,7 +341,7 @@ AdminStatLoop:
 		if cpuerr != nil {
 			cpustr = "Unknown"
 		} else {
-			calcperc := int(cpu_perc[0]) / runtime.NumCPU()
+			calcperc := int(cpuPerc[0]) / runtime.NumCPU()
 			cpustr = strconv.Itoa(calcperc)
 			if calcperc < 30 {
 				cpuColour = "stat_green"
@@ -352,26 +352,26 @@ AdminStatLoop:
 			}
 		}
 
-		if !no_ram_updates {
+		if !noRAMUpdates {
 			if ramerr != nil {
 				ramstr = "Unknown"
 			} else {
-				total_count, total_unit := convertByteUnit(float64(memres.Total))
-				used_count := convertByteInUnit(float64(memres.Total-memres.Available), total_unit)
+				totalCount, totalUnit := convertByteUnit(float64(memres.Total))
+				usedCount := convertByteInUnit(float64(memres.Total-memres.Available), totalUnit)
 
 				// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
 				var totstr string
-				if (total_count - float64(int(total_count))) > 0.85 {
-					used_count += 1.0 - (total_count - float64(int(total_count)))
-					totstr = strconv.Itoa(int(total_count) + 1)
+				if (totalCount - float64(int(totalCount))) > 0.85 {
+					usedCount += 1.0 - (totalCount - float64(int(totalCount)))
+					totstr = strconv.Itoa(int(totalCount) + 1)
 				} else {
-					totstr = fmt.Sprintf("%.1f", total_count)
+					totstr = fmt.Sprintf("%.1f", totalCount)
 				}
 
-				if used_count > total_count {
-					used_count = total_count
+				if usedCount > totalCount {
+					usedCount = totalCount
 				}
-				ramstr = fmt.Sprintf("%.1f", used_count) + " / " + totstr + total_unit
+				ramstr = fmt.Sprintf("%.1f", usedCount) + " / " + totstr + totalUnit
 
 				ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
 				if ramperc < 50 {
@@ -388,7 +388,7 @@ AdminStatLoop:
 		watchers := adminStatsWatchers
 		adminStatsMutex.RUnlock()
 
-		for watcher, _ := range watchers {
+		for watcher := range watchers {
 			w, err := watcher.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				//log.Print(err.Error())
@@ -398,7 +398,8 @@ AdminStatLoop:
 				continue
 			}
 
-			if !no_stat_updates {
+			// nolint
+			if !noStatUpdates {
 				w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + totunit + " online\r"))
 				w.Write([]byte("set #dash-gonline " + strconv.Itoa(gonline) + gunit + " guests online\r"))
 				w.Write([]byte("set #dash-uonline " + strconv.Itoa(uonline) + uunit + " users online\r"))
@@ -411,7 +412,7 @@ AdminStatLoop:
 			w.Write([]byte("set #dash-cpu CPU: " + cpustr + "%\r"))
 			w.Write([]byte("set-class #dash-cpu grid_item grid_istat " + cpuColour + "\r"))
 
-			if !no_ram_updates {
+			if !noRAMUpdates {
 				w.Write([]byte("set #dash-ram RAM: " + ramstr + "\r"))
 				w.Write([]byte("set-class #dash-ram grid_item grid_istat " + ramColour + "\r"))
 			}
@@ -419,11 +420,11 @@ AdminStatLoop:
 			w.Close()
 		}
 
-		last_uonline = uonline
-		last_gonline = gonline
-		last_totonline = totonline
-		last_cpu_perc = int(cpu_perc[0])
-		last_available_ram = int64(memres.Available)
+		lastUonline = uonline
+		lastGonline = gonline
+		lastTotonline = totonline
+		lastCPUPerc = int(cpuPerc[0])
+		lastAvailableRAM = int64(memres.Available)
 
 		//time.Sleep(time.Second)
 	}

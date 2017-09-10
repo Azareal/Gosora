@@ -30,6 +30,7 @@ func routes() {
 	addRoute("route_forum", "/forum/", "", "extra_data")
 	//addRoute("route_topic_create","/topics/create/","","extra_data")
 	//addRoute("route_topics","/topics/",""/*,"&groups","&forums"*/)
+	addRoute("route_change_theme", "/theme/", "")
 
 	addRouteGroup("/report/",
 		Route{"route_report_submit", "/report/submit/", "", []string{"extra_data"}},

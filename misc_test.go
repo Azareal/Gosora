@@ -3,7 +3,7 @@ package main
 import "strconv"
 import "testing"
 
-// TO-DO: Generate a test database to work with rather than a live one
+// TODO: Generate a test database to work with rather than a live one
 func TestUserStore(t *testing.T) {
 	if !gloinited {
 		err := gloinit()
@@ -18,14 +18,14 @@ func TestUserStore(t *testing.T) {
 	var user *User
 	var err error
 
-	user, err = users.CascadeGet(-1)
+	_, err = users.CascadeGet(-1)
 	if err == nil {
 		t.Error("UID #-1 shouldn't exist")
 	} else if err != ErrNoRows {
 		t.Fatal(err)
 	}
 
-	user, err = users.CascadeGet(0)
+	_, err = users.CascadeGet(0)
 	if err == nil {
 		t.Error("UID #0 shouldn't exist")
 	} else if err != ErrNoRows {
@@ -43,7 +43,7 @@ func TestUserStore(t *testing.T) {
 		t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
 	}
 
-	// TO-DO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
+	// TODO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
 	var userList map[int]*User
 	_, err = users.BulkCascadeGetMap([]int{-1})
 	if err == nil {
@@ -90,7 +90,7 @@ func TestForumStore(t *testing.T) {
 	var forum *Forum
 	var err error
 
-	forum, err = fstore.CascadeGet(-1)
+	_, err = fstore.CascadeGet(-1)
 	if err == nil {
 		t.Error("FID #-1 shouldn't exist")
 	} else if err != ErrNoRows {
@@ -131,6 +131,8 @@ func TestForumStore(t *testing.T) {
 	} else if err != nil {
 		t.Fatal(err)
 	}
+
+	_ = forum
 }
 
 func TestSlugs(t *testing.T) {

@@ -3,6 +3,7 @@ package main
 import (
 	//"log"
 	//"fmt"
+	"html"
 	"html/template"
 	"net"
 	"net/http"
@@ -15,9 +16,11 @@ import (
 
 var guestUser = User{ID: 0, Link: "#", Group: 6, Perms: GuestPerms}
 
-var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = _pre_route
+// nolint
+var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = preRoute
 
-// TO-DO: Are these even session checks anymore? We might need to rethink these names
+// TODO: Are these even session checks anymore? We might need to rethink these names
+// nolint We need these types so people can tell what they are without scrolling to the bottom of the file
 var PanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderVars, PanelStats, bool) = _panel_session_check
 var SimplePanelSessionCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, bool) = _simple_panel_session_check
 var SimpleForumSessionCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, success bool) = _simple_forum_session_check
@@ -79,7 +82,7 @@ func (user *User) Unban() error {
 	return users.Load(user.ID)
 }
 
-// TO-DO: Use a transaction to avoid race conditions
+// TODO: Use a transaction to avoid race conditions
 // Make this more stateless?
 func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Duration) error {
 	var temporary bool
@@ -99,7 +102,7 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	return users.Load(user.ID)
 }
 
-// TO-DO: Use a transaction to avoid race conditions
+// TODO: Use a transaction to avoid race conditions
 func (user *User) RevertGroupUpdate() error {
 	_, err := replace_schedule_group_stmt.Exec(user.ID, 0, 0, time.Now(), false)
 	if err != nil {
@@ -117,18 +120,18 @@ func BcryptCheckPassword(realPassword string, password string, salt string) (err
 }
 
 // Investigate. Do we need the extra salt?
-func BcryptGeneratePassword(password string) (hashed_password string, salt string, err error) {
+func BcryptGeneratePassword(password string) (hashedPassword string, salt string, err error) {
 	salt, err = GenerateSafeString(saltLength)
 	if err != nil {
 		return "", "", err
 	}
 
 	password = password + salt
-	hashed_password, err = BcryptGeneratePasswordNoSalt(password)
+	hashedPassword, err = BcryptGeneratePasswordNoSalt(password)
 	if err != nil {
 		return "", "", err
 	}
-	return hashed_password, salt, nil
+	return hashedPassword, salt, nil
 }
 
 func BcryptGeneratePasswordNoSalt(password string) (hash string, err error) {
@@ -149,17 +152,18 @@ func SetPassword(uid int, password string) error {
 }
 
 func SendValidationEmail(username string, email string, token string) bool {
-	var schema string = "http"
+	var schema = "http"
 	if site.EnableSsl {
 		schema += "s"
 	}
 
+	// TODO: Move these to the phrase system
 	subject := "Validate Your Email @ " + site.Name
 	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + site.Url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
 	return SendEmail(email, subject, msg)
 }
 
-// TO-DO: Support for left sidebars and sidebars on both sides
+// TODO: Support for left sidebars and sidebars on both sides
 // http.Request is for context.Context middleware. Mostly for plugin_socialgroups right now
 func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http.Request) {
 	if vhooks["intercept_build_widgets"] != nil {
@@ -168,8 +172,8 @@ func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http
 		}
 	}
 
-	//log.Print("themes[defaultTheme].Sidebars",themes[defaultTheme].Sidebars)
-	if themes[defaultTheme].Sidebars == "right" {
+	//log.Print("themes[headerVars.ThemeName].Sidebars",themes[headerVars.ThemeName].Sidebars)
+	if themes[headerVars.ThemeName].Sidebars == "right" {
 		if len(docks.RightSidebar) != 0 {
 			var sbody string
 			for _, widget := range docks.RightSidebar {
@@ -258,13 +262,26 @@ func _forum_session_check(w http.ResponseWriter, r *http.Request, user *User, fi
 }
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
+// TODO: Do a panel specific theme?
 func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, stats PanelStats, success bool) {
+	var themeName = defaultThemeBox.Load().(string)
+
+	cookie, err := r.Cookie("current_theme")
+	if err == nil {
+		cookie := html.EscapeString(cookie.Value)
+		theme, ok := themes[cookie]
+		if ok && !theme.HideFromThemes {
+			themeName = cookie
+		}
+	}
+
 	headerVars = &HeaderVars{
 		Site:      site,
 		Settings:  settingBox.Load().(SettingBox),
-		ThemeName: defaultTheme, // TO-DO: Is this racey?
+		Themes:    themes,
+		ThemeName: themeName,
 	}
-	// TO-DO: We should probably initialise headerVars.ExtData
+	// TODO: We should probably initialise headerVars.ExtData
 
 	if !user.IsSuperMod {
 		NoPermissions(w, r, *user)
@@ -272,8 +289,8 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 	}
 
 	headerVars.Stylesheets = append(headerVars.Stylesheets, headerVars.ThemeName+"/panel.css")
-	if len(themes[defaultTheme].Resources) != 0 {
-		rlist := themes[defaultTheme].Resources
+	if len(themes[headerVars.ThemeName].Resources) != 0 {
+		rlist := themes[headerVars.ThemeName].Resources
 		for _, resource := range rlist {
 			if resource.Location == "global" || resource.Location == "panel" {
 				halves := strings.Split(resource.Name, ".")
@@ -289,18 +306,18 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 		}
 	}
 
-	err := group_count_stmt.QueryRow().Scan(&stats.Groups)
+	err = group_count_stmt.QueryRow().Scan(&stats.Groups)
 	if err != nil {
 		InternalError(err, w)
 		return headerVars, stats, false
 	}
 
 	stats.Users = users.GetGlobalCount()
-	stats.Forums = fstore.GetGlobalCount() // TO-DO: Stop it from showing the blanked forums
+	stats.Forums = fstore.GetGlobalCount() // TODO: Stop it from showing the blanked forums
 	stats.Settings = len(headerVars.Settings)
 	stats.WordFilters = len(wordFilterBox.Load().(WordFilterBox))
 	stats.Themes = len(themes)
-	stats.Reports = 0 // TO-DO: Do the report count. Only show open threads?
+	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
 
 	pusher, ok := w.(http.Pusher)
 	if ok {
@@ -308,9 +325,9 @@ func _panel_session_check(w http.ResponseWriter, r *http.Request, user *User) (h
 		pusher.Push("/static/"+headerVars.ThemeName+"/panel.css", nil)
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
-		// TO-DO: Push the theme CSS files
-		// TO-DO: Push the theme scripts
-		// TO-DO: Push avatars?
+		// TODO: Push the theme CSS files
+		// TODO: Push the theme scripts
+		// TODO: Push avatars?
 	}
 
 	return headerVars, stats, true
@@ -337,19 +354,32 @@ func _simple_session_check(w http.ResponseWriter, r *http.Request, user *User) (
 	return headerLite, true
 }
 
+// TODO: Add the ability for admins to restrict certain themes to certain groups?
 func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) {
+	var themeName = defaultThemeBox.Load().(string)
+
+	cookie, err := r.Cookie("current_theme")
+	if err == nil {
+		cookie := html.EscapeString(cookie.Value)
+		theme, ok := themes[cookie]
+		if ok && !theme.HideFromThemes {
+			themeName = cookie
+		}
+	}
+
 	headerVars = &HeaderVars{
 		Site:      site,
 		Settings:  settingBox.Load().(SettingBox),
-		ThemeName: defaultTheme, // TO-DO: Is this racey?
+		Themes:    themes,
+		ThemeName: themeName,
 	}
 
 	if user.IsBanned {
 		headerVars.NoticeList = append(headerVars.NoticeList, "Your account has been suspended. Some of your permissions may have been revoked.")
 	}
 
-	if len(themes[defaultTheme].Resources) != 0 {
-		rlist := themes[defaultTheme].Resources
+	if len(themes[headerVars.ThemeName].Resources) != 0 {
+		rlist := themes[headerVars.ThemeName].Resources
 		for _, resource := range rlist {
 			if resource.Location == "global" || resource.Location == "frontend" {
 				halves := strings.Split(resource.Name, ".")
@@ -370,15 +400,15 @@ func _session_check(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		pusher.Push("/static/"+headerVars.ThemeName+"/main.css", nil)
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
-		// TO-DO: Push the theme CSS files
-		// TO-DO: Push the theme scripts
-		// TO-DO: Push avatars?
+		// TODO: Push the theme CSS files
+		// TODO: Push the theme scripts
+		// TODO: Push avatars?
 	}
 
 	return headerVars, true
 }
 
-func _pre_route(w http.ResponseWriter, r *http.Request) (User, bool) {
+func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	user, halt := auth.SessionCheck(w, r)
 	if halt {
 		return *user, false
@@ -401,11 +431,14 @@ func _pre_route(w http.ResponseWriter, r *http.Request) (User, bool) {
 		user.LastIP = host
 	}
 
-	// TO-DO: Set the X-Frame-Options header
+	h := w.Header()
+	h.Set("X-Frame-Options", "deny")
+	//h.Set("X-XSS-Protection", "1")
+	// TODO: Set the content policy header
 	return *user, true
 }
 
-func words_to_score(wcount int, topic bool) (score int) {
+func wordsToScore(wcount int, topic bool) (score int) {
 	if topic {
 		score = 2
 	} else {
@@ -421,11 +454,12 @@ func words_to_score(wcount int, topic bool) (score int) {
 	return score
 }
 
-func increase_post_user_stats(wcount int, uid int, topic bool, user User) error {
+// TODO: Move this to where the other User methods are
+func (user *User) increasePostStats(wcount int, topic bool) error {
 	var mod int
 	baseScore := 1
 	if topic {
-		_, err := increment_user_topics_stmt.Exec(1, uid)
+		_, err := increment_user_topics_stmt.Exec(1, user.ID)
 		if err != nil {
 			return err
 		}
@@ -434,38 +468,40 @@ func increase_post_user_stats(wcount int, uid int, topic bool, user User) error 
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := increment_user_megaposts_stmt.Exec(1, 1, 1, uid)
+		_, err := increment_user_megaposts_stmt.Exec(1, 1, 1, user.ID)
 		if err != nil {
 			return err
 		}
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := increment_user_bigposts_stmt.Exec(1, 1, uid)
+		_, err := increment_user_bigposts_stmt.Exec(1, 1, user.ID)
 		if err != nil {
 			return err
 		}
 		mod = 1
 	} else {
-		_, err := increment_user_posts_stmt.Exec(1, uid)
+		_, err := increment_user_posts_stmt.Exec(1, user.ID)
 		if err != nil {
 			return err
 		}
 	}
-	_, err := increment_user_score_stmt.Exec(baseScore+mod, uid)
+	_, err := increment_user_score_stmt.Exec(baseScore+mod, user.ID)
 	if err != nil {
 		return err
 	}
 	//log.Print(user.Score + base_score + mod)
 	//log.Print(getLevel(user.Score + base_score + mod))
-	_, err = update_user_level_stmt.Exec(getLevel(user.Score+baseScore+mod), uid)
+	// TODO: Use a transaction to prevent level desyncs?
+	_, err = update_user_level_stmt.Exec(getLevel(user.Score+baseScore+mod), user.ID)
 	return err
 }
 
-func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error {
+// TODO: Move this to where the other User methods are
+func (user *User) decreasePostStats(wcount int, topic bool) error {
 	var mod int
 	baseScore := -1
 	if topic {
-		_, err := increment_user_topics_stmt.Exec(-1, uid)
+		_, err := increment_user_topics_stmt.Exec(-1, user.ID)
 		if err != nil {
 			return err
 		}
@@ -474,28 +510,29 @@ func decrease_post_user_stats(wcount int, uid int, topic bool, user User) error 
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := increment_user_megaposts_stmt.Exec(-1, -1, -1, uid)
+		_, err := increment_user_megaposts_stmt.Exec(-1, -1, -1, user.ID)
 		if err != nil {
 			return err
 		}
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := increment_user_bigposts_stmt.Exec(-1, -1, uid)
+		_, err := increment_user_bigposts_stmt.Exec(-1, -1, user.ID)
 		if err != nil {
 			return err
 		}
 		mod = 1
 	} else {
-		_, err := increment_user_posts_stmt.Exec(-1, uid)
+		_, err := increment_user_posts_stmt.Exec(-1, user.ID)
 		if err != nil {
 			return err
 		}
 	}
-	_, err := increment_user_score_stmt.Exec(baseScore-mod, uid)
+	_, err := increment_user_score_stmt.Exec(baseScore-mod, user.ID)
 	if err != nil {
 		return err
 	}
-	_, err = update_user_level_stmt.Exec(getLevel(user.Score-baseScore-mod), uid)
+	// TODO: Use a transaction to prevent level desyncs?
+	_, err = update_user_level_stmt.Exec(getLevel(user.Score-baseScore-mod), user.ID)
 	return err
 }
 

@@ -82,7 +82,7 @@ func addStaticFile(path string, prefix string) error {
 func compressBytesGzip(in []byte) []byte {
 	var buff bytes.Buffer
 	gz := gzip.NewWriter(&buff)
-	_, _ = gz.Write(in) // TO-DO: What if this errors? What circumstances could it error under? Should we add a second return value?
+	_, _ = gz.Write(in) // TODO: What if this errors? What circumstances could it error under? Should we add a second return value?
 	_ = gz.Close()
 	return buff.Bytes()
 }

@@ -65,9 +65,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if dev.SuperDebug {
 		log.Print("before route_static")
-		log.Print("prefix:", prefix)
-		log.Print("req.URL.Path:", req.URL.Path)
-		log.Print("extra_data:", extra_data)
+		log.Print("prefix: ", prefix)
+		log.Print("req.URL.Path: ", req.URL.Path)
+		log.Print("extra_data: ", extra_data)
+		log.Print("req.Referer(): ", req.Referer())
 	}
 	
 	if prefix == "/static" {
@@ -102,6 +103,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		case "/forum":
 			route_forum(w,req,user,extra_data)
+			return
+		case "/theme":
+			route_change_theme(w,req,user)
 			return
 		case "/report":
 			switch(req.URL.Path) {
@@ -230,7 +234,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
-			// TO-DO: Add support for favicons and robots.txt files
+			// TODO: Add support for favicons and robots.txt files
 			switch(extra_data) {
 				case "robots.txt":
 					route_robots_txt(w,req)

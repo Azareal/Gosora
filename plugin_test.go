@@ -3,7 +3,7 @@ package main
 import "strconv"
 import "testing"
 
-// TO-DO: Replace the soft tabs with hard ones
+// TODO: Replace the soft tabs with hard ones
 // go test -v
 
 type ME_Pair struct {

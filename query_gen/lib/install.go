@@ -14,7 +14,7 @@ type DB_Install_Instruction struct {
 }
 
 // A set of wrappers around the generator methods, so we can use this in the installer
-// TO-DO: Re-implement the query generation, query builder and installer adapters as layers on-top of a query text adapter
+// TODO: Re-implement the query generation, query builder and installer adapters as layers on-top of a query text adapter
 type installer struct {
 	adapter      DB_Adapter
 	instructions []DB_Install_Instruction

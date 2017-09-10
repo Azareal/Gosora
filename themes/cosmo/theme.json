@@ -5,6 +5,7 @@
 	"Creator": "Azareal",
 	"FullImage": "cosmo.png",
 	"MobileFriendly": true,
+	"HideFromThemes": true,
 	"Tag": "🏗️",
 	"URL": "github.com/Azareal/Gosora",
 	"Templates": [

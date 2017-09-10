@@ -15,7 +15,7 @@ var plugins = make(map[string]*Plugin)
 var hooks = map[string][]func(interface{}) interface{}{
 	"forums_frow_assign":       nil,
 	"topic_create_frow_assign": nil,
-	"rrow_assign":              nil, // TO-DO: Rename this hook to topic_rrow_assign
+	"rrow_assign":              nil, // TODO: Rename this hook to topic_rrow_assign
 }
 
 // Hooks with a variable number of arguments

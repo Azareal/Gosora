@@ -13,12 +13,12 @@
 		<span>
 			<a class="rowtopic" href="{{.Link}}">{{.Title}}</a> {{if .ForumName}}<a class="rowsmall" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
 			<br /><a class="rowsmall" href="{{.Creator.Link}}">Starter: {{.Creator.Name}}</a>
-			{{/** TO-DO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
+			{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
 			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>{{end}}
 			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>{{end}}
 		</span>
 	</div>
-	<div class="rowitem topic_right passive datarow" style="{{if .LastUser.Avatar}}background-image: url({{.LastUser.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
+	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}" style="{{if .LastUser.Avatar}}background-image: url({{.LastUser.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
 		<span>
 			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
 			<span class="rowsmall lastReplyAt">Last: {{.LastReplyAt}}</span>

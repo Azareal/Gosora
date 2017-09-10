@@ -26,12 +26,12 @@
 
 <div id="profile_right_lane" class="colstack_right">
 	{{if .CurrentUser.Perms.BanUsers}}
-	<!-- TO-DO: Inline the display: none; CSS -->
+	<!-- TODO: Inline the display: none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
 			<div class="rowitem"><h1>Ban User</h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" method="post"  style="display: none;">
-		{{/** TO-DO: Put a JS duration calculator here instead of this text? **/}}
+		{{/** TODO: Put a JS duration calculator here instead of this text? **/}}
 		<div class="colline">If all the fields are left blank, the ban will be permanent.</div>
 		<div class="colstack_item">
 			<div class="formrow real_first_child">
@@ -100,7 +100,7 @@
 </div>
 
 {{/** Quick subpage switcher **/}}
-{{/** TO-DO: Stop inlining this **/}}
+{{/** TODO: Stop inlining this **/}}
 <script type="text/javascript">
 function handle_profile_hashbit() {
 	var hash_class = ""

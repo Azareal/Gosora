@@ -29,7 +29,7 @@ func (adapter *Pgsql_Adapter) GetStmts() map[string]DB_Stmt {
 	return adapter.Buffer
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 // We may need to change the CreateTable API to better suit PGSQL and the other database drivers which are coming up
 func (adapter *Pgsql_Adapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
 	if name == "" {
@@ -93,7 +93,7 @@ func (adapter *Pgsql_Adapter) CreateTable(name string, table string, charset str
 	return querystr, nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -110,7 +110,7 @@ func (adapter *Pgsql_Adapter) SimpleInsert(name string, table string, columns st
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -127,7 +127,7 @@ func (adapter *Pgsql_Adapter) SimpleReplace(name string, table string, columns s
 	return "", nil
 }
 
-// TO-DO: Implemented, but we need CreateTable and a better installer to *test* it
+// TODO: Implemented, but we need CreateTable and a better installer to *test* it
 func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -144,7 +144,7 @@ func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string
 		for _, token := range item.Expr {
 			switch token.Type {
 			case "function":
-				// TO-DO: Write a more sophisticated function parser on the utils side.
+				// TODO: Write a more sophisticated function parser on the utils side.
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "LOCALTIMESTAMP()"
 				}
@@ -170,7 +170,7 @@ func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function":
-					// TO-DO: Write a more sophisticated function parser on the utils side. What's the situation in regards to case sensitivity?
+					// TODO: Write a more sophisticated function parser on the utils side. What's the situation in regards to case sensitivity?
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "LOCALTIMESTAMP()"
 					}
@@ -194,7 +194,7 @@ func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string
 	return querystr, nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleDelete(name string, table string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -208,7 +208,7 @@ func (adapter *Pgsql_Adapter) SimpleDelete(name string, table string, where stri
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 // We don't want to accidentally wipe tables, so we'll have a seperate method for purging tables instead
 func (adapter *Pgsql_Adapter) Purge(name string, table string) (string, error) {
 	if name == "" {
@@ -220,7 +220,7 @@ func (adapter *Pgsql_Adapter) Purge(name string, table string) (string, error) {
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -234,7 +234,7 @@ func (adapter *Pgsql_Adapter) SimpleSelect(name string, table string, columns st
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -254,7 +254,7 @@ func (adapter *Pgsql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -274,22 +274,22 @@ func (adapter *Pgsql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	return "", nil
 }
 
-// TO-DO: Implement this
+// TODO: Implement this
 func (adapter *Pgsql_Adapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -304,7 +304,7 @@ func (adapter *Pgsql_Adapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {
 		stmt := adapter.Buffer[name]
-		// TO-DO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
+		// TODO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
 		if stmt.Type != "create-table" {
 			stmts += "var " + name + "_stmt *sql.Stmt\n"
 			body += `	

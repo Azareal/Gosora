@@ -43,6 +43,7 @@ var forum_entry_exists_stmt *sql.Stmt
 var group_entry_exists_stmt *sql.Stmt
 var get_forum_topics_offset_stmt *sql.Stmt
 var get_expired_scheduled_groups_stmt *sql.Stmt
+var get_sync_stmt *sql.Stmt
 var get_topic_replies_offset_stmt *sql.Stmt
 var get_topic_list_stmt *sql.Stmt
 var get_topic_user_stmt *sql.Stmt
@@ -96,7 +97,6 @@ var increment_user_bigposts_stmt *sql.Stmt
 var increment_user_megaposts_stmt *sql.Stmt
 var increment_user_topics_stmt *sql.Stmt
 var edit_profile_reply_stmt *sql.Stmt
-var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
@@ -110,6 +110,7 @@ var update_email_stmt *sql.Stmt
 var verify_email_stmt *sql.Stmt
 var set_temp_group_stmt *sql.Stmt
 var update_word_filter_stmt *sql.Stmt
+var bump_sync_stmt *sql.Stmt
 var delete_reply_stmt *sql.Stmt
 var delete_topic_stmt *sql.Stmt
 var delete_profile_reply_stmt *sql.Stmt
@@ -336,6 +337,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing get_expired_scheduled_groups statement.")
 	get_expired_scheduled_groups_stmt, err = db.Prepare("SELECT `uid` FROM `users_groups_scheduler` WHERE UTC_TIMESTAMP() > `revert_at` AND `temporary` = 1")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing get_sync statement.")
+	get_sync_stmt, err = db.Prepare("SELECT `last_update` FROM `sync`")
 	if err != nil {
 		return err
 	}
@@ -658,12 +665,6 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing delete_forum statement.")
-	delete_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = '',`active` = 0 WHERE `fid` = ?")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing update_forum statement.")
 	update_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = ?,`desc` = ?,`active` = ?,`preset` = ? WHERE `fid` = ?")
 	if err != nil {
@@ -738,6 +739,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing update_word_filter statement.")
 	update_word_filter_stmt, err = db.Prepare("UPDATE `word_filters` SET `find` = ?,`replacement` = ? WHERE `wfid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing bump_sync statement.")
+	bump_sync_stmt, err = db.Prepare("UPDATE `sync` SET `last_update` = UTC_TIMESTAMP()")
 	if err != nil {
 		return err
 	}

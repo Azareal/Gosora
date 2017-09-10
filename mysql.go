@@ -66,7 +66,7 @@ func _initDatabase() (err error) {
 		return err
 	}
 
-	// TO-DO: Is there a less noisy way of doing this for tests?
+	// TODO: Is there a less noisy way of doing this for tests?
 	log.Print("Preparing get_activity_feed_by_watcher statement.")
 	get_activity_feed_by_watcher_stmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid ASC LIMIT 8")
 	if err != nil {

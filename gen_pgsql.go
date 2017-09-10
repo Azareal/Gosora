@@ -32,7 +32,6 @@ var increment_user_bigposts_stmt *sql.Stmt
 var increment_user_megaposts_stmt *sql.Stmt
 var increment_user_topics_stmt *sql.Stmt
 var edit_profile_reply_stmt *sql.Stmt
-var delete_forum_stmt *sql.Stmt
 var update_forum_stmt *sql.Stmt
 var update_setting_stmt *sql.Stmt
 var update_plugin_stmt *sql.Stmt
@@ -46,6 +45,7 @@ var update_email_stmt *sql.Stmt
 var verify_email_stmt *sql.Stmt
 var set_temp_group_stmt *sql.Stmt
 var update_word_filter_stmt *sql.Stmt
+var bump_sync_stmt *sql.Stmt
 
 // nolint
 func _gen_pgsql() (err error) {
@@ -203,12 +203,6 @@ func _gen_pgsql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing delete_forum statement.")
-	delete_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = '',`active` = 0 WHERE `fid` = ?")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing update_forum statement.")
 	update_forum_stmt, err = db.Prepare("UPDATE `forums` SET `name` = ?,`desc` = ?,`active` = ?,`preset` = ? WHERE `fid` = ?")
 	if err != nil {
@@ -283,6 +277,12 @@ func _gen_pgsql() (err error) {
 		
 	log.Print("Preparing update_word_filter statement.")
 	update_word_filter_stmt, err = db.Prepare("UPDATE `word_filters` SET `find` = ?,`replacement` = ? WHERE `wfid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing bump_sync statement.")
+	bump_sync_stmt, err = db.Prepare("UPDATE `sync` SET `last_update` = LOCALTIMESTAMP()")
 	if err != nil {
 		return err
 	}

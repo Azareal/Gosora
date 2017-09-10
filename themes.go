@@ -14,11 +14,14 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"text/template"
 )
 
-var defaultTheme string
 var themes = make(map[string]Theme)
+var defaultThemeBox atomic.Value
+var changeDefaultThemeMutex sync.Mutex
 
 //var overridenTemplates map[string]interface{} = make(map[string]interface{})
 var overridenTemplates = make(map[string]bool)
@@ -65,6 +68,7 @@ type ThemeResource struct {
 }
 
 func LoadThemes() error {
+	changeDefaultThemeMutex.Lock()
 	rows, err := get_themes_stmt.Query()
 	if err != nil {
 		return err
@@ -100,7 +104,7 @@ func LoadThemes() error {
 		if defaultThemeSwitch {
 			log.Print("Loading the theme '" + theme.Name + "'")
 			theme.Active = true
-			defaultTheme = uname
+			defaultThemeBox.Store(uname)
 			mapThemeTemplates(theme)
 		} else {
 			theme.Active = false
@@ -113,6 +117,7 @@ func LoadThemes() error {
 		}
 		themes[uname] = theme
 	}
+	changeDefaultThemeMutex.Unlock()
 	return rows.Err()
 }
 
@@ -158,7 +163,7 @@ func initThemes() error {
 }
 
 func addThemeStaticFiles(theme Theme) error {
-	// TO-DO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
+	// TODO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
 	return filepath.Walk("./themes/"+theme.Name+"/public", func(path string, f os.FileInfo, err error) error {
 		if dev.DebugMode {
 			log.Print("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
@@ -375,8 +380,8 @@ func resetTemplateOverrides() {
 }
 
 // NEW method of doing theme templates to allow one user to have a different theme to another. Under construction.
-// TO-DO: Generate the type switch instead of writing it by hand
-// TO-DO: Cut the number of types in half
+// TODO: Generate the type switch instead of writing it by hand
+// TODO: Cut the number of types in half
 func RunThemeTemplate(theme string, template string, pi interface{}, w http.ResponseWriter) {
 	switch tmplO := GetThemeTemplate(theme, template).(type) {
 	case *func(TopicPage, http.ResponseWriter):
@@ -415,7 +420,7 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w http.Resp
 	case func(Page, http.ResponseWriter):
 		tmplO(pi.(Page), w)
 	case string:
-		mapping, ok := themes[defaultTheme].TemplatesMap[template]
+		mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap[template]
 		if !ok {
 			mapping = template
 		}
@@ -458,7 +463,7 @@ func GetThemeTemplate(theme string, template string) interface{} {
 // CreateThemeTemplate creates a theme template on the current default theme
 func CreateThemeTemplate(theme string, name string) {
 	themes[theme].TmplPtr[name] = func(pi Page, w http.ResponseWriter) {
-		mapping, ok := themes[defaultTheme].TemplatesMap[name]
+		mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap[name]
 		if !ok {
 			mapping = name
 		}
@@ -467,4 +472,12 @@ func CreateThemeTemplate(theme string, name string) {
 			InternalError(err, w)
 		}
 	}
+}
+
+func GetDefaultThemeName() string {
+	return defaultThemeBox.Load().(string)
+}
+
+func SetDefaultThemeName(name string) {
+	defaultThemeBox.Store(name)
 }

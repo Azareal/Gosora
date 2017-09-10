@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TO-DO: Add the watchdog goroutine
+// TODO: Add the watchdog goroutine
 var users UserStore
 var errAccountExists = errors.New("this username is already in use")
 
@@ -36,46 +36,46 @@ type UserStore interface {
 }
 
 type MemoryUserStore struct {
-	items           map[int]*User
-	length          int
-	capacity        int
-	get             *sql.Stmt
-	register        *sql.Stmt
-	username_exists *sql.Stmt
-	user_count      *sql.Stmt
+	items          map[int]*User
+	length         int
+	capacity       int
+	get            *sql.Stmt
+	register       *sql.Stmt
+	usernameExists *sql.Stmt
+	userCount      *sql.Stmt
 	sync.RWMutex
 }
 
 func NewMemoryUserStore(capacity int) *MemoryUserStore {
-	get_stmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
+	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Add an admin version of register_stmt with more flexibility?
 	// create_account_stmt, err = db.Prepare("INSERT INTO
-	register_stmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message", "?,?,?,?,?,0,'',?,''")
+	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message", "?,?,?,?,?,0,'',?,''")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	username_exists_stmt, err := qgen.Builder.SimpleSelect("users", "name", "name = ?", "", "")
+	usernameExistsStmt, err := qgen.Builder.SimpleSelect("users", "name", "name = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	user_count_stmt, err := qgen.Builder.SimpleCount("users", "", "")
+	userCountStmt, err := qgen.Builder.SimpleCount("users", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return &MemoryUserStore{
-		items:           make(map[int]*User),
-		capacity:        capacity,
-		get:             get_stmt,
-		register:        register_stmt,
-		username_exists: username_exists_stmt,
-		user_count:      user_count_stmt,
+		items:          make(map[int]*User),
+		capacity:       capacity,
+		get:            getStmt,
+		register:       registerStmt,
+		usernameExists: usernameExistsStmt,
+		userCount:      userCountStmt,
 	}
 }
 
@@ -135,10 +135,10 @@ func (sus *MemoryUserStore) bulkGet(ids []int) (list []*User) {
 	return list
 }
 
-// TO-DO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
-// TO-DO: ID of 0 should always error?
+// TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
+// TODO: ID of 0 should always error?
 func (sus *MemoryUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err error) {
-	var idCount int = len(ids)
+	var idCount = len(ids)
 	list = make(map[int]*User)
 	if idCount == 0 {
 		return list, nil
@@ -324,7 +324,7 @@ func (sus *MemoryUserStore) RemoveUnsafe(id int) error {
 
 func (sus *MemoryUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
-	err := sus.username_exists.QueryRow(username).Scan(&username)
+	err := sus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
 		return 0, errAccountExists
 	}
@@ -363,21 +363,21 @@ func (sus *MemoryUserStore) GetCapacity() int {
 // Return the total number of users registered on the forums
 func (sus *MemoryUserStore) GetGlobalCount() int {
 	var ucount int
-	err := sus.user_count.QueryRow().Scan(&ucount)
+	err := sus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {
 		LogError(err)
 	}
 	return ucount
 }
 
-type SqlUserStore struct {
+type SQLUserStore struct {
 	get            *sql.Stmt
 	register       *sql.Stmt
 	usernameExists *sql.Stmt
 	userCount      *sql.Stmt
 }
 
-func NewSqlUserStore() *SqlUserStore {
+func NewSQLUserStore() *SQLUserStore {
 	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
@@ -400,7 +400,7 @@ func NewSqlUserStore() *SqlUserStore {
 		log.Fatal(err)
 	}
 
-	return &SqlUserStore{
+	return &SQLUserStore{
 		get:            getStmt,
 		register:       registerStmt,
 		usernameExists: usernameExistsStmt,
@@ -408,7 +408,7 @@ func NewSqlUserStore() *SqlUserStore {
 	}
 }
 
-func (sus *SqlUserStore) Get(id int) (*User, error) {
+func (sus *SQLUserStore) Get(id int) (*User, error) {
 	user := User{ID: id, Loggedin: true}
 	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
@@ -425,7 +425,7 @@ func (sus *SqlUserStore) Get(id int) (*User, error) {
 	return &user, err
 }
 
-func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
+func (sus *SQLUserStore) GetUnsafe(id int) (*User, error) {
 	user := User{ID: id, Loggedin: true}
 	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
@@ -442,7 +442,7 @@ func (sus *SqlUserStore) GetUnsafe(id int) (*User, error) {
 	return &user, err
 }
 
-func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
+func (sus *SQLUserStore) CascadeGet(id int) (*User, error) {
 	user := User{ID: id, Loggedin: true}
 	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
@@ -459,8 +459,8 @@ func (sus *SqlUserStore) CascadeGet(id int) (*User, error) {
 	return &user, err
 }
 
-// TO-DO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
-func (sus *SqlUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err error) {
+// TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
+func (sus *SQLUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err error) {
 	var qlist string
 	var uidList []interface{}
 	for _, id := range ids {
@@ -506,7 +506,7 @@ func (sus *SqlUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err e
 	return list, nil
 }
 
-func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
+func (sus *SQLUserStore) BypassGet(id int) (*User, error) {
 	user := User{ID: id, Loggedin: true}
 	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
@@ -523,13 +523,13 @@ func (sus *SqlUserStore) BypassGet(id int) (*User, error) {
 	return &user, err
 }
 
-func (sus *SqlUserStore) Load(id int) error {
+func (sus *SQLUserStore) Load(id int) error {
 	user := &User{ID: id}
 	// Simplify this into a quick check to see whether the user exists. Add an Exists method to facilitate this?
 	return sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 }
 
-func (sus *SqlUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
+func (sus *SQLUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
 	err := sus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
@@ -556,27 +556,27 @@ func (sus *SqlUserStore) CreateUser(username string, password string, email stri
 }
 
 // Placeholder methods, as we're not don't need to do any cache management with this implementation ofr the UserStore
-func (sus *SqlUserStore) Set(item *User) error {
+func (sus *SQLUserStore) Set(item *User) error {
 	return nil
 }
-func (sus *SqlUserStore) Add(item *User) error {
+func (sus *SQLUserStore) Add(item *User) error {
 	return nil
 }
-func (sus *SqlUserStore) AddUnsafe(item *User) error {
+func (sus *SQLUserStore) AddUnsafe(item *User) error {
 	return nil
 }
-func (sus *SqlUserStore) Remove(id int) error {
+func (sus *SQLUserStore) Remove(id int) error {
 	return nil
 }
-func (sus *SqlUserStore) RemoveUnsafe(id int) error {
+func (sus *SQLUserStore) RemoveUnsafe(id int) error {
 	return nil
 }
-func (sus *SqlUserStore) GetCapacity() int {
+func (sus *SQLUserStore) GetCapacity() int {
 	return 0
 }
 
 // Return the total number of users registered on the forums
-func (sus *SqlUserStore) GetLength() int {
+func (sus *SQLUserStore) GetLength() int {
 	var ucount int
 	err := sus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {
@@ -584,7 +584,7 @@ func (sus *SqlUserStore) GetLength() int {
 	}
 	return ucount
 }
-func (sus *SqlUserStore) GetGlobalCount() int {
+func (sus *SQLUserStore) GetGlobalCount() int {
 	var ucount int
 	err := sus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {

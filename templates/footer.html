@@ -1,3 +1,15 @@
+<div class="footer">
+	<div id="poweredBy" style="float: left;margin-top: 4px;">Powered by Gosora - <span style="font-size: 12px;">Made with love by Azareal</span></div>
+	<form action="/theme/" method="post">
+		<div id="themeSelector" style="float: right;">
+			<select id="themeSelectorSelect" name="themeSelector" aria-label="Change the site's appearance">
+				{{range .Header.Themes}}
+    			{{if not .HideFromThemes}}<option val="{{.Name}}"{{if eq $.Header.ThemeName .Name}} selected{{end}}>{{.FriendlyName}}</option>{{end}}
+				{{end}}
+			</select>
+		</div>
+	</form>
+</div>
 					</div>
 				{{if .Header.Widgets.RightSidebar}}<aside class="sidebar">{{.Header.Widgets.RightSidebar}}</aside>{{end}}
 				<div style="clear: both;"></div>

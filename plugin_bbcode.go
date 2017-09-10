@@ -203,9 +203,8 @@ func bbcodeParseWithoutCode(msg string) string {
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$4</i>")
 		msg = bbcodeQuotes.ReplaceAllString(msg, "<span class='postQuote'>$1</span>")
 		return bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
-	} else {
-		return string(msgbytes)
 	}
+	return string(msgbytes)
 }
 
 // Does every type of BBCode
@@ -368,7 +367,7 @@ func bbcodeFullParse(msg string) string {
 							goto MainLoop
 						}
 
-						// TO-DO: Add support for negative numbers?
+						// TODO: Add support for negative numbers?
 						if number < 0 {
 							outbytes = append(outbytes, bbcodeNoNegative...)
 							goto MainLoop

@@ -121,7 +121,7 @@ type DB_Adapter interface {
 	SimpleCount(string,string,string,string) (string, error)
 	Write() error
 	
-	// TO-DO: Add a simple query builder
+	// TODO: Add a simple query builder
 }
 
 func GetAdapter(name string) (adap DB_Adapter, err error) {

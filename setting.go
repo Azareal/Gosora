@@ -24,7 +24,6 @@ type Setting struct {
 
 func init() {
 	settingBox.Store(SettingBox(make(map[string]interface{})))
-	//settingBox.Store(make(map[string]interface{}))
 }
 
 func LoadSettings() error {
@@ -34,8 +33,7 @@ func LoadSettings() error {
 	}
 	defer rows.Close()
 
-	sBox := settingBox.Load().(SettingBox)
-	//sBox := settingBox.Load().(map[string]interface{})
+	var sBox = SettingBox(make(map[string]interface{}))
 	var sname, scontent, stype, sconstraints string
 	for rows.Next() {
 		err = rows.Scan(&sname, &scontent, &stype, &sconstraints)
@@ -56,10 +54,10 @@ func LoadSettings() error {
 	return nil
 }
 
-// TO-DO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
+// TODO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
 func (sBox SettingBox) ParseSetting(sname string, scontent string, stype string, constraint string) string {
 	var err error
-	var ssBox map[string]interface{} = map[string]interface{}(sBox)
+	var ssBox = map[string]interface{}(sBox)
 	if stype == "bool" {
 		ssBox[sname] = (scontent == "1")
 	} else if stype == "int" {

@@ -52,14 +52,14 @@ func init() {
 	wordFilterBox.Store(WordFilterBox(make(map[int]WordFilter)))
 }
 
-func initWordFilters() error {
+func LoadWordFilters() error {
 	rows, err := get_word_filters_stmt.Query()
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
-	var wordFilters = wordFilterBox.Load().(WordFilterBox)
+	var wordFilters = WordFilterBox(make(map[int]WordFilter))
 	var wfid int
 	var find string
 	var replacement string
@@ -92,8 +92,8 @@ func processConfig() {
 }
 
 func main() {
-	// TO-DO: Have a file for each run with the time/date the server started as the file name?
-	// TO-DO: Log panics with recover()
+	// TODO: Have a file for each run with the time/date the server started as the file name?
+	// TODO: Log panics with recover()
 	f, err := os.OpenFile("./operations.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		log.Fatal(err)
@@ -137,8 +137,8 @@ func main() {
 		users = NewMemoryUserStore(config.UserCacheCapacity)
 		topics = NewMemoryTopicStore(config.TopicCacheCapacity)
 	} else {
-		users = NewSqlUserStore()
-		topics = NewSqlTopicStore()
+		users = NewSQLUserStore()
+		topics = NewSQLTopicStore()
 	}
 
 	log.Print("Loading the static files.")
@@ -156,7 +156,7 @@ func main() {
 	log.Print("Initialising the authentication system")
 	auth = NewDefaultAuth()
 
-	err = initWordFilters()
+	err = LoadWordFilters()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -174,16 +174,23 @@ func main() {
 				if err != nil {
 					LogError(err)
 				}
-				// TO-DO: Handle delayed moderation tasks
-				// TO-DO: Handle the daily clean-up. Move this to a 24 hour task?
-				// TO-DO: Sync with the database, if there are any changes
-				// TO-DO: Manage the TopicStore, UserStore, and ForumStore
-				// TO-DO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
-				// TO-DO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
+
+				// TODO: Handle delayed moderation tasks
+				// TODO: Handle the daily clean-up. Move this to a 24 hour task?
+
+				// Sync with the database, if there are any changes
+				err = handleServerSync()
+				if err != nil {
+					LogError(err)
+				}
+
+				// TODO: Manage the TopicStore, UserStore, and ForumStore
+				// TODO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
+				// TODO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
 			case <-fifteenMinuteTicker.C:
-				// TO-DO: Automatically lock topics, if they're really old, and the associated setting is enabled.
-				// TO-DO: Publish scheduled posts.
-				// TO-DO: Delete the empty users_groups_scheduler entries
+				// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
+				// TODO: Publish scheduled posts.
+				// TODO: Delete the empty users_groups_scheduler entries
 			}
 		}
 	}()
@@ -286,12 +293,13 @@ func main() {
 	//	pprof.StopCPUProfile()
 	//}
 
-	// TO-DO: Let users run *both* HTTP and HTTPS
+	// TODO: Let users run *both* HTTP and HTTPS
 	log.Print("Initialising the HTTP server")
 	if !site.EnableSsl {
 		if site.Port == "" {
 			site.Port = "80"
 		}
+		log.Print("Listening on port " + site.Port)
 		err = http.ListenAndServe(":"+site.Port, router)
 	} else {
 		if site.Port == "" {
@@ -299,14 +307,16 @@ func main() {
 		}
 		if site.Port == "80" || site.Port == "443" {
 			// We should also run the server on port 80
-			// TO-DO: Redirect to port 443
+			// TODO: Redirect to port 443
 			go func() {
-				err = http.ListenAndServe(":80", &HttpsRedirect{})
+				log.Print("Listening on port 80")
+				err = http.ListenAndServe(":80", &HTTPSRedirect{})
 				if err != nil {
 					log.Fatal(err)
 				}
 			}()
 		}
+		log.Print("Listening on port " + site.Port)
 		err = http.ListenAndServeTLS(":"+site.Port, config.SslFullchain, config.SslPrivkey, router)
 	}
 

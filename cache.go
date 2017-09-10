@@ -9,7 +9,7 @@ const CACHE_DYNAMIC int = 1
 const CACHE_SQL int = 2
 
 // ErrCacheDesync is thrown whenever a piece of data, for instance, a user is out of sync with the database. Currently unused.
-var ErrCacheDesync = errors.New("The cache is out of sync with the database.") // TO-DO: A cross-server synchronisation mechanism
+var ErrCacheDesync = errors.New("The cache is out of sync with the database.") // TODO: A cross-server synchronisation mechanism
 
 // ErrStoreCapacityOverflow is thrown whenever a datastore reaches it's maximum hard capacity. I'm not sure *if* this one is used, at the moment. Probably.
 var ErrStoreCapacityOverflow = errors.New("This datastore has reached it's maximum capacity.")

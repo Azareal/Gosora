@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
+// TODO: Disable stat updates in posts handled by plugin_socialgroups
 func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
 	//log.Print("in route_edit_topic")
 	err := r.ParseForm()
@@ -35,7 +37,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, oldTopic.ParentID)
 	if !ok {
 		return
@@ -108,6 +110,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
+// TODO: Disable stat updates in posts handled by plugin_socialgroups
 func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
 	if err != nil {
@@ -124,7 +127,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
@@ -161,9 +164,15 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 	//log.Print("Topic #" + strconv.Itoa(tid) + " was deleted by User #" + strconv.Itoa(user.ID))
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 
-	wcount := wordCount(topic.Content)
-	err = decrease_post_user_stats(wcount, topic.CreatedBy, true, user)
-	if err != nil {
+	topicCreator, err := users.CascadeGet(topic.CreatedBy)
+	if err == nil {
+		wcount := wordCount(topic.Content)
+		err = topicCreator.decreasePostStats(wcount, true)
+		if err != nil {
+			InternalError(err, w)
+			return
+		}
+	} else if err != ErrNoRows {
 		InternalError(err, w)
 		return
 	}
@@ -192,7 +201,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
@@ -248,7 +257,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
@@ -288,6 +297,8 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 }
 
+// TODO: Disable stat updates in posts handled by plugin_socialgroups
+// TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 func route_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
@@ -327,7 +338,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) 
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, fid)
 	if !ok {
 		return
@@ -344,6 +355,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) 
 	}
 }
 
+// TODO: Disable stat updates in posts handled by plugin_socialgroups
 func route_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
@@ -377,7 +389,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	// TO-DO: Add hooks to make use of headerLite
+	// TODO: Add hooks to make use of headerLite
 	_, ok := SimpleForumSessionCheck(w, r, &user, fid)
 	if !ok {
 		return
@@ -399,9 +411,15 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User
 		w.Write(successJSONBytes)
 	}
 
-	wcount := wordCount(reply.Content)
-	err = decrease_post_user_stats(wcount, reply.CreatedBy, false, user)
-	if err != nil {
+	replyCreator, err := users.CascadeGet(reply.CreatedBy)
+	if err == nil {
+		wcount := wordCount(reply.Content)
+		err = replyCreator.decreasePostStats(wcount, false)
+		if err != nil {
+			InternalErrorJSQ(err, w, r, isJs)
+			return
+		}
+	} else if err != ErrNoRows {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
@@ -524,7 +542,7 @@ func route_ips(w http.ResponseWriter, r *http.Request, user User) {
 
 	ip := html.EscapeString(r.URL.Path[len("/users/ips/"):])
 	var uid int
-	var reqUserList map[int]bool = make(map[int]bool)
+	var reqUserList = make(map[int]bool)
 
 	rows, err := find_users_by_ip_users_stmt.Query(ip)
 	if err != nil {
@@ -590,14 +608,14 @@ func route_ips(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Convert the user ID map to a slice, then bulk load the users
-	var idSlice []int = make([]int, len(reqUserList))
+	var idSlice = make([]int, len(reqUserList))
 	var i int
 	for userID := range reqUserList {
 		idSlice[i] = userID
 		i++
 	}
 
-	// TO-DO: What if a user is deleted via the Control Panel?
+	// TODO: What if a user is deleted via the Control Panel?
 	userList, err := users.BulkCascadeGetMap(idSlice)
 	if err != nil {
 		InternalError(err, w)
@@ -616,7 +634,7 @@ func route_ips(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-// TO-DO: This is being replaced with the new ban route system
+// TODO: This is being replaced with the new ban route system
 /*func route_ban(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := SessionCheck(w,r,&user)
 	if !ok {

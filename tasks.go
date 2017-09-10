@@ -2,6 +2,12 @@ package main
 
 import "time"
 
+var lastSync time.Time
+
+func init() {
+	lastSync = time.Now()
+}
+
 func handleExpiredScheduledGroups() error {
 	rows, err := get_expired_scheduled_groups_stmt.Query()
 	if err != nil {
@@ -26,4 +32,38 @@ func handleExpiredScheduledGroups() error {
 		_ = users.Load(uid)
 	}
 	return rows.Err()
+}
+
+func handleServerSync() error {
+	var lastUpdate time.Time
+	var lastUpdateStr string
+	err := get_sync_stmt.QueryRow().Scan(&lastUpdateStr)
+	if err != nil {
+		return err
+	}
+
+	layout := "2006-01-02 15:04:05"
+	lastUpdate, err = time.Parse(layout, lastUpdateStr)
+	if err != nil {
+		return err
+	}
+
+	if lastUpdate.After(lastSync) {
+		// TODO: A more granular sync
+		err = fstore.LoadForums()
+		if err != nil {
+			return err
+		}
+		// TODO: Resync the groups
+		// TODO: Resync the permissions
+		err = LoadSettings()
+		if err != nil {
+			return err
+		}
+		err = LoadWordFilters()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

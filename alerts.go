@@ -127,6 +127,7 @@ func notifyWatchers(asid int64) {
 		log.Fatal(err.Error())
 		return
 	}
+	defer rows.Close()
 
 	var uid int
 	var uids []int
@@ -143,7 +144,6 @@ func notifyWatchers(asid int64) {
 		log.Fatal(err.Error())
 		return
 	}
-	_ = rows.Close()
 
 	var actorID, targetUserID, elementID int
 	var event, elementType string

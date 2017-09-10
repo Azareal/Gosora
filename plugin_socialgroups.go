@@ -25,7 +25,7 @@ var socialgroupsAttachForumStmt *sql.Stmt
 var socialgroupsUnattachForumStmt *sql.Stmt
 var socialgroupsAddMemberStmt *sql.Stmt
 
-// TO-DO: Add a better way of splitting up giant plugins like this
+// TODO: Add a better way of splitting up giant plugins like this
 
 // SocialGroup is a struct representing a social group
 type SocialGroup struct {
@@ -87,12 +87,12 @@ type SocialGroupMember struct {
 	RankString string /* Member, Mod, Admin, Owner */
 	PostCount  int
 	JoinedAt   string
-	Offline    bool // TO-DO: Need to track the online states of members when WebSockets are enabled
+	Offline    bool // TODO: Need to track the online states of members when WebSockets are enabled
 
 	User User
 }
 
-// TO-DO: Add a plugin interface instead of having a bunch of argument to AddPlugin?
+// TODO: Add a plugin interface instead of having a bunch of argument to AddPlugin?
 func init() {
 	plugins["socialgroups"] = NewPlugin("socialgroups", "Social Groups", "Azareal", "http://github.com/Azareal", "", "", "", initSocialgroups, nil, deactivateSocialgroups, installSocialgroups, nil)
 }
@@ -104,7 +104,7 @@ func initSocialgroups() (err error) {
 	plugins["socialgroups"].AddHook("pre_render_view_forum", socialgroupsPreRenderViewForum)
 	plugins["socialgroups"].AddHook("simple_forum_check_pre_perms", socialgroupsForumCheck)
 	plugins["socialgroups"].AddHook("forum_check_pre_perms", socialgroupsForumCheck)
-	// TO-DO: Auto-grant this perm to admins upon installation?
+	// TODO: Auto-grant this perm to admins upon installation?
 	registerPluginPerm("CreateSocialGroup")
 	router.HandleFunc("/groups/", socialgroupsGroupList)
 	router.HandleFunc("/group/", socialgroupsViewGroup)
@@ -175,7 +175,7 @@ func deactivateSocialgroups() {
 	_ = socialgroupsAddMemberStmt.Close()
 }
 
-// TO-DO: Stop accessing the query builder directly and add a feature in Gosora which is more easily reversed, if an error comes up during the installation process
+// TODO: Stop accessing the query builder directly and add a feature in Gosora which is more easily reversed, if an error comes up during the installation process
 func installSocialgroups() error {
 	sgTableStmt, err := qgen.Builder.CreateTable("socialgroups", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DB_Table_Column{
@@ -229,9 +229,9 @@ func uninstallSocialgroups() error {
 	return nil
 }
 
-// TO-DO: Do this properly via the widget system
+// TODO: Do this properly via the widget system
 func socialgroupsCommonAreaWidgets(headerVars *HeaderVars) {
-	// TO-DO: Hot Groups? Featured Groups? Official Groups?
+	// TODO: Hot Groups? Featured Groups? Official Groups?
 	var b bytes.Buffer
 	var menu = WidgetMenu{"Social Groups", []WidgetMenuItem{
 		WidgetMenuItem{"Create Group", "/group/create/", false},
@@ -243,15 +243,15 @@ func socialgroupsCommonAreaWidgets(headerVars *HeaderVars) {
 		return
 	}
 
-	if themes[defaultTheme].Sidebars == "left" {
+	if themes[headerVars.ThemeName].Sidebars == "left" {
 		headerVars.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
-	} else if themes[defaultTheme].Sidebars == "right" || themes[defaultTheme].Sidebars == "both" {
+	} else if themes[headerVars.ThemeName].Sidebars == "right" || themes[headerVars.ThemeName].Sidebars == "both" {
 		headerVars.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
 	}
 }
 
-// TO-DO: Do this properly via the widget system
-// TO-DO: Make a better more customisable group widget system
+// TODO: Do this properly via the widget system
+// TODO: Make a better more customisable group widget system
 func socialgroupsGroupWidgets(headerVars *HeaderVars, sgItem *SocialGroup) (success bool) {
 	return false // Disabled until the next commit
 
@@ -267,9 +267,9 @@ func socialgroupsGroupWidgets(headerVars *HeaderVars, sgItem *SocialGroup) (succ
 		return false
 	}
 
-	if themes[defaultTheme].Sidebars == "left" {
+	if themes[headerVars.ThemeName].Sidebars == "left" {
 		headerVars.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
-	} else if themes[defaultTheme].Sidebars == "right" || themes[defaultTheme].Sidebars == "both" {
+	} else if themes[headerVars.ThemeName].Sidebars == "right" || themes[headerVars.ThemeName].Sidebars == "both" {
 		headerVars.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
 	} else {
 		return false
@@ -356,7 +356,7 @@ func socialgroupsCreateGroup(w http.ResponseWriter, r *http.Request, user User) 
 	if !ok {
 		return
 	}
-	// TO-DO: Add an approval queue mode for group creation
+	// TODO: Add an approval queue mode for group creation
 	if !user.Loggedin || !user.PluginPerms["CreateSocialGroup"] {
 		NoPermissions(w, r, user)
 		return
@@ -371,7 +371,7 @@ func socialgroupsCreateGroup(w http.ResponseWriter, r *http.Request, user User) 
 }
 
 func socialgroupsCreateGroupSubmit(w http.ResponseWriter, r *http.Request, user User) {
-	// TO-DO: Add an approval queue mode for group creation
+	// TODO: Add an approval queue mode for group creation
 	if !user.Loggedin || !user.PluginPerms["CreateSocialGroup"] {
 		NoPermissions(w, r, user)
 		return
@@ -561,7 +561,7 @@ func socialgroupsTrowAssign(args ...interface{}) interface{} {
 	return nil
 }
 
-// TO-DO: It would be nice, if you could select one of the boards in the group from that drop-down rather than just the one you got linked from
+// TODO: It would be nice, if you could select one of the boards in the group from that drop-down rather than just the one you got linked from
 func socialgroupsTopicCreatePreLoop(args ...interface{}) interface{} {
 	var fid = args[2].(int)
 	if fstore.DirtyGet(fid).ParentType == "socialgroup" {
@@ -571,9 +571,9 @@ func socialgroupsTopicCreatePreLoop(args ...interface{}) interface{} {
 	return nil
 }
 
-// TO-DO: Add privacy options
-// TO-DO: Add support for multiple boards and add per-board simplified permissions
-// TO-DO: Take isJs into account for routes which expect JSON responses
+// TODO: Add privacy options
+// TODO: Add support for multiple boards and add per-board simplified permissions
+// TODO: Take isJs into account for routes which expect JSON responses
 func socialgroupsForumCheck(args ...interface{}) (skip interface{}) {
 	var r = args[1].(*http.Request)
 	var fid = args[3].(*int)
@@ -604,10 +604,10 @@ func socialgroupsForumCheck(args ...interface{}) (skip interface{}) {
 		var posts int
 		var joinedAt string
 
-		// TO-DO: Group privacy settings. For now, groups are all globally visible
+		// TODO: Group privacy settings. For now, groups are all globally visible
 
 		// Clear the default group permissions
-		// TO-DO: Do this more efficiently, doing it quick and dirty for now to get this out quickly
+		// TODO: Do this more efficiently, doing it quick and dirty for now to get this out quickly
 		overrideForumPerms(&user.Perms, false)
 		user.Perms.ViewTopic = true
 
@@ -620,7 +620,7 @@ func socialgroupsForumCheck(args ...interface{}) (skip interface{}) {
 			return true
 		}
 
-		// TO-DO: Implement bans properly by adding the Local Ban API in the next commit
+		// TODO: Implement bans properly by adding the Local Ban API in the next commit
 		if rank < 0 {
 			return true
 		}
@@ -641,7 +641,7 @@ func socialgroupsForumCheck(args ...interface{}) (skip interface{}) {
 	return false
 }
 
-// TO-DO: Override redirects? I don't think this is needed quite yet
+// TODO: Override redirects? I don't think this is needed quite yet
 
 func socialgroupsWidgets(args ...interface{}) interface{} {
 	var zone = args[0].(string)

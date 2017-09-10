@@ -11,7 +11,8 @@ import (
 	"sync/atomic"
 )
 
-// TO-DO: Let the admin edit phrases from inside the Control Panel? How should we persist these? Should we create a copy of the langpack or edit the primaries? Use the changeLangpack mutex for this?
+// TODO: Let the admin edit phrases from inside the Control Panel? How should we persist these? Should we create a copy of the langpack or edit the primaries? Use the changeLangpack mutex for this?
+// nolint Be quiet megacheck, this *is* used
 var changeLangpackMutex sync.Mutex
 var currentLanguage = "english"
 var currentLangPack atomic.Value
@@ -33,7 +34,8 @@ type LanguagePack struct {
 	SettingLabels     map[string]string
 }
 
-// TO-DO: Move the english language pack into it's own file and just keep the common logic here
+// TODO: Add the ability to edit language JSON files from the Control Panel and automatically scan the files for changes
+// TODO: Move the english language pack into a JSON file and load that on start-up
 var langpacks = map[string]*LanguagePack{
 	"english": &LanguagePack{
 		Name: "english",
@@ -135,7 +137,8 @@ func DeletePhrase() {
 
 }
 
-// TO-DO: Use atomics to store the pointer of the current active langpack?
+// TODO: Use atomics to store the pointer of the current active langpack?
+// nolint
 func ChangeLanguagePack(name string) (exists bool) {
 	changeLangpackMutex.Lock()
 	pack, ok := langpacks[name]

@@ -72,7 +72,7 @@ func initDatabase() (err error) {
 	GuestPerms = groups[6].Perms
 
 	log.Print("Loading the forums.")
-	fstore = NewStaticForumStore()
+	fstore = NewMemoryForumStore()
 	err = fstore.LoadForums()
 	if err != nil {
 		return err

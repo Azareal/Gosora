@@ -109,10 +109,26 @@ w.Write(forums_17)
 }
 w.Write(forums_18)
 w.Write(footer_0)
-if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
+if len(tmpl_forums_vars.Header.Themes) != 0 {
+for _, item := range tmpl_forums_vars.Header.Themes {
+if !item.HideFromThemes {
 w.Write(footer_1)
-w.Write([]byte(string(tmpl_forums_vars.Header.Widgets.RightSidebar)))
+w.Write([]byte(item.Name))
 w.Write(footer_2)
-}
+if tmpl_forums_vars.Header.ThemeName == item.Name {
 w.Write(footer_3)
+}
+w.Write(footer_4)
+w.Write([]byte(item.FriendlyName))
+w.Write(footer_5)
+}
+}
+}
+w.Write(footer_6)
+if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
+w.Write(footer_7)
+w.Write([]byte(string(tmpl_forums_vars.Header.Widgets.RightSidebar)))
+w.Write(footer_8)
+}
+w.Write(footer_9)
 }

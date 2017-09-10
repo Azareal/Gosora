@@ -165,7 +165,7 @@ li a {
 	font-size: 12px;
 }
 
-.colblock_left {
+/*.colblock_left {
 	border: 1px solid #ccc;
 	padding: 0px;
 	padding-top: 0px;
@@ -181,7 +181,7 @@ li a {
 	overflow: hidden;
 	word-wrap: break-word;
 }
-.colblock_left:empty, .colblock_right:empty { display: none; }
+.colblock_left:empty, .colblock_right:empty { display: none; }*/
 
 /* The new method of doing columns layouts, colblock is now deprecated :( */
 .colstack_left {
@@ -366,6 +366,36 @@ button {
 
 /* Topics */
 
+.topic_list {
+	display: grid;
+	grid-template-columns: calc(100% - 204px) 204px;
+}
+.topic_list .topic_inner_right {
+	display: none;
+}
+.topic_list .rowitem:last-child {
+	margin-bottom: 10px;
+}
+.topic_list .lastReplyAt {
+	white-space: nowrap;
+}
+
+@supports not (display: grid) {
+	.topic_list .rowitem {
+		float: left;
+		overflow: hidden;
+	}
+	.topic_list .topic_left {
+		width: calc(100% - 204px);
+	}
+	.topic_list .topic_right {
+		width: 204px;
+	}
+}
+
+.topic_status_sticky {
+	display: none;
+}
 .topic_sticky {
 	background-color: rgb(255,255,234);
 }
@@ -373,10 +403,10 @@ button {
 	background-color: rgb(248,248,248);
 }
 .topic_sticky_head {
-	background-color:#FFFFEA;
+	background-color: #FFFFEA;
 }
 .topic_closed_head {
-	background-color:#eaeaea;
+	background-color: #eaeaea;
 }
 
 .topic_status {
@@ -390,7 +420,9 @@ button {
 	color: #505050; /* 80,80,80 */
 	border-radius: 2px;
 }
-.topic_status:empty { display: none; }
+.topic_status:empty {
+	display: none;
+}
 
 .username, .panel_tag {
 	text-transform: none;
@@ -434,7 +466,9 @@ button.username {
 	color: #202020;
 	opacity: 0.7;
 }
-.post_item > .mod_button > button:hover { opacity: 0.9; }
+.post_item > .mod_button > button:hover {
+	opacity: 0.9;
+}
 
 .user_tag {
 	float: right;
@@ -449,8 +483,12 @@ button.username {
 	background-color: #ffeaff;
 }
 
-.mod_button { margin-right: 4px; }
-.like_label:before, .like_count_label:before { content: "😀"; }
+.mod_button {
+	margin-right: 4px;
+}
+.like_label:before, .like_count_label:before {
+	content: "😀";
+}
 .like_count_label {
 	color: #505050;
 	float: right;
@@ -565,6 +603,7 @@ button.username {
 	background-size: 128px;
 	padding-left: 136px;
 }
+
 /* Profiles */
 #profile_left_lane {
 	width: 220px;

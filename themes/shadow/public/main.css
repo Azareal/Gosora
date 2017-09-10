@@ -183,11 +183,11 @@ a {
 
 /* Topic View */
 
-/* TO-DO: How should we handle the sticky headers? */
+/* TODO: How should we handle the sticky headers? */
 .topic_sticky_head {
 }
 
-/* TO-DO: Rewrite the closed topic header so that it looks more consistent with the rest of the theme */
+/* TODO: Rewrite the closed topic header so that it looks more consistent with the rest of the theme */
 .topic_closed_head .topic_status_closed {
 	margin-bottom: -10px;
 	font-size: 19px;
@@ -443,6 +443,24 @@ input, select, textarea {
 	margin-top: 5px;
 }
 
+.footer {
+    background-color: rgb(61,61,61);
+    margin-top: 5px;
+    padding: 10px;
+    font-size: 14px;
+    padding-left: 13px;
+    padding-right: 13px;
+	clear: left;
+    height: 25px;
+}
+.footer select {
+    background-color: #444444;
+    border: 1px solid #555555;
+    color: #999999;
+    font-size: 13px;
+    padding: 4px;
+}
+
 /* Forum View */
 .rowhead {
 	display: flex;
@@ -536,7 +554,7 @@ input, select, textarea {
 .simple .user_tag {
 	font-size: 14px;
 }
-/* TO-DO: Have a has_avatar class for profile comments and topic replies to allow posts without avatars? Won't that look inconsistent next to everything else for just about every theme though? */
+/* TODO: Have a has_avatar class for profile comments and topic replies to allow posts without avatars? Won't that look inconsistent next to everything else for just about every theme though? */
 #profile_comments .rowitem {
 	background-repeat: no-repeat, repeat-y;
 	background-size: 128px;

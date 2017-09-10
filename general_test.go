@@ -56,8 +56,8 @@ func gloinit() error {
 		users = NewMemoryUserStore(config.UserCacheCapacity)
 		topics = NewMemoryTopicStore(config.TopicCacheCapacity)
 	} else {
-		users = NewSqlUserStore()
-		topics = NewSqlTopicStore()
+		users = NewSQLUserStore()
+		topics = NewSQLTopicStore()
 	}
 
 	log.Print("Loading the static files.")
@@ -67,7 +67,7 @@ func gloinit() error {
 	}
 	auth = NewDefaultAuth()
 
-	err = initWordFilters()
+	err = LoadWordFilters()
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func init() {
 	}
 }
 
-// TO-DO: Swap out LocalError for a panic for this?
+// TODO: Swap out LocalError for a panic for this?
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	b.ReportAllocs()
 	if !gloinited {
@@ -143,7 +143,7 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	})
 }
 
-// TO-DO: Make these routes compatible with the changes to the router
+// TODO: Make these routes compatible with the changes to the router
 /*
 func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 	b.ReportAllocs()
@@ -1091,7 +1091,7 @@ func TestLevels(t *testing.T) {
 	}
 }
 
-// TO-DO: Make this compatible with the changes to the router
+// TODO: Make this compatible with the changes to the router
 /*
 func TestStaticRoute(t *testing.T) {
 	if !gloinited {
@@ -1166,7 +1166,7 @@ func TestStaticRoute(t *testing.T) {
 	t.Print("No problems found in the topic-guest route!")
 }*/
 
-// TO-DO: Make these routes compatible with the changes to the router
+// TODO: Make these routes compatible with the changes to the router
 /*
 func TestForumsAdminRoute(t *testing.T) {
 	if !gloinited {

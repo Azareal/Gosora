@@ -15,11 +15,12 @@ type HeaderVars struct {
 	Widgets     PageWidgets
 	Site        *Site
 	Settings    map[string]interface{}
+	Themes      map[string]Theme // TODO: Use a slice containing every theme instead of the main map for speed
 	ThemeName   string
 	ExtData     ExtData
 }
 
-// TO-DO: Add this to routes which don't use templates. E.g. Json APIs.
+// TODO: Add this to routes which don't use templates. E.g. Json APIs.
 type HeaderLite struct {
 	Site     *Site
 	Settings SettingBox
@@ -36,7 +37,7 @@ type PageWidgets struct {
 	items map[string]interface{} // Key: pluginname
 }*/
 
-// TO-DO: Add a ExtDataHolder interface with methods for manipulating the contents?
+// TODO: Add a ExtDataHolder interface with methods for manipulating the contents?
 type ExtData struct {
 	items map[string]interface{} // Key: pluginname
 	sync.RWMutex
@@ -531,7 +532,7 @@ func parseMessage(msg string /*, user User*/) string {
 					}
 
 					outbytes = append(outbytes, urlOpen...)
-					var urlBit = []byte(buildForumUrl("", fid))
+					var urlBit = []byte(buildForumURL("", fid))
 					outbytes = append(outbytes, urlBit...)
 					outbytes = append(outbytes, urlOpen2...)
 					var fidBit = []byte("#fid-" + strconv.Itoa(fid))
@@ -539,7 +540,7 @@ func parseMessage(msg string /*, user User*/) string {
 					outbytes = append(outbytes, urlClose...)
 					lastItem = i
 				} else {
-					// TO-DO: Forum Shortcode Link
+					// TODO: Forum Shortcode Link
 				}
 			} else if msgbytes[i] == '@' {
 				//log.Print("IN @")
@@ -798,7 +799,7 @@ func coerceIntBytes(data []byte) (res int, length int) {
 	return conv, i
 }
 
-// TO-DO: Write tests for this
+// TODO: Write tests for this
 func paginate(count int, perPage int, maxPages int) []int {
 	if count < perPage {
 		return []int{1}
@@ -815,7 +816,7 @@ func paginate(count int, perPage int, maxPages int) []int {
 	return out
 }
 
-// TO-DO: Write tests for this
+// TODO: Write tests for this
 func pageOffset(count int, page int, perPage int) (int, int, int) {
 	var offset int
 	lastPage := (count / perPage) + 1

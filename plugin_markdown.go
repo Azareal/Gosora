@@ -4,7 +4,7 @@ package main
 import "regexp"
 import "strings"
 
-var markdownMaxDepth int = 25 // How deep the parser will go when parsing Markdown strings
+var markdownMaxDepth = 25 // How deep the parser will go when parsing Markdown strings
 var markdownUnclosedElement []byte
 
 var markdownBoldTagOpen, markdownBoldTagClose []byte
@@ -88,7 +88,7 @@ func _markdownParse(msg string, n int) string {
 
 		switch msg[index] {
 		case '_':
-			var startIndex int = index
+			var startIndex = index
 			if (index + 1) >= len(msg) {
 				break
 			}
@@ -111,7 +111,7 @@ func _markdownParse(msg string, n int) string {
 			lastElement = index
 			index--
 		case '~':
-			var startIndex int = index
+			var startIndex = index
 			if (index + 1) >= len(msg) {
 				break
 			}
@@ -142,8 +142,8 @@ func _markdownParse(msg string, n int) string {
 			//log.Print("start string(msg[index])",string(msg[index]))
 			//log.Print("start []byte(msg[:index])",[]byte(msg[:index]))
 
-			var startIndex int = index
-			var italic bool = true
+			var startIndex = index
+			var italic = true
 			var bold bool
 			if (index + 2) < len(msg) {
 				//log.Print("start index + 1",index + 1)
@@ -339,7 +339,7 @@ SwitchLoop:
 // plugin_markdown doesn't support lists yet, but I want it to be easy to have nested lists when we do have them
 func markdownSkipList(data string, index int) int {
 	var lastNewline int
-	var datalen int = len(data)
+	var datalen = len(data)
 
 	for ; index < datalen; index++ {
 	SkipListInnerLoop:

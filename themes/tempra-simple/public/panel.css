@@ -18,14 +18,12 @@
 .panel_compactrow .panel_tag {
 	font-size: 14px;
 }
-
 .panel_compactrow {
 	padding-left: 10px;
 	padding-top: 10px;
 	padding-bottom: 10px;
 	padding-right: 10px;
 }
-
 .panel_compacttext {
 	font-size: 14px;
 }
@@ -39,7 +37,9 @@
 	font-size: 16px;
 	position: static;
 }
-.panel_upshift:visited { color: black; }
+.panel_upshift:visited {
+	color: black;
+}
 /*.panel_tag_upshift {
 	margin-left: 2px;
 	position: relative;
@@ -47,31 +47,85 @@
 	color: #505050;
 }*/
 
-.panel_floater { float: right; }
-.panel_rank_tag_admin:before { content: "👑"; }
-.panel_rank_tag_mod:before { content: "👮"; }
-.panel_rank_tag_banned:before { content: "⛓️"; }
-.panel_rank_tag_guest:before { content: "👽"; }
-.panel_rank_tag_member:before { content: "👪"; }
+.panel_floater {
+	float: right;
+}
+.panel_rank_tag_admin:before {
+	content: "👑";
+}
+.panel_rank_tag_mod:before {
+	content: "👮";
+}
+.panel_rank_tag_banned:before {
+	content: "⛓️";
+}
+.panel_rank_tag_guest:before {
+	content: "👽";
+}
+.panel_rank_tag_member:before {
+	content: "👪";
+}
 
-.forum_preset_announce:before { content: "📣"; }
-.forum_preset_members:before { content: "👪"; }
-.forum_preset_staff:before { content: "👮"; }
-.forum_preset_admins:before { content: "👑"; }
-.forum_preset_archive:before { content: "☠️"; }
-.forum_preset_all, .forum_preset_custom, .forum_preset_ { display: none !important; }
-.forum_active_Hide:before { content: "🕵️"; }
-.forum_active_Show { display: none !important; }
-.forum_active_name { color: #707070; }
-.builtin_forum_divider { border-bottom-style: solid; }
+.forum_preset_announce:before {
+	content: "📣";
+}
+.forum_preset_members:before {
+	content: "👪";
+}
+.forum_preset_staff:before {
+	content: "👮";
+}
+.forum_preset_admins:before {
+	content: "👑";
+}
+.forum_preset_archive:before {
+	content: "☠️";
+}
+.forum_preset_all, .forum_preset_custom, .forum_preset_ {
+	display: none !important;
+}
+.forum_active_Hide:before {
+	content: "🕵️";
+}
+.forum_active_Show {
+	display: none !important;
+}
+.forum_active_name {
+	color: #707070;
+}
+.builtin_forum_divider {
+	border-bottom-style: solid;
+}
 
-.perm_preset_no_access:before { content: "No Access"; color: maroon; }
-.perm_preset_read_only:before { content: "Read Only"; color: green; }
-.perm_preset_can_post:before { content: "Can Post"; color: green; }
-.perm_preset_can_moderate:before { content: "Can Moderate"; color: darkblue; }
-.perm_preset_custom:before { content: "Custom"; color: black; }
-.perm_preset_default:before { content: "Default"; }
+.perm_preset_no_access:before {
+	content: "No Access";
+	color: maroon;
+}
+.perm_preset_read_only:before {
+	content: "Read Only";
+	color: green;
+}
+.perm_preset_can_post:before {
+	content: "Can Post";
+	color: green;
+}
+.perm_preset_can_moderate:before {
+	content: "Can Moderate";
+	color: darkblue;
+}
+.perm_preset_custom:before {
+	content: "Custom";
+	color: black;
+}
+.perm_preset_default:before {
+	content: "Default";
+}
 
 #panel_dashboard_right .colstack_head {
+	display: none;
+}
+
+/* TODO: Figure out how to handle this on the Control Panel */
+.footer {
 	display: none;
 }

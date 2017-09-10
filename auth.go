@@ -109,6 +109,7 @@ func (auth *DefaultAuth) Logout(w http.ResponseWriter, _ int) {
 	http.SetCookie(w, &cookie)
 }
 
+// TODO: Set the cookie domain
 func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session string) {
 	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: year}
 	http.SetCookie(w, &cookie)

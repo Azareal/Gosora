@@ -19,7 +19,7 @@ function bind_to_alerts() {
 	});
 }
 
-// TO-DO: Add the ability for users to dismiss alerts
+// TODO: Add the ability for users to dismiss alerts
 function load_alerts(menu_alerts)
 {
 	var alertListNode = menu_alerts.getElementsByClassName("alertList")[0];
@@ -119,7 +119,7 @@ $(document).ready(function(){
 
 		conn.onopen = function() {
 			conn.send("page " + document.location.pathname + '\r');
-			// TO-DO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
+			// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
 			Notification.requestPermission();
 		}
 		conn.onclose = function() {
@@ -148,15 +148,15 @@ $(document).ready(function(){
 					for (var i = 0; i < alertList.length; i++) alist += alertList[i];
 
 					//console.log(alist);
-					// TO-DO: Add support for other alert feeds like PM Alerts
+					// TODO: Add support for other alert feeds like PM Alerts
 					var general_alerts = document.getElementById("general_alerts");
 					var alertListNode = general_alerts.getElementsByClassName("alertList")[0];
 					var alertCounterNode = general_alerts.getElementsByClassName("alert_counter")[0];
 					alertListNode.innerHTML = alist;
 					alertCounterNode.textContent = alertCount;
 
-					// TO-DO: Add some sort of notification queue to avoid flooding the end-user with notices?
-					// TO-DO: Use the site name instead of "Something Happened"
+					// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
+					// TODO: Use the site name instead of "Something Happened"
 					if(Notification.permission === "granted") {
 						var n = new Notification("Something Happened",{
 							body: msg,
@@ -354,7 +354,7 @@ $(document).ready(function(){
 	});
 
 	// This one's for Tempra Conflux
-	// TO-DO: We might want to use pure JS here
+	// TODO: We might want to use pure JS here
 	$(".ip_item").each(function(){
 		var ip = this.textContent;
 		if(ip.length > 10){
@@ -395,6 +395,32 @@ $(document).ready(function(){
 	$("input,textarea,select,option").keyup(function(event){
 		event.stopPropagation();
 	})
+
+	$("#themeSelectorSelect").change(function(){
+		console.log("Changing the theme to " + this.options[this.selectedIndex].getAttribute("val"));
+		$.ajax({
+			url: this.form.getAttribute("action") + "?session=" + session,
+			type: "POST",
+			dataType: "json",
+			data: { "newTheme": this.options[this.selectedIndex].getAttribute("val"), isJs: "1" },
+			success: function (data, status, xhr) {
+				console.log("Theme successfully switched");
+				console.log("data",data);
+				console.log("status",status);
+				window.location.reload();
+			},
+			// TODO: Use a standard error handler for the AJAX calls in here which throws up the response (if JSON) in a .notice? Might be difficult to trace errors in the console, if we reuse the same function every-time
+			error: function(xhr,status,errstr) {
+				console.log("The AJAX request failed");
+				console.log("xhr",xhr);
+				console.log("status",status);
+				console.log("errstr",errstr);
+				if(status=="parsererror") {
+					console.log("The server didn't respond with a valid JSON response");
+				}
+			}
+		});
+	});
 
 	this.onkeyup = function(event) {
 		if(event.which == 37) this.querySelectorAll("#prevFloat a")[0].click();

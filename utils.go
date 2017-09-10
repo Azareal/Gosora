@@ -205,16 +205,16 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 		return
 	}
 
-	email_data, err := con.Data()
+	emailData, err := con.Data()
 	if err != nil {
 		return
 	}
-	_, err = fmt.Fprintf(email_data, body)
+	_, err = fmt.Fprintf(emailData, body)
 	if err != nil {
 		return
 	}
 
-	err = email_data.Close()
+	err = emailData.Close()
 	if err != nil {
 		return
 	}
@@ -229,7 +229,7 @@ func weakPassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("your password needs to be at-least eight characters long")
 	}
-	var charMap map[rune]int = make(map[rune]int)
+	var charMap = make(map[rune]int)
 	var numbers /*letters, */, symbols, upper, lower int
 	for _, char := range password {
 		charItem, ok := charMap[char]
@@ -254,7 +254,7 @@ func weakPassword(password string) error {
 		}
 	}
 
-	// TO-DO: Disable the linter on these and fix up the grammar
+	// TODO: Disable the linter on these and fix up the grammar
 	if numbers == 0 {
 		return errors.New("you don't have any numbers in your password")
 	}
@@ -306,15 +306,15 @@ func wordCount(input string) (count int) {
 	if input == "" {
 		return 0
 	}
-	in_space := false
+	var inSpace bool
 	for _, value := range input {
 		if unicode.IsSpace(value) {
-			if !in_space {
-				in_space = true
+			if !inSpace {
+				inSpace = true
 			}
-		} else if in_space {
+		} else if inSpace {
 			count++
-			in_space = false
+			inSpace = false
 		}
 	}
 	return count + 1
@@ -323,14 +323,14 @@ func wordCount(input string) (count int) {
 func getLevel(score int) (level int) {
 	var base float64 = 25
 	var current, prev float64
-	exp_factor := 2.8
+	expFactor := 2.8
 
 	for i := 1; ; i++ {
 		_, bit := math.Modf(float64(i) / 10)
 		if bit == 0 {
-			exp_factor += 0.1
+			expFactor += 0.1
 		}
-		current = base + math.Pow(float64(i), exp_factor) + (prev / 3)
+		current = base + math.Pow(float64(i), expFactor) + (prev / 3)
 		prev = current
 		if float64(score) < current {
 			break
@@ -344,14 +344,14 @@ func getLevelScore(getLevel int) (score int) {
 	var base float64 = 25
 	var current, prev float64
 	var level int
-	exp_factor := 2.8
+	expFactor := 2.8
 
 	for i := 1; ; i++ {
 		_, bit := math.Modf(float64(i) / 10)
 		if bit == 0 {
-			exp_factor += 0.1
+			expFactor += 0.1
 		}
-		current = base + math.Pow(float64(i), exp_factor) + (prev / 3)
+		current = base + math.Pow(float64(i), expFactor) + (prev / 3)
 		prev = current
 		level++
 		if level <= getLevel {
@@ -364,16 +364,16 @@ func getLevelScore(getLevel int) (score int) {
 func getLevels(maxLevel int) []float64 {
 	var base float64 = 25
 	var current, prev float64 // = 0
-	exp_factor := 2.8
+	expFactor := 2.8
 	var out []float64
 	out = append(out, 0)
 
 	for i := 1; i <= maxLevel; i++ {
 		_, bit := math.Modf(float64(i) / 10)
 		if bit == 0 {
-			exp_factor += 0.1
+			expFactor += 0.1
 		}
-		current = base + math.Pow(float64(i), exp_factor) + (prev / 3)
+		current = base + math.Pow(float64(i), expFactor) + (prev / 3)
 		prev = current
 		out = append(out, current)
 	}
@@ -396,16 +396,10 @@ func buildSlug(slug string, id int) string {
 
 func addModLog(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
 	_, err = add_modlog_entry_stmt.Exec(action, elementID, elementType, ipaddress, actorID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func addAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) (err error) {
 	_, err = add_adminlog_entry_stmt.Exec(action, elementID, elementType, ipaddress, actorID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

@@ -13,7 +13,7 @@ import (
 	"text/template/parse"
 )
 
-// TO-DO: Turn this file into a library
+// TODO: Turn this file into a library
 var ctemplates []string
 var tmplPtrMap = make(map[string]interface{})
 var textOverlapList = make(map[string]int)
@@ -263,6 +263,11 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 			for _, key := range outVal.MapKeys() {
 				item = outVal.MapIndex(key)
 			}
+			fmt.Println("Range item:", item)
+
+			if !item.IsValid() {
+				panic("item" + "^\n" + "Invalid map. Maybe, it doesn't have any entries for the template engine to analyse?")
+			}
 
 			if node.ElseList != nil {
 				out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n} else {\n" + c.compileSwitch("item", item, templateName, node.ElseList) + "}\n"
@@ -352,13 +357,23 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 			}
 
 			if !cur.IsValid() {
+				if dev.DebugMode {
+					fmt.Println("Debug Data:")
+					fmt.Println("Holdreflect:", holdreflect)
+					fmt.Println("Holdreflect.Kind()", holdreflect.Kind())
+					if !dev.SuperDebug {
+						fmt.Println("cur.Kind():", cur.Kind().String())
+					}
+					fmt.Println("")
+				}
+
 				panic(varholder + varbit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 			}
 
 			cur = cur.FieldByName(id)
 			if cur.Kind() == reflect.Interface {
 				cur = cur.Elem()
-				// TO-DO: Surely, there's a better way of detecting this?
+				// TODO: Surely, there's a better way of detecting this?
 				/*if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
 				varbit = "string(" + varbit + "." + id + ")"*/
 				//if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
@@ -795,7 +810,7 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 			continue
 		}
 
-		// TO-DO: Fix this up so that it works for regular pointers and not just struct pointers. Ditto for the other cur.Kind() == reflect.Ptr we have in this file
+		// TODO: Fix this up so that it works for regular pointers and not just struct pointers. Ditto for the other cur.Kind() == reflect.Ptr we have in this file
 		if cur.Kind() == reflect.Ptr {
 			if dev.SuperDebug {
 				fmt.Println("Looping over pointer")
@@ -950,7 +965,7 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 		}
 	}
 
-	// TO-DO: Cascade errors back up the tree to the caller?
+	// TODO: Cascade errors back up the tree to the caller?
 	res, err := ioutil.ReadFile(c.dir + node.Name)
 	if err != nil {
 		log.Fatal(err)
@@ -998,7 +1013,7 @@ func (c *CTemplateSet) compileCommand(*parse.CommandNode) (out string) {
 	panic("Uh oh! Something went wrong!")
 }
 
-// TO-DO: Write unit tests for this
+// TODO: Write unit tests for this
 func minify(data string) string {
 	data = strings.Replace(data, "\t", "", -1)
 	data = strings.Replace(data, "\v", "", -1)
@@ -1008,30 +1023,30 @@ func minify(data string) string {
 	return data
 }
 
-// TO-DO: Strip comments
-// TO-DO: Handle CSS nested in <style> tags?
-// TO-DO: Write unit tests for this
+// TODO: Strip comments
+// TODO: Handle CSS nested in <style> tags?
+// TODO: Write unit tests for this
 func minifyHTML(data string) string {
 	return minify(data)
 }
 
-// TO-DO: Have static files use this
-// TO-DO: Strip comments
-// TO-DO: Convert the rgb()s to hex codes?
-// TO-DO: Write unit tests for this
+// TODO: Have static files use this
+// TODO: Strip comments
+// TODO: Convert the rgb()s to hex codes?
+// TODO: Write unit tests for this
 func minifyCSS(data string) string {
 	return minify(data)
 }
 
-// TO-DO: Convert this to three character hex strings whenever possible?
-// TO-DO: Write unit tests for this
+// TODO: Convert this to three character hex strings whenever possible?
+// TODO: Write unit tests for this
 // nolint
 func rgbToHexstr(red int, green int, blue int) string {
 	return strconv.FormatInt(int64(red), 16) + strconv.FormatInt(int64(green), 16) + strconv.FormatInt(int64(blue), 16)
 }
 
 /*
-// TO-DO: Write unit tests for this
+// TODO: Write unit tests for this
 func hexstrToRgb(hexstr string) (red int, blue int, green int, err error) {
 	// Strip the # at the start
 	if hexstr[0] == '#' {

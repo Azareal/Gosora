@@ -13,7 +13,7 @@
 				{{if .Settings}}<a href="/panel/settings/" class="panel_tag">Settings</a>{{end}}
 				{{if .Active}}<a href="/panel/plugins/deactivate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Deactivate</a>
 				{{else if .Installable}}
-					{{/** TO-DO: Write a custom template interpreter to fix this nonsense **/}}
+					{{/** TODO: Write a custom template interpreter to fix this nonsense **/}}
 					{{if .Installed}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Activate</a>{{else}}<a href="/panel/plugins/install/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Install</a>{{end}}
 				{{else}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Activate</a>{{end}}
 			</span>

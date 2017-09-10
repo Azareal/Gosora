@@ -54,7 +54,7 @@ func (adapter *Mysql_Adapter) CreateTable(name string, table string, charset str
 		}
 
 		var end string
-		// TO-DO: Exclude the other variants of text like mediumtext and longtext too
+		// TODO: Exclude the other variants of text like mediumtext and longtext too
 		if column.Default != "" && column.Type != "text" {
 			end = " DEFAULT "
 			if adapter.stringyType(column.Type) && column.Default != "''" {
@@ -814,7 +814,7 @@ func (adapter *Mysql_Adapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {
 		stmt := adapter.Buffer[name]
-		// TO-DO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
+		// TODO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
 		if stmt.Type != "create-table" {
 			stmts += "var " + name + "_stmt *sql.Stmt\n"
 			body += `	

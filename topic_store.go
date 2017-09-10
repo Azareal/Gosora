@@ -5,7 +5,7 @@ import "sync"
 import "database/sql"
 import "./query_gen/lib"
 
-// TO-DO: Add the watchdog goroutine
+// TODO: Add the watchdog goroutine
 var topics TopicStore
 
 type TopicStore interface {
@@ -165,47 +165,47 @@ func (sts *MemoryTopicStore) GetCapacity() int {
 	return sts.capacity
 }
 
-type SqlTopicStore struct {
+type SQLTopicStore struct {
 	get *sql.Stmt
 }
 
-func NewSqlTopicStore() *SqlTopicStore {
+func NewSQLTopicStore() *SQLTopicStore {
 	stmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &SqlTopicStore{stmt}
+	return &SQLTopicStore{stmt}
 }
 
-func (sts *SqlTopicStore) Get(id int) (*Topic, error) {
+func (sts *SQLTopicStore) Get(id int) (*Topic, error) {
 	topic := Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return &topic, err
 }
 
-func (sts *SqlTopicStore) GetUnsafe(id int) (*Topic, error) {
+func (sts *SQLTopicStore) GetUnsafe(id int) (*Topic, error) {
 	topic := Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return &topic, err
 }
 
-func (sts *SqlTopicStore) CascadeGet(id int) (*Topic, error) {
+func (sts *SQLTopicStore) CascadeGet(id int) (*Topic, error) {
 	topic := Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return &topic, err
 }
 
-func (sts *SqlTopicStore) BypassGet(id int) (*Topic, error) {
+func (sts *SQLTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return topic, err
 }
 
-func (sts *SqlTopicStore) Load(id int) error {
+func (sts *SQLTopicStore) Load(id int) error {
 	topic := Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
@@ -213,29 +213,29 @@ func (sts *SqlTopicStore) Load(id int) error {
 }
 
 // Placeholder methods, the actual queries are done elsewhere
-func (sts *SqlTopicStore) Set(item *Topic) error {
+func (sts *SQLTopicStore) Set(item *Topic) error {
 	return nil
 }
-func (sts *SqlTopicStore) Add(item *Topic) error {
+func (sts *SQLTopicStore) Add(item *Topic) error {
 	return nil
 }
-func (sts *SqlTopicStore) AddUnsafe(item *Topic) error {
+func (sts *SQLTopicStore) AddUnsafe(item *Topic) error {
 	return nil
 }
-func (sts *SqlTopicStore) Remove(id int) error {
+func (sts *SQLTopicStore) Remove(id int) error {
 	return nil
 }
-func (sts *SqlTopicStore) RemoveUnsafe(id int) error {
+func (sts *SQLTopicStore) RemoveUnsafe(id int) error {
 	return nil
 }
-func (sts *SqlTopicStore) AddLastTopic(item *Topic, fid int) error {
+func (sts *SQLTopicStore) AddLastTopic(item *Topic, fid int) error {
 	// Coming Soon...
 	return nil
 }
-func (sts *SqlTopicStore) GetCapacity() int {
+func (sts *SQLTopicStore) GetCapacity() int {
 	return 0
 }
 
-func (sts *SqlTopicStore) GetLength() int {
+func (sts *SQLTopicStore) GetLength() int {
 	return 0 // Return the total number of topics on the forums?
 }

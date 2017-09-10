@@ -253,6 +253,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request, us
 	http.Redirect(w, r, "/panel/forums/", http.StatusSeeOther)
 }
 
+// TODO: Revamp this
 func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	headerVars, stats, ok := PanelSessionCheck(w, r, &user)
 	if !ok {
@@ -282,8 +283,8 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	confirm_msg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
-	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirm_msg}
+	confirmMsg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
+	yousure := AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
 	pi := PanelPage{"Delete Forum", user, headerVars, stats, tList, yousure}
 	if preRenderHooks["pre_render_panel_delete_forum"] != nil {
@@ -406,10 +407,10 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	forum_name := r.PostFormValue("forum_name")
-	forum_desc := r.PostFormValue("forum_desc")
-	forum_preset := stripInvalidPreset(r.PostFormValue("forum_preset"))
-	forum_active := r.PostFormValue("forum_active")
+	forumName := r.PostFormValue("forum_name")
+	forumDesc := r.PostFormValue("forum_desc")
+	forumPreset := stripInvalidPreset(r.PostFormValue("forum_preset"))
+	forumActive := r.PostFormValue("forum_active")
 
 	forum, err := fstore.CascadeGet(fid)
 	if err == ErrNoRows {
@@ -420,40 +421,40 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	if forum_name == "" {
-		forum_name = forum.Name
+	if forumName == "" {
+		forumName = forum.Name
 	}
 
 	var active bool
-	if forum_active == "" {
+	if forumActive == "" {
 		active = forum.Active
-	} else if forum_active == "1" || forum_active == "Show" {
+	} else if forumActive == "1" || forumActive == "Show" {
 		active = true
 	} else {
 		active = false
 	}
 
 	forumUpdateMutex.Lock()
-	_, err = update_forum_stmt.Exec(forum_name, forum_desc, active, forum_preset, fid)
+	_, err = update_forum_stmt.Exec(forumName, forumDesc, active, forumPreset, fid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
-	if forum.Name != forum_name {
-		forum.Name = forum_name
+	if forum.Name != forumName {
+		forum.Name = forumName
 	}
-	if forum.Desc != forum_desc {
-		forum.Desc = forum_desc
+	if forum.Desc != forumDesc {
+		forum.Desc = forumDesc
 	}
 	if forum.Active != active {
 		forum.Active = active
 	}
-	if forum.Preset != forum_preset {
-		forum.Preset = forum_preset
+	if forum.Preset != forumPreset {
+		forum.Preset = forumPreset
 	}
 	forumUpdateMutex.Unlock()
 
-	permmapToQuery(presetToPermmap(forum_preset), fid)
+	permmapToQuery(presetToPermmap(forumPreset), fid)
 
 	if !isJs {
 		http.Redirect(w, r, "/panel/forums/", http.StatusSeeOther)
@@ -495,8 +496,8 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	perm_preset := stripInvalidGroupForumPreset(r.PostFormValue("perm_preset"))
-	fperms, changed := groupForumPresetToForumPerms(perm_preset)
+	permPreset := stripInvalidGroupForumPreset(r.PostFormValue("perm_preset"))
+	fperms, changed := groupForumPresetToForumPerms(permPreset)
 
 	forum, err := fstore.CascadeGet(fid)
 	if err == ErrNoRows {
@@ -519,7 +520,7 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		_, err = add_forum_perms_to_group_stmt.Exec(gid, fid, perm_preset, perms)
+		_, err = add_forum_perms_to_group_stmt.Exec(gid, fid, permPreset, perms)
 		if err != nil {
 			InternalErrorJSQ(err, w, r, isJs)
 			return
@@ -552,7 +553,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	//log.Print("headerVars.Settings",headerVars.Settings)
-	var settingList map[string]interface{} = make(map[string]interface{})
+	var settingList = make(map[string]interface{})
 	rows, err := get_settings_stmt.Query()
 	if err != nil {
 		InternalError(err, w)
@@ -560,6 +561,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	defer rows.Close()
 
+	// nolint need the type so people viewing this file understand what it returns without visiting setting.go
 	var settingLabels map[string]string = GetAllSettingLabels()
 	var sname, scontent, stype string
 	for rows.Next() {
@@ -722,7 +724,7 @@ func route_panel_word_filters(w http.ResponseWriter, r *http.Request, user User)
 		return
 	}
 
-	var filterList WordFilterBox = wordFilterBox.Load().(WordFilterBox)
+	var filterList = wordFilterBox.Load().(WordFilterBox)
 	pi := PanelPage{"Word Filter Manager", user, headerVars, stats, tList, filterList}
 	if preRenderHooks["pre_render_panel_word_filters"] != nil {
 		if runPreRenderHook("pre_render_panel_word_filters", w, r, &user, &pi) {
@@ -766,14 +768,14 @@ func route_panel_word_filters_create(w http.ResponseWriter, r *http.Request, use
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
-	lastId, err := res.LastInsertId()
+	lastID, err := res.LastInsertId()
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
 
-	addWordFilter(int(lastId), find, replacement)
-	http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther) // TO-DO: Return json for JS?
+	addWordFilter(int(lastID), find, replacement)
+	http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther) // TODO: Return json for JS?
 }
 
 func route_panel_word_filters_edit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
@@ -811,7 +813,7 @@ func route_panel_word_filters_edit_submit(w http.ResponseWriter, r *http.Request
 		PreError("Bad Form", w, r)
 		return
 	}
-	// TO-DO: Either call it isJs or js rather than flip-flopping back and forth across the routes x.x
+	// TODO: Either call it isJs or js rather than flip-flopping back and forth across the routes x.x
 	isJs := (r.PostFormValue("isJs") == "1")
 	if !user.Perms.EditSettings {
 		NoPermissionsJSQ(w, r, user, isJs)
@@ -943,7 +945,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user U
 		InternalError(err, w)
 		return
 	}
-	var has_plugin bool = (err == nil)
+	var hasPlugin = (err == nil)
 
 	if plugins[uname].Activate != nil {
 		err = plugins[uname].Activate()
@@ -955,7 +957,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user U
 
 	//log.Print("err",err)
 	//log.Print("active",active)
-	if has_plugin {
+	if hasPlugin {
 		if active {
 			LocalError("The plugin is already active", w, r, user)
 			return
@@ -1071,7 +1073,7 @@ func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user Us
 		InternalError(err, w)
 		return
 	}
-	var has_plugin bool = (err == nil)
+	var hasPlugin = (err == nil)
 
 	if plugins[uname].Install != nil {
 		err = plugins[uname].Install()
@@ -1089,7 +1091,7 @@ func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user Us
 		}
 	}
 
-	if has_plugin {
+	if hasPlugin {
 		_, err = update_plugin_install_stmt.Exec(1, uname)
 		if err != nil {
 			InternalError(err, w)
@@ -1139,7 +1141,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	defer rows.Close()
 
-	// TO-DO: Add a UserStore method for iterating over global users and global user offsets
+	// TODO: Add a UserStore method for iterating over global users and global user offsets
 	for rows.Next() {
 		puser := User{ID: 0}
 		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.IsSuperAdmin, &puser.Avatar)
@@ -1485,7 +1487,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user 
 		return
 	}
 
-	// TO-DO: Load the phrases in bulk for efficiency?
+	// TODO: Load the phrases in bulk for efficiency?
 	var localPerms []NameLangToggle
 	localPerms = append(localPerms, NameLangToggle{"ViewTopic", GetLocalPermPhrase("ViewTopic"), group.Perms.ViewTopic})
 	localPerms = append(localPerms, NameLangToggle{"LikeItem", GetLocalPermPhrase("LikeItem"), group.Perms.LikeItem})
@@ -1877,7 +1879,9 @@ func route_panel_themes_set_default(w http.ResponseWriter, r *http.Request, user
 		}
 	}
 
-	// TO-DO: Make this less racey
+	// TODO: Make this less racey
+	changeDefaultThemeMutex.Lock()
+	defaultTheme := defaultThemeBox.Load().(string)
 	_, err = update_theme_stmt.Exec(0, defaultTheme)
 	if err != nil {
 		InternalError(err, w)
@@ -1896,9 +1900,10 @@ func route_panel_themes_set_default(w http.ResponseWriter, r *http.Request, user
 	dTheme.Active = false
 	themes[defaultTheme] = dTheme
 
-	defaultTheme = uname // TO-DO: Make this less racey
+	defaultThemeBox.Store(uname)
 	resetTemplateOverrides()
 	mapThemeTemplates(theme)
+	changeDefaultThemeMutex.Unlock()
 
 	http.Redirect(w, r, "/panel/themes/", http.StatusSeeOther)
 }

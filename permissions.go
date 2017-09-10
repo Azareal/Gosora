@@ -508,7 +508,7 @@ func stripInvalidPreset(preset string) string {
 	}
 }
 
-// TO-DO: Move this into the phrase system?
+// TODO: Move this into the phrase system?
 func presetToLang(preset string) string {
 	switch preset {
 	case "all":
@@ -530,6 +530,7 @@ func presetToLang(preset string) string {
 	}
 }
 
+// TODO: Is this racey?
 func rebuildGroupPermissions(gid int) error {
 	var permstr []byte
 	log.Print("Reloading a group")
@@ -538,15 +539,15 @@ func rebuildGroupPermissions(gid int) error {
 		return err
 	}
 
-	tmp_perms := Perms{
+	tmpPerms := Perms{
 	//ExtData: make(map[string]bool),
 	}
-	err = json.Unmarshal(permstr, &tmp_perms)
+	err = json.Unmarshal(permstr, &tmpPerms)
 	if err != nil {
 		return err
 	}
 
-	groups[gid].Perms = tmp_perms
+	groups[gid].Perms = tmpPerms
 	return nil
 }
 
@@ -558,7 +559,7 @@ func overridePerms(perms *Perms, status bool) {
 	}
 }
 
-// TO-DO: We need a better way of overriding forum perms rather than setting them one by one
+// TODO: We need a better way of overriding forum perms rather than setting them one by one
 func overrideForumPerms(perms *Perms, status bool) {
 	perms.ViewTopic = status
 	perms.LikeItem = status

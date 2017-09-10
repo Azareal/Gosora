@@ -31,12 +31,12 @@ func _initPgsql() (err error) {
 	}
 	fmt.Println("Successfully connected to the database")
 
-	// TO-DO: Create the database, if it doesn't exist
+	// TODO: Create the database, if it doesn't exist
 
 	return nil
 }
 
 func _pgEscapeBit(bit string) string {
-	// TO-DO: Write a custom parser, so that backslashes work properly in the sql.Open string. Do something similar for the database driver, if possible?
+	// TODO: Write a custom parser, so that backslashes work properly in the sql.Open string. Do something similar for the database driver, if possible?
 	return strings.Replace(bit, "'", "\\'", -1)
 }
