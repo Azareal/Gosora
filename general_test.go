@@ -52,6 +52,11 @@ func gloinit() error {
 		return err
 	}
 
+	err = initPhrases()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if config.CacheTopicUser == CACHE_STATIC {
 		users = NewMemoryUserStore(config.UserCacheCapacity)
 		topics = NewMemoryTopicStore(config.TopicCacheCapacity)

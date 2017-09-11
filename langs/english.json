@@ -1,0 +1,43 @@
+{
+	"Name": "english",
+	"Levels": {
+		"Level":    "Level {0}",
+		"LevelMax": ""
+	},
+	"GlobalPerms": {
+		"BanUsers":              "Can ban users",
+		"ActivateUsers":         "Can activate users",
+		"EditUser":              "Can edit users",
+		"EditUserEmail":         "Can change a user's email",
+		"EditUserPassword":      "Can change a user's password",
+		"EditUserGroup":         "Can change a user's group",
+		"EditUserGroupSuperMod": "Can edit super-mods",
+		"EditUserGroupAdmin":    "Can edit admins",
+		"EditGroup":             "Can edit groups",
+		"EditGroupLocalPerms":   "Can edit a group's minor perms",
+		"EditGroupGlobalPerms":  "Can edit a group's global perms",
+		"EditGroupSuperMod":     "Can edit super-mod groups",
+		"EditGroupAdmin":        "Can edit admin groups",
+		"ManageForums":          "Can manage forums",
+		"EditSettings":          "Can edit settings",
+		"ManageThemes":          "Can manage themes",
+		"ManagePlugins":         "Can manage plugins",
+		"ViewAdminLogs":         "Can view the administrator action logs",
+		"ViewIPs":               "Can view IP addresses"
+	},
+	"LocalPerms": {
+		"ViewTopic":   "Can view topics",
+		"LikeItem":    "Can like items",
+		"CreateTopic": "Can create topics",
+		"EditTopic":   "Can edit topics",
+		"DeleteTopic": "Can delete topics",
+		"CreateReply": "Can create replies",
+		"EditReply":   "Can edit replies",
+		"DeleteReply": "Can delete replies",
+		"PinTopic":    "Can pin topics",
+		"CloseTopic":  "Can lock topics"
+	},
+	"SettingLabels": {
+		"activation_type": "Activate All,Email Activation,Admin Approval"
+	}
+}

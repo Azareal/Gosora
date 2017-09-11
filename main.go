@@ -31,6 +31,8 @@ var enableWebsockets = false // Don't change this, the value is overwritten by a
 
 var router *GenRouter
 var startTime time.Time
+
+// ? - Make this more customisable?
 var externalSites = map[string]string{
 	"YT": "https://www.youtube.com/",
 }
@@ -129,6 +131,11 @@ func main() {
 
 	initTemplates()
 	err = initErrors()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = initPhrases()
 	if err != nil {
 		log.Fatal(err)
 	}
