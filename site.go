@@ -2,6 +2,8 @@ package main
 
 import "net/http"
 
+// TODO: Add a langPack configuration item or setting
+
 var site = &Site{Name: "Magical Fairy Land"}
 var db_config = DB_Config{Host: "localhost"}
 var config Config

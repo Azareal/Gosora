@@ -1,7 +1,7 @@
 {
 	"Name": "english",
 	"Levels": {
-		"Level":    "Level {0}",
+		"Level": "Level {0}",
 		"LevelMax": ""
 	},
 	"GlobalPerms": {

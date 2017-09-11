@@ -14,7 +14,7 @@ import (
 	"github.com/Azareal/gopsutil/mem"
 )
 
-func route_panel(w http.ResponseWriter, r *http.Request, user User) {
+func routePanel(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -180,7 +180,7 @@ func route_panel(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_panel_forums(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelForums(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -218,7 +218,7 @@ func route_panel_forums(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -254,7 +254,7 @@ func route_panel_forums_create_submit(w http.ResponseWriter, r *http.Request, us
 }
 
 // TODO: Revamp this
-func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routePanelForumsDelete(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -298,7 +298,7 @@ func route_panel_forums_delete(w http.ResponseWriter, r *http.Request, user User
 	}
 }
 
-func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routePanelForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -330,7 +330,7 @@ func route_panel_forums_delete_submit(w http.ResponseWriter, r *http.Request, us
 	http.Redirect(w, r, "/panel/forums/", http.StatusSeeOther)
 }
 
-func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -380,7 +380,7 @@ func route_panel_forums_edit(w http.ResponseWriter, r *http.Request, user User, 
 	}
 }
 
-func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -463,7 +463,7 @@ func route_panel_forums_edit_submit(w http.ResponseWriter, r *http.Request, user
 	}
 }
 
-func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -542,7 +542,7 @@ func route_panel_forums_edit_perms_submit(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func route_panel_settings(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelSettings(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -607,7 +607,7 @@ func route_panel_settings(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, sname string) {
+func routePanelSetting(w http.ResponseWriter, r *http.Request, user User, sname string) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -658,7 +658,7 @@ func route_panel_setting(w http.ResponseWriter, r *http.Request, user User, snam
 	}
 }
 
-func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User, sname string) {
+func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user User, sname string) {
 	headerLite, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -714,7 +714,7 @@ func route_panel_setting_edit(w http.ResponseWriter, r *http.Request, user User,
 	http.Redirect(w, r, "/panel/settings/", http.StatusSeeOther)
 }
 
-func route_panel_word_filters(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelWordFilters(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -737,7 +737,7 @@ func route_panel_word_filters(w http.ResponseWriter, r *http.Request, user User)
 	}
 }
 
-func route_panel_word_filters_create(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelWordFiltersCreate(w http.ResponseWriter, r *http.Request, user User) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -778,7 +778,7 @@ func route_panel_word_filters_create(w http.ResponseWriter, r *http.Request, use
 	http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther) // TODO: Return json for JS?
 }
 
-func route_panel_word_filters_edit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
+func routePanelWordFiltersEdit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -802,7 +802,7 @@ func route_panel_word_filters_edit(w http.ResponseWriter, r *http.Request, user 
 	}
 }
 
-func route_panel_word_filters_edit_submit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
+func routePanelWordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -848,7 +848,7 @@ func route_panel_word_filters_edit_submit(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther)
 }
 
-func route_panel_word_filters_delete_submit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
+func routePanelWordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, user User, wfid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -884,7 +884,7 @@ func route_panel_word_filters_delete_submit(w http.ResponseWriter, r *http.Reque
 	http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther)
 }
 
-func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelPlugins(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -913,7 +913,7 @@ func route_panel_plugins(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user User, uname string) {
+func routePanelPluginsActivate(w http.ResponseWriter, r *http.Request, user User, uname string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -989,7 +989,7 @@ func route_panel_plugins_activate(w http.ResponseWriter, r *http.Request, user U
 	http.Redirect(w, r, "/panel/plugins/", http.StatusSeeOther)
 }
 
-func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, user User, uname string) {
+func routePanelPluginsDeactivate(w http.ResponseWriter, r *http.Request, user User, uname string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1037,7 +1037,7 @@ func route_panel_plugins_deactivate(w http.ResponseWriter, r *http.Request, user
 	http.Redirect(w, r, "/panel/plugins/", http.StatusSeeOther)
 }
 
-func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user User, uname string) {
+func routePanelPluginsInstall(w http.ResponseWriter, r *http.Request, user User, uname string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1123,7 +1123,7 @@ func route_panel_plugins_install(w http.ResponseWriter, r *http.Request, user Us
 	http.Redirect(w, r, "/panel/plugins/", http.StatusSeeOther)
 }
 
-func route_panel_users(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelUsers(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1185,7 +1185,7 @@ func route_panel_users(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, suid string) {
+func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user User, suid string) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1239,7 +1239,7 @@ func route_panel_users_edit(w http.ResponseWriter, r *http.Request, user User, s
 	}
 }
 
-func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, user User, suid string) {
+func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user User, suid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1334,7 +1334,7 @@ func route_panel_users_edit_submit(w http.ResponseWriter, r *http.Request, user 
 	http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID), http.StatusSeeOther)
 }
 
-func route_panel_groups(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelGroups(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1396,7 +1396,7 @@ func route_panel_groups(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
+func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1455,7 +1455,7 @@ func route_panel_groups_edit(w http.ResponseWriter, r *http.Request, user User, 
 	}
 }
 
-func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user User, sgid string) {
+func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user User, sgid string) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1534,7 +1534,7 @@ func route_panel_groups_edit_perms(w http.ResponseWriter, r *http.Request, user 
 	}
 }
 
-func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
+func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1666,7 +1666,7 @@ func route_panel_groups_edit_submit(w http.ResponseWriter, r *http.Request, user
 	http.Redirect(w, r, "/panel/groups/edit/"+strconv.Itoa(gid), http.StatusSeeOther)
 }
 
-func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
+func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user User, sgid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1702,7 +1702,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	//var lpmap map[string]bool = make(map[string]bool)
+	////var lpmap map[string]bool = make(map[string]bool)
 	var pmap = make(map[string]bool)
 	if user.Perms.EditGroupLocalPerms {
 		pplist := LocalPermList
@@ -1712,7 +1712,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	//var gpmap map[string]bool = make(map[string]bool)
+	////var gpmap map[string]bool = make(map[string]bool)
 	if user.Perms.EditGroupGlobalPerms {
 		gplist := GlobalPermList
 		for _, perm := range gplist {
@@ -1742,7 +1742,7 @@ func route_panel_groups_edit_perms_submit(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, "/panel/groups/edit/perms/"+strconv.Itoa(gid), http.StatusSeeOther)
 }
 
-func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelGroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1792,7 +1792,7 @@ func route_panel_groups_create_submit(w http.ResponseWriter, r *http.Request, us
 	http.Redirect(w, r, "/panel/groups/edit/"+strconv.Itoa(gid), http.StatusSeeOther)
 }
 
-func route_panel_themes(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelThemes(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1827,7 +1827,7 @@ func route_panel_themes(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_panel_themes_set_default(w http.ResponseWriter, r *http.Request, user User, uname string) {
+func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user User, uname string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1908,7 +1908,7 @@ func route_panel_themes_set_default(w http.ResponseWriter, r *http.Request, user
 	http.Redirect(w, r, "/panel/themes/", http.StatusSeeOther)
 }
 
-func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return
@@ -2024,7 +2024,7 @@ func route_panel_logs_mod(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_panel_debug(w http.ResponseWriter, r *http.Request, user User) {
+func routePanelDebug(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
 		return

@@ -47,7 +47,7 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // GET functions
-func route_static(w http.ResponseWriter, r *http.Request) {
+func routeStatic(w http.ResponseWriter, r *http.Request) {
 	//log.Print("Outputting static file '" + r.URL.Path + "'")
 	file, ok := staticFiles[r.URL.Path]
 	if !ok {
@@ -94,7 +94,7 @@ func route_fstatic(w http.ResponseWriter, r *http.Request){
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
 // TODO: Add a sitemap
 // TODO: Add an API so that plugins can register disallowed areas. E.g. /groups/join for plugin_socialgroups
-func route_robots_txt(w http.ResponseWriter, r *http.Request) {
+func routeRobotsTxt(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(`User-agent: *
 Disallow: /panel/
 Disallow: /topics/create/
@@ -103,7 +103,7 @@ Disallow: /accounts/
 `))
 }
 
-func route_overview(w http.ResponseWriter, r *http.Request, user User) {
+func routeOverview(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -123,7 +123,7 @@ func route_overview(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_custom_page(w http.ResponseWriter, r *http.Request, user User) {
+func routeCustomPage(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -150,7 +150,7 @@ func route_custom_page(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 // TODO: Paginate this
-func route_topics(w http.ResponseWriter, r *http.Request, user User) {
+func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -256,7 +256,7 @@ func route_topics(w http.ResponseWriter, r *http.Request, user User) {
 	RunThemeTemplate(headerVars.ThemeName, "topics", pi, w)
 }
 
-func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	page, _ := strconv.Atoi(r.FormValue("page"))
 
 	// SEO URLs...
@@ -371,7 +371,7 @@ func route_forum(w http.ResponseWriter, r *http.Request, user User, sfid string)
 	RunThemeTemplate(headerVars.ThemeName, "forum", pi, w)
 }
 
-func route_forums(w http.ResponseWriter, r *http.Request, user User) {
+func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -423,7 +423,7 @@ func route_forums(w http.ResponseWriter, r *http.Request, user User) {
 	RunThemeTemplate(headerVars.ThemeName, "forums", pi, w)
 }
 
-func route_topic_id(w http.ResponseWriter, r *http.Request, user User) {
+func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 	var err error
 	var page, offset int
 	var replyList []Reply
@@ -604,7 +604,7 @@ func route_topic_id(w http.ResponseWriter, r *http.Request, user User) {
 	RunThemeTemplate(headerVars.ThemeName, "topic", tpage, w)
 }
 
-func route_profile(w http.ResponseWriter, r *http.Request, user User) {
+func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -703,7 +703,7 @@ func route_profile(w http.ResponseWriter, r *http.Request, user User) {
 	template_profile_handle(ppage, w)
 }
 
-func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	var fid int
 	var err error
 	if sfid != "" {
@@ -776,7 +776,7 @@ func route_topic_create(w http.ResponseWriter, r *http.Request, user User, sfid 
 }
 
 // POST functions. Authorised users only.
-func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
@@ -844,7 +844,7 @@ func route_topic_create_submit(w http.ResponseWriter, r *http.Request, user User
 	}
 }
 
-func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
+func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
@@ -940,7 +940,7 @@ func route_create_reply(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
-func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
+func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
@@ -1041,7 +1041,7 @@ func route_like_topic(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 }
 
-func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
@@ -1142,7 +1142,7 @@ func route_reply_like_submit(w http.ResponseWriter, r *http.Request, user User) 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
 }
 
-func route_profile_reply_create(w http.ResponseWriter, r *http.Request, user User) {
+func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Loggedin || !user.Perms.CreateReply {
 		NoPermissions(w, r, user)
 		return
@@ -1184,7 +1184,7 @@ func route_profile_reply_create(w http.ResponseWriter, r *http.Request, user Use
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
 }
 
-func route_report_submit(w http.ResponseWriter, r *http.Request, user User, sitemID string) {
+func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemID string) {
 	if !user.Loggedin {
 		LoginRequired(w, r, user)
 		return
@@ -1321,7 +1321,7 @@ func route_report_submit(w http.ResponseWriter, r *http.Request, user User, site
 	http.Redirect(w, r, "/topic/"+strconv.FormatInt(lastID, 10), http.StatusSeeOther)
 }
 
-func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditCritical(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1340,7 +1340,7 @@ func route_account_own_edit_critical(w http.ResponseWriter, r *http.Request, use
 	templates.ExecuteTemplate(w, "account-own-edit.html", pi)
 }
 
-func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1397,7 +1397,7 @@ func route_account_own_edit_critical_submit(w http.ResponseWriter, r *http.Reque
 	templates.ExecuteTemplate(w, "account-own-edit.html", pi)
 }
 
-func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditAvatar(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1415,7 +1415,7 @@ func route_account_own_edit_avatar(w http.ResponseWriter, r *http.Request, user 
 	templates.ExecuteTemplate(w, "account-own-edit-avatar.html", pi)
 }
 
-func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	if r.ContentLength > int64(config.MaxRequestSize) {
 		http.Error(w, "Request too large", http.StatusExpectationFailed)
 		return
@@ -1513,7 +1513,7 @@ func route_account_own_edit_avatar_submit(w http.ResponseWriter, r *http.Request
 	templates.ExecuteTemplate(w, "account-own-edit-avatar.html", pi)
 }
 
-func route_account_own_edit_username(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditUsername(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1531,7 +1531,7 @@ func route_account_own_edit_username(w http.ResponseWriter, r *http.Request, use
 	templates.ExecuteTemplate(w, "account-own-edit-username.html", pi)
 }
 
-func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1571,7 +1571,7 @@ func route_account_own_edit_username_submit(w http.ResponseWriter, r *http.Reque
 	templates.ExecuteTemplate(w, "account-own-edit-username.html", pi)
 }
 
-func route_account_own_edit_email(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1626,7 +1626,7 @@ func route_account_own_edit_email(w http.ResponseWriter, r *http.Request, user U
 	templates.ExecuteTemplate(w, "account-own-edit-email.html", pi)
 }
 
-func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1706,7 +1706,7 @@ func route_account_own_edit_email_token_submit(w http.ResponseWriter, r *http.Re
 }
 
 // TODO: Move this into member_routes.go
-func route_logout(w http.ResponseWriter, r *http.Request, user User) {
+func routeLogout(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Loggedin {
 		LocalError("You can't logout without logging in first.", w, r, user)
 		return
@@ -1715,7 +1715,7 @@ func route_logout(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func route_login(w http.ResponseWriter, r *http.Request, user User) {
+func routeLogin(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1736,7 +1736,7 @@ func route_login(w http.ResponseWriter, r *http.Request, user User) {
 // TODO: Log failed attempted logins?
 // TODO: Lock IPS out if they have too many failed attempts?
 // TODO: Log unusual countries in comparison to the country a user usually logs in from? Alert the user about this?
-func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	if user.Loggedin {
 		LocalError("You're already logged in.", w, r, user)
 		return
@@ -1784,7 +1784,7 @@ func route_login_submit(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func route_register(w http.ResponseWriter, r *http.Request, user User) {
+func routeRegister(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -1802,7 +1802,7 @@ func route_register(w http.ResponseWriter, r *http.Request, user User) {
 	templates.ExecuteTemplate(w, "register.html", pi)
 }
 
-func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	headerLite, _ := SimpleUserCheck(w, r, &user)
 
 	err := r.ParseForm()
@@ -1901,7 +1901,7 @@ func route_register_submit(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 // TODO: Set the cookie domain
-func route_change_theme(w http.ResponseWriter, r *http.Request, user User) {
+func routeChangeTheme(w http.ResponseWriter, r *http.Request, user User) {
 	//headerLite, _ := SimpleUserCheck(w, r, &user)
 	err := r.ParseForm()
 	if err != nil {
@@ -1943,7 +1943,7 @@ func route_change_theme(w http.ResponseWriter, r *http.Request, user User) {
 // TODO: We don't need support XML here to support sitemaps, we could handle those elsewhere
 var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
 
-func route_api(w http.ResponseWriter, r *http.Request, user User) {
+func routeAPI(w http.ResponseWriter, r *http.Request, user User) {
 	w.Header().Set("Content-Type", "application/json")
 	err := r.ParseForm()
 	if err != nil {

@@ -35,5 +35,5 @@ func (hub *WS_Hub) pushAlerts(_ []int, _ int, _ string, _ string, _ int, _ int, 
 	return errWsNouser
 }
 
-func route_websockets(_ http.ResponseWriter, _ *http.Request, _ User) {
+func routeWebsockets(_ http.ResponseWriter, _ *http.Request, _ User) {
 }

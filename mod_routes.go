@@ -12,8 +12,8 @@ import (
 
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
-func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
-	//log.Print("in route_edit_topic")
+func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
+	//log.Print("in routeEditTopic")
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
@@ -111,7 +111,7 @@ func route_edit_topic(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
-func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
+func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
 	if err != nil {
 		PreError("The provided TopicID is not a valid number.", w, r)
@@ -185,7 +185,7 @@ func route_delete_topic(w http.ResponseWriter, r *http.Request, user User) {
 	topics.Remove(tid)
 }
 
-func route_stick_topic(w http.ResponseWriter, r *http.Request, user User) {
+func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/stick/submit/"):])
 	if err != nil {
 		PreError("The provided TopicID is not a valid number.", w, r)
@@ -241,7 +241,7 @@ func route_stick_topic(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 }
 
-func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
+func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unstick/submit/"):])
 	if err != nil {
 		PreError("The provided TopicID is not a valid number.", w, r)
@@ -299,7 +299,7 @@ func route_unstick_topic(w http.ResponseWriter, r *http.Request, user User) {
 
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
-func route_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
@@ -356,7 +356,7 @@ func route_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) 
 }
 
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
-func route_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
@@ -446,7 +446,7 @@ func route_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User
 	}
 }
 
-func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -487,7 +487,7 @@ func route_profile_reply_edit_submit(w http.ResponseWriter, r *http.Request, use
 	}
 }
 
-func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
 		LocalError("Bad Form", w, r, user)
@@ -530,7 +530,7 @@ func route_profile_reply_delete_submit(w http.ResponseWriter, r *http.Request, u
 	}
 }
 
-func route_ips(w http.ResponseWriter, r *http.Request, user User) {
+func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w, r, &user)
 	if !ok {
 		return
@@ -635,7 +635,7 @@ func route_ips(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 // TODO: This is being replaced with the new ban route system
-/*func route_ban(w http.ResponseWriter, r *http.Request, user User) {
+/*func routeBan(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, ok := UserCheck(w,r,&user)
 	if !ok {
 		return
@@ -673,7 +673,7 @@ func route_ips(w http.ResponseWriter, r *http.Request, user User) {
 	templates.ExecuteTemplate(w,"areyousure.html",pi)
 }*/
 
-func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
+func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Perms.BanUsers {
 		NoPermissions(w, r, user)
 		return
@@ -768,7 +768,7 @@ func route_ban_submit(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
 }
 
-func route_unban(w http.ResponseWriter, r *http.Request, user User) {
+func routeUnban(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Perms.BanUsers {
 		NoPermissions(w, r, user)
 		return
@@ -821,7 +821,7 @@ func route_unban(w http.ResponseWriter, r *http.Request, user User) {
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
 }
 
-func route_activate(w http.ResponseWriter, r *http.Request, user User) {
+func routeActivate(w http.ResponseWriter, r *http.Request, user User) {
 	if !user.Perms.ActivateUsers {
 		NoPermissions(w, r, user)
 		return

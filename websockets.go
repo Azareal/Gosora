@@ -155,7 +155,7 @@ func (hub *WS_Hub) pushAlerts(users []int, asid int, event string, elementType s
 	return nil
 }
 
-func route_websockets(w http.ResponseWriter, r *http.Request, user User) {
+func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) {
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return

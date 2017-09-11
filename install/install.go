@@ -178,7 +178,7 @@ config.SmtpPassword = ""
 config.SmtpPort = "25"
 
 // Misc
-config.DefaultRoute = route_topics
+config.DefaultRoute = routeTopics
 config.DefaultGroup = 3 // Should be a setting in the database
 config.ActivationGroup = 5 // Should be a setting in the database
 config.StaffCss = "staff_post"

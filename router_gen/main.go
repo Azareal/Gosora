@@ -142,7 +142,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	if dev.SuperDebug {
-		log.Print("before route_static")
+		log.Print("before routeStatic")
 		log.Print("prefix: ", prefix)
 		log.Print("req.URL.Path: ", req.URL.Path)
 		log.Print("extra_data: ", extra_data)
@@ -151,7 +151,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if prefix == "/static" {
 		req.URL.Path += extra_data
-		route_static(w,req)
+		routeStatic(w,req)
 		return
 	}
 	
@@ -183,7 +183,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			// TODO: Add support for favicons and robots.txt files
 			switch(extra_data) {
 				case "robots.txt":
-					route_robots_txt(w,req)
+					routeRobotsTxt(w,req)
 					return
 			}
 			

@@ -64,7 +64,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	if dev.SuperDebug {
-		log.Print("before route_static")
+		log.Print("before routeStatic")
 		log.Print("prefix: ", prefix)
 		log.Print("req.URL.Path: ", req.URL.Path)
 		log.Print("extra_data: ", extra_data)
@@ -73,7 +73,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if prefix == "/static" {
 		req.URL.Path += extra_data
-		route_static(w,req)
+		routeStatic(w,req)
 		return
 	}
 	
@@ -93,135 +93,135 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	switch(prefix) {
 		case "/api":
-			route_api(w,req,user)
+			routeAPI(w,req,user)
 			return
 		case "/overview":
-			route_overview(w,req,user)
+			routeOverview(w,req,user)
 			return
 		case "/forums":
-			route_forums(w,req,user)
+			routeForums(w,req,user)
 			return
 		case "/forum":
-			route_forum(w,req,user,extra_data)
+			routeForum(w,req,user,extra_data)
 			return
 		case "/theme":
-			route_change_theme(w,req,user)
+			routeChangeTheme(w,req,user)
 			return
 		case "/report":
 			switch(req.URL.Path) {
 				case "/report/submit/":
-					route_report_submit(w,req,user,extra_data)
+					routeReportSubmit(w,req,user,extra_data)
 					return
 			}
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/create/":
-					route_topic_create(w,req,user,extra_data)
+					routeTopicCreate(w,req,user,extra_data)
 					return
 				default:
-					route_topics(w,req,user)
+					routeTopics(w,req,user)
 					return
 			}
 		case "/panel":
 			switch(req.URL.Path) {
 				case "/panel/forums/":
-					route_panel_forums(w,req,user)
+					routePanelForums(w,req,user)
 					return
 				case "/panel/forums/create/":
-					route_panel_forums_create_submit(w,req,user)
+					routePanelForumsCreateSubmit(w,req,user)
 					return
 				case "/panel/forums/delete/":
-					route_panel_forums_delete(w,req,user,extra_data)
+					routePanelForumsDelete(w,req,user,extra_data)
 					return
 				case "/panel/forums/delete/submit/":
-					route_panel_forums_delete_submit(w,req,user,extra_data)
+					routePanelForumsDeleteSubmit(w,req,user,extra_data)
 					return
 				case "/panel/forums/edit/":
-					route_panel_forums_edit(w,req,user,extra_data)
+					routePanelForumsEdit(w,req,user,extra_data)
 					return
 				case "/panel/forums/edit/submit/":
-					route_panel_forums_edit_submit(w,req,user,extra_data)
+					routePanelForumsEditSubmit(w,req,user,extra_data)
 					return
 				case "/panel/forums/edit/perms/submit/":
-					route_panel_forums_edit_perms_submit(w,req,user,extra_data)
+					routePanelForumsEditPermsSubmit(w,req,user,extra_data)
 					return
 				case "/panel/settings/":
-					route_panel_settings(w,req,user)
+					routePanelSettings(w,req,user)
 					return
 				case "/panel/settings/edit/":
-					route_panel_setting(w,req,user,extra_data)
+					routePanelSetting(w,req,user,extra_data)
 					return
 				case "/panel/settings/edit/submit/":
-					route_panel_setting_edit(w,req,user,extra_data)
+					routePanelSettingEdit(w,req,user,extra_data)
 					return
 				case "/panel/settings/word-filters/":
-					route_panel_word_filters(w,req,user)
+					routePanelWordFilters(w,req,user)
 					return
 				case "/panel/settings/word-filters/create/":
-					route_panel_word_filters_create(w,req,user)
+					routePanelWordFiltersCreate(w,req,user)
 					return
 				case "/panel/settings/word-filters/edit/":
-					route_panel_word_filters_edit(w,req,user,extra_data)
+					routePanelWordFiltersEdit(w,req,user,extra_data)
 					return
 				case "/panel/settings/word-filters/edit/submit/":
-					route_panel_word_filters_edit_submit(w,req,user,extra_data)
+					routePanelWordFiltersEditSubmit(w,req,user,extra_data)
 					return
 				case "/panel/settings/word-filters/delete/submit/":
-					route_panel_word_filters_delete_submit(w,req,user,extra_data)
+					routePanelWordFiltersDeleteSubmit(w,req,user,extra_data)
 					return
 				case "/panel/themes/":
-					route_panel_themes(w,req,user)
+					routePanelThemes(w,req,user)
 					return
 				case "/panel/themes/default/":
-					route_panel_themes_set_default(w,req,user,extra_data)
+					routePanelThemesSetDefault(w,req,user,extra_data)
 					return
 				case "/panel/plugins/":
-					route_panel_plugins(w,req,user)
+					routePanelPlugins(w,req,user)
 					return
 				case "/panel/plugins/activate/":
-					route_panel_plugins_activate(w,req,user,extra_data)
+					routePanelPluginsActivate(w,req,user,extra_data)
 					return
 				case "/panel/plugins/deactivate/":
-					route_panel_plugins_deactivate(w,req,user,extra_data)
+					routePanelPluginsDeactivate(w,req,user,extra_data)
 					return
 				case "/panel/plugins/install/":
-					route_panel_plugins_install(w,req,user,extra_data)
+					routePanelPluginsInstall(w,req,user,extra_data)
 					return
 				case "/panel/users/":
-					route_panel_users(w,req,user)
+					routePanelUsers(w,req,user)
 					return
 				case "/panel/users/edit/":
-					route_panel_users_edit(w,req,user,extra_data)
+					routePanelUsersEdit(w,req,user,extra_data)
 					return
 				case "/panel/users/edit/submit/":
-					route_panel_users_edit_submit(w,req,user,extra_data)
+					routePanelUsersEditSubmit(w,req,user,extra_data)
 					return
 				case "/panel/groups/":
-					route_panel_groups(w,req,user)
+					routePanelGroups(w,req,user)
 					return
 				case "/panel/groups/edit/":
-					route_panel_groups_edit(w,req,user,extra_data)
+					routePanelGroupsEdit(w,req,user,extra_data)
 					return
 				case "/panel/groups/edit/perms/":
-					route_panel_groups_edit_perms(w,req,user,extra_data)
+					routePanelGroupsEditPerms(w,req,user,extra_data)
 					return
 				case "/panel/groups/edit/submit/":
-					route_panel_groups_edit_submit(w,req,user,extra_data)
+					routePanelGroupsEditSubmit(w,req,user,extra_data)
 					return
 				case "/panel/groups/edit/perms/submit/":
-					route_panel_groups_edit_perms_submit(w,req,user,extra_data)
+					routePanelGroupsEditPermsSubmit(w,req,user,extra_data)
 					return
 				case "/panel/groups/create/":
-					route_panel_groups_create_submit(w,req,user)
+					routePanelGroupsCreateSubmit(w,req,user)
 					return
 				case "/panel/logs/mod/":
-					route_panel_logs_mod(w,req,user)
+					routePanelLogsMod(w,req,user)
 					return
 				case "/panel/debug/":
-					route_panel_debug(w,req,user)
+					routePanelDebug(w,req,user)
 					return
 				default:
-					route_panel(w,req,user)
+					routePanel(w,req,user)
 					return
 			}
 		case "/uploads":
@@ -237,7 +237,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			// TODO: Add support for favicons and robots.txt files
 			switch(extra_data) {
 				case "robots.txt":
-					route_robots_txt(w,req)
+					routeRobotsTxt(w,req)
 					return
 			}
 			

@@ -346,9 +346,9 @@ func socialgroupsViewGroup(w http.ResponseWriter, r *http.Request, user User) {
 		NotFound(w, r)
 	}
 
-	// Re-route the request to route_forums
+	// Re-route the request to routeForums
 	var ctx = context.WithValue(r.Context(), "socialgroups_current_group", sgItem)
-	route_forum(w, r.WithContext(ctx), user, strconv.Itoa(sgItem.MainForumID))
+	routeForum(w, r.WithContext(ctx), user, strconv.Itoa(sgItem.MainForumID))
 }
 
 func socialgroupsCreateGroup(w http.ResponseWriter, r *http.Request, user User) {

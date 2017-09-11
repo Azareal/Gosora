@@ -23,7 +23,7 @@ var currentLanguage = "english"
 var currentLangPack atomic.Value
 var langpackCount int // TODO: Use atomics for this
 
-// We'll be implementing the level phrases in the software proper very very soon!
+// TODO: We'll be implementing the level phrases in the software proper very very soon!
 type LevelPhrases struct {
 	Level    string
 	LevelMax string // ? Add a max level setting?
@@ -32,6 +32,7 @@ type LevelPhrases struct {
 	Levels []string // index = level
 }
 
+// ! For the sake of thread safety, you must never modify a *LanguagePack directly, but to create a copy of it and overwrite the entry in the sync.Map
 type LanguagePack struct {
 	Name          string
 	Phrases       map[string]string // Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
@@ -42,7 +43,6 @@ type LanguagePack struct {
 }
 
 // TODO: Add the ability to edit language JSON files from the Control Panel and automatically scan the files for changes
-// TODO: Move the english language pack into a JSON file and load that on start-up
 ////var langpacks = map[string]*LanguagePack
 var langpacks sync.Map // nolint it is used
 
@@ -94,12 +94,18 @@ func initPhrases() error {
 	return nil
 }
 
+// TODO: Implement this
 func LoadLangPack(name string) error {
 	_ = name
 	return nil
 }
 
-// We might not need to use a mutex for this, we shouldn't need to change the phrases after start-up, and when we do we could overwrite the entire map
+// TODO: Implement this
+func SaveLangPack(langPack *LanguagePack) error {
+	_ = langPack
+	return nil
+}
+
 func GetPhrase(name string) (string, bool) {
 	res, ok := currentLangPack.Load().(*LanguagePack).Phrases[name]
 	return res, ok
@@ -129,12 +135,12 @@ func GetSettingLabel(name string) string {
 	return res
 }
 
-// Is this a copy of the map or a pointer to it? We don't want to accidentally create a race condition
 func GetAllSettingLabels() map[string]string {
 	return currentLangPack.Load().(*LanguagePack).SettingLabels
 }
 
-// Use runtime reflection for updating phrases?
+// ? - Use runtime reflection for updating phrases?
+// TODO: Implement these
 func AddPhrase() {
 
 }
