@@ -3,22 +3,21 @@ package main
 import "strconv"
 import "testing"
 
-// TODO: Replace the soft tabs with hard ones
 // go test -v
 
-type ME_Pair struct {
+type MEPair struct {
 	Msg     string
 	Expects string
 }
 
-func addMEPair(msgList []ME_Pair, msg string, expects string) []ME_Pair {
-	return append(msgList, ME_Pair{msg, expects})
+func addMEPair(msgList []MEPair, msg string, expects string) []MEPair {
+	return append(msgList, MEPair{msg, expects})
 }
 
 func TestBBCodeRender(t *testing.T) {
 	//t.Skip()
 	var res string
-	var msgList []ME_Pair
+	var msgList []MEPair
 	msgList = addMEPair(msgList, "hi", "hi")
 	msgList = addMEPair(msgList, "😀", "😀")
 	msgList = addMEPair(msgList, "[b]😀[/b]", "<b>😀</b>")
@@ -190,7 +189,7 @@ func TestBBCodeRender(t *testing.T) {
 func TestMarkdownRender(t *testing.T) {
 	//t.Skip()
 	var res string
-	var msgList []ME_Pair
+	var msgList []MEPair
 	msgList = addMEPair(msgList, "hi", "hi")
 	msgList = addMEPair(msgList, "**hi**", "<b>hi</b>")
 	msgList = addMEPair(msgList, "_hi_", "<u>hi</u>")

@@ -19,7 +19,6 @@ import (
 
 // TODO: Let the admin edit phrases from inside the Control Panel? How should we persist these? Should we create a copy of the langpack or edit the primaries? Use the changeLangpack mutex for this?
 // nolint Be quiet megacheck, this *is* used
-var currentLanguage = "english"
 var currentLangPack atomic.Value
 var langpackCount int // TODO: Use atomics for this
 
@@ -40,6 +39,7 @@ type LanguagePack struct {
 	GlobalPerms   map[string]string
 	LocalPerms    map[string]string
 	SettingLabels map[string]string
+	Accounts      map[string]string // TODO: Apply these phrases in the software proper
 }
 
 // TODO: Add the ability to edit language JSON files from the Control Panel and automatically scan the files for changes
@@ -86,9 +86,9 @@ func initPhrases() error {
 		return errors.New("You don't have any language packs")
 	}
 
-	langPack, ok := langpacks.Load(currentLanguage)
+	langPack, ok := langpacks.Load(site.Language)
 	if !ok {
-		return errors.New("Couldn't find the " + currentLanguage + " language pack")
+		return errors.New("Couldn't find the " + site.Language + " language pack")
 	}
 	currentLangPack.Store(langPack)
 	return nil
@@ -137,6 +137,14 @@ func GetSettingLabel(name string) string {
 
 func GetAllSettingLabels() map[string]string {
 	return currentLangPack.Load().(*LanguagePack).SettingLabels
+}
+
+func GetAccountPhrase(name string) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).Accounts[name]
+	if !ok {
+		return "{name}"
+	}
+	return res
 }
 
 // ? - Use runtime reflection for updating phrases?

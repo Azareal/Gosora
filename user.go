@@ -1,3 +1,9 @@
+/*
+*
+*	Gosora User File
+*	Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import (
@@ -141,7 +147,7 @@ func SendValidationEmail(username string, email string, token string) bool {
 
 	// TODO: Move these to the phrase system
 	subject := "Validate Your Email @ " + site.Name
-	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + site.Url + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
+	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + site.URL + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
 	return SendEmail(email, subject, msg)
 }
 

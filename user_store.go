@@ -46,6 +46,7 @@ type MemoryUserStore struct {
 	sync.RWMutex
 }
 
+// NewMemoryUserStore gives you a new instance of MemoryUserStore
 func NewMemoryUserStore(capacity int) *MemoryUserStore {
 	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
 	if err != nil {

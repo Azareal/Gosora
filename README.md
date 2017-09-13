@@ -152,15 +152,11 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 ![Tempra Conflux Mobile](https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux-control-panel.png)
 
-![Cosmo Conflux Theme](https://github.com/Azareal/Gosora/blob/master/images/cosmo-conflux.png)
-
-![Cosmo Theme](https://github.com/Azareal/Gosora/blob/master/images/cosmo.png)
-
 More images in the /images/ folder. Beware though, some of them are *really* outdated.
 
 # Dependencies
 
-* Go 1.8
+* Go 1.9
 
 * MariaDB (or any other MySQL compatible database engine). We'll allow other database engines in the future.
 

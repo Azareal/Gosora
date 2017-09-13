@@ -1,4 +1,9 @@
-/* Copyright Azareal 2016 - 2018 */
+/*
+*
+*	Gosora Main File
+*	Copyright Azareal 2016 - 2018
+*
+ */
 package main
 
 import (
@@ -8,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync/atomic"
 	"time"
 	//"runtime/pprof"
 )
@@ -27,8 +31,6 @@ const terabyte int = gigabyte * 1024
 const saltLength int = 32
 const sessionLength int = 80
 
-var enableWebsockets = false // Don't change this, the value is overwritten by an initialiser
-
 var router *GenRouter
 var startTime time.Time
 
@@ -41,55 +43,13 @@ var groupCapCount int
 var staticFiles = make(map[string]SFile)
 var logWriter = io.MultiWriter(os.Stderr)
 
-type WordFilter struct {
-	ID          int
-	Find        string
-	Replacement string
-}
-type WordFilterBox map[int]WordFilter
-
-var wordFilterBox atomic.Value // An atomic value holding a WordFilterBox
-
-func init() {
-	wordFilterBox.Store(WordFilterBox(make(map[int]WordFilter)))
-}
-
-func LoadWordFilters() error {
-	rows, err := get_word_filters_stmt.Query()
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	var wordFilters = WordFilterBox(make(map[int]WordFilter))
-	var wfid int
-	var find string
-	var replacement string
-
-	for rows.Next() {
-		err := rows.Scan(&wfid, &find, &replacement)
-		if err != nil {
-			return err
-		}
-		wordFilters[wfid] = WordFilter{ID: wfid, Find: find, Replacement: replacement}
-	}
-	wordFilterBox.Store(wordFilters)
-	return rows.Err()
-}
-
-func addWordFilter(id int, find string, replacement string) {
-	wordFilters := wordFilterBox.Load().(WordFilterBox)
-	wordFilters[id] = WordFilter{ID: id, Find: find, Replacement: replacement}
-	wordFilterBox.Store(wordFilters)
-}
-
 func processConfig() {
-	config.Noavatar = strings.Replace(config.Noavatar, "{site_url}", site.Url, -1)
+	config.Noavatar = strings.Replace(config.Noavatar, "{site_url}", site.URL, -1)
 	if site.Port != "80" && site.Port != "443" {
-		site.Url = strings.TrimSuffix(site.Url, "/")
-		site.Url = strings.TrimSuffix(site.Url, "\\")
-		site.Url = strings.TrimSuffix(site.Url, ":")
-		site.Url = site.Url + ":" + site.Port
+		site.URL = strings.TrimSuffix(site.URL, "/")
+		site.URL = strings.TrimSuffix(site.URL, "\\")
+		site.URL = strings.TrimSuffix(site.URL, ":")
+		site.URL = site.URL + ":" + site.Port
 	}
 }
 

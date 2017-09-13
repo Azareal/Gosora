@@ -146,22 +146,23 @@ func main() {
 
 func init() {
 // Site Info
-site.Name = "` + siteName + `" // Should be a setting in the database
-site.Email = "" // Should be a setting in the database
-site.Url = "` + siteURL + `"
+site.Name = "` + siteName + `"
+site.Email = ""
+site.URL = "` + siteURL + `"
 site.Port = "` + serverPort + `"
 site.EnableSsl = false
 site.EnableEmails = false
 site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
 config.SslPrivkey = ""
 config.SslFullchain = ""
+site.Language = "english"
 
 // Database details
-db_config.Host = "` + dbHost + `"
-db_config.Username = "` + dbUsername + `"
-db_config.Password = "` + dbPassword + `"
-db_config.Dbname = "` + dbName + `"
-db_config.Port = "` + dbPort + `" // You probably won't need to change this
+dbConfig.Host = "` + dbHost + `"
+dbConfig.Username = "` + dbUsername + `"
+dbConfig.Password = "` + dbPassword + `"
+dbConfig.Dbname = "` + dbName + `"
+dbConfig.Port = "` + dbPort + `" // You probably won't need to change this
 
 // Limiters
 config.MaxRequestSize = 5 * megabyte

@@ -7,21 +7,29 @@
 body {
 	font-family: arial;
 	padding-bottom: 8px;
+	/* TODO: Redo the background */
 	background-image: url('/static/test_bg2.svg');
 	background-size: cover;
+	background: white;
 }
 
 /* Patch for Edge, until they fix emojis in arial x.x */
-@supports (-ms-ime-align:auto) { .user_content { font-family: Segoe UI Emoji, arial; } }
+@supports (-ms-ime-align:auto) {
+	.user_content { font-family: Segoe UI Emoji, arial; }
+}
 
 ul {
 	padding-left: 0px;
 	padding-right: 0px;
 	height: 36px;
 	list-style-type: none;
-	border: 1px solid #ccc;
-	background-color: white;
+	border: 1px solid hsl(0,0%,80%);
+	background: hsl(0, 0%, 97%);
 	margin-bottom: 12px;
+	margin-top: 0px;
+	border-bottom: 1.5px inset hsl(0,0%,80%);
+	margin-left: -8px;
+	margin-right: -8px;
 }
 li {
 	height: 35px;
@@ -29,7 +37,9 @@ li {
 	padding-top: 8px;
 	padding-bottom: 8px;
 }
-li:hover { background: rgb(250,250,250); }
+li:hover {
+	background: rgb(250,250,250);
+}
 li a {
 	text-decoration: none;
 	/*color: #515151;*/
@@ -38,12 +48,14 @@ li a {
 }
 .menu_left {
 	float: left;
-	border-right: 1px solid #ccc;
+	border-right: 1px solid hsl(0,0%,80%);
+	border-bottom: 1.5px inset hsl(0,0%,80%);
 	padding-right: 10px;
+	background: hsl(0, 0%, 98%);
 }
 .menu_right {
 	float: right;
-	border-left: 1px solid #ccc;
+	border-left: 1px solid hsl(0,0%,80%);
 	padding-right: 10px;
 }
 
@@ -85,8 +97,9 @@ li a {
 	color: black;
 	font-weight: bold;
 }
-.selectedAlert .alert_counter { display: none; }
-.menu_alerts .alertList { display: none; }
+.selectedAlert .alert_counter, .menu_alerts .alertList {
+	display: none;
+}
 .selectedAlert .alertList {
 	position: absolute;
 	top: 51px;
@@ -96,10 +109,10 @@ li a {
 	line-height: 16px;
 	width: 300px;
 	right: calc(5% + 7px);
-	border-top: 1px solid #ccc;
-	border-left: 1px solid #ccc;
-	border-right: 1px solid #ccc;
-	border-bottom: 1px solid #ccc;
+	border-top: 1px solid hsl(0,0%,80%);
+	border-left: 1px solid hsl(0,0%,80%);
+	border-right: 1px solid hsl(0,0%,80%);
+	border-bottom: 1px solid hsl(0,0%,80%);
 	margin-bottom: 10px;
 }
 .alertItem {
@@ -136,17 +149,45 @@ li a {
 	padding: 0px;
 	margin-left: auto;
 	margin-right: auto;
+	background: hsl(0, 0%, 98%);
+	border: 1px solid hsl(0,0%,80%);
+	border-top: none;
 }
 
+#back {
+	padding: 12px;
+    padding-top: 0px;
+}
+
+/* Explict declaring each border direction to fix a bug in Chrome where an override to .rowhead was also applying to .rowblock in some cases */
 .rowblock {
-	border: 1px solid #ccc;
+	border: 1px solid hsl(0,0%,80%);
 	width: 100%;
 	padding: 0px;
 	padding-top: 0px;
+	border-top: 1px solid hsl(0,0%,80%);
+	border-left: 1px solid hsl(0,0%,80%);
+	border-right: 1px solid hsl(0,0%,80%);
+	border-bottom: 1.5px inset hsl(0,0%,80%);
 }
-.rowblock:empty { display: none; }
+.rowblock:empty {
+	display: none;
+}
 .rowsmall {
 	font-size:12px;
+}
+
+/* Firefox specific CSS */
+@supports (-moz-appearance: none) {
+	ul, .menu_left, .rowblock {
+		border-bottom: 2px inset hsl(0,0%,40%);
+	}
+}
+/* Edge... We can't get the exact shade here, because of how they implemented it x.x */
+@supports (-ms-ime-align:auto) {
+	ul, .menu_left, .rowblock {
+		border-bottom: 1.5px inset hsl(0,0%,100%);
+	}
 }
 
 .rowlist {
@@ -162,25 +203,6 @@ li a {
 	padding-left: 48px;
 }
 
-.colblock_left {
-	border: 1px solid #ccc;
-	padding: 0px;
-	padding-top: 0px;
-	width: 30%;
-	float: left;
-	margin-right: 8px;
-}
-.colblock_right {
-	border: 1px solid #ccc;
-	padding: 0px;
-	padding-top: 0px;
-	width: 65%;
-	overflow: hidden;
-	word-wrap: break-word;
-}
-.colblock_left:empty, .colblock_right:empty { display: none; }
-
-/* The new method of doing columns layouts, colblock is now deprecated :( */
 .colstack_left {
 	float: left;
 	width: 30%;
@@ -192,7 +214,7 @@ li a {
 	width: calc(70% - 15px);
 }
 .colstack_item {
-	border: 1px solid #ccc;
+	border: 1px solid hsl(0,0%,80%);
 	padding: 0px;
 	padding-top: 0px;
 	width: 100%;
@@ -211,7 +233,7 @@ li a {
 	margin-top: 2px;
 }
 .grid_item {
-	border: 1px solid #ccc;
+	border: 1px solid hsl(0,0%,80%);
 	word-wrap: break-word;
 	background-color: white;
 	width: 100%;
@@ -223,21 +245,33 @@ li a {
 	padding-bottom: 12px;
 	font-size: 16px;
 }
-.grid_istat { margin-bottom: 5px; }
+.grid_istat {
+	margin-bottom: 5px;
+}
 
-.stat_green { background-color: lightgreen; border-color: green; }
-.stat_orange { background-color: #ffe4b3; border-color: orange; }
-.stat_red { background-color: #ffb2b2; border-color: red; }
-.stat_disabled { background-color: lightgray; border-color: gray; }
+.stat_green {
+	background-color: lightgreen;
+	border-color: green;
+}
+.stat_orange {
+	background-color: #ffe4b3;
+	border-color: orange;
+}
+.stat_red {
+	background-color: #ffb2b2;
+	border-color: red;
+}
+.stat_disabled {
+	background-color: lightgray;
+	border-color: gray;
+}
 
 .rowitem {
 	width: 100%;
 	/*padding-left: 8px;
 	padding-right: 8px;
 	padding-top: 17px;
-	padding-bottom: 12px;
-	font-weight: bold;
-	text-transform: uppercase;*/
+	padding-bottom: 12px;*/
 	padding-left: 10px;
 	padding-top: 14px;
 	padding-bottom: 12px;
@@ -249,13 +283,16 @@ li a {
 	text-transform: none;
 }
 .rowitem:not(:last-child) {
-	border-bottom: 1px dotted #ccc;
+	border-bottom: 1px solid hsl(0,0%,85%);
 }
 .rowitem a {
 	text-decoration: none;
 	color: black;
 }
-.rowitem a:hover { color: silver; }
+.rowitem a:hover {
+	color: hsl(0,0%,40%);
+}
+
 .opthead { display: none; }
 .datarow {
 	padding-top: 10px;
@@ -272,8 +309,12 @@ li a {
 	content: " ";
 	display: table;
 }
-.formrow:after { clear: both; }
-.formrow:not(:last-child) { border-bottom: 1px dotted #ccc; }
+.formrow:after {
+	clear: both;
+}
+.formrow:not(:last-child) {
+	border-bottom: 1px dotted hsl(0,0%,80%);
+}
 
 .formitem {
 	float: left;
@@ -282,8 +323,12 @@ li a {
 	/*font-size: 17px;*/
 	font-weight: normal;
 }
-.formitem:not(:last-child) { border-right: 1px dotted #ccc; }
-.formitem.invisible_border { border: none; }
+.formitem:not(:last-child) {
+	border-right: 1px dotted hsl(0,0%,80%);
+}
+.formitem.invisible_border {
+	border: none;
+}
 
 /* Mostly for textareas */
 .formitem:only-child { width: 100%; }
@@ -296,7 +341,9 @@ li a {
 	margin: 0 auto;
 	float: none;
 }
-.formitem:not(:only-child) input, .formitem:not(:only-child) select { padding: 3px;/*5px;*/ }
+.formitem:not(:only-child) input, .formitem:not(:only-child) select {
+	padding: 3px;/*5px;*/
+}
 .formitem:not(:only-child).formlabel {
 	padding-top: 15px;/*18px;*/
 	padding-bottom: 12px;/*16px;*/
@@ -308,7 +355,7 @@ li a {
 	margin-left: auto;
 	margin-right: auto;
 	font-size: 15px;
-	border-color: #ccc;
+	border-color: hsl(0,0%,80%);
 }
 
 button {
@@ -318,6 +365,33 @@ button {
 
 /* Topics */
 
+.topic_list {
+	display: grid;
+	grid-template-columns: calc(100% - 204px) 204px;
+}
+.topic_list .topic_inner_right {
+	display: none;
+}
+.topic_list .lastReplyAt {
+	white-space: nowrap;
+}
+
+@supports not (display: grid) {
+	.topic_list .rowitem {
+		float: left;
+		overflow: hidden;
+	}
+	.topic_list .topic_left {
+		width: calc(100% - 204px);
+	}
+	.topic_list .topic_right {
+		width: 204px;
+	}
+}
+
+.topic_status_sticky {
+	display: none;
+}
 .topic_sticky {
 	background-color: rgb(255,255,234);
 }
@@ -338,8 +412,22 @@ button {
 }
 .topic_status:empty { display: none; }
 
+.rowhead, .colstack_head {
+	border-bottom: none;
+}
 .rowhead .rowitem, .opthead .rowitem, .colstack_head .rowitem {
-	background: linear-gradient(to bottom, white, hsl(0, 0%, 93%));
+	/*background: linear-gradient(to bottom, white, hsl(0, 0%, 93%));*/
+	background: hsl(0, 0%, 98%);
+}
+.rowhead h1, .colstack_head h1 {
+	-webkit-margin-before: 0; /* Opera / Chrome Implicit padding */
+	-webkit-margin-after: 0;
+	font-weight: normal;
+	font-size: 16px;
+	margin-block-start: 0; /* Firefox Implicit padding */
+	margin-block-end: 0;
+	margin-top: 0;
+	margin-bottom: 0; /* Edge Implicit padding */
 }
 .topic_sticky_head {
 	background-color: #FFFFEA;
@@ -360,7 +448,7 @@ button {
 	color: #505050; /* 80,80,80 */
 	background-color: #FFFFFF;
 	border-style: solid;
-	border-color: #ccc;
+	border-color: hsl(0,0%,80%);
 	border-width: 1px;
 	font-size: 15px;
 }
@@ -396,7 +484,7 @@ button.username {
 	display: block;
 	padding: 5px;
 	margin-bottom: 10px;
-	border: 1px solid #ccc;
+	border: 1px solid hsl(0,0%,80%);
 	background-color: white;
 }
 .alert_success {
@@ -415,16 +503,19 @@ button.username {
 }
 
 /* Tempra Conflux */
+
 .user_content {
 	padding: 5px;
-	margin-top: 3px;
+	margin-top: 2px;
 	margin-bottom: 0;
 	background: white;
 	min-height: 145px;
 	padding-bottom: 0;
 	width: 100%;
 }
-.user_content.nobuttons { min-height: 168px; }
+.user_content.nobuttons {
+	min-height: 168px;
+}
 
 .button_container {
 	border-top: solid 1px #eaeaea;
@@ -515,7 +606,8 @@ button.username {
 	float: left;
 	position: sticky;
 	top: 4px;
-	box-shadow:0 1px 2px rgba(0,0,0,.1);
+	/*box-shadow: 0 1px 2px rgba(0,0,0,.1);*/
+	border-bottom: 1px inset hsl(0,0%,80%);
 }
 .userinfo .avatar_item {
 	background-repeat: no-repeat, repeat-y;
@@ -534,7 +626,8 @@ button.username {
 	min-height: 128px;
 	margin-bottom: 0;
 	margin-right: 3px;
-	box-shadow:0 1px 2px rgba(0,0,0,.1);
+	/*box-shadow: 0 1px 2px rgba(0,0,0,.1);*/
+	border-bottom: 1px inset hsl(0,0%,80%);
 }
 
 .action_item .userinfo { display: none; }
@@ -551,7 +644,7 @@ button.username {
 	border-width: 1px;
 	background-color: #FFFFFF;
 	border-style: solid;
-	border-color: #ccc;
+	border-color: hsl(0,0%,80%);
 	padding: 0px;
 	padding-left: 5px;
 	padding-right: 5px;
@@ -572,6 +665,64 @@ button.username {
 	float: right;
 	position: relative;
 	top: -2px;
+}
+
+.post_container {
+	border-bottom: none;
+}
+.topic_reply_form {
+	border-top: 1px solid hsl(0,0%,80%);
+}
+.post_container .post_item {
+	background-color: #eaeaea;
+	padding-top: 4px;
+	padding-left: 5px;
+	clear: both;
+	border-bottom: none;
+	padding-right: 4px;
+	padding-bottom: 2px;
+}
+.post_container .post_item:first-child {
+	padding-top: 6px;
+}
+.post_container .post_item:last-child .content_container {
+	margin-bottom: 6px !important;
+}
+
+.footer {
+	border: 1px solid hsl(0,0%,80%);
+	margin-top: 12px;
+	clear: both;
+	height: 40px;
+	padding: 6px;
+	padding-left: 10px;
+	padding-right: 10px;
+	background-color: white;
+	border-bottom: 1.5px inset hsl(0,0%,80%);
+}
+.footer select {
+	padding: 2px;
+	margin-top: 1px;
+}
+#poweredBy {
+	float: left;
+	margin-top: 4px;
+}
+#poweredBy span {
+	font-size: 12px;
+}
+
+/* Firefox specific CSS */
+@supports (-moz-appearance: none) {
+	.footer {
+		border-bottom: 2px inset hsl(0,0%,40%);
+	}
+}
+/* Edge... We can't get the exact shade here, because of how they implemented it x.x */
+@supports (-ms-ime-align:auto) {
+	.footer {
+		border-bottom: 1.5px inset hsl(0,0%,100%);
+	}
 }
 
 {{template "media.partial.css" }}

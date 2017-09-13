@@ -22,10 +22,8 @@
 	</form>
 </div>
 
-<!-- Stop inling this x.x -->
-<style type="text/css">.rowitem:last-child .content_container { margin-bottom: 5px !important; }</style>
-<div class="rowblock post_container" style="border-top: none;">
-	<article class="rowitem passive deletable_block editable_parent post_item top_post" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
+<div class="rowblock post_container">
+	<article class="rowitem passive deletable_block editable_parent post_item top_post">
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="{{.Topic.UserLink}}" class="the_name">{{.Topic.CreatedByName}}</a>
@@ -79,7 +77,7 @@
 	</article>
 {{end}}</div>
 {{if .CurrentUser.Perms.CreateReply}}
-<div class="rowblock topic_reply_form" style="border-top: none;">
+<div class="rowblock topic_reply_form">
 	<form action="/reply/create/" method="post">
 		<input name="tid" value='{{.Topic.ID}}' type="hidden" />
 		<div class="formrow">

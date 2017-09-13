@@ -5,33 +5,36 @@ package main
 import "errors"
 import "net/http"
 
-var wsHub WS_Hub
+// TODO: Disable WebSockets on high load? Add a Control Panel interface for disabling it?
+var enableWebsockets = false // Put this in caps for consistency with the other constants?
+
+var wsHub WSHub
 var errWsNouser = errors.New("This user isn't connected via WebSockets")
 
-type WS_Hub struct {
+type WSHub struct {
 }
 
-func (_ *WS_Hub) guestCount() int {
+func (_ *WSHub) guestCount() int {
 	return 0
 }
 
-func (_ *WS_Hub) userCount() int {
+func (_ *WSHub) userCount() int {
 	return 0
 }
 
-func (hub *WS_Hub) broadcastMessage(_ string) error {
+func (hub *WSHub) broadcastMessage(_ string) error {
 	return nil
 }
 
-func (hub *WS_Hub) pushMessage(_ int, _ string) error {
+func (hub *WSHub) pushMessage(_ int, _ string) error {
 	return errWsNouser
 }
 
-func (hub *WS_Hub) pushAlert(_ int, _ int, _ string, _ string, _ int, _ int, _ int) error {
+func (hub *WSHub) pushAlert(_ int, _ int, _ string, _ string, _ int, _ int, _ int) error {
 	return errWsNouser
 }
 
-func (hub *WS_Hub) pushAlerts(_ []int, _ int, _ string, _ string, _ int, _ int, _ int) error {
+func (hub *WSHub) pushAlerts(_ []int, _ int, _ string, _ string, _ int, _ int, _ int) error {
 	return errWsNouser
 }
 

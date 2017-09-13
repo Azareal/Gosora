@@ -1,7 +1,7 @@
 /*
 *
-* Gosora Route Handlers
-* Copyright Azareal 2016 - 2018
+*	Gosora Route Handlers
+*	Copyright Azareal 2016 - 2018
 *
  */
 package main

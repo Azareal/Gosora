@@ -137,7 +137,7 @@ func TestForumStore(t *testing.T) {
 
 func TestSlugs(t *testing.T) {
 	var res string
-	var msgList []ME_Pair
+	var msgList []MEPair
 
 	msgList = addMEPair(msgList, "Unknown", "unknown")
 	msgList = addMEPair(msgList, "Unknown2", "unknown2")

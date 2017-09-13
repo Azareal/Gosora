@@ -373,9 +373,6 @@ button {
 .topic_list .topic_inner_right {
 	display: none;
 }
-.topic_list .rowitem:last-child {
-	margin-bottom: 10px;
-}
 .topic_list .lastReplyAt {
 	white-space: nowrap;
 }
@@ -596,6 +593,27 @@ button.username {
 	float: right;
 	position: relative;
 	top: -2px;
+}
+
+.footer {
+	border: 1px solid #ccc;
+	margin-top: 12px;
+	clear: both;
+	height: 40px;
+	padding: 6px;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+.footer select {
+	padding: 2px;
+	margin-top: 1px;
+}
+#poweredBy {
+	float: left;
+	margin-top: 4px;
+}
+#poweredBy span {
+	font-size: 12px;
 }
 
 #profile_comments .rowitem {

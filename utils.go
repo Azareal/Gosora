@@ -1,3 +1,9 @@
+/*
+*
+*	Utility Functions And Stuff
+*	Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import (

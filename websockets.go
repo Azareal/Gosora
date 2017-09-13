@@ -1,5 +1,11 @@
 // +build !no_ws
 
+/*
+*
+*	Gosora WebSocket Subsystem
+*	Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import (
@@ -17,44 +23,46 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WS_User struct {
+type WSUser struct {
 	conn *websocket.Conn
 	User *User
 }
 
-type WS_Hub struct {
-	onlineUsers  map[int]*WS_User
-	onlineGuests map[*WS_User]bool
+type WSHub struct {
+	onlineUsers  map[int]*WSUser
+	onlineGuests map[*WSUser]bool
 	guests       sync.RWMutex
 	users        sync.RWMutex
 }
 
-var wsHub WS_Hub
+// TODO: Disable WebSockets on high load? Add a Control Panel interface for disabling it?
+var enableWebsockets = true // Put this in caps for consistency with the other constants?
+
+var wsHub WSHub
 var wsUpgrader = websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
 var errWsNouser = errors.New("This user isn't connected via WebSockets")
 
 func init() {
-	enableWebsockets = true
-	adminStatsWatchers = make(map[*WS_User]bool)
-	wsHub = WS_Hub{
-		onlineUsers:  make(map[int]*WS_User),
-		onlineGuests: make(map[*WS_User]bool),
+	adminStatsWatchers = make(map[*WSUser]bool)
+	wsHub = WSHub{
+		onlineUsers:  make(map[int]*WSUser),
+		onlineGuests: make(map[*WSUser]bool),
 	}
 }
 
-func (hub *WS_Hub) guestCount() int {
+func (hub *WSHub) guestCount() int {
 	defer hub.guests.RUnlock()
 	hub.guests.RLock()
 	return len(hub.onlineGuests)
 }
 
-func (hub *WS_Hub) userCount() int {
+func (hub *WSHub) userCount() int {
 	defer hub.users.RUnlock()
 	hub.users.RLock()
 	return len(hub.onlineUsers)
 }
 
-func (hub *WS_Hub) broadcastMessage(msg string) error {
+func (hub *WSHub) broadcastMessage(msg string) error {
 	hub.users.RLock()
 	for _, wsUser := range hub.onlineUsers {
 		w, err := wsUser.conn.NextWriter(websocket.TextMessage)
@@ -67,7 +75,7 @@ func (hub *WS_Hub) broadcastMessage(msg string) error {
 	return nil
 }
 
-func (hub *WS_Hub) pushMessage(targetUser int, msg string) error {
+func (hub *WSHub) pushMessage(targetUser int, msg string) error {
 	hub.users.RLock()
 	wsUser, ok := hub.onlineUsers[targetUser]
 	hub.users.RUnlock()
@@ -85,7 +93,7 @@ func (hub *WS_Hub) pushMessage(targetUser int, msg string) error {
 	return nil
 }
 
-func (hub *WS_Hub) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
+func (hub *WSHub) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
 	//log.Print("In pushAlert")
 	hub.users.RLock()
 	wsUser, ok := hub.onlineUsers[targetUser]
@@ -111,9 +119,9 @@ func (hub *WS_Hub) pushAlert(targetUser int, asid int, event string, elementType
 	return nil
 }
 
-func (hub *WS_Hub) pushAlerts(users []int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
+func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
 	//log.Print("In pushAlerts")
-	var wsUsers []*WS_User
+	var wsUsers []*WSUser
 	hub.users.RLock()
 	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
 	for _, uid := range users {
@@ -165,7 +173,7 @@ func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	wsUser := &WS_User{conn, userptr}
+	wsUser := &WSUser{conn, userptr}
 	if user.ID == 0 {
 		wsHub.guests.Lock()
 		wsHub.onlineGuests[wsUser] = true
@@ -224,7 +232,7 @@ func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) {
 	conn.Close()
 }
 
-func wsPageResponses(wsUser *WS_User, page []byte) {
+func wsPageResponses(wsUser *WSUser, page []byte) {
 	switch string(page) {
 	case "/panel/":
 		//log.Print("/panel/ WS Route")
@@ -255,7 +263,7 @@ func wsPageResponses(wsUser *WS_User, page []byte) {
 	}
 }
 
-func wsLeavePage(wsUser *WS_User, page []byte) {
+func wsLeavePage(wsUser *WSUser, page []byte) {
 	switch string(page) {
 	case "/panel/":
 		adminStatsMutex.Lock()
@@ -264,7 +272,7 @@ func wsLeavePage(wsUser *WS_User, page []byte) {
 	}
 }
 
-var adminStatsWatchers map[*WS_User]bool
+var adminStatsWatchers map[*WSUser]bool
 var adminStatsMutex sync.RWMutex
 
 func adminStatsTicker() {

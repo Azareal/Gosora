@@ -207,10 +207,10 @@ type PanelEditForumPage struct {
 	Groups      []GroupForumPermPreset
 }
 
-type NameLangPair struct {
+/*type NameLangPair struct {
 	Name    string
 	LangStr string
-}
+}*/
 
 type NameLangToggle struct {
 	Name    string

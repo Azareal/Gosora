@@ -1,3 +1,9 @@
+/*
+*
+*	Gosora Task System
+*	Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import "time"

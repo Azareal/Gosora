@@ -124,7 +124,7 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 
 		for pb.Next() {
 			topicW.Body.Reset()
-			route_topic_id(topicW, topicReqAdmin, user)
+			routeTopicID(topicW, topicReqAdmin, user)
 		}
 	})
 }
@@ -143,7 +143,7 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 		topicReq := httptest.NewRequest("get", "/topic/1", bytes.NewReader(nil))
 		for pb.Next() {
 			topicW.Body.Reset()
-			route_topic_id(topicW, topicReq, guestUser)
+			routeTopicID(topicW, topicReq, guestUser)
 		}
 	})
 }

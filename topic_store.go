@@ -1,3 +1,9 @@
+/*
+*
+*	Gosora Topic Store
+*	Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import "log"
@@ -32,6 +38,7 @@ type MemoryTopicStore struct {
 	sync.RWMutex
 }
 
+// NewMemoryTopicStore gives you a new instance of MemoryTopicStore
 func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
 	stmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {

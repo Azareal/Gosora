@@ -53,7 +53,7 @@ func _initMysql() (err error) {
 
 	if err == sql.ErrNoRows {
 		fmt.Println("Unable to find the database. Attempting to create it")
-		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName + "")
+		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName)
 		if err != nil {
 			return err
 		}

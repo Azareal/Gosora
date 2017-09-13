@@ -2,24 +2,23 @@ package main
 
 import "net/http"
 
-// TODO: Add a langPack configuration item or setting
-
-var site = &Site{Name: "Magical Fairy Land"}
-var db_config = DB_Config{Host: "localhost"}
+var site = &Site{Name: "Magical Fairy Land", Language: "english"}
+var dbConfig = DBConfig{Host: "localhost"}
 var config Config
 var dev DevConfig
 
 type Site struct {
-	Name         string
-	Email        string
-	Url          string
+	Name         string // ? - Move this into the settings table?
+	Email        string // ? - Move this into the settings table?
+	URL          string
 	Port         string
 	EnableSsl    bool
 	EnableEmails bool
 	HasProxy     bool
+	Language     string // ? - Move this into the settings table?
 }
 
-type DB_Config struct {
+type DBConfig struct {
 	Host     string
 	Username string
 	Password string
@@ -44,13 +43,13 @@ type Config struct {
 	DefaultRoute              func(http.ResponseWriter, *http.Request, User)
 	DefaultGroup              int
 	ActivationGroup           int
-	StaffCss                  string
+	StaffCss                  string // ? - Move this into the settings table? Might be better to implement this as Group CSS
 	UncategorisedForumVisible bool
 	MinifyTemplates           bool
 	MultiServer               bool
 
-	Noavatar     string
-	ItemsPerPage int
+	Noavatar     string // ? - Move this into the settings table?
+	ItemsPerPage int    // ? - Move this into the settings table?
 }
 
 type DevConfig struct {

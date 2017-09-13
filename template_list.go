@@ -246,7 +246,7 @@ var topic_91 = []byte(`
 
 `)
 var footer_0 = []byte(`<div class="footer">
-	<div id="poweredBy" style="float: left;margin-top: 4px;">Powered by Gosora - <span style="font-size: 12px;">Made with love by Azareal</span></div>
+	<div id="poweredBy">Powered by Gosora - <span>Made with love by Azareal</span></div>
 	<form action="/theme/" method="post">
 		<div id="themeSelector" style="float: right;">
 			<select id="themeSelectorSelect" name="themeSelector" aria-label="Change the site's appearance">
@@ -312,10 +312,8 @@ var topic_alt_19 = []byte(`
 	</form>
 </div>
 
-<!-- Stop inling this x.x -->
-<style type="text/css">.rowitem:last-child .content_container { margin-bottom: 5px !important; }</style>
-<div class="rowblock post_container" style="border-top: none;">
-	<article class="rowitem passive deletable_block editable_parent post_item top_post" style="background-color: #eaeaea;padding-top: 4px;padding-left: 5px;clear: both;border-bottom: none;padding-right: 4px;padding-bottom: 2px;">
+<div class="rowblock post_container">
+	<article class="rowitem passive deletable_block editable_parent post_item top_post">
 		<div class="userinfo">
 			<div class="avatar_item" style="background-image: url(`)
 var topic_alt_20 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
@@ -426,7 +424,7 @@ var topic_alt_84 = []byte(`
 var topic_alt_85 = []byte(`</div>
 `)
 var topic_alt_86 = []byte(`
-<div class="rowblock topic_reply_form" style="border-top: none;">
+<div class="rowblock topic_reply_form">
 	<form action="/reply/create/" method="post">
 		<input name="tid" value='`)
 var topic_alt_87 = []byte(`' type="hidden" />

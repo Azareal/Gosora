@@ -1,4 +1,9 @@
-/* Work in progress. Check back later! */
+/*
+*
+*	Gosora Forum Store
+* 	Copyright Azareal 2017 - 2018
+*
+ */
 package main
 
 import (
@@ -15,6 +20,7 @@ var forumCreateMutex sync.Mutex
 var forumPerms map[int]map[int]ForumPerms // [gid][fid]Perms
 var fstore ForumStore
 
+// ForumStore is an interface for accessing the forums and the metadata stored on them
 type ForumStore interface {
 	LoadForums() error
 	DirtyGet(id int) *Forum
@@ -43,9 +49,9 @@ type ForumStore interface {
 	GetGlobalCount() int
 }
 
+// MemoryForumStore is a struct which holds an arbitrary number of forums in memory, usually all of them, although we might introduce functionality to hold a smaller subset in memory for sites with an extremely large number of forums
 type MemoryForumStore struct {
-	//forums    map[int]*Forum
-	forums    sync.Map
+	forums    sync.Map     // map[int]*Forum
 	forumView atomic.Value // []*Forum
 	//fids []int
 	forumCount int
@@ -56,6 +62,7 @@ type MemoryForumStore struct {
 	getForumCount *sql.Stmt
 }
 
+// NewMemoryForumStore gives you a new instance of MemoryForumStore
 func NewMemoryForumStore() *MemoryForumStore {
 	getStmt, err := qgen.Builder.SimpleSelect("forums", "name, desc, active, preset, parentID, parentType, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime", "fid = ?", "", "")
 	if err != nil {
@@ -81,6 +88,7 @@ func NewMemoryForumStore() *MemoryForumStore {
 	}
 }
 
+// TODO: Add support for subforums
 func (mfs *MemoryForumStore) LoadForums() error {
 	log.Print("Adding the uncategorised forum")
 	forumUpdateMutex.Lock()
@@ -89,7 +97,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 	var forumView []*Forum
 	addForum := func(forum *Forum) {
 		mfs.forums.Store(forum.ID, forum)
-		if forum.Active && forum.Name != "" {
+		if forum.Active && forum.Name != "" && forum.ParentType == "" {
 			forumView = append(forumView, forum)
 		}
 	}
@@ -132,7 +140,8 @@ func (mfs *MemoryForumStore) rebuildView() {
 	var forumView []*Forum
 	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
 		forum := value.(*Forum)
-		if forum.Active && forum.Name != "" {
+		// ? - ParentType blank means that it doesn't have a parent
+		if forum.Active && forum.Name != "" && forum.ParentType == "" {
 			forumView = append(forumView, forum)
 		}
 		return true

@@ -27,12 +27,12 @@ func init() {
 
 func _initDatabase() (err error) {
 	var _dbpassword string
-	if db_config.Password != "" {
-		_dbpassword = ":" + db_config.Password
+	if dbConfig.Password != "" {
+		_dbpassword = ":" + dbConfig.Password
 	}
 
 	// Open the database connection
-	db, err = sql.Open("mysql", db_config.Username+_dbpassword+"@tcp("+db_config.Host+":"+db_config.Port+")/"+db_config.Dbname+"?collation="+dbCollation)
+	db, err = sql.Open("mysql", dbConfig.Username+_dbpassword+"@tcp("+dbConfig.Host+":"+dbConfig.Port+")/"+dbConfig.Dbname+"?collation="+dbCollation)
 	if err != nil {
 		return err
 	}

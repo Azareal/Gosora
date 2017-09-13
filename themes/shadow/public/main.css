@@ -460,6 +460,13 @@ input, select, textarea {
     font-size: 13px;
     padding: 4px;
 }
+#poweredBy {
+	float: left;
+	margin-top: 4px;
+}
+#poweredBy span {
+	font-size: 12px;
+}
 
 /* Forum View */
 .rowhead {
