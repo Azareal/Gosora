@@ -2,22 +2,23 @@ package main
 
 func init() {
 	// Site Info
-	site.Name = "TS" // Should be a setting in the database
-	site.Email = ""  // Should be a setting in the database
-	site.Url = "localhost"
+	site.Name = "TS"
+	site.Email = ""
+	site.URL = "localhost"
 	site.Port = "8080" // 8080
 	site.EnableSsl = false
 	site.EnableEmails = false
 	site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
 	config.SslPrivkey = ""
 	config.SslFullchain = ""
+	site.Language = "english"
 
 	// Database details
-	db_config.Host = "localhost"
-	db_config.Username = "root"
-	db_config.Password = "password"
-	db_config.Dbname = "gosora"
-	db_config.Port = "3306" // You probably won't need to change this
+	dbConfig.Host = "localhost"
+	dbConfig.Username = "root"
+	dbConfig.Password = "password"
+	dbConfig.Dbname = "gosora"
+	dbConfig.Port = "3306" // You probably won't need to change this
 
 	// Limiters
 	config.MaxRequestSize = 5 * megabyte
