@@ -13,10 +13,9 @@ import (
 	"time"
 )
 
-// TODO: Replace some of these !user.Loggedin's with !user.Perms.ViewTopic
 // ? - Should we add a new permission or permission zone (like per-forum permissions) specifically for profile comment creation
 // ? - Should we allow banned users to make reports? How should we handle report abuse?
-// TODO: Add a permission to stop certain users from using avatars
+// TODO: Add a permission to stop certain users from using custom avatars
 // ? - Log username changes and put restrictions on this?
 
 func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid string) {
@@ -34,7 +33,7 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 	if !ok {
 		return
 	}
-	if !user.Loggedin || !user.Perms.CreateTopic {
+	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
 		NoPermissions(w, r, user)
 		return
 	}
@@ -58,7 +57,12 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 			return
 		}
 	} else {
-		group := groups[user.Group]
+		group, err := gstore.Get(user.Group)
+		if err != nil {
+			LocalError("Something weird happened behind the scenes", w, r, user)
+			log.Print("Group #" + strconv.Itoa(user.Group) + " doesn't exist, but it's set on User #" + strconv.Itoa(user.ID))
+			return
+		}
 		canSee = group.CanSee
 	}
 
@@ -110,7 +114,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	if !ok {
 		return
 	}
-	if !user.Loggedin || !user.Perms.CreateTopic {
+	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
 		NoPermissions(w, r, user)
 		return
 	}
@@ -172,7 +176,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	topic, err := topics.CascadeGet(tid)
+	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
 		PreError("Couldn't find the parent topic", w, r)
 		return
@@ -186,7 +190,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	if !ok {
 		return
 	}
-	if !user.Loggedin || !user.Perms.CreateReply {
+	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
 		NoPermissions(w, r, user)
 		return
 	}
@@ -239,7 +243,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Reload the topic...
-	err = topics.Load(tid)
+	err = topics.Reload(tid)
 	if err != nil && err == ErrNoRows {
 		LocalError("The destination no longer exists", w, r, user)
 		return
@@ -269,7 +273,7 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	topic, err := topics.CascadeGet(tid)
+	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
 		PreError("The requested topic doesn't exist.", w, r)
 		return
@@ -302,7 +306,7 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = users.CascadeGet(topic.CreatedBy)
+	_, err = users.Get(topic.CreatedBy)
 	if err != nil && err == ErrNoRows {
 		LocalError("The target user doesn't exist", w, r, user)
 		return
@@ -345,7 +349,7 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 	_ = wsHub.pushAlert(topic.CreatedBy, int(lastID), "like", "topic", user.ID, topic.CreatedBy, tid)
 
 	// Reload the topic...
-	err = topics.Load(tid)
+	err = topics.Reload(tid)
 	if err != nil && err == ErrNoRows {
 		LocalError("The liked topic no longer exists", w, r, user)
 		return
@@ -413,7 +417,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = users.CascadeGet(reply.CreatedBy)
+	_, err = users.Get(reply.CreatedBy)
 	if err != nil && err != ErrNoRows {
 		LocalError("The target user doesn't exist", w, r, user)
 		return
@@ -459,7 +463,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) {
-	if !user.Loggedin || !user.Perms.CreateReply {
+	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
 		NoPermissions(w, r, user)
 		return
 	}
@@ -540,7 +544,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 			return
 		}
 
-		topic, err := topics.CascadeGet(reply.ParentID)
+		topic, err := topics.Get(reply.ParentID)
 		if err == ErrNoRows {
 			LocalError("We weren't able to find the topic the reported post is supposed to be in", w, r, user)
 			return
@@ -813,7 +817,7 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
-	err = users.Load(user.ID)
+	err = users.Reload(user.ID)
 	if err != nil {
 		LocalError("This user no longer exists!", w, r, user)
 		return
@@ -871,7 +875,7 @@ func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, u
 
 	// TODO: Use the reloaded data instead for the name?
 	user.Name = newUsername
-	err = users.Load(user.ID)
+	err = users.Reload(user.ID)
 	if err != nil {
 		LocalError("Your account doesn't exist!", w, r, user)
 		return

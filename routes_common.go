@@ -3,19 +3,23 @@ package main
 import (
 	"html"
 	"html/template"
+	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
 // nolint
 var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = preRoute
 
+// TODO: Come up with a better middleware solution
 // nolint We need these types so people can tell what they are without scrolling to the bottom of the file
 var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderVars, PanelStats, bool) = panelUserCheck
 var SimplePanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, bool) = simplePanelUserCheck
 var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, success bool) = simpleForumUserCheck
 var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, success bool) = forumUserCheck
+var MemberCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) = memberCheck
 var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) = simpleUserCheck
 var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) = userCheck
 
@@ -58,7 +62,14 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 		}
 	}
 
-	fperms := groups[user.Group].Forums[fid]
+	group, err := gstore.Get(user.Group)
+	if err != nil {
+		PreError("Something weird happened", w, r)
+		log.Print("Group #" + strconv.Itoa(user.Group) + " doesn't exist despite being used by User #" + strconv.Itoa(user.ID))
+		return
+	}
+
+	fperms := group.Forums[fid]
 	if fperms.Overrides && !user.IsSuperAdmin {
 		user.Perms.ViewTopic = fperms.ViewTopic
 		user.Perms.LikeItem = fperms.LikeItem
@@ -93,7 +104,14 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 		}
 	}
 
-	fperms := groups[user.Group].Forums[fid]
+	group, err := gstore.Get(user.Group)
+	if err != nil {
+		PreError("Something weird happened", w, r)
+		log.Print("Group #" + strconv.Itoa(user.Group) + " doesn't exist despite being used by User #" + strconv.Itoa(user.ID))
+		return
+	}
+
+	fperms := group.Forums[fid]
 	//log.Printf("user.Perms: %+v\n", user.Perms)
 	//log.Printf("fperms: %+v\n", fperms)
 	if fperms.Overrides && !user.IsSuperAdmin {
@@ -199,6 +217,16 @@ func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h
 		Settings: settingBox.Load().(SettingBox),
 	}
 	return headerLite, true
+}
+
+// TODO: Add this to the member routes
+func memberCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) {
+	headerVars, success = UserCheck(w, r, user)
+	if !user.Loggedin {
+		NoPermissions(w, r, *user)
+		return headerVars, false
+	}
+	return headerVars, success
 }
 
 // SimpleUserCheck is back from the grave, yay :D

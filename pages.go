@@ -190,7 +190,7 @@ type PanelEditGroupPage struct {
 }
 
 type GroupForumPermPreset struct {
-	Group  Group
+	Group  *Group
 	Preset string
 }
 
@@ -474,7 +474,7 @@ func parseMessage(msg string /*, user User*/) string {
 					tid, intLen := coerceIntBytes(msgbytes[start:])
 					i += intLen
 
-					topic, err := topics.CascadeGet(tid)
+					topic, err := topics.Get(tid)
 					if err != nil || !fstore.Exists(topic.ParentID) {
 						outbytes = append(outbytes, invalidTopic...)
 						lastItem = i
@@ -550,7 +550,7 @@ func parseMessage(msg string /*, user User*/) string {
 				uid, intLen := coerceIntBytes(msgbytes[start:])
 				i += intLen
 
-				menUser, err := users.CascadeGet(uid)
+				menUser, err := users.Get(uid)
 				if err != nil {
 					outbytes = append(outbytes, invalidProfile...)
 					lastItem = i

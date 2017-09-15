@@ -67,7 +67,7 @@ func (user *User) Unban() error {
 	if err != nil {
 		return err
 	}
-	return users.Load(user.ID)
+	return users.Reload(user.ID)
 }
 
 // TODO: Use a transaction to avoid race conditions
@@ -87,7 +87,7 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	if err != nil {
 		return err
 	}
-	return users.Load(user.ID)
+	return users.Reload(user.ID)
 }
 
 // TODO: Use a transaction to avoid race conditions
@@ -100,7 +100,7 @@ func (user *User) RevertGroupUpdate() error {
 	if err != nil {
 		return err
 	}
-	return users.Load(user.ID)
+	return users.Reload(user.ID)
 }
 
 func BcryptCheckPassword(realPassword string, password string, salt string) (err error) {
@@ -250,22 +250,23 @@ func (user *User) decreasePostStats(wcount int, topic bool) error {
 }
 
 func initUserPerms(user *User) {
-	if user.IsSuperAdmin {
-		user.Perms = AllPerms
-		user.PluginPerms = AllPluginPerms
-	} else {
-		user.Perms = groups[user.Group].Perms
-		user.PluginPerms = groups[user.Group].PluginPerms
-	}
-
 	if user.TempGroup != 0 {
 		user.Group = user.TempGroup
 	}
 
-	user.IsAdmin = user.IsSuperAdmin || groups[user.Group].IsAdmin
-	user.IsSuperMod = user.IsAdmin || groups[user.Group].IsMod
+	group := gstore.DirtyGet(user.Group)
+	if user.IsSuperAdmin {
+		user.Perms = AllPerms
+		user.PluginPerms = AllPluginPerms
+	} else {
+		user.Perms = group.Perms
+		user.PluginPerms = group.PluginPerms
+	}
+
+	user.IsAdmin = user.IsSuperAdmin || group.IsAdmin
+	user.IsSuperMod = user.IsAdmin || group.IsMod
 	user.IsMod = user.IsSuperMod
-	user.IsBanned = groups[user.Group].IsBanned
+	user.IsBanned = group.IsBanned
 	if user.IsBanned && user.IsSuperMod {
 		user.IsBanned = false
 	}

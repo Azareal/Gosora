@@ -15,24 +15,30 @@ func TestUserStore(t *testing.T) {
 		initPlugins()
 	}
 
+	users = NewMemoryUserStore(config.UserCacheCapacity)
+	userStoreTest(t)
+	users = NewSQLUserStore()
+	userStoreTest(t)
+}
+func userStoreTest(t *testing.T) {
 	var user *User
 	var err error
 
-	_, err = users.CascadeGet(-1)
+	_, err = users.Get(-1)
 	if err == nil {
 		t.Error("UID #-1 shouldn't exist")
 	} else if err != ErrNoRows {
 		t.Fatal(err)
 	}
 
-	_, err = users.CascadeGet(0)
+	_, err = users.Get(0)
 	if err == nil {
 		t.Error("UID #0 shouldn't exist")
 	} else if err != ErrNoRows {
 		t.Fatal(err)
 	}
 
-	user, err = users.CascadeGet(1)
+	user, err = users.Get(1)
 	if err == ErrNoRows {
 		t.Error("Couldn't find UID #1")
 	} else if err != nil {
@@ -45,37 +51,121 @@ func TestUserStore(t *testing.T) {
 
 	// TODO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
 	var userList map[int]*User
-	_, err = users.BulkCascadeGetMap([]int{-1})
-	if err == nil {
-		t.Error("UID #-1 shouldn't exist")
+	userList, _ = users.BulkGetMap([]int{-1})
+	if len(userList) > 0 {
+		t.Error("There shouldn't be any results for UID #-1")
 	}
 
-	_, err = users.BulkCascadeGetMap([]int{0})
-	if err == nil {
-		t.Error("UID #0 shouldn't exist")
+	userList, _ = users.BulkGetMap([]int{0})
+	if len(userList) > 0 {
+		t.Error("There shouldn't be any results for UID #0")
 	}
 
-	userList, err = users.BulkCascadeGetMap([]int{1})
-	if err == ErrNoRows {
-		t.Error("Couldn't find UID #1")
-	} else if err != nil {
-		t.Fatal(err)
-	}
-
+	userList, _ = users.BulkGetMap([]int{1})
 	if len(userList) == 0 {
-		t.Error("The returned map is empty for UID #0")
+		t.Error("The returned map is empty for UID #1")
 	} else if len(userList) > 1 {
-		t.Error("Too many results were returned for UID #0")
+		t.Error("Too many results were returned for UID #1")
 	}
 
 	user, ok := userList[1]
 	if !ok {
-		t.Error("We couldn't find UID #0 in the returned map")
+		t.Error("We couldn't find UID #1 in the returned map")
 		t.Error("userList", userList)
 	}
 
 	if user.ID != 1 {
 		t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
+	}
+
+	ok = users.Exists(-1)
+	if ok {
+		t.Error("UID #-1 shouldn't exist")
+	}
+
+	ok = users.Exists(0)
+	if ok {
+		t.Error("UID #0 shouldn't exist")
+	}
+
+	ok = users.Exists(1)
+	if !ok {
+		t.Error("UID #1 should exist")
+	}
+
+	count := users.GetGlobalCount()
+	if count <= 0 {
+		t.Error("The number of users should be bigger than zero")
+		t.Error("count", count)
+	}
+}
+
+func TestTopicStore(t *testing.T) {
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !pluginsInited {
+		initPlugins()
+	}
+
+	topics = NewMemoryTopicStore(config.TopicCacheCapacity)
+	topicStoreTest(t)
+	topics = NewSQLTopicStore()
+	topicStoreTest(t)
+}
+func topicStoreTest(t *testing.T) {
+	var topic *Topic
+	var err error
+
+	_, err = topics.Get(-1)
+	if err == nil {
+		t.Error("TID #-1 shouldn't exist")
+	} else if err != ErrNoRows {
+		t.Fatal(err)
+	}
+
+	_, err = topics.Get(0)
+	if err == nil {
+		t.Error("TID #0 shouldn't exist")
+	} else if err != ErrNoRows {
+		t.Fatal(err)
+	}
+
+	topic, err = topics.Get(1)
+	if err == ErrNoRows {
+		t.Error("Couldn't find TID #1")
+	} else if err != nil {
+		t.Fatal(err)
+	}
+
+	if topic.ID != 1 {
+		t.Error("topic.ID does not match the requested TID. Got '" + strconv.Itoa(topic.ID) + "' instead.")
+	}
+
+	// TODO: Add BulkGetMap() to the TopicStore
+
+	ok := topics.Exists(-1)
+	if ok {
+		t.Error("TID #-1 shouldn't exist")
+	}
+
+	ok = topics.Exists(0)
+	if ok {
+		t.Error("TID #0 shouldn't exist")
+	}
+
+	ok = topics.Exists(1)
+	if !ok {
+		t.Error("TID #1 should exist")
+	}
+
+	count := topics.GetGlobalCount()
+	if count <= 0 {
+		t.Error("The number of topics should be bigger than zero")
+		t.Error("count", count)
 	}
 }
 
@@ -90,14 +180,14 @@ func TestForumStore(t *testing.T) {
 	var forum *Forum
 	var err error
 
-	_, err = fstore.CascadeGet(-1)
+	_, err = fstore.Get(-1)
 	if err == nil {
 		t.Error("FID #-1 shouldn't exist")
 	} else if err != ErrNoRows {
 		t.Fatal(err)
 	}
 
-	forum, err = fstore.CascadeGet(0)
+	forum, err = fstore.Get(0)
 	if err == ErrNoRows {
 		t.Error("Couldn't find FID #0")
 	} else if err != nil {
@@ -111,7 +201,7 @@ func TestForumStore(t *testing.T) {
 		t.Error("FID #0 is named '" + forum.Name + "' and not 'Uncategorised'")
 	}
 
-	forum, err = fstore.CascadeGet(1)
+	forum, err = fstore.Get(1)
 	if err == ErrNoRows {
 		t.Error("Couldn't find FID #1")
 	} else if err != nil {
@@ -119,13 +209,13 @@ func TestForumStore(t *testing.T) {
 	}
 
 	if forum.ID != 1 {
-		t.Error("forum.ID doesn't not match the requested UID. Got '" + strconv.Itoa(forum.ID) + "' instead.'")
+		t.Error("forum.ID doesn't not match the requested FID. Got '" + strconv.Itoa(forum.ID) + "' instead.'")
 	}
 	if forum.Name != "Reports" {
 		t.Error("FID #0 is named '" + forum.Name + "' and not 'Reports'")
 	}
 
-	forum, err = fstore.CascadeGet(2)
+	forum, err = fstore.Get(2)
 	if err == ErrNoRows {
 		t.Error("Couldn't find FID #2")
 	} else if err != nil {
@@ -133,6 +223,84 @@ func TestForumStore(t *testing.T) {
 	}
 
 	_ = forum
+
+	ok := fstore.Exists(-1)
+	if ok {
+		t.Error("FID #-1 shouldn't exist")
+	}
+
+	ok = fstore.Exists(0)
+	if !ok {
+		t.Error("FID #0 should exist")
+	}
+
+	ok = fstore.Exists(1)
+	if !ok {
+		t.Error("FID #1 should exist")
+	}
+}
+
+func TestGroupStore(t *testing.T) {
+	if !gloinited {
+		gloinit()
+	}
+	if !pluginsInited {
+		initPlugins()
+	}
+
+	var group *Group
+	var err error
+
+	_, err = gstore.Get(-1)
+	if err == nil {
+		t.Error("GID #-1 shouldn't exist")
+	} else if err != ErrNoRows {
+		t.Fatal(err)
+	}
+
+	group, err = gstore.Get(0)
+	if err == ErrNoRows {
+		t.Error("Couldn't find GID #0")
+	} else if err != nil {
+		t.Fatal(err)
+	}
+
+	if group.ID != 0 {
+		t.Error("group.ID doesn't not match the requested GID. Got '" + strconv.Itoa(group.ID) + "' instead.")
+	}
+	if group.Name != "Unknown" {
+		t.Error("GID #0 is named '" + group.Name + "' and not 'Unknown'")
+	}
+
+	// ? - What if they delete this group? x.x
+	// ? - Maybe, pick a random group ID? That would take an extra query, and I'm not sure if I want to be rewriting custom test queries. Possibly, a Random() method on the GroupStore? Seems useless for normal use, it might have some merit for the TopicStore though
+	group, err = gstore.Get(1)
+	if err == ErrNoRows {
+		t.Error("Couldn't find GID #1")
+	} else if err != nil {
+		t.Fatal(err)
+	}
+
+	if group.ID != 1 {
+		t.Error("group.ID doesn't not match the requested GID. Got '" + strconv.Itoa(group.ID) + "' instead.'")
+	}
+
+	_ = group
+
+	ok := gstore.Exists(-1)
+	if ok {
+		t.Error("GID #-1 shouldn't exist")
+	}
+
+	ok = gstore.Exists(0)
+	if !ok {
+		t.Error("GID #0 should exist")
+	}
+
+	ok = gstore.Exists(1)
+	if !ok {
+		t.Error("GID #1 should exist")
+	}
 }
 
 func TestSlugs(t *testing.T) {

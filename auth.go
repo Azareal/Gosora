@@ -93,7 +93,7 @@ func (auth *DefaultAuth) ForceLogout(uid int) error {
 	}
 
 	// Flush the user out of the cache and reload
-	err = users.Load(uid)
+	err = users.Reload(uid)
 	if err != nil {
 		return errors.New("Your account no longer exists.")
 	}
@@ -141,7 +141,7 @@ func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (u
 	}
 
 	// Is this session valid..?
-	user, err = users.CascadeGet(uid)
+	user, err = users.Get(uid)
 	if err == ErrNoRows {
 		return &guestUser, false
 	} else if err != nil {
@@ -168,6 +168,6 @@ func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 	}
 
 	// Reload the user data
-	_ = users.Load(uid)
+	_ = users.Reload(uid)
 	return session, nil
 }

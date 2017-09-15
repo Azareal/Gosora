@@ -31,7 +31,7 @@ Other modern features like alerts, likes, advanced dashboard with live stats (CP
 
 # Dependencies
 
-Go 1.8 - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
+Go 1.9 - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
 MySQL Database - You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL. You could use something like WNMP / XAMPP which have a little PHP script called PhpMyAdmin for managing MySQL databases or you could install MariaDB directly.
 

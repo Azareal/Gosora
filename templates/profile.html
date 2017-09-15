@@ -8,7 +8,7 @@
 		<div class="rowitem avatarRow" style="padding: 0;">
 			<img src="{{.ProfileOwner.Avatar}}" class="avatar" />
 		</div>
-		<div class="rowitem">
+		<div class="rowitem">{{/** TODO: Stop inlining this CSS **/}}
 			<span class="profileName">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username" style="float: right;font-weight: normal;">{{.ProfileOwner.Tag}}</span>{{end}}
 		</div>
 		<div class="rowitem passive">
@@ -30,7 +30,7 @@
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
 			<div class="rowitem"><h1>Ban User</h1></div>
 	</div>
-	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" method="post"  style="display: none;">
+	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" method="post" style="display: none;">
 		{{/** TODO: Put a JS duration calculator here instead of this text? **/}}
 		<div class="colline">If all the fields are left blank, the ban will be permanent.</div>
 		<div class="colstack_item">
@@ -66,10 +66,9 @@
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
 		<div class="rowitem"><h1>Comments</h1></div>
 	</div>
-	<div id="profile_comments" class="colstack_item hash_hide" style="overflow: hidden;border-top: none;">{{range .ItemList}}
+	<div id="profile_comments" class="colstack_item hash_hide">{{range .ItemList}}
 		<div class="rowitem passive deletable_block editable_parent simple {{.ClassName}}" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;{{end}}">
 			<span class="editable_block user_content simple">{{.ContentHtml}}</span>
-
 			<span class="controls">
 				<a href="{{.UserLink}}" class="real_username username">{{.CreatedByName}}</a>&nbsp;&nbsp;
 

@@ -35,7 +35,7 @@ func handleExpiredScheduledGroups() error {
 		if err != nil {
 			return err
 		}
-		_ = users.Load(uid)
+		_ = users.Reload(uid)
 	}
 	return rows.Err()
 }

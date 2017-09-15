@@ -90,23 +90,26 @@ type TopicsRow struct {
 	ForumLink string
 }
 
+// TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser
 func getTopicuser(tid int) (TopicUser, error) {
-	if config.CacheTopicUser != CACHE_SQL {
-		topic, err := topics.Get(tid)
+	tcache, tok := topics.(TopicCache)
+	ucache, uok := users.(UserCache)
+	if tok && uok {
+		topic, err := tcache.CacheGet(tid)
 		if err == nil {
-			user, err := users.CascadeGet(topic.CreatedBy)
+			user, err := users.Get(topic.CreatedBy)
 			if err != nil {
 				return TopicUser{ID: tid}, err
 			}
 
 			// We might be better off just passing seperate topic and user structs to the caller?
 			return copyTopicToTopicuser(topic, user), nil
-		} else if users.GetLength() < users.GetCapacity() {
-			topic, err = topics.CascadeGet(tid)
+		} else if ucache.GetLength() < ucache.GetCapacity() {
+			topic, err = topics.Get(tid)
 			if err != nil {
 				return TopicUser{ID: tid}, err
 			}
-			user, err := users.CascadeGet(topic.CreatedBy)
+			user, err := users.Get(topic.CreatedBy)
 			if err != nil {
 				return TopicUser{ID: tid}, err
 			}
@@ -118,11 +121,13 @@ func getTopicuser(tid int) (TopicUser, error) {
 	err := get_topic_user_stmt.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 	tu.Link = buildTopicURL(nameToSlug(tu.Title), tu.ID)
 	tu.UserLink = buildProfileURL(nameToSlug(tu.CreatedByName), tu.CreatedBy)
+	tu.Tag = gstore.DirtyGet(tu.Group).Tag
 
-	theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, ParentID: tu.ParentID, IPAddress: tu.IPAddress, PostCount: tu.PostCount, LikeCount: tu.LikeCount}
-	//log.Printf("the_topic: %+v\n", the_topic)
-	tu.Tag = groups[tu.Group].Tag
-	_ = topics.Add(&theTopic)
+	if tok {
+		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, ParentID: tu.ParentID, IPAddress: tu.IPAddress, PostCount: tu.PostCount, LikeCount: tu.LikeCount}
+		//log.Printf("the_topic: %+v\n", theTopic)
+		_ = tcache.CacheAdd(&theTopic)
+	}
 	return tu, err
 }
 

@@ -395,7 +395,7 @@ func socialgroupsCreateGroupSubmit(w http.ResponseWriter, r *http.Request, user 
 	}
 
 	// Create the backing forum
-	fid, err := fstore.CreateForum(groupName, "", true, "")
+	fid, err := fstore.Create(groupName, "", true, "")
 	if err != nil {
 		InternalError(err, w)
 		return

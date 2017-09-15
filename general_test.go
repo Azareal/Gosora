@@ -100,7 +100,7 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		admin, err := users.CascadeGet(1)
+		admin, err := users.Get(1)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -157,7 +157,7 @@ func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		admin, err := users.CascadeGet(1)
+		admin, err := users.Get(1)
 		if err != nil {
 			panic(err)
 		}
@@ -188,7 +188,7 @@ func BenchmarkForumsAdminRouteParallelProf(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		admin, err := users.CascadeGet(1)
+		admin, err := users.Get(1)
 		if err != nil {
 			panic(err)
 		}
@@ -237,7 +237,7 @@ func BenchmarkForumsGuestRouteParallel(b *testing.B) {
 
 /*func BenchmarkRoutesSerial(b *testing.B) {
 	b.ReportAllocs()
-	admin, err := users.CascadeGet(1)
+	admin, err := users.Get(1)
 	if err != nil {
 		panic(err)
 	}
@@ -1125,7 +1125,7 @@ func TestStaticRoute(t *testing.T) {
 		init_plugins()
 	}
 
-	admin, err := users.CascadeGet(1)
+	admin, err := users.Get(1)
 	if err != nil {
 		panic(err)
 	}
@@ -1181,7 +1181,7 @@ func TestForumsAdminRoute(t *testing.T) {
 		init_plugins()
 	}
 
-	admin, err := users.CascadeGet(1)
+	admin, err := users.Get(1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1231,7 +1231,7 @@ func TestForumsGuestRoute(t *testing.T) {
 		init_plugins()
 	}
 
-	admin, err := users.CascadeGet(1)
+	admin, err := users.Get(1)
 	if err != nil {
 		panic(err)
 	}

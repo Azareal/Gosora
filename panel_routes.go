@@ -244,7 +244,7 @@ func routePanelForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user U
 	factive := r.PostFormValue("forum-name")
 	active := (factive == "on" || factive == "1")
 
-	_, err = fstore.CreateForum(fname, fdesc, active, fpreset)
+	_, err = fstore.Create(fname, fdesc, active, fpreset)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -274,7 +274,7 @@ func routePanelForumsDelete(w http.ResponseWriter, r *http.Request, user User, s
 		return
 	}
 
-	forum, err := fstore.CascadeGet(fid)
+	forum, err := fstore.Get(fid)
 	if err == ErrNoRows {
 		LocalError("The forum you're trying to delete doesn't exist.", w, r, user)
 		return
@@ -318,7 +318,7 @@ func routePanelForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user U
 		return
 	}
 
-	err = fstore.CascadeDelete(fid)
+	err = fstore.Delete(fid)
 	if err == ErrNoRows {
 		LocalError("The forum you're trying to delete doesn't exist.", w, r, user)
 		return
@@ -346,7 +346,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user User, sfi
 		return
 	}
 
-	forum, err := fstore.CascadeGet(fid)
+	forum, err := fstore.Get(fid)
 	if err == ErrNoRows {
 		LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
 		return
@@ -359,7 +359,12 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user User, sfi
 		forum.Preset = "custom"
 	}
 
-	var glist = groups
+	glist, err := gstore.GetAll()
+	if err != nil {
+		InternalError(err, w)
+		return
+	}
+
 	var gplist []GroupForumPermPreset
 	for gid, group := range glist {
 		if gid == 0 {
@@ -412,7 +417,7 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 	forumPreset := stripInvalidPreset(r.PostFormValue("forum_preset"))
 	forumActive := r.PostFormValue("forum_active")
 
-	forum, err := fstore.CascadeGet(fid)
+	forum, err := fstore.Get(fid)
 	if err == ErrNoRows {
 		LocalErrorJSQ("The forum you're trying to edit doesn't exist.", w, r, user, isJs)
 		return
@@ -499,7 +504,7 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 	permPreset := stripInvalidGroupForumPreset(r.PostFormValue("perm_preset"))
 	fperms, changed := groupForumPresetToForumPerms(permPreset)
 
-	forum, err := fstore.CascadeGet(fid)
+	forum, err := fstore.Get(fid)
 	if err == ErrNoRows {
 		LocalErrorJSQ("This forum doesn't exist", w, r, user, isJs)
 		return
@@ -512,7 +517,13 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 	defer forumUpdateMutex.Unlock()
 	if changed {
 		permUpdateMutex.Lock()
-		groups[gid].Forums[fid] = fperms
+		defer permUpdateMutex.Unlock()
+		group, err := gstore.Get(gid)
+		if err != nil {
+			LocalError("The group whose permissions you're updating doesn't exist.", w, r, user)
+			return
+		}
+		group.Forums[fid] = fperms
 
 		perms, err := json.Marshal(fperms)
 		if err != nil {
@@ -525,7 +536,6 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 			InternalErrorJSQ(err, w, r, isJs)
 			return
 		}
-		permUpdateMutex.Unlock()
 
 		_, err = update_forum_stmt.Exec(forum.Name, forum.Desc, forum.Active, "", fid)
 		if err != nil {
@@ -1159,8 +1169,8 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user User) {
 			puser.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(puser.ID), 1)
 		}
 
-		if groups[puser.Group].Tag != "" {
-			puser.Tag = groups[puser.Group].Tag
+		if gstore.DirtyGet(puser.Group).Tag != "" {
+			puser.Tag = gstore.DirtyGet(puser.Group).Tag
 		} else {
 			puser.Tag = ""
 		}
@@ -1202,7 +1212,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user User, suid
 		return
 	}
 
-	targetUser, err := users.CascadeGet(uid)
+	targetUser, err := users.Get(uid)
 	if err == ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.", w, r, user)
 		return
@@ -1214,6 +1224,12 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user User, suid
 	if targetUser.IsAdmin && !user.IsAdmin {
 		LocalError("Only administrators can edit the account of an administrator.", w, r, user)
 		return
+	}
+
+	groups, err := gstore.GetRange(1, 0) // ? - 0 = Go to the end
+	if err != nil {
+		InternalError(err, w)
+		return // ? - Should we stop admins from deleting all the groups? Maybe, protect the group they're currently using?
 	}
 
 	var groupList []interface{}
@@ -1259,7 +1275,7 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	targetUser, err := users.CascadeGet(uid)
+	targetUser, err := users.Get(uid)
 	if err == ErrNoRows {
 		LocalError("The user you're trying to edit doesn't exist.", w, r, user)
 		return
@@ -1301,16 +1317,20 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	if (newgroup > groupCapCount) || (newgroup < 0) || groups[newgroup].Name == "" {
+	group, err := gstore.Get(newgroup)
+	if err == ErrNoRows {
 		LocalError("The group you're trying to place this user in doesn't exist.", w, r, user)
+		return
+	} else if err != nil {
+		InternalError(err, w)
 		return
 	}
 
-	if !user.Perms.EditUserGroupAdmin && groups[newgroup].IsAdmin {
+	if !user.Perms.EditUserGroupAdmin && group.IsAdmin {
 		LocalError("You need the EditUserGroupAdmin permission to assign someone to an administrator group.", w, r, user)
 		return
 	}
-	if !user.Perms.EditUserGroupSuperMod && groups[newgroup].IsMod {
+	if !user.Perms.EditUserGroupSuperMod && group.IsMod {
 		LocalError("You need the EditUserGroupAdmin permission to assign someone to a super mod group.", w, r, user)
 		return
 	}
@@ -1325,7 +1345,7 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user User
 		SetPassword(targetUser.ID, newpassword)
 	}
 
-	err = users.Load(targetUser.ID)
+	err = users.Reload(targetUser.ID)
 	if err != nil {
 		LocalError("This user no longer exists!", w, r, user)
 		return
@@ -1349,7 +1369,8 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user User) {
 
 	var count int
 	var groupList []GroupAdmin
-	for _, group := range groups[offset:] {
+	groups, _ := gstore.GetRange(offset, 0)
+	for _, group := range groups {
 		if count == perPage {
 			break
 		}
@@ -1412,13 +1433,16 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user User, sgi
 		return
 	}
 
-	if !groupExists(gid) {
+	group, err := gstore.Get(gid)
+	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
 		NotFound(w, r)
 		return
+	} else if err != nil {
+		InternalError(err, w)
+		return
 	}
 
-	group := groups[gid]
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
 		LocalError("You need the EditGroupAdmin permission to edit an admin group.", w, r, user)
 		return
@@ -1471,13 +1495,16 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	if !groupExists(gid) {
+	group, err := gstore.Get(gid)
+	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
 		NotFound(w, r)
 		return
+	} else if err != nil {
+		InternalError(err, w)
+		return
 	}
 
-	group := groups[gid]
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
 		LocalError("You need the EditGroupAdmin permission to edit an admin group.", w, r, user)
 		return
@@ -1554,13 +1581,16 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 		return
 	}
 
-	if !groupExists(gid) {
+	group, err := gstore.Get(gid)
+	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
 		NotFound(w, r)
 		return
+	} else if err != nil {
+		InternalError(err, w)
+		return
 	}
 
-	group := groups[gid]
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
 		LocalError("You need the EditGroupAdmin permission to edit an admin group.", w, r, user)
 		return
@@ -1611,9 +1641,9 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 				InternalError(err, w)
 				return
 			}
-			groups[gid].IsAdmin = true
-			groups[gid].IsMod = true
-			groups[gid].IsBanned = false
+			group.IsAdmin = true
+			group.IsMod = true
+			group.IsBanned = false
 		case "Mod":
 			if !user.Perms.EditGroupSuperMod {
 				LocalError("You need the EditGroupSuperMod permission to designate this group as a super-mod group.", w, r, user)
@@ -1625,18 +1655,18 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 				InternalError(err, w)
 				return
 			}
-			groups[gid].IsAdmin = false
-			groups[gid].IsMod = true
-			groups[gid].IsBanned = false
+			group.IsAdmin = false
+			group.IsMod = true
+			group.IsBanned = false
 		case "Banned":
 			_, err = update_group_rank_stmt.Exec(0, 0, 1, gid)
 			if err != nil {
 				InternalError(err, w)
 				return
 			}
-			groups[gid].IsAdmin = false
-			groups[gid].IsMod = false
-			groups[gid].IsBanned = true
+			group.IsAdmin = false
+			group.IsMod = false
+			group.IsBanned = true
 		case "Guest":
 			LocalError("You can't designate a group as a guest group.", w, r, user)
 			return
@@ -1646,9 +1676,9 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 				InternalError(err, w)
 				return
 			}
-			groups[gid].IsAdmin = false
-			groups[gid].IsMod = false
-			groups[gid].IsBanned = false
+			group.IsAdmin = false
+			group.IsMod = false
+			group.IsBanned = false
 		default:
 			LocalError("Invalid group type.", w, r, user)
 			return
@@ -1660,8 +1690,8 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 		InternalError(err, w)
 		return
 	}
-	groups[gid].Name = gname
-	groups[gid].Tag = gtag
+	group.Name = gname
+	group.Tag = gtag
 
 	http.Redirect(w, r, "/panel/groups/edit/"+strconv.Itoa(gid), http.StatusSeeOther)
 }
@@ -1686,13 +1716,16 @@ func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 
-	if !groupExists(gid) {
+	group, err := gstore.Get(gid)
+	if err == ErrNoRows {
 		//log.Print("aaaaa monsters o.o")
 		NotFound(w, r)
 		return
+	} else if err != nil {
+		InternalError(err, w)
+		return
 	}
 
-	group := groups[gid]
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
 		LocalError("You need the EditGroupAdmin permission to edit an admin group.", w, r, user)
 		return
@@ -1784,7 +1817,7 @@ func routePanelGroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user U
 		}
 	}
 
-	gid, err := createGroup(groupName, groupTag, isAdmin, isMod, isBanned)
+	gid, err := gstore.Create(groupName, groupTag, isAdmin, isMod, isBanned)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1942,32 +1975,32 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user User) {
 			return
 		}
 
-		actor, err := users.CascadeGet(actorID)
+		actor, err := users.Get(actorID)
 		if err != nil {
 			actor = &User{Name: "Unknown", Link: buildProfileURL("unknown", 0)}
 		}
 
 		switch action {
 		case "lock":
-			topic, err := topics.CascadeGet(elementID)
+			topic, err := topics.Get(elementID)
 			if err != nil {
 				topic = &Topic{Title: "Unknown", Link: buildProfileURL("unknown", 0)}
 			}
 			action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was locked by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
 		case "unlock":
-			topic, err := topics.CascadeGet(elementID)
+			topic, err := topics.Get(elementID)
 			if err != nil {
 				topic = &Topic{Title: "Unknown", Link: buildProfileURL("unknown", 0)}
 			}
 			action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was reopened by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
 		case "stick":
-			topic, err := topics.CascadeGet(elementID)
+			topic, err := topics.Get(elementID)
 			if err != nil {
 				topic = &Topic{Title: "Unknown", Link: buildProfileURL("unknown", 0)}
 			}
 			action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was pinned by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
 		case "unstick":
-			topic, err := topics.CascadeGet(elementID)
+			topic, err := topics.Get(elementID)
 			if err != nil {
 				topic = &Topic{Title: "Unknown", Link: buildProfileURL("unknown", 0)}
 			}
@@ -1983,19 +2016,19 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user User) {
 				action = "A reply in <a href='" + topic.Link + "'>" + topic.Title + "</a> was deleted by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
 			}
 		case "ban":
-			targetUser, err := users.CascadeGet(elementID)
+			targetUser, err := users.Get(elementID)
 			if err != nil {
 				targetUser = &User{Name: "Unknown", Link: buildProfileURL("unknown", 0)}
 			}
 			action = "<a href='" + targetUser.Link + "'>" + targetUser.Name + "</a> was banned by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
 		case "unban":
-			targetUser, err := users.CascadeGet(elementID)
+			targetUser, err := users.Get(elementID)
 			if err != nil {
 				targetUser = &User{Name: "Unknown", Link: buildProfileURL("unknown", 0)}
 			}
 			action = "<a href='" + targetUser.Link + "'>" + targetUser.Name + "</a> was unbanned by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
 		case "activate":
-			targetUser, err := users.CascadeGet(elementID)
+			targetUser, err := users.Get(elementID)
 			if err != nil {
 				targetUser = &User{Name: "Unknown", Link: buildProfileURL("unknown", 0)}
 			}

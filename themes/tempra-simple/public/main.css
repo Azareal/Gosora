@@ -625,7 +625,9 @@ button.username {
 /* Profiles */
 #profile_left_lane {
 	width: 220px;
-	margin-top: 5px;
+}
+#profile_left_pane {
+	margin-bottom: 12px;
 }
 #profile_left_lane .avatarRow {
 	overflow: hidden;
@@ -646,6 +648,10 @@ button.username {
 }
 #profile_right_lane {
 	width: calc(100% - 245px);
+}
+#profile_comments {
+	overflow: hidden;
+	border-top: none;
 }
 .simple .user_tag {
 	font-size: 14px;

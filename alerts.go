@@ -29,13 +29,13 @@ import "errors"
 func buildAlert(asid int, event string, elementType string, actorID int, targetUserID int, elementID int, user User /* The current user */) (string, error) {
 	var targetUser *User
 
-	actor, err := users.CascadeGet(actorID)
+	actor, err := users.Get(actorID)
 	if err != nil {
 		return "", errors.New("Unable to find the actor")
 	}
 
 	/*if elementType != "forum" {
-		targetUser, err = users.CascadeGet(targetUser_id)
+		targetUser, err = users.Get(targetUser_id)
 		if err != nil {
 			LocalErrorJS("Unable to find the target user",w,r)
 			return
@@ -52,7 +52,7 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 	case "forum":
 		if event == "reply" {
 			act = "created a new topic"
-			topic, err := topics.CascadeGet(elementID)
+			topic, err := topics.Get(elementID)
 			if err != nil {
 				return "", errors.New("Unable to find the linked topic")
 			}
@@ -64,7 +64,7 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 			act = "did something in a forum"
 		}
 	case "topic":
-		topic, err := topics.CascadeGet(elementID)
+		topic, err := topics.Get(elementID)
 		if err != nil {
 			return "", errors.New("Unable to find the linked topic")
 		}
@@ -75,7 +75,7 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 			postAct = " your topic"
 		}
 	case "user":
-		targetUser, err = users.CascadeGet(elementID)
+		targetUser, err = users.Get(elementID)
 		if err != nil {
 			return "", errors.New("Unable to find the target user")
 		}

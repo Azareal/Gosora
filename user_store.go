@@ -13,26 +13,32 @@ import (
 )
 
 // TODO: Add the watchdog goroutine
+// TODO: Add some sort of update method
 var users UserStore
 var errAccountExists = errors.New("this username is already in use")
 
 type UserStore interface {
-	Load(id int) error
+	Reload(id int) error // ? - Should we move this to TopicCache? Might require us to do a lot more casting in Gosora though...
 	Get(id int) (*User, error)
-	GetUnsafe(id int) (*User, error)
-	CascadeGet(id int) (*User, error)
-	//BulkCascadeGet(ids []int) ([]*User, error)
-	BulkCascadeGetMap(ids []int) (map[int]*User, error)
+	Exists(id int) bool
+	//BulkGet(ids []int) ([]*User, error)
+	BulkGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
-	Set(item *User) error
-	Add(item *User) error
-	AddUnsafe(item *User) error
-	Remove(id int) error
-	RemoveUnsafe(id int) error
-	CreateUser(username string, password string, email string, group int, active int) (int, error)
-	GetLength() int
-	GetCapacity() int
+	Create(username string, password string, email string, group int, active int) (int, error)
 	GetGlobalCount() int
+}
+
+type UserCache interface {
+	CacheGet(id int) (*User, error)
+	CacheGetUnsafe(id int) (*User, error)
+	CacheSet(item *User) error
+	CacheAdd(item *User) error
+	CacheAddUnsafe(item *User) error
+	CacheRemove(id int) error
+	CacheRemoveUnsafe(id int) error
+	GetLength() int
+	SetCapacity(capacity int)
+	GetCapacity() int
 }
 
 type MemoryUserStore struct {
@@ -40,6 +46,7 @@ type MemoryUserStore struct {
 	length         int
 	capacity       int
 	get            *sql.Stmt
+	exists         *sql.Stmt
 	register       *sql.Stmt
 	usernameExists *sql.Stmt
 	userCount      *sql.Stmt
@@ -49,6 +56,11 @@ type MemoryUserStore struct {
 // NewMemoryUserStore gives you a new instance of MemoryUserStore
 func NewMemoryUserStore(capacity int) *MemoryUserStore {
 	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	existsStmt, err := qgen.Builder.SimpleSelect("users", "uid", "uid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,13 +86,14 @@ func NewMemoryUserStore(capacity int) *MemoryUserStore {
 		items:          make(map[int]*User),
 		capacity:       capacity,
 		get:            getStmt,
+		exists:         existsStmt,
 		register:       registerStmt,
 		usernameExists: usernameExistsStmt,
 		userCount:      userCountStmt,
 	}
 }
 
-func (sus *MemoryUserStore) Get(id int) (*User, error) {
+func (sus *MemoryUserStore) CacheGet(id int) (*User, error) {
 	sus.RLock()
 	item, ok := sus.items[id]
 	sus.RUnlock()
@@ -90,7 +103,7 @@ func (sus *MemoryUserStore) Get(id int) (*User, error) {
 	return item, ErrNoRows
 }
 
-func (sus *MemoryUserStore) GetUnsafe(id int) (*User, error) {
+func (sus *MemoryUserStore) CacheGetUnsafe(id int) (*User, error) {
 	item, ok := sus.items[id]
 	if ok {
 		return item, nil
@@ -98,7 +111,7 @@ func (sus *MemoryUserStore) GetUnsafe(id int) (*User, error) {
 	return item, ErrNoRows
 }
 
-func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
+func (sus *MemoryUserStore) Get(id int) (*User, error) {
 	sus.RLock()
 	user, ok := sus.items[id]
 	sus.RUnlock()
@@ -117,10 +130,10 @@ func (sus *MemoryUserStore) CascadeGet(id int) (*User, error) {
 		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = groups[user.Group].Tag
+	user.Tag = gstore.DirtyGet(user.Group).Tag
 	initUserPerms(user)
 	if err == nil {
-		sus.Set(user)
+		sus.CacheSet(user)
 	}
 	return user, err
 }
@@ -138,7 +151,7 @@ func (sus *MemoryUserStore) bulkGet(ids []int) (list []*User) {
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
 // TODO: ID of 0 should always error?
-func (sus *MemoryUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err error) {
+func (sus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 	var idCount = len(ids)
 	list = make(map[int]*User)
 	if idCount == 0 {
@@ -195,11 +208,11 @@ func (sus *MemoryUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, er
 			user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 		}
 		user.Link = buildProfileURL(nameToSlug(user.Name), user.ID)
-		user.Tag = groups[user.Group].Tag
+		user.Tag = gstore.DirtyGet(user.Group).Tag
 		initUserPerms(user)
 
 		// Add it to the cache...
-		_ = sus.Set(user)
+		_ = sus.CacheSet(user)
 
 		// Add it to the list to be returned
 		list[user.ID] = user
@@ -245,16 +258,16 @@ func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
 		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = groups[user.Group].Tag
+	user.Tag = gstore.DirtyGet(user.Group).Tag
 	initUserPerms(user)
 	return user, err
 }
 
-func (sus *MemoryUserStore) Load(id int) error {
+func (sus *MemoryUserStore) Reload(id int) error {
 	user := &User{ID: id, Loggedin: true}
 	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 	if err != nil {
-		sus.Remove(id)
+		sus.CacheRemove(id)
 		return err
 	}
 
@@ -266,13 +279,17 @@ func (sus *MemoryUserStore) Load(id int) error {
 		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = groups[user.Group].Tag
+	user.Tag = gstore.DirtyGet(user.Group).Tag
 	initUserPerms(user)
-	_ = sus.Set(user)
+	_ = sus.CacheSet(user)
 	return nil
 }
 
-func (sus *MemoryUserStore) Set(item *User) error {
+func (sus *MemoryUserStore) Exists(id int) bool {
+	return sus.exists.QueryRow(id).Scan(&id) == nil
+}
+
+func (sus *MemoryUserStore) CacheSet(item *User) error {
 	sus.Lock()
 	user, ok := sus.items[item.ID]
 	if ok {
@@ -289,7 +306,7 @@ func (sus *MemoryUserStore) Set(item *User) error {
 	return nil
 }
 
-func (sus *MemoryUserStore) Add(item *User) error {
+func (sus *MemoryUserStore) CacheAdd(item *User) error {
 	if sus.length >= sus.capacity {
 		return ErrStoreCapacityOverflow
 	}
@@ -300,7 +317,7 @@ func (sus *MemoryUserStore) Add(item *User) error {
 	return nil
 }
 
-func (sus *MemoryUserStore) AddUnsafe(item *User) error {
+func (sus *MemoryUserStore) CacheAddUnsafe(item *User) error {
 	if sus.length >= sus.capacity {
 		return ErrStoreCapacityOverflow
 	}
@@ -309,7 +326,7 @@ func (sus *MemoryUserStore) AddUnsafe(item *User) error {
 	return nil
 }
 
-func (sus *MemoryUserStore) Remove(id int) error {
+func (sus *MemoryUserStore) CacheRemove(id int) error {
 	sus.Lock()
 	delete(sus.items, id)
 	sus.Unlock()
@@ -317,13 +334,13 @@ func (sus *MemoryUserStore) Remove(id int) error {
 	return nil
 }
 
-func (sus *MemoryUserStore) RemoveUnsafe(id int) error {
+func (sus *MemoryUserStore) CacheRemoveUnsafe(id int) error {
 	delete(sus.items, id)
 	sus.length--
 	return nil
 }
 
-func (sus *MemoryUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
+func (sus *MemoryUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
 	err := sus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
@@ -373,6 +390,7 @@ func (sus *MemoryUserStore) GetGlobalCount() int {
 
 type SQLUserStore struct {
 	get            *sql.Stmt
+	exists         *sql.Stmt
 	register       *sql.Stmt
 	usernameExists *sql.Stmt
 	userCount      *sql.Stmt
@@ -380,6 +398,11 @@ type SQLUserStore struct {
 
 func NewSQLUserStore() *SQLUserStore {
 	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	existsStmt, err := qgen.Builder.SimpleSelect("users", "uid", "uid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -403,6 +426,7 @@ func NewSQLUserStore() *SQLUserStore {
 
 	return &SQLUserStore{
 		get:            getStmt,
+		exists:         existsStmt,
 		register:       registerStmt,
 		usernameExists: usernameExistsStmt,
 		userCount:      userCountStmt,
@@ -421,47 +445,13 @@ func (sus *SQLUserStore) Get(id int) (*User, error) {
 		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = groups[user.Group].Tag
-	initUserPerms(&user)
-	return &user, err
-}
-
-func (sus *SQLUserStore) GetUnsafe(id int) (*User, error) {
-	user := User{ID: id, Loggedin: true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
-
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-	}
-	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = groups[user.Group].Tag
-	initUserPerms(&user)
-	return &user, err
-}
-
-func (sus *SQLUserStore) CascadeGet(id int) (*User, error) {
-	user := User{ID: id, Loggedin: true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
-
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-	}
-	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = groups[user.Group].Tag
+	user.Tag = gstore.DirtyGet(user.Group).Tag
 	initUserPerms(&user)
 	return &user, err
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
-func (sus *SQLUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err error) {
+func (sus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 	var qlist string
 	var uidList []interface{}
 	for _, id := range ids {
@@ -497,7 +487,7 @@ func (sus *SQLUserStore) BulkCascadeGetMap(ids []int) (list map[int]*User, err e
 			user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 		}
 		user.Link = buildProfileURL(nameToSlug(user.Name), user.ID)
-		user.Tag = groups[user.Group].Tag
+		user.Tag = gstore.DirtyGet(user.Group).Tag
 		initUserPerms(user)
 
 		// Add it to the list to be returned
@@ -519,18 +509,20 @@ func (sus *SQLUserStore) BypassGet(id int) (*User, error) {
 		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = groups[user.Group].Tag
+	user.Tag = gstore.DirtyGet(user.Group).Tag
 	initUserPerms(&user)
 	return &user, err
 }
 
-func (sus *SQLUserStore) Load(id int) error {
-	user := &User{ID: id}
-	// Simplify this into a quick check to see whether the user exists. Add an Exists method to facilitate this?
-	return sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+func (sus *SQLUserStore) Reload(id int) error {
+	return sus.exists.QueryRow(id).Scan(&id)
 }
 
-func (sus *SQLUserStore) CreateUser(username string, password string, email string, group int, active int) (int, error) {
+func (sus *SQLUserStore) Exists(id int) bool {
+	return sus.exists.QueryRow(id).Scan(&id) == nil
+}
+
+func (sus *SQLUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
 	err := sus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
@@ -556,35 +548,7 @@ func (sus *SQLUserStore) CreateUser(username string, password string, email stri
 	return int(lastID), err
 }
 
-// Placeholder methods, as we're not don't need to do any cache management with this implementation ofr the UserStore
-func (sus *SQLUserStore) Set(item *User) error {
-	return nil
-}
-func (sus *SQLUserStore) Add(item *User) error {
-	return nil
-}
-func (sus *SQLUserStore) AddUnsafe(item *User) error {
-	return nil
-}
-func (sus *SQLUserStore) Remove(id int) error {
-	return nil
-}
-func (sus *SQLUserStore) RemoveUnsafe(id int) error {
-	return nil
-}
-func (sus *SQLUserStore) GetCapacity() int {
-	return 0
-}
-
 // Return the total number of users registered on the forums
-func (sus *SQLUserStore) GetLength() int {
-	var ucount int
-	err := sus.userCount.QueryRow().Scan(&ucount)
-	if err != nil {
-		LogError(err)
-	}
-	return ucount
-}
 func (sus *SQLUserStore) GetGlobalCount() int {
 	var ucount int
 	err := sus.userCount.QueryRow().Scan(&ucount)

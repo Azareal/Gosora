@@ -17,7 +17,7 @@ import (
 
 var forumUpdateMutex sync.Mutex
 var forumCreateMutex sync.Mutex
-var forumPerms map[int]map[int]ForumPerms // [gid][fid]Perms
+var forumPerms map[int]map[int]ForumPerms // [gid][fid]Perms // TODO: Add an abstraction around this and make it more thread-safe
 var fstore ForumStore
 
 // ForumStore is an interface for accessing the forums and the metadata stored on them
@@ -25,15 +25,11 @@ type ForumStore interface {
 	LoadForums() error
 	DirtyGet(id int) *Forum
 	Get(id int) (*Forum, error)
-	CascadeGet(id int) (*Forum, error)
-	CascadeGetCopy(id int) (Forum, error)
+	GetCopy(id int) (Forum, error)
 	BypassGet(id int) (*Forum, error)
-	Load(id int) error
-	Set(forum *Forum) error
+	Reload(id int) error // ? - Should we move this to TopicCache? Might require us to do a lot more casting in Gosora though...
 	//Update(Forum) error
-	//CascadeUpdate(Forum) error
-	Delete(id int)
-	CascadeDelete(id int) error
+	Delete(id int) error
 	IncrementTopicCount(id int) error
 	DecrementTopicCount(id int) error
 	UpdateLastTopic(topicName string, tid int, username string, uid int, time string, fid int) error
@@ -44,9 +40,15 @@ type ForumStore interface {
 	GetAllVisibleIDs() ([]int, error)
 	//GetChildren(parentID int, parentType string) ([]*Forum,error)
 	//GetFirstChild(parentID int, parentType string) (*Forum,error)
-	CreateForum(forumName string, forumDesc string, active bool, preset string) (int, error)
+	Create(forumName string, forumDesc string, active bool, preset string) (int, error)
 
 	GetGlobalCount() int
+}
+
+type ForumCache interface {
+	CacheGet(id int) (*Forum, error)
+	CacheSet(forum *Forum) error
+	CacheDelete(id int)
 }
 
 // MemoryForumStore is a struct which holds an arbitrary number of forums in memory, usually all of them, although we might introduce functionality to hold a smaller subset in memory for sites with an extremely large number of forums
@@ -158,39 +160,38 @@ func (mfs *MemoryForumStore) DirtyGet(id int) *Forum {
 	return forum
 }
 
-func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
+func (mfs *MemoryForumStore) CacheGet(id int) (*Forum, error) {
 	fint, ok := mfs.forums.Load(id)
-	forum := fint.(*Forum)
-	if !ok || forum.Name == "" {
+	if !ok || fint.(*Forum).Name == "" {
 		return nil, ErrNoRows
 	}
-	return forum, nil
+	return fint.(*Forum), nil
 }
 
-func (mfs *MemoryForumStore) CascadeGet(id int) (*Forum, error) {
+func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 	fint, ok := mfs.forums.Load(id)
-	forum := fint.(*Forum)
-	if !ok || forum.Name == "" {
+	if !ok || fint.(*Forum).Name == "" {
+		var forum = &Forum{ID: id}
 		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
 
 		forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
 		forum.LastTopicLink = buildTopicURL(nameToSlug(forum.LastTopic), forum.LastTopicID)
 		return forum, err
 	}
-	return forum, nil
+	return fint.(*Forum), nil
 }
 
-func (mfs *MemoryForumStore) CascadeGetCopy(id int) (Forum, error) {
+func (mfs *MemoryForumStore) GetCopy(id int) (Forum, error) {
 	fint, ok := mfs.forums.Load(id)
-	forum := fint.(*Forum)
-	if !ok || forum.Name == "" {
+	if !ok || fint.(*Forum).Name == "" {
+		var forum = Forum{ID: id}
 		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
 
 		forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
 		forum.LastTopicLink = buildTopicURL(nameToSlug(forum.LastTopic), forum.LastTopicID)
-		return *forum, err
+		return forum, err
 	}
-	return *forum, nil
+	return *fint.(*Forum), nil
 }
 
 func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
@@ -202,7 +203,7 @@ func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 	return &forum, err
 }
 
-func (mfs *MemoryForumStore) Load(id int) error {
+func (mfs *MemoryForumStore) Reload(id int) error {
 	var forum = Forum{ID: id}
 	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
 	if err != nil {
@@ -211,11 +212,11 @@ func (mfs *MemoryForumStore) Load(id int) error {
 	forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
 	forum.LastTopicLink = buildTopicURL(nameToSlug(forum.LastTopic), forum.LastTopicID)
 
-	mfs.Set(&forum)
+	mfs.CacheSet(&forum)
 	return nil
 }
 
-func (mfs *MemoryForumStore) Set(forum *Forum) error {
+func (mfs *MemoryForumStore) CacheSet(forum *Forum) error {
 	if !mfs.Exists(forum.ID) {
 		return ErrNoRows
 	}
@@ -261,30 +262,31 @@ func (mfs *MemoryForumStore) GetFirstChild(parentID int, parentType string) (*Fo
 	return nil, nil
 }*/
 
+// TODO: Add a query for this rather than hitting cache
 func (mfs *MemoryForumStore) Exists(id int) bool {
 	forum, ok := mfs.forums.Load(id)
 	return ok && forum.(*Forum).Name != ""
 }
 
 // TODO: Batch deletions with name blanking? Is this necessary?
-func (mfs *MemoryForumStore) Delete(id int) {
+func (mfs *MemoryForumStore) CacheDelete(id int) {
 	mfs.forums.Delete(id)
 	mfs.rebuildView()
 }
 
-func (mfs *MemoryForumStore) CascadeDelete(id int) error {
+func (mfs *MemoryForumStore) Delete(id int) error {
 	forumUpdateMutex.Lock()
 	defer forumUpdateMutex.Unlock()
 	_, err := mfs.delete.Exec(id)
 	if err != nil {
 		return err
 	}
-	mfs.Delete(id)
+	mfs.CacheDelete(id)
 	return nil
 }
 
 func (mfs *MemoryForumStore) IncrementTopicCount(id int) error {
-	forum, err := mfs.CascadeGet(id)
+	forum, err := mfs.Get(id)
 	if err != nil {
 		return err
 	}
@@ -297,7 +299,7 @@ func (mfs *MemoryForumStore) IncrementTopicCount(id int) error {
 }
 
 func (mfs *MemoryForumStore) DecrementTopicCount(id int) error {
-	forum, err := mfs.CascadeGet(id)
+	forum, err := mfs.Get(id)
 	if err != nil {
 		return err
 	}
@@ -311,7 +313,7 @@ func (mfs *MemoryForumStore) DecrementTopicCount(id int) error {
 
 // TODO: Have a pointer to the last topic rather than storing it on the forum itself
 func (mfs *MemoryForumStore) UpdateLastTopic(topicName string, tid int, username string, uid int, time string, fid int) error {
-	forum, err := mfs.CascadeGet(fid)
+	forum, err := mfs.Get(fid)
 	if err != nil {
 		return err
 	}
@@ -330,7 +332,7 @@ func (mfs *MemoryForumStore) UpdateLastTopic(topicName string, tid int, username
 	return nil
 }
 
-func (mfs *MemoryForumStore) CreateForum(forumName string, forumDesc string, active bool, preset string) (int, error) {
+func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
 	forumCreateMutex.Lock()
 	res, err := create_forum_stmt.Exec(forumName, forumDesc, active, preset)
 	if err != nil {

@@ -18,14 +18,18 @@ var ErrStoreCapacityOverflow = errors.New("This datastore has reached it's maxim
 type DataStore interface {
 	Load(id int) error
 	Get(id int) (interface{}, error)
-	GetUnsafe(id int) (interface{}, error)
-	CascadeGet(id int) (interface{}, error)
 	BypassGet(id int) (interface{}, error)
-	Set(item interface{}) error
-	Add(item interface{}) error
-	AddUnsafe(item interface{}) error
-	Remove(id int) error
-	RemoveUnsafe(id int) error
+	//GetGlobalCount()
+}
+
+type DataCache interface {
+	CacheGet(id int) (interface{}, error)
+	CacheGetUnsafe(id int) (interface{}, error)
+	CacheSet(item interface{}) error
+	CacheAdd(item interface{}) error
+	CacheAddUnsafe(item interface{}) error
+	CacheRemove(id int) error
+	CacheRemoveUnsafe(id int) error
 	GetLength() int
 	GetCapacity() int
 }

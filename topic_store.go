@@ -6,52 +6,76 @@
  */
 package main
 
-import "log"
-import "sync"
-import "database/sql"
-import "./query_gen/lib"
+import (
+	"database/sql"
+	"log"
+	"sync"
+
+	"./query_gen/lib"
+)
 
 // TODO: Add the watchdog goroutine
+// TODO: Add BulkGetMap
+// TODO: Add some sort of update method
 var topics TopicStore
 
 type TopicStore interface {
-	Load(id int) error
+	Reload(id int) error // ? - Should we move this to TopicCache? Might require us to do a lot more casting in Gosora though...
 	Get(id int) (*Topic, error)
-	GetUnsafe(id int) (*Topic, error)
-	CascadeGet(id int) (*Topic, error)
 	BypassGet(id int) (*Topic, error)
-	Set(item *Topic) error
-	Add(item *Topic) error
-	AddUnsafe(item *Topic) error
-	Remove(id int) error
-	RemoveUnsafe(id int) error
+	Delete(id int) error
+	Exists(id int) bool
 	AddLastTopic(item *Topic, fid int) error
+	GetGlobalCount() int
+}
+
+type TopicCache interface {
+	CacheGet(id int) (*Topic, error)
+	GetUnsafe(id int) (*Topic, error)
+	CacheSet(item *Topic) error
+	CacheAdd(item *Topic) error
+	CacheAddUnsafe(item *Topic) error
+	CacheRemove(id int) error
+	CacheRemoveUnsafe(id int) error
 	GetLength() int
+	SetCapacity(capacity int)
 	GetCapacity() int
 }
 
 type MemoryTopicStore struct {
-	items    map[int]*Topic
-	length   int
-	capacity int
-	get      *sql.Stmt
+	items      map[int]*Topic
+	length     int
+	capacity   int
+	get        *sql.Stmt
+	exists     *sql.Stmt
+	topicCount *sql.Stmt
 	sync.RWMutex
 }
 
 // NewMemoryTopicStore gives you a new instance of MemoryTopicStore
 func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
-	stmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
+	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	existsStmt, err := qgen.Builder.SimpleSelect("topics", "tid", "tid = ?", "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 	return &MemoryTopicStore{
-		items:    make(map[int]*Topic),
-		capacity: capacity,
-		get:      stmt,
+		items:      make(map[int]*Topic),
+		capacity:   capacity,
+		get:        getStmt,
+		exists:     existsStmt,
+		topicCount: topicCountStmt,
 	}
 }
 
-func (sts *MemoryTopicStore) Get(id int) (*Topic, error) {
+func (sts *MemoryTopicStore) CacheGet(id int) (*Topic, error) {
 	sts.RLock()
 	item, ok := sts.items[id]
 	sts.RUnlock()
@@ -61,7 +85,7 @@ func (sts *MemoryTopicStore) Get(id int) (*Topic, error) {
 	return item, ErrNoRows
 }
 
-func (sts *MemoryTopicStore) GetUnsafe(id int) (*Topic, error) {
+func (sts *MemoryTopicStore) CacheGetUnsafe(id int) (*Topic, error) {
 	item, ok := sts.items[id]
 	if ok {
 		return item, nil
@@ -69,7 +93,7 @@ func (sts *MemoryTopicStore) GetUnsafe(id int) (*Topic, error) {
 	return item, ErrNoRows
 }
 
-func (sts *MemoryTopicStore) CascadeGet(id int) (*Topic, error) {
+func (sts *MemoryTopicStore) Get(id int) (*Topic, error) {
 	sts.RLock()
 	topic, ok := sts.items[id]
 	sts.RUnlock()
@@ -81,7 +105,7 @@ func (sts *MemoryTopicStore) CascadeGet(id int) (*Topic, error) {
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
 		topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
-		_ = sts.Add(topic)
+		_ = sts.CacheAdd(topic)
 	}
 	return topic, err
 }
@@ -93,19 +117,58 @@ func (sts *MemoryTopicStore) BypassGet(id int) (*Topic, error) {
 	return topic, err
 }
 
-func (sts *MemoryTopicStore) Load(id int) error {
+func (sts *MemoryTopicStore) Reload(id int) error {
 	topic := &Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
 		topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
-		_ = sts.Set(topic)
+		_ = sts.CacheSet(topic)
 	} else {
-		_ = sts.Remove(id)
+		_ = sts.CacheRemove(id)
 	}
 	return err
 }
 
-func (sts *MemoryTopicStore) Set(item *Topic) error {
+// TODO: Use a transaction here
+func (sts *MemoryTopicStore) Delete(id int) error {
+	topic, err := sts.Get(id)
+	if err != nil {
+		return nil // Already gone, maybe we should check for other errors here
+	}
+
+	topicCreator, err := users.Get(topic.CreatedBy)
+	if err == nil {
+		wcount := wordCount(topic.Content)
+		err = topicCreator.decreasePostStats(wcount, true)
+		if err != nil {
+			return err
+		}
+	} else if err != ErrNoRows {
+		return err
+	}
+
+	err = fstore.DecrementTopicCount(topic.ParentID)
+	if err != nil && err != ErrNoRows {
+		return err
+	}
+
+	sts.Lock()
+	sts.CacheRemoveUnsafe(id)
+	_, err = delete_topic_stmt.Exec(id)
+	if err != nil {
+		sts.Unlock()
+		return err
+	}
+	sts.Unlock()
+
+	return nil
+}
+
+func (sts *MemoryTopicStore) Exists(id int) bool {
+	return sts.exists.QueryRow(id).Scan(&id) == nil
+}
+
+func (sts *MemoryTopicStore) CacheSet(item *Topic) error {
 	sts.Lock()
 	_, ok := sts.items[item.ID]
 	if ok {
@@ -121,7 +184,7 @@ func (sts *MemoryTopicStore) Set(item *Topic) error {
 	return nil
 }
 
-func (sts *MemoryTopicStore) Add(item *Topic) error {
+func (sts *MemoryTopicStore) CacheAdd(item *Topic) error {
 	if sts.length >= sts.capacity {
 		return ErrStoreCapacityOverflow
 	}
@@ -132,7 +195,8 @@ func (sts *MemoryTopicStore) Add(item *Topic) error {
 	return nil
 }
 
-func (sts *MemoryTopicStore) AddUnsafe(item *Topic) error {
+// TODO: Make these length increments thread-safe. Ditto for the other DataStores
+func (sts *MemoryTopicStore) CacheAddUnsafe(item *Topic) error {
 	if sts.length >= sts.capacity {
 		return ErrStoreCapacityOverflow
 	}
@@ -141,7 +205,8 @@ func (sts *MemoryTopicStore) AddUnsafe(item *Topic) error {
 	return nil
 }
 
-func (sts *MemoryTopicStore) Remove(id int) error {
+// TODO: Make these length decrements thread-safe. Ditto for the other DataStores
+func (sts *MemoryTopicStore) CacheRemove(id int) error {
 	sts.Lock()
 	delete(sts.items, id)
 	sts.Unlock()
@@ -149,12 +214,13 @@ func (sts *MemoryTopicStore) Remove(id int) error {
 	return nil
 }
 
-func (sts *MemoryTopicStore) RemoveUnsafe(id int) error {
+func (sts *MemoryTopicStore) CacheRemoveUnsafe(id int) error {
 	delete(sts.items, id)
 	sts.length--
 	return nil
 }
 
+// ? - What is this? Do we need it? Should it be in the main store interface?
 func (sts *MemoryTopicStore) AddLastTopic(item *Topic, fid int) error {
 	// Coming Soon...
 	return nil
@@ -172,33 +238,43 @@ func (sts *MemoryTopicStore) GetCapacity() int {
 	return sts.capacity
 }
 
+// Return the total number of topics on these forums
+func (sts *MemoryTopicStore) GetGlobalCount() int {
+	var tcount int
+	err := sts.topicCount.QueryRow().Scan(&tcount)
+	if err != nil {
+		LogError(err)
+	}
+	return tcount
+}
+
 type SQLTopicStore struct {
-	get *sql.Stmt
+	get        *sql.Stmt
+	exists     *sql.Stmt
+	topicCount *sql.Stmt
 }
 
 func NewSQLTopicStore() *SQLTopicStore {
-	stmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
+	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &SQLTopicStore{stmt}
+	existsStmt, err := qgen.Builder.SimpleSelect("topics", "tid", "tid = ?", "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &SQLTopicStore{
+		get:        getStmt,
+		exists:     existsStmt,
+		topicCount: topicCountStmt,
+	}
 }
 
 func (sts *SQLTopicStore) Get(id int) (*Topic, error) {
-	topic := Topic{ID: id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
-	return &topic, err
-}
-
-func (sts *SQLTopicStore) GetUnsafe(id int) (*Topic, error) {
-	topic := Topic{ID: id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
-	return &topic, err
-}
-
-func (sts *SQLTopicStore) CascadeGet(id int) (*Topic, error) {
 	topic := Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
@@ -212,37 +288,52 @@ func (sts *SQLTopicStore) BypassGet(id int) (*Topic, error) {
 	return topic, err
 }
 
-func (sts *SQLTopicStore) Load(id int) error {
-	topic := Topic{ID: id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
+func (sts *SQLTopicStore) Reload(id int) error {
+	return sts.exists.QueryRow(id).Scan(&id)
+}
+
+func (sts *SQLTopicStore) Exists(id int) bool {
+	return sts.exists.QueryRow(id).Scan(&id) == nil
+}
+
+// TODO: Use a transaction here
+func (sts *SQLTopicStore) Delete(id int) error {
+	topic, err := sts.Get(id)
+	if err != nil {
+		return nil // Already gone, maybe we should check for other errors here
+	}
+
+	topicCreator, err := users.Get(topic.CreatedBy)
+	if err == nil {
+		wcount := wordCount(topic.Content)
+		err = topicCreator.decreasePostStats(wcount, true)
+		if err != nil {
+			return err
+		}
+	} else if err != ErrNoRows {
+		return err
+	}
+
+	err = fstore.DecrementTopicCount(topic.ParentID)
+	if err != nil && err != ErrNoRows {
+		return err
+	}
+
+	_, err = delete_topic_stmt.Exec(id)
 	return err
 }
 
-// Placeholder methods, the actual queries are done elsewhere
-func (sts *SQLTopicStore) Set(item *Topic) error {
-	return nil
-}
-func (sts *SQLTopicStore) Add(item *Topic) error {
-	return nil
-}
-func (sts *SQLTopicStore) AddUnsafe(item *Topic) error {
-	return nil
-}
-func (sts *SQLTopicStore) Remove(id int) error {
-	return nil
-}
-func (sts *SQLTopicStore) RemoveUnsafe(id int) error {
-	return nil
-}
 func (sts *SQLTopicStore) AddLastTopic(item *Topic, fid int) error {
 	// Coming Soon...
 	return nil
 }
-func (sts *SQLTopicStore) GetCapacity() int {
-	return 0
-}
 
-func (sts *SQLTopicStore) GetLength() int {
-	return 0 // Return the total number of topics on the forums?
+// Return the total number of topics on these forums
+func (sts *SQLTopicStore) GetGlobalCount() int {
+	var tcount int
+	err := sts.topicCount.QueryRow().Scan(&tcount)
+	if err != nil {
+		LogError(err)
+	}
+	return tcount
 }

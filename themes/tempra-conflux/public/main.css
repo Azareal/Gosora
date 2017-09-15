@@ -190,9 +190,6 @@ li a {
 	}
 }
 
-.rowlist {
-	font-size: 14px;
-}
 .rowlist .rowitem {
 	padding-top: 10px;
 	padding-bottom: 10px;
@@ -206,12 +203,12 @@ li a {
 .colstack_left {
 	float: left;
 	width: 30%;
-	margin-right: 8px;
+	margin-right: 10px;
 }
 .colstack_right {
 	float: left;
 	width: 65%;
-	width: calc(70% - 15px);
+	width: calc(70% - 13px);
 }
 .colstack_item {
 	border: 1px solid hsl(0,0%,80%);
@@ -458,11 +455,7 @@ button.username {
 }
 
 /* We'll be rewriting the profiles soon too! */
-/*.username.real_username {
-	color: #404040;
-	font-size: 16px;
-	padding-right: 4px;
-}
+/*.username.real_username { color: #404040; font-size: 16px; padding-right: 4px; }
 .username.real_username:hover { color: black; }*/
 
 .postQuote {
@@ -564,10 +557,40 @@ button.username {
 	background: none;
 }
 
+#profile_left_lane {
+	border: 1px solid hsl(0,0%,80%);
+	width: 220px;
+	margin-bottom: 10px;
+	border-bottom: 1.5px inset hsl(0,0%,80%);
+}
+#profile_left_lane .avatarRow {
+	overflow: hidden;
+	max-height: 220px;
+}
+#profile_left_lane .avatar {
+	width: 100%;
+	margin: 0;
+	display: block;
+}
+#profile_right_lane {
+	width: calc(100% - 230px);
+}
+#profile_comments {
+	overflow: hidden;
+	margin-bottom: 0;
+}
 #profile_comments .rowitem {
 	background-repeat: no-repeat, repeat-y;
 	background-size: 128px;
 	padding-left: 136px;
+}
+#profile_comments .controls {
+	width: 100%;
+	display: inline-block;
+	margin-top: 20px;
+}
+#profile_right_lane .topic_reply_form {
+	border-bottom: 1.5px inset hsl(0,0%,80%);
 }
 
 .simple {
@@ -607,7 +630,7 @@ button.username {
 	position: sticky;
 	top: 4px;
 	/*box-shadow: 0 1px 2px rgba(0,0,0,.1);*/
-	border-bottom: 1px inset hsl(0,0%,80%);
+	border-bottom: 1.5px inset hsl(0,0%,80%);
 }
 .userinfo .avatar_item {
 	background-repeat: no-repeat, repeat-y;
@@ -714,13 +737,13 @@ button.username {
 
 /* Firefox specific CSS */
 @supports (-moz-appearance: none) {
-	.footer {
+	.footer, .rowmenu, #profile_right_lane .topic_reply_form {
 		border-bottom: 2px inset hsl(0,0%,40%);
 	}
 }
 /* Edge... We can't get the exact shade here, because of how they implemented it x.x */
 @supports (-ms-ime-align:auto) {
-	.footer {
+	.footer, .rowmenu, #profile_right_lane .topic_reply_form {
 		border-bottom: 1.5px inset hsl(0,0%,100%);
 	}
 }

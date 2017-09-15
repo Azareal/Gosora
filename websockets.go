@@ -168,7 +168,7 @@ func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) {
 	if err != nil {
 		return
 	}
-	userptr, err := users.CascadeGet(user.ID)
+	userptr, err := users.Get(user.ID)
 	if err != nil && err != ErrStoreCapacityOverflow {
 		return
 	}

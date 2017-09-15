@@ -157,7 +157,13 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 
 	var qlist string
 	var fidList []interface{}
-	group := groups[user.Group]
+	group, err := gstore.Get(user.Group)
+	if err != nil {
+		LocalError("Something weird happened", w, r, user)
+		log.Print("Group #" + strconv.Itoa(user.Group) + " doesn't exist despite being used by User #" + strconv.Itoa(user.ID))
+		return
+	}
+
 	for _, fid := range group.CanSee {
 		if fstore.DirtyGet(fid).Name != "" {
 			fidList = append(fidList, strconv.Itoa(fid))
@@ -232,7 +238,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: What if a user is deleted via the Control Panel?
-	userList, err := users.BulkCascadeGetMap(idSlice)
+	userList, err := users.BulkGetMap(idSlice)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -279,7 +285,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	}
 
 	// TODO: Fix this double-check
-	forum, err := fstore.CascadeGet(fid)
+	forum, err := fstore.Get(fid)
 	if err == ErrNoRows {
 		NotFound(w, r)
 		return
@@ -347,7 +353,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	}
 
 	// TODO: What if a user is deleted via the Control Panel?
-	userList, err := users.BulkCascadeGetMap(idSlice)
+	userList, err := users.BulkGetMap(idSlice)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -387,7 +393,12 @@ func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 		}
 		//log.Print("canSee",canSee)
 	} else {
-		group := groups[user.Group]
+		group, err := gstore.Get(user.Group)
+		if err != nil {
+			LocalError("Something weird happened", w, r, user)
+			log.Print("Group #" + strconv.Itoa(user.Group) + " doesn't exist despite being used by User #" + strconv.Itoa(user.ID))
+			return
+		}
 		canSee = group.CanSee
 		//log.Print("group.CanSee",group.CanSee)
 	}
@@ -471,8 +482,14 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		user.Perms.CreateReply = false
 	}
 
-	topic.Tag = groups[topic.Group].Tag
-	if groups[topic.Group].IsMod || groups[topic.Group].IsAdmin {
+	postGroup, err := gstore.Get(topic.Group)
+	if err != nil {
+		InternalError(err, w)
+		return
+	}
+
+	topic.Tag = postGroup.Tag
+	if postGroup.IsMod || postGroup.IsAdmin {
 		topic.ClassName = config.StaffCss
 	}
 
@@ -527,7 +544,13 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		replyItem.ContentHtml = parseMessage(replyItem.Content)
 		replyItem.ContentLines = strings.Count(replyItem.Content, "\n")
 
-		if groups[replyItem.Group].IsMod || groups[replyItem.Group].IsAdmin {
+		postGroup, err = gstore.Get(replyItem.Group)
+		if err != nil {
+			InternalError(err, w)
+			return
+		}
+
+		if postGroup.IsMod || postGroup.IsAdmin {
 			replyItem.ClassName = config.StaffCss
 		} else {
 			replyItem.ClassName = ""
@@ -541,7 +564,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 			replyItem.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(replyItem.CreatedBy), 1)
 		}
 
-		replyItem.Tag = groups[replyItem.Group].Tag
+		replyItem.Tag = postGroup.Tag
 
 		/*if headerVars.Settings["url_tags"] == false {
 			replyItem.URLName = ""
@@ -631,7 +654,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 		puser = &user
 	} else {
 		// Fetch the user data
-		puser, err = users.CascadeGet(pid)
+		puser, err = users.Get(pid)
 		if err == ErrNoRows {
 			NotFound(w, r)
 			return
@@ -656,8 +679,14 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 			return
 		}
 
+		group, err := gstore.Get(replyGroup)
+		if err != nil {
+			InternalError(err, w)
+			return
+		}
+
 		replyLines = strings.Count(replyContent, "\n")
-		if groups[replyGroup].IsMod || groups[replyGroup].IsAdmin {
+		if group.IsMod || group.IsAdmin {
 			replyClassName = config.StaffCss
 		} else {
 			replyClassName = ""
@@ -670,8 +699,8 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 			replyAvatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(replyCreatedBy), 1)
 		}
 
-		if groups[replyGroup].Tag != "" {
-			replyTag = groups[replyGroup].Tag
+		if group.Tag != "" {
+			replyTag = group.Tag
 		} else if puser.ID == replyCreatedBy {
 			replyTag = "Profile Owner"
 		} else {
@@ -739,7 +768,7 @@ func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	userPtr, err := users.CascadeGet(uid)
+	userPtr, err := users.Get(uid)
 	if err != nil {
 		LocalError("Bad account", w, r, user)
 		return
@@ -848,7 +877,7 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		group = config.ActivationGroup
 	}
 
-	uid, err := users.CreateUser(username, password, email, group, active)
+	uid, err := users.Create(username, password, email, group, active)
 	if err == errAccountExists {
 		LocalError("This username isn't available. Try another.", w, r, user)
 		return

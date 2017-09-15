@@ -6,7 +6,7 @@
  */
 package main
 
-// Should we add a reply store to centralise all the reply logic? Would this cover profile replies too or would that be seperate?
+// ? - Should we add a reply store to centralise all the reply logic? Would this cover profile replies too or would that be seperate?
 
 type Reply struct /* Should probably rename this to ReplyUser and rename ReplyShort to Reply */
 {

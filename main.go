@@ -38,8 +38,6 @@ var startTime time.Time
 var externalSites = map[string]string{
 	"YT": "https://www.youtube.com/",
 }
-var groups []Group
-var groupCapCount int
 var staticFiles = make(map[string]SFile)
 var logWriter = io.MultiWriter(os.Stderr)
 

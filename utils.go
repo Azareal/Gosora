@@ -386,13 +386,6 @@ func getLevels(maxLevel int) []float64 {
 	return out
 }
 
-func fillGroupIDGap(biggerID int, smallerID int) {
-	dummy := Group{ID: 0, Name: ""}
-	for i := smallerID; i > biggerID; i++ {
-		groups = append(groups, dummy)
-	}
-}
-
 func buildSlug(slug string, id int) string {
 	if slug == "" {
 		return strconv.Itoa(id)

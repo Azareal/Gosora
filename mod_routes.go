@@ -28,7 +28,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	oldTopic, err := topics.CascadeGet(tid)
+	oldTopic, err := topics.Get(tid)
 	if err == ErrNoRows {
 		PreErrorJSQ("The topic you tried to edit doesn't exist.", w, r, isJs)
 		return
@@ -50,8 +50,9 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 	topicName := r.PostFormValue("topic_name")
 	topicStatus := r.PostFormValue("topic_status")
 	isClosed := (topicStatus == "closed")
-
 	topicContent := html.EscapeString(r.PostFormValue("topic_content"))
+
+	// TODO: Move this bit to the TopicStore
 	_, err = edit_topic_stmt.Exec(topicName, preparseMessage(topicContent), parseMessage(html.EscapeString(preparseMessage(topicContent))), isClosed, tid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
@@ -94,7 +95,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 		}
 	}
 
-	err = topics.Load(tid)
+	err = topics.Reload(tid)
 	if err == ErrNoRows {
 		LocalErrorJSQ("This topic no longer exists!", w, r, user, isJs)
 		return
@@ -110,6 +111,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
+// TODO: Add support for soft-deletion and add a permission just for hard delete
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
 func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
@@ -118,7 +120,7 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	topic, err := topics.CascadeGet(tid)
+	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
 		PreError("The topic you tried to delete doesn't exist.", w, r)
 		return
@@ -137,7 +139,8 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = delete_topic_stmt.Exec(tid)
+	// We might be able to handle this err better
+	err = topics.Delete(topic.CreatedBy)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -154,7 +157,7 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	// Might need soft-delete before we can do an action reply for this
+	// ? - We might need to add soft-delete before we can do an action reply for this
 	/*_, err = create_action_reply_stmt.Exec(tid,"delete",ipaddress,user.ID)
 	if err != nil {
 		InternalError(err,w)
@@ -163,26 +166,6 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) {
 
 	//log.Print("Topic #" + strconv.Itoa(tid) + " was deleted by User #" + strconv.Itoa(user.ID))
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-
-	topicCreator, err := users.CascadeGet(topic.CreatedBy)
-	if err == nil {
-		wcount := wordCount(topic.Content)
-		err = topicCreator.decreasePostStats(wcount, true)
-		if err != nil {
-			InternalError(err, w)
-			return
-		}
-	} else if err != ErrNoRows {
-		InternalError(err, w)
-		return
-	}
-
-	err = fstore.DecrementTopicCount(topic.ParentID)
-	if err != nil && err != ErrNoRows {
-		InternalError(err, w)
-		return
-	}
-	topics.Remove(tid)
 }
 
 func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
@@ -192,7 +175,7 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	topic, err := topics.CascadeGet(tid)
+	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
 		PreError("The topic you tried to pin doesn't exist.", w, r)
 		return
@@ -233,7 +216,7 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = topics.Load(tid)
+	err = topics.Reload(tid)
 	if err != nil {
 		LocalError("This topic doesn't exist!", w, r, user)
 		return
@@ -248,7 +231,7 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	topic, err := topics.CascadeGet(tid)
+	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
 		PreError("The topic you tried to unpin doesn't exist.", w, r)
 		return
@@ -289,7 +272,7 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = topics.Load(tid)
+	err = topics.Reload(tid)
 	if err != nil {
 		LocalError("This topic doesn't exist!", w, r, user)
 		return
@@ -411,7 +394,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		w.Write(successJSONBytes)
 	}
 
-	replyCreator, err := users.CascadeGet(reply.CreatedBy)
+	replyCreator, err := users.Get(reply.CreatedBy)
 	if err == nil {
 		wcount := wordCount(reply.Content)
 		err = replyCreator.decreasePostStats(wcount, false)
@@ -439,7 +422,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = topics.Load(reply.ParentID)
+	err = topics.Reload(reply.ParentID)
 	if err != nil {
 		LocalError("This topic no longer exists!", w, r, user)
 		return
@@ -616,7 +599,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: What if a user is deleted via the Control Panel?
-	userList, err := users.BulkCascadeGetMap(idSlice)
+	userList, err := users.BulkGetMap(idSlice)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -693,7 +676,7 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}*/
 
-	targetUser, err := users.CascadeGet(uid)
+	targetUser, err := users.Get(uid)
 	if err == ErrNoRows {
 		LocalError("The user you're trying to ban no longer exists.", w, r, user)
 		return
@@ -784,7 +767,7 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	targetUser, err := users.CascadeGet(uid)
+	targetUser, err := users.Get(uid)
 	if err == ErrNoRows {
 		LocalError("The user you're trying to unban no longer exists.", w, r, user)
 		return
@@ -874,7 +857,7 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = users.Load(uid)
+	err = users.Reload(uid)
 	if err != nil {
 		LocalError("This user no longer exists!", w, r, user)
 		return

@@ -298,6 +298,7 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	return rebuildForumPermissions(fid)
 }
 
+// TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?
 func rebuildForumPermissions(fid int) error {
 	if dev.DebugMode {
 		log.Print("Loading the forum permissions")
@@ -336,38 +337,44 @@ func rebuildForumPermissions(fid int) error {
 		}
 		forumPerms[gid][fid] = pperms
 	}
-	for gid := range groups {
+
+	groups, err := gstore.GetAll()
+	if err != nil {
+		return err
+	}
+
+	for _, group := range groups {
 		if dev.DebugMode {
-			log.Print("Updating the forum permissions for Group #" + strconv.Itoa(gid))
+			log.Print("Updating the forum permissions for Group #" + strconv.Itoa(group.ID))
 		}
 		var blankList []ForumPerms
 		var blankIntList []int
-		groups[gid].Forums = blankList
-		groups[gid].CanSee = blankIntList
+		group.Forums = blankList
+		group.CanSee = blankIntList
 
 		for ffid := range forums {
-			forumPerm, ok := forumPerms[gid][ffid]
+			forumPerm, ok := forumPerms[group.ID][ffid]
 			if ok {
 				//log.Print("Overriding permissions for forum #" + strconv.Itoa(fid))
-				groups[gid].Forums = append(groups[gid].Forums, forumPerm)
+				group.Forums = append(group.Forums, forumPerm)
 			} else {
 				//log.Print("Inheriting from default for forum #" + strconv.Itoa(fid))
 				forumPerm = BlankForumPerms
-				groups[gid].Forums = append(groups[gid].Forums, forumPerm)
+				group.Forums = append(group.Forums, forumPerm)
 			}
 
 			if forumPerm.Overrides {
 				if forumPerm.ViewTopic {
-					groups[gid].CanSee = append(groups[gid].CanSee, ffid)
+					group.CanSee = append(group.CanSee, ffid)
 				}
-			} else if groups[gid].Perms.ViewTopic {
-				groups[gid].CanSee = append(groups[gid].CanSee, ffid)
+			} else if group.Perms.ViewTopic {
+				group.CanSee = append(group.CanSee, ffid)
 			}
 		}
 		if dev.SuperDebug {
-			log.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
-			log.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
-			log.Print("len(groups[gid].Forums)", len(groups[gid].Forums))
+			log.Printf("group.CanSee %+v\n", group.CanSee)
+			log.Printf("group.Forums %+v\n", group.Forums)
+			log.Print("len(group.Forums)", len(group.Forums))
 		}
 	}
 	return nil
@@ -410,30 +417,36 @@ func buildForumPermissions() error {
 		}
 		forumPerms[gid][fid] = pperms
 	}
-	for gid := range groups {
+
+	groups, err := gstore.GetAll()
+	if err != nil {
+		return err
+
+	}
+	for _, group := range groups {
 		if dev.DebugMode {
-			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(gid) + " - " + groups[gid].Name)
+			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(group.ID) + " - " + group.Name)
 		}
 		//groups[gid].Forums = append(groups[gid].Forums,BlankForumPerms) // GID 0. No longer needed now that Uncategorised occupies that slot
 		for fid := range forums {
-			forumPerm, ok := forumPerms[gid][fid]
+			forumPerm, ok := forumPerms[group.ID][fid]
 			if ok {
 				// Override group perms
 				//log.Print("Overriding permissions for forum #" + strconv.Itoa(fid))
-				groups[gid].Forums = append(groups[gid].Forums, forumPerm)
+				group.Forums = append(group.Forums, forumPerm)
 			} else {
 				// Inherit from Group
 				//log.Print("Inheriting from default for forum #" + strconv.Itoa(fid))
 				forumPerm = BlankForumPerms
-				groups[gid].Forums = append(groups[gid].Forums, forumPerm)
+				group.Forums = append(group.Forums, forumPerm)
 			}
 
 			if forumPerm.Overrides {
 				if forumPerm.ViewTopic {
-					groups[gid].CanSee = append(groups[gid].CanSee, fid)
+					group.CanSee = append(group.CanSee, fid)
 				}
-			} else if groups[gid].Perms.ViewTopic {
-				groups[gid].CanSee = append(groups[gid].CanSee, fid)
+			} else if group.Perms.ViewTopic {
+				group.CanSee = append(group.CanSee, fid)
 			}
 		}
 		if dev.SuperDebug {
@@ -547,7 +560,11 @@ func rebuildGroupPermissions(gid int) error {
 		return err
 	}
 
-	groups[gid].Perms = tmpPerms
+	group, err := gstore.Get(gid)
+	if err != nil {
+		return err
+	}
+	group.Perms = tmpPerms
 	return nil
 }
 
