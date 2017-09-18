@@ -33,6 +33,7 @@ func init() {
 	hvars = &HeaderVars{Site: site}
 }
 
+// HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
 type HTTPSRedirect struct {
 }
 
@@ -307,7 +308,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	} else {
 		page = 1
 	}
-	rows, err := get_forum_topics_offset_stmt.Query(fid, offset, config.ItemsPerPage)
+	rows, err := getForumTopicsOffsetStmt.Query(fid, offset, config.ItemsPerPage)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -461,6 +462,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 	topic.ClassName = ""
+	//log.Printf("topic: %+v\n", topic)
 
 	headerVars, ok := ForumUserCheck(w, r, &user, topic.ParentID)
 	if !ok {
@@ -490,7 +492,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 
 	topic.Tag = postGroup.Tag
 	if postGroup.IsMod || postGroup.IsAdmin {
-		topic.ClassName = config.StaffCss
+		topic.ClassName = config.StaffCSS
 	}
 
 	/*if headerVars.Settings["url_tags"] == false {
@@ -509,6 +511,15 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		topic.CreatedAt = ""
 	}
 
+	// TODO: Make a function for this? Build a more sophisticated noavatar handling system?
+	if topic.Avatar != "" {
+		if topic.Avatar[0] == '.' {
+			topic.Avatar = "/uploads/avatar_" + strconv.Itoa(topic.CreatedBy) + topic.Avatar
+		}
+	} else {
+		topic.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(topic.CreatedBy), 1)
+	}
+
 	// Calculate the offset
 	lastPage := (topic.PostCount / config.ItemsPerPage) + 1
 	if page > 1 {
@@ -521,7 +532,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Get the replies..
-	rows, err := get_topic_replies_offset_stmt.Query(topic.ID, offset, config.ItemsPerPage)
+	rows, err := getTopicRepliesOffsetStmt.Query(topic.ID, offset, config.ItemsPerPage)
 	if err == ErrNoRows {
 		LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
 		return
@@ -551,11 +562,12 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		}
 
 		if postGroup.IsMod || postGroup.IsAdmin {
-			replyItem.ClassName = config.StaffCss
+			replyItem.ClassName = config.StaffCSS
 		} else {
 			replyItem.ClassName = ""
 		}
 
+		// TODO: Make a function for this? Build a more sophisticated noavatar handling system?
 		if replyItem.Avatar != "" {
 			if replyItem.Avatar[0] == '.' {
 				replyItem.Avatar = "/uploads/avatar_" + strconv.Itoa(replyItem.CreatedBy) + replyItem.Avatar
@@ -665,7 +677,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Get the replies..
-	rows, err := get_profile_replies_stmt.Query(puser.ID)
+	rows, err := getProfileRepliesStmt.Query(puser.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -687,7 +699,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 
 		replyLines = strings.Count(replyContent, "\n")
 		if group.IsMod || group.IsAdmin {
-			replyClassName = config.StaffCss
+			replyClassName = config.StaffCSS
 		} else {
 			replyClassName = ""
 		}
@@ -893,7 +905,7 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user User) {
 			InternalError(err, w)
 			return
 		}
-		_, err = add_email_stmt.Exec(email, uid, 0, token)
+		_, err = addEmailStmt.Exec(email, uid, 0, token)
 		if err != nil {
 			InternalError(err, w)
 			return
@@ -981,7 +993,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user User) {
 			return
 		}
 
-		_, err = delete_activity_stream_match_stmt.Exec(user.ID, asid)
+		_, err = deleteActivityStreamMatchStmt.Exec(user.ID, asid)
 		if err != nil {
 			InternalError(err, w)
 			return
@@ -996,7 +1008,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user User) {
 		var asid, actorID, targetUserID, elementID int
 		var msgCount int
 
-		err = get_activity_count_by_watcher_stmt.QueryRow(user.ID).Scan(&msgCount)
+		err = getActivityCountByWatcherStmt.QueryRow(user.ID).Scan(&msgCount)
 		if err == ErrNoRows {
 			PreErrorJS("Couldn't find the parent topic", w, r)
 			return
@@ -1005,7 +1017,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user User) {
 			return
 		}
 
-		rows, err := get_activity_feed_by_watcher_stmt.Query(user.ID)
+		rows, err := getActivityFeedByWatcherStmt.Query(user.ID)
 		if err != nil {
 			InternalErrorJS(err, w, r)
 			return

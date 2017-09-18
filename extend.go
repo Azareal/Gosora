@@ -79,6 +79,8 @@ var preRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_security_error": nil,
 }
 
+// ? - Should we make this an interface which plugins implement instead?
+// Plugin is a struct holding the metadata for a plugin, along with a few of it's primary handlers.
 type Plugin struct {
 	UName       string
 	Name        string
@@ -100,8 +102,9 @@ type Plugin struct {
 	Hooks map[string]int
 }
 
+// LoadPlugins polls the database to see which plugins have been activated and which have been installed
 func LoadPlugins() error {
-	rows, err := get_plugins_stmt.Query()
+	rows, err := getPluginsStmt.Query()
 	if err != nil {
 		return err
 	}

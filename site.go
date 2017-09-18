@@ -35,15 +35,15 @@ type Config struct {
 	UserCacheCapacity  int
 	TopicCacheCapacity int
 
-	SmtpServer   string
-	SmtpUsername string
-	SmtpPassword string
-	SmtpPort     string
+	SMTPServer   string
+	SMTPUsername string
+	SMTPPassword string
+	SMTPPort     string
 
 	DefaultRoute              func(http.ResponseWriter, *http.Request, User)
 	DefaultGroup              int
 	ActivationGroup           int
-	StaffCss                  string // ? - Move this into the settings table? Might be better to implement this as Group CSS
+	StaffCSS                  string // ? - Move this into the settings table? Might be better to implement this as Group CSS
 	UncategorisedForumVisible bool
 	MinifyTemplates           bool
 	MultiServer               bool

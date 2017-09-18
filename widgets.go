@@ -41,7 +41,7 @@ type NameTextPair struct {
 }
 
 func initWidgets() error {
-	rows, err := get_widgets_stmt.Query()
+	rows, err := getWidgetsStmt.Query()
 	if err != nil {
 		return err
 	}

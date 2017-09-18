@@ -348,15 +348,15 @@ var topic_alt_40 = []byte(`
 					<a href="/report/submit/`)
 var topic_alt_41 = []byte(`?session=`)
 var topic_alt_42 = []byte(`&type=topic" class="action_button report_item">Report</a>
-					`)
-var topic_alt_43 = []byte(`<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">`)
-var topic_alt_44 = []byte(`</a>`)
+				`)
+var topic_alt_43 = []byte(`<a class="action_button action_button_right like_count hide_on_micro">`)
+var topic_alt_44 = []byte(` up</a>`)
 var topic_alt_45 = []byte(`
-				<a class="action_button action_button_right hide_on_mobile">`)
+				<a class="action_button action_button_right created_at hide_on_mobile">`)
 var topic_alt_46 = []byte(`</a>
 				`)
-var topic_alt_47 = []byte(`<a class="action_button action_button_right hide_on_micro">`)
-var topic_alt_48 = []byte(` up</a>`)
+var topic_alt_47 = []byte(`<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">`)
+var topic_alt_48 = []byte(`</a>`)
 var topic_alt_49 = []byte(`
 			</div>
 		</div><div style="clear:both;"></div>
@@ -404,15 +404,15 @@ var topic_alt_74 = []byte(`
 					<a href="/report/submit/`)
 var topic_alt_75 = []byte(`?session=`)
 var topic_alt_76 = []byte(`&type=reply" class="action_button report_item">Report</a>
-					`)
-var topic_alt_77 = []byte(`<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">`)
-var topic_alt_78 = []byte(`</a>`)
+				`)
+var topic_alt_77 = []byte(`<a class="action_button action_button_right like_count hide_on_micro">`)
+var topic_alt_78 = []byte(` up</a>`)
 var topic_alt_79 = []byte(`
-				<a class="action_button action_button_right hide_on_mobile">`)
+				<a class="action_button action_button_right created_at hide_on_mobile">`)
 var topic_alt_80 = []byte(`</a>
 				`)
-var topic_alt_81 = []byte(`<a class="action_button action_button_right hide_on_micro">`)
-var topic_alt_82 = []byte(` up</a>`)
+var topic_alt_81 = []byte(`<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">`)
+var topic_alt_82 = []byte(`</a>`)
 var topic_alt_83 = []byte(`
 			</div>
 			`)

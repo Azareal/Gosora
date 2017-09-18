@@ -60,7 +60,7 @@ func routePanel(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	var postCount int
-	err = todays_post_count_stmt.QueryRow().Scan(&postCount)
+	err = todaysPostCountStmt.QueryRow().Scan(&postCount)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -77,7 +77,7 @@ func routePanel(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	var topicCount int
-	err = todays_topic_count_stmt.QueryRow().Scan(&topicCount)
+	err = todaysTopicCountStmt.QueryRow().Scan(&topicCount)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -94,7 +94,7 @@ func routePanel(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	var reportCount int
-	err = todays_report_count_stmt.QueryRow().Scan(&reportCount)
+	err = todaysReportCountStmt.QueryRow().Scan(&reportCount)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -102,7 +102,7 @@ func routePanel(w http.ResponseWriter, r *http.Request, user User) {
 	var reportInterval = "week"
 
 	var newUserCount int
-	err = todays_newuser_count_stmt.QueryRow().Scan(&newUserCount)
+	err = todaysNewUserCountStmt.QueryRow().Scan(&newUserCount)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -440,7 +440,7 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 	}
 
 	forumUpdateMutex.Lock()
-	_, err = update_forum_stmt.Exec(forumName, forumDesc, active, forumPreset, fid)
+	_, err = updateForumStmt.Exec(forumName, forumDesc, active, forumPreset, fid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -531,13 +531,13 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 			return
 		}
 
-		_, err = add_forum_perms_to_group_stmt.Exec(gid, fid, permPreset, perms)
+		_, err = addForumPermsToGroupStmt.Exec(gid, fid, permPreset, perms)
 		if err != nil {
 			InternalErrorJSQ(err, w, r, isJs)
 			return
 		}
 
-		_, err = update_forum_stmt.Exec(forum.Name, forum.Desc, forum.Active, "", fid)
+		_, err = updateForumStmt.Exec(forum.Name, forum.Desc, forum.Active, "", fid)
 		if err != nil {
 			InternalErrorJSQ(err, w, r, isJs)
 			return
@@ -564,7 +564,7 @@ func routePanelSettings(w http.ResponseWriter, r *http.Request, user User) {
 
 	//log.Print("headerVars.Settings",headerVars.Settings)
 	var settingList = make(map[string]interface{})
-	rows, err := get_settings_stmt.Query()
+	rows, err := getSettingsStmt.Query()
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -628,7 +628,7 @@ func routePanelSetting(w http.ResponseWriter, r *http.Request, user User, sname 
 	}
 	setting := Setting{sname, "", "", ""}
 
-	err := get_setting_stmt.QueryRow(setting.Name).Scan(&setting.Content, &setting.Type)
+	err := getSettingStmt.QueryRow(setting.Name).Scan(&setting.Content, &setting.Type)
 	if err == ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.", w, r, user)
 		return
@@ -691,7 +691,7 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user User, sn
 	var stype, sconstraints string
 	scontent := r.PostFormValue("setting-value")
 
-	err = get_full_setting_stmt.QueryRow(sname).Scan(&sname, &stype, &sconstraints)
+	err = getFullSettingStmt.QueryRow(sname).Scan(&sname, &stype, &sconstraints)
 	if err == ErrNoRows {
 		LocalError("The setting you want to edit doesn't exist.", w, r, user)
 		return
@@ -708,7 +708,8 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user User, sn
 		}
 	}
 
-	_, err = update_setting_stmt.Exec(scontent, sname)
+	// TODO: Make this a method or function?
+	_, err = updateSettingStmt.Exec(scontent, sname)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -773,7 +774,7 @@ func routePanelWordFiltersCreate(w http.ResponseWriter, r *http.Request, user Us
 	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
 	replacement := strings.TrimSpace(r.PostFormValue("replacement"))
 
-	res, err := create_word_filter_stmt.Exec(find, replacement)
+	res, err := createWordFilterStmt.Exec(find, replacement)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -845,7 +846,7 @@ func routePanelWordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, use
 	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
 	replacement := strings.TrimSpace(r.PostFormValue("replacement"))
 
-	_, err = update_word_filter_stmt.Exec(find, replacement, id)
+	_, err = updateWordFilterStmt.Exec(find, replacement, id)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -881,7 +882,7 @@ func routePanelWordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, u
 		return
 	}
 
-	_, err = delete_word_filter_stmt.Exec(id)
+	_, err = deleteWordFilterStmt.Exec(id)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -950,7 +951,7 @@ func routePanelPluginsActivate(w http.ResponseWriter, r *http.Request, user User
 	}
 
 	var active bool
-	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
+	err := isPluginActiveStmt.QueryRow(uname).Scan(&active)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -972,15 +973,15 @@ func routePanelPluginsActivate(w http.ResponseWriter, r *http.Request, user User
 			LocalError("The plugin is already active", w, r, user)
 			return
 		}
-		//log.Print("update_plugin")
-		_, err = update_plugin_stmt.Exec(1, uname)
+		//log.Print("updatePlugin")
+		_, err = updatePluginStmt.Exec(1, uname)
 		if err != nil {
 			InternalError(err, w)
 			return
 		}
 	} else {
-		//log.Print("add_plugin")
-		_, err := add_plugin_stmt.Exec(uname, 1, 0)
+		//log.Print("addPlugin")
+		_, err := addPluginStmt.Exec(uname, 1, 0)
 		if err != nil {
 			InternalError(err, w)
 			return
@@ -1021,7 +1022,7 @@ func routePanelPluginsDeactivate(w http.ResponseWriter, r *http.Request, user Us
 	}
 
 	var active bool
-	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
+	err := isPluginActiveStmt.QueryRow(uname).Scan(&active)
 	if err == ErrNoRows {
 		LocalError("The plugin you're trying to deactivate isn't active", w, r, user)
 		return
@@ -1034,7 +1035,7 @@ func routePanelPluginsDeactivate(w http.ResponseWriter, r *http.Request, user Us
 		LocalError("The plugin you're trying to deactivate isn't active", w, r, user)
 		return
 	}
-	_, err = update_plugin_stmt.Exec(0, uname)
+	_, err = updatePluginStmt.Exec(0, uname)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1078,7 +1079,7 @@ func routePanelPluginsInstall(w http.ResponseWriter, r *http.Request, user User,
 	}
 
 	var active bool
-	err := is_plugin_active_stmt.QueryRow(uname).Scan(&active)
+	err := isPluginActiveStmt.QueryRow(uname).Scan(&active)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -1102,18 +1103,18 @@ func routePanelPluginsInstall(w http.ResponseWriter, r *http.Request, user User,
 	}
 
 	if hasPlugin {
-		_, err = update_plugin_install_stmt.Exec(1, uname)
+		_, err = updatePluginInstallStmt.Exec(1, uname)
 		if err != nil {
 			InternalError(err, w)
 			return
 		}
-		_, err = update_plugin_stmt.Exec(1, uname)
+		_, err = updatePluginStmt.Exec(1, uname)
 		if err != nil {
 			InternalError(err, w)
 			return
 		}
 	} else {
-		_, err := add_plugin_stmt.Exec(uname, 1, 1)
+		_, err := addPluginStmt.Exec(uname, 1, 1)
 		if err != nil {
 			InternalError(err, w)
 			return
@@ -1144,7 +1145,7 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user User) {
 	offset, page, lastPage := pageOffset(stats.Users, page, perPage)
 
 	var userList []User
-	rows, err := get_users_offset_stmt.Query(offset, perPage)
+	rows, err := getUsersOffsetStmt.Query(offset, perPage)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1335,7 +1336,7 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user User
 		return
 	}
 
-	_, err = update_user_stmt.Exec(newname, newemail, newgroup, targetUser.ID)
+	_, err = updateUserStmt.Exec(newname, newemail, newgroup, targetUser.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1636,7 +1637,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 				return
 			}
 
-			_, err = update_group_rank_stmt.Exec(1, 1, 0, gid)
+			_, err = updateGroupRankStmt.Exec(1, 1, 0, gid)
 			if err != nil {
 				InternalError(err, w)
 				return
@@ -1650,7 +1651,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 				return
 			}
 
-			_, err = update_group_rank_stmt.Exec(0, 1, 0, gid)
+			_, err = updateGroupRankStmt.Exec(0, 1, 0, gid)
 			if err != nil {
 				InternalError(err, w)
 				return
@@ -1659,7 +1660,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 			group.IsMod = true
 			group.IsBanned = false
 		case "Banned":
-			_, err = update_group_rank_stmt.Exec(0, 0, 1, gid)
+			_, err = updateGroupRankStmt.Exec(0, 0, 1, gid)
 			if err != nil {
 				InternalError(err, w)
 				return
@@ -1671,7 +1672,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 			LocalError("You can't designate a group as a guest group.", w, r, user)
 			return
 		case "Member":
-			_, err = update_group_rank_stmt.Exec(0, 0, 0, gid)
+			_, err = updateGroupRankStmt.Exec(0, 0, 0, gid)
 			if err != nil {
 				InternalError(err, w)
 				return
@@ -1685,7 +1686,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 		}
 	}
 
-	_, err = update_group_stmt.Exec(gname, gtag, gid)
+	_, err = updateGroupStmt.Exec(gname, gtag, gid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1760,7 +1761,7 @@ func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 
-	_, err = update_group_perms_stmt.Exec(pjson, gid)
+	_, err = updateGroupPermsStmt.Exec(pjson, gid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1886,7 +1887,7 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user Use
 
 	var isDefault bool
 	log.Print("uname", uname)
-	err := is_theme_default_stmt.QueryRow(uname).Scan(&isDefault)
+	err := isThemeDefaultStmt.QueryRow(uname).Scan(&isDefault)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -1899,13 +1900,13 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user Use
 			LocalError("The theme is already active", w, r, user)
 			return
 		}
-		_, err = update_theme_stmt.Exec(1, uname)
+		_, err = updateThemeStmt.Exec(1, uname)
 		if err != nil {
 			InternalError(err, w)
 			return
 		}
 	} else {
-		_, err := add_theme_stmt.Exec(uname, 1)
+		_, err := addThemeStmt.Exec(uname, 1)
 		if err != nil {
 			InternalError(err, w)
 			return
@@ -1915,7 +1916,7 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user Use
 	// TODO: Make this less racey
 	changeDefaultThemeMutex.Lock()
 	defaultTheme := defaultThemeBox.Load().(string)
-	_, err = update_theme_stmt.Exec(0, defaultTheme)
+	_, err = updateThemeStmt.Exec(0, defaultTheme)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1948,7 +1949,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	var logCount int
-	err := modlog_count_stmt.QueryRow().Scan(&logCount)
+	err := modlogCountStmt.QueryRow().Scan(&logCount)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1958,7 +1959,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user User) {
 	perPage := 10
 	offset, page, lastPage := pageOffset(logCount, page, perPage)
 
-	rows, err := get_modlogs_offset_stmt.Query(offset, perPage)
+	rows, err := getModlogsOffsetStmt.Query(offset, perPage)
 	if err != nil {
 		InternalError(err, w)
 		return

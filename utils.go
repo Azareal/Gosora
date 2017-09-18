@@ -189,13 +189,13 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 	}
 	body := "Subject: " + subject + "\n\n" + msg + "\n"
 
-	con, err := smtp.Dial(config.SmtpServer + ":" + config.SmtpPort)
+	con, err := smtp.Dial(config.SMTPServer + ":" + config.SMTPPort)
 	if err != nil {
 		return
 	}
 
-	if config.SmtpUsername != "" {
-		auth := smtp.PlainAuth("", config.SmtpUsername, config.SmtpPassword, config.SmtpServer)
+	if config.SMTPUsername != "" {
+		auth := smtp.PlainAuth("", config.SMTPUsername, config.SMTPPassword, config.SMTPServer)
 		err = con.Auth(auth)
 		if err != nil {
 			return
@@ -394,11 +394,11 @@ func buildSlug(slug string, id int) string {
 }
 
 func addModLog(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
-	_, err = add_modlog_entry_stmt.Exec(action, elementID, elementType, ipaddress, actorID)
+	_, err = addModlogEntryStmt.Exec(action, elementID, elementType, ipaddress, actorID)
 	return err
 }
 
 func addAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) (err error) {
-	_, err = add_adminlog_entry_stmt.Exec(action, elementID, elementType, ipaddress, actorID)
+	_, err = addAdminlogEntryStmt.Exec(action, elementID, elementType, ipaddress, actorID)
 	return err
 }

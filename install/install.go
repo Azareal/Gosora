@@ -173,16 +173,16 @@ config.UserCacheCapacity = 120 // The max number of users held in memory
 config.TopicCacheCapacity = 200 // The max number of topics held in memory
 
 // Email
-config.SmtpServer = ""
-config.SmtpUsername = ""
-config.SmtpPassword = ""
-config.SmtpPort = "25"
+config.SMTPServer = ""
+config.SMTPUsername = ""
+config.SMTPPassword = ""
+config.SMTPPort = "25"
 
 // Misc
 config.DefaultRoute = routeTopics
 config.DefaultGroup = 3 // Should be a setting in the database
 config.ActivationGroup = 5 // Should be a setting in the database
-config.StaffCss = "staff_post"
+config.StaffCSS = "staff_post"
 config.UncategorisedForumVisible = true
 config.MinifyTemplates = true
 config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features

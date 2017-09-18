@@ -4,6 +4,7 @@ import "strconv"
 import "testing"
 
 // TODO: Generate a test database to work with rather than a live one
+// TODO: We might need to refactor TestUserStore soon, as it's getting fairly complex
 func TestUserStore(t *testing.T) {
 	if !gloinited {
 		err := gloinit()
@@ -16,6 +17,7 @@ func TestUserStore(t *testing.T) {
 	}
 
 	users = NewMemoryUserStore(config.UserCacheCapacity)
+	users.(UserCache).Flush()
 	userStoreTest(t)
 	users = NewSQLUserStore()
 	userStoreTest(t)
@@ -23,6 +25,12 @@ func TestUserStore(t *testing.T) {
 func userStoreTest(t *testing.T) {
 	var user *User
 	var err error
+	var length int
+
+	ucache, hasCache := users.(UserCache)
+	if hasCache && ucache.GetLength() != 0 {
+		t.Error("Initial ucache length isn't zero")
+	}
 
 	_, err = users.Get(-1)
 	if err == nil {
@@ -31,11 +39,19 @@ func userStoreTest(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if hasCache && ucache.GetLength() != 0 {
+		t.Error("There shouldn't be anything in the user cache")
+	}
+
 	_, err = users.Get(0)
 	if err == nil {
 		t.Error("UID #0 shouldn't exist")
 	} else if err != ErrNoRows {
 		t.Fatal(err)
+	}
+
+	if hasCache && ucache.GetLength() != 0 {
+		t.Error("There shouldn't be anything in the user cache")
 	}
 
 	user, err = users.Get(1)
@@ -49,6 +65,30 @@ func userStoreTest(t *testing.T) {
 		t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
 	}
 
+	if hasCache {
+		length = ucache.GetLength()
+		if length != 1 {
+			t.Error("User cache length should be 1, not " + strconv.Itoa(length))
+		}
+
+		user, err = ucache.CacheGet(1)
+		if err == ErrNoRows {
+			t.Error("Couldn't find UID #1 in the cache")
+		} else if err != nil {
+			t.Fatal(err)
+		}
+
+		if user.ID != 1 {
+			t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
+		}
+
+		ucache.Flush()
+		length = ucache.GetLength()
+		if length != 0 {
+			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
+		}
+	}
+
 	// TODO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
 	var userList map[int]*User
 	userList, _ = users.BulkGetMap([]int{-1})
@@ -56,9 +96,23 @@ func userStoreTest(t *testing.T) {
 		t.Error("There shouldn't be any results for UID #-1")
 	}
 
+	if hasCache {
+		length = ucache.GetLength()
+		if length != 0 {
+			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
+		}
+	}
+
 	userList, _ = users.BulkGetMap([]int{0})
 	if len(userList) > 0 {
 		t.Error("There shouldn't be any results for UID #0")
+	}
+
+	if hasCache {
+		length = ucache.GetLength()
+		if length != 0 {
+			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
+		}
 	}
 
 	userList, _ = users.BulkGetMap([]int{1})
@@ -78,6 +132,26 @@ func userStoreTest(t *testing.T) {
 		t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
 	}
 
+	if hasCache {
+		length = ucache.GetLength()
+		if length != 1 {
+			t.Error("User cache length should be 1, not " + strconv.Itoa(length))
+		}
+
+		user, err = ucache.CacheGet(1)
+		if err == ErrNoRows {
+			t.Error("Couldn't find UID #1 in the cache")
+		} else if err != nil {
+			t.Fatal(err)
+		}
+
+		if user.ID != 1 {
+			t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
+		}
+
+		ucache.Flush()
+	}
+
 	ok = users.Exists(-1)
 	if ok {
 		t.Error("UID #-1 shouldn't exist")
@@ -91,6 +165,13 @@ func userStoreTest(t *testing.T) {
 	ok = users.Exists(1)
 	if !ok {
 		t.Error("UID #1 should exist")
+	}
+
+	if hasCache {
+		length = ucache.GetLength()
+		if length != 0 {
+			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
+		}
 	}
 
 	count := users.GetGlobalCount()

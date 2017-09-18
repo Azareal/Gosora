@@ -118,7 +118,7 @@ func getTopicuser(tid int) (TopicUser, error) {
 	}
 
 	tu := TopicUser{ID: tid}
-	err := get_topic_user_stmt.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+	err := getTopicUserStmt.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 	tu.Link = buildTopicURL(nameToSlug(tu.Title), tu.ID)
 	tu.UserLink = buildProfileURL(nameToSlug(tu.CreatedByName), tu.CreatedBy)
 	tu.Tag = gstore.DirtyGet(tu.Group).Tag
@@ -160,7 +160,7 @@ func copyTopicToTopicuser(topic *Topic, user *User) (tu TopicUser) {
 
 func getTopicByReply(rid int) (*Topic, error) {
 	topic := Topic{ID: 0}
-	err := get_topic_by_reply_stmt.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	err := getTopicByReplyStmt.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), topic.ID)
 	return &topic, err
 }

@@ -53,7 +53,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 	topicContent := html.EscapeString(r.PostFormValue("topic_content"))
 
 	// TODO: Move this bit to the TopicStore
-	_, err = edit_topic_stmt.Exec(topicName, preparseMessage(topicContent), parseMessage(html.EscapeString(preparseMessage(topicContent))), isClosed, tid)
+	_, err = editTopicStmt.Exec(topicName, preparseMessage(topicContent), parseMessage(html.EscapeString(preparseMessage(topicContent))), isClosed, tid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -78,12 +78,12 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 			InternalError(err, w)
 			return
 		}
-		_, err = create_action_reply_stmt.Exec(tid, action, ipaddress, user.ID)
+		_, err = createActionReplyStmt.Exec(tid, action, ipaddress, user.ID)
 		if err != nil {
 			InternalError(err, w)
 			return
 		}
-		_, err = add_replies_to_topic_stmt.Exec(1, user.ID, tid)
+		_, err = addRepliesToTopicStmt.Exec(1, user.ID, tid)
 		if err != nil {
 			InternalError(err, w)
 			return
@@ -158,7 +158,7 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// ? - We might need to add soft-delete before we can do an action reply for this
-	/*_, err = create_action_reply_stmt.Exec(tid,"delete",ipaddress,user.ID)
+	/*_, err = createActionReplyStmt.Exec(tid,"delete",ipaddress,user.ID)
 	if err != nil {
 		InternalError(err,w)
 		return
@@ -194,7 +194,8 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = stick_topic_stmt.Exec(tid)
+	// TODO: Move this into the TopicStore?
+	_, err = stickTopicStmt.Exec(tid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -210,7 +211,7 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		InternalError(err, w)
 		return
 	}
-	_, err = create_action_reply_stmt.Exec(tid, "stick", ipaddress, user.ID)
+	_, err = createActionReplyStmt.Exec(tid, "stick", ipaddress, user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -250,7 +251,7 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = unstick_topic_stmt.Exec(tid)
+	_, err = unstickTopicStmt.Exec(tid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -266,7 +267,7 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		InternalError(err, w)
 		return
 	}
-	_, err = create_action_reply_stmt.Exec(tid, "unstick", ipaddress, user.ID)
+	_, err = createActionReplyStmt.Exec(tid, "unstick", ipaddress, user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -297,7 +298,7 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
-	_, err = edit_reply_stmt.Exec(content, parseMessage(content), rid)
+	_, err = editReplyStmt.Exec(content, parseMessage(content), rid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -305,14 +306,14 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
 
 	// Get the Reply ID..
 	var tid int
-	err = get_reply_tid_stmt.QueryRow(rid).Scan(&tid)
+	err = getReplyTIDStmt.QueryRow(rid).Scan(&tid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
 
 	var fid int
-	err = get_topic_fid_stmt.QueryRow(tid).Scan(&fid)
+	err = getTopicFIDStmt.QueryRow(tid).Scan(&fid)
 	if err == ErrNoRows {
 		PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
 		return
@@ -363,7 +364,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	var fid int
-	err = get_topic_fid_stmt.QueryRow(reply.ParentID).Scan(&fid)
+	err = getTopicFIDStmt.QueryRow(reply.ParentID).Scan(&fid)
 	if err == ErrNoRows {
 		PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
 		return
@@ -382,7 +383,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = delete_reply_stmt.Exec(rid)
+	_, err = deleteReplyStmt.Exec(rid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -406,7 +407,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
-	_, err = remove_replies_from_topic_stmt.Exec(1, reply.ParentID)
+	_, err = removeRepliesFromTopicStmt.Exec(1, reply.ParentID)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 	}
@@ -445,7 +446,7 @@ func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user Us
 
 	// Get the Reply ID..
 	var uid int
-	err = get_user_reply_uid_stmt.QueryRow(rid).Scan(&uid)
+	err = getUserReplyUIDStmt.QueryRow(rid).Scan(&uid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -457,7 +458,7 @@ func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user Us
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
-	_, err = edit_profile_reply_stmt.Exec(content, parseMessage(content), rid)
+	_, err = editProfileReplyStmt.Exec(content, parseMessage(content), rid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -485,7 +486,7 @@ func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user 
 	}
 
 	var uid int
-	err = get_user_reply_uid_stmt.QueryRow(rid).Scan(&uid)
+	err = getUserReplyUIDStmt.QueryRow(rid).Scan(&uid)
 	if err == ErrNoRows {
 		LocalErrorJSQ("The reply you tried to delete doesn't exist.", w, r, user, isJs)
 		return
@@ -499,7 +500,7 @@ func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user 
 		return
 	}
 
-	_, err = delete_profile_reply_stmt.Exec(rid)
+	_, err = deleteProfileReplyStmt.Exec(rid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
@@ -527,7 +528,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 	var uid int
 	var reqUserList = make(map[int]bool)
 
-	rows, err := find_users_by_ip_users_stmt.Query(ip)
+	rows, err := findUsersByIPUsersStmt.Query(ip)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -548,7 +549,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	rows2, err := find_users_by_ip_topics_stmt.Query(ip)
+	rows2, err := findUsersByIPTopicsStmt.Query(ip)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -569,7 +570,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	rows3, err := find_users_by_ip_replies_stmt.Query(ip)
+	rows3, err := findUsersByIPRepliesStmt.Query(ip)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -821,7 +822,7 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	var active bool
-	err = get_user_active_stmt.QueryRow(uid).Scan(&active)
+	err = getUserActiveStmt.QueryRow(uid).Scan(&active)
 	if err == ErrNoRows {
 		LocalError("The account you're trying to activate no longer exists.", w, r, user)
 		return
@@ -834,13 +835,13 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("The account you're trying to activate has already been activated.", w, r, user)
 		return
 	}
-	_, err = activate_user_stmt.Exec(uid)
+	_, err = activateUserStmt.Exec(uid)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	_, err = change_group_stmt.Exec(config.DefaultGroup, uid)
+	_, err = changeGroupStmt.Exec(config.DefaultGroup, uid)
 	if err != nil {
 		InternalError(err, w)
 		return

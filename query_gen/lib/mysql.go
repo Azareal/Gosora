@@ -816,10 +816,10 @@ func (adapter *Mysql_Adapter) Write() error {
 		stmt := adapter.Buffer[name]
 		// TODO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
 		if stmt.Type != "create-table" {
-			stmts += "var " + name + "_stmt *sql.Stmt\n"
+			stmts += "var " + name + "Stmt *sql.Stmt\n"
 			body += `	
 	log.Print("Preparing ` + name + ` statement.")
-	` + name + `_stmt, err = db.Prepare("` + stmt.Contents + `")
+	` + name + `Stmt, err = db.Prepare("` + stmt.Contents + `")
 	if err != nil {
 		return err
 	}

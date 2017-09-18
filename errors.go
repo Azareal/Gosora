@@ -11,8 +11,8 @@ import "runtime/debug"
 var errorBufferMutex sync.RWMutex
 var errorBuffer []error
 
-//var notfound_count_per_second int
-//var noperms_count_per_second int
+//var notfoundCountPerSecond int
+//var nopermsCountPerSecond int
 var errorInternal []byte
 var errorNotfound []byte
 
@@ -83,42 +83,28 @@ func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) {
 	log.Fatal(err)
 }
 
+// ? - Where is this used? Is it actually used? Should we use it more?
+// LoginRequired is an error shown to the end-user when they try to access an area which requires them to login
+func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
+	w.WriteHeader(401)
+	pi := Page{"Local Error", user, hvars, tList, "You need to login to do that."}
+	if preRenderHooks["pre_render_error"] != nil {
+		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
+			return
+		}
+	}
+	var b bytes.Buffer
+	err := templates.ExecuteTemplate(&b, "error.html", pi)
+	if err != nil {
+		LogError(err)
+	}
+	fmt.Fprintln(w, b.String())
+}
+
 func PreError(errmsg string, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(500)
 	user := User{ID: 0, Group: 6, Perms: GuestPerms}
 	pi := Page{"Error", user, hvars, tList, errmsg}
-	if preRenderHooks["pre_render_error"] != nil {
-		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
-			return
-		}
-	}
-	var b bytes.Buffer
-	err := templates.ExecuteTemplate(&b, "error.html", pi)
-	if err != nil {
-		LogError(err)
-	}
-	fmt.Fprintln(w, b.String())
-}
-
-func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) {
-	w.WriteHeader(500)
-	pi := Page{"Local Error", user, hvars, tList, errmsg}
-	if preRenderHooks["pre_render_error"] != nil {
-		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
-			return
-		}
-	}
-	var b bytes.Buffer
-	err := templates.ExecuteTemplate(&b, "error.html", pi)
-	if err != nil {
-		LogError(err)
-	}
-	fmt.Fprintln(w, b.String())
-}
-
-func LoginRequired(w http.ResponseWriter, r *http.Request, user User) {
-	w.WriteHeader(401)
-	pi := Page{"Local Error", user, hvars, tList, "You need to login to do that."}
 	if preRenderHooks["pre_render_error"] != nil {
 		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
 			return
@@ -158,6 +144,23 @@ func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, isJs boo
 	}
 }
 
+// LocalError is an error shown to the end-user when something goes wrong and it's not the software's fault
+func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) {
+	w.WriteHeader(500)
+	pi := Page{"Local Error", user, hvars, tList, errmsg}
+	if preRenderHooks["pre_render_error"] != nil {
+		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
+			return
+		}
+	}
+	var b bytes.Buffer
+	err := templates.ExecuteTemplate(&b, "error.html", pi)
+	if err != nil {
+		LogError(err)
+	}
+	fmt.Fprintln(w, b.String())
+}
+
 func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, isJs bool) {
 	w.WriteHeader(500)
 	if !isJs {
@@ -183,6 +186,7 @@ func LocalErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
 }
 
+// NoPermissions is an error shown to the end-user when they try to access an area which they aren't authorised to access
 func NoPermissions(w http.ResponseWriter, r *http.Request, user User) {
 	w.WriteHeader(403)
 	pi := Page{"Local Error", user, hvars, tList, "You don't have permission to do that."}
@@ -220,6 +224,7 @@ func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bo
 	}
 }
 
+// ? - Is this actually used? Should it be used? A ban in Gosora should be more of a permission revocation to stop them posting rather than something which spits up an error page, right?
 func Banned(w http.ResponseWriter, r *http.Request, user User) {
 	w.WriteHeader(403)
 	pi := Page{"Banned", user, hvars, tList, "You have been banned from this site."}
@@ -237,6 +242,7 @@ func Banned(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 // nolint
+// BannedJSQ is the version of the banned error page which handles both JavaScript requests and normal page loads
 func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) {
 	w.WriteHeader(403)
 	if !isJs {

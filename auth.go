@@ -162,7 +162,7 @@ func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 		return "", err
 	}
 
-	_, err = update_session_stmt.Exec(session, uid)
+	_, err = updateSessionStmt.Exec(session, uid)
 	if err != nil {
 		return "", err
 	}

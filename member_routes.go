@@ -128,7 +128,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	wcount := wordCount(content)
-	res, err := create_topic_stmt.Exec(fid, topicName, content, parseMessage(content), user.ID, ipaddress, wcount, user.ID)
+	res, err := createTopicStmt.Exec(fid, topicName, content, parseMessage(content), user.ID, ipaddress, wcount, user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -145,7 +145,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = add_subscription_stmt.Exec(user.ID, lastID, "topic")
+	_, err = addSubscriptionStmt.Exec(user.ID, lastID, "topic")
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -203,13 +203,13 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	wcount := wordCount(content)
-	_, err = create_reply_stmt.Exec(tid, content, parseMessage(content), ipaddress, wcount, user.ID)
+	_, err = createReplyStmt.Exec(tid, content, parseMessage(content), ipaddress, wcount, user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	_, err = add_replies_to_topic_stmt.Exec(1, user.ID, tid)
+	_, err = addRepliesToTopicStmt.Exec(1, user.ID, tid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -220,7 +220,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	res, err := add_activity_stmt.Exec(user.ID, topic.CreatedBy, "reply", "topic", tid)
+	res, err := addActivityStmt.Exec(user.ID, topic.CreatedBy, "reply", "topic", tid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -231,7 +231,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = notify_watchers_stmt.Exec(lastID)
+	_, err = notifyWatchersStmt.Exec(lastID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -297,7 +297,7 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = has_liked_topic_stmt.QueryRow(user.ID, tid).Scan(&tid)
+	err = hasLikedTopicStmt.QueryRow(user.ID, tid).Scan(&tid)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -316,19 +316,19 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	score := 1
-	_, err = create_like_stmt.Exec(score, tid, "topics", user.ID)
+	_, err = createLikeStmt.Exec(score, tid, "topics", user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	_, err = add_likes_to_topic_stmt.Exec(1, tid)
+	_, err = addLikesToTopicStmt.Exec(1, tid)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	res, err := add_activity_stmt.Exec(user.ID, topic.CreatedBy, "like", "topic", tid)
+	res, err := addActivityStmt.Exec(user.ID, topic.CreatedBy, "like", "topic", tid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -339,7 +339,7 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = notify_one_stmt.Exec(topic.CreatedBy, lastID)
+	_, err = notifyOneStmt.Exec(topic.CreatedBy, lastID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -384,7 +384,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	var fid int
-	err = get_topic_fid_stmt.QueryRow(reply.ParentID).Scan(&fid)
+	err = getTopicFIDStmt.QueryRow(reply.ParentID).Scan(&fid)
 	if err == ErrNoRows {
 		PreError("The parent topic doesn't exist.", w, r)
 		return
@@ -408,7 +408,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = has_liked_reply_stmt.QueryRow(user.ID, rid).Scan(&rid)
+	err = hasLikedReplyStmt.QueryRow(user.ID, rid).Scan(&rid)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -427,19 +427,19 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	score := 1
-	_, err = create_like_stmt.Exec(score, rid, "replies", user.ID)
+	_, err = createLikeStmt.Exec(score, rid, "replies", user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	_, err = add_likes_to_reply_stmt.Exec(1, rid)
+	_, err = addLikesToReplyStmt.Exec(1, rid)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	res, err := add_activity_stmt.Exec(user.ID, reply.CreatedBy, "like", "post", rid)
+	res, err := addActivityStmt.Exec(user.ID, reply.CreatedBy, "like", "post", rid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -450,7 +450,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = notify_one_stmt.Exec(reply.CreatedBy, lastID)
+	_, err = notifyOneStmt.Exec(reply.CreatedBy, lastID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -485,14 +485,14 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) 
 		return
 	}
 
-	_, err = create_profile_reply_stmt.Exec(uid, html.EscapeString(preparseMessage(r.PostFormValue("reply-content"))), parseMessage(html.EscapeString(preparseMessage(r.PostFormValue("reply-content")))), user.ID, ipaddress)
+	_, err = createProfileReplyStmt.Exec(uid, html.EscapeString(preparseMessage(r.PostFormValue("reply-content"))), parseMessage(html.EscapeString(preparseMessage(r.PostFormValue("reply-content")))), user.ID, ipaddress)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
 	var userName string
-	err = get_user_name_stmt.QueryRow(uid).Scan(&userName)
+	err = getUserNameStmt.QueryRow(uid).Scan(&userName)
 	if err == ErrNoRows {
 		LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
 		return
@@ -565,7 +565,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 			return
 		}
 
-		err = get_user_name_stmt.QueryRow(userReply.ParentID).Scan(&title)
+		err = getUserNameStmt.QueryRow(userReply.ParentID).Scan(&title)
 		if err == ErrNoRows {
 			LocalError("We weren't able to find the profile the reported post is supposed to be on", w, r, user)
 			return
@@ -576,7 +576,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		title = "Profile: " + title
 		content = userReply.Content + "\n\nOriginal Post: @" + strconv.Itoa(userReply.ParentID)
 	} else if itemType == "topic" {
-		err = get_topic_basic_stmt.QueryRow(itemID).Scan(&title, &content)
+		err = getTopicBasicStmt.QueryRow(itemID).Scan(&title, &content)
 		if err == ErrNoRows {
 			NotFound(w, r)
 			return
@@ -597,7 +597,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 	}
 
 	var count int
-	rows, err := report_exists_stmt.Query(itemType + "_" + strconv.Itoa(itemID))
+	rows, err := reportExistsStmt.Query(itemType + "_" + strconv.Itoa(itemID))
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -615,7 +615,8 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		return
 	}
 
-	res, err := create_report_stmt.Exec(title, content, parseMessage(content), user.ID, itemType+"_"+strconv.Itoa(itemID))
+	// ? - Can we do this via the TopicStore?
+	res, err := createReportStmt.Exec(title, content, parseMessage(content), user.ID, itemType+"_"+strconv.Itoa(itemID))
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -627,7 +628,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		return
 	}
 
-	_, err = add_topics_to_forum_stmt.Exec(1, fid)
+	_, err = addTopicsToForumStmt.Exec(1, fid)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -681,7 +682,7 @@ func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, u
 	newPassword := r.PostFormValue("account-new-password")
 	confirmPassword := r.PostFormValue("account-confirm-password")
 
-	err = get_password_stmt.QueryRow(user.ID).Scan(&realPassword, &salt)
+	err = getPasswordStmt.QueryRow(user.ID).Scan(&realPassword, &salt)
 	if err == ErrNoRows {
 		LocalError("Your account no longer exists.", w, r, user)
 		return
@@ -811,7 +812,7 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 		}
 	}
 
-	_, err = set_avatar_stmt.Exec("."+ext, strconv.Itoa(user.ID))
+	_, err = setAvatarStmt.Exec("."+ext, strconv.Itoa(user.ID))
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -867,7 +868,7 @@ func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, u
 	}
 
 	newUsername := html.EscapeString(r.PostFormValue("account-new-username"))
-	_, err = set_username_stmt.Exec(newUsername, strconv.Itoa(user.ID))
+	_, err = setUsernameStmt.Exec(newUsername, strconv.Itoa(user.ID))
 	if err != nil {
 		LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)
 		return
@@ -903,7 +904,7 @@ func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User)
 
 	email := Email{UserID: user.ID}
 	var emailList []interface{}
-	rows, err := get_emails_by_user_stmt.Query(user.ID)
+	rows, err := getEmailsByUserStmt.Query(user.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -960,7 +961,7 @@ func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request,
 	email := Email{UserID: user.ID}
 	targetEmail := Email{UserID: user.ID}
 	var emailList []interface{}
-	rows, err := get_emails_by_user_stmt.Query(user.ID)
+	rows, err := getEmailsByUserStmt.Query(user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -997,7 +998,7 @@ func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	_, err = verify_email_stmt.Exec(user.Email)
+	_, err = verifyEmailStmt.Exec(user.Email)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -1005,7 +1006,7 @@ func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request,
 
 	// If Email Activation is on, then activate the account while we're here
 	if headerVars.Settings["activation_type"] == 2 {
-		_, err = activate_user_stmt.Exec(user.ID)
+		_, err = activateUserStmt.Exec(user.ID)
 		if err != nil {
 			InternalError(err, w)
 			return

@@ -106,7 +106,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 
 	addForum(&Forum{0, buildForumURL(nameToSlug("Uncategorised"), 0), "Uncategorised", "", config.UncategorisedForumVisible, "all", 0, "", 0, "", "", 0, "", 0, ""})
 
-	rows, err := get_forums_stmt.Query()
+	rows, err := getForumsStmt.Query()
 	if err != nil {
 		return err
 	}
@@ -290,7 +290,7 @@ func (mfs *MemoryForumStore) IncrementTopicCount(id int) error {
 	if err != nil {
 		return err
 	}
-	_, err = add_topics_to_forum_stmt.Exec(1, id)
+	_, err = addTopicsToForumStmt.Exec(1, id)
 	if err != nil {
 		return err
 	}
@@ -303,7 +303,7 @@ func (mfs *MemoryForumStore) DecrementTopicCount(id int) error {
 	if err != nil {
 		return err
 	}
-	_, err = remove_topics_from_forum_stmt.Exec(1, id)
+	_, err = removeTopicsFromForumStmt.Exec(1, id)
 	if err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func (mfs *MemoryForumStore) UpdateLastTopic(topicName string, tid int, username
 		return err
 	}
 
-	_, err = update_forum_cache_stmt.Exec(topicName, tid, username, uid, fid)
+	_, err = updateForumCacheStmt.Exec(topicName, tid, username, uid, fid)
 	if err != nil {
 		return err
 	}
@@ -334,7 +334,7 @@ func (mfs *MemoryForumStore) UpdateLastTopic(topicName string, tid int, username
 
 func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
 	forumCreateMutex.Lock()
-	res, err := create_forum_stmt.Exec(forumName, forumDesc, active, preset)
+	res, err := createForumStmt.Exec(forumName, forumDesc, active, preset)
 	if err != nil {
 		return 0, err
 	}

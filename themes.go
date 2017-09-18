@@ -69,7 +69,7 @@ type ThemeResource struct {
 
 func LoadThemes() error {
 	changeDefaultThemeMutex.Lock()
-	rows, err := get_themes_stmt.Query()
+	rows, err := getThemesStmt.Query()
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func addThemeStaticFiles(theme Theme) error {
 			var pieces = strings.Split(path, "/")
 			var filename = pieces[len(pieces)-1]
 			//log.Print("filename ", filename)
-			err = theme.ResourceTemplates.ExecuteTemplate(&b, filename, CssData{ComingSoon: "We don't have any data to pass you yet!"})
+			err = theme.ResourceTemplates.ExecuteTemplate(&b, filename, CSSData{ComingSoon: "We don't have any data to pass you yet!"})
 			if err != nil {
 				return err
 			}

@@ -15,7 +15,7 @@ func init() {
 }
 
 func handleExpiredScheduledGroups() error {
-	rows, err := get_expired_scheduled_groups_stmt.Query()
+	rows, err := getExpiredScheduledGroupsStmt.Query()
 	if err != nil {
 		return err
 	}
@@ -27,11 +27,11 @@ func handleExpiredScheduledGroups() error {
 		if err != nil {
 			return err
 		}
-		_, err = replace_schedule_group_stmt.Exec(uid, 0, 0, time.Now(), false)
+		_, err = replaceScheduleGroupStmt.Exec(uid, 0, 0, time.Now(), false)
 		if err != nil {
 			return err
 		}
-		_, err = set_temp_group_stmt.Exec(0, uid)
+		_, err = setTempGroupStmt.Exec(0, uid)
 		if err != nil {
 			return err
 		}
@@ -43,13 +43,12 @@ func handleExpiredScheduledGroups() error {
 func handleServerSync() error {
 	var lastUpdate time.Time
 	var lastUpdateStr string
-	err := get_sync_stmt.QueryRow().Scan(&lastUpdateStr)
+	err := getSyncStmt.QueryRow().Scan(&lastUpdateStr)
 	if err != nil {
 		return err
 	}
 
-	layout := "2006-01-02 15:04:05"
-	lastUpdate, err = time.Parse(layout, lastUpdateStr)
+	lastUpdate, err = time.Parse("2006-01-02 15:04:05", lastUpdateStr)
 	if err != nil {
 		return err
 	}

@@ -166,18 +166,18 @@ w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_41)
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_42)
-if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
-w.Write(topic_alt_43)
-w.Write([]byte(tmpl_topic_alt_vars.Topic.IPAddress))
-w.Write(topic_alt_44)
 }
+if tmpl_topic_alt_vars.Topic.LikeCount > 0 {
+w.Write(topic_alt_43)
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.LikeCount)))
+w.Write(topic_alt_44)
 }
 w.Write(topic_alt_45)
 w.Write([]byte(tmpl_topic_alt_vars.Topic.CreatedAt))
 w.Write(topic_alt_46)
-if tmpl_topic_alt_vars.Topic.LikeCount > 0 {
+if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_47)
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.LikeCount)))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.IPAddress))
 w.Write(topic_alt_48)
 }
 w.Write(topic_alt_49)
@@ -239,18 +239,18 @@ w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_alt_75)
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_76)
-if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
-w.Write(topic_alt_77)
-w.Write([]byte(item.IPAddress))
-w.Write(topic_alt_78)
 }
+if item.LikeCount > 0 {
+w.Write(topic_alt_77)
+w.Write([]byte(strconv.Itoa(item.LikeCount)))
+w.Write(topic_alt_78)
 }
 w.Write(topic_alt_79)
 w.Write([]byte(item.CreatedAt))
 w.Write(topic_alt_80)
-if item.LikeCount > 0 {
+if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_81)
-w.Write([]byte(strconv.Itoa(item.LikeCount)))
+w.Write([]byte(item.IPAddress))
 w.Write(topic_alt_82)
 }
 w.Write(topic_alt_83)

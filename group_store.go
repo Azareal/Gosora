@@ -35,7 +35,7 @@ func NewMemoryGroupStore() *MemoryGroupStore {
 func (mgs *MemoryGroupStore) LoadGroups() error {
 	mgs.groups = []*Group{&Group{ID: 0, Name: "Unknown"}}
 
-	rows, err := get_groups_stmt.Query()
+	rows, err := getGroupsStmt.Query()
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (mgs *MemoryGroupStore) Create(groupName string, tag string, isAdmin bool, 
 	defer groupCreateMutex.Unlock()
 
 	var permstr = "{}"
-	res, err := create_group_stmt.Exec(groupName, tag, isAdmin, isMod, isBanned, permstr)
+	res, err := createGroupStmt.Exec(groupName, tag, isAdmin, isMod, isBanned, permstr)
 	if err != nil {
 		return 0, err
 	}
@@ -163,7 +163,7 @@ func (mgs *MemoryGroupStore) Create(groupName string, tag string, isAdmin bool, 
 			return gid, err
 		}
 		perms := string(permstr)
-		_, err = add_forum_perms_to_group_stmt.Exec(gid, forum.ID, forum.Preset, perms)
+		_, err = addForumPermsToGroupStmt.Exec(gid, forum.ID, forum.Preset, perms)
 		if err != nil {
 			return gid, err
 		}

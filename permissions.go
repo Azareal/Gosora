@@ -254,7 +254,7 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	permUpdateMutex.Lock()
 	defer permUpdateMutex.Unlock()
 
-	_, err := delete_forum_perms_by_forum_stmt.Exec(fid)
+	_, err := deleteForumPermsByForumStmt.Exec(fid)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	_, err = add_forum_perms_to_forum_admins_stmt.Exec(fid, "", perms)
+	_, err = addForumPermsToForumAdminsStmt.Exec(fid, "", perms)
 	if err != nil {
 		return err
 	}
@@ -272,7 +272,7 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	_, err = add_forum_perms_to_forum_staff_stmt.Exec(fid, "", perms)
+	_, err = addForumPermsToForumStaffStmt.Exec(fid, "", perms)
 	if err != nil {
 		return err
 	}
@@ -281,7 +281,7 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	_, err = add_forum_perms_to_forum_members_stmt.Exec(fid, "", perms)
+	_, err = addForumPermsToForumMembersStmt.Exec(fid, "", perms)
 	if err != nil {
 		return err
 	}
@@ -290,7 +290,7 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	_, err = add_forum_perms_to_group_stmt.Exec(6, fid, "", perms)
+	_, err = addForumPermsToGroupStmt.Exec(6, fid, "", perms)
 	if err != nil {
 		return err
 	}
@@ -380,13 +380,14 @@ func rebuildForumPermissions(fid int) error {
 	return nil
 }
 
+// ? - We could have buildForumPermissions and rebuildForumPermissions call a third function containing common logic?
 func buildForumPermissions() error {
 	forums, err := fstore.GetAll()
 	if err != nil {
 		return err
 	}
 
-	rows, err := get_forums_permissions_stmt.Query()
+	rows, err := getForumsPermissionsStmt.Query()
 	if err != nil {
 		return err
 	}

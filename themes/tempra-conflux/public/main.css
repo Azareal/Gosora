@@ -498,16 +498,13 @@ button.username {
 /* Tempra Conflux */
 
 .user_content {
-	padding: 5px;
+	padding: 7px;
 	margin-top: 2px;
 	margin-bottom: 0;
 	background: white;
-	min-height: 145px;
+    min-height: 145.30px;
 	padding-bottom: 0;
 	width: 100%;
-}
-.user_content.nobuttons {
-	min-height: 168px;
 }
 
 .button_container {
@@ -517,24 +514,27 @@ button.username {
 	padding: 0;
 	margin: 0;
 	margin-top: 3px;
-	display: block;
-	height: 20px;
+	display: flex;
+	flex-direction: row;
 }
 
 .action_button {
 	display: block;
-	float: left;
 	border-right: solid 1px #eaeaea;
 	color: #505050;
 	font-size: 13px;
 	padding-top: 2px;
-	padding-bottom: 2px;
-	padding-left: 5px;
-	padding-right: 5px;
+	padding-bottom: 1.5px;
+	padding-left: 7px;
+	padding-right: 7px;
 }
 .action_button_right {
-	float: right;
 	border-left: solid 1px #eaeaea;
+	border-right: none;
+}
+
+.button_container .report_item {
+	margin-right: auto;
 }
 
 .like_label:before { content: "😀"; }
@@ -645,12 +645,12 @@ button.username {
 
 .content_container {
 	background: white;
-	margin-left: 137px;
+	margin-left: 138px;
 	min-height: 128px;
 	margin-bottom: 0;
 	margin-right: 3px;
 	/*box-shadow: 0 1px 2px rgba(0,0,0,.1);*/
-	border-bottom: 1px inset hsl(0,0%,80%);
+	border-bottom: 1.5px inset hsl(0,0%,80%);
 }
 
 .action_item .userinfo { display: none; }
@@ -681,8 +681,12 @@ button.username {
 	text-decoration: none;
 	color: #505050;
 }
-.prev_button { left: 14px; }
-.next_button { right: 14px; }
+.prev_button {
+	left: 14px;
+}
+.next_button {
+	right: 14px;
+}
 
 .head_tag_upshift {
 	float: right;
@@ -737,13 +741,13 @@ button.username {
 
 /* Firefox specific CSS */
 @supports (-moz-appearance: none) {
-	.footer, .rowmenu, #profile_right_lane .topic_reply_form {
+	.footer, .rowmenu, #profile_right_lane .topic_reply_form, .content_container {
 		border-bottom: 2px inset hsl(0,0%,40%);
 	}
 }
 /* Edge... We can't get the exact shade here, because of how they implemented it x.x */
 @supports (-ms-ime-align:auto) {
-	.footer, .rowmenu, #profile_right_lane .topic_reply_form {
+	.footer, .rowmenu, #profile_right_lane .topic_reply_form, .content_container {
 		border-bottom: 1.5px inset hsl(0,0%,100%);
 	}
 }

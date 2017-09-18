@@ -24,7 +24,7 @@ type SFile struct {
 	FormattedModTime string
 }
 
-type CssData struct {
+type CSSData struct {
 	ComingSoon string
 }
 

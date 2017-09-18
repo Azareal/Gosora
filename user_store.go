@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"./query_gen/lib"
 	"golang.org/x/crypto/bcrypt"
@@ -36,6 +37,7 @@ type UserCache interface {
 	CacheAddUnsafe(item *User) error
 	CacheRemove(id int) error
 	CacheRemoveUnsafe(id int) error
+	Flush()
 	GetLength() int
 	SetCapacity(capacity int)
 	GetCapacity() int
@@ -43,7 +45,7 @@ type UserCache interface {
 
 type MemoryUserStore struct {
 	items          map[int]*User
-	length         int
+	length         int64
 	capacity       int
 	get            *sql.Stmt
 	exists         *sql.Stmt
@@ -93,34 +95,34 @@ func NewMemoryUserStore(capacity int) *MemoryUserStore {
 	}
 }
 
-func (sus *MemoryUserStore) CacheGet(id int) (*User, error) {
-	sus.RLock()
-	item, ok := sus.items[id]
-	sus.RUnlock()
+func (mus *MemoryUserStore) CacheGet(id int) (*User, error) {
+	mus.RLock()
+	item, ok := mus.items[id]
+	mus.RUnlock()
 	if ok {
 		return item, nil
 	}
 	return item, ErrNoRows
 }
 
-func (sus *MemoryUserStore) CacheGetUnsafe(id int) (*User, error) {
-	item, ok := sus.items[id]
+func (mus *MemoryUserStore) CacheGetUnsafe(id int) (*User, error) {
+	item, ok := mus.items[id]
 	if ok {
 		return item, nil
 	}
 	return item, ErrNoRows
 }
 
-func (sus *MemoryUserStore) Get(id int) (*User, error) {
-	sus.RLock()
-	user, ok := sus.items[id]
-	sus.RUnlock()
+func (mus *MemoryUserStore) Get(id int) (*User, error) {
+	mus.RLock()
+	user, ok := mus.items[id]
+	mus.RUnlock()
 	if ok {
 		return user, nil
 	}
 
 	user = &User{ID: id, Loggedin: true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -133,25 +135,25 @@ func (sus *MemoryUserStore) Get(id int) (*User, error) {
 	user.Tag = gstore.DirtyGet(user.Group).Tag
 	initUserPerms(user)
 	if err == nil {
-		sus.CacheSet(user)
+		mus.CacheSet(user)
 	}
 	return user, err
 }
 
 // WARNING: We did a little hack to make this as thin and quick as possible to reduce lock contention, use the * Cascade* methods instead for normal use
-func (sus *MemoryUserStore) bulkGet(ids []int) (list []*User) {
+func (mus *MemoryUserStore) bulkGet(ids []int) (list []*User) {
 	list = make([]*User, len(ids))
-	sus.RLock()
+	mus.RLock()
 	for i, id := range ids {
-		list[i] = sus.items[id]
+		list[i] = mus.items[id]
 	}
-	sus.RUnlock()
+	mus.RUnlock()
 	return list
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
 // TODO: ID of 0 should always error?
-func (sus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
+func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 	var idCount = len(ids)
 	list = make(map[int]*User)
 	if idCount == 0 {
@@ -159,7 +161,7 @@ func (sus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 	}
 
 	var stillHere []int
-	sliceList := sus.bulkGet(ids)
+	sliceList := mus.bulkGet(ids)
 	for i, sliceItem := range sliceList {
 		if sliceItem != nil {
 			list[sliceItem.ID] = sliceItem
@@ -212,7 +214,7 @@ func (sus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 		initUserPerms(user)
 
 		// Add it to the cache...
-		_ = sus.CacheSet(user)
+		_ = mus.CacheSet(user)
 
 		// Add it to the list to be returned
 		list[user.ID] = user
@@ -246,9 +248,9 @@ func (sus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 	return list, nil
 }
 
-func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
+func (mus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	user := &User{ID: id, Loggedin: true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -263,11 +265,11 @@ func (sus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	return user, err
 }
 
-func (sus *MemoryUserStore) Reload(id int) error {
+func (mus *MemoryUserStore) Reload(id int) error {
 	user := &User{ID: id, Loggedin: true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 	if err != nil {
-		sus.CacheRemove(id)
+		mus.CacheRemove(id)
 		return err
 	}
 
@@ -281,68 +283,68 @@ func (sus *MemoryUserStore) Reload(id int) error {
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
 	user.Tag = gstore.DirtyGet(user.Group).Tag
 	initUserPerms(user)
-	_ = sus.CacheSet(user)
+	_ = mus.CacheSet(user)
 	return nil
 }
 
-func (sus *MemoryUserStore) Exists(id int) bool {
-	return sus.exists.QueryRow(id).Scan(&id) == nil
+func (mus *MemoryUserStore) Exists(id int) bool {
+	return mus.exists.QueryRow(id).Scan(&id) == nil
 }
 
-func (sus *MemoryUserStore) CacheSet(item *User) error {
-	sus.Lock()
-	user, ok := sus.items[item.ID]
+func (mus *MemoryUserStore) CacheSet(item *User) error {
+	mus.Lock()
+	user, ok := mus.items[item.ID]
 	if ok {
-		sus.Unlock()
+		mus.Unlock()
 		*user = *item
-	} else if sus.length >= sus.capacity {
-		sus.Unlock()
+	} else if int(mus.length) >= mus.capacity {
+		mus.Unlock()
 		return ErrStoreCapacityOverflow
 	} else {
-		sus.items[item.ID] = item
-		sus.Unlock()
-		sus.length++
+		mus.items[item.ID] = item
+		mus.Unlock()
+		atomic.AddInt64(&mus.length, 1)
 	}
 	return nil
 }
 
-func (sus *MemoryUserStore) CacheAdd(item *User) error {
-	if sus.length >= sus.capacity {
+func (mus *MemoryUserStore) CacheAdd(item *User) error {
+	if int(mus.length) >= mus.capacity {
 		return ErrStoreCapacityOverflow
 	}
-	sus.Lock()
-	sus.items[item.ID] = item
-	sus.Unlock()
-	sus.length++
+	mus.Lock()
+	mus.items[item.ID] = item
+	mus.Unlock()
+	atomic.AddInt64(&mus.length, 1)
 	return nil
 }
 
-func (sus *MemoryUserStore) CacheAddUnsafe(item *User) error {
-	if sus.length >= sus.capacity {
+func (mus *MemoryUserStore) CacheAddUnsafe(item *User) error {
+	if int(mus.length) >= mus.capacity {
 		return ErrStoreCapacityOverflow
 	}
-	sus.items[item.ID] = item
-	sus.length++
+	mus.items[item.ID] = item
+	atomic.AddInt64(&mus.length, 1)
 	return nil
 }
 
-func (sus *MemoryUserStore) CacheRemove(id int) error {
-	sus.Lock()
-	delete(sus.items, id)
-	sus.Unlock()
-	sus.length--
+func (mus *MemoryUserStore) CacheRemove(id int) error {
+	mus.Lock()
+	delete(mus.items, id)
+	mus.Unlock()
+	atomic.AddInt64(&mus.length, -1)
 	return nil
 }
 
-func (sus *MemoryUserStore) CacheRemoveUnsafe(id int) error {
-	delete(sus.items, id)
-	sus.length--
+func (mus *MemoryUserStore) CacheRemoveUnsafe(id int) error {
+	delete(mus.items, id)
+	atomic.AddInt64(&mus.length, -1)
 	return nil
 }
 
-func (sus *MemoryUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
+func (mus *MemoryUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
-	err := sus.usernameExists.QueryRow(username).Scan(&username)
+	err := mus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
 		return 0, errAccountExists
 	}
@@ -357,7 +359,7 @@ func (sus *MemoryUserStore) Create(username string, password string, email strin
 		return 0, err
 	}
 
-	res, err := sus.register.Exec(username, email, string(hashedPassword), salt, group, active)
+	res, err := mus.register.Exec(username, email, string(hashedPassword), salt, group, active)
 	if err != nil {
 		return 0, err
 	}
@@ -366,22 +368,29 @@ func (sus *MemoryUserStore) Create(username string, password string, email strin
 	return int(lastID), err
 }
 
-func (sus *MemoryUserStore) GetLength() int {
-	return sus.length
+func (mus *MemoryUserStore) Flush() {
+	mus.Lock()
+	mus.items = make(map[int]*User)
+	mus.length = 0
+	mus.Unlock()
 }
 
-func (sus *MemoryUserStore) SetCapacity(capacity int) {
-	sus.capacity = capacity
+func (mus *MemoryUserStore) GetLength() int {
+	return int(mus.length)
 }
 
-func (sus *MemoryUserStore) GetCapacity() int {
-	return sus.capacity
+func (mus *MemoryUserStore) SetCapacity(capacity int) {
+	mus.capacity = capacity
+}
+
+func (mus *MemoryUserStore) GetCapacity() int {
+	return mus.capacity
 }
 
 // Return the total number of users registered on the forums
-func (sus *MemoryUserStore) GetGlobalCount() int {
+func (mus *MemoryUserStore) GetGlobalCount() int {
 	var ucount int
-	err := sus.userCount.QueryRow().Scan(&ucount)
+	err := mus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {
 		LogError(err)
 	}
@@ -433,9 +442,9 @@ func NewSQLUserStore() *SQLUserStore {
 	}
 }
 
-func (sus *SQLUserStore) Get(id int) (*User, error) {
+func (mus *SQLUserStore) Get(id int) (*User, error) {
 	user := User{ID: id, Loggedin: true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -451,7 +460,7 @@ func (sus *SQLUserStore) Get(id int) (*User, error) {
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
-func (sus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
+func (mus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 	var qlist string
 	var uidList []interface{}
 	for _, id := range ids {
@@ -497,9 +506,9 @@ func (sus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 	return list, nil
 }
 
-func (sus *SQLUserStore) BypassGet(id int) (*User, error) {
+func (mus *SQLUserStore) BypassGet(id int) (*User, error) {
 	user := User{ID: id, Loggedin: true}
-	err := sus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
@@ -514,17 +523,17 @@ func (sus *SQLUserStore) BypassGet(id int) (*User, error) {
 	return &user, err
 }
 
-func (sus *SQLUserStore) Reload(id int) error {
-	return sus.exists.QueryRow(id).Scan(&id)
+func (mus *SQLUserStore) Reload(id int) error {
+	return mus.exists.QueryRow(id).Scan(&id)
 }
 
-func (sus *SQLUserStore) Exists(id int) bool {
-	return sus.exists.QueryRow(id).Scan(&id) == nil
+func (mus *SQLUserStore) Exists(id int) bool {
+	return mus.exists.QueryRow(id).Scan(&id) == nil
 }
 
-func (sus *SQLUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
+func (mus *SQLUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
-	err := sus.usernameExists.QueryRow(username).Scan(&username)
+	err := mus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
 		return 0, errAccountExists
 	}
@@ -539,7 +548,7 @@ func (sus *SQLUserStore) Create(username string, password string, email string, 
 		return 0, err
 	}
 
-	res, err := sus.register.Exec(username, email, string(hashedPassword), salt, group, active)
+	res, err := mus.register.Exec(username, email, string(hashedPassword), salt, group, active)
 	if err != nil {
 		return 0, err
 	}
@@ -549,9 +558,9 @@ func (sus *SQLUserStore) Create(username string, password string, email string, 
 }
 
 // Return the total number of users registered on the forums
-func (sus *SQLUserStore) GetGlobalCount() int {
+func (mus *SQLUserStore) GetGlobalCount() int {
 	var ucount int
-	err := sus.userCount.QueryRow().Scan(&ucount)
+	err := mus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {
 		LogError(err)
 	}

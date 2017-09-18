@@ -180,7 +180,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		}
 	}
 
-	err = group_count_stmt.QueryRow().Scan(&stats.Groups)
+	err = groupCountStmt.QueryRow().Scan(&stats.Groups)
 	if err != nil {
 		InternalError(err, w)
 		return headerVars, stats, false
@@ -307,7 +307,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		return *user, false
 	}
 	if host != user.LastIP {
-		_, err = update_last_ip_stmt.Exec(host, user.ID)
+		_, err = updateLastIPStmt.Exec(host, user.ID)
 		if err != nil {
 			InternalError(err, w)
 			return *user, false

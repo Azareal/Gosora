@@ -40,10 +40,10 @@
 					{{if .CurrentUser.Perms.PinTopic}}
 					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}' class="action_button">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="action_button">Pin</a>{{end}}{{end}}
 					<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="action_button report_item">Report</a>
-					{{if .CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">{{.Topic.IPAddress}}</a>{{end}}
 				{{end}}
-				<a class="action_button action_button_right hide_on_mobile">{{.Topic.CreatedAt}}</a>
-				{{if .Topic.LikeCount}}<a class="action_button action_button_right hide_on_micro">{{.Topic.LikeCount}} up</a>{{end}}
+				{{if .Topic.LikeCount}}<a class="action_button action_button_right like_count hide_on_micro">{{.Topic.LikeCount}} up</a>{{end}}
+				<a class="action_button action_button_right created_at hide_on_mobile">{{.Topic.CreatedAt}}</a>
+				{{if .CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">{{.Topic.IPAddress}}</a>{{end}}
 			</div>
 		</div><div style="clear:both;"></div>
 	</article>
@@ -66,10 +66,10 @@
 					{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="action_button edit_item">Edit</a>{{end}}
 					{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="action_button delete_item">Delete</a>{{end}}
 					<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="action_button report_item">Report</a>
-					{{if $.CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">{{.IPAddress}}</a>{{end}}
 				{{end}}
-				<a class="action_button action_button_right hide_on_mobile">{{.CreatedAt}}</a>
-				{{if .LikeCount}}<a class="action_button action_button_right hide_on_micro">{{.LikeCount}} up</a>{{end}}
+				{{if .LikeCount}}<a class="action_button action_button_right like_count hide_on_micro">{{.LikeCount}} up</a>{{end}}
+				<a class="action_button action_button_right created_at hide_on_mobile">{{.CreatedAt}}</a>
+				{{if $.CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">{{.IPAddress}}</a>{{end}}
 			</div>
 			{{end}}
 		</div>

@@ -79,11 +79,11 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	}
 
 	revertAt := time.Now().Add(duration)
-	_, err := replace_schedule_group_stmt.Exec(user.ID, gid, issuedBy, revertAt, temporary)
+	_, err := replaceScheduleGroupStmt.Exec(user.ID, gid, issuedBy, revertAt, temporary)
 	if err != nil {
 		return err
 	}
-	_, err = set_temp_group_stmt.Exec(gid, user.ID)
+	_, err = setTempGroupStmt.Exec(gid, user.ID)
 	if err != nil {
 		return err
 	}
@@ -92,11 +92,11 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 
 // TODO: Use a transaction to avoid race conditions
 func (user *User) RevertGroupUpdate() error {
-	_, err := replace_schedule_group_stmt.Exec(user.ID, 0, 0, time.Now(), false)
+	_, err := replaceScheduleGroupStmt.Exec(user.ID, 0, 0, time.Now(), false)
 	if err != nil {
 		return err
 	}
-	_, err = set_temp_group_stmt.Exec(0, user.ID)
+	_, err = setTempGroupStmt.Exec(0, user.ID)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func SetPassword(uid int, password string) error {
 	if err != nil {
 		return err
 	}
-	_, err = set_password_stmt.Exec(hashedPassword, salt, uid)
+	_, err = setPasswordStmt.Exec(hashedPassword, salt, uid)
 	return err
 }
 
@@ -172,7 +172,7 @@ func (user *User) increasePostStats(wcount int, topic bool) error {
 	var mod int
 	baseScore := 1
 	if topic {
-		_, err := increment_user_topics_stmt.Exec(1, user.ID)
+		_, err := incrementUserTopicsStmt.Exec(1, user.ID)
 		if err != nil {
 			return err
 		}
@@ -181,31 +181,31 @@ func (user *User) increasePostStats(wcount int, topic bool) error {
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := increment_user_megaposts_stmt.Exec(1, 1, 1, user.ID)
+		_, err := incrementUserMegapostsStmt.Exec(1, 1, 1, user.ID)
 		if err != nil {
 			return err
 		}
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := increment_user_bigposts_stmt.Exec(1, 1, user.ID)
+		_, err := incrementUserBigpostsStmt.Exec(1, 1, user.ID)
 		if err != nil {
 			return err
 		}
 		mod = 1
 	} else {
-		_, err := increment_user_posts_stmt.Exec(1, user.ID)
+		_, err := incrementUserPostsStmt.Exec(1, user.ID)
 		if err != nil {
 			return err
 		}
 	}
-	_, err := increment_user_score_stmt.Exec(baseScore+mod, user.ID)
+	_, err := incrementUserScoreStmt.Exec(baseScore+mod, user.ID)
 	if err != nil {
 		return err
 	}
 	//log.Print(user.Score + base_score + mod)
 	//log.Print(getLevel(user.Score + base_score + mod))
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = update_user_level_stmt.Exec(getLevel(user.Score+baseScore+mod), user.ID)
+	_, err = updateUserLevelStmt.Exec(getLevel(user.Score+baseScore+mod), user.ID)
 	return err
 }
 
@@ -214,7 +214,7 @@ func (user *User) decreasePostStats(wcount int, topic bool) error {
 	var mod int
 	baseScore := -1
 	if topic {
-		_, err := increment_user_topics_stmt.Exec(-1, user.ID)
+		_, err := incrementUserTopicsStmt.Exec(-1, user.ID)
 		if err != nil {
 			return err
 		}
@@ -223,29 +223,29 @@ func (user *User) decreasePostStats(wcount int, topic bool) error {
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := increment_user_megaposts_stmt.Exec(-1, -1, -1, user.ID)
+		_, err := incrementUserMegapostsStmt.Exec(-1, -1, -1, user.ID)
 		if err != nil {
 			return err
 		}
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := increment_user_bigposts_stmt.Exec(-1, -1, user.ID)
+		_, err := incrementUserBigpostsStmt.Exec(-1, -1, user.ID)
 		if err != nil {
 			return err
 		}
 		mod = 1
 	} else {
-		_, err := increment_user_posts_stmt.Exec(-1, user.ID)
+		_, err := incrementUserPostsStmt.Exec(-1, user.ID)
 		if err != nil {
 			return err
 		}
 	}
-	_, err := increment_user_score_stmt.Exec(baseScore-mod, user.ID)
+	_, err := incrementUserScoreStmt.Exec(baseScore-mod, user.ID)
 	if err != nil {
 		return err
 	}
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = update_user_level_stmt.Exec(getLevel(user.Score-baseScore-mod), user.ID)
+	_, err = updateUserLevelStmt.Exec(getLevel(user.Score-baseScore-mod), user.ID)
 	return err
 }
 

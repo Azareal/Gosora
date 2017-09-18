@@ -1,6 +1,11 @@
 // +build !pgsql !sqlite !mssql
 
-/* Copyright Azareal 2016 - 2018 */
+/*
+*
+*	Gosora MySQL Interface
+*	Copyright Azareal 2016 - 2018
+*
+ */
 package main
 
 import "log"
@@ -11,15 +16,15 @@ import _ "github.com/go-sql-driver/mysql"
 import "./query_gen/lib"
 
 var dbCollation = "utf8mb4_general_ci"
-var get_activity_feed_by_watcher_stmt *sql.Stmt
-var get_activity_count_by_watcher_stmt *sql.Stmt
-var todays_post_count_stmt *sql.Stmt
-var todays_topic_count_stmt *sql.Stmt
-var todays_report_count_stmt *sql.Stmt
-var todays_newuser_count_stmt *sql.Stmt
-var find_users_by_ip_users_stmt *sql.Stmt
-var find_users_by_ip_topics_stmt *sql.Stmt
-var find_users_by_ip_replies_stmt *sql.Stmt
+var getActivityFeedByWatcherStmt *sql.Stmt
+var getActivityCountByWatcherStmt *sql.Stmt
+var todaysPostCountStmt *sql.Stmt
+var todaysTopicCountStmt *sql.Stmt
+var todaysReportCountStmt *sql.Stmt
+var todaysNewUserCountStmt *sql.Stmt
+var findUsersByIPUsersStmt *sql.Stmt
+var findUsersByIPTopicsStmt *sql.Stmt
+var findUsersByIPRepliesStmt *sql.Stmt
 
 func init() {
 	dbAdapter = "mysql"
@@ -68,54 +73,54 @@ func _initDatabase() (err error) {
 
 	// TODO: Is there a less noisy way of doing this for tests?
 	log.Print("Preparing get_activity_feed_by_watcher statement.")
-	get_activity_feed_by_watcher_stmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid ASC LIMIT 8")
+	getActivityFeedByWatcherStmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid ASC LIMIT 8")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing get_activity_count_by_watcher statement.")
-	get_activity_count_by_watcher_stmt, err = db.Prepare("SELECT count(*) FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
+	getActivityCountByWatcherStmt, err = db.Prepare("SELECT count(*) FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todays_post_count statement.")
-	todays_post_count_stmt, err = db.Prepare("select count(*) from replies where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
+	todaysPostCountStmt, err = db.Prepare("select count(*) from replies where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todays_topic_count statement.")
-	todays_topic_count_stmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
+	todaysTopicCountStmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todays_report_count statement.")
-	todays_report_count_stmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() and parentID = 1")
+	todaysReportCountStmt, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() and parentID = 1")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todays_newuser_count statement.")
-	todays_newuser_count_stmt, err = db.Prepare("select count(*) from users where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
+	todaysNewUserCountStmt, err = db.Prepare("select count(*) from users where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing find_users_by_ip_users statement.")
-	find_users_by_ip_users_stmt, err = db.Prepare("select uid from users where last_ip = ?")
+	findUsersByIPUsersStmt, err = db.Prepare("select uid from users where last_ip = ?")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing find_users_by_ip_topics statement.")
-	find_users_by_ip_topics_stmt, err = db.Prepare("select uid from users where uid in(select createdBy from topics where ipaddress = ?)")
+	findUsersByIPTopicsStmt, err = db.Prepare("select uid from users where uid in(select createdBy from topics where ipaddress = ?)")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing find_users_by_ip_replies statement.")
-	find_users_by_ip_replies_stmt, err = db.Prepare("select uid from users where uid in(select createdBy from replies where ipaddress = ?)")
+	findUsersByIPRepliesStmt, err = db.Prepare("select uid from users where uid in(select createdBy from replies where ipaddress = ?)")
 	return err
 }
