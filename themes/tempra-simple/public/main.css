@@ -390,8 +390,32 @@ button {
 	}
 }
 
+.username, .panel_tag {
+	text-transform: none;
+	margin-left: 0px;
+	padding-left: 4px;
+	padding-right: 4px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	color: #505050; /* 80,80,80 */
+	background-color: #FFFFFF;
+	border-style: solid;
+	border-color: #ccc;
+	border-width: 1px;
+	font-size: 15px;
+}
+
+.topic_item {
+	display: flex;
+}
 .topic_status_sticky {
 	display: none;
+}
+.topic_status_closed {
+	margin-left: auto;
+	margin-top: -5px;
+	font-size: 0.90em;
+	margin-bottom: -2px;
 }
 .topic_sticky {
 	background-color: rgb(255,255,234);
@@ -421,20 +445,6 @@ button {
 	display: none;
 }
 
-.username, .panel_tag {
-	text-transform: none;
-	margin-left: 0px;
-	padding-left: 4px;
-	padding-right: 4px;
-	padding-top: 2px;
-	padding-bottom: 2px;
-	color: #505050; /* 80,80,80 */
-	background-color: #FFFFFF;
-	border-style: solid;
-	border-color: #ccc;
-	border-width: 1px;
-	font-size: 15px;
-}
 button.username {
 	position: relative;
 	top: -0.25px;
@@ -501,15 +511,34 @@ button.username {
 	font-size: 17px;
 }
 
-.edit_label:before { content: "🖊️"; }
-.trash_label:before { content: "🗑️"; }
-.pin_label:before { content: "📌"; }
-.unpin_label:before { content: "📌"; }
-.unpin_label { background-color: #D6FFD6; }
-.ip_label:before { content: "🔍"; }
-.flag_label:before { content: "🚩"; }
-.level_label:before { content: "👑"; }
-.level_label { color: #505050; opacity:0.85; }
+.edit_label:before {
+	content: "🖊️";
+}
+.trash_label:before {
+	content: "🗑️";
+}
+.pin_label:before, .unpin_label:before {
+	content: "📌";
+}
+.unpin_label, .unlock_label {
+	background-color: #D6FFD6;
+}
+.lock_label:before, .unlock_label:before {
+	content: "🔒";
+}
+.ip_label:before {
+	content: "🔍";
+}
+.flag_label:before {
+	content: "🚩";
+}
+.level_label:before {
+	content: "👑";
+}
+.level_label {
+	color: #505050;
+	opacity: 0.85;
+}
 
 .controls {
 	margin-top: 23px;
@@ -652,9 +681,27 @@ button.username {
 #profile_comments {
 	overflow: hidden;
 	border-top: none;
+	margin-bottom: 0;
 }
 .simple .user_tag {
 	font-size: 14px;
+}
+
+.pageset {
+	display: flex;
+	margin-bottom: 10px;
+	margin-top: -5px;
+}
+.pageitem {
+	background-color: white;
+	padding: 5px;
+	margin-right: 5px;
+	padding-bottom: 4px;
+	border: 1px solid #ccc;
+}
+.pageitem a {
+	color: black;
+	text-decoration: none;
 }
 
 {{template "media.partial.css" }}

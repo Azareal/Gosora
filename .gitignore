@@ -8,6 +8,7 @@ brun.bat
 uploads/avatar_*
 uploads/socialgroup_*
 bin/*
+out/*
 *.exe
 *.exe~
 *.prof

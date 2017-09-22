@@ -156,6 +156,7 @@ func NewPlugin(uname string, name string, author string, url string, settings st
 	}
 }
 
+// ? - Is this racey?
 func (plugin *Plugin) AddHook(name string, handler interface{}) {
 	switch h := handler.(type) {
 	case func(interface{}) interface{}:
@@ -193,6 +194,7 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 	}
 }
 
+// ? - Is this racey?
 func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 	switch handler.(type) {
 	case func(interface{}) interface{}:
@@ -250,6 +252,7 @@ func initPlugins() {
 	pluginsInited = true
 }
 
+// ? - Are the following functions racey?
 func runHook(name string, data interface{}) interface{} {
 	for _, hook := range hooks[name] {
 		data = hook(data)

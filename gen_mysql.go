@@ -35,7 +35,6 @@ var getUserReplyUIDStmt *sql.Stmt
 var hasLikedTopicStmt *sql.Stmt
 var hasLikedReplyStmt *sql.Stmt
 var getUserNameStmt *sql.Stmt
-var getUserActiveStmt *sql.Stmt
 var getEmailsByUserStmt *sql.Stmt
 var getTopicBasicStmt *sql.Stmt
 var getActivityEntryStmt *sql.Stmt
@@ -83,6 +82,8 @@ var editTopicStmt *sql.Stmt
 var editReplyStmt *sql.Stmt
 var stickTopicStmt *sql.Stmt
 var unstickTopicStmt *sql.Stmt
+var lockTopicStmt *sql.Stmt
+var unlockTopicStmt *sql.Stmt
 var updateLastIPStmt *sql.Stmt
 var updateSessionStmt *sql.Stmt
 var setPasswordStmt *sql.Stmt
@@ -288,12 +289,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing getUserName statement.")
 	getUserNameStmt, err = db.Prepare("SELECT `name` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing getUserActive statement.")
-	getUserActiveStmt, err = db.Prepare("SELECT `active` FROM `users` WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}
@@ -557,7 +552,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing editTopic statement.")
-	editTopicStmt, err = db.Prepare("UPDATE `topics` SET `title` = ?,`content` = ?,`parsed_content` = ?,`is_closed` = ? WHERE `tid` = ?")
+	editTopicStmt, err = db.Prepare("UPDATE `topics` SET `title` = ?,`content` = ?,`parsed_content` = ? WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
@@ -576,6 +571,18 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing unstickTopic statement.")
 	unstickTopicStmt, err = db.Prepare("UPDATE `topics` SET `sticky` = 0 WHERE `tid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing lockTopic statement.")
+	lockTopicStmt, err = db.Prepare("UPDATE `topics` SET `is_closed` = 1 WHERE `tid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing unlockTopic statement.")
+	unlockTopicStmt, err = db.Prepare("UPDATE `topics` SET `is_closed` = 0 WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}

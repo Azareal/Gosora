@@ -1,6 +1,6 @@
 /* The Media Queries */
 
-@media(min-width: 881px) {
+@media(min-width: 951px) {
 	.shrink_main {
 		float: left;
 		width: calc(75% - 12px);
@@ -12,7 +12,7 @@
 	}
 }
 
-@media (max-width: 880px) {
+@media (max-width: 950px) {
 	li {
 		height: 29px;
 		font-size: 15px;

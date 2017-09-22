@@ -1,12 +1,14 @@
 package main
 
-//import "fmt"
-import "sync"
-import "bytes"
-import "strings"
-import "strconv"
-import "regexp"
-import "html/template"
+import (
+	//"fmt"
+	"bytes"
+	"html/template"
+	"regexp"
+	"strconv"
+	"strings"
+	"sync"
+)
 
 type HeaderVars struct {
 	NoticeList  []string
@@ -32,12 +34,8 @@ type PageWidgets struct {
 	RightSidebar template.HTML
 }
 
-/*type UnsafeExtData struct
-{
-	items map[string]interface{} // Key: pluginname
-}*/
-
 // TODO: Add a ExtDataHolder interface with methods for manipulating the contents?
+// ? - Could we use a sync.Map instead?
 type ExtData struct {
 	items map[string]interface{} // Key: pluginname
 	sync.RWMutex

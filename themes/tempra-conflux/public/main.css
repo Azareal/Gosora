@@ -389,6 +389,9 @@ button {
 .topic_status_sticky {
 	display: none;
 }
+.topic_status_closed {
+	margin-left: auto;
+}
 .topic_sticky {
 	background-color: rgb(255,255,234);
 }
@@ -407,7 +410,26 @@ button {
 	color: #505050; /* 80,80,80 */
 	border-radius: 2px;
 }
-.topic_status:empty { display: none; }
+.topic_status:empty {
+	display: none;
+}
+
+.topic_item {
+	display: flex;
+}
+.topic_item .topic_name_input {
+	padding: 5px;
+	width: 100%;
+	margin-right: 9px;
+}
+.topic_item .submit_edit {
+	margin-right: 0;
+}
+
+.topic_content_input {
+	width: 100%;
+	min-height: 143px;
+}
 
 .rowhead, .colstack_head {
 	border-bottom: none;
@@ -737,6 +759,23 @@ button.username {
 }
 #poweredBy span {
 	font-size: 12px;
+}
+
+.pageset {
+	display: flex;
+	margin-bottom: 10px;
+	margin-top: -5px;
+}
+.pageitem {
+	border: 1px solid hsl(0,0%,80%);
+	background-color: white;
+	padding: 5px;
+	margin-right: 5px;
+	padding-bottom: 4px;
+}
+.pageitem a {
+	color: black;
+	text-decoration: none;
 }
 
 /* Firefox specific CSS */

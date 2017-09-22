@@ -92,10 +92,10 @@ func (auth *DefaultAuth) ForceLogout(uid int) error {
 		return errors.New("There was a glitch in the system. Please contact your local administrator.")
 	}
 
-	// Flush the user out of the cache and reload
-	err = users.Reload(uid)
-	if err != nil {
-		return errors.New("Your account no longer exists.")
+	// Flush the user out of the cache
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(uid)
 	}
 
 	return nil
@@ -167,7 +167,10 @@ func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 		return "", err
 	}
 
-	// Reload the user data
-	_ = users.Reload(uid)
+	// Flush the user data from the cache
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(uid)
+	}
 	return session, nil
 }

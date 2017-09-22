@@ -19,7 +19,6 @@ var users UserStore
 var errAccountExists = errors.New("this username is already in use")
 
 type UserStore interface {
-	Reload(id int) error // ? - Should we move this to TopicCache? Might require us to do a lot more casting in Gosora though...
 	Get(id int) (*User, error)
 	Exists(id int) bool
 	//BulkGet(ids []int) ([]*User, error)
@@ -38,6 +37,7 @@ type UserCache interface {
 	CacheRemove(id int) error
 	CacheRemoveUnsafe(id int) error
 	Flush()
+	Reload(id int) error
 	GetLength() int
 	SetCapacity(capacity int)
 	GetCapacity() int
@@ -133,7 +133,7 @@ func (mus *MemoryUserStore) Get(id int) (*User, error) {
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
 	user.Tag = gstore.DirtyGet(user.Group).Tag
-	initUserPerms(user)
+	user.initPerms()
 	if err == nil {
 		mus.CacheSet(user)
 	}
@@ -211,7 +211,7 @@ func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 		}
 		user.Link = buildProfileURL(nameToSlug(user.Name), user.ID)
 		user.Tag = gstore.DirtyGet(user.Group).Tag
-		initUserPerms(user)
+		user.initPerms()
 
 		// Add it to the cache...
 		_ = mus.CacheSet(user)
@@ -261,7 +261,7 @@ func (mus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
 	user.Tag = gstore.DirtyGet(user.Group).Tag
-	initUserPerms(user)
+	user.initPerms()
 	return user, err
 }
 
@@ -282,7 +282,7 @@ func (mus *MemoryUserStore) Reload(id int) error {
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
 	user.Tag = gstore.DirtyGet(user.Group).Tag
-	initUserPerms(user)
+	user.initPerms()
 	_ = mus.CacheSet(user)
 	return nil
 }
@@ -443,7 +443,7 @@ func NewSQLUserStore() *SQLUserStore {
 }
 
 func (mus *SQLUserStore) Get(id int) (*User, error) {
-	user := User{ID: id, Loggedin: true}
+	user := &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	if user.Avatar != "" {
@@ -455,8 +455,8 @@ func (mus *SQLUserStore) Get(id int) (*User, error) {
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
 	user.Tag = gstore.DirtyGet(user.Group).Tag
-	initUserPerms(&user)
-	return &user, err
+	user.initPerms()
+	return user, err
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
@@ -497,7 +497,7 @@ func (mus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 		}
 		user.Link = buildProfileURL(nameToSlug(user.Name), user.ID)
 		user.Tag = gstore.DirtyGet(user.Group).Tag
-		initUserPerms(user)
+		user.initPerms()
 
 		// Add it to the list to be returned
 		list[user.ID] = user
@@ -507,7 +507,7 @@ func (mus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 }
 
 func (mus *SQLUserStore) BypassGet(id int) (*User, error) {
-	user := User{ID: id, Loggedin: true}
+	user := &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	if user.Avatar != "" {
@@ -519,12 +519,8 @@ func (mus *SQLUserStore) BypassGet(id int) (*User, error) {
 	}
 	user.Link = buildProfileURL(nameToSlug(user.Name), id)
 	user.Tag = gstore.DirtyGet(user.Group).Tag
-	initUserPerms(&user)
-	return &user, err
-}
-
-func (mus *SQLUserStore) Reload(id int) error {
-	return mus.exists.QueryRow(id).Scan(&id)
+	user.initPerms()
+	return user, err
 }
 
 func (mus *SQLUserStore) Exists(id int) bool {

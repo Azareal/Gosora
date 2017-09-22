@@ -23,6 +23,9 @@ var themes = make(map[string]Theme)
 var defaultThemeBox atomic.Value
 var changeDefaultThemeMutex sync.Mutex
 
+// TODO: Use this when the default theme doesn't exist
+var fallbackTheme = "shadow"
+
 //var overridenTemplates map[string]interface{} = make(map[string]interface{})
 var overridenTemplates = make(map[string]bool)
 

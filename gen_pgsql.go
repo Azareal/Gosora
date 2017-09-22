@@ -18,6 +18,8 @@ var editTopicStmt *sql.Stmt
 var editReplyStmt *sql.Stmt
 var stickTopicStmt *sql.Stmt
 var unstickTopicStmt *sql.Stmt
+var lockTopicStmt *sql.Stmt
+var unlockTopicStmt *sql.Stmt
 var updateLastIPStmt *sql.Stmt
 var updateSessionStmt *sql.Stmt
 var setPasswordStmt *sql.Stmt
@@ -96,7 +98,7 @@ func _gen_pgsql() (err error) {
 	}
 		
 	log.Print("Preparing editTopic statement.")
-	editTopicStmt, err = db.Prepare("UPDATE `topics` SET `title` = ?,`content` = ?,`parsed_content` = ?,`is_closed` = ? WHERE `tid` = ?")
+	editTopicStmt, err = db.Prepare("UPDATE `topics` SET `title` = ?,`content` = ?,`parsed_content` = ? WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
@@ -115,6 +117,18 @@ func _gen_pgsql() (err error) {
 		
 	log.Print("Preparing unstickTopic statement.")
 	unstickTopicStmt, err = db.Prepare("UPDATE `topics` SET `sticky` = 0 WHERE `tid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing lockTopic statement.")
+	lockTopicStmt, err = db.Prepare("UPDATE `topics` SET `is_closed` = 1 WHERE `tid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing unlockTopic statement.")
+	unlockTopicStmt, err = db.Prepare("UPDATE `topics` SET `is_closed` = 0 WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}

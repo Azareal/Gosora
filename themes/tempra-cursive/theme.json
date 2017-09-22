@@ -6,6 +6,7 @@
 	"FullImage": "tempra-cursive.png",
 	"ForkOf": "tempra-simple",
 	"MobileFriendly": true,
+	"HideFromThemes": true,
 	"URL": "github.com/Azareal/Gosora",
 	"Sidebars":"right"
 }

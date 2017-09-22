@@ -242,14 +242,10 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 		go notifyWatchers(lastID)
 	}
 
-	// Reload the topic...
-	err = topics.Reload(tid)
-	if err != nil && err == ErrNoRows {
-		LocalError("The destination no longer exists", w, r, user)
-		return
-	} else if err != nil {
-		InternalError(err, w)
-		return
+	// Flush the topic out of the cache
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(tid)
 	}
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
@@ -348,16 +344,11 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 	// Live alerts, if the poster is online and WebSockets is enabled
 	_ = wsHub.pushAlert(topic.CreatedBy, int(lastID), "like", "topic", user.ID, topic.CreatedBy, tid)
 
-	// Reload the topic...
-	err = topics.Reload(tid)
-	if err != nil && err == ErrNoRows {
-		LocalError("The liked topic no longer exists", w, r, user)
-		return
-	} else if err != nil {
-		InternalError(err, w)
-		return
+	// Flush the topic out of the cache
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(tid)
 	}
-
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 }
 
@@ -818,10 +809,9 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
-	err = users.Reload(user.ID)
-	if err != nil {
-		LocalError("This user no longer exists!", w, r, user)
-		return
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
 	}
 
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your avatar was successfully updated")
@@ -876,10 +866,9 @@ func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, u
 
 	// TODO: Use the reloaded data instead for the name?
 	user.Name = newUsername
-	err = users.Reload(user.ID)
-	if err != nil {
-		LocalError("Your account doesn't exist!", w, r, user)
-		return
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
 	}
 
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your username was successfully updated")

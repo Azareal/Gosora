@@ -13,7 +13,6 @@ import (
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
 func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
-	//log.Print("in routeEditTopic")
 	err := r.ParseForm()
 	if err != nil {
 		PreError("Bad Form", w, r)
@@ -21,8 +20,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	isJs := (r.PostFormValue("js") == "1")
 
-	var tid int
-	tid, err = strconv.Atoi(r.URL.Path[len("/topic/edit/submit/"):])
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/edit/submit/"):])
 	if err != nil {
 		PreErrorJSQ("The provided TopicID is not a valid number.", w, r, isJs)
 		return
@@ -48,60 +46,24 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	topicName := r.PostFormValue("topic_name")
-	topicStatus := r.PostFormValue("topic_status")
-	isClosed := (topicStatus == "closed")
 	topicContent := html.EscapeString(r.PostFormValue("topic_content"))
 
 	// TODO: Move this bit to the TopicStore
-	_, err = editTopicStmt.Exec(topicName, preparseMessage(topicContent), parseMessage(html.EscapeString(preparseMessage(topicContent))), isClosed, tid)
+	_, err = editTopicStmt.Exec(topicName, preparseMessage(topicContent), parseMessage(html.EscapeString(preparseMessage(topicContent))), tid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
 
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		LocalError("Bad IP", w, r, user)
+	err = fstore.UpdateLastTopic(topicName, tid, user.Name, user.ID, time.Now().Format("2006-01-02 15:04:05"), oldTopic.ParentID)
+	if err != nil && err != ErrNoRows {
+		InternalError(err, w)
 		return
 	}
 
-	if oldTopic.IsClosed != isClosed {
-		var action string
-		if isClosed {
-			action = "lock"
-		} else {
-			action = "unlock"
-		}
-
-		err = addModLog(action, tid, "topic", ipaddress, user.ID)
-		if err != nil {
-			InternalError(err, w)
-			return
-		}
-		_, err = createActionReplyStmt.Exec(tid, action, ipaddress, user.ID)
-		if err != nil {
-			InternalError(err, w)
-			return
-		}
-		_, err = addRepliesToTopicStmt.Exec(1, user.ID, tid)
-		if err != nil {
-			InternalError(err, w)
-			return
-		}
-		err = fstore.UpdateLastTopic(topicName, tid, user.Name, user.ID, time.Now().Format("2006-01-02 15:04:05"), oldTopic.ParentID)
-		if err != nil && err != ErrNoRows {
-			InternalError(err, w)
-			return
-		}
-	}
-
-	err = topics.Reload(tid)
-	if err == ErrNoRows {
-		LocalErrorJSQ("This topic no longer exists!", w, r, user, isJs)
-		return
-	} else if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(oldTopic.ID)
 	}
 
 	if !isJs {
@@ -194,13 +156,13 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	// TODO: Move this into the TopicStore?
-	_, err = stickTopicStmt.Exec(tid)
+	err = topic.Stick()
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
+	// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		LocalError("Bad IP", w, r, user)
@@ -211,15 +173,9 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		InternalError(err, w)
 		return
 	}
-	_, err = createActionReplyStmt.Exec(tid, "stick", ipaddress, user.ID)
+	err = topic.CreateActionReply("stick", ipaddress, user)
 	if err != nil {
 		InternalError(err, w)
-		return
-	}
-
-	err = topics.Reload(tid)
-	if err != nil {
-		LocalError("This topic doesn't exist!", w, r, user)
 		return
 	}
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
@@ -251,7 +207,7 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = unstickTopicStmt.Exec(tid)
+	err = topic.Unstick()
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -267,15 +223,111 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) {
 		InternalError(err, w)
 		return
 	}
-	_, err = createActionReplyStmt.Exec(tid, "unstick", ipaddress, user.ID)
+	err = topic.CreateActionReply("unstick", ipaddress, user)
+	if err != nil {
+		InternalError(err, w)
+		return
+	}
+	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+}
+
+func routeLockTopic(w http.ResponseWriter, r *http.Request, user User) {
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/lock/submit/"):])
+	if err != nil {
+		PreError("The provided TopicID is not a valid number.", w, r)
+		return
+	}
+
+	topic, err := topics.Get(tid)
+	if err == ErrNoRows {
+		PreError("The topic you tried to pin doesn't exist.", w, r)
+		return
+	} else if err != nil {
+		InternalError(err, w)
+		return
+	}
+
+	// TODO: Add hooks to make use of headerLite
+	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if !ok {
+		return
+	}
+	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
+		NoPermissions(w, r, user)
+		return
+	}
+
+	err = topic.Lock()
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	err = topics.Reload(tid)
+	// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("This topic doesn't exist!", w, r, user)
+		LocalError("Bad IP", w, r, user)
+		return
+	}
+	err = addModLog("lock", tid, "topic", ipaddress, user.ID)
+	if err != nil {
+		InternalError(err, w)
+		return
+	}
+	err = topic.CreateActionReply("lock", ipaddress, user)
+	if err != nil {
+		InternalError(err, w)
+		return
+	}
+	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+}
+
+func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user User) {
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unlock/submit/"):])
+	if err != nil {
+		PreError("The provided TopicID is not a valid number.", w, r)
+		return
+	}
+
+	topic, err := topics.Get(tid)
+	if err == ErrNoRows {
+		PreError("The topic you tried to pin doesn't exist.", w, r)
+		return
+	} else if err != nil {
+		InternalError(err, w)
+		return
+	}
+
+	// TODO: Add hooks to make use of headerLite
+	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if !ok {
+		return
+	}
+	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
+		NoPermissions(w, r, user)
+		return
+	}
+
+	err = topic.Unlock()
+	if err != nil {
+		InternalError(err, w)
+		return
+	}
+
+	// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
+	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		LocalError("Bad IP", w, r, user)
+		return
+	}
+	err = addModLog("unlock", tid, "topic", ipaddress, user.ID)
+	if err != nil {
+		InternalError(err, w)
+		return
+	}
+	err = topic.CreateActionReply("unlock", ipaddress, user)
+	if err != nil {
+		InternalError(err, w)
 		return
 	}
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
@@ -422,11 +474,9 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		InternalError(err, w)
 		return
 	}
-
-	err = topics.Reload(reply.ParentID)
-	if err != nil {
-		LocalError("This topic no longer exists!", w, r, user)
-		return
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(reply.ParentID)
 	}
 }
 
@@ -612,7 +662,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 			return
 		}
 	}
-	err = templates.ExecuteTemplate(w, "ip-search.html", pi)
+	err = templates.ExecuteTemplate(w, "ip-search-results.html", pi)
 	if err != nil {
 		InternalError(err, w)
 	}
@@ -821,8 +871,7 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	var active bool
-	err = getUserActiveStmt.QueryRow(uid).Scan(&active)
+	targetUser, err := users.Get(uid)
 	if err == ErrNoRows {
 		LocalError("The account you're trying to activate no longer exists.", w, r, user)
 		return
@@ -831,17 +880,11 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	if active {
+	if targetUser.Active {
 		LocalError("The account you're trying to activate has already been activated.", w, r, user)
 		return
 	}
-	_, err = activateUserStmt.Exec(uid)
-	if err != nil {
-		InternalError(err, w)
-		return
-	}
-
-	_, err = changeGroupStmt.Exec(config.DefaultGroup, uid)
+	err = targetUser.Activate()
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -852,16 +895,10 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user User) {
 		LocalError("Bad IP", w, r, user)
 		return
 	}
-	err = addModLog("activate", uid, "user", ipaddress, user.ID)
+	err = addModLog("activate", targetUser.ID, "user", ipaddress, user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
-
-	err = users.Reload(uid)
-	if err != nil {
-		LocalError("This user no longer exists!", w, r, user)
-		return
-	}
-	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
+	http.Redirect(w, r, "/user/"+strconv.Itoa(targetUser.ID), http.StatusSeeOther)
 }

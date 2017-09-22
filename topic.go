@@ -90,6 +90,68 @@ type TopicsRow struct {
 	ForumLink string
 }
 
+func (topic *Topic) Lock() (err error) {
+	_, err = lockTopicStmt.Exec(topic.ID)
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(topic.ID)
+	}
+	return err
+}
+
+func (topic *Topic) Unlock() (err error) {
+	_, err = unlockTopicStmt.Exec(topic.ID)
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(topic.ID)
+	}
+	return err
+}
+
+// TODO: We might want more consistent terminology rather than using stick in some places and pin in others. If you don't understand the difference, there is none, they are one and the same.
+// ? - We do a CacheDelete() here instead of mutating the pointer to avoid creating a race condition
+func (topic *Topic) Stick() (err error) {
+	_, err = stickTopicStmt.Exec(topic.ID)
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(topic.ID)
+	}
+	return err
+}
+
+func (topic *Topic) Unstick() (err error) {
+	_, err = unstickTopicStmt.Exec(topic.ID)
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(topic.ID)
+	}
+	return err
+}
+
+// TODO: Implement this
+func (topic *Topic) AddLike(uid int) error {
+	return nil
+}
+
+// TODO: Implement this
+func (topic *Topic) RemoveLike(uid int) error {
+	return nil
+}
+
+func (topic *Topic) CreateActionReply(action string, ipaddress string, user User) (err error) {
+	_, err = createActionReplyStmt.Exec(topic.ID, action, ipaddress, user.ID)
+	if err != nil {
+		return err
+	}
+	_, err = addRepliesToTopicStmt.Exec(1, user.ID, topic.ID)
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(topic.ID)
+	}
+	// ? - Update the last topic cache for the parent forum?
+	return err
+}
+
 // TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser
 func getTopicuser(tid int) (TopicUser, error) {
 	tcache, tok := topics.(TopicCache)

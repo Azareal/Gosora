@@ -23,6 +23,12 @@ var MemberCheck func(w http.ResponseWriter, r *http.Request, user *User) (header
 var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, success bool) = simpleUserCheck
 var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, success bool) = userCheck
 
+// This is mostly for errors.go, please create *HeaderVars on the spot instead of relying on this or the atomic store underlying it, if possible
+// TODO: Write a test for this
+func getDefaultHeaderVar() *HeaderVars {
+	return &HeaderVars{Site: site, ThemeName: fallbackTheme}
+}
+
 // TODO: Support for left sidebars and sidebars on both sides
 // http.Request is for context.Context middleware. Mostly for plugin_socialgroups right now
 func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http.Request) {
@@ -312,7 +318,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 			InternalError(err, w)
 			return *user, false
 		}
-		user.LastIP = host
+		user.LastIP = host // ! - Is this racey?
 	}
 
 	h := w.Header()

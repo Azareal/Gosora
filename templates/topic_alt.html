@@ -9,13 +9,10 @@
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
 		<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 			<h1 class='topic_name hide_on_edit'>{{.Topic.Title}}</h1>
+			{{/** TODO: Inline this CSS **/}}
 			{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
 			{{if .CurrentUser.Perms.EditTopic}}
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />
-			{{if .CurrentUser.Perms.CloseTopic}}<select name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
-				<option>open</option>
-				<option>closed</option>
-			</select>{{end}}
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
 			{{end}}
 		</div>
@@ -37,6 +34,8 @@
 					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="action_button">+1</a>{{end}}
 					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit">Edit</a>{{end}}
 					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}" class="action_button delete_item">Delete</a>{{end}}
+					{{if .CurrentUser.Perms.CloseTopic}}
+					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}' class="action_button">Unlock</a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}' class="action_button">Lock</a>{{end}}{{end}}
 					{{if .CurrentUser.Perms.PinTopic}}
 					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}' class="action_button">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="action_button">Pin</a>{{end}}{{end}}
 					<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="action_button report_item">Report</a>

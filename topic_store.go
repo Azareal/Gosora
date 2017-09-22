@@ -22,7 +22,6 @@ import (
 var topics TopicStore
 
 type TopicStore interface {
-	Reload(id int) error // ? - Should we move this to TopicCache? Might require us to do a lot more casting in Gosora though...
 	Get(id int) (*Topic, error)
 	BypassGet(id int) (*Topic, error)
 	Delete(id int) error
@@ -43,6 +42,7 @@ type TopicCache interface {
 	CacheRemove(id int) error
 	CacheRemoveUnsafe(id int) error
 	Flush()
+	Reload(id int) error
 	GetLength() int
 	SetCapacity(capacity int)
 	GetCapacity() int
@@ -308,11 +308,6 @@ func (sts *SQLTopicStore) BypassGet(id int) (*Topic, error) {
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return topic, err
-}
-
-// Reload uses a similar query to Exists(), as we don't have any entries to reload, and the secondary benefit of calling Reload() is seeing if the item you're trying to reload exists
-func (sts *SQLTopicStore) Reload(id int) error {
-	return sts.exists.QueryRow(id).Scan(&id)
 }
 
 func (sts *SQLTopicStore) Exists(id int) bool {

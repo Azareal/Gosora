@@ -72,7 +72,6 @@ func main() {
 	log.Print("Running Gosora v" + version.String())
 	fmt.Println("")
 	startTime = time.Now()
-	//timeLocation = startTime.Location()
 
 	log.Print("Processing configuration data")
 	processConfig()
@@ -88,10 +87,6 @@ func main() {
 	}
 
 	initTemplates()
-	err = initErrors()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	err = initPhrases()
 	if err != nil {
@@ -135,6 +130,8 @@ func main() {
 			select {
 			case <-secondTicker.C:
 				//log.Print("Running the second ticker")
+				// TODO: Add a plugin hook here
+
 				err := handleExpiredScheduledGroups()
 				if err != nil {
 					LogError(err)
@@ -152,10 +149,16 @@ func main() {
 				// TODO: Manage the TopicStore, UserStore, and ForumStore
 				// TODO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
 				// TODO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
+
+				// TODO: Add a plugin hook here
 			case <-fifteenMinuteTicker.C:
+				// TODO: Add a plugin hook here
+
 				// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 				// TODO: Publish scheduled posts.
 				// TODO: Delete the empty users_groups_scheduler entries
+
+				// TODO: Add a plugin hook here
 			}
 		}
 	}()
@@ -181,6 +184,8 @@ func main() {
 	router.HandleFunc("/topic/delete/submit/", routeDeleteTopic)
 	router.HandleFunc("/topic/stick/submit/", routeStickTopic)
 	router.HandleFunc("/topic/unstick/submit/", routeUnstickTopic)
+	router.HandleFunc("/topic/lock/submit/", routeLockTopic)
+	router.HandleFunc("/topic/unlock/submit/", routeUnlockTopic)
 	router.HandleFunc("/topic/like/submit/", routeLikeTopic)
 
 	// Custom Pages
@@ -217,17 +222,17 @@ func main() {
 
 	// The Control Panel
 	// TODO: Rename the commented route handlers to the new camelCase format :'(
-	///router.HandleFunc("/panel/", route_panel)
-	///router.HandleFunc("/panel/forums/", route_panel_forums)
-	///router.HandleFunc("/panel/forums/create/", route_panel_forums_create_submit)
-	///router.HandleFunc("/panel/forums/delete/", route_panel_forums_delete)
-	///router.HandleFunc("/panel/forums/delete/submit/", route_panel_forums_delete_submit)
-	///router.HandleFunc("/panel/forums/edit/", route_panel_forums_edit)
-	///router.HandleFunc("/panel/forums/edit/submit/", route_panel_forums_edit_submit)
-	///router.HandleFunc("/panel/forums/edit/perms/submit/", route_panel_forums_edit_perms_submit)
-	///router.HandleFunc("/panel/settings/", route_panel_settings)
-	///router.HandleFunc("/panel/settings/edit/", route_panel_setting)
-	///router.HandleFunc("/panel/settings/edit/submit/", route_panel_setting_edit)
+	////router.HandleFunc("/panel/", routePanel)
+	////router.HandleFunc("/panel/forums/", routePanelForums)
+	////router.HandleFunc("/panel/forums/create/", routePanelForumsCreateSubmit)
+	////router.HandleFunc("/panel/forums/delete/", routePanelForumsDelete)
+	////router.HandleFunc("/panel/forums/delete/submit/", routePanelForumsDeleteSubmit)
+	////router.HandleFunc("/panel/forums/edit/", routePanelForumsEdit)
+	////router.HandleFunc("/panel/forums/edit/submit/", routePanelForumsEditSubmit)
+	////router.HandleFunc("/panel/forums/edit/perms/submit/", routePanelForumsEditPermsSubmit)
+	////router.HandleFunc("/panel/settings/", routePanelSettings)
+	////router.HandleFunc("/panel/settings/edit/", routePanelSetting)
+	////router.HandleFunc("/panel/settings/edit/submit/", routePanelSettingEdit)
 	///router.HandleFunc("/panel/themes/", route_panel_themes)
 	///router.HandleFunc("/panel/themes/default/", route_panel_themes_default)
 	///router.HandleFunc("/panel/plugins/", route_panel_plugins)
@@ -245,9 +250,9 @@ func main() {
 	///router.HandleFunc("/panel/logs/mod/", route_panel_logs_mod)
 	///router.HandleFunc("/panel/debug/", route_panel_debug)
 
-	///router.HandleFunc("/api/", route_api)
-	//router.HandleFunc("/exit/", route_exit)
-	///router.HandleFunc("/", default_route)
+	////router.HandleFunc("/api/", routeAPI)
+	//router.HandleFunc("/exit/", routeExit)
+	////router.HandleFunc("/", config.DefaultRoute)
 	router.HandleFunc("/ws/", routeWebsockets)
 
 	log.Print("Initialising the plugins")

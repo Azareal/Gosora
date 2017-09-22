@@ -22,6 +22,7 @@ func handleExpiredScheduledGroups() error {
 	defer rows.Close()
 
 	var uid int
+	ucache, ok := users.(UserCache)
 	for rows.Next() {
 		err := rows.Scan(&uid)
 		if err != nil {
@@ -35,7 +36,9 @@ func handleExpiredScheduledGroups() error {
 		if err != nil {
 			return err
 		}
-		_ = users.Reload(uid)
+		if ok {
+			ucache.CacheRemove(uid)
+		}
 	}
 	return rows.Err()
 }

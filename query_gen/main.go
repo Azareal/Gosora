@@ -253,8 +253,6 @@ func write_selects(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleSelect("getUserName", "users", "name", "uid = ?", "", "")
 
-	adapter.SimpleSelect("getUserActive", "users", "active", "uid = ?", "", "")
-
 	adapter.SimpleSelect("getEmailsByUser", "emails", "email, validated, token", "uid = ?", "", "")
 
 	adapter.SimpleSelect("getTopicBasic", "topics", "title, content", "tid = ?", "", "")
@@ -366,13 +364,17 @@ func write_updates(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleUpdate("addLikesToReply", "replies", "likeCount = likeCount + ?", "rid = ?")
 
-	adapter.SimpleUpdate("editTopic", "topics", "title = ?, content = ?, parsed_content = ?, is_closed = ?", "tid = ?")
+	adapter.SimpleUpdate("editTopic", "topics", "title = ?, content = ?, parsed_content = ?", "tid = ?")
 
 	adapter.SimpleUpdate("editReply", "replies", "content = ?, parsed_content = ?", "rid = ?")
 
 	adapter.SimpleUpdate("stickTopic", "topics", "sticky = 1", "tid = ?")
 
 	adapter.SimpleUpdate("unstickTopic", "topics", "sticky = 0", "tid = ?")
+
+	adapter.SimpleUpdate("lockTopic", "topics", "is_closed = 1", "tid = ?")
+
+	adapter.SimpleUpdate("unlockTopic", "topics", "is_closed = 0", "tid = ?")
 
 	adapter.SimpleUpdate("updateLastIP", "users", "last_ip = ?", "uid = ?")
 

@@ -64,10 +64,11 @@ func (user *User) Ban(duration time.Duration, issuedBy int) error {
 
 func (user *User) Unban() error {
 	err := user.RevertGroupUpdate()
-	if err != nil {
-		return err
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
 	}
-	return users.Reload(user.ID)
+	return err
 }
 
 // TODO: Use a transaction to avoid race conditions
@@ -84,10 +85,11 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 		return err
 	}
 	_, err = setTempGroupStmt.Exec(gid, user.ID)
-	if err != nil {
-		return err
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
 	}
-	return users.Reload(user.ID)
+	return err
 }
 
 // TODO: Use a transaction to avoid race conditions
@@ -97,10 +99,129 @@ func (user *User) RevertGroupUpdate() error {
 		return err
 	}
 	_, err = setTempGroupStmt.Exec(0, user.ID)
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
+	}
+	return err
+}
+
+// TODO: Use a transaction here
+// TODO: Add a Deactivate method?
+func (user *User) Activate() (err error) {
+	_, err = activateUserStmt.Exec(user.ID)
 	if err != nil {
 		return err
 	}
-	return users.Reload(user.ID)
+	_, err = changeGroupStmt.Exec(config.DefaultGroup, user.ID)
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
+	}
+	return err
+}
+
+func (user *User) increasePostStats(wcount int, topic bool) error {
+	var mod int
+	baseScore := 1
+	if topic {
+		_, err := incrementUserTopicsStmt.Exec(1, user.ID)
+		if err != nil {
+			return err
+		}
+		baseScore = 2
+	}
+
+	settings := settingBox.Load().(SettingBox)
+	if wcount >= settings["megapost_min_words"].(int) {
+		_, err := incrementUserMegapostsStmt.Exec(1, 1, 1, user.ID)
+		if err != nil {
+			return err
+		}
+		mod = 4
+	} else if wcount >= settings["bigpost_min_words"].(int) {
+		_, err := incrementUserBigpostsStmt.Exec(1, 1, user.ID)
+		if err != nil {
+			return err
+		}
+		mod = 1
+	} else {
+		_, err := incrementUserPostsStmt.Exec(1, user.ID)
+		if err != nil {
+			return err
+		}
+	}
+	_, err := incrementUserScoreStmt.Exec(baseScore+mod, user.ID)
+	if err != nil {
+		return err
+	}
+	//log.Print(user.Score + base_score + mod)
+	//log.Print(getLevel(user.Score + base_score + mod))
+	// TODO: Use a transaction to prevent level desyncs?
+	_, err = updateUserLevelStmt.Exec(getLevel(user.Score+baseScore+mod), user.ID)
+	return err
+}
+
+func (user *User) decreasePostStats(wcount int, topic bool) error {
+	var mod int
+	baseScore := -1
+	if topic {
+		_, err := incrementUserTopicsStmt.Exec(-1, user.ID)
+		if err != nil {
+			return err
+		}
+		baseScore = -2
+	}
+
+	settings := settingBox.Load().(SettingBox)
+	if wcount >= settings["megapost_min_words"].(int) {
+		_, err := incrementUserMegapostsStmt.Exec(-1, -1, -1, user.ID)
+		if err != nil {
+			return err
+		}
+		mod = 4
+	} else if wcount >= settings["bigpost_min_words"].(int) {
+		_, err := incrementUserBigpostsStmt.Exec(-1, -1, user.ID)
+		if err != nil {
+			return err
+		}
+		mod = 1
+	} else {
+		_, err := incrementUserPostsStmt.Exec(-1, user.ID)
+		if err != nil {
+			return err
+		}
+	}
+	_, err := incrementUserScoreStmt.Exec(baseScore-mod, user.ID)
+	if err != nil {
+		return err
+	}
+	// TODO: Use a transaction to prevent level desyncs?
+	_, err = updateUserLevelStmt.Exec(getLevel(user.Score-baseScore-mod), user.ID)
+	return err
+}
+
+func (user *User) initPerms() {
+	if user.TempGroup != 0 {
+		user.Group = user.TempGroup
+	}
+
+	group := gstore.DirtyGet(user.Group)
+	if user.IsSuperAdmin {
+		user.Perms = AllPerms
+		user.PluginPerms = AllPluginPerms
+	} else {
+		user.Perms = group.Perms
+		user.PluginPerms = group.PluginPerms
+	}
+
+	user.IsAdmin = user.IsSuperAdmin || group.IsAdmin
+	user.IsSuperMod = user.IsAdmin || group.IsMod
+	user.IsMod = user.IsSuperMod
+	user.IsBanned = group.IsBanned
+	if user.IsBanned && user.IsSuperMod {
+		user.IsBanned = false
+	}
 }
 
 func BcryptCheckPassword(realPassword string, password string, salt string) (err error) {
@@ -165,111 +286,6 @@ func wordsToScore(wcount int, topic bool) (score int) {
 		score++
 	}
 	return score
-}
-
-// TODO: Move this to where the other User methods are
-func (user *User) increasePostStats(wcount int, topic bool) error {
-	var mod int
-	baseScore := 1
-	if topic {
-		_, err := incrementUserTopicsStmt.Exec(1, user.ID)
-		if err != nil {
-			return err
-		}
-		baseScore = 2
-	}
-
-	settings := settingBox.Load().(SettingBox)
-	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := incrementUserMegapostsStmt.Exec(1, 1, 1, user.ID)
-		if err != nil {
-			return err
-		}
-		mod = 4
-	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := incrementUserBigpostsStmt.Exec(1, 1, user.ID)
-		if err != nil {
-			return err
-		}
-		mod = 1
-	} else {
-		_, err := incrementUserPostsStmt.Exec(1, user.ID)
-		if err != nil {
-			return err
-		}
-	}
-	_, err := incrementUserScoreStmt.Exec(baseScore+mod, user.ID)
-	if err != nil {
-		return err
-	}
-	//log.Print(user.Score + base_score + mod)
-	//log.Print(getLevel(user.Score + base_score + mod))
-	// TODO: Use a transaction to prevent level desyncs?
-	_, err = updateUserLevelStmt.Exec(getLevel(user.Score+baseScore+mod), user.ID)
-	return err
-}
-
-// TODO: Move this to where the other User methods are
-func (user *User) decreasePostStats(wcount int, topic bool) error {
-	var mod int
-	baseScore := -1
-	if topic {
-		_, err := incrementUserTopicsStmt.Exec(-1, user.ID)
-		if err != nil {
-			return err
-		}
-		baseScore = -2
-	}
-
-	settings := settingBox.Load().(SettingBox)
-	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := incrementUserMegapostsStmt.Exec(-1, -1, -1, user.ID)
-		if err != nil {
-			return err
-		}
-		mod = 4
-	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := incrementUserBigpostsStmt.Exec(-1, -1, user.ID)
-		if err != nil {
-			return err
-		}
-		mod = 1
-	} else {
-		_, err := incrementUserPostsStmt.Exec(-1, user.ID)
-		if err != nil {
-			return err
-		}
-	}
-	_, err := incrementUserScoreStmt.Exec(baseScore-mod, user.ID)
-	if err != nil {
-		return err
-	}
-	// TODO: Use a transaction to prevent level desyncs?
-	_, err = updateUserLevelStmt.Exec(getLevel(user.Score-baseScore-mod), user.ID)
-	return err
-}
-
-func initUserPerms(user *User) {
-	if user.TempGroup != 0 {
-		user.Group = user.TempGroup
-	}
-
-	group := gstore.DirtyGet(user.Group)
-	if user.IsSuperAdmin {
-		user.Perms = AllPerms
-		user.PluginPerms = AllPluginPerms
-	} else {
-		user.Perms = group.Perms
-		user.PluginPerms = group.PluginPerms
-	}
-
-	user.IsAdmin = user.IsSuperAdmin || group.IsAdmin
-	user.IsSuperMod = user.IsAdmin || group.IsMod
-	user.IsMod = user.IsSuperMod
-	user.IsBanned = group.IsBanned
-	if user.IsBanned && user.IsSuperMod {
-		user.IsBanned = false
-	}
 }
 
 func buildProfileURL(slug string, uid int) string {

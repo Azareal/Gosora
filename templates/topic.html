@@ -13,13 +13,9 @@
 <div class="rowblock rowhead topic_block">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 		<h1 class='topic_name hide_on_edit'>{{.Topic.Title}}</h1>
-		{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
+		{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed'>&#x1F512;&#xFE0E</span>{{end}}
 		{{if .CurrentUser.Perms.EditTopic}}
 		<input form='edit_topic_form' class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" />
-		{{if .CurrentUser.Perms.CloseTopic}}<select form='edit_topic_form' name="topic_status" class='show_on_edit topic_status_input' style='float: right;'>
-			<option>open</option>
-			<option>closed</option>
-		</select>{{end}}
 		<button form='edit_topic_form' name="topic-button" class="formbutton show_on_edit submit_edit">Update</button>
 		{{end}}
 	</div>
@@ -39,6 +35,8 @@
 		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic"><button class="username edit_label"></button></a>{{end}}
 
 		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Delete Topic"><button class="username trash_label"></button></a>{{end}}
+
+		{{if .CurrentUser.Perms.CloseTopic}}{{if .Topic.IsClosed}}<a class="mod_button" href='/topic/unlock/submit/{{.Topic.ID}}' style="font-weight:normal;" title="Unlock Topic"><button class="username unlock_label"></button></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Lock Topic"><button class="username lock_label"></button></a>{{end}}{{end}}
 
 		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}' style="font-weight:normal;" title="Unpin Topic"><button class="username unpin_label"></button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Pin Topic"><button class="username pin_label"></button></a>{{end}}{{end}}
 		{{if .CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/{{.Topic.IPAddress}}' style="font-weight:normal;" title="View IP"><button class="username ip_label"></button></a>{{end}}

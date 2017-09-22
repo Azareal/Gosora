@@ -1154,14 +1154,14 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user User) {
 
 	// TODO: Add a UserStore method for iterating over global users and global user offsets
 	for rows.Next() {
-		puser := User{ID: 0}
+		puser := &User{ID: 0}
 		err := rows.Scan(&puser.ID, &puser.Name, &puser.Group, &puser.Active, &puser.IsSuperAdmin, &puser.Avatar)
 		if err != nil {
 			InternalError(err, w)
 			return
 		}
 
-		initUserPerms(&puser)
+		puser.initPerms()
 		if puser.Avatar != "" {
 			if puser.Avatar[0] == '.' {
 				puser.Avatar = "/uploads/avatar_" + strconv.Itoa(puser.ID) + puser.Avatar
@@ -1175,7 +1175,7 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user User) {
 		} else {
 			puser.Tag = ""
 		}
-		userList = append(userList, puser)
+		userList = append(userList, *puser)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -1346,12 +1346,10 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user User
 		SetPassword(targetUser.ID, newpassword)
 	}
 
-	err = users.Reload(targetUser.ID)
-	if err != nil {
-		LocalError("This user no longer exists!", w, r, user)
-		return
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(targetUser.ID)
 	}
-
 	http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID), http.StatusSeeOther)
 }
 

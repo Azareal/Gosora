@@ -244,6 +244,12 @@ a {
 .pin_label:before {
 	content: "Pin";
 }
+.lock_label:before {
+	content: "Lock";
+}
+.unlock_label:before {
+	content: "Unlock";
+}
 .unpin_label:before {
 	content: "Unpin";
 }
@@ -321,7 +327,7 @@ textarea.large {
 	min-height: 80px;
 }
 
-.formitem button {
+.formitem button, .formbutton {
 	background-color: #444444;
 	border: 1px solid #555555;
 	color: #999999;
@@ -525,6 +531,28 @@ input, select, textarea {
 }
 .topic_list .lastReplyAt {
 	white-space: nowrap;
+}
+
+.topic_item {
+	display: flex;
+}
+.topic_name_input {
+	width: 100%;
+	margin-right: 10px;
+	background-color: #444444;
+	border: 1px solid #555555;
+	color: #999999;
+	padding-bottom: 6px;
+	font-size: 13px;
+	padding: 5px;
+}
+.topic_item .submit_edit {
+	margin-left: auto;
+}
+.topic_item .topic_status_closed {
+	margin-left: auto;
+	position: relative;
+	top: -5px;
 }
 
 /* Profiles */

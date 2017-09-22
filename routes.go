@@ -25,13 +25,8 @@ import (
 var tList []interface{}
 
 //var nList []string
-var hvars *HeaderVars // We might need to rethink this now that it's a pointer
 var successJSONBytes = []byte(`{"success":"1"}`)
 var cacheControlMaxAge = "max-age=" + strconv.Itoa(day)
-
-func init() {
-	hvars = &HeaderVars{Site: site}
-}
 
 // HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
 type HTTPSRedirect struct {
