@@ -84,8 +84,7 @@ func _tableDefsMysql() error {
 			continue
 		}
 
-		var table string
-		var ext string
+		var table, ext string
 		table = strings.TrimPrefix(f.Name(), "query_")
 		ext = filepath.Ext(table)
 		if ext != ".sql" {
@@ -109,6 +108,10 @@ func _tableDefsMysql() error {
 	//fmt.Println("Finished creating the tables")
 	return nil
 }
+
+// ? - Moved this here since it was breaking the installer, we need to add this at some point
+/* TODO: Implement the html-attribute setting type before deploying this */
+/*INSERT INTO settings(`name`,`content`,`type`) VALUES ('meta_desc','','html-attribute');*/
 
 func _initialDataMysql() error {
 	return nil // Coming Soon

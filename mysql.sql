@@ -187,8 +187,6 @@ INSERT INTO settings(`name`,`content`,`type`) VALUES ('url_tags','1','bool');
 INSERT INTO settings(`name`,`content`,`type`,`constraints`) VALUES ('activation_type','1','list','1-3');
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('bigpost_min_words','250','int');
 INSERT INTO settings(`name`,`content`,`type`) VALUES ('megapost_min_words','1000','int');
-/* TODO: Implement the html-attribute setting type before deploying this */
-/*INSERT INTO settings(`name`,`content`,`type`) VALUES ('meta_desc','','html-attribute');*/
 INSERT INTO themes(`uname`,`default`) VALUES ('tempra-simple',1);
 INSERT INTO emails(`email`,`uid`,`validated`) VALUES ('admin@localhost',1,1);
 
