@@ -347,28 +347,25 @@ func rebuildForumPermissions(fid int) error {
 		if dev.DebugMode {
 			log.Print("Updating the forum permissions for Group #" + strconv.Itoa(group.ID))
 		}
-
-		var blankIntList []int
 		group.Forums = []ForumPerms{BlankForumPerms}
-		group.CanSee = blankIntList
+		group.CanSee = []int{}
 
 		for ffid := range forums {
 			forumPerm, ok := forumPerms[group.ID][ffid]
 			if ok {
 				//log.Print("Overriding permissions for forum #" + strconv.Itoa(fid))
 				group.Forums = append(group.Forums, forumPerm)
+				if forumPerm.Overrides {
+					if forumPerm.ViewTopic {
+						group.CanSee = append(group.CanSee, ffid)
+					}
+				} else if group.Perms.ViewTopic {
+					group.CanSee = append(group.CanSee, ffid)
+				}
 			} else {
 				//log.Print("Inheriting from default for forum #" + strconv.Itoa(fid))
 				forumPerm = BlankForumPerms
 				group.Forums = append(group.Forums, forumPerm)
-			}
-
-			if forumPerm.Overrides {
-				if forumPerm.ViewTopic {
-					group.CanSee = append(group.CanSee, ffid)
-				}
-			} else if group.Perms.ViewTopic {
-				group.CanSee = append(group.CanSee, ffid)
 			}
 		}
 		if dev.SuperDebug {
@@ -418,6 +415,9 @@ func buildForumPermissions() error {
 		}
 		forumPerms[gid][fid] = pperms
 	}
+	if dev.SuperDebug {
+		log.Print("forumPerms ", forumPerms)
+	}
 
 	groups, err := gstore.GetAll()
 	if err != nil {
@@ -429,32 +429,33 @@ func buildForumPermissions() error {
 			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(group.ID) + " - " + group.Name)
 		}
 		group.Forums = []ForumPerms{BlankForumPerms}
+		group.CanSee = []int{}
 		for fid := range forums {
 			forumPerm, ok := forumPerms[group.ID][fid]
 			if ok {
 				// Override group perms
 				//log.Print("Overriding permissions for forum #" + strconv.Itoa(fid))
 				group.Forums = append(group.Forums, forumPerm)
+				if forumPerm.Overrides {
+					if forumPerm.ViewTopic {
+						group.CanSee = append(group.CanSee, fid)
+					}
+				} else if group.Perms.ViewTopic {
+					group.CanSee = append(group.CanSee, fid)
+				}
 			} else {
 				// Inherit from Group
+				// ? - Is this really inheriting from the Group? At-least for CanSee?
 				//log.Print("Inheriting from default for forum #" + strconv.Itoa(fid))
 				forumPerm = BlankForumPerms
 				group.Forums = append(group.Forums, forumPerm)
 			}
-
-			if forumPerm.Overrides {
-				if forumPerm.ViewTopic {
-					group.CanSee = append(group.CanSee, fid)
-				}
-			} else if group.Perms.ViewTopic {
-				group.CanSee = append(group.CanSee, fid)
-			}
 		}
 		if dev.SuperDebug {
-			//log.Printf("group.CanSee %+v\n", group.CanSee)
-			//log.Printf("group.Forums %+v\n", group.Forums)
-			//log.Print("len(group.CanSee)",len(group.CanSee))
-			//log.Print("len(group.Forums)",len(group.Forums))
+			log.Printf("group.CanSee %+v\n", group.CanSee)
+			log.Printf("group.Forums %+v\n", group.Forums)
+			log.Print("len(group.CanSee)", len(group.CanSee))
+			log.Print("len(group.Forums)", len(group.Forums))
 		}
 	}
 	return nil

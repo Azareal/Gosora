@@ -57,9 +57,10 @@ type Config struct {
 }
 
 type DevConfig struct {
-	DebugMode  bool
-	SuperDebug bool
-	Profiling  bool
+	DebugMode     bool
+	SuperDebug    bool
+	TemplateDebug bool
+	Profiling     bool
 }
 
 func processConfig() {

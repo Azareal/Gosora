@@ -99,7 +99,7 @@ func (c *CTemplateSet) compileTemplate(name string, dir string, expects string, 
 	if err != nil {
 		return "", err
 	}
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println(name)
 	}
 
@@ -109,7 +109,7 @@ func (c *CTemplateSet) compileTemplate(name string, dir string, expects string, 
 	c.tlist[fname] = tree
 	varholder := "tmpl_" + fname + "_vars"
 
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println(c.tlist)
 	}
 	c.localVars = make(map[string]map[string]VarItemReflect)
@@ -122,13 +122,13 @@ func (c *CTemplateSet) compileTemplate(name string, dir string, expects string, 
 	c.FragmentCursor[fname] = 0
 
 	subtree := c.tlist[fname]
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println(subtree.Root)
 	}
 
 	treeLength := len(subtree.Root.Nodes)
 	for index, node := range subtree.Root.Nodes {
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Node: " + node.String())
 		}
 
@@ -171,7 +171,7 @@ w.Write([]byte(`, " + ", -1)
 		fmt.Println(" ")
 	}
 
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("Output!")
 		fmt.Println(fout)
 	}
@@ -179,12 +179,12 @@ w.Write([]byte(`, " + ", -1)
 }
 
 func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value, templateName string, node interface{}) (out string) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileSwitch")
 	}
 	switch node := node.(type) {
 	case *parse.ActionNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Action Node")
 		}
 		if node.Pipe == nil {
@@ -195,24 +195,24 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 		}
 		return out
 	case *parse.IfNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("If Node:")
 			fmt.Println("node.Pipe", node.Pipe)
 		}
 
 		var expr string
 		for _, cmd := range node.Pipe.Cmds {
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("If Node Bit:", cmd)
 				fmt.Println("If Node Bit Type:", reflect.ValueOf(cmd).Type().Name())
 			}
 			expr += c.compileVarswitch(varholder, holdreflect, templateName, cmd)
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("If Node Expression Step:", c.compileVarswitch(varholder, holdreflect, templateName, cmd))
 			}
 		}
 
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("If Node Expression:", expr)
 		}
 
@@ -220,18 +220,18 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 		c.currentNode = parse.NodeList
 		c.nextNode = -1
 		if node.ElseList == nil {
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Selected Branch 1")
 			}
 			return "if " + expr + " {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.List) + "}\n"
 		}
 
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Selected Branch 2")
 		}
 		return "if " + expr + " {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.List) + "} else {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.ElseList) + "}\n"
 	case *parse.ListNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("List Node")
 		}
 		for _, subnode := range node.Nodes {
@@ -239,20 +239,20 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 		}
 		return out
 	case *parse.RangeNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Range Node!")
 			fmt.Println(node.Pipe)
 		}
 
 		var outVal reflect.Value
 		for _, cmd := range node.Pipe.Cmds {
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Range Bit:", cmd)
 			}
 			out, outVal = c.compileReflectswitch(varholder, holdreflect, templateName, cmd)
 		}
 
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Returned:", out)
 			fmt.Println("Range Kind Switch!")
 		}
@@ -317,13 +317,13 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 }
 
 func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileSubswitch")
 	}
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Field Node:", n.Ident)
 		}
 
@@ -337,20 +337,20 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 		}
 
 		for _, id := range n.Ident {
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Data Kind:", cur.Kind().String())
 				fmt.Println("Field Bit:", id)
 			}
 
 			if cur.Kind() == reflect.Ptr {
-				if dev.SuperDebug {
+				if dev.TemplateDebug {
 					fmt.Println("Looping over pointer")
 				}
 				for cur.Kind() == reflect.Ptr {
 					cur = cur.Elem()
 				}
 
-				if dev.SuperDebug {
+				if dev.TemplateDebug {
 					fmt.Println("Data Kind:", cur.Kind().String())
 					fmt.Println("Field Bit:", id)
 				}
@@ -361,7 +361,7 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 					fmt.Println("Debug Data:")
 					fmt.Println("Holdreflect:", holdreflect)
 					fmt.Println("Holdreflect.Kind()", holdreflect.Kind())
-					if !dev.SuperDebug {
+					if !dev.TemplateDebug {
 						fmt.Println("cur.Kind():", cur.Kind().String())
 					}
 					fmt.Println("")
@@ -386,7 +386,7 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 			} else {
 				varbit += "." + id
 			}
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("End Cycle")
 			}
 		}
@@ -399,14 +399,14 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 		}
 		return out
 	case *parse.DotNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Dot Node:", node.String())
 		}
 		return c.compileVarsub(varholder, holdreflect)
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.VariableNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Variable Node:", n.String())
 			fmt.Println(n.Ident)
 		}
@@ -415,7 +415,7 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 	case *parse.StringNode:
 		return n.Quoted
 	case *parse.IdentifierNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Identifier Node:", node)
 			fmt.Println("Identifier Node Args:", node.Args)
 		}
@@ -428,13 +428,13 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 }
 
 func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compile_varswitch")
 	}
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Field Node:", n.Ident)
 			for _, id := range n.Ident {
 				fmt.Println("Field Bit:", id)
@@ -444,13 +444,13 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
 		return c.compileBoolsub(n.String(), varholder, templateName, holdreflect)
 	case *parse.ChainNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Chain Node:", n.Node)
 			fmt.Println("Chain Node Args:", node.Args)
 		}
 		break
 	case *parse.IdentifierNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Identifier Node:", node)
 			fmt.Println("Identifier Node Args:", node.Args)
 		}
@@ -458,7 +458,7 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 	case *parse.DotNode:
 		return varholder
 	case *parse.VariableNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Variable Node:", n.String())
 			fmt.Println("Variable Node Identifier:", n.Ident)
 		}
@@ -467,14 +467,14 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.PipeNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Pipe Node!")
 			fmt.Println(n)
 			fmt.Println("Args:", node.Args)
 		}
 		out += c.compileIdentswitchN(varholder, holdreflect, templateName, node)
 
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Out:", out)
 		}
 		return out
@@ -487,7 +487,7 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 }
 
 func (c *CTemplateSet) compileIdentswitchN(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compile_identswitch_n")
 	}
 	out, _ = c.compileIdentswitch(varholder, holdreflect, templateName, node)
@@ -495,7 +495,7 @@ func (c *CTemplateSet) compileIdentswitchN(varholder string, holdreflect reflect
 }
 
 func (c *CTemplateSet) compileIdentswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, val reflect.Value) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileIdentswitch")
 	}
 
@@ -503,7 +503,7 @@ func (c *CTemplateSet) compileIdentswitch(varholder string, holdreflect reflect.
 ArgLoop:
 	for pos := 0; pos < len(node.Args); pos++ {
 		id := node.Args[pos]
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("pos:", pos)
 			fmt.Println("ID:", id)
 		}
@@ -511,7 +511,7 @@ ArgLoop:
 		case "not":
 			out += "!"
 		case "or":
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Building or function")
 			}
 			if pos == 0 {
@@ -534,7 +534,7 @@ ArgLoop:
 
 			out += left + " || " + right
 
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Left operand:", node.Args[pos-1])
 				fmt.Println("Right operand:", node.Args[pos+1])
 			}
@@ -543,12 +543,12 @@ ArgLoop:
 				pos++
 			}
 
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("pos:", pos)
 				fmt.Println("len(node.Args):", len(node.Args))
 			}
 		case "and":
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Building and function")
 			}
 			if pos == 0 {
@@ -571,7 +571,7 @@ ArgLoop:
 
 			out += left + " && " + right
 
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Left operand:", node.Args[pos-1])
 				fmt.Println("Right operand:", node.Args[pos+1])
 			}
@@ -580,48 +580,48 @@ ArgLoop:
 				pos++
 			}
 
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("pos:", pos)
 				fmt.Println("len(node.Args):", len(node.Args))
 			}
 		case "le":
 			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " <= " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
 			}
 			break ArgLoop
 		case "lt":
 			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " < " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
 			}
 			break ArgLoop
 		case "gt":
 			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " > " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
 			}
 			break ArgLoop
 		case "ge":
 			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " >= " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
 			}
 			break ArgLoop
 		case "eq":
 			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " == " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
 			}
 			break ArgLoop
 		case "ne":
 			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " != " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
 			}
@@ -640,7 +640,7 @@ ArgLoop:
 			}
 
 			out += param1 + " + " + param2
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("add")
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
@@ -660,7 +660,7 @@ ArgLoop:
 			}
 
 			out += param1 + " - " + param2
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("subtract")
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
@@ -680,7 +680,7 @@ ArgLoop:
 			}
 
 			out += param1 + " / " + param2
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("divide")
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
@@ -700,14 +700,14 @@ ArgLoop:
 			}
 
 			out += param1 + " * " + param2
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("multiply")
 				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
 				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
 			}
 			break ArgLoop
 		default:
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Variable!")
 			}
 			if len(node.Args) > (pos + 1) {
@@ -727,13 +727,13 @@ ArgLoop:
 }
 
 func (c *CTemplateSet) compileReflectswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, outVal reflect.Value) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileReflectswitch")
 	}
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Field Node:", n.Ident)
 			for _, id := range n.Ident {
 				fmt.Println("Field Bit:", id)
@@ -742,7 +742,7 @@ func (c *CTemplateSet) compileReflectswitch(varholder string, holdreflect reflec
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
 		return c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
 	case *parse.ChainNode:
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Chain Node:", n.Node)
 			fmt.Println("node.Args", node.Args)
 		}
@@ -758,7 +758,7 @@ func (c *CTemplateSet) compileReflectswitch(varholder string, holdreflect reflec
 }
 
 func (c *CTemplateSet) compileIfVarsubN(varname string, varholder string, templateName string, cur reflect.Value) (out string) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileIfVarsubN")
 	}
 	out, _ = c.compileIfVarsub(varname, varholder, templateName, cur)
@@ -766,7 +766,7 @@ func (c *CTemplateSet) compileIfVarsubN(varname string, varholder string, templa
 }
 
 func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templateName string, cur reflect.Value) (out string, val reflect.Value) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileIfVarsub")
 	}
 	if varname[0] != '.' && varname[0] != '$' {
@@ -797,13 +797,13 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 	}
 	bits[0] = strings.TrimPrefix(bits[0], "$")
 
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("Cur Kind:", cur.Kind())
 		fmt.Println("Cur Type:", cur.Type().Name())
 	}
 
 	for _, bit := range bits {
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Variable Field:", bit)
 		}
 		if bit == "" {
@@ -812,14 +812,14 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 
 		// TODO: Fix this up so that it works for regular pointers and not just struct pointers. Ditto for the other cur.Kind() == reflect.Ptr we have in this file
 		if cur.Kind() == reflect.Ptr {
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Looping over pointer")
 			}
 			for cur.Kind() == reflect.Ptr {
 				cur = cur.Elem()
 			}
 
-			if dev.SuperDebug {
+			if dev.TemplateDebug {
 				fmt.Println("Data Kind:", cur.Kind().String())
 				fmt.Println("Field Bit:", bit)
 			}
@@ -837,13 +837,13 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 			panic(out + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}
 
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Data Kind:", cur.Kind())
 			fmt.Println("Data Type:", cur.Type().Name())
 		}
 	}
 
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("Out Value:", out)
 		fmt.Println("Out Kind:", cur.Kind())
 		fmt.Println("Out Type:", cur.Type().Name())
@@ -855,7 +855,7 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 		}
 	}
 
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("Out Value:", out)
 		fmt.Println("Out Kind:", cur.Kind())
 		fmt.Println("Out Type:", cur.Type().Name())
@@ -872,7 +872,7 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 }
 
 func (c *CTemplateSet) compileBoolsub(varname string, varholder string, templateName string, val reflect.Value) string {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileBoolsub")
 	}
 	out, val := c.compileIfVarsub(varname, varholder, templateName, val)
@@ -894,7 +894,7 @@ func (c *CTemplateSet) compileBoolsub(varname string, varholder string, template
 }
 
 func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value) string {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileVarsub")
 	}
 	for _, varItem := range c.varList {
@@ -940,7 +940,7 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value) string {
 }
 
 func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflect.Value, node *parse.TemplateNode) (out string) {
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("in compileSubtemplate")
 		fmt.Println("Template Node:", node.Name)
 	}
@@ -985,7 +985,7 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 
 	c.tlist[fname] = tree
 	subtree := c.tlist[fname]
-	if dev.SuperDebug {
+	if dev.TemplateDebug {
 		fmt.Println("subtree.Root", subtree.Root)
 	}
 
@@ -995,7 +995,7 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 
 	treeLength := len(subtree.Root.Nodes)
 	for index, node := range subtree.Root.Nodes {
-		if dev.SuperDebug {
+		if dev.TemplateDebug {
 			fmt.Println("Node:", node.String())
 		}
 

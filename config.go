@@ -50,5 +50,6 @@ func init() {
 	// Developer flag
 	dev.DebugMode = true
 	//dev.SuperDebug = true
+	//dev.TemplateDebug = true
 	//dev.Profiling = true
 }
