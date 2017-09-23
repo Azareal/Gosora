@@ -183,7 +183,7 @@ config.DefaultRoute = routeTopics
 config.DefaultGroup = 3 // Should be a setting in the database
 config.ActivationGroup = 5 // Should be a setting in the database
 config.StaffCSS = "staff_post"
-config.UncategorisedForumVisible = true
+config.DefaultForum = 2
 config.MinifyTemplates = true
 config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
 

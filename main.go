@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 	//"runtime/pprof"
 )
@@ -40,16 +39,6 @@ var externalSites = map[string]string{
 }
 var staticFiles = make(map[string]SFile)
 var logWriter = io.MultiWriter(os.Stderr)
-
-func processConfig() {
-	config.Noavatar = strings.Replace(config.Noavatar, "{site_url}", site.URL, -1)
-	if site.Port != "80" && site.Port != "443" {
-		site.URL = strings.TrimSuffix(site.URL, "/")
-		site.URL = strings.TrimSuffix(site.URL, "\\")
-		site.URL = strings.TrimSuffix(site.URL, ":")
-		site.URL = site.URL + ":" + site.Port
-	}
-}
 
 func main() {
 	// TODO: Have a file for each run with the time/date the server started as the file name?
@@ -121,6 +110,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = verifyConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Run this goroutine once a second
 	secondTicker := time.NewTicker(1 * time.Second)
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
@@ -149,6 +143,7 @@ func main() {
 				// TODO: Manage the TopicStore, UserStore, and ForumStore
 				// TODO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
 				// TODO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
+				// TODO: Rescan the static files for changes
 
 				// TODO: Add a plugin hook here
 			case <-fifteenMinuteTicker.C:

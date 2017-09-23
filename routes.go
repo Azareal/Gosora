@@ -45,6 +45,9 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 	//log.Print("Outputting static file '" + r.URL.Path + "'")
 	file, ok := staticFiles[r.URL.Path]
 	if !ok {
+		if dev.DebugMode {
+			log.Print("Failed to find '" + r.URL.Path + "'")
+		}
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -75,14 +78,9 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 }
 
 // Deprecated: Test route for stopping the server during a performance analysis
-/*func route_exit(w http.ResponseWriter, r *http.Request){
+/*func routeExit(w http.ResponseWriter, r *http.Request, user User){
 	db.Close()
 	os.Exit(0)
-}
-
-// Deprecated: Test route to see which file serving method is faster
-func route_fstatic(w http.ResponseWriter, r *http.Request){
-	http.ServeFile(w,r,r.URL.Path)
 }*/
 
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?

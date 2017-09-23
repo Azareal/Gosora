@@ -31,6 +31,9 @@
 	{{if .CurrentUser.Perms.ManagePlugins}}<div class="rowitem passive">
 		<a href="/panel/plugins/">Plugins</a>
 	</div>{{end}}
+	{{if .CurrentUser.IsSuperAdmin}}<div class="rowitem passive">
+		<a href="/panel/backups/">Backups</a>
+	</div>{{end}}
 	<div class="rowitem passive">
 		<a href="/panel/logs/mod/">Logs</a>
 	</div>

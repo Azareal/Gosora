@@ -11,14 +11,14 @@
 	</div>
 	<div id="panel_forums" class="colstack_item rowlist">
 		{{range .ItemList}}
-		<div class="rowitem editable_parent{{if eq .ID 1}} builtin_forum_divider{{end}}">
+		<div class="rowitem editable_parent">
 			<span class="panel_floater">
 			<span data-field="forum_active" data-type="list" class="panel_tag editable_block forum_active {{if .Active}}forum_active_Show" data-value="1{{else}}forum_active_Hide" data-value="0{{end}}" title="Hidden"></span>
 			<span data-field="forum_preset" data-type="list" data-value="{{.Preset}}" class="panel_tag editable_block forum_preset forum_preset_{{.Preset}}" title="{{.PresetLang}}"></span>
 
 			<span class="panel_buttons">
-				{{if gt .ID 0}}<a class="panel_tag edit_fields hide_on_edit panel_right_button">Edit</a>
-				<a class="panel_right_button" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>Update</button></a>{{end}}
+				<a class="panel_tag edit_fields hide_on_edit panel_right_button">Edit</a>
+				<a class="panel_right_button" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>Update</button></a>
 				{{if gt .ID 1}}<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button hide_on_edit">Delete</a>{{end}}
 				<a href="/panel/forums/edit/{{.ID}}" class="panel_tag panel_right_button show_on_edit">Full Edit</a>
 			</span>

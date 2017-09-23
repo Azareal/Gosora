@@ -70,6 +70,11 @@ type ThemeResource struct {
 	Location string
 }
 
+func init() {
+	defaultThemeBox.Store(fallbackTheme)
+}
+
+// ? - Delete themes which no longer exist in the themes folder from the database?
 func LoadThemes() error {
 	changeDefaultThemeMutex.Lock()
 	rows, err := getThemesStmt.Query()
@@ -92,32 +97,16 @@ func LoadThemes() error {
 			continue
 		}
 
-		theme.TemplatesMap = make(map[string]string)
-		theme.TmplPtr = make(map[string]interface{})
-		if theme.Templates != nil {
-			for _, themeTmpl := range theme.Templates {
-				theme.TemplatesMap[themeTmpl.Name] = themeTmpl.Source
-				theme.TmplPtr[themeTmpl.Name] = tmplPtrMap["o_"+themeTmpl.Source]
-			}
-		}
-
-		theme.ResourceTemplates = template.New("")
-		template.Must(theme.ResourceTemplates.ParseGlob("./themes/" + uname + "/public/*.css"))
-
 		if defaultThemeSwitch {
-			log.Print("Loading the theme '" + theme.Name + "'")
+			log.Print("Loading the default theme '" + theme.Name + "'")
 			theme.Active = true
-			defaultThemeBox.Store(uname)
+			defaultThemeBox.Store(theme.Name)
 			mapThemeTemplates(theme)
 		} else {
+			log.Print("Loading the theme '" + theme.Name + "'")
 			theme.Active = false
 		}
 
-		// It should be safe for us to load the files for all the themes in memory, as-long as the admin hasn't setup a ridiculous number of themes
-		err = addThemeStaticFiles(theme)
-		if err != nil {
-			return err
-		}
 		themes[uname] = theme
 	}
 	changeDefaultThemeMutex.Unlock()
@@ -158,6 +147,24 @@ func initThemes() error {
 			if err != nil {
 				return err
 			}
+		}
+
+		theme.TemplatesMap = make(map[string]string)
+		theme.TmplPtr = make(map[string]interface{})
+		if theme.Templates != nil {
+			for _, themeTmpl := range theme.Templates {
+				theme.TemplatesMap[themeTmpl.Name] = themeTmpl.Source
+				theme.TmplPtr[themeTmpl.Name] = tmplPtrMap["o_"+themeTmpl.Source]
+			}
+		}
+
+		theme.ResourceTemplates = template.New("")
+		template.Must(theme.ResourceTemplates.ParseGlob("./themes/" + theme.Name + "/public/*.css"))
+
+		// It should be safe for us to load the files for all the themes in memory, as-long as the admin hasn't setup a ridiculous number of themes
+		err = addThemeStaticFiles(theme)
+		if err != nil {
+			return err
 		}
 
 		themes[theme.Name] = theme

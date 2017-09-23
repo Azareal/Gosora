@@ -146,7 +146,6 @@ a {
 	margin-top: 8px;
 	padding: 12px;
 }
-
 .rowitem h1 {
 	font-size: 16px;
 	font-weight: normal;
@@ -154,7 +153,6 @@ a {
 	-webkit-margin-after: 0;
 	display: inline;
 }
-
 .rowsmall {
 	font-size: 12px;
 }
@@ -179,6 +177,11 @@ a {
 	background-color: rgb(61,61,61);
 	margin-top: 5px;
 	padding: 10px;
+}
+
+/* Algin to right in a flex head */
+.to_right {
+	margin-left: auto;
 }
 
 /* Topic View */
@@ -223,7 +226,6 @@ a {
 	display: block;
 	float: left;
 }
-
 .mod_button button {
 	border: none;
 	background: none;
@@ -288,7 +290,6 @@ a {
 	color: rgb(205,205,205);
 	float: right;
 }
-
 .level {
 	margin-left: 3px;
 }
@@ -408,7 +409,11 @@ textarea.large {
 	background-size: 40px;
 	padding-left: 46px;
 }
-
+.bgavatars:not(.rowlist) .rowitem {
+	background-repeat: no-repeat;
+	background-size: 40px;
+	padding-left: 46px;
+}
 .rowlist .formrow, .rowlist .formrow:first-child {
 	margin-top: 0px;
 }
@@ -475,7 +480,7 @@ input, select, textarea {
 }
 
 /* Forum View */
-.rowhead {
+.rowhead, .opthead, .colstack_head {
 	display: flex;
 	flex-direction: row;
 }
@@ -533,9 +538,6 @@ input, select, textarea {
 	white-space: nowrap;
 }
 
-.topic_item {
-	display: flex;
-}
 .topic_name_input {
 	width: 100%;
 	margin-right: 10px;
@@ -594,6 +596,32 @@ input, select, textarea {
 	background-repeat: no-repeat, repeat-y;
 	background-size: 128px;
 	padding-left: 136px;
+}
+
+.ip_search_block .rowitem {
+	display: flex;
+	flex-direction: row;
+}
+
+.ip_search_block input {
+	background-color: #444444;
+	border: 1px solid #555555;
+	color: #999999;
+	margin-top: -3px;
+	margin-bottom: -3px;
+	padding: 4px;
+	padding-bottom: 3px;
+}
+
+.ip_search_input {
+	font-size: 15px;
+	width: 100%;
+	margin-left: 0px;
+}
+
+.ip_search_search {
+	font-size: 14px;
+	margin-left: 8px;
 }
 
 .colstack_grid {

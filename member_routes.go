@@ -28,6 +28,9 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 			return
 		}
 	}
+	if fid == 0 {
+		fid = config.DefaultForum
+	}
 
 	headerVars, ok := ForumUserCheck(w, r, &user, fid)
 	if !ok {

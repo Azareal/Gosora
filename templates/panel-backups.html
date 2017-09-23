@@ -1,0 +1,20 @@
+{{template "header.html" . }}
+{{template "panel-menu.html" . }}
+<main class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem"><h1>Backups</h1></div>
+	</div>
+	<div id="panel_backups" class="colstack_item rowlist">
+		{{range .Backups}}
+		<div class="rowitem panel_compactrow">
+			<span>{{.SQLURL}}</span>
+			<span class="panel_floater">
+				<a href="/panel/backups/{{.SQLURL}}" class="panel_tag panel_right_button">Download</a>
+			</span>
+		</div>
+		{{else}}
+		<div class="rowitem">There aren't any backups available at this time.</div>
+		{{end}}
+	</div>
+</main>
+{{template "footer.html" . }}

@@ -214,6 +214,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				case "/panel/groups/create/":
 					routePanelGroupsCreateSubmit(w,req,user)
 					return
+				case "/panel/backups/":
+					routePanelBackups(w,req,user,extra_data)
+					return
 				case "/panel/logs/mod/":
 					routePanelLogsMod(w,req,user)
 					return

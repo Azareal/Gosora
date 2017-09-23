@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type HeaderVars struct {
@@ -227,7 +228,23 @@ type PanelEditGroupPermsPage struct {
 	GlobalPerms []NameLangToggle
 }
 
-type Log struct {
+type backupItem struct {
+	SQLURL string
+
+	// TODO: Add an easier to parse format here for Gosora to be able to more easily reimport portions of the dump and to strip unneccesary data (e.g. table defs and parsed post data)
+
+	Timestamp time.Time
+}
+
+type PanelBackupPage struct {
+	Title       string
+	CurrentUser User
+	Header      *HeaderVars
+	Stats       PanelStats
+	Backups     []backupItem
+}
+
+type logItem struct {
 	Action    template.HTML
 	IPAddress string
 	DoneAt    string
@@ -238,7 +255,7 @@ type PanelLogsPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
-	Logs        []Log
+	Logs        []logItem
 	PageList    []int
 	Page        int
 	LastPage    int
@@ -283,6 +300,7 @@ func init() {
 	urlReg = regexp.MustCompile(urlpattern)
 }
 
+// TODO: Write a test for this
 func shortcodeToUnicode(msg string) string {
 	//re := regexp.MustCompile(":(.):")
 	msg = strings.Replace(msg, ":grinning:", "😀", -1)
@@ -421,6 +439,7 @@ func preparseMessage(msg string) string {
 	return shortcodeToUnicode(msg)
 }
 
+// TODO: Write a test for this
 func parseMessage(msg string /*, user User*/) string {
 	msg = strings.Replace(msg, ":)", "😀", -1)
 	msg = strings.Replace(msg, ":(", "😞", -1)
@@ -634,6 +653,7 @@ func parseMessage(msg string /*, user User*/) string {
 	return msg
 }
 
+// TODO: Write a test for this
 func regexParseMessage(msg string) string {
 	msg = strings.Replace(msg, ":)", "😀", -1)
 	msg = strings.Replace(msg, ":D", "😃", -1)
@@ -648,6 +668,7 @@ func regexParseMessage(msg string) string {
 
 // 6, 7, 8, 6, 7
 // ftp://, http://, https:// git://, mailto: (not a URL, just here for length comparison purposes)
+// TODO: Write a test for this
 func validateURLBytes(data []byte) bool {
 	datalen := len(data)
 	i := 0
@@ -670,6 +691,7 @@ func validateURLBytes(data []byte) bool {
 	return true
 }
 
+// TODO: Write a test for this
 func validatedURLBytes(data []byte) (url []byte) {
 	datalen := len(data)
 	i := 0
@@ -694,6 +716,7 @@ func validatedURLBytes(data []byte) (url []byte) {
 	return url
 }
 
+// TODO: Write a test for this
 func partialURLBytes(data []byte) (url []byte) {
 	datalen := len(data)
 	i := 0
@@ -719,6 +742,7 @@ func partialURLBytes(data []byte) (url []byte) {
 	return url
 }
 
+// TODO: Write a test for this
 func partialURLBytesLen(data []byte) int {
 	datalen := len(data)
 	i := 0
@@ -745,6 +769,7 @@ func partialURLBytesLen(data []byte) int {
 	return datalen
 }
 
+// TODO: Write a test for this
 func parseMediaBytes(data []byte) (protocol []byte, url []byte) {
 	datalen := len(data)
 	i := 0
@@ -774,6 +799,7 @@ func parseMediaBytes(data []byte) (protocol []byte, url []byte) {
 	return protocol, data[i:]
 }
 
+// TODO: Write a test for this
 func coerceIntBytes(data []byte) (res int, length int) {
 	if !(data[0] > 47 && data[0] < 58) {
 		return 0, 1

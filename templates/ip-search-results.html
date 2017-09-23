@@ -1,18 +1,28 @@
 {{template "header.html" . }}
 <main>
 
-<div class="rowblock opthead">
-	<div class="rowitem"><a>IP Search</a></div>
+<div class="rowblock rowhead">
+	<div class="rowitem">
+		<h1>IP Search</h1>
+	</div>
 </div>
-<div class="rowblock">
-	<div class="rowitem passive">Searching for {{.IP}}</div>
+
+<form action="/users/ips/" method="get" id="ip-search-form"></form>
+<div class="rowblock ip_search_block">
+	<div class="rowitem passive">
+		<input form="ip-search-form" name="ip" class="ip_search_input" type="search" placeholder="🔍︎" {{if .IP}}value="{{.IP}}"{{end}}/>
+		<input form="ip-search-form" class="ip_search_search" type="submit" value="Search" />
+	</div>
 </div>
-<div class="rowblock rowlist bgavatars">
-	{{range .ItemList}}<div class="rowitem" style="{{if .Avatar}}background-image: url('{{.Avatar}}');{{end}}">
+
+{{if .IP}}
+<div class="rowblock bgavatars">
+	{{range .ItemList}}<div class="rowitem"{{if .Avatar}} style="background-image: url('{{.Avatar}}');"{{end}}>
 		<a href="{{.Link}}">{{.Name}}</a>
 	</div>
-	{{else}}<div class="rowitem passive">No users found.</div>{{end}}
+	{{else}}<div class="rowitem">No users found.</div>{{end}}
 </div>
+{{end}}
 
 </main>
 {{template "footer.html" . }}

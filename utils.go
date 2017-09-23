@@ -29,6 +29,7 @@ type Version struct {
 	TagID int
 }
 
+// TODO: Write a test for this
 func (version *Version) String() (out string) {
 	out = strconv.Itoa(version.Major) + "." + strconv.Itoa(version.Minor) + "." + strconv.Itoa(version.Patch)
 	if version.Tag != "" {
@@ -40,7 +41,8 @@ func (version *Version) String() (out string) {
 	return
 }
 
-// GenerateSafeString is for generating a cryptographically secure set of random bytes..
+// GenerateSafeString is for generating a cryptographically secure set of random bytes...
+// TODO: Write a test for this
 func GenerateSafeString(length int) (string, error) {
 	rb := make([]byte, length)
 	_, err := rand.Read(rb)
@@ -50,6 +52,7 @@ func GenerateSafeString(length int) (string, error) {
 	return base64.URLEncoding.EncodeToString(rb), nil
 }
 
+// TODO: Write a test for this
 func relativeTime(in string) (string, error) {
 	if in == "" {
 		return "", nil
@@ -97,6 +100,7 @@ func relativeTime(in string) (string, error) {
 	}
 }
 
+// TODO: Write a test for this
 func convertByteUnit(bytes float64) (float64, string) {
 	switch {
 	case bytes >= float64(terabyte):
@@ -112,6 +116,7 @@ func convertByteUnit(bytes float64) (float64, string) {
 	}
 }
 
+// TODO: Write a test for this
 func convertByteInUnit(bytes float64, unit string) (count float64) {
 	switch unit {
 	case "TB":
@@ -132,6 +137,7 @@ func convertByteInUnit(bytes float64, unit string) (count float64) {
 	return
 }
 
+// TODO: Write a test for this
 func convertUnit(num int) (int, string) {
 	switch {
 	case num >= 1000000000000:
@@ -147,6 +153,7 @@ func convertUnit(num int) (int, string) {
 	}
 }
 
+// TODO: Write a test for this
 func convertFriendlyUnit(num int) (int, string) {
 	switch {
 	case num >= 1000000000000:
@@ -231,6 +238,7 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 	return true
 }
 
+// TODO: Write a test for this
 func weakPassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("your password needs to be at-least eight characters long")
@@ -283,6 +291,7 @@ func weakPassword(password string) error {
 	return nil
 }
 
+// TODO: Write a test for this
 func createFile(name string) error {
 	f, err := os.Create(name)
 	if err != nil {
@@ -291,6 +300,7 @@ func createFile(name string) error {
 	return f.Close()
 }
 
+// TODO: Write a test for this
 func writeFile(name string, content string) (err error) {
 	f, err := os.Create(name)
 	if err != nil {
@@ -307,6 +317,13 @@ func writeFile(name string, content string) (err error) {
 	return f.Close()
 }
 
+// TODO: Write a test for this
+func Stripslashes(text string) string {
+	text = strings.Replace(text, "/", "", -1)
+	return strings.Replace(text, "\\", "", -1)
+}
+
+// TODO: Write a test for this
 func wordCount(input string) (count int) {
 	input = strings.TrimSpace(input)
 	if input == "" {
@@ -326,6 +343,7 @@ func wordCount(input string) (count int) {
 	return count + 1
 }
 
+// TODO: Write a test for this
 func getLevel(score int) (level int) {
 	var base float64 = 25
 	var current, prev float64
@@ -346,6 +364,7 @@ func getLevel(score int) (level int) {
 	return level
 }
 
+// TODO: Write a test for this
 func getLevelScore(getLevel int) (score int) {
 	var base float64 = 25
 	var current, prev float64
@@ -367,6 +386,7 @@ func getLevelScore(getLevel int) (score int) {
 	return int(math.Ceil(current))
 }
 
+// TODO: Write a test for this
 func getLevels(maxLevel int) []float64 {
 	var base float64 = 25
 	var current, prev float64 // = 0

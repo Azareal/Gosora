@@ -39,6 +39,20 @@ type ForumSimple struct {
 	Preset string
 }
 
+// TODO: Replace this sorting mechanism with something a lot more efficient
+// ? - Use sort.Slice instead?
+type SortForum []*Forum
+
+func (sf SortForum) Len() int {
+	return len(sf)
+}
+func (sf SortForum) Swap(i, j int) {
+	sf[i], sf[j] = sf[j], sf[i]
+}
+func (sf SortForum) Less(i, j int) bool {
+	return sf[i].ID < sf[j].ID
+}
+
 func buildForumURL(slug string, fid int) string {
 	if slug == "" {
 		return "/forum/" + strconv.Itoa(fid)

@@ -81,6 +81,7 @@ func routes() {
 		Route{"routePanelGroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "", []string{"extra_data"}},
 		Route{"routePanelGroupsCreateSubmit", "/panel/groups/create/", "", []string{}},
 
+		Route{"routePanelBackups", "/panel/backups/", "", []string{"extra_data"}},
 		Route{"routePanelLogsMod", "/panel/logs/mod/", "", []string{}},
 		Route{"routePanelDebug", "/panel/debug/", "", []string{}},
 	)

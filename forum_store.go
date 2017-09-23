@@ -9,6 +9,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"sort"
 	"sync"
 	"sync/atomic"
 
@@ -104,8 +105,6 @@ func (mfs *MemoryForumStore) LoadForums() error {
 		}
 	}
 
-	addForum(&Forum{0, buildForumURL(nameToSlug("Uncategorised"), 0), "Uncategorised", "", config.UncategorisedForumVisible, "all", 0, "", 0, "", "", 0, "", 0, ""})
-
 	rows, err := getForumsStmt.Query()
 	if err != nil {
 		return err
@@ -148,16 +147,16 @@ func (mfs *MemoryForumStore) rebuildView() {
 		}
 		return true
 	})
+	sort.Sort(SortForum(forumView))
 	mfs.forumView.Store(forumView)
 }
 
 func (mfs *MemoryForumStore) DirtyGet(id int) *Forum {
 	fint, ok := mfs.forums.Load(id)
-	forum := fint.(*Forum)
-	if !ok || forum.Name == "" {
+	if !ok || fint.(*Forum).Name == "" {
 		return &Forum{ID: -1, Name: ""}
 	}
-	return forum
+	return fint.(*Forum)
 }
 
 func (mfs *MemoryForumStore) CacheGet(id int) (*Forum, error) {
@@ -225,24 +224,29 @@ func (mfs *MemoryForumStore) CacheSet(forum *Forum) error {
 	return nil
 }
 
+// ! Has a randomised order
 func (mfs *MemoryForumStore) GetAll() (forumView []*Forum, err error) {
 	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
 		forumView = append(forumView, value.(*Forum))
 		return true
 	})
+	sort.Sort(SortForum(forumView))
 	return forumView, nil
 }
 
+// ? - Can we optimise the sorting?
 func (mfs *MemoryForumStore) GetAllIDs() (ids []int, err error) {
 	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
 		ids = append(ids, value.(*Forum).ID)
 		return true
 	})
+	sort.Ints(ids)
 	return ids, nil
 }
 
-func (mfs *MemoryForumStore) GetAllVisible() ([]*Forum, error) {
-	return mfs.forumView.Load().([]*Forum), nil
+func (mfs *MemoryForumStore) GetAllVisible() (forumView []*Forum, err error) {
+	forumView = mfs.forumView.Load().([]*Forum)
+	return forumView, nil
 }
 
 func (mfs *MemoryForumStore) GetAllVisibleIDs() ([]int, error) {
@@ -285,6 +289,7 @@ func (mfs *MemoryForumStore) Delete(id int) error {
 	return nil
 }
 
+// ! Is this racey?
 func (mfs *MemoryForumStore) IncrementTopicCount(id int) error {
 	forum, err := mfs.Get(id)
 	if err != nil {
@@ -298,6 +303,7 @@ func (mfs *MemoryForumStore) IncrementTopicCount(id int) error {
 	return nil
 }
 
+// ! Is this racey?
 func (mfs *MemoryForumStore) DecrementTopicCount(id int) error {
 	forum, err := mfs.Get(id)
 	if err != nil {
@@ -312,6 +318,7 @@ func (mfs *MemoryForumStore) DecrementTopicCount(id int) error {
 }
 
 // TODO: Have a pointer to the last topic rather than storing it on the forum itself
+// ! Is this racey?
 func (mfs *MemoryForumStore) UpdateLastTopic(topicName string, tid int, username string, uid int, time string, fid int) error {
 	forum, err := mfs.Get(fid)
 	if err != nil {

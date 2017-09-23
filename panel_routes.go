@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -190,6 +193,7 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
+	// TODO: Paginate this?
 	var forumList []interface{}
 	forums, err := fstore.GetAll()
 	if err != nil {
@@ -197,6 +201,7 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
+	// ? - Should we generate something similar to the forumView? It might be a little overkill for a page which is rarely loaded in comparison to /forums/
 	for _, forum := range forums {
 		if forum.Name != "" && forum.ParentID == 0 {
 			fadmin := ForumAdmin{forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, forum.TopicCount, presetToLang(forum.Preset)}
@@ -1940,6 +1945,59 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user Use
 	http.Redirect(w, r, "/panel/themes/", http.StatusSeeOther)
 }
 
+func routePanelBackups(w http.ResponseWriter, r *http.Request, user User, backupURL string) {
+	headerVars, stats, ok := PanelUserCheck(w, r, &user)
+	if !ok {
+		return
+	}
+	if !user.IsSuperAdmin {
+		NoPermissions(w, r, user)
+		return
+	}
+
+	if backupURL != "" {
+		// We don't want them trying to break out of this directory, it shouldn't hurt since it's a super admin, but it's always good to practice good security hygiene, especially if this is one of many instances on a managed server not controlled by the superadmin/s
+		backupURL = Stripslashes(backupURL)
+
+		var ext = filepath.Ext("./backups/" + backupURL)
+		if ext == ".sql" {
+			info, err := os.Stat("./backups/" + backupURL)
+			if err != nil {
+				NotFound(w, r)
+				return
+			}
+			// TODO: Change the served filename to gosora_backup_%timestamp%.sql, the time the file was generated, not when it was modified aka what the name of it should be
+			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.sql")
+			w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
+			// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
+			http.ServeFile(w, r, "./backups/"+backupURL)
+			return
+		}
+		NotFound(w, r)
+		return
+	}
+
+	var backupList []backupItem
+	backupFiles, err := ioutil.ReadDir("./backups")
+	if err != nil {
+		InternalError(err, w)
+		return
+	}
+	for _, backupFile := range backupFiles {
+		var ext = filepath.Ext(backupFile.Name())
+		if ext != ".sql" {
+			continue
+		}
+		backupList = append(backupList, backupItem{backupFile.Name(), backupFile.ModTime()})
+	}
+
+	pi := PanelBackupPage{"Backups", user, headerVars, stats, backupList}
+	err = templates.ExecuteTemplate(w, "panel-backups.html", pi)
+	if err != nil {
+		InternalError(err, w)
+	}
+}
+
 func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user User) {
 	headerVars, stats, ok := PanelUserCheck(w, r, &user)
 	if !ok {
@@ -1964,7 +2022,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	defer rows.Close()
 
-	var logs []Log
+	var logs []logItem
 	var action, elementType, ipaddress, doneAt string
 	var elementID, actorID int
 	for rows.Next() {
@@ -2035,7 +2093,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user User) {
 		default:
 			action = "Unknown action '" + action + "' by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
 		}
-		logs = append(logs, Log{Action: template.HTML(action), IPAddress: ipaddress, DoneAt: doneAt})
+		logs = append(logs, logItem{Action: template.HTML(action), IPAddress: ipaddress, DoneAt: doneAt})
 	}
 	err = rows.Err()
 	if err != nil {

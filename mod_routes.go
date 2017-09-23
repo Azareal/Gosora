@@ -574,7 +574,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	ip := html.EscapeString(r.URL.Path[len("/users/ips/"):])
+	ip := r.FormValue("ip")
 	var uid int
 	var reqUserList = make(map[int]bool)
 
