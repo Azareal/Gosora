@@ -491,7 +491,7 @@ input, select, textarea {
 	float: left;
 	padding-right: 0px;
 }
-.rowhead .rowitem:not(.has_opt) {
+.rowhead .rowitem:not(.has_opt), .opthead .rowitem, .colstack_head .rowitem {
 	width: 100%;
 }
 

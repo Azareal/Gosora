@@ -347,9 +347,9 @@ func rebuildForumPermissions(fid int) error {
 		if dev.DebugMode {
 			log.Print("Updating the forum permissions for Group #" + strconv.Itoa(group.ID))
 		}
-		var blankList []ForumPerms
+
 		var blankIntList []int
-		group.Forums = blankList
+		group.Forums = []ForumPerms{BlankForumPerms}
 		group.CanSee = blankIntList
 
 		for ffid := range forums {
@@ -428,7 +428,7 @@ func buildForumPermissions() error {
 		if dev.DebugMode {
 			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(group.ID) + " - " + group.Name)
 		}
-		//groups[gid].Forums = append(groups[gid].Forums,BlankForumPerms) // GID 0. No longer needed now that Uncategorised occupies that slot
+		group.Forums = []ForumPerms{BlankForumPerms}
 		for fid := range forums {
 			forumPerm, ok := forumPerms[group.ID][fid]
 			if ok {
@@ -451,10 +451,10 @@ func buildForumPermissions() error {
 			}
 		}
 		if dev.SuperDebug {
-			//log.Printf("groups[gid].CanSee %+v\n", groups[gid].CanSee)
-			//log.Printf("groups[gid].Forums %+v\n", groups[gid].Forums)
-			//log.Print("len(groups[gid].CanSee)",len(groups[gid].CanSee))
-			//log.Print("len(groups[gid].Forums)",len(groups[gid].Forums))
+			//log.Printf("group.CanSee %+v\n", group.CanSee)
+			//log.Printf("group.Forums %+v\n", group.Forums)
+			//log.Print("len(group.CanSee)",len(group.CanSee))
+			//log.Print("len(group.Forums)",len(group.Forums))
 		}
 	}
 	return nil

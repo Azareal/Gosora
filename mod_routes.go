@@ -662,7 +662,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 			return
 		}
 	}
-	err = templates.ExecuteTemplate(w, "ip-search-results.html", pi)
+	err = templates.ExecuteTemplate(w, "ip-search.html", pi)
 	if err != nil {
 		InternalError(err, w)
 	}
