@@ -19,7 +19,7 @@ var form_vars = {'perm_preset': ['can_moderate','can_post','read_only','no_acces
 			<div class="formitem"><input name="forum_desc" type="text" value="{{.Desc}}" placeholder="Where the general stuff happens" /></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Hidden?</a></div>
+			<div class="formitem formlabel"><a>Active</a></div>
 			<div class="formitem"><select name="forum_active">
 				<option{{if not .Active}} selected{{end}} value="1">Yes</option>
 				<option{{if .Active}} selected{{end}} value="0">No</option>

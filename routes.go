@@ -149,6 +149,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	BuildWidgets("topics", nil, headerVars, r)
 
+	// TODO: Add a function for the qlist stuff
 	var qlist string
 	var fidList []interface{}
 	group, err := gstore.Get(user.Group)
@@ -158,11 +159,29 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	for _, fid := range group.CanSee {
-		if fstore.DirtyGet(fid).Name != "" {
+	var canSee []int
+	if user.IsSuperAdmin {
+		canSee, err = fstore.GetAllVisibleIDs()
+		if err != nil {
+			InternalError(err, w)
+			return
+		}
+	} else {
+		canSee = group.CanSee
+	}
+
+	for _, fid := range canSee {
+		forum := fstore.DirtyGet(fid)
+		if forum.Name != "" && forum.Active {
 			fidList = append(fidList, strconv.Itoa(fid))
 			qlist += "?,"
 		}
+	}
+
+	// ! Need an inline error not a page level error
+	if qlist == "" {
+		NotFound(w, r)
+		return
 	}
 	qlist = qlist[0 : len(qlist)-1]
 
@@ -400,7 +419,7 @@ func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 	for _, fid := range canSee {
 		//log.Print(forums[fid])
 		var forum = *fstore.DirtyGet(fid)
-		if forum.ParentID == 0 {
+		if forum.ParentID == 0 && forum.Name != "" && forum.Active {
 			if forum.LastTopicID != 0 {
 				forum.LastTopicTime, err = relativeTime(forum.LastTopicTime)
 				if err != nil {

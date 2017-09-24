@@ -176,6 +176,7 @@ func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 		return list, nil
 	}
 
+	// TODO: Add a function for the qlist stuff
 	var qlist string
 	var uidList []interface{}
 	for _, id := range ids {

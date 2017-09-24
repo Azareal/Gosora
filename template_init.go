@@ -129,7 +129,7 @@ func compileTemplates() error {
 	}
 
 	var forumList []Forum
-	forums, err := fstore.GetAllVisible()
+	forums, err := fstore.GetAll()
 	if err != nil {
 		return err
 	}

@@ -78,14 +78,16 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 
 		// Do a bulk forum fetch, just in case it's the SqlForumStore?
 		forum := fstore.DirtyGet(ffid)
-		fcopy := *forum
-		if hooks["topic_create_frow_assign"] != nil {
-			// TODO: Add the skip feature to all the other row based hooks?
-			if runHook("topic_create_frow_assign", &fcopy).(bool) {
-				continue
+		if forum.Name != "" && forum.Active {
+			fcopy := *forum
+			if hooks["topic_create_frow_assign"] != nil {
+				// TODO: Add the skip feature to all the other row based hooks?
+				if runHook("topic_create_frow_assign", &fcopy).(bool) {
+					continue
+				}
 			}
+			forumList = append(forumList, fcopy)
 		}
-		forumList = append(forumList, fcopy)
 	}
 
 	ctpage := CreateTopicPage{"Create Topic", user, headerVars, forumList, fid}
