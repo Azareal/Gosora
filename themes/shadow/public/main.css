@@ -393,15 +393,14 @@ textarea.large {
 /* Mini paginators aka panel paginators */
 .pageset {
 	margin-top: 4px;
-	clear: both;
-	height: 32px;
+	display: flex;
+	flex-direction: row;
 }
 .pageitem {
 	background-color: rgb(61,61,61);
 	padding: 10px;
 	margin-right: 4px;
 	font-size: 13px;
-	float: left;
 }
 
 .rowlist.bgavatars .rowitem {

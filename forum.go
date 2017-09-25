@@ -1,8 +1,12 @@
 package main
 
 //import "fmt"
-import "strconv"
-import _ "github.com/go-sql-driver/mysql"
+import (
+	"strconv"
+	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
+)
 
 type ForumAdmin struct {
 	ID         int
@@ -37,6 +41,21 @@ type ForumSimple struct {
 	Name   string
 	Active bool
 	Preset string
+}
+
+func (forum *Forum) Update(name string, desc string, active bool, preset string) error {
+	if name == "" {
+		name = forum.Name
+	}
+	preset = strings.TrimSpace(preset)
+	_, err := updateForumStmt.Exec(name, desc, active, preset, forum.ID)
+	if err != nil {
+		return err
+	}
+	if forum.Preset != preset || preset == "custom" || preset == "" {
+		permmapToQuery(presetToPermmap(preset), forum.ID)
+	}
+	_ = fstore.Reload(forum.ID)
 }
 
 // TODO: Replace this sorting mechanism with something a lot more efficient

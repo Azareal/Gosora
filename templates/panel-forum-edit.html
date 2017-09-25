@@ -21,8 +21,8 @@ var form_vars = {'perm_preset': ['can_moderate','can_post','read_only','no_acces
 		<div class="formrow">
 			<div class="formitem formlabel"><a>Active</a></div>
 			<div class="formitem"><select name="forum_active">
-				<option{{if not .Active}} selected{{end}} value="1">Yes</option>
-				<option{{if .Active}} selected{{end}} value="0">No</option>
+				<option{{if .Active}} selected{{end}} value="1">Yes</option>
+				<option{{if not .Active}} selected{{end}} value="0">No</option>
 			</select></div>
 		</div>
 		<div class="formrow">

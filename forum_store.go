@@ -8,6 +8,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"sort"
 	"sync"
@@ -28,7 +29,7 @@ type ForumStore interface {
 	Get(id int) (*Forum, error)
 	GetCopy(id int) (Forum, error)
 	BypassGet(id int) (*Forum, error)
-	Reload(id int) error // ? - Should we move this to TopicCache? Might require us to do a lot more casting in Gosora though...
+	Reload(id int) error // ? - Should we move this to ForumCache? It might require us to do some unnecessary casting though
 	//Update(Forum) error
 	Delete(id int) error
 	IncrementTopicCount(id int) error
@@ -216,9 +217,6 @@ func (mfs *MemoryForumStore) Reload(id int) error {
 }
 
 func (mfs *MemoryForumStore) CacheSet(forum *Forum) error {
-	if !mfs.Exists(forum.ID) {
-		return ErrNoRows
-	}
 	mfs.forums.Store(forum.ID, forum)
 	mfs.rebuildView()
 	return nil
@@ -278,7 +276,11 @@ func (mfs *MemoryForumStore) CacheDelete(id int) {
 	mfs.rebuildView()
 }
 
+// TODO: Add a hook to allow plugin_socialgroups to detect when one of it's forums has just been deleted?
 func (mfs *MemoryForumStore) Delete(id int) error {
+	if id == 1 {
+		return errors.New("You cannot delete the Reports forum")
+	}
 	forumUpdateMutex.Lock()
 	defer forumUpdateMutex.Unlock()
 	_, err := mfs.delete.Exec(id)

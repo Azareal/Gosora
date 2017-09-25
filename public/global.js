@@ -305,11 +305,12 @@ $(document).ready(function(){
 				//console.log("Field Type",field_type)
 				//console.log("Field Value '" + field_value + "'")
 				for (var i = 0; i < itLen; i++) {
+					var sel = "";
 					if(field_value == i || field_value == it[i]) {
 						sel = "selected ";
 						this.classList.remove(field_name + '_' + it[i]);
 						this.innerHTML = "";
-					} else sel = "";
+					}
 					out += "<option "+sel+"value='"+i+"'>"+it[i]+"</option>";
 				}
 				this.innerHTML = "<select data-field='"+field_name+"' name='"+field_name+"'>"+out+"</select>";

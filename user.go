@@ -107,7 +107,7 @@ func (user *User) RevertGroupUpdate() error {
 }
 
 // TODO: Use a transaction here
-// TODO: Add a Deactivate method?
+// ? - Add a Deactivate method? Not really needed, if someone's been bad you could do a ban, I guess it might be useful, if someone says that email x isn't actually owned by the user in question?
 func (user *User) Activate() (err error) {
 	_, err = activateUserStmt.Exec(user.ID)
 	if err != nil {
@@ -201,6 +201,7 @@ func (user *User) decreasePostStats(wcount int, topic bool) error {
 	return err
 }
 
+// TODO: Write unit tests for this
 func (user *User) initPerms() {
 	if user.TempGroup != 0 {
 		user.Group = user.TempGroup
@@ -272,6 +273,7 @@ func SendValidationEmail(username string, email string, token string) bool {
 	return SendEmail(email, subject, msg)
 }
 
+// TODO: Write units tests for this
 func wordsToScore(wcount int, topic bool) (score int) {
 	if topic {
 		score = 2
@@ -288,6 +290,7 @@ func wordsToScore(wcount int, topic bool) (score int) {
 	return score
 }
 
+// TODO: Write unit tests for this
 func buildProfileURL(slug string, uid int) string {
 	if slug == "" {
 		return "/user/" + strconv.Itoa(uid)

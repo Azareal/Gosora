@@ -417,11 +417,6 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 		return
 	}
 
-	forumName := r.PostFormValue("forum_name")
-	forumDesc := r.PostFormValue("forum_desc")
-	forumPreset := stripInvalidPreset(r.PostFormValue("forum_preset"))
-	forumActive := r.PostFormValue("forum_active")
-
 	forum, err := fstore.Get(fid)
 	if err == ErrNoRows {
 		LocalErrorJSQ("The forum you're trying to edit doesn't exist.", w, r, user, isJs)
@@ -431,40 +426,23 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 		return
 	}
 
-	if forumName == "" {
-		forumName = forum.Name
-	}
+	forumName := r.PostFormValue("forum_name")
+	forumDesc := r.PostFormValue("forum_desc")
+	forumPreset := stripInvalidPreset(r.PostFormValue("forum_preset"))
+	forumActive := r.PostFormValue("forum_active")
 
-	var active bool
+	var active = false
 	if forumActive == "" {
 		active = forum.Active
 	} else if forumActive == "1" || forumActive == "Show" {
 		active = true
-	} else {
-		active = false
 	}
 
-	forumUpdateMutex.Lock()
-	_, err = updateForumStmt.Exec(forumName, forumDesc, active, forumPreset, fid)
+	err = forum.Update(forumName, forumDesc, active, forumPreset)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
-	if forum.Name != forumName {
-		forum.Name = forumName
-	}
-	if forum.Desc != forumDesc {
-		forum.Desc = forumDesc
-	}
-	if forum.Active != active {
-		forum.Active = active
-	}
-	if forum.Preset != forumPreset {
-		forum.Preset = forumPreset
-	}
-	forumUpdateMutex.Unlock()
-
-	permmapToQuery(presetToPermmap(forumPreset), fid)
 
 	if !isJs {
 		http.Redirect(w, r, "/panel/forums/", http.StatusSeeOther)
@@ -473,6 +451,7 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 	}
 }
 
+// ! This probably misses the forumView cache
 func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
