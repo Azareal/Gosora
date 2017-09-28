@@ -201,6 +201,10 @@ func (user *User) decreasePostStats(wcount int, topic bool) error {
 	return err
 }
 
+func (user *User) Copy() User {
+	return *user
+}
+
 // TODO: Write unit tests for this
 func (user *User) initPerms() {
 	if user.TempGroup != 0 {
@@ -288,6 +292,11 @@ func wordsToScore(wcount int, topic bool) (score int) {
 		score++
 	}
 	return score
+}
+
+// For use in tests and to help generate dummy users for forums which don't have last posters
+func getDummyUser() *User {
+	return &User{ID: 0, Name: ""}
 }
 
 // TODO: Write unit tests for this

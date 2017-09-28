@@ -1,8 +1,8 @@
 # Gosora [![Azareal's Discord Chat](https://img.shields.io/badge/style-Invite-7289DA.svg?style=flat&label=Discord)](https://discord.gg/eyYvtTf)
 
-A super fast forum software written in Go.
+A super fast forum software written in Go. You can talk to us on our Discord chat!
 
-The initial code-base was forked from one of my side projects, but has now gone far beyond that. We're still fairly early in development, so the code-base might change at an incredible rate. We plan to start stabilising it somewhat once we enter alpha.
+The initial code-base was forked from one of my side projects, but has now gone far beyond that. We're still fairly early in development, so the code-base might change at an incredible rate. We plan to stop making as many breaking changes once we release the first alpha.
 
 If you like this software, please give it a star and give us some feedback :)
 

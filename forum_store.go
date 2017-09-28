@@ -27,14 +27,13 @@ type ForumStore interface {
 	LoadForums() error
 	DirtyGet(id int) *Forum
 	Get(id int) (*Forum, error)
-	GetCopy(id int) (Forum, error)
 	BypassGet(id int) (*Forum, error)
 	Reload(id int) error // ? - Should we move this to ForumCache? It might require us to do some unnecessary casting though
 	//Update(Forum) error
 	Delete(id int) error
-	IncrementTopicCount(id int) error
-	DecrementTopicCount(id int) error
-	UpdateLastTopic(topicName string, tid int, username string, uid int, time string, fid int) error
+	AddTopic(tid int, uid int, fid int) error
+	RemoveTopic(fid int) error
+	UpdateLastTopic(tid int, uid int, fid int) error
 	Exists(id int) bool
 	GetAll() ([]*Forum, error)
 	GetAllIDs() ([]int, error)
@@ -51,6 +50,7 @@ type ForumCache interface {
 	CacheGet(id int) (*Forum, error)
 	CacheSet(forum *Forum) error
 	CacheDelete(id int)
+	GetLength() int
 }
 
 // MemoryForumStore is a struct which holds an arbitrary number of forums in memory, usually all of them, although we might introduce functionality to hold a smaller subset in memory for sites with an extremely large number of forums
@@ -58,7 +58,6 @@ type MemoryForumStore struct {
 	forums    sync.Map     // map[int]*Forum
 	forumView atomic.Value // []*Forum
 	//fids []int
-	forumCount int
 
 	get           *sql.Stmt
 	getAll        *sql.Stmt
@@ -94,10 +93,6 @@ func NewMemoryForumStore() *MemoryForumStore {
 
 // TODO: Add support for subforums
 func (mfs *MemoryForumStore) LoadForums() error {
-	log.Print("Adding the uncategorised forum")
-	forumUpdateMutex.Lock()
-	defer forumUpdateMutex.Unlock()
-
 	var forumView []*Forum
 	addForum := func(forum *Forum) {
 		mfs.forums.Store(forum.ID, forum)
@@ -114,8 +109,8 @@ func (mfs *MemoryForumStore) LoadForums() error {
 
 	var i = 0
 	for ; rows.Next(); i++ {
-		forum := Forum{ID: 0, Active: true, Preset: "all"}
-		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+		forum := &Forum{ID: 0, Active: true, Preset: "all"}
+		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 		if err != nil {
 			return err
 		}
@@ -129,15 +124,27 @@ func (mfs *MemoryForumStore) LoadForums() error {
 		}
 
 		forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-		forum.LastTopicLink = buildTopicURL(nameToSlug(forum.LastTopic), forum.LastTopicID)
-		addForum(&forum)
+
+		topic, err := topics.Get(forum.LastTopicID)
+		if err != nil {
+			topic = getDummyTopic()
+		}
+		user, err := users.Get(forum.LastReplyerID)
+		if err != nil {
+			user = getDummyUser()
+		}
+		forum.LastTopic = topic
+		forum.LastReplyer = user
+		//forum.SetLast(topic, user)
+
+		addForum(forum)
 	}
-	mfs.forumCount = i
 	mfs.forumView.Store(forumView)
 	return rows.Err()
 }
 
 // TODO: Hide social groups too
+// ? - Will this be hit a lot by plugin_socialgroups?
 func (mfs *MemoryForumStore) rebuildView() {
 	var forumView []*Forum
 	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
@@ -173,46 +180,75 @@ func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 	if !ok || fint.(*Forum).Name == "" {
 		var forum = &Forum{ID: id}
 		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+		if err != nil {
+			return forum, err
+		}
 
 		forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-		forum.LastTopicLink = buildTopicURL(nameToSlug(forum.LastTopic), forum.LastTopicID)
+
+		topic, err := topics.Get(forum.LastTopicID)
+		if err != nil {
+			topic = getDummyTopic()
+		}
+		user, err := users.Get(forum.LastReplyerID)
+		if err != nil {
+			user = getDummyUser()
+		}
+		forum.LastTopic = topic
+		forum.LastReplyer = user
+		//forum.SetLast(topic, user)
+
+		mfs.CacheSet(forum)
 		return forum, err
 	}
 	return fint.(*Forum), nil
 }
 
-func (mfs *MemoryForumStore) GetCopy(id int) (Forum, error) {
-	fint, ok := mfs.forums.Load(id)
-	if !ok || fint.(*Forum).Name == "" {
-		var forum = Forum{ID: id}
-		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
-
-		forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-		forum.LastTopicLink = buildTopicURL(nameToSlug(forum.LastTopic), forum.LastTopicID)
-		return forum, err
-	}
-	return *fint.(*Forum), nil
-}
-
 func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
-	var forum = Forum{ID: id}
+	var forum = &Forum{ID: id}
 	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+	if err != nil {
+		return nil, err
+	}
 
 	forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-	forum.LastTopicLink = buildTopicURL(nameToSlug(forum.LastTopic), forum.LastTopicID)
-	return &forum, err
+
+	topic, err := topics.Get(forum.LastTopicID)
+	if err != nil {
+		topic = getDummyTopic()
+	}
+	user, err := users.Get(forum.LastReplyerID)
+	if err != nil {
+		user = getDummyUser()
+	}
+	forum.LastTopic = topic
+	forum.LastReplyer = user
+	//forum.SetLast(topic, user)
+
+	return forum, err
 }
 
 func (mfs *MemoryForumStore) Reload(id int) error {
-	var forum = Forum{ID: id}
+	var forum = &Forum{ID: id}
 	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
 	if err != nil {
 		return err
 	}
 	forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-	forum.LastTopicLink = buildTopicURL(nameToSlug(forum.LastTopic), forum.LastTopicID)
 
-	mfs.CacheSet(&forum)
+	topic, err := topics.Get(forum.LastTopicID)
+	if err != nil {
+		topic = getDummyTopic()
+	}
+	user, err := users.Get(forum.LastReplyerID)
+	if err != nil {
+		user = getDummyUser()
+	}
+	forum.LastTopic = topic
+	forum.LastReplyer = user
+	//forum.SetLast(topic, user)
+
+	mfs.CacheSet(forum)
 	return nil
 }
 
@@ -281,8 +317,6 @@ func (mfs *MemoryForumStore) Delete(id int) error {
 	if id == 1 {
 		return errors.New("You cannot delete the Reports forum")
 	}
-	forumUpdateMutex.Lock()
-	defer forumUpdateMutex.Unlock()
 	_, err := mfs.delete.Exec(id)
 	if err != nil {
 		return err
@@ -291,53 +325,40 @@ func (mfs *MemoryForumStore) Delete(id int) error {
 	return nil
 }
 
-// ! Is this racey?
-func (mfs *MemoryForumStore) IncrementTopicCount(id int) error {
-	forum, err := mfs.Get(id)
+func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
+	_, err := updateForumCacheStmt.Exec(tid, uid, fid)
 	if err != nil {
 		return err
 	}
-	_, err = addTopicsToForumStmt.Exec(1, id)
+	_, err = addTopicsToForumStmt.Exec(1, fid)
 	if err != nil {
 		return err
 	}
-	forum.TopicCount++
+	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
+	mfs.Reload(fid)
 	return nil
 }
 
-// ! Is this racey?
-func (mfs *MemoryForumStore) DecrementTopicCount(id int) error {
-	forum, err := mfs.Get(id)
+// TODO: Update the forum cache with the latest topic
+func (mfs *MemoryForumStore) RemoveTopic(fid int) error {
+	_, err := removeTopicsFromForumStmt.Exec(1, fid)
 	if err != nil {
 		return err
 	}
-	_, err = removeTopicsFromForumStmt.Exec(1, id)
-	if err != nil {
-		return err
-	}
-	forum.TopicCount--
+	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
+	mfs.Reload(fid)
 	return nil
 }
 
+// DEPRECATED. forum.Update() will be the way to do this in the future, once it's completed
 // TODO: Have a pointer to the last topic rather than storing it on the forum itself
-// ! Is this racey?
-func (mfs *MemoryForumStore) UpdateLastTopic(topicName string, tid int, username string, uid int, time string, fid int) error {
-	forum, err := mfs.Get(fid)
+func (mfs *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
+	_, err := updateForumCacheStmt.Exec(tid, uid, fid)
 	if err != nil {
 		return err
 	}
-
-	_, err = updateForumCacheStmt.Exec(topicName, tid, username, uid, fid)
-	if err != nil {
-		return err
-	}
-
-	forum.LastTopic = topicName
-	forum.LastTopicID = tid
-	forum.LastReplyer = username
-	forum.LastReplyerID = uid
-	forum.LastTopicTime = time
-
+	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
+	mfs.Reload(fid)
 	return nil
 }
 
@@ -354,17 +375,23 @@ func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active b
 	}
 	fid := int(fid64)
 
-	mfs.forums.Store(fid, &Forum{fid, buildForumURL(nameToSlug(forumName), fid), forumName, forumDesc, active, preset, 0, "", 0, "", "", 0, "", 0, ""})
-	mfs.forumCount++
+	err = mfs.Reload(fid)
+	if err != nil {
+		return 0, err
+	}
 
-	// TODO: Add a GroupStore. How would it interact with the ForumStore?
 	permmapToQuery(presetToPermmap(preset), fid)
 	forumCreateMutex.Unlock()
-
-	if active {
-		mfs.rebuildView()
-	}
 	return fid, nil
+}
+
+// ! Might be slightly inaccurate, if the sync.Map is constantly shifting and churning, but it'll stabilise eventually. Also, slow. Don't use this on every request x.x
+func (mfs *MemoryForumStore) GetLength() (length int) {
+	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
+		length++
+		return true
+	})
+	return length
 }
 
 // TODO: Get the total count of forums in the forum store minus the blanked forums rather than doing a heavy query for this?

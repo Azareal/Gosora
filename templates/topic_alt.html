@@ -27,7 +27,7 @@
 			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container">
-			<div class="hide_on_edit topic_content user_content">{{.Topic.Content}}</div>
+			<div class="hide_on_edit topic_content user_content">{{.Topic.ContentHTML}}</div>
 			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 			<div class="button_container">
 				{{if .CurrentUser.Loggedin}}
@@ -58,6 +58,7 @@
 				<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>
 				<span>{{.ActionType}}</span>
 			{{else}}
+			{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
 			<div class="editable_block user_content">{{.ContentHtml}}</div>
 			<div class="button_container">
 				{{if $.CurrentUser.Loggedin}}

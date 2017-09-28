@@ -7,8 +7,13 @@
 package main
 
 //import "fmt"
-import "strconv"
-import "html/template"
+import (
+	"html"
+	"html/template"
+	"strconv"
+)
+
+// ? - Add a TopicMeta struct for *Forums?
 
 type Topic struct {
 	ID          int
@@ -54,6 +59,7 @@ type TopicUser struct {
 	Group         int
 	Avatar        string
 	ContentLines  int
+	ContentHTML   string
 	Tag           string
 	URL           string
 	URLPrefix     string
@@ -138,6 +144,18 @@ func (topic *Topic) RemoveLike(uid int) error {
 	return nil
 }
 
+func (topic *Topic) Update(name string, content string) error {
+	content = preparseMessage(content)
+	parsed_content := parseMessage(html.EscapeString(content))
+	_, err := editTopicStmt.Exec(name, content, parsed_content, topic.ID)
+
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(topic.ID)
+	}
+	return err
+}
+
 func (topic *Topic) CreateActionReply(action string, ipaddress string, user User) (err error) {
 	_, err = createActionReplyStmt.Exec(topic.ID, action, ipaddress, user.ID)
 	if err != nil {
@@ -152,8 +170,12 @@ func (topic *Topic) CreateActionReply(action string, ipaddress string, user User
 	return err
 }
 
+func (topic *Topic) Copy() Topic {
+	return *topic
+}
+
 // TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser
-func getTopicuser(tid int) (TopicUser, error) {
+func getTopicUser(tid int) (TopicUser, error) {
 	tcache, tok := topics.(TopicCache)
 	ucache, uok := users.(UserCache)
 	if tok && uok {
@@ -165,7 +187,7 @@ func getTopicuser(tid int) (TopicUser, error) {
 			}
 
 			// We might be better off just passing seperate topic and user structs to the caller?
-			return copyTopicToTopicuser(topic, user), nil
+			return copyTopicToTopicUser(topic, user), nil
 		} else if ucache.GetLength() < ucache.GetCapacity() {
 			topic, err = topics.Get(tid)
 			if err != nil {
@@ -175,7 +197,7 @@ func getTopicuser(tid int) (TopicUser, error) {
 			if err != nil {
 				return TopicUser{ID: tid}, err
 			}
-			return copyTopicToTopicuser(topic, user), nil
+			return copyTopicToTopicUser(topic, user), nil
 		}
 	}
 
@@ -193,7 +215,7 @@ func getTopicuser(tid int) (TopicUser, error) {
 	return tu, err
 }
 
-func copyTopicToTopicuser(topic *Topic, user *User) (tu TopicUser) {
+func copyTopicToTopicUser(topic *Topic, user *User) (tu TopicUser) {
 	tu.UserLink = user.Link
 	tu.CreatedByName = user.Name
 	tu.Group = user.Group
@@ -218,6 +240,11 @@ func copyTopicToTopicuser(topic *Topic, user *User) (tu TopicUser) {
 	tu.Data = topic.Data
 
 	return tu
+}
+
+// For use in tests and for generating blank topics for forums which don't have a last poster
+func getDummyTopic() *Topic {
+	return &Topic{ID: 0, Title: ""}
 }
 
 func getTopicByReply(rid int) (*Topic, error) {

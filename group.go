@@ -11,6 +11,7 @@ type GroupAdmin struct {
 	CanDelete bool
 }
 
+// ! Fix the data races
 type Group struct {
 	ID              int
 	Name            string
@@ -24,4 +25,8 @@ type Group struct {
 	PluginPermsText []byte
 	Forums          []ForumPerms
 	CanSee          []int // The IDs of the forums this group can see
+}
+
+func (group *Group) Copy() Group {
+	return *group
 }

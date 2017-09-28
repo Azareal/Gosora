@@ -186,7 +186,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing getForums statement.")
-	getForumsStmt, err = db.Prepare("SELECT `fid`,`name`,`desc`,`active`,`preset`,`parentID`,`parentType`,`topicCount`,`lastTopic`,`lastTopicID`,`lastReplyer`,`lastReplyerID`,`lastTopicTime` FROM `forums` ORDER BY fid ASC")
+	getForumsStmt, err = db.Prepare("SELECT `fid`,`name`,`desc`,`active`,`preset`,`parentID`,`parentType`,`topicCount`,`lastTopicID`,`lastReplyerID` FROM `forums` ORDER BY fid ASC")
 	if err != nil {
 		return err
 	}
@@ -534,7 +534,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing updateForumCache statement.")
-	updateForumCacheStmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = UTC_TIMESTAMP() WHERE `fid` = ?")
+	updateForumCacheStmt, err = db.Prepare("UPDATE `forums` SET `lastTopicID` = ?,`lastReplyerID` = ? WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}

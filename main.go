@@ -82,14 +82,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if config.CacheTopicUser == CACHE_STATIC {
-		users = NewMemoryUserStore(config.UserCacheCapacity)
-		topics = NewMemoryTopicStore(config.TopicCacheCapacity)
-	} else {
-		users = NewSQLUserStore()
-		topics = NewSQLTopicStore()
-	}
-
 	log.Print("Loading the static files.")
 	err = initStaticFiles()
 	if err != nil {

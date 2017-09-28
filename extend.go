@@ -6,8 +6,10 @@
  */
 package main
 
-import "log"
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 var plugins = make(map[string]*Plugin)
 
@@ -15,7 +17,6 @@ var plugins = make(map[string]*Plugin)
 var hooks = map[string][]func(interface{}) interface{}{
 	"forums_frow_assign":       nil,
 	"topic_create_frow_assign": nil,
-	"rrow_assign":              nil, // TODO: Rename this hook to topic_rrow_assign
 }
 
 // Hooks with a variable number of arguments
@@ -26,6 +27,7 @@ var vhooks = map[string]func(...interface{}) interface{}{
 	"forum_trow_assign":            nil,
 	"topics_topic_row_assign":      nil,
 	//"topics_user_row_assign": nil,
+	"topic_reply_row_assign": nil,
 	"create_group_preappend": nil, // What is this? Investigate!
 	"topic_create_pre_loop":  nil,
 }
@@ -100,6 +102,15 @@ type Plugin struct {
 	Uninstall  func() error
 
 	Hooks map[string]int
+	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins
+}
+
+func initExtend() (err error) {
+	err = InitPluginLangs()
+	if err != nil {
+		return err
+	}
+	return LoadPlugins()
 }
 
 // LoadPlugins polls the database to see which plugins have been activated and which have been installed
@@ -111,8 +122,7 @@ func LoadPlugins() error {
 	defer rows.Close()
 
 	var uname string
-	var active bool
-	var installed bool
+	var active, installed bool
 	for rows.Next() {
 		err = rows.Scan(&uname, &active, &installed)
 		if err != nil {

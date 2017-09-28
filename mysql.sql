@@ -26,11 +26,8 @@ CREATE TABLE `forums`(
 	`preset` varchar(100) DEFAULT '' not null,
 	`parentID` int DEFAULT 0 not null, /* TODO: Add support for subforums */
 	`parentType` varchar(50) DEFAULT '' not null,
-	`lastTopic` varchar(100) DEFAULT '' not null,
 	`lastTopicID` int DEFAULT 0 not null,
-	`lastReplyer` varchar(100) DEFAULT '' not null,
 	`lastReplyerID` int DEFAULT 0 not null,
-	`lastTopicTime` datetime not null,
 	primary key(`fid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
@@ -233,7 +230,7 @@ INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`) VALUES ('Awaiting 
 INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`tag`) VALUES ('Not Loggedin','{"ViewTopic":true}','{}','Guest');
 
 INSERT INTO forums(`name`,`active`) VALUES ('Reports',0);
-INSERT INTO forums(`name`,`lastTopicTime`,`lastTopicID`,`lastReplyer`,`lastReplyerID`,`lastTopic`) VALUES ('General',UTC_TIMESTAMP(),1,"Admin",1,'Test Topic');
+INSERT INTO forums(`name`,`lastTopicID`,`lastReplyerID`) VALUES ("General",1,1);
 
 INSERT INTO forums_permissions(`gid`,`fid`,`permissions`) VALUES (1,1,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"PinTopic":true,"CloseTopic":true}');
 INSERT INTO forums_permissions(`gid`,`fid`,`permissions`) VALUES (2,1,'{"ViewTopic":true,"CreateReply":true,"CloseTopic":true}');

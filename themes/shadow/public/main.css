@@ -7,6 +7,11 @@ body {
 	background-color: #222222;
 	margin: 0;
 }
+p::selection, span::selection, a::selection {
+	background-color: hsl(0,0%,75%);
+	color: hsl(0,0%,20%);
+	font-weight: 100;
+}
 
 #back {
 	margin-left: auto;
@@ -133,7 +138,7 @@ a {
 }
 
 .rowblock:not(.opthead):not(.colstack_head):not(.rowhead) .rowitem {
-	font-size: 15px;
+	font-size: 15px; /*16px*/
 }
 
 .rowblock:last-child, .colstack_item:last-child {
@@ -479,7 +484,7 @@ input, select, textarea {
 }
 
 /* Forum View */
-.rowhead, .opthead, .colstack_head {
+.rowhead, .opthead, .colstack_head, .rowhead .rowitem {
 	display: flex;
 	flex-direction: row;
 }
@@ -795,6 +800,9 @@ input, select, textarea {
 		width: calc(100% - 84px);
 	}
 	.topic_list .topic_right {
+		display: none;
+	}
+	#poweredBy span {
 		display: none;
 	}
 }

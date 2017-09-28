@@ -61,7 +61,7 @@ type MemoryTopicStore struct {
 
 // NewMemoryTopicStore gives you a new instance of MemoryTopicStore
 func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
-	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
+	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,7 +114,7 @@ func (mts *MemoryTopicStore) Get(id int) (*Topic, error) {
 	}
 
 	topic = &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
 		topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 		_ = mts.CacheAdd(topic)
@@ -125,14 +125,14 @@ func (mts *MemoryTopicStore) Get(id int) (*Topic, error) {
 // BypassGet will always bypass the cache and pull the topic directly from the database
 func (mts *MemoryTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return topic, err
 }
 
 func (mts *MemoryTopicStore) Reload(id int) error {
 	topic := &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
 		topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 		_ = mts.CacheSet(topic)
@@ -160,7 +160,7 @@ func (mts *MemoryTopicStore) Delete(id int) error {
 		return err
 	}
 
-	err = fstore.DecrementTopicCount(topic.ParentID)
+	err = fstore.RemoveTopic(topic.ParentID)
 	if err != nil && err != ErrNoRows {
 		return err
 	}
@@ -271,7 +271,7 @@ type SQLTopicStore struct {
 }
 
 func NewSQLTopicStore() *SQLTopicStore {
-	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
+	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -297,7 +297,7 @@ func NewSQLTopicStore() *SQLTopicStore {
 
 func (sts *SQLTopicStore) Get(id int) (*Topic, error) {
 	topic := Topic{ID: id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return &topic, err
 }
@@ -305,7 +305,7 @@ func (sts *SQLTopicStore) Get(id int) (*Topic, error) {
 // BypassGet is an alias of Get(), as we don't have a cache for SQLTopicStore
 func (sts *SQLTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID: id}
-	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
 	return topic, err
 }
@@ -332,7 +332,7 @@ func (sts *SQLTopicStore) Delete(id int) error {
 		return err
 	}
 
-	err = fstore.DecrementTopicCount(topic.ParentID)
+	err = fstore.RemoveTopic(topic.ParentID)
 	if err != nil && err != ErrNoRows {
 		return err
 	}

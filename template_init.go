@@ -106,9 +106,9 @@ func compileTemplates() error {
 
 	log.Print("Compiling the templates")
 
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, "Date", "Date", 0, "", "127.0.0.1", 0, 1, "classname", "weird-data", buildProfileURL("fake-user", 62), "Fake User", config.DefaultGroup, "", 0, "", "", "", "", 58, false}
-	var replyList []Reply
-	replyList = append(replyList, Reply{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", config.DefaultGroup, "", 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, "Date", "Date", 0, "", "127.0.0.1", 0, 1, "classname", "weird-data", buildProfileURL("fake-user", 62), "Fake User", config.DefaultGroup, "", 0, "", "", "", "", "", 58, false}
+	var replyList []ReplyUser
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", config.DefaultGroup, "", 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
 	var varList = make(map[string]VarItem)
 	tpage := TopicPage{"Title", user, headerVars, replyList, topic, 1, 1}
@@ -135,6 +135,7 @@ func compileTemplates() error {
 	}
 
 	for _, forum := range forums {
+		//log.Printf("*forum %+v\n", *forum)
 		forumList = append(forumList, *forum)
 	}
 	varList = make(map[string]VarItem)
@@ -154,7 +155,7 @@ func compileTemplates() error {
 
 	//var topicList []TopicUser
 	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
-	forumItem := Forum{1, "general", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0, "", "", 0, "", 0, ""}
+	forumItem := makeDummyForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	forumPage := ForumPage{"General Forum", user, headerVars, topicsList, forumItem, 1, 1}
 	forumTmpl, err := c.compileTemplate("forum.html", "templates/", "ForumPage", forumPage, varList)
 	if err != nil {

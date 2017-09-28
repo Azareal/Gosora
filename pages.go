@@ -54,7 +54,7 @@ type TopicPage struct {
 	Title       string
 	CurrentUser User
 	Header      *HeaderVars
-	ItemList    []Reply
+	ItemList    []ReplyUser
 	Topic       TopicUser
 	Page        int
 	LastPage    int
@@ -72,7 +72,7 @@ type ForumPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	ItemList    []*TopicsRow
-	Forum       Forum
+	Forum       *Forum
 	Page        int
 	LastPage    int
 }
@@ -88,7 +88,7 @@ type ProfilePage struct {
 	Title        string
 	CurrentUser  User
 	Header       *HeaderVars
-	ItemList     []Reply
+	ItemList     []ReplyUser
 	ProfileOwner User
 }
 

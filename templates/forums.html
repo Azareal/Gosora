@@ -5,7 +5,7 @@
 	<div class="rowitem"><a>Forums</a></div>
 </div>
 <div class="rowblock">
-	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopicTime)}}datarow{{end}}">
+	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopic.Title)}}datarow{{end}}">
 		{{if .Desc}}<span style="float: left;">
 			<a href="{{.Link}}" style="">{{.Name}}</a>
 			<br /><span class="rowsmall">{{.Desc}}</span>
@@ -15,7 +15,7 @@
 		</span>{{end}}
 
 		<span style="float: right;">
-			<a href="{{.LastTopicLink}}" style="float: right;font-size: 14px;">{{.LastTopic}}</a>
+			<a href="{{.LastTopic.Link}}" style="float: right;font-size: 14px;">{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}None{{end}}</a>
 			{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}
 		</span>
 		<div style="clear: both;"></div>

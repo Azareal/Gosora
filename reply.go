@@ -8,8 +8,7 @@ package main
 
 // ? - Should we add a reply store to centralise all the reply logic? Would this cover profile replies too or would that be seperate?
 
-type Reply struct /* Should probably rename this to ReplyUser and rename ReplyShort to Reply */
-{
+type ReplyUser struct {
 	ID            int
 	ParentID      int
 	Content       string
@@ -36,7 +35,7 @@ type Reply struct /* Should probably rename this to ReplyUser and rename ReplySh
 	ActionIcon    string
 }
 
-type ReplyShort struct {
+type Reply struct {
 	ID           int
 	ParentID     int
 	Content      string
@@ -51,14 +50,18 @@ type ReplyShort struct {
 	LikeCount    int
 }
 
-func getReply(id int) (*ReplyShort, error) {
-	reply := ReplyShort{ID: id}
+func (reply *Reply) Copy() Reply {
+	return *reply
+}
+
+func getReply(id int) (*Reply, error) {
+	reply := Reply{ID: id}
 	err := getReplyStmt.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress, &reply.LikeCount)
 	return &reply, err
 }
 
-func getUserReply(id int) (*ReplyShort, error) {
-	reply := ReplyShort{ID: id}
+func getUserReply(id int) (*Reply, error) {
+	reply := Reply{ID: id}
 	err := getUserReplyStmt.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress)
 	return &reply, err
 }

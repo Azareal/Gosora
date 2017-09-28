@@ -159,6 +159,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
+	// TODO: Make CanSee a method on *Group with a canSee field?
 	var canSee []int
 	if user.IsSuperAdmin {
 		canSee, err = fstore.GetAllVisibleIDs()
@@ -379,7 +380,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 		topicItem.LastUser = userList[topicItem.LastReplyBy]
 	}
 
-	pi := ForumPage{forum.Name, user, headerVars, topicList, *forum, page, lastPage}
+	pi := ForumPage{forum.Name, user, headerVars, topicList, forum, page, lastPage}
 	if preRenderHooks["pre_render_view_forum"] != nil {
 		if runPreRenderHook("pre_render_view_forum", w, r, &user, &pi) {
 			return
@@ -417,16 +418,22 @@ func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	for _, fid := range canSee {
-		//log.Print(forums[fid])
-		var forum = *fstore.DirtyGet(fid)
+		// Avoid data races by copying the struct into something we can freely mold without worrying about breaking something somewhere else
+		var forum = fstore.DirtyGet(fid).Copy()
 		if forum.ParentID == 0 && forum.Name != "" && forum.Active {
 			if forum.LastTopicID != 0 {
-				forum.LastTopicTime, err = relativeTime(forum.LastTopicTime)
-				if err != nil {
-					InternalError(err, w)
+				//topic, user := forum.GetLast()
+				//if topic.ID != 0 && user.ID != 0 {
+				if forum.LastTopic.ID != 0 && forum.LastReplyer.ID != 0 {
+					forum.LastTopicTime, err = relativeTime(forum.LastTopic.LastReplyAt)
+					if err != nil {
+						InternalError(err, w)
+						return
+					}
+				} else {
+					forum.LastTopicTime = ""
 				}
 			} else {
-				forum.LastTopic = "None"
 				forum.LastTopicTime = ""
 			}
 			if hooks["forums_frow_assign"] != nil {
@@ -448,7 +455,7 @@ func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 	var err error
 	var page, offset int
-	var replyList []Reply
+	var replyList []ReplyUser
 
 	page, _ = strconv.Atoi(r.FormValue("page"))
 
@@ -465,7 +472,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Get the topic...
-	topic, err := getTopicuser(tid)
+	topic, err := getTopicUser(tid)
 	if err == ErrNoRows {
 		NotFound(w, r)
 		return
@@ -488,7 +495,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 
 	BuildWidgets("view_topic", &topic, headerVars, r)
 
-	topic.Content = parseMessage(topic.Content)
+	topic.ContentHTML = parseMessage(topic.Content)
 	topic.ContentLines = strings.Count(topic.Content, "\n")
 
 	// We don't want users posting in locked topics...
@@ -543,6 +550,8 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		page = 1
 	}
 
+	tpage := TopicPage{topic.Title, user, headerVars, replyList, topic, page, lastPage}
+
 	// Get the replies..
 	rows, err := getTopicRepliesOffsetStmt.Query(topic.ID, offset, config.ItemsPerPage)
 	if err == ErrNoRows {
@@ -554,7 +563,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	defer rows.Close()
 
-	replyItem := Reply{ClassName: ""}
+	replyItem := ReplyUser{ClassName: ""}
 	for rows.Next() {
 		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.ActionType)
 		if err != nil {
@@ -628,9 +637,8 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		}
 		replyItem.Liked = false
 
-		// TODO: Rename this to topic_rrow_assign
-		if hooks["rrow_assign"] != nil {
-			runHook("rrow_assign", &replyItem)
+		if vhooks["topic_reply_row_assign"] != nil {
+			runVhook("topic_reply_row_assign", &tpage, &replyItem)
 		}
 		replyList = append(replyList, replyItem)
 	}
@@ -640,7 +648,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	tpage := TopicPage{topic.Title, user, headerVars, replyList, topic, page, lastPage}
+	tpage.ItemList = replyList
 	if preRenderHooks["pre_render_view_topic"] != nil {
 		if runPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
 			return
@@ -658,7 +666,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 	var err error
 	var replyContent, replyCreatedByName, replyCreatedAt, replyAvatar, replyTag, replyClassName string
 	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyLines, replyGroup int
-	var replyList []Reply
+	var replyList []ReplyUser
 
 	// SEO URLs...
 	halves := strings.Split(r.URL.Path[len("/user/"):], ".")
@@ -736,7 +744,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 
 		// TODO: Add a hook here
 
-		replyList = append(replyList, Reply{rid, puser.ID, replyContent, parseMessage(replyContent), replyCreatedBy, buildProfileURL(nameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
+		replyList = append(replyList, ReplyUser{rid, puser.ID, replyContent, parseMessage(replyContent), replyCreatedBy, buildProfileURL(nameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
 	}
 	err = rows.Err()
 	if err != nil {

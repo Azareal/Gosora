@@ -4,6 +4,7 @@ import (
 	//"log"
 	//"fmt"
 	"html"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -26,7 +27,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	oldTopic, err := topics.Get(tid)
+	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
 		PreErrorJSQ("The topic you tried to edit doesn't exist.", w, r, isJs)
 		return
@@ -36,7 +37,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, oldTopic.ParentID)
+	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if !ok {
 		return
 	}
@@ -47,23 +48,18 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 
 	topicName := r.PostFormValue("topic_name")
 	topicContent := html.EscapeString(r.PostFormValue("topic_content"))
+	log.Print("topicContent ", topicContent)
 
-	// TODO: Move this bit to the TopicStore
-	_, err = editTopicStmt.Exec(topicName, preparseMessage(topicContent), parseMessage(html.EscapeString(preparseMessage(topicContent))), tid)
+	err = topic.Update(topicName, topicContent)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
 
-	err = fstore.UpdateLastTopic(topicName, tid, user.Name, user.ID, time.Now().Format("2006-01-02 15:04:05"), oldTopic.ParentID)
+	err = fstore.UpdateLastTopic(topic.ID, user.ID, topic.ParentID)
 	if err != nil && err != ErrNoRows {
-		InternalError(err, w)
+		InternalErrorJSQ(err, w, r, isJs)
 		return
-	}
-
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(oldTopic.ID)
 	}
 
 	if !isJs {

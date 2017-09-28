@@ -25,6 +25,16 @@ func initDatabase() (err error) {
 		return err
 	}
 
+	// We have to put this here, otherwise LoadForums() won't be able to get the last poster data when building it's forums
+	log.Print("Initialising the user and topic stores")
+	if config.CacheTopicUser == CACHE_STATIC {
+		users = NewMemoryUserStore(config.UserCacheCapacity)
+		topics = NewMemoryTopicStore(config.TopicCacheCapacity)
+	} else {
+		users = NewSQLUserStore()
+		topics = NewSQLTopicStore()
+	}
+
 	log.Print("Loading the forums.")
 	fstore = NewMemoryForumStore()
 	err = fstore.LoadForums()
@@ -45,7 +55,7 @@ func initDatabase() (err error) {
 	}
 
 	log.Print("Loading the plugins.")
-	err = LoadPlugins()
+	err = initExtend()
 	if err != nil {
 		return err
 	}

@@ -215,7 +215,7 @@ func write_selects(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleSelect("getGroups", "users_groups", "gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "", "", "")
 
-	adapter.SimpleSelect("getForums", "forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime", "", "fid ASC", "")
+	adapter.SimpleSelect("getForums", "forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "", "fid ASC", "")
 
 	adapter.SimpleSelect("getForumsPermissions", "forums_permissions", "gid, fid, permissions", "", "gid ASC, fid ASC", "")
 
@@ -358,7 +358,7 @@ func write_updates(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleUpdate("removeTopicsFromForum", "forums", "topicCount = topicCount - ?", "fid = ?")
 
-	adapter.SimpleUpdate("updateForumCache", "forums", "lastTopic = ?, lastTopicID = ?, lastReplyer = ?, lastReplyerID = ?, lastTopicTime = UTC_TIMESTAMP()", "fid = ?")
+	adapter.SimpleUpdate("updateForumCache", "forums", "lastTopicID = ?, lastReplyerID = ?", "fid = ?")
 
 	adapter.SimpleUpdate("addLikesToTopic", "topics", "likeCount = likeCount + ?", "tid = ?")
 

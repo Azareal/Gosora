@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // ? - Should we add a new permission or permission zone (like per-forum permissions) specifically for profile comment creation
@@ -79,7 +78,7 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 		// Do a bulk forum fetch, just in case it's the SqlForumStore?
 		forum := fstore.DirtyGet(ffid)
 		if forum.Name != "" && forum.Active {
-			fcopy := *forum
+			fcopy := forum.Copy()
 			if hooks["topic_create_frow_assign"] != nil {
 				// TODO: Add the skip feature to all the other row based hooks?
 				if runHook("topic_create_frow_assign", &fcopy).(bool) {
@@ -144,12 +143,6 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = fstore.IncrementTopicCount(fid)
-	if err != nil {
-		InternalError(err, w)
-		return
-	}
-
 	_, err = addSubscriptionStmt.Exec(user.ID, lastID, "topic")
 	if err != nil {
 		InternalError(err, w)
@@ -163,7 +156,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = fstore.UpdateLastTopic(topicName, int(lastID), user.Name, user.ID, time.Now().Format("2006-01-02 15:04:05"), fid)
+	err = fstore.AddTopic(int(lastID), user.ID, fid)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 	}
@@ -219,7 +212,14 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 		InternalError(err, w)
 		return
 	}
-	err = fstore.UpdateLastTopic(topic.Title, tid, user.Name, user.ID, time.Now().Format("2006-01-02 15:04:05"), topic.ParentID)
+
+	// Flush the topic out of the cache
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(tid)
+	}
+
+	err = fstore.UpdateLastTopic(tid, user.ID, topic.ParentID)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return
@@ -245,12 +245,6 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	// Alert the subscribers about this post without blocking this post from being posted
 	if enableWebsockets {
 		go notifyWatchers(lastID)
-	}
-
-	// Flush the topic out of the cache
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(tid)
 	}
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
@@ -629,7 +623,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		InternalError(err, w)
 		return
 	}
-	err = fstore.UpdateLastTopic(title, int(lastID), user.Name, user.ID, time.Now().Format("2006-01-02 15:04:05"), fid)
+	err = fstore.UpdateLastTopic(int(lastID), user.ID, fid)
 	if err != nil && err != ErrNoRows {
 		InternalError(err, w)
 		return

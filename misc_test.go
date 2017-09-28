@@ -269,17 +269,10 @@ func TestForumStore(t *testing.T) {
 	}
 
 	forum, err = fstore.Get(0)
-	if err == ErrNoRows {
-		t.Error("Couldn't find FID #0")
-	} else if err != nil {
+	if err == nil {
+		t.Error("FID #0 shouldn't exist")
+	} else if err != ErrNoRows {
 		t.Fatal(err)
-	}
-
-	if forum.ID != 0 {
-		t.Error("forum.ID doesn't not match the requested UID. Got '" + strconv.Itoa(forum.ID) + "' instead.")
-	}
-	if forum.Name != "Uncategorised" {
-		t.Error("FID #0 is named '" + forum.Name + "' and not 'Uncategorised'")
 	}
 
 	forum, err = fstore.Get(1)
@@ -311,8 +304,8 @@ func TestForumStore(t *testing.T) {
 	}
 
 	ok = fstore.Exists(0)
-	if !ok {
-		t.Error("FID #0 should exist")
+	if ok {
+		t.Error("FID #0 shouldn't exist")
 	}
 
 	ok = fstore.Exists(1)

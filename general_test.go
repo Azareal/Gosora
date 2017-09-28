@@ -53,14 +53,6 @@ func gloinit() error {
 		log.Fatal(err)
 	}
 
-	if config.CacheTopicUser == CACHE_STATIC {
-		users = NewMemoryUserStore(config.UserCacheCapacity)
-		topics = NewMemoryTopicStore(config.TopicCacheCapacity)
-	} else {
-		users = NewSQLUserStore()
-		topics = NewSQLTopicStore()
-	}
-
 	log.Print("Loading the static files.")
 	err = initStaticFiles()
 	if err != nil {
@@ -548,7 +540,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 		}
 	})
 
-	var replyItem Reply
+	var replyItem ReplyUser
 	var isSuperAdmin bool
 	var group int
 	b.Run("topic_replies_scan", func(b *testing.B) {

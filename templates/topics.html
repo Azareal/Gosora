@@ -4,7 +4,7 @@
 <div class="rowblock rowhead">
 	<div class="rowitem"><h1>Topic List</h1></div>
 </div>
-<div id="topic_list" class="rowblock topic_list">
+<div id="topic_list" class="rowblock topic_list" aria-label="The main topic list">
 	{{range .ItemList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
 		<span class="topic_inner_right rowsmall" style="float: right;">
 			<span class="replyCount">{{.PostCount}} replies</span><br />

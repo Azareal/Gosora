@@ -56,7 +56,7 @@ type SocialGroupPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	ItemList    []*TopicsRow
-	Forum       Forum
+	Forum       *Forum
 	SocialGroup *SocialGroup
 	Page        int
 	LastPage    int

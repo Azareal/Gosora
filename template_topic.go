@@ -123,7 +123,7 @@ w.Write(topic_22)
 w.Write(topic_23)
 }
 w.Write(topic_24)
-w.Write([]byte(tmpl_topic_vars.Topic.Content))
+w.Write([]byte(tmpl_topic_vars.Topic.ContentHTML))
 w.Write(topic_25)
 w.Write([]byte(tmpl_topic_vars.Topic.Content))
 w.Write(topic_26)
@@ -219,66 +219,67 @@ w.Write(topic_64)
 w.Write(topic_65)
 }
 w.Write(topic_66)
-w.Write([]byte(item.ContentHtml))
 w.Write(topic_67)
-w.Write([]byte(item.UserLink))
+w.Write([]byte(item.ContentHtml))
 w.Write(topic_68)
-w.Write([]byte(item.CreatedByName))
+w.Write([]byte(item.UserLink))
 w.Write(topic_69)
-if tmpl_topic_vars.CurrentUser.Perms.LikeItem {
+w.Write([]byte(item.CreatedByName))
 w.Write(topic_70)
-w.Write([]byte(strconv.Itoa(item.ID)))
+if tmpl_topic_vars.CurrentUser.Perms.LikeItem {
 w.Write(topic_71)
-if item.Liked {
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_72)
-}
+if item.Liked {
 w.Write(topic_73)
 }
-if tmpl_topic_vars.CurrentUser.Perms.EditReply {
 w.Write(topic_74)
-w.Write([]byte(strconv.Itoa(item.ID)))
+}
+if tmpl_topic_vars.CurrentUser.Perms.EditReply {
 w.Write(topic_75)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(topic_76)
 }
 if tmpl_topic_vars.CurrentUser.Perms.DeleteReply {
-w.Write(topic_76)
-w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_77)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(topic_78)
 }
 if tmpl_topic_vars.CurrentUser.Perms.ViewIPs {
-w.Write(topic_78)
-w.Write([]byte(item.IPAddress))
 w.Write(topic_79)
-}
+w.Write([]byte(item.IPAddress))
 w.Write(topic_80)
-w.Write([]byte(strconv.Itoa(item.ID)))
+}
 w.Write(topic_81)
-w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_82)
-if item.LikeCount > 0 {
+w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
 w.Write(topic_83)
-w.Write([]byte(strconv.Itoa(item.LikeCount)))
+if item.LikeCount > 0 {
 w.Write(topic_84)
+w.Write([]byte(strconv.Itoa(item.LikeCount)))
+w.Write(topic_85)
 }
 if item.Tag != "" {
-w.Write(topic_85)
-w.Write([]byte(item.Tag))
 w.Write(topic_86)
-} else {
+w.Write([]byte(item.Tag))
 w.Write(topic_87)
-w.Write([]byte(strconv.Itoa(item.Level)))
+} else {
 w.Write(topic_88)
-}
+w.Write([]byte(strconv.Itoa(item.Level)))
 w.Write(topic_89)
 }
-}
-}
 w.Write(topic_90)
-if tmpl_topic_vars.CurrentUser.Perms.CreateReply {
-w.Write(topic_91)
-w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
-w.Write(topic_92)
 }
+}
+}
+w.Write(topic_91)
+if tmpl_topic_vars.CurrentUser.Perms.CreateReply {
+w.Write(topic_92)
+w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_93)
+}
+w.Write(topic_94)
 w.Write(footer_0)
 if len(tmpl_topic_vars.Header.Themes) != 0 {
 for _, item := range tmpl_topic_vars.Header.Themes {

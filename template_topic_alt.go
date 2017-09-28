@@ -126,7 +126,7 @@ w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.Level)))
 w.Write(topic_alt_24)
 }
 w.Write(topic_alt_25)
-w.Write([]byte(tmpl_topic_alt_vars.Topic.Content))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.ContentHTML))
 w.Write(topic_alt_26)
 w.Write([]byte(tmpl_topic_alt_vars.Topic.Content))
 w.Write(topic_alt_27)

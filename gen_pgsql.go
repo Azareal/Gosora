@@ -80,7 +80,7 @@ func _gen_pgsql() (err error) {
 	}
 		
 	log.Print("Preparing updateForumCache statement.")
-	updateForumCacheStmt, err = db.Prepare("UPDATE `forums` SET `lastTopic` = ?,`lastTopicID` = ?,`lastReplyer` = ?,`lastReplyerID` = ?,`lastTopicTime` = LOCALTIMESTAMP() WHERE `fid` = ?")
+	updateForumCacheStmt, err = db.Prepare("UPDATE `forums` SET `lastTopicID` = ?,`lastReplyerID` = ? WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}

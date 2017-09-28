@@ -73,7 +73,7 @@ w.Write(forums_0)
 if len(tmpl_forums_vars.ItemList) != 0 {
 for _, item := range tmpl_forums_vars.ItemList {
 w.Write(forums_1)
-if item.Desc != "" || item.LastTopicTime != "" {
+if item.Desc != "" || item.LastTopic.Title != "" {
 w.Write(forums_2)
 }
 w.Write(forums_3)
@@ -93,21 +93,25 @@ w.Write([]byte(item.Name))
 w.Write(forums_10)
 }
 w.Write(forums_11)
-w.Write([]byte(item.LastTopicLink))
+w.Write([]byte(item.LastTopic.Link))
 w.Write(forums_12)
-w.Write([]byte(item.LastTopic))
+if item.LastTopic.Title != "" {
+w.Write([]byte(item.LastTopic.Title))
+} else {
 w.Write(forums_13)
-if item.LastTopicTime != "" {
-w.Write(forums_14)
-w.Write([]byte(item.LastTopicTime))
-w.Write(forums_15)
 }
+w.Write(forums_14)
+if item.LastTopicTime != "" {
+w.Write(forums_15)
+w.Write([]byte(item.LastTopicTime))
 w.Write(forums_16)
 }
-} else {
 w.Write(forums_17)
 }
+} else {
 w.Write(forums_18)
+}
+w.Write(forums_19)
 w.Write(footer_0)
 if len(tmpl_forums_vars.Header.Themes) != 0 {
 for _, item := range tmpl_forums_vars.Header.Themes {
