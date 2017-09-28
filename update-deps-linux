@@ -1,10 +1,20 @@
 echo "Updating the MySQL Driver"
 go get -u github.com/go-sql-driver/mysql
+
 echo "Updating the PostgreSQL Driver"
 go get -u github.com/lib/pq
+
 echo "Updating bcrypt"
 go get -u golang.org/x/crypto/bcrypt
+
 echo "Updating gopsutil"
 go get -u github.com/Azareal/gopsutil
+
 echo "Updating Gorilla WebSockets"
 go get -u github.com/gorilla/websocket
+
+echo "Updating Sourcemap (dependency for OttoJS)"
+go get -u gopkg.in/sourcemap.v1
+
+echo "Updating OttoJS"
+go get -u github.com/robertkrimen/otto

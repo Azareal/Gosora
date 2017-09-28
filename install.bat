@@ -1,41 +1,64 @@
 @echo off
 echo Installing the dependencies
+
 echo Installing the MySQL Driver
 go get -u github.com/go-sql-driver/mysql
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+
 echo Installing the PostgreSQL Driver
 go get -u github.com/lib/pq
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+
 echo Installing the bcrypt library
 go get -u golang.org/x/crypto/bcrypt
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+
+echo Installing /x/sys/windows (dependency for gopsutil)
 go get -u golang.org/x/sys/windows
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+
+echo Installing wmi (dependency for gopsutil)
 go get -u github.com/StackExchange/wmi
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+
 echo Installing the gopsutil library
 go get -u github.com/Azareal/gopsutil
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+
 echo Installing the WebSockets library
 go get -u github.com/gorilla/websocket
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
+echo Installing Sourcemap (dependency for OttoJS)
+go get -u gopkg.in/sourcemap.v1
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
+echo Installing the OttoJS
+go get -u github.com/robertkrimen/otto
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

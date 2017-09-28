@@ -47,5 +47,19 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Updating Sourcemap (dependency for OttoJS)
+go get -u gopkg.in/sourcemap.v1
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
+echo Updating OttoJS
+go get -u github.com/robertkrimen/otto
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo The dependencies were successfully updated
 pause
