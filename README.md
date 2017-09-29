@@ -103,6 +103,10 @@ go get -u github.com/Azareal/gopsutil
 
 go get -u github.com/gorilla/websocket
 
+go get -u gopkg.in/sourcemap.v1
+
+go get -u github.com/robertkrimen/otto
+
 
 go generate
 

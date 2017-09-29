@@ -67,14 +67,15 @@ type MemoryForumStore struct {
 
 // NewMemoryForumStore gives you a new instance of MemoryForumStore
 func NewMemoryForumStore() *MemoryForumStore {
-	getStmt, err := qgen.Builder.SimpleSelect("forums", "name, desc, active, preset, parentID, parentType, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime", "fid = ?", "", "")
+	getStmt, err := qgen.Builder.SimpleSelect("forums", "name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "fid = ?", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
-	getAllStmt, err := qgen.Builder.SimpleSelect("forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopic, lastTopicID, lastReplyer, lastReplyerID, lastTopicTime", "", "fid ASC", "")
+	getAllStmt, err := qgen.Builder.SimpleSelect("forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "", "fid ASC", "")
 	if err != nil {
 		log.Fatal(err)
 	}
+	// TODO: Do a proper delete
 	deleteStmt, err := qgen.Builder.SimpleUpdate("forums", "name= '', active = 0", "fid = ?")
 	if err != nil {
 		log.Fatal(err)
@@ -179,7 +180,7 @@ func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 	fint, ok := mfs.forums.Load(id)
 	if !ok || fint.(*Forum).Name == "" {
 		var forum = &Forum{ID: id}
-		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 		if err != nil {
 			return forum, err
 		}
@@ -206,7 +207,7 @@ func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 
 func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 	var forum = &Forum{ID: id}
-	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +231,7 @@ func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 
 func (mfs *MemoryForumStore) Reload(id int) error {
 	var forum = &Forum{ID: id}
-	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.TopicCount, &forum.LastTopic, &forum.LastTopicID, &forum.LastReplyer, &forum.LastReplyerID, &forum.LastTopicTime)
+	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 	if err != nil {
 		return err
 	}
@@ -335,8 +336,7 @@ func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
 		return err
 	}
 	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
-	mfs.Reload(fid)
-	return nil
+	return mfs.Reload(fid)
 }
 
 // TODO: Update the forum cache with the latest topic
@@ -358,8 +358,7 @@ func (mfs *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
 		return err
 	}
 	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
-	mfs.Reload(fid)
-	return nil
+	return mfs.Reload(fid)
 }
 
 func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
