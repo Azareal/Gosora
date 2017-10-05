@@ -146,7 +146,7 @@ func (topic *Topic) RemoveLike(uid int) error {
 
 func (topic *Topic) Update(name string, content string) error {
 	content = preparseMessage(content)
-	parsed_content := parseMessage(html.EscapeString(content))
+	parsed_content := parseMessage(html.EscapeString(content), topic.ParentID, "forums")
 	_, err := editTopicStmt.Exec(name, content, parsed_content, topic.ID)
 
 	tcache, ok := topics.(TopicCache)
@@ -170,6 +170,7 @@ func (topic *Topic) CreateActionReply(action string, ipaddress string, user User
 	return err
 }
 
+// Copy gives you a non-pointer concurrency safe copy of the topic
 func (topic *Topic) Copy() Topic {
 	return *topic
 }
@@ -188,7 +189,7 @@ func getTopicUser(tid int) (TopicUser, error) {
 
 			// We might be better off just passing seperate topic and user structs to the caller?
 			return copyTopicToTopicUser(topic, user), nil
-		} else if ucache.GetLength() < ucache.GetCapacity() {
+		} else if ucache.Length() < ucache.GetCapacity() {
 			topic, err = topics.Get(tid)
 			if err != nil {
 				return TopicUser{ID: tid}, err

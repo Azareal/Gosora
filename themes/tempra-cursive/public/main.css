@@ -588,7 +588,6 @@ button.username {
 	ul { height: 26px; }
 	.menu_left { padding-right: 5px; padding-top: 1px; }
 	.menu_right { padding-right: 5px; }
-	.menu_create_topic { display: none;}
 
 	.menu_alerts {
 		padding-left: 4px;
@@ -596,8 +595,13 @@ button.username {
 		font-size: 16px;
 		padding-top: 1px;
 	}
-	.menu_alerts .alert_counter { top: -23px; left: 8px; }
-	.selectedAlert .alertList { top: 33px; }
+	.menu_alerts .alert_counter {
+		top: -23px;
+		left: 8px;
+	}
+	.selectedAlert .alertList {
+		top: 33px;
+	}
 
 	.hide_on_mobile { display: none; }
 	.prev_button, .next_button { top: auto; bottom: 5px; }

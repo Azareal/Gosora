@@ -78,6 +78,7 @@ function load_alerts(menu_alerts)
 				bind_to_alerts();
 			},
 			error: function(magic,theStatus,error) {
+				var errtxt
 				try {
 					var data = JSON.parse(magic.responseText);
 					if("errmsg" in data) errtxt = data.errmsg;
@@ -94,16 +95,16 @@ function load_alerts(menu_alerts)
 
 function SplitN(data,ch,n) {
 	var out = [];
-	if(data.length == 0) return out;
+	if(data.length === 0) return out;
 
 	var lastIndex = 0;
 	var j = 0;
 	var lastN = 1;
-	for(var i = 0; i < data.length; i++) {
-		if(data[i] == ch) {
+	for(let i = 0; i < data.length; i++) {
+		if(data[i] === ch) {
 			out[j++] = data.substring(lastIndex,i);
 			lastIndex = i;
-			if(lastN == n) break;
+			if(lastN === n) break;
 			lastN++;
 		}
 	}
@@ -118,19 +119,23 @@ $(document).ready(function(){
 		else conn = new WebSocket("ws://" + document.location.host + "/ws/");
 
 		conn.onopen = function() {
+			console.log("The WebSockets connection was opened");
 			conn.send("page " + document.location.pathname + '\r');
 			// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
 			Notification.requestPermission();
 		}
 		conn.onclose = function() {
 			conn = false;
+			console.log("The WebSockets connection was closed");
 		}
 		conn.onmessage = function(event) {
 			//console.log("WS_Message: ",event.data);
 			if(event.data[0] == "{") {
 				try {
 					var data = JSON.parse(event.data);
-				} catch(err) { console.log(err); }
+				} catch(err) {
+					console.log(err);
+				}
 
 				if ("msg" in data) {
 					var msg = data.msg
@@ -175,11 +180,11 @@ $(document).ready(function(){
 				//console.log(messages[i]);
 				if(messages[i].startsWith("set ")) {
 					//msgblocks = messages[i].split(' ',3);
-					msgblocks = SplitN(messages[i]," ",3);
+					let msgblocks = SplitN(messages[i]," ",3);
 					if(msgblocks.length < 3) continue;
 					document.querySelector(msgblocks[1]).innerHTML = msgblocks[2];
 				} else if(messages[i].startsWith("set-class ")) {
-					msgblocks = SplitN(messages[i]," ",3);
+					let msgblocks = SplitN(messages[i]," ",3);
 					if(msgblocks.length < 3) continue;
 					document.querySelector(msgblocks[1]).className = msgblocks[2];
 				}
@@ -328,7 +333,7 @@ $(document).ready(function(){
 			//console.log("running .submit_edit event");
 			var out_data = {isJs: "1"}
 			var block_parent = $(this).closest('.editable_parent');
-			var block = block_parent.find('.editable_block').each(function(){
+			block_parent.find('.editable_block').each(function(){
 				var field_name = this.getAttribute("data-field");
 				var field_type = this.getAttribute("data-type");
 				if(field_type=="list") {
@@ -397,6 +402,71 @@ $(document).ready(function(){
 		event.stopPropagation();
 	})
 
+	$(".create_topic_link").click(function(event){
+		event.preventDefault();
+		$(".topic_create_form").show();
+	});
+	$(".topic_create_form .close_form").click(function(){
+		event.preventDefault();
+		$(".topic_create_form").hide();
+	});
+
+	function uploadFileHandler() {
+		var fileList = this.files;
+
+		// Truncate the number of files to 5
+		let files = [];
+		for(var i = 0; i < fileList.length && i < 5; i++)
+			files[i] = fileList[i];
+
+		// Iterate over the files
+		for(let i = 0; i < files.length; i++) {
+			console.log("files[" + i + "]",files[i]);
+			let reader = new FileReader();
+			reader.onload = function(e) {
+				var fileDock = document.getElementById("upload_file_dock");
+				var fileItem = document.createElement("label");
+				console.log("fileItem",fileItem);
+
+				if(!files[i]["name"].indexOf('.' > -1)) {
+					// TODO: Surely, there's a prettier and more elegant way of doing this?
+					alert("This file doesn't have an extension");
+					return;
+				}
+
+				var ext = files[i]["name"].split('.').pop();
+				fileItem.innerText = "." + ext;
+				fileItem.className = "formbutton uploadItem";
+				fileItem.style.backgroundImage = "url("+e.target.result+")";
+
+				fileDock.appendChild(fileItem);
+
+				let reader = new FileReader();
+				reader.onload = function(e) {
+					crypto.subtle.digest('SHA-256',e.target.result).then(function(hash) {
+						const hashArray = Array.from(new Uint8Array(hash))
+						return hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('')
+					}).then(function(hash) {
+						console.log("hash",hash);
+						let content = document.getElementById("topic_content")
+						console.log("content.value",content.value);
+						
+						if(content.value == "") content.value = content.value + "//" + siteURL + "/attachs/" + hash + "." + ext;
+						else content.value = content.value + "\r\n//" + siteURL + "/attachs/" + hash + "." + ext;
+						console.log("content.value",content.value);
+					});
+				}
+				reader.readAsArrayBuffer(files[i]);
+			}
+			reader.readAsDataURL(files[i]);
+		}
+	}
+
+	var uploadFiles = document.getElementById("quick_topic_upload_files");
+	if(uploadFiles != null) {
+		uploadFiles.addEventListener("change", uploadFileHandler, false);
+	}
+
 	$("#themeSelectorSelect").change(function(){
 		console.log("Changing the theme to " + this.options[this.selectedIndex].getAttribute("val"));
 		$.ajax({
@@ -408,6 +478,7 @@ $(document).ready(function(){
 				console.log("Theme successfully switched");
 				console.log("data",data);
 				console.log("status",status);
+				console.log("xhr",xhr);
 				window.location.reload();
 			},
 			// TODO: Use a standard error handler for the AJAX calls in here which throws up the response (if JSON) in a .notice? Might be difficult to trace errors in the console, if we reuse the same function every-time

@@ -12,11 +12,12 @@ func init() {
 }
 
 type Pgsql_Adapter struct {
-	Name        string
+	Name        string // ? - Do we really need this? Can't we hard-code this?
 	Buffer      map[string]DB_Stmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
+// GetName gives you the name of the database adapter. In this case, it's pgsql
 func (adapter *Pgsql_Adapter) GetName() string {
 	return adapter.Name
 }
@@ -139,7 +140,7 @@ func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string
 		return "", errors.New("You need to set data in this update statement")
 	}
 	var querystr = "UPDATE `" + table + "` SET "
-	for _, item := range _process_set(set) {
+	for _, item := range processSet(set) {
 		querystr += "`" + item.Column + "` ="
 		for _, token := range item.Expr {
 			switch token.Type {
@@ -166,7 +167,7 @@ func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string
 	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _processWhere(where) {
+		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function":

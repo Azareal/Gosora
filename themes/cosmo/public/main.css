@@ -807,7 +807,7 @@ blockquote p {
 }
 
 @media(max-width: 620px) {
-	.menu_create_topic, .menu_overview, .hide_on_mobile { display: none; }
+	.menu_overview, .hide_on_mobile { display: none; }
 }
 
 /* This one is specifically for small mobiles.. */

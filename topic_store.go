@@ -8,7 +8,9 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -20,17 +22,20 @@ import (
 // TODO: Add some sort of update method
 // ? - Should we add stick, lock, unstick, and unlock methods? These might be better on the Topics not the TopicStore
 var topics TopicStore
+var ErrNoTitle = errors.New("This message is missing a title")
+var ErrNoBody = errors.New("This message is missing a body")
 
 type TopicStore interface {
 	Get(id int) (*Topic, error)
 	BypassGet(id int) (*Topic, error)
 	Delete(id int) error
 	Exists(id int) bool
+	Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error)
 	AddLastTopic(item *Topic, fid int) error // unimplemented
 	// TODO: Implement these two methods
-	//GetReplies() ([]*Reply, error)
-	//GetRepliesRange(lower int, higher int) ([]*Reply, error)
-	GetGlobalCount() int
+	//Replies(tid int) ([]*Reply, error)
+	//RepliesRange(tid int, lower int, higher int) ([]*Reply, error)
+	GlobalCount() int
 }
 
 type TopicCache interface {
@@ -43,7 +48,7 @@ type TopicCache interface {
 	CacheRemoveUnsafe(id int) error
 	Flush()
 	Reload(id int) error
-	GetLength() int
+	Length() int
 	SetCapacity(capacity int)
 	GetCapacity() int
 }
@@ -176,6 +181,34 @@ func (mts *MemoryTopicStore) Exists(id int) bool {
 	return mts.exists.QueryRow(id).Scan(&id) == nil
 }
 
+func (mts *MemoryTopicStore) Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error) {
+	topicName = strings.TrimSpace(topicName)
+	if topicName == "" {
+		return 0, ErrNoBody
+	}
+
+	content = strings.TrimSpace(content)
+	parsedContent := parseMessage(content, fid, "forums")
+	if strings.TrimSpace(parsedContent) == "" {
+		return 0, ErrNoBody
+	}
+
+	wcount := wordCount(content)
+	// TODO: Move this statement into the topic store
+	res, err := createTopicStmt.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
+	if err != nil {
+		return 0, err
+	}
+
+	lastID, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	err = fstore.AddTopic(int(lastID), uid, fid)
+	return int(lastID), err
+}
+
 func (mts *MemoryTopicStore) CacheSet(item *Topic) error {
 	mts.Lock()
 	_, ok := mts.items[item.ID]
@@ -241,7 +274,9 @@ func (mts *MemoryTopicStore) Flush() {
 	mts.Unlock()
 }
 
-func (mts *MemoryTopicStore) GetLength() int {
+// ! Is this concurrent?
+// Length returns the number of topics in the memory cache
+func (mts *MemoryTopicStore) Length() int {
 	return int(mts.length)
 }
 
@@ -253,8 +288,8 @@ func (mts *MemoryTopicStore) GetCapacity() int {
 	return mts.capacity
 }
 
-// Return the total number of topics on these forums
-func (mts *MemoryTopicStore) GetGlobalCount() int {
+// GlobalCount returns the total number of topics on these forums
+func (mts *MemoryTopicStore) GlobalCount() int {
 	var tcount int
 	err := mts.topicCount.QueryRow().Scan(&tcount)
 	if err != nil {
@@ -314,6 +349,34 @@ func (sts *SQLTopicStore) Exists(id int) bool {
 	return sts.exists.QueryRow(id).Scan(&id) == nil
 }
 
+func (sts *SQLTopicStore) Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error) {
+	topicName = strings.TrimSpace(topicName)
+	if topicName == "" {
+		return 0, ErrNoBody
+	}
+
+	content = strings.TrimSpace(content)
+	parsedContent := parseMessage(content, fid, "forums")
+	if strings.TrimSpace(parsedContent) == "" {
+		return 0, ErrNoBody
+	}
+
+	wcount := wordCount(content)
+	// TODO: Move this statement into the topic store
+	res, err := createTopicStmt.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
+	if err != nil {
+		return 0, err
+	}
+
+	lastID, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	err = fstore.AddTopic(int(lastID), uid, fid)
+	return int(lastID), err
+}
+
 // TODO: Use a transaction here
 func (sts *SQLTopicStore) Delete(id int) error {
 	topic, err := sts.Get(id)
@@ -347,8 +410,8 @@ func (sts *SQLTopicStore) AddLastTopic(item *Topic, fid int) error {
 	return nil
 }
 
-// Return the total number of topics on these forums
-func (sts *SQLTopicStore) GetGlobalCount() int {
+// GlobalCount returns the total number of topics on these forums
+func (sts *SQLTopicStore) GlobalCount() int {
 	var tcount int
 	err := sts.topicCount.QueryRow().Scan(&tcount)
 	if err != nil {

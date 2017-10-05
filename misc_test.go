@@ -28,7 +28,7 @@ func userStoreTest(t *testing.T) {
 	var length int
 
 	ucache, hasCache := users.(UserCache)
-	if hasCache && ucache.GetLength() != 0 {
+	if hasCache && ucache.Length() != 0 {
 		t.Error("Initial ucache length isn't zero")
 	}
 
@@ -39,7 +39,7 @@ func userStoreTest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if hasCache && ucache.GetLength() != 0 {
+	if hasCache && ucache.Length() != 0 {
 		t.Error("There shouldn't be anything in the user cache")
 	}
 
@@ -50,7 +50,7 @@ func userStoreTest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if hasCache && ucache.GetLength() != 0 {
+	if hasCache && ucache.Length() != 0 {
 		t.Error("There shouldn't be anything in the user cache")
 	}
 
@@ -66,7 +66,7 @@ func userStoreTest(t *testing.T) {
 	}
 
 	if hasCache {
-		length = ucache.GetLength()
+		length = ucache.Length()
 		if length != 1 {
 			t.Error("User cache length should be 1, not " + strconv.Itoa(length))
 		}
@@ -83,7 +83,7 @@ func userStoreTest(t *testing.T) {
 		}
 
 		ucache.Flush()
-		length = ucache.GetLength()
+		length = ucache.Length()
 		if length != 0 {
 			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
 		}
@@ -97,7 +97,7 @@ func userStoreTest(t *testing.T) {
 	}
 
 	if hasCache {
-		length = ucache.GetLength()
+		length = ucache.Length()
 		if length != 0 {
 			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
 		}
@@ -109,7 +109,7 @@ func userStoreTest(t *testing.T) {
 	}
 
 	if hasCache {
-		length = ucache.GetLength()
+		length = ucache.Length()
 		if length != 0 {
 			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
 		}
@@ -133,7 +133,7 @@ func userStoreTest(t *testing.T) {
 	}
 
 	if hasCache {
-		length = ucache.GetLength()
+		length = ucache.Length()
 		if length != 1 {
 			t.Error("User cache length should be 1, not " + strconv.Itoa(length))
 		}
@@ -168,13 +168,13 @@ func userStoreTest(t *testing.T) {
 	}
 
 	if hasCache {
-		length = ucache.GetLength()
+		length = ucache.Length()
 		if length != 0 {
 			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
 		}
 	}
 
-	count := users.GetGlobalCount()
+	count := users.GlobalCount()
 	if count <= 0 {
 		t.Error("The number of users should be bigger than zero")
 		t.Error("count", count)
@@ -243,7 +243,7 @@ func topicStoreTest(t *testing.T) {
 		t.Error("TID #1 should exist")
 	}
 
-	count := topics.GetGlobalCount()
+	count := topics.GlobalCount()
 	if count <= 0 {
 		t.Error("The number of topics should be bigger than zero")
 		t.Error("count", count)

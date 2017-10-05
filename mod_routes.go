@@ -345,13 +345,6 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
-	_, err = editReplyStmt.Exec(content, parseMessage(content), rid)
-	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
-	}
-
 	// Get the Reply ID..
 	var tid int
 	err = getReplyTIDStmt.QueryRow(rid).Scan(&tid)
@@ -377,6 +370,13 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	if !user.Perms.ViewTopic || !user.Perms.EditReply {
 		NoPermissionsJSQ(w, r, user, isJs)
+		return
+	}
+
+	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
+	_, err = editReplyStmt.Exec(content, parseMessage(content, fid, "forums"), rid)
+	if err != nil {
+		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
 
@@ -504,7 +504,7 @@ func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user Us
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
-	_, err = editProfileReplyStmt.Exec(content, parseMessage(content), rid)
+	_, err = editProfileReplyStmt.Exec(content, parseMessage(content, 0, ""), rid)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return

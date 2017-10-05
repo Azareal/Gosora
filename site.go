@@ -12,6 +12,7 @@ var config Config
 var dev DevConfig
 
 type Site struct {
+	ShortName    string
 	Name         string // ? - Move this into the settings table? Should we make a second version of this for the abbreviation shown in the navbar?
 	Email        string // ? - Move this into the settings table?
 	URL          string

@@ -2,10 +2,48 @@
 <main>
 
 <div class="rowblock rowhead">
-	<div class="rowitem"><h1>Topic List</h1></div>
+	<div class="rowitem topic_list_title{{if ne .CurrentUser.ID 0}} has_opt{{end}}"><h1>All Topics</h1></div>
+	{{if ne .CurrentUser.ID 0}}
+		{{if .ForumList}}
+		<div class="opt create_topic_opt" title="Create Topic"><a class="create_topic_link" href="/topics/create/"></a></div>
+		{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic"><a></a></div>{{end}}
+		<div style="clear: both;"></div>
+	{{end}}
 </div>
-<div id="topic_list" class="rowblock topic_list" aria-label="The main topic list">
-	{{range .ItemList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
+{{if ne .CurrentUser.ID 0}}
+	{{if .ForumList}}
+<div class="rowblock topic_create_form" style="display: none;">
+	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
+	<div class="formrow topic_board_row real_first_child">
+		<div class="formitem"><select form="topic_create_form_form" id="topic_board_input" name="topic-board">
+			{{range .ForumList}}<option {{if eq .ID $.DefaultForum}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
+		</select></div>
+	</div>
+	<div class="formrow topic_name_row">
+		<div class="formitem">
+			<input form="topic_create_form_form" name="topic-name" placeholder="Topic title" required>
+		</div>
+	</div>
+	<div class="formrow topic_content_row">
+		<div class="formitem">
+			<textarea form="topic_create_form_form" id="topic_content" name="topic-content" placeholder="Insert post here" required></textarea>
+		</div>
+	</div>
+	<div class="formrow topic_button_row">
+		<div class="formitem">
+			<button form="topic_create_form_form" class="formbutton">Create Topic</button>
+			{{if .CurrentUser.Perms.UploadFiles}}
+			<input name="quick_topic_upload_files" form="topic_create_form_form" id="quick_topic_upload_files" multiple type="file" style="display: none;" />
+			<label for="quick_topic_upload_files" class="formbutton add_file_button">Add File</label>{{end}}
+			<div id="upload_file_dock"></div>
+			<button class="formbutton close_form">Cancel</button>
+		</div>
+	</div>
+</div>
+	{{end}}
+{{end}}
+<div id="topic_list" class="rowblock topic_list" aria-label="A list containing topics from every forum">
+	{{range .TopicList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
 		<span class="topic_inner_right rowsmall" style="float: right;">
 			<span class="replyCount">{{.PostCount}} replies</span><br />
 			<span class="lastReplyAt">{{.LastReplyAt}}</span>

@@ -269,6 +269,8 @@ func write_selects(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleSelect("getSync", "sync", "last_update", "", "", "")
 
+	adapter.SimpleSelect("getAttachment", "attachments", "sectionID, sectionTable, originID, originTable, uploadedBy, path", "path = ? AND sectionID = ? AND sectionTable = ?", "", "")
+
 	return nil
 }
 
@@ -333,6 +335,8 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 	adapter.SimpleInsert("addModlogEntry", "moderation_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
 
 	adapter.SimpleInsert("addAdminlogEntry", "administration_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
+
+	adapter.SimpleInsert("addAttachment", "attachments", "sectionID, sectionTable, originID, originTable, uploadedBy, path", "?,?,?,?,?,?")
 
 	adapter.SimpleInsert("createWordFilter", "word_filters", "find, replacement", "?,?")
 

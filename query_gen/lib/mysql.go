@@ -13,11 +13,12 @@ func init() {
 }
 
 type Mysql_Adapter struct {
-	Name        string
+	Name        string // ? - Do we really need this? Can't we hard-code this?
 	Buffer      map[string]DB_Stmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
+// GetName gives you the name of the database adapter. In this case, it's mysql
 func (adapter *Mysql_Adapter) GetName() string {
 	return adapter.Name
 }
@@ -120,7 +121,7 @@ func (adapter *Mysql_Adapter) SimpleInsert(name string, table string, columns st
 	var querystr = "INSERT INTO `" + table + "`("
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range _process_columns(columns) {
+	for _, column := range processColumns(columns) {
 		if column.Type == "function" {
 			querystr += column.Left + ","
 		} else {
@@ -132,7 +133,7 @@ func (adapter *Mysql_Adapter) SimpleInsert(name string, table string, columns st
 	querystr = querystr[0 : len(querystr)-1]
 
 	querystr += ") VALUES ("
-	for _, field := range _processFields(fields) {
+	for _, field := range processFields(fields) {
 		querystr += field.Name + ","
 	}
 	querystr = querystr[0 : len(querystr)-1]
@@ -158,7 +159,7 @@ func (adapter *Mysql_Adapter) SimpleReplace(name string, table string, columns s
 	var querystr = "REPLACE INTO `" + table + "`("
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range _process_columns(columns) {
+	for _, column := range processColumns(columns) {
 		if column.Type == "function" {
 			querystr += column.Left + ","
 		} else {
@@ -169,7 +170,7 @@ func (adapter *Mysql_Adapter) SimpleReplace(name string, table string, columns s
 	querystr = querystr[0 : len(querystr)-1]
 
 	querystr += ") VALUES ("
-	for _, field := range _processFields(fields) {
+	for _, field := range processFields(fields) {
 		querystr += field.Name + ","
 	}
 	querystr = querystr[0 : len(querystr)-1]
@@ -190,7 +191,7 @@ func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string
 	}
 
 	var querystr = "UPDATE `" + table + "` SET "
-	for _, item := range _process_set(set) {
+	for _, item := range processSet(set) {
 		querystr += "`" + item.Column + "` ="
 		for _, token := range item.Expr {
 			switch token.Type {
@@ -211,7 +212,7 @@ func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string
 	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _processWhere(where) {
+		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":
@@ -247,7 +248,7 @@ func (adapter *Mysql_Adapter) SimpleDelete(name string, table string, where stri
 	var querystr = "DELETE FROM `" + table + "` WHERE"
 
 	// Add support for BETWEEN x.x
-	for _, loc := range _processWhere(where) {
+	for _, loc := range processWhere(where) {
 		for _, token := range loc.Expr {
 			switch token.Type {
 			case "function", "operator", "number", "substitute":
@@ -308,7 +309,7 @@ func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns st
 	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _processWhere(where) {
+		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":
@@ -328,7 +329,7 @@ func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns st
 
 	if len(orderby) != 0 {
 		querystr += " ORDER BY "
-		for _, column := range _process_orderby(orderby) {
+		for _, column := range processOrderby(orderby) {
 			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
 		}
 		querystr = querystr[0 : len(querystr)-1]
@@ -362,7 +363,7 @@ func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 
 	var querystr = "SELECT "
 
-	for _, column := range _process_columns(columns) {
+	for _, column := range processColumns(columns) {
 		var source, alias string
 
 		// Escape the column names, just in case we've used a reserved keyword
@@ -384,7 +385,7 @@ func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 	querystr = querystr[0 : len(querystr)-1]
 
 	querystr += " FROM `" + table1 + "` LEFT JOIN `" + table2 + "` ON "
-	for _, joiner := range _processJoiner(joiners) {
+	for _, joiner := range processJoiner(joiners) {
 		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
 	}
 	// Remove the trailing AND
@@ -393,7 +394,7 @@ func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _processWhere(where) {
+		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":
@@ -418,7 +419,7 @@ func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 
 	if len(orderby) != 0 {
 		querystr += " ORDER BY "
-		for _, column := range _process_orderby(orderby) {
+		for _, column := range processOrderby(orderby) {
 			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
 		}
 		querystr = querystr[0 : len(querystr)-1]
@@ -452,7 +453,7 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 
 	var querystr = "SELECT "
 
-	for _, column := range _process_columns(columns) {
+	for _, column := range processColumns(columns) {
 		var source, alias string
 
 		// Escape the column names, just in case we've used a reserved keyword
@@ -474,7 +475,7 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	querystr = querystr[0 : len(querystr)-1]
 
 	querystr += " FROM `" + table1 + "` INNER JOIN `" + table2 + "` ON "
-	for _, joiner := range _processJoiner(joiners) {
+	for _, joiner := range processJoiner(joiners) {
 		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
 	}
 	// Remove the trailing AND
@@ -483,7 +484,7 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	// Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _processWhere(where) {
+		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":
@@ -508,7 +509,7 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 
 	if len(orderby) != 0 {
 		querystr += " ORDER BY "
-		for _, column := range _process_orderby(orderby) {
+		for _, column := range processOrderby(orderby) {
 			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
 		}
 		querystr = querystr[0 : len(querystr)-1]
@@ -529,7 +530,7 @@ func (adapter *Mysql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel
 	var querystr = "INSERT INTO `" + ins.Table + "`("
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range _process_columns(ins.Columns) {
+	for _, column := range processColumns(ins.Columns) {
 		if column.Type == "function" {
 			querystr += column.Left + ","
 		} else {
@@ -540,7 +541,7 @@ func (adapter *Mysql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel
 
 	/* Select Portion */
 
-	for _, column := range _process_columns(sel.Columns) {
+	for _, column := range processColumns(sel.Columns) {
 		var source, alias string
 
 		// Escape the column names, just in case we've used a reserved keyword
@@ -562,7 +563,7 @@ func (adapter *Mysql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel
 	// Add support for BETWEEN x.x
 	if len(sel.Where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _processWhere(sel.Where) {
+		for _, loc := range processWhere(sel.Where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":
@@ -582,7 +583,7 @@ func (adapter *Mysql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel
 
 	if len(sel.Orderby) != 0 {
 		querystr += " ORDER BY "
-		for _, column := range _process_orderby(sel.Orderby) {
+		for _, column := range processOrderby(sel.Orderby) {
 			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
 		}
 		querystr = querystr[0 : len(querystr)-1]
@@ -603,7 +604,7 @@ func (adapter *Mysql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, s
 	var querystr = "INSERT INTO `" + ins.Table + "`("
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range _process_columns(ins.Columns) {
+	for _, column := range processColumns(ins.Columns) {
 		if column.Type == "function" {
 			querystr += column.Left + ","
 		} else {
@@ -614,7 +615,7 @@ func (adapter *Mysql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, s
 
 	/* Select Portion */
 
-	for _, column := range _process_columns(sel.Columns) {
+	for _, column := range processColumns(sel.Columns) {
 		var source, alias string
 
 		// Escape the column names, just in case we've used a reserved keyword
@@ -634,7 +635,7 @@ func (adapter *Mysql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, s
 	querystr = querystr[0 : len(querystr)-1]
 
 	querystr += " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON "
-	for _, joiner := range _processJoiner(sel.Joiners) {
+	for _, joiner := range processJoiner(sel.Joiners) {
 		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
 	}
 	querystr = querystr[0 : len(querystr)-4]
@@ -642,7 +643,7 @@ func (adapter *Mysql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, s
 	// Add support for BETWEEN x.x
 	if len(sel.Where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _processWhere(sel.Where) {
+		for _, loc := range processWhere(sel.Where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":
@@ -667,7 +668,7 @@ func (adapter *Mysql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, s
 
 	if len(sel.Orderby) != 0 {
 		querystr += " ORDER BY "
-		for _, column := range _process_orderby(sel.Orderby) {
+		for _, column := range processOrderby(sel.Orderby) {
 			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
 		}
 		querystr = querystr[0 : len(querystr)-1]
@@ -688,7 +689,7 @@ func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, 
 	var querystr = "INSERT INTO `" + ins.Table + "`("
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range _process_columns(ins.Columns) {
+	for _, column := range processColumns(ins.Columns) {
 		if column.Type == "function" {
 			querystr += column.Left + ","
 		} else {
@@ -699,7 +700,7 @@ func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, 
 
 	/* Select Portion */
 
-	for _, column := range _process_columns(sel.Columns) {
+	for _, column := range processColumns(sel.Columns) {
 		var source, alias string
 
 		// Escape the column names, just in case we've used a reserved keyword
@@ -719,7 +720,7 @@ func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, 
 	querystr = querystr[0 : len(querystr)-1]
 
 	querystr += " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON "
-	for _, joiner := range _processJoiner(sel.Joiners) {
+	for _, joiner := range processJoiner(sel.Joiners) {
 		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
 	}
 	querystr = querystr[0 : len(querystr)-4]
@@ -727,7 +728,7 @@ func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, 
 	// Add support for BETWEEN x.x
 	if len(sel.Where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range _processWhere(sel.Where) {
+		for _, loc := range processWhere(sel.Where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":
@@ -752,7 +753,7 @@ func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, 
 
 	if len(sel.Orderby) != 0 {
 		querystr += " ORDER BY "
-		for _, column := range _process_orderby(sel.Orderby) {
+		for _, column := range processOrderby(sel.Orderby) {
 			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
 		}
 		querystr = querystr[0 : len(querystr)-1]
@@ -783,7 +784,7 @@ func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where strin
 		//fmt.Println("SimpleCount:",name)
 		//fmt.Println("where:",where)
 		//fmt.Println("_process_where:",_process_where(where))
-		for _, loc := range _processWhere(where) {
+		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":

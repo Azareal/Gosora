@@ -57,9 +57,8 @@ func relativeTime(in string) (string, error) {
 	if in == "" {
 		return "", nil
 	}
-	layout := "2006-01-02 15:04:05"
-	t, err := time.Parse(layout, in)
-	//t, err := time.ParseInLocation(layout, in, timeLocation)
+
+	t, err := time.Parse("2006-01-02 15:04:05", in)
 	if err != nil {
 		return "", err
 	}
@@ -103,6 +102,8 @@ func relativeTime(in string) (string, error) {
 // TODO: Write a test for this
 func convertByteUnit(bytes float64) (float64, string) {
 	switch {
+	case bytes >= float64(petabyte):
+		return bytes / float64(petabyte), "PB"
 	case bytes >= float64(terabyte):
 		return bytes / float64(terabyte), "TB"
 	case bytes >= float64(gigabyte):
@@ -119,6 +120,8 @@ func convertByteUnit(bytes float64) (float64, string) {
 // TODO: Write a test for this
 func convertByteInUnit(bytes float64, unit string) (count float64) {
 	switch unit {
+	case "PB":
+		count = bytes / float64(petabyte)
 	case "TB":
 		count = bytes / float64(terabyte)
 	case "GB":
@@ -141,7 +144,7 @@ func convertByteInUnit(bytes float64, unit string) (count float64) {
 func convertUnit(num int) (int, string) {
 	switch {
 	case num >= 1000000000000:
-		return 0, "∞"
+		return num / 1000000000000, "T"
 	case num >= 1000000000:
 		return num / 1000000000, "B"
 	case num >= 1000000:
@@ -156,8 +159,10 @@ func convertUnit(num int) (int, string) {
 // TODO: Write a test for this
 func convertFriendlyUnit(num int) (int, string) {
 	switch {
+	case num >= 1000000000000000:
+		return 0, " quadrillion"
 	case num >= 1000000000000:
-		return 0, " zillion"
+		return 0, " trillion"
 	case num >= 1000000000:
 		return num / 1000000000, " billion"
 	case num >= 1000000:
@@ -347,7 +352,7 @@ func wordCount(input string) (count int) {
 func getLevel(score int) (level int) {
 	var base float64 = 25
 	var current, prev float64
-	expFactor := 2.8
+	var expFactor = 2.8
 
 	for i := 1; ; i++ {
 		_, bit := math.Modf(float64(i) / 10)
@@ -390,7 +395,7 @@ func getLevelScore(getLevel int) (score int) {
 func getLevels(maxLevel int) []float64 {
 	var base float64 = 25
 	var current, prev float64 // = 0
-	expFactor := 2.8
+	var expFactor = 2.8
 	var out []float64
 	out = append(out, 0)
 

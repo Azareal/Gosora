@@ -50,6 +50,7 @@ type Reply struct {
 	LikeCount    int
 }
 
+// Copy gives you a non-pointer concurrency safe copy of the reply
 func (reply *Reply) Copy() Reply {
 	return *reply
 }

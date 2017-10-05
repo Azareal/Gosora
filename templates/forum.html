@@ -11,11 +11,37 @@
 	</div>
 	{{if ne .CurrentUser.ID 0}}
 		{{if .CurrentUser.Perms.CreateTopic}}
-		<div class="opt create_topic_opt" title="Create Topic"><a href="/topics/create/{{.Forum.ID}}"></a></div>
+		<div class="opt create_topic_opt" title="Create Topic"><a class="create_topic_link" href="/topics/create/{{.Forum.ID}}"></a></div>
 		{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic"><a></a></div>{{end}}
 		<div style="clear: both;"></div>
 	{{end}}
 </div>
+{{if .CurrentUser.Perms.CreateTopic}}
+<div class="rowblock topic_create_form" style="display: none;">
+	<form id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
+	<input form="topic_create_form_form" id="topic_board_input" name="topic-board" value="{{.Forum.ID}}" type="hidden">
+	<div class="formrow topic_name_row real_first_child">
+		<div class="formitem">
+			<input form="topic_create_form_form" name="topic-name" placeholder="Topic title" required>
+		</div>
+	</div>
+	<div class="formrow topic_content_row">
+		<div class="formitem">
+			<textarea form="topic_create_form_form" id="topic_content" name="topic-content" placeholder="Insert post here" required></textarea>
+		</div>
+	</div>
+	<div class="formrow topic_button_row">
+		<div class="formitem">
+			<button form="topic_create_form_form" name="topic-button" class="formbutton">Create Topic</button>
+			{{if .CurrentUser.Perms.UploadFiles}}
+			<input name="quick_topic_upload_files" form="topic_create_form_form" id="quick_topic_upload_files" multiple type="file" style="display: none;" />
+			<label for="quick_topic_upload_files" class="formbutton add_file_button">Add File</label>{{end}}
+			<div id="upload_file_dock"></div>
+			<button class="formbutton close_form">Cancel</button>
+		</div>
+	</div>
+</div>
+{{end}}
 <div id="forum_topic_list" class="rowblock topic_list">
 	{{range .ItemList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
 		<span class="topic_inner_right rowsmall" style="float: right;">

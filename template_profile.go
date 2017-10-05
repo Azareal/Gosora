@@ -20,33 +20,37 @@ func template_profile(tmpl_profile_vars ProfilePage, w http.ResponseWriter) {
 w.Write(header_0)
 w.Write([]byte(tmpl_profile_vars.Title))
 w.Write(header_1)
-w.Write([]byte(tmpl_profile_vars.Header.ThemeName))
+w.Write([]byte(tmpl_profile_vars.Header.Site.Name))
 w.Write(header_2)
+w.Write([]byte(tmpl_profile_vars.Header.ThemeName))
+w.Write(header_3)
 if len(tmpl_profile_vars.Header.Stylesheets) != 0 {
 for _, item := range tmpl_profile_vars.Header.Stylesheets {
-w.Write(header_3)
-w.Write([]byte(item))
 w.Write(header_4)
-}
-}
+w.Write([]byte(item))
 w.Write(header_5)
+}
+}
+w.Write(header_6)
 if len(tmpl_profile_vars.Header.Scripts) != 0 {
 for _, item := range tmpl_profile_vars.Header.Scripts {
-w.Write(header_6)
-w.Write([]byte(item))
 w.Write(header_7)
-}
-}
+w.Write([]byte(item))
 w.Write(header_8)
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(header_9)
-if !tmpl_profile_vars.CurrentUser.IsSuperMod {
-w.Write(header_10)
 }
+}
+w.Write(header_9)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(header_10)
+w.Write([]byte(tmpl_profile_vars.Header.Site.URL))
 w.Write(header_11)
+if !tmpl_profile_vars.CurrentUser.IsSuperMod {
+w.Write(header_12)
+}
+w.Write(header_13)
 w.Write(menu_0)
 w.Write(menu_1)
-w.Write([]byte(tmpl_profile_vars.Header.Site.Name))
+w.Write([]byte(tmpl_profile_vars.Header.Site.ShortName))
 w.Write(menu_2)
 if tmpl_profile_vars.CurrentUser.Loggedin {
 w.Write(menu_3)
@@ -58,16 +62,16 @@ w.Write(menu_5)
 w.Write(menu_6)
 }
 w.Write(menu_7)
-w.Write(header_12)
-if tmpl_profile_vars.Header.Widgets.RightSidebar != "" {
-w.Write(header_13)
-}
 w.Write(header_14)
+if tmpl_profile_vars.Header.Widgets.RightSidebar != "" {
+w.Write(header_15)
+}
+w.Write(header_16)
 if len(tmpl_profile_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_profile_vars.Header.NoticeList {
-w.Write(header_15)
+w.Write(header_17)
 w.Write([]byte(item))
-w.Write(header_16)
+w.Write(header_18)
 }
 }
 w.Write(profile_0)

@@ -43,14 +43,14 @@ type ForumStore interface {
 	//GetFirstChild(parentID int, parentType string) (*Forum,error)
 	Create(forumName string, forumDesc string, active bool, preset string) (int, error)
 
-	GetGlobalCount() int
+	GlobalCount() int
 }
 
 type ForumCache interface {
 	CacheGet(id int) (*Forum, error)
 	CacheSet(forum *Forum) error
 	CacheDelete(id int)
-	GetLength() int
+	Length() int
 }
 
 // MemoryForumStore is a struct which holds an arbitrary number of forums in memory, usually all of them, although we might introduce functionality to hold a smaller subset in memory for sites with an extremely large number of forums
@@ -385,7 +385,8 @@ func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active b
 }
 
 // ! Might be slightly inaccurate, if the sync.Map is constantly shifting and churning, but it'll stabilise eventually. Also, slow. Don't use this on every request x.x
-func (mfs *MemoryForumStore) GetLength() (length int) {
+// Length returns the number of forums in the memory cache
+func (mfs *MemoryForumStore) Length() (length int) {
 	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
 		length++
 		return true
@@ -394,8 +395,8 @@ func (mfs *MemoryForumStore) GetLength() (length int) {
 }
 
 // TODO: Get the total count of forums in the forum store minus the blanked forums rather than doing a heavy query for this?
-// GetGlobalCount returns the total number of forums
-func (mfs *MemoryForumStore) GetGlobalCount() (fcount int) {
+// GlobalCount returns the total number of forums
+func (mfs *MemoryForumStore) GlobalCount() (fcount int) {
 	err := mfs.getForumCount.QueryRow().Scan(&fcount)
 	if err != nil {
 		LogError(err)

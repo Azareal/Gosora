@@ -27,6 +27,8 @@ type Group struct {
 	CanSee          []int // The IDs of the forums this group can see
 }
 
+// ! Ahem, don't listen to the comment below. It's not concurrency safe right now.
+// Copy gives you a non-pointer concurrency safe copy of the group
 func (group *Group) Copy() Group {
 	return *group
 }

@@ -43,6 +43,7 @@ var groupEntryExistsStmt *sql.Stmt
 var getForumTopicsOffsetStmt *sql.Stmt
 var getExpiredScheduledGroupsStmt *sql.Stmt
 var getSyncStmt *sql.Stmt
+var getAttachmentStmt *sql.Stmt
 var getTopicRepliesOffsetStmt *sql.Stmt
 var getTopicListStmt *sql.Stmt
 var getTopicUserStmt *sql.Stmt
@@ -68,6 +69,7 @@ var addThemeStmt *sql.Stmt
 var createGroupStmt *sql.Stmt
 var addModlogEntryStmt *sql.Stmt
 var addAdminlogEntryStmt *sql.Stmt
+var addAttachmentStmt *sql.Stmt
 var createWordFilterStmt *sql.Stmt
 var addForumPermsToGroupStmt *sql.Stmt
 var replaceScheduleGroupStmt *sql.Stmt
@@ -341,6 +343,12 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing getAttachment statement.")
+	getAttachmentStmt, err = db.Prepare("SELECT `sectionID`,`sectionTable`,`originID`,`originTable`,`uploadedBy`,`path` FROM `attachments` WHERE `path` = ? AND `sectionID` = ? AND `sectionTable` = ?")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing getTopicRepliesOffset statement.")
 	getTopicRepliesOffsetStmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ? LIMIT ?,?")
 	if err != nil {
@@ -487,6 +495,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing addAdminlogEntry statement.")
 	addAdminlogEntryStmt, err = db.Prepare("INSERT INTO `administration_logs`(`action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt`) VALUES (?,?,?,?,?,UTC_TIMESTAMP())")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing addAttachment statement.")
+	addAttachmentStmt, err = db.Prepare("INSERT INTO `attachments`(`sectionID`,`sectionTable`,`originID`,`originTable`,`uploadedBy`,`path`) VALUES (?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}

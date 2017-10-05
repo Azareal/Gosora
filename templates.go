@@ -876,14 +876,15 @@ func (c *CTemplateSet) compileBoolsub(varname string, varholder string, template
 		fmt.Println("in compileBoolsub")
 	}
 	out, val := c.compileIfVarsub(varname, varholder, templateName, val)
+	// TODO: What if it's a pointer or an interface? I *think* we've got pointers handled somewhere, but not interfaces which we don't know the types of at compile time
 	switch val.Kind() {
-	case reflect.Int:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64:
 		out += " > 0"
 	case reflect.Bool: // Do nothing
 	case reflect.String:
 		out += " != \"\""
-	case reflect.Int64:
-		out += " > 0"
+	case reflect.Slice, reflect.Map:
+		out = "len(" + out + ") != 0"
 	default:
 		fmt.Println("Variable Name:", varname)
 		fmt.Println("Variable Holder:", varholder)

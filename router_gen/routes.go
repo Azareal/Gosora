@@ -13,11 +13,11 @@ type RouteGroup struct {
 }
 
 func addRoute(fname string, path string, before string, vars ...string) {
-	route_list = append(route_list, Route{fname, path, before, vars})
+	routeList = append(routeList, Route{fname, path, before, vars})
 }
 
 func addRouteGroup(path string, routes ...Route) {
-	route_groups = append(route_groups, RouteGroup{path, routes})
+	routeGroups = append(routeGroups, RouteGroup{path, routes})
 }
 
 func routes() {
@@ -31,6 +31,7 @@ func routes() {
 	//addRoute("routeTopicCreate","/topics/create/","","extra_data")
 	//addRoute("routeTopics","/topics/",""/*,"&groups","&forums"*/)
 	addRoute("routeChangeTheme", "/theme/", "")
+	addRoute("routeShowAttachment", "/attachs/", "", "extra_data")
 
 	addRouteGroup("/report/",
 		Route{"routeReportSubmit", "/report/submit/", "", []string{"extra_data"}},

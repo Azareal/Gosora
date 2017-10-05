@@ -46,6 +46,7 @@ type ForumSimple struct {
 	Preset string
 }
 
+// Copy gives you a non-pointer concurrency safe copy of the forum
 func (forum *Forum) Copy() (fcopy Forum) {
 	//forum.LastLock.RLock()
 	fcopy = *forum

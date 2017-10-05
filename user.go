@@ -121,6 +121,24 @@ func (user *User) Activate() (err error) {
 	return err
 }
 
+func (user *User) ChangeName(username string) (err error) {
+	_, err = setUsernameStmt.Exec(username, user.ID)
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
+	}
+	return err
+}
+
+func (user *User) ChangeAvatar(avatar string) (err error) {
+	_, err = setAvatarStmt.Exec(avatar, user.ID)
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
+	}
+	return err
+}
+
 func (user *User) increasePostStats(wcount int, topic bool) error {
 	var mod int
 	baseScore := 1
@@ -201,6 +219,7 @@ func (user *User) decreasePostStats(wcount int, topic bool) error {
 	return err
 }
 
+// Copy gives you a non-pointer concurrency safe copy of the user
 func (user *User) Copy() User {
 	return *user
 }

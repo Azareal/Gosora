@@ -2,7 +2,8 @@ package main
 
 func init() {
 	// Site Info
-	site.Name = "TS"
+	site.ShortName = "TS" // This should be less than three letters to fit in the navbar
+	site.Name = "Test Site"
 	site.Email = ""
 	site.URL = "localhost"
 	site.Port = "8080" // 8080
@@ -47,7 +48,7 @@ func init() {
 	config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"
 	config.ItemsPerPage = 25
 
-	// Developer flag
+	// Developer flags
 	dev.DebugMode = true
 	//dev.SuperDebug = true
 	//dev.TemplateDebug = true

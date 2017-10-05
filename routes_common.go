@@ -192,8 +192,8 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		return headerVars, stats, false
 	}
 
-	stats.Users = users.GetGlobalCount()
-	stats.Forums = fstore.GetGlobalCount() // TODO: Stop it from showing the blanked forums
+	stats.Users = users.GlobalCount()
+	stats.Forums = fstore.GlobalCount() // TODO: Stop it from showing the blanked forums
 	stats.Settings = len(headerVars.Settings)
 	stats.WordFilters = len(wordFilterBox.Load().(WordFilterBox))
 	stats.Themes = len(themes)

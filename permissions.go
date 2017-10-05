@@ -16,6 +16,8 @@ var AllPerms Perms
 var AllForumPerms ForumPerms
 var AllPluginPerms = make(map[string]bool)
 
+// ? - Can we avoid duplicating the items in this list in a bunch of places?
+
 var LocalPermList = []string{
 	"ViewTopic",
 	"LikeItem",
@@ -29,6 +31,7 @@ var LocalPermList = []string{
 	"CloseTopic",
 }
 
+// ? - Can we avoid duplicating the items in this list in a bunch of places?
 var GlobalPermList = []string{
 	"BanUsers",
 	"ActivateUsers",
@@ -49,6 +52,7 @@ var GlobalPermList = []string{
 	"ManagePlugins",
 	"ViewAdminLogs",
 	"ViewIPs",
+	"UploadFiles",
 }
 
 // Permission Structure: ActionComponent[Subcomponent]Flag
@@ -73,6 +77,10 @@ type Perms struct {
 	ManagePlugins         bool
 	ViewAdminLogs         bool
 	ViewIPs               bool
+
+	// Global non-staff permissions
+	UploadFiles bool
+	// TODO: Add a permission for enabling avatars
 
 	// Forum permissions
 	ViewTopic   bool
@@ -146,6 +154,8 @@ func init() {
 		ManagePlugins:         true,
 		ViewAdminLogs:         true,
 		ViewIPs:               true,
+
+		UploadFiles: true,
 
 		ViewTopic:   true,
 		LikeItem:    true,

@@ -26,7 +26,7 @@ var tList []interface{}
 
 //var nList []string
 var successJSONBytes = []byte(`{"success":"1"}`)
-var cacheControlMaxAge = "max-age=" + strconv.Itoa(day)
+var cacheControlMaxAge = "max-age=" + strconv.Itoa(day) // TODO: Make this a config value
 
 // HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
 type HTTPSRedirect struct {
@@ -171,11 +171,25 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 		canSee = group.CanSee
 	}
 
+	// We need a list of the visible forums for Quick Topic
+	var forumList []Forum
+
 	for _, fid := range canSee {
 		forum := fstore.DirtyGet(fid)
 		if forum.Name != "" && forum.Active {
+			if forum.ParentType == "" || forum.ParentType == "forum" {
+				// Optimise Quick Topic away for guests
+				if user.Loggedin {
+					fcopy := forum.Copy()
+					// TODO: Add a hook here for plugin_socialgroups
+					forumList = append(forumList, fcopy)
+				}
+			}
+			// ? - Should we be showing plugin_socialgroups posts on /topics/?
+			// ? - Would it be useful, if we could post in social groups from /topics/?
 			fidList = append(fidList, strconv.Itoa(fid))
 			qlist += "?,"
+
 		}
 	}
 
@@ -265,7 +279,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 		topicItem.LastUser = userList[topicItem.LastReplyBy]
 	}
 
-	pi := TopicsPage{"Topic List", user, headerVars, topicList}
+	pi := TopicsPage{"All Topics", user, headerVars, topicList, forumList, config.DefaultForum}
 	if preRenderHooks["pre_render_topic_list"] != nil {
 		if runPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
 			return
@@ -495,7 +509,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 
 	BuildWidgets("view_topic", &topic, headerVars, r)
 
-	topic.ContentHTML = parseMessage(topic.Content)
+	topic.ContentHTML = parseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")
 
 	// We don't want users posting in locked topics...
@@ -573,7 +587,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 
 		replyItem.UserLink = buildProfileURL(nameToSlug(replyItem.CreatedByName), replyItem.CreatedBy)
 		replyItem.ParentID = topic.ID
-		replyItem.ContentHtml = parseMessage(replyItem.Content)
+		replyItem.ContentHtml = parseMessage(replyItem.Content, topic.ParentID, "forums")
 		replyItem.ContentLines = strings.Count(replyItem.Content, "\n")
 
 		postGroup, err = gstore.Get(replyItem.Group)
@@ -744,7 +758,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 
 		// TODO: Add a hook here
 
-		replyList = append(replyList, ReplyUser{rid, puser.ID, replyContent, parseMessage(replyContent), replyCreatedBy, buildProfileURL(nameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
+		replyList = append(replyList, ReplyUser{rid, puser.ID, replyContent, parseMessage(replyContent, 0, ""), replyCreatedBy, buildProfileURL(nameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
 	}
 	err = rows.Err()
 	if err != nil {

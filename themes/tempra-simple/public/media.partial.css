@@ -52,7 +52,6 @@
 	li a { font-size: 14px; }
 	ul { height: 26px; }
 	.menu_left, .menu_right { padding-right: 7px; }
-	.menu_create_topic { display: none; }
 
 	.menu_alerts {
 		padding-left: 4px;

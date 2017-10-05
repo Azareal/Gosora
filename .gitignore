@@ -5,11 +5,15 @@ tmp.txt
 run_notemplategen.bat
 brun.bat
 
+attachs/*
+!attachs/filler.txt
 uploads/avatar_*
 uploads/socialgroup_*
 backups/*.sql
+node_modules/*
 bin/*
 out/*
+logs/*
 *.exe
 *.exe~
 *.prof

@@ -25,7 +25,7 @@ type UserStore interface {
 	BulkGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
 	Create(username string, password string, email string, group int, active int) (int, error)
-	GetGlobalCount() int
+	GlobalCount() int
 }
 
 type UserCache interface {
@@ -38,7 +38,7 @@ type UserCache interface {
 	CacheRemoveUnsafe(id int) error
 	Flush()
 	Reload(id int) error
-	GetLength() int
+	Length() int
 	SetCapacity(capacity int)
 	GetCapacity() int
 }
@@ -376,7 +376,9 @@ func (mus *MemoryUserStore) Flush() {
 	mus.Unlock()
 }
 
-func (mus *MemoryUserStore) GetLength() int {
+// ! Is this concurrent?
+// Length returns the number of users in the memory cache
+func (mus *MemoryUserStore) Length() int {
 	return int(mus.length)
 }
 
@@ -388,8 +390,8 @@ func (mus *MemoryUserStore) GetCapacity() int {
 	return mus.capacity
 }
 
-// Return the total number of users registered on the forums
-func (mus *MemoryUserStore) GetGlobalCount() int {
+// GlobalCount returns the total number of users registered on the forums
+func (mus *MemoryUserStore) GlobalCount() int {
 	var ucount int
 	err := mus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {
@@ -554,8 +556,8 @@ func (mus *SQLUserStore) Create(username string, password string, email string, 
 	return int(lastID), err
 }
 
-// Return the total number of users registered on the forums
-func (mus *SQLUserStore) GetGlobalCount() int {
+// GlobalCount returns the total number of users registered on the forums
+func (mus *SQLUserStore) GlobalCount() int {
 	var ucount int
 	err := mus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {

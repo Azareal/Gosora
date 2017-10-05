@@ -23,7 +23,9 @@
 		"ManageThemes":          "Can manage themes",
 		"ManagePlugins":         "Can manage plugins",
 		"ViewAdminLogs":         "Can view the administrator action logs",
-		"ViewIPs":               "Can view IP addresses"
+		"ViewIPs":               "Can view IP addresses",
+
+		"UploadFiles": "Can upload files"
 	},
 	"LocalPerms": {
 		"ViewTopic":   "Can view topics",

@@ -4,6 +4,11 @@
 	-webkit-box-sizing: border-box;
 }
 
+/* TODO: Run a find and replacer in Gosora to support browsers without CSS Variable support */
+:root {
+	--main-border-color: hsl(0,0%,80%);
+}
+
 body {
 	font-family: arial;
 	padding-bottom: 8px;
@@ -23,11 +28,11 @@ ul {
 	padding-right: 0px;
 	height: 36px;
 	list-style-type: none;
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	background: hsl(0, 0%, 97%);
 	margin-bottom: 12px;
 	margin-top: 0px;
-	border-bottom: 1.5px inset hsl(0,0%,80%);
+	border-bottom: 1.5px inset var(--main-border-color);
 	margin-left: -8px;
 	margin-right: -8px;
 }
@@ -48,14 +53,14 @@ li a {
 }
 .menu_left {
 	float: left;
-	border-right: 1px solid hsl(0,0%,80%);
-	border-bottom: 1.5px inset hsl(0,0%,80%);
+	border-right: 1px solid var(--main-border-color);
+	border-bottom: 1.5px inset var(--main-border-color);
 	padding-right: 10px;
 	background: hsl(0, 0%, 98%);
 }
 .menu_right {
 	float: right;
-	border-left: 1px solid hsl(0,0%,80%);
+	border-left: 1px solid var(--main-border-color);
 	padding-right: 10px;
 }
 
@@ -109,10 +114,10 @@ li a {
 	line-height: 16px;
 	width: 300px;
 	right: calc(5% + 7px);
-	border-top: 1px solid hsl(0,0%,80%);
-	border-left: 1px solid hsl(0,0%,80%);
-	border-right: 1px solid hsl(0,0%,80%);
-	border-bottom: 1px solid hsl(0,0%,80%);
+	border-top: 1px solid var(--main-border-color);
+	border-left: 1px solid var(--main-border-color);
+	border-right: 1px solid var(--main-border-color);
+	border-bottom: 1px solid var(--main-border-color);
 	margin-bottom: 10px;
 }
 .alertItem {
@@ -150,7 +155,7 @@ li a {
 	margin-left: auto;
 	margin-right: auto;
 	background: hsl(0, 0%, 98%);
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	border-top: none;
 }
 
@@ -161,14 +166,14 @@ li a {
 
 /* Explict declaring each border direction to fix a bug in Chrome where an override to .rowhead was also applying to .rowblock in some cases */
 .rowblock {
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	width: 100%;
 	padding: 0px;
 	padding-top: 0px;
-	border-top: 1px solid hsl(0,0%,80%);
-	border-left: 1px solid hsl(0,0%,80%);
-	border-right: 1px solid hsl(0,0%,80%);
-	border-bottom: 1.5px inset hsl(0,0%,80%);
+	border-top: 1px solid var(--main-border-color);
+	border-left: 1px solid var(--main-border-color);
+	border-right: 1px solid var(--main-border-color);
+	border-bottom: 1.5px inset var(--main-border-color);
 }
 .rowblock:empty {
 	display: none;
@@ -211,7 +216,7 @@ li a {
 	width: calc(70% - 13px);
 }
 .colstack_item {
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	padding: 0px;
 	padding-top: 0px;
 	width: 100%;
@@ -230,7 +235,7 @@ li a {
 	margin-top: 2px;
 }
 .grid_item {
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	word-wrap: break-word;
 	background-color: white;
 	width: 100%;
@@ -291,6 +296,34 @@ li a {
 }
 
 .opthead { display: none; }
+.rowitem.has_opt {
+	float: left;
+	width: calc(100% - 50px);
+	border-right: 1px solid #ccc;
+	border-bottom: none;
+}
+.opt {
+	float: left;
+	font-size: 32px;
+	height: 100%;
+	background-color: hsl(0, 0%, 99%);
+	width: 50px;
+	text-align: center;
+}
+.create_topic_opt a.create_topic_link:before {
+	content: '🖊︎';
+}
+.create_topic_opt, .create_topic_opt a {
+	color: rgb(120,120,120);
+	text-decoration: none;
+}
+.locked_opt {
+	color: rgb(80,80,80);
+}
+.locked_opt:before {
+	content: '🔒︎';
+}
+
 .datarow {
 	padding-top: 10px;
 	padding-bottom: 10px;
@@ -310,7 +343,7 @@ li a {
 	clear: both;
 }
 .formrow:not(:last-child) {
-	border-bottom: 1px dotted hsl(0,0%,80%);
+	border-bottom: 1px dotted var(--main-border-color);
 }
 
 .formitem {
@@ -321,7 +354,7 @@ li a {
 	font-weight: normal;
 }
 .formitem:not(:last-child) {
-	border-right: 1px dotted hsl(0,0%,80%);
+	border-right: 1px dotted var(--main-border-color);
 }
 .formitem.invisible_border {
 	border: none;
@@ -346,18 +379,18 @@ li a {
 	padding-bottom: 12px;/*16px;*/
 	/*padding-left: 15px;*/
 }
+
+.formbutton, button {
+	background: white;
+	border: 1px solid #8e8e8e;
+}
 .formbutton {
 	padding: 7px;
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
 	font-size: 15px;
-	border-color: hsl(0,0%,80%);
-}
-
-button {
-	background: white;
-	border: 1px solid #8e8e8e;
+	border-color: var(--main-border-color);
 }
 
 /* Topics */
@@ -384,6 +417,39 @@ button {
 	.topic_list .topic_right {
 		width: 204px;
 	}
+}
+
+.postImage {
+	max-width: 100%;
+	max-height: 200px;
+	background-color: white;
+	padding: 10px;
+}
+
+.topic_create_form .topic_button_row .formitem {
+	display: flex;
+}
+.topic_create_form .formbutton:first-child {
+	margin-left: 0px;
+	margin-right: 5px;
+}
+.topic_create_form .formbutton:not(:first-child) {
+	margin-left: 0px;
+	margin-right: 5px;
+}
+.topic_create_form .formbutton:last-child {
+	margin-left: auto;
+}
+.topic_create_form .upload_file_dock {
+	display: flex;
+}
+.topic_create_form .uploadItem {
+	display: inline-block;
+	margin-left: 8px;
+	margin-right: 8px;
+	background-size: 25px 35px;
+	background-repeat: no-repeat;
+	padding-left: 30px;
 }
 
 .topic_status_sticky {
@@ -467,7 +533,7 @@ button {
 	color: #505050; /* 80,80,80 */
 	background-color: #FFFFFF;
 	border-style: solid;
-	border-color: hsl(0,0%,80%);
+	border-color: var(--main-border-color);
 	border-width: 1px;
 	font-size: 15px;
 }
@@ -499,7 +565,7 @@ button.username {
 	display: block;
 	padding: 5px;
 	margin-bottom: 10px;
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	background-color: white;
 }
 .alert_success {
@@ -580,10 +646,10 @@ button.username {
 }
 
 #profile_left_lane {
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	width: 220px;
 	margin-bottom: 10px;
-	border-bottom: 1.5px inset hsl(0,0%,80%);
+	border-bottom: 1.5px inset var(--main-border-color);
 }
 #profile_left_lane .avatarRow {
 	overflow: hidden;
@@ -612,7 +678,7 @@ button.username {
 	margin-top: 20px;
 }
 #profile_right_lane .topic_reply_form {
-	border-bottom: 1.5px inset hsl(0,0%,80%);
+	border-bottom: 1.5px inset var(--main-border-color);
 }
 
 .simple {
@@ -652,7 +718,7 @@ button.username {
 	position: sticky;
 	top: 4px;
 	/*box-shadow: 0 1px 2px rgba(0,0,0,.1);*/
-	border-bottom: 1.5px inset hsl(0,0%,80%);
+	border-bottom: 1.5px inset var(--main-border-color);
 }
 .userinfo .avatar_item {
 	background-repeat: no-repeat, repeat-y;
@@ -672,10 +738,12 @@ button.username {
 	margin-bottom: 0;
 	margin-right: 3px;
 	/*box-shadow: 0 1px 2px rgba(0,0,0,.1);*/
-	border-bottom: 1.5px inset hsl(0,0%,80%);
+	border-bottom: 1.5px inset var(--main-border-color);
 }
 
-.action_item .userinfo { display: none; }
+.action_item .userinfo {
+	display: none;
+}
 .action_item .content_container {
 	min-height: auto;
 	padding: 15px;
@@ -689,7 +757,7 @@ button.username {
 	border-width: 1px;
 	background-color: #FFFFFF;
 	border-style: solid;
-	border-color: hsl(0,0%,80%);
+	border-color: var(--main-border-color);
 	padding: 0px;
 	padding-left: 5px;
 	padding-right: 5px;
@@ -720,7 +788,7 @@ button.username {
 	border-bottom: none;
 }
 .topic_reply_form {
-	border-top: 1px solid hsl(0,0%,80%);
+	border-top: 1px solid var(--main-border-color);
 }
 .post_container .post_item {
 	background-color: #eaeaea;
@@ -739,7 +807,7 @@ button.username {
 }
 
 .footer {
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	margin-top: 12px;
 	clear: both;
 	height: 40px;
@@ -747,7 +815,7 @@ button.username {
 	padding-left: 10px;
 	padding-right: 10px;
 	background-color: white;
-	border-bottom: 1.5px inset hsl(0,0%,80%);
+	border-bottom: 1.5px inset var(--main-border-color);
 }
 .footer select {
 	padding: 2px;
@@ -767,7 +835,7 @@ button.username {
 	margin-top: -5px;
 }
 .pageitem {
-	border: 1px solid hsl(0,0%,80%);
+	border: 1px solid var(--main-border-color);
 	background-color: white;
 	padding: 5px;
 	margin-right: 5px;

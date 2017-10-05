@@ -27,6 +27,7 @@ const kilobyte int = 1024
 const megabyte int = kilobyte * 1024
 const gigabyte int = megabyte * 1024
 const terabyte int = gigabyte * 1024
+const petabyte int = terabyte * 1024
 const saltLength int = 32
 const sessionLength int = 80
 
@@ -37,6 +38,30 @@ var startTime time.Time
 var externalSites = map[string]string{
 	"YT": "https://www.youtube.com/",
 }
+
+type StringList []string
+
+// ? - Should we allow users to upload .php or .go files? It could cause security issues. We could store them with a mangled extension to render them inert
+// TODO: Let admins manage this from the Control Panel
+var allowedFileExts = StringList{
+	"png", "jpg", "jpeg", "svg", "bmp", "gif",
+	"txt", "xml", "json", "yaml", "js", "py", "rb",
+	"mp3", "mp4", "avi", "wmv",
+}
+var imageFileExts = StringList{
+	"png", "jpg", "jpeg", "svg", "bmp", "gif",
+}
+
+// TODO: Write a test for this
+func (slice StringList) Contains(needle string) bool {
+	for _, item := range slice {
+		if item == needle {
+			return true
+		}
+	}
+	return false
+}
+
 var staticFiles = make(map[string]SFile)
 var logWriter = io.MultiWriter(os.Stderr)
 

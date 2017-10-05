@@ -139,6 +139,19 @@ func initThemes() error {
 
 		theme.Active = false // Set this to false, just in case someone explicitly overrode this value in the JSON file
 
+		// TODO: Let the theme specify where it's resources are via the JSON file?
+		// TODO: Let the theme inherit CSS from another theme?
+		// ? - This might not be too helpful, as it only searches for /public/ and not if /public/ is empty. Still, it might help some people with a slightly less cryptic error
+		_, err = os.Stat("./themes/" + theme.Name + "/public/")
+		if err != nil {
+			if os.IsNotExist(err) {
+				return errors.New("We couldn't find this theme's resources. E.g. the /public/ folder.")
+			} else {
+				log.Print("We weren't able to access this theme's resources due to a permissions issue or some other problem")
+				return err
+			}
+		}
+
 		if theme.FullImage != "" {
 			if dev.DebugMode {
 				log.Print("Adding theme image")

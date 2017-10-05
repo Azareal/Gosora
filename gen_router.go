@@ -107,6 +107,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		case "/theme":
 			routeChangeTheme(w,req,user)
 			return
+		case "/attachs":
+			routeShowAttachment(w,req,user,extra_data)
+			return
 		case "/report":
 			switch(req.URL.Path) {
 				case "/report/submit/":

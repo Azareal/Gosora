@@ -895,36 +895,37 @@ func BenchmarkCustomRouterSerial(b *testing.B) {
 	})
 }*/
 
+// TODO: Take the attachment system into account in these parser benches
 func BenchmarkParserSerial(b *testing.B) {
 	b.ReportAllocs()
 	b.Run("empty_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("")
+			_ = parseMessage("", 0, "")
 		}
 	})
 	b.Run("short_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going?")
+			_ = parseMessage("Hey everyone, how's it going?", 0, "")
 		}
 	})
 	b.Run("one_smily", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going? :)")
+			_ = parseMessage("Hey everyone, how's it going? :)", 0, "")
 		}
 	})
 	b.Run("five_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going? :):):):):)")
+			_ = parseMessage("Hey everyone, how's it going? :):):):):)", 0, "")
 		}
 	})
 	b.Run("ten_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going? :):):):):):):):):):)")
+			_ = parseMessage("Hey everyone, how's it going? :):):):):):):):):):)", 0, "")
 		}
 	})
 	b.Run("twenty_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+			_ = parseMessage("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)", 0, "")
 		}
 	})
 }

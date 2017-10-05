@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<title>{{.Title}}</title>
+		<title>{{.Title}} | {{.Header.Site.Name}}</title>
 		<link href="/static/{{.Header.ThemeName}}/main.css" rel="stylesheet" type="text/css">
 		{{range .Header.Stylesheets}}
 		<link href="/static/{{.}}" rel="stylesheet" type="text/css">
@@ -10,7 +10,10 @@
 		{{range .Header.Scripts}}
 		<script type="text/javascript" src="/static/{{.}}"></script>
 		{{end}}
-		<script type="text/javascript">var session = "{{.CurrentUser.Session}}";</script>
+		<script type="text/javascript">
+		var session = "{{.CurrentUser.Session}}";
+		var siteURL = "{{.Header.Site.URL}}";
+		</script>
 		<script type="text/javascript" src="/static/global.js"></script>
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
 	</head>

@@ -1531,6 +1531,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user User
 	globalPerms = append(globalPerms, NameLangToggle{"ManagePlugins", GetGlobalPermPhrase("ManagePlugins"), group.Perms.ManagePlugins})
 	globalPerms = append(globalPerms, NameLangToggle{"ViewAdminLogs", GetGlobalPermPhrase("ViewAdminLogs"), group.Perms.ViewAdminLogs})
 	globalPerms = append(globalPerms, NameLangToggle{"ViewIPs", GetGlobalPermPhrase("ViewIPs"), group.Perms.ViewIPs})
+	globalPerms = append(globalPerms, NameLangToggle{"UploadFiles", GetGlobalPermPhrase("UploadFiles"), group.Perms.UploadFiles})
 
 	pi := PanelEditGroupPermsPage{"Group Editor", user, headerVars, stats, group.ID, group.Name, localPerms, globalPerms}
 	if preRenderHooks["pre_render_panel_edit_group_perms"] != nil {

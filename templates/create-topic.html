@@ -4,25 +4,29 @@
 		<div class="rowitem"><h1>Create Topic</h1></div>
 	</div>
 	<div class="rowblock">
-		<form action="/topic/create/submit/" method="post">
-			<div class="formrow real_first_child">
-				<div class="formitem formlabel"><a>Board</a></div>
-				<div class="formitem"><select name="topic-board">
-					{{range .ItemList}}<option {{if eq .ID $.FID}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
-				</select></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>Topic Name</a></div>
-				<div class="formitem"><input name="topic-name" type="text" placeholder="Topic Name" required /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>Content</a></div>
-				<div class="formitem"><textarea class="large" name="topic-content" placeholder="Insert content here" required></textarea></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem"><button name="topic-button" class="formbutton form_middle_button">Create Topic</button></div>
-			</div>
-		</form>
+		<form id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
+		<div class="formrow real_first_child">
+			<div class="formitem formlabel"><a>Board</a></div>
+			<div class="formitem"><select form="topic_create_form_form" id="topic_board_input" name="topic-board">
+				{{range .ItemList}}<option {{if eq .ID $.FID}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
+			</select></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>Topic Name</a></div>
+			<div class="formitem"><input form="topic_create_form_form" name="topic-name" type="text" placeholder="Topic Name" required /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>Content</a></div>
+			<div class="formitem"><textarea form="topic_create_form_form" class="large" id="topic_content" name="topic-content" placeholder="Insert content here" required></textarea></div>
+		</div>
+		<div class="formrow">
+			<button form="topic_create_form_form" name="topic-button" class="formbutton">Create Topic</button>
+			{{if .CurrentUser.Perms.UploadFiles}}
+			<input name="quick_topic_upload_files" form="topic_create_form_form" id="quick_topic_upload_files" multiple type="file" style="display: none;" />
+			<label for="quick_topic_upload_files" class="formbutton add_file_button">Add File</label>{{end}}
+			<div id="upload_file_dock"></div>
+			<button class="formbutton close_form">Cancel</button>
+		</div>
 	</div>
 </main>
 {{template "footer.html" . }}

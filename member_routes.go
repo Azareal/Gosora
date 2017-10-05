@@ -1,12 +1,15 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"html"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -101,9 +104,17 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 
 // POST functions. Authorised users only.
 func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
-	err := r.ParseForm()
+	// TODO: Reduce this to 1MB for attachments for each file?
+	if r.ContentLength > int64(config.MaxRequestSize) {
+		size, unit := convertByteUnit(float64(config.MaxRequestSize))
+		CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, int64(config.MaxRequestSize))
+
+	err := r.ParseMultipartForm(int64(megabyte))
 	if err != nil {
-		PreError("Bad Form", w, r)
+		LocalError("Unable to parse the form", w, r, user)
 		return
 	}
 
@@ -131,35 +142,110 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	wcount := wordCount(content)
-	res, err := createTopicStmt.Exec(fid, topicName, content, parseMessage(content), user.ID, ipaddress, wcount, user.ID)
+	tid, err := topics.Create(fid, topicName, content, user.ID, ipaddress)
 	if err != nil {
-		InternalError(err, w)
+		switch err {
+		case ErrNoRows:
+			LocalError("Something went wrong, perhaps the forum got deleted?", w, r, user)
+		case ErrNoTitle:
+			LocalError("This topic doesn't have a title", w, r, user)
+		case ErrNoBody:
+			LocalError("This topic doesn't have a body", w, r, user)
+		default:
+			InternalError(err, w)
+		}
 		return
 	}
-	lastID, err := res.LastInsertId()
+
+	_, err = addSubscriptionStmt.Exec(user.ID, tid, "topic")
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	_, err = addSubscriptionStmt.Exec(user.ID, lastID, "topic")
+	err = user.increasePostStats(wordCount(content), true)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 
-	http.Redirect(w, r, "/topic/"+strconv.FormatInt(lastID, 10), http.StatusSeeOther)
-	err = user.increasePostStats(wcount, true)
-	if err != nil {
-		InternalError(err, w)
-		return
+	// Handle the file attachments
+	if user.Perms.UploadFiles {
+		var mpartFiles = r.MultipartForm.File
+		if len(mpartFiles) > 5 {
+			LocalError("You can't attach more than five files", w, r, user)
+			return
+		}
+
+		for _, fheaders := range r.MultipartForm.File {
+			for _, hdr := range fheaders {
+				log.Print("hdr.Filename ", hdr.Filename)
+				extarr := strings.Split(hdr.Filename, ".")
+				if len(extarr) < 2 {
+					LocalError("Bad file", w, r, user)
+					return
+				}
+				ext := extarr[len(extarr)-1]
+
+				// TODO: Can we do this without a regex?
+				reg, err := regexp.Compile("[^A-Za-z0-9]+")
+				if err != nil {
+					LocalError("Bad file extension", w, r, user)
+					return
+				}
+				ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
+				if !allowedFileExts.Contains(ext) {
+					LocalError("You're not allowed this upload files with this extension", w, r, user)
+					return
+				}
+
+				infile, err := hdr.Open()
+				if err != nil {
+					LocalError("Upload failed", w, r, user)
+					return
+				}
+				defer infile.Close()
+
+				hasher := sha256.New()
+				_, err = io.Copy(hasher, infile)
+				if err != nil {
+					LocalError("Upload failed [Hashing Failed]", w, r, user)
+					return
+				}
+				infile.Close()
+
+				checksum := hex.EncodeToString(hasher.Sum(nil))
+				filename := checksum + "." + ext
+				outfile, err := os.Create("." + "/attachs/" + filename)
+				if err != nil {
+					LocalError("Upload failed [File Creation Failed]", w, r, user)
+					return
+				}
+				defer outfile.Close()
+
+				infile, err = hdr.Open()
+				if err != nil {
+					LocalError("Upload failed", w, r, user)
+					return
+				}
+				defer infile.Close()
+
+				_, err = io.Copy(outfile, infile)
+				if err != nil {
+					LocalError("Upload failed [Copy Failed]", w, r, user)
+					return
+				}
+
+				_, err = addAttachmentStmt.Exec(fid, "forums", tid, "topics", user.ID, filename)
+				if err != nil {
+					InternalError(err, w)
+					return
+				}
+			}
+		}
 	}
 
-	err = fstore.AddTopic(int(lastID), user.ID, fid)
-	if err != nil && err != ErrNoRows {
-		InternalError(err, w)
-	}
+	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 }
 
 func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
@@ -201,7 +287,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	wcount := wordCount(content)
-	_, err = createReplyStmt.Exec(tid, content, parseMessage(content), ipaddress, wcount, user.ID)
+	_, err = createReplyStmt.Exec(tid, content, parseMessage(content, topic.ParentID, "forums"), ipaddress, wcount, user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -475,7 +561,8 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) 
 		return
 	}
 
-	_, err = createProfileReplyStmt.Exec(uid, html.EscapeString(preparseMessage(r.PostFormValue("reply-content"))), parseMessage(html.EscapeString(preparseMessage(r.PostFormValue("reply-content")))), user.ID, ipaddress)
+	content := html.EscapeString(preparseMessage(r.PostFormValue("reply-content")))
+	_, err = createProfileReplyStmt.Exec(uid, content, parseMessage(content, 0, ""), user.ID, ipaddress)
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -605,8 +692,9 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		return
 	}
 
+	// TODO: Repost attachments in the reports forum, so that the mods can see them
 	// ? - Can we do this via the TopicStore?
-	res, err := createReportStmt.Exec(title, content, parseMessage(content), user.ID, itemType+"_"+strconv.Itoa(itemID))
+	res, err := createReportStmt.Exec(title, content, parseMessage(content, 0, ""), user.ID, itemType+"_"+strconv.Itoa(itemID))
 	if err != nil {
 		InternalError(err, w)
 		return
@@ -728,7 +816,8 @@ func routeAccountOwnEditAvatar(w http.ResponseWriter, r *http.Request, user User
 
 func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	if r.ContentLength > int64(config.MaxRequestSize) {
-		http.Error(w, "Request too large", http.StatusExpectationFailed)
+		size, unit := convertByteUnit(float64(config.MaxRequestSize))
+		CustomError("Your avatar's too big. Avatars must be smaller than "+strconv.Itoa(int(size))+unit, http.StatusExpectationFailed, "Error", w, r, user)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.MaxRequestSize))
@@ -742,14 +831,13 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 
-	err := r.ParseMultipartForm(int64(config.MaxRequestSize))
+	err := r.ParseMultipartForm(int64(megabyte))
 	if err != nil {
 		LocalError("Upload failed", w, r, user)
 		return
 	}
 
-	var filename string
-	var ext string
+	var filename, ext string
 	for _, fheaders := range r.MultipartForm.File {
 		for _, hdr := range fheaders {
 			infile, err := hdr.Open()
@@ -760,6 +848,7 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 			defer infile.Close()
 
 			// We don't want multiple files
+			// TODO: Check the length of r.MultipartForm.File and error rather than doing this x.x
 			if filename != "" {
 				if filename != hdr.Filename {
 					os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
@@ -778,6 +867,7 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 				}
 				ext = extarr[len(extarr)-1]
 
+				// TODO: Can we do this without a regex?
 				reg, err := regexp.Compile("[^A-Za-z0-9]+")
 				if err != nil {
 					LocalError("Bad file extension", w, r, user)
@@ -802,16 +892,12 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 		}
 	}
 
-	_, err = setAvatarStmt.Exec("."+ext, strconv.Itoa(user.ID))
+	err = user.ChangeAvatar("." + ext)
 	if err != nil {
 		InternalError(err, w)
 		return
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
 
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your avatar was successfully updated")
 	pi := Page{"Edit Avatar", user, headerVars, tList, nil}
@@ -857,18 +943,12 @@ func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, u
 	}
 
 	newUsername := html.EscapeString(r.PostFormValue("account-new-username"))
-	_, err = setUsernameStmt.Exec(newUsername, strconv.Itoa(user.ID))
+	err = user.ChangeName(newUsername)
 	if err != nil {
 		LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)
 		return
 	}
-
-	// TODO: Use the reloaded data instead for the name?
 	user.Name = newUsername
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
 
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your username was successfully updated")
 	pi := Page{"Edit Username", user, headerVars, tList, nil}
@@ -1021,4 +1101,61 @@ func routeLogout(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	auth.Logout(w, user.ID)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func routeShowAttachment(w http.ResponseWriter, r *http.Request, user User, filename string) {
+	err := r.ParseForm()
+	if err != nil {
+		PreError("Bad Form", w, r)
+		return
+	}
+
+	filename = Stripslashes(filename)
+	var ext = filepath.Ext("./attachs/" + filename)
+	//log.Print("ext ", ext)
+	//log.Print("filename ", filename)
+	if !allowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
+		LocalError("Bad extension", w, r, user)
+		return
+	}
+
+	sectionID, err := strconv.Atoi(r.FormValue("sectionID"))
+	if err != nil {
+		LocalError("The sectionID is not an integer", w, r, user)
+		return
+	}
+	var sectionTable = r.FormValue("sectionType")
+
+	var originTable string
+	var originID, uploadedBy int
+	err = getAttachmentStmt.QueryRow(filename, sectionID, sectionTable).Scan(&sectionID, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
+	if err == ErrNoRows {
+		NotFound(w, r)
+		return
+	} else if err != nil {
+		InternalError(err, w)
+		return
+	}
+
+	if sectionTable == "forums" {
+		_, ok := SimpleForumUserCheck(w, r, &user, sectionID)
+		if !ok {
+			return
+		}
+		if !user.Perms.ViewTopic {
+			NoPermissions(w, r, user)
+			return
+		}
+	} else {
+		LocalError("Unknown section", w, r, user)
+		return
+	}
+
+	if originTable != "topics" && originTable != "replies" {
+		LocalError("Unknown origin", w, r, user)
+		return
+	}
+
+	// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
+	http.ServeFile(w, r, "./attachs/"+filename)
 }

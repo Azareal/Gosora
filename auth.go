@@ -117,6 +117,7 @@ func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session stri
 	http.SetCookie(w, &cookie)
 }
 
+// GetCookies fetches the current user's session cookies
 func (auth *DefaultAuth) GetCookies(r *http.Request) (uid int, session string, err error) {
 	// Are there any session cookies..?
 	cookie, err := r.Cookie("uid")
@@ -134,6 +135,7 @@ func (auth *DefaultAuth) GetCookies(r *http.Request) (uid int, session string, e
 	return uid, cookie.Value, err
 }
 
+// SessionCheck checks if a user has session cookies and whether they're valid
 func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (user *User, halt bool) {
 	uid, session, err := auth.GetCookies(r)
 	if err != nil {
@@ -156,6 +158,7 @@ func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (u
 	return user, false
 }
 
+// CreateSession generates a new session to allow a remote client to stay logged in as a specific user
 func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 	session, err = GenerateSafeString(sessionLength)
 	if err != nil {

@@ -78,6 +78,17 @@ CREATE TABLE `replies`(
 	primary key(`rid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
+CREATE TABLE `attachments`(
+	`attachID` int not null AUTO_INCREMENT,
+	`sectionID` int DEFAULT 0 not null, /* section ID */
+	`sectionTable` varchar(200) DEFAULT 'forums' not null, /* section table */
+	`originID` int not null,
+	`originTable` varchar(200) DEFAULT 'replies' not null,
+	`uploadedBy` int not null,
+	`path` varchar(200) not null,
+	primary key(`attachID`)
+) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
+
 CREATE TABLE `revisions`(
 	`index` int not null,
 	`content` text not null,
@@ -190,6 +201,7 @@ INSERT INTO emails(`email`,`uid`,`validated`) VALUES ('admin@localhost',1,1);
 /*
 The Permissions:
 
+Global Permissions:
 BanUsers
 ActivateUsers
 EditUser
@@ -210,6 +222,10 @@ ManagePlugins
 ViewAdminLogs
 ViewIPs
 
+Non-staff Global Permissions:
+UploadFiles
+
+Forum Permissions:
 ViewTopic
 LikeItem
 CreateTopic
@@ -222,9 +238,9 @@ PinTopic
 CloseTopic
 */
 
-INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,1,"Admin");
-INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`is_mod`,`tag`) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,"Mod");
-INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`) VALUES ('Member','{"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}','{}');
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`is_mod`,`is_admin`,`tag`) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,1,"Admin");
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`is_mod`,`tag`) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,"Mod");
+INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`) VALUES ('Member','{"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}','{}');
 INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`is_banned`) VALUES ('Banned','{"ViewTopic":true}','{}',1);
 INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`) VALUES ('Awaiting Activation','{"ViewTopic":true}','{}');
 INSERT INTO users_groups(`name`,`permissions`,`plugin_perms`,`tag`) VALUES ('Not Loggedin','{"ViewTopic":true}','{}','Guest');

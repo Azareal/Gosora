@@ -1,25 +1,31 @@
-/* WIP Under Construction */
+/*
+*
+*	Query Generator Library
+*	WIP Under Construction
+*	Copyright Azareal 2017 - 2018
+*
+ */
 package qgen
 
 //import "fmt"
 import "strings"
 import "os"
 
-func _process_columns(colstr string) (columns []DB_Column) {
+func processColumns(colstr string) (columns []DB_Column) {
 	if colstr == "" {
 		return columns
 	}
 	colstr = strings.Replace(colstr, " as ", " AS ", -1)
 	for _, segment := range strings.Split(colstr, ",") {
 		var outcol DB_Column
-		dothalves := strings.Split(strings.TrimSpace(segment), ".")
+		dotHalves := strings.Split(strings.TrimSpace(segment), ".")
 
 		var halves []string
-		if len(dothalves) == 2 {
-			outcol.Table = dothalves[0]
-			halves = strings.Split(dothalves[1], " AS ")
+		if len(dotHalves) == 2 {
+			outcol.Table = dotHalves[0]
+			halves = strings.Split(dotHalves[1], " AS ")
 		} else {
-			halves = strings.Split(dothalves[0], " AS ")
+			halves = strings.Split(dotHalves[0], " AS ")
 		}
 
 		halves[0] = strings.TrimSpace(halves[0])
@@ -40,7 +46,7 @@ func _process_columns(colstr string) (columns []DB_Column) {
 	return columns
 }
 
-func _process_orderby(orderstr string) (order []DB_Order) {
+func processOrderby(orderstr string) (order []DB_Order) {
 	if orderstr == "" {
 		return order
 	}
@@ -57,7 +63,7 @@ func _process_orderby(orderstr string) (order []DB_Order) {
 	return order
 }
 
-func _processJoiner(joinstr string) (joiner []DB_Joiner) {
+func processJoiner(joinstr string) (joiner []DB_Joiner) {
 	if joinstr == "" {
 		return joiner
 	}
@@ -68,9 +74,9 @@ func _processJoiner(joinstr string) (joiner []DB_Joiner) {
 		var parseOffset int
 		var left, right string
 
-		left, parseOffset = _getIdentifier(segment, parseOffset)
-		outjoin.Operator, parseOffset = _getOperator(segment, parseOffset+1)
-		right, parseOffset = _getIdentifier(segment, parseOffset+1)
+		left, parseOffset = getIdentifier(segment, parseOffset)
+		outjoin.Operator, parseOffset = getOperator(segment, parseOffset+1)
+		right, parseOffset = getIdentifier(segment, parseOffset+1)
 
 		left_column := strings.Split(left, ".")
 		right_column := strings.Split(right, ".")
@@ -84,7 +90,7 @@ func _processJoiner(joinstr string) (joiner []DB_Joiner) {
 	return joiner
 }
 
-func _processWhere(wherestr string) (where []DB_Where) {
+func processWhere(wherestr string) (where []DB_Where) {
 	if wherestr == "" {
 		return where
 	}
@@ -144,7 +150,7 @@ func _processWhere(wherestr string) (where []DB_Where) {
 				//fmt.Println("len(halves)",len(halves[1]))
 				//fmt.Println("preI",string(halves[1][preI]))
 				//fmt.Println("msg prior to preI",halves[1][0:preI])
-				i = _skipFunctionCall(segment, i-1)
+				i = skipFunctionCall(segment, i-1)
 				//fmt.Println("i",i)
 				//fmt.Println("msg prior to i-1",halves[1][0:i-1])
 				//fmt.Println("string(i-1)",string(halves[1][i-1]))
@@ -179,7 +185,7 @@ func _processWhere(wherestr string) (where []DB_Where) {
 	return where
 }
 
-func _process_set(setstr string) (setter []DB_Setter) {
+func processSet(setstr string) (setter []DB_Setter) {
 	if setstr == "" {
 		return setter
 	}
@@ -192,7 +198,7 @@ func _process_set(setstr string) (setter []DB_Setter) {
 	setstr += ","
 	for i := 0; i < len(setstr); i++ {
 		if setstr[i] == '(' {
-			i = _skipFunctionCall(setstr, i-1)
+			i = skipFunctionCall(setstr, i-1)
 			setset = append(setset, setstr[lastItem:i+1])
 			buffer = ""
 			lastItem = i + 2
@@ -208,12 +214,12 @@ func _process_set(setstr string) (setter []DB_Setter) {
 	// Second pass. Break this setitem into manageable chunks
 	buffer = ""
 	for _, setitem := range setset {
-		var tmp_setter DB_Setter
+		var tmpSetter DB_Setter
 		halves := strings.Split(setitem, "=")
 		if len(halves) != 2 {
 			continue
 		}
-		tmp_setter.Column = strings.TrimSpace(halves[0])
+		tmpSetter.Column = strings.TrimSpace(halves[0])
 
 		halves[1] += ")"
 		var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
@@ -237,7 +243,7 @@ func _process_set(setstr string) (setter []DB_Setter) {
 					buffer = string(char)
 				} else if char == '?' {
 					//fmt.Println("Expr:","?")
-					tmp_setter.Expr = append(tmp_setter.Expr, DB_Token{"?", "substitute"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{"?", "substitute"})
 				}
 			case 1: // number
 				if '0' <= char && char <= '9' {
@@ -246,7 +252,7 @@ func _process_set(setstr string) (setter []DB_Setter) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmp_setter.Expr = append(tmp_setter.Expr, DB_Token{buffer, "number"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "number"})
 				}
 			case 2: // column
 				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
@@ -258,7 +264,7 @@ func _process_set(setstr string) (setter []DB_Setter) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmp_setter.Expr = append(tmp_setter.Expr, DB_Token{buffer, "column"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "column"})
 				}
 			case 3: // function
 				var preI = i
@@ -266,14 +272,14 @@ func _process_set(setstr string) (setter []DB_Setter) {
 				//fmt.Println("len(halves)",len(halves[1]))
 				//fmt.Println("preI",string(halves[1][preI]))
 				//fmt.Println("msg prior to preI",halves[1][0:preI])
-				i = _skipFunctionCall(halves[1], i-1)
+				i = skipFunctionCall(halves[1], i-1)
 				//fmt.Println("i",i)
 				//fmt.Println("msg prior to i-1",halves[1][0:i-1])
 				//fmt.Println("string(i-1)",string(halves[1][i-1]))
 				//fmt.Println("string(i)",string(halves[1][i]))
 				buffer += halves[1][preI:i] + string(halves[1][i])
 				//fmt.Println("Expr:",buffer)
-				tmp_setter.Expr = append(tmp_setter.Expr, DB_Token{buffer, "function"})
+				tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "function"})
 				optype = 0
 			case 4: // string
 				if char != '\'' {
@@ -281,7 +287,7 @@ func _process_set(setstr string) (setter []DB_Setter) {
 				} else {
 					optype = 0
 					//fmt.Println("Expr:",buffer)
-					tmp_setter.Expr = append(tmp_setter.Expr, DB_Token{buffer, "string"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "string"})
 				}
 			case 5: // operator
 				if _is_op_byte(char) {
@@ -290,19 +296,19 @@ func _process_set(setstr string) (setter []DB_Setter) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmp_setter.Expr = append(tmp_setter.Expr, DB_Token{buffer, "operator"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "operator"})
 				}
 			default:
 				panic("Bad optype in _process_set")
 			}
 		}
-		setter = append(setter, tmp_setter)
+		setter = append(setter, tmpSetter)
 	}
 	//fmt.Println("setter",setter)
 	return setter
 }
 
-func _processLimit(limitstr string) (limiter DB_Limit) {
+func processLimit(limitstr string) (limiter DB_Limit) {
 	halves := strings.Split(limitstr, ",")
 	if len(halves) == 2 {
 		limiter.Offset = halves[0]
@@ -321,7 +327,7 @@ func _is_op_rune(char rune) bool {
 	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
 }
 
-func _processFields(fieldstr string) (fields []DB_Field) {
+func processFields(fieldstr string) (fields []DB_Field) {
 	if fieldstr == "" {
 		return fields
 	}
@@ -330,12 +336,12 @@ func _processFields(fieldstr string) (fields []DB_Field) {
 	fieldstr += ","
 	for i := 0; i < len(fieldstr); i++ {
 		if fieldstr[i] == '(' {
-			i = _skipFunctionCall(fieldstr, i-1)
-			fields = append(fields, DB_Field{Name: fieldstr[lastItem : i+1], Type: _getIdentifierType(fieldstr[lastItem : i+1])})
+			i = skipFunctionCall(fieldstr, i-1)
+			fields = append(fields, DB_Field{Name: fieldstr[lastItem : i+1], Type: getIdentifierType(fieldstr[lastItem : i+1])})
 			buffer = ""
 			lastItem = i + 2
 		} else if fieldstr[i] == ',' && buffer != "" {
-			fields = append(fields, DB_Field{Name: buffer, Type: _getIdentifierType(buffer)})
+			fields = append(fields, DB_Field{Name: buffer, Type: getIdentifierType(buffer)})
 			buffer = ""
 			lastItem = i + 1
 		} else if (fieldstr[i] > 32) && fieldstr[i] != ',' && fieldstr[i] != ')' {
@@ -345,7 +351,7 @@ func _processFields(fieldstr string) (fields []DB_Field) {
 	return fields
 }
 
-func _getIdentifierType(identifier string) string {
+func getIdentifierType(identifier string) string {
 	if ('a' <= identifier[0] && identifier[0] <= 'z') || ('A' <= identifier[0] && identifier[0] <= 'Z') {
 		if identifier[len(identifier)-1] == ')' {
 			return "function"
@@ -358,12 +364,12 @@ func _getIdentifierType(identifier string) string {
 	return "literal"
 }
 
-func _getIdentifier(segment string, startOffset int) (out string, i int) {
+func getIdentifier(segment string, startOffset int) (out string, i int) {
 	segment = strings.TrimSpace(segment)
 	segment += " " // Avoid overflow bugs with slicing
 	for i = startOffset; i < len(segment); i++ {
 		if segment[i] == '(' {
-			i = _skipFunctionCall(segment, i)
+			i = skipFunctionCall(segment, i)
 			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
 		}
 		if (segment[i] == ' ' || _is_op_byte(segment[i])) && i != startOffset {
@@ -373,7 +379,7 @@ func _getIdentifier(segment string, startOffset int) (out string, i int) {
 	return strings.TrimSpace(segment[startOffset:]), (i - 1)
 }
 
-func _getOperator(segment string, startOffset int) (out string, i int) {
+func getOperator(segment string, startOffset int) (out string, i int) {
 	segment = strings.TrimSpace(segment)
 	segment += " " // Avoid overflow bugs with slicing
 	for i = startOffset; i < len(segment); i++ {
@@ -384,7 +390,7 @@ func _getOperator(segment string, startOffset int) (out string, i int) {
 	return strings.TrimSpace(segment[startOffset:]), (i - 1)
 }
 
-func _skipFunctionCall(data string, index int) int {
+func skipFunctionCall(data string, index int) int {
 	var braceCount int
 	for ; index < len(data); index++ {
 		char := data[index]

@@ -28,12 +28,17 @@ var dbUsername string
 var dbPassword string
 var dbName string
 var dbPort string
-var siteName, siteURL, serverPort string
+
+var siteShortName string
+var siteName string
+var siteURL string
+var serverPort string
 
 var defaultAdapter = "mysql"
 var defaultHost = "localhost"
 var defaultUsername = "root"
 var defaultDbname = "gosora"
+var defaultSiteShortName = "SN"
 var defaultSiteName = "Site Name"
 var defaultsiteURL = "localhost"
 var defaultServerPort = "80" // 8080's a good one, if you're testing and don't want it to clash with port 80
@@ -145,57 +150,58 @@ func main() {
 	configContents := []byte(`package main
 
 func init() {
-// Site Info
-site.Name = "` + siteName + `"
-site.Email = ""
-site.URL = "` + siteURL + `"
-site.Port = "` + serverPort + `"
-site.EnableSsl = false
-site.EnableEmails = false
-site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
-config.SslPrivkey = ""
-config.SslFullchain = ""
-site.Language = "english"
+	// Site Info
+	site.ShortName = "` + siteShortName + `" // This should be less than three letters to fit in the navbar
+	site.Name = "` + siteName + `"
+	site.Email = ""
+	site.URL = "` + siteURL + `"
+	site.Port = "` + serverPort + `"
+	site.EnableSsl = false
+	site.EnableEmails = false
+	site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
+	config.SslPrivkey = ""
+	config.SslFullchain = ""
+	site.Language = "english"
 
-// Database details
-dbConfig.Host = "` + dbHost + `"
-dbConfig.Username = "` + dbUsername + `"
-dbConfig.Password = "` + dbPassword + `"
-dbConfig.Dbname = "` + dbName + `"
-dbConfig.Port = "` + dbPort + `" // You probably won't need to change this
+	// Database details
+	dbConfig.Host = "` + dbHost + `"
+	dbConfig.Username = "` + dbUsername + `"
+	dbConfig.Password = "` + dbPassword + `"
+	dbConfig.Dbname = "` + dbName + `"
+	dbConfig.Port = "` + dbPort + `" // You probably won't need to change this
 
-// Limiters
-config.MaxRequestSize = 5 * megabyte
+	// Limiters
+	config.MaxRequestSize = 5 * megabyte
 
-// Caching
-config.CacheTopicUser = CACHE_STATIC
-config.UserCacheCapacity = 120 // The max number of users held in memory
-config.TopicCacheCapacity = 200 // The max number of topics held in memory
+	// Caching
+	config.CacheTopicUser = CACHE_STATIC
+	config.UserCacheCapacity = 120 // The max number of users held in memory
+	config.TopicCacheCapacity = 200 // The max number of topics held in memory
 
-// Email
-config.SMTPServer = ""
-config.SMTPUsername = ""
-config.SMTPPassword = ""
-config.SMTPPort = "25"
+	// Email
+	config.SMTPServer = ""
+	config.SMTPUsername = ""
+	config.SMTPPassword = ""
+	config.SMTPPort = "25"
 
-// Misc
-config.DefaultRoute = routeTopics
-config.DefaultGroup = 3 // Should be a setting in the database
-config.ActivationGroup = 5 // Should be a setting in the database
-config.StaffCSS = "staff_post"
-config.DefaultForum = 2
-config.MinifyTemplates = true
-config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
+	// Misc
+	config.DefaultRoute = routeTopics
+	config.DefaultGroup = 3 // Should be a setting in the database
+	config.ActivationGroup = 5 // Should be a setting in the database
+	config.StaffCSS = "staff_post"
+	config.DefaultForum = 2
+	config.MinifyTemplates = true
+	config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
 
-//config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
-config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"
-config.ItemsPerPage = 25
+	//config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
+	config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"
+	config.ItemsPerPage = 25
 
-// Developer flag
-dev.DebugMode = true
-//dev.SuperDebug = true
-//dev.TemplateDebug = true
-//dev.Profiling = true
+	// Developer flags
+	dev.DebugMode = true
+	//dev.SuperDebug = true
+	//dev.TemplateDebug = true
+	//dev.Profiling = true
 }
 `)
 
@@ -293,6 +299,17 @@ func getSiteDetails() bool {
 		siteName = defaultSiteName
 	}
 	fmt.Println("Set the site name to " + siteName)
+
+	// ? - We could compute this based on the first letter of each word in the site's name, if it's name spans multiple words. I'm not sure how to do this for single word names.
+	fmt.Println("Can we have a short abbreviation for your site? Default: " + defaultSiteShortName)
+	if !scanner.Scan() {
+		return false
+	}
+	siteShortName = scanner.Text()
+	if siteShortName == "" {
+		siteShortName = defaultSiteShortName
+	}
+	fmt.Println("Set the site name to " + siteShortName)
 
 	fmt.Println("What's your site's url? Default: " + defaultsiteURL)
 	if !scanner.Scan() {

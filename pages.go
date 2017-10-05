@@ -4,6 +4,7 @@ import (
 	//"fmt"
 	"bytes"
 	"html/template"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -61,10 +62,12 @@ type TopicPage struct {
 }
 
 type TopicsPage struct {
-	Title       string
-	CurrentUser User
-	Header      *HeaderVars
-	ItemList    []*TopicsRow
+	Title        string
+	CurrentUser  User
+	Header       *HeaderVars
+	TopicList    []*TopicsRow
+	ForumList    []Forum
+	DefaultForum int
 }
 
 type ForumPage struct {
@@ -287,12 +290,16 @@ var invalidURL = []byte("<span style='color: red;'>[Invalid URL]</span>")
 var invalidTopic = []byte("<span style='color: red;'>[Invalid Topic]</span>")
 var invalidProfile = []byte("<span style='color: red;'>[Invalid Profile]</span>")
 var invalidForum = []byte("<span style='color: red;'>[Invalid Forum]</span>")
+var unknownMedia = []byte("<span style='color: red;'>[Unknown Media]</span>")
 var urlOpen = []byte("<a href='")
 var urlOpen2 = []byte("'>")
 var bytesSinglequote = []byte("'")
 var bytesGreaterthan = []byte(">")
 var urlMention = []byte(" class='mention'")
 var urlClose = []byte("</a>")
+var imageOpen = []byte("<a href=\"")
+var imageOpen2 = []byte("\"><img src='")
+var imageClose = []byte("' class='postImage' /></a>")
 var urlpattern = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
 var urlReg *regexp.Regexp
 
@@ -440,7 +447,8 @@ func preparseMessage(msg string) string {
 }
 
 // TODO: Write a test for this
-func parseMessage(msg string /*, user User*/) string {
+// TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
+func parseMessage(msg string, sectionID int, sectionType string /*, user User*/) string {
 	msg = strings.Replace(msg, ":)", "😀", -1)
 	msg = strings.Replace(msg, ":(", "😞", -1)
 	msg = strings.Replace(msg, ":D", "😃", -1)
@@ -461,19 +469,13 @@ func parseMessage(msg string /*, user User*/) string {
 	var msgbytes = []byte(msg)
 	var outbytes []byte
 	msgbytes = append(msgbytes, spaceGap...)
-	//log.Print(`"`+string(msgbytes)+`"`)
-	lastItem := 0
-	i := 0
+	//log.Printf("string(msgbytes) %+v\n", `"`+string(msgbytes)+`"`)
+	var lastItem = 0
+	var i = 0
 	for ; len(msgbytes) > (i + 1); i++ {
 		//log.Print("Index:",i)
-		//log.Print("Index Item:",msgbytes[i])
-		//if msgbytes[i] == 10 {
-		//	log.Print("NEWLINE")
-		//} else if msgbytes[i] == 32 {
-		//	log.Print("SPACE")
-		//} else {
-		//	log.Print("string(msgbytes[i])",string(msgbytes[i]))
-		//}
+		//log.Print("Index Item: ",msgbytes[i])
+		//log.Print("string(msgbytes[i]): ",string(msgbytes[i]))
 		//log.Print("End Index")
 		if (i == 0 && (msgbytes[0] > 32)) || ((msgbytes[i] < 33) && (msgbytes[i+1] > 32)) {
 			//log.Print("IN")
@@ -507,12 +509,12 @@ func parseMessage(msg string /*, user User*/) string {
 					outbytes = append(outbytes, urlClose...)
 					lastItem = i
 
-					//log.Print("string(msgbytes)",string(msgbytes))
-					//log.Print(msgbytes)
+					//log.Print("string(msgbytes) ",string(msgbytes))
+					//log.Print("msgbytes ",msgbytes)
 					//log.Print(msgbytes[lastItem - 1])
 					//log.Print(lastItem - 1)
 					//log.Print(msgbytes[lastItem])
-					//log.Print(lastItem)
+					//log.Print("lastItem ",lastItem)
 				} else if bytes.Equal(msgbytes[i+1:i+5], []byte("rid-")) {
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
 					i += 5
@@ -611,11 +613,57 @@ func parseMessage(msg string /*, user User*/) string {
 
 				outbytes = append(outbytes, msgbytes[lastItem:i]...)
 				urlLen := partialURLBytesLen(msgbytes[i:])
-				if msgbytes[i+urlLen] != ' ' && msgbytes[i+urlLen] != 10 {
+				if msgbytes[i+urlLen] > 32 { // space and invisibles
 					outbytes = append(outbytes, invalidURL...)
 					i += urlLen
 					continue
 				}
+				outbytes = append(outbytes, urlOpen...)
+				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
+				outbytes = append(outbytes, urlOpen2...)
+				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
+				outbytes = append(outbytes, urlClose...)
+				i += urlLen
+				lastItem = i
+			} else if msgbytes[i] == '/' && msgbytes[i+1] == '/' {
+				outbytes = append(outbytes, msgbytes[lastItem:i]...)
+				urlLen := partialURLBytesLen(msgbytes[i:])
+				if msgbytes[i+urlLen] > 32 { // space and invisibles
+					//log.Print("INVALID URL")
+					//log.Print("msgbytes[i+urlLen]", msgbytes[i+urlLen])
+					//log.Print("string(msgbytes[i+urlLen])", string(msgbytes[i+urlLen]))
+					//log.Print("msgbytes[i:i+urlLen]", msgbytes[i:i+urlLen])
+					//log.Print("string(msgbytes[i:i+urlLen])", string(msgbytes[i:i+urlLen]))
+					outbytes = append(outbytes, invalidURL...)
+					i += urlLen
+					continue
+				}
+
+				//log.Print("VALID URL")
+				//log.Print("msgbytes[i:i+urlLen]", msgbytes[i:i+urlLen])
+				//log.Print("string(msgbytes[i:i+urlLen])", string(msgbytes[i:i+urlLen]))
+				media, ok := parseMediaBytes(msgbytes[i : i+urlLen])
+				if !ok {
+					outbytes = append(outbytes, invalidURL...)
+					i += urlLen
+					continue
+				}
+
+				if media.Type == "image" {
+					outbytes = append(outbytes, imageOpen...)
+					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
+					outbytes = append(outbytes, imageOpen2...)
+					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
+					outbytes = append(outbytes, imageClose...)
+					i += urlLen
+					lastItem = i
+					continue
+				} else if media.Type != "" {
+					outbytes = append(outbytes, unknownMedia...)
+					i += urlLen
+					continue
+				}
+
 				outbytes = append(outbytes, urlOpen...)
 				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
 				outbytes = append(outbytes, urlOpen2...)
@@ -628,13 +676,10 @@ func parseMessage(msg string /*, user User*/) string {
 	}
 
 	if lastItem != i && len(outbytes) != 0 {
-		//log.Print("lastItem:",msgbytes[lastItem])
-		//log.Print("lastItem index:")
-		//log.Print(lastItem)
-		//log.Print("i:")
-		//log.Print(i)
-		//log.Print("lastItem to end:")
-		//log.Print(msgbytes[lastItem:])
+		//log.Print("lastItem: ",msgbytes[lastItem])
+		//log.Print("lastItem index: ",lastItem)
+		//log.Print("i: ",i)
+		//log.Print("lastItem to end: ",msgbytes[lastItem:])
 		//log.Print("-----")
 		calclen := len(msgbytes) - 10
 		if calclen <= lastItem {
@@ -666,8 +711,8 @@ func regexParseMessage(msg string) string {
 	return msg
 }
 
-// 6, 7, 8, 6, 7
-// ftp://, http://, https:// git://, mailto: (not a URL, just here for length comparison purposes)
+// 6, 7, 8, 6, 2, 7
+// ftp://, http://, https:// git://, //, mailto: (not a URL, just here for length comparison purposes)
 // TODO: Write a test for this
 func validateURLBytes(data []byte) bool {
 	datalen := len(data)
@@ -681,10 +726,13 @@ func validateURLBytes(data []byte) bool {
 		} else if datalen >= 8 && bytes.Equal(data[0:8], []byte("https://")) {
 			i = 8
 		}
+	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
+		i = 2
 	}
 
+	// ? - There should only be one : and that's only if the URL is on a non-standard port
 	for ; datalen > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			return false
 		}
 	}
@@ -704,10 +752,13 @@ func validatedURLBytes(data []byte) (url []byte) {
 		} else if datalen >= 8 && bytes.Equal(data[0:8], []byte("https://")) {
 			i = 8
 		}
+	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
+		i = 2
 	}
 
+	// ? - There should only be one : and that's only if the URL is on a non-standard port
 	for ; datalen > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			return invalidURL
 		}
 	}
@@ -730,10 +781,13 @@ func partialURLBytes(data []byte) (url []byte) {
 		} else if datalen >= 8 && bytes.Equal(data[0:8], []byte("https://")) {
 			i = 8
 		}
+	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
+		i = 2
 	}
 
+	// ? - There should only be one : and that's only if the URL is on a non-standard port
 	for ; end >= i; i++ {
-		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			end = i
 		}
 	}
@@ -756,47 +810,80 @@ func partialURLBytesLen(data []byte) int {
 		} else if datalen >= 8 && bytes.Equal(data[0:8], []byte("https://")) {
 			i = 8
 		}
+	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
+		i = 2
 	}
 
+	// ? - There should only be one : and that's only if the URL is on a non-standard port
 	for ; datalen > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
-			//log.Print("Bad Character:",data[i])
+		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+			//log.Print("Bad Character: ", data[i])
 			return i
 		}
 	}
-
-	//log.Print("Data Length:",datalen)
+	//log.Print("Data Length: ",datalen)
 	return datalen
 }
 
+type MediaEmbed struct {
+	Type string //image
+	URL  string
+}
+
 // TODO: Write a test for this
-func parseMediaBytes(data []byte) (protocol []byte, url []byte) {
-	datalen := len(data)
-	i := 0
+func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
+	if !validateURLBytes(data) {
+		return media, false
+	}
+	url, err := parseURL(data)
+	if err != nil {
+		return media, false
+	}
 
-	if datalen >= 6 {
-		if bytes.Equal(data[0:6], []byte("ftp://")) || bytes.Equal(data[0:6], []byte("git://")) {
-			i = 6
-			protocol = data[0:2]
-		} else if datalen >= 7 && bytes.Equal(data[0:7], httpProtBytes) {
-			i = 7
-			protocol = []byte("http")
-		} else if datalen >= 8 && bytes.Equal(data[0:8], []byte("https://")) {
-			i = 8
-			protocol = []byte("https")
+	//log.Print("url ", url)
+	hostname := url.Hostname()
+	scheme := url.Scheme
+	port := url.Port()
+	//log.Print("hostname ", hostname)
+	//log.Print("scheme ", scheme)
+
+	var samesite = hostname == "localhost" || hostname == site.URL
+	if samesite {
+		//log.Print("samesite")
+		hostname = strings.Split(site.URL, ":")[0]
+		// ?- Test this as I'm not sure it'll do what it should. If someone's running SSL on port 80 or non-SSL on port 443 then... Well... They're in far worse trouble than this...
+		port = site.Port
+		if scheme == "" && site.EnableSsl {
+			scheme = "https"
 		}
 	}
+	if scheme == "" {
+		scheme = "http"
+	}
 
-	for ; datalen > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
-			return []byte(""), invalidURL
+	path := url.EscapedPath()
+	//log.Print("path", path)
+	pathFrags := strings.Split(path, "/")
+	//log.Printf("pathFrags %+v\n", pathFrags)
+	//log.Print("scheme ", scheme)
+	//log.Print("hostname ", hostname)
+	if len(pathFrags) >= 2 {
+		if samesite && pathFrags[1] == "attachs" && (scheme == "http" || scheme == "https") {
+			//log.Print("Attachment")
+			media.Type = "image"
+			var sport string
+			// ? - Assumes the sysadmin hasn't mixed up the two standard ports
+			if port != "443" && port != "80" {
+				sport = ":" + port
+			}
+			media.URL = scheme + "://" + hostname + sport + path
 		}
 	}
+	return media, true
+}
 
-	if len(protocol) == 0 {
-		protocol = []byte("http")
-	}
-	return protocol, data[i:]
+func parseURL(data []byte) (*url.URL, error) {
+	return url.Parse(string(data))
 }
 
 // TODO: Write a test for this

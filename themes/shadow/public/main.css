@@ -1,10 +1,21 @@
 /* Patch for Edge, until they fix emojis in arial x.x */
 @supports (-ms-ime-align:auto) { .user_content { font-family: Segoe UI Emoji, arial; } }
 
+:root {
+	--main-block-color: rgb(61,61,61);
+	--main-text-color: white;
+	--dim-text-color: rgb(205,205,205);
+	--main-background-color: #222222;
+	--inner-background-color: #333333;
+	--input-background-color: #444444;
+	--input-border-color: #555555;
+	--input-text-color: #999999;
+}
+
 body {
 	font-family: arial;
-	color: white;
-	background-color: #222222;
+	color: var(--main-text-color);
+	background-color: var(--main-background-color);
 	margin: 0;
 }
 p::selection, span::selection, a::selection {
@@ -17,15 +28,15 @@ p::selection, span::selection, a::selection {
 	margin-left: auto;
 	margin-right: auto;
 	width: 70%;
-	background-color: #333333;
+	background-color: var(--inner-background-color);
 	position: relative;
 	top: -2px;
 }
 
 ul {
 	list-style-type: none;
-	background-color: rgb(61,61,61);
-	border-bottom: 1px solid #222222;
+	background-color: var(--main-block-color);
+	border-bottom: 1px solid var(--main-background-color);
 	padding-left: 15%;
 	padding-right: 15%;
 	margin: 0;
@@ -89,7 +100,6 @@ li {
 .menu_alerts .alertList {
 	display: none;
 }
-
 .selectedAlert .alertList {
 	display: block;
 	position: absolute;
@@ -99,7 +109,7 @@ li {
 	z-index: 50;
 	right: 15%;
 	font-size: 13px;
-	background-color: #333333;
+	background-color: var(--inner-background-color);
 }
 
 .alertItem {
@@ -109,19 +119,19 @@ li {
 	height: 40px;
 	background-size: 48px;
 	background-repeat: no-repeat;
-	background-color: rgb(61,61,61);
+	background-color: var(--main-block-color);
 	padding-left: 56px;
 	padding-top: 8px;
 }
 
 a {
 	text-decoration: none;
-	color: white;
+	color: var(--main-text-color);
 }
 
 .alert {
 	padding-bottom: 12px;
-	background-color: rgb(61,61,61);
+	background-color: var(--main-block-color);
 	padding: 12px;
 	display: block;
 }
@@ -147,7 +157,7 @@ a {
 
 .rowitem, .formitem {
 	padding-bottom: 12px;
-	background-color: rgb(61,61,61);
+	background-color: var(--main-block-color);
 	margin-top: 8px;
 	padding: 12px;
 }
@@ -179,7 +189,7 @@ a {
 
 .colline {
 	font-size: 14px;
-	background-color: rgb(61,61,61);
+	background-color: var(--main-block-color);
 	margin-top: 5px;
 	padding: 10px;
 }
@@ -218,7 +228,7 @@ a {
 
 .user_tag {
 	float: right;
-	color: rgb(205,205,205);
+	color: var(--dim-text-color);
 }
 
 .real_username {
@@ -234,7 +244,7 @@ a {
 .mod_button button {
 	border: none;
 	background: none;
-	color: white;
+	color: var(--main-text-color);
 	font-size: 12px;
 	padding: 0;
 }
@@ -292,7 +302,7 @@ a {
 }
 
 .level_label, .level {
-	color: rgb(205,205,205);
+	color: var(--dim-text-color);
 	float: right;
 }
 .level {
@@ -310,17 +320,15 @@ a {
 }
 
 textarea {
-	background-color: #444444;
-	border-color: #555555;
-	color: #999999;
+	background-color: var(--input-background-color);
+	border-color: var(--input-border-color);
+	color: var(--input-text-color);
 	width: calc(100% - 15px);
 	min-height: 80px;
 }
-
-textarea:focus, input:focus, select:focus {
+textarea:focus, input:focus, select:focus, button:focus {
 	outline-color: rgb(95,95,95);
 }
-
 textarea.large {
 	min-height: 120px;
 	margin-top: 1px;
@@ -328,15 +336,10 @@ textarea.large {
 	display: block;
 }
 
-.topic_reply_form textarea {
-	width: calc(100% - 5px);
-	min-height: 80px;
-}
-
 .formitem button, .formbutton {
-	background-color: #444444;
-	border: 1px solid #555555;
-	color: #999999;
+	background-color: var(--input-background-color);
+	border: 1px solid var(--input-border-color);
+	color: var(--input-text-color);
 	padding: 7px;
 	padding-bottom: 6px;
 	font-size: 13px;
@@ -402,7 +405,7 @@ textarea.large {
 	flex-direction: row;
 }
 .pageitem {
-	background-color: rgb(61,61,61);
+	background-color: var(--main-block-color);
 	padding: 10px;
 	margin-right: 4px;
 	font-size: 13px;
@@ -423,9 +426,9 @@ textarea.large {
 }
 
 .formitem input {
-	background-color: #444444;
-	border: 1px solid #555555;
-	color: #999999;
+	background-color: var(--input-background-color);
+	border: 1px solid var(--input-border-color);
+	color: var(--input-text-color);
 	padding-bottom: 6px;
 	font-size: 13px;
 
@@ -434,9 +437,9 @@ textarea.large {
 }
 
 .formitem select {
-	background-color: #444444;
-	border: 1px solid #555555;
-	color: #999999;
+	background-color: var(--input-background-color);
+	border: 1px solid var(--input-border-color);
+	color: var(--input-text-color);
 	font-size: 13px;
 	padding: 4px;
 }
@@ -458,8 +461,50 @@ input, select, textarea {
 	margin-top: 5px;
 }
 
+.topic_create_form .topic_board_row .formitem, .topic_create_form .topic_name_row .formitem {
+	padding-bottom: 5px;
+}
+.topic_create_form input, .topic_create_form select {
+	padding: 7px;
+	font-family: monospace;
+}
+.topic_create_form select {
+	padding: 6px;
+}
+.topic_create_form input {
+	width: calc(100% - 14px);
+}
+.topic_create_form textarea, .topic_reply_form textarea {
+	width: calc(100% - 5px);
+	min-height: 80px;
+}
+.topic_create_form textarea {
+	padding: 7px;
+	width: calc(100% - 14px);
+}
+
+.topic_button_row .formitem {
+	display: flex;
+}
+.topic_create_form .add_file_button {
+	margin-left: 8px;
+}
+.topic_create_form .close_form {
+	margin-left: auto;
+}
+.topic_create_form .upload_file_dock {
+	display: flex;
+}
+.topic_create_form .uploadItem {
+	display: inline-block;
+	margin-left: 8px;
+	background-size: 25px 30px;
+	background-repeat: no-repeat;
+	padding-left: 30px;
+}
+
 .footer {
-    background-color: rgb(61,61,61);
+    background-color: var(--main-block-color);
     margin-top: 5px;
     padding: 10px;
     font-size: 14px;
@@ -469,9 +514,9 @@ input, select, textarea {
     height: 25px;
 }
 .footer select {
-    background-color: #444444;
-    border: 1px solid #555555;
-    color: #999999;
+    background-color: var(--input-background-color);
+    border: 1px solid var(--input-border-color);
+    color: var(--input-text-color);
     font-size: 13px;
     padding: 4px;
 }
@@ -505,7 +550,7 @@ input, select, textarea {
 	height: 30.4px;
 	padding-left: 5px;
 	width: 100%;
-	background-color: rgb(61,61,61);
+	background-color: var(--main-block-color);
 	padding-top: 11px;
 }
 .opt a {
@@ -545,9 +590,9 @@ input, select, textarea {
 .topic_name_input {
 	width: 100%;
 	margin-right: 10px;
-	background-color: #444444;
-	border: 1px solid #555555;
-	color: #999999;
+	background-color: var(--input-background-color);
+	border: 1px solid var(--input-border-color);
+	color: var(--input-text-color);
 	padding-bottom: 6px;
 	font-size: 13px;
 	padding: 5px;
@@ -559,6 +604,13 @@ input, select, textarea {
 	margin-left: auto;
 	position: relative;
 	top: -5px;
+}
+
+.postImage {
+	max-width: 100%;
+	max-height: 200px;/*300px;*/
+	background-color: rgb(71,71,71);
+	padding: 10px;
 }
 
 /* Profiles */
@@ -608,9 +660,9 @@ input, select, textarea {
 }
 
 .ip_search_block input {
-	background-color: #444444;
-	border: 1px solid #555555;
-	color: #999999;
+	background-color: var(--input-background-color);
+	border: 1px solid var(--input-border-color);
+	color: var(--input-text-color);
 	margin-top: -3px;
 	margin-bottom: -3px;
 	padding: 4px;
@@ -640,7 +692,7 @@ input, select, textarea {
 	padding-top: 10px;
 	padding-bottom: 10px;
 	font-size: 13px;
-	background-color: rgb(61,61,61);
+	background-color: var(--main-block-color);
 }
 
 #panel_dashboard_right .colstack_head .rowitem {
@@ -808,7 +860,7 @@ input, select, textarea {
 }
 
 @media(max-width: 470px) {
-	.menu_create_topic, .like_count_label, .like_count {
+	.like_count_label, .like_count {
 		display: none;
 	}
 	.post_item {

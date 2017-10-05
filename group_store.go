@@ -12,6 +12,7 @@ var groupCreateMutex sync.Mutex
 var groupUpdateMutex sync.Mutex
 var gstore GroupStore
 
+// ? - We could fallback onto the database when an item can't be found in the cache?
 type GroupStore interface {
 	LoadGroups() error
 	DirtyGet(id int) *Group
@@ -21,6 +22,10 @@ type GroupStore interface {
 	Create(groupName string, tag string, isAdmin bool, isMod bool, isBanned bool) (int, error)
 	GetAll() ([]*Group, error)
 	GetRange(lower int, higher int) ([]*Group, error)
+}
+
+type GroupCache interface {
+	Length() int
 }
 
 type MemoryGroupStore struct {
@@ -202,4 +207,8 @@ func (mgs *MemoryGroupStore) GetRange(lower int, higher int) (groups []*Group, e
 		groups = mgs.groups[lower:]
 	}
 	return groups, nil
+}
+
+func (mgs *MemoryGroupStore) Length() int {
+	return len(mgs.groups)
 }

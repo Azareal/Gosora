@@ -32,6 +32,28 @@ var vhooks = map[string]func(...interface{}) interface{}{
 	"topic_create_pre_loop":  nil,
 }
 
+// Coming Soon:
+type Message interface {
+	ID() int
+	Poster() int
+	Contents() string
+	ParsedContents() string
+}
+
+// While the idea is nice, this might result in too much code duplication, as we have seventy billion page structs, what else could we do to get static typing with these in plugins?
+type PageInt interface {
+	Title() string
+	HeaderVars() *HeaderVars
+	CurrentUser() *User
+	GetExtData(name string) interface{}
+	SetExtData(name string, contents interface{})
+}
+
+// Coming Soon:
+var messageHooks = map[string][]func(Message, PageInt, ...interface{}) interface{}{
+	"topic_reply_row_assign": nil,
+}
+
 // Hooks which take in and spit out a string. This is usually used for parser components
 var sshooks = map[string][]func(string) string{
 	"preparse_preassign": nil,

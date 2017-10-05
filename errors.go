@@ -230,6 +230,7 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
+// NotFound is used when the requested page doesn't exist
 // ? - Add a JSQ and JS version of this?
 // ? - Add a user parameter?
 func NotFound(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +244,7 @@ func NotFound(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// nolint
+// CustomError lets us make custom error types which aren't covered by the generic functions above
 func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User) {
 	w.WriteHeader(errcode)
 	pi := Page{errtitle, user, getDefaultHeaderVar(), tList, errmsg}
@@ -258,7 +259,7 @@ func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWri
 	}
 }
 
-// nolint
+// CustomErrorJSQ is a version of CustomError which lets us handle both JSON and regular pages depending on how it's being accessed
 func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User, isJs bool) {
 	if !isJs {
 		CustomError(errmsg, errcode, errtitle, w, r, user)
@@ -267,7 +268,7 @@ func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.Response
 	}
 }
 
-// nolint
+// CustomErrorJS is the pure JSON version of CustomError
 func CustomErrorJS(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User) {
 	w.WriteHeader(errcode)
 	_, _ = w.Write([]byte(`{"errmsg":"` + errmsg + `"}`))

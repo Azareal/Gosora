@@ -12,7 +12,13 @@
 	}
 }
 
-@media (max-width: 950px) {
+@media(max-width: 950px) {
+	.sidebar {
+		display: none;
+	}
+}
+
+@media (max-width: 700px) {
 	li {
 		height: 29px;
 		font-size: 15px;
@@ -20,11 +26,20 @@
 		padding-top: 6px;
 		padding-bottom: 6px;
 	}
+	li, li a {
+		font-size: 15px;
+	}
 	ul {
 		height: 30px;
 		margin-top: 8px;
+		margin-left: -1px;
+		margin-right: -1px;
+		border-bottom: 1px solid hsl(0,0%,80%);
 	}
-	.menu_left, .menu_right { padding-right: 9px; }
+	.menu_left, .menu_right {
+		padding-right: 9px;
+		border-bottom: 1px solid hsl(0,0%,80%);
+	}
 	.menu_alerts {
 		padding-left: 7px;
 		padding-right: 7px;
@@ -39,9 +54,16 @@
 		height: 100% !important;
 		overflow-x: hidden;
 	}
-	.container { width: auto; }
-	.sidebar { display: none; }
-	.selectedAlert .alertList { top: 37px; right: 4px; }
+	.container {
+		width: auto;
+		margin-left: 5px;
+		margin-right: 5px;
+		margin-top: 5px;
+	}
+	.selectedAlert .alertList {
+		top: 37px;
+		right: 4px;
+	}
 }
 
 @media (max-width: 680px) {
@@ -54,7 +76,7 @@
 	li a { font-size: 14px; }
 	ul { height: 26px; }
 	.menu_left, .menu_right { padding-right: 7px; }
-	.menu_create_topic, .hide_on_mobile { display: none; }
+	.hide_on_mobile { display: none; }
 
 	.menu_alerts {
 		padding-left: 4px;
