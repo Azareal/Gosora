@@ -12,7 +12,7 @@
 </div>
 {{if ne .CurrentUser.ID 0}}
 	{{if .ForumList}}
-<div class="rowblock topic_create_form" style="display: none;">
+<div class="rowblock topic_create_form quick_create_form" style="display: none;">
 	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
 	<div class="formrow topic_board_row real_first_child">
 		<div class="formitem"><select form="topic_create_form_form" id="topic_board_input" name="topic-board">
@@ -26,16 +26,16 @@
 	</div>
 	<div class="formrow topic_content_row">
 		<div class="formitem">
-			<textarea form="topic_create_form_form" id="topic_content" name="topic-content" placeholder="Insert post here" required></textarea>
+			<textarea form="topic_create_form_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
 		</div>
 	</div>
-	<div class="formrow topic_button_row">
+	<div class="formrow quick_button_row">
 		<div class="formitem">
 			<button form="topic_create_form_form" class="formbutton">Create Topic</button>
 			{{if .CurrentUser.Perms.UploadFiles}}
-			<input name="quick_topic_upload_files" form="topic_create_form_form" id="quick_topic_upload_files" multiple type="file" style="display: none;" />
-			<label for="quick_topic_upload_files" class="formbutton add_file_button">Add File</label>{{end}}
-			<div id="upload_file_dock"></div>
+			<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />
+			<label for="upload_files" class="formbutton add_file_button">Add File</label>
+			<div id="upload_file_dock"></div>{{end}}
 			<button class="formbutton close_form">Cancel</button>
 		</div>
 	</div>
@@ -43,26 +43,29 @@
 	{{end}}
 {{end}}
 <div id="topic_list" class="rowblock topic_list" aria-label="A list containing topics from every forum">
-	{{range .TopicList}}<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}" style="{{if .Creator.Avatar}}background-image: url({{.Creator.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
-		<span class="topic_inner_right rowsmall" style="float: right;">
-			<span class="replyCount">{{.PostCount}} replies</span><br />
-			<span class="lastReplyAt">{{.LastReplyAt}}</span>
-		</span>
-		<span>
-			<a class="rowtopic" href="{{.Link}}">{{.Title}}</a> {{if .ForumName}}<a class="rowsmall" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
-			<br /><a class="rowsmall" href="{{.Creator.Link}}">Starter: {{.Creator.Name}}</a>
+	{{range .TopicList}}<div class="topic_row">
+	<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
+		{{if .Creator.Avatar}}<img src="{{.Creator.Avatar}}" height="64" />{{end}}
+		<span class="topic_inner_left">
+			<a class="rowtopic" href="{{.Link}}">{{.Title}}</a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
+			<br /><a class="rowsmall starter" href="{{.Creator.Link}}">{{.Creator.Name}}</a>
 			{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
 			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>{{end}}
 			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>{{end}}
 		</span>
+		<span class="topic_inner_right rowsmall" style="float: right;">
+			<span class="replyCount">{{.PostCount}} replies</span><br />
+			<span class="topicCount">x topics</span>
+		</span>
 	</div>
-	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}" style="{{if .LastUser.Avatar}}background-image: url({{.LastUser.Avatar}});background-position: left;background-repeat: no-repeat;background-size: 64px;padding-left: 72px;{{end}}">
+	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
+		{{if .LastUser.Avatar}}<img src="{{.LastUser.Avatar}}" height="64" />{{end}}
 		<span>
 			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
 			<span class="rowsmall lastReplyAt">Last: {{.LastReplyAt}}</span>
 		</span>
 	</div>
-	{{else}}<div class="rowitem passive">There aren't any topics yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">Start one?</a>{{end}}</div>{{end}}
+	</div>{{else}}<div class="rowitem passive">There aren't any topics yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">Start one?</a>{{end}}</div>{{end}}
 </div>
 
 </main>

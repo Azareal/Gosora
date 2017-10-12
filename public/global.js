@@ -448,7 +448,7 @@ $(document).ready(function(){
 						return hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('')
 					}).then(function(hash) {
 						console.log("hash",hash);
-						let content = document.getElementById("topic_content")
+						let content = document.getElementById("input_content")
 						console.log("content.value",content.value);
 						
 						if(content.value == "") content.value = content.value + "//" + siteURL + "/attachs/" + hash + "." + ext;
@@ -462,7 +462,7 @@ $(document).ready(function(){
 		}
 	}
 
-	var uploadFiles = document.getElementById("quick_topic_upload_files");
+	var uploadFiles = document.getElementById("upload_files");
 	if(uploadFiles != null) {
 		uploadFiles.addEventListener("change", uploadFileHandler, false);
 	}

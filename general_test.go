@@ -39,6 +39,9 @@ func gloinit() error {
 		return err
 	}
 
+	rstore = NewSQLReplyStore()
+	prstore = NewSQLProfileReplyStore()
+
 	dbProd = db
 	//db_test, err = sql.Open("testdb","")
 	//if err != nil {

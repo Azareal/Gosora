@@ -170,17 +170,18 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	// Handle the file attachments
+	// TODO: Stop duplicating this code
 	if user.Perms.UploadFiles {
-		var mpartFiles = r.MultipartForm.File
-		if len(mpartFiles) > 5 {
-			LocalError("You can't attach more than five files", w, r, user)
-			return
-		}
+		files, ok := r.MultipartForm.File["upload_files"]
+		if ok {
+			if len(files) > 5 {
+				LocalError("You can't attach more than five files", w, r, user)
+				return
+			}
 
-		for _, fheaders := range r.MultipartForm.File {
-			for _, hdr := range fheaders {
-				log.Print("hdr.Filename ", hdr.Filename)
-				extarr := strings.Split(hdr.Filename, ".")
+			for _, file := range files {
+				log.Print("file.Filename ", file.Filename)
+				extarr := strings.Split(file.Filename, ".")
 				if len(extarr) < 2 {
 					LocalError("Bad file", w, r, user)
 					return
@@ -195,11 +196,11 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 				}
 				ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
 				if !allowedFileExts.Contains(ext) {
-					LocalError("You're not allowed this upload files with this extension", w, r, user)
+					LocalError("You're not allowed to upload files with this extension", w, r, user)
 					return
 				}
 
-				infile, err := hdr.Open()
+				infile, err := file.Open()
 				if err != nil {
 					LocalError("Upload failed", w, r, user)
 					return
@@ -223,7 +224,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 				}
 				defer outfile.Close()
 
-				infile, err = hdr.Open()
+				infile, err = file.Open()
 				if err != nil {
 					LocalError("Upload failed", w, r, user)
 					return
@@ -249,11 +250,20 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 }
 
 func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
-	err := r.ParseForm()
-	if err != nil {
-		PreError("Bad Form", w, r)
+	// TODO: Reduce this to 1MB for attachments for each file?
+	if r.ContentLength > int64(config.MaxRequestSize) {
+		size, unit := convertByteUnit(float64(config.MaxRequestSize))
+		CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, int64(config.MaxRequestSize))
+
+	err := r.ParseMultipartForm(int64(megabyte))
+	if err != nil {
+		LocalError("Unable to parse the form", w, r, user)
+		return
+	}
+
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
 		PreError("Failed to convert the Topic ID", w, r)
@@ -279,6 +289,83 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
+	// Handle the file attachments
+	// TODO: Stop duplicating this code
+	if user.Perms.UploadFiles {
+		files, ok := r.MultipartForm.File["upload_files"]
+		if ok {
+			if len(files) > 5 {
+				LocalError("You can't attach more than five files", w, r, user)
+				return
+			}
+
+			for _, file := range files {
+				log.Print("file.Filename ", file.Filename)
+				extarr := strings.Split(file.Filename, ".")
+				if len(extarr) < 2 {
+					LocalError("Bad file", w, r, user)
+					return
+				}
+				ext := extarr[len(extarr)-1]
+
+				// TODO: Can we do this without a regex?
+				reg, err := regexp.Compile("[^A-Za-z0-9]+")
+				if err != nil {
+					LocalError("Bad file extension", w, r, user)
+					return
+				}
+				ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
+				if !allowedFileExts.Contains(ext) {
+					LocalError("You're not allowed to upload files with this extension", w, r, user)
+					return
+				}
+
+				infile, err := file.Open()
+				if err != nil {
+					LocalError("Upload failed", w, r, user)
+					return
+				}
+				defer infile.Close()
+
+				hasher := sha256.New()
+				_, err = io.Copy(hasher, infile)
+				if err != nil {
+					LocalError("Upload failed [Hashing Failed]", w, r, user)
+					return
+				}
+				infile.Close()
+
+				checksum := hex.EncodeToString(hasher.Sum(nil))
+				filename := checksum + "." + ext
+				outfile, err := os.Create("." + "/attachs/" + filename)
+				if err != nil {
+					LocalError("Upload failed [File Creation Failed]", w, r, user)
+					return
+				}
+				defer outfile.Close()
+
+				infile, err = file.Open()
+				if err != nil {
+					LocalError("Upload failed", w, r, user)
+					return
+				}
+				defer infile.Close()
+
+				_, err = io.Copy(outfile, infile)
+				if err != nil {
+					LocalError("Upload failed [Copy Failed]", w, r, user)
+					return
+				}
+
+				_, err = addAttachmentStmt.Exec(topic.ParentID, "forums", tid, "replies", user.ID, filename)
+				if err != nil {
+					InternalError(err, w)
+					return
+				}
+			}
+		}
+	}
+
 	content := preparseMessage(html.EscapeString(r.PostFormValue("reply-content")))
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -286,23 +373,10 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	wcount := wordCount(content)
-	_, err = createReplyStmt.Exec(tid, content, parseMessage(content, topic.ParentID, "forums"), ipaddress, wcount, user.ID)
+	_, err = rstore.Create(tid, content, ipaddress, topic.ParentID, user.ID)
 	if err != nil {
 		InternalError(err, w)
 		return
-	}
-
-	_, err = addRepliesToTopicStmt.Exec(1, user.ID, tid)
-	if err != nil {
-		InternalError(err, w)
-		return
-	}
-
-	// Flush the topic out of the cache
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(tid)
 	}
 
 	err = fstore.UpdateLastTopic(tid, user.ID, topic.ParentID)
@@ -334,6 +408,8 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+
+	wcount := wordCount(content)
 	err = user.increasePostStats(wcount, false)
 	if err != nil {
 		InternalError(err, w)
@@ -341,6 +417,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
+// TODO: Refactor this
 func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
 	if err != nil {
@@ -450,7 +527,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	reply, err := getReply(rid)
+	reply, err := rstore.Get(rid)
 	if err == ErrNoRows {
 		PreError("You can't like something which doesn't exist!", w, r)
 		return
@@ -484,15 +561,6 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	err = hasLikedReplyStmt.QueryRow(user.ID, rid).Scan(&rid)
-	if err != nil && err != ErrNoRows {
-		InternalError(err, w)
-		return
-	} else if err != ErrNoRows {
-		LocalError("You already liked this!", w, r, user)
-		return
-	}
-
 	_, err = users.Get(reply.CreatedBy)
 	if err != nil && err != ErrNoRows {
 		LocalError("The target user doesn't exist", w, r, user)
@@ -502,15 +570,11 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	score := 1
-	_, err = createLikeStmt.Exec(score, rid, "replies", user.ID)
-	if err != nil {
-		InternalError(err, w)
+	err = reply.Like(user.ID)
+	if err == ErrAlreadyLiked {
+		LocalError("You've already liked this!", w, r, user)
 		return
-	}
-
-	_, err = addLikesToReplyStmt.Exec(1, rid)
-	if err != nil {
+	} else if err != nil {
 		InternalError(err, w)
 		return
 	}
@@ -612,7 +676,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 	var fid = 1
 	var title, content string
 	if itemType == "reply" {
-		reply, err := getReply(itemID)
+		reply, err := rstore.Get(itemID)
 		if err == ErrNoRows {
 			LocalError("We were unable to find the reported post", w, r, user)
 			return
@@ -633,7 +697,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		title = "Reply: " + topic.Title
 		content = reply.Content + "\n\nOriginal Post: #rid-" + strconv.Itoa(itemID)
 	} else if itemType == "user-reply" {
-		userReply, err := getUserReply(itemID)
+		userReply, err := prstore.Get(itemID)
 		if err == ErrNoRows {
 			LocalError("We weren't able to find the reported post", w, r, user)
 			return

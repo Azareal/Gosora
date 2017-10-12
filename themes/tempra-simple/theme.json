@@ -9,8 +9,8 @@
 	"Sidebars":"right",
 	"Resources": [
 		{
-			"Name": "sample.css",
-			"Location": "none"
+			"Name":"tempra-simple/misc.js",
+			"Location":"global"
 		}
 	]
 }

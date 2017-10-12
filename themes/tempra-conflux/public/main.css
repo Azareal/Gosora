@@ -395,7 +395,7 @@ li a {
 
 /* Topics */
 
-.topic_list {
+.topic_list .topic_row {
 	display: grid;
 	grid-template-columns: calc(100% - 204px) 204px;
 }
@@ -404,6 +404,9 @@ li a {
 }
 .topic_list .lastReplyAt {
 	white-space: nowrap;
+}
+.topic_list .starter:before {
+	content: "Starter: ";
 }
 
 @supports not (display: grid) {
@@ -417,6 +420,20 @@ li a {
 	.topic_list .topic_right {
 		width: 204px;
 	}
+}
+
+.topic_left, .topic_right {
+	display: flex;
+	padding: 0px;
+	height: 58px;
+}
+.topic_left img, .topic_right img {
+	width: 64px;
+	height: auto;
+}
+.topic_left .topic_inner_left, .topic_right > span {
+	margin-top: 10px;
+	margin-left: 8px;
 }
 
 .postImage {

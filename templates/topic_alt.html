@@ -77,16 +77,23 @@
 	</article>
 {{end}}</div>
 {{if .CurrentUser.Perms.CreateReply}}
-<div class="rowblock topic_reply_form">
-	<form action="/reply/create/" method="post">
-		<input name="tid" value='{{.Topic.ID}}' type="hidden" />
-		<div class="formrow">
-			<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here" required></textarea></div>
+<div class="rowblock topic_reply_form quick_create_form">
+	<form id="reply_form" enctype="multipart/form-data" action="/reply/create/" method="post"></form>
+	<input form="reply_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
+	<div class="formrow real_first_child">
+		<div class="formitem">
+			<textarea id="input_content" form="reply_form" name="reply-content" placeholder="Insert reply here" required></textarea>
 		</div>
-		<div class="formrow">
-			<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
+	</div>
+	<div class="formrow quick_button_row">
+		<div class="formitem">
+			<button form="reply_form" name="reply-button" class="formbutton">Create Reply</button>
+			{{if .CurrentUser.Perms.UploadFiles}}
+			<input name="upload_files" form="reply_form" id="upload_files" multiple type="file" style="display: none;" />
+			<label for="upload_files" class="formbutton add_file_button">Add File</label>
+			<div id="upload_file_dock"></div>{{end}}
 		</div>
-	</form>
+	</div>
 </div>
 {{end}}
 

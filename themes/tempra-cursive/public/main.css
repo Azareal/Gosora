@@ -228,10 +228,22 @@ li a {
 	margin-bottom: 3px;
 }
 
-.stat_green { background-color: lightgreen; border-color: lightgreen; }
-.stat_orange { background-color: #ffe4b3; border-color: #ffe4b3; }
-.stat_red { background-color: #ffb2b2; border-color: #ffb2b2; }
-.stat_disabled { background-color: lightgray; border-color: lightgray; }
+.stat_green {
+	background-color: lightgreen;
+	border-color: lightgreen;
+}
+.stat_orange {
+	background-color: #ffe4b3;
+	border-color: #ffe4b3;
+}
+.stat_red {
+	background-color: #ffb2b2;
+	border-color: #ffb2b2;
+}
+.stat_disabled {
+	background-color: lightgray;
+	border-color: lightgray;
+}
 
 .rowitem {
 	width: 100%;
@@ -313,6 +325,10 @@ button {
 }
 
 /* Topics */
+
+.topic_list .starter:before {
+	content: "Starter: ";
+}
 
 .topic_sticky {
 	background-color: rgb(255,255,234);

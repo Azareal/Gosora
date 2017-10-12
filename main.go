@@ -44,12 +44,16 @@ type StringList []string
 // ? - Should we allow users to upload .php or .go files? It could cause security issues. We could store them with a mangled extension to render them inert
 // TODO: Let admins manage this from the Control Panel
 var allowedFileExts = StringList{
-	"png", "jpg", "jpeg", "svg", "bmp", "gif",
-	"txt", "xml", "json", "yaml", "js", "py", "rb",
-	"mp3", "mp4", "avi", "wmv",
+	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", "apng", // images
+
+	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", // text
+
+	"mp3", "mp4", "avi", "wmv", "webm", // video
+
+	"otf", "woff2", "woff", "ttf", "eot", // fonts
 }
 var imageFileExts = StringList{
-	"png", "jpg", "jpeg", "svg", "bmp", "gif",
+	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", "apng",
 }
 
 // TODO: Write a test for this
@@ -99,6 +103,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	rstore = NewSQLReplyStore()
+	prstore = NewSQLProfileReplyStore()
 
 	initTemplates()
 

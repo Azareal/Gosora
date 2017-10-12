@@ -169,17 +169,15 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 	}
 
 	headerVars.Stylesheets = append(headerVars.Stylesheets, headerVars.ThemeName+"/panel.css")
-	if len(themes[headerVars.ThemeName].Resources) != 0 {
+	if len(themes[headerVars.ThemeName].Resources) > 0 {
 		rlist := themes[headerVars.ThemeName].Resources
 		for _, resource := range rlist {
 			if resource.Location == "global" || resource.Location == "panel" {
-				halves := strings.Split(resource.Name, ".")
-				if len(halves) != 2 {
-					continue
-				}
-				if halves[1] == "css" {
+				extarr := strings.Split(resource.Name, ".")
+				ext := extarr[len(extarr)-1]
+				if ext == "css" {
 					headerVars.Stylesheets = append(headerVars.Stylesheets, resource.Name)
-				} else if halves[1] == "js" {
+				} else if ext == "js" {
 					headerVars.Scripts = append(headerVars.Scripts, resource.Name)
 				}
 			}
@@ -268,17 +266,15 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 		headerVars.NoticeList = append(headerVars.NoticeList, "Your account has been suspended. Some of your permissions may have been revoked.")
 	}
 
-	if len(themes[headerVars.ThemeName].Resources) != 0 {
+	if len(themes[headerVars.ThemeName].Resources) > 0 {
 		rlist := themes[headerVars.ThemeName].Resources
 		for _, resource := range rlist {
 			if resource.Location == "global" || resource.Location == "frontend" {
-				halves := strings.Split(resource.Name, ".")
-				if len(halves) != 2 {
-					continue
-				}
-				if halves[1] == "css" {
+				extarr := strings.Split(resource.Name, ".")
+				ext := extarr[len(extarr)-1]
+				if ext == "css" {
 					headerVars.Stylesheets = append(headerVars.Stylesheets, resource.Name)
-				} else if halves[1] == "js" {
+				} else if ext == "js" {
 					headerVars.Scripts = append(headerVars.Scripts, resource.Name)
 				}
 			}

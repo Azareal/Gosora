@@ -387,6 +387,7 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	}
 }
 
+// TODO: Refactor this
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
 func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	err := r.ParseForm()
@@ -402,7 +403,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	reply, err := getReply(rid)
+	reply, err := rstore.Get(rid)
 	if err == ErrNoRows {
 		PreErrorJSQ("The reply you tried to delete doesn't exist.", w, r, isJs)
 		return
@@ -431,11 +432,12 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	_, err = deleteReplyStmt.Exec(rid)
+	err = reply.Delete()
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
+
 	//log.Print("Reply #" + strconv.Itoa(rid) + " was deleted by User #" + strconv.Itoa(user.ID))
 	if !isJs {
 		//http.Redirect(w,r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
@@ -455,24 +457,15 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		InternalErrorJSQ(err, w, r, isJs)
 		return
 	}
-	_, err = removeRepliesFromTopicStmt.Exec(1, reply.ParentID)
-	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-	}
 
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
+		LocalErrorJSQ("Bad IP", w, r, user, isJs)
 		return
 	}
 	err = addModLog("delete", reply.ParentID, "reply", ipaddress, user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
-	}
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(reply.ParentID)
+		InternalErrorJSQ(err, w, r, isJs)
 	}
 }
 
@@ -570,7 +563,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	ip := r.FormValue("ip")
+	var ip = r.FormValue("ip")
 	var uid int
 	var reqUserList = make(map[int]bool)
 

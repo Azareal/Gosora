@@ -4,5 +4,11 @@
 	"Version": "0.0.1",
 	"Creator": "Azareal",
 	"FullImage": "shadow.png",
-	"URL": "github.com/Azareal/Gosora"
+	"URL": "github.com/Azareal/Gosora",
+	"Resources": [
+		{
+			"Name":"shadow/misc.js",
+			"Location":"global"
+		}
+	]
 }

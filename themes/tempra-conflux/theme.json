@@ -12,5 +12,11 @@
 			"Name": "topic",
 			"Source": "topic_alt"
 		}
+	],
+	"Resources": [
+		{
+			"Name":"tempra-conflux/misc.js",
+			"Location":"global"
+		}
 	]
 }

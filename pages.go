@@ -611,13 +611,56 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
+				//log.Print("Normal URL")
 				outbytes = append(outbytes, msgbytes[lastItem:i]...)
 				urlLen := partialURLBytesLen(msgbytes[i:])
 				if msgbytes[i+urlLen] > 32 { // space and invisibles
+					//log.Print("INVALID URL")
+					//log.Print("msgbytes[i+urlLen]", msgbytes[i+urlLen])
+					//log.Print("string(msgbytes[i+urlLen])", string(msgbytes[i+urlLen]))
+					//log.Print("msgbytes[i:i+urlLen]", msgbytes[i:i+urlLen])
+					//log.Print("string(msgbytes[i:i+urlLen])", string(msgbytes[i:i+urlLen]))
 					outbytes = append(outbytes, invalidURL...)
 					i += urlLen
 					continue
 				}
+
+				media, ok := parseMediaBytes(msgbytes[i : i+urlLen])
+				if !ok {
+					outbytes = append(outbytes, invalidURL...)
+					i += urlLen
+					continue
+				}
+
+				if media.Type == "attach" {
+					outbytes = append(outbytes, imageOpen...)
+					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
+					outbytes = append(outbytes, imageOpen2...)
+					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
+					outbytes = append(outbytes, imageClose...)
+					i += urlLen
+					lastItem = i
+					continue
+				} else if media.Type == "image" {
+					outbytes = append(outbytes, imageOpen...)
+					outbytes = append(outbytes, []byte(media.URL)...)
+					outbytes = append(outbytes, imageOpen2...)
+					outbytes = append(outbytes, []byte(media.URL)...)
+					outbytes = append(outbytes, imageClose...)
+					i += urlLen
+					lastItem = i
+					continue
+				} else if media.Type == "raw" {
+					outbytes = append(outbytes, []byte(media.Body)...)
+					i += urlLen
+					lastItem = i
+					continue
+				} else if media.Type != "" {
+					outbytes = append(outbytes, unknownMedia...)
+					i += urlLen
+					continue
+				}
+
 				outbytes = append(outbytes, urlOpen...)
 				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
 				outbytes = append(outbytes, urlOpen2...)
@@ -649,12 +692,26 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
-				if media.Type == "image" {
+				if media.Type == "attach" {
 					outbytes = append(outbytes, imageOpen...)
 					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
 					outbytes = append(outbytes, imageOpen2...)
 					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
 					outbytes = append(outbytes, imageClose...)
+					i += urlLen
+					lastItem = i
+					continue
+				} else if media.Type == "image" {
+					outbytes = append(outbytes, imageOpen...)
+					outbytes = append(outbytes, []byte(media.URL)...)
+					outbytes = append(outbytes, imageOpen2...)
+					outbytes = append(outbytes, []byte(media.URL)...)
+					outbytes = append(outbytes, imageClose...)
+					i += urlLen
+					lastItem = i
+					continue
+				} else if media.Type == "raw" {
+					outbytes = append(outbytes, []byte(media.Body)...)
 					i += urlLen
 					lastItem = i
 					continue
@@ -730,9 +787,9 @@ func validateURLBytes(data []byte) bool {
 		i = 2
 	}
 
-	// ? - There should only be one : and that's only if the URL is on a non-standard port
+	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; datalen > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			return false
 		}
 	}
@@ -756,9 +813,9 @@ func validatedURLBytes(data []byte) (url []byte) {
 		i = 2
 	}
 
-	// ? - There should only be one : and that's only if the URL is on a non-standard port
+	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; datalen > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			return invalidURL
 		}
 	}
@@ -785,9 +842,9 @@ func partialURLBytes(data []byte) (url []byte) {
 		i = 2
 	}
 
-	// ? - There should only be one : and that's only if the URL is on a non-standard port
+	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; end >= i; i++ {
-		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			end = i
 		}
 	}
@@ -814,9 +871,9 @@ func partialURLBytesLen(data []byte) int {
 		i = 2
 	}
 
-	// ? - There should only be one : and that's only if the URL is on a non-standard port
+	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; datalen > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			//log.Print("Bad Character: ", data[i])
 			return i
 		}
@@ -828,6 +885,7 @@ func partialURLBytesLen(data []byte) int {
 type MediaEmbed struct {
 	Type string //image
 	URL  string
+	Body string
 }
 
 // TODO: Write a test for this
@@ -846,6 +904,8 @@ func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
 	port := url.Port()
 	//log.Print("hostname ", hostname)
 	//log.Print("scheme ", scheme)
+	query := url.Query()
+	//log.Printf("query %+v\n", query)
 
 	var samesite = hostname == "localhost" || hostname == site.URL
 	if samesite {
@@ -870,15 +930,47 @@ func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
 	if len(pathFrags) >= 2 {
 		if samesite && pathFrags[1] == "attachs" && (scheme == "http" || scheme == "https") {
 			//log.Print("Attachment")
-			media.Type = "image"
+			media.Type = "attach"
 			var sport string
 			// ? - Assumes the sysadmin hasn't mixed up the two standard ports
 			if port != "443" && port != "80" {
 				sport = ":" + port
 			}
 			media.URL = scheme + "://" + hostname + sport + path
+			return media, true
 		}
 	}
+
+	// ? - I don't think this hostname will hit every YT domain
+	// TODO: Make this a more customisable handler rather than hard-coding it in here
+	if hostname == "www.youtube.com" && path == "/watch" {
+		video, ok := query["v"]
+		if ok && len(video) >= 1 && video[0] != "" {
+			media.Type = "raw"
+			// TODO: Filter the URL to make sure no nasties end up in there
+			media.Body = "<iframe class='postIframe' src='https://www.youtube-nocookie.com/embed/" + video[0] + "' frameborder='0' allowfullscreen></iframe>"
+			return media, true
+		}
+	}
+
+	lastFrag := pathFrags[len(pathFrags)-1]
+	if lastFrag != "" {
+		// TODO: Write a function for getting the file extension of a string
+		extarr := strings.Split(lastFrag, ".")
+		if len(extarr) >= 2 {
+			ext := extarr[len(extarr)-1]
+			if imageFileExts.Contains(ext) {
+				media.Type = "image"
+				var sport string
+				if port != "443" && port != "80" {
+					sport = ":" + port
+				}
+				media.URL = scheme + "://" + hostname + sport + path
+				return media, true
+			}
+		}
+	}
+
 	return media, true
 }
 

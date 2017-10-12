@@ -56,12 +56,13 @@ if tmpl_profile_vars.CurrentUser.Loggedin {
 w.Write(menu_3)
 w.Write([]byte(tmpl_profile_vars.CurrentUser.Link))
 w.Write(menu_4)
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
 w.Write(menu_5)
-} else {
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
 w.Write(menu_6)
-}
+} else {
 w.Write(menu_7)
+}
+w.Write(menu_8)
 w.Write(header_14)
 if tmpl_profile_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_15)

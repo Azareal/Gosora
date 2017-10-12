@@ -56,12 +56,13 @@ if tmpl_topic_vars.CurrentUser.Loggedin {
 w.Write(menu_3)
 w.Write([]byte(tmpl_topic_vars.CurrentUser.Link))
 w.Write(menu_4)
-w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
 w.Write(menu_5)
-} else {
+w.Write([]byte(tmpl_topic_vars.CurrentUser.Session))
 w.Write(menu_6)
-}
+} else {
 w.Write(menu_7)
+}
+w.Write(menu_8)
 w.Write(header_14)
 if tmpl_topic_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_15)
@@ -286,8 +287,12 @@ if tmpl_topic_vars.CurrentUser.Perms.CreateReply {
 w.Write(topic_94)
 w.Write([]byte(strconv.Itoa(tmpl_topic_vars.Topic.ID)))
 w.Write(topic_95)
-}
+if tmpl_topic_vars.CurrentUser.Perms.UploadFiles {
 w.Write(topic_96)
+}
+w.Write(topic_97)
+}
+w.Write(topic_98)
 w.Write(footer_0)
 if len(tmpl_topic_vars.Header.Themes) != 0 {
 for _, item := range tmpl_topic_vars.Header.Themes {

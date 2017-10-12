@@ -1,8 +1,10 @@
 package main
 
 //import "fmt"
-import "regexp"
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 var markdownMaxDepth = 25 // How deep the parser will go when parsing Markdown strings
 var markdownUnclosedElement []byte
@@ -87,6 +89,15 @@ func _markdownParse(msg string, n int) string {
 		//log.Print(" ")*/
 
 		switch msg[index] {
+		// TODO: Do something slightly less hacky for skipping URLs
+		case '/':
+			if len(msg) > (index+2) && msg[index+1] == '/' {
+				for ; index < len(msg) && msg[index] != ' '; index++ {
+
+				}
+				index--
+				continue
+			}
 		case '_':
 			var startIndex = index
 			if (index + 1) >= len(msg) {

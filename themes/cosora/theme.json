@@ -4,6 +4,16 @@
 	"Version": "0.0.1",
 	"Creator": "Azareal",
 	"URL": "github.com/Azareal/Gosora",
-	"HideFromThemes":true,
-	"Tag": "WIP"
+	"Tag": "WIP",
+	"Sidebars":"right",
+	"Resources": [
+		{
+			"Name":"font-awesome-4.7.0/css/font-awesome.css",
+			"Location":"global"
+		},
+		{
+			"Name":"EQCSS.min.js",
+			"Location":"global"
+		}
+	]
 }

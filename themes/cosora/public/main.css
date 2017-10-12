@@ -1,0 +1,235 @@
+:root {
+	--header-border-color: hsl(0,0%,85%);
+	--element-border-color: hsl(0,0%,90%);
+	--element-background-color: white;
+}
+
+* {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+body {
+	font-size: 16px;
+	font-family: arial;
+	margin: 0px;
+}
+
+a {
+	text-decoration: none;
+	color: hsl(0,0%,40%);
+}
+
+#back {
+	padding: 8px;
+	padding-top: 14px;
+	display: flex;
+	/*background-color: hsl(0,0%,97%);*/
+}
+
+#main {
+	width: 100%;
+}
+
+.sidebar {
+	width: 200px;
+	display: none;
+}
+
+.nav {
+	border-bottom: 1px solid var(--header-border-color);
+}
+
+li {
+	margin-right: 12px;
+}
+.menu_left a:after {
+    content: "|";
+    margin-left: 12px;
+    color: var(--header-border-color);
+}
+
+.menu_overview {
+	font-size: 22px;
+	margin-right: 12px;
+}
+.menu_overview a:after {
+	margin-left: 14px;
+	margin-right: 4px;
+	position: relative;
+	top: -3px;
+}
+
+.menu_forums a:before {
+    content: "\f03a";
+    font: normal normal normal 14px/1 FontAwesome;
+    margin-right: 6px;
+}
+.menu_topics a:before {
+    font: normal normal normal 14px/1 FontAwesome;
+    margin-right: 4px;
+    content: "\f27b";
+    position: relative;
+    top: -2px;
+}
+.menu_alerts {
+	display: none;
+}
+.menu_account a:before {
+    content: "\f2c3";
+    font: normal normal normal 14px/1 FontAwesome;
+    margin-right: 6px;
+}
+.menu_profile a:before {
+    content: "\f2c0";
+    font: normal normal normal 14px/1 FontAwesome;
+    margin-right: 5px;
+    position: relative;
+    top: -1px;
+    font-size: 14px;
+}
+.menu_panel a:before {
+    font: normal normal normal 14px/1 FontAwesome;
+    margin-right: 6px;
+    content: "\f108";
+}
+.menu_logout a:before {
+    content: "\f08b";
+    font: normal normal normal 14px/1 FontAwesome;
+    margin-right: 3px;
+}
+
+ul {
+	display: flex;
+	list-style-type: none;
+	padding: 0px;
+	margin-left: 14px;
+	margin-bottom: 12px;
+}
+
+.alertList {
+	display: none;
+}
+
+.rowblock {
+	margin-bottom: 12px;
+	border: 1px solid var(--header-border-color);
+	border-bottom: 2px solid var(--header-border-color);
+	background-color: var(--element-background-color);
+	margin-left: 4px;
+    margin-right: 4px;
+}
+
+.rowhead {
+	padding: 13px;
+	padding-top: 14px;
+    padding-bottom: 14px;
+}
+.rowhead h1 {
+	font-size: 20px;
+	font-weight: normal;
+	color: hsl(0,0%,10%);
+	-webkit-margin-before: 0;
+	-webkit-margin-after: 0;
+	display: inline-block;
+}
+
+.topic_list {
+	border: none;
+}
+.topic_list .topic_row {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.topic_left, .topic_right {
+    margin-bottom: 8px;
+    padding: 4px;
+	display: flex;
+    border: 1px solid var(--element-border-color);
+    border-bottom: 2px solid var(--element-border-color);
+}
+
+.topic_list .rowtopic {
+    font-size: 18px;
+    color: hsl(0,0%,30%);
+    margin-right: 2px;
+	max-width: 230px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.topic_list .rowsmall.starter:before {
+    content: "\f007";
+    font: normal normal normal 14px/1 FontAwesome;
+    margin-right: 5px;
+    font-size: 16px;
+}
+
+.topic_list .rowsmall.starter:before {
+    content: "\f007";
+    font: normal normal normal 14px/1 FontAwesome;
+    margin-right: 5px;
+    font-size: 16px;
+}
+
+.topic_list .topic_status_e {
+	display: none;
+}
+
+.topic_left {
+	flex: 1 1 calc(100% - 400px);
+	border-right: none;
+}
+
+.topic_inner_right {
+	margin-left: auto;
+    margin-right: auto;
+    font-size: 17px;
+	margin-top: 12px;
+}
+
+.topic_right {
+	flex: 1 1 150px;
+	border-left: none;
+}
+
+.topic_left img {
+	border-radius: 30px;
+	height: 48px;
+	width: 48px;
+	margin-top: 8px;
+	margin-left: 4px;
+}
+
+.topic_right img {
+	border-radius: 30px;
+	height: 48px;
+	width: 48px;
+	margin-top: 8px;
+}
+
+.topic_left .topic_inner_left {
+	margin-top: 12px;
+	margin-left: 8px;
+	margin-bottom: 14px;
+}
+
+.topic_right > span {
+	margin-top: 12px;
+	margin-left: 8px;
+}
+
+.topic_sticky {
+	border-bottom: 2px solid hsl(51, 60%, 50%);
+}
+
+/*@element .topic_left .rowtopic and (min-characters: 10) {
+}*/
+
+@media(max-width: 670px) {
+	.topic_inner_right {
+		display: none;
+	}
+}

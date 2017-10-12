@@ -377,6 +377,58 @@ func TestGroupStore(t *testing.T) {
 	}
 }
 
+func TestReplyStore(t *testing.T) {
+	if !gloinited {
+		gloinit()
+	}
+	if !pluginsInited {
+		initPlugins()
+	}
+
+	reply, err := rstore.Get(-1)
+	if err == nil {
+		t.Error("RID #-1 shouldn't exist")
+	}
+
+	reply, err = rstore.Get(0)
+	if err == nil {
+		t.Error("RID #0 shouldn't exist")
+	}
+
+	reply, err = rstore.Get(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reply.ID != 1 {
+		t.Error("RID #1 has the wrong ID. It should be 1 not " + strconv.Itoa(reply.ID))
+	}
+	if reply.ParentID != 1 {
+		t.Error("The parent topic of RID #1 should be 1 not " + strconv.Itoa(reply.ParentID))
+	}
+	if reply.CreatedBy != 1 {
+		t.Error("The creator of RID #1 should be 1 not " + strconv.Itoa(reply.CreatedBy))
+	}
+}
+
+func TestProfileReplyStore(t *testing.T) {
+	if !gloinited {
+		gloinit()
+	}
+	if !pluginsInited {
+		initPlugins()
+	}
+
+	_, err := prstore.Get(-1)
+	if err == nil {
+		t.Error("RID #-1 shouldn't exist")
+	}
+
+	_, err = prstore.Get(0)
+	if err == nil {
+		t.Error("RID #0 shouldn't exist")
+	}
+}
+
 func TestSlugs(t *testing.T) {
 	var res string
 	var msgList []MEPair

@@ -231,11 +231,25 @@ li a {
 	font-size: 16px;
 }
 
-.grid_istat { margin-bottom: 5px; }
-.stat_green { background-color: lightgreen; border-color: lightgreen; }
-.stat_orange { background-color: #ffe4b3; border-color: #ffe4b3; }
-.stat_red { background-color: #ffb2b2; border-color: #ffb2b2; }
-.stat_disabled { background-color: lightgray; border-color: lightgray; }
+.grid_istat {
+	margin-bottom: 5px;
+}
+.stat_green {
+	background-color: lightgreen;
+	border-color: lightgreen;
+}
+.stat_orange {
+	background-color: #ffe4b3;
+	border-color: #ffe4b3;
+}
+.stat_red {
+	background-color: #ffb2b2;
+	border-color: #ffb2b2;
+}
+.stat_disabled {
+	background-color: lightgray;
+	border-color: lightgray;
+}
 
 .rowhead .rowitem, .colstack_head .rowitem {
 	background-color: rgb(252,252,252);
@@ -259,15 +273,24 @@ li a {
 	padding-right: 10px;
 	background-color: white;
 }
-/*.rowitem:not(.passive) { font-size: 17px; }*/
-.rowitem:not(:last-child) { border-bottom: 1px dotted hsl(0, 0%, 80%); }
+.rowitem:not(:last-child) {
+	border-bottom: 1px solid hsl(0,0%,85%);
+}
+
 .rowitem a {
 	text-decoration: none;
 	color: black;
 }
-.rowitem a:hover { color: silver; }
-.top_post { margin-bottom: 12px; }
-.opthead { display: none; }
+.rowitem a:hover {
+	color: silver;
+}
+
+.top_post {
+	margin-bottom: 12px;
+}
+.opthead {
+	display: none;
+}
 
 .rowitem.has_opt {
 	float: left;
@@ -372,15 +395,21 @@ li a {
 
 /* Topics */
 
-.topic_list {
+.topic_list .topic_row {
 	display: grid;
 	grid-template-columns: calc(100% - 204px) 204px;
+}
+.topic_list .rowitem {
+	border-bottom: 1px solid hsl(0,0%,85%);
 }
 .topic_list .topic_inner_right {
 	display: none;
 }
 .topic_list .lastReplyAt {
 	white-space: nowrap;
+}
+.topic_list .starter:before {
+	content: "Starter: ";
 }
 
 @supports not (display: grid) {
@@ -394,6 +423,21 @@ li a {
 	.topic_list .topic_right {
 		width: 204px;
 	}
+}
+
+.topic_left, .topic_right {
+	display: flex;
+	padding: 0px;
+	height: 58px;
+	overflow: hidden;
+}
+.topic_left img, .topic_right img {
+	width: 64px;
+	height: auto;
+}
+.topic_left .topic_inner_left, .topic_right > span {
+	margin-top: 10px;
+	margin-left: 8px;
 }
 
 .postImage {

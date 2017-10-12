@@ -56,12 +56,13 @@ if tmpl_forum_vars.CurrentUser.Loggedin {
 w.Write(menu_3)
 w.Write([]byte(tmpl_forum_vars.CurrentUser.Link))
 w.Write(menu_4)
-w.Write([]byte(tmpl_forum_vars.CurrentUser.Session))
 w.Write(menu_5)
-} else {
+w.Write([]byte(tmpl_forum_vars.CurrentUser.Session))
 w.Write(menu_6)
-}
+} else {
 w.Write(menu_7)
+}
+w.Write(menu_8)
 w.Write(header_14)
 if tmpl_forum_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_15)
@@ -137,48 +138,54 @@ w.Write([]byte(item.Creator.Avatar))
 w.Write(forum_27)
 }
 w.Write(forum_28)
-w.Write([]byte(strconv.Itoa(item.PostCount)))
-w.Write(forum_29)
-w.Write([]byte(item.LastReplyAt))
-w.Write(forum_30)
 w.Write([]byte(item.Link))
-w.Write(forum_31)
+w.Write(forum_29)
 w.Write([]byte(item.Title))
-w.Write(forum_32)
+w.Write(forum_30)
 w.Write([]byte(item.Creator.Link))
-w.Write(forum_33)
+w.Write(forum_31)
 w.Write([]byte(item.Creator.Name))
-w.Write(forum_34)
+w.Write(forum_32)
 if item.IsClosed {
-w.Write(forum_35)
+w.Write(forum_33)
 }
 if item.Sticky {
+w.Write(forum_34)
+}
+w.Write(forum_35)
+w.Write([]byte(strconv.Itoa(item.PostCount)))
 w.Write(forum_36)
-}
+if item.Sticky {
 w.Write(forum_37)
-if item.LastUser.Avatar != "" {
+} else {
+if item.IsClosed {
 w.Write(forum_38)
-w.Write([]byte(item.LastUser.Avatar))
-w.Write(forum_39)
 }
+}
+w.Write(forum_39)
+if item.LastUser.Avatar != "" {
 w.Write(forum_40)
-w.Write([]byte(item.LastUser.Link))
+w.Write([]byte(item.LastUser.Avatar))
 w.Write(forum_41)
-w.Write([]byte(item.LastUser.Name))
+}
 w.Write(forum_42)
-w.Write([]byte(item.LastReplyAt))
+w.Write([]byte(item.LastUser.Link))
 w.Write(forum_43)
+w.Write([]byte(item.LastUser.Name))
+w.Write(forum_44)
+w.Write([]byte(item.LastReplyAt))
+w.Write(forum_45)
 }
 } else {
-w.Write(forum_44)
-if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
-w.Write(forum_45)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
 w.Write(forum_46)
-}
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
 w.Write(forum_47)
-}
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
 w.Write(forum_48)
+}
+w.Write(forum_49)
+}
+w.Write(forum_50)
 w.Write(footer_0)
 if len(tmpl_forum_vars.Header.Themes) != 0 {
 for _, item := range tmpl_forum_vars.Header.Themes {
