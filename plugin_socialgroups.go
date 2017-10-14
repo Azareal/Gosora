@@ -478,7 +478,7 @@ func socialgroupsMemberList(w http.ResponseWriter, r *http.Request, user User) {
 		} else {
 			sgMember.User.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(sgMember.User.ID), 1)
 		}
-		sgMember.JoinedAt, _ = relativeTime(sgMember.JoinedAt)
+		sgMember.JoinedAt, _ = relativeTimeFromString(sgMember.JoinedAt)
 		if sgItem.Owner == sgMember.User.ID {
 			sgMember.RankString = "Owner"
 		} else {

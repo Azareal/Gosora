@@ -12,6 +12,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Updating the MSSQL Driver
+go get -u github.com/denisenkom/go-mssqldb
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo Updating bcrypt
 go get -u golang.org/x/crypto/bcrypt
 if %errorlevel% neq 0 (

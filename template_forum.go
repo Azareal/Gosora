@@ -173,7 +173,7 @@ w.Write([]byte(item.LastUser.Link))
 w.Write(forum_43)
 w.Write([]byte(item.LastUser.Name))
 w.Write(forum_44)
-w.Write([]byte(item.LastReplyAt))
+w.Write([]byte(item.RelativeLastReplyAt))
 w.Write(forum_45)
 }
 } else {

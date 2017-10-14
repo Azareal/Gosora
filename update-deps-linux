@@ -4,6 +4,9 @@ go get -u github.com/go-sql-driver/mysql
 echo "Updating the PostgreSQL Driver"
 go get -u github.com/lib/pq
 
+echo "Updating the MSSQL Driver"
+go get -u github.com/denisenkom/go-mssqldb
+
 echo "Updating bcrypt"
 go get -u golang.org/x/crypto/bcrypt
 

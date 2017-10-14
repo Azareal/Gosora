@@ -26,11 +26,13 @@ func (install *installer) SetAdapter(name string) error {
 		return err
 	}
 	install.adapter = adap
+	install.instructions = []DB_Install_Instruction{}
 	return nil
 }
 
 func (install *installer) SetAdapterInstance(adapter DB_Adapter) {
 	install.adapter = adapter
+	install.instructions = []DB_Install_Instruction{}
 }
 
 func (install *installer) CreateTable(table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) error {
@@ -39,6 +41,15 @@ func (install *installer) CreateTable(table string, charset string, collation st
 		return err
 	}
 	install.instructions = append(install.instructions, DB_Install_Instruction{table, res, "create-table"})
+	return nil
+}
+
+func (install *installer) SimpleInsert(table string, columns string, fields string) error {
+	res, err := install.adapter.SimpleInsert("_installer", table, columns, fields)
+	if err != nil {
+		return err
+	}
+	install.instructions = append(install.instructions, DB_Install_Instruction{table, res, "insert"})
 	return nil
 }
 
@@ -52,7 +63,7 @@ func (install *installer) Write() error {
 				return err
 			}
 		} else {
-			inserts += instr.Contents + "\n"
+			inserts += instr.Contents + ";\n"
 		}
 	}
 	return writeFile("./schema/"+install.adapter.GetName()+"/inserts.sql", inserts)

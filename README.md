@@ -107,6 +107,10 @@ go get -u gopkg.in/sourcemap.v1
 
 go get -u github.com/robertkrimen/otto
 
+go get -u github.com/lib/pq
+
+go get -u github.com/denisenkom/go-mssqldb
+
 
 go generate
 
@@ -126,6 +130,8 @@ install.exe
 
 gosora.exe
 ```
+
+I'm looking into minimising the number of go gets for the advanced build and to maybe remove the platform and database engine specific dependencies if possible for those who don't need them.
 
 
 # How do I install plugins?
@@ -176,15 +182,25 @@ More images in the /images/ folder. Beware though, some of them are *really* out
 
 * github.com/gorilla/websocket Needed for Gosora's Optional WebSockets Module.
 
+* github.com/robertkrimen/otto Needed for the upcoming JS plugin type.
+
+  * gopkg.in/sourcemap.v1 Dependency for Otto.
+
+* github.com/lib/pq For interfacing with PostgreSQL. You will be able to pick this instead of MariaDB soon.
+
+* ithub.com/denisenkom/go-mssqldb For interfacing with MSSQL. You will be able to pick this instead of MSSQL soon.
+
 # Bundled Plugins
 
 There are several plugins which are bundled with the software by default. These cover various common tasks which aren't common enough to clutter the core with or which have competing implementation methods (E.g. plugin_markdown vs plugin_bbcode for post mark-up).
 
-* Hello World / Skeleton - Example plugins for helping you learn how to develop plugins.
+* Hey There / Skeleton / Hey There (JS Version) - Example plugins for helping you learn how to develop plugins.
 
 * BBCode - A plugin in early development for converting BBCode Tags into HTML.
 
 * Markdown - An extremely simple plugin for converting Markdown into HTML.
+
+* Social Groups - A WIP plugin which lets users create their own little discussion areas which they can administrate / moderate on their own.
 
 # Developers
 

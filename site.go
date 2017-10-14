@@ -24,11 +24,19 @@ type Site struct {
 }
 
 type DBConfig struct {
+	// Production database
 	Host     string
 	Username string
 	Password string
 	Dbname   string
 	Port     string
+
+	// Test database. Split this into a separate variable?
+	TestHost     string
+	TestUsername string
+	TestPassword string
+	TestDbname   string
+	TestPort     string
 }
 
 type Config struct {
@@ -62,9 +70,10 @@ type DevConfig struct {
 	SuperDebug    bool
 	TemplateDebug bool
 	Profiling     bool
+	TestDB        bool
 }
 
-func processConfig() {
+func processConfig() error {
 	config.Noavatar = strings.Replace(config.Noavatar, "{site_url}", site.URL, -1)
 	if site.Port != "80" && site.Port != "443" {
 		site.URL = strings.TrimSuffix(site.URL, "/")
@@ -72,6 +81,14 @@ func processConfig() {
 		site.URL = strings.TrimSuffix(site.URL, ":")
 		site.URL = site.URL + ":" + site.Port
 	}
+	// We need this in here rather than verifyConfig as switchToTestDB() currently overwrites the values it verifies
+	if dbConfig.TestDbname == dbConfig.Dbname {
+		return errors.New("Your test database can't have the same name as your production database")
+	}
+	if dev.TestDB {
+		switchToTestDB()
+	}
+	return nil
 }
 
 func verifyConfig() error {
@@ -79,4 +96,12 @@ func verifyConfig() error {
 		return errors.New("Invalid default forum")
 	}
 	return nil
+}
+
+func switchToTestDB() {
+	dbConfig.Host = dbConfig.TestHost
+	dbConfig.Username = dbConfig.TestUsername
+	dbConfig.Password = dbConfig.TestPassword
+	dbConfig.Dbname = dbConfig.TestDbname
+	dbConfig.Port = dbConfig.TestPort
 }

@@ -4,7 +4,7 @@
 * Copyright Azareal 2017 - 2018
 *
  */
-package main
+package install
 
 import (
 	"bytes"
@@ -15,25 +15,47 @@ import (
 	"strconv"
 	"strings"
 
-	"../query_gen/lib"
+	"../../query_gen/lib"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 //var dbCollation string = "utf8mb4_general_ci"
 
-func _setMysqlAdapter() {
-	dbPort = "3306"
-	initDatabase = _initMysql
-	tableDefs = _tableDefsMysql
-	initialData = _initialDataMysql
+func init() {
+	adapters["mysql"] = &MysqlInstaller{dbHost: ""}
 }
 
-func _initMysql() (err error) {
-	_dbPassword := dbPassword
+type MysqlInstaller struct {
+	db         *sql.DB
+	dbHost     string
+	dbUsername string
+	dbPassword string
+	dbName     string
+	dbPort     string
+}
+
+func (ins *MysqlInstaller) SetConfig(dbHost string, dbUsername string, dbPassword string, dbName string, dbPort string) {
+	ins.dbHost = dbHost
+	ins.dbUsername = dbUsername
+	ins.dbPassword = dbPassword
+	ins.dbName = dbName
+	ins.dbPort = dbPort
+}
+
+func (ins *MysqlInstaller) Name() string {
+	return "mysql"
+}
+
+func (ins *MysqlInstaller) DefaultPort() string {
+	return "3306"
+}
+
+func (ins *MysqlInstaller) InitDatabase() (err error) {
+	_dbPassword := ins.dbPassword
 	if _dbPassword != "" {
 		_dbPassword = ":" + _dbPassword
 	}
-	db, err = sql.Open("mysql", dbUsername+_dbPassword+"@tcp("+dbHost+":"+dbPort+")/")
+	db, err := sql.Open("mysql", ins.dbUsername+_dbPassword+"@tcp("+ins.dbHost+":"+ins.dbPort+")/")
 	if err != nil {
 		return err
 	}
@@ -46,22 +68,22 @@ func _initMysql() (err error) {
 	fmt.Println("Successfully connected to the database")
 
 	var waste string
-	err = db.QueryRow("SHOW DATABASES LIKE '" + dbName + "'").Scan(&waste)
+	err = db.QueryRow("SHOW DATABASES LIKE '" + ins.dbName + "'").Scan(&waste)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
 	if err == sql.ErrNoRows {
 		fmt.Println("Unable to find the database. Attempting to create it")
-		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName)
+		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + ins.dbName)
 		if err != nil {
 			return err
 		}
 		fmt.Println("The database was successfully created")
 	}
 
-	fmt.Println("Switching to database " + dbName)
-	_, err = db.Exec("USE " + dbName)
+	fmt.Println("Switching to database " + ins.dbName)
+	_, err = db.Exec("USE " + ins.dbName)
 	if err != nil {
 		return err
 	}
@@ -73,10 +95,11 @@ func _initMysql() (err error) {
 		return err
 	}
 
+	ins.db = db
 	return nil
 }
 
-func _tableDefsMysql() error {
+func (ins *MysqlInstaller) TableDefs() error {
 	//fmt.Println("Creating the tables")
 	files, _ := ioutil.ReadDir("./schema/mysql/")
 	for _, f := range files {
@@ -99,7 +122,7 @@ func _tableDefsMysql() error {
 		}
 		data = bytes.TrimSpace(data)
 
-		_, err = db.Exec(string(data))
+		_, err = ins.db.Exec(string(data))
 		if err != nil {
 			fmt.Println("Failed query:", string(data))
 			return err
@@ -113,47 +136,51 @@ func _tableDefsMysql() error {
 /* TODO: Implement the html-attribute setting type before deploying this */
 /*INSERT INTO settings(`name`,`content`,`type`) VALUES ('meta_desc','','html-attribute');*/
 
-func _initialDataMysql() error {
-	return nil // Coming Soon
-
-	/*fmt.Println("Seeding the tables")
+func (ins *MysqlInstaller) InitialData() error {
+	//fmt.Println("Seeding the tables")
 	data, err := ioutil.ReadFile("./schema/mysql/inserts.sql")
 	if err != nil {
 		return err
 	}
 	data = bytes.TrimSpace(data)
 
-	fmt.Println("Executing query",string(data))
-	_, err = db.Exec(string(data))
-	if err != nil {
-		return err
-	}
-
-	//fmt.Println("Finished inserting the database data")
-	return nil*/
-}
-
-func _mysqlSeedDatabase() error {
-	fmt.Println("Opening the database seed file")
-	sqlContents, err := ioutil.ReadFile("./mysql.sql")
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Preparing installation queries")
-	sqlContents = bytes.TrimSpace(sqlContents)
-	statements := bytes.Split(sqlContents, []byte(";"))
+	statements := bytes.Split(data, []byte(";"))
 	for key, statement := range statements {
 		if len(statement) == 0 {
 			continue
 		}
 
 		fmt.Println("Executing query #" + strconv.Itoa(key) + " " + string(statement))
-		_, err = db.Exec(string(statement))
+		_, err = ins.db.Exec(string(statement))
 		if err != nil {
 			return err
 		}
 	}
-	fmt.Println("Finished inserting the database data")
+
+	//fmt.Println("Finished inserting the database data")
 	return nil
+}
+
+func (ins *MysqlInstaller) CreateAdmin() error {
+	return createAdmin()
+}
+
+func (ins *MysqlInstaller) DBHost() string {
+	return ins.dbHost
+}
+
+func (ins *MysqlInstaller) DBUsername() string {
+	return ins.dbUsername
+}
+
+func (ins *MysqlInstaller) DBPassword() string {
+	return ins.dbPassword
+}
+
+func (ins *MysqlInstaller) DBName() string {
+	return ins.dbName
+}
+
+func (ins *MysqlInstaller) DBPort() string {
+	return ins.dbPort
 }

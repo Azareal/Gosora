@@ -53,7 +53,7 @@ func GenerateSafeString(length int) (string, error) {
 }
 
 // TODO: Write a test for this
-func relativeTime(in string) (string, error) {
+func relativeTimeFromString(in string) (string, error) {
 	if in == "" {
 		return "", nil
 	}
@@ -63,6 +63,11 @@ func relativeTime(in string) (string, error) {
 		return "", err
 	}
 
+	return relativeTime(t), nil
+}
+
+// TODO: Write a test for this
+func relativeTime(t time.Time) string {
 	diff := time.Since(t)
 	hours := diff.Hours()
 	seconds := diff.Seconds()
@@ -70,32 +75,32 @@ func relativeTime(in string) (string, error) {
 	months := int(hours / 24 / 31)
 	switch {
 	case months > 11:
-		//return t.Format("Mon Jan 2 2006"), err
-		return t.Format("Jan 2 2006"), err
+		//return t.Format("Mon Jan 2 2006")
+		return t.Format("Jan 2 2006")
 	case months > 1:
-		return fmt.Sprintf("%d months ago", months), err
+		return fmt.Sprintf("%d months ago", months)
 	case months == 1:
-		return "a month ago", err
+		return "a month ago"
 	case weeks > 1:
-		return fmt.Sprintf("%d weeks ago", weeks), err
+		return fmt.Sprintf("%d weeks ago", weeks)
 	case int(hours/24) == 7:
-		return "a week ago", err
+		return "a week ago"
 	case int(hours/24) == 1:
-		return "1 day ago", err
+		return "1 day ago"
 	case int(hours/24) > 1:
-		return fmt.Sprintf("%d days ago", int(hours/24)), err
+		return fmt.Sprintf("%d days ago", int(hours/24))
 	case seconds <= 1:
-		return "a moment ago", err
+		return "a moment ago"
 	case seconds < 60:
-		return fmt.Sprintf("%d seconds ago", int(seconds)), err
+		return fmt.Sprintf("%d seconds ago", int(seconds))
 	case seconds < 120:
-		return "a minute ago", err
+		return "a minute ago"
 	case seconds < 3600:
-		return fmt.Sprintf("%d minutes ago", int(seconds/60)), err
+		return fmt.Sprintf("%d minutes ago", int(seconds/60))
 	case seconds < 7200:
-		return "an hour ago", err
+		return "an hour ago"
 	default:
-		return fmt.Sprintf("%d hours ago", int(seconds/60/60)), err
+		return fmt.Sprintf("%d hours ago", int(seconds/60/60))
 	}
 }
 

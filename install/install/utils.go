@@ -1,8 +1,10 @@
-package main
+package install
 
 import "encoding/base64"
 import "crypto/rand"
 import "golang.org/x/crypto/bcrypt"
+
+const saltLength int = 32
 
 // Generate a cryptographically secure set of random bytes..
 func GenerateSafeString(length int) (string, error) {

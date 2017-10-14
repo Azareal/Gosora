@@ -62,7 +62,7 @@
 		{{if .LastUser.Avatar}}<img src="{{.LastUser.Avatar}}" height="64" />{{end}}
 		<span>
 			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
-			<span class="rowsmall lastReplyAt">Last: {{.LastReplyAt}}</span>
+			<span class="rowsmall lastReplyAt">Last: {{.RelativeLastReplyAt}}</span>
 		</span>
 	</div>
 	</div>{{else}}<div class="rowitem passive">There aren't any topics yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">Start one?</a>{{end}}</div>{{end}}

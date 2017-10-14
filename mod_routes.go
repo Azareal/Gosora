@@ -4,7 +4,6 @@ import (
 	//"log"
 	//"fmt"
 	"html"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -48,8 +47,6 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 
 	topicName := r.PostFormValue("topic_name")
 	topicContent := html.EscapeString(r.PostFormValue("topic_content"))
-	log.Print("topicContent ", topicContent)
-
 	err = topic.Update(topicName, topicContent)
 	if err != nil {
 		InternalErrorJSQ(err, w, r, isJs)

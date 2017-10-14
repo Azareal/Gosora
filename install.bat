@@ -15,6 +15,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Installing the MSSQL Driver
+go get -u github.com/denisenkom/go-mssqldb
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo Installing the bcrypt library
 go get -u golang.org/x/crypto/bcrypt
 if %errorlevel% neq 0 (
@@ -63,6 +70,7 @@ if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
+
 
 echo Building the installer
 go generate

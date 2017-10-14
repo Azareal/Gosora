@@ -1,0 +1,28 @@
+DROP TABLE IF EXISTS [users];
+CREATE TABLE [users] (
+	[uid] int not null IDENTITY,
+	[name] nvarchar (100) not null,
+	[password] nvarchar (100) not null,
+	[salt] nvarchar (80) DEFAULT '' not null,
+	[group] int not null,
+	[active] bit DEFAULT 0 not null,
+	[is_super_admin] bit DEFAULT 0 not null,
+	[createdAt] datetime not null,
+	[lastActiveAt] datetime not null,
+	[session] nvarchar (200) DEFAULT '' not null,
+	[last_ip] nvarchar (200) DEFAULT '0.0.0.0.0' not null,
+	[email] nvarchar (200) DEFAULT '' not null,
+	[avatar] nvarchar (100) DEFAULT '' not null,
+	[message] nvarchar (MAX) DEFAULT '' not null,
+	[url_prefix] nvarchar (20) DEFAULT '' not null,
+	[url_name] nvarchar (100) DEFAULT '' not null,
+	[level] smallint DEFAULT 0 not null,
+	[score] int DEFAULT 0 not null,
+	[posts] int DEFAULT 0 not null,
+	[bigposts] int DEFAULT 0 not null,
+	[megaposts] int DEFAULT 0 not null,
+	[topics] int DEFAULT 0 not null,
+	[temp_group] int DEFAULT 0 not null,
+	primary key([uid]),
+	unique([name])
+);

@@ -1,4 +1,4 @@
-// +build !pgsql !sqlite !mssql
+// +build !pgsql, !sqlite, !mssql
 
 /*
 *
@@ -28,16 +28,18 @@ var findUsersByIPRepliesStmt *sql.Stmt
 
 func init() {
 	dbAdapter = "mysql"
+	_initDatabase = initMySQL
 }
 
-func _initDatabase() (err error) {
+func initMySQL() (err error) {
 	var _dbpassword string
 	if dbConfig.Password != "" {
 		_dbpassword = ":" + dbConfig.Password
 	}
 
+	// TODO: Move this bit to the query gen lib
 	// Open the database connection
-	db, err = sql.Open("mysql", dbConfig.Username+_dbpassword+"@tcp("+dbConfig.Host+":"+dbConfig.Port+")/"+dbConfig.Dbname+"?collation="+dbCollation)
+	db, err = sql.Open("mysql", dbConfig.Username+_dbpassword+"@tcp("+dbConfig.Host+":"+dbConfig.Port+")/"+dbConfig.Dbname+"?collation="+dbCollation+"&parseTime=true")
 	if err != nil {
 		return err
 	}

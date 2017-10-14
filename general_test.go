@@ -3,6 +3,7 @@ package main
 import (
 	//"os"
 	"bytes"
+	"errors"
 	"log"
 	"strconv"
 	"strings"
@@ -12,24 +13,57 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"./install/install"
 	//"runtime/pprof"
 	//_ "github.com/go-sql-driver/mysql"
 	//"github.com/erikstmartin/go-testdb"
 	//"github.com/husobee/vestigo"
 )
 
-var dbTest *sql.DB
+//var dbTest *sql.DB
 var dbProd *sql.DB
 var gloinited bool
 
-func gloinit() error {
+func gloinit() (err error) {
 	dev.DebugMode = false
 	//nogrouplog = true
-
 	startTime = time.Now()
-	processConfig()
 
-	err := initThemes()
+	err = processConfig()
+	if err != nil {
+		return err
+	}
+
+	err = initThemes()
+	if err != nil {
+		return err
+	}
+
+	switchToTestDB()
+
+	adap, ok := install.Lookup(dbAdapter)
+	if !ok {
+		return errors.New("We couldn't find the adapter '" + dbAdapter + "'")
+	}
+	adap.SetConfig(dbConfig.Host, dbConfig.Username, dbConfig.Password, dbConfig.Dbname, dbConfig.Port)
+
+	err = adap.InitDatabase()
+	if err != nil {
+		return err
+	}
+
+	err = adap.TableDefs()
+	if err != nil {
+		return err
+	}
+
+	err = adap.CreateAdmin()
+	if err != nil {
+		return err
+	}
+
+	err = adap.InitialData()
 	if err != nil {
 		return err
 	}

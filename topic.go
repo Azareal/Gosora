@@ -11,6 +11,7 @@ import (
 	"html"
 	"html/template"
 	"strconv"
+	"time"
 )
 
 // ? - Add a TopicMeta struct for *Forums?
@@ -69,23 +70,24 @@ type TopicUser struct {
 }
 
 type TopicsRow struct {
-	ID          int
-	Link        string
-	Title       string
-	Content     string
-	CreatedBy   int
-	IsClosed    bool
-	Sticky      bool
-	CreatedAt   string
-	LastReplyAt string
-	LastReplyBy int
-	ParentID    int
-	Status      string // Deprecated. Marked for removal. -Is there anything we could use it for?
-	IPAddress   string
-	PostCount   int
-	LikeCount   int
-	ClassName   string
-	Data        string // Used for report metadata
+	ID                  int
+	Link                string
+	Title               string
+	Content             string
+	CreatedBy           int
+	IsClosed            bool
+	Sticky              bool
+	CreatedAt           string
+	LastReplyAt         time.Time
+	RelativeLastReplyAt string
+	LastReplyBy         int
+	ParentID            int
+	Status              string // Deprecated. Marked for removal. -Is there anything we could use it for?
+	IPAddress           string
+	PostCount           int
+	LikeCount           int
+	ClassName           string
+	Data                string // Used for report metadata
 
 	Creator      *User
 	CSS          template.CSS

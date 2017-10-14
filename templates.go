@@ -263,8 +263,9 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 			for _, key := range outVal.MapKeys() {
 				item = outVal.MapIndex(key)
 			}
-			fmt.Println("Range item:", item)
-
+			if dev.DebugMode {
+				fmt.Println("Range item:", item)
+			}
 			if !item.IsValid() {
 				panic("item" + "^\n" + "Invalid map. Maybe, it doesn't have any entries for the template engine to analyse?")
 			}

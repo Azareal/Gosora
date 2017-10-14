@@ -388,20 +388,18 @@ func bbcodeFullParse(msg string) string {
 				}
 			}
 		}
-		//log.Print(string(outbytes))
+		//log.Print("Outbytes:",`"`+string(outbytes)+`"`)
 		if lastTag != i {
 			outbytes = append(outbytes, msgbytes[lastTag:]...)
-			//log.Print("Outbytes:",`"`+string(outbytes)+`"`)
-			//log.Print("----")
 		}
 
 		if len(outbytes) != 0 {
 			//log.Print("BBCode Post:",`"`+string(outbytes[0:len(outbytes) - 10])+`"`)
-			//log.Print("----")
 			msg = string(outbytes[0 : len(outbytes)-10])
 		} else {
 			msg = string(msgbytes[0 : len(msgbytes)-10])
 		}
+		//log.Print("----")
 
 		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$4</i>")

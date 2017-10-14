@@ -120,6 +120,22 @@ func create_tables(adapter qgen.DB_Adapter) error {
 		},
 	)
 
+	qgen.Install.CreateTable("users_groups", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"gid", "int", 0, false, true, ""},
+			qgen.DB_Table_Column{"name", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"permissions", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"plugin_perms", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"is_mod", "boolean", 0, false, false, "0"},
+			qgen.DB_Table_Column{"is_admin", "boolean", 0, false, false, "0"},
+			qgen.DB_Table_Column{"is_banned", "boolean", 0, false, false, "0"},
+			qgen.DB_Table_Column{"tag", "varchar", 50, false, false, "''"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"gid", "primary"},
+		},
+	)
+
 	// What should we do about global penalties? Put them on the users table for speed? Or keep them here?
 	// Should we add IP Penalties? No, that's a stupid idea, just implement IP Bans properly. What about shadowbans?
 	// TODO: Perm overrides
@@ -166,6 +182,191 @@ func create_tables(adapter qgen.DB_Adapter) error {
 		},
 	)
 
+	qgen.Install.CreateTable("emails", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"email", "varchar", 200, false, false, ""},
+			qgen.DB_Table_Column{"uid", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"validated", "boolean", 0, false, false, "0"},
+			qgen.DB_Table_Column{"token", "varchar", 200, false, false, "''"},
+		},
+		[]qgen.DB_Table_Key{},
+	)
+
+	qgen.Install.CreateTable("forums", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"fid", "int", 0, false, true, ""},
+			qgen.DB_Table_Column{"name", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"desc", "varchar", 200, false, false, ""},
+			qgen.DB_Table_Column{"active", "boolean", 0, false, false, "1"},
+			qgen.DB_Table_Column{"topicCount", "int", 0, false, false, "0"},
+			qgen.DB_Table_Column{"preset", "varchar", 100, false, false, "''"},
+			qgen.DB_Table_Column{"parentID", "int", 0, false, false, "0"},
+			qgen.DB_Table_Column{"parentType", "varchar", 50, false, false, "''"},
+			qgen.DB_Table_Column{"lastTopicID", "int", 0, false, false, "0"},
+			qgen.DB_Table_Column{"lastReplyerID", "int", 0, false, false, "0"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"fid", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("forums_permissions", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"fid", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"gid", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"preset", "varchar", 100, false, false, "''"},
+			qgen.DB_Table_Column{"permissions", "text", 0, false, false, ""},
+		},
+		[]qgen.DB_Table_Key{
+			// TODO: Test to see that the compound primary key works
+			qgen.DB_Table_Key{"fid,gid", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("topics", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"tid", "int", 0, false, true, ""},
+			qgen.DB_Table_Column{"title", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"content", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"parsed_content", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"createdAt", "createdAt", 0, false, false, ""},
+			qgen.DB_Table_Column{"lastReplyAt", "datetime", 0, false, false, ""},
+			qgen.DB_Table_Column{"lastReplyBy", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"createdBy", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"is_closed", "boolean", 0, false, false, "0"},
+			qgen.DB_Table_Column{"sticky", "boolean", 0, false, false, "0"},
+			qgen.DB_Table_Column{"parentID", "int", 0, false, false, "2"},
+			qgen.DB_Table_Column{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+			qgen.DB_Table_Column{"postCount", "int", 0, false, false, "1"},
+			qgen.DB_Table_Column{"likeCount", "int", 0, false, false, "0"},
+			qgen.DB_Table_Column{"words", "int", 0, false, false, "0"},
+			qgen.DB_Table_Column{"css_class", "varchar", 100, false, false, "''"},
+			qgen.DB_Table_Column{"data", "varchar", 200, false, false, "''"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"tid", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("replies", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"rid", "int", 0, false, true, ""},
+			qgen.DB_Table_Column{"tid", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"content", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"parsed_content", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"createdAt", "createdAt", 0, false, false, ""},
+			qgen.DB_Table_Column{"createdBy", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"lastEdit", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"lastEditBy", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"lastUpdated", "datetime", 0, false, false, ""},
+			qgen.DB_Table_Column{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+			qgen.DB_Table_Column{"likeCount", "int", 0, false, false, "0"},
+			qgen.DB_Table_Column{"words", "int", 0, false, false, "1"}, // ? - replies has a default of 1 and topics has 0? why?
+			qgen.DB_Table_Column{"actionType", "varchar", 20, false, false, "''"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"rid", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("attachments", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"attachID", "int", 0, false, true, ""},
+			qgen.DB_Table_Column{"sectionID", "int", 0, false, false, "0"},
+			qgen.DB_Table_Column{"sectionTable", "varchar", 200, false, false, "forums"},
+			qgen.DB_Table_Column{"originID", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"originTable", "varchar", 200, false, false, "replies"},
+			qgen.DB_Table_Column{"uploadedBy", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"path", "varchar", 200, false, false, ""},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"attachID", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("revisions", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"index", "int", 0, false, false, ""}, // TODO: Replace this with a proper revision ID x.x
+			qgen.DB_Table_Column{"content", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"contentID", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"contentType", "varchar", 100, false, false, "replies"},
+		},
+		[]qgen.DB_Table_Key{},
+	)
+
+	qgen.Install.CreateTable("users_replies", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"rid", "int", 0, false, true, ""},
+			qgen.DB_Table_Column{"uid", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"content", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"parsed_content", "text", 0, false, false, ""},
+			qgen.DB_Table_Column{"createdAt", "createdAt", 0, false, false, ""},
+			qgen.DB_Table_Column{"createdBy", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"lastEdit", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"lastEditBy", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"rid", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("likes", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"weight", "tinyint", 0, false, false, "1"},
+			qgen.DB_Table_Column{"targetItem", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"targetType", "varchar", 50, false, false, "replies"},
+			qgen.DB_Table_Column{"sentBy", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"recalc", "tinyint", 0, false, false, "0"},
+		},
+		[]qgen.DB_Table_Key{},
+	)
+
+	qgen.Install.CreateTable("activity_stream_matches", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"watcher", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"asid", "int", 0, false, false, ""},
+		},
+		[]qgen.DB_Table_Key{},
+	)
+
+	qgen.Install.CreateTable("activity_stream", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"asid", "int", 0, false, true, ""},
+			qgen.DB_Table_Column{"actor", "int", 0, false, false, ""},            /* the one doing the act */
+			qgen.DB_Table_Column{"targetUser", "int", 0, false, false, ""},       /* the user who created the item the actor is acting on, some items like forums may lack a targetUser field */
+			qgen.DB_Table_Column{"event", "varchar", 50, false, false, ""},       /* mention, like, reply (as in the act of replying to an item, not the reply item type, you can "reply" to a forum by making a topic in it), friend_invite */
+			qgen.DB_Table_Column{"elementType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
+			qgen.DB_Table_Column{"elementID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"asid", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("activity_subscriptions", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"user", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"targetID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
+			qgen.DB_Table_Column{"targetType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
+			qgen.DB_Table_Column{"level", "int", 0, false, false, "0"},          /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
+		},
+		[]qgen.DB_Table_Key{},
+	)
+
+	/* Due to MySQL's design, we have to drop the unique keys for table settings, plugins, and themes down from 200 to 180 or it will error */
+	qgen.Install.CreateTable("settings", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"name", "varchar", 180, false, false, ""},
+			qgen.DB_Table_Column{"content", "varchar", 250, false, false, ""},
+			qgen.DB_Table_Column{"type", "varchar", 50, false, false, ""},
+			qgen.DB_Table_Column{"constraints", "varchar", 200, false, false, "''"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"name", "unique"},
+		},
+	)
+
 	qgen.Install.CreateTable("word_filters", "", "",
 		[]qgen.DB_Table_Column{
 			qgen.DB_Table_Column{"wfid", "int", 0, false, true, ""},
@@ -175,6 +376,63 @@ func create_tables(adapter qgen.DB_Adapter) error {
 		[]qgen.DB_Table_Key{
 			qgen.DB_Table_Key{"wfid", "primary"},
 		},
+	)
+
+	qgen.Install.CreateTable("plugins", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"uname", "varchar", 180, false, false, ""},
+			qgen.DB_Table_Column{"active", "boolean", 0, false, false, "0"},
+			qgen.DB_Table_Column{"installed", "boolean", 0, false, false, "0"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"uname", "unique"},
+		},
+	)
+
+	qgen.Install.CreateTable("themes", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"uname", "varchar", 180, false, false, ""},
+			qgen.DB_Table_Column{"default", "boolean", 0, false, false, "0"},
+		},
+		[]qgen.DB_Table_Key{
+			qgen.DB_Table_Key{"uname", "unique"},
+		},
+	)
+
+	qgen.Install.CreateTable("widgets", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"position", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"side", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"type", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"active", "boolean", 0, false, false, "0"},
+			qgen.DB_Table_Column{"location", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"data", "text", 0, false, false, "''"},
+		},
+		[]qgen.DB_Table_Key{},
+	)
+
+	qgen.Install.CreateTable("moderation_logs", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"action", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"elementID", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"elementType", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"ipaddress", "varchar", 200, false, false, ""},
+			qgen.DB_Table_Column{"actorID", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"doneAt", "datetime", 0, false, false, ""},
+		},
+		[]qgen.DB_Table_Key{},
+	)
+
+	qgen.Install.CreateTable("administration_logs", "", "",
+		[]qgen.DB_Table_Column{
+			qgen.DB_Table_Column{"action", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"elementID", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"elementType", "varchar", 100, false, false, ""},
+			qgen.DB_Table_Column{"ipaddress", "varchar", 200, false, false, ""},
+			qgen.DB_Table_Column{"actorID", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"doneAt", "datetime", 0, false, false, ""},
+		},
+		[]qgen.DB_Table_Key{},
 	)
 
 	qgen.Install.CreateTable("sync", "", "",
@@ -189,6 +447,103 @@ func create_tables(adapter qgen.DB_Adapter) error {
 
 // nolint
 func seed_tables(adapter qgen.DB_Adapter) error {
+	qgen.Install.SimpleInsert("sync", "last_update", "UTC_TIMESTAMP()")
+
+	qgen.Install.SimpleInsert("settings", "name, content, type", "'url_tags','1','bool'")
+	qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
+	qgen.Install.SimpleInsert("settings", "name, content, type", "'bigpost_min_words','250','int'")
+	qgen.Install.SimpleInsert("settings", "name, content, type", "'megapost_min_words','1000','int'")
+	qgen.Install.SimpleInsert("themes", "uname, default", "'tempra-simple',1")
+	qgen.Install.SimpleInsert("emails", "email, uid, validated", "'admin@localhost',1,1") // ? - Use a different default email or let the admin input it during installation?
+
+	/*
+		The Permissions:
+
+		Global Permissions:
+		BanUsers
+		ActivateUsers
+		EditUser
+		EditUserEmail
+		EditUserPassword
+		EditUserGroup
+		EditUserGroupSuperMod
+		EditUserGroupAdmin
+		EditGroup
+		EditGroupLocalPerms
+		EditGroupGlobalPerms
+		EditGroupSuperMod
+		EditGroupAdmin
+		ManageForums
+		EditSettings
+		ManageThemes
+		ManagePlugins
+		ViewAdminLogs
+		ViewIPs
+
+		Non-staff Global Permissions:
+		UploadFiles
+
+		Forum Permissions:
+		ViewTopic
+		LikeItem
+		CreateTopic
+		EditTopic
+		DeleteTopic
+		CreateReply
+		EditReply
+		DeleteReply
+		PinTopic
+		CloseTopic
+	*/
+
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, tag", `'Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,1,"Admin"`)
+
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, tag", `'Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,"Mod"`)
+
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms", `'Member','{"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}','{}'`)
+
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_banned", `'Banned','{"ViewTopic":true}','{}',1`)
+
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms", `'Awaiting Activation','{"ViewTopic":true}','{}'`)
+
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, tag", `'Not Loggedin','{"ViewTopic":true}','{}','Guest'`)
+
+	//
+	// TODO: Stop processFields() from stripping the spaces in the descriptions in the next commit
+
+	qgen.Install.SimpleInsert("forums", "name, active, desc", "'Reports',0,'All the reports go here'")
+
+	qgen.Install.SimpleInsert("forums", "name, lastTopicID, lastReplyerID, desc", "'General',1,1,'A place for general discussions which don't fit elsewhere'")
+
+	//
+
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `1,1,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"PinTopic":true,"CloseTopic":true}'`)
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `2,1,'{"ViewTopic":true,"CreateReply":true,"CloseTopic":true}'`)
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", "3,1,'{}'")
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", "4,1,'{}'")
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", "5,1,'{}'")
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", "6,1,'{}'")
+
+	//
+
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `1,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true,"EditTopic":true,"DeleteTopic":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}'`)
+
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `2,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true,"EditTopic":true,"DeleteTopic":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}'`)
+
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `3,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true}'`)
+
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `4,2,'{"ViewTopic":true}'`)
+
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `5,2,'{"ViewTopic":true}'`)
+
+	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `6,2,'{"ViewTopic":true}'`)
+
+	//
+
+	qgen.Install.SimpleInsert("topics", "title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, createdBy, parentID", "'Test Topic','A topic automatically generated by the software.','A topic automatically generated by the software.',UTC_TIMESTAMP(),UTC_TIMESTAMP(),1,1,2")
+
+	qgen.Install.SimpleInsert("replies", "tid, content, parsed_content, createdAt, createdBy, lastUpdated, lastEdit, lastEditBy", "1,'A reply!','A reply!',UTC_TIMESTAMP(),1,UTC_TIMESTAMP(),0,0")
+
 	return nil
 }
 
@@ -276,7 +631,7 @@ func write_selects(adapter qgen.DB_Adapter) error {
 
 // nolint
 func write_left_joins(adapter qgen.DB_Adapter) error {
-	adapter.SimpleLeftJoin("getTopicRepliesOffset", "replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "tid = ?", "", "?,?")
+	adapter.SimpleLeftJoin("getTopicRepliesOffset", "replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "", "?,?")
 
 	adapter.SimpleLeftJoin("getTopicList", "topics", "users", "topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar", "topics.createdBy = users.uid", "", "topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC", "")
 
@@ -302,25 +657,25 @@ func write_inner_joins(adapter qgen.DB_Adapter) error {
 
 // nolint
 func write_inserts(adapter qgen.DB_Adapter) error {
-	adapter.SimpleInsert("createTopic", "topics", "parentID,title,content,parsed_content,createdAt,lastReplyAt,lastReplyBy,ipaddress,words,createdBy", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?")
+	adapter.SimpleInsert("createTopic", "topics", "parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?")
 
-	adapter.SimpleInsert("createReport", "topics", "title,content,parsed_content,createdAt,lastReplyAt,createdBy,data,parentID,css_class", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,1,'report'")
+	adapter.SimpleInsert("createReport", "topics", "title, content, parsed_content, createdAt, lastReplyAt, createdBy, data, parentID, css_class", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,1,'report'")
 
-	adapter.SimpleInsert("createReply", "replies", "tid,content,parsed_content,createdAt,ipaddress,words,createdBy", "?,?,?,UTC_TIMESTAMP(),?,?,?")
+	adapter.SimpleInsert("createReply", "replies", "tid, content, parsed_content, createdAt, ipaddress, words, createdBy", "?,?,?,UTC_TIMESTAMP(),?,?,?")
 
-	adapter.SimpleInsert("createActionReply", "replies", "tid,actionType,ipaddress,createdBy", "?,?,?,?")
+	adapter.SimpleInsert("createActionReply", "replies", "tid, actionType, ipaddress, createdBy", "?,?,?,?")
 
 	adapter.SimpleInsert("createLike", "likes", "weight, targetItem, targetType, sentBy", "?,?,?,?")
 
-	adapter.SimpleInsert("addActivity", "activity_stream", "actor,targetUser,event,elementType,elementID", "?,?,?,?,?")
+	adapter.SimpleInsert("addActivity", "activity_stream", "actor, targetUser, event, elementType, elementID", "?,?,?,?,?")
 
-	adapter.SimpleInsert("notifyOne", "activity_stream_matches", "watcher,asid", "?,?")
+	adapter.SimpleInsert("notifyOne", "activity_stream_matches", "watcher, asid", "?,?")
 
 	adapter.SimpleInsert("addEmail", "emails", "email, uid, validated, token", "?,?,?,?")
 
 	adapter.SimpleInsert("createProfileReply", "users_replies", "uid, content, parsed_content, createdAt, createdBy, ipaddress", "?,?,?,UTC_TIMESTAMP(),?,?")
 
-	adapter.SimpleInsert("addSubscription", "activity_subscriptions", "user,targetID,targetType,level", "?,?,?,2")
+	adapter.SimpleInsert("addSubscription", "activity_subscriptions", "user, targetID, targetType, level", "?,?,?,2")
 
 	adapter.SimpleInsert("createForum", "forums", "name, desc, active, preset", "?,?,?,?")
 
@@ -328,7 +683,7 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleInsert("addPlugin", "plugins", "uname, active, installed", "?,?,?")
 
-	adapter.SimpleInsert("addTheme", "themes", "uname,default", "?,?")
+	adapter.SimpleInsert("addTheme", "themes", "uname, default", "?,?")
 
 	adapter.SimpleInsert("createGroup", "users_groups", "name, tag, is_admin, is_mod, is_banned, permissions", "?,?,?,?,?,?")
 
@@ -345,7 +700,7 @@ func write_inserts(adapter qgen.DB_Adapter) error {
 
 // nolint
 func write_replaces(adapter qgen.DB_Adapter) error {
-	adapter.SimpleReplace("addForumPermsToGroup", "forums_permissions", "gid,fid,preset,permissions", "?,?,?,?")
+	adapter.SimpleReplace("addForumPermsToGroup", "forums_permissions", "gid, fid, preset, permissions", "?,?,?,?")
 
 	adapter.SimpleReplace("replaceScheduleGroup", "users_groups_scheduler", "uid, set_group, issued_by, issued_at, revert_at, temporary", "?,?,?,UTC_TIMESTAMP(),?,?")
 
@@ -469,17 +824,17 @@ func write_simple_counts(adapter qgen.DB_Adapter) error {
 // nolint
 func write_insert_selects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleInsertSelect("addForumPermsToForumAdmins",
-		qgen.DB_Insert{"forums_permissions", "gid,fid,preset,permissions", ""},
+		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 1", "", ""},
 	)
 
 	adapter.SimpleInsertSelect("addForumPermsToForumStaff",
-		qgen.DB_Insert{"forums_permissions", "gid,fid,preset,permissions", ""},
+		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 1", "", ""},
 	)
 
 	adapter.SimpleInsertSelect("addForumPermsToForumMembers",
-		qgen.DB_Insert{"forums_permissions", "gid,fid,preset,permissions", ""},
+		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
 	)
 

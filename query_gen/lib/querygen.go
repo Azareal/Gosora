@@ -6,102 +6,91 @@ import "errors"
 var DB_Registry []DB_Adapter
 var No_Adapter = errors.New("This adapter doesn't exist")
 
-type DB_Table_Column struct
-{
-	Name string
-	Type string
-	Size int
-	Null bool
+type DB_Table_Column struct {
+	Name           string
+	Type           string
+	Size           int
+	Null           bool
 	Auto_Increment bool
-	Default string
+	Default        string
 }
 
-type DB_Table_Key struct
-{
+type DB_Table_Key struct {
 	Columns string
-	Type string
+	Type    string
 }
 
-type DB_Select struct
-{
-	Table string
+type DB_Select struct {
+	Table   string
 	Columns string
-	Where string
+	Where   string
 	Orderby string
-	Limit string
+	Limit   string
 }
 
-type DB_Join struct
-{
-	Table1 string
-	Table2 string
+type DB_Join struct {
+	Table1  string
+	Table2  string
 	Columns string
 	Joiners string
-	Where string
+	Where   string
 	Orderby string
-	Limit string
+	Limit   string
 }
 
-type DB_Insert struct
-{
-	Table string
+type DB_Insert struct {
+	Table   string
 	Columns string
-	Fields string
+	Fields  string
 }
 
-type DB_Column struct
-{
+type DB_Column struct {
 	Table string
-	Left string // Could be a function or a column, so I'm naming this Left
+	Left  string // Could be a function or a column, so I'm naming this Left
 	Alias string // aka AS Blah, if it's present
-	Type string // function or column
+	Type  string // function or column
 }
 
-type DB_Field struct
-{
+type DB_Field struct {
 	Name string
 	Type string
 }
 
-type DB_Where struct
-{
+type DB_Where struct {
 	Expr []DB_Token // Simple expressions, the innards of functions are opaque for now.
 }
 
-type DB_Joiner struct
-{
-	LeftTable string
-	LeftColumn string
-	RightTable string
+type DB_Joiner struct {
+	LeftTable   string
+	LeftColumn  string
+	RightTable  string
 	RightColumn string
-	Operator string
+	Operator    string
 }
 
-type DB_Order struct
-{
+type DB_Order struct {
 	Column string
-	Order string
+	Order  string
 }
 
 type DB_Token struct {
 	Contents string
-	Type string // function, operator, column, number, string, substitute
+	Type     string // function, operator, column, number, string, substitute
 }
 
 type DB_Setter struct {
 	Column string
-	Expr []DB_Token // Simple expressions, the innards of functions are opaque for now.
+	Expr   []DB_Token // Simple expressions, the innards of functions are opaque for now.
 }
 
 type DB_Limit struct {
-	Offset string // ? or int
+	Offset   string // ? or int
 	MaxCount string // ? or int
 }
 
-type DB_Stmt struct
-{
+type DB_Stmt struct {
 	Contents string
-	Type string // create-table, insert, update, delete
+	Type     string // create-table, insert, update, delete
 }
 
 type DB_Adapter interface {
@@ -114,13 +103,13 @@ type DB_Adapter interface {
 	Purge(name string, table string) (string, error)
 	SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error)
 	SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error)
-	SimpleInnerJoin(string,string,string,string,string,string,string,string) (string, error)
-	SimpleInsertSelect(string,DB_Insert,DB_Select) (string,error)
-	SimpleInsertLeftJoin(string,DB_Insert,DB_Join) (string,error)
-	SimpleInsertInnerJoin(string,DB_Insert,DB_Join) (string,error)
-	SimpleCount(string,string,string,string) (string, error)
+	SimpleInnerJoin(string, string, string, string, string, string, string, string) (string, error)
+	SimpleInsertSelect(string, DB_Insert, DB_Select) (string, error)
+	SimpleInsertLeftJoin(string, DB_Insert, DB_Join) (string, error)
+	SimpleInsertInnerJoin(string, DB_Insert, DB_Join) (string, error)
+	SimpleCount(string, string, string, string) (string, error)
 	Write() error
-	
+
 	// TODO: Add a simple query builder
 }
 

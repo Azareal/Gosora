@@ -4,6 +4,9 @@ go get -u github.com/go-sql-driver/mysql
 echo "Installing the PostgreSQL Driver"
 go get -u github.com/lib/pq
 
+echo "Installing the MSSQL Driver"
+go get -u github.com/denisenkom/go-mssqldb
+
 echo "Installing bcrypt"
 go get -u golang.org/x/crypto/bcrypt
 
@@ -16,8 +19,9 @@ go get -u github.com/gorilla/websocket
 echo "Installing Sourcemap (dependency for OttoJS)"
 go get -u gopkg.in/sourcemap.v1
 
-echo "Install OttoJS"
+echo "Installing OttoJS"
 go get -u github.com/robertkrimen/otto
+
 
 echo "Building the installer"
 cd ./install

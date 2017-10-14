@@ -16,6 +16,11 @@ func addMEPair(msgList []MEPair, msg string, expects string) []MEPair {
 
 func TestBBCodeRender(t *testing.T) {
 	//t.Skip()
+	err := initBbcode()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	var res string
 	var msgList []MEPair
 	msgList = addMEPair(msgList, "hi", "hi")
@@ -54,8 +59,8 @@ func TestBBCodeRender(t *testing.T) {
 		}
 	}
 
-	var msg, expects string
-	var err error
+	var msg string
+	var expects string
 
 	msg = "[rand][/rand]"
 	expects = "<span style='color: red;'>[Invalid Number]</span>[rand][/rand]"

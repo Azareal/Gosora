@@ -235,14 +235,11 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 			//topicItem.ForumLink = ""
 		}
 
-		/*topicItem.CreatedAt, err = relativeTime(topicItem.CreatedAt)
+		/*topicItem.CreatedAt, err = relativeTimeFromString(topicItem.CreatedAt)
 		if err != nil {
 			replyItem.CreatedAt = ""
 		}*/
-		topicItem.LastReplyAt, err = relativeTime(topicItem.LastReplyAt)
-		if err != nil {
-			InternalError(err, w)
-		}
+		topicItem.RelativeLastReplyAt = relativeTime(topicItem.LastReplyAt)
 
 		if vhooks["topics_topic_row_assign"] != nil {
 			runVhook("topics_topic_row_assign", &topicItem, &forum)
@@ -354,10 +351,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 		}
 
 		topicItem.Link = buildTopicURL(nameToSlug(topicItem.Title), topicItem.ID)
-		topicItem.LastReplyAt, err = relativeTime(topicItem.LastReplyAt)
-		if err != nil {
-			InternalError(err, w)
-		}
+		topicItem.RelativeLastReplyAt = relativeTime(topicItem.LastReplyAt)
 
 		if vhooks["forum_trow_assign"] != nil {
 			runVhook("forum_trow_assign", &topicItem, &forum)
@@ -439,7 +433,7 @@ func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 				//topic, user := forum.GetLast()
 				//if topic.ID != 0 && user.ID != 0 {
 				if forum.LastTopic.ID != 0 && forum.LastReplyer.ID != 0 {
-					forum.LastTopicTime, err = relativeTime(forum.LastTopic.LastReplyAt)
+					forum.LastTopicTime, err = relativeTimeFromString(forum.LastTopic.LastReplyAt)
 					if err != nil {
 						InternalError(err, w)
 						return
@@ -539,7 +533,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 		}
 	}*/
 
-	topic.CreatedAt, err = relativeTime(topic.CreatedAt)
+	topic.CreatedAt, err = relativeTimeFromString(topic.CreatedAt)
 	if err != nil {
 		topic.CreatedAt = ""
 	}
@@ -624,7 +618,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 			}
 		}*/
 
-		replyItem.CreatedAt, err = relativeTime(replyItem.CreatedAt)
+		replyItem.CreatedAt, err = relativeTimeFromString(replyItem.CreatedAt)
 		if err != nil {
 			replyItem.CreatedAt = ""
 		}

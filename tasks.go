@@ -45,13 +45,7 @@ func handleExpiredScheduledGroups() error {
 
 func handleServerSync() error {
 	var lastUpdate time.Time
-	var lastUpdateStr string
-	err := getSyncStmt.QueryRow().Scan(&lastUpdateStr)
-	if err != nil {
-		return err
-	}
-
-	lastUpdate, err = time.Parse("2006-01-02 15:04:05", lastUpdateStr)
+	err := getSyncStmt.QueryRow().Scan(&lastUpdate)
 	if err != nil {
 		return err
 	}

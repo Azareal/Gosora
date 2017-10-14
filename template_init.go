@@ -1,8 +1,11 @@
 package main
 
-import "log"
-import "html/template"
-import "net/http"
+import (
+	"html/template"
+	"log"
+	"net/http"
+	"time"
+)
 
 var templates = template.New("")
 
@@ -148,7 +151,7 @@ func compileTemplates() error {
 	}
 
 	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, "Date", "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, "Date", time.Now(), "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
 	topicsPage := TopicsPage{"Topic List", user, headerVars, topicsList, forumList, config.DefaultForum}
 	topicsTmpl, err := c.compileTemplate("topics.html", "templates/", "TopicsPage", topicsPage, varList)
 	if err != nil {

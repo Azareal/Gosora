@@ -304,6 +304,9 @@ func (adapter *Pgsql_Adapter) SimpleCount(name string, table string, where strin
 func (adapter *Pgsql_Adapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {
+		if name[0] == '_' {
+			continue
+		}
 		stmt := adapter.Buffer[name]
 		// TODO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
 		if stmt.Type != "create-table" {

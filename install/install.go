@@ -8,26 +8,16 @@ package main
 
 import (
 	"bufio"
-	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
 	"strconv"
 
-	"../query_gen/lib"
+	"./install"
 )
 
-const saltLength int = 32
-
-var db *sql.DB
 var scanner *bufio.Scanner
-
-var dbAdapter = "mysql"
-var dbHost string
-var dbUsername string
-var dbPassword string
-var dbName string
-var dbPort string
 
 var siteShortName string
 var siteName string
@@ -43,13 +33,8 @@ var defaultSiteName = "Site Name"
 var defaultsiteURL = "localhost"
 var defaultServerPort = "80" // 8080's a good one, if you're testing and don't want it to clash with port 80
 
-// func() error, removing type to satisfy lint
-var initDatabase = _initMysql
-var tableDefs = _tableDefsMysql
-var initialData = _initialDataMysql
-
 func main() {
-	// Capture panics rather than immediately closing the window on Windows
+	// Capture panics instead of closing the window at a superhuman speed before the user can read the message on Windows
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -63,15 +48,15 @@ func main() {
 	scanner = bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to Gosora's Installer")
 	fmt.Println("We're going to take you through a few steps to help you get started :)")
-	if !getDatabaseDetails() {
+	adap, ok := handleDatabaseDetails()
+	if !ok {
 		err := scanner.Err()
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			fmt.Println("Something went wrong!")
+			err = errors.New("Something went wrong!")
 		}
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
+		abortError(err)
 		return
 	}
 
@@ -80,71 +65,34 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			fmt.Println("Something went wrong!")
+			err = errors.New("Something went wrong!")
 		}
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
+		abortError(err)
 		return
 	}
 
-	err := initDatabase()
+	err := adap.InitDatabase()
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
+		abortError(err)
 		return
 	}
 
-	err = tableDefs()
+	err = adap.TableDefs()
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
+		abortError(err)
 		return
 	}
 
-	hashedPassword, salt, err := BcryptGeneratePassword("password")
+	err = adap.CreateAdmin()
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
+		abortError(err)
 		return
 	}
 
-	// Build the admin user query
-	adminUserStmt, err := qgen.Builder.SimpleInsert("users", "name, password, salt, email, group, is_super_admin, active, createdAt, lastActiveAt, message, last_ip", "'Admin',?,?,'admin@localhost',1,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'','127.0.0.1'")
+	err = adap.InitialData()
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
+		abortError(err)
 		return
-	}
-
-	// Run the admin user query
-	_, err = adminUserStmt.Exec(hashedPassword, salt)
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
-		return
-	}
-
-	err = initialData()
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
-		return
-	}
-
-	if dbAdapter == "mysql" {
-		err = _mysqlSeedDatabase()
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("Aborting installation...")
-			pressAnyKey()
-			return
-		}
 	}
 
 	configContents := []byte(`package main
@@ -164,11 +112,18 @@ func init() {
 	site.Language = "english"
 
 	// Database details
-	dbConfig.Host = "` + dbHost + `"
-	dbConfig.Username = "` + dbUsername + `"
-	dbConfig.Password = "` + dbPassword + `"
-	dbConfig.Dbname = "` + dbName + `"
-	dbConfig.Port = "` + dbPort + `" // You probably won't need to change this
+	dbConfig.Host = "` + adap.DbHost() + `"
+	dbConfig.Username = "` + adap.DbUsername() + `"
+	dbConfig.Password = "` + adap.DbPassword() + `"
+	dbConfig.Dbname = "` + adap.DbName() + `"
+	dbConfig.Port = "` + adap.DbPort() + `" // You probably won't need to change this
+
+	// Test Database details
+    dbConfig.TestHost = ""
+    dbConfig.TestUsername = ""
+    dbConfig.TestPassword = ""
+    dbConfig.TestDbname = "" // The name of the test database, leave blank to disable. DON'T USE YOUR PRODUCTION DATABASE FOR THIS. LEAVE BLANK IF YOU DON'T KNOW WHAT THIS MEANS.
+	dbConfig.TestPort = ""
 
 	// Limiters
 	config.MaxRequestSize = 5 * megabyte
@@ -202,24 +157,21 @@ func init() {
 	//dev.SuperDebug = true
 	//dev.TemplateDebug = true
 	//dev.Profiling = true
+	//dev.TestDB = true
 }
 `)
 
 	fmt.Println("Opening the configuration file")
 	configFile, err := os.Create("./config.go")
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
+		abortError(err)
 		return
 	}
 
 	fmt.Println("Writing to the configuration file...")
 	_, err = configFile.Write(configContents)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Aborting installation...")
-		pressAnyKey()
+		abortError(err)
 		return
 	}
 
@@ -232,21 +184,39 @@ func init() {
 	pressAnyKey()
 }
 
-func getDatabaseDetails() bool {
-	fmt.Println("Which database driver do you wish to use? mysql, mysql, or mysql? Default: mysql")
-	if !scanner.Scan() {
-		return false
+func abortError(err error) {
+	fmt.Println(err)
+	fmt.Println("Aborting installation...")
+	pressAnyKey()
+}
+
+func handleDatabaseDetails() (adap install.InstallAdapter, ok bool) {
+	var dbHost string
+	var dbUsername string
+	var dbPassword string
+	var dbName string
+	var dbPort string
+
+	for {
+		fmt.Println("Which database adapter do you wish to use? mysql, mysql, or mysql? Default: mysql")
+		if !scanner.Scan() {
+			return nil, false
+		}
+		dbAdapter := scanner.Text()
+		if dbAdapter == "" {
+			dbAdapter = defaultAdapter
+		}
+		adap, ok = install.Lookup(dbAdapter)
+		if ok {
+			break
+		}
+		fmt.Println("That adapter doesn't exist")
 	}
-	dbAdapter = scanner.Text()
-	if dbAdapter == "" {
-		dbAdapter = defaultAdapter
-	}
-	dbAdapter = setDBAdapter(dbAdapter)
 	fmt.Println("Set database adapter to " + dbAdapter)
 
 	fmt.Println("Database Host? Default: " + defaultHost)
 	if !scanner.Scan() {
-		return false
+		return nil, false
 	}
 	dbHost = scanner.Text()
 	if dbHost == "" {
@@ -256,7 +226,7 @@ func getDatabaseDetails() bool {
 
 	fmt.Println("Database Username? Default: " + defaultUsername)
 	if !scanner.Scan() {
-		return false
+		return nil, false
 	}
 	dbUsername = scanner.Text()
 	if dbUsername == "" {
@@ -266,7 +236,7 @@ func getDatabaseDetails() bool {
 
 	fmt.Println("Database Password? Default: ''")
 	if !scanner.Scan() {
-		return false
+		return nil, false
 	}
 	dbPassword = scanner.Text()
 	if len(dbPassword) == 0 {
@@ -278,14 +248,16 @@ func getDatabaseDetails() bool {
 
 	fmt.Println("Database Name? Pick a name you like or one provided to you. Default: " + defaultDbname)
 	if !scanner.Scan() {
-		return false
+		return nil, false
 	}
 	dbName = scanner.Text()
 	if dbName == "" {
 		dbName = defaultDbname
 	}
 	fmt.Println("Set database name to " + dbName)
-	return true
+
+	adap.SetConfig(dbHost, dbUsername, dbPassword, dbName, adap.DefaultPort())
+	return adap, true
 }
 
 func getSiteDetails() bool {
@@ -336,16 +308,6 @@ func getSiteDetails() bool {
 	}
 	fmt.Println("Set the server port to " + serverPort)
 	return true
-}
-
-func setDBAdapter(name string) string {
-	switch name {
-	//case "wip-pgsql":
-	//	set_pgsql_adapter()
-	//	return "wip-pgsql"
-	}
-	_setMysqlAdapter()
-	return "mysql"
 }
 
 func obfuscatePassword(password string) (out string) {

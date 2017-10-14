@@ -5,6 +5,7 @@
 package main
 
 import "strings"
+
 //import "time"
 import "database/sql"
 import _ "github.com/lib/pq"
@@ -21,15 +22,17 @@ var todays_newuser_count_stmt *sql.Stmt
 
 func init() {
 	db_adapter = "pgsql"
+	_initDatabase = initPgsql
 }
 
-func _init_database() (err error) {
+func initPgsql() (err error) {
 	// TODO: Investigate connect_timeout to see what it does exactly and whether it's relevant to us
 	var _dbpassword string
-	if(dbpassword != ""){
+	if dbpassword != "" {
 		_dbpassword = " password='" + _escape_bit(db_config.Password) + "'"
 	}
-	db, err = sql.Open("postgres", "host='" + _escape_bit(db_config.Host) + "' port='" + _escape_bit(db_config.Port) + "' user='" + _escape_bit(db_config.Username) + "' dbname='" + _escape_bit(config.Dbname) + "'" + _dbpassword + " sslmode='" + db_sslmode + "'")
+	// TODO: Move this bit to the query gen lib
+	db, err = sql.Open("postgres", "host='"+_escape_bit(db_config.Host)+"' port='"+_escape_bit(db_config.Port)+"' user='"+_escape_bit(db_config.Username)+"' dbname='"+_escape_bit(config.Dbname)+"'"+_dbpassword+" sslmode='"+db_sslmode+"'")
 	if err != nil {
 		return err
 	}
@@ -69,5 +72,5 @@ func _init_database() (err error) {
 
 func _escape_bit(bit string) string {
 	// TODO: Write a custom parser, so that backslashes work properly in the sql.Open string. Do something similar for the database driver, if possible?
-	return strings.Replace(bit,"'","\\'",-1)
+	return strings.Replace(bit, "'", "\\'", -1)
 }
