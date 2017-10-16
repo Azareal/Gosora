@@ -18,6 +18,7 @@ type DB_Install_Instruction struct {
 type installer struct {
 	adapter      DB_Adapter
 	instructions []DB_Install_Instruction
+	plugins      []QueryPlugin
 }
 
 func (install *installer) SetAdapter(name string) error {
@@ -35,19 +36,47 @@ func (install *installer) SetAdapterInstance(adapter DB_Adapter) {
 	install.instructions = []DB_Install_Instruction{}
 }
 
+func (install *installer) RegisterPlugin(plugin QueryPlugin) {
+	install.plugins = append(install.plugins, plugin)
+}
+
 func (install *installer) CreateTable(table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) error {
+	for _, plugin := range install.plugins {
+		err := plugin.Hook("CreateTableStart", table, charset, collation, columns, keys)
+		if err != nil {
+			return err
+		}
+	}
 	res, err := install.adapter.CreateTable("_installer", table, charset, collation, columns, keys)
 	if err != nil {
 		return err
+	}
+	for _, plugin := range install.plugins {
+		err := plugin.Hook("CreateTableAfter", table, charset, collation, columns, keys, res)
+		if err != nil {
+			return err
+		}
 	}
 	install.instructions = append(install.instructions, DB_Install_Instruction{table, res, "create-table"})
 	return nil
 }
 
 func (install *installer) SimpleInsert(table string, columns string, fields string) error {
+	for _, plugin := range install.plugins {
+		err := plugin.Hook("SimpleInsertStart", table, columns, fields)
+		if err != nil {
+			return err
+		}
+	}
 	res, err := install.adapter.SimpleInsert("_installer", table, columns, fields)
 	if err != nil {
 		return err
+	}
+	for _, plugin := range install.plugins {
+		err := plugin.Hook("SimpleInsertAfter", table, columns, fields, res)
+		if err != nil {
+			return err
+		}
 	}
 	install.instructions = append(install.instructions, DB_Install_Instruction{table, res, "insert"})
 	return nil
@@ -66,5 +95,18 @@ func (install *installer) Write() error {
 			inserts += instr.Contents + ";\n"
 		}
 	}
-	return writeFile("./schema/"+install.adapter.GetName()+"/inserts.sql", inserts)
+
+	err := writeFile("./schema/"+install.adapter.GetName()+"/inserts.sql", inserts)
+	if err != nil {
+		return err
+	}
+
+	for _, plugin := range install.plugins {
+		err := plugin.Write()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

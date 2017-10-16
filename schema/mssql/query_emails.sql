@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [emails];
 CREATE TABLE [emails] (
 	[email] nvarchar (200) not null,
 	[uid] int not null,

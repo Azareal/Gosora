@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [users_replies];
 CREATE TABLE [users_replies] (
 	[rid] int not null IDENTITY,
 	[uid] int not null,

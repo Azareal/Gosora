@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [users_groups];
 CREATE TABLE [users_groups] (
 	[gid] int not null IDENTITY,
 	[name] nvarchar (100) not null,

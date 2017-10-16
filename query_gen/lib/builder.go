@@ -7,13 +7,12 @@ import "database/sql"
 var Builder *builder
 
 func init() {
-	Builder = &builder{conn:nil}
+	Builder = &builder{conn: nil}
 }
 
 // A set of wrappers around the generator methods, so that we can use this inline in Gosora
-type builder struct
-{
-	conn *sql.DB
+type builder struct {
+	conn    *sql.DB
 	adapter DB_Adapter
 }
 
@@ -28,6 +27,10 @@ func (build *builder) SetAdapter(name string) error {
 	}
 	build.adapter = adap
 	return nil
+}
+
+func (build *builder) GetAdapter() DB_Adapter {
+	return build.adapter
 }
 
 func (build *builder) SimpleSelect(table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {

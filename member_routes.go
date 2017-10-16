@@ -758,7 +758,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 
 	// TODO: Repost attachments in the reports forum, so that the mods can see them
 	// ? - Can we do this via the TopicStore?
-	res, err := createReportStmt.Exec(title, content, parseMessage(content, 0, ""), user.ID, itemType+"_"+strconv.Itoa(itemID))
+	res, err := createReportStmt.Exec(title, content, parseMessage(content, 0, ""), user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID))
 	if err != nil {
 		InternalError(err, w)
 		return

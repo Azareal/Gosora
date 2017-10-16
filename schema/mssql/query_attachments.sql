@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [attachments];
 CREATE TABLE [attachments] (
 	[attachID] int not null IDENTITY,
 	[sectionID] int DEFAULT 0 not null,

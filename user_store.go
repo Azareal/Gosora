@@ -69,7 +69,7 @@ func NewMemoryUserStore(capacity int) *MemoryUserStore {
 
 	// Add an admin version of register_stmt with more flexibility?
 	// create_account_stmt, err = db.Prepare("INSERT INTO
-	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message", "?,?,?,?,?,0,'',?,''")
+	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -289,7 +289,11 @@ func (mus *MemoryUserStore) Reload(id int) error {
 }
 
 func (mus *MemoryUserStore) Exists(id int) bool {
-	return mus.exists.QueryRow(id).Scan(&id) == nil
+	err := mus.exists.QueryRow(id).Scan(&id)
+	if err != nil && err != ErrNoRows {
+		LogError(err)
+	}
+	return err != ErrNoRows
 }
 
 func (mus *MemoryUserStore) CacheSet(item *User) error {
@@ -315,8 +319,8 @@ func (mus *MemoryUserStore) CacheAdd(item *User) error {
 	}
 	mus.Lock()
 	mus.items[item.ID] = item
+	mus.length = int64(len(mus.items))
 	mus.Unlock()
-	atomic.AddInt64(&mus.length, 1)
 	return nil
 }
 
@@ -325,12 +329,17 @@ func (mus *MemoryUserStore) CacheAddUnsafe(item *User) error {
 		return ErrStoreCapacityOverflow
 	}
 	mus.items[item.ID] = item
-	atomic.AddInt64(&mus.length, 1)
+	mus.length = int64(len(mus.items))
 	return nil
 }
 
 func (mus *MemoryUserStore) CacheRemove(id int) error {
 	mus.Lock()
+	_, ok := mus.items[id]
+	if !ok {
+		mus.Unlock()
+		return ErrNoRows
+	}
 	delete(mus.items, id)
 	mus.Unlock()
 	atomic.AddInt64(&mus.length, -1)
@@ -338,11 +347,16 @@ func (mus *MemoryUserStore) CacheRemove(id int) error {
 }
 
 func (mus *MemoryUserStore) CacheRemoveUnsafe(id int) error {
+	_, ok := mus.items[id]
+	if !ok {
+		return ErrNoRows
+	}
 	delete(mus.items, id)
 	atomic.AddInt64(&mus.length, -1)
 	return nil
 }
 
+// TODO: Change active to a bool?
 func (mus *MemoryUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
 	// Is this username already taken..?
 	err := mus.usernameExists.QueryRow(username).Scan(&username)
@@ -421,7 +435,7 @@ func NewSQLUserStore() *SQLUserStore {
 
 	// Add an admin version of register_stmt with more flexibility?
 	// create_account_stmt, err = db.Prepare("INSERT INTO
-	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message", "?,?,?,?,?,0,'',?,''")
+	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -527,7 +541,11 @@ func (mus *SQLUserStore) BypassGet(id int) (*User, error) {
 }
 
 func (mus *SQLUserStore) Exists(id int) bool {
-	return mus.exists.QueryRow(id).Scan(&id) == nil
+	err := mus.exists.QueryRow(id).Scan(&id)
+	if err != nil && err != ErrNoRows {
+		LogError(err)
+	}
+	return err != ErrNoRows
 }
 
 func (mus *SQLUserStore) Create(username string, password string, email string, group int, active int) (int, error) {

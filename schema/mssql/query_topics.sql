@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [topics];
 CREATE TABLE [topics] (
 	[tid] int not null IDENTITY,
 	[title] nvarchar (100) not null,

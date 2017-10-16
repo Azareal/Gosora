@@ -17,15 +17,16 @@ import (
 // ? - Add a TopicMeta struct for *Forums?
 
 type Topic struct {
-	ID          int
-	Link        string
-	Title       string
-	Content     string
-	CreatedBy   int
-	IsClosed    bool
-	Sticky      bool
-	CreatedAt   string
-	LastReplyAt string
+	ID                  int
+	Link                string
+	Title               string
+	Content             string
+	CreatedBy           int
+	IsClosed            bool
+	Sticky              bool
+	CreatedAt           string
+	LastReplyAt         time.Time
+	RelativeLastReplyAt string
 	//LastReplyBy int
 	ParentID  int
 	Status    string // Deprecated. Marked for removal.
@@ -37,15 +38,16 @@ type Topic struct {
 }
 
 type TopicUser struct {
-	ID          int
-	Link        string
-	Title       string
-	Content     string
-	CreatedBy   int
-	IsClosed    bool
-	Sticky      bool
-	CreatedAt   string
-	LastReplyAt string
+	ID                  int
+	Link                string
+	Title               string
+	Content             string
+	CreatedBy           int
+	IsClosed            bool
+	Sticky              bool
+	CreatedAt           string
+	LastReplyAt         time.Time
+	RelativeLastReplyAt string
 	//LastReplyBy int
 	ParentID  int
 	Status    string // Deprecated. Marked for removal.

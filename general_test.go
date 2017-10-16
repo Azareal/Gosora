@@ -24,6 +24,26 @@ import (
 //var dbTest *sql.DB
 var dbProd *sql.DB
 var gloinited bool
+var installAdapter install.InstallAdapter
+
+func ResetTables() (err error) {
+	err = installAdapter.InitDatabase()
+	if err != nil {
+		return err
+	}
+
+	err = installAdapter.TableDefs()
+	if err != nil {
+		return err
+	}
+
+	err = installAdapter.CreateAdmin()
+	if err != nil {
+		return err
+	}
+
+	return installAdapter.InitialData()
+}
 
 func gloinit() (err error) {
 	dev.DebugMode = false
@@ -42,28 +62,14 @@ func gloinit() (err error) {
 
 	switchToTestDB()
 
-	adap, ok := install.Lookup(dbAdapter)
+	var ok bool
+	installAdapter, ok = install.Lookup(dbAdapter)
 	if !ok {
 		return errors.New("We couldn't find the adapter '" + dbAdapter + "'")
 	}
-	adap.SetConfig(dbConfig.Host, dbConfig.Username, dbConfig.Password, dbConfig.Dbname, dbConfig.Port)
+	installAdapter.SetConfig(dbConfig.Host, dbConfig.Username, dbConfig.Password, dbConfig.Dbname, dbConfig.Port)
 
-	err = adap.InitDatabase()
-	if err != nil {
-		return err
-	}
-
-	err = adap.TableDefs()
-	if err != nil {
-		return err
-	}
-
-	err = adap.CreateAdmin()
-	if err != nil {
-		return err
-	}
-
-	err = adap.InitialData()
+	err = ResetTables()
 	if err != nil {
 		return err
 	}
@@ -110,6 +116,7 @@ func gloinit() (err error) {
 func init() {
 	err := gloinit()
 	if err != nil {
+		log.Print("Something bad happened")
 		log.Fatal(err)
 	}
 }

@@ -6,7 +6,10 @@
  */
 package main
 
-import "time"
+import (
+	"log"
+	"time"
+)
 
 var lastSync time.Time
 
@@ -28,12 +31,14 @@ func handleExpiredScheduledGroups() error {
 		if err != nil {
 			return err
 		}
-		_, err = replaceScheduleGroupStmt.Exec(uid, 0, 0, time.Now(), false)
+		_, err = replaceScheduleGroupStmt.Exec(uid, 0, 0, time.Now(), false, uid)
 		if err != nil {
+			log.Print("Unable to replace the scheduled group")
 			return err
 		}
 		_, err = setTempGroupStmt.Exec(0, uid)
 		if err != nil {
+			log.Print("Unable to reset the tempgroup")
 			return err
 		}
 		if ok {
@@ -54,16 +59,19 @@ func handleServerSync() error {
 		// TODO: A more granular sync
 		err = fstore.LoadForums()
 		if err != nil {
+			log.Print("Unable to reload the forums")
 			return err
 		}
 		// TODO: Resync the groups
 		// TODO: Resync the permissions
 		err = LoadSettings()
 		if err != nil {
+			log.Print("Unable to reload the settings")
 			return err
 		}
 		err = LoadWordFilters()
 		if err != nil {
+			log.Print("Unable to reload the word filters")
 			return err
 		}
 	}

@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [widgets];
 CREATE TABLE [widgets] (
 	[position] int not null,
 	[side] nvarchar (100) not null,

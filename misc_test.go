@@ -1,10 +1,29 @@
 package main
 
-import "strconv"
-import "testing"
+import (
+	"fmt"
+	"runtime/debug"
+	"strconv"
+	"testing"
+	"time"
+)
 
-// TODO: Generate a test database to work with rather than a live one
-// TODO: We might need to refactor TestUserStore soon, as it's getting fairly complex
+func recordMustExist(t *testing.T, err error, errmsg string) {
+	if err == ErrNoRows {
+		t.Error(errmsg)
+	} else if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func recordMustNotExist(t *testing.T, err error, errmsg string) {
+	if err == nil {
+		t.Error(errmsg)
+	} else if err != ErrNoRows {
+		t.Fatal(err)
+	}
+}
+
 func TestUserStore(t *testing.T) {
 	if !gloinited {
 		err := gloinit()
@@ -18,14 +37,13 @@ func TestUserStore(t *testing.T) {
 
 	users = NewMemoryUserStore(config.UserCacheCapacity)
 	users.(UserCache).Flush()
-	userStoreTest(t)
+	userStoreTest(t, 2)
 	users = NewSQLUserStore()
-	userStoreTest(t)
+	userStoreTest(t, 3)
 }
-func userStoreTest(t *testing.T) {
+func userStoreTest(t *testing.T, newUserID int) {
 	var user *User
 	var err error
-	var length int
 
 	ucache, hasCache := users.(UserCache)
 	if hasCache && ucache.Length() != 0 {
@@ -33,60 +51,57 @@ func userStoreTest(t *testing.T) {
 	}
 
 	_, err = users.Get(-1)
-	if err == nil {
-		t.Error("UID #-1 shouldn't exist")
-	} else if err != ErrNoRows {
-		t.Fatal(err)
-	}
+	recordMustNotExist(t, err, "UID #-1 shouldn't exist")
 
 	if hasCache && ucache.Length() != 0 {
 		t.Error("There shouldn't be anything in the user cache")
 	}
 
 	_, err = users.Get(0)
-	if err == nil {
-		t.Error("UID #0 shouldn't exist")
-	} else if err != ErrNoRows {
-		t.Fatal(err)
-	}
+	recordMustNotExist(t, err, "UID #0 shouldn't exist")
 
 	if hasCache && ucache.Length() != 0 {
 		t.Error("There shouldn't be anything in the user cache")
 	}
 
 	user, err = users.Get(1)
-	if err == ErrNoRows {
-		t.Error("Couldn't find UID #1")
-	} else if err != nil {
-		t.Fatal(err)
-	}
+	recordMustExist(t, err, "Couldn't find UID #1")
 
 	if user.ID != 1 {
 		t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
 	}
+	if user.Name != "Admin" {
+		t.Error("user.Name should be 'Admin', not '" + user.Name + "'")
+	}
+	if user.Group != 1 {
+		t.Error("Admin should be in group 1")
+	}
+
+	user, err = users.Get(newUserID)
+	recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't exist", newUserID))
 
 	if hasCache {
-		length = ucache.Length()
-		if length != 1 {
-			t.Error("User cache length should be 1, not " + strconv.Itoa(length))
-		}
+		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
 
+		user, err = ucache.CacheGet(-1)
+		recordMustNotExist(t, err, "UID #-1 shouldn't exist, even in the cache")
+		user, err = ucache.CacheGet(0)
+		recordMustNotExist(t, err, "UID #0 shouldn't exist, even in the cache")
 		user, err = ucache.CacheGet(1)
-		if err == ErrNoRows {
-			t.Error("Couldn't find UID #1 in the cache")
-		} else if err != nil {
-			t.Fatal(err)
-		}
+		recordMustExist(t, err, "Couldn't find UID #1 in the cache")
 
 		if user.ID != 1 {
 			t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
 		}
+		if user.Name != "Admin" {
+			t.Error("user.Name should be 'Admin', not '" + user.Name + "'")
+		}
+
+		user, err = ucache.CacheGet(newUserID)
+		recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't exist, even in the cache", newUserID))
 
 		ucache.Flush()
-		length = ucache.Length()
-		if length != 0 {
-			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
-		}
+		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
 	}
 
 	// TODO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
@@ -97,10 +112,7 @@ func userStoreTest(t *testing.T) {
 	}
 
 	if hasCache {
-		length = ucache.Length()
-		if length != 0 {
-			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
-		}
+		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
 	}
 
 	userList, _ = users.BulkGetMap([]int{0})
@@ -109,10 +121,7 @@ func userStoreTest(t *testing.T) {
 	}
 
 	if hasCache {
-		length = ucache.Length()
-		if length != 0 {
-			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
-		}
+		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
 	}
 
 	userList, _ = users.BulkGetMap([]int{1})
@@ -133,17 +142,9 @@ func userStoreTest(t *testing.T) {
 	}
 
 	if hasCache {
-		length = ucache.Length()
-		if length != 1 {
-			t.Error("User cache length should be 1, not " + strconv.Itoa(length))
-		}
-
+		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
 		user, err = ucache.CacheGet(1)
-		if err == ErrNoRows {
-			t.Error("Couldn't find UID #1 in the cache")
-		} else if err != nil {
-			t.Fatal(err)
-		}
+		recordMustExist(t, err, "Couldn't find UID #1 in the cache")
 
 		if user.ID != 1 {
 			t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
@@ -152,32 +153,138 @@ func userStoreTest(t *testing.T) {
 		ucache.Flush()
 	}
 
-	ok = users.Exists(-1)
-	if ok {
-		t.Error("UID #-1 shouldn't exist")
-	}
-
-	ok = users.Exists(0)
-	if ok {
-		t.Error("UID #0 shouldn't exist")
-	}
-
-	ok = users.Exists(1)
-	if !ok {
-		t.Error("UID #1 should exist")
-	}
+	expect(t, !users.Exists(-1), "UID #-1 shouldn't exist")
+	expect(t, !users.Exists(0), "UID #0 shouldn't exist")
+	expect(t, users.Exists(1), "UID #1 should exist")
+	expect(t, !users.Exists(newUserID), fmt.Sprintf("UID #%d shouldn't exist", newUserID))
 
 	if hasCache {
-		length = ucache.Length()
-		if length != 0 {
-			t.Error("User cache length should be 0, not " + strconv.Itoa(length))
+		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
+	}
+	expectIntToBeX(t, users.GlobalCount(), 1, "The number of users should be one, not %d")
+
+	var awaitingActivation = 5
+	uid, err := users.Create("Sam", "ReallyBadPassword", "sam@localhost.loc", awaitingActivation, 0)
+	if err != nil {
+		t.Error(err)
+	}
+	if uid != newUserID {
+		t.Errorf("The UID of the new user should be %d", newUserID)
+	}
+	if !users.Exists(newUserID) {
+		t.Errorf("UID #%d should exist", newUserID)
+	}
+
+	user, err = users.Get(newUserID)
+	recordMustExist(t, err, fmt.Sprintf("Couldn't find UID #%d", newUserID))
+	if user.ID != newUserID {
+		t.Errorf("The UID of the user record should be %d", newUserID)
+	}
+	if user.Name != "Sam" {
+		t.Error("The user should be named Sam")
+	}
+	expectIntToBeX(t, user.Group, 5, "Sam should be in group 5")
+
+	if hasCache {
+		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
+		user, err = ucache.CacheGet(newUserID)
+		recordMustExist(t, err, fmt.Sprintf("Couldn't find UID #%d in the cache", newUserID))
+		if user.ID != newUserID {
+			t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
 		}
 	}
 
-	count := users.GlobalCount()
-	if count <= 0 {
-		t.Error("The number of users should be bigger than zero")
-		t.Error("count", count)
+	err = user.Activate()
+	if err != nil {
+		t.Error(err)
+	}
+	expectIntToBeX(t, user.Group, 5, "Sam should still be in group 5 in this copy")
+
+	// ? - What if we change the caching mechanism so it isn't hard purged and reloaded? We'll deal with that when we come to it, but for now, this is a sign of a cache bug
+	if hasCache {
+		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
+		_, err = ucache.CacheGet(newUserID)
+		recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't be in the cache", newUserID))
+	}
+
+	user, err = users.Get(newUserID)
+	recordMustExist(t, err, fmt.Sprintf("Couldn't find UID #%d", newUserID))
+	if user.ID != newUserID {
+		t.Errorf("The UID of the user record should be %d", newUserID)
+	}
+	expectIntToBeX(t, user.Group, config.DefaultGroup, "Sam should be in group "+strconv.Itoa(config.DefaultGroup))
+
+	// Permanent ban
+	duration, _ := time.ParseDuration("0")
+
+	// TODO: Attempt a double ban, double activation, and double unban
+	err = user.Ban(duration, 1)
+	if err != nil {
+		t.Error(err)
+	}
+	expectIntToBeX(t, user.Group, config.DefaultGroup, "Sam should still be in the default group in this copy")
+
+	if hasCache {
+		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
+		_, err = ucache.CacheGet(2)
+		recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't be in the cache", newUserID))
+	}
+
+	user, err = users.Get(newUserID)
+	recordMustExist(t, err, fmt.Sprintf("Couldn't find UID #%d", newUserID))
+	if user.ID != newUserID {
+		t.Errorf("The UID of the user record should be %d", newUserID)
+	}
+	expectIntToBeX(t, user.Group, banGroup, "Sam should be in group "+strconv.Itoa(banGroup))
+
+	// TODO: Do tests against the scheduled updates table and the task system to make sure the ban exists there and gets revoked when it should
+
+	err = user.Unban()
+	if err != nil {
+		t.Error(err)
+	}
+	expectIntToBeX(t, user.Group, banGroup, "Sam should still be in the ban group in this copy")
+
+	if hasCache {
+		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
+		_, err = ucache.CacheGet(newUserID)
+		recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't be in the cache", newUserID))
+	}
+
+	user, err = users.Get(newUserID)
+	recordMustExist(t, err, fmt.Sprintf("Couldn't find UID #%d", newUserID))
+	if user.ID != newUserID {
+		t.Errorf("The UID of the user record should be %d", newUserID)
+	}
+	expectIntToBeX(t, user.Group, config.DefaultGroup, "Sam should be back in group "+strconv.Itoa(config.DefaultGroup))
+
+	err = user.Delete()
+	if err != nil {
+		t.Error(err)
+	}
+	expect(t, !users.Exists(newUserID), fmt.Sprintf("UID #%d should not longer exist", newUserID))
+
+	if hasCache {
+		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
+		_, err = ucache.CacheGet(newUserID)
+		recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't be in the cache", newUserID))
+	}
+
+	// TODO: Works for now but might cause a data race with the task system
+	//ResetTables()
+}
+
+func expectIntToBeX(t *testing.T, item int, expect int, errmsg string) {
+	if item != expect {
+		debug.PrintStack()
+		t.Fatalf(errmsg, item)
+	}
+}
+
+func expect(t *testing.T, item bool, errmsg string) {
+	if !item {
+		debug.PrintStack()
+		t.Fatalf(errmsg)
 	}
 }
 
@@ -216,11 +323,7 @@ func topicStoreTest(t *testing.T) {
 	}
 
 	topic, err = topics.Get(1)
-	if err == ErrNoRows {
-		t.Error("Couldn't find TID #1")
-	} else if err != nil {
-		t.Fatal(err)
-	}
+	recordMustExist(t, err, "Couldn't find TID #1")
 
 	if topic.ID != 1 {
 		t.Error("topic.ID does not match the requested TID. Got '" + strconv.Itoa(topic.ID) + "' instead.")
@@ -276,11 +379,7 @@ func TestForumStore(t *testing.T) {
 	}
 
 	forum, err = fstore.Get(1)
-	if err == ErrNoRows {
-		t.Error("Couldn't find FID #1")
-	} else if err != nil {
-		t.Fatal(err)
-	}
+	recordMustExist(t, err, "Couldn't find FID #1")
 
 	if forum.ID != 1 {
 		t.Error("forum.ID doesn't not match the requested FID. Got '" + strconv.Itoa(forum.ID) + "' instead.'")
@@ -290,11 +389,7 @@ func TestForumStore(t *testing.T) {
 	}
 
 	forum, err = fstore.Get(2)
-	if err == ErrNoRows {
-		t.Error("Couldn't find FID #2")
-	} else if err != nil {
-		t.Fatal(err)
-	}
+	recordMustExist(t, err, "Couldn't find FID #1")
 
 	_ = forum
 
@@ -332,12 +427,9 @@ func TestGroupStore(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// TODO: Refactor the group store to remove GID #0
 	group, err = gstore.Get(0)
-	if err == ErrNoRows {
-		t.Error("Couldn't find GID #0")
-	} else if err != nil {
-		t.Fatal(err)
-	}
+	recordMustExist(t, err, "Couldn't find GID #0")
 
 	if group.ID != 0 {
 		t.Error("group.ID doesn't not match the requested GID. Got '" + strconv.Itoa(group.ID) + "' instead.")
@@ -346,14 +438,8 @@ func TestGroupStore(t *testing.T) {
 		t.Error("GID #0 is named '" + group.Name + "' and not 'Unknown'")
 	}
 
-	// ? - What if they delete this group? x.x
-	// ? - Maybe, pick a random group ID? That would take an extra query, and I'm not sure if I want to be rewriting custom test queries. Possibly, a Random() method on the GroupStore? Seems useless for normal use, it might have some merit for the TopicStore though
 	group, err = gstore.Get(1)
-	if err == ErrNoRows {
-		t.Error("Couldn't find GID #1")
-	} else if err != nil {
-		t.Fatal(err)
-	}
+	recordMustExist(t, err, "Couldn't find GID #1")
 
 	if group.ID != 1 {
 		t.Error("group.ID doesn't not match the requested GID. Got '" + strconv.Itoa(group.ID) + "' instead.'")

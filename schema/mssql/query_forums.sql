@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [forums];
 CREATE TABLE [forums] (
 	[fid] int not null IDENTITY,
 	[name] nvarchar (100) not null,

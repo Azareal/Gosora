@@ -1,10 +1,13 @@
 /* WIP Under Construction */
 package qgen
 
-import "errors"
+import (
+	"database/sql"
+	"errors"
+)
 
 var DB_Registry []DB_Adapter
-var No_Adapter = errors.New("This adapter doesn't exist")
+var ErrNoAdapter = errors.New("This adapter doesn't exist")
 
 type DB_Table_Column struct {
 	Name           string
@@ -97,7 +100,12 @@ type DB_Adapter interface {
 	GetName() string
 	CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
+
+	// ! DEPRECATED
 	SimpleReplace(name string, table string, columns string, fields string) (string, error)
+
+	// ! NOTE: MySQL doesn't support upserts properly, asides from for keys, so this is just a less destructive replace atm
+	SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error)
 	SimpleUpdate(name string, table string, set string, where string) (string, error)
 	SimpleDelete(name string, table string, where string) (string, error)
 	Purge(name string, table string) (string, error)
@@ -119,5 +127,27 @@ func GetAdapter(name string) (adap DB_Adapter, err error) {
 			return adapter, nil
 		}
 	}
-	return adap, No_Adapter
+	return adap, ErrNoAdapter
+}
+
+type QueryPlugin interface {
+	Hook(name string, args ...interface{}) error
+	Write() error
+}
+
+type MySQLUpsertCallback struct {
+	stmt *sql.Stmt
+}
+
+func (double *MySQLUpsertCallback) Exec(args ...interface{}) (res sql.Result, err error) {
+	if len(args) < 2 {
+		return res, errors.New("Need two or more arguments")
+	}
+	args = args[:len(args)-1]
+	return double.stmt.Exec(append(args, args...)...)
+}
+
+func PrepareMySQLUpsertCallback(db *sql.DB, query string) (*MySQLUpsertCallback, error) {
+	stmt, err := db.Prepare(query)
+	return &MySQLUpsertCallback{stmt}, err
 }

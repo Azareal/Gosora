@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [activity_subscriptions];
 CREATE TABLE [activity_subscriptions] (
 	[user] int not null,
 	[targetID] int not null,

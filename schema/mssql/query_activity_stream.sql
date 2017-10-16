@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [activity_stream];
 CREATE TABLE [activity_stream] (
 	[asid] int not null IDENTITY,
 	[actor] int not null,

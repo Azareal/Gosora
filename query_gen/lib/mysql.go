@@ -149,6 +149,7 @@ func (adapter *Mysql_Adapter) SimpleInsert(name string, table string, columns st
 	return querystr + ")", nil
 }
 
+// ! DEPRECATED
 func (adapter *Mysql_Adapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -186,6 +187,53 @@ func (adapter *Mysql_Adapter) SimpleReplace(name string, table string, columns s
 	return querystr + ")", nil
 }
 
+func (adapter *Mysql_Adapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if len(columns) == 0 {
+		return "", errors.New("No columns found for SimpleInsert")
+	}
+	if len(fields) == 0 {
+		return "", errors.New("No input data found for SimpleInsert")
+	}
+	if where == "" {
+		return "", errors.New("You need a where for this upsert")
+	}
+
+	var querystr = "INSERT INTO `" + table + "`("
+	var parsedFields = processFields(fields)
+
+	var insertColumns string
+	var insertValues string
+	var setBit = ") ON DUPLICATE KEY UPDATE "
+
+	for columnID, column := range processColumns(columns) {
+		field := parsedFields[columnID]
+		if column.Type == "function" {
+			insertColumns += column.Left + ","
+			insertValues += field.Name + ","
+			setBit += column.Left + " = " + field.Name + " AND "
+		} else {
+			insertColumns += "`" + column.Left + "`,"
+			insertValues += field.Name + ","
+			setBit += "`" + column.Left + "` = " + field.Name + " AND "
+		}
+	}
+	insertColumns = insertColumns[0 : len(insertColumns)-1]
+	insertValues = insertValues[0 : len(insertValues)-1]
+	insertColumns += ") VALUES (" + insertValues
+	setBit = setBit[0 : len(setBit)-5]
+
+	querystr += insertColumns + setBit
+
+	adapter.pushStatement(name, "upsert", querystr)
+	return querystr, nil
+}
+
 func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
@@ -212,7 +260,6 @@ func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string
 		}
 		querystr += ","
 	}
-
 	// Remove the trailing comma
 	querystr = querystr[0 : len(querystr)-1]
 
@@ -826,8 +873,17 @@ func (adapter *Mysql_Adapter) Write() error {
 			continue
 		}
 		stmt := adapter.Buffer[name]
-		// TODO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
-		if stmt.Type != "create-table" {
+		// ? - Table creation might be a little complex for Go to do outside a SQL file :(
+		if stmt.Type == "upsert" {
+			stmts += "var " + name + "Stmt *qgen.MySQLUpsertCallback\n"
+			body += `	
+	log.Print("Preparing ` + name + ` statement.")
+	` + name + `Stmt, err = qgen.PrepareMySQLUpsertCallback(db, "` + stmt.Contents + `")
+	if err != nil {
+		return err
+	}
+	`
+		} else if stmt.Type != "create-table" {
 			stmts += "var " + name + "Stmt *sql.Stmt\n"
 			body += `	
 	log.Print("Preparing ` + name + ` statement.")
@@ -847,6 +903,7 @@ package main
 
 import "log"
 import "database/sql"
+import "./query_gen/lib"
 
 // nolint
 ` + stmts + `

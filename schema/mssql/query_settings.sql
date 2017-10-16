@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [settings];
 CREATE TABLE [settings] (
 	[name] nvarchar (180) not null,
 	[content] nvarchar (250) not null,

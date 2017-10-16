@@ -113,6 +113,7 @@ var verifyEmailStmt *sql.Stmt
 var setTempGroupStmt *sql.Stmt
 var updateWordFilterStmt *sql.Stmt
 var bumpSyncStmt *sql.Stmt
+var deleteUserStmt *sql.Stmt
 var deleteReplyStmt *sql.Stmt
 var deleteProfileReplyStmt *sql.Stmt
 var deleteForumPermsByForumStmt *sql.Stmt
@@ -245,9 +246,9 @@ func _gen_mssql() (err error) {
 	}
 		
 	log.Print("Preparing getUsersOffset statement.")
-	getUsersOffsetStmt, err = db.Prepare("SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users] OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
+	getUsersOffsetStmt, err = db.Prepare("SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users] ORDER BY uid ASC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
 	if err != nil {
-		log.Print("Bad Query: ","SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users] OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
+		log.Print("Bad Query: ","SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users] ORDER BY uid ASC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
 		return err
 	}
 		
@@ -273,9 +274,9 @@ func _gen_mssql() (err error) {
 	}
 		
 	log.Print("Preparing getModlogsOffset statement.")
-	getModlogsOffsetStmt, err = db.Prepare("SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs] OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
+	getModlogsOffsetStmt, err = db.Prepare("SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
 	if err != nil {
-		log.Print("Bad Query: ","SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs] OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
+		log.Print("Bad Query: ","SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
 		return err
 	}
 		
@@ -385,9 +386,9 @@ func _gen_mssql() (err error) {
 	}
 		
 	log.Print("Preparing getTopicRepliesOffset statement.")
-	getTopicRepliesOffsetStmt, err = db.Prepare("SELECT [replies].[rid],[replies].[content],[replies].[createdBy],[replies].[createdAt],[replies].[lastEdit],[replies].[lastEditBy],[users].[avatar],[users].[name],[users].[group],[users].[url_prefix],[users].[url_name],[users].[level],[replies].[ipaddress],[replies].[likeCount],[replies].[actionType] FROM [replies] LEFT JOIN [users] ON [replies].[createdBy] = [users].[uid]  WHERE [replies].[tid] = ?1 OFFSET ?2 ROWS FETCH NEXT ?3 ROWS ONLY")
+	getTopicRepliesOffsetStmt, err = db.Prepare("SELECT [replies].[rid],[replies].[content],[replies].[createdBy],[replies].[createdAt],[replies].[lastEdit],[replies].[lastEditBy],[users].[avatar],[users].[name],[users].[group],[users].[url_prefix],[users].[url_name],[users].[level],[replies].[ipaddress],[replies].[likeCount],[replies].[actionType] FROM [replies] LEFT JOIN [users] ON [replies].[createdBy] = [users].[uid]  WHERE [replies].[tid] = ?1 ORDER BY replies.rid ASC OFFSET ?2 ROWS FETCH NEXT ?3 ROWS ONLY")
 	if err != nil {
-		log.Print("Bad Query: ","SELECT [replies].[rid],[replies].[content],[replies].[createdBy],[replies].[createdAt],[replies].[lastEdit],[replies].[lastEditBy],[users].[avatar],[users].[name],[users].[group],[users].[url_prefix],[users].[url_name],[users].[level],[replies].[ipaddress],[replies].[likeCount],[replies].[actionType] FROM [replies] LEFT JOIN [users] ON [replies].[createdBy] = [users].[uid]  WHERE [replies].[tid] = ?1 OFFSET ?2 ROWS FETCH NEXT ?3 ROWS ONLY")
+		log.Print("Bad Query: ","SELECT [replies].[rid],[replies].[content],[replies].[createdBy],[replies].[createdAt],[replies].[lastEdit],[replies].[lastEditBy],[users].[avatar],[users].[name],[users].[group],[users].[url_prefix],[users].[url_name],[users].[level],[replies].[ipaddress],[replies].[likeCount],[replies].[actionType] FROM [replies] LEFT JOIN [users] ON [replies].[createdBy] = [users].[uid]  WHERE [replies].[tid] = ?1 ORDER BY replies.rid ASC OFFSET ?2 ROWS FETCH NEXT ?3 ROWS ONLY")
 		return err
 	}
 		
@@ -434,9 +435,9 @@ func _gen_mssql() (err error) {
 	}
 		
 	log.Print("Preparing getWatchers statement.")
-	getWatchersStmt, err = db.Prepare("")
+	getWatchersStmt, err = db.Prepare("SELECT [activity_subscriptions].[user] FROM [activity_stream] INNER JOIN [activity_subscriptions] ON [activity_subscriptions].[targetType] = [activity_stream].[elementType] AND [activity_subscriptions].[targetID] = [activity_stream].[elementID] AND [activity_subscriptions].[user] != [activity_stream].[actor]  WHERE [asid] = ?1")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","SELECT [activity_subscriptions].[user] FROM [activity_stream] INNER JOIN [activity_subscriptions] ON [activity_subscriptions].[targetType] = [activity_stream].[elementType] AND [activity_subscriptions].[targetID] = [activity_stream].[elementID] AND [activity_subscriptions].[user] != [activity_stream].[actor]  WHERE [asid] = ?1")
 		return err
 	}
 		
@@ -448,23 +449,23 @@ func _gen_mssql() (err error) {
 	}
 		
 	log.Print("Preparing createReport statement.")
-	createReportStmt, err = db.Prepare("INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[createdBy],[data],[parentID],[css_class]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,1,'report')")
+	createReportStmt, err = db.Prepare("INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[createdBy],[lastReplyBy],[data],[parentID],[css_class]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?,1,'report')")
 	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[createdBy],[data],[parentID],[css_class]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,1,'report')")
+		log.Print("Bad Query: ","INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[createdBy],[lastReplyBy],[data],[parentID],[css_class]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?,1,'report')")
 		return err
 	}
 		
 	log.Print("Preparing createReply statement.")
-	createReplyStmt, err = db.Prepare("INSERT INTO [replies] ([tid],[content],[parsed_content],[createdAt],[ipaddress],[words],[createdBy]) VALUES (?,?,?,GETUTCDATE(),?,?,?)")
+	createReplyStmt, err = db.Prepare("INSERT INTO [replies] ([tid],[content],[parsed_content],[createdAt],[lastUpdated],[ipaddress],[words],[createdBy]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?)")
 	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [replies] ([tid],[content],[parsed_content],[createdAt],[ipaddress],[words],[createdBy]) VALUES (?,?,?,GETUTCDATE(),?,?,?)")
+		log.Print("Bad Query: ","INSERT INTO [replies] ([tid],[content],[parsed_content],[createdAt],[lastUpdated],[ipaddress],[words],[createdBy]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?)")
 		return err
 	}
 		
 	log.Print("Preparing createActionReply statement.")
-	createActionReplyStmt, err = db.Prepare("INSERT INTO [replies] ([tid],[actionType],[ipaddress],[createdBy]) VALUES (?,?,?,?)")
+	createActionReplyStmt, err = db.Prepare("INSERT INTO [replies] ([tid],[actionType],[ipaddress],[createdBy],[createdAt],[lastUpdated],[content],[parsed_content]) VALUES (?,?,?,?,GETUTCDATE(),GETUTCDATE(),'','')")
 	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [replies] ([tid],[actionType],[ipaddress],[createdBy]) VALUES (?,?,?,?)")
+		log.Print("Bad Query: ","INSERT INTO [replies] ([tid],[actionType],[ipaddress],[createdBy],[createdAt],[lastUpdated],[content],[parsed_content]) VALUES (?,?,?,?,GETUTCDATE(),GETUTCDATE(),'','')")
 		return err
 	}
 		
@@ -574,338 +575,345 @@ func _gen_mssql() (err error) {
 	}
 		
 	log.Print("Preparing addForumPermsToGroup statement.")
-	addForumPermsToGroupStmt, err = db.Prepare("")
+	addForumPermsToGroupStmt, err = db.Prepare("MERGE [forums_permissions] WITH(HOLDLOCK) as t1 USING (VALUES(?,?,?,?)) AS updates (f0,f1,f2,f3) ON  [gid] = ? [fid] = ? WHEN MATCHED THEN UPDATE SET [gid] = f0,[fid] = f1,[preset] = f2,[permissions] = f3 WHEN NOT MATCHED THEN INSERT([gid],[fid],[preset],[permissions]) VALUES (f0,f1,f2,f3);")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","MERGE [forums_permissions] WITH(HOLDLOCK) as t1 USING (VALUES(?,?,?,?)) AS updates (f0,f1,f2,f3) ON  [gid] = ? [fid] = ? WHEN MATCHED THEN UPDATE SET [gid] = f0,[fid] = f1,[preset] = f2,[permissions] = f3 WHEN NOT MATCHED THEN INSERT([gid],[fid],[preset],[permissions]) VALUES (f0,f1,f2,f3);")
 		return err
 	}
 		
 	log.Print("Preparing replaceScheduleGroup statement.")
-	replaceScheduleGroupStmt, err = db.Prepare("")
+	replaceScheduleGroupStmt, err = db.Prepare("MERGE [users_groups_scheduler] WITH(HOLDLOCK) as t1 USING (VALUES(?,?,?,GETUTCDATE(),?,?)) AS updates (f0,f1,f2,f3,f4,f5) ON  [uid] = ? WHEN MATCHED THEN UPDATE SET [uid] = f0,[set_group] = f1,[issued_by] = f2,[issued_at] = f3,[revert_at] = f4,[temporary] = f5 WHEN NOT MATCHED THEN INSERT([uid],[set_group],[issued_by],[issued_at],[revert_at],[temporary]) VALUES (f0,f1,f2,f3,f4,f5);")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","MERGE [users_groups_scheduler] WITH(HOLDLOCK) as t1 USING (VALUES(?,?,?,GETUTCDATE(),?,?)) AS updates (f0,f1,f2,f3,f4,f5) ON  [uid] = ? WHEN MATCHED THEN UPDATE SET [uid] = f0,[set_group] = f1,[issued_by] = f2,[issued_at] = f3,[revert_at] = f4,[temporary] = f5 WHEN NOT MATCHED THEN INSERT([uid],[set_group],[issued_by],[issued_at],[revert_at],[temporary]) VALUES (f0,f1,f2,f3,f4,f5);")
 		return err
 	}
 		
 	log.Print("Preparing addRepliesToTopic statement.")
-	addRepliesToTopicStmt, err = db.Prepare("")
+	addRepliesToTopicStmt, err = db.Prepare("UPDATE [topics] SET [postCount] = [postCount] + ?,[lastReplyBy] = ?,[lastReplyAt] = GETUTCDATE() WHERE [tid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [topics] SET [postCount] = [postCount] + ?,[lastReplyBy] = ?,[lastReplyAt] = GETUTCDATE() WHERE [tid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing removeRepliesFromTopic statement.")
-	removeRepliesFromTopicStmt, err = db.Prepare("")
+	removeRepliesFromTopicStmt, err = db.Prepare("UPDATE [topics] SET [postCount] = [postCount] - ? WHERE [tid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [topics] SET [postCount] = [postCount] - ? WHERE [tid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing addTopicsToForum statement.")
-	addTopicsToForumStmt, err = db.Prepare("")
+	addTopicsToForumStmt, err = db.Prepare("UPDATE [forums] SET [topicCount] = [topicCount] + ? WHERE [fid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [forums] SET [topicCount] = [topicCount] + ? WHERE [fid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing removeTopicsFromForum statement.")
-	removeTopicsFromForumStmt, err = db.Prepare("")
+	removeTopicsFromForumStmt, err = db.Prepare("UPDATE [forums] SET [topicCount] = [topicCount] - ? WHERE [fid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [forums] SET [topicCount] = [topicCount] - ? WHERE [fid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateForumCache statement.")
-	updateForumCacheStmt, err = db.Prepare("")
+	updateForumCacheStmt, err = db.Prepare("UPDATE [forums] SET [lastTopicID] = ?,[lastReplyerID] = ? WHERE [fid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [forums] SET [lastTopicID] = ?,[lastReplyerID] = ? WHERE [fid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing addLikesToTopic statement.")
-	addLikesToTopicStmt, err = db.Prepare("")
+	addLikesToTopicStmt, err = db.Prepare("UPDATE [topics] SET [likeCount] = [likeCount] + ? WHERE [tid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [topics] SET [likeCount] = [likeCount] + ? WHERE [tid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing addLikesToReply statement.")
-	addLikesToReplyStmt, err = db.Prepare("")
+	addLikesToReplyStmt, err = db.Prepare("UPDATE [replies] SET [likeCount] = [likeCount] + ? WHERE [rid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [replies] SET [likeCount] = [likeCount] + ? WHERE [rid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing editTopic statement.")
-	editTopicStmt, err = db.Prepare("")
+	editTopicStmt, err = db.Prepare("UPDATE [topics] SET [title] = ?,[content] = ?,[parsed_content] = ? WHERE [tid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [topics] SET [title] = ?,[content] = ?,[parsed_content] = ? WHERE [tid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing editReply statement.")
-	editReplyStmt, err = db.Prepare("")
+	editReplyStmt, err = db.Prepare("UPDATE [replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing stickTopic statement.")
-	stickTopicStmt, err = db.Prepare("")
+	stickTopicStmt, err = db.Prepare("UPDATE [topics] SET [sticky] = 1 WHERE [tid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [topics] SET [sticky] = 1 WHERE [tid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing unstickTopic statement.")
-	unstickTopicStmt, err = db.Prepare("")
+	unstickTopicStmt, err = db.Prepare("UPDATE [topics] SET [sticky] = 0 WHERE [tid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [topics] SET [sticky] = 0 WHERE [tid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing lockTopic statement.")
-	lockTopicStmt, err = db.Prepare("")
+	lockTopicStmt, err = db.Prepare("UPDATE [topics] SET [is_closed] = 1 WHERE [tid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [topics] SET [is_closed] = 1 WHERE [tid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing unlockTopic statement.")
-	unlockTopicStmt, err = db.Prepare("")
+	unlockTopicStmt, err = db.Prepare("UPDATE [topics] SET [is_closed] = 0 WHERE [tid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [topics] SET [is_closed] = 0 WHERE [tid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateLastIP statement.")
-	updateLastIPStmt, err = db.Prepare("")
+	updateLastIPStmt, err = db.Prepare("UPDATE [users] SET [last_ip] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [last_ip] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateSession statement.")
-	updateSessionStmt, err = db.Prepare("")
+	updateSessionStmt, err = db.Prepare("UPDATE [users] SET [session] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [session] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing setPassword statement.")
-	setPasswordStmt, err = db.Prepare("")
+	setPasswordStmt, err = db.Prepare("UPDATE [users] SET [password] = ?,[salt] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [password] = ?,[salt] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing setAvatar statement.")
-	setAvatarStmt, err = db.Prepare("")
+	setAvatarStmt, err = db.Prepare("UPDATE [users] SET [avatar] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [avatar] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing setUsername statement.")
-	setUsernameStmt, err = db.Prepare("")
+	setUsernameStmt, err = db.Prepare("UPDATE [users] SET [name] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [name] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing changeGroup statement.")
-	changeGroupStmt, err = db.Prepare("")
+	changeGroupStmt, err = db.Prepare("UPDATE [users] SET [group] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [group] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing activateUser statement.")
-	activateUserStmt, err = db.Prepare("")
+	activateUserStmt, err = db.Prepare("UPDATE [users] SET [active] = 1 WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [active] = 1 WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateUserLevel statement.")
-	updateUserLevelStmt, err = db.Prepare("")
+	updateUserLevelStmt, err = db.Prepare("UPDATE [users] SET [level] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [level] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing incrementUserScore statement.")
-	incrementUserScoreStmt, err = db.Prepare("")
+	incrementUserScoreStmt, err = db.Prepare("UPDATE [users] SET [score] = [score] + ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [score] = [score] + ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing incrementUserPosts statement.")
-	incrementUserPostsStmt, err = db.Prepare("")
+	incrementUserPostsStmt, err = db.Prepare("UPDATE [users] SET [posts] = [posts] + ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [posts] = [posts] + ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing incrementUserBigposts statement.")
-	incrementUserBigpostsStmt, err = db.Prepare("")
+	incrementUserBigpostsStmt, err = db.Prepare("UPDATE [users] SET [posts] = [posts] + ?,[bigposts] = [bigposts] + ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [posts] = [posts] + ?,[bigposts] = [bigposts] + ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing incrementUserMegaposts statement.")
-	incrementUserMegapostsStmt, err = db.Prepare("")
+	incrementUserMegapostsStmt, err = db.Prepare("UPDATE [users] SET [posts] = [posts] + ?,[bigposts] = [bigposts] + ?,[megaposts] = [megaposts] + ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [posts] = [posts] + ?,[bigposts] = [bigposts] + ?,[megaposts] = [megaposts] + ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing incrementUserTopics statement.")
-	incrementUserTopicsStmt, err = db.Prepare("")
+	incrementUserTopicsStmt, err = db.Prepare("UPDATE [users] SET [topics] = [topics] + ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [topics] = [topics] + ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing editProfileReply statement.")
-	editProfileReplyStmt, err = db.Prepare("")
+	editProfileReplyStmt, err = db.Prepare("UPDATE [users_replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users_replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateForum statement.")
-	updateForumStmt, err = db.Prepare("")
+	updateForumStmt, err = db.Prepare("UPDATE [forums] SET [name] = ?,[desc] = ?,[active] = ?,[preset] = ? WHERE [fid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [forums] SET [name] = ?,[desc] = ?,[active] = ?,[preset] = ? WHERE [fid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateSetting statement.")
-	updateSettingStmt, err = db.Prepare("")
+	updateSettingStmt, err = db.Prepare("UPDATE [settings] SET [content] = ? WHERE [name] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [settings] SET [content] = ? WHERE [name] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updatePlugin statement.")
-	updatePluginStmt, err = db.Prepare("")
+	updatePluginStmt, err = db.Prepare("UPDATE [plugins] SET [active] = ? WHERE [uname] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [plugins] SET [active] = ? WHERE [uname] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updatePluginInstall statement.")
-	updatePluginInstallStmt, err = db.Prepare("")
+	updatePluginInstallStmt, err = db.Prepare("UPDATE [plugins] SET [installed] = ? WHERE [uname] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [plugins] SET [installed] = ? WHERE [uname] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateTheme statement.")
-	updateThemeStmt, err = db.Prepare("")
+	updateThemeStmt, err = db.Prepare("UPDATE [themes] SET [default] = ? WHERE [uname] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [themes] SET [default] = ? WHERE [uname] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateUser statement.")
-	updateUserStmt, err = db.Prepare("")
+	updateUserStmt, err = db.Prepare("UPDATE [users] SET [name] = ?,[email] = ?,[group] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [name] = ?,[email] = ?,[group] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateGroupPerms statement.")
-	updateGroupPermsStmt, err = db.Prepare("")
+	updateGroupPermsStmt, err = db.Prepare("UPDATE [users_groups] SET [permissions] = ? WHERE [gid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users_groups] SET [permissions] = ? WHERE [gid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateGroupRank statement.")
-	updateGroupRankStmt, err = db.Prepare("")
+	updateGroupRankStmt, err = db.Prepare("UPDATE [users_groups] SET [is_admin] = ?,[is_mod] = ?,[is_banned] = ? WHERE [gid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users_groups] SET [is_admin] = ?,[is_mod] = ?,[is_banned] = ? WHERE [gid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateGroup statement.")
-	updateGroupStmt, err = db.Prepare("")
+	updateGroupStmt, err = db.Prepare("UPDATE [users_groups] SET [name] = ?,[tag] = ? WHERE [gid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users_groups] SET [name] = ?,[tag] = ? WHERE [gid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateEmail statement.")
-	updateEmailStmt, err = db.Prepare("")
+	updateEmailStmt, err = db.Prepare("UPDATE [emails] SET [email] = ?,[uid] = ?,[validated] = ?,[token] = ? WHERE [email] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [emails] SET [email] = ?,[uid] = ?,[validated] = ?,[token] = ? WHERE [email] = ?")
 		return err
 	}
 		
 	log.Print("Preparing verifyEmail statement.")
-	verifyEmailStmt, err = db.Prepare("")
+	verifyEmailStmt, err = db.Prepare("UPDATE [emails] SET [validated] = 1,[token] = '' WHERE [email] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [emails] SET [validated] = 1,[token] = '' WHERE [email] = ?")
 		return err
 	}
 		
 	log.Print("Preparing setTempGroup statement.")
-	setTempGroupStmt, err = db.Prepare("")
+	setTempGroupStmt, err = db.Prepare("UPDATE [users] SET [temp_group] = ? WHERE [uid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [users] SET [temp_group] = ? WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing updateWordFilter statement.")
-	updateWordFilterStmt, err = db.Prepare("")
+	updateWordFilterStmt, err = db.Prepare("UPDATE [word_filters] SET [find] = ?,[replacement] = ? WHERE [wfid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [word_filters] SET [find] = ?,[replacement] = ? WHERE [wfid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing bumpSync statement.")
-	bumpSyncStmt, err = db.Prepare("")
+	bumpSyncStmt, err = db.Prepare("UPDATE [sync] SET [last_update] = GETUTCDATE()")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","UPDATE [sync] SET [last_update] = GETUTCDATE()")
+		return err
+	}
+		
+	log.Print("Preparing deleteUser statement.")
+	deleteUserStmt, err = db.Prepare("DELETE FROM [users] WHERE [uid] = ?")
+	if err != nil {
+		log.Print("Bad Query: ","DELETE FROM [users] WHERE [uid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing deleteReply statement.")
-	deleteReplyStmt, err = db.Prepare("")
+	deleteReplyStmt, err = db.Prepare("DELETE FROM [replies] WHERE [rid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","DELETE FROM [replies] WHERE [rid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing deleteProfileReply statement.")
-	deleteProfileReplyStmt, err = db.Prepare("")
+	deleteProfileReplyStmt, err = db.Prepare("DELETE FROM [users_replies] WHERE [rid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","DELETE FROM [users_replies] WHERE [rid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing deleteForumPermsByForum statement.")
-	deleteForumPermsByForumStmt, err = db.Prepare("")
+	deleteForumPermsByForumStmt, err = db.Prepare("DELETE FROM [forums_permissions] WHERE [fid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","DELETE FROM [forums_permissions] WHERE [fid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing deleteActivityStreamMatch statement.")
-	deleteActivityStreamMatchStmt, err = db.Prepare("")
+	deleteActivityStreamMatchStmt, err = db.Prepare("DELETE FROM [activity_stream_matches] WHERE [watcher] = ? AND [asid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","DELETE FROM [activity_stream_matches] WHERE [watcher] = ? AND [asid] = ?")
 		return err
 	}
 		
 	log.Print("Preparing deleteWordFilter statement.")
-	deleteWordFilterStmt, err = db.Prepare("")
+	deleteWordFilterStmt, err = db.Prepare("DELETE FROM [word_filters] WHERE [wfid] = ?")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","DELETE FROM [word_filters] WHERE [wfid] = ?")
 		return err
 	}
 		
@@ -931,30 +939,30 @@ func _gen_mssql() (err error) {
 	}
 		
 	log.Print("Preparing addForumPermsToForumAdmins statement.")
-	addForumPermsToForumAdminsStmt, err = db.Prepare("")
+	addForumPermsToForumAdminsStmt, err = db.Prepare("INSERT INTO [forums_permissions] ([gid],[fid],[preset],[permissions]) SELECT [gid],[? AS fid],[? AS preset],[? AS permissions] FROM [users_groups]  WHERE [is_admin] = 1")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","INSERT INTO [forums_permissions] ([gid],[fid],[preset],[permissions]) SELECT [gid],[? AS fid],[? AS preset],[? AS permissions] FROM [users_groups]  WHERE [is_admin] = 1")
 		return err
 	}
 		
 	log.Print("Preparing addForumPermsToForumStaff statement.")
-	addForumPermsToForumStaffStmt, err = db.Prepare("")
+	addForumPermsToForumStaffStmt, err = db.Prepare("INSERT INTO [forums_permissions] ([gid],[fid],[preset],[permissions]) SELECT [gid],[? AS fid],[? AS preset],[? AS permissions] FROM [users_groups]  WHERE [is_admin] = 0 AND [is_mod] = 1")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","INSERT INTO [forums_permissions] ([gid],[fid],[preset],[permissions]) SELECT [gid],[? AS fid],[? AS preset],[? AS permissions] FROM [users_groups]  WHERE [is_admin] = 0 AND [is_mod] = 1")
 		return err
 	}
 		
 	log.Print("Preparing addForumPermsToForumMembers statement.")
-	addForumPermsToForumMembersStmt, err = db.Prepare("")
+	addForumPermsToForumMembersStmt, err = db.Prepare("INSERT INTO [forums_permissions] ([gid],[fid],[preset],[permissions]) SELECT [gid],[? AS fid],[? AS preset],[? AS permissions] FROM [users_groups]  WHERE [is_admin] = 0 AND [is_mod] = 0 AND [is_banned] = 0")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","INSERT INTO [forums_permissions] ([gid],[fid],[preset],[permissions]) SELECT [gid],[? AS fid],[? AS preset],[? AS permissions] FROM [users_groups]  WHERE [is_admin] = 0 AND [is_mod] = 0 AND [is_banned] = 0")
 		return err
 	}
 		
 	log.Print("Preparing notifyWatchers statement.")
-	notifyWatchersStmt, err = db.Prepare("")
+	notifyWatchersStmt, err = db.Prepare("INSERT INTO [activity_stream_matches] ([watcher],[asid]) SELECT [activity_subscriptions].[user],[activity_stream].[asid] FROM [activity_stream] INNER JOIN [activity_subscriptions] ON [activity_subscriptions].[targetType] = [activity_stream].[elementType] AND [activity_subscriptions].[targetID] = [activity_stream].[elementID] AND [activity_subscriptions].[user] != [activity_stream].[actor]  WHERE [asid] = ?1")
 	if err != nil {
-		log.Print("Bad Query: ","")
+		log.Print("Bad Query: ","INSERT INTO [activity_stream_matches] ([watcher],[asid]) SELECT [activity_subscriptions].[user],[activity_stream].[asid] FROM [activity_stream] INNER JOIN [activity_subscriptions] ON [activity_subscriptions].[targetType] = [activity_stream].[elementType] AND [activity_subscriptions].[targetID] = [activity_stream].[elementID] AND [activity_subscriptions].[user] != [activity_stream].[actor]  WHERE [asid] = ?1")
 		return err
 	}
 	

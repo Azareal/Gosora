@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [administration_logs];
 CREATE TABLE [administration_logs] (
 	[action] nvarchar (100) not null,
 	[elementID] int not null,

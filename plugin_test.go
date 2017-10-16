@@ -180,7 +180,7 @@ func TestBBCodeRender(t *testing.T) {
 		t.Error("Expected a number between 0 and 170141183460469231731687303715884105727")
 	}
 
-	t.Log("Testing bbcode_regex_parse")
+	/*t.Log("Testing bbcode_regex_parse")
 	for _, item := range msgList {
 		t.Log("Testing string '" + item.Msg + "'")
 		res = bbcodeRegexParse(item.Msg)
@@ -188,7 +188,7 @@ func TestBBCodeRender(t *testing.T) {
 			t.Error("Bad output:", "'"+res+"'")
 			t.Error("Expected:", item.Expects)
 		}
-	}
+	}*/
 }
 
 func TestMarkdownRender(t *testing.T) {

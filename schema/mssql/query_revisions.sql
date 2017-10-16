@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [revisions];
 CREATE TABLE [revisions] (
 	[index] int not null,
 	[content] nvarchar (MAX) not null,

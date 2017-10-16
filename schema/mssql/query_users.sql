@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [users];
 CREATE TABLE [users] (
 	[uid] int not null IDENTITY,
 	[name] nvarchar (100) not null,

@@ -15,6 +15,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TODO: Replace any literals with this
+var banGroup = 4
+
 var guestUser = User{ID: 0, Link: "#", Group: 6, Perms: GuestPerms}
 
 //func(real_password string, password string, salt string) (err error)
@@ -59,7 +62,7 @@ type Email struct {
 }
 
 func (user *User) Ban(duration time.Duration, issuedBy int) error {
-	return user.ScheduleGroupUpdate(4, issuedBy, duration)
+	return user.ScheduleGroupUpdate(banGroup, issuedBy, duration)
 }
 
 func (user *User) Unban() error {
@@ -80,7 +83,7 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	}
 
 	revertAt := time.Now().Add(duration)
-	_, err := replaceScheduleGroupStmt.Exec(user.ID, gid, issuedBy, revertAt, temporary)
+	_, err := replaceScheduleGroupStmt.Exec(user.ID, gid, issuedBy, revertAt, temporary, user.ID)
 	if err != nil {
 		return err
 	}
@@ -94,7 +97,7 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 
 // TODO: Use a transaction to avoid race conditions
 func (user *User) RevertGroupUpdate() error {
-	_, err := replaceScheduleGroupStmt.Exec(user.ID, 0, 0, time.Now(), false)
+	_, err := replaceScheduleGroupStmt.Exec(user.ID, 0, 0, time.Now(), false, user.ID)
 	if err != nil {
 		return err
 	}
@@ -114,6 +117,21 @@ func (user *User) Activate() (err error) {
 		return err
 	}
 	_, err = changeGroupStmt.Exec(config.DefaultGroup, user.ID)
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
+	}
+	return err
+}
+
+// TODO: Write tests for this
+// TODO: Delete this user's content too?
+// TODO: Expose this to the admin?
+func (user *User) Delete() error {
+	_, err := deleteUserStmt.Exec(user.ID)
+	if err != nil {
+		return err
+	}
 	ucache, ok := users.(UserCache)
 	if ok {
 		ucache.CacheRemove(user.ID)

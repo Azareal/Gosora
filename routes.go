@@ -433,11 +433,7 @@ func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 				//topic, user := forum.GetLast()
 				//if topic.ID != 0 && user.ID != 0 {
 				if forum.LastTopic.ID != 0 && forum.LastReplyer.ID != 0 {
-					forum.LastTopicTime, err = relativeTimeFromString(forum.LastTopic.LastReplyAt)
-					if err != nil {
-						InternalError(err, w)
-						return
-					}
+					forum.LastTopicTime = relativeTime(forum.LastTopic.LastReplyAt)
 				} else {
 					forum.LastTopicTime = ""
 				}

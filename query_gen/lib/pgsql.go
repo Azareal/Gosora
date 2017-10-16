@@ -128,6 +128,23 @@ func (adapter *Pgsql_Adapter) SimpleReplace(name string, table string, columns s
 	return "", nil
 }
 
+// TODO: Implement this
+func (adapter *Pgsql_Adapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if len(columns) == 0 {
+		return "", errors.New("No columns found for SimpleInsert")
+	}
+	if len(fields) == 0 {
+		return "", errors.New("No input data found for SimpleInsert")
+	}
+	return "", nil
+}
+
 // TODO: Implemented, but we need CreateTable and a better installer to *test* it
 func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
 	if name == "" {

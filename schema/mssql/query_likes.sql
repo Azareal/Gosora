@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS [likes];
 CREATE TABLE [likes] (
 	[weight] tinyint DEFAULT 1 not null,
 	[targetItem] int not null,

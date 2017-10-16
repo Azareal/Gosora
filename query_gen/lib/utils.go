@@ -8,8 +8,10 @@
 package qgen
 
 //import "fmt"
-import "strings"
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 func processColumns(colstr string) (columns []DB_Column) {
 	if colstr == "" {
@@ -46,6 +48,7 @@ func processColumns(colstr string) (columns []DB_Column) {
 	return columns
 }
 
+// TODO: Allow order by statements without a direction
 func processOrderby(orderstr string) (order []DB_Order) {
 	if orderstr == "" {
 		return order

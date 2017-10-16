@@ -6,6 +6,7 @@ package main
 
 import "log"
 import "database/sql"
+import "./query_gen/lib"
 
 // nolint
 var getUserStmt *sql.Stmt
@@ -71,8 +72,8 @@ var addModlogEntryStmt *sql.Stmt
 var addAdminlogEntryStmt *sql.Stmt
 var addAttachmentStmt *sql.Stmt
 var createWordFilterStmt *sql.Stmt
-var addForumPermsToGroupStmt *sql.Stmt
-var replaceScheduleGroupStmt *sql.Stmt
+var addForumPermsToGroupStmt *qgen.MySQLUpsertCallback
+var replaceScheduleGroupStmt *qgen.MySQLUpsertCallback
 var addRepliesToTopicStmt *sql.Stmt
 var removeRepliesFromTopicStmt *sql.Stmt
 var addTopicsToForumStmt *sql.Stmt
@@ -114,6 +115,7 @@ var verifyEmailStmt *sql.Stmt
 var setTempGroupStmt *sql.Stmt
 var updateWordFilterStmt *sql.Stmt
 var bumpSyncStmt *sql.Stmt
+var deleteUserStmt *sql.Stmt
 var deleteReplyStmt *sql.Stmt
 var deleteProfileReplyStmt *sql.Stmt
 var deleteForumPermsByForumStmt *sql.Stmt
@@ -230,7 +232,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing getUsersOffset statement.")
-	getUsersOffsetStmt, err = db.Prepare("SELECT `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` FROM `users` LIMIT ?,?")
+	getUsersOffsetStmt, err = db.Prepare("SELECT `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` FROM `users` ORDER BY uid ASC LIMIT ?,?")
 	if err != nil {
 		return err
 	}
@@ -254,7 +256,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing getModlogsOffset statement.")
-	getModlogsOffsetStmt, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs` LIMIT ?,?")
+	getModlogsOffsetStmt, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs` ORDER BY doneAt DESC LIMIT ?,?")
 	if err != nil {
 		return err
 	}
@@ -350,7 +352,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing getTopicRepliesOffset statement.")
-	getTopicRepliesOffsetStmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `replies`.`tid` = ? LIMIT ?,?")
+	getTopicRepliesOffsetStmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `replies`.`tid` = ? ORDER BY replies.rid ASC LIMIT ?,?")
 	if err != nil {
 		return err
 	}
@@ -404,19 +406,19 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing createReport statement.")
-	createReportStmt, err = db.Prepare("INSERT INTO `topics`(`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`createdBy`,`data`,`parentID`,`css_class`) VALUES (?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,1,'report')")
+	createReportStmt, err = db.Prepare("INSERT INTO `topics`(`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`createdBy`,`lastReplyBy`,`data`,`parentID`,`css_class`) VALUES (?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report')")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing createReply statement.")
-	createReplyStmt, err = db.Prepare("INSERT INTO `replies`(`tid`,`content`,`parsed_content`,`createdAt`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,UTC_TIMESTAMP(),?,?,?)")
+	createReplyStmt, err = db.Prepare("INSERT INTO `replies`(`tid`,`content`,`parsed_content`,`createdAt`,`lastUpdated`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?)")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing createActionReply statement.")
-	createActionReplyStmt, err = db.Prepare("INSERT INTO `replies`(`tid`,`actionType`,`ipaddress`,`createdBy`) VALUES (?,?,?,?)")
+	createActionReplyStmt, err = db.Prepare("INSERT INTO `replies`(`tid`,`actionType`,`ipaddress`,`createdBy`,`createdAt`,`lastUpdated`,`content`,`parsed_content`) VALUES (?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'','')")
 	if err != nil {
 		return err
 	}
@@ -512,13 +514,13 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing addForumPermsToGroup statement.")
-	addForumPermsToGroupStmt, err = db.Prepare("REPLACE INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) VALUES (?,?,?,?)")
+	addForumPermsToGroupStmt, err = qgen.PrepareMySQLUpsertCallback(db, "INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE `gid` = ? AND `fid` = ? AND `preset` = ? AND `permissions` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing replaceScheduleGroup statement.")
-	replaceScheduleGroupStmt, err = db.Prepare("REPLACE INTO `users_groups_scheduler`(`uid`,`set_group`,`issued_by`,`issued_at`,`revert_at`,`temporary`) VALUES (?,?,?,UTC_TIMESTAMP(),?,?)")
+	replaceScheduleGroupStmt, err = qgen.PrepareMySQLUpsertCallback(db, "INSERT INTO `users_groups_scheduler`(`uid`,`set_group`,`issued_by`,`issued_at`,`revert_at`,`temporary`) VALUES (?,?,?,UTC_TIMESTAMP(),?,?) ON DUPLICATE KEY UPDATE `uid` = ? AND `set_group` = ? AND `issued_by` = ? AND `issued_at` = UTC_TIMESTAMP() AND `revert_at` = ? AND `temporary` = ?")
 	if err != nil {
 		return err
 	}
@@ -765,6 +767,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing bumpSync statement.")
 	bumpSyncStmt, err = db.Prepare("UPDATE `sync` SET `last_update` = UTC_TIMESTAMP()")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing deleteUser statement.")
+	deleteUserStmt, err = db.Prepare("DELETE FROM `users` WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}

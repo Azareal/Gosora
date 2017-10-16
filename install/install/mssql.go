@@ -106,6 +106,13 @@ func (ins *MssqlInstaller) TableDefs() (err error) {
 		}
 		table = strings.TrimSuffix(table, ext)
 
+		// ? - This is mainly here for tests, although it might allow the installer to overwrite a production database, so we might want to proceed with caution
+		_, err = ins.db.Exec("DROP TABLE IF EXISTS [" + table + "];")
+		if err != nil {
+			fmt.Println("Failed query:", "DROP TABLE IF EXISTS ["+table+"]")
+			return err
+		}
+
 		fmt.Println("Creating table '" + table + "'")
 		data, err := ioutil.ReadFile("./schema/mssql/" + f.Name())
 		if err != nil {
