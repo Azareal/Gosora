@@ -55,6 +55,12 @@ var allowedFileExts = StringList{
 var imageFileExts = StringList{
 	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", "apng",
 }
+var archiveFileExts = StringList{
+	"bz2", "zip", "gz", "7z", "tar", "cab",
+}
+var executableFileExts = StringList{
+	"exe", "jar", "phar", "shar", "iso",
+}
 
 // TODO: Write a test for this
 func (slice StringList) Contains(needle string) bool {
@@ -70,6 +76,16 @@ var staticFiles = make(map[string]SFile)
 var logWriter = io.MultiWriter(os.Stderr)
 
 func main() {
+	// TODO: Recover from panics
+	/*defer func() {
+		r := recover()
+		if r != nil {
+			log.Print(r)
+			debug.PrintStack()
+			return
+		}
+	}()*/
+
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()
 	f, err := os.OpenFile("./operations.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
@@ -178,7 +194,6 @@ func main() {
 
 				// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 				// TODO: Publish scheduled posts.
-				// TODO: Delete the empty users_groups_scheduler entries
 
 				// TODO: Add a plugin hook here
 			}

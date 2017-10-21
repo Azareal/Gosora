@@ -451,7 +451,6 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 	}
 }
 
-// ! This probably misses the forumView cache
 func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user User, sfid string) {
 	_, ok := SimplePanelUserCheck(w, r, &user)
 	if !ok {
@@ -509,24 +508,24 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		}
 		group.Forums[fid] = fperms
 
-		perms, err := json.Marshal(fperms)
+		err = replaceForumPermsForGroup(gid, map[int]string{fid: permPreset}, map[int]ForumPerms{fid: fperms})
 		if err != nil {
 			InternalErrorJSQ(err, w, r, isJs)
 			return
 		}
 
-		_, err = addForumPermsToGroupStmt.Exec(gid, fid, permPreset, perms)
-		if err != nil {
-			InternalErrorJSQ(err, w, r, isJs)
-			return
-		}
-
+		// TODO: Add this and replaceForumPermsForGroup into a transaction?
 		_, err = updateForumStmt.Exec(forum.Name, forum.Desc, forum.Active, "", fid)
 		if err != nil {
 			InternalErrorJSQ(err, w, r, isJs)
 			return
 		}
-		forum.Preset = ""
+		err = fstore.Reload(fid)
+		if err != nil {
+			// Log this? -- Another admin might have deleted it
+			LocalErrorJSQ("Unable to reload forum", w, r, user, isJs)
+			return
+		}
 	}
 
 	if !isJs {
@@ -1347,7 +1346,7 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user User) {
 	perPage := 9
 	offset, page, lastPage := pageOffset(stats.Groups, page, perPage)
 
-	// Skip the System group
+	// Skip the 'Unknown' group
 	offset++
 
 	var count int
@@ -1436,15 +1435,16 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user User, sgi
 	}
 
 	var rank string
-	if group.IsAdmin {
+	switch {
+	case group.IsAdmin:
 		rank = "Admin"
-	} else if group.IsMod {
+	case group.IsMod:
 		rank = "Mod"
-	} else if group.IsBanned {
+	case group.IsBanned:
 		rank = "Banned"
-	} else if group.ID == 6 {
+	case group.ID == 6:
 		rank = "Guest"
-	} else {
+	default:
 		rank = "Member"
 	}
 
@@ -1619,52 +1619,26 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 				LocalError("You need the EditGroupAdmin permission to designate this group as an admin group.", w, r, user)
 				return
 			}
-
-			_, err = updateGroupRankStmt.Exec(1, 1, 0, gid)
-			if err != nil {
-				InternalError(err, w)
-				return
-			}
-			group.IsAdmin = true
-			group.IsMod = true
-			group.IsBanned = false
+			err = group.ChangeRank(true, true, false)
 		case "Mod":
 			if !user.Perms.EditGroupSuperMod {
 				LocalError("You need the EditGroupSuperMod permission to designate this group as a super-mod group.", w, r, user)
 				return
 			}
-
-			_, err = updateGroupRankStmt.Exec(0, 1, 0, gid)
-			if err != nil {
-				InternalError(err, w)
-				return
-			}
-			group.IsAdmin = false
-			group.IsMod = true
-			group.IsBanned = false
+			err = group.ChangeRank(false, true, false)
 		case "Banned":
-			_, err = updateGroupRankStmt.Exec(0, 0, 1, gid)
-			if err != nil {
-				InternalError(err, w)
-				return
-			}
-			group.IsAdmin = false
-			group.IsMod = false
-			group.IsBanned = true
+			err = group.ChangeRank(false, false, true)
 		case "Guest":
 			LocalError("You can't designate a group as a guest group.", w, r, user)
 			return
 		case "Member":
-			_, err = updateGroupRankStmt.Exec(0, 0, 0, gid)
-			if err != nil {
-				InternalError(err, w)
-				return
-			}
-			group.IsAdmin = false
-			group.IsMod = false
-			group.IsBanned = false
+			err = group.ChangeRank(false, false, false)
 		default:
 			LocalError("Invalid group type.", w, r, user)
+			return
+		}
+		if err != nil {
+			InternalError(err, w)
 			return
 		}
 	}

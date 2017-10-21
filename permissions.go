@@ -1,9 +1,16 @@
 package main
 
-import "log"
-import "sync"
-import "strconv"
-import "encoding/json"
+import (
+	"database/sql"
+	"encoding/json"
+	"log"
+	"strconv"
+	"sync"
+
+	"./query_gen/lib"
+)
+
+// TODO: Refactor the perms system
 
 var permUpdateMutex sync.Mutex
 var BlankPerms Perms
@@ -261,10 +268,18 @@ func presetToPermmap(preset string) (out map[string]ForumPerms) {
 }
 
 func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
-	permUpdateMutex.Lock()
-	defer permUpdateMutex.Unlock()
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
-	_, err := deleteForumPermsByForumStmt.Exec(fid)
+	deleteForumPermsByForumTx, err := qgen.Builder.SimpleDeleteTx(tx, "forums_permissions", "fid = ?")
+	if err != nil {
+		return err
+	}
+
+	_, err = deleteForumPermsByForumTx.Exec(fid)
 	if err != nil {
 		return err
 	}
@@ -273,7 +288,16 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	_, err = addForumPermsToForumAdminsStmt.Exec(fid, "", perms)
+
+	addForumPermsToForumAdminsTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
+		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
+		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 1", "", ""},
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = addForumPermsToForumAdminsTx.Exec(fid, "", perms)
 	if err != nil {
 		return err
 	}
@@ -282,7 +306,15 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	_, err = addForumPermsToForumStaffStmt.Exec(fid, "", perms)
+
+	addForumPermsToForumStaffTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
+		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
+		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 1", "", ""},
+	)
+	if err != nil {
+		return err
+	}
+	_, err = addForumPermsToForumStaffTx.Exec(fid, "", perms)
 	if err != nil {
 		return err
 	}
@@ -291,21 +323,75 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	_, err = addForumPermsToForumMembersStmt.Exec(fid, "", perms)
+
+	addForumPermsToForumMembersTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
+		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
+		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
+	)
+	if err != nil {
+		return err
+	}
+	_, err = addForumPermsToForumMembersTx.Exec(fid, "", perms)
 	if err != nil {
 		return err
 	}
 
-	perms, err = json.Marshal(permmap["guests"])
-	if err != nil {
-		return err
-	}
-	_, err = addForumPermsToGroupStmt.Exec(6, fid, "", perms)
+	// 6 is the ID of the Not Loggedin Group
+	// TODO: Use a shared variable rather than a literal for the group ID
+	err = replaceForumPermsForGroupTx(tx, 6, map[int]string{fid: ""}, map[int]ForumPerms{fid: permmap["guests"]})
 	if err != nil {
 		return err
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	permUpdateMutex.Lock()
+	defer permUpdateMutex.Unlock()
 	return rebuildForumPermissions(fid)
+}
+
+func replaceForumPermsForGroup(gid int, presetSet map[int]string, permSets map[int]ForumPerms) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	err = replaceForumPermsForGroupTx(tx, gid, presetSet, permSets)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func replaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string, permSets map[int]ForumPerms) error {
+	deleteForumPermsForGroupTx, err := qgen.Builder.SimpleDeleteTx(tx, "forums_permissions", "gid = ? AND fid = ?")
+	if err != nil {
+		return err
+	}
+
+	addForumPermsToGroupTx, err := qgen.Builder.SimpleInsertTx(tx, "forums_permissions", "gid, fid, preset, permissions", "?,?,?,?")
+	if err != nil {
+		return err
+	}
+	for fid, permSet := range permSets {
+		permstr, err := json.Marshal(permSet)
+		if err != nil {
+			return err
+		}
+		_, err = deleteForumPermsForGroupTx.Exec(gid, fid)
+		if err != nil {
+			return err
+		}
+		_, err = addForumPermsToGroupTx.Exec(gid, fid, presetSets[fid], string(permstr))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?

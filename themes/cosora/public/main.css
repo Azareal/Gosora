@@ -2,12 +2,24 @@
 	--header-border-color: hsl(0,0%,85%);
 	--element-border-color: hsl(0,0%,90%);
 	--element-background-color: white;
+	--replies-lang-string: " replies";
+	--topics-lang-string: " topics";
+	--likes-lang-string: " likes";
+	--primary-link-color: hsl(0,0%,40%);
 }
 
 * {
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
+}
+
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('../font-awesome-4.7.0/fonts/fontawesome-webfont.eot?v=4.7.0');
+  src: url('../font-awesome-4.7.0/fonts/fontawesome-webfont.eot?#iefix&v=4.7.0') format('embedded-opentype'), url('../font-awesome-4.7.0/fonts/fontawesome-webfont.woff2?v=4.7.0') format('woff2'), url('../font-awesome-4.7.0/fonts/fontawesome-webfont.woff?v=4.7.0') format('woff'), url('../font-awesome-4.7.0/fonts/fontawesome-webfont.ttf?v=4.7.0') format('truetype'), url('../font-awesome-4.7.0/fonts/fontawesome-webfont.svg?v=4.7.0#fontawesomeregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
 }
 
 body {
@@ -18,7 +30,7 @@ body {
 
 a {
 	text-decoration: none;
-	color: hsl(0,0%,40%);
+	color: var(--primary-link-color);
 }
 
 #back {
@@ -53,10 +65,11 @@ li {
 .menu_overview {
 	font-size: 22px;
 	margin-right: 12px;
+	letter-spacing: 1px;
 }
 .menu_overview a:after {
-	margin-left: 14px;
-	margin-right: 4px;
+	margin-left: 13px;
+	margin-right: 5px;
 	position: relative;
 	top: -3px;
 }
@@ -74,8 +87,37 @@ li {
     top: -2px;
 }
 .menu_alerts {
+	color: hsl(0,0%,40%);
+	display: flex;
+}
+.alert_bell:before {
+    content: "\f01c";
+    font: normal normal normal 14px/1 FontAwesome;
+}
+.menu_alerts:not(.has_alerts) .alert_counter {
 	display: none;
 }
+.alert_counter {
+	width: 4px;
+	height: 4px;
+	overflow: hidden;
+	background-color: red;
+	opacity: 0.7;
+	border-radius: 30px;
+	position: relative;
+	top: 2px;
+	left: -1px;
+}
+.alert_aftercounter:before {
+	content: "Alerts";
+	margin-left: 4px;
+}
+.alert_aftercounter:after {
+	content: "|";
+	margin-left: 12px;
+	color: var(--header-border-color);
+}
+
 .menu_account a:before {
     content: "\f2c3";
     font: normal normal normal 14px/1 FontAwesome;
@@ -117,8 +159,8 @@ ul {
 	border: 1px solid var(--header-border-color);
 	border-bottom: 2px solid var(--header-border-color);
 	background-color: var(--element-background-color);
-	margin-left: 4px;
-    margin-right: 4px;
+	margin-left: 12px;
+	margin-right: 12px;
 }
 
 .rowhead {
@@ -133,6 +175,23 @@ ul {
 	-webkit-margin-before: 0;
 	-webkit-margin-after: 0;
 	display: inline-block;
+}
+
+.topic_list_title_block {
+	display: flex;
+}
+.mod_opt {
+	margin-left: auto;
+}
+.mod_opt .moderate_link {
+	border-left: 1px solid var(--element-border-color);
+	padding-left: 12px;
+	height: 20px;
+}
+.mod_opt .moderate_link:before {
+	content: "\f0e3";
+	font: normal normal normal 14px/1 FontAwesome;
+	font-size: 18px;
 }
 
 .topic_list {
@@ -152,26 +211,37 @@ ul {
 }
 
 .topic_list .rowtopic {
-    font-size: 18px;
-    color: hsl(0,0%,30%);
-    margin-right: 2px;
-	max-width: 230px;
+	font-size: 17px;
+	color: hsl(0,0%,30%);
+	margin-right: 1px;
+	white-space: nowrap;
+	display: inline-block;
+}
+.topic_list .rowtopic span {
+	max-width: 112px;
 	overflow: hidden;
-	text-overflow: ellipsis;
+}
+
+.topic_list .rowsmall {
+	font-size: 15px;
 }
 
 .topic_list .rowsmall.starter:before {
-    content: "\f007";
-    font: normal normal normal 14px/1 FontAwesome;
-    margin-right: 5px;
-    font-size: 16px;
+	content: "\f007";
+	font: normal normal normal 14px/1 FontAwesome;
+	margin-right: 5px;
+	font-size: 15px;
 }
 
 .topic_list .rowsmall.starter:before {
-    content: "\f007";
-    font: normal normal normal 14px/1 FontAwesome;
-    margin-right: 5px;
-    font-size: 16px;
+	content: "\f007";
+	font: normal normal normal 14px/1 FontAwesome;
+	margin-right: 5px;
+	font-size: 15px;
+}
+
+.topic_list .lastReplyAt {
+	font-size: 14px;
 }
 
 .topic_list .topic_status_e {
@@ -179,19 +249,50 @@ ul {
 }
 
 .topic_left {
-	flex: 1 1 calc(100% - 400px);
+	flex: 1 1 calc(100% - 380px);
 	border-right: none;
 }
 
 .topic_inner_right {
-	margin-left: auto;
-    margin-right: auto;
+	margin-left: 15%;
+	margin-right: auto;
     font-size: 17px;
+}
+
+.topic_inner_right.rowsmall {
+	font-size: 14px;
+	margin-top: 15px;
+}
+
+/* Experimenting here */
+.topic_inner_right {
 	margin-top: 12px;
 }
 
+.topic_inner_right span {
+	/*font-size: 15px;*/
+	font-size: 16px;
+}
+
+.topic_inner_right span:after {
+	font-size: 13.5px;
+}
+/* End Experiment */
+
+.topic_inner_right .replyCount:after {
+	content: var(--replies-lang-string);
+}
+
+.topic_inner_right .topicCount:after {
+	content: var(--topics-lang-string);
+}
+
+.topic_inner_right .likeCount:after {
+	content: var(--likes-lang-string);
+}
+
 .topic_right {
-	flex: 1 1 150px;
+	flex: 1 1 0px; /*150px*/
 	border-left: none;
 }
 
@@ -205,15 +306,16 @@ ul {
 
 .topic_right img {
 	border-radius: 30px;
-	height: 48px;
-	width: 48px;
-	margin-top: 8px;
+	height: 42px;
+	width: 42px;
+	margin-top: 10px;
 }
 
 .topic_left .topic_inner_left {
 	margin-top: 12px;
 	margin-left: 8px;
 	margin-bottom: 14px;
+	width: 240px;
 }
 
 .topic_right > span {
@@ -222,11 +324,22 @@ ul {
 }
 
 .topic_sticky {
-	border-bottom: 2px solid hsl(51, 60%, 50%);
+	border-bottom: 2px solid hsl(51, 60%, 70%);
 }
 
-/*@element .topic_left .rowtopic and (min-characters: 10) {
-}*/
+@element .topic_left .rowtopic and (min-width: 110px) {
+	$this, $this span, $this + .parent_forum {
+		float: left;
+	}
+	$this + .parent_forum {
+		margin: 2px;
+		margin-left: 3px;
+	}
+	$this:after {
+		content: "...";
+		float: left;
+	}
+}
 
 @media(max-width: 670px) {
 	.topic_inner_right {

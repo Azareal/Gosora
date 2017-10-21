@@ -40,6 +40,7 @@ var updatePluginStmt *sql.Stmt
 var updatePluginInstallStmt *sql.Stmt
 var updateThemeStmt *sql.Stmt
 var updateUserStmt *sql.Stmt
+var updateUserGroupStmt *sql.Stmt
 var updateGroupPermsStmt *sql.Stmt
 var updateGroupRankStmt *sql.Stmt
 var updateGroupStmt *sql.Stmt
@@ -249,6 +250,12 @@ func _gen_pgsql() (err error) {
 		
 	log.Print("Preparing updateUser statement.")
 	updateUserStmt, err = db.Prepare("UPDATE `users` SET `name` = ?,`email` = ?,`group` = ? WHERE `uid` = ?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing updateUserGroup statement.")
+	updateUserGroupStmt, err = db.Prepare("UPDATE `users` SET `group` = ? WHERE `uid` = ?")
 	if err != nil {
 		return err
 	}

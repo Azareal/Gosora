@@ -102,10 +102,9 @@ type DB_Adapter interface {
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
 
 	// ! DEPRECATED
-	SimpleReplace(name string, table string, columns string, fields string) (string, error)
-
-	// ! NOTE: MySQL doesn't support upserts properly, asides from for keys, so this is just a less destructive replace atm
-	SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error)
+	//SimpleReplace(name string, table string, columns string, fields string) (string, error)
+	// ! NOTE: MySQL doesn't support upserts properly, so I'm removing this from the interface until we find a way to patch it in
+	//SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error)
 	SimpleUpdate(name string, table string, set string, where string) (string, error)
 	SimpleDelete(name string, table string, where string) (string, error)
 	Purge(name string, table string) (string, error)

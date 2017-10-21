@@ -451,8 +451,9 @@ func (adapter *Mssql_Adapter) SimpleSelect(name string, table string, columns st
 					querystr += " ?" + strconv.Itoa(substituteCount)
 				case "function", "operator", "number":
 					// TODO: Split the function case off to speed things up
+					// MSSQL seems to convert the formats? so we'll compare it with a regular date. Do this with the other methods too?
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
-						token.Contents = "GETUTCDATE()"
+						token.Contents = "GETDATE()"
 					}
 					querystr += " " + token.Contents
 				case "column":
@@ -800,12 +801,21 @@ func (adapter *Mssql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel
 	/* Select */
 	var substituteCount = 0
 
-	// Escape the column names, just in case we've used a reserved keyword
-	var colslice = strings.Split(strings.TrimSpace(sel.Columns), ",")
-	for _, column := range colslice {
-		querystr += "[" + strings.TrimSpace(column) + "],"
+	for _, column := range processColumns(sel.Columns) {
+		var source, alias string
+
+		// Escape the column names, just in case we've used a reserved keyword
+		if column.Type == "function" || column.Type == "substitute" {
+			source = column.Left
+		} else {
+			source = "[" + column.Left + "]"
+		}
+
+		if column.Alias != "" {
+			alias = " AS [" + column.Alias + "]"
+		}
+		querystr += " " + source + alias + ","
 	}
-	// Remove the trailing comma
 	querystr = querystr[0 : len(querystr)-1]
 	querystr += " FROM [" + sel.Table + "] "
 

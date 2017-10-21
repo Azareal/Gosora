@@ -132,3 +132,101 @@ func (build *builder) Purge(table string) (stmt *sql.Stmt, err error) {
 	}
 	return build.conn.Prepare(res)
 }
+
+// These ones support transactions
+func (build *builder) SimpleSelectTx(tx *sql.Tx, table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleSelect("_builder", table, columns, where, orderby, limit)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleCountTx(tx *sql.Tx, table string, where string, limit string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleCount("_builder", table, where, limit)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleLeftJoinTx(tx *sql.Tx, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleLeftJoin("_builder", table1, table2, columns, joiners, where, orderby, limit)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleInnerJoinTx(tx *sql.Tx, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInnerJoin("_builder", table1, table2, columns, joiners, where, orderby, limit)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) CreateTableTx(tx *sql.Tx, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.CreateTable("_builder", table, charset, collation, columns, keys)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleInsertTx(tx *sql.Tx, table string, columns string, fields string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInsert("_builder", table, columns, fields)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleInsertSelectTx(tx *sql.Tx, ins DB_Insert, sel DB_Select) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInsertSelect("_builder", ins, sel)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInsertLeftJoin("_builder", ins, sel)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleInsertInnerJoin("_builder", ins, sel)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleUpdateTx(tx *sql.Tx, table string, set string, where string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleUpdate("_builder", table, set, where)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+func (build *builder) SimpleDeleteTx(tx *sql.Tx, table string, where string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.SimpleDelete("_builder", table, where)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}
+
+// I don't know why you need this, but here it is x.x
+func (build *builder) PurgeTx(tx *sql.Tx, table string) (stmt *sql.Stmt, err error) {
+	res, err := build.adapter.Purge("_builder", table)
+	if err != nil {
+		return stmt, err
+	}
+	return tx.Prepare(res)
+}

@@ -903,7 +903,7 @@ package main
 
 import "log"
 import "database/sql"
-import "./query_gen/lib"
+//import "./query_gen/lib"
 
 // nolint
 ` + stmts + `

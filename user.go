@@ -9,9 +9,12 @@ package main
 import (
 	//"log"
 	//"fmt"
+	"database/sql"
+	"errors"
 	"strconv"
 	"time"
 
+	"./query_gen/lib"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,6 +28,7 @@ var CheckPassword = BcryptCheckPassword
 
 //func(password string) (hashed_password string, salt string, err error)
 var GeneratePassword = BcryptGeneratePassword
+var ErrNoTempGroup = errors.New("We couldn't find a temporary group for this user")
 
 type User struct {
 	ID           int
@@ -66,28 +70,61 @@ func (user *User) Ban(duration time.Duration, issuedBy int) error {
 }
 
 func (user *User) Unban() error {
-	err := user.RevertGroupUpdate()
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
+	return user.RevertGroupUpdate()
+}
+
+func (user *User) deleteScheduleGroupTx(tx *sql.Tx) error {
+	deleteScheduleGroupStmt, err := qgen.Builder.SimpleDeleteTx(tx, "users_groups_scheduler", "uid = ?")
+	if err != nil {
+		return err
 	}
+	_, err = deleteScheduleGroupStmt.Exec(user.ID)
 	return err
 }
 
-// TODO: Use a transaction to avoid race conditions
+func (user *User) setTempGroupTx(tx *sql.Tx, tempGroup int) error {
+	setTempGroupStmt, err := qgen.Builder.SimpleUpdateTx(tx, "users", "temp_group = ?", "uid = ?")
+	if err != nil {
+		return err
+	}
+	_, err = setTempGroupStmt.Exec(tempGroup, user.ID)
+	return err
+}
+
 // Make this more stateless?
 func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Duration) error {
 	var temporary bool
 	if duration.Nanoseconds() != 0 {
 		temporary = true
 	}
-
 	revertAt := time.Now().Add(duration)
-	_, err := replaceScheduleGroupStmt.Exec(user.ID, gid, issuedBy, revertAt, temporary, user.ID)
+
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-	_, err = setTempGroupStmt.Exec(gid, user.ID)
+	defer tx.Rollback()
+
+	err = user.deleteScheduleGroupTx(tx)
+	if err != nil {
+		return err
+	}
+
+	createScheduleGroupTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups_scheduler", "uid, set_group, issued_by, issued_at, revert_at, temporary", "?,?,?,UTC_TIMESTAMP(),?,?")
+	if err != nil {
+		return err
+	}
+	_, err = createScheduleGroupTx.Exec(user.ID, gid, issuedBy, revertAt, temporary)
+	if err != nil {
+		return err
+	}
+
+	err = user.setTempGroupTx(tx, gid)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+
 	ucache, ok := users.(UserCache)
 	if ok {
 		ucache.CacheRemove(user.ID)
@@ -95,13 +132,24 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	return err
 }
 
-// TODO: Use a transaction to avoid race conditions
 func (user *User) RevertGroupUpdate() error {
-	_, err := replaceScheduleGroupStmt.Exec(user.ID, 0, 0, time.Now(), false, user.ID)
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-	_, err = setTempGroupStmt.Exec(0, user.ID)
+	defer tx.Rollback()
+
+	err = user.deleteScheduleGroupTx(tx)
+	if err != nil {
+		return err
+	}
+
+	err = user.setTempGroupTx(tx, 0)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+
 	ucache, ok := users.(UserCache)
 	if ok {
 		ucache.CacheRemove(user.ID)
@@ -150,6 +198,15 @@ func (user *User) ChangeName(username string) (err error) {
 
 func (user *User) ChangeAvatar(avatar string) (err error) {
 	_, err = setAvatarStmt.Exec(avatar, user.ID)
+	ucache, ok := users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
+	}
+	return err
+}
+
+func (user *User) ChangeGroup(group int) (err error) {
+	_, err = updateUserGroupStmt.Exec(group, user.ID)
 	ucache, ok := users.(UserCache)
 	if ok {
 		ucache.CacheRemove(user.ID)

@@ -24,7 +24,7 @@ type UserStore interface {
 	//BulkGet(ids []int) ([]*User, error)
 	BulkGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
-	Create(username string, password string, email string, group int, active int) (int, error)
+	Create(username string, password string, email string, group int, active bool) (int, error)
 	GlobalCount() int
 }
 
@@ -124,6 +124,7 @@ func (mus *MemoryUserStore) Get(id int) (*User, error) {
 	user = &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
+	// TODO: Add an init method to User rather than writing this same bit of code over and over
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
@@ -202,6 +203,7 @@ func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 			return nil, err
 		}
 
+		// TODO: Add an init method to User rather than writing this same bit of code over and over
 		// Initialise the user
 		if user.Avatar != "" {
 			if user.Avatar[0] == '.' {
@@ -253,6 +255,7 @@ func (mus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	user := &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
+	// TODO: Add an init method to User rather than writing this same bit of code over and over
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
@@ -274,6 +277,7 @@ func (mus *MemoryUserStore) Reload(id int) error {
 		return err
 	}
 
+	// TODO: Add an init method to User rather than writing this same bit of code over and over
 	if user.Avatar != "" {
 		if user.Avatar[0] == '.' {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
@@ -357,7 +361,7 @@ func (mus *MemoryUserStore) CacheRemoveUnsafe(id int) error {
 }
 
 // TODO: Change active to a bool?
-func (mus *MemoryUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
+func (mus *MemoryUserStore) Create(username string, password string, email string, group int, active bool) (int, error) {
 	// Is this username already taken..?
 	err := mus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
@@ -405,8 +409,7 @@ func (mus *MemoryUserStore) GetCapacity() int {
 }
 
 // GlobalCount returns the total number of users registered on the forums
-func (mus *MemoryUserStore) GlobalCount() int {
-	var ucount int
+func (mus *MemoryUserStore) GlobalCount() (ucount int) {
 	err := mus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {
 		LogError(err)
@@ -548,7 +551,7 @@ func (mus *SQLUserStore) Exists(id int) bool {
 	return err != ErrNoRows
 }
 
-func (mus *SQLUserStore) Create(username string, password string, email string, group int, active int) (int, error) {
+func (mus *SQLUserStore) Create(username string, password string, email string, group int, active bool) (int, error) {
 	// Is this username already taken..?
 	err := mus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
@@ -575,11 +578,62 @@ func (mus *SQLUserStore) Create(username string, password string, email string, 
 }
 
 // GlobalCount returns the total number of users registered on the forums
-func (mus *SQLUserStore) GlobalCount() int {
-	var ucount int
+func (mus *SQLUserStore) GlobalCount() (ucount int) {
 	err := mus.userCount.QueryRow().Scan(&ucount)
 	if err != nil {
 		LogError(err)
 	}
 	return ucount
+}
+
+// TODO: MockUserStore
+
+// NullUserStore is here for tests because Go doesn't have short-circuiting
+type NullUserStore struct {
+}
+
+func (nus *NullUserStore) CacheGet(_ int) (*User, error) {
+	return nil, ErrNoRows
+}
+
+func (nus *NullUserStore) CacheGetUnsafe(_ int) (*User, error) {
+	return nil, ErrNoRows
+}
+
+func (nus *NullUserStore) CacheSet(_ *User) error {
+	return ErrStoreCapacityOverflow
+}
+
+func (nus *NullUserStore) CacheAdd(_ *User) error {
+	return ErrStoreCapacityOverflow
+}
+
+func (nus *NullUserStore) CacheAddUnsafe(_ *User) error {
+	return ErrStoreCapacityOverflow
+}
+
+func (nus *NullUserStore) CacheRemove(_ int) error {
+	return ErrNoRows
+}
+
+func (nus *NullUserStore) CacheRemoveUnsafe(_ int) error {
+	return ErrNoRows
+}
+
+func (nus *NullUserStore) Flush() {
+}
+
+func (nus *NullUserStore) Reload(_ int) error {
+	return ErrNoRows
+}
+
+func (nus *NullUserStore) Length() int {
+	return 0
+}
+
+func (nus *NullUserStore) SetCapacity(_ int) {
+}
+
+func (nus *NullUserStore) GetCapacity() int {
+	return 0
 }

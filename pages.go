@@ -456,6 +456,7 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	msg = strings.Replace(msg, ":O", "😲", -1)
 	msg = strings.Replace(msg, ":p", "😛", -1)
 	msg = strings.Replace(msg, ":o", "😲", -1)
+	msg = strings.Replace(msg, ";)", "😉", -1)
 	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 
 	// Word filter list. E.g. Swear words and other things the admins don't like
@@ -473,13 +474,12 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	var lastItem = 0
 	var i = 0
 	for ; len(msgbytes) > (i + 1); i++ {
-		//log.Print("Index:",i)
+		//log.Print("Index: ",i)
 		//log.Print("Index Item: ",msgbytes[i])
 		//log.Print("string(msgbytes[i]): ",string(msgbytes[i]))
 		//log.Print("End Index")
 		if (i == 0 && (msgbytes[0] > 32)) || ((msgbytes[i] < 33) && (msgbytes[i+1] > 32)) {
-			//log.Print("IN")
-			//log.Print(msgbytes[i])
+			//log.Print("IN ",msgbytes[i])
 			if (i != 0) || msgbytes[i] < 33 {
 				i++
 			}
@@ -509,12 +509,12 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					outbytes = append(outbytes, urlClose...)
 					lastItem = i
 
-					//log.Print("string(msgbytes) ",string(msgbytes))
-					//log.Print("msgbytes ",msgbytes)
-					//log.Print(msgbytes[lastItem - 1])
-					//log.Print(lastItem - 1)
-					//log.Print(msgbytes[lastItem])
-					//log.Print("lastItem ",lastItem)
+					//log.Print("string(msgbytes): ",string(msgbytes))
+					//log.Print("msgbytes: ",msgbytes)
+					//log.Print("msgbytes[lastItem - 1]: ",msgbytes[lastItem - 1])
+					//log.Print("lastItem - 1: ",lastItem - 1)
+					//log.Print("msgbytes[lastItem]: ",msgbytes[lastItem])
+					//log.Print("lastItem: ",lastItem)
 				} else if bytes.Equal(msgbytes[i+1:i+5], []byte("rid-")) {
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
 					i += 5
@@ -589,10 +589,10 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 
 				//log.Print(string(msgbytes))
 				//log.Print(msgbytes)
-				//log.Print(msgbytes[lastItem - 1])
-				//log.Print("lastItem - 1",lastItem - 1)
-				//log.Print("msgbytes[lastItem]",msgbytes[lastItem])
-				//log.Print("lastItem",lastItem)
+				//log.Print("msgbytes[lastItem - 1]: ", msgbytes[lastItem - 1])
+				//log.Print("lastItem - 1: ", lastItem - 1)
+				//log.Print("msgbytes[lastItem]: ", msgbytes[lastItem])
+				//log.Print("lastItem: ", lastItem)
 			} else if msgbytes[i] == 'h' || msgbytes[i] == 'f' || msgbytes[i] == 'g' {
 				//log.Print("IN hfg")
 				if msgbytes[i+1] == 't' && msgbytes[i+2] == 't' && msgbytes[i+3] == 'p' {
@@ -616,10 +616,10 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				urlLen := partialURLBytesLen(msgbytes[i:])
 				if msgbytes[i+urlLen] > 32 { // space and invisibles
 					//log.Print("INVALID URL")
-					//log.Print("msgbytes[i+urlLen]", msgbytes[i+urlLen])
-					//log.Print("string(msgbytes[i+urlLen])", string(msgbytes[i+urlLen]))
-					//log.Print("msgbytes[i:i+urlLen]", msgbytes[i:i+urlLen])
-					//log.Print("string(msgbytes[i:i+urlLen])", string(msgbytes[i:i+urlLen]))
+					//log.Print("msgbytes[i+urlLen]: ", msgbytes[i+urlLen])
+					//log.Print("string(msgbytes[i+urlLen]): ", string(msgbytes[i+urlLen]))
+					//log.Print("msgbytes[i:i+urlLen]: ", msgbytes[i:i+urlLen])
+					//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
 					outbytes = append(outbytes, invalidURL...)
 					i += urlLen
 					continue
@@ -673,18 +673,18 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				urlLen := partialURLBytesLen(msgbytes[i:])
 				if msgbytes[i+urlLen] > 32 { // space and invisibles
 					//log.Print("INVALID URL")
-					//log.Print("msgbytes[i+urlLen]", msgbytes[i+urlLen])
-					//log.Print("string(msgbytes[i+urlLen])", string(msgbytes[i+urlLen]))
-					//log.Print("msgbytes[i:i+urlLen]", msgbytes[i:i+urlLen])
-					//log.Print("string(msgbytes[i:i+urlLen])", string(msgbytes[i:i+urlLen]))
+					//log.Print("msgbytes[i+urlLen]: ", msgbytes[i+urlLen])
+					//log.Print("string(msgbytes[i+urlLen]): ", string(msgbytes[i+urlLen]))
+					//log.Print("msgbytes[i:i+urlLen]: ", msgbytes[i:i+urlLen])
+					//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
 					outbytes = append(outbytes, invalidURL...)
 					i += urlLen
 					continue
 				}
 
 				//log.Print("VALID URL")
-				//log.Print("msgbytes[i:i+urlLen]", msgbytes[i:i+urlLen])
-				//log.Print("string(msgbytes[i:i+urlLen])", string(msgbytes[i:i+urlLen]))
+				//log.Print("msgbytes[i:i+urlLen]: ", msgbytes[i:i+urlLen])
+				//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
 				media, ok := parseMediaBytes(msgbytes[i : i+urlLen])
 				if !ok {
 					outbytes = append(outbytes, invalidURL...)
@@ -733,10 +733,10 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	}
 
 	if lastItem != i && len(outbytes) != 0 {
-		//log.Print("lastItem: ",msgbytes[lastItem])
-		//log.Print("lastItem index: ",lastItem)
-		//log.Print("i: ",i)
-		//log.Print("lastItem to end: ",msgbytes[lastItem:])
+		//log.Print("lastItem: ", msgbytes[lastItem])
+		//log.Print("lastItem index: ", lastItem)
+		//log.Print("i: ", i)
+		//log.Print("lastItem to end: ", msgbytes[lastItem:])
 		//log.Print("-----")
 		calclen := len(msgbytes) - 10
 		if calclen <= lastItem {
@@ -756,7 +756,7 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 }
 
 // TODO: Write a test for this
-func regexParseMessage(msg string) string {
+/*func regexParseMessage(msg string) string {
 	msg = strings.Replace(msg, ":)", "😀", -1)
 	msg = strings.Replace(msg, ":D", "😃", -1)
 	msg = strings.Replace(msg, ":P", "😛", -1)
@@ -766,7 +766,7 @@ func regexParseMessage(msg string) string {
 		msg = runSshook("parse_assign", msg)
 	}
 	return msg
-}
+}*/
 
 // 6, 7, 8, 6, 2, 7
 // ftp://, http://, https:// git://, //, mailto: (not a URL, just here for length comparison purposes)

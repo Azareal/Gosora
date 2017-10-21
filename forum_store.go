@@ -405,3 +405,5 @@ func (mfs *MemoryForumStore) GlobalCount() (fcount int) {
 }
 
 // TODO: Work on SqlForumStore
+
+// TODO: Work on the NullForumStore

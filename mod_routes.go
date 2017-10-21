@@ -819,7 +819,10 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user User) {
 	}
 
 	err = targetUser.Unban()
-	if err == ErrNoRows {
+	if err == ErrNoTempGroup {
+		LocalError("The user you're trying to unban is not banned", w, r, user)
+		return
+	} else if err == ErrNoRows {
 		LocalError("The user you're trying to unban no longer exists.", w, r, user)
 		return
 	} else if err != nil {

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"log"
 	"sync"
+
+	"./query_gen/lib"
 )
 
 var groupCreateMutex sync.Mutex
@@ -19,7 +21,7 @@ type GroupStore interface {
 	Get(id int) (*Group, error)
 	GetCopy(id int) (Group, error)
 	Exists(id int) bool
-	Create(groupName string, tag string, isAdmin bool, isMod bool, isBanned bool) (int, error)
+	Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (int, error)
 	GetAll() ([]*Group, error)
 	GetRange(lower int, higher int) ([]*Group, error)
 }
@@ -71,8 +73,11 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 			log.Print(group.Name + ": ")
 			log.Printf("%+v\n", group.PluginPerms)
 		}
-
 		//group.Perms.ExtData = make(map[string]bool)
+		// TODO: Can we optimise the bit where this cascades down to the user now?
+		if group.IsAdmin || group.IsMod {
+			group.IsBanned = false
+		}
 		mgs.groups = append(mgs.groups, &group)
 	}
 	err = rows.Err()
@@ -110,15 +115,26 @@ func (mgs *MemoryGroupStore) GetCopy(gid int) (Group, error) {
 }
 
 func (mgs *MemoryGroupStore) Exists(gid int) bool {
-	return (gid <= mgs.groupCapCount) && (gid > -1) && mgs.groups[gid].Name != ""
+	return (gid <= mgs.groupCapCount) && (gid >= 0) && mgs.groups[gid].Name != ""
 }
 
-func (mgs *MemoryGroupStore) Create(groupName string, tag string, isAdmin bool, isMod bool, isBanned bool) (int, error) {
+// ? Allow two groups with the same name?
+func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (int, error) {
 	groupCreateMutex.Lock()
 	defer groupCreateMutex.Unlock()
 
 	var permstr = "{}"
-	res, err := createGroupStmt.Exec(groupName, tag, isAdmin, isMod, isBanned, permstr)
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	insertTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups", "name, tag, is_admin, is_mod, is_banned, permissions", "?,?,?,?,?,?")
+	if err != nil {
+		return 0, err
+	}
+	res, err := insertTx.Exec(name, tag, isAdmin, isMod, isBanned, permstr)
 	if err != nil {
 		return 0, err
 	}
@@ -138,14 +154,14 @@ func (mgs *MemoryGroupStore) Create(groupName string, tag string, isAdmin bool, 
 		runVhook("create_group_preappend", &pluginPerms, &pluginPermsBytes)
 	}
 
-	mgs.groups = append(mgs.groups, &Group{gid, groupName, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankForums, blankIntList})
-
 	// Generate the forum permissions based on the presets...
 	fdata, err := fstore.GetAll()
 	if err != nil {
 		return 0, err
 	}
 
+	var presetSet = make(map[int]string)
+	var permSet = make(map[int]ForumPerms)
 	permUpdateMutex.Lock()
 	defer permUpdateMutex.Unlock()
 	for _, forum := range fdata {
@@ -161,23 +177,38 @@ func (mgs *MemoryGroupStore) Create(groupName string, tag string, isAdmin bool, 
 		}
 
 		permmap := presetToPermmap(forum.Preset)
-		permitem := permmap[thePreset]
-		permitem.Overrides = true
-		permstr, err := json.Marshal(permitem)
-		if err != nil {
-			return gid, err
-		}
-		perms := string(permstr)
-		_, err = addForumPermsToGroupStmt.Exec(gid, forum.ID, forum.Preset, perms)
-		if err != nil {
-			return gid, err
-		}
+		permItem := permmap[thePreset]
+		permItem.Overrides = true
 
+		permSet[forum.ID] = permItem
+		presetSet[forum.ID] = forum.Preset
+	}
+
+	err = replaceForumPermsForGroupTx(tx, gid, presetSet, permSet)
+	if err != nil {
+		return 0, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	// TODO: Can we optimise the bit where this cascades down to the user now?
+	if isAdmin || isMod {
+		isBanned = false
+	}
+
+	mgs.groups = append(mgs.groups, &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankForums, blankIntList})
+	mgs.groupCapCount++
+
+	for _, forum := range fdata {
 		err = rebuildForumPermissions(forum.ID)
 		if err != nil {
 			return gid, err
 		}
 	}
+
 	return gid, nil
 }
 

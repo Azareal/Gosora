@@ -20,8 +20,12 @@ var auth Auth
 // ErrMismatchedHashAndPassword is thrown whenever a hash doesn't match it's unhashed password
 var ErrMismatchedHashAndPassword = bcrypt.ErrMismatchedHashAndPassword
 
+// nolint
 // ErrPasswordTooLong is silly, but we don't want bcrypt to bork on us
 var ErrPasswordTooLong = errors.New("The password you selected is too long")
+var ErrWrongPassword = errors.New("That's not the correct password.")
+var ErrSecretError = errors.New("There was a glitch in the system. Please contact your local administrator.")
+var ErrNoUserByName = errors.New("We couldn't find an account with that username.")
 
 // Auth is the main authentication interface.
 type Auth interface {
@@ -61,24 +65,24 @@ func (auth *DefaultAuth) Authenticate(username string, password string) (uid int
 	var realPassword, salt string
 	err = auth.login.QueryRow(username).Scan(&uid, &realPassword, &salt)
 	if err == ErrNoRows {
-		return 0, errors.New("We couldn't find an account with that username.") // nolint
+		return 0, ErrNoUserByName
 	} else if err != nil {
 		LogError(err)
-		return 0, errors.New("There was a glitch in the system. Please contact your local administrator.") // nolint
+		return 0, ErrSecretError
 	}
 
 	if salt == "" {
 		// Send an email to admin for this?
 		LogError(errors.New("Missing salt for user #" + strconv.Itoa(uid) + ". Potential security breach."))
-		return 0, errors.New("There was a glitch in the system. Please contact your local administrator")
+		return 0, ErrSecretError
 	}
 
 	err = CheckPassword(realPassword, password, salt)
 	if err == ErrMismatchedHashAndPassword {
-		return 0, errors.New("That's not the correct password.")
+		return 0, ErrWrongPassword
 	} else if err != nil {
 		LogError(err)
-		return 0, errors.New("There was a glitch in the system. Please contact your local administrator.")
+		return 0, ErrSecretError
 	}
 
 	return uid, nil
@@ -89,7 +93,7 @@ func (auth *DefaultAuth) ForceLogout(uid int) error {
 	_, err := auth.logout.Exec(uid)
 	if err != nil {
 		LogError(err)
-		return errors.New("There was a glitch in the system. Please contact your local administrator.")
+		return ErrSecretError
 	}
 
 	// Flush the user out of the cache
@@ -110,6 +114,7 @@ func (auth *DefaultAuth) Logout(w http.ResponseWriter, _ int) {
 }
 
 // TODO: Set the cookie domain
+// SetCookies sets the two cookies required for the current user to be recognised as a specific user in future requests
 func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session string) {
 	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: year}
 	http.SetCookie(w, &cookie)

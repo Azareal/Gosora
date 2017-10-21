@@ -332,6 +332,8 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	} else {
 		page = 1
 	}
+
+	// TODO: Move this to *Forum
 	rows, err := getForumTopicsOffsetStmt.Query(fid, offset, config.ItemsPerPage)
 	if err != nil {
 		InternalError(err, w)
@@ -904,10 +906,11 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}
 
-	var active, group int
+	var active bool
+	var group int
 	switch headerLite.Settings["activation_type"] {
 	case 1: // Activate All
-		active = 1
+		active = true
 		group = config.DefaultGroup
 	default: // Anything else. E.g. Admin Activation or Email Activation.
 		group = config.ActivationGroup

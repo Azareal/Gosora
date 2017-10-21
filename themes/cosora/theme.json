@@ -8,10 +8,6 @@
 	"Sidebars":"right",
 	"Resources": [
 		{
-			"Name":"font-awesome-4.7.0/css/font-awesome.css",
-			"Location":"global"
-		},
-		{
 			"Name":"EQCSS.min.js",
 			"Location":"global"
 		}

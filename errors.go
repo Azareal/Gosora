@@ -14,14 +14,18 @@ var errorBuffer []error
 //var notfoundCountPerSecond int
 //var nopermsCountPerSecond int
 
-// LogError logs internal handler errors which can't be handled with InternalError() as a wrapper for log.Fatal(), we might do more with it in the future
+// LogError logs internal handler errors which can't be handled with InternalError() as a wrapper for log.Fatal(), we might do more with it in the future.
 func LogError(err error) {
+	LogWarning(err)
+	log.Fatal("")
+}
+
+func LogWarning(err error) {
 	log.Print(err)
 	debug.PrintStack()
 	errorBufferMutex.Lock()
 	defer errorBufferMutex.Unlock()
 	errorBuffer = append(errorBuffer, err)
-	log.Fatal("")
 }
 
 // InternalError is the main function for handling internal errors, while simultaneously printing out a page for the end-user to let them know that *something* has gone wrong

@@ -36,7 +36,6 @@ function load_alerts(menu_alerts)
 				}
 
 				var alist = "";
-				var anyAvatar = false
 				for(var i in data.msgs) {
 					var msg = data.msgs[i];
 					var mmsg = msg.msg;
@@ -44,15 +43,13 @@ function load_alerts(menu_alerts)
 					if("sub" in msg) {
 						for(var i = 0; i < msg.sub.length; i++) {
 							mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
-							//console.log("Sub #" + i);
-							//console.log(msg.sub[i]);
+							//console.log("Sub #" + i + ":",msg.sub[i]);
 						}
 					}
 
 					if("avatar" in msg) {
 						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
 						alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>");
-						anyAvatar = true
 					} else {
 						alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
 						alertList.push("<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>");
@@ -62,11 +59,8 @@ function load_alerts(menu_alerts)
 				}
 
 				if(alist == "") alist = "<div class='alertItem'>You don't have any alerts</div>";
-				else {
-					//menu_alerts.removeClass("hasAvatars");
-					//if(anyAvatar) menu_alerts.addClass("hasAvatars");
-				}
 				alertListNode.innerHTML = alist;
+
 				if(data.msgCount != 0 && data.msgCount != undefined) {
 					alertCounterNode.textContent = data.msgCount;
 					menu_alerts.classList.add("has_alerts");
@@ -88,6 +82,7 @@ function load_alerts(menu_alerts)
 					console.log(magic.responseText);
 					console.log(err);
 				}
+				console.log("error: ",error);
 				alertListNode.innerHTML = "<div class='alertItem'>"+errtxt+"</div>";
 			}
 		});
@@ -176,8 +171,7 @@ $(document).ready(function(){
 
 			var messages = event.data.split('\r');
 			for(var i = 0; i < messages.length; i++) {
-				//console.log("Message:");
-				//console.log(messages[i]);
+				//console.log("Message: ",messages[i]);
 				if(messages[i].startsWith("set ")) {
 					//msgblocks = messages[i].split(' ',3);
 					let msgblocks = SplitN(messages[i]," ",3);
@@ -214,10 +208,10 @@ $(document).ready(function(){
 		let topicStatusInput = $('.topic_status_input').val();
 		let topicContentInput = $('.topic_content_input').val();
 		let formAction = this.form.getAttribute("action");
-		//console.log("New Topic Name: " + topicNameInput);
-		//console.log("New Topic Status: " + topicStatusInput);
-		//console.log("New Topic Content: " + topicContentInput);
-		//console.log("Form Action: " + formAction);
+		//console.log("New Topic Name: ", topicNameInput);
+		//console.log("New Topic Status: ", topicStatusInput);
+		//console.log("New Topic Content: ", topicContentInput);
+		//console.log("Form Action: ", formAction);
 		$.ajax({
 			url: formAction,
 			type: "POST",
@@ -253,7 +247,7 @@ $(document).ready(function(){
 			block.html(newContent);
 
 			var formAction = $(this).closest('a').attr("href");
-			//console.log("Form Action: " + form_action);
+			//console.log("Form Action:",formAction);
 			$.ajax({ url: formAction, type: "POST", dataType: "json", data: { isJs: "1", edit_item: newContent }
 			});
 		});
@@ -266,8 +260,7 @@ $(document).ready(function(){
 		let block = blockParent.find('.editable_block').eq(0);
 		block.html("<input name='edit_field' value='" + block.text() + "' type='text'/><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit' type='submit'>Update</button></a>");
 
-		$(".submit_edit").click(function(event)
-		{
+		$(".submit_edit").click(function(event) {
 			event.preventDefault();
 			let blockParent = $(this).closest('.editable_parent');
 			let block = blockParent.find('.editable_block').eq(0);
@@ -275,12 +268,12 @@ $(document).ready(function(){
 			block.html(newContent);
 
 			let formAction = $(this).closest('a').attr("href");
-			//console.log("Form Action: " + formAction);
+			//console.log("Form Action:", formAction);
 			$.ajax({
 				url: formAction + "?session=" + session,
 				type: "POST",
 				dataType: "json",
-				data: {isJs: "1",edit_item: newContent}
+				data: { isJs: "1", edit_item: newContent }
 			});
 		});
 	});
@@ -305,9 +298,9 @@ $(document).ready(function(){
 				else var it = ['No','Yes'];
 				var itLen = it.length;
 				var out = "";
-				//console.log("Field Name '" + field_name + "'")
-				//console.log("Field Type",field_type)
-				//console.log("Field Value '" + field_value + "'")
+				//console.log("Field Name:",field_name);
+				//console.log("Field Type:",field_type);
+				//console.log("Field Value:",field_value);
 				for (var i = 0; i < itLen; i++) {
 					var sel = "";
 					if(field_value == i || field_value == it[i]) {
@@ -332,7 +325,7 @@ $(document).ready(function(){
 			//console.log("running .submit_edit event");
 			var out_data = {isJs: "1"}
 			var block_parent = $(this).closest('.editable_parent');
-			block_parent.find('.editable_block').each(function(){
+			block_parent.find('.editable_block').each(function() {
 				var field_name = this.getAttribute("data-field");
 				var field_type = this.getAttribute("data-type");
 				if(field_type=="list") {
@@ -350,7 +343,7 @@ $(document).ready(function(){
 			});
 
 			var form_action = $(this).closest('a').attr("href");
-			//console.log("Form Action: " + form_action);
+			//console.log("Form Action:", form_action);
 			//console.log(out_data);
 			$.ajax({ url: form_action + "?session=" + session, type:"POST", dataType:"json", data: out_data });
 			block_parent.find('.hide_on_edit').show();

@@ -408,6 +408,9 @@ li a {
 .topic_list .lastReplyAt {
 	white-space: nowrap;
 }
+.topic_list .lastReplyAt:before {
+	content: "Last: ";
+}
 .topic_list .starter:before {
 	content: "Starter: ";
 }

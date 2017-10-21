@@ -75,7 +75,7 @@ func writeStatements(adapter qgen.DB_Adapter) error {
 		return err
 	}
 
-	err = writeReplaces(adapter)
+	/*err = writeReplaces(adapter)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func writeStatements(adapter qgen.DB_Adapter) error {
 	err = writeUpserts(adapter)
 	if err != nil {
 		return err
-	}
+	}*/
 
 	err = writeUpdates(adapter)
 	if err != nil {
@@ -356,8 +356,6 @@ func writeInserts(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleInsert("addTheme", "themes", "uname, default", "?,?")
 
-	adapter.SimpleInsert("createGroup", "users_groups", "name, tag, is_admin, is_mod, is_banned, permissions", "?,?,?,?,?,?")
-
 	adapter.SimpleInsert("addModlogEntry", "moderation_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
 
 	adapter.SimpleInsert("addAdminlogEntry", "administration_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
@@ -373,7 +371,8 @@ func writeReplaces(adapter qgen.DB_Adapter) (err error) {
 	return nil
 }
 
-func writeUpserts(adapter qgen.DB_Adapter) (err error) {
+// ! Upserts are broken atm
+/*func writeUpserts(adapter qgen.DB_Adapter) (err error) {
 	_, err = adapter.SimpleUpsert("addForumPermsToGroup", "forums_permissions", "gid, fid, preset, permissions", "?,?,?,?", "gid = ? AND fid = ?")
 	if err != nil {
 		return err
@@ -385,7 +384,7 @@ func writeUpserts(adapter qgen.DB_Adapter) (err error) {
 	}
 
 	return nil
-}
+}*/
 
 func writeUpdates(adapter qgen.DB_Adapter) error {
 	adapter.SimpleUpdate("addRepliesToTopic", "topics", "postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()", "tid = ?")
@@ -454,6 +453,8 @@ func writeUpdates(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleUpdate("updateUser", "users", "name = ?, email = ?, group = ?", "uid = ?")
 
+	adapter.SimpleUpdate("updateUserGroup", "users", "group = ?", "uid = ?")
+
 	adapter.SimpleUpdate("updateGroupPerms", "users_groups", "permissions = ?", "gid = ?")
 
 	adapter.SimpleUpdate("updateGroupRank", "users_groups", "is_admin = ?, is_mod = ?, is_banned = ?", "gid = ?")
@@ -480,10 +481,10 @@ func writeDeletes(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleDelete("deleteProfileReply", "users_replies", "rid = ?")
 
-	adapter.SimpleDelete("deleteForumPermsByForum", "forums_permissions", "fid = ?")
+	//adapter.SimpleDelete("deleteForumPermsByForum", "forums_permissions", "fid = ?")
 
 	adapter.SimpleDelete("deleteActivityStreamMatch", "activity_stream_matches", "watcher = ? AND asid = ?")
-	//adapter.SimpleDelete("delete_activity_stream_matches_by_watcher","activity_stream_matches","watcher = ?")
+	//adapter.SimpleDelete("deleteActivityStreamMatchesByWatcher","activity_stream_matches","watcher = ?")
 
 	adapter.SimpleDelete("deleteWordFilter", "word_filters", "wfid = ?")
 
@@ -501,20 +502,20 @@ func writeSimpleCounts(adapter qgen.DB_Adapter) error {
 }
 
 func writeInsertSelects(adapter qgen.DB_Adapter) error {
-	adapter.SimpleInsertSelect("addForumPermsToForumAdmins",
+	/*adapter.SimpleInsertSelect("addForumPermsToForumAdmins",
 		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 1", "", ""},
-	)
+	)*/
 
-	adapter.SimpleInsertSelect("addForumPermsToForumStaff",
+	/*adapter.SimpleInsertSelect("addForumPermsToForumStaff",
 		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 1", "", ""},
-	)
+	)*/
 
-	adapter.SimpleInsertSelect("addForumPermsToForumMembers",
+	/*adapter.SimpleInsertSelect("addForumPermsToForumMembers",
 		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
-	)
+	)*/
 
 	return nil
 }

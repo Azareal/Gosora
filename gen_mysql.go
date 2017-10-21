@@ -6,7 +6,7 @@ package main
 
 import "log"
 import "database/sql"
-import "./query_gen/lib"
+//import "./query_gen/lib"
 
 // nolint
 var getUserStmt *sql.Stmt
@@ -67,13 +67,10 @@ var createForumStmt *sql.Stmt
 var addForumPermsToForumStmt *sql.Stmt
 var addPluginStmt *sql.Stmt
 var addThemeStmt *sql.Stmt
-var createGroupStmt *sql.Stmt
 var addModlogEntryStmt *sql.Stmt
 var addAdminlogEntryStmt *sql.Stmt
 var addAttachmentStmt *sql.Stmt
 var createWordFilterStmt *sql.Stmt
-var addForumPermsToGroupStmt *qgen.MySQLUpsertCallback
-var replaceScheduleGroupStmt *qgen.MySQLUpsertCallback
 var addRepliesToTopicStmt *sql.Stmt
 var removeRepliesFromTopicStmt *sql.Stmt
 var addTopicsToForumStmt *sql.Stmt
@@ -107,6 +104,7 @@ var updatePluginStmt *sql.Stmt
 var updatePluginInstallStmt *sql.Stmt
 var updateThemeStmt *sql.Stmt
 var updateUserStmt *sql.Stmt
+var updateUserGroupStmt *sql.Stmt
 var updateGroupPermsStmt *sql.Stmt
 var updateGroupRankStmt *sql.Stmt
 var updateGroupStmt *sql.Stmt
@@ -118,15 +116,11 @@ var bumpSyncStmt *sql.Stmt
 var deleteUserStmt *sql.Stmt
 var deleteReplyStmt *sql.Stmt
 var deleteProfileReplyStmt *sql.Stmt
-var deleteForumPermsByForumStmt *sql.Stmt
 var deleteActivityStreamMatchStmt *sql.Stmt
 var deleteWordFilterStmt *sql.Stmt
 var reportExistsStmt *sql.Stmt
 var groupCountStmt *sql.Stmt
 var modlogCountStmt *sql.Stmt
-var addForumPermsToForumAdminsStmt *sql.Stmt
-var addForumPermsToForumStaffStmt *sql.Stmt
-var addForumPermsToForumMembersStmt *sql.Stmt
 var notifyWatchersStmt *sql.Stmt
 
 // nolint
@@ -483,12 +477,6 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing createGroup statement.")
-	createGroupStmt, err = db.Prepare("INSERT INTO `users_groups`(`name`,`tag`,`is_admin`,`is_mod`,`is_banned`,`permissions`) VALUES (?,?,?,?,?,?)")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing addModlogEntry statement.")
 	addModlogEntryStmt, err = db.Prepare("INSERT INTO `moderation_logs`(`action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt`) VALUES (?,?,?,?,?,UTC_TIMESTAMP())")
 	if err != nil {
@@ -509,18 +497,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing createWordFilter statement.")
 	createWordFilterStmt, err = db.Prepare("INSERT INTO `word_filters`(`find`,`replacement`) VALUES (?,?)")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing addForumPermsToGroup statement.")
-	addForumPermsToGroupStmt, err = qgen.PrepareMySQLUpsertCallback(db, "INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE `gid` = ? AND `fid` = ? AND `preset` = ? AND `permissions` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing replaceScheduleGroup statement.")
-	replaceScheduleGroupStmt, err = qgen.PrepareMySQLUpsertCallback(db, "INSERT INTO `users_groups_scheduler`(`uid`,`set_group`,`issued_by`,`issued_at`,`revert_at`,`temporary`) VALUES (?,?,?,UTC_TIMESTAMP(),?,?) ON DUPLICATE KEY UPDATE `uid` = ? AND `set_group` = ? AND `issued_by` = ? AND `issued_at` = UTC_TIMESTAMP() AND `revert_at` = ? AND `temporary` = ?")
 	if err != nil {
 		return err
 	}
@@ -723,6 +699,12 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing updateUserGroup statement.")
+	updateUserGroupStmt, err = db.Prepare("UPDATE `users` SET `group` = ? WHERE `uid` = ?")
+	if err != nil {
+		return err
+	}
+		
 	log.Print("Preparing updateGroupPerms statement.")
 	updateGroupPermsStmt, err = db.Prepare("UPDATE `users_groups` SET `permissions` = ? WHERE `gid` = ?")
 	if err != nil {
@@ -789,12 +771,6 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing deleteForumPermsByForum statement.")
-	deleteForumPermsByForumStmt, err = db.Prepare("DELETE FROM `forums_permissions` WHERE `fid` = ?")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing deleteActivityStreamMatch statement.")
 	deleteActivityStreamMatchStmt, err = db.Prepare("DELETE FROM `activity_stream_matches` WHERE `watcher` = ? AND `asid` = ?")
 	if err != nil {
@@ -821,24 +797,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing modlogCount statement.")
 	modlogCountStmt, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `moderation_logs`")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing addForumPermsToForumAdmins statement.")
-	addForumPermsToForumAdminsStmt, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) SELECT `gid`, ? AS `fid`, ? AS `preset`, ? AS `permissions` FROM `users_groups` WHERE `is_admin` = 1")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing addForumPermsToForumStaff statement.")
-	addForumPermsToForumStaffStmt, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) SELECT `gid`, ? AS `fid`, ? AS `preset`, ? AS `permissions` FROM `users_groups` WHERE `is_admin` = 0 AND `is_mod` = 1")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing addForumPermsToForumMembers statement.")
-	addForumPermsToForumMembersStmt, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) SELECT `gid`, ? AS `fid`, ? AS `preset`, ? AS `permissions` FROM `users_groups` WHERE `is_admin` = 0 AND `is_mod` = 0 AND `is_banned` = 0")
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,10 @@
+language: go
+go:
+  - 1.9
+  - master
+before_install:
+  - chmod 755 ./install-linux
+  - chmod 755 ./run-linux
+script: go test
+addons:
+  mariadb: '10.0'

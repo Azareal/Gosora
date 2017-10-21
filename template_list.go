@@ -678,33 +678,38 @@ var forums_19 = []byte(`
 var topics_0 = []byte(`
 <main>
 
-<div class="rowblock rowhead">
+<div class="rowblock rowhead topic_list_title_block">
 	<div class="rowitem topic_list_title`)
 var topics_1 = []byte(` has_opt`)
 var topics_2 = []byte(`"><h1>All Topics</h1></div>
 	`)
 var topics_3 = []byte(`
-		<div class="opt create_topic_opt" title="Create Topic"><a class="create_topic_link" href="/topics/create/"></a></div>
+		<div class="opt create_topic_opt" title="Create Topic" aria-label="Create a topic"><a class="create_topic_link" href="/topics/create/"></a></div>
 		`)
-var topics_4 = []byte(`<div class="opt locked_opt" title="You don't have the permissions needed to create a topic"><a></a></div>`)
-var topics_5 = []byte(`
+var topics_4 = []byte(`
+		<div class="opt mod_opt" title="Moderate">
+			<a class="moderate_link" href="#"></a>
+		</div>
+		`)
+var topics_5 = []byte(`<div class="opt locked_opt" title="You don't have the permissions needed to create a topic" aria-label="You don't have the permissions needed to make a topic anywhere"><a></a></div>`)
+var topics_6 = []byte(`
 		<div style="clear: both;"></div>
 	`)
-var topics_6 = []byte(`
+var topics_7 = []byte(`
 </div>
 `)
-var topics_7 = []byte(`
-<div class="rowblock topic_create_form quick_create_form" style="display: none;">
+var topics_8 = []byte(`
+<div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
 	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
 	<div class="formrow topic_board_row real_first_child">
 		<div class="formitem"><select form="topic_create_form_form" id="topic_board_input" name="topic-board">
 			`)
-var topics_8 = []byte(`<option `)
-var topics_9 = []byte(`selected`)
-var topics_10 = []byte(` value="`)
-var topics_11 = []byte(`">`)
-var topics_12 = []byte(`</option>`)
-var topics_13 = []byte(`
+var topics_9 = []byte(`<option `)
+var topics_10 = []byte(`selected`)
+var topics_11 = []byte(` value="`)
+var topics_12 = []byte(`">`)
+var topics_13 = []byte(`</option>`)
+var topics_14 = []byte(`
 		</select></div>
 	</div>
 	<div class="formrow topic_name_row">
@@ -721,71 +726,73 @@ var topics_13 = []byte(`
 		<div class="formitem">
 			<button form="topic_create_form_form" class="formbutton">Create Topic</button>
 			`)
-var topics_14 = []byte(`
+var topics_15 = []byte(`
 			<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />
 			<label for="upload_files" class="formbutton add_file_button">Add File</label>
 			<div id="upload_file_dock"></div>`)
-var topics_15 = []byte(`
+var topics_16 = []byte(`
 			<button class="formbutton close_form">Cancel</button>
 		</div>
 	</div>
 </div>
 	`)
-var topics_16 = []byte(`
+var topics_17 = []byte(`
 <div id="topic_list" class="rowblock topic_list" aria-label="A list containing topics from every forum">
 	`)
-var topics_17 = []byte(`<div class="topic_row">
+var topics_18 = []byte(`<div class="topic_row">
 	<div class="rowitem topic_left passive datarow `)
-var topics_18 = []byte(`topic_sticky`)
-var topics_19 = []byte(`topic_closed`)
-var topics_20 = []byte(`">
+var topics_19 = []byte(`topic_sticky`)
+var topics_20 = []byte(`topic_closed`)
+var topics_21 = []byte(`">
+		<span class="selector"></span>
 		`)
-var topics_21 = []byte(`<img src="`)
-var topics_22 = []byte(`" height="64" />`)
-var topics_23 = []byte(`
+var topics_22 = []byte(`<img src="`)
+var topics_23 = []byte(`" height="64" />`)
+var topics_24 = []byte(`
 		<span class="topic_inner_left">
 			<a class="rowtopic" href="`)
-var topics_24 = []byte(`">`)
-var topics_25 = []byte(`</a> `)
-var topics_26 = []byte(`<a class="rowsmall parent_forum" href="`)
-var topics_27 = []byte(`">`)
-var topics_28 = []byte(`</a>`)
-var topics_29 = []byte(`
+var topics_25 = []byte(`"><span>`)
+var topics_26 = []byte(`</span></a> `)
+var topics_27 = []byte(`<a class="rowsmall parent_forum" href="`)
+var topics_28 = []byte(`">`)
+var topics_29 = []byte(`</a>`)
+var topics_30 = []byte(`
 			<br /><a class="rowsmall starter" href="`)
-var topics_30 = []byte(`">`)
-var topics_31 = []byte(`</a>
+var topics_31 = []byte(`">`)
+var topics_32 = []byte(`</a>
 			`)
-var topics_32 = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>`)
-var topics_33 = []byte(`<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>`)
-var topics_34 = []byte(`
+var topics_33 = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>`)
+var topics_34 = []byte(`<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>`)
+var topics_35 = []byte(`
 		</span>
 		<span class="topic_inner_right rowsmall" style="float: right;">
 			<span class="replyCount">`)
-var topics_35 = []byte(` replies</span><br />
-			<span class="topicCount">x topics</span>
+var topics_36 = []byte(`</span><br />
+			<span class="likeCount">`)
+var topics_37 = []byte(`</span>
 		</span>
 	</div>
 	<div class="rowitem topic_right passive datarow `)
-var topics_36 = []byte(`topic_sticky`)
-var topics_37 = []byte(`topic_closed`)
-var topics_38 = []byte(`">
+var topics_38 = []byte(`topic_sticky`)
+var topics_39 = []byte(`topic_closed`)
+var topics_40 = []byte(`">
 		`)
-var topics_39 = []byte(`<img src="`)
-var topics_40 = []byte(`" height="64" />`)
-var topics_41 = []byte(`
+var topics_41 = []byte(`<img src="`)
+var topics_42 = []byte(`" height="64" />`)
+var topics_43 = []byte(`
 		<span>
 			<a href="`)
-var topics_42 = []byte(`" class="lastName" style="font-size: 14px;">`)
-var topics_43 = []byte(`</a><br>
-			<span class="rowsmall lastReplyAt">Last: `)
-var topics_44 = []byte(`</span>
+var topics_44 = []byte(`" class="lastName" style="font-size: 14px;">`)
+var topics_45 = []byte(`</a><br>
+			<span class="rowsmall lastReplyAt">`)
+var topics_46 = []byte(`</span>
 		</span>
 	</div>
 	</div>`)
-var topics_45 = []byte(`<div class="rowitem passive">There aren't any topics yet.`)
-var topics_46 = []byte(` <a href="/topics/create/">Start one?</a>`)
-var topics_47 = []byte(`</div>`)
-var topics_48 = []byte(`
+var topics_47 = []byte(`<div class="rowitem passive">There aren't any topics yet.`)
+var topics_48 = []byte(` <a href="/topics/create/">Start one?</a>`)
+var topics_49 = []byte(`</div>`)
+var topics_50 = []byte(`
 </div>
 
 </main>
@@ -803,7 +810,7 @@ var forum_8 = []byte(`
 
 <main>
 
-<div id="forum_head_block" class="rowblock rowhead">
+<div id="forum_head_block" class="rowblock rowhead topic_list_title_block">
 	<div class="rowitem forum_title`)
 var forum_9 = []byte(` has_opt`)
 var forum_10 = []byte(`"><h1>`)
@@ -811,21 +818,26 @@ var forum_11 = []byte(`</h1>
 	</div>
 	`)
 var forum_12 = []byte(`
-		<div class="opt create_topic_opt" title="Create Topic"><a class="create_topic_link" href="/topics/create/`)
+		<div class="opt create_topic_opt" title="Create Topic" aria-label="Create a topic"><a class="create_topic_link" href="/topics/create/`)
 var forum_13 = []byte(`"></a></div>
 		`)
-var forum_14 = []byte(`<div class="opt locked_opt" title="You don't have the permissions needed to create a topic"><a></a></div>`)
-var forum_15 = []byte(`
+var forum_14 = []byte(`
+		<div class="opt mod_opt" title="Moderate">
+			<a class="moderate_link" href="#"></a>
+		</div>
+		`)
+var forum_15 = []byte(`<div class="opt locked_opt" title="You don't have the permissions needed to create a topic" aria-label="You don't have the permissions needed to make a topic in this forum"><a></a></div>`)
+var forum_16 = []byte(`
 		<div style="clear: both;"></div>
 	`)
-var forum_16 = []byte(`
+var forum_17 = []byte(`
 </div>
 `)
-var forum_17 = []byte(`
-<div class="rowblock topic_create_form quick_create_form" style="display: none;">
+var forum_18 = []byte(`
+<div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
 	<form id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
 	<input form="topic_create_form_form" id="topic_board_input" name="topic-board" value="`)
-var forum_18 = []byte(`" type="hidden">
+var forum_19 = []byte(`" type="hidden">
 	<div class="formrow topic_name_row real_first_child">
 		<div class="formitem">
 			<input form="topic_create_form_form" name="topic-name" placeholder="Topic title" required>
@@ -840,68 +852,70 @@ var forum_18 = []byte(`" type="hidden">
 		<div class="formitem">
 			<button form="topic_create_form_form" name="topic-button" class="formbutton">Create Topic</button>
 			`)
-var forum_19 = []byte(`
+var forum_20 = []byte(`
 			<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />
 			<label for="upload_files" class="formbutton add_file_button">Add File</label>
 			<div id="upload_file_dock"></div>`)
-var forum_20 = []byte(`
+var forum_21 = []byte(`
 			<button class="formbutton close_form">Cancel</button>
 		</div>
 	</div>
 </div>
 `)
-var forum_21 = []byte(`
+var forum_22 = []byte(`
 <div id="forum_topic_list" class="rowblock topic_list">
 	`)
-var forum_22 = []byte(`<div class="topic_row">
+var forum_23 = []byte(`<div class="topic_row">
 	<div class="rowitem topic_left passive datarow `)
-var forum_23 = []byte(`topic_sticky`)
-var forum_24 = []byte(`topic_closed`)
-var forum_25 = []byte(`">
+var forum_24 = []byte(`topic_sticky`)
+var forum_25 = []byte(`topic_closed`)
+var forum_26 = []byte(`">
+		<span class="selector"></span>
 		`)
-var forum_26 = []byte(`<img src="`)
-var forum_27 = []byte(`" height="64" />`)
-var forum_28 = []byte(`
+var forum_27 = []byte(`<img src="`)
+var forum_28 = []byte(`" height="64" />`)
+var forum_29 = []byte(`
 		<span class="topic_inner_left">
 			<a class="rowtopic" href="`)
-var forum_29 = []byte(`">`)
-var forum_30 = []byte(`</a>
+var forum_30 = []byte(`"><span>`)
+var forum_31 = []byte(`</span></a>
 			<br /><a class="rowsmall starter" href="`)
-var forum_31 = []byte(`">`)
-var forum_32 = []byte(`</a>
+var forum_32 = []byte(`">`)
+var forum_33 = []byte(`</a>
 			`)
-var forum_33 = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>`)
-var forum_34 = []byte(`<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>`)
-var forum_35 = []byte(`
+var forum_34 = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>`)
+var forum_35 = []byte(`<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>`)
+var forum_36 = []byte(`
 		</span>
 		<span class="topic_inner_right rowsmall" style="float: right;">
 			<span class="replyCount">`)
-var forum_36 = []byte(` replies</span><br />
-			<span class="topicCount">x topics</span>
+var forum_37 = []byte(`</span><br />
+			<span class="likeCount">`)
+var forum_38 = []byte(`</span>
 		</span>
 	</div>
 	<div class="rowitem topic_right passive datarow `)
-var forum_37 = []byte(`topic_sticky`)
-var forum_38 = []byte(`topic_closed`)
-var forum_39 = []byte(`">
+var forum_39 = []byte(`topic_sticky`)
+var forum_40 = []byte(`topic_closed`)
+var forum_41 = []byte(`">
 		`)
-var forum_40 = []byte(`<img src="`)
-var forum_41 = []byte(`" height="64" />`)
-var forum_42 = []byte(`
+var forum_42 = []byte(`<img src="`)
+var forum_43 = []byte(`" height="64" />`)
+var forum_44 = []byte(`
 		<span>
 			<a href="`)
-var forum_43 = []byte(`" class="lastName" style="font-size: 14px;">`)
-var forum_44 = []byte(`</a><br>
-			<span class="rowsmall lastReplyAt">Last: `)
-var forum_45 = []byte(`</span>
+var forum_45 = []byte(`" class="lastName" style="font-size: 14px;">`)
+var forum_46 = []byte(`</a><br>
+			<span class="rowsmall lastReplyAt">`)
+var forum_47 = []byte(`</span>
 		</span>
 	</div>
 	</div>`)
-var forum_46 = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.`)
-var forum_47 = []byte(` <a href="/topics/create/`)
-var forum_48 = []byte(`">Start one?</a>`)
-var forum_49 = []byte(`</div>`)
-var forum_50 = []byte(`
+var forum_48 = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.`)
+var forum_49 = []byte(` <a href="/topics/create/`)
+var forum_50 = []byte(`">Start one?</a>`)
+var forum_51 = []byte(`</div>`)
+var forum_52 = []byte(`
 </div>
 
 </main>

@@ -25,24 +25,18 @@ func handleExpiredScheduledGroups() error {
 	defer rows.Close()
 
 	var uid int
-	ucache, ok := users.(UserCache)
 	for rows.Next() {
 		err := rows.Scan(&uid)
 		if err != nil {
 			return err
 		}
-		_, err = replaceScheduleGroupStmt.Exec(uid, 0, 0, time.Now(), false, uid)
+
+		// Sneaky way of initialising a *User, please use the methods on the UserStore instead
+		user := getDummyUser()
+		user.ID = uid
+		err = user.RevertGroupUpdate()
 		if err != nil {
-			log.Print("Unable to replace the scheduled group")
 			return err
-		}
-		_, err = setTempGroupStmt.Exec(0, uid)
-		if err != nil {
-			log.Print("Unable to reset the tempgroup")
-			return err
-		}
-		if ok {
-			ucache.CacheRemove(uid)
 		}
 	}
 	return rows.Err()

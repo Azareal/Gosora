@@ -27,6 +27,24 @@ type Group struct {
 	CanSee          []int // The IDs of the forums this group can see
 }
 
+// TODO: Reload the group from the database rather than modifying it via it's pointer
+func (group *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err error) {
+	_, err = updateGroupRankStmt.Exec(isAdmin, isMod, isBanned, group.ID)
+	if err != nil {
+		return err
+	}
+
+	group.IsAdmin = isAdmin
+	group.IsMod = isMod
+	if isAdmin || isMod {
+		group.IsBanned = false
+	} else {
+		group.IsBanned = isBanned
+	}
+
+	return nil
+}
+
 // ! Ahem, don't listen to the comment below. It's not concurrency safe right now.
 // Copy gives you a non-pointer concurrency safe copy of the group
 func (group *Group) Copy() Group {
