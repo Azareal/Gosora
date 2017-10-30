@@ -53,7 +53,7 @@ type Config struct {
 	SMTPPassword string
 	SMTPPort     string
 
-	DefaultRoute    func(http.ResponseWriter, *http.Request, User)
+	DefaultRoute    func(http.ResponseWriter, *http.Request, User) RouteError
 	DefaultGroup    int
 	ActivationGroup int
 	StaffCSS        string // ? - Move this into the settings table? Might be better to implement this as Group CSS

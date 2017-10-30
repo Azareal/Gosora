@@ -3,7 +3,9 @@ package main
 import (
 	//"log"
 	//"fmt"
+	"encoding/json"
 	"html"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -12,51 +14,44 @@ import (
 
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
-func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
+func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {
-		PreError("Bad Form", w, r)
-		return
+		return PreError("Bad Form", w, r)
 	}
 	isJs := (r.PostFormValue("js") == "1")
 
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/edit/submit/"):])
 	if err != nil {
-		PreErrorJSQ("The provided TopicID is not a valid number.", w, r, isJs)
-		return
+		return PreErrorJSQ("The provided TopicID is not a valid number.", w, r, isJs)
 	}
 
 	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
-		PreErrorJSQ("The topic you tried to edit doesn't exist.", w, r, isJs)
-		return
+		return PreErrorJSQ("The topic you tried to edit doesn't exist.", w, r, isJs)
 	} else if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.EditTopic {
-		NoPermissionsJSQ(w, r, user, isJs)
-		return
+		return NoPermissionsJSQ(w, r, user, isJs)
 	}
 
 	topicName := r.PostFormValue("topic_name")
 	topicContent := html.EscapeString(r.PostFormValue("topic_content"))
 	err = topic.Update(topicName, topicContent)
 	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	err = fstore.UpdateLastTopic(topic.ID, user.ID, topic.ParentID)
 	if err != nil && err != ErrNoRows {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	if !isJs {
@@ -64,317 +59,323 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) {
 	} else {
 		_, _ = w.Write(successJSONBytes)
 	}
+	return nil
 }
 
-// TODO: Add support for soft-deletion and add a permission just for hard delete
+// TODO: Add support for soft-deletion and add a permission for hard delete in addition to the usual
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
-func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) {
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
-	if err != nil {
-		PreError("The provided TopicID is not a valid number.", w, r)
-		return
+func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	// TODO: Move this to some sort of middleware
+	var tids []int
+	var isJs = false
+	if r.Header.Get("Content-type") == "application/json" {
+		if r.Body == nil {
+			return PreErrorJS("No request body", w, r)
+		}
+		//log.Print("r.Body: ", r.Body)
+		err := json.NewDecoder(r.Body).Decode(&tids)
+		if err != nil {
+			//log.Print("parse err: ", err)
+			return PreErrorJS("We weren't able to parse your data", w, r)
+		}
+		isJs = true
+	} else {
+		tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
+		if err != nil {
+			return PreError("The provided TopicID is not a valid number.", w, r)
+		}
+		tids = append(tids, tid)
+	}
+	if len(tids) == 0 {
+		return LocalErrorJSQ("You haven't provided any IDs", w, r, user, isJs)
 	}
 
-	topic, err := topics.Get(tid)
-	if err == ErrNoRows {
-		PreError("The topic you tried to delete doesn't exist.", w, r)
-		return
-	} else if err != nil {
-		InternalError(err, w)
-		return
-	}
+	for _, tid := range tids {
+		topic, err := topics.Get(tid)
+		if err == ErrNoRows {
+			return PreErrorJSQ("The topic you tried to delete doesn't exist.", w, r, isJs)
+		} else if err != nil {
+			return InternalErrorJSQ(err, w, r, isJs)
+		}
 
-	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
-	}
-	if !user.Perms.ViewTopic || !user.Perms.DeleteTopic {
-		NoPermissions(w, r, user)
-		return
-	}
+		// TODO: Add hooks to make use of headerLite
+		_, ferr := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+		if ferr != nil {
+			return ferr
+		}
+		if !user.Perms.ViewTopic || !user.Perms.DeleteTopic {
+			return NoPermissionsJSQ(w, r, user, isJs)
+		}
 
-	// We might be able to handle this err better
-	err = topics.Delete(topic.CreatedBy)
-	if err != nil {
-		InternalError(err, w)
-		return
-	}
+		// We might be able to handle this err better
+		err = topic.Delete()
+		if err != nil {
+			return InternalErrorJSQ(err, w, r, isJs)
+		}
 
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
-	}
-	err = addModLog("delete", tid, "topic", ipaddress, user.ID)
-	if err != nil {
-		InternalError(err, w)
-		return
-	}
+		ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			return LocalErrorJSQ("Bad IP", w, r, user, isJs)
+		}
+		err = addModLog("delete", tid, "topic", ipaddress, user.ID)
+		if err != nil {
+			return InternalErrorJSQ(err, w, r, isJs)
+		}
 
-	// ? - We might need to add soft-delete before we can do an action reply for this
-	/*_, err = createActionReplyStmt.Exec(tid,"delete",ipaddress,user.ID)
-	if err != nil {
-		InternalError(err,w)
-		return
-	}*/
+		// ? - We might need to add soft-delete before we can do an action reply for this
+		/*_, err = createActionReplyStmt.Exec(tid,"delete",ipaddress,user.ID)
+		if err != nil {
+			return InternalErrorJSQ(err,w,r,isJs)
+		}*/
 
-	//log.Print("Topic #" + strconv.Itoa(tid) + " was deleted by User #" + strconv.Itoa(user.ID))
+		log.Printf("Topic #%d was deleted by User #%d", tid, user.ID)
+	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }
 
-func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) {
+func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/stick/submit/"):])
 	if err != nil {
-		PreError("The provided TopicID is not a valid number.", w, r)
-		return
+		return PreError("The provided TopicID is not a valid number.", w, r)
 	}
 
 	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
-		PreError("The topic you tried to pin doesn't exist.", w, r)
-		return
+		return PreError("The topic you tried to pin doesn't exist.", w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	err = topic.Stick()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 	err = addModLog("stick", tid, "topic", ipaddress, user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	err = topic.CreateActionReply("stick", ipaddress, user)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	return nil
 }
 
-func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) {
+func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unstick/submit/"):])
 	if err != nil {
-		PreError("The provided TopicID is not a valid number.", w, r)
-		return
+		return PreError("The provided TopicID is not a valid number.", w, r)
 	}
 
 	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
-		PreError("The topic you tried to unpin doesn't exist.", w, r)
-		return
+		return PreError("The topic you tried to unpin doesn't exist.", w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	err = topic.Unstick()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 	err = addModLog("unstick", tid, "topic", ipaddress, user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	err = topic.CreateActionReply("unstick", ipaddress, user)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
+
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	return nil
 }
 
-func routeLockTopic(w http.ResponseWriter, r *http.Request, user User) {
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/lock/submit/"):])
-	if err != nil {
-		PreError("The provided TopicID is not a valid number.", w, r)
-		return
+func routeLockTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	// TODO: Move this to some sort of middleware
+	var tids []int
+	var isJs = false
+	if r.Header.Get("Content-type") == "application/json" {
+		if r.Body == nil {
+			return PreErrorJS("No request body", w, r)
+		}
+		err := json.NewDecoder(r.Body).Decode(&tids)
+		if err != nil {
+			return PreErrorJS("We weren't able to parse your data", w, r)
+		}
+		isJs = true
+	} else {
+		tid, err := strconv.Atoi(r.URL.Path[len("/topic/lock/submit/"):])
+		if err != nil {
+			return PreError("The provided TopicID is not a valid number.", w, r)
+		}
+		tids = append(tids, tid)
+	}
+	if len(tids) == 0 {
+		return LocalErrorJSQ("You haven't provided any IDs", w, r, user, isJs)
 	}
 
-	topic, err := topics.Get(tid)
-	if err == ErrNoRows {
-		PreError("The topic you tried to pin doesn't exist.", w, r)
-		return
-	} else if err != nil {
-		InternalError(err, w)
-		return
+	for _, tid := range tids {
+		topic, err := topics.Get(tid)
+		if err == ErrNoRows {
+			return PreErrorJSQ("The topic you tried to lock doesn't exist.", w, r, isJs)
+		} else if err != nil {
+			return InternalErrorJSQ(err, w, r, isJs)
+		}
+
+		// TODO: Add hooks to make use of headerLite
+		_, ferr := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+		if ferr != nil {
+			return ferr
+		}
+		if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
+			return NoPermissionsJSQ(w, r, user, isJs)
+		}
+
+		err = topic.Lock()
+		if err != nil {
+			return InternalErrorJSQ(err, w, r, isJs)
+		}
+
+		// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
+		ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			return LocalErrorJSQ("Bad IP", w, r, user, isJs)
+		}
+		err = addModLog("lock", tid, "topic", ipaddress, user.ID)
+		if err != nil {
+			return InternalErrorJSQ(err, w, r, isJs)
+		}
+		err = topic.CreateActionReply("lock", ipaddress, user)
+		if err != nil {
+			return InternalErrorJSQ(err, w, r, isJs)
+		}
 	}
 
-	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
+	if len(tids) == 1 {
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(tids[0]), http.StatusSeeOther)
 	}
-	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
-		NoPermissions(w, r, user)
-		return
-	}
-
-	err = topic.Lock()
-	if err != nil {
-		InternalError(err, w)
-		return
-	}
-
-	// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
-	}
-	err = addModLog("lock", tid, "topic", ipaddress, user.ID)
-	if err != nil {
-		InternalError(err, w)
-		return
-	}
-	err = topic.CreateActionReply("lock", ipaddress, user)
-	if err != nil {
-		InternalError(err, w)
-		return
-	}
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	return nil
 }
 
-func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user User) {
+func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unlock/submit/"):])
 	if err != nil {
-		PreError("The provided TopicID is not a valid number.", w, r)
-		return
+		return PreError("The provided TopicID is not a valid number.", w, r)
 	}
 
 	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
-		PreError("The topic you tried to pin doesn't exist.", w, r)
-		return
+		return PreError("The topic you tried to unlock doesn't exist.", w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	err = topic.Unlock()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 	err = addModLog("unlock", tid, "topic", ipaddress, user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	err = topic.CreateActionReply("unlock", ipaddress, user)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
+
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	return nil
 }
 
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
-func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {
-		PreError("Bad Form", w, r)
-		return
+		return PreError("Bad Form", w, r)
 	}
 	isJs := (r.PostFormValue("js") == "1")
 
 	rid, err := strconv.Atoi(r.URL.Path[len("/reply/edit/submit/"):])
 	if err != nil {
-		PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
-		return
+		return PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
 	}
 
 	// Get the Reply ID..
 	var tid int
 	err = getReplyTIDStmt.QueryRow(rid).Scan(&tid)
 	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	var fid int
 	err = getTopicFIDStmt.QueryRow(tid).Scan(&fid)
 	if err == ErrNoRows {
-		PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
-		return
+		return PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
 	} else if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, fid)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, fid)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.EditReply {
-		NoPermissionsJSQ(w, r, user, isJs)
-		return
+		return NoPermissionsJSQ(w, r, user, isJs)
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
 	_, err = editReplyStmt.Exec(content, parseMessage(content, fid, "forums"), rid)
 	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	if !isJs {
@@ -382,60 +383,53 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	} else {
 		w.Write(successJSONBytes)
 	}
+	return nil
 }
 
 // TODO: Refactor this
 // TODO: Disable stat updates in posts handled by plugin_socialgroups
-func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {
-		PreError("Bad Form", w, r)
-		return
+		return PreError("Bad Form", w, r)
 	}
 	isJs := (r.PostFormValue("isJs") == "1")
 
 	rid, err := strconv.Atoi(r.URL.Path[len("/reply/delete/submit/"):])
 	if err != nil {
-		PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
-		return
+		return PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
 	}
 
 	reply, err := rstore.Get(rid)
 	if err == ErrNoRows {
-		PreErrorJSQ("The reply you tried to delete doesn't exist.", w, r, isJs)
-		return
+		return PreErrorJSQ("The reply you tried to delete doesn't exist.", w, r, isJs)
 	} else if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	var fid int
 	err = getTopicFIDStmt.QueryRow(reply.ParentID).Scan(&fid)
 	if err == ErrNoRows {
-		PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
-		return
+		return PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
 	} else if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, fid)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, fid)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
-		NoPermissionsJSQ(w, r, user, isJs)
-		return
+		return NoPermissionsJSQ(w, r, user, isJs)
 	}
 
 	err = reply.Delete()
 	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	//log.Print("Reply #" + strconv.Itoa(rid) + " was deleted by User #" + strconv.Itoa(user.ID))
+	//log.Printf("Reply #%d was deleted by User #%d", rid, user.ID)
 	if !isJs {
 		//http.Redirect(w,r, "/topic/" + strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
@@ -447,57 +441,50 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		wcount := wordCount(reply.Content)
 		err = replyCreator.decreasePostStats(wcount, false)
 		if err != nil {
-			InternalErrorJSQ(err, w, r, isJs)
-			return
+			return InternalErrorJSQ(err, w, r, isJs)
 		}
 	} else if err != ErrNoRows {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalErrorJSQ("Bad IP", w, r, user, isJs)
-		return
+		return LocalErrorJSQ("Bad IP", w, r, user, isJs)
 	}
 	err = addModLog("delete", reply.ParentID, "reply", ipaddress, user.ID)
 	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
+	return nil
 }
 
-func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return
+		return LocalError("Bad Form", w, r, user)
 	}
 	isJs := (r.PostFormValue("js") == "1")
 
 	rid, err := strconv.Atoi(r.URL.Path[len("/profile/reply/edit/submit/"):])
 	if err != nil {
-		LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
-		return
+		return LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
 	}
 
 	// Get the Reply ID..
 	var uid int
 	err = getUserReplyUIDStmt.QueryRow(rid).Scan(&uid)
 	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	if user.ID != uid && !user.Perms.EditReply {
-		NoPermissionsJSQ(w, r, user, isJs)
-		return
+		return NoPermissionsJSQ(w, r, user, isJs)
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
 	_, err = editProfileReplyStmt.Exec(content, parseMessage(content, 0, ""), rid)
 	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	if !isJs {
@@ -505,59 +492,54 @@ func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user Us
 	} else {
 		w.Write(successJSONBytes)
 	}
+	return nil
 }
 
-func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return
+		return LocalError("Bad Form", w, r, user)
 	}
 	isJs := (r.PostFormValue("isJs") == "1")
 
 	rid, err := strconv.Atoi(r.URL.Path[len("/profile/reply/delete/submit/"):])
 	if err != nil {
-		LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
-		return
+		return LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
 	}
 
 	var uid int
 	err = getUserReplyUIDStmt.QueryRow(rid).Scan(&uid)
 	if err == ErrNoRows {
-		LocalErrorJSQ("The reply you tried to delete doesn't exist.", w, r, user, isJs)
-		return
+		return LocalErrorJSQ("The reply you tried to delete doesn't exist.", w, r, user, isJs)
 	} else if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	if user.ID != uid && !user.Perms.DeleteReply {
-		NoPermissionsJSQ(w, r, user, isJs)
-		return
+		return NoPermissionsJSQ(w, r, user, isJs)
 	}
 
 	_, err = deleteProfileReplyStmt.Exec(rid)
 	if err != nil {
-		InternalErrorJSQ(err, w, r, isJs)
-		return
+		return InternalErrorJSQ(err, w, r, isJs)
 	}
-	//log.Print("The profile post '" + strconv.Itoa(rid) + "' was deleted by User #" + strconv.Itoa(user.ID))
+	//log.Printf("The profile post '%d' was deleted by User #%d", rid, user.ID)
 
 	if !isJs {
 		//http.Redirect(w,r, "/user/" + strconv.Itoa(uid), http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)
 	}
+	return nil
 }
 
-func routeIps(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeIps(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewIPs {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	var ip = r.FormValue("ip")
@@ -566,65 +548,56 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 
 	rows, err := findUsersByIPUsersStmt.Query(ip)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&uid)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 		reqUserList[uid] = true
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	rows2, err := findUsersByIPTopicsStmt.Query(ip)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	defer rows2.Close()
 
 	for rows2.Next() {
 		err := rows2.Scan(&uid)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 		reqUserList[uid] = true
 	}
 	err = rows2.Err()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	rows3, err := findUsersByIPRepliesStmt.Query(ip)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	defer rows3.Close()
 
 	for rows3.Next() {
 		err := rows3.Scan(&uid)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 		reqUserList[uid] = true
 	}
 	err = rows3.Err()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Convert the user ID map to a slice, then bulk load the users
@@ -638,47 +611,43 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 	// TODO: What if a user is deleted via the Control Panel?
 	userList, err := users.BulkGetMap(idSlice)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	pi := IPSearchPage{"IP Search", user, headerVars, userList, ip}
 	if preRenderHooks["pre_render_ips"] != nil {
 		if runPreRenderHook("pre_render_ips", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
 	err = templates.ExecuteTemplate(w, "ip-search.html", pi)
 	if err != nil {
-		InternalError(err, w)
+		return InternalError(err, w, r)
 	}
+	return nil
 }
 
 // TODO: This is being replaced with the new ban route system
-/*func routeBan(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w,r,&user)
-	if !ok {
+/*func routeBan(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w,r,&user)
+	if ferr != nil {
 		return
 	}
 	if !user.Perms.BanUsers {
-		NoPermissions(w,r,user)
-		return
+		return NoPermissions(w,r,user)
 	}
 
 	uid, err := strconv.Atoi(r.URL.Path[len("/users/ban/"):])
 	if err != nil {
-		LocalError("The provided User ID is not a valid number.",w,r,user)
-		return
+		return LocalError("The provided User ID is not a valid number.",w,r,user)
 	}
 
 	var uname string
 	err = get_user_name_stmt.QueryRow(uid).Scan(&uname)
 	if err == ErrNoRows {
-		LocalError("The user you're trying to ban no longer exists.",w,r,user)
-		return
+		return LocalError("The user you're trying to ban no longer exists.",w,r,user)
 	} else if err != nil {
-		InternalError(err,w)
-		return
+		return InternalError(err,w,r)
 	}
 
 	confirm_msg := "Are you sure you want to ban '" + uname + "'?"
@@ -687,71 +656,63 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) {
 	pi := Page{"Ban User",user,headerVars,tList,yousure}
 	if preRenderHooks["pre_render_ban"] != nil {
 		if runPreRenderHook("pre_render_ban", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w,"areyousure.html",pi)
+	err = templates.ExecuteTemplate(w,"areyousure.html",pi)
+	if err != nil {
+		return InternalError(err,w,r)
+	}
+	return nil
 }*/
 
-func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Perms.BanUsers {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 	if r.FormValue("session") != user.Session {
-		SecurityError(w, r, user)
-		return
+		return SecurityError(w, r, user)
 	}
 
 	uid, err := strconv.Atoi(r.URL.Path[len("/users/ban/submit/"):])
 	if err != nil {
-		LocalError("The provided User ID is not a valid number.", w, r, user)
-		return
+		return LocalError("The provided User ID is not a valid number.", w, r, user)
 	}
 	/*if uid == -2 {
-		LocalError("Stop trying to ban Merlin! Ban admin! Bad! No!",w,r,user)
-		return
+		return LocalError("Stop trying to ban Merlin! Ban admin! Bad! No!",w,r,user)
 	}*/
 
 	targetUser, err := users.Get(uid)
 	if err == ErrNoRows {
-		LocalError("The user you're trying to ban no longer exists.", w, r, user)
-		return
+		return LocalError("The user you're trying to ban no longer exists.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	if targetUser.IsSuperAdmin || targetUser.IsAdmin || targetUser.IsMod {
-		LocalError("You may not ban another staff member.", w, r, user)
-		return
+		return LocalError("You may not ban another staff member.", w, r, user)
 	}
 	if uid == user.ID {
-		LocalError("Why are you trying to ban yourself? Stop that.", w, r, user)
-		return
+		return LocalError("Why are you trying to ban yourself? Stop that.", w, r, user)
 	}
 
 	if targetUser.IsBanned {
-		LocalError("The user you're trying to unban is already banned.", w, r, user)
-		return
+		return LocalError("The user you're trying to unban is already banned.", w, r, user)
 	}
 
 	durationDays, err := strconv.Atoi(r.FormValue("ban-duration-days"))
 	if err != nil {
-		LocalError("You can only use whole numbers for the number of days", w, r, user)
-		return
+		return LocalError("You can only use whole numbers for the number of days", w, r, user)
 	}
 
 	durationWeeks, err := strconv.Atoi(r.FormValue("ban-duration-weeks"))
 	if err != nil {
-		LocalError("You can only use whole numbers for the number of weeks", w, r, user)
-		return
+		return LocalError("You can only use whole numbers for the number of weeks", w, r, user)
 	}
 
 	durationMonths, err := strconv.Atoi(r.FormValue("ban-duration-months"))
 	if err != nil {
-		LocalError("You can only use whole numbers for the number of months", w, r, user)
-		return
+		return LocalError("You can only use whole numbers for the number of months", w, r, user)
 	}
 
 	var duration time.Duration
@@ -767,127 +728,106 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) {
 
 	err = targetUser.Ban(duration, user.ID)
 	if err == ErrNoRows {
-		LocalError("The user you're trying to ban no longer exists.", w, r, user)
-		return
+		return LocalError("The user you're trying to ban no longer exists.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 	err = addModLog("ban", uid, "user", ipaddress, user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
+	return nil
 }
 
-func routeUnban(w http.ResponseWriter, r *http.Request, user User) {
+func routeUnban(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Perms.BanUsers {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 	if r.FormValue("session") != user.Session {
-		SecurityError(w, r, user)
-		return
+		return SecurityError(w, r, user)
 	}
 
 	uid, err := strconv.Atoi(r.URL.Path[len("/users/unban/"):])
 	if err != nil {
-		LocalError("The provided User ID is not a valid number.", w, r, user)
-		return
+		return LocalError("The provided User ID is not a valid number.", w, r, user)
 	}
 
 	targetUser, err := users.Get(uid)
 	if err == ErrNoRows {
-		LocalError("The user you're trying to unban no longer exists.", w, r, user)
-		return
+		return LocalError("The user you're trying to unban no longer exists.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	if !targetUser.IsBanned {
-		LocalError("The user you're trying to unban isn't banned.", w, r, user)
-		return
+		return LocalError("The user you're trying to unban isn't banned.", w, r, user)
 	}
 
 	err = targetUser.Unban()
 	if err == ErrNoTempGroup {
-		LocalError("The user you're trying to unban is not banned", w, r, user)
-		return
+		return LocalError("The user you're trying to unban is not banned", w, r, user)
 	} else if err == ErrNoRows {
-		LocalError("The user you're trying to unban no longer exists.", w, r, user)
-		return
+		return LocalError("The user you're trying to unban no longer exists.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 	err = addModLog("unban", uid, "user", ipaddress, user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
+	return nil
 }
 
-func routeActivate(w http.ResponseWriter, r *http.Request, user User) {
+func routeActivate(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Perms.ActivateUsers {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 	if r.FormValue("session") != user.Session {
-		SecurityError(w, r, user)
-		return
+		return SecurityError(w, r, user)
 	}
 
 	uid, err := strconv.Atoi(r.URL.Path[len("/users/activate/"):])
 	if err != nil {
-		LocalError("The provided User ID is not a valid number.", w, r, user)
-		return
+		return LocalError("The provided User ID is not a valid number.", w, r, user)
 	}
 
 	targetUser, err := users.Get(uid)
 	if err == ErrNoRows {
-		LocalError("The account you're trying to activate no longer exists.", w, r, user)
-		return
+		return LocalError("The account you're trying to activate no longer exists.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	if targetUser.Active {
-		LocalError("The account you're trying to activate has already been activated.", w, r, user)
-		return
+		return LocalError("The account you're trying to activate has already been activated.", w, r, user)
 	}
 	err = targetUser.Activate()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 	err = addModLog("activate", targetUser.ID, "user", ipaddress, user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	http.Redirect(w, r, "/user/"+strconv.Itoa(targetUser.ID), http.StatusSeeOther)
+	return nil
 }

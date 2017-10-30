@@ -405,57 +405,56 @@ func resetTemplateOverrides() {
 // NEW method of doing theme templates to allow one user to have a different theme to another. Under construction.
 // TODO: Generate the type switch instead of writing it by hand
 // TODO: Cut the number of types in half
-func RunThemeTemplate(theme string, template string, pi interface{}, w http.ResponseWriter) {
-	switch tmplO := GetThemeTemplate(theme, template).(type) {
-	case *func(TopicPage, http.ResponseWriter):
+func RunThemeTemplate(theme string, template string, pi interface{}, w http.ResponseWriter) error {
+	var getTmpl = GetThemeTemplate(theme, template)
+	switch tmplO := getTmpl.(type) {
+	case *func(TopicPage, http.ResponseWriter) error:
 		var tmpl = *tmplO
-		tmpl(pi.(TopicPage), w)
-	case *func(TopicsPage, http.ResponseWriter):
+		return tmpl(pi.(TopicPage), w)
+	case *func(TopicsPage, http.ResponseWriter) error:
 		var tmpl = *tmplO
-		tmpl(pi.(TopicsPage), w)
-	case *func(ForumPage, http.ResponseWriter):
+		return tmpl(pi.(TopicsPage), w)
+	case *func(ForumPage, http.ResponseWriter) error:
 		var tmpl = *tmplO
-		tmpl(pi.(ForumPage), w)
-	case *func(ForumsPage, http.ResponseWriter):
+		return tmpl(pi.(ForumPage), w)
+	case *func(ForumsPage, http.ResponseWriter) error:
 		var tmpl = *tmplO
-		tmpl(pi.(ForumsPage), w)
-	case *func(ProfilePage, http.ResponseWriter):
+		return tmpl(pi.(ForumsPage), w)
+	case *func(ProfilePage, http.ResponseWriter) error:
 		var tmpl = *tmplO
-		tmpl(pi.(ProfilePage), w)
-	case *func(CreateTopicPage, http.ResponseWriter):
+		return tmpl(pi.(ProfilePage), w)
+	case *func(CreateTopicPage, http.ResponseWriter) error:
 		var tmpl = *tmplO
-		tmpl(pi.(CreateTopicPage), w)
-	case *func(Page, http.ResponseWriter):
+		return tmpl(pi.(CreateTopicPage), w)
+	case *func(Page, http.ResponseWriter) error:
 		var tmpl = *tmplO
-		tmpl(pi.(Page), w)
-	case func(TopicPage, http.ResponseWriter):
-		tmplO(pi.(TopicPage), w)
-	case func(TopicsPage, http.ResponseWriter):
-		tmplO(pi.(TopicsPage), w)
-	case func(ForumPage, http.ResponseWriter):
-		tmplO(pi.(ForumPage), w)
-	case func(ForumsPage, http.ResponseWriter):
-		tmplO(pi.(ForumsPage), w)
-	case func(ProfilePage, http.ResponseWriter):
-		tmplO(pi.(ProfilePage), w)
-	case func(CreateTopicPage, http.ResponseWriter):
-		tmplO(pi.(CreateTopicPage), w)
-	case func(Page, http.ResponseWriter):
-		tmplO(pi.(Page), w)
+		return tmpl(pi.(Page), w)
+	case func(TopicPage, http.ResponseWriter) error:
+		return tmplO(pi.(TopicPage), w)
+	case func(TopicsPage, http.ResponseWriter) error:
+		return tmplO(pi.(TopicsPage), w)
+	case func(ForumPage, http.ResponseWriter) error:
+		return tmplO(pi.(ForumPage), w)
+	case func(ForumsPage, http.ResponseWriter) error:
+		return tmplO(pi.(ForumsPage), w)
+	case func(ProfilePage, http.ResponseWriter) error:
+		return tmplO(pi.(ProfilePage), w)
+	case func(CreateTopicPage, http.ResponseWriter) error:
+		return tmplO(pi.(CreateTopicPage), w)
+	case func(Page, http.ResponseWriter) error:
+		return tmplO(pi.(Page), w)
 	case string:
 		mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap[template]
 		if !ok {
 			mapping = template
 		}
-		err := templates.ExecuteTemplate(w, mapping+".html", pi)
-		if err != nil {
-			LogError(err)
-		}
+		return templates.ExecuteTemplate(w, mapping+".html", pi)
 	default:
 		log.Print("theme ", theme)
 		log.Print("template ", template)
 		log.Print("pi ", pi)
 		log.Print("tmplO ", tmplO)
+		log.Print("getTmpl ", getTmpl)
 
 		valueOf := reflect.ValueOf(tmplO)
 		log.Print("initial valueOf.Type()", valueOf.Type())
@@ -466,7 +465,7 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w http.Resp
 		log.Print("deferenced valueOf.Type() ", valueOf.Type())
 		log.Print("valueOf.Kind() ", valueOf.Kind())
 
-		LogError(errors.New("Unknown template type"))
+		return errors.New("Unknown template type")
 	}
 }
 
@@ -485,15 +484,12 @@ func GetThemeTemplate(theme string, template string) interface{} {
 
 // CreateThemeTemplate creates a theme template on the current default theme
 func CreateThemeTemplate(theme string, name string) {
-	themes[theme].TmplPtr[name] = func(pi Page, w http.ResponseWriter) {
+	themes[theme].TmplPtr[name] = func(pi Page, w http.ResponseWriter) error {
 		mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap[name]
 		if !ok {
 			mapping = name
 		}
-		err := templates.ExecuteTemplate(w, mapping+".html", pi)
-		if err != nil {
-			InternalError(err, w)
-		}
+		return templates.ExecuteTemplate(w, mapping+".html", pi)
 	}
 }
 

@@ -28,7 +28,6 @@ var ErrNoBody = errors.New("This message is missing a body")
 type TopicStore interface {
 	Get(id int) (*Topic, error)
 	BypassGet(id int) (*Topic, error)
-	Delete(id int) error
 	Exists(id int) bool
 	Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error)
 	AddLastTopic(item *Topic, fid int) error // unimplemented
@@ -60,7 +59,6 @@ type MemoryTopicStore struct {
 	get        *sql.Stmt
 	exists     *sql.Stmt
 	topicCount *sql.Stmt
-	delete     *sql.Stmt
 	sync.RWMutex
 }
 
@@ -78,17 +76,12 @@ func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
 	if err != nil {
 		log.Fatal(err)
 	}
-	deleteStmt, err := qgen.Builder.SimpleDelete("topics", "tid = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
 	return &MemoryTopicStore{
 		items:      make(map[int]*Topic),
 		capacity:   capacity,
 		get:        getStmt,
 		exists:     existsStmt,
 		topicCount: topicCountStmt,
-		delete:     deleteStmt,
 	}
 }
 
@@ -144,36 +137,6 @@ func (mts *MemoryTopicStore) Reload(id int) error {
 	} else {
 		_ = mts.CacheRemove(id)
 	}
-	return err
-}
-
-// TODO: Use a transaction here
-func (mts *MemoryTopicStore) Delete(id int) error {
-	topic, err := mts.Get(id)
-	if err != nil {
-		return nil // Already gone, maybe we should check for other errors here
-	}
-
-	topicCreator, err := users.Get(topic.CreatedBy)
-	if err == nil {
-		wcount := wordCount(topic.Content)
-		err = topicCreator.decreasePostStats(wcount, true)
-		if err != nil {
-			return err
-		}
-	} else if err != ErrNoRows {
-		return err
-	}
-
-	err = fstore.RemoveTopic(topic.ParentID)
-	if err != nil && err != ErrNoRows {
-		return err
-	}
-
-	mts.Lock()
-	mts.CacheRemoveUnsafe(id)
-	_, err = mts.delete.Exec(id)
-	mts.Unlock()
 	return err
 }
 
@@ -302,7 +265,6 @@ type SQLTopicStore struct {
 	get        *sql.Stmt
 	exists     *sql.Stmt
 	topicCount *sql.Stmt
-	delete     *sql.Stmt
 }
 
 func NewSQLTopicStore() *SQLTopicStore {
@@ -318,15 +280,10 @@ func NewSQLTopicStore() *SQLTopicStore {
 	if err != nil {
 		log.Fatal(err)
 	}
-	deleteStmt, err := qgen.Builder.SimpleDelete("topics", "tid = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
 	return &SQLTopicStore{
 		get:        getStmt,
 		exists:     existsStmt,
 		topicCount: topicCountStmt,
-		delete:     deleteStmt,
 	}
 }
 
@@ -375,33 +332,6 @@ func (sts *SQLTopicStore) Create(fid int, topicName string, content string, uid 
 
 	err = fstore.AddTopic(int(lastID), uid, fid)
 	return int(lastID), err
-}
-
-// TODO: Use a transaction here
-func (sts *SQLTopicStore) Delete(id int) error {
-	topic, err := sts.Get(id)
-	if err != nil {
-		return nil // Already gone, maybe we should check for other errors here
-	}
-
-	topicCreator, err := users.Get(topic.CreatedBy)
-	if err == nil {
-		wcount := wordCount(topic.Content)
-		err = topicCreator.decreasePostStats(wcount, true)
-		if err != nil {
-			return err
-		}
-	} else if err != ErrNoRows {
-		return err
-	}
-
-	err = fstore.RemoveTopic(topic.ParentID)
-	if err != nil && err != ErrNoRows {
-		return err
-	}
-
-	_, err = sts.delete.Exec(id)
-	return err
 }
 
 // ? - What're we going to do about this?

@@ -550,6 +550,49 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	})
 }
 
+func BenchmarkUserGet(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+
+	b.RunParallel(func(pb *testing.PB) {
+		var err error
+		for pb.Next() {
+			_, err = users.Get(1)
+			if err != nil {
+				b.Fatal(err)
+				return
+			}
+		}
+	})
+}
+
+func BenchmarkUserBypassGet(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+
+	// Bypass the cache and always hit the database
+	b.RunParallel(func(pb *testing.PB) {
+		var err error
+		for pb.Next() {
+			_, err = users.BypassGet(1)
+			if err != nil {
+				b.Fatal(err)
+				return
+			}
+		}
+	})
+}
+
 func BenchmarkQueriesSerial(b *testing.B) {
 	b.ReportAllocs()
 	var tu TopicUser

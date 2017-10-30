@@ -10,79 +10,61 @@ import (
 var templates = template.New("")
 
 // nolint
-func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) {
+func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) error {
 	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["topic"]
 	if !ok {
 		mapping = "topic"
 	}
-	err := templates.ExecuteTemplate(w, mapping+".html", pi)
-	if err != nil {
-		InternalError(err, w)
-	}
+	return templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
 // nolint
-var template_topic_handle func(TopicPage, http.ResponseWriter) = interpreted_topic_template
-var template_topic_alt_handle func(TopicPage, http.ResponseWriter) = interpreted_topic_template
+var template_topic_handle func(TopicPage, http.ResponseWriter) error = interpreted_topic_template
+var template_topic_alt_handle func(TopicPage, http.ResponseWriter) error = interpreted_topic_template
 
 // nolint
-var template_topics_handle func(TopicsPage, http.ResponseWriter) = func(pi TopicsPage, w http.ResponseWriter) {
+var template_topics_handle func(TopicsPage, http.ResponseWriter) error = func(pi TopicsPage, w http.ResponseWriter) error {
 	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["topics"]
 	if !ok {
 		mapping = "topics"
 	}
-	err := templates.ExecuteTemplate(w, mapping+".html", pi)
-	if err != nil {
-		InternalError(err, w)
-	}
+	return templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
 // nolint
-var template_forum_handle func(ForumPage, http.ResponseWriter) = func(pi ForumPage, w http.ResponseWriter) {
+var template_forum_handle func(ForumPage, http.ResponseWriter) error = func(pi ForumPage, w http.ResponseWriter) error {
 	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["forum"]
 	if !ok {
 		mapping = "forum"
 	}
-	err := templates.ExecuteTemplate(w, mapping+".html", pi)
-	if err != nil {
-		InternalError(err, w)
-	}
+	return templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
 // nolint
-var template_forums_handle func(ForumsPage, http.ResponseWriter) = func(pi ForumsPage, w http.ResponseWriter) {
+var template_forums_handle func(ForumsPage, http.ResponseWriter) error = func(pi ForumsPage, w http.ResponseWriter) error {
 	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["forums"]
 	if !ok {
 		mapping = "forums"
 	}
-	err := templates.ExecuteTemplate(w, mapping+".html", pi)
-	if err != nil {
-		InternalError(err, w)
-	}
+	return templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
 // nolint
-var template_profile_handle func(ProfilePage, http.ResponseWriter) = func(pi ProfilePage, w http.ResponseWriter) {
+var template_profile_handle func(ProfilePage, http.ResponseWriter) error = func(pi ProfilePage, w http.ResponseWriter) error {
 	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["profile"]
 	if !ok {
 		mapping = "profile"
 	}
-	err := templates.ExecuteTemplate(w, mapping+".html", pi)
-	if err != nil {
-		InternalError(err, w)
-	}
+	return templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
 // nolint
-var template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) = func(pi CreateTopicPage, w http.ResponseWriter) {
+var template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) error = func(pi CreateTopicPage, w http.ResponseWriter) error {
 	mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap["create-topic"]
 	if !ok {
 		mapping = "create-topic"
 	}
-	err := templates.ExecuteTemplate(w, mapping+".html", pi)
-	if err != nil {
-		InternalError(err, w)
-	}
+	return templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
 // ? - Add template hooks?

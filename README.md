@@ -162,6 +162,8 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 ![Tempra Conflux Mobile](https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux-mobile-320px.png)
 
+![Cosora Prototype WIP](https://github.com/Azareal/Gosora/blob/master/images/cosora-wip.png)
+
 More images in the /images/ folder. Beware though, some of them are *really* outdated.
 
 # Dependencies

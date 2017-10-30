@@ -22,7 +22,7 @@ func init() {
 
 		The Deactivate field is for the handler which is called by the software when the admin hits the Deactivate button in the control panel. You should clean-up any resources you have allocated, remove any hooks, close any statements, etc. within this handler.
 
-		The Installation field is for one-off installation logic such as creating tables. You will need to run the seperate uninstallation function for that.
+		The Installation field is for one-off installation logic such as creating tables. You will need to run the separate uninstallation function for that.
 
 		That Uninstallation field which is currently unused is for not only deactivating this plugin, but for purging any data associated with it such a new tables or data produced by the end-user.
 	*/

@@ -2,21 +2,25 @@
 <main>
 
 <div class="rowblock opthead">
-	<div class="rowitem"><a>Forums</a></div>
+	<div class="rowitem"><h1>Forums</h1></div>
 </div>
-<div class="rowblock">
+<div class="rowblock forum_list">
 	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopic.Title)}}datarow{{end}}">
-		{{if .Desc}}<span style="float: left;">
-			<a href="{{.Link}}" style="">{{.Name}}</a>
-			<br /><span class="rowsmall">{{.Desc}}</span>
-		</span>{{else}}<span style="float: left;">
+		<span class="forum_left shift_left">
 			<a href="{{.Link}}">{{.Name}}</a>
+		{{if .Desc}}
+			<br /><span class="rowsmall">{{.Desc}}</span>
+		{{else}}
 			<br /><span class="rowsmall" style="font-style: italic;">No description</span>
-		</span>{{end}}
+		{{end}}
+		</span>
 
-		<span style="float: right;">
-			<a href="{{.LastTopic.Link}}" style="float: right;font-size: 14px;">{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}None{{end}}</a>
-			{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}
+		<span class="forum_right shift_right">
+			{{if .LastReplyer.Avatar}}<img class="extra_little_row_avatar" src="{{.LastReplyer.Avatar}}" height=64 width=64 />{{end}}
+			<span>
+				<a href="{{.LastTopic.Link}}">{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}None{{end}}</a>
+				{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}
+			</span>
 		</span>
 		<div style="clear: both;"></div>
 	</div>

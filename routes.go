@@ -74,11 +74,11 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 		h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
 		io.Copy(w, bytes.NewReader(file.Data))
 	}
-	//io.CopyN(w, bytes.NewReader(file.Data), static_files[r.URL.Path].Length)
+	//io.CopyN(w, bytes.NewReader(file.Data), staticFiles[r.URL.Path].Length)
 }
 
 // Deprecated: Test route for stopping the server during a performance analysis
-/*func routeExit(w http.ResponseWriter, r *http.Request, user User){
+/*func routeExit(w http.ResponseWriter, r *http.Request, user User) RouteError{
 	db.Close()
 	os.Exit(0)
 }*/
@@ -86,77 +86,76 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
 // TODO: Add a sitemap
 // TODO: Add an API so that plugins can register disallowed areas. E.g. /groups/join for plugin_socialgroups
-func routeRobotsTxt(w http.ResponseWriter, r *http.Request) {
+func routeRobotsTxt(w http.ResponseWriter, r *http.Request) RouteError {
 	_, _ = w.Write([]byte(`User-agent: *
 Disallow: /panel/
 Disallow: /topics/create/
 Disallow: /user/edit/
 Disallow: /accounts/
 `))
+	return nil
 }
 
-func routeOverview(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeOverview(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	BuildWidgets("overview", nil, headerVars, r)
 
 	pi := Page{"Overview", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_overview"] != nil {
 		if runPreRenderHook("pre_render_overview", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
 
 	err := templates.ExecuteTemplate(w, "overview.html", pi)
 	if err != nil {
-		InternalError(err, w)
+		return InternalError(err, w, r)
 	}
+	return nil
 }
 
-func routeCustomPage(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeCustomPage(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 
 	name := r.URL.Path[len("/pages/"):]
 	if templates.Lookup("page_"+name) == nil {
-		NotFound(w, r)
-		return
+		return NotFound(w, r)
 	}
 	BuildWidgets("custom_page", name, headerVars, r)
 
 	pi := Page{"Page", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_custom_page"] != nil {
 		if runPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
 
 	err := templates.ExecuteTemplate(w, "page_"+name, pi)
 	if err != nil {
-		InternalError(err, w)
+		return InternalError(err, w, r)
 	}
+	return nil
 }
 
-// TODO: Paginate this
-func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeTopics(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	BuildWidgets("topics", nil, headerVars, r)
 
 	// TODO: Add a function for the qlist stuff
 	var qlist string
-	var fidList []interface{}
 	group, err := gstore.Get(user.Group)
 	if err != nil {
-		LocalError("Something weird happened", w, r, user)
-		log.Print("Group #" + strconv.Itoa(user.Group) + " doesn't exist despite being used by User #" + strconv.Itoa(user.ID))
-		return
+		log.Printf("Group #%d doesn't exist despite being used by User #%d", user.Group, user.ID)
+		return LocalError("Something weird happened", w, r, user)
 	}
 
 	// TODO: Make CanSee a method on *Group with a canSee field?
@@ -164,8 +163,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 	if user.IsSuperAdmin {
 		canSee, err = fstore.GetAllVisibleIDs()
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 	} else {
 		canSee = group.CanSee
@@ -173,6 +171,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 
 	// We need a list of the visible forums for Quick Topic
 	var forumList []Forum
+	var argList []interface{}
 
 	for _, fid := range canSee {
 		forum := fstore.DirtyGet(fid)
@@ -187,7 +186,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 			}
 			// ? - Should we be showing plugin_socialgroups posts on /topics/?
 			// ? - Would it be useful, if we could post in social groups from /topics/?
-			fidList = append(fidList, strconv.Itoa(fid))
+			argList = append(argList, strconv.Itoa(fid))
 			qlist += "?,"
 
 		}
@@ -195,23 +194,48 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 
 	// ! Need an inline error not a page level error
 	if qlist == "" {
-		NotFound(w, r)
-		return
+		return NotFound(w, r)
 	}
 	qlist = qlist[0 : len(qlist)-1]
 
-	var topicList []*TopicsRow
-	//stmt, err := qgen.Builder.SimpleLeftJoin("topics","users","topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, topics.postCount, topics.likeCount, users.name, users.avatar","topics.createdBy = users.uid","parentID IN("+qlist+")","topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC","")
-	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount", "parentID IN("+qlist+")", "sticky DESC, lastReplyAt DESC, createdBy DESC", "")
+	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "parentID IN("+qlist+")", "")
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
-	rows, err := stmt.Query(fidList...)
+	var topicCount int
+	err = topicCountStmt.QueryRow(argList...).Scan(&topicCount)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
+	}
+
+	// Get the current page
+	page, _ := strconv.Atoi(r.FormValue("page"))
+
+	// Calculate the offset
+	var offset int
+	lastPage := (topicCount / config.ItemsPerPage) + 1
+	if page > 1 {
+		offset = (config.ItemsPerPage * page) - config.ItemsPerPage
+	} else if page == -1 {
+		page = lastPage
+		offset = (config.ItemsPerPage * page) - config.ItemsPerPage
+	} else {
+		page = 1
+	}
+
+	var topicList []*TopicsRow
+	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount", "parentID IN("+qlist+")", "sticky DESC, lastReplyAt DESC, createdBy DESC", "?,?")
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+
+	argList = append(argList, offset)
+	argList = append(argList, config.ItemsPerPage)
+
+	rows, err := stmt.Query(argList...)
+	if err != nil {
+		return InternalError(err, w, r)
 	}
 	defer rows.Close()
 
@@ -220,20 +244,14 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 		topicItem := TopicsRow{ID: 0}
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.IsClosed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		topicItem.Link = buildTopicURL(nameToSlug(topicItem.Title), topicItem.ID)
 
 		forum := fstore.DirtyGet(topicItem.ParentID)
-		if topicItem.ParentID >= 0 {
-			topicItem.ForumName = forum.Name
-			topicItem.ForumLink = forum.Link
-		} else {
-			topicItem.ForumName = ""
-			//topicItem.ForumLink = ""
-		}
+		topicItem.ForumName = forum.Name
+		topicItem.ForumLink = forum.Link
 
 		/*topicItem.CreatedAt, err = relativeTimeFromString(topicItem.CreatedAt)
 		if err != nil {
@@ -250,8 +268,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Convert the user ID map to a slice, then bulk load the users
@@ -265,8 +282,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 	// TODO: What if a user is deleted via the Control Panel?
 	userList, err := users.BulkGetMap(idSlice)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Second pass to the add the user data
@@ -279,13 +295,17 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) {
 	pi := TopicsPage{"All Topics", user, headerVars, topicList, forumList, config.DefaultForum}
 	if preRenderHooks["pre_render_topic_list"] != nil {
 		if runPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	RunThemeTemplate(headerVars.ThemeName, "topics", pi, w)
+	err = RunThemeTemplate(headerVars.ThemeName, "topics", pi, w)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) RouteError {
 	page, _ := strconv.Atoi(r.FormValue("page"))
 
 	// SEO URLs...
@@ -295,34 +315,31 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	}
 	fid, err := strconv.Atoi(halves[1])
 	if err != nil {
-		PreError("The provided ForumID is not a valid number.", w, r)
-		return
+		return PreError("The provided ForumID is not a valid number.", w, r)
 	}
 
-	headerVars, ok := ForumUserCheck(w, r, &user, fid)
-	if !ok {
-		return
+	headerVars, ferr := ForumUserCheck(w, r, &user, fid)
+	if ferr != nil {
+		return ferr
 	}
-	//log.Printf("groups[user.Group]: %+v\n", groups[user.Group].Forums)
+
 	if !user.Perms.ViewTopic {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	// TODO: Fix this double-check
 	forum, err := fstore.Get(fid)
 	if err == ErrNoRows {
-		NotFound(w, r)
-		return
+		return NotFound(w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	BuildWidgets("view_forum", forum, headerVars, r)
 
 	// Calculate the offset
 	var offset int
+	// TODO: Does forum.TopicCount take the deleted items into consideration for guests?
 	lastPage := (forum.TopicCount / config.ItemsPerPage) + 1
 	if page > 1 {
 		offset = (config.ItemsPerPage * page) - config.ItemsPerPage
@@ -336,8 +353,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	// TODO: Move this to *Forum
 	rows, err := getForumTopicsOffsetStmt.Query(fid, offset, config.ItemsPerPage)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	defer rows.Close()
 
@@ -348,8 +364,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 		var topicItem = TopicsRow{ID: 0}
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.IsClosed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.ParentID, &topicItem.PostCount, &topicItem.LikeCount)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		topicItem.Link = buildTopicURL(nameToSlug(topicItem.Title), topicItem.ID)
@@ -364,8 +379,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Convert the user ID map to a slice, then bulk load the users
@@ -379,8 +393,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	// TODO: What if a user is deleted via the Control Panel?
 	userList, err := users.BulkGetMap(idSlice)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Second pass to the add the user data
@@ -393,16 +406,20 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	pi := ForumPage{forum.Name, user, headerVars, topicList, forum, page, lastPage}
 	if preRenderHooks["pre_render_view_forum"] != nil {
 		if runPreRenderHook("pre_render_view_forum", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	RunThemeTemplate(headerVars.ThemeName, "forum", pi, w)
+	err = RunThemeTemplate(headerVars.ThemeName, "forum", pi, w)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeForums(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeForums(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	BuildWidgets("forums", nil, headerVars, r)
 
@@ -412,19 +429,17 @@ func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 	if user.IsSuperAdmin {
 		canSee, err = fstore.GetAllVisibleIDs()
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
-		//log.Print("canSee",canSee)
+		//log.Print("canSee ", canSee)
 	} else {
 		group, err := gstore.Get(user.Group)
 		if err != nil {
-			LocalError("Something weird happened", w, r, user)
-			log.Print("Group #" + strconv.Itoa(user.Group) + " doesn't exist despite being used by User #" + strconv.Itoa(user.ID))
-			return
+			log.Printf("Group #%d doesn't exist despite being used by User #%d", user.Group, user.ID)
+			return LocalError("Something weird happened", w, r, user)
 		}
 		canSee = group.CanSee
-		//log.Print("group.CanSee",group.CanSee)
+		//log.Print("group.CanSee ", group.CanSee)
 	}
 
 	for _, fid := range canSee {
@@ -452,13 +467,17 @@ func routeForums(w http.ResponseWriter, r *http.Request, user User) {
 	pi := ForumsPage{"Forum List", user, headerVars, forumList}
 	if preRenderHooks["pre_render_forum_list"] != nil {
 		if runPreRenderHook("pre_render_forum_list", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	RunThemeTemplate(headerVars.ThemeName, "forums", pi, w)
+	err = RunThemeTemplate(headerVars.ThemeName, "forums", pi, w)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
+func routeTopicID(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	var err error
 	var page, offset int
 	var replyList []ReplyUser
@@ -473,30 +492,26 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 
 	tid, err := strconv.Atoi(halves[1])
 	if err != nil {
-		PreError("The provided TopicID is not a valid number.", w, r)
-		return
+		return PreError("The provided TopicID is not a valid number.", w, r)
 	}
 
 	// Get the topic...
 	topic, err := getTopicUser(tid)
 	if err == ErrNoRows {
-		NotFound(w, r)
-		return
+		return NotFound(w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	topic.ClassName = ""
 	//log.Printf("topic: %+v\n", topic)
 
-	headerVars, ok := ForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
+	headerVars, ferr := ForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic {
 		//log.Printf("user.Perms: %+v\n", user.Perms)
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	BuildWidgets("view_topic", &topic, headerVars, r)
@@ -511,8 +526,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 
 	postGroup, err := gstore.Get(topic.Group)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	topic.Tag = postGroup.Tag
@@ -561,11 +575,9 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 	// Get the replies..
 	rows, err := getTopicRepliesOffsetStmt.Query(topic.ID, offset, config.ItemsPerPage)
 	if err == ErrNoRows {
-		LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
-		return
+		return LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	defer rows.Close()
 
@@ -573,8 +585,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 	for rows.Next() {
 		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.ActionType)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		replyItem.UserLink = buildProfileURL(nameToSlug(replyItem.CreatedByName), replyItem.CreatedBy)
@@ -584,8 +595,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 
 		postGroup, err = gstore.Get(replyItem.Group)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		if postGroup.IsMod || postGroup.IsAdmin {
@@ -650,23 +660,26 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	tpage.ItemList = replyList
 	if preRenderHooks["pre_render_view_topic"] != nil {
 		if runPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
-			return
+			return nil
 		}
 	}
-	RunThemeTemplate(headerVars.ThemeName, "topic", tpage, w)
+	err = RunThemeTemplate(headerVars.ThemeName, "topic", tpage, w)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeProfile(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 
 	var err error
@@ -682,8 +695,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 
 	pid, err := strconv.Atoi(halves[1])
 	if err != nil {
-		LocalError("The provided User ID is not a valid number.", w, r, user)
-		return
+		return LocalError("The provided User ID is not a valid number.", w, r, user)
 	}
 
 	var puser *User
@@ -694,33 +706,28 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 		// Fetch the user data
 		puser, err = users.Get(pid)
 		if err == ErrNoRows {
-			NotFound(w, r)
-			return
+			return NotFound(w, r)
 		} else if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 	}
 
 	// Get the replies..
 	rows, err := getProfileRepliesStmt.Query(puser.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &replyGroup)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		group, err := gstore.Get(replyGroup)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		replyLines = strings.Count(replyContent, "\n")
@@ -754,62 +761,64 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) {
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	ppage := ProfilePage{puser.Name + "'s Profile", user, headerVars, replyList, *puser}
 	if preRenderHooks["pre_render_profile"] != nil {
 		if runPreRenderHook("pre_render_profile", w, r, &user, &ppage) {
-			return
+			return nil
 		}
 	}
 
-	template_profile_handle(ppage, w)
+	err = template_profile_handle(ppage, w)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeLogin(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeLogin(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if user.Loggedin {
-		LocalError("You're already logged in.", w, r, user)
-		return
+		return LocalError("You're already logged in.", w, r, user)
 	}
 	pi := Page{"Login", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_login"] != nil {
 		if runPreRenderHook("pre_render_login", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "login.html", pi)
+	err := templates.ExecuteTemplate(w, "login.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
 // TODO: Log failed attempted logins?
 // TODO: Lock IPS out if they have too many failed attempts?
 // TODO: Log unusual countries in comparison to the country a user usually logs in from? Alert the user about this?
-func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if user.Loggedin {
-		LocalError("You're already logged in.", w, r, user)
-		return
+		return LocalError("You're already logged in.", w, r, user)
 	}
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return
+		return LocalError("Bad Form", w, r, user)
 	}
 
 	uid, err := auth.Authenticate(html.EscapeString(r.PostFormValue("username")), r.PostFormValue("password"))
 	if err != nil {
-		LocalError(err.Error(), w, r, user)
-		return
+		return LocalError(err.Error(), w, r, user)
 	}
 
 	userPtr, err := users.Get(uid)
 	if err != nil {
-		LocalError("Bad account", w, r, user)
-		return
+		return LocalError("Bad account", w, r, user)
 	}
 	user = *userPtr
 
@@ -817,8 +826,7 @@ func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user User) {
 	if user.Session == "" {
 		session, err = auth.CreateSession(uid)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 	} else {
 		session = user.Session
@@ -829,81 +837,75 @@ func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		// Is this error check reundant? We already check for the error in PreRoute for the same IP
 		host, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
+		// TODO: Should we be logging this?
 		log.Print("#" + strconv.Itoa(uid) + " has logged in with IP " + host)
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }
 
-func routeRegister(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeRegister(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if user.Loggedin {
-		LocalError("You're already logged in.", w, r, user)
-		return
+		return LocalError("You're already logged in.", w, r, user)
 	}
 	pi := Page{"Registration", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_register"] != nil {
 		if runPreRenderHook("pre_render_register", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "register.html", pi)
+	err := templates.ExecuteTemplate(w, "register.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerLite, _ := SimpleUserCheck(w, r, &user)
 
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return
+		return LocalError("Bad Form", w, r, user)
 	}
 
 	username := html.EscapeString(r.PostFormValue("username"))
 	if username == "" {
-		LocalError("You didn't put in a username.", w, r, user)
-		return
+		return LocalError("You didn't put in a username.", w, r, user)
 	}
 	email := html.EscapeString(r.PostFormValue("email"))
 	if email == "" {
-		LocalError("You didn't put in an email.", w, r, user)
-		return
+		return LocalError("You didn't put in an email.", w, r, user)
 	}
 
 	password := r.PostFormValue("password")
 	if password == "" {
-		LocalError("You didn't put in a password.", w, r, user)
-		return
+		return LocalError("You didn't put in a password.", w, r, user)
 	}
-
 	if password == username {
-		LocalError("You can't use your username as your password.", w, r, user)
-		return
+		return LocalError("You can't use your username as your password.", w, r, user)
 	}
-
 	if password == email {
-		LocalError("You can't use your email as your password.", w, r, user)
-		return
+		return LocalError("You can't use your email as your password.", w, r, user)
 	}
 
 	err = weakPassword(password)
 	if err != nil {
-		LocalError(err.Error(), w, r, user)
-		return
+		return LocalError(err.Error(), w, r, user)
 	}
 
 	confirmPassword := r.PostFormValue("confirm_password")
-	log.Print("Registration Attempt! Username: " + username) // TODO: Add controls over what is logged when?
+	log.Print("Registration Attempt! Username: " + username) // TODO: Add more controls over what is logged when?
 
 	// Do the two inputted passwords match..?
 	if password != confirmPassword {
-		LocalError("The two passwords don't match.", w, r, user)
-		return
+		return LocalError("The two passwords don't match.", w, r, user)
 	}
 
 	var active bool
@@ -918,49 +920,43 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user User) {
 
 	uid, err := users.Create(username, password, email, group, active)
 	if err == errAccountExists {
-		LocalError("This username isn't available. Try another.", w, r, user)
-		return
+		return LocalError("This username isn't available. Try another.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Check if this user actually owns this email, if email activation is on, automatically flip their account to active when the email is validated. Validation is also useful for determining whether this user should receive any alerts, etc. via email
 	if site.EnableEmails {
 		token, err := GenerateSafeString(80)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 		_, err = addEmailStmt.Exec(email, uid, 0, token)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		if !SendValidationEmail(username, email, token) {
-			LocalError("We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.", w, r, user)
-			return
+			return LocalError("We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.", w, r, user)
 		}
 	}
 
 	session, err := auth.CreateSession(uid)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	auth.SetCookies(w, uid, session)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }
 
 // TODO: Set the cookie domain
-func routeChangeTheme(w http.ResponseWriter, r *http.Request, user User) {
+func routeChangeTheme(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	//headerLite, _ := SimpleUserCheck(w, r, &user)
 	err := r.ParseForm()
 	if err != nil {
-		PreError("Bad Form", w, r)
-		return
+		return PreError("Bad Form", w, r)
 	}
 
 	// TODO: Rename isJs to something else, just in case we rewrite the JS side in WebAssembly?
@@ -970,17 +966,16 @@ func routeChangeTheme(w http.ResponseWriter, r *http.Request, user User) {
 
 	theme, ok := themes[newTheme]
 	if !ok || theme.HideFromThemes {
+		// TODO: Should we be logging this?
 		log.Print("Bad Theme: ", newTheme)
-		LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
-		return
+		return LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
 	}
 
 	// TODO: Store the current theme in the user's account?
 	/*if user.Loggedin {
 		_, err = change_theme_stmt.Exec(newTheme, user.ID)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 	}*/
 
@@ -992,23 +987,22 @@ func routeChangeTheme(w http.ResponseWriter, r *http.Request, user User) {
 	} else {
 		_, _ = w.Write(successJSONBytes)
 	}
+	return nil
 }
 
 // TODO: We don't need support XML here to support sitemaps, we could handle those elsewhere
 var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
 
-func routeAPI(w http.ResponseWriter, r *http.Request, user User) {
+func routeAPI(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.Header().Set("Content-Type", "application/json")
 	err := r.ParseForm()
 	if err != nil {
-		PreErrorJS("Bad Form", w, r)
-		return
+		return PreErrorJS("Bad Form", w, r)
 	}
 
 	action := r.FormValue("action")
 	if action != "get" && action != "set" {
-		PreErrorJS("Invalid Action", w, r)
-		return
+		return PreErrorJS("Invalid Action", w, r)
 	}
 
 	module := r.FormValue("module")
@@ -1016,19 +1010,17 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user User) {
 	case "dismiss-alert":
 		asid, err := strconv.Atoi(r.FormValue("asid"))
 		if err != nil {
-			PreErrorJS("Invalid asid", w, r)
-			return
+			return PreErrorJS("Invalid asid", w, r)
 		}
 
 		_, err = deleteActivityStreamMatchStmt.Exec(user.ID, asid)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {
 			w.Write(phraseLoginAlerts)
-			return
+			return nil
 		}
 
 		var msglist, event, elementType string
@@ -1037,38 +1029,32 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user User) {
 
 		err = getActivityCountByWatcherStmt.QueryRow(user.ID).Scan(&msgCount)
 		if err == ErrNoRows {
-			PreErrorJS("Couldn't find the parent topic", w, r)
-			return
+			return PreErrorJS("Couldn't find the parent topic", w, r)
 		} else if err != nil {
-			InternalErrorJS(err, w, r)
-			return
+			return InternalErrorJS(err, w, r)
 		}
 
 		rows, err := getActivityFeedByWatcherStmt.Query(user.ID)
 		if err != nil {
-			InternalErrorJS(err, w, r)
-			return
+			return InternalErrorJS(err, w, r)
 		}
 		defer rows.Close()
 
 		for rows.Next() {
 			err = rows.Scan(&asid, &actorID, &targetUserID, &event, &elementType, &elementID)
 			if err != nil {
-				InternalErrorJS(err, w, r)
-				return
+				return InternalErrorJS(err, w, r)
 			}
 			res, err := buildAlert(asid, event, elementType, actorID, targetUserID, elementID, user)
 			if err != nil {
-				LocalErrorJS(err.Error(), w, r)
-				return
+				return LocalErrorJS(err.Error(), w, r)
 			}
 			msglist += res + ","
 		}
 
 		err = rows.Err()
 		if err != nil {
-			InternalErrorJS(err, w, r)
-			return
+			return InternalErrorJS(err, w, r)
 		}
 
 		if len(msglist) != 0 {
@@ -1087,6 +1073,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user User) {
 		return
 	}*/
 	default:
-		PreErrorJS("Invalid Module", w, r)
+		return PreErrorJS("Invalid Module", w, r)
 	}
+	return nil
 }

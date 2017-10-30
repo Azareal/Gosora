@@ -13,7 +13,7 @@
 		</li>
 		{{if .CurrentUser.Loggedin}}
 		<li class="menu_left menu_account"><a href="/user/edit/critical/">Account</a></li>
-		<li class="menu_left menu_profile"><a href="{{.CurrentUser.Link}}">Profile</a></li>{{/** TODO: Remove the menu_account class once we confirm this won't break any theme **/}}
+		<li class="menu_left menu_profile"><a href="{{.CurrentUser.Link}}">Profile</a></li>
 		<li class="menu_left menu_panel menu_account supermod_only"><a href="/panel/">Panel</a></li>
 		<li class="menu_left menu_logout"><a href="/accounts/logout/?session={{.CurrentUser.Session}}">Logout</a></li>
 		{{else}}

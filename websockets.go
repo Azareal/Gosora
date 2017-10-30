@@ -163,14 +163,15 @@ func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType st
 	return nil
 }
 
-func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) {
+// TODO: How should we handle errors for this?
+func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		return
+		return nil
 	}
 	userptr, err := users.Get(user.ID)
 	if err != nil && err != ErrStoreCapacityOverflow {
-		return
+		return nil
 	}
 
 	wsUser := &WSUser{conn, userptr}
@@ -202,12 +203,12 @@ func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) {
 			break
 		}
 
-		//log.Print("Message",message)
-		//log.Print("string(Message)",string(message))
+		//log.Print("Message", message)
+		//log.Print("string(Message)", string(message))
 		messages := bytes.Split(message, []byte("\r"))
 		for _, msg := range messages {
-			//log.Print("Submessage",msg)
-			//log.Print("Submessage",string(msg))
+			//log.Print("Submessage", msg)
+			//log.Print("Submessage", string(msg))
 			if bytes.HasPrefix(msg, []byte("page ")) {
 				msgblocks := bytes.SplitN(msg, []byte(" "), 2)
 				if len(msgblocks) < 2 {
@@ -217,19 +218,18 @@ func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) {
 				if !bytes.Equal(msgblocks[1], currentPage) {
 					wsLeavePage(wsUser, currentPage)
 					currentPage = msgblocks[1]
-					//log.Print("Current Page:",currentPage)
-					//log.Print("Current Page:",string(currentPage))
+					//log.Print("Current Page:", currentPage)
+					//log.Print("Current Page:", string(currentPage))
 					wsPageResponses(wsUser, currentPage)
 				}
 			}
 			/*if bytes.Equal(message,[]byte(`start-view`)) {
-
 			} else if bytes.Equal(message,[]byte(`end-view`)) {
-
 			}*/
 		}
 	}
 	conn.Close()
+	return nil
 }
 
 func wsPageResponses(wsUser *WSUser, page []byte) {
@@ -308,7 +308,7 @@ AdminStatLoop:
 		gonline := wsHub.guestCount()
 		totonline := uonline + gonline
 
-		// It's far more likely that the CPU Usage will change than the other stats, so we'll optimise them seperately...
+		// It's far more likely that the CPU Usage will change than the other stats, so we'll optimise them separately...
 		noStatUpdates = (uonline == lastUonline && gonline == lastGonline && totonline == lastTotonline)
 		noRAMUpdates = (lastAvailableRAM == int64(memres.Available))
 		if int(cpuPerc[0]) == lastCPUPerc && noStatUpdates && noRAMUpdates {

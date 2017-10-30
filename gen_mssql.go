@@ -112,6 +112,7 @@ var setTempGroupStmt *sql.Stmt
 var updateWordFilterStmt *sql.Stmt
 var bumpSyncStmt *sql.Stmt
 var deleteUserStmt *sql.Stmt
+var deleteTopicStmt *sql.Stmt
 var deleteReplyStmt *sql.Stmt
 var deleteProfileReplyStmt *sql.Stmt
 var deleteActivityStreamMatchStmt *sql.Stmt
@@ -859,6 +860,13 @@ func _gen_mssql() (err error) {
 	deleteUserStmt, err = db.Prepare("DELETE FROM [users] WHERE [uid] = ?")
 	if err != nil {
 		log.Print("Bad Query: ","DELETE FROM [users] WHERE [uid] = ?")
+		return err
+	}
+		
+	log.Print("Preparing deleteTopic statement.")
+	deleteTopicStmt, err = db.Prepare("DELETE FROM [topics] WHERE [tid] = ?")
+	if err != nil {
+		log.Print("Bad Query: ","DELETE FROM [topics] WHERE [tid] = ?")
 		return err
 	}
 		

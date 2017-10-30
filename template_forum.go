@@ -16,7 +16,7 @@ func init() {
 }
 
 // nolint
-func template_forum(tmpl_forum_vars ForumPage, w http.ResponseWriter) {
+func template_forum(tmpl_forum_vars ForumPage, w http.ResponseWriter) error {
 w.Write(header_0)
 w.Write([]byte(tmpl_forum_vars.Title))
 w.Write(header_1)
@@ -56,13 +56,12 @@ if tmpl_forum_vars.CurrentUser.Loggedin {
 w.Write(menu_3)
 w.Write([]byte(tmpl_forum_vars.CurrentUser.Link))
 w.Write(menu_4)
-w.Write(menu_5)
 w.Write([]byte(tmpl_forum_vars.CurrentUser.Session))
-w.Write(menu_6)
+w.Write(menu_5)
 } else {
-w.Write(menu_7)
+w.Write(menu_6)
 }
-w.Write(menu_8)
+w.Write(menu_7)
 w.Write(header_14)
 if tmpl_forum_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_15)
@@ -112,83 +111,98 @@ w.Write(forum_15)
 w.Write(forum_16)
 }
 w.Write(forum_17)
-if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+if tmpl_forum_vars.CurrentUser.ID != 0 {
 w.Write(forum_18)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
 w.Write(forum_19)
-if tmpl_forum_vars.CurrentUser.Perms.UploadFiles {
+if tmpl_forum_vars.CurrentUser.Avatar != "" {
 w.Write(forum_20)
-}
+w.Write([]byte(tmpl_forum_vars.CurrentUser.Avatar))
 w.Write(forum_21)
 }
 w.Write(forum_22)
-if len(tmpl_forum_vars.ItemList) != 0 {
-for _, item := range tmpl_forum_vars.ItemList {
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
 w.Write(forum_23)
-if item.Sticky {
+if tmpl_forum_vars.CurrentUser.Perms.UploadFiles {
 w.Write(forum_24)
-} else {
-if item.IsClosed {
+}
 w.Write(forum_25)
 }
 }
 w.Write(forum_26)
-if item.Creator.Avatar != "" {
+if len(tmpl_forum_vars.ItemList) != 0 {
+for _, item := range tmpl_forum_vars.ItemList {
 w.Write(forum_27)
-w.Write([]byte(item.Creator.Avatar))
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(forum_28)
-}
+if item.Sticky {
 w.Write(forum_29)
-w.Write([]byte(item.Link))
-w.Write(forum_30)
-w.Write([]byte(item.Title))
-w.Write(forum_31)
-w.Write([]byte(item.Creator.Link))
-w.Write(forum_32)
-w.Write([]byte(item.Creator.Name))
-w.Write(forum_33)
+} else {
 if item.IsClosed {
+w.Write(forum_30)
+}
+}
+w.Write(forum_31)
+if item.Creator.Avatar != "" {
+w.Write(forum_32)
+w.Write([]byte(item.Creator.Link))
+w.Write(forum_33)
+w.Write([]byte(item.Creator.Avatar))
 w.Write(forum_34)
 }
-if item.Sticky {
 w.Write(forum_35)
-}
+w.Write([]byte(item.Link))
 w.Write(forum_36)
-w.Write([]byte(strconv.Itoa(item.PostCount)))
+w.Write([]byte(item.Title))
 w.Write(forum_37)
-w.Write([]byte(strconv.Itoa(item.LikeCount)))
+w.Write([]byte(item.Creator.Link))
 w.Write(forum_38)
-if item.Sticky {
+w.Write([]byte(item.Creator.Name))
 w.Write(forum_39)
-} else {
 if item.IsClosed {
 w.Write(forum_40)
 }
-}
+if item.Sticky {
 w.Write(forum_41)
-if item.LastUser.Avatar != "" {
+}
 w.Write(forum_42)
-w.Write([]byte(item.LastUser.Avatar))
+w.Write([]byte(strconv.Itoa(item.PostCount)))
 w.Write(forum_43)
-}
+w.Write([]byte(strconv.Itoa(item.LikeCount)))
 w.Write(forum_44)
-w.Write([]byte(item.LastUser.Link))
+if item.Sticky {
 w.Write(forum_45)
-w.Write([]byte(item.LastUser.Name))
-w.Write(forum_46)
-w.Write([]byte(item.RelativeLastReplyAt))
-w.Write(forum_47)
-}
 } else {
+if item.IsClosed {
+w.Write(forum_46)
+}
+}
+w.Write(forum_47)
+if item.LastUser.Avatar != "" {
 w.Write(forum_48)
-if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+w.Write([]byte(item.LastUser.Link))
 w.Write(forum_49)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write([]byte(item.LastUser.Avatar))
 w.Write(forum_50)
 }
 w.Write(forum_51)
-}
+w.Write([]byte(item.LastUser.Link))
 w.Write(forum_52)
+w.Write([]byte(item.LastUser.Name))
+w.Write(forum_53)
+w.Write([]byte(item.RelativeLastReplyAt))
+w.Write(forum_54)
+}
+} else {
+w.Write(forum_55)
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
+w.Write(forum_56)
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
+w.Write(forum_57)
+}
+w.Write(forum_58)
+}
+w.Write(forum_59)
 w.Write(footer_0)
 if len(tmpl_forum_vars.Header.Themes) != 0 {
 for _, item := range tmpl_forum_vars.Header.Themes {
@@ -212,4 +226,5 @@ w.Write([]byte(string(tmpl_forum_vars.Header.Widgets.RightSidebar)))
 w.Write(footer_8)
 }
 w.Write(footer_9)
+	return nil
 }

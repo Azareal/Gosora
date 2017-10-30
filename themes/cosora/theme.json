@@ -6,9 +6,27 @@
 	"URL": "github.com/Azareal/Gosora",
 	"Tag": "WIP",
 	"Sidebars":"right",
+	"Templates": [
+		{
+			"Name": "topic",
+			"Source": "topic_alt"
+		}
+	],
 	"Resources": [
 		{
-			"Name":"EQCSS.min.js",
+			"Name":"EQCSS.js",
+			"Location":"global"
+		},
+		{
+			"Name":"trumbowyg/trumbowyg.min.js",
+			"Location":"global"
+		},
+		{
+			"Name":"trumbowyg/ui/trumbowyg.custom.css",
+			"Location":"global"
+		},
+		{
+			"Name":"cosora/misc.js",
 			"Location":"global"
 		}
 	]

@@ -16,7 +16,7 @@ func init() {
 }
 
 // nolint
-func template_profile(tmpl_profile_vars ProfilePage, w http.ResponseWriter) {
+func template_profile(tmpl_profile_vars ProfilePage, w http.ResponseWriter) error {
 w.Write(header_0)
 w.Write([]byte(tmpl_profile_vars.Title))
 w.Write(header_1)
@@ -56,13 +56,12 @@ if tmpl_profile_vars.CurrentUser.Loggedin {
 w.Write(menu_3)
 w.Write([]byte(tmpl_profile_vars.CurrentUser.Link))
 w.Write(menu_4)
-w.Write(menu_5)
 w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(menu_6)
+w.Write(menu_5)
 } else {
-w.Write(menu_7)
+w.Write(menu_6)
 }
-w.Write(menu_8)
+w.Write(menu_7)
 w.Write(header_14)
 if tmpl_profile_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_15)
@@ -186,4 +185,5 @@ w.Write([]byte(string(tmpl_profile_vars.Header.Widgets.RightSidebar)))
 w.Write(footer_8)
 }
 w.Write(footer_9)
+	return nil
 }

@@ -8,30 +8,30 @@ import "errors"
 
 func init() {
 	DB_Registry = append(DB_Registry,
-		&Mysql_Adapter{Name: "mysql", Buffer: make(map[string]DB_Stmt)},
+		&MysqlAdapter{Name: "mysql", Buffer: make(map[string]DB_Stmt)},
 	)
 }
 
-type Mysql_Adapter struct {
+type MysqlAdapter struct {
 	Name        string // ? - Do we really need this? Can't we hard-code this?
 	Buffer      map[string]DB_Stmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
 // GetName gives you the name of the database adapter. In this case, it's mysql
-func (adapter *Mysql_Adapter) GetName() string {
+func (adapter *MysqlAdapter) GetName() string {
 	return adapter.Name
 }
 
-func (adapter *Mysql_Adapter) GetStmt(name string) DB_Stmt {
+func (adapter *MysqlAdapter) GetStmt(name string) DB_Stmt {
 	return adapter.Buffer[name]
 }
 
-func (adapter *Mysql_Adapter) GetStmts() map[string]DB_Stmt {
+func (adapter *MysqlAdapter) GetStmts() map[string]DB_Stmt {
 	return adapter.Buffer
 }
 
-func (adapter *Mysql_Adapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
+func (adapter *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -104,7 +104,7 @@ func (adapter *Mysql_Adapter) CreateTable(name string, table string, charset str
 	return querystr + ";", nil
 }
 
-func (adapter *Mysql_Adapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
+func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -150,7 +150,7 @@ func (adapter *Mysql_Adapter) SimpleInsert(name string, table string, columns st
 }
 
 // ! DEPRECATED
-func (adapter *Mysql_Adapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
+func (adapter *MysqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -187,7 +187,7 @@ func (adapter *Mysql_Adapter) SimpleReplace(name string, table string, columns s
 	return querystr + ")", nil
 }
 
-func (adapter *Mysql_Adapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+func (adapter *MysqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -234,7 +234,7 @@ func (adapter *Mysql_Adapter) SimpleUpsert(name string, table string, columns st
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
+func (adapter *MysqlAdapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -288,7 +288,7 @@ func (adapter *Mysql_Adapter) SimpleUpdate(name string, table string, set string
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleDelete(name string, table string, where string) (string, error) {
+func (adapter *MysqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -323,8 +323,8 @@ func (adapter *Mysql_Adapter) SimpleDelete(name string, table string, where stri
 	return querystr, nil
 }
 
-// We don't want to accidentally wipe tables, so we'll have a seperate method for purging tables instead
-func (adapter *Mysql_Adapter) Purge(name string, table string) (string, error) {
+// We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
+func (adapter *MysqlAdapter) Purge(name string, table string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -335,7 +335,7 @@ func (adapter *Mysql_Adapter) Purge(name string, table string) (string, error) {
 	return "DELETE FROM `" + table + "`", nil
 }
 
-func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
+func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -399,7 +399,7 @@ func (adapter *Mysql_Adapter) SimpleSelect(name string, table string, columns st
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -489,7 +489,7 @@ func (adapter *Mysql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -579,7 +579,7 @@ func (adapter *Mysql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
+func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
 	/* Insert Portion */
 
 	var querystr = "INSERT INTO `" + ins.Table + "`("
@@ -653,7 +653,7 @@ func (adapter *Mysql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	/* Insert Portion */
 
 	var querystr = "INSERT INTO `" + ins.Table + "`("
@@ -738,7 +738,7 @@ func (adapter *Mysql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, s
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	/* Insert Portion */
 
 	var querystr = "INSERT INTO `" + ins.Table + "`("
@@ -823,7 +823,7 @@ func (adapter *Mysql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, 
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
+func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -836,9 +836,9 @@ func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where strin
 	// TODO: Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
-		//fmt.Println("SimpleCount:",name)
-		//fmt.Println("where:",where)
-		//fmt.Println("processWhere:",processWhere(where))
+		//log.Print("SimpleCount: ", name)
+		//log.Print("where: ", where)
+		//log.Print("processWhere: ", processWhere(where))
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
@@ -866,7 +866,7 @@ func (adapter *Mysql_Adapter) SimpleCount(name string, table string, where strin
 	return querystr, nil
 }
 
-func (adapter *Mysql_Adapter) Write() error {
+func (adapter *MysqlAdapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {
 		if name[0] == '_' {
@@ -920,12 +920,12 @@ func _gen_mysql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (adapter *Mysql_Adapter) pushStatement(name string, stype string, querystr string) {
+func (adapter *MysqlAdapter) pushStatement(name string, stype string, querystr string) {
 	adapter.Buffer[name] = DB_Stmt{querystr, stype}
 	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }
 
-func (adapter *Mysql_Adapter) stringyType(ctype string) bool {
+func (adapter *MysqlAdapter) stringyType(ctype string) bool {
 	ctype = strings.ToLower(ctype)
 	return ctype == "varchar" || ctype == "tinytext" || ctype == "text" || ctype == "mediumtext" || ctype == "longtext" || ctype == "char" || ctype == "datetime" || ctype == "timestamp" || ctype == "time" || ctype == "date"
 }

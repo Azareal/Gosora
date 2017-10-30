@@ -148,6 +148,32 @@ func (topic *Topic) RemoveLike(uid int) error {
 	return nil
 }
 
+// TODO: Use a transaction here
+func (topic *Topic) Delete() error {
+	topicCreator, err := users.Get(topic.CreatedBy)
+	if err == nil {
+		wcount := wordCount(topic.Content)
+		err = topicCreator.decreasePostStats(wcount, true)
+		if err != nil {
+			return err
+		}
+	} else if err != ErrNoRows {
+		return err
+	}
+
+	err = fstore.RemoveTopic(topic.ParentID)
+	if err != nil && err != ErrNoRows {
+		return err
+	}
+
+	_, err = deleteTopicStmt.Exec(topic.ID)
+	tcache, ok := topics.(TopicCache)
+	if ok {
+		tcache.CacheRemove(topic.ID)
+	}
+	return err
+}
+
 func (topic *Topic) Update(name string, content string) error {
 	content = preparseMessage(content)
 	parsed_content := parseMessage(html.EscapeString(content), topic.ParentID, "forums")
@@ -191,7 +217,7 @@ func getTopicUser(tid int) (TopicUser, error) {
 				return TopicUser{ID: tid}, err
 			}
 
-			// We might be better off just passing seperate topic and user structs to the caller?
+			// We might be better off just passing separate topic and user structs to the caller?
 			return copyTopicToTopicUser(topic, user), nil
 		} else if ucache.Length() < ucache.GetCapacity() {
 			topic, err = topics.Get(tid)

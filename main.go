@@ -46,7 +46,7 @@ type StringList []string
 var allowedFileExts = StringList{
 	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", "apng", // images
 
-	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", // text
+	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", // text
 
 	"mp3", "mp4", "avi", "wmv", "webm", // video
 

@@ -8,16 +8,29 @@ type Route struct {
 }
 
 type RouteGroup struct {
-	Path   string
-	Routes []Route
+	Path      string
+	RouteList []Route
+	Before    []string
 }
 
 func addRoute(fname string, path string, before string, vars ...string) {
 	routeList = append(routeList, Route{fname, path, before, vars})
 }
 
-func addRouteGroup(path string, routes ...Route) {
-	routeGroups = append(routeGroups, RouteGroup{path, routes})
+func newRouteGroup(path string, routes ...Route) *RouteGroup {
+	return &RouteGroup{path, routes, []string{}}
+}
+
+func addRouteGroup(routeGroup *RouteGroup) {
+	routeGroups = append(routeGroups, routeGroup)
+}
+
+func (group *RouteGroup) RunBefore(line string) {
+	group.Before = append(group.Before, line)
+}
+
+func (group *RouteGroup) Routes(routes ...Route) {
+	group.RouteList = append(group.RouteList, routes...)
 }
 
 func routes() {
@@ -33,17 +46,21 @@ func routes() {
 	addRoute("routeChangeTheme", "/theme/", "")
 	addRoute("routeShowAttachment", "/attachs/", "", "extra_data")
 
-	addRouteGroup("/report/",
+	reportGroup := newRouteGroup("/report/",
 		Route{"routeReportSubmit", "/report/submit/", "", []string{"extra_data"}},
 	)
+	addRouteGroup(reportGroup)
 
-	addRouteGroup("/topics/",
+	topicGroup := newRouteGroup("/topics/",
 		Route{"routeTopics", "/topics/", "", []string{}},
 		Route{"routeTopicCreate", "/topics/create/", "", []string{"extra_data"}},
 	)
+	addRouteGroup(topicGroup)
 
 	// The Control Panel
-	addRouteGroup("/panel/",
+	panelGroup := newRouteGroup("/panel/")
+	panelGroup.RunBefore("SuperModOnly")
+	panelGroup.Routes(
 		Route{"routePanel", "/panel/", "", []string{}},
 		Route{"routePanelForums", "/panel/forums/", "", []string{}},
 		Route{"routePanelForumsCreateSubmit", "/panel/forums/create/", "", []string{}},
@@ -86,4 +103,5 @@ func routes() {
 		Route{"routePanelLogsMod", "/panel/logs/mod/", "", []string{}},
 		Route{"routePanelDebug", "/panel/debug/", "", []string{}},
 	)
+	addRouteGroup(panelGroup)
 }

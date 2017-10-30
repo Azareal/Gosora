@@ -7,7 +7,7 @@ import "log"
 import "os"
 
 var routeList []Route
-var routeGroups []RouteGroup
+var routeGroups []*RouteGroup
 
 func main() {
 	log.Println("Generating the router...")
@@ -29,11 +29,14 @@ func main() {
 		if route.Before != "" {
 			out += "\n\t\t\t" + route.Before
 		}
-		out += "\n\t\t\t" + route.Name + "(w,req,user"
+		out += "\n\t\t\terr = " + route.Name + "(w,req,user"
 		for _, item := range route.Vars {
 			out += "," + item
 		}
-		out += ")\n\t\t\treturn"
+		out += `)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}`
 	}
 
 	for _, group := range routeGroups {
@@ -44,10 +47,20 @@ func main() {
 			end = len(group.Path) - 1
 		}
 		out += `
-		case "` + group.Path[0:end] + `":
-			switch(req.URL.Path) {`
+		case "` + group.Path[0:end] + `":`
+		for _, callback := range group.Before {
+			out += `
+			err = ` + callback + `(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+				return
+			}
+			`
+		}
+		out += "\n\t\t\tswitch(req.URL.Path) {"
+
 		var defaultRoute Route
-		for _, route := range group.Routes {
+		for _, route := range group.RouteList {
 			if group.Path == route.Path {
 				defaultRoute = route
 				continue
@@ -57,11 +70,11 @@ func main() {
 			if route.Before != "" {
 				out += "\n\t\t\t\t\t" + route.Before
 			}
-			out += "\n\t\t\t\t\t" + route.Name + "(w,req,user"
+			out += "\n\t\t\t\t\terr = " + route.Name + "(w,req,user"
 			for _, item := range route.Vars {
 				out += "," + item
 			}
-			out += ")\n\t\t\t\t\treturn"
+			out += ")"
 		}
 
 		if defaultRoute.Name != "" {
@@ -69,13 +82,17 @@ func main() {
 			if defaultRoute.Before != "" {
 				out += "\n\t\t\t\t\t" + defaultRoute.Before
 			}
-			out += "\n\t\t\t\t\t" + defaultRoute.Name + "(w,req,user"
+			out += "\n\t\t\t\t\terr = " + defaultRoute.Name + "(w,req,user"
 			for _, item := range defaultRoute.Vars {
 				out += ", " + item
 			}
-			out += ")\n\t\t\t\t\treturn"
+			out += ")"
 		}
-		out += "\n\t\t\t}"
+		out += `
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}`
 	}
 
 	fileData += `package main
@@ -90,7 +107,7 @@ var ErrNoRoute = errors.New("That route doesn't exist.")
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	extra_routes map[string]func(http.ResponseWriter, *http.Request, User)
+	extra_routes map[string]func(http.ResponseWriter, *http.Request, User) RouteError
 	
 	sync.RWMutex
 }
@@ -98,14 +115,26 @@ type GenRouter struct {
 func NewGenRouter(uploads http.Handler) *GenRouter {
 	return &GenRouter{
 		UploadHandler: http.StripPrefix("/uploads/",uploads).ServeHTTP,
-		extra_routes: make(map[string]func(http.ResponseWriter, *http.Request, User)),
+		extra_routes: make(map[string]func(http.ResponseWriter, *http.Request, User) RouteError),
 	}
+}
+
+func (router *GenRouter) handleError(err RouteError, w http.ResponseWriter, r *http.Request, user User) {
+	if err.Handled() {
+		return
+	}
+	
+	if err.Type() == "system" {
+		InternalErrorJSQ(err,w,r,err.Json())
+		return
+	}
+	LocalErrorJSQ(err.Error(),w,r,user,err.Json())
 }
 
 func (router *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, User)) {
+func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, User) RouteError) {
 	router.Lock()
 	router.extra_routes[pattern] = handle
 	router.Unlock()
@@ -169,6 +198,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log.Print("after PreRoute")
 	}
 	
+	var err RouteError
 	switch(prefix) {` + out + `
 		case "/uploads":
 			if extra_data == "" {
@@ -176,14 +206,17 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 			req.URL.Path += extra_data
+			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req)
-			return
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
 			// TODO: Add support for favicons and robots.txt files
 			switch(extra_data) {
 				case "robots.txt":
-					routeRobotsTxt(w,req)
+					err = routeRobotsTxt(w,req)
+					if err != nil {
+						router.handleError(err,w,req,user)
+					}
 					return
 			}
 			
@@ -192,21 +225,22 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 			config.DefaultRoute(w,req,user)
-			return
-		//default: NotFound(w,req)
+		default:
+			// A fallback for the routes which haven't been converted to the new router yet or plugins
+			router.RLock()
+			handle, ok := router.extra_routes[req.URL.Path]
+			router.RUnlock()
+			
+			if ok {
+				req.URL.Path += extra_data
+				err = handle(w,req,user)
+				if err != nil {
+					router.handleError(err,w,req,user)
+				}
+				return
+			}
+			NotFound(w,req)
 	}
-	
-	// A fallback for the routes which haven't been converted to the new router yet or plugins
-	router.RLock()
-	handle, ok := router.extra_routes[req.URL.Path]
-	router.RUnlock()
-	
-	if ok {
-		req.URL.Path += extra_data
-		handle(w,req,user)
-		return
-	}
-	NotFound(w,req)
 }
 `
 	writeFile("./gen_router.go", fileData)

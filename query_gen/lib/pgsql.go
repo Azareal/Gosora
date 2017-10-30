@@ -7,32 +7,32 @@ import "errors"
 
 func init() {
 	DB_Registry = append(DB_Registry,
-		&Pgsql_Adapter{Name: "pgsql", Buffer: make(map[string]DB_Stmt)},
+		&PgsqlAdapter{Name: "pgsql", Buffer: make(map[string]DB_Stmt)},
 	)
 }
 
-type Pgsql_Adapter struct {
+type PgsqlAdapter struct {
 	Name        string // ? - Do we really need this? Can't we hard-code this?
 	Buffer      map[string]DB_Stmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
 // GetName gives you the name of the database adapter. In this case, it's pgsql
-func (adapter *Pgsql_Adapter) GetName() string {
+func (adapter *PgsqlAdapter) GetName() string {
 	return adapter.Name
 }
 
-func (adapter *Pgsql_Adapter) GetStmt(name string) DB_Stmt {
+func (adapter *PgsqlAdapter) GetStmt(name string) DB_Stmt {
 	return adapter.Buffer[name]
 }
 
-func (adapter *Pgsql_Adapter) GetStmts() map[string]DB_Stmt {
+func (adapter *PgsqlAdapter) GetStmts() map[string]DB_Stmt {
 	return adapter.Buffer
 }
 
 // TODO: Implement this
 // We may need to change the CreateTable API to better suit PGSQL and the other database drivers which are coming up
-func (adapter *Pgsql_Adapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
+func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -95,7 +95,7 @@ func (adapter *Pgsql_Adapter) CreateTable(name string, table string, charset str
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -112,7 +112,7 @@ func (adapter *Pgsql_Adapter) SimpleInsert(name string, table string, columns st
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -129,7 +129,7 @@ func (adapter *Pgsql_Adapter) SimpleReplace(name string, table string, columns s
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -146,7 +146,7 @@ func (adapter *Pgsql_Adapter) SimpleUpsert(name string, table string, columns st
 }
 
 // TODO: Implemented, but we need CreateTable and a better installer to *test* it
-func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -213,7 +213,7 @@ func (adapter *Pgsql_Adapter) SimpleUpdate(name string, table string, set string
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleDelete(name string, table string, where string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -227,8 +227,8 @@ func (adapter *Pgsql_Adapter) SimpleDelete(name string, table string, where stri
 }
 
 // TODO: Implement this
-// We don't want to accidentally wipe tables, so we'll have a seperate method for purging tables instead
-func (adapter *Pgsql_Adapter) Purge(name string, table string) (string, error) {
+// We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
+func (adapter *PgsqlAdapter) Purge(name string, table string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -239,7 +239,7 @@ func (adapter *Pgsql_Adapter) Purge(name string, table string) (string, error) {
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -253,7 +253,7 @@ func (adapter *Pgsql_Adapter) SimpleSelect(name string, table string, columns st
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -273,7 +273,7 @@ func (adapter *Pgsql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -293,22 +293,22 @@ func (adapter *Pgsql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
+func (adapter *PgsqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
 	return "", nil
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *PgsqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	return "", nil
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *PgsqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	return "", nil
 }
 
 // TODO: Implement this
-func (adapter *Pgsql_Adapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
+func (adapter *PgsqlAdapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -318,7 +318,7 @@ func (adapter *Pgsql_Adapter) SimpleCount(name string, table string, where strin
 	return "", nil
 }
 
-func (adapter *Pgsql_Adapter) Write() error {
+func (adapter *PgsqlAdapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {
 		if name[0] == '_' {
@@ -361,12 +361,12 @@ func _gen_pgsql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (adapter *Pgsql_Adapter) pushStatement(name string, stype string, querystr string) {
+func (adapter *PgsqlAdapter) pushStatement(name string, stype string, querystr string) {
 	adapter.Buffer[name] = DB_Stmt{querystr, stype}
 	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }
 
-func (adapter *Pgsql_Adapter) stringyType(ctype string) bool {
+func (adapter *PgsqlAdapter) stringyType(ctype string) bool {
 	ctype = strings.ToLower(ctype)
 	return ctype == "char" || ctype == "varchar" || ctype == "timestamp" || ctype == "text"
 }

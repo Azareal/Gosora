@@ -3,24 +3,38 @@ var form_vars = {};
 var alertList = [];
 var alertCount = 0;
 var conn;
+var selectedTopics = [];
+var attachItemCallback = function(){}
 
-function post_link(event)
-{
-	event.preventDefault();
-	var form_action = $(event.target).closest('a').attr("href");
-	//console.log("Form Action: " + form_action);
-	$.ajax({ url: form_action, type: "POST", dataType: "json", data: {js: "1"} });
+// TODO: Write a friendlier error handler which uses a .notice or something, we could have a specialised one for alerts
+function ajaxError(xhr,status,errstr) {
+	console.log("The AJAX request failed");
+	console.log("xhr", xhr);
+	console.log("status", status);
+	console.log("errstr", errstr);
+	if(status=="parsererror") {
+		console.log("The server didn't respond with a valid JSON response");
+	}
+	console.trace();
 }
 
-function bind_to_alerts() {
+function postLink(event)
+{
+	event.preventDefault();
+	let formAction = $(event.target).closest('a').attr("href");
+	//console.log("Form Action: " + formAction);
+	$.ajax({ url: formAction, type: "POST", dataType: "json", error: ajaxError, data: {js: "1"} });
+}
+
+function bindToAlerts() {
 	$(".alertItem.withAvatar a").click(function(event) {
 		event.stopPropagation();
-		$.ajax({ url: "/api/?action=set&module=dismiss-alert", type: "POST", dataType: "json", data: { asid: $(this).attr("data-asid") } });
+		$.ajax({ url: "/api/?action=set&module=dismiss-alert", type: "POST", dataType: "json", error: ajaxError, data: { asid: $(this).attr("data-asid") } });
 	});
 }
 
 // TODO: Add the ability for users to dismiss alerts
-function load_alerts(menu_alerts)
+function loadAlerts(menu_alerts)
 {
 	var alertListNode = menu_alerts.getElementsByClassName("alertList")[0];
 	var alertCounterNode = menu_alerts.getElementsByClassName("alert_counter")[0];
@@ -69,7 +83,7 @@ function load_alerts(menu_alerts)
 				}
 				alertCount = data.msgCount;
 
-				bind_to_alerts();
+				bindToAlerts();
 			},
 			error: function(magic,theStatus,error) {
 				var errtxt
@@ -124,7 +138,7 @@ $(document).ready(function(){
 			console.log("The WebSockets connection was closed");
 		}
 		conn.onmessage = function(event) {
-			//console.log("WS_Message: ",event.data);
+			//console.log("WS_Message:", event.data);
 			if(event.data[0] == "{") {
 				try {
 					var data = JSON.parse(event.data);
@@ -165,7 +179,7 @@ $(document).ready(function(){
 						setTimeout(n.close.bind(n), 8000);
 					}
 
-					bind_to_alerts();
+					bindToAlerts();
 				}
 			}
 
@@ -216,6 +230,7 @@ $(document).ready(function(){
 			url: formAction,
 			type: "POST",
 			dataType: "json",
+			error: ajaxError,
 			data: {
 				topic_name: topicNameInput,
 				topic_status: topicStatusInput,
@@ -227,7 +242,7 @@ $(document).ready(function(){
 
 	$(".delete_item").click(function(event)
 	{
-		post_link(event);
+		postLink(event);
 		$(this).closest('.deletable_block').remove();
 	});
 
@@ -248,7 +263,7 @@ $(document).ready(function(){
 
 			var formAction = $(this).closest('a').attr("href");
 			//console.log("Form Action:",formAction);
-			$.ajax({ url: formAction, type: "POST", dataType: "json", data: { isJs: "1", edit_item: newContent }
+			$.ajax({ url: formAction, type: "POST", error: ajaxError, dataType: "json", data: { isJs: "1", edit_item: newContent }
 			});
 		});
 	});
@@ -273,6 +288,7 @@ $(document).ready(function(){
 				url: formAction + "?session=" + session,
 				type: "POST",
 				dataType: "json",
+				error: ajaxError,
 				data: { isJs: "1", edit_item: newContent }
 			});
 		});
@@ -283,37 +299,37 @@ $(document).ready(function(){
 		event.preventDefault();
 		if($(this).find("input").length !== 0) return;
 		//console.log("clicked .edit_fields");
-		var block_parent = $(this).closest('.editable_parent');
-		//console.log(block_parent);
-		block_parent.find('.hide_on_edit').hide();
-		block_parent.find('.show_on_edit').show();
-		block_parent.find('.editable_block').show();
-		block_parent.find('.editable_block').each(function(){
-			var field_name = this.getAttribute("data-field");
-			var field_type = this.getAttribute("data-type");
-			if(field_type=="list")
+		var blockParent = $(this).closest('.editable_parent');
+		//console.log(blockParent);
+		blockParent.find('.hide_on_edit').hide();
+		blockParent.find('.show_on_edit').show();
+		blockParent.find('.editable_block').show();
+		blockParent.find('.editable_block').each(function(){
+			var fieldName = this.getAttribute("data-field");
+			var fieldType = this.getAttribute("data-type");
+			if(fieldType=="list")
 			{
-				var field_value = this.getAttribute("data-value");
-				if(field_name in form_vars) var it = form_vars[field_name];
+				var fieldValue = this.getAttribute("data-value");
+				if(fieldName in form_vars) var it = form_vars[fieldName];
 				else var it = ['No','Yes'];
 				var itLen = it.length;
 				var out = "";
-				//console.log("Field Name:",field_name);
-				//console.log("Field Type:",field_type);
-				//console.log("Field Value:",field_value);
+				//console.log("Field Name:",fieldName);
+				//console.log("Field Type:",fieldType);
+				//console.log("Field Value:",fieldValue);
 				for (var i = 0; i < itLen; i++) {
 					var sel = "";
-					if(field_value == i || field_value == it[i]) {
+					if(fieldValue == i || fieldValue == it[i]) {
 						sel = "selected ";
-						this.classList.remove(field_name + '_' + it[i]);
+						this.classList.remove(fieldName + '_' + it[i]);
 						this.innerHTML = "";
 					}
 					out += "<option "+sel+"value='"+i+"'>"+it[i]+"</option>";
 				}
-				this.innerHTML = "<select data-field='"+field_name+"' name='"+field_name+"'>"+out+"</select>";
+				this.innerHTML = "<select data-field='"+fieldName+"' name='"+fieldName+"'>"+out+"</select>";
 			}
-			else if(field_type=="hidden") {}
-			else this.innerHTML = "<input name='"+field_name+"' value='"+this.textContent+"' type='text'/>";
+			else if(fieldType=="hidden") {}
+			else this.innerHTML = "<input name='"+fieldName+"' value='"+this.textContent+"' type='text'/>";
 		});
 
 		// Remove any handlers already attached to the submitter
@@ -323,31 +339,31 @@ $(document).ready(function(){
 		{
 			event.preventDefault();
 			//console.log("running .submit_edit event");
-			var out_data = {isJs: "1"}
-			var block_parent = $(this).closest('.editable_parent');
-			block_parent.find('.editable_block').each(function() {
-				var field_name = this.getAttribute("data-field");
-				var field_type = this.getAttribute("data-type");
-				if(field_type=="list") {
+			var outData = {isJs: "1"}
+			var blockParent = $(this).closest('.editable_parent');
+			blockParent.find('.editable_block').each(function() {
+				var fieldName = this.getAttribute("data-field");
+				var fieldType = this.getAttribute("data-type");
+				if(fieldType=="list") {
 					var newContent = $(this).find('select :selected').text();
-					this.classList.add(field_name + '_' + newContent);
+					this.classList.add(fieldName + '_' + newContent);
 					this.innerHTML = "";
-				} else if(field_type=="hidden") {
+				} else if(fieldType=="hidden") {
 					var newContent = $(this).val();
 				} else {
 					var newContent = $(this).find('input').eq(0).val();
 					this.innerHTML = newContent;
 				}
 				this.setAttribute("data-value",newContent);
-				out_data[field_name] = newContent;
+				outData[fieldName] = newContent;
 			});
 
-			var form_action = $(this).closest('a').attr("href");
-			//console.log("Form Action:", form_action);
-			//console.log(out_data);
-			$.ajax({ url: form_action + "?session=" + session, type:"POST", dataType:"json", data: out_data });
-			block_parent.find('.hide_on_edit').show();
-			block_parent.find('.show_on_edit').hide();
+			var formAction = $(this).closest('a').attr("href");
+			//console.log("Form Action:", formAction);
+			//console.log(outData);
+			$.ajax({ url: formAction + "?session=" + session, type:"POST", dataType:"json", data: outData, error: ajaxError });
+			blockParent.find('.hide_on_edit').show();
+			blockParent.find('.show_on_edit').hide();
 		});
 	});
 
@@ -357,7 +373,7 @@ $(document).ready(function(){
 		var ip = this.textContent;
 		if(ip.length > 10){
 			this.innerHTML = "Show IP";
-			this.onclick = function(event){
+			this.onclick = function(event) {
 				event.preventDefault();
 				this.textContent = ip;
 			};
@@ -369,23 +385,23 @@ $(document).ready(function(){
 		$("#back").removeClass("alertActive");
 	});
 	$(".alert_bell").click(function(){
-		var menu_alerts = $(this).parent();
-		if(menu_alerts.hasClass("selectedAlert")) {
+		var menuAlerts = $(this).parent();
+		if(menuAlerts.hasClass("selectedAlert")) {
 			event.stopPropagation();
-			menu_alerts.removeClass("selectedAlert");
+			menuAlerts.removeClass("selectedAlert");
 			$("#back").removeClass("alertActive");
 		}
 	});
 
-	var alert_menu_list = document.getElementsByClassName("menu_alerts");
-	for(var i = 0; i < alert_menu_list.length; i++) {
-		load_alerts(alert_menu_list[i]);
+	var alertMenuList = document.getElementsByClassName("menu_alerts");
+	for(var i = 0; i < alertMenuList.length; i++) {
+		loadAlerts(alertMenuList[i]);
 	}
 
 	$(".menu_alerts").click(function(event) {
 		event.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
-		if(!conn) load_alerts(this);
+		if(!conn) loadAlerts(this);
 		this.className += " selectedAlert";
 		document.getElementById("back").className += " alertActive"
 	});
@@ -405,7 +421,6 @@ $(document).ready(function(){
 
 	function uploadFileHandler() {
 		var fileList = this.files;
-
 		// Truncate the number of files to 5
 		let files = [];
 		for(var i = 0; i < fileList.length && i < 5; i++)
@@ -441,11 +456,16 @@ $(document).ready(function(){
 					}).then(function(hash) {
 						console.log("hash",hash);
 						let content = document.getElementById("input_content")
-						console.log("content.value",content.value);
+						console.log("content.value", content.value);
 						
-						if(content.value == "") content.value = content.value + "//" + siteURL + "/attachs/" + hash + "." + ext;
-						else content.value = content.value + "\r\n//" + siteURL + "/attachs/" + hash + "." + ext;
-						console.log("content.value",content.value);
+						let attachItem;
+						if(content.value == "") attachItem = "//" + siteURL + "/attachs/" + hash + "." + ext;
+						else attachItem = "\r\n//" + siteURL + "/attachs/" + hash + "." + ext;
+						content.value = content.value + attachItem;
+						console.log("content.value", content.value);
+						
+						// For custom / third party text editors
+						attachItemCallback(attachItem);
 					});
 				}
 				reader.readAsArrayBuffer(files[i]);
@@ -458,6 +478,43 @@ $(document).ready(function(){
 	if(uploadFiles != null) {
 		uploadFiles.addEventListener("change", uploadFileHandler, false);
 	}
+	
+	$(".moderate_link").click(function(event) {
+		event.preventDefault();
+		$(".pre_opt").removeClass("auto_hide");
+		$(".topic_row").each(function(){
+			$(this).click(function(){
+				selectedTopics.push(parseInt($(this).attr("data-tid"),10));
+				if(selectedTopics.length==1) {
+					$(".mod_floater_head span").html("What do you want to do with this topic?");
+				} else {
+					$(".mod_floater_head span").html("What do you want to do with these "+selectedTopics.length+" topics?");
+				}
+				$(this).addClass("topic_selected");
+				$(".mod_floater").removeClass("auto_hide");
+			});
+		});
+		$(".mod_floater_submit").click(function(event){
+			event.preventDefault();
+			let selectNode = this.form.querySelector(".mod_floater_options");
+			let optionNode = selectNode.options[selectNode.selectedIndex];
+			let action = optionNode.getAttribute("val");
+			//console.log("action",action);
+			
+			let url = "/topic/"+action+"/submit/";
+			//console.log("JSON.stringify(selectedTopics) ", JSON.stringify(selectedTopics));
+			$.ajax({
+				url: url,
+				type: "POST",
+				data: JSON.stringify(selectedTopics),
+				contentType: "application/json",
+				error: ajaxError,
+				success: function() {
+					window.location.reload();
+				}
+			});
+		});
+	});
 
 	$("#themeSelectorSelect").change(function(){
 		console.log("Changing the theme to " + this.options[this.selectedIndex].getAttribute("val"));
@@ -466,22 +523,13 @@ $(document).ready(function(){
 			type: "POST",
 			dataType: "json",
 			data: { "newTheme": this.options[this.selectedIndex].getAttribute("val"), isJs: "1" },
+			error: ajaxError,
 			success: function (data, status, xhr) {
 				console.log("Theme successfully switched");
-				console.log("data",data);
-				console.log("status",status);
-				console.log("xhr",xhr);
+				console.log("data", data);
+				console.log("status", status);
+				console.log("xhr", xhr);
 				window.location.reload();
-			},
-			// TODO: Use a standard error handler for the AJAX calls in here which throws up the response (if JSON) in a .notice? Might be difficult to trace errors in the console, if we reuse the same function every-time
-			error: function(xhr,status,errstr) {
-				console.log("The AJAX request failed");
-				console.log("xhr",xhr);
-				console.log("status",status);
-				console.log("errstr",errstr);
-				if(status=="parsererror") {
-					console.log("The server didn't respond with a valid JSON response");
-				}
 			}
 		});
 	});

@@ -10,11 +10,11 @@ import (
 
 func init() {
 	DB_Registry = append(DB_Registry,
-		&Mssql_Adapter{Name: "mssql", Buffer: make(map[string]DB_Stmt)},
+		&MssqlAdapter{Name: "mssql", Buffer: make(map[string]DB_Stmt)},
 	)
 }
 
-type Mssql_Adapter struct {
+type MssqlAdapter struct {
 	Name        string // ? - Do we really need this? Can't we hard-code this?
 	Buffer      map[string]DB_Stmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
@@ -22,21 +22,21 @@ type Mssql_Adapter struct {
 }
 
 // GetName gives you the name of the database adapter. In this case, it's Mssql
-func (adapter *Mssql_Adapter) GetName() string {
+func (adapter *MssqlAdapter) GetName() string {
 	return adapter.Name
 }
 
-func (adapter *Mssql_Adapter) GetStmt(name string) DB_Stmt {
+func (adapter *MssqlAdapter) GetStmt(name string) DB_Stmt {
 	return adapter.Buffer[name]
 }
 
-func (adapter *Mssql_Adapter) GetStmts() map[string]DB_Stmt {
+func (adapter *MssqlAdapter) GetStmts() map[string]DB_Stmt {
 	return adapter.Buffer
 }
 
 // TODO: Convert any remaining stringy types to nvarchar
 // We may need to change the CreateTable API to better suit Mssql and the other database drivers which are coming up
-func (adapter *Mssql_Adapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
+func (adapter *MssqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -115,7 +115,7 @@ func (adapter *Mssql_Adapter) CreateTable(name string, table string, charset str
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
+func (adapter *MssqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -162,7 +162,7 @@ func (adapter *Mssql_Adapter) SimpleInsert(name string, table string, columns st
 }
 
 // ! DEPRECATED
-func (adapter *Mssql_Adapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
+func (adapter *MssqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
 	log.Print("In SimpleReplace")
 	key, ok := adapter.keys[table]
 	if !ok {
@@ -197,7 +197,7 @@ func (adapter *Mssql_Adapter) SimpleReplace(name string, table string, columns s
 	return adapter.SimpleUpsert(name, table, columns, fields, "key = "+keyValue)
 }
 
-func (adapter *Mssql_Adapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+func (adapter *MssqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -293,7 +293,7 @@ func (adapter *Mssql_Adapter) SimpleUpsert(name string, table string, columns st
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
+func (adapter *MssqlAdapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -359,7 +359,7 @@ func (adapter *Mssql_Adapter) SimpleUpdate(name string, table string, set string
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) SimpleDelete(name string, table string, where string) (string, error) {
+func (adapter *MssqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -400,8 +400,8 @@ func (adapter *Mssql_Adapter) SimpleDelete(name string, table string, where stri
 	return querystr, nil
 }
 
-// We don't want to accidentally wipe tables, so we'll have a seperate method for purging tables instead
-func (adapter *Mssql_Adapter) Purge(name string, table string) (string, error) {
+// We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
+func (adapter *MssqlAdapter) Purge(name string, table string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -412,7 +412,7 @@ func (adapter *Mssql_Adapter) Purge(name string, table string) (string, error) {
 	return "DELETE FROM [" + table + "]", nil
 }
 
-func (adapter *Mssql_Adapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
+func (adapter *MssqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -518,7 +518,7 @@ func (adapter *Mssql_Adapter) SimpleSelect(name string, table string, columns st
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (adapter *MssqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -647,7 +647,7 @@ func (adapter *Mssql_Adapter) SimpleLeftJoin(name string, table1 string, table2 
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (adapter *MssqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -778,7 +778,7 @@ func (adapter *Mssql_Adapter) SimpleInnerJoin(name string, table1 string, table2
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
+func (adapter *MssqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
 	// TODO: More errors.
 	// TODO: Add this to the MySQL adapter in order to make this problem more discoverable?
 	if len(sel.Orderby) == 0 && sel.Limit != "" {
@@ -893,7 +893,7 @@ func (adapter *Mssql_Adapter) SimpleInsertSelect(name string, ins DB_Insert, sel
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) simpleJoin(name string, ins DB_Insert, sel DB_Join, joinType string) (string, error) {
+func (adapter *MssqlAdapter) simpleJoin(name string, ins DB_Insert, sel DB_Join, joinType string) (string, error) {
 	// TODO: More errors.
 	// TODO: Add this to the MySQL adapter in order to make this problem more discoverable?
 	if len(sel.Orderby) == 0 && sel.Limit != "" {
@@ -1023,15 +1023,15 @@ func (adapter *Mssql_Adapter) simpleJoin(name string, ins DB_Insert, sel DB_Join
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *MssqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	return adapter.simpleJoin(name, ins, sel, "LEFT")
 }
 
-func (adapter *Mssql_Adapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *MssqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	return adapter.simpleJoin(name, ins, sel, "INNER")
 }
 
-func (adapter *Mssql_Adapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
+func (adapter *MssqlAdapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -1077,7 +1077,7 @@ func (adapter *Mssql_Adapter) SimpleCount(name string, table string, where strin
 	return querystr, nil
 }
 
-func (adapter *Mssql_Adapter) Write() error {
+func (adapter *MssqlAdapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {
 		if name[0] == '_' {
@@ -1121,12 +1121,12 @@ func _gen_mssql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (adapter *Mssql_Adapter) pushStatement(name string, stype string, querystr string) {
+func (adapter *MssqlAdapter) pushStatement(name string, stype string, querystr string) {
 	adapter.Buffer[name] = DB_Stmt{querystr, stype}
 	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }
 
-func (adapter *Mssql_Adapter) stringyType(ctype string) bool {
+func (adapter *MssqlAdapter) stringyType(ctype string) bool {
 	ctype = strings.ToLower(ctype)
 	return ctype == "char" || ctype == "varchar" || ctype == "datetime" || ctype == "text" || ctype == "nvarchar"
 }
@@ -1135,6 +1135,6 @@ type SetPrimaryKeys interface {
 	SetPrimaryKeys(keys map[string]string)
 }
 
-func (adapter *Mssql_Adapter) SetPrimaryKeys(keys map[string]string) {
+func (adapter *MssqlAdapter) SetPrimaryKeys(keys map[string]string) {
 	adapter.keys = keys
 }

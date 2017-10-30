@@ -257,6 +257,8 @@ li a {
 .rowhead h1, .colstack_head h1 {
 	-webkit-margin-before: 0;
 	-webkit-margin-after: 0;
+	margin-block-start: 0;
+	margin-block-end: 0;
 	font-weight: normal;
 	font-size: 16px;
 }

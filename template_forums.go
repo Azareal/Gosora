@@ -15,7 +15,7 @@ func init() {
 }
 
 // nolint
-func template_forums(tmpl_forums_vars ForumsPage, w http.ResponseWriter) {
+func template_forums(tmpl_forums_vars ForumsPage, w http.ResponseWriter) error {
 w.Write(header_0)
 w.Write([]byte(tmpl_forums_vars.Title))
 w.Write(header_1)
@@ -55,13 +55,12 @@ if tmpl_forums_vars.CurrentUser.Loggedin {
 w.Write(menu_3)
 w.Write([]byte(tmpl_forums_vars.CurrentUser.Link))
 w.Write(menu_4)
-w.Write(menu_5)
 w.Write([]byte(tmpl_forums_vars.CurrentUser.Session))
-w.Write(menu_6)
+w.Write(menu_5)
 } else {
-w.Write(menu_7)
+w.Write(menu_6)
 }
-w.Write(menu_8)
+w.Write(menu_7)
 w.Write(header_14)
 if tmpl_forums_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_15)
@@ -82,41 +81,43 @@ if item.Desc != "" || item.LastTopic.Title != "" {
 w.Write(forums_2)
 }
 w.Write(forums_3)
-if item.Desc != "" {
-w.Write(forums_4)
 w.Write([]byte(item.Link))
-w.Write(forums_5)
+w.Write(forums_4)
 w.Write([]byte(item.Name))
+w.Write(forums_5)
+if item.Desc != "" {
 w.Write(forums_6)
 w.Write([]byte(item.Desc))
 w.Write(forums_7)
 } else {
 w.Write(forums_8)
-w.Write([]byte(item.Link))
-w.Write(forums_9)
-w.Write([]byte(item.Name))
-w.Write(forums_10)
 }
+w.Write(forums_9)
+if item.LastReplyer.Avatar != "" {
+w.Write(forums_10)
+w.Write([]byte(item.LastReplyer.Avatar))
 w.Write(forums_11)
-w.Write([]byte(item.LastTopic.Link))
+}
 w.Write(forums_12)
+w.Write([]byte(item.LastTopic.Link))
+w.Write(forums_13)
 if item.LastTopic.Title != "" {
 w.Write([]byte(item.LastTopic.Title))
 } else {
-w.Write(forums_13)
-}
 w.Write(forums_14)
-if item.LastTopicTime != "" {
-w.Write(forums_15)
-w.Write([]byte(item.LastTopicTime))
-w.Write(forums_16)
 }
+w.Write(forums_15)
+if item.LastTopicTime != "" {
+w.Write(forums_16)
+w.Write([]byte(item.LastTopicTime))
 w.Write(forums_17)
 }
-} else {
 w.Write(forums_18)
 }
+} else {
 w.Write(forums_19)
+}
+w.Write(forums_20)
 w.Write(footer_0)
 if len(tmpl_forums_vars.Header.Themes) != 0 {
 for _, item := range tmpl_forums_vars.Header.Themes {
@@ -140,4 +141,5 @@ w.Write([]byte(string(tmpl_forums_vars.Header.Widgets.RightSidebar)))
 w.Write(footer_8)
 }
 w.Write(footer_9)
+	return nil
 }

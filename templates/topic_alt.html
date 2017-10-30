@@ -1,11 +1,14 @@
 {{template "header.html" . }}
-{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="Go to the previous page" rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
-{{if ne .LastPage .Page}}<link rel="prerender" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}" />
+
+{{if gt .Page 1}}<link rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}" />
+<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="Go to the previous page" rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+
+{{if ne .LastPage .Page}}<link rel="prerender next" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}" />
 <div id="nextFloat" class="next_button"><a class="next_link" aria-label="Go to the next page" rel="next" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 
 <main>
 
-<div class="rowblock rowhead topic_block">
+<div class="rowblock rowhead topic_block" aria-label="The opening post of this topic">
 	<form action='/topic/edit/submit/{{.Topic.ID}}' method="post">
 		<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 			<h1 class='topic_name hide_on_edit'>{{.Topic.Title}}</h1>
@@ -20,14 +23,14 @@
 </div>
 
 <div class="rowblock post_container">
-	<article class="rowitem passive deletable_block editable_parent post_item top_post">
-		<div class="userinfo">
+	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="The opening post for this topic">
+		<div class="userinfo" aria-label="The information on the poster">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-			<a href="{{.Topic.UserLink}}" class="the_name">{{.Topic.CreatedByName}}</a>
+			<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
 			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container">
-			<div class="hide_on_edit topic_content user_content">{{.Topic.ContentHTML}}</div>
+			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
 			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 			<div class="button_container">
 				{{if .CurrentUser.Loggedin}}
@@ -46,20 +49,21 @@
 			</div>
 		</div><div style="clear:both;"></div>
 	</article>
+
 	{{range .ItemList}}
-	<article class="rowitem passive deletable_block editable_parent post_item {{if .ActionType}}action_item{{end}}">
-		<div class="userinfo">
+	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{if .ActionType}}action_item{{end}}">
+		<div class="userinfo" aria-label="The information on the poster">
 			<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-			<a href="{{.UserLink}}" class="the_name">{{.CreatedByName}}</a>
+			<a href="{{.UserLink}}" class="the_name" rel="author">{{.CreatedByName}}</a>
 			{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 		<div class="content_container" {{if .ActionType}}style="margin-left: 0px;"{{end}}>
 			{{if .ActionType}}
 				<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>
-				<span>{{.ActionType}}</span>
+				<span itemprop="text">{{.ActionType}}</span>
 			{{else}}
 			{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
-			<div class="editable_block user_content">{{.ContentHtml}}</div>
+			<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
 			<div class="button_container">
 				{{if $.CurrentUser.Loggedin}}
 					{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="action_button">+1</a>{{end}}
@@ -76,6 +80,7 @@
 		<div style="clear:both;"></div>
 	</article>
 {{end}}</div>
+
 {{if .CurrentUser.Perms.CreateReply}}
 <div class="rowblock topic_reply_form quick_create_form">
 	<form id="reply_form" enctype="multipart/form-data" action="/reply/create/" method="post"></form>

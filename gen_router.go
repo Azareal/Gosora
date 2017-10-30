@@ -12,7 +12,7 @@ var ErrNoRoute = errors.New("That route doesn't exist.")
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	extra_routes map[string]func(http.ResponseWriter, *http.Request, User)
+	extra_routes map[string]func(http.ResponseWriter, *http.Request, User) RouteError
 	
 	sync.RWMutex
 }
@@ -20,14 +20,26 @@ type GenRouter struct {
 func NewGenRouter(uploads http.Handler) *GenRouter {
 	return &GenRouter{
 		UploadHandler: http.StripPrefix("/uploads/",uploads).ServeHTTP,
-		extra_routes: make(map[string]func(http.ResponseWriter, *http.Request, User)),
+		extra_routes: make(map[string]func(http.ResponseWriter, *http.Request, User) RouteError),
 	}
+}
+
+func (router *GenRouter) handleError(err RouteError, w http.ResponseWriter, r *http.Request, user User) {
+	if err.Handled() {
+		return
+	}
+	
+	if err.Type() == "system" {
+		InternalErrorJSQ(err,w,r,err.Json())
+		return
+	}
+	LocalErrorJSQ(err.Error(),w,r,user,err.Json())
 }
 
 func (router *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, User)) {
+func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, User) RouteError) {
 	router.Lock()
 	router.extra_routes[pattern] = handle
 	router.Unlock()
@@ -91,144 +103,135 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log.Print("after PreRoute")
 	}
 	
+	var err RouteError
 	switch(prefix) {
 		case "/api":
-			routeAPI(w,req,user)
-			return
+			err = routeAPI(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		case "/overview":
-			routeOverview(w,req,user)
-			return
+			err = routeOverview(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		case "/forums":
-			routeForums(w,req,user)
-			return
+			err = routeForums(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		case "/forum":
-			routeForum(w,req,user,extra_data)
-			return
+			err = routeForum(w,req,user,extra_data)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		case "/theme":
-			routeChangeTheme(w,req,user)
-			return
+			err = routeChangeTheme(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		case "/attachs":
-			routeShowAttachment(w,req,user,extra_data)
-			return
+			err = routeShowAttachment(w,req,user,extra_data)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		case "/report":
 			switch(req.URL.Path) {
 				case "/report/submit/":
-					routeReportSubmit(w,req,user,extra_data)
-					return
+					err = routeReportSubmit(w,req,user,extra_data)
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
 			}
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/create/":
-					routeTopicCreate(w,req,user,extra_data)
-					return
+					err = routeTopicCreate(w,req,user,extra_data)
 				default:
-					routeTopics(w,req,user)
-					return
+					err = routeTopics(w,req,user)
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
 			}
 		case "/panel":
+			err = SuperModOnly(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+				return
+			}
+			
 			switch(req.URL.Path) {
 				case "/panel/forums/":
-					routePanelForums(w,req,user)
-					return
+					err = routePanelForums(w,req,user)
 				case "/panel/forums/create/":
-					routePanelForumsCreateSubmit(w,req,user)
-					return
+					err = routePanelForumsCreateSubmit(w,req,user)
 				case "/panel/forums/delete/":
-					routePanelForumsDelete(w,req,user,extra_data)
-					return
+					err = routePanelForumsDelete(w,req,user,extra_data)
 				case "/panel/forums/delete/submit/":
-					routePanelForumsDeleteSubmit(w,req,user,extra_data)
-					return
+					err = routePanelForumsDeleteSubmit(w,req,user,extra_data)
 				case "/panel/forums/edit/":
-					routePanelForumsEdit(w,req,user,extra_data)
-					return
+					err = routePanelForumsEdit(w,req,user,extra_data)
 				case "/panel/forums/edit/submit/":
-					routePanelForumsEditSubmit(w,req,user,extra_data)
-					return
+					err = routePanelForumsEditSubmit(w,req,user,extra_data)
 				case "/panel/forums/edit/perms/submit/":
-					routePanelForumsEditPermsSubmit(w,req,user,extra_data)
-					return
+					err = routePanelForumsEditPermsSubmit(w,req,user,extra_data)
 				case "/panel/settings/":
-					routePanelSettings(w,req,user)
-					return
+					err = routePanelSettings(w,req,user)
 				case "/panel/settings/edit/":
-					routePanelSetting(w,req,user,extra_data)
-					return
+					err = routePanelSetting(w,req,user,extra_data)
 				case "/panel/settings/edit/submit/":
-					routePanelSettingEdit(w,req,user,extra_data)
-					return
+					err = routePanelSettingEdit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/":
-					routePanelWordFilters(w,req,user)
-					return
+					err = routePanelWordFilters(w,req,user)
 				case "/panel/settings/word-filters/create/":
-					routePanelWordFiltersCreate(w,req,user)
-					return
+					err = routePanelWordFiltersCreate(w,req,user)
 				case "/panel/settings/word-filters/edit/":
-					routePanelWordFiltersEdit(w,req,user,extra_data)
-					return
+					err = routePanelWordFiltersEdit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/edit/submit/":
-					routePanelWordFiltersEditSubmit(w,req,user,extra_data)
-					return
+					err = routePanelWordFiltersEditSubmit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/delete/submit/":
-					routePanelWordFiltersDeleteSubmit(w,req,user,extra_data)
-					return
+					err = routePanelWordFiltersDeleteSubmit(w,req,user,extra_data)
 				case "/panel/themes/":
-					routePanelThemes(w,req,user)
-					return
+					err = routePanelThemes(w,req,user)
 				case "/panel/themes/default/":
-					routePanelThemesSetDefault(w,req,user,extra_data)
-					return
+					err = routePanelThemesSetDefault(w,req,user,extra_data)
 				case "/panel/plugins/":
-					routePanelPlugins(w,req,user)
-					return
+					err = routePanelPlugins(w,req,user)
 				case "/panel/plugins/activate/":
-					routePanelPluginsActivate(w,req,user,extra_data)
-					return
+					err = routePanelPluginsActivate(w,req,user,extra_data)
 				case "/panel/plugins/deactivate/":
-					routePanelPluginsDeactivate(w,req,user,extra_data)
-					return
+					err = routePanelPluginsDeactivate(w,req,user,extra_data)
 				case "/panel/plugins/install/":
-					routePanelPluginsInstall(w,req,user,extra_data)
-					return
+					err = routePanelPluginsInstall(w,req,user,extra_data)
 				case "/panel/users/":
-					routePanelUsers(w,req,user)
-					return
+					err = routePanelUsers(w,req,user)
 				case "/panel/users/edit/":
-					routePanelUsersEdit(w,req,user,extra_data)
-					return
+					err = routePanelUsersEdit(w,req,user,extra_data)
 				case "/panel/users/edit/submit/":
-					routePanelUsersEditSubmit(w,req,user,extra_data)
-					return
+					err = routePanelUsersEditSubmit(w,req,user,extra_data)
 				case "/panel/groups/":
-					routePanelGroups(w,req,user)
-					return
+					err = routePanelGroups(w,req,user)
 				case "/panel/groups/edit/":
-					routePanelGroupsEdit(w,req,user,extra_data)
-					return
+					err = routePanelGroupsEdit(w,req,user,extra_data)
 				case "/panel/groups/edit/perms/":
-					routePanelGroupsEditPerms(w,req,user,extra_data)
-					return
+					err = routePanelGroupsEditPerms(w,req,user,extra_data)
 				case "/panel/groups/edit/submit/":
-					routePanelGroupsEditSubmit(w,req,user,extra_data)
-					return
+					err = routePanelGroupsEditSubmit(w,req,user,extra_data)
 				case "/panel/groups/edit/perms/submit/":
-					routePanelGroupsEditPermsSubmit(w,req,user,extra_data)
-					return
+					err = routePanelGroupsEditPermsSubmit(w,req,user,extra_data)
 				case "/panel/groups/create/":
-					routePanelGroupsCreateSubmit(w,req,user)
-					return
+					err = routePanelGroupsCreateSubmit(w,req,user)
 				case "/panel/backups/":
-					routePanelBackups(w,req,user,extra_data)
-					return
+					err = routePanelBackups(w,req,user,extra_data)
 				case "/panel/logs/mod/":
-					routePanelLogsMod(w,req,user)
-					return
+					err = routePanelLogsMod(w,req,user)
 				case "/panel/debug/":
-					routePanelDebug(w,req,user)
-					return
+					err = routePanelDebug(w,req,user)
 				default:
-					routePanel(w,req,user)
-					return
+					err = routePanel(w,req,user)
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
 			}
 		case "/uploads":
 			if extra_data == "" {
@@ -236,14 +239,17 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 			req.URL.Path += extra_data
+			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req)
-			return
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
 			// TODO: Add support for favicons and robots.txt files
 			switch(extra_data) {
 				case "robots.txt":
-					routeRobotsTxt(w,req)
+					err = routeRobotsTxt(w,req)
+					if err != nil {
+						router.handleError(err,w,req,user)
+					}
 					return
 			}
 			
@@ -252,19 +258,20 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 			config.DefaultRoute(w,req,user)
-			return
-		//default: NotFound(w,req)
+		default:
+			// A fallback for the routes which haven't been converted to the new router yet or plugins
+			router.RLock()
+			handle, ok := router.extra_routes[req.URL.Path]
+			router.RUnlock()
+			
+			if ok {
+				req.URL.Path += extra_data
+				err = handle(w,req,user)
+				if err != nil {
+					router.handleError(err,w,req,user)
+				}
+				return
+			}
+			NotFound(w,req)
 	}
-	
-	// A fallback for the routes which haven't been converted to the new router yet or plugins
-	router.RLock()
-	handle, ok := router.extra_routes[req.URL.Path]
-	router.RUnlock()
-	
-	if ok {
-		req.URL.Path += extra_data
-		handle(w,req,user)
-		return
-	}
-	NotFound(w,req)
 }

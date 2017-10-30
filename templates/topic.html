@@ -1,16 +1,17 @@
 {{template "header.html" . }}
 
 <form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}' method="post"></form>
-{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="Go to the previous page" rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+{{if gt .Page 1}}<link rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}" />
+<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="Go to the previous page" rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
 
-{{if ne .LastPage .Page}}<link rel="prerender" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}" />
+{{if ne .LastPage .Page}}<link rel="prerender next" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}" />
 <div id="nextFloat" class="next_button">
 	<a class="next_link" aria-label="Go to the next page" rel="next" href="/topic/{{.Topic.ID}}?page={{add .Page 1}}">&gt;</a>
 </div>{{end}}
 
 <main>
 
-<div class="rowblock rowhead topic_block">
+<div class="rowblock rowhead topic_block" aria-label="The opening post of this topic">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 		<h1 class='topic_name hide_on_edit'>{{.Topic.Title}}</h1>
 		{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='Status: Closed'>&#x1F512;&#xFE0E</span>{{end}}
@@ -21,14 +22,14 @@
 	</div>
 </div>
 
-<article class="rowblock post_container top_post">
-	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="{{if .Topic.Avatar}}background-image:url({{.Topic.Avatar}}), url(/static/{{.Header.ThemeName}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
-		<p class="hide_on_edit topic_content user_content" style="margin:0;padding:0;">{{.Topic.ContentHTML}}</p>
+<article itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="The opening post for this topic">
+	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="{{if .Topic.Avatar}}background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.ThemeName}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
+		<p class="hide_on_edit topic_content user_content" itemprop="text" style="margin:0;padding:0;">{{.Topic.ContentHTML}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 
 		<span class="controls">
 
-		<a href="{{.Topic.UserLink}}" class="username real_username">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
+		<a href="{{.Topic.UserLink}}" class="username real_username" rel="author">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
 		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="mod_button" title="Love it" style="color:#202020;">
 		<button class="username like_label"{{if .Topic.Liked}} style="background-color:#D6FFD6;"{{end}}></button></a>{{end}}
 
@@ -49,19 +50,20 @@
 		</span>
 	</div>
 </article>
-<div class="rowblock post_container" style="overflow: hidden;">{{range .ItemList}}{{if .ActionType}}
-	<article class="rowitem passive deletable_block editable_parent post_item action_item">
+
+<div class="rowblock post_container" aria-label="The current page for this topic" style="overflow: hidden;">{{range .ItemList}}{{if .ActionType}}
+	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item action_item">
 		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>
-		<span>{{.ActionType}}</span>
+		<span itemprop="text">{{.ActionType}}</span>
 	</article>
 {{else}}
-	<article class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="{{if .Avatar}}background-image:url({{.Avatar}}), url(/static/{{$.Header.ThemeName}}/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
+	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/{{$.Header.ThemeName}}/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
 		{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
-		<p class="editable_block user_content" style="margin:0;padding:0;">{{.ContentHtml}}</p>
+		<p class="editable_block user_content" itemprop="text" style="margin:0;padding:0;">{{.ContentHtml}}</p>
 
 		<span class="controls">
 
-		<a href="{{.UserLink}}" class="username real_username">{{.CreatedByName}}</a>&nbsp;&nbsp;
+		<a href="{{.UserLink}}" class="username real_username" rel="author">{{.CreatedByName}}</a>&nbsp;&nbsp;
 		{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username like_label"{{if .Liked}} style="background-color:#D6FFD6;"{{end}}></button></a>{{end}}
 
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Reply"><button class="username edit_item edit_label"></button></a>{{end}}

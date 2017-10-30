@@ -20,27 +20,25 @@ import (
 // TODO: Add a permission to stop certain users from using custom avatars
 // ? - Log username changes and put restrictions on this?
 
-func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid string) {
+func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid string) RouteError {
 	var fid int
 	var err error
 	if sfid != "" {
 		fid, err = strconv.Atoi(sfid)
 		if err != nil {
-			PreError("The provided ForumID is not a valid number.", w, r)
-			return
+			return LocalError("You didn't provide a valid number for the forum ID.", w, r, user)
 		}
 	}
 	if fid == 0 {
 		fid = config.DefaultForum
 	}
 
-	headerVars, ok := ForumUserCheck(w, r, &user, fid)
-	if !ok {
-		return
+	headerVars, ferr := ForumUserCheck(w, r, &user, fid)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	BuildWidgets("create_topic", nil, headerVars, r)
@@ -58,15 +56,15 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 	if user.IsSuperAdmin {
 		canSee, err = fstore.GetAllVisibleIDs()
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 	} else {
 		group, err := gstore.Get(user.Group)
 		if err != nil {
+			// TODO: Refactor this
 			LocalError("Something weird happened behind the scenes", w, r, user)
-			log.Print("Group #" + strconv.Itoa(user.Group) + " doesn't exist, but it's set on User #" + strconv.Itoa(user.ID))
-			return
+			log.Printf("Group #%d doesn't exist, but it's set on User #%d", user.Group, user.ID)
+			return nil
 		}
 		canSee = group.CanSee
 	}
@@ -95,78 +93,74 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 	ctpage := CreateTopicPage{"Create Topic", user, headerVars, forumList, fid}
 	if preRenderHooks["pre_render_create_topic"] != nil {
 		if runPreRenderHook("pre_render_create_topic", w, r, &user, &ctpage) {
-			return
+			return nil
 		}
 	}
 
-	template_create_topic_handle(ctpage, w)
+	err = template_create_topic_handle(ctpage, w)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
 // POST functions. Authorised users only.
-func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	// TODO: Reduce this to 1MB for attachments for each file?
 	if r.ContentLength > int64(config.MaxRequestSize) {
 		size, unit := convertByteUnit(float64(config.MaxRequestSize))
-		CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
-		return
+		return CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.MaxRequestSize))
 
 	err := r.ParseMultipartForm(int64(megabyte))
 	if err != nil {
-		LocalError("Unable to parse the form", w, r, user)
-		return
+		return LocalError("Unable to parse the form", w, r, user)
 	}
 
 	fid, err := strconv.Atoi(r.PostFormValue("topic-board"))
 	if err != nil {
-		PreError("The provided ForumID is not a valid number.", w, r)
-		return
+		return LocalError("The provided ForumID is not a valid number.", w, r, user)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, fid)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, fid)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	topicName := html.EscapeString(r.PostFormValue("topic-name"))
 	content := html.EscapeString(preparseMessage(r.PostFormValue("topic-content")))
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 
 	tid, err := topics.Create(fid, topicName, content, user.ID, ipaddress)
 	if err != nil {
 		switch err {
 		case ErrNoRows:
-			LocalError("Something went wrong, perhaps the forum got deleted?", w, r, user)
+			return LocalError("Something went wrong, perhaps the forum got deleted?", w, r, user)
 		case ErrNoTitle:
-			LocalError("This topic doesn't have a title", w, r, user)
+			return LocalError("This topic doesn't have a title", w, r, user)
 		case ErrNoBody:
-			LocalError("This topic doesn't have a body", w, r, user)
+			return LocalError("This topic doesn't have a body", w, r, user)
 		default:
-			InternalError(err, w)
+			return InternalError(err, w, r)
 		}
-		return
 	}
 
 	_, err = addSubscriptionStmt.Exec(user.ID, tid, "topic")
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	err = user.increasePostStats(wordCount(content), true)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Handle the file attachments
@@ -175,43 +169,39 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 		files, ok := r.MultipartForm.File["upload_files"]
 		if ok {
 			if len(files) > 5 {
-				LocalError("You can't attach more than five files", w, r, user)
-				return
+				return LocalError("You can't attach more than five files", w, r, user)
 			}
 
 			for _, file := range files {
-				log.Print("file.Filename ", file.Filename)
+				if dev.DebugMode {
+					log.Print("file.Filename ", file.Filename)
+				}
 				extarr := strings.Split(file.Filename, ".")
 				if len(extarr) < 2 {
-					LocalError("Bad file", w, r, user)
-					return
+					return LocalError("Bad file", w, r, user)
 				}
 				ext := extarr[len(extarr)-1]
 
 				// TODO: Can we do this without a regex?
 				reg, err := regexp.Compile("[^A-Za-z0-9]+")
 				if err != nil {
-					LocalError("Bad file extension", w, r, user)
-					return
+					return LocalError("Bad file extension", w, r, user)
 				}
 				ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
 				if !allowedFileExts.Contains(ext) {
-					LocalError("You're not allowed to upload files with this extension", w, r, user)
-					return
+					return LocalError("You're not allowed to upload files with this extension", w, r, user)
 				}
 
 				infile, err := file.Open()
 				if err != nil {
-					LocalError("Upload failed", w, r, user)
-					return
+					return LocalError("Upload failed", w, r, user)
 				}
 				defer infile.Close()
 
 				hasher := sha256.New()
 				_, err = io.Copy(hasher, infile)
 				if err != nil {
-					LocalError("Upload failed [Hashing Failed]", w, r, user)
-					return
+					return LocalError("Upload failed [Hashing Failed]", w, r, user)
 				}
 				infile.Close()
 
@@ -219,74 +209,65 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) {
 				filename := checksum + "." + ext
 				outfile, err := os.Create("." + "/attachs/" + filename)
 				if err != nil {
-					LocalError("Upload failed [File Creation Failed]", w, r, user)
-					return
+					return LocalError("Upload failed [File Creation Failed]", w, r, user)
 				}
 				defer outfile.Close()
 
 				infile, err = file.Open()
 				if err != nil {
-					LocalError("Upload failed", w, r, user)
-					return
+					return LocalError("Upload failed", w, r, user)
 				}
 				defer infile.Close()
 
 				_, err = io.Copy(outfile, infile)
 				if err != nil {
-					LocalError("Upload failed [Copy Failed]", w, r, user)
-					return
+					return LocalError("Upload failed [Copy Failed]", w, r, user)
 				}
 
 				_, err = addAttachmentStmt.Exec(fid, "forums", tid, "topics", user.ID, filename)
 				if err != nil {
-					InternalError(err, w)
-					return
+					return InternalError(err, w, r)
 				}
 			}
 		}
 	}
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	return nil
 }
 
-func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
+func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	// TODO: Reduce this to 1MB for attachments for each file?
 	if r.ContentLength > int64(config.MaxRequestSize) {
 		size, unit := convertByteUnit(float64(config.MaxRequestSize))
-		CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
-		return
+		return CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.MaxRequestSize))
 
 	err := r.ParseMultipartForm(int64(megabyte))
 	if err != nil {
-		LocalError("Unable to parse the form", w, r, user)
-		return
+		return LocalError("Unable to parse the form", w, r, user)
 	}
 
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
-		PreError("Failed to convert the Topic ID", w, r)
-		return
+		return PreError("Failed to convert the Topic ID", w, r)
 	}
 
 	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
-		PreError("Couldn't find the parent topic", w, r)
-		return
+		return PreError("Couldn't find the parent topic", w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	// Handle the file attachments
@@ -295,43 +276,37 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 		files, ok := r.MultipartForm.File["upload_files"]
 		if ok {
 			if len(files) > 5 {
-				LocalError("You can't attach more than five files", w, r, user)
-				return
+				return LocalError("You can't attach more than five files", w, r, user)
 			}
 
 			for _, file := range files {
 				log.Print("file.Filename ", file.Filename)
 				extarr := strings.Split(file.Filename, ".")
 				if len(extarr) < 2 {
-					LocalError("Bad file", w, r, user)
-					return
+					return LocalError("Bad file", w, r, user)
 				}
 				ext := extarr[len(extarr)-1]
 
 				// TODO: Can we do this without a regex?
 				reg, err := regexp.Compile("[^A-Za-z0-9]+")
 				if err != nil {
-					LocalError("Bad file extension", w, r, user)
-					return
+					return LocalError("Bad file extension", w, r, user)
 				}
 				ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
 				if !allowedFileExts.Contains(ext) {
-					LocalError("You're not allowed to upload files with this extension", w, r, user)
-					return
+					return LocalError("You're not allowed to upload files with this extension", w, r, user)
 				}
 
 				infile, err := file.Open()
 				if err != nil {
-					LocalError("Upload failed", w, r, user)
-					return
+					return LocalError("Upload failed", w, r, user)
 				}
 				defer infile.Close()
 
 				hasher := sha256.New()
 				_, err = io.Copy(hasher, infile)
 				if err != nil {
-					LocalError("Upload failed [Hashing Failed]", w, r, user)
-					return
+					return LocalError("Upload failed [Hashing Failed]", w, r, user)
 				}
 				infile.Close()
 
@@ -339,28 +314,24 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 				filename := checksum + "." + ext
 				outfile, err := os.Create("." + "/attachs/" + filename)
 				if err != nil {
-					LocalError("Upload failed [File Creation Failed]", w, r, user)
-					return
+					return LocalError("Upload failed [File Creation Failed]", w, r, user)
 				}
 				defer outfile.Close()
 
 				infile, err = file.Open()
 				if err != nil {
-					LocalError("Upload failed", w, r, user)
-					return
+					return LocalError("Upload failed", w, r, user)
 				}
 				defer infile.Close()
 
 				_, err = io.Copy(outfile, infile)
 				if err != nil {
-					LocalError("Upload failed [Copy Failed]", w, r, user)
-					return
+					return LocalError("Upload failed [Copy Failed]", w, r, user)
 				}
 
 				_, err = addAttachmentStmt.Exec(topic.ParentID, "forums", tid, "replies", user.ID, filename)
 				if err != nil {
-					InternalError(err, w)
-					return
+					return InternalError(err, w, r)
 				}
 			}
 		}
@@ -369,37 +340,31 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	content := preparseMessage(html.EscapeString(r.PostFormValue("reply-content")))
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 
 	_, err = rstore.Create(tid, content, ipaddress, topic.ParentID, user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	err = fstore.UpdateLastTopic(tid, user.ID, topic.ParentID)
 	if err != nil && err != ErrNoRows {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	res, err := addActivityStmt.Exec(user.ID, topic.CreatedBy, "reply", "topic", tid)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	lastID, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	_, err = notifyWatchersStmt.Exec(lastID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Alert the subscribers about this post without blocking this post from being posted
@@ -412,95 +377,80 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) {
 	wcount := wordCount(content)
 	err = user.increasePostStats(wcount, false)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
+	return nil
 }
 
 // TODO: Refactor this
-func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
+func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {
-		PreError("Bad Form", w, r)
-		return
+		return PreError("Bad Form", w, r)
 	}
 
 	tid, err := strconv.Atoi(r.URL.Path[len("/topic/like/submit/"):])
 	if err != nil {
-		PreError("Topic IDs can only ever be numbers.", w, r)
-		return
+		return PreError("Topic IDs can only ever be numbers.", w, r)
 	}
 
 	topic, err := topics.Get(tid)
 	if err == ErrNoRows {
-		PreError("The requested topic doesn't exist.", w, r)
-		return
+		return PreError("The requested topic doesn't exist.", w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	if topic.CreatedBy == user.ID {
-		LocalError("You can't like your own topics", w, r, user)
-		return
+		return LocalError("You can't like your own topics", w, r, user)
 	}
 
 	err = hasLikedTopicStmt.QueryRow(user.ID, tid).Scan(&tid)
 	if err != nil && err != ErrNoRows {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	} else if err != ErrNoRows {
-		LocalError("You already liked this!", w, r, user)
-		return
+		return LocalError("You already liked this!", w, r, user)
 	}
 
 	_, err = users.Get(topic.CreatedBy)
 	if err != nil && err == ErrNoRows {
-		LocalError("The target user doesn't exist", w, r, user)
-		return
+		return LocalError("The target user doesn't exist", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	score := 1
 	_, err = createLikeStmt.Exec(score, tid, "topics", user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	_, err = addLikesToTopicStmt.Exec(1, tid)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	res, err := addActivityStmt.Exec(user.ID, topic.CreatedBy, "like", "topic", tid)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	lastID, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	_, err = notifyOneStmt.Exec(topic.CreatedBy, lastID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Live alerts, if the poster is online and WebSockets is enabled
@@ -512,163 +462,139 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) {
 		tcache.CacheRemove(tid)
 	}
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	return nil
 }
 
-func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {
-		PreError("Bad Form", w, r)
-		return
+		return PreError("Bad Form", w, r)
 	}
 
 	rid, err := strconv.Atoi(r.URL.Path[len("/reply/like/submit/"):])
 	if err != nil {
-		PreError("The provided Reply ID is not a valid number.", w, r)
-		return
+		return PreError("The provided Reply ID is not a valid number.", w, r)
 	}
 
 	reply, err := rstore.Get(rid)
 	if err == ErrNoRows {
-		PreError("You can't like something which doesn't exist!", w, r)
-		return
+		return PreError("You can't like something which doesn't exist!", w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	var fid int
 	err = getTopicFIDStmt.QueryRow(reply.ParentID).Scan(&fid)
 	if err == ErrNoRows {
-		PreError("The parent topic doesn't exist.", w, r)
-		return
+		return PreError("The parent topic doesn't exist.", w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ok := SimpleForumUserCheck(w, r, &user, fid)
-	if !ok {
-		return
+	_, ferr := SimpleForumUserCheck(w, r, &user, fid)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	if reply.CreatedBy == user.ID {
-		LocalError("You can't like your own replies", w, r, user)
-		return
+		return LocalError("You can't like your own replies", w, r, user)
 	}
 
 	_, err = users.Get(reply.CreatedBy)
 	if err != nil && err != ErrNoRows {
-		LocalError("The target user doesn't exist", w, r, user)
-		return
+		return LocalError("The target user doesn't exist", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	err = reply.Like(user.ID)
 	if err == ErrAlreadyLiked {
-		LocalError("You've already liked this!", w, r, user)
-		return
+		return LocalError("You've already liked this!", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	res, err := addActivityStmt.Exec(user.ID, reply.CreatedBy, "like", "post", rid)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	lastID, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	_, err = notifyOneStmt.Exec(reply.CreatedBy, lastID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// Live alerts, if the poster is online and WebSockets is enabled
 	_ = wsHub.pushAlert(reply.CreatedBy, int(lastID), "like", "post", user.ID, reply.CreatedBy, rid)
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
+	return nil
 }
 
-func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) {
+func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
-		NoPermissions(w, r, user)
-		return
+		return NoPermissions(w, r, user)
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return
+		return LocalError("Bad Form", w, r, user)
 	}
 	uid, err := strconv.Atoi(r.PostFormValue("uid"))
 	if err != nil {
-		LocalError("Invalid UID", w, r, user)
-		return
+		return LocalError("Invalid UID", w, r, user)
 	}
 
 	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		LocalError("Bad IP", w, r, user)
-		return
+		return LocalError("Bad IP", w, r, user)
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("reply-content")))
 	_, err = createProfileReplyStmt.Exec(uid, content, parseMessage(content, 0, ""), user.ID, ipaddress)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	var userName string
 	err = getUserNameStmt.QueryRow(uid).Scan(&userName)
 	if err == ErrNoRows {
-		LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
-		return
+		return LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
+	return nil
 }
 
-func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemID string) {
+func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemID string) RouteError {
 	if !user.Loggedin {
-		LoginRequired(w, r, user)
-		return
+		return LoginRequired(w, r, user)
 	}
 	if user.IsBanned {
-		Banned(w, r, user)
-		return
+		return Banned(w, r, user)
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return
+		return LocalError("Bad Form", w, r, user)
 	}
 	if r.FormValue("session") != user.Session {
-		SecurityError(w, r, user)
-		return
+		return SecurityError(w, r, user)
 	}
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		LocalError("Bad ID", w, r, user)
-		return
+		return LocalError("Bad ID", w, r, user)
 	}
 
 	itemType := r.FormValue("type")
@@ -678,20 +604,16 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 	if itemType == "reply" {
 		reply, err := rstore.Get(itemID)
 		if err == ErrNoRows {
-			LocalError("We were unable to find the reported post", w, r, user)
-			return
+			return LocalError("We were unable to find the reported post", w, r, user)
 		} else if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		topic, err := topics.Get(reply.ParentID)
 		if err == ErrNoRows {
-			LocalError("We weren't able to find the topic the reported post is supposed to be in", w, r, user)
-			return
+			return LocalError("We weren't able to find the topic the reported post is supposed to be in", w, r, user)
 		} else if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		title = "Reply: " + topic.Title
@@ -699,124 +621,112 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 	} else if itemType == "user-reply" {
 		userReply, err := prstore.Get(itemID)
 		if err == ErrNoRows {
-			LocalError("We weren't able to find the reported post", w, r, user)
-			return
+			return LocalError("We weren't able to find the reported post", w, r, user)
 		} else if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		err = getUserNameStmt.QueryRow(userReply.ParentID).Scan(&title)
 		if err == ErrNoRows {
-			LocalError("We weren't able to find the profile the reported post is supposed to be on", w, r, user)
-			return
+			return LocalError("We weren't able to find the profile the reported post is supposed to be on", w, r, user)
 		} else if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 		title = "Profile: " + title
 		content = userReply.Content + "\n\nOriginal Post: @" + strconv.Itoa(userReply.ParentID)
 	} else if itemType == "topic" {
 		err = getTopicBasicStmt.QueryRow(itemID).Scan(&title, &content)
 		if err == ErrNoRows {
-			NotFound(w, r)
-			return
+			return NotFound(w, r)
 		} else if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 		title = "Topic: " + title
 		content = content + "\n\nOriginal Post: #tid-" + strconv.Itoa(itemID)
 	} else {
 		if vhooks["report_preassign"] != nil {
 			runVhookNoreturn("report_preassign", &itemID, &itemType)
-			return
+			return nil
 		}
 		// Don't try to guess the type
-		LocalError("Unknown type", w, r, user)
-		return
+		return LocalError("Unknown type", w, r, user)
 	}
 
 	var count int
 	rows, err := reportExistsStmt.Query(itemType + "_" + strconv.Itoa(itemID))
 	if err != nil && err != ErrNoRows {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	for rows.Next() {
 		err = rows.Scan(&count)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 	}
 	if count != 0 {
-		LocalError("Someone has already reported this!", w, r, user)
-		return
+		return LocalError("Someone has already reported this!", w, r, user)
 	}
 
 	// TODO: Repost attachments in the reports forum, so that the mods can see them
 	// ? - Can we do this via the TopicStore?
 	res, err := createReportStmt.Exec(title, content, parseMessage(content, 0, ""), user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID))
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	lastID, err := res.LastInsertId()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	_, err = addTopicsToForumStmt.Exec(1, fid)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	err = fstore.UpdateLastTopic(int(lastID), user.ID, fid)
 	if err != nil && err != ErrNoRows {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/topic/"+strconv.FormatInt(lastID, 10), http.StatusSeeOther)
+	return nil
 }
 
-func routeAccountOwnEditCritical(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeAccountOwnEditCritical(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Loggedin {
-		LocalError("You need to login to edit your account.", w, r, user)
-		return
+		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 
 	pi := Page{"Edit Password", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_account_own_edit_critical"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "account-own-edit.html", pi)
+	err := templates.ExecuteTemplate(w, "account-own-edit.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Loggedin {
-		LocalError("You need to login to edit your account.", w, r, user)
-		return
+		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return
+		return LocalError("Bad Form", w, r, user)
 	}
 
 	var realPassword, salt string
@@ -826,24 +736,19 @@ func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, u
 
 	err = getPasswordStmt.QueryRow(user.ID).Scan(&realPassword, &salt)
 	if err == ErrNoRows {
-		LocalError("Your account no longer exists.", w, r, user)
-		return
+		return LocalError("Your account no longer exists.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	err = CheckPassword(realPassword, currentPassword, salt)
 	if err == ErrMismatchedHashAndPassword {
-		LocalError("That's not the correct password.", w, r, user)
-		return
+		return LocalError("That's not the correct password.", w, r, user)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	if newPassword != confirmPassword {
-		LocalError("The two passwords don't match.", w, r, user)
-		return
+		return LocalError("The two passwords don't match.", w, r, user)
 	}
 	SetPassword(user.ID, newPassword)
 
@@ -854,51 +759,55 @@ func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, u
 	pi := Page{"Edit Password", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_account_own_edit_critical"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "account-own-edit.html", pi)
+	err = templates.ExecuteTemplate(w, "account-own-edit.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeAccountOwnEditAvatar(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeAccountOwnEditAvatar(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Loggedin {
-		LocalError("You need to login to edit your account.", w, r, user)
-		return
+		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 	pi := Page{"Edit Avatar", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_account_own_edit_avatar"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "account-own-edit-avatar.html", pi)
+	err := templates.ExecuteTemplate(w, "account-own-edit-avatar.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user User) {
+func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if r.ContentLength > int64(config.MaxRequestSize) {
 		size, unit := convertByteUnit(float64(config.MaxRequestSize))
-		CustomError("Your avatar's too big. Avatars must be smaller than "+strconv.Itoa(int(size))+unit, http.StatusExpectationFailed, "Error", w, r, user)
-		return
+		return CustomError("Your avatar's too big. Avatars must be smaller than "+strconv.Itoa(int(size))+unit, http.StatusExpectationFailed, "Error", w, r, user)
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(config.MaxRequestSize))
 
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Loggedin {
-		LocalError("You need to login to edit your account.", w, r, user)
-		return
+		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 
 	err := r.ParseMultipartForm(int64(megabyte))
 	if err != nil {
-		LocalError("Upload failed", w, r, user)
-		return
+		return LocalError("Upload failed", w, r, user)
 	}
 
 	var filename, ext string
@@ -906,8 +815,7 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 		for _, hdr := range fheaders {
 			infile, err := hdr.Open()
 			if err != nil {
-				LocalError("Upload failed", w, r, user)
-				return
+				return LocalError("Upload failed", w, r, user)
 			}
 			defer infile.Close()
 
@@ -916,8 +824,7 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 			if filename != "" {
 				if filename != hdr.Filename {
 					os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
-					LocalError("You may only upload one avatar", w, r, user)
-					return
+					return LocalError("You may only upload one avatar", w, r, user)
 				}
 			} else {
 				filename = hdr.Filename
@@ -926,16 +833,14 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 			if ext == "" {
 				extarr := strings.Split(hdr.Filename, ".")
 				if len(extarr) < 2 {
-					LocalError("Bad file", w, r, user)
-					return
+					return LocalError("Bad file", w, r, user)
 				}
 				ext = extarr[len(extarr)-1]
 
 				// TODO: Can we do this without a regex?
 				reg, err := regexp.Compile("[^A-Za-z0-9]+")
 				if err != nil {
-					LocalError("Bad file extension", w, r, user)
-					return
+					return LocalError("Bad file extension", w, r, user)
 				}
 				ext = reg.ReplaceAllString(ext, "")
 				ext = strings.ToLower(ext)
@@ -943,23 +848,20 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 
 			outfile, err := os.Create("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
 			if err != nil {
-				LocalError("Upload failed [File Creation Failed]", w, r, user)
-				return
+				return LocalError("Upload failed [File Creation Failed]", w, r, user)
 			}
 			defer outfile.Close()
 
 			_, err = io.Copy(outfile, infile)
 			if err != nil {
-				LocalError("Upload failed [Copy Failed]", w, r, user)
-				return
+				return LocalError("Upload failed [Copy Failed]", w, r, user)
 			}
 		}
 	}
 
 	err = user.ChangeAvatar("." + ext)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
 
@@ -967,50 +869,54 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 	pi := Page{"Edit Avatar", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_account_own_edit_avatar"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "account-own-edit-avatar.html", pi)
+	err = templates.ExecuteTemplate(w, "account-own-edit-avatar.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeAccountOwnEditUsername(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeAccountOwnEditUsername(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Loggedin {
-		LocalError("You need to login to edit your account.", w, r, user)
-		return
+		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 	pi := Page{"Edit Username", user, headerVars, tList, user.Name}
 	if preRenderHooks["pre_render_account_own_edit_username"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "account-own-edit-username.html", pi)
+	err := templates.ExecuteTemplate(w, "account-own-edit-username.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Loggedin {
-		LocalError("You need to login to edit your account.", w, r, user)
-		return
+		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 	err := r.ParseForm()
 	if err != nil {
-		LocalError("Bad Form", w, r, user)
-		return
+		return LocalError("Bad Form", w, r, user)
 	}
 
 	newUsername := html.EscapeString(r.PostFormValue("account-new-username"))
 	err = user.ChangeName(newUsername)
 	if err != nil {
-		LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)
-		return
+		return LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)
 	}
 	user.Name = newUsername
 
@@ -1018,20 +924,23 @@ func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, u
 	pi := Page{"Edit Username", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_account_own_edit_username"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "account-own-edit-username.html", pi)
+	err = templates.ExecuteTemplate(w, "account-own-edit-username.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Loggedin {
-		LocalError("You need to login to edit your account.", w, r, user)
-		return
+		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 
 	email := Email{UserID: user.ID}
@@ -1073,20 +982,23 @@ func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User)
 	pi := Page{"Email Manager", user, headerVars, emailList, nil}
 	if preRenderHooks["pre_render_account_own_edit_email"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "account-own-edit-email.html", pi)
+	err = templates.ExecuteTemplate(w, "account-own-edit-email.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user User) {
-	headerVars, ok := UserCheck(w, r, &user)
-	if !ok {
-		return
+func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	headerVars, ferr := UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
 	if !user.Loggedin {
-		LocalError("You need to login to edit your account.", w, r, user)
-		return
+		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 	token := r.URL.Path[len("/user/edit/token/"):]
 
@@ -1095,16 +1007,14 @@ func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request,
 	var emailList []interface{}
 	rows, err := getEmailsByUserStmt.Query(user.ID)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&email.Email, &email.Validated, &email.Token)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 
 		if email.Email == user.Email {
@@ -1117,31 +1027,26 @@ func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request,
 	}
 	err = rows.Err()
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	if len(emailList) == 0 {
-		LocalError("A verification email was never sent for you!", w, r, user)
-		return
+		return LocalError("A verification email was never sent for you!", w, r, user)
 	}
 	if targetEmail.Token == "" {
-		LocalError("That's not a valid token!", w, r, user)
-		return
+		return LocalError("That's not a valid token!", w, r, user)
 	}
 
 	_, err = verifyEmailStmt.Exec(user.Email)
 	if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	// If Email Activation is on, then activate the account while we're here
 	if headerVars.Settings["activation_type"] == 2 {
 		_, err = activateUserStmt.Exec(user.ID)
 		if err != nil {
-			InternalError(err, w)
-			return
+			return InternalError(err, w, r)
 		}
 	}
 
@@ -1152,26 +1057,29 @@ func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request,
 	pi := Page{"Email Manager", user, headerVars, emailList, nil}
 	if preRenderHooks["pre_render_account_own_edit_email"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
-			return
+			return nil
 		}
 	}
-	templates.ExecuteTemplate(w, "account-own-edit-email.html", pi)
+	err = templates.ExecuteTemplate(w, "account-own-edit-email.html", pi)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+	return nil
 }
 
-func routeLogout(w http.ResponseWriter, r *http.Request, user User) {
+func routeLogout(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Loggedin {
-		LocalError("You can't logout without logging in first.", w, r, user)
-		return
+		return LocalError("You can't logout without logging in first.", w, r, user)
 	}
 	auth.Logout(w, user.ID)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }
 
-func routeShowAttachment(w http.ResponseWriter, r *http.Request, user User, filename string) {
+func routeShowAttachment(w http.ResponseWriter, r *http.Request, user User, filename string) RouteError {
 	err := r.ParseForm()
 	if err != nil {
-		PreError("Bad Form", w, r)
-		return
+		return PreError("Bad Form", w, r)
 	}
 
 	filename = Stripslashes(filename)
@@ -1179,14 +1087,12 @@ func routeShowAttachment(w http.ResponseWriter, r *http.Request, user User, file
 	//log.Print("ext ", ext)
 	//log.Print("filename ", filename)
 	if !allowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
-		LocalError("Bad extension", w, r, user)
-		return
+		return LocalError("Bad extension", w, r, user)
 	}
 
 	sectionID, err := strconv.Atoi(r.FormValue("sectionID"))
 	if err != nil {
-		LocalError("The sectionID is not an integer", w, r, user)
-		return
+		return LocalError("The sectionID is not an integer", w, r, user)
 	}
 	var sectionTable = r.FormValue("sectionType")
 
@@ -1194,32 +1100,28 @@ func routeShowAttachment(w http.ResponseWriter, r *http.Request, user User, file
 	var originID, uploadedBy int
 	err = getAttachmentStmt.QueryRow(filename, sectionID, sectionTable).Scan(&sectionID, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
 	if err == ErrNoRows {
-		NotFound(w, r)
-		return
+		return NotFound(w, r)
 	} else if err != nil {
-		InternalError(err, w)
-		return
+		return InternalError(err, w, r)
 	}
 
 	if sectionTable == "forums" {
-		_, ok := SimpleForumUserCheck(w, r, &user, sectionID)
-		if !ok {
-			return
+		_, ferr := SimpleForumUserCheck(w, r, &user, sectionID)
+		if ferr != nil {
+			return ferr
 		}
 		if !user.Perms.ViewTopic {
-			NoPermissions(w, r, user)
-			return
+			return NoPermissions(w, r, user)
 		}
 	} else {
-		LocalError("Unknown section", w, r, user)
-		return
+		return LocalError("Unknown section", w, r, user)
 	}
 
 	if originTable != "topics" && originTable != "replies" {
-		LocalError("Unknown origin", w, r, user)
-		return
+		return LocalError("Unknown origin", w, r, user)
 	}
 
 	// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
 	http.ServeFile(w, r, "./attachs/"+filename)
+	return nil
 }

@@ -5,6 +5,7 @@
 	<div class="rowitem topic_list_title{{if ne .CurrentUser.ID 0}} has_opt{{end}}"><h1>All Topics</h1></div>
 	{{if ne .CurrentUser.ID 0}}
 		{{if .ForumList}}
+		<div class="pre_opt auto_hide"></div>
 		<div class="opt create_topic_opt" title="Create Topic" aria-label="Create a topic"><a class="create_topic_link" href="/topics/create/"></a></div>
 		{{/** TODO: Add a permissions check for this **/}}
 		<div class="opt mod_opt" title="Moderate">
@@ -14,18 +15,38 @@
 		<div style="clear: both;"></div>
 	{{end}}
 </div>
+
 {{if ne .CurrentUser.ID 0}}
-	{{if .ForumList}}
+<div class="mod_floater auto_hide">
+	<form method="post">
+	<div class="mod_floater_head">
+		<span>What do you want to do with these 18 topics?</span>
+	</div>
+	<div class="mod_floater_body">
+		<select class="mod_floater_options">
+			<option val="delete">Delete them</option>
+			<option val="lock">Lock them</option>
+		</select>
+		<button class="mod_floater_submit">Run</button>
+	</div>
+	</form>
+</div>
+
+{{if .ForumList}}
 <div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
 	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
-	<div class="formrow topic_board_row real_first_child">
-		<div class="formitem"><select form="topic_create_form_form" id="topic_board_input" name="topic-board">
-			{{range .ForumList}}<option {{if eq .ID $.DefaultForum}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
-		</select></div>
-	</div>
-	<div class="formrow topic_name_row">
-		<div class="formitem">
-			<input form="topic_create_form_form" name="topic-name" placeholder="Topic title" required>
+	{{if .CurrentUser.Avatar}}<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" />{{end}}
+	<div class="main_form">
+	<div class="topic_meta">
+		<div class="formrow topic_board_row real_first_child">
+			<div class="formitem"><select form="topic_create_form_form" id="topic_board_input" name="topic-board">
+				{{range .ForumList}}<option {{if eq .ID $.DefaultForum}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
+			</select></div>
+		</div>
+		<div class="formrow topic_name_row">
+			<div class="formitem">
+				<input form="topic_create_form_form" name="topic-name" placeholder="What's up?" required>
+			</div>
 		</div>
 	</div>
 	<div class="formrow topic_content_row">
@@ -42,15 +63,16 @@
 			<div id="upload_file_dock"></div>{{end}}
 			<button class="formbutton close_form">Cancel</button>
 		</div>
+		</div>
 	</div>
 </div>
 	{{end}}
 {{end}}
 <div id="topic_list" class="rowblock topic_list" aria-label="A list containing topics from every forum">
-	{{range .TopicList}}<div class="topic_row">
+	{{range .TopicList}}<div class="topic_row" data-tid="{{.ID}}">
 	<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
 		<span class="selector"></span>
-		{{if .Creator.Avatar}}<img src="{{.Creator.Avatar}}" height="64" />{{end}}
+		{{if .Creator.Avatar}}<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" /></a>{{end}}
 		<span class="topic_inner_left">
 			<a class="rowtopic" href="{{.Link}}"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
 			<br /><a class="rowsmall starter" href="{{.Creator.Link}}">{{.Creator.Name}}</a>
@@ -64,7 +86,7 @@
 		</span>
 	</div>
 	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
-		{{if .LastUser.Avatar}}<img src="{{.LastUser.Avatar}}" height="64" />{{end}}
+		{{if .LastUser.Avatar}}<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" /></a>{{end}}
 		<span>
 			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
 			<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>

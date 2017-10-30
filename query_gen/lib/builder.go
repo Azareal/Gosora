@@ -33,6 +33,19 @@ func (build *builder) GetAdapter() DB_Adapter {
 	return build.adapter
 }
 
+func (build *builder) Tx(handler func(*TransactionBuilder) error) error {
+	tx, err := build.conn.Begin()
+	if err != nil {
+		return err
+	}
+	err = handler(&TransactionBuilder{tx, build.adapter, nil})
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
 func (build *builder) SimpleSelect(table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
 	res, err := build.adapter.SimpleSelect("_builder", table, columns, where, orderby, limit)
 	if err != nil {

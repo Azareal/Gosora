@@ -477,6 +477,8 @@ func writeUpdates(adapter qgen.DB_Adapter) error {
 func writeDeletes(adapter qgen.DB_Adapter) error {
 	adapter.SimpleDelete("deleteUser", "users", "uid = ?")
 
+	adapter.SimpleDelete("deleteTopic", "topics", "tid = ?")
+
 	adapter.SimpleDelete("deleteReply", "replies", "rid = ?")
 
 	adapter.SimpleDelete("deleteProfileReply", "users_replies", "rid = ?")
