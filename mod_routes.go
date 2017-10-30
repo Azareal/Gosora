@@ -627,45 +627,6 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	return nil
 }
 
-// TODO: This is being replaced with the new ban route system
-/*func routeBan(w http.ResponseWriter, r *http.Request, user User) RouteError {
-	headerVars, ferr := UserCheck(w,r,&user)
-	if ferr != nil {
-		return
-	}
-	if !user.Perms.BanUsers {
-		return NoPermissions(w,r,user)
-	}
-
-	uid, err := strconv.Atoi(r.URL.Path[len("/users/ban/"):])
-	if err != nil {
-		return LocalError("The provided User ID is not a valid number.",w,r,user)
-	}
-
-	var uname string
-	err = get_user_name_stmt.QueryRow(uid).Scan(&uname)
-	if err == ErrNoRows {
-		return LocalError("The user you're trying to ban no longer exists.",w,r,user)
-	} else if err != nil {
-		return InternalError(err,w,r)
-	}
-
-	confirm_msg := "Are you sure you want to ban '" + uname + "'?"
-	yousure := AreYouSure{"/users/ban/submit/" + strconv.Itoa(uid),confirm_msg}
-
-	pi := Page{"Ban User",user,headerVars,tList,yousure}
-	if preRenderHooks["pre_render_ban"] != nil {
-		if runPreRenderHook("pre_render_ban", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = templates.ExecuteTemplate(w,"areyousure.html",pi)
-	if err != nil {
-		return InternalError(err,w,r)
-	}
-	return nil
-}*/
-
 func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Perms.BanUsers {
 		return NoPermissions(w, r, user)

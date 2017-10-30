@@ -179,7 +179,7 @@ li a {
 	display: none;
 }
 .rowsmall {
-	font-size:12px;
+	font-size: 12px;
 }
 
 /* Firefox specific CSS */
@@ -393,6 +393,17 @@ li a {
 	border-color: var(--main-border-color);
 }
 
+/* TODO: Add the avatars to the forum list */
+.extra_little_row_avatar {
+	display: none;
+}
+.shift_left {
+	float: left;
+}
+.shift_right {
+	float: right;
+}
+
 /* Topics */
 
 .topic_list .topic_row {
@@ -578,8 +589,12 @@ button.username {
 	border-width: 1px;
 }
 
-.mention { font-weight: bold; }
-.show_on_edit { display: none; }
+.mention {
+	font-weight: bold;
+}
+.show_on_edit, .auto_hide {
+	display: none;
+}
 
 .alert {
 	display: block;

@@ -198,7 +198,7 @@ func handleDatabaseDetails() (adap install.InstallAdapter, ok bool) {
 	var dbPort string
 
 	for {
-		fmt.Println("Which database adapter do you wish to use? mysql, mysql, or mysql? Default: mysql")
+		fmt.Println("Which database adapter do you wish to use? mysql, mssql, or mysql? Default: mysql")
 		if !scanner.Scan() {
 			return nil, false
 		}
@@ -281,7 +281,7 @@ func getSiteDetails() bool {
 	if siteShortName == "" {
 		siteShortName = defaultSiteShortName
 	}
-	fmt.Println("Set the site name to " + siteShortName)
+	fmt.Println("Set the short name to " + siteShortName)
 
 	fmt.Println("What's your site's url? Default: " + defaultsiteURL)
 	if !scanner.Scan() {

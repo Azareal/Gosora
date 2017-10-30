@@ -97,7 +97,7 @@ li {
 	content: "Alerts";
 }
 
-.menu_alerts .alertList {
+.menu_alerts .alertList, .auto_hide {
 	display: none;
 }
 .selectedAlert .alertList {
@@ -203,6 +203,17 @@ a {
 
 /* TODO: How should we handle the sticky headers? */
 .topic_sticky_head {
+}
+
+/* TODO: Add the avatars to the forum list */
+.extra_little_row_avatar {
+	display: none;
+}
+.shift_left {
+	float: left;
+}
+.shift_right {
+	float: right;
 }
 
 /* TODO: Rewrite the closed topic header so that it looks more consistent with the rest of the theme */

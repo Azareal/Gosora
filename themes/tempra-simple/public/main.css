@@ -80,7 +80,9 @@ li a {
 	text-align: center;
 	border: white solid 1px;
 }
-.menu_alerts .alert_counter:empty { display: none; }
+.menu_alerts .alert_counter:empty {
+	display: none;
+}
 
 .selectedAlert {
 	background: white;
@@ -165,25 +167,6 @@ li a {
 	font-size: 12px;
 }
 
-/*.colblock_left {
-	border: 1px solid hsl(0, 0%, 80%);
-	padding: 0px;
-	padding-top: 0px;
-	width: 30%;
-	float: left;
-	margin-right: 8px;
-}
-.colblock_right {
-	border: 1px solid hsl(0, 0%, 80%);
-	padding: 0px;
-	padding-top: 0px;
-	width: 65%;
-	overflow: hidden;
-	word-wrap: break-word;
-}
-.colblock_left:empty, .colblock_right:empty { display: none; }*/
-
-/* The new method of doing columns layouts, colblock is now deprecated :( */
 .colstack_left {
 	float: left;
 	width: 30%;
@@ -203,8 +186,12 @@ li a {
 	overflow: hidden;
 	word-wrap: break-word;
 }
-.colstack_head { margin-bottom: 0px; }
-.colstack_left:empty, .colstack_right:empty { display: none; }
+.colstack_head {
+	margin-bottom: 0px;
+}
+.colstack_left:empty, .colstack_right:empty {
+	display: none;
+}
 
 .colstack_grid {
 	display: grid;
@@ -393,6 +380,17 @@ li a {
 	margin-right: auto;
 	font-size: 15px;
 	border-color: hsl(0, 0%, 80%);
+}
+
+/* TODO: Add the avatars to the forum list */
+.extra_little_row_avatar {
+	display: none;
+}
+.shift_left {
+	float: left;
+}
+.shift_right {
+	float: right;
 }
 
 /* Topics */
@@ -659,8 +657,12 @@ button.username {
 	font-size: 17px;
 }
 
-.mention { font-weight: bold; }
-.show_on_edit { display: none; }
+.mention {
+	font-weight: bold;
+}
+.show_on_edit, .auto_hide {
+	display: none;
+}
 
 .alert {
 	display: block;

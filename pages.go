@@ -234,7 +234,7 @@ type PanelEditGroupPermsPage struct {
 type backupItem struct {
 	SQLURL string
 
-	// TODO: Add an easier to parse format here for Gosora to be able to more easily reimport portions of the dump and to strip unneccessary data (e.g. table defs and parsed post data)
+	// TODO: Add an easier to parse format here for Gosora to be able to more easily reimport portions of the dump and to strip unnecessary data (e.g. table defs and parsed post data)
 
 	Timestamp time.Time
 }
