@@ -1,5 +1,4 @@
 echo "Generating the dynamic code"
 go generate
 echo "Running tests"
-go test -o GosoraTests
-./GosoraTests
+go test

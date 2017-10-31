@@ -3,6 +3,9 @@ go:
   - 1.9
   - master
 before_install:
+  - cd $HOME
+  - git clone https://github.com/Azareal/Gosora
+  - cd Gosora
   - chmod 755 ./update-deps-linux
   - chmod 755 ./run-linux-tests
   - ./update-deps-linux
