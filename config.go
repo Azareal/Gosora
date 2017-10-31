@@ -24,7 +24,7 @@ func init() {
 	// MySQL Test Database details
 	dbConfig.TestHost = "localhost"
 	dbConfig.TestUsername = "root"
-	dbConfig.TestPassword = "password"
+	dbConfig.TestPassword = ""
 	dbConfig.TestDbname = "gosora_test" // The name of the test database, leave blank to disable. DON'T USE YOUR PRODUCTION DATABASE FOR THIS. LEAVE BLANK IF YOU DON'T KNOW WHAT THIS MEANS.
 	dbConfig.TestPort = "3306"
 
