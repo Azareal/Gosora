@@ -2,7 +2,7 @@ package main
 
 func init() {
 	// Site Info
-	site.ShortName = "TS" // This should be less than three letters to fit in the navbar
+	site.ShortName = "Ts" // This should be less than three letters to fit in the navbar
 	site.Name = "Test Site"
 	site.Email = ""
 	site.URL = "localhost"
@@ -20,6 +20,13 @@ func init() {
 	dbConfig.Password = "password"
 	dbConfig.Dbname = "gosora"
 	dbConfig.Port = "3306" // You probably won't need to change this
+
+	// MySQL Test Database details
+	dbConfig.TestHost = "localhost"
+	dbConfig.TestUsername = "root"
+	dbConfig.TestPassword = "password"
+	dbConfig.TestDbname = "gosora_test" // The name of the test database, leave blank to disable. DON'T USE YOUR PRODUCTION DATABASE FOR THIS. LEAVE BLANK IF YOU DON'T KNOW WHAT THIS MEANS.
+	dbConfig.TestPort = "3306"
 
 	// Limiters
 	config.MaxRequestSize = 5 * megabyte
@@ -41,7 +48,7 @@ func init() {
 	config.ActivationGroup = 5 // Should be a setting in the database
 	config.StaffCSS = "staff_post"
 	config.DefaultForum = 2
-	config.MinifyTemplates = false
+	config.MinifyTemplates = true
 	config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
 
 	//config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
@@ -53,4 +60,5 @@ func init() {
 	//dev.SuperDebug = true
 	//dev.TemplateDebug = true
 	//dev.Profiling = true
+	//dev.TestDB = true
 }
