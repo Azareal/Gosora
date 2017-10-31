@@ -6,7 +6,7 @@ import "log"
 //import "strings"
 import "os"
 
-var routeList []Route
+var routeList []*RouteImpl
 var routeGroups []*RouteGroup
 
 func main() {
@@ -59,7 +59,7 @@ func main() {
 		}
 		out += "\n\t\t\tswitch(req.URL.Path) {"
 
-		var defaultRoute Route
+		var defaultRoute = blankRoute()
 		for _, route := range group.RouteList {
 			if group.Path == route.Path {
 				defaultRoute = route

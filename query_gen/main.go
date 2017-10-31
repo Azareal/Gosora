@@ -220,16 +220,13 @@ func seedTables(adapter qgen.DB_Adapter) error {
 }
 
 func writeSelects(adapter qgen.DB_Adapter) error {
-	// url_prefix and url_name will be removed from this query in a later commit
-	adapter.SimpleSelect("getUser", "users", "name, group, is_super_admin, avatar, message, url_prefix, url_name, level", "uid = ?", "", "")
-
 	// Looking for getTopic? Your statement is in another castle
 
 	adapter.SimpleSelect("getReply", "replies", "tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount", "rid = ?", "", "")
 
 	adapter.SimpleSelect("getUserReply", "users_replies", "uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress", "rid = ?", "", "")
 
-	adapter.SimpleSelect("getPassword", "users", "password,salt", "uid = ?", "", "")
+	adapter.SimpleSelect("getPassword", "users", "password, salt", "uid = ?", "", "")
 
 	adapter.SimpleSelect("getSettings", "settings", "name, content, type", "", "", "")
 
@@ -254,8 +251,6 @@ func writeSelects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleSelect("isPluginActive", "plugins", "active", "uname = ?", "", "")
 
 	//adapter.SimpleSelect("isPluginInstalled","plugins","installed","uname = ?","","")
-
-	adapter.SimpleSelect("getUsers", "users", "uid, name, group, active, is_super_admin, avatar", "", "", "")
 
 	adapter.SimpleSelect("getUsersOffset", "users", "uid, name, group, active, is_super_admin, avatar", "", "uid ASC", "?,?")
 
@@ -305,6 +300,7 @@ func writeLeftJoins(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleLeftJoin("getTopicList", "topics", "users", "topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar", "topics.createdBy = users.uid", "", "topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC", "")
 
+	// TODO: Can we get rid of this?
 	adapter.SimpleLeftJoin("getTopicUser", "topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
 
 	adapter.SimpleLeftJoin("getTopicByReply", "replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.data", "replies.tid = topics.tid", "rid = ?", "", "")

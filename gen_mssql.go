@@ -7,7 +7,6 @@ import "log"
 import "database/sql"
 
 // nolint
-var getUserStmt *sql.Stmt
 var getReplyStmt *sql.Stmt
 var getUserReplyStmt *sql.Stmt
 var getPasswordStmt *sql.Stmt
@@ -22,7 +21,6 @@ var getPluginsStmt *sql.Stmt
 var getThemesStmt *sql.Stmt
 var getWidgetsStmt *sql.Stmt
 var isPluginActiveStmt *sql.Stmt
-var getUsersStmt *sql.Stmt
 var getUsersOffsetStmt *sql.Stmt
 var getWordFiltersStmt *sql.Stmt
 var isThemeDefaultStmt *sql.Stmt
@@ -128,13 +126,6 @@ func _gen_mssql() (err error) {
 		log.Print("Building the generated statements")
 	}
 	
-	log.Print("Preparing getUser statement.")
-	getUserStmt, err = db.Prepare("SELECT [name],[group],[is_super_admin],[avatar],[message],[url_prefix],[url_name],[level] FROM [users] WHERE [uid] = ?1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [name],[group],[is_super_admin],[avatar],[message],[url_prefix],[url_name],[level] FROM [users] WHERE [uid] = ?1")
-		return err
-	}
-		
 	log.Print("Preparing getReply statement.")
 	getReplyStmt, err = db.Prepare("SELECT [tid],[content],[createdBy],[createdAt],[lastEdit],[lastEditBy],[ipaddress],[likeCount] FROM [replies] WHERE [rid] = ?1")
 	if err != nil {
@@ -230,13 +221,6 @@ func _gen_mssql() (err error) {
 	isPluginActiveStmt, err = db.Prepare("SELECT [active] FROM [plugins] WHERE [uname] = ?1")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [active] FROM [plugins] WHERE [uname] = ?1")
-		return err
-	}
-		
-	log.Print("Preparing getUsers statement.")
-	getUsersStmt, err = db.Prepare("SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users]")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users]")
 		return err
 	}
 		

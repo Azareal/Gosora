@@ -650,6 +650,7 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) RouteErro
 		return InternalError(err, w, r)
 	}
 
+	// TODO: Is there a difference between IsMod and IsSuperMod? Should we delete the redundant one?
 	if targetUser.IsSuperAdmin || targetUser.IsAdmin || targetUser.IsMod {
 		return LocalError("You may not ban another staff member.", w, r, user)
 	}

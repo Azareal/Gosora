@@ -1,6 +1,6 @@
 package main
 
-type Route struct {
+type RouteImpl struct {
 	Name   string
 	Path   string
 	Before string
@@ -9,15 +9,15 @@ type Route struct {
 
 type RouteGroup struct {
 	Path      string
-	RouteList []Route
+	RouteList []*RouteImpl
 	Before    []string
 }
 
 func addRoute(fname string, path string, before string, vars ...string) {
-	routeList = append(routeList, Route{fname, path, before, vars})
+	routeList = append(routeList, &RouteImpl{fname, path, before, vars})
 }
 
-func newRouteGroup(path string, routes ...Route) *RouteGroup {
+func newRouteGroup(path string, routes ...*RouteImpl) *RouteGroup {
 	return &RouteGroup{path, routes, []string{}}
 }
 
@@ -29,8 +29,21 @@ func (group *RouteGroup) RunBefore(line string) {
 	group.Before = append(group.Before, line)
 }
 
-func (group *RouteGroup) Routes(routes ...Route) {
+func (group *RouteGroup) Routes(routes ...*RouteImpl) {
 	group.RouteList = append(group.RouteList, routes...)
+}
+
+func blankRoute() *RouteImpl {
+	return &RouteImpl{"", "", "", []string{}}
+}
+
+func Route(fname string, path string, args ...string) *RouteImpl {
+	var before = ""
+	if len(args) > 0 {
+		before = args[0]
+		args = args[1:]
+	}
+	return &RouteImpl{fname, path, before, args}
 }
 
 func routes() {
@@ -47,61 +60,64 @@ func routes() {
 	addRoute("routeShowAttachment", "/attachs/", "", "extra_data")
 
 	reportGroup := newRouteGroup("/report/",
-		Route{"routeReportSubmit", "/report/submit/", "", []string{"extra_data"}},
+		Route("routeReportSubmit", "/report/submit/", "", "extra_data"),
 	)
 	addRouteGroup(reportGroup)
 
 	topicGroup := newRouteGroup("/topics/",
-		Route{"routeTopics", "/topics/", "", []string{}},
-		Route{"routeTopicCreate", "/topics/create/", "", []string{"extra_data"}},
+		Route("routeTopics", "/topics/"),
+		Route("routeTopicCreate", "/topics/create/", "", "extra_data"),
 	)
 	addRouteGroup(topicGroup)
 
-	// The Control Panel
+	buildPanelRoutes()
+}
+
+func buildPanelRoutes() {
 	panelGroup := newRouteGroup("/panel/")
 	panelGroup.RunBefore("SuperModOnly")
 	panelGroup.Routes(
-		Route{"routePanel", "/panel/", "", []string{}},
-		Route{"routePanelForums", "/panel/forums/", "", []string{}},
-		Route{"routePanelForumsCreateSubmit", "/panel/forums/create/", "", []string{}},
-		Route{"routePanelForumsDelete", "/panel/forums/delete/", "", []string{"extra_data"}},
-		Route{"routePanelForumsDeleteSubmit", "/panel/forums/delete/submit/", "", []string{"extra_data"}},
-		Route{"routePanelForumsEdit", "/panel/forums/edit/", "", []string{"extra_data"}},
-		Route{"routePanelForumsEditSubmit", "/panel/forums/edit/submit/", "", []string{"extra_data"}},
-		Route{"routePanelForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "", []string{"extra_data"}},
+		Route("routePanel", "/panel/"),
+		Route("routePanelForums", "/panel/forums/"),
+		Route("routePanelForumsCreateSubmit", "/panel/forums/create/"),
+		Route("routePanelForumsDelete", "/panel/forums/delete/", "", "extra_data"),
+		Route("routePanelForumsDeleteSubmit", "/panel/forums/delete/submit/", "", "extra_data"),
+		Route("routePanelForumsEdit", "/panel/forums/edit/", "", "extra_data"),
+		Route("routePanelForumsEditSubmit", "/panel/forums/edit/submit/", "", "extra_data"),
+		Route("routePanelForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "", "extra_data"),
 
-		Route{"routePanelSettings", "/panel/settings/", "", []string{}},
-		Route{"routePanelSetting", "/panel/settings/edit/", "", []string{"extra_data"}},
-		Route{"routePanelSettingEdit", "/panel/settings/edit/submit/", "", []string{"extra_data"}},
+		Route("routePanelSettings", "/panel/settings/"),
+		Route("routePanelSetting", "/panel/settings/edit/", "", "extra_data"),
+		Route("routePanelSettingEdit", "/panel/settings/edit/submit/", "", "extra_data"),
 
-		Route{"routePanelWordFilters", "/panel/settings/word-filters/", "", []string{}},
-		Route{"routePanelWordFiltersCreate", "/panel/settings/word-filters/create/", "", []string{}},
-		Route{"routePanelWordFiltersEdit", "/panel/settings/word-filters/edit/", "", []string{"extra_data"}},
-		Route{"routePanelWordFiltersEditSubmit", "/panel/settings/word-filters/edit/submit/", "", []string{"extra_data"}},
-		Route{"routePanelWordFiltersDeleteSubmit", "/panel/settings/word-filters/delete/submit/", "", []string{"extra_data"}},
+		Route("routePanelWordFilters", "/panel/settings/word-filters/"),
+		Route("routePanelWordFiltersCreate", "/panel/settings/word-filters/create/"),
+		Route("routePanelWordFiltersEdit", "/panel/settings/word-filters/edit/", "", "extra_data"),
+		Route("routePanelWordFiltersEditSubmit", "/panel/settings/word-filters/edit/submit/", "", "extra_data"),
+		Route("routePanelWordFiltersDeleteSubmit", "/panel/settings/word-filters/delete/submit/", "", "extra_data"),
 
-		Route{"routePanelThemes", "/panel/themes/", "", []string{}},
-		Route{"routePanelThemesSetDefault", "/panel/themes/default/", "", []string{"extra_data"}},
+		Route("routePanelThemes", "/panel/themes/"),
+		Route("routePanelThemesSetDefault", "/panel/themes/default/", "", "extra_data"),
 
-		Route{"routePanelPlugins", "/panel/plugins/", "", []string{}},
-		Route{"routePanelPluginsActivate", "/panel/plugins/activate/", "", []string{"extra_data"}},
-		Route{"routePanelPluginsDeactivate", "/panel/plugins/deactivate/", "", []string{"extra_data"}},
-		Route{"routePanelPluginsInstall", "/panel/plugins/install/", "", []string{"extra_data"}},
+		Route("routePanelPlugins", "/panel/plugins/"),
+		Route("routePanelPluginsActivate", "/panel/plugins/activate/", "", "extra_data"),
+		Route("routePanelPluginsDeactivate", "/panel/plugins/deactivate/", "", "extra_data"),
+		Route("routePanelPluginsInstall", "/panel/plugins/install/", "", "extra_data"),
 
-		Route{"routePanelUsers", "/panel/users/", "", []string{}},
-		Route{"routePanelUsersEdit", "/panel/users/edit/", "", []string{"extra_data"}},
-		Route{"routePanelUsersEditSubmit", "/panel/users/edit/submit/", "", []string{"extra_data"}},
+		Route("routePanelUsers", "/panel/users/"),
+		Route("routePanelUsersEdit", "/panel/users/edit/", "", "extra_data"),
+		Route("routePanelUsersEditSubmit", "/panel/users/edit/submit/", "", "extra_data"),
 
-		Route{"routePanelGroups", "/panel/groups/", "", []string{}},
-		Route{"routePanelGroupsEdit", "/panel/groups/edit/", "", []string{"extra_data"}},
-		Route{"routePanelGroupsEditPerms", "/panel/groups/edit/perms/", "", []string{"extra_data"}},
-		Route{"routePanelGroupsEditSubmit", "/panel/groups/edit/submit/", "", []string{"extra_data"}},
-		Route{"routePanelGroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "", []string{"extra_data"}},
-		Route{"routePanelGroupsCreateSubmit", "/panel/groups/create/", "", []string{}},
+		Route("routePanelGroups", "/panel/groups/"),
+		Route("routePanelGroupsEdit", "/panel/groups/edit/", "", "extra_data"),
+		Route("routePanelGroupsEditPerms", "/panel/groups/edit/perms/", "", "extra_data"),
+		Route("routePanelGroupsEditSubmit", "/panel/groups/edit/submit/", "", "extra_data"),
+		Route("routePanelGroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "", "extra_data"),
+		Route("routePanelGroupsCreateSubmit", "/panel/groups/create/"),
 
-		Route{"routePanelBackups", "/panel/backups/", "", []string{"extra_data"}},
-		Route{"routePanelLogsMod", "/panel/logs/mod/", "", []string{}},
-		Route{"routePanelDebug", "/panel/debug/", "", []string{}},
+		Route("routePanelBackups", "/panel/backups/", "", "extra_data"),
+		Route("routePanelLogsMod", "/panel/logs/mod/"),
+		Route("routePanelDebug", "/panel/debug/"),
 	)
 	addRouteGroup(panelGroup)
 }

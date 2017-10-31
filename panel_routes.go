@@ -835,8 +835,6 @@ func routePanelPlugins(w http.ResponseWriter, r *http.Request, user User) RouteE
 
 	var pluginList []interface{}
 	for _, plugin := range plugins {
-		//log.Print("plugin.Name ", plugin.Name)
-		//log.Print("plugin.Installed ", plugin.Installed)
 		pluginList = append(pluginList, plugin)
 	}
 
@@ -1047,6 +1045,7 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user User) RouteErr
 	offset, page, lastPage := pageOffset(stats.Users, page, perPage)
 
 	var userList []User
+	// TODO: Move this into the UserStore
 	rows, err := getUsersOffsetStmt.Query(offset, perPage)
 	if err != nil {
 		return InternalError(err, w, r)

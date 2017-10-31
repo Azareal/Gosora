@@ -73,24 +73,7 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	}
 
 	fperms := group.Forums[fid]
-	if fperms.Overrides && !user.IsSuperAdmin {
-		user.Perms.ViewTopic = fperms.ViewTopic
-		user.Perms.LikeItem = fperms.LikeItem
-		user.Perms.CreateTopic = fperms.CreateTopic
-		user.Perms.EditTopic = fperms.EditTopic
-		user.Perms.DeleteTopic = fperms.DeleteTopic
-		user.Perms.CreateReply = fperms.CreateReply
-		user.Perms.EditReply = fperms.EditReply
-		user.Perms.DeleteReply = fperms.DeleteReply
-		user.Perms.PinTopic = fperms.PinTopic
-		user.Perms.CloseTopic = fperms.CloseTopic
-
-		if len(fperms.ExtData) != 0 {
-			for name, perm := range fperms.ExtData {
-				user.PluginPerms[name] = perm
-			}
-		}
-	}
+	cascadeForumPerms(fperms, user)
 	return headerLite, nil
 }
 
@@ -119,6 +102,12 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 	fperms := group.Forums[fid]
 	//log.Printf("user.Perms: %+v\n", user.Perms)
 	//log.Printf("fperms: %+v\n", fperms)
+	cascadeForumPerms(fperms, user)
+	return headerVars, ferr
+}
+
+// TODO: Put this on the user instance? Do we really want forum specific logic in there? Maybe, a method which spits a new pointer with the same contents as user?
+func cascadeForumPerms(fperms ForumPerms, user *User) {
 	if fperms.Overrides && !user.IsSuperAdmin {
 		user.Perms.ViewTopic = fperms.ViewTopic
 		user.Perms.LikeItem = fperms.LikeItem
@@ -137,7 +126,6 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 			}
 		}
 	}
-	return headerVars, ferr
 }
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
