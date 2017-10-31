@@ -112,11 +112,11 @@ func init() {
 	site.Language = "english"
 
 	// Database details
-	dbConfig.Host = "` + adap.DbHost() + `"
-	dbConfig.Username = "` + adap.DbUsername() + `"
-	dbConfig.Password = "` + adap.DbPassword() + `"
-	dbConfig.Dbname = "` + adap.DbName() + `"
-	dbConfig.Port = "` + adap.DbPort() + `" // You probably won't need to change this
+	dbConfig.Host = "` + adap.DBHost() + `"
+	dbConfig.Username = "` + adap.DBUsername() + `"
+	dbConfig.Password = "` + adap.DBPassword() + `"
+	dbConfig.Dbname = "` + adap.DBName() + `"
+	dbConfig.Port = "` + adap.DBPort() + `" // You probably won't need to change this
 
 	// Test Database details
     dbConfig.TestHost = ""
@@ -191,6 +191,7 @@ func abortError(err error) {
 }
 
 func handleDatabaseDetails() (adap install.InstallAdapter, ok bool) {
+	var dbAdapter string
 	var dbHost string
 	var dbUsername string
 	var dbPassword string
