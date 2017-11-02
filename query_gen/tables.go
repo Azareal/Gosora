@@ -57,7 +57,7 @@ func createTables(adapter qgen.DB_Adapter) error {
 	// Should we add IP Penalties? No, that's a stupid idea, just implement IP Bans properly. What about shadowbans?
 	// TODO: Perm overrides
 	// TODO: Add a mod-queue and other basic auto-mod features. This is needed for awaiting activation and the mod_queue penalty flag
-	// TODO: Add a penalty type where a user is stopped from creating plugin_socialgroups social groups
+	// TODO: Add a penalty type where a user is stopped from creating plugin_guilds social groups
 	// TODO: Shadow bans. We will probably have a CanShadowBan permission for this, as we *really* don't want people using this lightly.
 	/*qgen.Install.CreateTable("users_penalties","","",
 		[]qgen.DB_Table_Column{

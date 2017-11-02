@@ -15,20 +15,20 @@ import (
 	"./query_gen/lib"
 )
 
-var socialgroupsListStmt *sql.Stmt
-var socialgroupsMemberListStmt *sql.Stmt
-var socialgroupsMemberListJoinStmt *sql.Stmt
-var socialgroupsGetMemberStmt *sql.Stmt
-var socialgroupsGetGroupStmt *sql.Stmt
-var socialgroupsCreateGroupStmt *sql.Stmt
-var socialgroupsAttachForumStmt *sql.Stmt
-var socialgroupsUnattachForumStmt *sql.Stmt
-var socialgroupsAddMemberStmt *sql.Stmt
+var guildsListStmt *sql.Stmt
+var guildsMemberListStmt *sql.Stmt
+var guildsMemberListJoinStmt *sql.Stmt
+var guildsGetMemberStmt *sql.Stmt
+var guildsGetGuildStmt *sql.Stmt
+var guildsCreateGuildStmt *sql.Stmt
+var guildsAttachForumStmt *sql.Stmt
+var guildsUnattachForumStmt *sql.Stmt
+var guildsAddMemberStmt *sql.Stmt
 
 // TODO: Add a better way of splitting up giant plugins like this
 
-// SocialGroup is a struct representing a social group
-type SocialGroup struct {
+// Guild is a struct representing a guild
+type Guild struct {
 	ID      int
 	Link    string
 	Name    string
@@ -51,37 +51,37 @@ type SocialGroup struct {
 	ExtData     ExtData
 }
 
-type SocialGroupPage struct {
+type GuildPage struct {
 	Title       string
 	CurrentUser User
 	Header      *HeaderVars
 	ItemList    []*TopicsRow
 	Forum       *Forum
-	SocialGroup *SocialGroup
+	Guild       *Guild
 	Page        int
 	LastPage    int
 }
 
-// SocialGroupListPage is a page struct for constructing a list of every social group
-type SocialGroupListPage struct {
+// GuildListPage is a page struct for constructing a list of every guild
+type GuildListPage struct {
 	Title       string
 	CurrentUser User
 	Header      *HeaderVars
-	GroupList   []*SocialGroup
+	GroupList   []*Guild
 }
 
-type SocialGroupMemberListPage struct {
+type GuildMemberListPage struct {
 	Title       string
 	CurrentUser User
 	Header      *HeaderVars
-	ItemList    []SocialGroupMember
-	SocialGroup *SocialGroup
+	ItemList    []GuildMember
+	Guild       *Guild
 	Page        int
 	LastPage    int
 }
 
-// SocialGroupMember is a struct representing a specific member of a group, not to be confused with the global User struct.
-type SocialGroupMember struct {
+// GuildMember is a struct representing a specific member of a guild, not to be confused with the global User struct.
+type GuildMember struct {
 	Link       string
 	Rank       int    /* 0: Member. 1: Mod. 2: Admin. */
 	RankString string /* Member, Mod, Admin, Owner */
@@ -94,57 +94,57 @@ type SocialGroupMember struct {
 
 // TODO: Add a plugin interface instead of having a bunch of argument to AddPlugin?
 func init() {
-	plugins["socialgroups"] = NewPlugin("socialgroups", "Social Groups", "Azareal", "http://github.com/Azareal", "", "", "", initSocialgroups, nil, deactivateSocialgroups, installSocialgroups, nil)
+	plugins["guilds"] = NewPlugin("guilds", "Guilds", "Azareal", "http://github.com/Azareal", "", "", "", initGuilds, nil, deactivateGuilds, installGuilds, nil)
 }
 
-func initSocialgroups() (err error) {
-	plugins["socialgroups"].AddHook("intercept_build_widgets", socialgroupsWidgets)
-	plugins["socialgroups"].AddHook("trow_assign", socialgroupsTrowAssign)
-	plugins["socialgroups"].AddHook("topic_create_pre_loop", socialgroupsTopicCreatePreLoop)
-	plugins["socialgroups"].AddHook("pre_render_view_forum", socialgroupsPreRenderViewForum)
-	plugins["socialgroups"].AddHook("simple_forum_check_pre_perms", socialgroupsForumCheck)
-	plugins["socialgroups"].AddHook("forum_check_pre_perms", socialgroupsForumCheck)
+func initGuilds() (err error) {
+	plugins["guilds"].AddHook("intercept_build_widgets", guildsWidgets)
+	plugins["guilds"].AddHook("trow_assign", guildsTrowAssign)
+	plugins["guilds"].AddHook("topic_create_pre_loop", guildsTopicCreatePreLoop)
+	plugins["guilds"].AddHook("pre_render_view_forum", guildsPreRenderViewForum)
+	plugins["guilds"].AddHook("simple_forum_check_pre_perms", guildsForumCheck)
+	plugins["guilds"].AddHook("forum_check_pre_perms", guildsForumCheck)
 	// TODO: Auto-grant this perm to admins upon installation?
-	registerPluginPerm("CreateSocialGroup")
-	router.HandleFunc("/groups/", socialgroupsGroupList)
-	router.HandleFunc("/group/", socialgroupsViewGroup)
-	router.HandleFunc("/group/create/", socialgroupsCreateGroup)
-	router.HandleFunc("/group/create/submit/", socialgroupsCreateGroupSubmit)
-	router.HandleFunc("/group/members/", socialgroupsMemberList)
+	registerPluginPerm("CreateGuild")
+	router.HandleFunc("/guilds/", guildsGuildList)
+	router.HandleFunc("/guild/", guildsViewGuild)
+	router.HandleFunc("/guild/create/", guildsCreateGuild)
+	router.HandleFunc("/guild/create/submit/", guildsCreateGuildSubmit)
+	router.HandleFunc("/guild/members/", guildsMemberList)
 
-	socialgroupsListStmt, err = qgen.Builder.SimpleSelect("socialgroups", "sgid, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime", "", "", "")
+	guildsListStmt, err = qgen.Builder.SimpleSelect("guilds", "guildID, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime", "", "", "")
 	if err != nil {
 		return err
 	}
-	socialgroupsGetGroupStmt, err = qgen.Builder.SimpleSelect("socialgroups", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "sgid = ?", "", "")
+	guildsGetGuildStmt, err = qgen.Builder.SimpleSelect("guilds", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "guildID = ?", "", "")
 	if err != nil {
 		return err
 	}
-	socialgroupsMemberListStmt, err = qgen.Builder.SimpleSelect("socialgroups_members", "sgid, uid, rank, posts, joinedAt", "", "", "")
+	guildsMemberListStmt, err = qgen.Builder.SimpleSelect("guilds_members", "guildID, uid, rank, posts, joinedAt", "", "", "")
 	if err != nil {
 		return err
 	}
-	socialgroupsMemberListJoinStmt, err = qgen.Builder.SimpleLeftJoin("socialgroups_members", "users", "users.uid, socialgroups_members.rank, socialgroups_members.posts, socialgroups_members.joinedAt, users.name, users.avatar", "socialgroups_members.uid = users.uid", "socialgroups_members.sgid = ?", "socialgroups_members.rank DESC, socialgroups_members.joinedat ASC", "")
+	guildsMemberListJoinStmt, err = qgen.Builder.SimpleLeftJoin("guilds_members", "users", "users.uid, guilds_members.rank, guilds_members.posts, guilds_members.joinedAt, users.name, users.avatar", "guilds_members.uid = users.uid", "guilds_members.guildID = ?", "guilds_members.rank DESC, guilds_members.joinedat ASC", "")
 	if err != nil {
 		return err
 	}
-	socialgroupsGetMemberStmt, err = qgen.Builder.SimpleSelect("socialgroups_members", "rank, posts, joinedAt", "sgid = ? AND uid = ?", "", "")
+	guildsGetMemberStmt, err = qgen.Builder.SimpleSelect("guilds_members", "rank, posts, joinedAt", "guildID = ? AND uid = ?", "", "")
 	if err != nil {
 		return err
 	}
-	socialgroupsCreateGroupStmt, err = qgen.Builder.SimpleInsert("socialgroups", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
+	guildsCreateGuildStmt, err = qgen.Builder.SimpleInsert("guilds", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
 	if err != nil {
 		return err
 	}
-	socialgroupsAttachForumStmt, err = qgen.Builder.SimpleUpdate("forums", "parentID = ?, parentType = 'socialgroup'", "fid = ?")
+	guildsAttachForumStmt, err = qgen.Builder.SimpleUpdate("forums", "parentID = ?, parentType = 'guild'", "fid = ?")
 	if err != nil {
 		return err
 	}
-	socialgroupsUnattachForumStmt, err = qgen.Builder.SimpleUpdate("forums", "parentID = 0, parentType = ''", "fid = ?")
+	guildsUnattachForumStmt, err = qgen.Builder.SimpleUpdate("forums", "parentID = 0, parentType = ''", "fid = ?")
 	if err != nil {
 		return err
 	}
-	socialgroupsAddMemberStmt, err = qgen.Builder.SimpleInsert("socialgroups_members", "sgid, uid, rank, posts, joinedAt", "?,?,?,0,UTC_TIMESTAMP()")
+	guildsAddMemberStmt, err = qgen.Builder.SimpleInsert("guilds_members", "guildID, uid, rank, posts, joinedAt", "?,?,?,0,UTC_TIMESTAMP()")
 	if err != nil {
 		return err
 	}
@@ -152,34 +152,34 @@ func initSocialgroups() (err error) {
 	return nil
 }
 
-func deactivateSocialgroups() {
-	plugins["socialgroups"].RemoveHook("intercept_build_widgets", socialgroupsWidgets)
-	plugins["socialgroups"].RemoveHook("trow_assign", socialgroupsTrowAssign)
-	plugins["socialgroups"].RemoveHook("topic_create_pre_loop", socialgroupsTopicCreatePreLoop)
-	plugins["socialgroups"].RemoveHook("pre_render_view_forum", socialgroupsPreRenderViewForum)
-	plugins["socialgroups"].RemoveHook("simple_forum_check_pre_perms", socialgroupsForumCheck)
-	plugins["socialgroups"].RemoveHook("forum_check_pre_perms", socialgroupsForumCheck)
-	deregisterPluginPerm("CreateSocialGroup")
-	_ = router.RemoveFunc("/groups/")
-	_ = router.RemoveFunc("/group/")
-	_ = router.RemoveFunc("/group/create/")
-	_ = router.RemoveFunc("/group/create/submit/")
-	_ = socialgroupsListStmt.Close()
-	_ = socialgroupsMemberListStmt.Close()
-	_ = socialgroupsMemberListJoinStmt.Close()
-	_ = socialgroupsGetMemberStmt.Close()
-	_ = socialgroupsGetGroupStmt.Close()
-	_ = socialgroupsCreateGroupStmt.Close()
-	_ = socialgroupsAttachForumStmt.Close()
-	_ = socialgroupsUnattachForumStmt.Close()
-	_ = socialgroupsAddMemberStmt.Close()
+func deactivateGuilds() {
+	plugins["guilds"].RemoveHook("intercept_build_widgets", guildsWidgets)
+	plugins["guilds"].RemoveHook("trow_assign", guildsTrowAssign)
+	plugins["guilds"].RemoveHook("topic_create_pre_loop", guildsTopicCreatePreLoop)
+	plugins["guilds"].RemoveHook("pre_render_view_forum", guildsPreRenderViewForum)
+	plugins["guilds"].RemoveHook("simple_forum_check_pre_perms", guildsForumCheck)
+	plugins["guilds"].RemoveHook("forum_check_pre_perms", guildsForumCheck)
+	deregisterPluginPerm("CreateGuild")
+	_ = router.RemoveFunc("/guilds/")
+	_ = router.RemoveFunc("/guild/")
+	_ = router.RemoveFunc("/guild/create/")
+	_ = router.RemoveFunc("/guild/create/submit/")
+	_ = guildsListStmt.Close()
+	_ = guildsMemberListStmt.Close()
+	_ = guildsMemberListJoinStmt.Close()
+	_ = guildsGetMemberStmt.Close()
+	_ = guildsGetGuildStmt.Close()
+	_ = guildsCreateGuildStmt.Close()
+	_ = guildsAttachForumStmt.Close()
+	_ = guildsUnattachForumStmt.Close()
+	_ = guildsAddMemberStmt.Close()
 }
 
 // TODO: Stop accessing the query builder directly and add a feature in Gosora which is more easily reversed, if an error comes up during the installation process
-func installSocialgroups() error {
-	sgTableStmt, err := qgen.Builder.CreateTable("socialgroups", "utf8mb4", "utf8mb4_general_ci",
+func installGuilds() error {
+	guildTableStmt, err := qgen.Builder.CreateTable("guilds", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DB_Table_Column{
-			qgen.DB_Table_Column{"sgid", "int", 0, false, true, ""},
+			qgen.DB_Table_Column{"guildID", "int", 0, false, true, ""},
 			qgen.DB_Table_Column{"name", "varchar", 100, false, false, ""},
 			qgen.DB_Table_Column{"desc", "varchar", 200, false, false, ""},
 			qgen.DB_Table_Column{"active", "boolean", 1, false, false, ""},
@@ -194,21 +194,21 @@ func installSocialgroups() error {
 			qgen.DB_Table_Column{"lastUpdateTime", "datetime", 0, false, false, ""},
 		},
 		[]qgen.DB_Table_Key{
-			qgen.DB_Table_Key{"sgid", "primary"},
+			qgen.DB_Table_Key{"guildID", "primary"},
 		},
 	)
 	if err != nil {
 		return err
 	}
 
-	_, err = sgTableStmt.Exec()
+	_, err = guildTableStmt.Exec()
 	if err != nil {
 		return err
 	}
 
-	sgMembersTableStmt, err := qgen.Builder.CreateTable("socialgroups_members", "", "",
+	guildMembersTableStmt, err := qgen.Builder.CreateTable("guilds_members", "", "",
 		[]qgen.DB_Table_Column{
-			qgen.DB_Table_Column{"sgid", "int", 0, false, false, ""},
+			qgen.DB_Table_Column{"guildID", "int", 0, false, false, ""},
 			qgen.DB_Table_Column{"uid", "int", 0, false, false, ""},
 			qgen.DB_Table_Column{"rank", "int", 0, false, false, "0"},  /* 0: Member. 1: Mod. 2: Admin. */
 			qgen.DB_Table_Column{"posts", "int", 0, false, false, "0"}, /* Per-Group post count. Should we do some sort of score system? */
@@ -220,21 +220,21 @@ func installSocialgroups() error {
 		return err
 	}
 
-	_, err = sgMembersTableStmt.Exec()
+	_, err = guildMembersTableStmt.Exec()
 	return err
 }
 
 // TO-DO; Implement an uninstallation system into Gosora. And a better installation system.
-func uninstallSocialgroups() error {
+func uninstallGuilds() error {
 	return nil
 }
 
 // TODO: Do this properly via the widget system
-func socialgroupsCommonAreaWidgets(headerVars *HeaderVars) {
+func guildsCommonAreaWidgets(headerVars *HeaderVars) {
 	// TODO: Hot Groups? Featured Groups? Official Groups?
 	var b bytes.Buffer
-	var menu = WidgetMenu{"Social Groups", []WidgetMenuItem{
-		WidgetMenuItem{"Create Group", "/group/create/", false},
+	var menu = WidgetMenu{"Guilds", []WidgetMenuItem{
+		WidgetMenuItem{"Create Guild", "/guild/create/", false},
 	}}
 
 	err := templates.ExecuteTemplate(&b, "widget_menu.html", menu)
@@ -252,13 +252,13 @@ func socialgroupsCommonAreaWidgets(headerVars *HeaderVars) {
 
 // TODO: Do this properly via the widget system
 // TODO: Make a better more customisable group widget system
-func socialgroupsGroupWidgets(headerVars *HeaderVars, sgItem *SocialGroup) (success bool) {
+func guildsGuildWidgets(headerVars *HeaderVars, guildItem *Guild) (success bool) {
 	return false // Disabled until the next commit
 
 	/*var b bytes.Buffer
-	var menu WidgetMenu = WidgetMenu{"Group Options", []WidgetMenuItem{
-		WidgetMenuItem{"Join", "/group/join/" + strconv.Itoa(sgItem.ID), false},
-		WidgetMenuItem{"Members", "/group/members/" + strconv.Itoa(sgItem.ID), false},
+	var menu WidgetMenu = WidgetMenu{"Guild Options", []WidgetMenuItem{
+		WidgetMenuItem{"Join", "/guild/join/" + strconv.Itoa(guildItem.ID), false},
+		WidgetMenuItem{"Members", "/guild/members/" + strconv.Itoa(guildItem.ID), false},
 	}}
 
 	err := templates.ExecuteTemplate(&b, "widget_menu.html", menu)
@@ -281,27 +281,27 @@ func socialgroupsGroupWidgets(headerVars *HeaderVars, sgItem *SocialGroup) (succ
 	Custom Pages
 */
 
-func socialgroupsGroupList(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func guildsGuildList(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
-	socialgroupsCommonAreaWidgets(headerVars)
+	guildsCommonAreaWidgets(headerVars)
 
-	rows, err := socialgroupsListStmt.Query()
+	rows, err := guildsListStmt.Query()
 	if err != nil && err != ErrNoRows {
 		return InternalError(err, w, r)
 	}
 
-	var sgList []*SocialGroup
+	var guildList []*Guild
 	for rows.Next() {
-		sgItem := &SocialGroup{ID: 0}
-		err := rows.Scan(&sgItem.ID, &sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Joinable, &sgItem.Owner, &sgItem.MemberCount, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
+		guildItem := &Guild{ID: 0}
+		err := rows.Scan(&guildItem.ID, &guildItem.Name, &guildItem.Desc, &guildItem.Active, &guildItem.Privacy, &guildItem.Joinable, &guildItem.Owner, &guildItem.MemberCount, &guildItem.CreatedAt, &guildItem.LastUpdateTime)
 		if err != nil {
 			return InternalError(err, w, r)
 		}
-		sgItem.Link = socialgroupsBuildGroupURL(nameToSlug(sgItem.Name), sgItem.ID)
-		sgList = append(sgList, sgItem)
+		guildItem.Link = guildsBuildGuildURL(nameToSlug(guildItem.Name), guildItem.ID)
+		guildList = append(guildList, guildItem)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -309,93 +309,93 @@ func socialgroupsGroupList(w http.ResponseWriter, r *http.Request, user User) Ro
 	}
 	rows.Close()
 
-	pi := SocialGroupListPage{"Group List", user, headerVars, sgList}
-	err = templates.ExecuteTemplate(w, "socialgroups_group_list.html", pi)
+	pi := GuildListPage{"Guild List", user, headerVars, guildList}
+	err = templates.ExecuteTemplate(w, "guilds_guild_list.html", pi)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 	return nil
 }
 
-func socialgroupsGetGroup(sgid int) (sgItem *SocialGroup, err error) {
-	sgItem = &SocialGroup{ID: sgid}
-	err = socialgroupsGetGroupStmt.QueryRow(sgid).Scan(&sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Joinable, &sgItem.Owner, &sgItem.MemberCount, &sgItem.MainForumID, &sgItem.Backdrop, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
-	return sgItem, err
+func guildsGetGuild(guildID int) (guildItem *Guild, err error) {
+	guildItem = &Guild{ID: guildID}
+	err = guildsGetGuildStmt.QueryRow(guildID).Scan(&guildItem.Name, &guildItem.Desc, &guildItem.Active, &guildItem.Privacy, &guildItem.Joinable, &guildItem.Owner, &guildItem.MemberCount, &guildItem.MainForumID, &guildItem.Backdrop, &guildItem.CreatedAt, &guildItem.LastUpdateTime)
+	return guildItem, err
 }
 
-func socialgroupsViewGroup(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func guildsViewGuild(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	// SEO URLs...
-	halves := strings.Split(r.URL.Path[len("/group/"):], ".")
+	halves := strings.Split(r.URL.Path[len("/guild/"):], ".")
 	if len(halves) < 2 {
 		halves = append(halves, halves[0])
 	}
-	sgid, err := strconv.Atoi(halves[1])
+	guildID, err := strconv.Atoi(halves[1])
 	if err != nil {
-		return PreError("Not a valid group ID", w, r)
+		return PreError("Not a valid guild ID", w, r)
 	}
 
-	sgItem, err := socialgroupsGetGroup(sgid)
+	guildItem, err := guildsGetGuild(guildID)
 	if err != nil {
-		return LocalError("Bad group", w, r, user)
+		return LocalError("Bad guild", w, r, user)
 	}
-	if !sgItem.Active {
+	if !guildItem.Active {
 		return NotFound(w, r)
 	}
 
 	// Re-route the request to routeForums
-	var ctx = context.WithValue(r.Context(), "socialgroups_current_group", sgItem)
-	return routeForum(w, r.WithContext(ctx), user, strconv.Itoa(sgItem.MainForumID))
+	var ctx = context.WithValue(r.Context(), "guilds_current_guild", guildItem)
+	return routeForum(w, r.WithContext(ctx), user, strconv.Itoa(guildItem.MainForumID))
 }
 
-func socialgroupsCreateGroup(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func guildsCreateGuild(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	// TODO: Add an approval queue mode for group creation
-	if !user.Loggedin || !user.PluginPerms["CreateSocialGroup"] {
+	if !user.Loggedin || !user.PluginPerms["CreateGuild"] {
 		return NoPermissions(w, r, user)
 	}
-	socialgroupsCommonAreaWidgets(headerVars)
+	guildsCommonAreaWidgets(headerVars)
 
-	pi := Page{"Create Group", user, headerVars, tList, nil}
-	err := templates.ExecuteTemplate(w, "socialgroups_create_group.html", pi)
+	pi := Page{"Create Guild", user, headerVars, tList, nil}
+	err := templates.ExecuteTemplate(w, "guilds_create_guild.html", pi)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 	return nil
 }
 
-func socialgroupsCreateGroupSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func guildsCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	// TODO: Add an approval queue mode for group creation
-	if !user.Loggedin || !user.PluginPerms["CreateSocialGroup"] {
+	if !user.Loggedin || !user.PluginPerms["CreateGuild"] {
 		return NoPermissions(w, r, user)
 	}
 
-	var groupActive = true
-	var groupName = html.EscapeString(r.PostFormValue("group_name"))
-	var groupDesc = html.EscapeString(r.PostFormValue("group_desc"))
+	var guildActive = true
+	var guildName = html.EscapeString(r.PostFormValue("group_name"))
+	var guildDesc = html.EscapeString(r.PostFormValue("group_desc"))
 	var gprivacy = r.PostFormValue("group_privacy")
 
-	var groupPrivacy int
+	var guildPrivacy int
 	switch gprivacy {
 	case "0":
-		groupPrivacy = 0 // Public
+		guildPrivacy = 0 // Public
 	case "1":
-		groupPrivacy = 1 // Protected
+		guildPrivacy = 1 // Protected
 	case "2":
-		groupPrivacy = 2 // private
+		guildPrivacy = 2 // private
 	default:
-		groupPrivacy = 0
+		guildPrivacy = 0
 	}
 
 	// Create the backing forum
-	fid, err := fstore.Create(groupName, "", true, "")
+	fid, err := fstore.Create(guildName, "", true, "")
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 
-	res, err := socialgroupsCreateGroupStmt.Exec(groupName, groupDesc, groupActive, groupPrivacy, user.ID, fid)
+	res, err := guildsCreateGuildStmt.Exec(guildName, guildDesc, guildActive, guildPrivacy, user.ID, fid)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -405,80 +405,80 @@ func socialgroupsCreateGroupSubmit(w http.ResponseWriter, r *http.Request, user 
 	}
 
 	// Add the main backing forum to the forum list
-	err = socialgroupsAttachForum(int(lastID), fid)
+	err = guildsAttachForum(int(lastID), fid)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 
-	_, err = socialgroupsAddMemberStmt.Exec(lastID, user.ID, 2)
+	_, err = guildsAddMemberStmt.Exec(lastID, user.ID, 2)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 
-	http.Redirect(w, r, socialgroupsBuildGroupURL(nameToSlug(groupName), int(lastID)), http.StatusSeeOther)
+	http.Redirect(w, r, guildsBuildGuildURL(nameToSlug(guildName), int(lastID)), http.StatusSeeOther)
 	return nil
 }
 
-func socialgroupsMemberList(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func guildsMemberList(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 
 	// SEO URLs...
-	halves := strings.Split(r.URL.Path[len("/group/members/"):], ".")
+	halves := strings.Split(r.URL.Path[len("/guild/members/"):], ".")
 	if len(halves) < 2 {
 		halves = append(halves, halves[0])
 	}
-	sgid, err := strconv.Atoi(halves[1])
+	guildID, err := strconv.Atoi(halves[1])
 	if err != nil {
 		return PreError("Not a valid group ID", w, r)
 	}
 
-	var sgItem = &SocialGroup{ID: sgid}
+	var guildItem = &Guild{ID: guildID}
 	var mainForum int // Unused
-	err = socialgroupsGetGroupStmt.QueryRow(sgid).Scan(&sgItem.Name, &sgItem.Desc, &sgItem.Active, &sgItem.Privacy, &sgItem.Joinable, &sgItem.Owner, &sgItem.MemberCount, &mainForum, &sgItem.Backdrop, &sgItem.CreatedAt, &sgItem.LastUpdateTime)
+	err = guildsGetGuildStmt.QueryRow(guildID).Scan(&guildItem.Name, &guildItem.Desc, &guildItem.Active, &guildItem.Privacy, &guildItem.Joinable, &guildItem.Owner, &guildItem.MemberCount, &mainForum, &guildItem.Backdrop, &guildItem.CreatedAt, &guildItem.LastUpdateTime)
 	if err != nil {
 		return LocalError("Bad group", w, r, user)
 	}
-	sgItem.Link = socialgroupsBuildGroupURL(nameToSlug(sgItem.Name), sgItem.ID)
+	guildItem.Link = guildsBuildGuildURL(nameToSlug(guildItem.Name), guildItem.ID)
 
-	socialgroupsGroupWidgets(headerVars, sgItem)
+	guildsGuildWidgets(headerVars, guildItem)
 
-	rows, err := socialgroupsMemberListJoinStmt.Query(sgid)
+	rows, err := guildsMemberListJoinStmt.Query(guildID)
 	if err != nil && err != ErrNoRows {
 		return InternalError(err, w, r)
 	}
 
-	var sgMembers []SocialGroupMember
+	var guildMembers []GuildMember
 	for rows.Next() {
-		sgMember := SocialGroupMember{PostCount: 0}
-		err := rows.Scan(&sgMember.User.ID, &sgMember.Rank, &sgMember.PostCount, &sgMember.JoinedAt, &sgMember.User.Name, &sgMember.User.Avatar)
+		guildMember := GuildMember{PostCount: 0}
+		err := rows.Scan(&guildMember.User.ID, &guildMember.Rank, &guildMember.PostCount, &guildMember.JoinedAt, &guildMember.User.Name, &guildMember.User.Avatar)
 		if err != nil {
 			return InternalError(err, w, r)
 		}
-		sgMember.Link = buildProfileURL(nameToSlug(sgMember.User.Name), sgMember.User.ID)
-		if sgMember.User.Avatar != "" {
-			if sgMember.User.Avatar[0] == '.' {
-				sgMember.User.Avatar = "/uploads/avatar_" + strconv.Itoa(sgMember.User.ID) + sgMember.User.Avatar
+		guildMember.Link = buildProfileURL(nameToSlug(guildMember.User.Name), guildMember.User.ID)
+		if guildMember.User.Avatar != "" {
+			if guildMember.User.Avatar[0] == '.' {
+				guildMember.User.Avatar = "/uploads/avatar_" + strconv.Itoa(guildMember.User.ID) + guildMember.User.Avatar
 			}
 		} else {
-			sgMember.User.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(sgMember.User.ID), 1)
+			guildMember.User.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(guildMember.User.ID), 1)
 		}
-		sgMember.JoinedAt, _ = relativeTimeFromString(sgMember.JoinedAt)
-		if sgItem.Owner == sgMember.User.ID {
-			sgMember.RankString = "Owner"
+		guildMember.JoinedAt, _ = relativeTimeFromString(guildMember.JoinedAt)
+		if guildItem.Owner == guildMember.User.ID {
+			guildMember.RankString = "Owner"
 		} else {
-			switch sgMember.Rank {
+			switch guildMember.Rank {
 			case 0:
-				sgMember.RankString = "Member"
+				guildMember.RankString = "Member"
 			case 1:
-				sgMember.RankString = "Mod"
+				guildMember.RankString = "Mod"
 			case 2:
-				sgMember.RankString = "Admin"
+				guildMember.RankString = "Admin"
 			}
 		}
-		sgMembers = append(sgMembers, sgMember)
+		guildMembers = append(guildMembers, guildMember)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -486,49 +486,49 @@ func socialgroupsMemberList(w http.ResponseWriter, r *http.Request, user User) R
 	}
 	rows.Close()
 
-	pi := SocialGroupMemberListPage{"Group Member List", user, headerVars, sgMembers, sgItem, 0, 0}
+	pi := GuildMemberListPage{"Guild Member List", user, headerVars, guildMembers, guildItem, 0, 0}
 	// A plugin with plugins. Pluginception!
-	if preRenderHooks["pre_render_socialgroups_member_list"] != nil {
-		if runPreRenderHook("pre_render_socialgroups_member_list", w, r, &user, &pi) {
+	if preRenderHooks["pre_render_guilds_member_list"] != nil {
+		if runPreRenderHook("pre_render_guilds_member_list", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err = templates.ExecuteTemplate(w, "socialgroups_member_list.html", pi)
+	err = templates.ExecuteTemplate(w, "guilds_member_list.html", pi)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 	return nil
 }
 
-func socialgroupsAttachForum(sgid int, fid int) error {
-	_, err := socialgroupsAttachForumStmt.Exec(sgid, fid)
+func guildsAttachForum(guildID int, fid int) error {
+	_, err := guildsAttachForumStmt.Exec(guildID, fid)
 	return err
 }
 
-func socialgroupsUnattachForum(fid int) error {
-	_, err := socialgroupsAttachForumStmt.Exec(fid)
+func guildsUnattachForum(fid int) error {
+	_, err := guildsAttachForumStmt.Exec(fid)
 	return err
 }
 
-func socialgroupsBuildGroupURL(slug string, id int) string {
+func guildsBuildGuildURL(slug string, id int) string {
 	if slug == "" {
-		return "/group/" + slug + "." + strconv.Itoa(id)
+		return "/guild/" + slug + "." + strconv.Itoa(id)
 	}
-	return "/group/" + strconv.Itoa(id)
+	return "/guild/" + strconv.Itoa(id)
 }
 
 /*
 	Hooks
 */
 
-func socialgroupsPreRenderViewForum(w http.ResponseWriter, r *http.Request, user *User, data interface{}) (halt bool) {
+func guildsPreRenderViewForum(w http.ResponseWriter, r *http.Request, user *User, data interface{}) (halt bool) {
 	pi := data.(*ForumPage)
 	if pi.Header.ExtData.items != nil {
-		if sgData, ok := pi.Header.ExtData.items["socialgroups_current_group"]; ok {
-			sgItem := sgData.(*SocialGroup)
+		if guildData, ok := pi.Header.ExtData.items["guilds_current_group"]; ok {
+			guildItem := guildData.(*Guild)
 
-			sgpi := SocialGroupPage{pi.Title, pi.CurrentUser, pi.Header, pi.ItemList, pi.Forum, sgItem, pi.Page, pi.LastPage}
-			err := templates.ExecuteTemplate(w, "socialgroups_view_group.html", sgpi)
+			guildpi := GuildPage{pi.Title, pi.CurrentUser, pi.Header, pi.ItemList, pi.Forum, guildItem, pi.Page, pi.LastPage}
+			err := templates.ExecuteTemplate(w, "guilds_view_guild.html", guildpi)
 			if err != nil {
 				LogError(err)
 				return false
@@ -539,19 +539,19 @@ func socialgroupsPreRenderViewForum(w http.ResponseWriter, r *http.Request, user
 	return false
 }
 
-func socialgroupsTrowAssign(args ...interface{}) interface{} {
+func guildsTrowAssign(args ...interface{}) interface{} {
 	var forum = args[1].(*Forum)
-	if forum.ParentType == "socialgroup" {
+	if forum.ParentType == "guild" {
 		var topicItem = args[0].(*TopicsRow)
-		topicItem.ForumLink = "/group/" + strings.TrimPrefix(topicItem.ForumLink, getForumURLPrefix())
+		topicItem.ForumLink = "/guild/" + strings.TrimPrefix(topicItem.ForumLink, getForumURLPrefix())
 	}
 	return nil
 }
 
 // TODO: It would be nice, if you could select one of the boards in the group from that drop-down rather than just the one you got linked from
-func socialgroupsTopicCreatePreLoop(args ...interface{}) interface{} {
+func guildsTopicCreatePreLoop(args ...interface{}) interface{} {
 	var fid = args[2].(int)
-	if fstore.DirtyGet(fid).ParentType == "socialgroup" {
+	if fstore.DirtyGet(fid).ParentType == "guild" {
 		var strictmode = args[5].(*bool)
 		*strictmode = true
 	}
@@ -561,24 +561,24 @@ func socialgroupsTopicCreatePreLoop(args ...interface{}) interface{} {
 // TODO: Add privacy options
 // TODO: Add support for multiple boards and add per-board simplified permissions
 // TODO: Take isJs into account for routes which expect JSON responses
-func socialgroupsForumCheck(args ...interface{}) (skip bool, rerr RouteError) {
+func guildsForumCheck(args ...interface{}) (skip bool, rerr RouteError) {
 	var r = args[1].(*http.Request)
 	var fid = args[3].(*int)
 	var forum = fstore.DirtyGet(*fid)
 
-	if forum.ParentType == "socialgroup" {
+	if forum.ParentType == "guild" {
 		var err error
 		var w = args[0].(http.ResponseWriter)
-		sgItem, ok := r.Context().Value("socialgroups_current_group").(*SocialGroup)
+		guildItem, ok := r.Context().Value("guilds_current_group").(*Guild)
 		if !ok {
-			sgItem, err = socialgroupsGetGroup(forum.ParentID)
+			guildItem, err = guildsGetGuild(forum.ParentID)
 			if err != nil {
 				return true, InternalError(errors.New("Unable to find the parent group for a forum"), w, r)
 			}
-			if !sgItem.Active {
+			if !guildItem.Active {
 				return true, NotFound(w, r)
 			}
-			r = r.WithContext(context.WithValue(r.Context(), "socialgroups_current_group", sgItem))
+			r = r.WithContext(context.WithValue(r.Context(), "guilds_current_group", guildItem))
 		}
 
 		var user = args[2].(*User)
@@ -593,7 +593,7 @@ func socialgroupsForumCheck(args ...interface{}) (skip bool, rerr RouteError) {
 		overrideForumPerms(&user.Perms, false)
 		user.Perms.ViewTopic = true
 
-		err = socialgroupsGetMemberStmt.QueryRow(sgItem.ID, user.ID).Scan(&rank, &posts, &joinedAt)
+		err = guildsGetMemberStmt.QueryRow(guildItem.ID, user.ID).Scan(&rank, &posts, &joinedAt)
 		if err != nil && err != ErrNoRows {
 			return true, InternalError(err, w, r)
 		} else if err != nil {
@@ -608,7 +608,7 @@ func socialgroupsForumCheck(args ...interface{}) (skip bool, rerr RouteError) {
 		}
 
 		// Basic permissions for members, more complicated permissions coming in the next commit!
-		if sgItem.Owner == user.ID {
+		if guildItem.Owner == user.ID {
 			overrideForumPerms(&user.Perms, true)
 		} else if rank == 0 {
 			user.Perms.LikeItem = true
@@ -625,7 +625,7 @@ func socialgroupsForumCheck(args ...interface{}) (skip bool, rerr RouteError) {
 
 // TODO: Override redirects? I don't think this is needed quite yet
 
-func socialgroupsWidgets(args ...interface{}) interface{} {
+func guildsWidgets(args ...interface{}) interface{} {
 	var zone = args[0].(string)
 	var headerVars = args[2].(*HeaderVars)
 	var request = args[3].(*http.Request)
@@ -635,9 +635,9 @@ func socialgroupsWidgets(args ...interface{}) interface{} {
 	}
 
 	var forum = args[1].(*Forum)
-	if forum.ParentType == "socialgroup" {
+	if forum.ParentType == "guild" {
 		// This is why I hate using contexts, all the daisy chains and interface casts x.x
-		sgItem, ok := request.Context().Value("socialgroups_current_group").(*SocialGroup)
+		guildItem, ok := request.Context().Value("guilds_current_group").(*Guild)
 		if !ok {
 			LogError(errors.New("Unable to find a parent group in the context data"))
 			return false
@@ -646,9 +646,9 @@ func socialgroupsWidgets(args ...interface{}) interface{} {
 		if headerVars.ExtData.items == nil {
 			headerVars.ExtData.items = make(map[string]interface{})
 		}
-		headerVars.ExtData.items["socialgroups_current_group"] = sgItem
+		headerVars.ExtData.items["guilds_current_group"] = guildItem
 
-		return socialgroupsGroupWidgets(headerVars, sgItem)
+		return guildsGuildWidgets(headerVars, guildItem)
 	}
 	return false
 }

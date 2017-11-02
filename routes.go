@@ -85,7 +85,7 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
 // TODO: Add a sitemap
-// TODO: Add an API so that plugins can register disallowed areas. E.g. /groups/join for plugin_socialgroups
+// TODO: Add an API so that plugins can register disallowed areas. E.g. /guilds/join for plugin_guilds
 func routeRobotsTxt(w http.ResponseWriter, r *http.Request) RouteError {
 	_, _ = w.Write([]byte(`User-agent: *
 Disallow: /panel/
@@ -180,11 +180,11 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) RouteError {
 				// Optimise Quick Topic away for guests
 				if user.Loggedin {
 					fcopy := forum.Copy()
-					// TODO: Add a hook here for plugin_socialgroups
+					// TODO: Add a hook here for plugin_guilds
 					forumList = append(forumList, fcopy)
 				}
 			}
-			// ? - Should we be showing plugin_socialgroups posts on /topics/?
+			// ? - Should we be showing plugin_guilds posts on /topics/?
 			// ? - Would it be useful, if we could post in social groups from /topics/?
 			argList = append(argList, strconv.Itoa(fid))
 			qlist += "?,"

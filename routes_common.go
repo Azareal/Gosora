@@ -29,7 +29,7 @@ func getDefaultHeaderVar() *HeaderVars {
 }
 
 // TODO: Support for left sidebars and sidebars on both sides
-// http.Request is for context.Context middleware. Mostly for plugin_socialgroups right now
+// http.Request is for context.Context middleware. Mostly for plugin_guilds right now
 func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http.Request) {
 	if vhooks["intercept_build_widgets"] != nil {
 		if runVhook("intercept_build_widgets", zone, data, headerVars, r).(bool) {
@@ -62,7 +62,7 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	if vhookSkippable["simple_forum_check_pre_perms"] != nil {
 		var skip bool
 		skip, rerr = runVhookSkippable("simple_forum_check_pre_perms", w, r, user, &fid, &headerLite)
-		if skip {
+		if skip || rerr != nil {
 			return headerLite, rerr
 		}
 	}
@@ -89,7 +89,7 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 	if vhookSkippable["forum_check_pre_perms"] != nil {
 		var skip bool
 		skip, rerr = runVhookSkippable("forum_check_pre_perms", w, r, user, &fid, &headerVars)
-		if skip {
+		if skip || rerr != nil {
 			return headerVars, rerr
 		}
 	}

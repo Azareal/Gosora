@@ -10,7 +10,7 @@ func NewForumPermsStore() *ForumPermsStore {
 }
 
 func (fps *ForumPermsStore) Get(fid int, gid int) (fperms ForumPerms, err error) {
-	// TODO: Add a hook here and have plugin_socialgroups use it
+	// TODO: Add a hook here and have plugin_guilds use it
 	group, err := gstore.Get(gid)
 	if err != nil {
 		return fperms, ErrNoRows

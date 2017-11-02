@@ -50,7 +50,7 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 		runVhook("topic_create_pre_loop", w, r, fid, &headerVars, &user, &strictmode)
 	}
 
-	// TODO: Re-add support for plugin_socialgroups
+	// TODO: Re-add support for plugin_guilds
 	var forumList []Forum
 	var canSee []int
 	if user.IsSuperAdmin {
@@ -71,7 +71,7 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 
 	// TODO: plugin_superadmin needs to be able to override this loop. Skip flag on topic_create_pre_loop?
 	for _, ffid := range canSee {
-		// TODO: Surely, there's a better way of doing this. I've added it in for now to support plugin_socialgroups, but we really need to clean this up
+		// TODO: Surely, there's a better way of doing this. I've added it in for now to support plugin_guilds, but we really need to clean this up
 		if strictmode && ffid != fid {
 			continue
 		}

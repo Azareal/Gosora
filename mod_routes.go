@@ -13,7 +13,7 @@ import (
 )
 
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
-// TODO: Disable stat updates in posts handled by plugin_socialgroups
+// TODO: Disable stat updates in posts handled by plugin_guilds
 func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {
@@ -63,7 +63,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user User) RouteErro
 }
 
 // TODO: Add support for soft-deletion and add a permission for hard delete in addition to the usual
-// TODO: Disable stat updates in posts handled by plugin_socialgroups
+// TODO: Disable stat updates in posts handled by plugin_guilds
 func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
@@ -334,7 +334,7 @@ func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user User) RouteEr
 	return nil
 }
 
-// TODO: Disable stat updates in posts handled by plugin_socialgroups
+// TODO: Disable stat updates in posts handled by plugin_guilds
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
@@ -387,7 +387,7 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) Rou
 }
 
 // TODO: Refactor this
-// TODO: Disable stat updates in posts handled by plugin_socialgroups
+// TODO: Disable stat updates in posts handled by plugin_guilds
 func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := r.ParseForm()
 	if err != nil {

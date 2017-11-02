@@ -145,7 +145,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 }
 
 // TODO: Hide social groups too
-// ? - Will this be hit a lot by plugin_socialgroups?
+// ? - Will this be hit a lot by plugin_guilds?
 func (mfs *MemoryForumStore) rebuildView() {
 	var forumView []*Forum
 	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
@@ -313,7 +313,7 @@ func (mfs *MemoryForumStore) CacheDelete(id int) {
 	mfs.rebuildView()
 }
 
-// TODO: Add a hook to allow plugin_socialgroups to detect when one of it's forums has just been deleted?
+// TODO: Add a hook to allow plugin_guilds to detect when one of it's forums has just been deleted?
 func (mfs *MemoryForumStore) Delete(id int) error {
 	if id == 1 {
 		return errors.New("You cannot delete the Reports forum")
