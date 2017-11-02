@@ -34,7 +34,7 @@
 			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 			<div class="button_container">
 				{{if .CurrentUser.Loggedin}}
-					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="action_button">+1</a>{{end}}
+					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="action_button like_item">+1</a>{{end}}
 					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit">Edit</a>{{end}}
 					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}" class="action_button delete_item">Delete</a>{{end}}
 					{{if .CurrentUser.Perms.CloseTopic}}
@@ -43,9 +43,11 @@
 					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}' class="action_button">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="action_button">Pin</a>{{end}}{{end}}
 					<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="action_button report_item">Report</a>
 				{{end}}
-				{{if .Topic.LikeCount}}<a class="action_button action_button_right like_count hide_on_micro">{{.Topic.LikeCount}} up</a>{{end}}
-				<a class="action_button action_button_right created_at hide_on_mobile">{{.Topic.CreatedAt}}</a>
-				{{if .CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">{{.Topic.IPAddress}}</a>{{end}}
+				<div class="action_button_right">
+					{{if .Topic.LikeCount}}<a class="action_button like_count hide_on_micro">{{.Topic.LikeCount}}</a>{{end}}
+					<a class="action_button created_at hide_on_mobile">{{.Topic.RelativeCreatedAt}}</a>
+					{{if .CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button ip_item hide_on_mobile">{{.Topic.IPAddress}}</a>{{end}}
+				</div>
 			</div>
 		</div><div style="clear:both;"></div>
 	</article>
@@ -66,14 +68,16 @@
 			<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
 			<div class="button_container">
 				{{if $.CurrentUser.Loggedin}}
-					{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="action_button">+1</a>{{end}}
+					{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="action_button like_item">+1</a>{{end}}
 					{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="action_button edit_item">Edit</a>{{end}}
 					{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="action_button delete_item">Delete</a>{{end}}
 					<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="action_button report_item">Report</a>
 				{{end}}
-				{{if .LikeCount}}<a class="action_button action_button_right like_count hide_on_micro">{{.LikeCount}} up</a>{{end}}
-				<a class="action_button action_button_right created_at hide_on_mobile">{{.CreatedAt}}</a>
-				{{if $.CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button action_button_right ip_item hide_on_mobile">{{.IPAddress}}</a>{{end}}
+				<div class="action_button_right">
+					{{if .LikeCount}}<a class="action_button like_count hide_on_micro">{{.LikeCount}}</a>{{end}}
+					<a class="action_button created_at hide_on_mobile">{{.RelativeCreatedAt}}</a>
+					{{if $.CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button ip_item hide_on_mobile">{{.IPAddress}}</a>{{end}}
+				</div>
 			</div>
 			{{end}}
 		</div>
@@ -82,21 +86,28 @@
 {{end}}</div>
 
 {{if .CurrentUser.Perms.CreateReply}}
-<div class="rowblock topic_reply_form quick_create_form">
-	<form id="reply_form" enctype="multipart/form-data" action="/reply/create/" method="post"></form>
-	<input form="reply_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
-	<div class="formrow real_first_child">
-		<div class="formitem">
-			<textarea id="input_content" form="reply_form" name="reply-content" placeholder="Insert reply here" required></textarea>
-		</div>
+<div class="rowblock topic_reply_container">
+	<div class="userinfo" aria-label="The information on the poster">
+		<div class="avatar_item" style="background-image: url({{.CurrentUser.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+		<a href="{{.CurrentUser.Link}}" class="the_name" rel="author">{{.CurrentUser.Name}}</a>
+		{{if .CurrentUser.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.CurrentUser.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.CurrentUser.Level}}</div><div class="tag_post"></div></div>{{end}}
 	</div>
-	<div class="formrow quick_button_row">
-		<div class="formitem">
-			<button form="reply_form" name="reply-button" class="formbutton">Create Reply</button>
-			{{if .CurrentUser.Perms.UploadFiles}}
-			<input name="upload_files" form="reply_form" id="upload_files" multiple type="file" style="display: none;" />
-			<label for="upload_files" class="formbutton add_file_button">Add File</label>
-			<div id="upload_file_dock"></div>{{end}}
+	<div class="rowblock topic_reply_form quick_create_form">
+		<form id="reply_form" enctype="multipart/form-data" action="/reply/create/" method="post"></form>
+		<input form="reply_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
+		<div class="formrow real_first_child">
+			<div class="formitem">
+				<textarea id="input_content" form="reply_form" name="reply-content" placeholder="What do you think?" required></textarea>
+			</div>
+		</div>
+		<div class="formrow quick_button_row">
+			<div class="formitem">
+				<button form="reply_form" name="reply-button" class="formbutton">Create Reply</button>
+				{{if .CurrentUser.Perms.UploadFiles}}
+				<input name="upload_files" form="reply_form" id="upload_files" multiple type="file" style="display: none;" />
+				<label for="upload_files" class="formbutton add_file_button">Add File</label>
+				<div id="upload_file_dock"></div>{{end}}
+			</div>
 		</div>
 	</div>
 </div>

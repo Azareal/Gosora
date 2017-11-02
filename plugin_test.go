@@ -214,6 +214,8 @@ func TestMarkdownRender(t *testing.T) {
 	msgList = addMEPair(msgList, "**hi*", "*<i>hi</i>")
 	msgList = addMEPair(msgList, "***hi***", "<b><i>hi</i></b>")
 	msgList = addMEPair(msgList, "***h***", "<b><i>h</i></b>")
+	msgList = addMEPair(msgList, "\\***h**\\*", "*<b>h</b>*")
+	msgList = addMEPair(msgList, "\\*\\**h*\\*\\*", "**<i>h</i>**")
 	msgList = addMEPair(msgList, "\\*hi\\*", "*hi*")
 	msgList = addMEPair(msgList, "d\\*hi\\*", "d*hi*")
 	msgList = addMEPair(msgList, "\\*hi\\*d", "*hi*d")
@@ -225,8 +227,10 @@ func TestMarkdownRender(t *testing.T) {
 	msgList = addMEPair(msgList, "\\\\\\d", "\\\\\\d")
 	msgList = addMEPair(msgList, "d\\", "d\\")
 	msgList = addMEPair(msgList, "\\d\\", "\\d\\")
+	msgList = addMEPair(msgList, "*_hi_*", "<i><u>hi</u></i>")
 	msgList = addMEPair(msgList, "*~hi~*", "<i><s>hi</s></i>")
 	msgList = addMEPair(msgList, "~*hi*~", "<s><i>hi</i></s>")
+	msgList = addMEPair(msgList, "~ *hi* ~", "<s> <i>hi</i> </s>")
 	msgList = addMEPair(msgList, "_~hi~_", "<u><s>hi</s></u>")
 	msgList = addMEPair(msgList, "***~hi~***", "<b><i><s>hi</s></i></b>")
 	msgList = addMEPair(msgList, "**", "**")
@@ -255,4 +259,37 @@ func TestMarkdownRender(t *testing.T) {
 			t.Error("Expected:", item.Expects)
 		}
 	}
+
+	for _, item := range msgList {
+		res = markdownParse("\n" + item.Msg)
+		if res != "\n"+item.Expects {
+			t.Error("Testing string '\n" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			//t.Error("Ouput in bytes:", []byte(res))
+			t.Error("Expected:", "\n"+item.Expects)
+		}
+	}
+
+	for _, item := range msgList {
+		res = markdownParse("\t" + item.Msg)
+		if res != "\t"+item.Expects {
+			t.Error("Testing string '\t" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			//t.Error("Ouput in bytes:", []byte(res))
+			t.Error("Expected:", "\t"+item.Expects)
+		}
+	}
+
+	for _, item := range msgList {
+		res = markdownParse("d" + item.Msg)
+		if res != "d"+item.Expects {
+			t.Error("Testing string 'd" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			//t.Error("Ouput in bytes:", []byte(res))
+			t.Error("Expected:", "d"+item.Expects)
+		}
+	}
+
+	// TODO: Write suffix tests and double string tests
+	// TODO: Write similar prefix, suffix, and double string tests for plugin_bbcode. Ditto for the outer parser along with suitable tests for that like making sure the URL parser and media embedder works.
 }

@@ -652,6 +652,9 @@ button.username {
 	padding-right: 7px;
 }
 .action_button_right {
+	display: flex;
+}
+.action_button_right .action_button {
 	border-left: solid 1px #eaeaea;
 	border-right: none;
 }
@@ -660,10 +663,21 @@ button.username {
 	margin-right: auto;
 }
 
-.like_label:before { content: "😀"; }
-.edit_label:before { content: "🖊️"; }
-.trash_label:before { content: "🗑️"; }
-.flag_label:before { content: "🚩"; }
+.like_label:before {
+	content: "😀";
+}
+.like_count:after {
+	content: " up";
+}
+.edit_label:before {
+	content: "🖊️";
+}
+.trash_label:before {
+	content: "🗑️";
+}
+.flag_label:before {
+	content: "🚩";
+}
 
 .mod_button {
 	margin-right: 4px;

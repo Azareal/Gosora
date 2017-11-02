@@ -532,8 +532,8 @@ func buildForumPermissions() error {
 	groups, err := gstore.GetAll()
 	if err != nil {
 		return err
-
 	}
+
 	for _, group := range groups {
 		if dev.DebugMode {
 			log.Print("Adding the forum permissions for Group #" + strconv.Itoa(group.ID) + " - " + group.Name)

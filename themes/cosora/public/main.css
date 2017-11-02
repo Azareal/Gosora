@@ -8,8 +8,10 @@
 	--primary-link-color: hsl(0,0%,40%);
 	--primary-text-color: hsl(0,0%,20%);
 	--lightened-primary-text-color: hsl(0,0%,30%);
+	--extra-lightened-primary-text-color: hsl(0,0%,40%);
 	--inverse-primary-text-color: white;
 	--light-text-color: hsl(0,0%,55%);
+	--lighter-text-color: hsl(0,0%,65%);
 }
 
 * {
@@ -402,6 +404,25 @@ select, input, textarea {
 	color: hsl(0,0%,30%);
 }
 
+.topic_reply_container {
+	display: flex;
+	border: 0;
+}
+.topic_reply_form {
+	margin: 0px;
+	width: 100%;
+}
+.topic_reply_form .trumbowyg-button-pane:after {
+	display: none;
+}
+.topic_reply_form .trumbowyg-editor {
+	border-left: none;
+	border-right: none;
+}
+.topic_reply_form .quick_button_row {
+	margin-bottom: 7px;
+}
+
 #prevFloat, #nextFloat {
 	display: none;
 }
@@ -600,33 +621,67 @@ select, input, textarea {
 }
 .userinfo {
 	margin-right: 16px;
-	padding: 18px;
 	display: flex;
 	flex-direction: column;
-	padding-left: 24px;
-	padding-right: 24px;
-	padding-bottom: 12px;
+	padding-top: 30px;
+	padding-left: 42px;
+	padding-right: 42px;
+	padding-bottom: 18px;
+	height: min-content;
+	/*overflow: hidden;
+	text-overflow: ellipsis;*/
 }
 .content_container {
 	width: 100%;
-	padding: 16px;
+	padding: 17px;
+	display: flex;
+	flex-direction: column;
 }
 .avatar_item {
 	border-radius: 50px;
-	width: 90px;
-	height: 90px;
-	margin-bottom: 5px;
-	background-size: 128px;
+	width: 84px;
+	height: 84px;
+	margin-bottom: 12px;
+	background-size: 120px;
+}
+.the_name, .userinfo .tag_block {
+	margin-left: auto;
+	margin-right: auto;
 }
 .the_name {
-	font-size: 19px;
+	font-size: 18px;
 	color: var(--lightened-primary-text-color);
-	margin-left: auto;
-	margin-right: auto;
 }
 .userinfo .tag_block {
+	color: var(--extra-lightened-primary-text-color);
+}
+.button_container {
+	margin-top: auto;
+	display: flex;
+}
+.action_button {
+	margin-right: 5px;
+	color: var(--light-text-color);
+	font-size: 14px;
+	display: inline-block;
+}
+.action_button_right {
+	display: inline-flex;
 	margin-left: auto;
-	margin-right: auto;
+}
+.like_count:after {
+	content: " likes";
+	margin-right: 6px;
+}
+.created_at:before, .ip_item:before {
+	border-left: 1px solid var(--element-border-color);
+	content: "";
+	margin-right: 10px;
+	margin-top: 1px;
+	margin-bottom: 1px;
+}
+.created_at {
+	margin-right: 10px;
 }
 
 @media(max-width: 670px) {

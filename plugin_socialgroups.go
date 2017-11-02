@@ -561,7 +561,7 @@ func socialgroupsTopicCreatePreLoop(args ...interface{}) interface{} {
 // TODO: Add privacy options
 // TODO: Add support for multiple boards and add per-board simplified permissions
 // TODO: Take isJs into account for routes which expect JSON responses
-func socialgroupsForumCheck(args ...interface{}) (skip interface{}) {
+func socialgroupsForumCheck(args ...interface{}) (skip bool, rerr RouteError) {
 	var r = args[1].(*http.Request)
 	var fid = args[3].(*int)
 	var forum = fstore.DirtyGet(*fid)
@@ -569,19 +569,14 @@ func socialgroupsForumCheck(args ...interface{}) (skip interface{}) {
 	if forum.ParentType == "socialgroup" {
 		var err error
 		var w = args[0].(http.ResponseWriter)
-		var success = args[4].(*bool)
 		sgItem, ok := r.Context().Value("socialgroups_current_group").(*SocialGroup)
 		if !ok {
 			sgItem, err = socialgroupsGetGroup(forum.ParentID)
 			if err != nil {
-				InternalError(errors.New("Unable to find the parent group for a forum"), w, r)
-				*success = false
-				return false
+				return true, InternalError(errors.New("Unable to find the parent group for a forum"), w, r)
 			}
 			if !sgItem.Active {
-				NotFound(w, r)
-				*success = false
-				return false
+				return true, NotFound(w, r)
 			}
 			r = r.WithContext(context.WithValue(r.Context(), "socialgroups_current_group", sgItem))
 		}
@@ -600,16 +595,16 @@ func socialgroupsForumCheck(args ...interface{}) (skip interface{}) {
 
 		err = socialgroupsGetMemberStmt.QueryRow(sgItem.ID, user.ID).Scan(&rank, &posts, &joinedAt)
 		if err != nil && err != ErrNoRows {
-			*success = false
-			InternalError(err, w, r)
-			return false
+			return true, InternalError(err, w, r)
 		} else if err != nil {
-			return true
+			// TODO: Should we let admins / guests into public groups?
+			return true, LocalError("You're not part of this group!", w, r, *user)
 		}
 
 		// TODO: Implement bans properly by adding the Local Ban API in the next commit
+		// TODO: How does this even work? Refactor it along with the rest of this plugin!
 		if rank < 0 {
-			return true
+			return true, LocalError("You've been banned from this group!", w, r, *user)
 		}
 
 		// Basic permissions for members, more complicated permissions coming in the next commit!
@@ -622,10 +617,10 @@ func socialgroupsForumCheck(args ...interface{}) (skip interface{}) {
 		} else {
 			overrideForumPerms(&user.Perms, true)
 		}
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
 // TODO: Override redirects? I don't think this is needed quite yet

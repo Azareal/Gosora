@@ -49,6 +49,7 @@ func initDatabase() (err error) {
 	if err != nil {
 		return err
 	}
+	fpstore = NewForumPermsStore()
 
 	log.Print("Loading the settings.")
 	err = LoadSettings()

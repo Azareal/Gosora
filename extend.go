@@ -21,16 +21,22 @@ var hooks = map[string][]func(interface{}) interface{}{
 
 // Hooks with a variable number of arguments
 var vhooks = map[string]func(...interface{}) interface{}{
-	"simple_forum_check_pre_perms": nil,
-	"forum_check_pre_perms":        nil,
-	"intercept_build_widgets":      nil,
-	"forum_trow_assign":            nil,
-	"topics_topic_row_assign":      nil,
+	"intercept_build_widgets": nil,
+	"forum_trow_assign":       nil,
+	"topics_topic_row_assign": nil,
 	//"topics_user_row_assign": nil,
 	"topic_reply_row_assign": nil,
 	"create_group_preappend": nil, // What is this? Investigate!
 	"topic_create_pre_loop":  nil,
 }
+
+// Hooks with a variable number of arguments and return values for skipping the parent function and propagating an error upwards
+var vhookSkippable = map[string]func(...interface{}) (bool, RouteError){
+	"simple_forum_check_pre_perms": nil,
+	"forum_check_pre_perms":        nil,
+}
+
+//var vhookErrorable = map[string]func(...interface{}) (interface{}, RouteError){}
 
 // Coming Soon:
 type Message interface {
@@ -221,6 +227,9 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 	case func(...interface{}) interface{}:
 		vhooks[name] = h
 		plugin.Hooks[name] = 0
+	case func(...interface{}) (bool, RouteError):
+		vhookSkippable[name] = h
+		plugin.Hooks[name] = 0
 	default:
 		panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
 	}
@@ -258,6 +267,8 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 		preRenderHooks[name] = hook
 	case func(...interface{}) interface{}:
 		delete(vhooks, name)
+	case func(...interface{}) (bool, RouteError):
+		delete(vhookSkippable, name)
 	default:
 		panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
 	}
@@ -300,6 +311,10 @@ func runHookNoreturn(name string, data interface{}) {
 
 func runVhook(name string, data ...interface{}) interface{} {
 	return vhooks[name](data...)
+}
+
+func runVhookSkippable(name string, data ...interface{}) (bool, RouteError) {
+	return vhookSkippable[name](data...)
 }
 
 func runVhookNoreturn(name string, data ...interface{}) {

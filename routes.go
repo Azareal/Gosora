@@ -533,22 +533,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) RouteError 
 	if postGroup.IsMod || postGroup.IsAdmin {
 		topic.ClassName = config.StaffCSS
 	}
-
-	/*if headerVars.Settings["url_tags"] == false {
-		topic.URLName = ""
-	} else {
-		topic.URL, ok = external_sites[topic.URLPrefix]
-		if !ok {
-			topic.URL = topic.URLName
-		} else {
-			topic.URL = topic.URL + topic.URLName
-		}
-	}*/
-
-	topic.CreatedAt, err = relativeTimeFromString(topic.CreatedAt)
-	if err != nil {
-		topic.CreatedAt = ""
-	}
+	topic.RelativeCreatedAt = relativeTime(topic.CreatedAt)
 
 	// TODO: Make a function for this? Build a more sophisticated noavatar handling system?
 	if topic.Avatar != "" {
@@ -604,7 +589,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) RouteError 
 			replyItem.ClassName = ""
 		}
 
-		// TODO: Make a function for this? Build a more sophisticated noavatar handling system?
+		// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the UserStore initialise this?
 		if replyItem.Avatar != "" {
 			if replyItem.Avatar[0] == '.' {
 				replyItem.Avatar = "/uploads/avatar_" + strconv.Itoa(replyItem.CreatedBy) + replyItem.Avatar
@@ -614,22 +599,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) RouteError 
 		}
 
 		replyItem.Tag = postGroup.Tag
-
-		/*if headerVars.Settings["url_tags"] == false {
-			replyItem.URLName = ""
-		} else {
-			replyItem.URL, ok = external_sites[replyItem.URLPrefix]
-			if !ok {
-				replyItem.URL = replyItem.URLName
-			} else {
-				replyItem.URL = replyItem.URL + replyItem.URLName
-			}
-		}*/
-
-		replyItem.CreatedAt, err = relativeTimeFromString(replyItem.CreatedAt)
-		if err != nil {
-			replyItem.CreatedAt = ""
-		}
+		replyItem.RelativeCreatedAt = relativeTime(replyItem.CreatedAt)
 
 		// We really shouldn't have inline HTML, we should do something about this...
 		if replyItem.ActionType != "" {
@@ -683,7 +653,8 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) RouteError 
 	}
 
 	var err error
-	var replyContent, replyCreatedByName, replyCreatedAt, replyAvatar, replyTag, replyClassName string
+	var replyCreatedAt time.Time
+	var replyContent, replyCreatedByName, replyRelativeCreatedAt, replyAvatar, replyTag, replyClassName string
 	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyLines, replyGroup int
 	var replyList []ReplyUser
 
@@ -736,6 +707,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) RouteError 
 		} else {
 			replyClassName = ""
 		}
+
 		if replyAvatar != "" {
 			if replyAvatar[0] == '.' {
 				replyAvatar = "/uploads/avatar_" + strconv.Itoa(replyCreatedBy) + replyAvatar
@@ -754,10 +726,11 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) RouteError 
 
 		replyLiked := false
 		replyLikeCount := 0
+		replyRelativeCreatedAt = relativeTime(replyCreatedAt)
 
 		// TODO: Add a hook here
 
-		replyList = append(replyList, ReplyUser{rid, puser.ID, replyContent, parseMessage(replyContent, 0, ""), replyCreatedBy, buildProfileURL(nameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
+		replyList = append(replyList, ReplyUser{rid, puser.ID, replyContent, parseMessage(replyContent, 0, ""), replyCreatedBy, buildProfileURL(nameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyRelativeCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
 	}
 	err = rows.Err()
 	if err != nil {

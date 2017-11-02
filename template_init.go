@@ -92,9 +92,10 @@ func compileTemplates() error {
 
 	log.Print("Compiling the templates")
 
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, "Date", time.Now(), "Date", 0, "", "127.0.0.1", 0, 1, "classname", "weird-data", buildProfileURL("fake-user", 62), "Fake User", config.DefaultGroup, "", 0, "", "", "", "", "", 58, false}
+	var now = time.Now()
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, relativeTime(now), now, relativeTime(now), 0, "", "127.0.0.1", 0, 1, "classname", "weird-data", buildProfileURL("fake-user", 62), "Fake User", config.DefaultGroup, "", 0, "", "", "", "", "", 58, false}
 	var replyList []ReplyUser
-	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", config.DefaultGroup, "", 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", config.DefaultGroup, now, relativeTime(now), 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
 	var varList = make(map[string]VarItem)
 	tpage := TopicPage{"Title", user, headerVars, replyList, topic, 1, 1}

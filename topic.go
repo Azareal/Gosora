@@ -24,7 +24,8 @@ type Topic struct {
 	CreatedBy           int
 	IsClosed            bool
 	Sticky              bool
-	CreatedAt           string
+	CreatedAt           time.Time
+	RelativeCreatedAt   string
 	LastReplyAt         time.Time
 	RelativeLastReplyAt string
 	//LastReplyBy int
@@ -45,7 +46,8 @@ type TopicUser struct {
 	CreatedBy           int
 	IsClosed            bool
 	Sticky              bool
-	CreatedAt           string
+	CreatedAt           time.Time
+	RelativeCreatedAt   string
 	LastReplyAt         time.Time
 	RelativeLastReplyAt string
 	//LastReplyBy int

@@ -45,7 +45,7 @@ func deactivateMarkdown() {
 // An adapter for the parser, so that the parser can call itself recursively.
 // This is less for the simple Markdown elements like bold and italics and more for the really complicated ones I plan on adding at some point.
 func markdownParse(msg string) string {
-	msg = strings.TrimSpace(_markdownParse(msg+" ", 0))
+	msg = strings.TrimSuffix(_markdownParse(msg+" ", 0), " ")
 	log.Print("final msg: ", msg)
 	return msg
 }
@@ -172,9 +172,9 @@ func _markdownParse(msg string, n int) string {
 
 			index++
 
-			//log.Print("preskip index",index)
-			//log.Print("preskip msg[index]",msg[index])
-			//log.Print("preskip string(msg[index])",string(msg[index]))
+			//log.Print("preskip index: ", index)
+			//log.Print("preskip msg[index]: ", msg[index])
+			//log.Print("preskip string(msg[index]): ", string(msg[index]))
 			index = markdownSkipUntilAsterisk(msg, index)
 
 			if index >= len(msg) {
@@ -222,8 +222,8 @@ func _markdownParse(msg string, n int) string {
 				sIndex++
 			}
 
-			//log.Print("sIndex",sIndex)
-			//log.Print("lIndex",lIndex)
+			//log.Print("sIndex: ", sIndex)
+			//log.Print("lIndex: ", lIndex)
 
 			if lIndex <= sIndex {
 				//log.Print("unclosed markdown element @ lIndex <= sIndex")
@@ -241,19 +241,19 @@ func _markdownParse(msg string, n int) string {
 				break
 			}
 
-			//log.Print("final sIndex",sIndex)
-			//log.Print("final lIndex",lIndex)
-			//log.Print("final index",index)
-			//log.Print("final msg[index]",msg[index])
-			//log.Print("final string(msg[index])",string(msg[index]))
+			//log.Print("final sIndex: ", sIndex)
+			//log.Print("final lIndex: ",lIndex)
+			//log.Print("final index: ", index)
+			//log.Print("final msg[index]: ", msg[index])
+			//log.Print("final string(msg[index]): ", string(msg[index]))
 
-			//log.Print("final msg[sIndex]",msg[sIndex])
-			//log.Print("final string(msg[sIndex])",string(msg[sIndex]))
-			//log.Print("final msg[lIndex]",msg[lIndex])
-			//log.Print("final string(msg[lIndex])",string(msg[lIndex]))
+			//log.Print("final msg[sIndex]: ", msg[sIndex])
+			//log.Print("final string(msg[sIndex]): ", string(msg[sIndex]))
+			//log.Print("final msg[lIndex]: ", msg[lIndex])
+			//log.Print("final string(msg[lIndex]): ", string(msg[lIndex]))
 
-			//log.Print("[]byte(msg[:sIndex])",[]byte(msg[:sIndex]))
-			//log.Print("[]byte(msg[:lIndex])",[]byte(msg[:lIndex]))
+			//log.Print("[]byte(msg[:sIndex]): ", []byte(msg[:sIndex]))
+			//log.Print("[]byte(msg[:lIndex]): ", []byte(msg[:lIndex]))
 
 			outbytes = append(outbytes, msg[lastElement:startIndex]...)
 
@@ -278,13 +278,13 @@ func _markdownParse(msg string, n int) string {
 			index--
 		case '\\':
 			if (index + 1) < len(msg) {
-				outbytes = append(outbytes, msg[lastElement:index]...)
-				index++
-				lastElement = index
+				if isMarkdownStartChar(msg[index+1]) && msg[index+1] != '\\' {
+					outbytes = append(outbytes, msg[lastElement:index]...)
+					index++
+					lastElement = index
+				}
 			}
 			//case '`':
-			//case '_':
-			//case '~':
 			//case 10: // newline
 		}
 	}
@@ -296,6 +296,10 @@ func _markdownParse(msg string, n int) string {
 		return string(outbytes) + msg[lastElement:]
 	}
 	return string(outbytes)
+}
+
+func isMarkdownStartChar(char byte) bool {
+	return char == '\\' || char == '~' || char == '_' || char == 10 || char == '`' || char == '*'
 }
 
 func markdownFindChar(data string, index int, char byte) bool {

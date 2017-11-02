@@ -59,51 +59,51 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	}
 
 	// Is there a better way of doing the skip AND the success flag on this hook like multiple returns?
-	if vhooks["simple_forum_check_pre_perms"] != nil {
-		if runVhook("simple_forum_check_pre_perms", w, r, user, &fid, &rerr, &headerLite).(bool) {
+	if vhookSkippable["simple_forum_check_pre_perms"] != nil {
+		var skip bool
+		skip, rerr = runVhookSkippable("simple_forum_check_pre_perms", w, r, user, &fid, &headerLite)
+		if skip {
 			return headerLite, rerr
 		}
 	}
 
-	group, err := gstore.Get(user.Group)
+	fperms, err := fpstore.Get(fid, user.Group)
 	if err != nil {
 		// TODO: Refactor this
-		log.Printf("Group #%d doesn't exist despite being used by User #%d", user.Group, user.ID)
+		log.Printf("Unable to get the forum perms for Group #%d for User #%d", user.Group, user.ID)
 		return nil, PreError("Something weird happened", w, r)
 	}
-
-	fperms := group.Forums[fid]
 	cascadeForumPerms(fperms, user)
 	return headerLite, nil
 }
 
-func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, ferr RouteError) {
-	headerVars, ferr = UserCheck(w, r, user)
-	if ferr != nil {
-		return headerVars, ferr
+func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, rerr RouteError) {
+	headerVars, rerr = UserCheck(w, r, user)
+	if rerr != nil {
+		return headerVars, rerr
 	}
 	if !fstore.Exists(fid) {
 		return headerVars, NotFound(w, r)
 	}
 
-	if vhooks["forum_check_pre_perms"] != nil {
-		if runVhook("forum_check_pre_perms", w, r, user, &fid, &ferr, &headerVars).(bool) {
-			return headerVars, ferr
+	if vhookSkippable["forum_check_pre_perms"] != nil {
+		var skip bool
+		skip, rerr = runVhookSkippable("forum_check_pre_perms", w, r, user, &fid, &headerVars)
+		if skip {
+			return headerVars, rerr
 		}
 	}
 
-	group, err := gstore.Get(user.Group)
+	fperms, err := fpstore.Get(fid, user.Group)
 	if err != nil {
 		// TODO: Refactor this
-		log.Printf("Group #%d doesn't exist despite being used by User #%d", user.Group, user.ID)
-		return headerVars, PreError("Something weird happened", w, r)
+		log.Printf("Unable to get the forum perms for Group #%d for User #%d", user.Group, user.ID)
+		return nil, PreError("Something weird happened", w, r)
 	}
-
-	fperms := group.Forums[fid]
 	//log.Printf("user.Perms: %+v\n", user.Perms)
 	//log.Printf("fperms: %+v\n", fperms)
 	cascadeForumPerms(fperms, user)
-	return headerVars, ferr
+	return headerVars, rerr
 }
 
 // TODO: Put this on the user instance? Do we really want forum specific logic in there? Maybe, a method which spits a new pointer with the same contents as user?
