@@ -1,10 +1,10 @@
 {{template "header.html" . }}
 <main>
 	<div class="rowblock opthead">
-		<div class="rowitem"><a>Group List</a></div>
+		<div class="rowitem"><a>Guild List</a></div>
 	</div>
 	<div class="rowblock">
-		{{range .GroupList}}<div class="rowitem datarow">
+		{{range .GuildList}}<div class="rowitem datarow">
 			<span style="float: left;">
 				<a href="{{.Link}}" style="">{{.Name}}</a>
 				<br /><span class="rowsmall">{{.Desc}}</span>
@@ -15,7 +15,7 @@
 			</span>
 			<div style="clear: both;"></div>
 		</div>
-		{{else}}<div class="rowitem passive">There aren't any visible groups.</div>{{end}}
+		{{else}}<div class="rowitem passive">There aren't any visible guilds.</div>{{end}}
 	</div>
 </main>
 {{template "footer.html" . }}

@@ -67,7 +67,7 @@ type GuildListPage struct {
 	Title       string
 	CurrentUser User
 	Header      *HeaderVars
-	GroupList   []*Guild
+	GuildList   []*Guild
 }
 
 type GuildMemberListPage struct {

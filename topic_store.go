@@ -9,7 +9,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -63,18 +62,18 @@ type MemoryTopicStore struct {
 }
 
 // NewMemoryTopicStore gives you a new instance of MemoryTopicStore
-func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
+func NewMemoryTopicStore(capacity int) (*MemoryTopicStore, error) {
 	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	existsStmt, err := qgen.Builder.SimpleSelect("topics", "tid", "tid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return &MemoryTopicStore{
 		items:      make(map[int]*Topic),
@@ -82,7 +81,7 @@ func NewMemoryTopicStore(capacity int) *MemoryTopicStore {
 		get:        getStmt,
 		exists:     existsStmt,
 		topicCount: topicCountStmt,
-	}
+	}, nil
 }
 
 func (mts *MemoryTopicStore) CacheGet(id int) (*Topic, error) {
@@ -267,24 +266,24 @@ type SQLTopicStore struct {
 	topicCount *sql.Stmt
 }
 
-func NewSQLTopicStore() *SQLTopicStore {
+func NewSQLTopicStore() (*SQLTopicStore, error) {
 	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	existsStmt, err := qgen.Builder.SimpleSelect("topics", "tid", "tid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return &SQLTopicStore{
 		get:        getStmt,
 		exists:     existsStmt,
 		topicCount: topicCountStmt,
-	}
+	}, nil
 }
 
 func (sts *SQLTopicStore) Get(id int) (*Topic, error) {

@@ -12,6 +12,7 @@ import (
 	"database/sql"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"./query_gen/lib"
@@ -63,6 +64,19 @@ type Email struct {
 	Validated bool
 	Primary   bool
 	Token     string
+}
+
+func (user *User) Init() {
+	if user.Avatar != "" {
+		if user.Avatar[0] == '.' {
+			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
+		}
+	} else {
+		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
+	}
+	user.Link = buildProfileURL(nameToSlug(user.Name), user.ID)
+	user.Tag = gstore.DirtyGet(user.Group).Tag
+	user.initPerms()
 }
 
 func (user *User) Ban(duration time.Duration, issuedBy int) error {

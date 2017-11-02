@@ -18,6 +18,7 @@ type PluginMeta struct {
 	Settings string
 	Tag      string
 
+	Skip  bool              // Skip this folder?
 	Main  string            // The main file
 	Hooks map[string]string // Hooks mapped to functions
 }
@@ -61,6 +62,9 @@ func InitPluginLangs() error {
 		err = json.Unmarshal(pluginFile, &plugin)
 		if err != nil {
 			return err
+		}
+		if plugin.Skip {
+			continue
 		}
 
 		if plugin.UName == "" {

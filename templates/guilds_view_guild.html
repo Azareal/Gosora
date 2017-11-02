@@ -3,18 +3,18 @@
 {{template "socialgroups_css.html" . }}
 
 {{/** TODO: Port the page template functions to the template interpreter **/}}
-{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" href="/group/{{.SocialGroup.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
-{{if ne .LastPage .Page}}<link rel="prerender" href="/group/{{.SocialGroup.ID}}?page={{add .Page 1}}" />
-<div id="nextFloat" class="next_button"><a class="next_link" href="/group/{{.SocialGroup.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
+{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" href="/guild/{{.Guild.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
+{{if ne .LastPage .Page}}<link rel="prerender" href="/guild/{{.Guild.ID}}?page={{add .Page 1}}" />
+<div id="nextFloat" class="next_button"><a class="next_link" href="/guild/{{.Guild.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 
 <div class="sgBackdrop">
 	<nav class="miniMenu">
-		<div class="menuItem"><a href="/group/{{.SocialGroup.ID}}">{{.SocialGroup.Name}}</a></div>
+		<div class="menuItem"><a href="/guild/{{.Guild.ID}}">{{.Guild.Name}}</a></div>
 		<div class="menuItem"><a href="#">About</a></div>
-		<div class="menuItem"><a href="/group/members/{{.SocialGroup.ID}}">Members</a></div>
+		<div class="menuItem"><a href="/guild/members/{{.Guild.ID}}">Members</a></div>
 		<div class="menuItem rightMenu"><a href="#">Edit</a></div>
 		<div class="menuItem rightMenu"><a href="/topics/create/{{.Forum.ID}}">Reply</a></div>
-		<div class="menuItem rightMenu"><a href="/group/join/{{.SocialGroup.ID}}">Join</a></div>
+		<div class="menuItem rightMenu"><a href="/guild/join/{{.Guild.ID}}">Join</a></div>
 	</nav>
 	<div style="clear: both;"></div>
 </div>

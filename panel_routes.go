@@ -1485,8 +1485,6 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 		originalRank = "Member"
 	}
 
-	groupUpdateMutex.Lock()
-	defer groupUpdateMutex.Unlock()
 	if rank != originalRank {
 		if !user.Perms.EditGroupGlobalPerms {
 			return LocalError("You need the EditGroupGlobalPerms permission to change the group type.", w, r, user)
@@ -1517,12 +1515,12 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user Use
 		}
 	}
 
+	// TODO: Move this to *Group
 	_, err = updateGroupStmt.Exec(gname, gtag, gid)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
-	group.Name = gname
-	group.Tag = gtag
+	gstore.Reload(gid)
 
 	http.Redirect(w, r, "/panel/groups/edit/"+strconv.Itoa(gid), http.StatusSeeOther)
 	return nil

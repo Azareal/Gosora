@@ -66,30 +66,30 @@ type MemoryForumStore struct {
 }
 
 // NewMemoryForumStore gives you a new instance of MemoryForumStore
-func NewMemoryForumStore() *MemoryForumStore {
+func NewMemoryForumStore() (*MemoryForumStore, error) {
 	getStmt, err := qgen.Builder.SimpleSelect("forums", "name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "fid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	getAllStmt, err := qgen.Builder.SimpleSelect("forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "", "fid ASC", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	// TODO: Do a proper delete
 	deleteStmt, err := qgen.Builder.SimpleUpdate("forums", "name= '', active = 0", "fid = ?")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	forumCountStmt, err := qgen.Builder.SimpleCount("forums", "name != ''", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return &MemoryForumStore{
 		get:           getStmt,
 		getAll:        getAllStmt,
 		delete:        deleteStmt,
 		getForumCount: forumCountStmt,
-	}
+	}, nil
 }
 
 // TODO: Add support for subforums

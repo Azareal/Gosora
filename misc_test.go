@@ -37,10 +37,13 @@ func TestUserStore(t *testing.T) {
 		initPlugins()
 	}
 
-	users = NewMemoryUserStore(config.UserCacheCapacity)
+	var err error
+	users, err = NewMemoryUserStore(config.UserCacheCapacity)
+	expectNilErr(t, err)
 	users.(UserCache).Flush()
 	userStoreTest(t, 2)
-	users = NewSQLUserStore()
+	users, err = NewSQLUserStore()
+	expectNilErr(t, err)
 	userStoreTest(t, 3)
 }
 func userStoreTest(t *testing.T, newUserID int) {
@@ -453,9 +456,12 @@ func TestTopicStore(t *testing.T) {
 		initPlugins()
 	}
 
-	topics = NewMemoryTopicStore(config.TopicCacheCapacity)
+	var err error
+	topics, err = NewMemoryTopicStore(config.TopicCacheCapacity)
+	expectNilErr(t, err)
 	topicStoreTest(t)
-	topics = NewSQLTopicStore()
+	topics, err = NewSQLTopicStore()
+	expectNilErr(t, err)
 	topicStoreTest(t)
 }
 func topicStoreTest(t *testing.T) {

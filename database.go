@@ -21,7 +21,10 @@ func initDatabase() (err error) {
 	}
 
 	log.Print("Loading the usergroups.")
-	gstore = NewMemoryGroupStore()
+	gstore, err = NewMemoryGroupStore()
+	if err != nil {
+		return err
+	}
 	err = gstore.LoadGroups()
 	if err != nil {
 		return err
@@ -30,15 +33,30 @@ func initDatabase() (err error) {
 	// We have to put this here, otherwise LoadForums() won't be able to get the last poster data when building it's forums
 	log.Print("Initialising the user and topic stores")
 	if config.CacheTopicUser == CACHE_STATIC {
-		users = NewMemoryUserStore(config.UserCacheCapacity)
-		topics = NewMemoryTopicStore(config.TopicCacheCapacity)
+		users, err = NewMemoryUserStore(config.UserCacheCapacity)
+		if err != nil {
+			return err
+		}
+		topics, err = NewMemoryTopicStore(config.TopicCacheCapacity)
+		if err != nil {
+			return err
+		}
 	} else {
-		users = NewSQLUserStore()
-		topics = NewSQLTopicStore()
+		users, err = NewSQLUserStore()
+		if err != nil {
+			return err
+		}
+		topics, err = NewSQLTopicStore()
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Print("Loading the forums.")
-	fstore = NewMemoryForumStore()
+	fstore, err = NewMemoryForumStore()
+	if err != nil {
+		return err
+	}
 	err = fstore.LoadForums()
 	if err != nil {
 		return err

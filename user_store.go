@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -56,32 +55,32 @@ type MemoryUserStore struct {
 }
 
 // NewMemoryUserStore gives you a new instance of MemoryUserStore
-func NewMemoryUserStore(capacity int) *MemoryUserStore {
+func NewMemoryUserStore(capacity int) (*MemoryUserStore, error) {
 	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	existsStmt, err := qgen.Builder.SimpleSelect("users", "uid", "uid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// Add an admin version of register_stmt with more flexibility?
 	// create_account_stmt, err = db.Prepare("INSERT INTO
 	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	usernameExistsStmt, err := qgen.Builder.SimpleSelect("users", "name", "name = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	userCountStmt, err := qgen.Builder.SimpleCount("users", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return &MemoryUserStore{
@@ -92,7 +91,7 @@ func NewMemoryUserStore(capacity int) *MemoryUserStore {
 		register:       registerStmt,
 		usernameExists: usernameExistsStmt,
 		userCount:      userCountStmt,
-	}
+	}, nil
 }
 
 func (mus *MemoryUserStore) CacheGet(id int) (*User, error) {
@@ -124,17 +123,7 @@ func (mus *MemoryUserStore) Get(id int) (*User, error) {
 	user = &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
-	// TODO: Add an init method to User rather than writing this same bit of code over and over
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-	}
-	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = gstore.DirtyGet(user.Group).Tag
-	user.initPerms()
+	user.Init()
 	if err == nil {
 		mus.CacheSet(user)
 	}
@@ -203,18 +192,8 @@ func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 			return nil, err
 		}
 
-		// TODO: Add an init method to User rather than writing this same bit of code over and over
 		// Initialise the user
-		if user.Avatar != "" {
-			if user.Avatar[0] == '.' {
-				user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-			}
-		} else {
-			user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-		}
-		user.Link = buildProfileURL(nameToSlug(user.Name), user.ID)
-		user.Tag = gstore.DirtyGet(user.Group).Tag
-		user.initPerms()
+		user.Init()
 
 		// Add it to the cache...
 		_ = mus.CacheSet(user)
@@ -255,17 +234,7 @@ func (mus *MemoryUserStore) BypassGet(id int) (*User, error) {
 	user := &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
-	// TODO: Add an init method to User rather than writing this same bit of code over and over
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-	}
-	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = gstore.DirtyGet(user.Group).Tag
-	user.initPerms()
+	user.Init()
 	return user, err
 }
 
@@ -277,17 +246,7 @@ func (mus *MemoryUserStore) Reload(id int) error {
 		return err
 	}
 
-	// TODO: Add an init method to User rather than writing this same bit of code over and over
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-	}
-	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = gstore.DirtyGet(user.Group).Tag
-	user.initPerms()
+	user.Init()
 	_ = mus.CacheSet(user)
 	return nil
 }
@@ -425,32 +384,32 @@ type SQLUserStore struct {
 	userCount      *sql.Stmt
 }
 
-func NewSQLUserStore() *SQLUserStore {
+func NewSQLUserStore() (*SQLUserStore, error) {
 	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	existsStmt, err := qgen.Builder.SimpleSelect("users", "uid", "uid = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// Add an admin version of register_stmt with more flexibility?
 	// create_account_stmt, err = db.Prepare("INSERT INTO
 	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	usernameExistsStmt, err := qgen.Builder.SimpleSelect("users", "name", "name = ?", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	userCountStmt, err := qgen.Builder.SimpleCount("users", "", "")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return &SQLUserStore{
@@ -459,23 +418,14 @@ func NewSQLUserStore() *SQLUserStore {
 		register:       registerStmt,
 		usernameExists: usernameExistsStmt,
 		userCount:      userCountStmt,
-	}
+	}, nil
 }
 
 func (mus *SQLUserStore) Get(id int) (*User, error) {
 	user := &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-	}
-	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = gstore.DirtyGet(user.Group).Tag
-	user.initPerms()
+	user.Init()
 	return user, err
 }
 
@@ -508,16 +458,7 @@ func (mus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 		}
 
 		// Initialise the user
-		if user.Avatar != "" {
-			if user.Avatar[0] == '.' {
-				user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-			}
-		} else {
-			user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-		}
-		user.Link = buildProfileURL(nameToSlug(user.Name), user.ID)
-		user.Tag = gstore.DirtyGet(user.Group).Tag
-		user.initPerms()
+		user.Init()
 
 		// Add it to the list to be returned
 		list[user.ID] = user
@@ -530,16 +471,7 @@ func (mus *SQLUserStore) BypassGet(id int) (*User, error) {
 	user := &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-	}
-	user.Link = buildProfileURL(nameToSlug(user.Name), id)
-	user.Tag = gstore.DirtyGet(user.Group).Tag
-	user.initPerms()
+	user.Init()
 	return user, err
 }
 

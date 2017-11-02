@@ -37,9 +37,8 @@ func (err *RouteErrorImpl) Type() string {
 	// System errors may contain sensitive information we don't want the user to see
 	if err.system {
 		return "system"
-	} else {
-		return "user"
 	}
+	return "user"
 }
 
 func (err *RouteErrorImpl) Error() string {
@@ -101,9 +100,8 @@ func InternalError(err error, w http.ResponseWriter, r *http.Request) RouteError
 func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, isJs bool) RouteError {
 	if !isJs {
 		return InternalError(err, w, r)
-	} else {
-		return InternalErrorJS(err, w, r)
 	}
+	return InternalErrorJS(err, w, r)
 }
 
 // InternalErrorJS is the JSON version of InternalError on routes we know will only be requested via JSON. E.g. An API.
@@ -160,9 +158,8 @@ func PreErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) RouteErro
 func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, isJs bool) RouteError {
 	if !isJs {
 		return PreError(errmsg, w, r)
-	} else {
-		return PreErrorJS(errmsg, w, r)
 	}
+	return PreErrorJS(errmsg, w, r)
 }
 
 // LocalError is an error shown to the end-user when something goes wrong and it's not the software's fault
@@ -184,9 +181,8 @@ func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User
 func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
 	if !isJs {
 		return LocalError(errmsg, w, r, user)
-	} else {
-		return LocalErrorJS(errmsg, w, r)
 	}
+	return LocalErrorJS(errmsg, w, r)
 }
 
 func LocalErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
@@ -216,9 +212,8 @@ func NoPermissions(w http.ResponseWriter, r *http.Request, user User) RouteError
 func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
 	if !isJs {
 		return NoPermissions(w, r, user)
-	} else {
-		return NoPermissionsJS(w, r, user)
 	}
+	return NoPermissionsJS(w, r, user)
 }
 
 func NoPermissionsJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
@@ -248,9 +243,8 @@ func Banned(w http.ResponseWriter, r *http.Request, user User) RouteError {
 func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
 	if !isJs {
 		return Banned(w, r, user)
-	} else {
-		return BannedJS(w, r, user)
 	}
+	return BannedJS(w, r, user)
 }
 
 func BannedJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
@@ -331,9 +325,8 @@ func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWri
 func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
 	if !isJs {
 		return CustomError(errmsg, errcode, errtitle, w, r, user)
-	} else {
-		return CustomErrorJS(errmsg, errcode, errtitle, w, r, user)
 	}
+	return CustomErrorJS(errmsg, errcode, errtitle, w, r, user)
 }
 
 // CustomErrorJS is the pure JSON version of CustomError

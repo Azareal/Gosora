@@ -2,16 +2,16 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"log"
+	"sort"
 	"sync"
 
 	"./query_gen/lib"
 )
 
-var groupCreateMutex sync.Mutex
-var groupUpdateMutex sync.Mutex
 var gstore GroupStore
 
 // ? - We could fallback onto the database when an item can't be found in the cache?
@@ -24,23 +24,40 @@ type GroupStore interface {
 	Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (int, error)
 	GetAll() ([]*Group, error)
 	GetRange(lower int, higher int) ([]*Group, error)
+	Reload(id int) error // ? - Should we move this to GroupCache? It might require us to do some unnecessary casting though
+	GlobalCount() int
 }
 
 type GroupCache interface {
+	CacheSet(group *Group) error
 	Length() int
 }
 
 type MemoryGroupStore struct {
-	groups        []*Group // TODO: Use a sync.Map instead of a slice
-	groupCapCount int
+	groups     map[int]*Group // TODO: Use a sync.Map instead of a map?
+	groupCount int
+	get        *sql.Stmt
+
+	sync.RWMutex
 }
 
-func NewMemoryGroupStore() *MemoryGroupStore {
-	return &MemoryGroupStore{}
+func NewMemoryGroupStore() (*MemoryGroupStore, error) {
+	getGroupStmt, err := qgen.Builder.SimpleSelect("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "gid = ?", "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	return &MemoryGroupStore{
+		groups:     make(map[int]*Group),
+		groupCount: 0,
+		get:        getGroupStmt,
+	}, nil
 }
 
 func (mgs *MemoryGroupStore) LoadGroups() error {
-	mgs.groups = []*Group{&Group{ID: 0, Name: "Unknown"}}
+	mgs.Lock()
+	defer mgs.Unlock()
+	mgs.groups[0] = &Group{ID: 0, Name: "Unknown"}
 
 	rows, err := getGroupsStmt.Query()
 	if err != nil {
@@ -50,79 +67,136 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 
 	i := 1
 	for ; rows.Next(); i++ {
-		group := Group{ID: 0}
+		group := &Group{ID: 0}
 		err := rows.Scan(&group.ID, &group.Name, &group.PermissionsText, &group.PluginPermsText, &group.IsMod, &group.IsAdmin, &group.IsBanned, &group.Tag)
 		if err != nil {
 			return err
 		}
 
-		err = json.Unmarshal(group.PermissionsText, &group.Perms)
+		err = mgs.initGroup(group)
 		if err != nil {
 			return err
 		}
-		if dev.DebugMode {
-			log.Print(group.Name + ": ")
-			log.Printf("%+v\n", group.Perms)
-		}
-
-		err = json.Unmarshal(group.PluginPermsText, &group.PluginPerms)
-		if err != nil {
-			return err
-		}
-		if dev.DebugMode {
-			log.Print(group.Name + ": ")
-			log.Printf("%+v\n", group.PluginPerms)
-		}
-		//group.Perms.ExtData = make(map[string]bool)
-		// TODO: Can we optimise the bit where this cascades down to the user now?
-		if group.IsAdmin || group.IsMod {
-			group.IsBanned = false
-		}
-		mgs.groups = append(mgs.groups, &group)
+		mgs.groups[group.ID] = group
 	}
 	err = rows.Err()
 	if err != nil {
 		return err
 	}
-	mgs.groupCapCount = i
+	mgs.groupCount = i
 
 	if dev.DebugMode {
 		log.Print("Binding the Not Loggedin Group")
 	}
-	GuestPerms = mgs.groups[6].Perms
+	GuestPerms = mgs.dirtyGetUnsafe(6).Perms
 	return nil
 }
 
-func (mgs *MemoryGroupStore) DirtyGet(gid int) *Group {
-	if !mgs.Exists(gid) {
+// TODO: Hit the database when the item isn't in memory
+func (mgs *MemoryGroupStore) dirtyGetUnsafe(gid int) *Group {
+	group, ok := mgs.groups[gid]
+	if !ok {
 		return &blankGroup
 	}
-	return mgs.groups[gid]
+	return group
 }
 
+// TODO: Hit the database when the item isn't in memory
+func (mgs *MemoryGroupStore) DirtyGet(gid int) *Group {
+	mgs.RLock()
+	group, ok := mgs.groups[gid]
+	mgs.RUnlock()
+	if !ok {
+		return &blankGroup
+	}
+	return group
+}
+
+// TODO: Hit the database when the item isn't in memory
 func (mgs *MemoryGroupStore) Get(gid int) (*Group, error) {
-	if !mgs.Exists(gid) {
+	mgs.RLock()
+	group, ok := mgs.groups[gid]
+	mgs.RUnlock()
+	if !ok {
 		return nil, ErrNoRows
 	}
-	return mgs.groups[gid], nil
+	return group, nil
 }
 
+// TODO: Hit the database when the item isn't in memory
 func (mgs *MemoryGroupStore) GetCopy(gid int) (Group, error) {
-	if !mgs.Exists(gid) {
+	mgs.RLock()
+	group, ok := mgs.groups[gid]
+	mgs.RUnlock()
+	if !ok {
 		return blankGroup, ErrNoRows
 	}
-	return *mgs.groups[gid], nil
+	return *group, nil
 }
 
+func (mgs *MemoryGroupStore) Reload(id int) error {
+	var group = &Group{ID: id}
+	err := mgs.get.QueryRow(id).Scan(&group.Name, &group.PermissionsText, &group.PluginPermsText, &group.IsMod, &group.IsAdmin, &group.IsBanned, &group.Tag)
+	if err != nil {
+		return err
+	}
+
+	err = mgs.initGroup(group)
+	if err != nil {
+		LogError(err)
+	}
+	mgs.CacheSet(group)
+
+	err = rebuildGroupPermissions(id)
+	if err != nil {
+		LogError(err)
+	}
+	return nil
+}
+
+func (mgs *MemoryGroupStore) initGroup(group *Group) error {
+	err := json.Unmarshal(group.PermissionsText, &group.Perms)
+	if err != nil {
+		return err
+	}
+	if dev.DebugMode {
+		log.Print(group.Name + ": ")
+		log.Printf("%+v\n", group.Perms)
+	}
+
+	err = json.Unmarshal(group.PluginPermsText, &group.PluginPerms)
+	if err != nil {
+		return err
+	}
+	if dev.DebugMode {
+		log.Print(group.Name + ": ")
+		log.Printf("%+v\n", group.PluginPerms)
+	}
+	//group.Perms.ExtData = make(map[string]bool)
+	// TODO: Can we optimise the bit where this cascades down to the user now?
+	if group.IsAdmin || group.IsMod {
+		group.IsBanned = false
+	}
+	return nil
+}
+
+func (mgs *MemoryGroupStore) CacheSet(group *Group) error {
+	mgs.Lock()
+	mgs.groups[group.ID] = group
+	mgs.Unlock()
+	return nil
+}
+
+// TODO: Hit the database when the item isn't in memory
 func (mgs *MemoryGroupStore) Exists(gid int) bool {
-	return (gid <= mgs.groupCapCount) && (gid >= 0) && mgs.groups[gid].Name != ""
+	mgs.RLock()
+	group, ok := mgs.groups[gid]
+	mgs.RUnlock()
+	return ok && group.Name != ""
 }
 
 // ? Allow two groups with the same name?
-func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (int, error) {
-	groupCreateMutex.Lock()
-	defer groupCreateMutex.Unlock()
-
+func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (gid int, err error) {
 	var permstr = "{}"
 	tx, err := db.Begin()
 	if err != nil {
@@ -143,7 +217,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	if err != nil {
 		return 0, err
 	}
-	var gid = int(gid64)
+	gid = int(gid64)
 
 	var perms = BlankPerms
 	var blankForums []ForumPerms
@@ -199,8 +273,10 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 		isBanned = false
 	}
 
-	mgs.groups = append(mgs.groups, &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankForums, blankIntList})
-	mgs.groupCapCount++
+	mgs.Lock()
+	mgs.groups[gid] = &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankForums, blankIntList}
+	mgs.groupCount++
+	mgs.Unlock()
 
 	for _, forum := range fdata {
 		err = rebuildForumPermissions(forum.ID)
@@ -212,34 +288,62 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	return gid, nil
 }
 
-// ! NOT CONCURRENT
-func (mgs *MemoryGroupStore) GetAll() ([]*Group, error) {
+func (mgs *MemoryGroupStore) GetAll() (results []*Group, err error) {
+	var i int
+	mgs.RLock()
+	results = make([]*Group, len(mgs.groups))
+	for _, group := range mgs.groups {
+		results[i] = group
+		i++
+	}
+	mgs.RUnlock()
+	sort.Sort(SortGroup(results))
+	return results, nil
+}
+
+func (mgs *MemoryGroupStore) GetAllMap() (map[int]*Group, error) {
+	mgs.RLock()
+	defer mgs.RUnlock()
 	return mgs.groups, nil
 }
 
-// ? - It's currently faster to use GetAll(), but we'll be dropping the guarantee that the slices are ordered soon
 // ? - Set the lower and higher numbers to 0 to remove the bounds
-// ? - Currently uses slicing for efficiency, so it might behave a little weirdly
+// TODO: Might be a little slow right now, maybe we can cache the groups in a slice or break the map up into chunks
 func (mgs *MemoryGroupStore) GetRange(lower int, higher int) (groups []*Group, err error) {
 	if lower == 0 && higher == 0 {
 		return mgs.GetAll()
-	} else if lower == 0 {
+	}
+
+	if lower == 0 {
 		if higher < 0 {
 			return nil, errors.New("higher may not be lower than 0")
 		}
-		if higher > len(mgs.groups) {
-			higher = len(mgs.groups)
-		}
-		groups = mgs.groups[:higher]
 	} else if higher == 0 {
 		if lower < 0 {
 			return nil, errors.New("lower may not be lower than 0")
 		}
-		groups = mgs.groups[lower:]
 	}
+
+	mgs.RLock()
+	for gid, group := range mgs.groups {
+		if gid >= lower && (gid <= higher || higher == 0) {
+			groups = append(groups, group)
+		}
+	}
+	mgs.RUnlock()
+	sort.Sort(SortGroup(groups))
+
 	return groups, nil
 }
 
 func (mgs *MemoryGroupStore) Length() int {
-	return len(mgs.groups)
+	mgs.RLock()
+	defer mgs.RUnlock()
+	return mgs.groupCount
+}
+
+func (mgs *MemoryGroupStore) GlobalCount() int {
+	mgs.RLock()
+	defer mgs.RUnlock()
+	return mgs.groupCount
 }
