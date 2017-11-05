@@ -333,49 +333,49 @@ func _gen_mysql() (err error) {
 	}
 		
 	log.Print("Preparing getTopicRepliesOffset statement.")
-	getTopicRepliesOffsetStmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress`,`replies`.`likeCount`,`replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `replies`.`tid` = ? ORDER BY replies.rid ASC LIMIT ?,?")
+	getTopicRepliesOffsetStmt, err = db.Prepare("SELECT `replies`.`rid`, `replies`.`content`, `replies`.`createdBy`, `replies`.`createdAt`, `replies`.`lastEdit`, `replies`.`lastEditBy`, `users`.`avatar`, `users`.`name`, `users`.`group`, `users`.`url_prefix`, `users`.`url_name`, `users`.`level`, `replies`.`ipaddress`, `replies`.`likeCount`, `replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `replies`.`tid` = ? ORDER BY replies.rid ASC LIMIT ?,?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing getTopicList statement.")
-	getTopicListStmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`parentID`,`users`.`name`,`users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
+	getTopicListStmt, err = db.Prepare("SELECT `topics`.`tid`, `topics`.`title`, `topics`.`content`, `topics`.`createdBy`, `topics`.`is_closed`, `topics`.`sticky`, `topics`.`createdAt`, `topics`.`parentID`, `users`.`name`, `users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing getTopicUser statement.")
-	getTopicUserStmt, err = db.Prepare("SELECT `topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`createdAt`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`parentID`,`topics`.`ipaddress`,`topics`.`postCount`,`topics`.`likeCount`,`users`.`name`,`users`.`avatar`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `tid` = ?")
+	getTopicUserStmt, err = db.Prepare("SELECT `topics`.`title`, `topics`.`content`, `topics`.`createdBy`, `topics`.`createdAt`, `topics`.`is_closed`, `topics`.`sticky`, `topics`.`parentID`, `topics`.`ipaddress`, `topics`.`postCount`, `topics`.`likeCount`, `users`.`name`, `users`.`avatar`, `users`.`group`, `users`.`url_prefix`, `users`.`url_name`, `users`.`level` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing getTopicByReply statement.")
-	getTopicByReplyStmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`createdAt`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`parentID`,`topics`.`ipaddress`,`topics`.`postCount`,`topics`.`likeCount`,`topics`.`data` FROM `replies` LEFT JOIN `topics` ON `replies`.`tid` = `topics`.`tid`  WHERE `rid` = ?")
+	getTopicByReplyStmt, err = db.Prepare("SELECT `topics`.`tid`, `topics`.`title`, `topics`.`content`, `topics`.`createdBy`, `topics`.`createdAt`, `topics`.`is_closed`, `topics`.`sticky`, `topics`.`parentID`, `topics`.`ipaddress`, `topics`.`postCount`, `topics`.`likeCount`, `topics`.`data` FROM `replies` LEFT JOIN `topics` ON `replies`.`tid` = `topics`.`tid`  WHERE `rid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing getTopicReplies statement.")
-	getTopicRepliesStmt, err = db.Prepare("SELECT `replies`.`rid`,`replies`.`content`,`replies`.`createdBy`,`replies`.`createdAt`,`replies`.`lastEdit`,`replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group`,`users`.`url_prefix`,`users`.`url_name`,`users`.`level`,`replies`.`ipaddress` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ?")
+	getTopicRepliesStmt, err = db.Prepare("SELECT `replies`.`rid`, `replies`.`content`, `replies`.`createdBy`, `replies`.`createdAt`, `replies`.`lastEdit`, `replies`.`lastEditBy`, `users`.`avatar`, `users`.`name`, `users`.`group`, `users`.`url_prefix`, `users`.`url_name`, `users`.`level`, `replies`.`ipaddress` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing getForumTopics statement.")
-	getForumTopicsStmt, err = db.Prepare("SELECT `topics`.`tid`,`topics`.`title`,`topics`.`content`,`topics`.`createdBy`,`topics`.`is_closed`,`topics`.`sticky`,`topics`.`createdAt`,`topics`.`lastReplyAt`,`topics`.`parentID`,`users`.`name`,`users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ? ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
+	getForumTopicsStmt, err = db.Prepare("SELECT `topics`.`tid`, `topics`.`title`, `topics`.`content`, `topics`.`createdBy`, `topics`.`is_closed`, `topics`.`sticky`, `topics`.`createdAt`, `topics`.`lastReplyAt`, `topics`.`parentID`, `users`.`name`, `users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ? ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing getProfileReplies statement.")
-	getProfileRepliesStmt, err = db.Prepare("SELECT `users_replies`.`rid`,`users_replies`.`content`,`users_replies`.`createdBy`,`users_replies`.`createdAt`,`users_replies`.`lastEdit`,`users_replies`.`lastEditBy`,`users`.`avatar`,`users`.`name`,`users`.`group` FROM `users_replies` LEFT JOIN `users` ON `users_replies`.`createdBy` = `users`.`uid`  WHERE `users_replies`.`uid` = ?")
+	getProfileRepliesStmt, err = db.Prepare("SELECT `users_replies`.`rid`, `users_replies`.`content`, `users_replies`.`createdBy`, `users_replies`.`createdAt`, `users_replies`.`lastEdit`, `users_replies`.`lastEditBy`, `users`.`avatar`, `users`.`name`, `users`.`group` FROM `users_replies` LEFT JOIN `users` ON `users_replies`.`createdBy` = `users`.`uid`  WHERE `users_replies`.`uid` = ?")
 	if err != nil {
 		return err
 	}
 		
 	log.Print("Preparing getWatchers statement.")
-	getWatchersStmt, err = db.Prepare("SELECT `activity_subscriptions`.`user` FROM `activity_stream` INNER JOIN `activity_subscriptions` ON `activity_subscriptions`.`targetType` = `activity_stream`.`elementType` AND `activity_subscriptions`.`targetID` = `activity_stream`.`elementID` AND `activity_subscriptions`.`user` != `activity_stream`.`actor`  WHERE `asid` = ?")
+	getWatchersStmt, err = db.Prepare("SELECT  `activity_subscriptions`.`user` FROM `activity_stream` INNER JOIN `activity_subscriptions` ON `activity_subscriptions`.`targetType` = `activity_stream`.`elementType` AND `activity_subscriptions`.`targetID` = `activity_stream`.`elementID` AND `activity_subscriptions`.`user` != `activity_stream`.`actor`  WHERE `asid` = ?")
 	if err != nil {
 		return err
 	}

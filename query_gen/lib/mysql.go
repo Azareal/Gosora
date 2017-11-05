@@ -389,34 +389,12 @@ func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 s
 		return "", errors.New("No joiners found for SimpleLeftJoin")
 	}
 
-	var querystr = "SELECT "
-
-	for _, column := range processColumns(columns) {
-		var source, alias string
-
-		// Escape the column names, just in case we've used a reserved keyword
-		if column.Table != "" {
-			source = "`" + column.Table + "`.`" + column.Left + "`"
-		} else if column.Type == "function" {
-			source = column.Left
-		} else {
-			source = "`" + column.Left + "`"
-		}
-
-		if column.Alias != "" {
-			alias = " AS `" + column.Alias + "`"
-		}
-		querystr += source + alias + ","
-	}
-	// Remove the trailing comma
-	querystr = querystr[0 : len(querystr)-1]
-
 	whereStr, err := adapter.buildJoinWhere(where)
 	if err != nil {
-		return querystr, err
+		return "", err
 	}
 
-	querystr += " FROM `" + table1 + "` LEFT JOIN `" + table2 + "` ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
+	var querystr = "SELECT" + adapter.buildJoinColumns(columns) + " FROM `" + table1 + "` LEFT JOIN `" + table2 + "` ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
@@ -440,35 +418,12 @@ func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 		return "", errors.New("No joiners found for SimpleInnerJoin")
 	}
 
-	var querystr = "SELECT "
-
-	for _, column := range processColumns(columns) {
-		var source, alias string
-
-		// Escape the column names, just in case we've used a reserved keyword
-		if column.Table != "" {
-			source = "`" + column.Table + "`.`" + column.Left + "`"
-		} else if column.Type == "function" {
-			source = column.Left
-		} else {
-			source = "`" + column.Left + "`"
-		}
-
-		if column.Alias != "" {
-			alias = " AS `" + column.Alias + "`"
-		}
-		querystr += source + alias + ","
-	}
-
-	// Remove the trailing comma
-	querystr = querystr[0 : len(querystr)-1]
-
 	whereStr, err := adapter.buildJoinWhere(where)
 	if err != nil {
-		return querystr, err
+		return "", err
 	}
 
-	querystr += " FROM `" + table1 + "` INNER JOIN `" + table2 + "` ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
+	var querystr = "SELECT " + adapter.buildJoinColumns(columns) + " FROM `" + table1 + "` INNER JOIN `" + table2 + "` ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
@@ -476,44 +431,12 @@ func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 }
 
 func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
-	/* Insert Portion */
-	var querystr = "INSERT INTO `" + ins.Table + "`("
-
-	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(ins.Columns) {
-		if column.Type == "function" {
-			querystr += column.Left + ","
-		} else {
-			querystr += "`" + column.Left + "`,"
-		}
-	}
-	querystr = querystr[0:len(querystr)-1] + ") SELECT"
-
-	/* Select Portion */
-
-	for _, column := range processColumns(sel.Columns) {
-		var source, alias string
-
-		// Escape the column names, just in case we've used a reserved keyword
-		if column.Type == "function" || column.Type == "substitute" {
-			source = column.Left
-		} else {
-			source = "`" + column.Left + "`"
-		}
-
-		if column.Alias != "" {
-			alias = " AS `" + column.Alias + "`"
-		}
-		querystr += " " + source + alias + ","
-	}
-	querystr = querystr[0 : len(querystr)-1]
-
 	whereStr, err := adapter.buildWhere(sel.Where)
 	if err != nil {
-		return querystr, err
+		return "", err
 	}
 
-	querystr += " FROM `" + sel.Table + "`" + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
+	var querystr = "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table + "`" + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "insert", querystr)
@@ -521,46 +444,12 @@ func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel 
 }
 
 func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
-	/* Insert Portion */
-	var querystr = "INSERT INTO `" + ins.Table + "`("
-
-	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(ins.Columns) {
-		if column.Type == "function" {
-			querystr += column.Left + ","
-		} else {
-			querystr += "`" + column.Left + "`,"
-		}
-	}
-	querystr = querystr[0:len(querystr)-1] + ") SELECT"
-
-	/* Select Portion */
-
-	for _, column := range processColumns(sel.Columns) {
-		var source, alias string
-
-		// Escape the column names, just in case we've used a reserved keyword
-		if column.Table != "" {
-			source = "`" + column.Table + "`.`" + column.Left + "`"
-		} else if column.Type == "function" {
-			source = column.Left
-		} else {
-			source = "`" + column.Left + "`"
-		}
-
-		if column.Alias != "" {
-			alias = " AS `" + column.Alias + "`"
-		}
-		querystr += " " + source + alias + ","
-	}
-	querystr = querystr[0 : len(querystr)-1]
-
 	whereStr, err := adapter.buildJoinWhere(sel.Where)
 	if err != nil {
-		return querystr, err
+		return "", err
 	}
 
-	querystr += " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
+	var querystr = "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "insert", querystr)
@@ -612,23 +501,8 @@ func (adapter *MysqlAdapter) buildLimit(limit string) (querystr string) {
 	return querystr
 }
 
-func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
-	/* Insert Portion */
-	var querystr = "INSERT INTO `" + ins.Table + "`("
-
-	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(ins.Columns) {
-		if column.Type == "function" {
-			querystr += column.Left + ","
-		} else {
-			querystr += "`" + column.Left + "`,"
-		}
-	}
-	querystr = querystr[0:len(querystr)-1] + ") SELECT"
-
-	/* Select Portion */
-
-	for _, column := range processColumns(sel.Columns) {
+func (adapter *MysqlAdapter) buildJoinColumns(columns string) (querystr string) {
+	for _, column := range processColumns(columns) {
 		var source, alias string
 
 		// Escape the column names, just in case we've used a reserved keyword
@@ -645,14 +519,16 @@ func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, s
 		}
 		querystr += " " + source + alias + ","
 	}
-	querystr = querystr[0 : len(querystr)-1]
+	return querystr[0 : len(querystr)-1]
+}
 
+func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	whereStr, err := adapter.buildJoinWhere(sel.Where)
 	if err != nil {
-		return querystr, err
+		return "", err
 	}
 
-	querystr += " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
+	var querystr = "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "insert", querystr)
@@ -667,17 +543,12 @@ func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string
 		return "", errors.New("You need a name for this table")
 	}
 
-	querystr = "SELECT COUNT(*) AS `count` FROM `" + table + "`"
 	whereStr, err := adapter.buildWhere(where)
 	if err != nil {
 		return "", err
 	}
-	querystr += whereStr
 
-	if limit != "" {
-		querystr += " LIMIT " + limit
-	}
-
+	querystr = "SELECT COUNT(*) AS `count` FROM `" + table + "`" + whereStr + adapter.buildLimit(limit)
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
 	return querystr, nil
