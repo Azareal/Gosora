@@ -338,7 +338,6 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user User, sfi
 	if err == ErrNoRows {
 		return LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
 	} else if err != nil {
-
 		return InternalError(err, w, r)
 	}
 
@@ -465,6 +464,8 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
+	// ! IMPORTANT
+	// TODO: Refactor this
 	forumUpdateMutex.Lock()
 	defer forumUpdateMutex.Unlock()
 	if changed {
@@ -488,7 +489,6 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		}
 		err = fstore.Reload(fid)
 		if err != nil {
-			// TODO: Log this? -- Another admin might have deleted it
 			return LocalErrorJSQ("Unable to reload forum", w, r, user, isJs)
 		}
 	}

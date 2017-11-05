@@ -68,5 +68,12 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Installing the Riot Search Engine
+go get -u github.com/go-ego/riot
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo The dependencies were successfully updated
 pause

@@ -351,7 +351,7 @@ var topic_alt_29 = []byte(`</textarea>
 			<div class="button_container">
 				`)
 var topic_alt_30 = []byte(`<a href="/topic/like/submit/`)
-var topic_alt_31 = []byte(`" class="action_button like_item">+1</a>`)
+var topic_alt_31 = []byte(`" class="action_button like_item add_like">+1</a>`)
 var topic_alt_32 = []byte(`<a href="/topic/edit/`)
 var topic_alt_33 = []byte(`" class="action_button open_edit">Edit</a>`)
 var topic_alt_34 = []byte(`<a href="/topic/delete/submit/`)
@@ -420,7 +420,7 @@ var topic_alt_72 = []byte(`</div>
 			<div class="button_container">
 				`)
 var topic_alt_73 = []byte(`<a href="/reply/like/submit/`)
-var topic_alt_74 = []byte(`" class="action_button like_item">+1</a>`)
+var topic_alt_74 = []byte(`" class="action_button like_item add_like">+1</a>`)
 var topic_alt_75 = []byte(`<a href="/reply/edit/submit/`)
 var topic_alt_76 = []byte(`" class="action_button edit_item">Edit</a>`)
 var topic_alt_77 = []byte(`<a href="/reply/delete/submit/`)

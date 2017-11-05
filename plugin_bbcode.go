@@ -261,8 +261,7 @@ func bbcodeFullParse(msg string) string {
 						i += 6
 					}
 					//if msglen >= (i+5) {
-					//	log.Print("boo2")
-					//	log.Print(string(msgbytes[i:i+5]))
+					//	log.Print("boo2: ", string(msgbytes[i:i+5]))
 					//}
 					complexBbc = true
 				}
@@ -317,73 +316,15 @@ func bbcodeFullParse(msg string) string {
 		//log.Print("BBCode Pre:","`"+string(msgbytes)+"`")
 		//log.Print("----")
 		for ; i < len(msgbytes); i++ {
-		MainLoop:
 			if msgbytes[i] == '[' {
-			OuterComplex:
 				if msgbytes[i+1] == 'u' {
 					if msgbytes[i+2] == 'r' && msgbytes[i+3] == 'l' && msgbytes[i+4] == ']' {
-						start = i + 5
-						outbytes = append(outbytes, msgbytes[lastTag:i]...)
-						i = start
-						i += partialURLBytesLen(msgbytes[start:])
-						//log.Print("Partial Bytes:",string(msgbytes[start:]))
-						//log.Print("-----")
-						if !bytes.Equal(msgbytes[i:i+6], []byte("[/url]")) {
-							//log.Print("Invalid Bytes:",string(msgbytes[i:i+6]))
-							//log.Print("-----")
-							outbytes = append(outbytes, invalidURL...)
-							goto MainLoop
-						}
-
-						outbytes = append(outbytes, urlOpen...)
-						outbytes = append(outbytes, msgbytes[start:i]...)
-						outbytes = append(outbytes, urlOpen2...)
-						outbytes = append(outbytes, msgbytes[start:i]...)
-						outbytes = append(outbytes, urlClose...)
-						i += 6
-						lastTag = i
+						i, start, lastTag, outbytes = bbcodeParseURL(i, start, lastTag, msgbytes, outbytes)
+						continue
 					}
 				} else if msgbytes[i+1] == 'r' {
 					if bytes.Equal(msgbytes[i+2:i+6], []byte("and]")) {
-						outbytes = append(outbytes, msgbytes[lastTag:i]...)
-						start = i + 6
-						i = start
-						for ; ; i++ {
-							if msgbytes[i] == '[' {
-								if !bytes.Equal(msgbytes[i+1:i+7], []byte("/rand]")) {
-									outbytes = append(outbytes, bbcodeMissingTag...)
-									goto OuterComplex
-								}
-								break
-							} else if (len(msgbytes) - 1) < (i + 10) {
-								outbytes = append(outbytes, bbcodeMissingTag...)
-								goto OuterComplex
-							}
-						}
-
-						number, err := strconv.ParseInt(string(msgbytes[start:i]), 10, 64)
-						if err != nil {
-							outbytes = append(outbytes, bbcodeInvalidNumber...)
-							goto MainLoop
-						}
-
-						// TODO: Add support for negative numbers?
-						if number < 0 {
-							outbytes = append(outbytes, bbcodeNoNegative...)
-							goto MainLoop
-						}
-
-						var dat []byte
-						if number == 0 {
-							dat = []byte("0")
-						} else {
-							dat = []byte(strconv.FormatInt((random.Int63n(number)), 10))
-						}
-
-						outbytes = append(outbytes, dat...)
-						//log.Print("Outputted the random number")
-						i += 7
-						lastTag = i
+						i, start, lastTag, outbytes = bbcodeParseRand(i, start, lastTag, msgbytes, outbytes)
 					}
 				}
 			}
@@ -410,4 +351,72 @@ func bbcodeFullParse(msg string) string {
 	}
 
 	return msg
+}
+
+func bbcodeParseURL(i int, start int, lastTag int, msgbytes []byte, outbytes []byte) (int, int, int, []byte) {
+	start = i + 5
+	outbytes = append(outbytes, msgbytes[lastTag:i]...)
+	i = start
+	i += partialURLBytesLen(msgbytes[start:])
+	//log.Print("Partial Bytes: ", string(msgbytes[start:]))
+	//log.Print("-----")
+	if !bytes.Equal(msgbytes[i:i+6], []byte("[/url]")) {
+		//log.Print("Invalid Bytes: ", string(msgbytes[i:i+6]))
+		//log.Print("-----")
+		outbytes = append(outbytes, invalidURL...)
+		return i, start, lastTag, outbytes
+	}
+
+	outbytes = append(outbytes, urlOpen...)
+	outbytes = append(outbytes, msgbytes[start:i]...)
+	outbytes = append(outbytes, urlOpen2...)
+	outbytes = append(outbytes, msgbytes[start:i]...)
+	outbytes = append(outbytes, urlClose...)
+	i += 6
+	lastTag = i
+
+	return i, start, lastTag, outbytes
+}
+
+func bbcodeParseRand(i int, start int, lastTag int, msgbytes []byte, outbytes []byte) (int, int, int, []byte) {
+	outbytes = append(outbytes, msgbytes[lastTag:i]...)
+	start = i + 6
+	i = start
+	for ; ; i++ {
+		if msgbytes[i] == '[' {
+			if !bytes.Equal(msgbytes[i+1:i+7], []byte("/rand]")) {
+				outbytes = append(outbytes, bbcodeMissingTag...)
+				return i, start, lastTag, outbytes
+			}
+			break
+		} else if (len(msgbytes) - 1) < (i + 10) {
+			outbytes = append(outbytes, bbcodeMissingTag...)
+			return i, start, lastTag, outbytes
+		}
+	}
+
+	number, err := strconv.ParseInt(string(msgbytes[start:i]), 10, 64)
+	if err != nil {
+		outbytes = append(outbytes, bbcodeInvalidNumber...)
+		return i, start, lastTag, outbytes
+	}
+
+	// TODO: Add support for negative numbers?
+	if number < 0 {
+		outbytes = append(outbytes, bbcodeNoNegative...)
+		return i, start, lastTag, outbytes
+	}
+
+	var dat []byte
+	if number == 0 {
+		dat = []byte("0")
+	} else {
+		dat = []byte(strconv.FormatInt((random.Int63n(number)), 10))
+	}
+
+	outbytes = append(outbytes, dat...)
+	//log.Print("Outputted the random number")
+	i += 7
+	lastTag = i
+	return i, start, lastTag, outbytes
 }

@@ -39,6 +39,7 @@ type LanguagePack struct {
 	GlobalPerms   map[string]string
 	LocalPerms    map[string]string
 	SettingLabels map[string]string
+	PermPresets   map[string]string
 	Accounts      map[string]string // TODO: Apply these phrases in the software proper
 }
 
@@ -137,6 +138,10 @@ func GetSettingLabel(name string) string {
 
 func GetAllSettingLabels() map[string]string {
 	return currentLangPack.Load().(*LanguagePack).SettingLabels
+}
+
+func GetAllPermPresets() map[string]string {
+	return currentLangPack.Load().(*LanguagePack).PermPresets
 }
 
 func GetAccountPhrase(name string) string {

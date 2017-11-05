@@ -349,7 +349,7 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 
 	permUpdateMutex.Lock()
 	defer permUpdateMutex.Unlock()
-	return rebuildForumPermissions(fid)
+	return fpstore.Reload(fid)
 }
 
 func replaceForumPermsForGroup(gid int, presetSet map[int]string, permSets map[int]ForumPerms) error {
@@ -393,163 +393,7 @@ func replaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string,
 	return nil
 }
 
-// TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?
-func rebuildForumPermissions(fid int) error {
-	if dev.DebugMode {
-		log.Print("Loading the forum permissions")
-	}
-	fids, err := fstore.GetAllIDs()
-	if err != nil {
-		return err
-	}
-
-	rows, err := db.Query("select gid, permissions from forums_permissions where fid = ? order by gid asc", fid)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	if dev.DebugMode {
-		log.Print("Updating the forum permissions")
-	}
-	for rows.Next() {
-		var gid int
-		var perms []byte
-		var pperms ForumPerms
-		err := rows.Scan(&gid, &perms)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(perms, &pperms)
-		if err != nil {
-			return err
-		}
-		pperms.ExtData = make(map[string]bool)
-		pperms.Overrides = true
-		_, ok := forumPerms[gid]
-		if !ok {
-			forumPerms[gid] = make(map[int]ForumPerms)
-		}
-		forumPerms[gid][fid] = pperms
-	}
-
-	return cascadePermSetToGroups(forumPerms, fids)
-}
-
-func buildForumPermissions() error {
-	fids, err := fstore.GetAllIDs()
-	if err != nil {
-		return err
-	}
-	if dev.SuperDebug {
-		log.Print("fids: ", fids)
-	}
-
-	rows, err := getForumsPermissionsStmt.Query()
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	if dev.DebugMode {
-		log.Print("Adding the forum permissions")
-		if dev.SuperDebug {
-			log.Print("forumPerms[gid][fid]")
-		}
-	}
-
-	// Temporarily store the forum perms in a map before transferring it to a much faster and thread-safe slice
-	forumPerms = make(map[int]map[int]ForumPerms)
-	for rows.Next() {
-		var gid, fid int
-		var perms []byte
-		var pperms ForumPerms
-		err = rows.Scan(&gid, &fid, &perms)
-		if err != nil {
-			return err
-		}
-
-		if dev.SuperDebug {
-			log.Print("perms: ", string(perms))
-		}
-		err = json.Unmarshal(perms, &pperms)
-		if err != nil {
-			return err
-		}
-		pperms.ExtData = make(map[string]bool)
-		pperms.Overrides = true
-		_, ok := forumPerms[gid]
-		if !ok {
-			forumPerms[gid] = make(map[int]ForumPerms)
-		}
-
-		if dev.SuperDebug {
-			log.Print("gid: ", gid)
-			log.Print("fid: ", fid)
-			log.Printf("perms: %+v;", pperms)
-		}
-		forumPerms[gid][fid] = pperms
-	}
-
-	return cascadePermSetToGroups(forumPerms, fids)
-}
-
-func cascadePermSetToGroups(forumPerms map[int]map[int]ForumPerms, fids []int) error {
-	groups, err := gstore.GetAll()
-	if err != nil {
-		return err
-	}
-
-	for _, group := range groups {
-		if dev.DebugMode {
-			log.Printf("Updating the forum permissions for Group #%d", group.ID)
-		}
-		group.Forums = []ForumPerms{BlankForumPerms}
-		group.CanSee = []int{}
-		cascadePermSetToGroup(forumPerms, group, fids)
-
-		if dev.SuperDebug {
-			log.Printf("group.CanSee %+v\n", group.CanSee)
-			log.Printf("group.Forums %+v\n", group.Forums)
-			log.Print("len(group.CanSee): ", len(group.CanSee))
-			log.Print("len(group.Forums): ", len(group.Forums)) // This counts blank aka 0
-		}
-	}
-	return nil
-}
-
-func cascadePermSetToGroup(forumPerms map[int]map[int]ForumPerms, group *Group, fids []int) {
-	for _, fid := range fids {
-		if dev.SuperDebug {
-			log.Printf("Forum #%+v\n", fid)
-		}
-		forumPerm, ok := forumPerms[group.ID][fid]
-		if ok {
-			// Override group perms
-			//log.Print("Overriding permissions for forum #" + strconv.Itoa(fid))
-			group.Forums = append(group.Forums, forumPerm)
-		} else {
-			// Inherit from Group
-			//log.Print("Inheriting from default for forum #" + strconv.Itoa(fid))
-			forumPerm = BlankForumPerms
-			group.Forums = append(group.Forums, forumPerm)
-		}
-		if forumPerm.Overrides {
-			if forumPerm.ViewTopic {
-				group.CanSee = append(group.CanSee, fid)
-			}
-		} else if group.Perms.ViewTopic {
-			group.CanSee = append(group.CanSee, fid)
-		}
-
-		if dev.SuperDebug {
-			log.Print("group.ID: ", group.ID)
-			log.Printf("forumPerm: %+v\n", forumPerm)
-			log.Print("group.CanSee: ", group.CanSee)
-		}
-	}
-}
-
+// TODO: Refactor this and write tests for it
 func forumPermsToGroupForumPreset(fperms ForumPerms) string {
 	if !fperms.Overrides {
 		return "default"
@@ -614,24 +458,12 @@ func stripInvalidPreset(preset string) string {
 
 // TODO: Move this into the phrase system?
 func presetToLang(preset string) string {
-	switch preset {
-	case "all":
-		return "Public"
-	case "announce":
-		return "Announcements"
-	case "members":
-		return "Member Only"
-	case "staff":
-		return "Staff Only"
-	case "admins":
-		return "Admin Only"
-	case "archive":
-		return "Archive"
-	case "custom":
-		return "Custom"
-	default:
-		return ""
+	phrases := GetAllPermPresets()
+	phrase, ok := phrases[preset]
+	if !ok {
+		phrase = phrases["unknown"]
 	}
+	return phrase
 }
 
 // TODO: Is this racey?

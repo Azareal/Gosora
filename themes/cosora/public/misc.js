@@ -9,8 +9,13 @@ $(document).ready(function(){
 		$(".topic_create_form").addClass("selectedInput");
 	});
 	//$.trumbowyg.svgPath = false;
-	$('#input_content').trumbowyg({
+	$('.topic_create_form #input_content').trumbowyg({
 		btns: [['viewHTML'],['undo','redo'],['formatting'],['strong','em','del'],['link'],['insertImage'],['unorderedList','orderedList'],['removeformat']],
+		//hideButtonTexts: true
+	});
+	$('.topic_reply_form #input_content').trumbowyg({
+		btns: [['viewHTML'],['undo','redo'],['formatting'],['strong','em','del'],['link'],['insertImage'],['unorderedList','orderedList'],['removeformat']],
+		autogrow: true,
 		//hideButtonTexts: true
 	});
 });

@@ -421,6 +421,8 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	_, err = users.Get(newUserID)
 	recordMustNotExist(t, err, "UID #%d shouldn't exist", newUserID)
+
+	// TODO: Add tests for the Cache* methods
 }
 
 // TODO: Add an error message to this?
@@ -443,6 +445,36 @@ func expect(t *testing.T, item bool, errmsg string) {
 		debug.PrintStack()
 		t.Fatal(errmsg)
 	}
+}
+
+func TestPermsMiddleware(t *testing.T) {
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !pluginsInited {
+		initPlugins()
+	}
+
+	dummyResponseRecorder := httptest.NewRecorder()
+	bytesBuffer := bytes.NewBuffer([]byte(""))
+	dummyRequest := httptest.NewRequest("", "/forum/1", bytesBuffer)
+	user := getDummyUser()
+
+	ferr := SuperModOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr != nil, "Blank users shouldn't be supermods")
+
+	user.IsSuperMod = false
+	ferr = SuperModOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr != nil, "Non-supermods shouldn't be allowed through supermod gates")
+
+	user.IsSuperMod = true
+	ferr = SuperModOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr == nil, "Supermods should be allowed through supermod gates")
+
+	// TODO: Loop over the Control Panel routes and make sure only supermods can get in
 }
 
 func TestTopicStore(t *testing.T) {
@@ -525,31 +557,44 @@ func TestForumStore(t *testing.T) {
 	if forum.ID != 1 {
 		t.Error("forum.ID doesn't not match the requested FID. Got '" + strconv.Itoa(forum.ID) + "' instead.'")
 	}
-	if forum.Name != "Reports" {
-		t.Error("FID #0 is named '" + forum.Name + "' and not 'Reports'")
-	}
+	// TODO: Check the preset and forum permissions
+	expect(t, forum.Name == "Reports", fmt.Sprintf("FID #0 is named '%s' and not 'Reports'", forum.Name))
+	expect(t, !forum.Active, fmt.Sprintf("The reports forum shouldn't be active"))
+	var expectDesc = "All the reports go here"
+	expect(t, forum.Desc == expectDesc, fmt.Sprintf("The forum description should be '%s' not '%s'", expectDesc, forum.Desc))
 
 	forum, err = fstore.Get(2)
 	recordMustExist(t, err, "Couldn't find FID #1")
 
-	_ = forum
+	expect(t, forum.ID == 2, fmt.Sprintf("The FID should be 2 not %d", forum.ID))
+	expect(t, forum.Name == "General", fmt.Sprintf("The name of the forum should be 'General' not '%s'", forum.Name))
+	expect(t, forum.Active, fmt.Sprintf("The general forum should be active"))
+	expectDesc = "A place for general discussions which don't fit elsewhere"
+	expect(t, forum.Desc == expectDesc, fmt.Sprintf("The forum description should be '%s' not '%s'", expectDesc, forum.Desc))
 
 	ok := fstore.Exists(-1)
-	if ok {
-		t.Error("FID #-1 shouldn't exist")
-	}
-
+	expect(t, !ok, "FID #-1 shouldn't exist")
 	ok = fstore.Exists(0)
-	if ok {
-		t.Error("FID #0 shouldn't exist")
-	}
-
+	expect(t, !ok, "FID #0 shouldn't exist")
 	ok = fstore.Exists(1)
-	if !ok {
-		t.Error("FID #1 should exist")
+	expect(t, ok, "FID #1 should exist")
+
+	// TODO: Test forum creation
+	// TODO: Test forum deletion
+	// TODO: Test forum update
+}
+
+// TODO: Implement this
+func TestForumPermsStore(t *testing.T) {
+	if !gloinited {
+		gloinit()
+	}
+	if !pluginsInited {
+		initPlugins()
 	}
 }
 
+// TODO: Test the group permissions
 func TestGroupStore(t *testing.T) {
 	if !gloinited {
 		gloinit()
@@ -646,7 +691,19 @@ func TestGroupStore(t *testing.T) {
 	expect(t, group.IsMod, "This should be a mod group")
 	expect(t, !group.IsBanned, "This shouldn't be a ban group")
 
+	// Make sure the data is static
+	gstore.Reload(gid)
+
+	group, err = gstore.Get(gid)
+	expectNilErr(t, err)
+	expect(t, group.ID == gid, "The group ID should match the requested ID")
+	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
+	expect(t, group.IsMod, "This should be a mod group")
+	expect(t, !group.IsBanned, "This shouldn't be a ban group")
+
 	// TODO: Test group deletion
+	// TODO: Test group reload
+	// TODO: Test group cache set
 }
 
 func TestReplyStore(t *testing.T) {
@@ -714,6 +771,7 @@ func TestSlugs(t *testing.T) {
 	msgList = addMEPair(msgList, "--", "untitled")
 	msgList = addMEPair(msgList, "é", "é")
 	msgList = addMEPair(msgList, "-é-", "é")
+	msgList = addMEPair(msgList, "-你好-", "untitled")
 
 	for _, item := range msgList {
 		t.Log("Testing string '" + item.Msg + "'")

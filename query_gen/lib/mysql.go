@@ -118,21 +118,7 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 		return "", errors.New("No input data found for SimpleInsert")
 	}
 
-	var querystr = "INSERT INTO `" + table + "`("
-
-	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(columns) {
-		if column.Type == "function" {
-			querystr += column.Left + ","
-		} else {
-			querystr += "`" + column.Left + "`,"
-		}
-	}
-
-	// Remove the trailing comma
-	querystr = querystr[0 : len(querystr)-1]
-
-	querystr += ") VALUES ("
+	var querystr = "INSERT INTO `" + table + "`(" + adapter.buildColumns(columns) + ") VALUES ("
 	for _, field := range processFields(fields) {
 		nameLen := len(field.Name)
 		if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
@@ -147,6 +133,18 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 
 	adapter.pushStatement(name, "insert", querystr+")")
 	return querystr + ")", nil
+}
+
+func (adapter *MysqlAdapter) buildColumns(columns string) (querystr string) {
+	// Escape the column names, just in case we've used a reserved keyword
+	for _, column := range processColumns(columns) {
+		if column.Type == "function" {
+			querystr += column.Left + ","
+		} else {
+			querystr += "`" + column.Left + "`,"
+		}
+	}
+	return querystr[0 : len(querystr)-1]
 }
 
 // ! DEPRECATED
@@ -164,20 +162,7 @@ func (adapter *MysqlAdapter) SimpleReplace(name string, table string, columns st
 		return "", errors.New("No input data found for SimpleInsert")
 	}
 
-	var querystr = "REPLACE INTO `" + table + "`("
-
-	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(columns) {
-		if column.Type == "function" {
-			querystr += column.Left + ","
-		} else {
-			querystr += "`" + column.Left + "`,"
-		}
-	}
-	// Remove the trailing comma
-	querystr = querystr[0 : len(querystr)-1]
-
-	querystr += ") VALUES ("
+	var querystr = "REPLACE INTO `" + table + "`(" + adapter.buildColumns(columns) + ") VALUES ("
 	for _, field := range processFields(fields) {
 		querystr += field.Name + ","
 	}
@@ -260,29 +245,13 @@ func (adapter *MysqlAdapter) SimpleUpdate(name string, table string, set string,
 		}
 		querystr += ","
 	}
-	// Remove the trailing comma
 	querystr = querystr[0 : len(querystr)-1]
 
-	// Add support for BETWEEN x.x
-	if len(where) != 0 {
-		querystr += " WHERE"
-		for _, loc := range processWhere(where) {
-			for _, token := range loc.Expr {
-				switch token.Type {
-				case "function", "operator", "number", "substitute":
-					querystr += " " + token.Contents
-				case "column":
-					querystr += " `" + token.Contents + "`"
-				case "string":
-					querystr += " '" + token.Contents + "'"
-				default:
-					panic("This token doesn't exist o_o")
-				}
-			}
-			querystr += " AND"
-		}
-		querystr = querystr[0 : len(querystr)-4]
+	whereStr, err := adapter.buildWhere(where)
+	if err != nil {
+		return querystr, err
 	}
+	querystr += whereStr
 
 	adapter.pushStatement(name, "update", querystr)
 	return querystr, nil
@@ -335,32 +304,8 @@ func (adapter *MysqlAdapter) Purge(name string, table string) (string, error) {
 	return "DELETE FROM `" + table + "`", nil
 }
 
-func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
-	if table == "" {
-		return "", errors.New("You need a name for this table")
-	}
-	if len(columns) == 0 {
-		return "", errors.New("No columns found for SimpleSelect")
-	}
-
-	// Slice up the user friendly strings into something easier to process
-	var colslice = strings.Split(strings.TrimSpace(columns), ",")
-
-	var querystr = "SELECT "
-
-	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range colslice {
-		querystr += "`" + strings.TrimSpace(column) + "`,"
-	}
-	// Remove the trailing comma
-	querystr = querystr[0 : len(querystr)-1]
-
-	querystr += " FROM `" + table + "`"
-
-	// Add support for BETWEEN x.x
+// TODO: Add support for BETWEEN x.x
+func (adapter *MysqlAdapter) buildWhere(where string) (querystr string, err error) {
 	if len(where) != 0 {
 		querystr += " WHERE"
 		for _, loc := range processWhere(where) {
@@ -373,14 +318,17 @@ func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns str
 				case "string":
 					querystr += " '" + token.Contents + "'"
 				default:
-					panic("This token doesn't exist o_o")
+					return querystr, errors.New("This token doesn't exist o_o")
 				}
 			}
 			querystr += " AND"
 		}
 		querystr = querystr[0 : len(querystr)-4]
 	}
+	return querystr, nil
+}
 
+func (adapter *MysqlAdapter) buildOrderby(orderby string) (querystr string) {
 	if len(orderby) != 0 {
 		querystr += " ORDER BY "
 		for _, column := range processOrderby(orderby) {
@@ -389,10 +337,35 @@ func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns str
 		}
 		querystr = querystr[0 : len(querystr)-1]
 	}
+	return querystr
+}
 
-	if limit != "" {
-		querystr += " LIMIT " + limit
+func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
 	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if len(columns) == 0 {
+		return "", errors.New("No columns found for SimpleSelect")
+	}
+
+	var querystr = "SELECT "
+
+	// Slice up the user friendly strings into something easier to process
+	var colslice = strings.Split(strings.TrimSpace(columns), ",")
+	for _, column := range colslice {
+		querystr += "`" + strings.TrimSpace(column) + "`,"
+	}
+	querystr = querystr[0 : len(querystr)-1]
+
+	whereStr, err := adapter.buildWhere(where)
+	if err != nil {
+		return querystr, err
+	}
+
+	querystr += " FROM `" + table + "`" + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
@@ -435,54 +408,15 @@ func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 s
 		}
 		querystr += source + alias + ","
 	}
-
 	// Remove the trailing comma
 	querystr = querystr[0 : len(querystr)-1]
 
-	querystr += " FROM `" + table1 + "` LEFT JOIN `" + table2 + "` ON "
-	for _, joiner := range processJoiner(joiners) {
-		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
-	}
-	// Remove the trailing AND
-	querystr = querystr[0 : len(querystr)-4]
-
-	// Add support for BETWEEN x.x
-	if len(where) != 0 {
-		querystr += " WHERE"
-		for _, loc := range processWhere(where) {
-			for _, token := range loc.Expr {
-				switch token.Type {
-				case "function", "operator", "number", "substitute":
-					querystr += " " + token.Contents
-				case "column":
-					halves := strings.Split(token.Contents, ".")
-					if len(halves) == 2 {
-						querystr += " `" + halves[0] + "`.`" + halves[1] + "`"
-					} else {
-						querystr += " `" + token.Contents + "`"
-					}
-				case "string":
-					querystr += " '" + token.Contents + "'"
-				default:
-					panic("This token doesn't exist o_o")
-				}
-			}
-			querystr += " AND"
-		}
-		querystr = querystr[0 : len(querystr)-4]
+	whereStr, err := adapter.buildJoinWhere(where)
+	if err != nil {
+		return querystr, err
 	}
 
-	if len(orderby) != 0 {
-		querystr += " ORDER BY "
-		for _, column := range processOrderby(orderby) {
-			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
-		}
-		querystr = querystr[0 : len(querystr)-1]
-	}
-
-	if limit != "" {
-		querystr += " LIMIT " + limit
-	}
+	querystr += " FROM `" + table1 + "` LEFT JOIN `" + table2 + "` ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
@@ -529,50 +463,12 @@ func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 	// Remove the trailing comma
 	querystr = querystr[0 : len(querystr)-1]
 
-	querystr += " FROM `" + table1 + "` INNER JOIN `" + table2 + "` ON "
-	for _, joiner := range processJoiner(joiners) {
-		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
-	}
-	// Remove the trailing AND
-	querystr = querystr[0 : len(querystr)-4]
-
-	// Add support for BETWEEN x.x
-	if len(where) != 0 {
-		querystr += " WHERE"
-		for _, loc := range processWhere(where) {
-			for _, token := range loc.Expr {
-				switch token.Type {
-				case "function", "operator", "number", "substitute":
-					querystr += " " + token.Contents
-				case "column":
-					halves := strings.Split(token.Contents, ".")
-					if len(halves) == 2 {
-						querystr += " `" + halves[0] + "`.`" + halves[1] + "`"
-					} else {
-						querystr += " `" + token.Contents + "`"
-					}
-				case "string":
-					querystr += " '" + token.Contents + "'"
-				default:
-					panic("This token doesn't exist o_o")
-				}
-			}
-			querystr += " AND"
-		}
-		querystr = querystr[0 : len(querystr)-4]
+	whereStr, err := adapter.buildJoinWhere(where)
+	if err != nil {
+		return querystr, err
 	}
 
-	if len(orderby) != 0 {
-		querystr += " ORDER BY "
-		for _, column := range processOrderby(orderby) {
-			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
-		}
-		querystr = querystr[0 : len(querystr)-1]
-	}
-
-	if limit != "" {
-		querystr += " LIMIT " + limit
-	}
+	querystr += " FROM `" + table1 + "` INNER JOIN `" + table2 + "` ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
@@ -581,7 +477,6 @@ func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 
 func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
 	/* Insert Portion */
-
 	var querystr = "INSERT INTO `" + ins.Table + "`("
 
 	// Escape the column names, just in case we've used a reserved keyword
@@ -613,40 +508,12 @@ func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel 
 	}
 	querystr = querystr[0 : len(querystr)-1]
 
-	querystr += " FROM `" + sel.Table + "`"
-
-	// Add support for BETWEEN x.x
-	if len(sel.Where) != 0 {
-		querystr += " WHERE"
-		for _, loc := range processWhere(sel.Where) {
-			for _, token := range loc.Expr {
-				switch token.Type {
-				case "function", "operator", "number", "substitute":
-					querystr += " " + token.Contents
-				case "column":
-					querystr += " `" + token.Contents + "`"
-				case "string":
-					querystr += " '" + token.Contents + "'"
-				default:
-					panic("This token doesn't exist o_o")
-				}
-			}
-			querystr += " AND"
-		}
-		querystr = querystr[0 : len(querystr)-4]
+	whereStr, err := adapter.buildWhere(sel.Where)
+	if err != nil {
+		return querystr, err
 	}
 
-	if len(sel.Orderby) != 0 {
-		querystr += " ORDER BY "
-		for _, column := range processOrderby(sel.Orderby) {
-			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
-		}
-		querystr = querystr[0 : len(querystr)-1]
-	}
-
-	if sel.Limit != "" {
-		querystr += " LIMIT " + sel.Limit
-	}
+	querystr += " FROM `" + sel.Table + "`" + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "insert", querystr)
@@ -655,7 +522,6 @@ func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel 
 
 func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	/* Insert Portion */
-
 	var querystr = "INSERT INTO `" + ins.Table + "`("
 
 	// Escape the column names, just in case we've used a reserved keyword
@@ -689,16 +555,32 @@ func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, se
 	}
 	querystr = querystr[0 : len(querystr)-1]
 
-	querystr += " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON "
-	for _, joiner := range processJoiner(sel.Joiners) {
+	whereStr, err := adapter.buildJoinWhere(sel.Where)
+	if err != nil {
+		return querystr, err
+	}
+
+	querystr += " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
+
+	querystr = strings.TrimSpace(querystr)
+	adapter.pushStatement(name, "insert", querystr)
+	return querystr, nil
+}
+
+// TODO: Make this more consistent with the other build* methods?
+func (adapter *MysqlAdapter) buildJoiners(joiners string) (querystr string) {
+	for _, joiner := range processJoiner(joiners) {
 		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
 	}
-	querystr = querystr[0 : len(querystr)-4]
+	// Remove the trailing AND
+	return querystr[0 : len(querystr)-4]
+}
 
-	// Add support for BETWEEN x.x
-	if len(sel.Where) != 0 {
+// Add support for BETWEEN x.x
+func (adapter *MysqlAdapter) buildJoinWhere(where string) (querystr string, err error) {
+	if len(where) != 0 {
 		querystr += " WHERE"
-		for _, loc := range processWhere(sel.Where) {
+		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case "function", "operator", "number", "substitute":
@@ -713,34 +595,25 @@ func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, se
 				case "string":
 					querystr += " '" + token.Contents + "'"
 				default:
-					panic("This token doesn't exist o_o")
+					return querystr, errors.New("This token doesn't exist o_o")
 				}
 			}
 			querystr += " AND"
 		}
 		querystr = querystr[0 : len(querystr)-4]
 	}
-
-	if len(sel.Orderby) != 0 {
-		querystr += " ORDER BY "
-		for _, column := range processOrderby(sel.Orderby) {
-			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
-		}
-		querystr = querystr[0 : len(querystr)-1]
-	}
-
-	if sel.Limit != "" {
-		querystr += " LIMIT " + sel.Limit
-	}
-
-	querystr = strings.TrimSpace(querystr)
-	adapter.pushStatement(name, "insert", querystr)
 	return querystr, nil
+}
+
+func (adapter *MysqlAdapter) buildLimit(limit string) (querystr string) {
+	if limit != "" {
+		querystr += " LIMIT " + limit
+	}
+	return querystr
 }
 
 func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
 	/* Insert Portion */
-
 	var querystr = "INSERT INTO `" + ins.Table + "`("
 
 	// Escape the column names, just in case we've used a reserved keyword
@@ -774,56 +647,19 @@ func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, s
 	}
 	querystr = querystr[0 : len(querystr)-1]
 
-	querystr += " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON "
-	for _, joiner := range processJoiner(sel.Joiners) {
-		querystr += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
-	}
-	querystr = querystr[0 : len(querystr)-4]
-
-	// Add support for BETWEEN x.x
-	if len(sel.Where) != 0 {
-		querystr += " WHERE"
-		for _, loc := range processWhere(sel.Where) {
-			for _, token := range loc.Expr {
-				switch token.Type {
-				case "function", "operator", "number", "substitute":
-					querystr += " " + token.Contents
-				case "column":
-					halves := strings.Split(token.Contents, ".")
-					if len(halves) == 2 {
-						querystr += " `" + halves[0] + "`.`" + halves[1] + "`"
-					} else {
-						querystr += " `" + token.Contents + "`"
-					}
-				case "string":
-					querystr += " '" + token.Contents + "'"
-				default:
-					panic("This token doesn't exist o_o")
-				}
-			}
-			querystr += " AND"
-		}
-		querystr = querystr[0 : len(querystr)-4]
+	whereStr, err := adapter.buildJoinWhere(sel.Where)
+	if err != nil {
+		return querystr, err
 	}
 
-	if len(sel.Orderby) != 0 {
-		querystr += " ORDER BY "
-		for _, column := range processOrderby(sel.Orderby) {
-			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
-		}
-		querystr = querystr[0 : len(querystr)-1]
-	}
-
-	if sel.Limit != "" {
-		querystr += " LIMIT " + sel.Limit
-	}
+	querystr += " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "insert", querystr)
 	return querystr, nil
 }
 
-func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
+func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string, limit string) (querystr string, err error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -831,31 +667,12 @@ func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string
 		return "", errors.New("You need a name for this table")
 	}
 
-	var querystr = "SELECT COUNT(*) AS `count` FROM `" + table + "`"
-
-	// TODO: Add support for BETWEEN x.x
-	if len(where) != 0 {
-		querystr += " WHERE"
-		//log.Print("SimpleCount: ", name)
-		//log.Print("where: ", where)
-		//log.Print("processWhere: ", processWhere(where))
-		for _, loc := range processWhere(where) {
-			for _, token := range loc.Expr {
-				switch token.Type {
-				case "function", "operator", "number", "substitute":
-					querystr += " " + token.Contents
-				case "column":
-					querystr += " `" + token.Contents + "`"
-				case "string":
-					querystr += " '" + token.Contents + "'"
-				default:
-					panic("This token doesn't exist o_o")
-				}
-			}
-			querystr += " AND"
-		}
-		querystr = querystr[0 : len(querystr)-4]
+	querystr = "SELECT COUNT(*) AS `count` FROM `" + table + "`"
+	whereStr, err := adapter.buildWhere(where)
+	if err != nil {
+		return "", err
 	}
+	querystr += whereStr
 
 	if limit != "" {
 		querystr += " LIMIT " + limit

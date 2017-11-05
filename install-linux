@@ -22,6 +22,9 @@ go get -u gopkg.in/sourcemap.v1
 echo "Installing OttoJS"
 go get -u github.com/robertkrimen/otto
 
+echo "Installing the Riot Search Engine"
+go get -u github.com/robertkrimen/otto
+
 
 echo "Building the installer"
 cd ./install

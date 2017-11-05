@@ -157,21 +157,24 @@ func (mgs *MemoryGroupStore) Reload(id int) error {
 func (mgs *MemoryGroupStore) initGroup(group *Group) error {
 	err := json.Unmarshal(group.PermissionsText, &group.Perms)
 	if err != nil {
+		log.Printf("group: %+v\n", group)
+		log.Print("bad group perms: ", group.PermissionsText)
 		return err
 	}
 	if dev.DebugMode {
-		log.Print(group.Name + ": ")
-		log.Printf("%+v\n", group.Perms)
+		log.Printf(group.Name+": %+v\n", group.Perms)
 	}
 
 	err = json.Unmarshal(group.PluginPermsText, &group.PluginPerms)
 	if err != nil {
+		log.Printf("group: %+v\n", group)
+		log.Print("bad group plugin perms: ", group.PluginPermsText)
 		return err
 	}
 	if dev.DebugMode {
-		log.Print(group.Name + ": ")
-		log.Printf("%+v\n", group.PluginPerms)
+		log.Printf(group.Name+": %+v\n", group.PluginPerms)
 	}
+
 	//group.Perms.ExtData = make(map[string]bool)
 	// TODO: Can we optimise the bit where this cascades down to the user now?
 	if group.IsAdmin || group.IsMod {
@@ -204,7 +207,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	}
 	defer tx.Rollback()
 
-	insertTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups", "name, tag, is_admin, is_mod, is_banned, permissions", "?,?,?,?,?,?")
+	insertTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups", "name, tag, is_admin, is_mod, is_banned, permissions, plugin_perms", "?,?,?,?,?,?,'{}'")
 	if err != nil {
 		return 0, err
 	}
@@ -279,7 +282,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	mgs.Unlock()
 
 	for _, forum := range fdata {
-		err = rebuildForumPermissions(forum.ID)
+		err = fpstore.Reload(forum.ID)
 		if err != nil {
 			return gid, err
 		}

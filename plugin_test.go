@@ -48,6 +48,8 @@ func TestBBCodeRender(t *testing.T) {
 	msgList = addMEPair(msgList, "[quote][b]hi[/b][/quote]", "<span class='postQuote'><b>hi</b></span>")
 	msgList = addMEPair(msgList, "[quote][b]h[/b][/quote]", "<span class='postQuote'><b>h</b></span>")
 	msgList = addMEPair(msgList, "[quote][b][/b][/quote]", "<span class='postQuote'><b></b></span>")
+	msgList = addMEPair(msgList, "-你好-", "-你好-")
+	msgList = addMEPair(msgList, "[i]-你好-[/i]", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
 	t.Log("Testing bbcodeFullParse")
 	for _, item := range msgList {
@@ -249,6 +251,8 @@ func TestMarkdownRender(t *testing.T) {
 	msgList = addMEPair(msgList, "* *", "<i> </i>")
 	msgList = addMEPair(msgList, "** **", "<b> </b>")
 	msgList = addMEPair(msgList, "*** ***", "<b><i> </i></b>")
+	msgList = addMEPair(msgList, "-你好-", "-你好-")
+	msgList = addMEPair(msgList, "*-你好-*", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
 	for _, item := range msgList {
 		res = markdownParse(item.Msg)

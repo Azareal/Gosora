@@ -42,6 +42,16 @@
 	"SettingLabels": {
 		"activation_type": "Activate All,Email Activation,Admin Approval"
 	},
+	"PermPresets": {
+		"all":"Public",
+		"announce":"Announcements",
+		"members":"Member Only",
+		"staff":"Staff Only",
+		"admins":"Admin Only",
+		"archive":"Archive",
+		"custom":"Custom",
+		"unknown":"Unknown"
+	},
 	"Accounts": {
 		"VerifyEmailSubject": "Validate Your Email @  {{name}}",
 		"VerifyEmailBody": "Dear {{username}}, following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. {{schema}}://{{url}}/user/edit/token/{{token}}\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."

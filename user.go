@@ -228,11 +228,11 @@ func (user *User) ChangeGroup(group int) (err error) {
 	return err
 }
 
-func (user *User) increasePostStats(wcount int, topic bool) error {
+func (user *User) increasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := 1
 	if topic {
-		_, err := incrementUserTopicsStmt.Exec(1, user.ID)
+		_, err = incrementUserTopicsStmt.Exec(1, user.ID)
 		if err != nil {
 			return err
 		}
@@ -241,24 +241,19 @@ func (user *User) increasePostStats(wcount int, topic bool) error {
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := incrementUserMegapostsStmt.Exec(1, 1, 1, user.ID)
-		if err != nil {
-			return err
-		}
+		_, err = incrementUserMegapostsStmt.Exec(1, 1, 1, user.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := incrementUserBigpostsStmt.Exec(1, 1, user.ID)
-		if err != nil {
-			return err
-		}
+		_, err = incrementUserBigpostsStmt.Exec(1, 1, user.ID)
 		mod = 1
 	} else {
-		_, err := incrementUserPostsStmt.Exec(1, user.ID)
-		if err != nil {
-			return err
-		}
+		_, err = incrementUserPostsStmt.Exec(1, user.ID)
 	}
-	_, err := incrementUserScoreStmt.Exec(baseScore+mod, user.ID)
+	if err != nil {
+		return err
+	}
+
+	_, err = incrementUserScoreStmt.Exec(baseScore+mod, user.ID)
 	if err != nil {
 		return err
 	}
@@ -269,11 +264,11 @@ func (user *User) increasePostStats(wcount int, topic bool) error {
 	return err
 }
 
-func (user *User) decreasePostStats(wcount int, topic bool) error {
+func (user *User) decreasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := -1
 	if topic {
-		_, err := incrementUserTopicsStmt.Exec(-1, user.ID)
+		_, err = incrementUserTopicsStmt.Exec(-1, user.ID)
 		if err != nil {
 			return err
 		}
@@ -282,24 +277,19 @@ func (user *User) decreasePostStats(wcount int, topic bool) error {
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err := incrementUserMegapostsStmt.Exec(-1, -1, -1, user.ID)
-		if err != nil {
-			return err
-		}
+		_, err = incrementUserMegapostsStmt.Exec(-1, -1, -1, user.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err := incrementUserBigpostsStmt.Exec(-1, -1, user.ID)
-		if err != nil {
-			return err
-		}
+		_, err = incrementUserBigpostsStmt.Exec(-1, -1, user.ID)
 		mod = 1
 	} else {
-		_, err := incrementUserPostsStmt.Exec(-1, user.ID)
-		if err != nil {
-			return err
-		}
+		_, err = incrementUserPostsStmt.Exec(-1, user.ID)
 	}
-	_, err := incrementUserScoreStmt.Exec(baseScore-mod, user.ID)
+	if err != nil {
+		return err
+	}
+
+	_, err = incrementUserScoreStmt.Exec(baseScore-mod, user.ID)
 	if err != nil {
 		return err
 	}

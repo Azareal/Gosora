@@ -411,13 +411,20 @@ select, input, textarea {
 .topic_reply_form {
 	margin: 0px;
 	width: 100%;
+	height: min-content;
 }
 .topic_reply_form .trumbowyg-button-pane:after {
 	display: none;
 }
+.topic_reply_form .trumbowyg-box {
+	min-height: auto;
+}
 .topic_reply_form .trumbowyg-editor {
 	border-left: none;
 	border-right: none;
+	min-height: 103px;
+	max-height: 200px;
+	overflow-y: scroll;
 }
 .topic_reply_form .quick_button_row {
 	margin-bottom: 7px;
@@ -673,13 +680,21 @@ select, input, textarea {
 	content: " likes";
 	margin-right: 6px;
 }
-.created_at:before, .ip_item:before {
+
+.post_item .add_like:after, .created_at:before, .ip_item:before {
 	border-left: 1px solid var(--element-border-color);
 	content: "";
-	margin-right: 10px;
 	margin-top: 1px;
 	margin-bottom: 1px;
 }
+.created_at:before, .ip_item:before {
+	margin-right: 10px;
+}
+.post_item .add_like:after {
+	margin-left: 10px;
+	margin-right: 5px;
+}
+
 .created_at {
 	margin-right: 10px;
 }

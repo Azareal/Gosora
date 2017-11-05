@@ -63,11 +63,11 @@ func initDatabase() (err error) {
 	}
 
 	log.Print("Loading the forum permissions.")
-	err = buildForumPermissions()
+	fpstore = NewForumPermsStore()
+	err = fpstore.Init()
 	if err != nil {
 		return err
 	}
-	fpstore = NewForumPermsStore()
 
 	log.Print("Loading the settings.")
 	err = LoadSettings()
