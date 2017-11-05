@@ -65,7 +65,7 @@ var ErrAlreadyLiked = errors.New("You already liked this!")
 // TODO: Wrap these queries in a transaction to make sure the state is consistent
 func (reply *Reply) Like(uid int) (err error) {
 	var rid int // unused, just here to avoid mutating reply.ID
-	err = hasLikedReplyStmt.QueryRow(uid, reply.ID).Scan(&rid)
+	err = stmts.hasLikedReply.QueryRow(uid, reply.ID).Scan(&rid)
 	if err != nil && err != ErrNoRows {
 		return err
 	} else if err != ErrNoRows {
@@ -73,21 +73,21 @@ func (reply *Reply) Like(uid int) (err error) {
 	}
 
 	score := 1
-	_, err = createLikeStmt.Exec(score, reply.ID, "replies", uid)
+	_, err = stmts.createLike.Exec(score, reply.ID, "replies", uid)
 	if err != nil {
 		return err
 	}
-	_, err = addLikesToReplyStmt.Exec(1, reply.ID)
+	_, err = stmts.addLikesToReply.Exec(1, reply.ID)
 	return err
 }
 
 // TODO: Write tests for this
 func (reply *Reply) Delete() error {
-	_, err := deleteReplyStmt.Exec(reply.ID)
+	_, err := stmts.deleteReply.Exec(reply.ID)
 	if err != nil {
 		return err
 	}
-	_, err = removeRepliesFromTopicStmt.Exec(1, reply.ParentID)
+	_, err = stmts.removeRepliesFromTopic.Exec(1, reply.ParentID)
 	tcache, ok := topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(reply.ParentID)
@@ -100,6 +100,7 @@ func (reply *Reply) Copy() Reply {
 	return *reply
 }
 
+// TODO: Refactor this to stop hitting the global stmt store
 type ReplyStore interface {
 	Get(id int) (*Reply, error)
 	Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error)
@@ -114,14 +115,14 @@ func NewSQLReplyStore() *SQLReplyStore {
 
 func (store *SQLReplyStore) Get(id int) (*Reply, error) {
 	reply := Reply{ID: id}
-	err := getReplyStmt.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress, &reply.LikeCount)
+	err := stmts.getReply.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress, &reply.LikeCount)
 	return &reply, err
 }
 
 // TODO: Write a test for this
 func (store *SQLReplyStore) Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error) {
 	wcount := wordCount(content)
-	res, err := createReplyStmt.Exec(tid, content, parseMessage(content, fid, "forums"), ipaddress, wcount, uid)
+	res, err := stmts.createReply.Exec(tid, content, parseMessage(content, fid, "forums"), ipaddress, wcount, uid)
 	if err != nil {
 		return 0, err
 	}
@@ -130,7 +131,7 @@ func (store *SQLReplyStore) Create(tid int, content string, ipaddress string, fi
 		return 0, err
 	}
 
-	_, err = addRepliesToTopicStmt.Exec(1, uid, tid)
+	_, err = stmts.addRepliesToTopic.Exec(1, uid, tid)
 	if err != nil {
 		return int(lastID), err
 	}
@@ -145,6 +146,7 @@ type ProfileReplyStore interface {
 	Get(id int) (*Reply, error)
 }
 
+// TODO: Refactor this to stop using the global stmt store
 type SQLProfileReplyStore struct {
 }
 
@@ -154,6 +156,6 @@ func NewSQLProfileReplyStore() *SQLProfileReplyStore {
 
 func (store *SQLProfileReplyStore) Get(id int) (*Reply, error) {
 	reply := Reply{ID: id}
-	err := getUserReplyStmt.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress)
+	err := stmts.getUserReply.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress)
 	return &reply, err
 }

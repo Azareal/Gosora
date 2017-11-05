@@ -143,7 +143,7 @@ func initExtend() (err error) {
 
 // LoadPlugins polls the database to see which plugins have been activated and which have been installed
 func LoadPlugins() error {
-	rows, err := getPluginsStmt.Query()
+	rows, err := stmts.getPlugins.Query()
 	if err != nil {
 		return err
 	}

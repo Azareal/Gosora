@@ -102,7 +102,8 @@ func (mfs *MemoryForumStore) LoadForums() error {
 		}
 	}
 
-	rows, err := getForumsStmt.Query()
+	// TODO: Move this statement into the store
+	rows, err := stmts.getForums.Query()
 	if err != nil {
 		return err
 	}
@@ -327,11 +328,11 @@ func (mfs *MemoryForumStore) Delete(id int) error {
 }
 
 func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
-	_, err := updateForumCacheStmt.Exec(tid, uid, fid)
+	_, err := stmts.updateForumCache.Exec(tid, uid, fid)
 	if err != nil {
 		return err
 	}
-	_, err = addTopicsToForumStmt.Exec(1, fid)
+	_, err = stmts.addTopicsToForum.Exec(1, fid)
 	if err != nil {
 		return err
 	}
@@ -341,7 +342,7 @@ func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
 
 // TODO: Update the forum cache with the latest topic
 func (mfs *MemoryForumStore) RemoveTopic(fid int) error {
-	_, err := removeTopicsFromForumStmt.Exec(1, fid)
+	_, err := stmts.removeTopicsFromForum.Exec(1, fid)
 	if err != nil {
 		return err
 	}
@@ -353,7 +354,7 @@ func (mfs *MemoryForumStore) RemoveTopic(fid int) error {
 // DEPRECATED. forum.Update() will be the way to do this in the future, once it's completed
 // TODO: Have a pointer to the last topic rather than storing it on the forum itself
 func (mfs *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
-	_, err := updateForumCacheStmt.Exec(tid, uid, fid)
+	_, err := stmts.updateForumCache.Exec(tid, uid, fid)
 	if err != nil {
 		return err
 	}
@@ -363,7 +364,8 @@ func (mfs *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
 
 func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
 	forumCreateMutex.Lock()
-	res, err := createForumStmt.Exec(forumName, forumDesc, active, preset)
+	// TODO: Move this query into the store
+	res, err := stmts.createForum.Exec(forumName, forumDesc, active, preset)
 	if err != nil {
 		return 0, err
 	}

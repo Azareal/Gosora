@@ -23,7 +23,7 @@ func (fps *ForumPermsStore) Init() error {
 		log.Print("fids: ", fids)
 	}
 
-	rows, err := getForumsPermissionsStmt.Query()
+	rows, err := stmts.getForumsPermissions.Query()
 	if err != nil {
 		return err
 	}

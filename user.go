@@ -174,11 +174,11 @@ func (user *User) RevertGroupUpdate() error {
 // TODO: Use a transaction here
 // ? - Add a Deactivate method? Not really needed, if someone's been bad you could do a ban, I guess it might be useful, if someone says that email x isn't actually owned by the user in question?
 func (user *User) Activate() (err error) {
-	_, err = activateUserStmt.Exec(user.ID)
+	_, err = stmts.activateUser.Exec(user.ID)
 	if err != nil {
 		return err
 	}
-	_, err = changeGroupStmt.Exec(config.DefaultGroup, user.ID)
+	_, err = stmts.changeGroup.Exec(config.DefaultGroup, user.ID)
 	ucache, ok := users.(UserCache)
 	if ok {
 		ucache.CacheRemove(user.ID)
@@ -190,7 +190,7 @@ func (user *User) Activate() (err error) {
 // TODO: Delete this user's content too?
 // TODO: Expose this to the admin?
 func (user *User) Delete() error {
-	_, err := deleteUserStmt.Exec(user.ID)
+	_, err := stmts.deleteUser.Exec(user.ID)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (user *User) Delete() error {
 }
 
 func (user *User) ChangeName(username string) (err error) {
-	_, err = setUsernameStmt.Exec(username, user.ID)
+	_, err = stmts.setUsername.Exec(username, user.ID)
 	ucache, ok := users.(UserCache)
 	if ok {
 		ucache.CacheRemove(user.ID)
@@ -211,7 +211,7 @@ func (user *User) ChangeName(username string) (err error) {
 }
 
 func (user *User) ChangeAvatar(avatar string) (err error) {
-	_, err = setAvatarStmt.Exec(avatar, user.ID)
+	_, err = stmts.setAvatar.Exec(avatar, user.ID)
 	ucache, ok := users.(UserCache)
 	if ok {
 		ucache.CacheRemove(user.ID)
@@ -220,7 +220,7 @@ func (user *User) ChangeAvatar(avatar string) (err error) {
 }
 
 func (user *User) ChangeGroup(group int) (err error) {
-	_, err = updateUserGroupStmt.Exec(group, user.ID)
+	_, err = stmts.updateUserGroup.Exec(group, user.ID)
 	ucache, ok := users.(UserCache)
 	if ok {
 		ucache.CacheRemove(user.ID)
@@ -232,7 +232,7 @@ func (user *User) increasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := 1
 	if topic {
-		_, err = incrementUserTopicsStmt.Exec(1, user.ID)
+		_, err = stmts.incrementUserTopics.Exec(1, user.ID)
 		if err != nil {
 			return err
 		}
@@ -241,26 +241,26 @@ func (user *User) increasePostStats(wcount int, topic bool) (err error) {
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = incrementUserMegapostsStmt.Exec(1, 1, 1, user.ID)
+		_, err = stmts.incrementUserMegaposts.Exec(1, 1, 1, user.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = incrementUserBigpostsStmt.Exec(1, 1, user.ID)
+		_, err = stmts.incrementUserBigposts.Exec(1, 1, user.ID)
 		mod = 1
 	} else {
-		_, err = incrementUserPostsStmt.Exec(1, user.ID)
+		_, err = stmts.incrementUserPosts.Exec(1, user.ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = incrementUserScoreStmt.Exec(baseScore+mod, user.ID)
+	_, err = stmts.incrementUserScore.Exec(baseScore+mod, user.ID)
 	if err != nil {
 		return err
 	}
 	//log.Print(user.Score + base_score + mod)
 	//log.Print(getLevel(user.Score + base_score + mod))
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = updateUserLevelStmt.Exec(getLevel(user.Score+baseScore+mod), user.ID)
+	_, err = stmts.updateUserLevel.Exec(getLevel(user.Score+baseScore+mod), user.ID)
 	return err
 }
 
@@ -268,7 +268,7 @@ func (user *User) decreasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := -1
 	if topic {
-		_, err = incrementUserTopicsStmt.Exec(-1, user.ID)
+		_, err = stmts.incrementUserTopics.Exec(-1, user.ID)
 		if err != nil {
 			return err
 		}
@@ -277,24 +277,24 @@ func (user *User) decreasePostStats(wcount int, topic bool) (err error) {
 
 	settings := settingBox.Load().(SettingBox)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = incrementUserMegapostsStmt.Exec(-1, -1, -1, user.ID)
+		_, err = stmts.incrementUserMegaposts.Exec(-1, -1, -1, user.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = incrementUserBigpostsStmt.Exec(-1, -1, user.ID)
+		_, err = stmts.incrementUserBigposts.Exec(-1, -1, user.ID)
 		mod = 1
 	} else {
-		_, err = incrementUserPostsStmt.Exec(-1, user.ID)
+		_, err = stmts.incrementUserPosts.Exec(-1, user.ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = incrementUserScoreStmt.Exec(baseScore-mod, user.ID)
+	_, err = stmts.incrementUserScore.Exec(baseScore-mod, user.ID)
 	if err != nil {
 		return err
 	}
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = updateUserLevelStmt.Exec(getLevel(user.Score-baseScore-mod), user.ID)
+	_, err = stmts.updateUserLevel.Exec(getLevel(user.Score-baseScore-mod), user.ID)
 	return err
 }
 
@@ -359,7 +359,7 @@ func SetPassword(uid int, password string) error {
 	if err != nil {
 		return err
 	}
-	_, err = setPasswordStmt.Exec(hashedPassword, salt, uid)
+	_, err = stmts.setPassword.Exec(hashedPassword, salt, uid)
 	return err
 }
 

@@ -75,6 +75,13 @@ func (slice StringList) Contains(needle string) bool {
 var staticFiles = make(map[string]SFile)
 var logWriter = io.MultiWriter(os.Stderr)
 
+// TODO: Wrap the globals in here so we can pass pointers to them to subpackages
+var globs *Globs
+
+type Globs struct {
+	stmts *Stmts
+}
+
 func main() {
 	// TODO: Recover from panics
 	/*defer func() {
@@ -238,18 +245,21 @@ func main() {
 	//router.HandleFunc("/accounts/list/", routeLogin) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
 	//router.HandleFunc("/accounts/create/full/", routeLogout) // Advanced account creator for admins?
 	//router.HandleFunc("/user/edit/", routeLogout)
-	router.HandleFunc("/user/edit/critical/", routeAccountOwnEditCritical) // Password & Email
-	router.HandleFunc("/user/edit/critical/submit/", routeAccountOwnEditCriticalSubmit)
-	router.HandleFunc("/user/edit/avatar/", routeAccountOwnEditAvatar)
-	router.HandleFunc("/user/edit/avatar/submit/", routeAccountOwnEditAvatarSubmit)
-	router.HandleFunc("/user/edit/username/", routeAccountOwnEditUsername)
-	router.HandleFunc("/user/edit/username/submit/", routeAccountOwnEditUsernameSubmit)
-	router.HandleFunc("/user/edit/email/", routeAccountOwnEditEmail)
-	router.HandleFunc("/user/edit/token/", routeAccountOwnEditEmailTokenSubmit)
-	router.HandleFunc("/user/", routeProfile)
+	////router.HandleFunc("/user/edit/critical/", routeAccountOwnEditCritical) // Password & Email
+	////router.HandleFunc("/user/edit/critical/submit/", routeAccountOwnEditCriticalSubmit)
+	////router.HandleFunc("/user/edit/avatar/", routeAccountOwnEditAvatar)
+	////router.HandleFunc("/user/edit/avatar/submit/", routeAccountOwnEditAvatarSubmit)
+	////router.HandleFunc("/user/edit/username/", routeAccountOwnEditUsername)
+	////router.HandleFunc("/user/edit/username/submit/", routeAccountOwnEditUsernameSubmit)
+	////router.HandleFunc("/user/edit/email/", routeAccountOwnEditEmail)
+	////router.HandleFunc("/user/edit/token/", routeAccountOwnEditEmailTokenSubmit)
+	////router.HandleFunc("/user/", routeProfile)
+
+	// TODO: Move these into /user/?
 	router.HandleFunc("/profile/reply/create/", routeProfileReplyCreate)
 	router.HandleFunc("/profile/reply/edit/submit/", routeProfileReplyEditSubmit)
 	router.HandleFunc("/profile/reply/delete/submit/", routeProfileReplyDeleteSubmit)
+
 	//router.HandleFunc("/user/edit/submit/", routeLogout) // routeLogout? what on earth? o.o
 	//router.HandleFunc("/users/ban/", routeBan)
 	router.HandleFunc("/users/ban/submit/", routeBanSubmit)

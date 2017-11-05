@@ -54,12 +54,13 @@ func NewMemoryGroupStore() (*MemoryGroupStore, error) {
 	}, nil
 }
 
+// TODO: Move this query from the global stmt store into this store
 func (mgs *MemoryGroupStore) LoadGroups() error {
 	mgs.Lock()
 	defer mgs.Unlock()
 	mgs.groups[0] = &Group{ID: 0, Name: "Unknown"}
 
-	rows, err := getGroupsStmt.Query()
+	rows, err := stmts.getGroups.Query()
 	if err != nil {
 		return err
 	}

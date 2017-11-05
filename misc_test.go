@@ -475,6 +475,21 @@ func TestPermsMiddleware(t *testing.T) {
 	expect(t, ferr == nil, "Supermods should be allowed through supermod gates")
 
 	// TODO: Loop over the Control Panel routes and make sure only supermods can get in
+
+	user = getDummyUser()
+
+	ferr = MemberOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr != nil, "Blank users shouldn't be considered loggedin")
+
+	user.Loggedin = false
+	ferr = MemberOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr != nil, "Guests shouldn't be able to access member areas")
+
+	user.Loggedin = true
+	ferr = MemberOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr == nil, "Logged in users should be able to access member areas")
+
+	// TODO: Loop over the /user/ routes and make sure only members can access the ones other than /user/username
 }
 
 func TestTopicStore(t *testing.T) {

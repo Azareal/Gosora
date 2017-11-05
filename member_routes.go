@@ -153,7 +153,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) R
 		}
 	}
 
-	_, err = addSubscriptionStmt.Exec(user.ID, tid, "topic")
+	_, err = stmts.addSubscription.Exec(user.ID, tid, "topic")
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -224,7 +224,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) R
 					return LocalError("Upload failed [Copy Failed]", w, r, user)
 				}
 
-				_, err = addAttachmentStmt.Exec(fid, "forums", tid, "topics", user.ID, filename)
+				_, err = stmts.addAttachment.Exec(fid, "forums", tid, "topics", user.ID, filename)
 				if err != nil {
 					return InternalError(err, w, r)
 				}
@@ -329,7 +329,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) RouteEr
 					return LocalError("Upload failed [Copy Failed]", w, r, user)
 				}
 
-				_, err = addAttachmentStmt.Exec(topic.ParentID, "forums", tid, "replies", user.ID, filename)
+				_, err = stmts.addAttachment.Exec(topic.ParentID, "forums", tid, "replies", user.ID, filename)
 				if err != nil {
 					return InternalError(err, w, r)
 				}
@@ -353,7 +353,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) RouteEr
 		return InternalError(err, w, r)
 	}
 
-	res, err := addActivityStmt.Exec(user.ID, topic.CreatedBy, "reply", "topic", tid)
+	res, err := stmts.addActivity.Exec(user.ID, topic.CreatedBy, "reply", "topic", tid)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -362,7 +362,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) RouteEr
 		return InternalError(err, w, r)
 	}
 
-	_, err = notifyWatchersStmt.Exec(lastID)
+	_, err = stmts.notifyWatchers.Exec(lastID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -414,7 +414,7 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) RouteErro
 		return LocalError("You can't like your own topics", w, r, user)
 	}
 
-	err = hasLikedTopicStmt.QueryRow(user.ID, tid).Scan(&tid)
+	err = stmts.hasLikedTopic.QueryRow(user.ID, tid).Scan(&tid)
 	if err != nil && err != ErrNoRows {
 		return InternalError(err, w, r)
 	} else if err != ErrNoRows {
@@ -429,17 +429,17 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) RouteErro
 	}
 
 	score := 1
-	_, err = createLikeStmt.Exec(score, tid, "topics", user.ID)
+	_, err = stmts.createLike.Exec(score, tid, "topics", user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 
-	_, err = addLikesToTopicStmt.Exec(1, tid)
+	_, err = stmts.addLikesToTopic.Exec(1, tid)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 
-	res, err := addActivityStmt.Exec(user.ID, topic.CreatedBy, "like", "topic", tid)
+	res, err := stmts.addActivity.Exec(user.ID, topic.CreatedBy, "like", "topic", tid)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -448,7 +448,7 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) RouteErro
 		return InternalError(err, w, r)
 	}
 
-	_, err = notifyOneStmt.Exec(topic.CreatedBy, lastID)
+	_, err = stmts.notifyOne.Exec(topic.CreatedBy, lastID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -484,7 +484,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) Rou
 	}
 
 	var fid int
-	err = getTopicFIDStmt.QueryRow(reply.ParentID).Scan(&fid)
+	err = stmts.getTopicFID.QueryRow(reply.ParentID).Scan(&fid)
 	if err == ErrNoRows {
 		return PreError("The parent topic doesn't exist.", w, r)
 	} else if err != nil {
@@ -518,7 +518,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) Rou
 		return InternalError(err, w, r)
 	}
 
-	res, err := addActivityStmt.Exec(user.ID, reply.CreatedBy, "like", "post", rid)
+	res, err := stmts.addActivity.Exec(user.ID, reply.CreatedBy, "like", "post", rid)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -527,7 +527,7 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) Rou
 		return InternalError(err, w, r)
 	}
 
-	_, err = notifyOneStmt.Exec(reply.CreatedBy, lastID)
+	_, err = stmts.notifyOne.Exec(reply.CreatedBy, lastID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -559,13 +559,13 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("reply-content")))
-	_, err = createProfileReplyStmt.Exec(uid, content, parseMessage(content, 0, ""), user.ID, ipaddress)
+	_, err = stmts.createProfileReply.Exec(uid, content, parseMessage(content, 0, ""), user.ID, ipaddress)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 
 	var userName string
-	err = getUserNameStmt.QueryRow(uid).Scan(&userName)
+	err = stmts.getUserName.QueryRow(uid).Scan(&userName)
 	if err == ErrNoRows {
 		return LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
 	} else if err != nil {
@@ -626,7 +626,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 			return InternalError(err, w, r)
 		}
 
-		err = getUserNameStmt.QueryRow(userReply.ParentID).Scan(&title)
+		err = stmts.getUserName.QueryRow(userReply.ParentID).Scan(&title)
 		if err == ErrNoRows {
 			return LocalError("We weren't able to find the profile the reported post is supposed to be on", w, r, user)
 		} else if err != nil {
@@ -635,7 +635,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		title = "Profile: " + title
 		content = userReply.Content + "\n\nOriginal Post: @" + strconv.Itoa(userReply.ParentID)
 	} else if itemType == "topic" {
-		err = getTopicBasicStmt.QueryRow(itemID).Scan(&title, &content)
+		err = stmts.getTopicBasic.QueryRow(itemID).Scan(&title, &content)
 		if err == ErrNoRows {
 			return NotFound(w, r)
 		} else if err != nil {
@@ -653,7 +653,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 	}
 
 	var count int
-	rows, err := reportExistsStmt.Query(itemType + "_" + strconv.Itoa(itemID))
+	rows, err := stmts.reportExists.Query(itemType + "_" + strconv.Itoa(itemID))
 	if err != nil && err != ErrNoRows {
 		return InternalError(err, w, r)
 	}
@@ -670,7 +670,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 
 	// TODO: Repost attachments in the reports forum, so that the mods can see them
 	// ? - Can we do this via the TopicStore?
-	res, err := createReportStmt.Exec(title, content, parseMessage(content, 0, ""), user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID))
+	res, err := stmts.createReport.Exec(title, content, parseMessage(content, 0, ""), user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID))
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -680,7 +680,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		return InternalError(err, w, r)
 	}
 
-	_, err = addTopicsToForumStmt.Exec(1, fid)
+	_, err = stmts.addTopicsToForum.Exec(1, fid)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -697,9 +697,6 @@ func routeAccountOwnEditCritical(w http.ResponseWriter, r *http.Request, user Us
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
-	}
-	if !user.Loggedin {
-		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 
 	pi := Page{"Edit Password", user, headerVars, tList, nil}
@@ -720,9 +717,6 @@ func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, u
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Loggedin {
-		return LocalError("You need to login to edit your account.", w, r, user)
-	}
 
 	err := r.ParseForm()
 	if err != nil {
@@ -734,7 +728,7 @@ func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, u
 	newPassword := r.PostFormValue("account-new-password")
 	confirmPassword := r.PostFormValue("account-confirm-password")
 
-	err = getPasswordStmt.QueryRow(user.ID).Scan(&realPassword, &salt)
+	err = stmts.getPassword.QueryRow(user.ID).Scan(&realPassword, &salt)
 	if err == ErrNoRows {
 		return LocalError("Your account no longer exists.", w, r, user)
 	} else if err != nil {
@@ -774,9 +768,7 @@ func routeAccountOwnEditAvatar(w http.ResponseWriter, r *http.Request, user User
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Loggedin {
-		return LocalError("You need to login to edit your account.", w, r, user)
-	}
+
 	pi := Page{"Edit Avatar", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_account_own_edit_avatar"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
@@ -800,9 +792,6 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
-	}
-	if !user.Loggedin {
-		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 
 	err := r.ParseMultipartForm(int64(megabyte))
@@ -884,9 +873,7 @@ func routeAccountOwnEditUsername(w http.ResponseWriter, r *http.Request, user Us
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Loggedin {
-		return LocalError("You need to login to edit your account.", w, r, user)
-	}
+
 	pi := Page{"Edit Username", user, headerVars, tList, user.Name}
 	if preRenderHooks["pre_render_account_own_edit_username"] != nil {
 		if runPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
@@ -904,9 +891,6 @@ func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, u
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
-	}
-	if !user.Loggedin {
-		return LocalError("You need to login to edit your account.", w, r, user)
 	}
 	err := r.ParseForm()
 	if err != nil {
@@ -939,22 +923,19 @@ func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Loggedin {
-		return LocalError("You need to login to edit your account.", w, r, user)
-	}
 
 	email := Email{UserID: user.ID}
 	var emailList []interface{}
-	rows, err := getEmailsByUserStmt.Query(user.ID)
+	rows, err := stmts.getEmailsByUser.Query(user.ID)
 	if err != nil {
-		log.Fatal(err)
+		return InternalError(err, w, r)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&email.Email, &email.Validated, &email.Token)
 		if err != nil {
-			log.Fatal(err)
+			return InternalError(err, w, r)
 		}
 
 		if email.Email == user.Email {
@@ -964,7 +945,7 @@ func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User)
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err)
+		return InternalError(err, w, r)
 	}
 
 	// Was this site migrated from another forum software? Most of them don't have multiple emails for a single user.
@@ -992,20 +973,16 @@ func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User)
 	return nil
 }
 
-func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user User, token string) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Loggedin {
-		return LocalError("You need to login to edit your account.", w, r, user)
-	}
-	token := r.URL.Path[len("/user/edit/token/"):]
 
 	email := Email{UserID: user.ID}
 	targetEmail := Email{UserID: user.ID}
 	var emailList []interface{}
-	rows, err := getEmailsByUserStmt.Query(user.ID)
+	rows, err := stmts.getEmailsByUser.Query(user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -1037,14 +1014,14 @@ func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request,
 		return LocalError("That's not a valid token!", w, r, user)
 	}
 
-	_, err = verifyEmailStmt.Exec(user.Email)
+	_, err = stmts.verifyEmail.Exec(user.Email)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 
 	// If Email Activation is on, then activate the account while we're here
 	if headerVars.Settings["activation_type"] == 2 {
-		_, err = activateUserStmt.Exec(user.ID)
+		_, err = stmts.activateUser.Exec(user.ID)
 		if err != nil {
 			return InternalError(err, w, r)
 		}
@@ -1098,7 +1075,7 @@ func routeShowAttachment(w http.ResponseWriter, r *http.Request, user User, file
 
 	var originTable string
 	var originID, uploadedBy int
-	err = getAttachmentStmt.QueryRow(filename, sectionID, sectionTable).Scan(&sectionID, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
+	err = stmts.getAttachment.QueryRow(filename, sectionID, sectionTable).Scan(&sectionID, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
 	if err == ErrNoRows {
 		return NotFound(w, r)
 	} else if err != nil {

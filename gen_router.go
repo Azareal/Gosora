@@ -136,6 +136,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				router.handleError(err,w,req,user)
 			}
 		case "/report":
+			err = MemberOnly(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+				return
+			}
+			
 			switch(req.URL.Path) {
 				case "/report/submit/":
 					err = routeReportSubmit(w,req,user,extra_data)
@@ -146,6 +152,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/create/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routeTopicCreate(w,req,user,extra_data)
 				default:
 					err = routeTopics(w,req,user)
@@ -229,6 +241,79 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					err = routePanelDebug(w,req,user)
 				default:
 					err = routePanel(w,req,user)
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
+		case "/user":
+			switch(req.URL.Path) {
+				case "/user/edit/critical/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeAccountOwnEditCritical(w,req,user)
+				case "/user/edit/critical/submit/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeAccountOwnEditCriticalSubmit(w,req,user)
+				case "/user/edit/avatar/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeAccountOwnEditAvatar(w,req,user)
+				case "/user/edit/avatar/submit/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeAccountOwnEditAvatarSubmit(w,req,user)
+				case "/user/edit/username/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeAccountOwnEditUsername(w,req,user)
+				case "/user/edit/username/submit/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeAccountOwnEditUsernameSubmit(w,req,user)
+				case "/user/edit/email/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeAccountOwnEditEmail(w,req,user)
+				case "/user/edit/token/":
+					err = MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeAccountOwnEditEmailTokenSubmit(w,req,user,extra_data)
+				default:
+					req.URL.Path += extra_data
+					err = routeProfile(w,req,user)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)

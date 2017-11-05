@@ -157,7 +157,7 @@ func (mts *MemoryTopicStore) Create(fid int, topicName string, content string, u
 
 	wcount := wordCount(content)
 	// TODO: Move this statement into the topic store
-	res, err := createTopicStmt.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
+	res, err := stmts.createTopic.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
 	if err != nil {
 		return 0, err
 	}
@@ -319,7 +319,7 @@ func (sts *SQLTopicStore) Create(fid int, topicName string, content string, uid 
 
 	wcount := wordCount(content)
 	// TODO: Move this statement into the topic store
-	res, err := createTopicStmt.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
+	res, err := stmts.createTopic.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
 	if err != nil {
 		return 0, err
 	}

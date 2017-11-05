@@ -13,12 +13,6 @@ import "./query_gen/lib"
 
 // TODO: Add support for SSL for all database drivers, not just pgsql
 var db_sslmode = "disable" // verify-full
-var get_activity_feed_by_watcher_stmt *sql.Stmt
-var get_activity_count_by_watcher_stmt *sql.Stmt
-var todays_post_count_stmt *sql.Stmt
-var todays_topic_count_stmt *sql.Stmt
-var todays_report_count_stmt *sql.Stmt
-var todays_newuser_count_stmt *sql.Stmt
 
 func init() {
 	db_adapter = "pgsql"

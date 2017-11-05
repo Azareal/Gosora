@@ -28,7 +28,7 @@ type Group struct {
 }
 
 func (group *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err error) {
-	_, err = updateGroupRankStmt.Exec(isAdmin, isMod, isBanned, group.ID)
+	_, err = stmts.updateGroupRank.Exec(isAdmin, isMod, isBanned, group.ID)
 	if err != nil {
 		return err
 	}

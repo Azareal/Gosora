@@ -77,7 +77,7 @@ func init() {
 // ? - Delete themes which no longer exist in the themes folder from the database?
 func LoadThemes() error {
 	changeDefaultThemeMutex.Lock()
-	rows, err := getThemesStmt.Query()
+	rows, err := stmts.getThemes.Query()
 	if err != nil {
 		return err
 	}

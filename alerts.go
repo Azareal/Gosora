@@ -122,7 +122,7 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 }
 
 func notifyWatchers(asid int64) {
-	rows, err := getWatchersStmt.Query(asid)
+	rows, err := stmts.getWatchers.Query(asid)
 	if err != nil && err != ErrNoRows {
 		log.Fatal(err.Error())
 		return
@@ -147,7 +147,7 @@ func notifyWatchers(asid int64) {
 
 	var actorID, targetUserID, elementID int
 	var event, elementType string
-	err = getActivityEntryStmt.QueryRow(asid).Scan(&actorID, &targetUserID, &event, &elementType, &elementID)
+	err = stmts.getActivityEntry.QueryRow(asid).Scan(&actorID, &targetUserID, &event, &elementType, &elementID)
 	if err != nil && err != ErrNoRows {
 		log.Fatal(err.Error())
 		return

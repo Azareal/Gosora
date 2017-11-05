@@ -16,7 +16,7 @@ func init() {
 }
 
 func LoadWordFilters() error {
-	rows, err := getWordFiltersStmt.Query()
+	rows, err := stmts.getWordFilters.Query()
 	if err != nil {
 		return err
 	}

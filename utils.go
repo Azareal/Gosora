@@ -423,12 +423,14 @@ func buildSlug(slug string, id int) string {
 	return slug + "." + strconv.Itoa(id)
 }
 
+// TODO: Make a store for this?
 func addModLog(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
-	_, err = addModlogEntryStmt.Exec(action, elementID, elementType, ipaddress, actorID)
+	_, err = stmts.addModlogEntry.Exec(action, elementID, elementType, ipaddress, actorID)
 	return err
 }
 
+// TODO: Make a store for this?
 func addAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) (err error) {
-	_, err = addAdminlogEntryStmt.Exec(action, elementID, elementType, ipaddress, actorID)
+	_, err = stmts.addAdminlogEntry.Exec(action, elementID, elementType, ipaddress, actorID)
 	return err
 }

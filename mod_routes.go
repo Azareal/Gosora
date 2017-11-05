@@ -123,7 +123,7 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) RouteEr
 		}
 
 		// ? - We might need to add soft-delete before we can do an action reply for this
-		/*_, err = createActionReplyStmt.Exec(tid,"delete",ipaddress,user.ID)
+		/*_, err = stmts.createActionReply.Exec(tid,"delete",ipaddress,user.ID)
 		if err != nil {
 			return InternalErrorJSQ(err,w,r,isJs)
 		}*/
@@ -350,13 +350,13 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) Rou
 
 	// Get the Reply ID..
 	var tid int
-	err = getReplyTIDStmt.QueryRow(rid).Scan(&tid)
+	err = stmts.getReplyTID.QueryRow(rid).Scan(&tid)
 	if err != nil {
 		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	var fid int
-	err = getTopicFIDStmt.QueryRow(tid).Scan(&fid)
+	err = stmts.getTopicFID.QueryRow(tid).Scan(&fid)
 	if err == ErrNoRows {
 		return PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
 	} else if err != nil {
@@ -373,7 +373,7 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user User) Rou
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
-	_, err = editReplyStmt.Exec(content, parseMessage(content, fid, "forums"), rid)
+	_, err = stmts.editReply.Exec(content, parseMessage(content, fid, "forums"), rid)
 	if err != nil {
 		return InternalErrorJSQ(err, w, r, isJs)
 	}
@@ -408,7 +408,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) R
 	}
 
 	var fid int
-	err = getTopicFIDStmt.QueryRow(reply.ParentID).Scan(&fid)
+	err = stmts.getTopicFID.QueryRow(reply.ParentID).Scan(&fid)
 	if err == ErrNoRows {
 		return PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
 	} else if err != nil {
@@ -472,7 +472,7 @@ func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user Us
 
 	// Get the Reply ID..
 	var uid int
-	err = getUserReplyUIDStmt.QueryRow(rid).Scan(&uid)
+	err = stmts.getUserReplyUID.QueryRow(rid).Scan(&uid)
 	if err != nil {
 		return InternalErrorJSQ(err, w, r, isJs)
 	}
@@ -482,7 +482,7 @@ func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user Us
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("edit_item")))
-	_, err = editProfileReplyStmt.Exec(content, parseMessage(content, 0, ""), rid)
+	_, err = stmts.editProfileReply.Exec(content, parseMessage(content, 0, ""), rid)
 	if err != nil {
 		return InternalErrorJSQ(err, w, r, isJs)
 	}
@@ -508,7 +508,7 @@ func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user 
 	}
 
 	var uid int
-	err = getUserReplyUIDStmt.QueryRow(rid).Scan(&uid)
+	err = stmts.getUserReplyUID.QueryRow(rid).Scan(&uid)
 	if err == ErrNoRows {
 		return LocalErrorJSQ("The reply you tried to delete doesn't exist.", w, r, user, isJs)
 	} else if err != nil {
@@ -519,7 +519,7 @@ func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user 
 		return NoPermissionsJSQ(w, r, user, isJs)
 	}
 
-	_, err = deleteProfileReplyStmt.Exec(rid)
+	_, err = stmts.deleteProfileReply.Exec(rid)
 	if err != nil {
 		return InternalErrorJSQ(err, w, r, isJs)
 	}
@@ -546,7 +546,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	var uid int
 	var reqUserList = make(map[int]bool)
 
-	rows, err := findUsersByIPUsersStmt.Query(ip)
+	rows, err := stmts.findUsersByIPUsers.Query(ip)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -564,7 +564,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) RouteError {
 		return InternalError(err, w, r)
 	}
 
-	rows2, err := findUsersByIPTopicsStmt.Query(ip)
+	rows2, err := stmts.findUsersByIPTopics.Query(ip)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -582,7 +582,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user User) RouteError {
 		return InternalError(err, w, r)
 	}
 
-	rows3, err := findUsersByIPRepliesStmt.Query(ip)
+	rows3, err := stmts.findUsersByIPReplies.Query(ip)
 	if err != nil {
 		return InternalError(err, w, r)
 	}

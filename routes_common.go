@@ -166,7 +166,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		}
 	}
 
-	err = groupCountStmt.QueryRow().Scan(&stats.Groups)
+	err = stmts.groupCount.QueryRow().Scan(&stats.Groups)
 	if err != nil {
 		return headerVars, stats, InternalError(err, w, r)
 	}
@@ -284,7 +284,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		return *user, false
 	}
 	if host != user.LastIP {
-		_, err = updateLastIPStmt.Exec(host, user.ID)
+		_, err = stmts.updateLastIP.Exec(host, user.ID)
 		if err != nil {
 			InternalError(err, w, r)
 			return *user, false
@@ -303,6 +303,14 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 func SuperModOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.IsSuperMod {
 		return NoPermissions(w, r, user)
+	}
+	return nil
+}
+
+// MemberOnly makes sure that only logged in users can access this route
+func MemberOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	if !user.Loggedin {
+		return NoPermissions(w, r, user) // TODO: Do an error telling them to login instead?
 	}
 	return nil
 }

@@ -26,8 +26,20 @@ func main() {
 			end = len(route.Path) - 1
 		}
 		out += "\n\t\tcase \"" + route.Path[0:end] + "\":"
-		if route.Before != "" {
-			out += "\n\t\t\t" + route.Before
+		if len(route.RunBefore) > 0 {
+			for _, runnable := range route.RunBefore {
+				if runnable.Literal {
+					out += "\n\t\t\t\t\t" + runnable.Contents
+				} else {
+					out += `
+				err = ` + runnable.Contents + `(w,req,user)
+				if err != nil {
+					router.handleError(err,w,req,user)
+					return
+				}
+				`
+				}
+			}
 		}
 		out += "\n\t\t\terr = " + route.Name + "(w,req,user"
 		for _, item := range route.Vars {
@@ -48,14 +60,18 @@ func main() {
 		}
 		out += `
 		case "` + group.Path[0:end] + `":`
-		for _, callback := range group.Before {
-			out += `
-			err = ` + callback + `(w,req,user)
+		for _, runnable := range group.RunBefore {
+			if runnable.Literal {
+				out += "\t\t\t" + runnable.Contents
+			} else {
+				out += `
+			err = ` + runnable.Contents + `(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
 				return
 			}
 			`
+			}
 		}
 		out += "\n\t\t\tswitch(req.URL.Path) {"
 
@@ -67,8 +83,20 @@ func main() {
 			}
 
 			out += "\n\t\t\t\tcase \"" + route.Path + "\":"
-			if route.Before != "" {
-				out += "\n\t\t\t\t\t" + route.Before
+			if len(route.RunBefore) > 0 {
+				for _, runnable := range route.RunBefore {
+					if runnable.Literal {
+						out += "\n\t\t\t\t\t" + runnable.Contents
+					} else {
+						out += `
+					err = ` + runnable.Contents + `(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					`
+					}
+				}
 			}
 			out += "\n\t\t\t\t\terr = " + route.Name + "(w,req,user"
 			for _, item := range route.Vars {
@@ -79,8 +107,20 @@ func main() {
 
 		if defaultRoute.Name != "" {
 			out += "\n\t\t\t\tdefault:"
-			if defaultRoute.Before != "" {
-				out += "\n\t\t\t\t\t" + defaultRoute.Before
+			if len(defaultRoute.RunBefore) > 0 {
+				for _, runnable := range defaultRoute.RunBefore {
+					if runnable.Literal {
+						out += "\n\t\t\t\t\t" + runnable.Contents
+					} else {
+						out += `
+				err = ` + runnable.Contents + `(w,req,user)
+				if err != nil {
+					router.handleError(err,w,req,user)
+					return
+				}
+				`
+					}
+				}
 			}
 			out += "\n\t\t\t\t\terr = " + defaultRoute.Name + "(w,req,user"
 			for _, item := range defaultRoute.Vars {

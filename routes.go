@@ -351,7 +351,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user User, sfid string) 
 	}
 
 	// TODO: Move this to *Forum
-	rows, err := getForumTopicsOffsetStmt.Query(fid, offset, config.ItemsPerPage)
+	rows, err := stmts.getForumTopicsOffset.Query(fid, offset, config.ItemsPerPage)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -558,7 +558,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user User) RouteError 
 	tpage := TopicPage{topic.Title, user, headerVars, replyList, topic, page, lastPage}
 
 	// Get the replies..
-	rows, err := getTopicRepliesOffsetStmt.Query(topic.ID, offset, config.ItemsPerPage)
+	rows, err := stmts.getTopicRepliesOffset.Query(topic.ID, offset, config.ItemsPerPage)
 	if err == ErrNoRows {
 		return LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
 	} else if err != nil {
@@ -684,7 +684,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user User) RouteError 
 	}
 
 	// Get the replies..
-	rows, err := getProfileRepliesStmt.Query(puser.ID)
+	rows, err := stmts.getProfileReplies.Query(puser.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -904,7 +904,7 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user User) Rout
 		if err != nil {
 			return InternalError(err, w, r)
 		}
-		_, err = addEmailStmt.Exec(email, uid, 0, token)
+		_, err = stmts.addEmail.Exec(email, uid, 0, token)
 		if err != nil {
 			return InternalError(err, w, r)
 		}
@@ -946,7 +946,7 @@ func routeChangeTheme(w http.ResponseWriter, r *http.Request, user User) RouteEr
 
 	// TODO: Store the current theme in the user's account?
 	/*if user.Loggedin {
-		_, err = change_theme_stmt.Exec(newTheme, user.ID)
+		_, err = stmts.changeTheme.Exec(newTheme, user.ID)
 		if err != nil {
 			return InternalError(err, w, r)
 		}
@@ -986,7 +986,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user User) RouteError {
 			return PreErrorJS("Invalid asid", w, r)
 		}
 
-		_, err = deleteActivityStreamMatchStmt.Exec(user.ID, asid)
+		_, err = stmts.deleteActivityStreamMatch.Exec(user.ID, asid)
 		if err != nil {
 			return InternalError(err, w, r)
 		}
@@ -1000,14 +1000,14 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user User) RouteError {
 		var asid, actorID, targetUserID, elementID int
 		var msgCount int
 
-		err = getActivityCountByWatcherStmt.QueryRow(user.ID).Scan(&msgCount)
+		err = stmts.getActivityCountByWatcher.QueryRow(user.ID).Scan(&msgCount)
 		if err == ErrNoRows {
 			return PreErrorJS("Couldn't find the parent topic", w, r)
 		} else if err != nil {
 			return InternalErrorJS(err, w, r)
 		}
 
-		rows, err := getActivityFeedByWatcherStmt.Query(user.ID)
+		rows, err := stmts.getActivityFeedByWatcher.Query(user.ID)
 		if err != nil {
 			return InternalErrorJS(err, w, r)
 		}

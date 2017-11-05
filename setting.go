@@ -27,7 +27,7 @@ func init() {
 }
 
 func LoadSettings() error {
-	rows, err := getFullSettingsStmt.Query()
+	rows, err := stmts.getFullSettings.Query()
 	if err != nil {
 		return err
 	}

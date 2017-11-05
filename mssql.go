@@ -20,16 +20,6 @@ import (
 
 var dbInstance string = ""
 
-var getActivityFeedByWatcherStmt *sql.Stmt
-var getActivityCountByWatcherStmt *sql.Stmt
-var todaysPostCountStmt *sql.Stmt
-var todaysTopicCountStmt *sql.Stmt
-var todaysReportCountStmt *sql.Stmt
-var todaysNewUserCountStmt *sql.Stmt
-var findUsersByIPUsersStmt *sql.Stmt
-var findUsersByIPTopicsStmt *sql.Stmt
-var findUsersByIPRepliesStmt *sql.Stmt
-
 func init() {
 	dbAdapter = "mssql"
 	_initDatabase = initMSSQL

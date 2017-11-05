@@ -40,8 +40,9 @@ type NameTextPair struct {
 	Text string
 }
 
+// TODO: Make a store for this?
 func initWidgets() error {
-	rows, err := getWidgetsStmt.Query()
+	rows, err := stmts.getWidgets.Query()
 	if err != nil {
 		return err
 	}

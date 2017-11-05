@@ -4,6 +4,8 @@ import "log"
 
 import "database/sql"
 
+var stmts *Stmts
+
 var db *sql.DB
 var dbVersion string
 var dbAdapter string
@@ -14,11 +16,14 @@ var ErrNoRows = sql.ErrNoRows
 var _initDatabase func() error
 
 func initDatabase() (err error) {
+	stmts = &Stmts{Mocks: false}
+
 	// Engine specific code
 	err = _initDatabase()
 	if err != nil {
 		return err
 	}
+	globs = &Globs{stmts}
 
 	log.Print("Loading the usergroups.")
 	gstore, err = NewMemoryGroupStore()

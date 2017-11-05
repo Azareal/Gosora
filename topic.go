@@ -103,7 +103,7 @@ type TopicsRow struct {
 }
 
 func (topic *Topic) Lock() (err error) {
-	_, err = lockTopicStmt.Exec(topic.ID)
+	_, err = stmts.lockTopic.Exec(topic.ID)
 	tcache, ok := topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(topic.ID)
@@ -112,7 +112,7 @@ func (topic *Topic) Lock() (err error) {
 }
 
 func (topic *Topic) Unlock() (err error) {
-	_, err = unlockTopicStmt.Exec(topic.ID)
+	_, err = stmts.unlockTopic.Exec(topic.ID)
 	tcache, ok := topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(topic.ID)
@@ -123,7 +123,7 @@ func (topic *Topic) Unlock() (err error) {
 // TODO: We might want more consistent terminology rather than using stick in some places and pin in others. If you don't understand the difference, there is none, they are one and the same.
 // ? - We do a CacheDelete() here instead of mutating the pointer to avoid creating a race condition
 func (topic *Topic) Stick() (err error) {
-	_, err = stickTopicStmt.Exec(topic.ID)
+	_, err = stmts.stickTopic.Exec(topic.ID)
 	tcache, ok := topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(topic.ID)
@@ -132,7 +132,7 @@ func (topic *Topic) Stick() (err error) {
 }
 
 func (topic *Topic) Unstick() (err error) {
-	_, err = unstickTopicStmt.Exec(topic.ID)
+	_, err = stmts.unstickTopic.Exec(topic.ID)
 	tcache, ok := topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(topic.ID)
@@ -168,7 +168,7 @@ func (topic *Topic) Delete() error {
 		return err
 	}
 
-	_, err = deleteTopicStmt.Exec(topic.ID)
+	_, err = stmts.deleteTopic.Exec(topic.ID)
 	tcache, ok := topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(topic.ID)
@@ -179,7 +179,7 @@ func (topic *Topic) Delete() error {
 func (topic *Topic) Update(name string, content string) error {
 	content = preparseMessage(content)
 	parsed_content := parseMessage(html.EscapeString(content), topic.ParentID, "forums")
-	_, err := editTopicStmt.Exec(name, content, parsed_content, topic.ID)
+	_, err := stmts.editTopic.Exec(name, content, parsed_content, topic.ID)
 
 	tcache, ok := topics.(TopicCache)
 	if ok {
@@ -189,11 +189,11 @@ func (topic *Topic) Update(name string, content string) error {
 }
 
 func (topic *Topic) CreateActionReply(action string, ipaddress string, user User) (err error) {
-	_, err = createActionReplyStmt.Exec(topic.ID, action, ipaddress, user.ID)
+	_, err = stmts.createActionReply.Exec(topic.ID, action, ipaddress, user.ID)
 	if err != nil {
 		return err
 	}
-	_, err = addRepliesToTopicStmt.Exec(1, user.ID, topic.ID)
+	_, err = stmts.addRepliesToTopic.Exec(1, user.ID, topic.ID)
 	tcache, ok := topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(topic.ID)
@@ -235,7 +235,7 @@ func getTopicUser(tid int) (TopicUser, error) {
 	}
 
 	tu := TopicUser{ID: tid}
-	err := getTopicUserStmt.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+	err := stmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 	tu.Link = buildTopicURL(nameToSlug(tu.Title), tu.ID)
 	tu.UserLink = buildProfileURL(nameToSlug(tu.CreatedByName), tu.CreatedBy)
 	tu.Tag = gstore.DirtyGet(tu.Group).Tag
@@ -282,7 +282,7 @@ func getDummyTopic() *Topic {
 
 func getTopicByReply(rid int) (*Topic, error) {
 	topic := Topic{ID: 0}
-	err := getTopicByReplyStmt.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	err := stmts.getTopicByReply.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	topic.Link = buildTopicURL(nameToSlug(topic.Title), topic.ID)
 	return &topic, err
 }

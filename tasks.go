@@ -18,7 +18,7 @@ func init() {
 }
 
 func handleExpiredScheduledGroups() error {
-	rows, err := getExpiredScheduledGroupsStmt.Query()
+	rows, err := stmts.getExpiredScheduledGroups.Query()
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func handleExpiredScheduledGroups() error {
 
 func handleServerSync() error {
 	var lastUpdate time.Time
-	err := getSyncStmt.QueryRow().Scan(&lastUpdate)
+	err := stmts.getSync.QueryRow().Scan(&lastUpdate)
 	if err != nil {
 		return err
 	}

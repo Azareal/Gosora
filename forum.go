@@ -82,7 +82,7 @@ func (forum *Forum) Update(name string, desc string, active bool, preset string)
 		name = forum.Name
 	}
 	preset = strings.TrimSpace(preset)
-	_, err := updateForumStmt.Exec(name, desc, active, preset, forum.ID)
+	_, err := stmts.updateForum.Exec(name, desc, active, preset, forum.ID)
 	if err != nil {
 		return err
 	}

@@ -170,7 +170,7 @@ func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 		return "", err
 	}
 
-	_, err = updateSessionStmt.Exec(session, uid)
+	_, err = stmts.updateSession.Exec(session, uid)
 	if err != nil {
 		return "", err
 	}
