@@ -43,21 +43,13 @@ type MemoryGroupStore struct {
 }
 
 func NewMemoryGroupStore() (*MemoryGroupStore, error) {
-	getAllStmt, err := qgen.Builder.SimpleSelect("users_groups", "gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "", "", "")
-	if err != nil {
-		return nil, err
-	}
-	getGroupStmt, err := qgen.Builder.SimpleSelect("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "gid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-
+	acc := qgen.Builder.Accumulator()
 	return &MemoryGroupStore{
 		groups:     make(map[int]*Group),
 		groupCount: 0,
-		getAll:     getAllStmt,
-		get:        getGroupStmt,
-	}, nil
+		getAll:     acc.SimpleSelect("users_groups", "gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "", "", ""),
+		get:        acc.SimpleSelect("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "gid = ?", "", ""),
+	}, acc.FirstError()
 }
 
 // TODO: Move this query from the global stmt store into this store

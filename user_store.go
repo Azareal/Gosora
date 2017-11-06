@@ -56,42 +56,17 @@ type MemoryUserStore struct {
 
 // NewMemoryUserStore gives you a new instance of MemoryUserStore
 func NewMemoryUserStore(capacity int) (*MemoryUserStore, error) {
-	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	existsStmt, err := qgen.Builder.SimpleSelect("users", "uid", "uid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	// Add an admin version of register_stmt with more flexibility?
-	// create_account_stmt, err = db.Prepare("INSERT INTO
-	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
-	if err != nil {
-		return nil, err
-	}
-
-	usernameExistsStmt, err := qgen.Builder.SimpleSelect("users", "name", "name = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	userCountStmt, err := qgen.Builder.SimpleCount("users", "", "")
-	if err != nil {
-		return nil, err
-	}
-
+	acc := qgen.Builder.Accumulator()
+	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &MemoryUserStore{
 		items:          make(map[int]*User),
 		capacity:       capacity,
-		get:            getStmt,
-		exists:         existsStmt,
-		register:       registerStmt,
-		usernameExists: usernameExistsStmt,
-		userCount:      userCountStmt,
-	}, nil
+		get:            acc.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", ""),
+		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
+		register:       acc.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()"),
+		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
+		userCount:      acc.SimpleCount("users", "", ""),
+	}, acc.FirstError()
 }
 
 func (mus *MemoryUserStore) CacheGet(id int) (*User, error) {
@@ -385,40 +360,15 @@ type SQLUserStore struct {
 }
 
 func NewSQLUserStore() (*SQLUserStore, error) {
-	getStmt, err := qgen.Builder.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	existsStmt, err := qgen.Builder.SimpleSelect("users", "uid", "uid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	// Add an admin version of register_stmt with more flexibility?
-	// create_account_stmt, err = db.Prepare("INSERT INTO
-	registerStmt, err := qgen.Builder.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
-	if err != nil {
-		return nil, err
-	}
-
-	usernameExistsStmt, err := qgen.Builder.SimpleSelect("users", "name", "name = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	userCountStmt, err := qgen.Builder.SimpleCount("users", "", "")
-	if err != nil {
-		return nil, err
-	}
-
+	acc := qgen.Builder.Accumulator()
+	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &SQLUserStore{
-		get:            getStmt,
-		exists:         existsStmt,
-		register:       registerStmt,
-		usernameExists: usernameExistsStmt,
-		userCount:      userCountStmt,
-	}, nil
+		get:            acc.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", ""),
+		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
+		register:       acc.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()"),
+		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
+		userCount:      acc.SimpleCount("users", "", ""),
+	}, acc.FirstError()
 }
 
 func (mus *SQLUserStore) Get(id int) (*User, error) {

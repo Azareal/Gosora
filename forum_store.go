@@ -59,61 +59,30 @@ type MemoryForumStore struct {
 	forumView atomic.Value // []*Forum
 	//fids []int
 
-	get                   *sql.Stmt
-	getAll                *sql.Stmt
-	delete                *sql.Stmt
-	create                *sql.Stmt
-	count                 *sql.Stmt
-	updateCache           *sql.Stmt
-	addTopicsToForum      *sql.Stmt
-	removeTopicsFromForum *sql.Stmt
+	get          *sql.Stmt
+	getAll       *sql.Stmt
+	delete       *sql.Stmt
+	create       *sql.Stmt
+	count        *sql.Stmt
+	updateCache  *sql.Stmt
+	addTopics    *sql.Stmt
+	removeTopics *sql.Stmt
 }
 
 // NewMemoryForumStore gives you a new instance of MemoryForumStore
 func NewMemoryForumStore() (*MemoryForumStore, error) {
-	getStmt, err := qgen.Builder.SimpleSelect("forums", "name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "fid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-	getAllStmt, err := qgen.Builder.SimpleSelect("forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "", "fid ASC", "")
-	if err != nil {
-		return nil, err
-	}
+	acc := qgen.Builder.Accumulator()
 	// TODO: Do a proper delete
-	deleteStmt, err := qgen.Builder.SimpleUpdate("forums", "name= '', active = 0", "fid = ?")
-	if err != nil {
-		return nil, err
-	}
-	createStmt, err := qgen.Builder.SimpleInsert("forums", "name, desc, active, preset", "?,?,?,?")
-	if err != nil {
-		return nil, err
-	}
-	forumCountStmt, err := qgen.Builder.SimpleCount("forums", "name != ''", "")
-	if err != nil {
-		return nil, err
-	}
-	updateCacheStmt, err := qgen.Builder.SimpleUpdate("forums", "lastTopicID = ?, lastReplyerID = ?", "fid = ?")
-	if err != nil {
-		return nil, err
-	}
-	addTopicsToForumStmt, err := qgen.Builder.SimpleUpdate("forums", "topicCount = topicCount + ?", "fid = ?")
-	if err != nil {
-		return nil, err
-	}
-	removeTopicsFromForumStmt, err := qgen.Builder.SimpleUpdate("forums", "topicCount = topicCount - ?", "fid = ?")
-	if err != nil {
-		return nil, err
-	}
 	return &MemoryForumStore{
-		get:                   getStmt,
-		getAll:                getAllStmt,
-		delete:                deleteStmt,
-		create:                createStmt,
-		count:                 forumCountStmt,
-		updateCache:           updateCacheStmt,
-		addTopicsToForum:      addTopicsToForumStmt,
-		removeTopicsFromForum: removeTopicsFromForumStmt,
-	}, nil
+		get:          acc.SimpleSelect("forums", "name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "fid = ?", "", ""),
+		getAll:       acc.SimpleSelect("forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "", "fid ASC", ""),
+		delete:       acc.SimpleUpdate("forums", "name= '', active = 0", "fid = ?"),
+		create:       acc.SimpleInsert("forums", "name, desc, active, preset", "?,?,?,?"),
+		count:        acc.SimpleCount("forums", "name != ''", ""),
+		updateCache:  acc.SimpleUpdate("forums", "lastTopicID = ?, lastReplyerID = ?", "fid = ?"),
+		addTopics:    acc.SimpleUpdate("forums", "topicCount = topicCount + ?", "fid = ?"),
+		removeTopics: acc.SimpleUpdate("forums", "topicCount = topicCount - ?", "fid = ?"),
+	}, acc.FirstError()
 }
 
 // TODO: Add support for subforums
@@ -355,7 +324,7 @@ func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
 	if err != nil {
 		return err
 	}
-	_, err = mfs.addTopicsToForum.Exec(1, fid)
+	_, err = mfs.addTopics.Exec(1, fid)
 	if err != nil {
 		return err
 	}
@@ -365,7 +334,7 @@ func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
 
 // TODO: Update the forum cache with the latest topic
 func (mfs *MemoryForumStore) RemoveTopic(fid int) error {
-	_, err := mfs.removeTopicsFromForum.Exec(1, fid)
+	_, err := mfs.removeTopics.Exec(1, fid)
 	if err != nil {
 		return err
 	}

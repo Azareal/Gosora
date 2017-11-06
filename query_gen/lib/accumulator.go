@@ -1,7 +1,9 @@
 /* WIP: A version of the builder which accumulates errors, we'll see if we can't unify the implementations at some point */
 package qgen
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type accBuilder struct {
 	conn     *sql.DB
@@ -34,7 +36,7 @@ func (build *accBuilder) recordError(err error) {
 	if err == nil {
 		return
 	}
-	if build.firstErr != nil {
+	if build.firstErr == nil {
 		build.firstErr = err
 	}
 }

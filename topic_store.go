@@ -63,25 +63,14 @@ type MemoryTopicStore struct {
 
 // NewMemoryTopicStore gives you a new instance of MemoryTopicStore
 func NewMemoryTopicStore(capacity int) (*MemoryTopicStore, error) {
-	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-	existsStmt, err := qgen.Builder.SimpleSelect("topics", "tid", "tid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "", "")
-	if err != nil {
-		return nil, err
-	}
+	acc := qgen.Builder.Accumulator()
 	return &MemoryTopicStore{
 		items:      make(map[int]*Topic),
 		capacity:   capacity,
-		get:        getStmt,
-		exists:     existsStmt,
-		topicCount: topicCountStmt,
-	}, nil
+		get:        acc.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", ""),
+		exists:     acc.SimpleSelect("topics", "tid", "tid = ?", "", ""),
+		topicCount: acc.SimpleCount("topics", "", ""),
+	}, acc.FirstError()
 }
 
 func (mts *MemoryTopicStore) CacheGet(id int) (*Topic, error) {
@@ -267,23 +256,12 @@ type SQLTopicStore struct {
 }
 
 func NewSQLTopicStore() (*SQLTopicStore, error) {
-	getStmt, err := qgen.Builder.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-	existsStmt, err := qgen.Builder.SimpleSelect("topics", "tid", "tid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "", "")
-	if err != nil {
-		return nil, err
-	}
+	acc := qgen.Builder.Accumulator()
 	return &SQLTopicStore{
-		get:        getStmt,
-		exists:     existsStmt,
-		topicCount: topicCountStmt,
-	}, nil
+		get:        acc.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", ""),
+		exists:     acc.SimpleSelect("topics", "tid", "tid = ?", "", ""),
+		topicCount: acc.SimpleCount("topics", "", ""),
+	}, acc.FirstError()
 }
 
 func (sts *SQLTopicStore) Get(id int) (*Topic, error) {
