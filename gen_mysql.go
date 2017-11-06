@@ -54,7 +54,6 @@ type Stmts struct {
 	addActivity *sql.Stmt
 	notifyOne *sql.Stmt
 	addEmail *sql.Stmt
-	createProfileReply *sql.Stmt
 	addSubscription *sql.Stmt
 	addForumPermsToForum *sql.Stmt
 	addPlugin *sql.Stmt
@@ -392,12 +391,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing addEmail statement.")
 	stmts.addEmail, err = db.Prepare("INSERT INTO `emails`(`email`,`uid`,`validated`,`token`) VALUES (?,?,?,?)")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing createProfileReply statement.")
-	stmts.createProfileReply, err = db.Prepare("INSERT INTO `users_replies`(`uid`,`content`,`parsed_content`,`createdAt`,`createdBy`,`ipaddress`) VALUES (?,?,?,UTC_TIMESTAMP(),?,?)")
 	if err != nil {
 		return err
 	}

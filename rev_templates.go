@@ -5,16 +5,48 @@ package main
 
 import (
 	"errors"
+	"log"
 	"regexp"
+	"text/template/parse"
 )
 
 var tagFinder *regexp.Regexp
+var limeFuncMap = map[string]interface{}{
+	"and":      "&&",
+	"not":      "!",
+	"or":       "||",
+	"eq":       true,
+	"ge":       true,
+	"gt":       true,
+	"le":       true,
+	"lt":       true,
+	"ne":       true,
+	"add":      true,
+	"subtract": true,
+	"multiply": true,
+	"divide":   true,
+}
 
 func init() {
 	tagFinder = regexp.MustCompile(`(?s)\{\{(.*)\}\}`)
 }
 
+func mangoParse(tmpl string) error {
+	tree := parse.New(name, funcMap)
+	var treeSet = make(map[string]*parse.Tree)
+	tree, err = tree.Parse(content, "{{", "}}", treeSet, limeFuncMap)
+	if err != nil {
+		return err
+	}
+	treeLength := len(tree.Root.Nodes)
+	log.Print("treeLength", treeLength)
+	return nil
+}
+
 func icecreamSoup(tmpl string) error {
+	if config.MinifyTemplates {
+		tmpl = minify(tmpl)
+	}
 	tagIndices := tagFinder.FindAllStringIndex(tmpl, -1)
 	if tagIndices != nil && len(tagIndices) > 0 {
 

@@ -34,72 +34,72 @@ function bindToAlerts() {
 }
 
 // TODO: Add the ability for users to dismiss alerts
-function loadAlerts(menu_alerts)
+function loadAlerts(menuAlerts)
 {
-	var alertListNode = menu_alerts.getElementsByClassName("alertList")[0];
-	var alertCounterNode = menu_alerts.getElementsByClassName("alert_counter")[0];
+	var alertListNode = menuAlerts.getElementsByClassName("alertList")[0];
+	var alertCounterNode = menuAlerts.getElementsByClassName("alert_counter")[0];
 	alertCounterNode.textContent = "0";
 	$.ajax({
-			type: 'get',
-			dataType: 'json',
-			url:'/api/?action=get&module=alerts',
-			success: function(data) {
-				if("errmsg" in data) {
-					alertListNode.innerHTML = "<div class='alertItem'>"+data.errmsg+"</div>";
-					return;
-				}
-
-				var alist = "";
-				for(var i in data.msgs) {
-					var msg = data.msgs[i];
-					var mmsg = msg.msg;
-
-					if("sub" in msg) {
-						for(var i = 0; i < msg.sub.length; i++) {
-							mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
-							//console.log("Sub #" + i + ":",msg.sub[i]);
-						}
-					}
-
-					if("avatar" in msg) {
-						alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
-						alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>");
-					} else {
-						alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
-						alertList.push("<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>");
-					}
-					//console.log(msg);
-					//console.log(mmsg);
-				}
-
-				if(alist == "") alist = "<div class='alertItem'>You don't have any alerts</div>";
-				alertListNode.innerHTML = alist;
-
-				if(data.msgCount != 0 && data.msgCount != undefined) {
-					alertCounterNode.textContent = data.msgCount;
-					menu_alerts.classList.add("has_alerts");
-				} else {
-					menu_alerts.classList.remove("has_alerts");
-				}
-				alertCount = data.msgCount;
-
-				bindToAlerts();
-			},
-			error: function(magic,theStatus,error) {
-				var errtxt
-				try {
-					var data = JSON.parse(magic.responseText);
-					if("errmsg" in data) errtxt = data.errmsg;
-					else errtxt = "Unable to get the alerts";
-				} catch(err) {
-					errtxt = "Unable to get the alerts";
-					console.log(magic.responseText);
-					console.log(err);
-				}
-				console.log("error: ",error);
-				alertListNode.innerHTML = "<div class='alertItem'>"+errtxt+"</div>";
+		type: 'get',
+		dataType: 'json',
+		url:'/api/?action=get&module=alerts',
+		success: function(data) {
+			if("errmsg" in data) {
+				alertListNode.innerHTML = "<div class='alertItem'>"+data.errmsg+"</div>";
+				return;
 			}
-		});
+
+			var alist = "";
+			for(var i in data.msgs) {
+				var msg = data.msgs[i];
+				var mmsg = msg.msg;
+
+				if("sub" in msg) {
+					for(var i = 0; i < msg.sub.length; i++) {
+						mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
+						//console.log("Sub #" + i + ":",msg.sub[i]);
+					}
+				}
+
+				if("avatar" in msg) {
+					alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
+					alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>");
+				} else {
+					alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
+					alertList.push("<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>");
+				}
+				//console.log(msg);
+				//console.log(mmsg);
+			}
+
+			if(alist == "") alist = "<div class='alertItem'>You don't have any alerts</div>";
+			alertListNode.innerHTML = alist;
+
+			if(data.msgCount != 0 && data.msgCount != undefined) {
+				alertCounterNode.textContent = data.msgCount;
+				menuAlerts.classList.add("has_alerts");
+			} else {
+				menuAlerts.classList.remove("has_alerts");
+			}
+			alertCount = data.msgCount;
+
+			bindToAlerts();
+		},
+		error: function(magic,theStatus,error) {
+			let errtxt
+			try {
+				var data = JSON.parse(magic.responseText);
+				if("errmsg" in data) errtxt = data.errmsg;
+				else errtxt = "Unable to get the alerts";
+			} catch(err) {
+				errtxt = "Unable to get the alerts";
+				console.log(magic.responseText);
+				console.log(err);
+			}
+			console.log("error", error);
+			alertListNode.innerHTML = "<div class='alertItem'>"+errtxt+"</div>";
+		}
+	});
 }
 
 function SplitN(data,ch,n) {
@@ -121,84 +121,86 @@ function SplitN(data,ch,n) {
 	return out;
 }
 
-$(document).ready(function(){
-	if(window["WebSocket"]) {
-		if(window.location.protocol == "https:")
-			conn = new WebSocket("wss://" + document.location.host + "/ws/");
-		else conn = new WebSocket("ws://" + document.location.host + "/ws/");
+function runWebSockets() {
+	if(window.location.protocol == "https:")
+		conn = new WebSocket("wss://" + document.location.host + "/ws/");
+	else conn = new WebSocket("ws://" + document.location.host + "/ws/");
 
-		conn.onopen = function() {
-			console.log("The WebSockets connection was opened");
-			conn.send("page " + document.location.pathname + '\r');
-			// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
-			Notification.requestPermission();
-		}
-		conn.onclose = function() {
-			conn = false;
-			console.log("The WebSockets connection was closed");
-		}
-		conn.onmessage = function(event) {
-			//console.log("WS_Message:", event.data);
-			if(event.data[0] == "{") {
-				try {
-					var data = JSON.parse(event.data);
-				} catch(err) {
-					console.log(err);
-				}
-
-				if ("msg" in data) {
-					var msg = data.msg
-					if("sub" in data)
-						for(var i = 0; i < data.sub.length; i++)
-							msg = msg.replace("\{"+i+"\}", data.sub[i]);
-
-					if("avatar" in data) alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+data.avatar+"\");'><a class='text' data-asid='"+data.asid+"' href=\""+data.path+"\">"+msg+"</a></div>");
-					else alertList.push("<div class='alertItem'><a href=\""+data.path+"\" class='text'>"+msg+"</a></div>");
-					if(alertList.length > 8) alertList.shift();
-					//console.log("post alertList",alertList);
-					alertCount++;
-
-					var alist = ""
-					for (var i = 0; i < alertList.length; i++) alist += alertList[i];
-
-					//console.log(alist);
-					// TODO: Add support for other alert feeds like PM Alerts
-					var general_alerts = document.getElementById("general_alerts");
-					var alertListNode = general_alerts.getElementsByClassName("alertList")[0];
-					var alertCounterNode = general_alerts.getElementsByClassName("alert_counter")[0];
-					alertListNode.innerHTML = alist;
-					alertCounterNode.textContent = alertCount;
-
-					// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
-					// TODO: Use the site name instead of "Something Happened"
-					if(Notification.permission === "granted") {
-						var n = new Notification("Something Happened",{
-							body: msg,
-							icon: data.avatar,
-						});
-						setTimeout(n.close.bind(n), 8000);
-					}
-
-					bindToAlerts();
-				}
+	conn.onopen = function() {
+		console.log("The WebSockets connection was opened");
+		conn.send("page " + document.location.pathname + '\r');
+		// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
+		Notification.requestPermission();
+	}
+	conn.onclose = function() {
+		conn = false;
+		console.log("The WebSockets connection was closed");
+	}
+	conn.onmessage = function(event) {
+		//console.log("WS_Message:", event.data);
+		if(event.data[0] == "{") {
+			try {
+				var data = JSON.parse(event.data);
+			} catch(err) {
+				console.log(err);
 			}
 
-			var messages = event.data.split('\r');
-			for(var i = 0; i < messages.length; i++) {
-				//console.log("Message: ",messages[i]);
-				if(messages[i].startsWith("set ")) {
-					//msgblocks = messages[i].split(' ',3);
-					let msgblocks = SplitN(messages[i]," ",3);
-					if(msgblocks.length < 3) continue;
-					document.querySelector(msgblocks[1]).innerHTML = msgblocks[2];
-				} else if(messages[i].startsWith("set-class ")) {
-					let msgblocks = SplitN(messages[i]," ",3);
-					if(msgblocks.length < 3) continue;
-					document.querySelector(msgblocks[1]).className = msgblocks[2];
+			if ("msg" in data) {
+				var msg = data.msg
+				if("sub" in data)
+					for(var i = 0; i < data.sub.length; i++)
+						msg = msg.replace("\{"+i+"\}", data.sub[i]);
+
+				if("avatar" in data) alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+data.avatar+"\");'><a class='text' data-asid='"+data.asid+"' href=\""+data.path+"\">"+msg+"</a></div>");
+				else alertList.push("<div class='alertItem'><a href=\""+data.path+"\" class='text'>"+msg+"</a></div>");
+				if(alertList.length > 8) alertList.shift();
+				//console.log("post alertList",alertList);
+				alertCount++;
+
+				var alist = ""
+				for (var i = 0; i < alertList.length; i++) alist += alertList[i];
+
+				//console.log(alist);
+				// TODO: Add support for other alert feeds like PM Alerts
+				var generalAlerts = document.getElementById("general_alerts");
+				var alertListNode = generalAlerts.getElementsByClassName("alertList")[0];
+				var alertCounterNode = generalAlerts.getElementsByClassName("alert_counter")[0];
+				alertListNode.innerHTML = alist;
+				alertCounterNode.textContent = alertCount;
+
+				// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
+				// TODO: Use the site name instead of "Something Happened"
+				if(Notification.permission === "granted") {
+					var n = new Notification("Something Happened",{
+						body: msg,
+						icon: data.avatar,
+					});
+					setTimeout(n.close.bind(n), 8000);
 				}
+
+				bindToAlerts();
+			}
+		}
+
+		var messages = event.data.split('\r');
+		for(var i = 0; i < messages.length; i++) {
+			//console.log("Message: ",messages[i]);
+			if(messages[i].startsWith("set ")) {
+				//msgblocks = messages[i].split(' ',3);
+				let msgblocks = SplitN(messages[i]," ",3);
+				if(msgblocks.length < 3) continue;
+				document.querySelector(msgblocks[1]).innerHTML = msgblocks[2];
+			} else if(messages[i].startsWith("set-class ")) {
+				let msgblocks = SplitN(messages[i]," ",3);
+				if(msgblocks.length < 3) continue;
+				document.querySelector(msgblocks[1]).className = msgblocks[2];
 			}
 		}
 	}
+}
+
+$(document).ready(function(){
+	if(window["WebSocket"]) runWebSockets();
 	else conn = false;
 
 	$(".open_edit").click(function(event){

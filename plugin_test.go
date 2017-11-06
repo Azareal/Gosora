@@ -174,7 +174,7 @@ func TestBBCodeRender(t *testing.T) {
 	msg = "[rand]18446744073709551615[/rand]" // Unsigned 64-bit MAX
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
-	conv, err = strconv.Atoi(res)
+	_, err = strconv.Atoi(res)
 	if err != nil && res != "<span style='color: red;'>[Invalid Number]</span>[rand]18446744073709551615[/rand]" {
 		t.Error("Bad output:", "'"+res+"'")
 		t.Error("Expected a number between 0 and 18446744073709551615")
@@ -182,7 +182,7 @@ func TestBBCodeRender(t *testing.T) {
 	msg = "[rand]170141183460469231731687303715884105727[/rand]" // Signed 128-bit MAX
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
-	conv, err = strconv.Atoi(res)
+	_, err = strconv.Atoi(res)
 	if err != nil && res != "<span style='color: red;'>[Invalid Number]</span>[rand]170141183460469231731687303715884105727[/rand]" {
 		t.Error("Bad output:", "'"+res+"'")
 		t.Error("Expected a number between 0 and 170141183460469231731687303715884105727")

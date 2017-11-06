@@ -498,6 +498,8 @@ var topic_alt_104 = []byte(`
 `)
 var profile_0 = []byte(`
 
+<div id="profile_container">
+
 <div id="profile_left_lane" class="colstack_left">
 	<!--<header class="colstack_item colstack_head rowhead">
 		<div class="rowitem"><h1>Profile</h1></div>
@@ -637,6 +639,8 @@ var profile_42 = []byte(`' type="hidden" />
 	</form>
 `)
 var profile_43 = []byte(`
+</div>
+
 </div>
 
 `)

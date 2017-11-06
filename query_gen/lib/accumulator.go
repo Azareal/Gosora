@@ -115,9 +115,7 @@ func (build *accBuilder) Purge(table string) *sql.Stmt {
 	return build.prepare(build.adapter.Purge("_builder", table))
 }
 
-// These ones support transactions
-func (build *accBuilder) SimpleSelectTx(tx *sql.Tx, table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleSelect("_builder", table, columns, where, orderby, limit)
+func (build *accBuilder) prepareTx(tx *sql.Tx, res string, err error) (stmt *sql.Stmt) {
 	if err != nil {
 		build.recordError(err)
 		return nil
@@ -125,72 +123,42 @@ func (build *accBuilder) SimpleSelectTx(tx *sql.Tx, table string, columns string
 	stmt, err = tx.Prepare(res)
 	build.recordError(err)
 	return stmt
+}
+
+// These ones support transactions
+func (build *accBuilder) SimpleSelectTx(tx *sql.Tx, table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt) {
+	res, err := build.adapter.SimpleSelect("_builder", table, columns, where, orderby, limit)
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleCountTx(tx *sql.Tx, table string, where string, limit string) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleCount("_builder", table, where, limit)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleLeftJoinTx(tx *sql.Tx, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleLeftJoin("_builder", table1, table2, columns, joiners, where, orderby, limit)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleInnerJoinTx(tx *sql.Tx, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleInnerJoin("_builder", table1, table2, columns, joiners, where, orderby, limit)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) CreateTableTx(tx *sql.Tx, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (stmt *sql.Stmt) {
 	res, err := build.adapter.CreateTable("_builder", table, charset, collation, columns, keys)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleInsertTx(tx *sql.Tx, table string, columns string, fields string) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleInsert("_builder", table, columns, fields)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleInsertSelectTx(tx *sql.Tx, ins DB_Insert, sel DB_Select) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleInsertSelect("_builder", ins, sel)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt) {
@@ -206,45 +174,21 @@ func (build *accBuilder) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DB_Insert, sel D
 
 func (build *accBuilder) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleInsertInnerJoin("_builder", ins, sel)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleUpdateTx(tx *sql.Tx, table string, set string, where string) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleUpdate("_builder", table, set, where)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleDeleteTx(tx *sql.Tx, table string, where string) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleDelete("_builder", table, where)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 // I don't know why you need this, but here it is x.x
 func (build *accBuilder) PurgeTx(tx *sql.Tx, table string) (stmt *sql.Stmt) {
 	res, err := build.adapter.Purge("_builder", table)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }

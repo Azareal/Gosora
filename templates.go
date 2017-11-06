@@ -121,24 +121,7 @@ func (c *CTemplateSet) compileTemplate(name string, dir string, expects string, 
 	c.FragmentCursor = make(map[string]int)
 	c.FragmentCursor[fname] = 0
 
-	subtree := c.tlist[fname]
-	if dev.TemplateDebug {
-		fmt.Println(subtree.Root)
-	}
-
-	treeLength := len(subtree.Root.Nodes)
-	for index, node := range subtree.Root.Nodes {
-		if dev.TemplateDebug {
-			fmt.Println("Node: " + node.String())
-		}
-
-		c.previousNode = c.currentNode
-		c.currentNode = node.Type()
-		if treeLength != (index + 1) {
-			c.nextNode = subtree.Root.Nodes[index+1].Type()
-		}
-		out += c.compileSwitch(varholder, holdreflect, fname, node)
-	}
+	out += c.rootIterate(c.tlist[fname], varholder, holdreflect, fname)
 
 	var importList string
 	if c.doImports {
@@ -176,6 +159,26 @@ w.Write([]byte(`, " + ", -1)
 		fmt.Println(fout)
 	}
 	return fout, nil
+}
+
+func (c *CTemplateSet) rootIterate(tree *parse.Tree, varholder string, holdreflect reflect.Value, fname string) (out string) {
+	if dev.TemplateDebug {
+		fmt.Println(tree.Root)
+	}
+	treeLength := len(tree.Root.Nodes)
+	for index, node := range tree.Root.Nodes {
+		if dev.TemplateDebug {
+			fmt.Println("Node: ", node.String())
+		}
+
+		c.previousNode = c.currentNode
+		c.currentNode = node.Type()
+		if treeLength != (index + 1) {
+			c.nextNode = tree.Root.Nodes[index+1].Type()
+		}
+		out += c.compileSwitch(varholder, holdreflect, fname, node)
+	}
+	return out
 }
 
 func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value, templateName string, node interface{}) (out string) {
@@ -449,7 +452,6 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 			fmt.Println("Chain Node:", n.Node)
 			fmt.Println("Chain Node Args:", node.Args)
 		}
-		break
 	case *parse.IdentifierNode:
 		if dev.TemplateDebug {
 			fmt.Println("Identifier Node:", node)
@@ -957,7 +959,6 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 			case *parse.DotNode:
 				varholder = pvarholder
 				holdreflect = pholdreflect
-				break
 			case *parse.NilNode:
 				panic("Nil is not a command x.x")
 			default:
@@ -995,19 +996,7 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 	c.localVars[fname]["."] = VarItemReflect{".", varholder, holdreflect}
 	c.FragmentCursor[fname] = 0
 
-	treeLength := len(subtree.Root.Nodes)
-	for index, node := range subtree.Root.Nodes {
-		if dev.TemplateDebug {
-			fmt.Println("Node:", node.String())
-		}
-
-		c.previousNode = c.currentNode
-		c.currentNode = node.Type()
-		if treeLength != (index + 1) {
-			c.nextNode = subtree.Root.Nodes[index+1].Type()
-		}
-		out += c.compileSwitch(varholder, holdreflect, fname, node)
-	}
+	out += c.rootIterate(subtree, varholder, holdreflect, fname)
 	return out
 }
 

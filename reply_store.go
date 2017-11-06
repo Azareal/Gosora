@@ -16,18 +16,11 @@ type SQLReplyStore struct {
 }
 
 func NewSQLReplyStore() (*SQLReplyStore, error) {
-	getReplyStmt, err := qgen.Builder.SimpleSelect("replies", "tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount", "rid = ?", "", "")
-	if err != nil {
-		return nil, err
-	}
-	createReplyStmt, err := qgen.Builder.SimpleInsert("replies", "tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?")
-	if err != nil {
-		return nil, err
-	}
+	acc := qgen.Builder.Accumulator()
 	return &SQLReplyStore{
-		get:    getReplyStmt,
-		create: createReplyStmt,
-	}, nil
+		get:    acc.SimpleSelect("replies", "tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount", "rid = ?", "", ""),
+		create: acc.SimpleInsert("replies", "tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?"),
+	}, acc.FirstError()
 }
 
 func (store *SQLReplyStore) Get(id int) (*Reply, error) {

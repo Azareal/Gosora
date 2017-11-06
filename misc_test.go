@@ -550,6 +550,8 @@ func topicStoreTest(t *testing.T) {
 		t.Error("The number of topics should be bigger than zero")
 		t.Error("count", count)
 	}
+
+	// TODO: Test topic creation and retrieving that created topic plus reload and inspecting the cache
 }
 
 func TestForumStore(t *testing.T) {
@@ -737,16 +739,28 @@ func TestReplyStore(t *testing.T) {
 
 	reply, err := rstore.Get(1)
 	expectNilErr(t, err)
+	expect(t, reply.ID == 1, fmt.Sprintf("RID #1 has the wrong ID. It should be 1 not %d", reply.ID))
+	expect(t, reply.ParentID == 1, fmt.Sprintf("The parent topic of RID #1 should be 1 not %d", reply.ParentID))
+	expect(t, reply.CreatedBy == 1, fmt.Sprintf("The creator of RID #1 should be 1 not %d", reply.CreatedBy))
+	expect(t, reply.Content == "A reply!", fmt.Sprintf("The contents of RID #1 should be 'A reply!' not %s", reply.Content))
+	expect(t, reply.IPAddress == "::1", fmt.Sprintf("The IPAddress of RID#1 should be '::1' not %s", reply.IPAddress))
 
-	if reply.ID != 1 {
-		t.Errorf("RID #1 has the wrong ID. It should be 1 not %d", reply.ID)
-	}
-	if reply.ParentID != 1 {
-		t.Errorf("The parent topic of RID #1 should be 1 not %d", reply.ParentID)
-	}
-	if reply.CreatedBy != 1 {
-		t.Errorf("The creator of RID #1 should be 1 not %d", reply.CreatedBy)
-	}
+	_, err = rstore.Get(2)
+	recordMustNotExist(t, err, "RID #2 shouldn't exist")
+
+	// TODO: Test Create and Get
+	//Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error)
+	rid, err := rstore.Create(1, "Fofofo", "::1", 2, 1)
+	expectNilErr(t, err)
+	expect(t, rid == 2, fmt.Sprintf("The next reply ID should be 2 not %d", rid))
+
+	reply, err = rstore.Get(2)
+	expectNilErr(t, err)
+	expect(t, reply.ID == 2, fmt.Sprintf("RID #2 has the wrong ID. It should be 2 not %d", reply.ID))
+	expect(t, reply.ParentID == 1, fmt.Sprintf("The parent topic of RID #2 should be 1 not %d", reply.ParentID))
+	expect(t, reply.CreatedBy == 1, fmt.Sprintf("The creator of RID #2 should be 1 not %d", reply.CreatedBy))
+	expect(t, reply.Content == "Fofofo", fmt.Sprintf("The contents of RID #2 should be 'Fofofo' not %s", reply.Content))
+	expect(t, reply.IPAddress == "::1", fmt.Sprintf("The IPAddress of RID #2 should be '::1' not %s", reply.IPAddress))
 }
 
 func TestProfileReplyStore(t *testing.T) {
@@ -758,10 +772,30 @@ func TestProfileReplyStore(t *testing.T) {
 	}
 
 	_, err := prstore.Get(-1)
-	recordMustNotExist(t, err, "RID #-1 shouldn't exist")
+	recordMustNotExist(t, err, "PRID #-1 shouldn't exist")
 
 	_, err = prstore.Get(0)
-	recordMustNotExist(t, err, "RID #0 shouldn't exist")
+	recordMustNotExist(t, err, "PRID #0 shouldn't exist")
+
+	_, err = prstore.Get(1)
+	recordMustNotExist(t, err, "PRID #0 shouldn't exist")
+
+	var profileID = 1
+	prid, err := prstore.Create(profileID, "Haha", 1, "::1")
+	expect(t, err == nil, "Unable to create a profile reply")
+	expect(t, prid == 1, "The first profile reply should have an ID of 1")
+
+	profileReply, err := prstore.Get(1)
+	expect(t, err == nil, "PRID #1 should exist")
+	expect(t, profileReply.ID == 1, fmt.Sprintf("The profile reply should have an ID of 1 not %d", profileReply.ID))
+	expect(t, profileReply.ParentID == 1, fmt.Sprintf("The parent ID of the profile reply should be 1 not %d", profileReply.ParentID))
+	expect(t, profileReply.Content == "Haha", fmt.Sprintf("The profile reply's contents should be 'Haha' not '%s'", profileReply.Content))
+	expect(t, profileReply.CreatedBy == 1, fmt.Sprintf("The profile reply's creator should be 1 not %d", profileReply.CreatedBy))
+	expect(t, profileReply.IPAddress == "::1", fmt.Sprintf("The profile reply's IP Address should be '::1' not '%s'", profileReply.IPAddress))
+
+	//Get(id int) (*Reply, error)
+	//Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error)
+
 }
 
 func TestSlugs(t *testing.T) {

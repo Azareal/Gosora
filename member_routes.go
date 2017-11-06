@@ -559,17 +559,13 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) 
 	}
 
 	content := html.EscapeString(preparseMessage(r.PostFormValue("reply-content")))
-	_, err = stmts.createProfileReply.Exec(uid, content, parseMessage(content, 0, ""), user.ID, ipaddress)
+	_, err = prstore.Create(uid, content, user.ID, ipaddress)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
 
-	var userName string
-	err = stmts.getUserName.QueryRow(uid).Scan(&userName)
-	if err == ErrNoRows {
+	if !users.Exists(uid) {
 		return LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
-	} else if err != nil {
-		return InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)

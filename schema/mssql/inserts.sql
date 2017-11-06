@@ -25,5 +25,5 @@ INSERT INTO [forums_permissions] ([gid],[fid],[permissions]) VALUES (3,2,'{"View
 INSERT INTO [forums_permissions] ([gid],[fid],[permissions]) VALUES (4,2,'{"ViewTopic":true}');
 INSERT INTO [forums_permissions] ([gid],[fid],[permissions]) VALUES (5,2,'{"ViewTopic":true}');
 INSERT INTO [forums_permissions] ([gid],[fid],[permissions]) VALUES (6,2,'{"ViewTopic":true}');
-INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[lastReplyBy],[createdBy],[parentID]) VALUES ('TestTopic','Atopicautomaticallygeneratedbythesoftware.','Atopicautomaticallygeneratedbythesoftware.',GETUTCDATE(),GETUTCDATE(),1,1,2);
-INSERT INTO [replies] ([tid],[content],[parsed_content],[createdAt],[createdBy],[lastUpdated],[lastEdit],[lastEditBy]) VALUES (1,'Areply!','Areply!',GETUTCDATE(),1,GETUTCDATE(),0,0);
+INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[lastReplyBy],[createdBy],[parentID],[ipaddress]) VALUES ('TestTopic','Atopicautomaticallygeneratedbythesoftware.','Atopicautomaticallygeneratedbythesoftware.',GETUTCDATE(),GETUTCDATE(),1,1,2,'::1');
+INSERT INTO [replies] ([tid],[content],[parsed_content],[createdAt],[createdBy],[lastUpdated],[lastEdit],[lastEditBy],[ipaddress]) VALUES (1,'Areply!','Areply!',GETUTCDATE(),1,GETUTCDATE(),0,0,'::1');
