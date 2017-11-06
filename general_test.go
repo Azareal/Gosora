@@ -79,8 +79,14 @@ func gloinit() (err error) {
 		return err
 	}
 
-	rstore = NewSQLReplyStore()
-	prstore = NewSQLProfileReplyStore()
+	rstore, err = NewSQLReplyStore()
+	if err != nil {
+		return err
+	}
+	prstore, err = NewSQLProfileReplyStore()
+	if err != nil {
+		return err
+	}
 
 	dbProd = db
 	//db_test, err = sql.Open("testdb","")
@@ -538,7 +544,7 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var tu TopicUser
 		for pb.Next() {
-			err := getTopicUserStmt.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+			err := stmts.getTopicUser.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
 				b.Fatal("No rows found!")
 				return

@@ -82,6 +82,7 @@ type Globs struct {
 	stmts *Stmts
 }
 
+// TODO: Split this function up
 func main() {
 	// TODO: Recover from panics
 	/*defer func() {
@@ -130,8 +131,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rstore = NewSQLReplyStore()
-	prstore = NewSQLProfileReplyStore()
+	rstore, err = NewSQLReplyStore()
+	if err != nil {
+		log.Fatal(err)
+	}
+	prstore, err = NewSQLProfileReplyStore()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	initTemplates()
 

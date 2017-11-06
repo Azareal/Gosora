@@ -19,7 +19,10 @@ import (
 	"text/template"
 )
 
-var themes = make(map[string]Theme)
+//var themes = make(map[string]Theme)
+type ThemeList map[string]Theme
+
+var themes ThemeList = make(map[string]Theme)
 var defaultThemeBox atomic.Value
 var changeDefaultThemeMutex sync.Mutex
 
@@ -74,8 +77,9 @@ func init() {
 	defaultThemeBox.Store(fallbackTheme)
 }
 
+// TODO: Make the initThemes and LoadThemes functions less confusing
 // ? - Delete themes which no longer exist in the themes folder from the database?
-func LoadThemes() error {
+func LoadThemeActiveStatus() error {
 	changeDefaultThemeMutex.Lock()
 	rows, err := stmts.getThemes.Query()
 	if err != nil {

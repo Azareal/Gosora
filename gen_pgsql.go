@@ -10,9 +10,6 @@ import "database/sql"
 type Stmts struct {
 	addRepliesToTopic *sql.Stmt
 	removeRepliesFromTopic *sql.Stmt
-	addTopicsToForum *sql.Stmt
-	removeTopicsFromForum *sql.Stmt
-	updateForumCache *sql.Stmt
 	addLikesToTopic *sql.Stmt
 	addLikesToReply *sql.Stmt
 	editTopic *sql.Stmt
@@ -78,24 +75,6 @@ func _gen_pgsql() (err error) {
 		
 	log.Print("Preparing removeRepliesFromTopic statement.")
 	stmts.removeRepliesFromTopic, err = db.Prepare("UPDATE `topics` SET `postCount` = `postCount` - ? WHERE `tid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing addTopicsToForum statement.")
-	stmts.addTopicsToForum, err = db.Prepare("UPDATE `forums` SET `topicCount` = `topicCount` + ? WHERE `fid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing removeTopicsFromForum statement.")
-	stmts.removeTopicsFromForum, err = db.Prepare("UPDATE `forums` SET `topicCount` = `topicCount` - ? WHERE `fid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing updateForumCache statement.")
-	stmts.updateForumCache, err = db.Prepare("UPDATE `forums` SET `lastTopicID` = ?,`lastReplyerID` = ? WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}

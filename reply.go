@@ -7,8 +7,11 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"time"
+
+	"./query_gen/lib"
 )
 
 // ? - Should we add a reply store to centralise all the reply logic? Would this cover profile replies too or would that be separate?
@@ -107,22 +110,35 @@ type ReplyStore interface {
 }
 
 type SQLReplyStore struct {
+	get    *sql.Stmt
+	create *sql.Stmt
 }
 
-func NewSQLReplyStore() *SQLReplyStore {
-	return &SQLReplyStore{}
+func NewSQLReplyStore() (*SQLReplyStore, error) {
+	getReplyStmt, err := qgen.Builder.SimpleSelect("replies", "tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount", "rid = ?", "", "")
+	if err != nil {
+		return nil, err
+	}
+	createReplyStmt, err := qgen.Builder.SimpleInsert("replies", "tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?")
+	if err != nil {
+		return nil, err
+	}
+	return &SQLReplyStore{
+		get:    getReplyStmt,
+		create: createReplyStmt,
+	}, nil
 }
 
 func (store *SQLReplyStore) Get(id int) (*Reply, error) {
 	reply := Reply{ID: id}
-	err := stmts.getReply.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress, &reply.LikeCount)
+	err := store.get.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress, &reply.LikeCount)
 	return &reply, err
 }
 
 // TODO: Write a test for this
 func (store *SQLReplyStore) Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error) {
 	wcount := wordCount(content)
-	res, err := stmts.createReply.Exec(tid, content, parseMessage(content, fid, "forums"), ipaddress, wcount, uid)
+	res, err := store.create.Exec(tid, content, parseMessage(content, fid, "forums"), ipaddress, wcount, uid)
 	if err != nil {
 		return 0, err
 	}
@@ -147,15 +163,23 @@ type ProfileReplyStore interface {
 }
 
 // TODO: Refactor this to stop using the global stmt store
+// TODO: Add more methods to this like Create()
 type SQLProfileReplyStore struct {
+	get *sql.Stmt
 }
 
-func NewSQLProfileReplyStore() *SQLProfileReplyStore {
-	return &SQLProfileReplyStore{}
+func NewSQLProfileReplyStore() (*SQLProfileReplyStore, error) {
+	getUserReplyStmt, err := qgen.Builder.SimpleSelect("users_replies", "uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress", "rid = ?", "", "")
+	if err != nil {
+		return nil, err
+	}
+	return &SQLProfileReplyStore{
+		get: getUserReplyStmt,
+	}, nil
 }
 
 func (store *SQLProfileReplyStore) Get(id int) (*Reply, error) {
 	reply := Reply{ID: id}
-	err := stmts.getUserReply.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress)
+	err := store.get.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress)
 	return &reply, err
 }

@@ -222,10 +222,6 @@ func seedTables(adapter qgen.DB_Adapter) error {
 func writeSelects(adapter qgen.DB_Adapter) error {
 	// Looking for getTopic? Your statement is in another castle
 
-	adapter.SimpleSelect("getReply", "replies", "tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount", "rid = ?", "", "")
-
-	adapter.SimpleSelect("getUserReply", "users_replies", "uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress", "rid = ?", "", "")
-
 	adapter.SimpleSelect("getPassword", "users", "password, salt", "uid = ?", "", "")
 
 	adapter.SimpleSelect("getSettings", "settings", "name, content, type", "", "", "")
@@ -235,12 +231,6 @@ func writeSelects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleSelect("getFullSetting", "settings", "name, type, constraints", "name = ?", "", "")
 
 	adapter.SimpleSelect("getFullSettings", "settings", "name, content, type, constraints", "", "", "")
-
-	adapter.SimpleSelect("getGroups", "users_groups", "gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "", "", "")
-
-	adapter.SimpleSelect("getForums", "forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "", "fid ASC", "")
-
-	adapter.SimpleSelect("getForumsPermissions", "forums_permissions", "gid, fid, permissions", "", "gid ASC, fid ASC", "")
 
 	adapter.SimpleSelect("getPlugins", "plugins", "uname, active, installed", "", "", "")
 
@@ -328,8 +318,6 @@ func writeInserts(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleInsert("createReport", "topics", "title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'")
 
-	adapter.SimpleInsert("createReply", "replies", "tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?")
-
 	adapter.SimpleInsert("createActionReply", "replies", "tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''")
 
 	adapter.SimpleInsert("createLike", "likes", "weight, targetItem, targetType, sentBy", "?,?,?,?")
@@ -343,8 +331,6 @@ func writeInserts(adapter qgen.DB_Adapter) error {
 	adapter.SimpleInsert("createProfileReply", "users_replies", "uid, content, parsed_content, createdAt, createdBy, ipaddress", "?,?,?,UTC_TIMESTAMP(),?,?")
 
 	adapter.SimpleInsert("addSubscription", "activity_subscriptions", "user, targetID, targetType, level", "?,?,?,2")
-
-	adapter.SimpleInsert("createForum", "forums", "name, desc, active, preset", "?,?,?,?")
 
 	adapter.SimpleInsert("addForumPermsToForum", "forums_permissions", "gid,fid,preset,permissions", "?,?,?,?")
 
@@ -386,12 +372,6 @@ func writeUpdates(adapter qgen.DB_Adapter) error {
 	adapter.SimpleUpdate("addRepliesToTopic", "topics", "postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()", "tid = ?")
 
 	adapter.SimpleUpdate("removeRepliesFromTopic", "topics", "postCount = postCount - ?", "tid = ?")
-
-	adapter.SimpleUpdate("addTopicsToForum", "forums", "topicCount = topicCount + ?", "fid = ?")
-
-	adapter.SimpleUpdate("removeTopicsFromForum", "forums", "topicCount = topicCount - ?", "fid = ?")
-
-	adapter.SimpleUpdate("updateForumCache", "forums", "lastTopicID = ?, lastReplyerID = ?", "fid = ?")
 
 	adapter.SimpleUpdate("addLikesToTopic", "topics", "likeCount = likeCount + ?", "tid = ?")
 

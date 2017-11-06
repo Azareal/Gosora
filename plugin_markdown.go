@@ -45,7 +45,10 @@ func deactivateMarkdown() {
 // An adapter for the parser, so that the parser can call itself recursively.
 // This is less for the simple Markdown elements like bold and italics and more for the really complicated ones I plan on adding at some point.
 func markdownParse(msg string) string {
-	msg = strings.TrimSuffix(_markdownParse(msg+" ", 0), " ")
+	msg = _markdownParse(msg+" ", 0)
+	if msg[len(msg)-1] == ' ' {
+		msg = msg[:len(msg)-1]
+	}
 	log.Print("final msg: ", msg)
 	return msg
 }
@@ -292,9 +295,13 @@ func _markdownParse(msg string, n int) string {
 
 	if len(outbytes) == 0 {
 		return msg
+		//return msg[:len(msg)-1]
 	} else if lastElement < (len(msg) - 1) {
-		return string(outbytes) + msg[lastElement:]
+		msg = string(outbytes) + msg[lastElement:]
+		return msg
+		//return msg[:len(msg)-1]
 	}
+	//return string(outbytes[:len(outbytes)-1])
 	return string(outbytes)
 }
 

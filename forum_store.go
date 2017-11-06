@@ -59,10 +59,14 @@ type MemoryForumStore struct {
 	forumView atomic.Value // []*Forum
 	//fids []int
 
-	get           *sql.Stmt
-	getAll        *sql.Stmt
-	delete        *sql.Stmt
-	getForumCount *sql.Stmt
+	get                   *sql.Stmt
+	getAll                *sql.Stmt
+	delete                *sql.Stmt
+	create                *sql.Stmt
+	count                 *sql.Stmt
+	updateCache           *sql.Stmt
+	addTopicsToForum      *sql.Stmt
+	removeTopicsFromForum *sql.Stmt
 }
 
 // NewMemoryForumStore gives you a new instance of MemoryForumStore
@@ -80,15 +84,35 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 	if err != nil {
 		return nil, err
 	}
+	createStmt, err := qgen.Builder.SimpleInsert("forums", "name, desc, active, preset", "?,?,?,?")
+	if err != nil {
+		return nil, err
+	}
 	forumCountStmt, err := qgen.Builder.SimpleCount("forums", "name != ''", "")
 	if err != nil {
 		return nil, err
 	}
+	updateCacheStmt, err := qgen.Builder.SimpleUpdate("forums", "lastTopicID = ?, lastReplyerID = ?", "fid = ?")
+	if err != nil {
+		return nil, err
+	}
+	addTopicsToForumStmt, err := qgen.Builder.SimpleUpdate("forums", "topicCount = topicCount + ?", "fid = ?")
+	if err != nil {
+		return nil, err
+	}
+	removeTopicsFromForumStmt, err := qgen.Builder.SimpleUpdate("forums", "topicCount = topicCount - ?", "fid = ?")
+	if err != nil {
+		return nil, err
+	}
 	return &MemoryForumStore{
-		get:           getStmt,
-		getAll:        getAllStmt,
-		delete:        deleteStmt,
-		getForumCount: forumCountStmt,
+		get:                   getStmt,
+		getAll:                getAllStmt,
+		delete:                deleteStmt,
+		create:                createStmt,
+		count:                 forumCountStmt,
+		updateCache:           updateCacheStmt,
+		addTopicsToForum:      addTopicsToForumStmt,
+		removeTopicsFromForum: removeTopicsFromForumStmt,
 	}, nil
 }
 
@@ -102,8 +126,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 		}
 	}
 
-	// TODO: Move this statement into the store
-	rows, err := stmts.getForums.Query()
+	rows, err := mfs.getAll.Query()
 	if err != nil {
 		return err
 	}
@@ -122,7 +145,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 				log.Print("Adding a placeholder forum")
 			}
 		} else {
-			log.Print("Adding the " + forum.Name + " forum")
+			log.Printf("Adding the %s forum", forum.Name)
 		}
 
 		forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
@@ -328,11 +351,11 @@ func (mfs *MemoryForumStore) Delete(id int) error {
 }
 
 func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
-	_, err := stmts.updateForumCache.Exec(tid, uid, fid)
+	_, err := mfs.updateCache.Exec(tid, uid, fid)
 	if err != nil {
 		return err
 	}
-	_, err = stmts.addTopicsToForum.Exec(1, fid)
+	_, err = mfs.addTopicsToForum.Exec(1, fid)
 	if err != nil {
 		return err
 	}
@@ -342,7 +365,7 @@ func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
 
 // TODO: Update the forum cache with the latest topic
 func (mfs *MemoryForumStore) RemoveTopic(fid int) error {
-	_, err := stmts.removeTopicsFromForum.Exec(1, fid)
+	_, err := mfs.removeTopicsFromForum.Exec(1, fid)
 	if err != nil {
 		return err
 	}
@@ -354,7 +377,7 @@ func (mfs *MemoryForumStore) RemoveTopic(fid int) error {
 // DEPRECATED. forum.Update() will be the way to do this in the future, once it's completed
 // TODO: Have a pointer to the last topic rather than storing it on the forum itself
 func (mfs *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
-	_, err := stmts.updateForumCache.Exec(tid, uid, fid)
+	_, err := mfs.updateCache.Exec(tid, uid, fid)
 	if err != nil {
 		return err
 	}
@@ -364,8 +387,7 @@ func (mfs *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
 
 func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
 	forumCreateMutex.Lock()
-	// TODO: Move this query into the store
-	res, err := stmts.createForum.Exec(forumName, forumDesc, active, preset)
+	res, err := mfs.create.Exec(forumName, forumDesc, active, preset)
 	if err != nil {
 		return 0, err
 	}
@@ -399,7 +421,7 @@ func (mfs *MemoryForumStore) Length() (length int) {
 // TODO: Get the total count of forums in the forum store minus the blanked forums rather than doing a heavy query for this?
 // GlobalCount returns the total number of forums
 func (mfs *MemoryForumStore) GlobalCount() (fcount int) {
-	err := mfs.getForumCount.QueryRow().Scan(&fcount)
+	err := mfs.count.QueryRow().Scan(&fcount)
 	if err != nil {
 		LogError(err)
 	}

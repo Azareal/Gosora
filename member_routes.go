@@ -680,11 +680,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 		return InternalError(err, w, r)
 	}
 
-	_, err = stmts.addTopicsToForum.Exec(1, fid)
-	if err != nil {
-		return InternalError(err, w, r)
-	}
-	err = fstore.UpdateLastTopic(int(lastID), user.ID, fid)
+	err = fstore.AddTopic(int(lastID), user.ID, fid)
 	if err != nil && err != ErrNoRows {
 		return InternalError(err, w, r)
 	}

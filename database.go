@@ -68,7 +68,10 @@ func initDatabase() (err error) {
 	}
 
 	log.Print("Loading the forum permissions.")
-	fpstore = NewForumPermsStore()
+	fpstore, err = NewMemoryForumPermsStore()
+	if err != nil {
+		return err
+	}
 	err = fpstore.Init()
 	if err != nil {
 		return err
@@ -87,5 +90,5 @@ func initDatabase() (err error) {
 	}
 
 	log.Print("Loading the themes.")
-	return LoadThemes()
+	return LoadThemeActiveStatus()
 }

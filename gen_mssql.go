@@ -8,16 +8,11 @@ import "database/sql"
 
 // nolint
 type Stmts struct {
-	getReply *sql.Stmt
-	getUserReply *sql.Stmt
 	getPassword *sql.Stmt
 	getSettings *sql.Stmt
 	getSetting *sql.Stmt
 	getFullSetting *sql.Stmt
 	getFullSettings *sql.Stmt
-	getGroups *sql.Stmt
-	getForums *sql.Stmt
-	getForumsPermissions *sql.Stmt
 	getPlugins *sql.Stmt
 	getThemes *sql.Stmt
 	getWidgets *sql.Stmt
@@ -52,7 +47,6 @@ type Stmts struct {
 	getWatchers *sql.Stmt
 	createTopic *sql.Stmt
 	createReport *sql.Stmt
-	createReply *sql.Stmt
 	createActionReply *sql.Stmt
 	createLike *sql.Stmt
 	addActivity *sql.Stmt
@@ -60,7 +54,6 @@ type Stmts struct {
 	addEmail *sql.Stmt
 	createProfileReply *sql.Stmt
 	addSubscription *sql.Stmt
-	createForum *sql.Stmt
 	addForumPermsToForum *sql.Stmt
 	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
@@ -70,9 +63,6 @@ type Stmts struct {
 	createWordFilter *sql.Stmt
 	addRepliesToTopic *sql.Stmt
 	removeRepliesFromTopic *sql.Stmt
-	addTopicsToForum *sql.Stmt
-	removeTopicsFromForum *sql.Stmt
-	updateForumCache *sql.Stmt
 	addLikesToTopic *sql.Stmt
 	addLikesToReply *sql.Stmt
 	editTopic *sql.Stmt
@@ -140,20 +130,6 @@ func _gen_mssql() (err error) {
 		log.Print("Building the generated statements")
 	}
 	
-	log.Print("Preparing getReply statement.")
-	stmts.getReply, err = db.Prepare("SELECT [tid],[content],[createdBy],[createdAt],[lastEdit],[lastEditBy],[ipaddress],[likeCount] FROM [replies] WHERE [rid] = ?1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [tid],[content],[createdBy],[createdAt],[lastEdit],[lastEditBy],[ipaddress],[likeCount] FROM [replies] WHERE [rid] = ?1")
-		return err
-	}
-		
-	log.Print("Preparing getUserReply statement.")
-	stmts.getUserReply, err = db.Prepare("SELECT [uid],[content],[createdBy],[createdAt],[lastEdit],[lastEditBy],[ipaddress] FROM [users_replies] WHERE [rid] = ?1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [uid],[content],[createdBy],[createdAt],[lastEdit],[lastEditBy],[ipaddress] FROM [users_replies] WHERE [rid] = ?1")
-		return err
-	}
-		
 	log.Print("Preparing getPassword statement.")
 	stmts.getPassword, err = db.Prepare("SELECT [password],[salt] FROM [users] WHERE [uid] = ?1")
 	if err != nil {
@@ -186,27 +162,6 @@ func _gen_mssql() (err error) {
 	stmts.getFullSettings, err = db.Prepare("SELECT [name],[content],[type],[constraints] FROM [settings]")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [name],[content],[type],[constraints] FROM [settings]")
-		return err
-	}
-		
-	log.Print("Preparing getGroups statement.")
-	stmts.getGroups, err = db.Prepare("SELECT [gid],[name],[permissions],[plugin_perms],[is_mod],[is_admin],[is_banned],[tag] FROM [users_groups]")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [gid],[name],[permissions],[plugin_perms],[is_mod],[is_admin],[is_banned],[tag] FROM [users_groups]")
-		return err
-	}
-		
-	log.Print("Preparing getForums statement.")
-	stmts.getForums, err = db.Prepare("SELECT [fid],[name],[desc],[active],[preset],[parentID],[parentType],[topicCount],[lastTopicID],[lastReplyerID] FROM [forums] ORDER BY fid ASC")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [fid],[name],[desc],[active],[preset],[parentID],[parentType],[topicCount],[lastTopicID],[lastReplyerID] FROM [forums] ORDER BY fid ASC")
-		return err
-	}
-		
-	log.Print("Preparing getForumsPermissions statement.")
-	stmts.getForumsPermissions, err = db.Prepare("SELECT [gid],[fid],[permissions] FROM [forums_permissions] ORDER BY gid ASC,fid ASC")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [gid],[fid],[permissions] FROM [forums_permissions] ORDER BY gid ASC,fid ASC")
 		return err
 	}
 		
@@ -448,13 +403,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing createReply statement.")
-	stmts.createReply, err = db.Prepare("INSERT INTO [replies] ([tid],[content],[parsed_content],[createdAt],[lastUpdated],[ipaddress],[words],[createdBy]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?)")
-	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [replies] ([tid],[content],[parsed_content],[createdAt],[lastUpdated],[ipaddress],[words],[createdBy]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?)")
-		return err
-	}
-		
 	log.Print("Preparing createActionReply statement.")
 	stmts.createActionReply, err = db.Prepare("INSERT INTO [replies] ([tid],[actionType],[ipaddress],[createdBy],[createdAt],[lastUpdated],[content],[parsed_content]) VALUES (?,?,?,?,GETUTCDATE(),GETUTCDATE(),'','')")
 	if err != nil {
@@ -501,13 +449,6 @@ func _gen_mssql() (err error) {
 	stmts.addSubscription, err = db.Prepare("INSERT INTO [activity_subscriptions] ([user],[targetID],[targetType],[level]) VALUES (?,?,?,2)")
 	if err != nil {
 		log.Print("Bad Query: ","INSERT INTO [activity_subscriptions] ([user],[targetID],[targetType],[level]) VALUES (?,?,?,2)")
-		return err
-	}
-		
-	log.Print("Preparing createForum statement.")
-	stmts.createForum, err = db.Prepare("INSERT INTO [forums] ([name],[desc],[active],[preset]) VALUES (?,?,?,?)")
-	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [forums] ([name],[desc],[active],[preset]) VALUES (?,?,?,?)")
 		return err
 	}
 		
@@ -571,27 +512,6 @@ func _gen_mssql() (err error) {
 	stmts.removeRepliesFromTopic, err = db.Prepare("UPDATE [topics] SET [postCount] = [postCount] - ? WHERE [tid] = ?")
 	if err != nil {
 		log.Print("Bad Query: ","UPDATE [topics] SET [postCount] = [postCount] - ? WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing addTopicsToForum statement.")
-	stmts.addTopicsToForum, err = db.Prepare("UPDATE [forums] SET [topicCount] = [topicCount] + ? WHERE [fid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [forums] SET [topicCount] = [topicCount] + ? WHERE [fid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing removeTopicsFromForum statement.")
-	stmts.removeTopicsFromForum, err = db.Prepare("UPDATE [forums] SET [topicCount] = [topicCount] - ? WHERE [fid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [forums] SET [topicCount] = [topicCount] - ? WHERE [fid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing updateForumCache statement.")
-	stmts.updateForumCache, err = db.Prepare("UPDATE [forums] SET [lastTopicID] = ?,[lastReplyerID] = ? WHERE [fid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [forums] SET [lastTopicID] = ?,[lastReplyerID] = ? WHERE [fid] = ?")
 		return err
 	}
 		

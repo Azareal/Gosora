@@ -36,12 +36,17 @@ type GroupCache interface {
 type MemoryGroupStore struct {
 	groups     map[int]*Group // TODO: Use a sync.Map instead of a map?
 	groupCount int
+	getAll     *sql.Stmt
 	get        *sql.Stmt
 
 	sync.RWMutex
 }
 
 func NewMemoryGroupStore() (*MemoryGroupStore, error) {
+	getAllStmt, err := qgen.Builder.SimpleSelect("users_groups", "gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "", "", "")
+	if err != nil {
+		return nil, err
+	}
 	getGroupStmt, err := qgen.Builder.SimpleSelect("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "gid = ?", "", "")
 	if err != nil {
 		return nil, err
@@ -50,6 +55,7 @@ func NewMemoryGroupStore() (*MemoryGroupStore, error) {
 	return &MemoryGroupStore{
 		groups:     make(map[int]*Group),
 		groupCount: 0,
+		getAll:     getAllStmt,
 		get:        getGroupStmt,
 	}, nil
 }
@@ -60,7 +66,7 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 	defer mgs.Unlock()
 	mgs.groups[0] = &Group{ID: 0, Name: "Unknown"}
 
-	rows, err := stmts.getGroups.Query()
+	rows, err := mgs.getAll.Query()
 	if err != nil {
 		return err
 	}

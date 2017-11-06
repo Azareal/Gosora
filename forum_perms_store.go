@@ -1,20 +1,45 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
+
+	"./query_gen/lib"
 )
 
-var fpstore *ForumPermsStore
+var fpstore ForumPermsStore
 
-type ForumPermsStore struct {
+type ForumPermsStore interface {
+	Init() error
+	Get(fid int, gid int) (fperms ForumPerms, err error)
+	Reload(id int) error
 }
 
-func NewForumPermsStore() *ForumPermsStore {
-	return &ForumPermsStore{}
+type ForumPermsCache interface {
 }
 
-func (fps *ForumPermsStore) Init() error {
+type MemoryForumPermsStore struct {
+	get        *sql.Stmt
+	getByForum *sql.Stmt
+}
+
+func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
+	getPermsStmt, err := qgen.Builder.SimpleSelect("forums_permissions", "gid, fid, permissions", "", "gid ASC, fid ASC", "")
+	if err != nil {
+		return nil, err
+	}
+	getPermsByForumStmt, err := qgen.Builder.SimpleSelect("forums_permissions", "gid, permissions", "fid = ?", "gid ASC", "")
+	if err != nil {
+		return nil, err
+	}
+	return &MemoryForumPermsStore{
+		get:        getPermsStmt,
+		getByForum: getPermsByForumStmt,
+	}, nil
+}
+
+func (fps *MemoryForumPermsStore) Init() error {
 	fids, err := fstore.GetAllIDs()
 	if err != nil {
 		return err
@@ -23,7 +48,7 @@ func (fps *ForumPermsStore) Init() error {
 		log.Print("fids: ", fids)
 	}
 
-	rows, err := stmts.getForumsPermissions.Query()
+	rows, err := fps.get.Query()
 	if err != nil {
 		return err
 	}
@@ -73,7 +98,7 @@ func (fps *ForumPermsStore) Init() error {
 }
 
 // TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?
-func (fps *ForumPermsStore) Reload(fid int) error {
+func (fps *MemoryForumPermsStore) Reload(fid int) error {
 	if dev.DebugMode {
 		log.Printf("Reloading the forum permissions for forum #%d", fid)
 	}
@@ -82,7 +107,7 @@ func (fps *ForumPermsStore) Reload(fid int) error {
 		return err
 	}
 
-	rows, err := db.Query("select gid, permissions from forums_permissions where fid = ? order by gid asc", fid)
+	rows, err := fps.getByForum.Query(fid)
 	if err != nil {
 		return err
 	}
@@ -112,7 +137,7 @@ func (fps *ForumPermsStore) Reload(fid int) error {
 	return fps.cascadePermSetToGroups(forumPerms, fids)
 }
 
-func (fps *ForumPermsStore) cascadePermSetToGroups(forumPerms map[int]map[int]ForumPerms, fids []int) error {
+func (fps *MemoryForumPermsStore) cascadePermSetToGroups(forumPerms map[int]map[int]ForumPerms, fids []int) error {
 	groups, err := gstore.GetAll()
 	if err != nil {
 		return err
@@ -134,7 +159,7 @@ func (fps *ForumPermsStore) cascadePermSetToGroups(forumPerms map[int]map[int]Fo
 	return nil
 }
 
-func (fps *ForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[int]ForumPerms, group *Group, fids []int) {
+func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[int]ForumPerms, group *Group, fids []int) {
 	for _, fid := range fids {
 		if dev.SuperDebug {
 			log.Printf("Forum #%+v\n", fid)
@@ -164,7 +189,7 @@ func (fps *ForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[int]For
 	}
 }
 
-func (fps *ForumPermsStore) Get(fid int, gid int) (fperms ForumPerms, err error) {
+func (fps *MemoryForumPermsStore) Get(fid int, gid int) (fperms ForumPerms, err error) {
 	// TODO: Add a hook here and have plugin_guilds use it
 	group, err := gstore.Get(gid)
 	if err != nil {
