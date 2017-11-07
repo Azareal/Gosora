@@ -699,6 +699,27 @@ select, input, textarea {
 	margin-right: 10px;
 }
 
+#profile_container, #profile_left_pane {
+	display: flex;
+}
+#profile_left_lane {
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+}
+#profile_left_pane {
+	flex-direction: column;
+}
+#profile_left_pane .avatarRow {
+	padding: 24px;
+}
+#profile_left_pane .avatar {
+	border-radius: 80px;
+}
+#profile_right_lane .colstack_item {
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+}
+
 @media(max-width: 670px) {
 	.topic_inner_right {
 		display: none;

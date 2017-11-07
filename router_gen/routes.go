@@ -60,6 +60,7 @@ func Route(fname string, path string, args ...string) *RouteImpl {
 	return &RouteImpl{fname, path, args, []Runnable{}}
 }
 
+// TODO: How should we handle headerLite and headerVar?
 func routes() {
 	//addRoute("default_route","","")
 	addRoute(Route("routeAPI", "/api/"))

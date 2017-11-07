@@ -47,7 +47,6 @@ type Stmts struct {
 	getForumTopics *sql.Stmt
 	getProfileReplies *sql.Stmt
 	getWatchers *sql.Stmt
-	createTopic *sql.Stmt
 	createReport *sql.Stmt
 	createActionReply *sql.Stmt
 	createLike *sql.Stmt
@@ -349,12 +348,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing getWatchers statement.")
 	stmts.getWatchers, err = db.Prepare("SELECT  `activity_subscriptions`.`user` FROM `activity_stream` INNER JOIN `activity_subscriptions` ON `activity_subscriptions`.`targetType` = `activity_stream`.`elementType` AND `activity_subscriptions`.`targetID` = `activity_stream`.`elementID` AND `activity_subscriptions`.`user` != `activity_stream`.`actor`  WHERE `asid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing createTopic statement.")
-	stmts.createTopic, err = db.Prepare("INSERT INTO `topics`(`parentID`,`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`lastReplyBy`,`ipaddress`,`words`,`createdBy`) VALUES (?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?)")
 	if err != nil {
 		return err
 	}

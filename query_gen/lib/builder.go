@@ -63,7 +63,6 @@ func (build *builder) SimpleCount(table string, where string, limit string) (stm
 	if err != nil {
 		return stmt, err
 	}
-	//log.Print("res",res)
 	return build.conn.Prepare(res)
 }
 
@@ -72,7 +71,6 @@ func (build *builder) SimpleLeftJoin(table1 string, table2 string, columns strin
 	if err != nil {
 		return stmt, err
 	}
-	//log.Print("res",res)
 	return build.conn.Prepare(res)
 }
 
@@ -81,7 +79,6 @@ func (build *builder) SimpleInnerJoin(table1 string, table2 string, columns stri
 	if err != nil {
 		return stmt, err
 	}
-	//log.Print("res",res)
 	return build.conn.Prepare(res)
 }
 

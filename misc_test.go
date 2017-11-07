@@ -778,7 +778,7 @@ func TestProfileReplyStore(t *testing.T) {
 	recordMustNotExist(t, err, "PRID #0 shouldn't exist")
 
 	_, err = prstore.Get(1)
-	recordMustNotExist(t, err, "PRID #0 shouldn't exist")
+	recordMustNotExist(t, err, "PRID #1 shouldn't exist")
 
 	var profileID = 1
 	prid, err := prstore.Create(profileID, "Haha", 1, "::1")

@@ -163,13 +163,7 @@ func (build *accBuilder) SimpleInsertSelectTx(tx *sql.Tx, ins DB_Insert, sel DB_
 
 func (build *accBuilder) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleInsertLeftJoin("_builder", ins, sel)
-	if err != nil {
-		build.recordError(err)
-		return nil
-	}
-	stmt, err = tx.Prepare(res)
-	build.recordError(err)
-	return stmt
+	return build.prepareTx(tx, res, err)
 }
 
 func (build *accBuilder) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt) {

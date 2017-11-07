@@ -94,6 +94,18 @@ func main() {
 		}
 	}()*/
 
+	// WIP: Mango Test
+	/*res, err := ioutil.ReadFile("./templates/topic.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+	tagIndices, err := mangoParse(string(res))
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("tagIndices: %+v\n", tagIndices)
+	log.Fatal("")*/
+
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()
 	f, err := os.OpenFile("./operations.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)

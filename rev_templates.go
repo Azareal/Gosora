@@ -1,69 +1,48 @@
-//+build experiment
+//+lbuild experiment
 
 // ! EXPERIMENTAL
 package main
 
 import (
 	"errors"
-	"log"
 	"regexp"
-	"text/template/parse"
 )
 
-var tagFinder *regexp.Regexp
-var limeFuncMap = map[string]interface{}{
-	"and":      "&&",
-	"not":      "!",
-	"or":       "||",
-	"eq":       true,
-	"ge":       true,
-	"gt":       true,
-	"le":       true,
-	"lt":       true,
-	"ne":       true,
-	"add":      true,
-	"subtract": true,
-	"multiply": true,
-	"divide":   true,
+type Mango struct {
+	tagFinder *regexp.Regexp
 }
 
-func init() {
-	tagFinder = regexp.MustCompile(`(?s)\{\{(.*)\}\}`)
+func (m *Mango) Init() {
+	m.tagFinder = regexp.MustCompile(`(?s)\{\{(.*)\}\}`)
 }
 
-func mangoParse(tmpl string) error {
-	tree := parse.New(name, funcMap)
-	var treeSet = make(map[string]*parse.Tree)
-	tree, err = tree.Parse(content, "{{", "}}", treeSet, limeFuncMap)
-	if err != nil {
-		return err
-	}
-	treeLength := len(tree.Root.Nodes)
-	log.Print("treeLength", treeLength)
-	return nil
-}
-
-func icecreamSoup(tmpl string) error {
-	if config.MinifyTemplates {
-		tmpl = minify(tmpl)
-	}
-	tagIndices := tagFinder.FindAllStringIndex(tmpl, -1)
-	if tagIndices != nil && len(tagIndices) > 0 {
-
+func (m *Mango) Parse(tmpl string) (out string, err error) {
+	tagIndices := m.tagFinder.FindAllStringIndex(tmpl, -1)
+	if len(tagIndices) > 0 {
 		if tagIndices[0][0] == 0 {
-			return errors.New("We don't support tags in the outermost layer yet")
+			return "", errors.New("We don't support tags in the outermost layer yet")
 		}
+		var lastTag = 0
+		var lastID = 0
 		for _, tagIndex := range tagIndices {
 			var nestingLayer = 0
 			for i := tagIndex[0]; i > 0; i-- {
 				switch tmpl[i] {
 				case '>':
-					i, closeTag, err := tasteTagToLeft(tmpl, i)
+					ii, closeTag, err := m.tasteTagToLeft(tmpl, i)
 					if err != nil {
-						return err
+						return "", err
 					}
 					if closeTag {
 						nestingLayer++
+					} else {
+						_, tagID := m.parseTag(tmpl, ii, i)
+						if tagID == "" {
+							out += tmpl[lastTag:ii] + m.injectID(ii, i)
+							lastID++
+						} else {
+							out += tmpl[lastTag:i]
+						}
 					}
 				case '<':
 
@@ -71,9 +50,55 @@ func icecreamSoup(tmpl string) error {
 			}
 		}
 	}
+	return "", nil
 }
 
-func tasteTagToLeft(tmpl string, index int) (indexOut int, closeTag bool, err error) {
+func (m *Mango) injectID(start int, end int) string {
+	return ""
+}
+
+func (m *Mango) parseTag(tmpl string, start int, end int) (tagType string, tagID string) {
+	var i = start
+	for ; i < end; i++ {
+		if tmpl[i] == ' ' {
+			break
+		}
+	}
+	tagType = tmpl[start:i]
+	i = start
+	for ; i < (end - 4); i++ {
+		if tmpl[i] == ' ' && tmpl[i+1] == 'i' && tmpl[i+2] == 'd' && tmpl[i+3] == '=' {
+			tagID = m.extractAttributeContents(tmpl, i+4, end)
+		}
+	}
+	return tagType, tagID
+}
+
+func (m *Mango) extractAttributeContents(tmpl string, i int, end int) (contents string) {
+	var start = i
+	var quoteChar byte = 0 // nolint
+	if m.isHTMLQuoteChar(tmpl[i]) {
+		i++
+		quoteChar = tmpl[i]
+	}
+	i += 3
+	for ; i < end; i++ {
+		if quoteChar != 0 {
+			if tmpl[i] == quoteChar {
+				break
+			}
+		} else if tmpl[i] == ' ' {
+			break
+		}
+	}
+	return tmpl[start:i]
+}
+
+func (m *Mango) isHTMLQuoteChar(char byte) bool {
+	return char == '\'' || char == '"'
+}
+
+func (m *Mango) tasteTagToLeft(tmpl string, index int) (indexOut int, closeTag bool, err error) {
 	var foundLeftBrace = false
 	for ; index > 0; index-- {
 		// What if the / isn't adjacent to the < but has a space instead? Is that even valid?
@@ -85,7 +110,7 @@ func tasteTagToLeft(tmpl string, index int) (indexOut int, closeTag bool, err er
 		}
 	}
 	if !foundLeftBrace {
-		return errors.New("The left portion of the tag is missing")
+		return index, closeTag, errors.New("The left portion of the tag is missing")
 	}
 	return index, closeTag, nil
 }

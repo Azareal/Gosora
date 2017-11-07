@@ -58,6 +58,7 @@ type MemoryTopicStore struct {
 	get        *sql.Stmt
 	exists     *sql.Stmt
 	topicCount *sql.Stmt
+	create     *sql.Stmt
 	sync.RWMutex
 }
 
@@ -70,6 +71,7 @@ func NewMemoryTopicStore(capacity int) (*MemoryTopicStore, error) {
 		get:        acc.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", ""),
 		exists:     acc.SimpleSelect("topics", "tid", "tid = ?", "", ""),
 		topicCount: acc.SimpleCount("topics", "", ""),
+		create:     acc.SimpleInsert("topics", "parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?"),
 	}, acc.FirstError()
 }
 
@@ -146,7 +148,7 @@ func (mts *MemoryTopicStore) Create(fid int, topicName string, content string, u
 
 	wcount := wordCount(content)
 	// TODO: Move this statement into the topic store
-	res, err := stmts.createTopic.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
+	res, err := mts.create.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
 	if err != nil {
 		return 0, err
 	}
@@ -253,6 +255,7 @@ type SQLTopicStore struct {
 	get        *sql.Stmt
 	exists     *sql.Stmt
 	topicCount *sql.Stmt
+	create     *sql.Stmt
 }
 
 func NewSQLTopicStore() (*SQLTopicStore, error) {
@@ -261,6 +264,7 @@ func NewSQLTopicStore() (*SQLTopicStore, error) {
 		get:        acc.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", ""),
 		exists:     acc.SimpleSelect("topics", "tid", "tid = ?", "", ""),
 		topicCount: acc.SimpleCount("topics", "", ""),
+		create:     acc.SimpleInsert("topics", "parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?"),
 	}, acc.FirstError()
 }
 
@@ -297,7 +301,7 @@ func (sts *SQLTopicStore) Create(fid int, topicName string, content string, uid 
 
 	wcount := wordCount(content)
 	// TODO: Move this statement into the topic store
-	res, err := stmts.createTopic.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
+	res, err := sts.create.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
 	if err != nil {
 		return 0, err
 	}

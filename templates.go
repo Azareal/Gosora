@@ -144,12 +144,12 @@ func (c *CTemplateSet) compileTemplate(name string, dir string, expects string, 
 w.Write([]byte(`, " + ", -1)
 	fout = strings.Replace(fout, "` + `", "", -1)
 	//spstr := "`([:space:]*)`"
-	//whitespace_writes := regexp.MustCompile(`(?s)w.Write\(\[\]byte\(`+spstr+`\)\)`)
-	//fout = whitespace_writes.ReplaceAllString(fout,"")
+	//whitespaceWrites := regexp.MustCompile(`(?s)w.Write\(\[\]byte\(`+spstr+`\)\)`)
+	//fout = whitespaceWrites.ReplaceAllString(fout,"")
 
 	if dev.DebugMode {
 		for index, count := range c.stats {
-			fmt.Println(index + ": " + strconv.Itoa(count))
+			fmt.Println(index+": ", strconv.Itoa(count))
 		}
 		fmt.Println(" ")
 	}
@@ -158,6 +158,7 @@ w.Write([]byte(`, " + ", -1)
 		fmt.Println("Output!")
 		fmt.Println(fout)
 	}
+	//log.Fatal("remove the log.Fatal line")
 	return fout, nil
 }
 
@@ -168,9 +169,8 @@ func (c *CTemplateSet) rootIterate(tree *parse.Tree, varholder string, holdrefle
 	treeLength := len(tree.Root.Nodes)
 	for index, node := range tree.Root.Nodes {
 		if dev.TemplateDebug {
-			fmt.Println("Node: ", node.String())
+			fmt.Println("Node:", node.String())
 		}
-
 		c.previousNode = c.currentNode
 		c.currentNode = node.Type()
 		if treeLength != (index + 1) {
@@ -181,7 +181,7 @@ func (c *CTemplateSet) rootIterate(tree *parse.Tree, varholder string, holdrefle
 	return out
 }
 
-func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value, templateName string, node interface{}) (out string) {
+func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value, templateName string, node parse.Node) (out string) {
 	if dev.TemplateDebug {
 		fmt.Println("in compileSwitch")
 	}
@@ -196,7 +196,6 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 		for _, cmd := range node.Pipe.Cmds {
 			out += c.compileSubswitch(varholder, holdreflect, templateName, cmd)
 		}
-		return out
 	case *parse.IfNode:
 		if dev.TemplateDebug {
 			fmt.Println("If Node:")
@@ -218,7 +217,6 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 		if dev.TemplateDebug {
 			fmt.Println("If Node Expression:", expr)
 		}
-
 		c.previousNode = c.currentNode
 		c.currentNode = parse.NodeList
 		c.nextNode = -1
@@ -240,60 +238,8 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 		for _, subnode := range node.Nodes {
 			out += c.compileSwitch(varholder, holdreflect, templateName, subnode)
 		}
-		return out
 	case *parse.RangeNode:
-		if dev.TemplateDebug {
-			fmt.Println("Range Node!")
-			fmt.Println(node.Pipe)
-		}
-
-		var outVal reflect.Value
-		for _, cmd := range node.Pipe.Cmds {
-			if dev.TemplateDebug {
-				fmt.Println("Range Bit:", cmd)
-			}
-			out, outVal = c.compileReflectswitch(varholder, holdreflect, templateName, cmd)
-		}
-
-		if dev.TemplateDebug {
-			fmt.Println("Returned:", out)
-			fmt.Println("Range Kind Switch!")
-		}
-
-		switch outVal.Kind() {
-		case reflect.Map:
-			var item reflect.Value
-			for _, key := range outVal.MapKeys() {
-				item = outVal.MapIndex(key)
-			}
-			if dev.DebugMode {
-				fmt.Println("Range item:", item)
-			}
-			if !item.IsValid() {
-				panic("item" + "^\n" + "Invalid map. Maybe, it doesn't have any entries for the template engine to analyse?")
-			}
-
-			if node.ElseList != nil {
-				out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n} else {\n" + c.compileSwitch("item", item, templateName, node.ElseList) + "}\n"
-			} else {
-				out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n}"
-			}
-		case reflect.Slice:
-			if outVal.Len() == 0 {
-				panic("The sample data needs at-least one or more elements for the slices. We're looking into removing this requirement at some point!")
-			}
-			item := outVal.Index(0)
-			out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n}"
-		case reflect.Invalid:
-			return ""
-		}
-
-		if node.ElseList != nil {
-			out += " else {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.ElseList) + "}\n"
-		} else {
-			out += "\n"
-		}
-		return out
+		return c.compileRangeNode(varholder, holdreflect, templateName, node)
 	case *parse.TemplateNode:
 		return c.compileSubtemplate(varholder, holdreflect, node)
 	case *parse.TextNode:
@@ -305,7 +251,6 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 			return ""
 		}
 
-		//return "w.Write([]byte(`" + string(node.Text) + "`))\n"
 		fragmentName := templateName + "_" + strconv.Itoa(c.FragmentCursor[templateName])
 		_, ok := c.Fragments[fragmentName]
 		if !ok {
@@ -315,9 +260,61 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 		c.FragmentCursor[templateName] = c.FragmentCursor[templateName] + 1
 		return "w.Write(" + fragmentName + ")\n"
 	default:
-		panic("Unknown Node in main switch")
+		return c.unknownNode(node)
 	}
-	return ""
+	return out
+}
+
+func (c *CTemplateSet) compileRangeNode(varholder string, holdreflect reflect.Value, templateName string, node *parse.RangeNode) (out string) {
+	if dev.TemplateDebug {
+		fmt.Println("Range Node!")
+		fmt.Println(node.Pipe)
+	}
+
+	var outVal reflect.Value
+	for _, cmd := range node.Pipe.Cmds {
+		if dev.TemplateDebug {
+			fmt.Println("Range Bit:", cmd)
+		}
+		out, outVal = c.compileReflectswitch(varholder, holdreflect, templateName, cmd)
+	}
+	if dev.TemplateDebug {
+		fmt.Println("Returned:", out)
+		fmt.Println("Range Kind Switch!")
+	}
+
+	switch outVal.Kind() {
+	case reflect.Map:
+		var item reflect.Value
+		for _, key := range outVal.MapKeys() {
+			item = outVal.MapIndex(key)
+		}
+		if dev.DebugMode {
+			fmt.Println("Range item:", item)
+		}
+		if !item.IsValid() {
+			panic("item" + "^\n" + "Invalid map. Maybe, it doesn't have any entries for the template engine to analyse?")
+		}
+
+		if node.ElseList != nil {
+			out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n} else {\n" + c.compileSwitch("item", item, templateName, node.ElseList) + "}\n"
+		} else {
+			out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n}"
+		}
+	case reflect.Slice:
+		if outVal.Len() == 0 {
+			panic("The sample data needs at-least one or more elements for the slices. We're looking into removing this requirement at some point!")
+		}
+		item := outVal.Index(0)
+		out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n}"
+	case reflect.Invalid:
+		return ""
+	}
+
+	if node.ElseList != nil {
+		out += " else {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.ElseList) + "}"
+	}
+	return out + "\n"
 }
 
 func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
@@ -353,7 +350,6 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 				for cur.Kind() == reflect.Ptr {
 					cur = cur.Elem()
 				}
-
 				if dev.TemplateDebug {
 					fmt.Println("Data Kind:", cur.Kind().String())
 					fmt.Println("Field Bit:", id)
@@ -364,7 +360,7 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 				if dev.DebugMode {
 					fmt.Println("Debug Data:")
 					fmt.Println("Holdreflect:", holdreflect)
-					fmt.Println("Holdreflect.Kind()", holdreflect.Kind())
+					fmt.Println("Holdreflect.Kind():", holdreflect.Kind())
 					if !dev.TemplateDebug {
 						fmt.Println("cur.Kind():", cur.Kind().String())
 					}
@@ -425,15 +421,13 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 		}
 		return c.compileVarsub(c.compileIdentswitch(varholder, holdreflect, templateName, node))
 	default:
-		fmt.Println("Unknown Kind:", reflect.ValueOf(firstWord).Elem().Kind())
-		fmt.Println("Unknown Type:", reflect.ValueOf(firstWord).Elem().Type().Name())
-		panic("I don't know what node this is")
+		return c.unknownNode(node)
 	}
 }
 
 func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
 	if dev.TemplateDebug {
-		fmt.Println("in compile_varswitch")
+		fmt.Println("in compileVarswitch")
 	}
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
@@ -466,7 +460,6 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 			fmt.Println("Variable Node Identifier:", n.Ident)
 		}
 		out, _ = c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
-		return out
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.PipeNode:
@@ -480,12 +473,16 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 		if dev.TemplateDebug {
 			fmt.Println("Out:", out)
 		}
-		return out
 	default:
-		fmt.Println("Unknown Kind:", reflect.ValueOf(firstWord).Elem().Kind())
-		fmt.Println("Unknown Type:", reflect.ValueOf(firstWord).Elem().Type().Name())
-		panic("I don't know what node this is! Grr...")
+		return c.unknownNode(firstWord)
 	}
+	return out
+}
+
+func (c *CTemplateSet) unknownNode(node parse.Node) (out string) {
+	fmt.Println("Unknown Kind:", reflect.ValueOf(node).Elem().Kind())
+	fmt.Println("Unknown Type:", reflect.ValueOf(node).Elem().Type().Name())
+	panic("I don't know what node this is! Grr...")
 	return ""
 }
 
@@ -495,6 +492,78 @@ func (c *CTemplateSet) compileIdentswitchN(varholder string, holdreflect reflect
 	}
 	out, _ = c.compileIdentswitch(varholder, holdreflect, templateName, node)
 	return out
+}
+
+func (c *CTemplateSet) compareFunc(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, compare string) (out string) {
+	if dev.TemplateDebug {
+		fmt.Println("symbol: ", compare)
+		fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
+		fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
+	}
+	return c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " " + compare + " " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
+}
+
+func (c *CTemplateSet) simpleMath(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, symbol string) (out string, val reflect.Value) {
+	leftParam, val2 := c.compileIfVarsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
+	rightParam, val3 := c.compileIfVarsub(node.Args[pos+2].String(), varholder, templateName, holdreflect)
+
+	if val2.IsValid() {
+		val = val2
+	} else if val3.IsValid() {
+		val = val3
+	} else {
+		// TODO: What does this do?
+		numSample := 1
+		val = reflect.ValueOf(numSample)
+	}
+
+	if dev.TemplateDebug {
+		fmt.Println("symbol: " + symbol)
+		fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
+		fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
+	}
+
+	return leftParam + " " + symbol + " " + rightParam, val
+}
+
+func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, symbol string) (pos2 int, out string) {
+	if dev.TemplateDebug {
+		fmt.Println("Building " + symbol + " function")
+	}
+	if pos == 0 {
+		fmt.Println("pos:", pos)
+		panic(symbol + " is missing a left operand")
+	}
+	if len(node.Args) <= pos {
+		fmt.Println("post pos:", pos)
+		fmt.Println("len(node.Args):", len(node.Args))
+		panic(symbol + " is missing a right operand")
+	}
+
+	left := c.compileBoolsub(node.Args[pos-1].String(), varholder, templateName, holdreflect)
+	_, funcExists := c.funcMap[node.Args[pos+1].String()]
+
+	var right string
+	if !funcExists {
+		right = c.compileBoolsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
+	}
+	out = left + " " + symbol + " " + right
+	//log.Print("left: ", left)
+	//log.Print("right: ", right)
+
+	if dev.TemplateDebug {
+		fmt.Println("Left operand:", node.Args[pos-1])
+		fmt.Println("Right operand:", node.Args[pos+1])
+	}
+	if !funcExists {
+		pos++
+	}
+	if dev.TemplateDebug {
+		fmt.Println("pos:", pos)
+		fmt.Println("len(node.Args):", len(node.Args))
+	}
+
+	return pos, out
 }
 
 func (c *CTemplateSet) compileIdentswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, val reflect.Value) {
@@ -514,200 +583,50 @@ ArgLoop:
 		case "not":
 			out += "!"
 		case "or":
-			if dev.TemplateDebug {
-				fmt.Println("Building or function")
-			}
-			if pos == 0 {
-				fmt.Println("pos:", pos)
-				panic("or is missing a left operand")
-			}
-			if len(node.Args) <= pos {
-				fmt.Println("post pos:", pos)
-				fmt.Println("len(node.Args):", len(node.Args))
-				panic("or is missing a right operand")
-			}
-
-			left := c.compileBoolsub(node.Args[pos-1].String(), varholder, templateName, holdreflect)
-			_, funcExists := c.funcMap[node.Args[pos+1].String()]
-
-			var right string
-			if !funcExists {
-				right = c.compileBoolsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
-			}
-
-			out += left + " || " + right
-
-			if dev.TemplateDebug {
-				fmt.Println("Left operand:", node.Args[pos-1])
-				fmt.Println("Right operand:", node.Args[pos+1])
-			}
-
-			if !funcExists {
-				pos++
-			}
-
-			if dev.TemplateDebug {
-				fmt.Println("pos:", pos)
-				fmt.Println("len(node.Args):", len(node.Args))
-			}
+			var rout string
+			pos, rout = c.compareJoin(varholder, holdreflect, templateName, pos, node, "||") // TODO: Test this
+			out += rout
 		case "and":
-			if dev.TemplateDebug {
-				fmt.Println("Building and function")
-			}
-			if pos == 0 {
-				fmt.Println("pos:", pos)
-				panic("and is missing a left operand")
-			}
-			if len(node.Args) <= pos {
-				fmt.Println("post pos:", pos)
-				fmt.Println("len(node.Args):", len(node.Args))
-				panic("and is missing a right operand")
-			}
-
-			left := c.compileBoolsub(node.Args[pos-1].String(), varholder, templateName, holdreflect)
-			_, funcExists := c.funcMap[node.Args[pos+1].String()]
-
-			var right string
-			if !funcExists {
-				right = c.compileBoolsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
-			}
-
-			out += left + " && " + right
-
-			if dev.TemplateDebug {
-				fmt.Println("Left operand:", node.Args[pos-1])
-				fmt.Println("Right operand:", node.Args[pos+1])
-			}
-
-			if !funcExists {
-				pos++
-			}
-
-			if dev.TemplateDebug {
-				fmt.Println("pos:", pos)
-				fmt.Println("len(node.Args):", len(node.Args))
-			}
-		case "le":
-			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " <= " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.TemplateDebug {
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			var rout string
+			pos, rout = c.compareJoin(varholder, holdreflect, templateName, pos, node, "&&") // TODO: Test this
+			out += rout
+		case "le": // TODO: Can we condense these comparison cases down into one?
+			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, "<=")
 			break ArgLoop
 		case "lt":
-			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " < " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.TemplateDebug {
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, "<")
 			break ArgLoop
 		case "gt":
-			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " > " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.TemplateDebug {
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, ">")
 			break ArgLoop
 		case "ge":
-			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " >= " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.TemplateDebug {
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, ">=")
 			break ArgLoop
 		case "eq":
-			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " == " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.TemplateDebug {
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, "==")
 			break ArgLoop
 		case "ne":
-			out += c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " != " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-			if dev.TemplateDebug {
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, "!=")
 			break ArgLoop
 		case "add":
-			param1, val2 := c.compileIfVarsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
-			param2, val3 := c.compileIfVarsub(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-
-			if val2.IsValid() {
-				val = val2
-			} else if val3.IsValid() {
-				val = val3
-			} else {
-				numSample := 1
-				val = reflect.ValueOf(numSample)
-			}
-
-			out += param1 + " + " + param2
-			if dev.TemplateDebug {
-				fmt.Println("add")
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, "+")
+			out += rout
+			val = rval
 			break ArgLoop
 		case "subtract":
-			param1, val2 := c.compileIfVarsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
-			param2, val3 := c.compileIfVarsub(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-
-			if val2.IsValid() {
-				val = val2
-			} else if val3.IsValid() {
-				val = val3
-			} else {
-				numSample := 1
-				val = reflect.ValueOf(numSample)
-			}
-
-			out += param1 + " - " + param2
-			if dev.TemplateDebug {
-				fmt.Println("subtract")
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, "-")
+			out += rout
+			val = rval
 			break ArgLoop
 		case "divide":
-			param1, val2 := c.compileIfVarsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
-			param2, val3 := c.compileIfVarsub(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-
-			if val2.IsValid() {
-				val = val2
-			} else if val3.IsValid() {
-				val = val3
-			} else {
-				numSample := 1
-				val = reflect.ValueOf(numSample)
-			}
-
-			out += param1 + " / " + param2
-			if dev.TemplateDebug {
-				fmt.Println("divide")
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, "/")
+			out += rout
+			val = rval
 			break ArgLoop
 		case "multiply":
-			param1, val2 := c.compileIfVarsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
-			param2, val3 := c.compileIfVarsub(node.Args[pos+2].String(), varholder, templateName, holdreflect)
-
-			if val2.IsValid() {
-				val = val2
-			} else if val3.IsValid() {
-				val = val3
-			} else {
-				numSample := 1
-				val = reflect.ValueOf(numSample)
-			}
-
-			out += param1 + " * " + param2
-			if dev.TemplateDebug {
-				fmt.Println("multiply")
-				fmt.Println("node.Args[pos + 1]", node.Args[pos+1])
-				fmt.Println("node.Args[pos + 2]", node.Args[pos+2])
-			}
+			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, "*")
+			out += rout
+			val = rval
 			break ArgLoop
 		default:
 			if dev.TemplateDebug {
@@ -726,6 +645,7 @@ ArgLoop:
 	//for _, outval := range outbuf {
 	//	out += outval
 	//}
+	//log.Print("outbit: ", out)
 	return out, val
 }
 
@@ -747,7 +667,7 @@ func (c *CTemplateSet) compileReflectswitch(varholder string, holdreflect reflec
 	case *parse.ChainNode:
 		if dev.TemplateDebug {
 			fmt.Println("Chain Node:", n.Node)
-			fmt.Println("node.Args", node.Args)
+			fmt.Println("node.Args:", node.Args)
 		}
 		return "", outVal
 	case *parse.DotNode:
@@ -835,7 +755,6 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 		} else {
 			out += "." + bit
 		}
-
 		if !cur.IsValid() {
 			panic(out + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}

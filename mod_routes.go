@@ -657,7 +657,6 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) RouteErro
 	if uid == user.ID {
 		return LocalError("Why are you trying to ban yourself? Stop that.", w, r, user)
 	}
-
 	if targetUser.IsBanned {
 		return LocalError("The user you're trying to unban is already banned.", w, r, user)
 	}

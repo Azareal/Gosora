@@ -314,8 +314,6 @@ func writeInnerJoins(adapter qgen.DB_Adapter) (err error) {
 }
 
 func writeInserts(adapter qgen.DB_Adapter) error {
-	adapter.SimpleInsert("createTopic", "topics", "parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?")
-
 	adapter.SimpleInsert("createReport", "topics", "title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'")
 
 	adapter.SimpleInsert("createActionReply", "replies", "tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''")
