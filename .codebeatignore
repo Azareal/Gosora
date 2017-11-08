@@ -1,6 +1,7 @@
 /public/trumbowyg/*
 /public/jquery-emojiarea/*
 /public/font-awesome-4.7.0/*
+/schema/*
 
 template_list.go
 template_forum.go
@@ -9,3 +10,7 @@ template_topic.go
 template_topic_alt.go
 template_topics.go
 template_profile.go
+
+gen_mysql.go
+gen_mssql.go
+gen_pgsql.go
