@@ -1,0 +1,11 @@
+/public/trumbowyg/*
+/public/jquery-emojiarea/*
+/public/font-awesome-4.7.0/*
+
+template_list.go
+template_forum.go
+template_forums.go
+template_topic.go
+template_topic_alt.go
+template_topics.go
+template_profile.go
