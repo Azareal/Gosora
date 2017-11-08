@@ -543,6 +543,10 @@ button.username {
 	padding-left: 136px;
 }
 
+#profile_left_lane .avatarRow {
+	padding: 0;
+}
+
 /* Media Queries */
 
 @media(min-width: 881px) {

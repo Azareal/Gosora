@@ -505,11 +505,11 @@ var profile_0 = []byte(`
 		<div class="rowitem"><h1>Profile</h1></div>
 	</header>-->
 	<div id="profile_left_pane" class="rowmenu">
-		<div class="rowitem avatarRow" style="padding: 0;">
+		<div class="rowitem avatarRow">
 			<img src="`)
 var profile_1 = []byte(`" class="avatar" />
 		</div>
-		<div class="rowitem">`)
+		<div class="rowitem nameRow">`)
 var profile_2 = []byte(`
 			<span class="profileName">`)
 var profile_3 = []byte(`</span>`)

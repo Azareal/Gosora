@@ -310,7 +310,34 @@ func SuperModOnly(w http.ResponseWriter, r *http.Request, user User) RouteError 
 // MemberOnly makes sure that only logged in users can access this route
 func MemberOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Loggedin {
-		return NoPermissions(w, r, user) // TODO: Do an error telling them to login instead?
+		return LoginRequired(w, r, user)
+	}
+	return nil
+}
+
+// NoBanned stops any banned users from accessing this route
+func NoBanned(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	if user.IsBanned {
+		return Banned(w, r, user)
+	}
+	return nil
+}
+
+func ParseForm(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	err := r.ParseForm()
+	if err != nil {
+		return LocalError("Bad Form", w, r, user)
+	}
+	return nil
+}
+
+func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	err := r.ParseForm()
+	if err != nil {
+		return LocalError("Bad Form", w, r, user)
+	}
+	if r.FormValue("session") != user.Session {
+		return SecurityError(w, r, user)
 	}
 	return nil
 }

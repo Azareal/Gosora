@@ -655,6 +655,7 @@ input, select, textarea {
 #profile_left_lane .avatarRow {
 	overflow: hidden;
 	max-height: 220px;
+	padding: 0;
 }
 #profile_left_lane .avatar {
 	width: 100%;

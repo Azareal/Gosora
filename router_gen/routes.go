@@ -7,12 +7,6 @@ type RouteImpl struct {
 	RunBefore []Runnable
 }
 
-type RouteGroup struct {
-	Path      string
-	RouteList []*RouteImpl
-	RunBefore []Runnable
-}
-
 type Runnable struct {
 	Contents string
 	Literal  bool
@@ -31,25 +25,8 @@ func (route *RouteImpl) Before(item string, literal ...bool) *RouteImpl {
 	return route
 }
 
-func newRouteGroup(path string, routes ...*RouteImpl) *RouteGroup {
-	return &RouteGroup{path, routes, []Runnable{}}
-}
-
 func addRouteGroup(routeGroup *RouteGroup) {
 	routeGroups = append(routeGroups, routeGroup)
-}
-
-func (group *RouteGroup) Before(line string, literal ...bool) *RouteGroup {
-	var litItem bool
-	if len(literal) > 0 {
-		litItem = literal[0]
-	}
-	group.RunBefore = append(group.RunBefore, Runnable{line, litItem})
-	return group
-}
-
-func (group *RouteGroup) Routes(routes ...*RouteImpl) {
-	group.RouteList = append(group.RouteList, routes...)
 }
 
 func blankRoute() *RouteImpl {
@@ -74,9 +51,10 @@ func routes() {
 	addRoute(Route("routeChangeTheme", "/theme/"))
 	addRoute(Route("routeShowAttachment", "/attachs/", "extra_data"))
 
+	// TODO: Reduce the number of Befores. With a new method, perhaps?
 	reportGroup := newRouteGroup("/report/",
 		Route("routeReportSubmit", "/report/submit/", "extra_data"),
-	).Before("MemberOnly")
+	).Before("MemberOnly").Before("NoBanned").Before("NoSessionMismatch")
 	addRouteGroup(reportGroup)
 
 	topicGroup := newRouteGroup("/topics/",
@@ -90,20 +68,19 @@ func routes() {
 }
 
 // TODO: Test the email token route
-// TODO: Add a BeforeExcept method?
 func buildUserRoutes() {
-	userGroup := newRouteGroup("/user/") //.Before("MemberOnly")
+	userGroup := newRouteGroup("/user/")
 	userGroup.Routes(
 		Route("routeProfile", "/user/").Before("req.URL.Path += extra_data", true),
-		Route("routeAccountOwnEditCritical", "/user/edit/critical/").Before("MemberOnly"),
-		Route("routeAccountOwnEditCriticalSubmit", "/user/edit/critical/submit/").Before("MemberOnly"),
-		Route("routeAccountOwnEditAvatar", "/user/edit/avatar/").Before("MemberOnly"),
-		Route("routeAccountOwnEditAvatarSubmit", "/user/edit/avatar/submit/").Before("MemberOnly"),
-		Route("routeAccountOwnEditUsername", "/user/edit/username/").Before("MemberOnly"),
-		Route("routeAccountOwnEditUsernameSubmit", "/user/edit/username/submit/").Before("MemberOnly"),
-		Route("routeAccountOwnEditEmail", "/user/edit/email/").Before("MemberOnly"),
-		Route("routeAccountOwnEditEmailTokenSubmit", "/user/edit/token/", "extra_data").Before("MemberOnly"),
-	)
+		Route("routeAccountOwnEditCritical", "/user/edit/critical/"),
+		Route("routeAccountOwnEditCriticalSubmit", "/user/edit/critical/submit/"),
+		Route("routeAccountOwnEditAvatar", "/user/edit/avatar/"),
+		Route("routeAccountOwnEditAvatarSubmit", "/user/edit/avatar/submit/"),
+		Route("routeAccountOwnEditUsername", "/user/edit/username/"),
+		Route("routeAccountOwnEditUsernameSubmit", "/user/edit/username/submit/"),
+		Route("routeAccountOwnEditEmail", "/user/edit/email/"),
+		Route("routeAccountOwnEditEmailTokenSubmit", "/user/edit/token/", "extra_data"),
+	).Not("/user/").Before("MemberOnly")
 	addRouteGroup(userGroup)
 }
 

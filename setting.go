@@ -77,11 +77,8 @@ func (sBox SettingBox) ParseSetting(sname string, scontent string, stype string,
 		}
 
 		con1, err := strconv.Atoi(cons[0])
-		if err != nil {
-			return "Invalid contraint! The constraint field wasn't an integer!"
-		}
-		con2, err := strconv.Atoi(cons[1])
-		if err != nil {
+		con2, err2 := strconv.Atoi(cons[1])
+		if err != nil || err2 != nil {
 			return "Invalid contraint! The constraint field wasn't an integer!"
 		}
 

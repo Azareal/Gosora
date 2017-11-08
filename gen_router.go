@@ -142,6 +142,18 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 			
+			err = NoBanned(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+				return
+			}
+			
+			err = NoSessionMismatch(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+				return
+			}
+			
 			switch(req.URL.Path) {
 				case "/report/submit/":
 					err = routeReportSubmit(w,req,user,extra_data)

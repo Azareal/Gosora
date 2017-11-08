@@ -7,10 +7,10 @@
 		<div class="rowitem"><h1>Profile</h1></div>
 	</header>-->
 	<div id="profile_left_pane" class="rowmenu">
-		<div class="rowitem avatarRow" style="padding: 0;">
+		<div class="rowitem avatarRow">
 			<img src="{{.ProfileOwner.Avatar}}" class="avatar" />
 		</div>
-		<div class="rowitem">{{/** TODO: Stop inlining this CSS **/}}
+		<div class="rowitem nameRow">{{/** TODO: Stop inlining this CSS **/}}
 			<span class="profileName">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username" style="float: right;font-weight: normal;">{{.ProfileOwner.Tag}}</span>{{end}}
 		</div>
 		<div class="rowitem passive">

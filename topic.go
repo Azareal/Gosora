@@ -14,6 +14,9 @@ import (
 	"time"
 )
 
+// This is also in reply.go
+//var ErrAlreadyLiked = errors.New("This item was already liked by this user")
+
 // ? - Add a TopicMeta struct for *Forums?
 
 type Topic struct {
@@ -102,51 +105,70 @@ type TopicsRow struct {
 	ForumLink string
 }
 
-func (topic *Topic) Lock() (err error) {
-	_, err = stmts.lockTopic.Exec(topic.ID)
+// Flush the topic out of the cache
+// ? - We do a CacheRemove() here instead of mutating the pointer to avoid creating a race condition
+func (topic *Topic) cacheRemove() {
 	tcache, ok := topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(topic.ID)
 	}
+}
+
+// TODO: Write a test for this
+func (topic *Topic) AddReply(uid int) (err error) {
+	_, err = stmts.addRepliesToTopic.Exec(1, uid, topic.ID)
+	topic.cacheRemove()
+	return err
+}
+
+func (topic *Topic) Lock() (err error) {
+	_, err = stmts.lockTopic.Exec(topic.ID)
+	topic.cacheRemove()
 	return err
 }
 
 func (topic *Topic) Unlock() (err error) {
 	_, err = stmts.unlockTopic.Exec(topic.ID)
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(topic.ID)
-	}
+	topic.cacheRemove()
 	return err
 }
 
 // TODO: We might want more consistent terminology rather than using stick in some places and pin in others. If you don't understand the difference, there is none, they are one and the same.
-// ? - We do a CacheDelete() here instead of mutating the pointer to avoid creating a race condition
 func (topic *Topic) Stick() (err error) {
 	_, err = stmts.stickTopic.Exec(topic.ID)
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(topic.ID)
-	}
+	topic.cacheRemove()
 	return err
 }
 
 func (topic *Topic) Unstick() (err error) {
 	_, err = stmts.unstickTopic.Exec(topic.ID)
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(topic.ID)
+	topic.cacheRemove()
+	return err
+}
+
+// TODO: Test this
+// TODO: Use a transaction for this
+func (topic *Topic) Like(score int, uid int) (err error) {
+	var tid int // Unused
+	err = stmts.hasLikedTopic.QueryRow(uid, topic.ID).Scan(&tid)
+	if err != nil && err != ErrNoRows {
+		return err
+	} else if err != ErrNoRows {
+		return ErrAlreadyLiked
 	}
+
+	_, err = stmts.createLike.Exec(score, tid, "topics", uid)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmts.addLikesToTopic.Exec(1, tid)
+	topic.cacheRemove()
 	return err
 }
 
 // TODO: Implement this
-func (topic *Topic) AddLike(uid int) error {
-	return nil
-}
-
-// TODO: Implement this
-func (topic *Topic) RemoveLike(uid int) error {
+func (topic *Topic) Unlike(uid int) error {
 	return nil
 }
 
@@ -169,22 +191,16 @@ func (topic *Topic) Delete() error {
 	}
 
 	_, err = stmts.deleteTopic.Exec(topic.ID)
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(topic.ID)
-	}
+	topic.cacheRemove()
 	return err
 }
 
 func (topic *Topic) Update(name string, content string) error {
 	content = preparseMessage(content)
 	parsed_content := parseMessage(html.EscapeString(content), topic.ParentID, "forums")
-	_, err := stmts.editTopic.Exec(name, content, parsed_content, topic.ID)
 
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(topic.ID)
-	}
+	_, err := stmts.editTopic.Exec(name, content, parsed_content, topic.ID)
+	topic.cacheRemove()
 	return err
 }
 
@@ -194,10 +210,7 @@ func (topic *Topic) CreateActionReply(action string, ipaddress string, user User
 		return err
 	}
 	_, err = stmts.addRepliesToTopic.Exec(1, user.ID, topic.ID)
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(topic.ID)
-	}
+	topic.cacheRemove()
 	// ? - Update the last topic cache for the parent forum?
 	return err
 }

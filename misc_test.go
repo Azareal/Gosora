@@ -750,7 +750,9 @@ func TestReplyStore(t *testing.T) {
 
 	// TODO: Test Create and Get
 	//Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error)
-	rid, err := rstore.Create(1, "Fofofo", "::1", 2, 1)
+	topic, err := topics.Get(1)
+	expectNilErr(t, err)
+	rid, err := rstore.Create(topic, "Fofofo", "::1", 1)
 	expectNilErr(t, err)
 	expect(t, rid == 2, fmt.Sprintf("The next reply ID should be 2 not %d", rid))
 

@@ -703,17 +703,30 @@ select, input, textarea {
 	display: flex;
 }
 #profile_left_lane {
+	margin-left: 8px;
+	margin-right: 16px;
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 }
 #profile_left_pane {
 	flex-direction: column;
+	padding-bottom: 18px;
 }
 #profile_left_pane .avatarRow {
 	padding: 24px;
 }
 #profile_left_pane .avatar {
 	border-radius: 80px;
+}
+#profile_left_pane .nameRow {
+	display: flex;
+	flex-direction: column;
+	margin-left: auto;
+	margin-right: auto;
+}
+#profile_right_lane {
+	width: 100%;
+	margin-right: 12px;
 }
 #profile_right_lane .colstack_item {
 	border: 1px solid var(--element-border-color);

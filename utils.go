@@ -199,7 +199,8 @@ func nameToSlug(name string) (slug string) {
 	return slug
 }
 
-func SendEmail(email string, subject string, msg string) (res bool) {
+// TODO: Refactor this
+func SendEmail(email string, subject string, msg string) bool {
 	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
 	if vhooks["email_send_intercept"] != nil {
 		return vhooks["email_send_intercept"](email, subject, msg).(bool)
@@ -208,42 +209,42 @@ func SendEmail(email string, subject string, msg string) (res bool) {
 
 	con, err := smtp.Dial(config.SMTPServer + ":" + config.SMTPPort)
 	if err != nil {
-		return
+		return false
 	}
 
 	if config.SMTPUsername != "" {
 		auth := smtp.PlainAuth("", config.SMTPUsername, config.SMTPPassword, config.SMTPServer)
 		err = con.Auth(auth)
 		if err != nil {
-			return
+			return false
 		}
 	}
 
 	err = con.Mail(site.Email)
 	if err != nil {
-		return
+		return false
 	}
 	err = con.Rcpt(email)
 	if err != nil {
-		return
+		return false
 	}
 
 	emailData, err := con.Data()
 	if err != nil {
-		return
+		return false
 	}
 	_, err = fmt.Fprintf(emailData, body)
 	if err != nil {
-		return
+		return false
 	}
 
 	err = emailData.Close()
 	if err != nil {
-		return
+		return false
 	}
 	err = con.Quit()
 	if err != nil {
-		return
+		return false
 	}
 	return true
 }

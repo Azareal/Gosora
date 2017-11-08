@@ -238,6 +238,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) R
 
 func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	// TODO: Reduce this to 1MB for attachments for each file?
+	// TODO: Reuse this code more
 	if r.ContentLength > int64(config.MaxRequestSize) {
 		size, unit := convertByteUnit(float64(config.MaxRequestSize))
 		return CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
@@ -343,7 +344,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) RouteEr
 		return LocalError("Bad IP", w, r, user)
 	}
 
-	_, err = rstore.Create(tid, content, ipaddress, topic.ParentID, user.ID)
+	_, err = rstore.Create(topic, content, ipaddress, user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -409,16 +410,8 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) RouteErro
 	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
 		return NoPermissions(w, r, user)
 	}
-
 	if topic.CreatedBy == user.ID {
 		return LocalError("You can't like your own topics", w, r, user)
-	}
-
-	err = stmts.hasLikedTopic.QueryRow(user.ID, tid).Scan(&tid)
-	if err != nil && err != ErrNoRows {
-		return InternalError(err, w, r)
-	} else if err != ErrNoRows {
-		return LocalError("You already liked this!", w, r, user)
 	}
 
 	_, err = users.Get(topic.CreatedBy)
@@ -429,13 +422,10 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) RouteErro
 	}
 
 	score := 1
-	_, err = stmts.createLike.Exec(score, tid, "topics", user.ID)
-	if err != nil {
-		return InternalError(err, w, r)
-	}
-
-	_, err = stmts.addLikesToTopic.Exec(1, tid)
-	if err != nil {
+	err = topic.Like(score, user.ID)
+	if err == ErrAlreadyLiked {
+		return LocalError("You already liked this", w, r, user)
+	} else if err != nil {
 		return InternalError(err, w, r)
 	}
 
@@ -456,11 +446,6 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user User) RouteErro
 	// Live alerts, if the poster is online and WebSockets is enabled
 	_ = wsHub.pushAlert(topic.CreatedBy, int(lastID), "like", "topic", user.ID, topic.CreatedBy, tid)
 
-	// Flush the topic out of the cache
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(tid)
-	}
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	return nil
 }
@@ -499,7 +484,6 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user User) Rou
 	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
 		return NoPermissions(w, r, user)
 	}
-
 	if reply.CreatedBy == user.ID {
 		return LocalError("You can't like your own replies", w, r, user)
 	}
@@ -573,26 +557,10 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) 
 }
 
 func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemID string) RouteError {
-	if !user.Loggedin {
-		return LoginRequired(w, r, user)
-	}
-	if user.IsBanned {
-		return Banned(w, r, user)
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		return LocalError("Bad Form", w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return SecurityError(w, r, user)
-	}
-
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
 		return LocalError("Bad ID", w, r, user)
 	}
-
 	itemType := r.FormValue("type")
 
 	var fid = 1
@@ -649,23 +617,16 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 	}
 
 	var count int
-	rows, err := stmts.reportExists.Query(itemType + "_" + strconv.Itoa(itemID))
+	err = stmts.reportExists.QueryRow(itemType + "_" + strconv.Itoa(itemID)).Scan(&count)
 	if err != nil && err != ErrNoRows {
 		return InternalError(err, w, r)
-	}
-
-	for rows.Next() {
-		err = rows.Scan(&count)
-		if err != nil {
-			return InternalError(err, w, r)
-		}
 	}
 	if count != 0 {
 		return LocalError("Someone has already reported this!", w, r, user)
 	}
 
 	// TODO: Repost attachments in the reports forum, so that the mods can see them
-	// ? - Can we do this via the TopicStore?
+	// ? - Can we do this via the TopicStore? Should we do a ReportStore?
 	res, err := stmts.createReport.Exec(title, content, parseMessage(content, 0, ""), user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID))
 	if err != nil {
 		return InternalError(err, w, r)

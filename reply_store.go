@@ -7,7 +7,7 @@ var rstore ReplyStore
 
 type ReplyStore interface {
 	Get(id int) (*Reply, error)
-	Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error)
+	Create(topic *Topic, content string, ipaddress string, uid int) (id int, err error)
 }
 
 type SQLReplyStore struct {
@@ -30,24 +30,16 @@ func (store *SQLReplyStore) Get(id int) (*Reply, error) {
 }
 
 // TODO: Write a test for this
-func (store *SQLReplyStore) Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error) {
+func (store *SQLReplyStore) Create(topic *Topic, content string, ipaddress string, uid int) (id int, err error) {
 	wcount := wordCount(content)
-	res, err := store.create.Exec(tid, content, parseMessage(content, fid, "forums"), ipaddress, wcount, uid)
-	if err != nil {
-		return 0, err
-	}
-	lastID, err := res.LastInsertId()
+	res, err := store.create.Exec(topic.ID, content, parseMessage(content, topic.ParentID, "forums"), ipaddress, wcount, uid)
 	if err != nil {
 		return 0, err
 	}
 
-	_, err = stmts.addRepliesToTopic.Exec(1, uid, tid)
+	lastID, err := res.LastInsertId()
 	if err != nil {
-		return int(lastID), err
+		return 0, err
 	}
-	tcache, ok := topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(tid)
-	}
-	return int(lastID), err
+	return int(lastID), topic.AddReply(uid)
 }
