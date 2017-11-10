@@ -10,18 +10,20 @@
 		<div class="rowitem avatarRow">
 			<img src="{{.ProfileOwner.Avatar}}" class="avatar" />
 		</div>
-		<div class="rowitem nameRow">{{/** TODO: Stop inlining this CSS **/}}
-			<span class="profileName">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username" style="float: right;font-weight: normal;">{{.ProfileOwner.Tag}}</span>{{end}}
+		<div class="rowitem nameRow">
+			<span class="profileName">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username">{{.ProfileOwner.Tag}}</span>{{end}}
 		</div>
-		<div class="rowitem passive">
-			<a class="profile_menu_item">Add Friend</a>
-		</div>
-		{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod) }}<div class="rowitem passive">
-			{{if .ProfileOwner.IsBanned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Unban</a>
-		{{else}}<a href="#ban_user" class="profile_menu_item">Ban</a>{{end}}
-		</div>{{end}}
-		<div class="rowitem passive">
-			<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item">Report</a>
+		<div class="passiveBlock">
+			<div class="rowitem passive">
+				<a class="profile_menu_item">Add Friend</a>
+			</div>
+			{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod) }}<div class="rowitem passive">
+				{{if .ProfileOwner.IsBanned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Unban</a>
+			{{else}}<a href="#ban_user" class="profile_menu_item">Ban</a>{{end}}
+			</div>{{end}}
+			<div class="rowitem passive">
+				<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item">Report</a>
+			</div>
 		</div>
 	</div>
 </div>

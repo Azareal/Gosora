@@ -24,3 +24,6 @@ go get -u github.com/robertkrimen/otto
 
 echo "Updating the Riot Search Engine"
 go get -u github.com/go-ego/riot
+
+echo "Updating the Rez Image Resizer"
+go get -u github.com/bamiaux/rez

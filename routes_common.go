@@ -270,33 +270,40 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 }
 
 func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
-	user, halt := auth.SessionCheck(w, r)
-	if halt {
-		return *user, false
-	}
-	if user == &guestUser {
+	user, ok := func(w http.ResponseWriter, r *http.Request) (User, bool) {
+		user, halt := auth.SessionCheck(w, r)
+		if halt {
+			return *user, false
+		}
+		if user == &guestUser {
+			return *user, true
+		}
+
+		h := w.Header()
+		h.Set("X-Frame-Options", "deny")
+		//h.Set("X-XSS-Protection", "1")
+		// TODO: Set the content policy header
 		return *user, true
+	}(w, r)
+	if !ok {
+		return user, false
 	}
 
+	// TODO: WIP. Refactor this to eliminate the unnecessary query
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		PreError("Bad IP", w, r)
-		return *user, false
+		return user, false
 	}
 	if host != user.LastIP {
 		_, err = stmts.updateLastIP.Exec(host, user.ID)
 		if err != nil {
 			InternalError(err, w, r)
-			return *user, false
+			return user, false
 		}
-		user.LastIP = host // ! - Is this racey?
+		user.LastIP = host
 	}
-
-	h := w.Header()
-	h.Set("X-Frame-Options", "deny")
-	//h.Set("X-XSS-Protection", "1")
-	// TODO: Set the content policy header
-	return *user, true
+	return user, ok
 }
 
 // SuperModeOnly makes sure that only super mods or higher can access the panel routes

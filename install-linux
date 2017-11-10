@@ -25,6 +25,9 @@ go get -u github.com/robertkrimen/otto
 echo "Installing the Riot Search Engine"
 go get -u github.com/robertkrimen/otto
 
+echo "Installing the Rez Image Resizer"
+go get -u github.com/bamiaux/rez
+
 
 echo "Building the installer"
 cd ./install

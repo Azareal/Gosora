@@ -68,8 +68,15 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
-echo Installing the Riot Search Engine
+echo Updating the Riot Search Engine
 go get -u github.com/go-ego/riot
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
+echo Updating the Rez Image Resizer
+go get -u github.com/bamiaux/rez
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

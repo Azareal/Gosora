@@ -6,7 +6,6 @@ import (
 	"html"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -134,12 +133,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user User) R
 
 	topicName := html.EscapeString(r.PostFormValue("topic-name"))
 	content := html.EscapeString(preparseMessage(r.PostFormValue("topic-content")))
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-
-	tid, err := topics.Create(fid, topicName, content, user.ID, ipaddress)
+	tid, err := topics.Create(fid, topicName, content, user.ID, user.LastIP)
 	if err != nil {
 		switch err {
 		case ErrNoRows:
@@ -339,12 +333,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user User) RouteEr
 	}
 
 	content := preparseMessage(html.EscapeString(r.PostFormValue("reply-content")))
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-
-	_, err = rstore.Create(topic, content, ipaddress, user.ID)
+	_, err = rstore.Create(topic, content, user.LastIP, user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -537,13 +526,8 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user User) 
 		return LocalError("Invalid UID", w, r, user)
 	}
 
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-
 	content := html.EscapeString(preparseMessage(r.PostFormValue("reply-content")))
-	_, err = prstore.Create(uid, content, user.ID, ipaddress)
+	_, err = prstore.Create(uid, content, user.ID, user.LastIP)
 	if err != nil {
 		return InternalError(err, w, r)
 	}

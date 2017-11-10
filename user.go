@@ -54,7 +54,7 @@ type User struct {
 	Tag          string
 	Level        int
 	Score        int
-	LastIP       string
+	LastIP       string // ! This part of the UserCache data might fall out of date
 	TempGroup    int
 }
 

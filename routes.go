@@ -12,7 +12,6 @@ import (
 	"bytes"
 	"html"
 	"io"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -808,12 +807,8 @@ func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user User) RouteEr
 	auth.SetCookies(w, uid, session)
 	if user.IsAdmin {
 		// Is this error check reundant? We already check for the error in PreRoute for the same IP
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			return InternalError(err, w, r)
-		}
 		// TODO: Should we be logging this?
-		log.Print("#" + strconv.Itoa(uid) + " has logged in with IP " + host)
+		log.Printf("#%d has logged in with IP %s", uid, user.LastIP)
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil

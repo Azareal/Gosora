@@ -89,7 +89,8 @@ type Perms struct {
 	// TODO: Add a permission for enabling avatars
 
 	// Forum permissions
-	ViewTopic   bool
+	ViewTopic bool
+	//ViewOwnTopic bool
 	LikeItem    bool
 	CreateTopic bool
 	EditTopic   bool
@@ -108,7 +109,8 @@ type Perms struct {
 
 /* Inherit from group permissions for ones we don't have */
 type ForumPerms struct {
-	ViewTopic   bool
+	ViewTopic bool
+	//ViewOwnTopic bool
 	LikeItem    bool
 	CreateTopic bool
 	EditTopic   bool

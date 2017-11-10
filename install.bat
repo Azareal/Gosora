@@ -78,6 +78,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Installing the Rez Image Resizer
+go get -u github.com/bamiaux/rez
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 
 echo Building the installer
 go generate

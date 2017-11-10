@@ -546,6 +546,10 @@ button.username {
 #profile_left_lane .avatarRow {
 	padding: 0;
 }
+#profile_left_pane .nameRow .username {
+	float: right;
+	font-weight: normal;
+}
 
 /* Media Queries */
 

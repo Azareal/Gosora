@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"html"
 	"log"
-	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -113,11 +112,7 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user User) RouteEr
 			return InternalErrorJSQ(err, w, r, isJs)
 		}
 
-		ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			return LocalErrorJSQ("Bad IP", w, r, user, isJs)
-		}
-		err = addModLog("delete", tid, "topic", ipaddress, user.ID)
+		err = addModLog("delete", tid, "topic", user.LastIP, user.ID)
 		if err != nil {
 			return InternalErrorJSQ(err, w, r, isJs)
 		}
@@ -161,16 +156,11 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user User) RouteErr
 		return InternalError(err, w, r)
 	}
 
-	// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-	err = addModLog("stick", tid, "topic", ipaddress, user.ID)
+	err = addModLog("stick", tid, "topic", user.LastIP, user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
-	err = topic.CreateActionReply("stick", ipaddress, user)
+	err = topic.CreateActionReply("stick", user.LastIP, user)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -205,15 +195,11 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user User) RouteE
 		return InternalError(err, w, r)
 	}
 
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-	err = addModLog("unstick", tid, "topic", ipaddress, user.ID)
+	err = addModLog("unstick", tid, "topic", user.LastIP, user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
-	err = topic.CreateActionReply("unstick", ipaddress, user)
+	err = topic.CreateActionReply("unstick", user.LastIP, user)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -268,16 +254,11 @@ func routeLockTopic(w http.ResponseWriter, r *http.Request, user User) RouteErro
 			return InternalErrorJSQ(err, w, r, isJs)
 		}
 
-		// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
-		ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			return LocalErrorJSQ("Bad IP", w, r, user, isJs)
-		}
-		err = addModLog("lock", tid, "topic", ipaddress, user.ID)
+		err = addModLog("lock", tid, "topic", user.LastIP, user.ID)
 		if err != nil {
 			return InternalErrorJSQ(err, w, r, isJs)
 		}
-		err = topic.CreateActionReply("lock", ipaddress, user)
+		err = topic.CreateActionReply("lock", user.LastIP, user)
 		if err != nil {
 			return InternalErrorJSQ(err, w, r, isJs)
 		}
@@ -316,16 +297,11 @@ func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user User) RouteEr
 		return InternalError(err, w, r)
 	}
 
-	// ! - Can we use user.LastIP here? It might be racey, if another thread mutates it... We need to fix this.
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-	err = addModLog("unlock", tid, "topic", ipaddress, user.ID)
+	err = addModLog("unlock", tid, "topic", user.LastIP, user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
-	err = topic.CreateActionReply("unlock", ipaddress, user)
+	err = topic.CreateActionReply("unlock", user.LastIP, user)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -447,11 +423,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user User) R
 		return InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalErrorJSQ("Bad IP", w, r, user, isJs)
-	}
-	err = addModLog("delete", reply.ParentID, "reply", ipaddress, user.ID)
+	err = addModLog("delete", reply.ParentID, "reply", user.LastIP, user.ID)
 	if err != nil {
 		return InternalErrorJSQ(err, w, r, isJs)
 	}
@@ -694,11 +666,7 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) RouteErro
 		return InternalError(err, w, r)
 	}
 
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-	err = addModLog("ban", uid, "user", ipaddress, user.ID)
+	err = addModLog("ban", uid, "user", user.LastIP, user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -740,11 +708,7 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user User) RouteError {
 		return InternalError(err, w, r)
 	}
 
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-	err = addModLog("unban", uid, "user", ipaddress, user.ID)
+	err = addModLog("unban", uid, "user", user.LastIP, user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -781,11 +745,7 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user User) RouteError
 		return InternalError(err, w, r)
 	}
 
-	ipaddress, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return LocalError("Bad IP", w, r, user)
-	}
-	err = addModLog("activate", targetUser.ID, "user", ipaddress, user.ID)
+	err = addModLog("activate", targetUser.ID, "user", user.LastIP, user.ID)
 	if err != nil {
 		return InternalError(err, w, r)
 	}

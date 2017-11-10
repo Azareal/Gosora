@@ -710,6 +710,10 @@ button.username {
 	margin: 0;
 	display: block;
 }
+#profile_left_pane .nameRow .username {
+	float: right;
+	font-weight: normal;
+}
 #profile_right_lane {
 	width: calc(100% - 230px);
 }

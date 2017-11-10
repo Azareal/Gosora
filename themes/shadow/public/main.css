@@ -667,6 +667,10 @@ input, select, textarea {
 	display: block;
 	margin-top: 3px;
 }
+#profile_left_pane .nameRow .username {
+	float: right;
+	font-weight: normal;
+}
 #profile_left_lane .profileName {
 	font-size: 18px;
 }

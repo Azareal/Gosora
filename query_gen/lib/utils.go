@@ -81,12 +81,12 @@ func processJoiner(joinstr string) (joiner []DB_Joiner) {
 		outjoin.Operator, parseOffset = getOperator(segment, parseOffset+1)
 		right, parseOffset = getIdentifier(segment, parseOffset+1)
 
-		left_column := strings.Split(left, ".")
-		right_column := strings.Split(right, ".")
-		outjoin.LeftTable = strings.TrimSpace(left_column[0])
-		outjoin.RightTable = strings.TrimSpace(right_column[0])
-		outjoin.LeftColumn = strings.TrimSpace(left_column[1])
-		outjoin.RightColumn = strings.TrimSpace(right_column[1])
+		leftColumn := strings.Split(left, ".")
+		rightColumn := strings.Split(right, ".")
+		outjoin.LeftTable = strings.TrimSpace(leftColumn[0])
+		outjoin.RightTable = strings.TrimSpace(rightColumn[0])
+		outjoin.LeftColumn = strings.TrimSpace(leftColumn[1])
+		outjoin.RightColumn = strings.TrimSpace(rightColumn[1])
 
 		joiner = append(joiner, outjoin)
 	}
@@ -102,14 +102,14 @@ func processWhere(wherestr string) (where []DB_Where) {
 	var buffer string
 	var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
 	for _, segment := range strings.Split(wherestr, " AND ") {
-		var tmp_where DB_Where
+		var tmpWhere DB_Where
 		segment += ")"
 		for i := 0; i < len(segment); i++ {
 			char := segment[i]
-			//fmt.Println("optype",optype)
+			//fmt.Println("optype", optype)
 			switch optype {
 			case 0: // unknown
-				//fmt.Println("case 0:",char,string(char))
+				//fmt.Println("case 0:", char, string(char))
 				if '0' <= char && char <= '9' {
 					optype = 1
 					buffer = string(char)
@@ -119,12 +119,12 @@ func processWhere(wherestr string) (where []DB_Where) {
 				} else if char == '\'' {
 					optype = 4
 					buffer = ""
-				} else if _is_op_byte(char) {
+				} else if isOpByte(char) {
 					optype = 5
 					buffer = string(char)
 				} else if char == '?' {
 					//fmt.Println("Expr:","?")
-					tmp_where.Expr = append(tmp_where.Expr, DB_Token{"?", "substitute"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{"?", "substitute"})
 				}
 			case 1: // number
 				if '0' <= char && char <= '9' {
@@ -133,7 +133,7 @@ func processWhere(wherestr string) (where []DB_Where) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmp_where.Expr = append(tmp_where.Expr, DB_Token{buffer, "number"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "number"})
 				}
 			case 2: // column
 				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_' {
@@ -144,23 +144,23 @@ func processWhere(wherestr string) (where []DB_Where) {
 				} else {
 					optype = 0
 					i--
-					//fmt.Println("Expr:",buffer)
-					tmp_where.Expr = append(tmp_where.Expr, DB_Token{buffer, "column"})
+					//fmt.Println("Expr:", buffer)
+					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "column"})
 				}
 			case 3: // function
 				var preI = i
-				//fmt.Println("buffer",buffer)
-				//fmt.Println("len(halves)",len(halves[1]))
-				//fmt.Println("preI",string(halves[1][preI]))
-				//fmt.Println("msg prior to preI",halves[1][0:preI])
+				//fmt.Println("buffer", buffer)
+				//fmt.Println("len(halves)", len(halves[1]))
+				//fmt.Println("preI", string(halves[1][preI]))
+				//fmt.Println("msg prior to preI", halves[1][0:preI])
 				i = skipFunctionCall(segment, i-1)
 				//fmt.Println("i",i)
-				//fmt.Println("msg prior to i-1",halves[1][0:i-1])
-				//fmt.Println("string(i-1)",string(halves[1][i-1]))
-				//fmt.Println("string(i)",string(halves[1][i]))
+				//fmt.Println("msg prior to i-1", halves[1][0:i-1])
+				//fmt.Println("string(i-1)", string(halves[1][i-1]))
+				//fmt.Println("string(i)", string(halves[1][i]))
 				buffer += segment[preI:i] + string(segment[i])
 				//fmt.Println("Expr:",buffer)
-				tmp_where.Expr = append(tmp_where.Expr, DB_Token{buffer, "function"})
+				tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "function"})
 				optype = 0
 			case 4: // string
 				if char != '\'' {
@@ -168,22 +168,22 @@ func processWhere(wherestr string) (where []DB_Where) {
 				} else {
 					optype = 0
 					//fmt.Println("Expr:",buffer)
-					tmp_where.Expr = append(tmp_where.Expr, DB_Token{buffer, "string"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "string"})
 				}
 			case 5: // operator
-				if _is_op_byte(char) {
+				if isOpByte(char) {
 					buffer += string(char)
 				} else {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmp_where.Expr = append(tmp_where.Expr, DB_Token{buffer, "operator"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "operator"})
 				}
 			default:
 				panic("Bad optype in _process_where")
 			}
 		}
-		where = append(where, tmp_where)
+		where = append(where, tmpWhere)
 	}
 	return where
 }
@@ -241,7 +241,7 @@ func processSet(setstr string) (setter []DB_Setter) {
 				} else if char == '\'' {
 					optype = 4
 					buffer = ""
-				} else if _is_op_byte(char) {
+				} else if isOpByte(char) {
 					optype = 5
 					buffer = string(char)
 				} else if char == '?' {
@@ -289,20 +289,20 @@ func processSet(setstr string) (setter []DB_Setter) {
 					buffer += string(char)
 				} else {
 					optype = 0
-					//fmt.Println("Expr:",buffer)
+					//fmt.Println("Expr:", buffer)
 					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "string"})
 				}
 			case 5: // operator
-				if _is_op_byte(char) {
+				if isOpByte(char) {
 					buffer += string(char)
 				} else {
 					optype = 0
 					i--
-					//fmt.Println("Expr:",buffer)
+					//fmt.Println("Expr:", buffer)
 					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "operator"})
 				}
 			default:
-				panic("Bad optype in _process_set")
+				panic("Bad optype in processSet")
 			}
 		}
 		setter = append(setter, tmpSetter)
@@ -322,11 +322,11 @@ func processLimit(limitstr string) (limiter DB_Limit) {
 	return limiter
 }
 
-func _is_op_byte(char byte) bool {
+func isOpByte(char byte) bool {
 	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
 }
 
-func _is_op_rune(char rune) bool {
+func isOpRune(char rune) bool {
 	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
 }
 
@@ -375,7 +375,7 @@ func getIdentifier(segment string, startOffset int) (out string, i int) {
 			i = skipFunctionCall(segment, i)
 			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
 		}
-		if (segment[i] == ' ' || _is_op_byte(segment[i])) && i != startOffset {
+		if (segment[i] == ' ' || isOpByte(segment[i])) && i != startOffset {
 			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
 		}
 	}
@@ -386,7 +386,7 @@ func getOperator(segment string, startOffset int) (out string, i int) {
 	segment = strings.TrimSpace(segment)
 	segment += " " // Avoid overflow bugs with slicing
 	for i = startOffset; i < len(segment); i++ {
-		if !_is_op_byte(segment[i]) && i != startOffset {
+		if !isOpByte(segment[i]) && i != startOffset {
 			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
 		}
 	}

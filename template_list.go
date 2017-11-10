@@ -509,48 +509,49 @@ var profile_0 = []byte(`
 			<img src="`)
 var profile_1 = []byte(`" class="avatar" />
 		</div>
-		<div class="rowitem nameRow">`)
-var profile_2 = []byte(`
+		<div class="rowitem nameRow">
 			<span class="profileName">`)
-var profile_3 = []byte(`</span>`)
-var profile_4 = []byte(`<span class="username" style="float: right;font-weight: normal;">`)
-var profile_5 = []byte(`</span>`)
-var profile_6 = []byte(`
+var profile_2 = []byte(`</span>`)
+var profile_3 = []byte(`<span class="username">`)
+var profile_4 = []byte(`</span>`)
+var profile_5 = []byte(`
 		</div>
-		<div class="rowitem passive">
-			<a class="profile_menu_item">Add Friend</a>
-		</div>
-		`)
-var profile_7 = []byte(`<div class="rowitem passive">
+		<div class="passiveBlock">
+			<div class="rowitem passive">
+				<a class="profile_menu_item">Add Friend</a>
+			</div>
 			`)
-var profile_8 = []byte(`<a href="/users/unban/`)
-var profile_9 = []byte(`?session=`)
-var profile_10 = []byte(`" class="profile_menu_item">Unban</a>
-		`)
-var profile_11 = []byte(`<a href="#ban_user" class="profile_menu_item">Ban</a>`)
+var profile_6 = []byte(`<div class="rowitem passive">
+				`)
+var profile_7 = []byte(`<a href="/users/unban/`)
+var profile_8 = []byte(`?session=`)
+var profile_9 = []byte(`" class="profile_menu_item">Unban</a>
+			`)
+var profile_10 = []byte(`<a href="#ban_user" class="profile_menu_item">Ban</a>`)
+var profile_11 = []byte(`
+			</div>`)
 var profile_12 = []byte(`
-		</div>`)
-var profile_13 = []byte(`
-		<div class="rowitem passive">
-			<a href="/report/submit/`)
-var profile_14 = []byte(`?session=`)
-var profile_15 = []byte(`&type=user" class="profile_menu_item report_item">Report</a>
+			<div class="rowitem passive">
+				<a href="/report/submit/`)
+var profile_13 = []byte(`?session=`)
+var profile_14 = []byte(`&type=user" class="profile_menu_item report_item">Report</a>
+			</div>
 		</div>
 	</div>
 </div>
 
 <div id="profile_right_lane" class="colstack_right">
 	`)
-var profile_16 = []byte(`
+var profile_15 = []byte(`
 	<!-- TODO: Inline the display: none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
 			<div class="rowitem"><h1>Ban User</h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/`)
-var profile_17 = []byte(`?session=`)
-var profile_18 = []byte(`" method="post" style="display: none;">
+var profile_16 = []byte(`?session=`)
+var profile_17 = []byte(`" method="post" style="display: none;">
 		`)
-var profile_19 = []byte(`
+var profile_18 = []byte(`
 		<div class="colline">If all the fields are left blank, the ban will be permanent.</div>
 		<div class="colstack_item">
 			<div class="formrow real_first_child">
@@ -581,53 +582,53 @@ var profile_19 = []byte(`
 		</div>
 	</form>
 	`)
-var profile_20 = []byte(`
+var profile_19 = []byte(`
 
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
 		<div class="rowitem"><h1>Comments</h1></div>
 	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">`)
-var profile_21 = []byte(`
+var profile_20 = []byte(`
 		<div class="rowitem passive deletable_block editable_parent simple `)
-var profile_22 = []byte(`" style="`)
-var profile_23 = []byte(`background-image: url(`)
-var profile_24 = []byte(`), url(/static/post-avatar-bg.jpg);background-position: 0px `)
-var profile_25 = []byte(`-1`)
-var profile_26 = []byte(`0px;`)
-var profile_27 = []byte(`">
+var profile_21 = []byte(`" style="`)
+var profile_22 = []byte(`background-image: url(`)
+var profile_23 = []byte(`), url(/static/post-avatar-bg.jpg);background-position: 0px `)
+var profile_24 = []byte(`-1`)
+var profile_25 = []byte(`0px;`)
+var profile_26 = []byte(`">
 			<span class="editable_block user_content simple">`)
-var profile_28 = []byte(`</span>
+var profile_27 = []byte(`</span>
 			<span class="controls">
 				<a href="`)
-var profile_29 = []byte(`" class="real_username username">`)
-var profile_30 = []byte(`</a>&nbsp;&nbsp;
+var profile_28 = []byte(`" class="real_username username">`)
+var profile_29 = []byte(`</a>&nbsp;&nbsp;
 
 				`)
-var profile_31 = []byte(`<a href="/profile/reply/edit/submit/`)
-var profile_32 = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
+var profile_30 = []byte(`<a href="/profile/reply/edit/submit/`)
+var profile_31 = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
 
 				<a href="/profile/reply/delete/submit/`)
-var profile_33 = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>`)
-var profile_34 = []byte(`
+var profile_32 = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>`)
+var profile_33 = []byte(`
 
 				<a class="mod_button" href="/report/submit/`)
-var profile_35 = []byte(`?session=`)
-var profile_36 = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>
+var profile_34 = []byte(`?session=`)
+var profile_35 = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>
 
 				`)
-var profile_37 = []byte(`<a class="username hide_on_mobile user_tag" style="float: right;">`)
-var profile_38 = []byte(`</a>`)
-var profile_39 = []byte(`
+var profile_36 = []byte(`<a class="username hide_on_mobile user_tag" style="float: right;">`)
+var profile_37 = []byte(`</a>`)
+var profile_38 = []byte(`
 			</span>
 		</div>
 	`)
-var profile_40 = []byte(`</div>
+var profile_39 = []byte(`</div>
 
 `)
-var profile_41 = []byte(`
+var profile_40 = []byte(`
 	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/" method="post">
 		<input name="uid" value='`)
-var profile_42 = []byte(`' type="hidden" />
+var profile_41 = []byte(`' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top: none;">
 			<div class="formrow">
 				<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
@@ -638,13 +639,13 @@ var profile_42 = []byte(`' type="hidden" />
 		</div>
 	</form>
 `)
-var profile_43 = []byte(`
+var profile_42 = []byte(`
 </div>
 
 </div>
 
 `)
-var profile_44 = []byte(`
+var profile_43 = []byte(`
 <script type="text/javascript">
 function handle_profile_hashbit() {
 	var hash_class = ""

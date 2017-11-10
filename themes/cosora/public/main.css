@@ -714,6 +714,7 @@ select, input, textarea {
 }
 #profile_left_pane .avatarRow {
 	padding: 24px;
+	padding-bottom: 8px;
 }
 #profile_left_pane .avatar {
 	border-radius: 80px;
@@ -723,6 +724,12 @@ select, input, textarea {
 	flex-direction: column;
 	margin-left: auto;
 	margin-right: auto;
+}
+#profile_left_pane .nameRow .username {
+	text-align: center;
+}
+#profile_left_pane .profileName {
+	font-size: 19px;
 }
 #profile_right_lane {
 	width: 100%;

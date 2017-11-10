@@ -1,10 +1,10 @@
-/public/trumbowyg/*
-/public/jquery-emojiarea/*
-/public/font-awesome-4.7.0/*
+/public/trumbowyg/**
+/public/jquery-emojiarea/**
+/public/font-awesome-4.7.0/**
 /public/jquery-3.1.1.min.js
 /public/EQCSS.min.js
 /public/EQCSS.js
-/schema/*
+/schema/**
 
 template_list.go
 template_forum.go
