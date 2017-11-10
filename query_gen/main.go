@@ -232,8 +232,6 @@ func writeSelects(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleSelect("getFullSettings", "settings", "name, content, type, constraints", "", "", "")
 
-	adapter.SimpleSelect("getPlugins", "plugins", "uname, active, installed", "", "", "")
-
 	adapter.SimpleSelect("getThemes", "themes", "uname, default", "", "", "")
 
 	adapter.SimpleSelect("getWidgets", "widgets", "position, side, type, active,  location, data", "", "position ASC", "")

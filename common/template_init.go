@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"html/template"
@@ -8,6 +8,15 @@ import (
 )
 
 var templates = template.New("")
+var prebuildTmplList []func(*User, *HeaderVars) CTmpl
+
+type CTmpl struct {
+	Name       string
+	Filename   string
+	Path       string
+	StructName string
+	Data       interface{}
+}
 
 // nolint
 func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) error {
@@ -148,6 +157,17 @@ func compileTemplates() error {
 	forumTmpl, err := c.compileTemplate("forum.html", "templates/", "ForumPage", forumPage, varList)
 	if err != nil {
 		return err
+	}
+
+	// Let plugins register their own templates
+	for _, tmplfunc := range prebuildTmplList {
+		tmpl := tmplfunc(user, headerVars)
+		varList = make(map[string]VarItem)
+		compiledTmpl, err := c.compileTemplate(tmpl.Filename, tmpl.Path, tmpl.StructName, tmpl.Data, varList)
+		if err != nil {
+			return err
+		}
+		go writeTemplate(tmpl.Name, compiledTmpl)
 	}
 
 	log.Print("Writing the templates")

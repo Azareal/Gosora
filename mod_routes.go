@@ -603,9 +603,6 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user User) RouteErro
 	if !user.Perms.BanUsers {
 		return NoPermissions(w, r, user)
 	}
-	if r.FormValue("session") != user.Session {
-		return SecurityError(w, r, user)
-	}
 
 	uid, err := strconv.Atoi(r.URL.Path[len("/users/ban/submit/"):])
 	if err != nil {
@@ -679,9 +676,6 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Perms.BanUsers {
 		return NoPermissions(w, r, user)
 	}
-	if r.FormValue("session") != user.Session {
-		return SecurityError(w, r, user)
-	}
 
 	uid, err := strconv.Atoi(r.URL.Path[len("/users/unban/"):])
 	if err != nil {
@@ -720,9 +714,6 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user User) RouteError {
 func routeActivate(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Perms.ActivateUsers {
 		return NoPermissions(w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return SecurityError(w, r, user)
 	}
 
 	uid, err := strconv.Atoi(r.URL.Path[len("/users/activate/"):])

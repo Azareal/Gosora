@@ -4,14 +4,18 @@
 * Copyright Azareal 2016 - 2018
 *
  */
-package main
+package common
 
 import (
 	"log"
 	"net/http"
+
+	"../query_gen/lib"
 )
 
-var plugins = make(map[string]*Plugin)
+type PluginList map[string]*Plugin
+
+var Plugins PluginList = make(map[string]*Plugin)
 
 // Hooks with a single argument. Is this redundant? Might be useful for inlining, as variadics aren't inlined? Are closures even inlined to begin with?
 var hooks = map[string][]func(interface{}) interface{}{
@@ -138,12 +142,16 @@ func initExtend() (err error) {
 	if err != nil {
 		return err
 	}
-	return LoadPlugins()
+	return Plugins.Load()
 }
 
 // LoadPlugins polls the database to see which plugins have been activated and which have been installed
-func LoadPlugins() error {
-	rows, err := stmts.getPlugins.Query()
+func (plugins PluginList) Load() error {
+	getPlugins, err := qgen.Builder.SimpleSelect("plugins", "uname, active, installed", "", "", "")
+	if err != nil {
+		return err
+	}
+	rows, err := getPlugins.Query()
 	if err != nil {
 		return err
 	}
@@ -278,12 +286,12 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 var pluginsInited = false
 
 func initPlugins() {
-	for name, body := range plugins {
+	for name, body := range Plugins {
 		log.Print("Added plugin " + name)
 		if body.Active {
 			log.Print("Initialised plugin " + name)
-			if plugins[name].Init != nil {
-				err := plugins[name].Init()
+			if Plugins[name].Init != nil {
+				err := Plugins[name].Init()
 				if err != nil {
 					log.Print(err)
 				}

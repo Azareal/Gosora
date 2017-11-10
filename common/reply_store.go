@@ -1,7 +1,7 @@
-package main
+package common
 
 import "database/sql"
-import "./query_gen/lib"
+import "../query_gen/lib"
 
 var rstore ReplyStore
 

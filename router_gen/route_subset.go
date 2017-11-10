@@ -4,13 +4,20 @@ type RouteSubset struct {
 	RouteList []*RouteImpl
 }
 
-func (set *RouteSubset) Before(line string, literal ...bool) *RouteSubset {
-	var litItem bool
-	if len(literal) > 0 {
-		litItem = literal[0]
+func (set *RouteSubset) Before(lines ...string) *RouteSubset {
+	for _, line := range lines {
+		for _, route := range set.RouteList {
+			route.RunBefore = append(route.RunBefore, Runnable{line, false})
+		}
 	}
-	for _, route := range set.RouteList {
-		route.RunBefore = append(route.RunBefore, Runnable{line, litItem})
+	return set
+}
+
+func (set *RouteSubset) LitBefore(lines ...string) *RouteSubset {
+	for _, line := range lines {
+		for _, route := range set.RouteList {
+			route.RunBefore = append(route.RunBefore, Runnable{line, true})
+		}
 	}
 	return set
 }

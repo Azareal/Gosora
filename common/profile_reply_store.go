@@ -1,9 +1,7 @@
-package main
+package common
 
 import (
 	"database/sql"
-
-	"./query_gen/lib"
 )
 
 var prstore ProfileReplyStore

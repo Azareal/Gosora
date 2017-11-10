@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"database/sql"
@@ -8,7 +8,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"./query_gen/lib"
 	"golang.org/x/crypto/bcrypt"
 )
 

@@ -228,12 +228,6 @@ func main() {
 
 	log.Print("Initialising the router")
 	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	////router.HandleFunc("/static/", routeStatic)
-	////router.HandleFunc("/overview/", routeOverview)
-	////router.HandleFunc("/topics/create/", routeTopicCreate)
-	////router.HandleFunc("/topics/", routeTopics)
-	////router.HandleFunc("/forums/", routeForums)
-	////router.HandleFunc("/forum/", routeForum)
 	router.HandleFunc("/topic/create/submit/", routeTopicCreateSubmit)
 	router.HandleFunc("/topic/", routeTopicID)
 	router.HandleFunc("/reply/create/", routeCreateReply)
@@ -242,7 +236,6 @@ func main() {
 	router.HandleFunc("/reply/edit/submit/", routeReplyEditSubmit)
 	router.HandleFunc("/reply/delete/submit/", routeReplyDeleteSubmit)
 	router.HandleFunc("/reply/like/submit/", routeReplyLikeSubmit)
-	///router.HandleFunc("/report/submit/", route_report_submit)
 	router.HandleFunc("/topic/edit/submit/", routeEditTopic)
 	router.HandleFunc("/topic/delete/submit/", routeDeleteTopic)
 	router.HandleFunc("/topic/stick/submit/", routeStickTopic)
@@ -260,65 +253,14 @@ func main() {
 	router.HandleFunc("/accounts/logout/", routeLogout)
 	router.HandleFunc("/accounts/login/submit/", routeLoginSubmit)
 	router.HandleFunc("/accounts/create/submit/", routeRegisterSubmit)
-
 	//router.HandleFunc("/accounts/list/", routeLogin) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
-	//router.HandleFunc("/accounts/create/full/", routeLogout) // Advanced account creator for admins?
-	//router.HandleFunc("/user/edit/", routeLogout)
-	////router.HandleFunc("/user/edit/critical/", routeAccountOwnEditCritical) // Password & Email
-	////router.HandleFunc("/user/edit/critical/submit/", routeAccountOwnEditCriticalSubmit)
-	////router.HandleFunc("/user/edit/avatar/", routeAccountOwnEditAvatar)
-	////router.HandleFunc("/user/edit/avatar/submit/", routeAccountOwnEditAvatarSubmit)
-	////router.HandleFunc("/user/edit/username/", routeAccountOwnEditUsername)
-	////router.HandleFunc("/user/edit/username/submit/", routeAccountOwnEditUsernameSubmit)
-	////router.HandleFunc("/user/edit/email/", routeAccountOwnEditEmail)
-	////router.HandleFunc("/user/edit/token/", routeAccountOwnEditEmailTokenSubmit)
-	////router.HandleFunc("/user/", routeProfile)
 
 	// TODO: Move these into /user/?
 	router.HandleFunc("/profile/reply/create/", routeProfileReplyCreate)
 	router.HandleFunc("/profile/reply/edit/submit/", routeProfileReplyEditSubmit)
 	router.HandleFunc("/profile/reply/delete/submit/", routeProfileReplyDeleteSubmit)
-
 	//router.HandleFunc("/user/edit/submit/", routeLogout) // routeLogout? what on earth? o.o
-	//router.HandleFunc("/users/ban/", routeBan)
-	router.HandleFunc("/users/ban/submit/", routeBanSubmit)
-	router.HandleFunc("/users/unban/", routeUnban)
-	router.HandleFunc("/users/activate/", routeActivate)
-	router.HandleFunc("/users/ips/", routeIps)
-
-	// The Control Panel
-	// TODO: Rename the commented route handlers to the new camelCase format :'(
-	////router.HandleFunc("/panel/", routePanel)
-	////router.HandleFunc("/panel/forums/", routePanelForums)
-	////router.HandleFunc("/panel/forums/create/", routePanelForumsCreateSubmit)
-	////router.HandleFunc("/panel/forums/delete/", routePanelForumsDelete)
-	////router.HandleFunc("/panel/forums/delete/submit/", routePanelForumsDeleteSubmit)
-	////router.HandleFunc("/panel/forums/edit/", routePanelForumsEdit)
-	////router.HandleFunc("/panel/forums/edit/submit/", routePanelForumsEditSubmit)
-	////router.HandleFunc("/panel/forums/edit/perms/submit/", routePanelForumsEditPermsSubmit)
-	////router.HandleFunc("/panel/settings/", routePanelSettings)
-	////router.HandleFunc("/panel/settings/edit/", routePanelSetting)
-	////router.HandleFunc("/panel/settings/edit/submit/", routePanelSettingEdit)
-	///router.HandleFunc("/panel/themes/", route_panel_themes)
-	///router.HandleFunc("/panel/themes/default/", route_panel_themes_default)
-	///router.HandleFunc("/panel/plugins/", route_panel_plugins)
-	///router.HandleFunc("/panel/plugins/activate/", route_panel_plugins_activate)
-	///router.HandleFunc("/panel/plugins/deactivate/", route_panel_plugins_deactivate)
-	///router.HandleFunc("/panel/users/", route_panel_users)
-	///router.HandleFunc("/panel/users/edit/", route_panel_users_edit)
-	///router.HandleFunc("/panel/users/edit/submit/", route_panel_users_edit_submit)
-	///router.HandleFunc("/panel/groups/", route_panel_groups)
-	///router.HandleFunc("/panel/groups/edit/", route_panel_groups_edit)
-	///router.HandleFunc("/panel/groups/edit/perms/", route_panel_groups_edit_perms)
-	///router.HandleFunc("/panel/groups/edit/submit/", route_panel_groups_edit_submit)
-	///router.HandleFunc("/panel/groups/edit/perms/submit/", route_panel_groups_edit_perms_submit)
-	///router.HandleFunc("/panel/groups/create/", route_panel_groups_create_submit)
-	///router.HandleFunc("/panel/logs/mod/", route_panel_logs_mod)
-	///router.HandleFunc("/panel/debug/", route_panel_debug)
-
-	////router.HandleFunc("/api/", routeAPI)
 	//router.HandleFunc("/exit/", routeExit)
-	////router.HandleFunc("/", config.DefaultRoute)
 	router.HandleFunc("/ws/", routeWebsockets)
 
 	log.Print("Initialising the plugins")

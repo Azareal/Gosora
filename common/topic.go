@@ -4,7 +4,7 @@
 *	Copyright Azareal 2017 - 2018
 *
  */
-package main
+package common
 
 //import "fmt"
 import (

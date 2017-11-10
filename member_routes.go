@@ -96,7 +96,7 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user User, sfid st
 		}
 	}
 
-	err = template_create_topic_handle(ctpage, w)
+	err = RunThemeTemplate(headerVars.ThemeName, "create-topic", ctpage, w)
 	if err != nil {
 		return InternalError(err, w, r)
 	}
@@ -630,7 +630,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user User, sitemI
 	return nil
 }
 
-func routeAccountOwnEditCritical(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeAccountEditCritical(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -649,15 +649,10 @@ func routeAccountOwnEditCritical(w http.ResponseWriter, r *http.Request, user Us
 	return nil
 }
 
-func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeAccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		return LocalError("Bad Form", w, r, user)
 	}
 
 	var realPassword, salt string
@@ -665,7 +660,7 @@ func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, u
 	newPassword := r.PostFormValue("account-new-password")
 	confirmPassword := r.PostFormValue("account-confirm-password")
 
-	err = stmts.getPassword.QueryRow(user.ID).Scan(&realPassword, &salt)
+	err := stmts.getPassword.QueryRow(user.ID).Scan(&realPassword, &salt)
 	if err == ErrNoRows {
 		return LocalError("Your account no longer exists.", w, r, user)
 	} else if err != nil {
@@ -700,7 +695,7 @@ func routeAccountOwnEditCriticalSubmit(w http.ResponseWriter, r *http.Request, u
 	return nil
 }
 
-func routeAccountOwnEditAvatar(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeAccountEditAvatar(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -719,7 +714,7 @@ func routeAccountOwnEditAvatar(w http.ResponseWriter, r *http.Request, user User
 	return nil
 }
 
-func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if r.ContentLength > int64(config.MaxRequestSize) {
 		size, unit := convertByteUnit(float64(config.MaxRequestSize))
 		return CustomError("Your avatar's too big. Avatars must be smaller than "+strconv.Itoa(int(size))+unit, http.StatusExpectationFailed, "Error", w, r, user)
@@ -805,7 +800,7 @@ func routeAccountOwnEditAvatarSubmit(w http.ResponseWriter, r *http.Request, use
 	return nil
 }
 
-func routeAccountOwnEditUsername(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeAccountEditUsername(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -824,18 +819,14 @@ func routeAccountOwnEditUsername(w http.ResponseWriter, r *http.Request, user Us
 	return nil
 }
 
-func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeAccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
-	err := r.ParseForm()
-	if err != nil {
-		return LocalError("Bad Form", w, r, user)
-	}
 
 	newUsername := html.EscapeString(r.PostFormValue("account-new-username"))
-	err = user.ChangeName(newUsername)
+	err := user.ChangeName(newUsername)
 	if err != nil {
 		return LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)
 	}
@@ -855,7 +846,7 @@ func routeAccountOwnEditUsernameSubmit(w http.ResponseWriter, r *http.Request, u
 	return nil
 }
 
-func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeAccountEditEmail(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -910,7 +901,8 @@ func routeAccountOwnEditEmail(w http.ResponseWriter, r *http.Request, user User)
 	return nil
 }
 
-func routeAccountOwnEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user User, token string) RouteError {
+// TODO: Do a session check on this?
+func routeAccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user User, token string) RouteError {
 	headerVars, ferr := UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr

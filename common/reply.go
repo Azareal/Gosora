@@ -4,7 +4,7 @@
 * Copyright Azareal 2016 - 2018
 *
  */
-package main
+package common
 
 import (
 	"errors"

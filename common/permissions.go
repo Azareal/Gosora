@@ -1,12 +1,10 @@
-package main
+package common
 
 import (
 	"database/sql"
 	"encoding/json"
 	"log"
 	"sync"
-
-	"./query_gen/lib"
 )
 
 // TODO: Refactor the perms system

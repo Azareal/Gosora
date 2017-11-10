@@ -30,12 +30,17 @@ func inStringList(needle string, list []string) bool {
 	return false
 }
 
-func (group *RouteGroup) Before(line string, literal ...bool) *RouteGroup {
-	var litItem bool
-	if len(literal) > 0 {
-		litItem = literal[0]
+func (group *RouteGroup) Before(lines ...string) *RouteGroup {
+	for _, line := range lines {
+		group.RunBefore = append(group.RunBefore, Runnable{line, false})
 	}
-	group.RunBefore = append(group.RunBefore, Runnable{line, litItem})
+	return group
+}
+
+func (group *RouteGroup) LitBefore(lines ...string) *RouteGroup {
+	for _, line := range lines {
+		group.RunBefore = append(group.RunBefore, Runnable{line, true})
+	}
 	return group
 }
 

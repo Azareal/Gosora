@@ -1,5 +1,5 @@
 /* Copyright Azareal 2016 - 2018 */
-package main
+package common
 
 import (
 	//"fmt"
@@ -19,11 +19,10 @@ import (
 	"text/template"
 )
 
-//var themes = make(map[string]Theme)
 type ThemeList map[string]Theme
 
-var themes ThemeList = make(map[string]Theme)
-var defaultThemeBox atomic.Value
+//var themes ThemeList = make(map[string]Theme)
+var DefaultThemeBox atomic.Value
 var changeDefaultThemeMutex sync.Mutex
 
 // TODO: Use this when the default theme doesn't exist

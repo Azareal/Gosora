@@ -17,7 +17,7 @@ func routes() {
 	// TODO: Reduce the number of Befores. With a new method, perhaps?
 	reportGroup := newRouteGroup("/report/",
 		Route("routeReportSubmit", "/report/submit/", "extra_data"),
-	).Before("MemberOnly").Before("NoBanned").Before("NoSessionMismatch")
+	).Before("MemberOnly", "NoBanned", "NoSessionMismatch")
 	addRouteGroup(reportGroup)
 
 	topicGroup := newRouteGroup("/topics/",
@@ -34,16 +34,26 @@ func routes() {
 func buildUserRoutes() {
 	userGroup := newRouteGroup("/user/")
 	userGroup.Routes(
-		Route("routeProfile", "/user/").Before("req.URL.Path += extra_data", true),
-		Route("routeAccountOwnEditCritical", "/user/edit/critical/"),
-		Route("routeAccountOwnEditCriticalSubmit", "/user/edit/critical/submit/"),
-		Route("routeAccountOwnEditAvatar", "/user/edit/avatar/"),
-		Route("routeAccountOwnEditAvatarSubmit", "/user/edit/avatar/submit/"),
-		Route("routeAccountOwnEditUsername", "/user/edit/username/"),
-		Route("routeAccountOwnEditUsernameSubmit", "/user/edit/username/submit/"),
-		Route("routeAccountOwnEditEmail", "/user/edit/email/"),
-		Route("routeAccountOwnEditEmailTokenSubmit", "/user/edit/token/", "extra_data"),
+		Route("routeProfile", "/user/").LitBefore("req.URL.Path += extra_data"),
+		Route("routeAccountEditCritical", "/user/edit/critical/"),
+		Route("routeAccountEditCriticalSubmit", "/user/edit/critical/submit/").Before("NoSessionMismatch"), // TODO: Full test this
+		Route("routeAccountEditAvatar", "/user/edit/avatar/"),
+		Route("routeAccountEditAvatarSubmit", "/user/edit/avatar/submit/"),
+		Route("routeAccountEditUsername", "/user/edit/username/"),
+		Route("routeAccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
+		Route("routeAccountEditEmail", "/user/edit/email/"),
+		Route("routeAccountEditEmailTokenSubmit", "/user/edit/token/", "extra_data"),
 	).Not("/user/").Before("MemberOnly")
+	addRouteGroup(userGroup)
+
+	// TODO: Auto test and manual test these routes
+	userGroup = newRouteGroup("/users/").Before("MemberOnly")
+	userGroup.Routes(
+		Route("routeBanSubmit", "/users/ban/submit/"),
+		Route("routeUnban", "/users/unban/"),
+		Route("routeActivate", "/users/activate/"),
+		Route("routeIps", "/users/ips/"),
+	).Not("/users/ips/").Before("NoSessionMismatch")
 	addRouteGroup(userGroup)
 }
 

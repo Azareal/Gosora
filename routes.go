@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"./common"
 	"./query_gen/lib"
 )
 
@@ -102,7 +103,7 @@ func routeOverview(w http.ResponseWriter, r *http.Request, user User) RouteError
 	}
 	BuildWidgets("overview", nil, headerVars, r)
 
-	pi := Page{"Overview", user, headerVars, tList, nil}
+	pi := common.Page{"Overview", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_overview"] != nil {
 		if runPreRenderHook("pre_render_overview", w, r, &user, &pi) {
 			return nil
@@ -128,7 +129,7 @@ func routeCustomPage(w http.ResponseWriter, r *http.Request, user User) RouteErr
 	}
 	BuildWidgets("custom_page", name, headerVars, r)
 
-	pi := Page{"Page", user, headerVars, tList, nil}
+	pi := common.Page{"Page", user, headerVars, tList, nil}
 	if preRenderHooks["pre_render_custom_page"] != nil {
 		if runPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
 			return nil
@@ -252,10 +253,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user User) RouteError {
 		topicItem.ForumName = forum.Name
 		topicItem.ForumLink = forum.Link
 
-		/*topicItem.CreatedAt, err = relativeTimeFromString(topicItem.CreatedAt)
-		if err != nil {
-			replyItem.CreatedAt = ""
-		}*/
+		//topicItem.CreatedAt = relativeTime(topicItem.CreatedAt)
 		topicItem.RelativeLastReplyAt = relativeTime(topicItem.LastReplyAt)
 
 		if vhooks["topics_topic_row_assign"] != nil {

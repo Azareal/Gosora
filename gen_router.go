@@ -266,15 +266,21 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = routeAccountOwnEditCritical(w,req,user)
+					err = routeAccountEditCritical(w,req,user)
 				case "/user/edit/critical/submit/":
+					err = NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = MemberOnly(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
 						return
 					}
 					
-					err = routeAccountOwnEditCriticalSubmit(w,req,user)
+					err = routeAccountEditCriticalSubmit(w,req,user)
 				case "/user/edit/avatar/":
 					err = MemberOnly(w,req,user)
 					if err != nil {
@@ -282,7 +288,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = routeAccountOwnEditAvatar(w,req,user)
+					err = routeAccountEditAvatar(w,req,user)
 				case "/user/edit/avatar/submit/":
 					err = MemberOnly(w,req,user)
 					if err != nil {
@@ -290,7 +296,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = routeAccountOwnEditAvatarSubmit(w,req,user)
+					err = routeAccountEditAvatarSubmit(w,req,user)
 				case "/user/edit/username/":
 					err = MemberOnly(w,req,user)
 					if err != nil {
@@ -298,7 +304,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = routeAccountOwnEditUsername(w,req,user)
+					err = routeAccountEditUsername(w,req,user)
 				case "/user/edit/username/submit/":
 					err = MemberOnly(w,req,user)
 					if err != nil {
@@ -306,7 +312,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = routeAccountOwnEditUsernameSubmit(w,req,user)
+					err = routeAccountEditUsernameSubmit(w,req,user)
 				case "/user/edit/email/":
 					err = MemberOnly(w,req,user)
 					if err != nil {
@@ -314,7 +320,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = routeAccountOwnEditEmail(w,req,user)
+					err = routeAccountEditEmail(w,req,user)
 				case "/user/edit/token/":
 					err = MemberOnly(w,req,user)
 					if err != nil {
@@ -322,10 +328,48 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = routeAccountOwnEditEmailTokenSubmit(w,req,user,extra_data)
+					err = routeAccountEditEmailTokenSubmit(w,req,user,extra_data)
 				default:
 					req.URL.Path += extra_data
 					err = routeProfile(w,req,user)
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
+		case "/users":
+			err = MemberOnly(w,req,user)
+			if err != nil {
+				router.handleError(err,w,req,user)
+				return
+			}
+			
+			switch(req.URL.Path) {
+				case "/users/ban/submit/":
+					err = NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeBanSubmit(w,req,user)
+				case "/users/unban/":
+					err = NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeUnban(w,req,user)
+				case "/users/activate/":
+					err = NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = routeActivate(w,req,user)
+				case "/users/ips/":
+					err = routeIps(w,req,user)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)

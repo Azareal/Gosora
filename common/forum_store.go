@@ -4,7 +4,7 @@
 * 	Copyright Azareal 2017 - 2018
 *
  */
-package main
+package common
 
 import (
 	"database/sql"
@@ -14,7 +14,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"./query_gen/lib"
+	"../query_gen/lib"
 )
 
 var forumUpdateMutex sync.Mutex

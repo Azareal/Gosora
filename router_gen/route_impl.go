@@ -16,12 +16,17 @@ func addRoute(route *RouteImpl) {
 	routeList = append(routeList, route)
 }
 
-func (route *RouteImpl) Before(item string, literal ...bool) *RouteImpl {
-	var litItem bool
-	if len(literal) > 0 {
-		litItem = literal[0]
+func (route *RouteImpl) Before(items ...string) *RouteImpl {
+	for _, item := range items {
+		route.RunBefore = append(route.RunBefore, Runnable{item, false})
 	}
-	route.RunBefore = append(route.RunBefore, Runnable{item, litItem})
+	return route
+}
+
+func (route *RouteImpl) LitBefore(items ...string) *RouteImpl {
+	for _, item := range items {
+		route.RunBefore = append(route.RunBefore, Runnable{item, true})
+	}
 	return route
 }
 

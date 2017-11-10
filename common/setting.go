@@ -1,13 +1,13 @@
-package main
+package common
 
 import "strconv"
 import "strings"
 import "sync/atomic"
 
-// SettingBox is a map type specifically for holding the various settings admins set to toggle features on and off or to otherwise alter Gosora's behaviour from the Control Panel
-type SettingBox map[string]interface{}
+// SettingMap is a map type specifically for holding the various settings admins set to toggle features on and off or to otherwise alter Gosora's behaviour from the Control Panel
+type SettingMap map[string]interface{}
 
-var settingBox atomic.Value // An atomic value pointing to a SettingBox
+var SettingBox atomic.Value // An atomic value pointing to a SettingBox
 
 type OptionLabel struct {
 	Label    string
@@ -23,7 +23,7 @@ type Setting struct {
 }
 
 func init() {
-	settingBox.Store(SettingBox(make(map[string]interface{})))
+	SettingBox.Store(SettingMap(make(map[string]interface{})))
 }
 
 func LoadSettings() error {
@@ -33,7 +33,7 @@ func LoadSettings() error {
 	}
 	defer rows.Close()
 
-	var sBox = SettingBox(make(map[string]interface{}))
+	var sBox = SettingMap(make(map[string]interface{}))
 	var sname, scontent, stype, sconstraints string
 	for rows.Next() {
 		err = rows.Scan(&sname, &scontent, &stype, &sconstraints)
@@ -50,12 +50,12 @@ func LoadSettings() error {
 		return err
 	}
 
-	settingBox.Store(sBox)
+	SettingBox.Store(sBox)
 	return nil
 }
 
 // TODO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
-func (sBox SettingBox) ParseSetting(sname string, scontent string, stype string, constraint string) string {
+func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string, constraint string) string {
 	var err error
 	var ssBox = map[string]interface{}(sBox)
 	if stype == "bool" {

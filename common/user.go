@@ -4,7 +4,7 @@
 *	Copyright Azareal 2017 - 2018
 *
  */
-package main
+package common
 
 import (
 	//"log"
@@ -15,14 +15,13 @@ import (
 	"strings"
 	"time"
 
-	"./query_gen/lib"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // TODO: Replace any literals with this
-var banGroup = 4
+var BanGroup = 4
 
-var guestUser = User{ID: 0, Link: "#", Group: 6, Perms: GuestPerms}
+var GuestUser = User{ID: 0, Link: "#", Group: 6, Perms: GuestPerms}
 
 //func(real_password string, password string, salt string) (err error)
 var CheckPassword = BcryptCheckPassword

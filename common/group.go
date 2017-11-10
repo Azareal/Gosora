@@ -1,4 +1,4 @@
-package main
+package common
 
 var blankGroup = Group{ID: 0, Name: ""}
 

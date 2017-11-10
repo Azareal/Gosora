@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	"./common"
 )
 
 // nolint
@@ -14,23 +16,17 @@ var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = preRoute
 
 // TODO: Come up with a better middleware solution
 // nolint We need these types so people can tell what they are without scrolling to the bottom of the file
-var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderVars, PanelStats, RouteError) = panelUserCheck
-var SimplePanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, RouteError) = simplePanelUserCheck
-var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, err RouteError) = simpleForumUserCheck
-var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, err RouteError) = forumUserCheck
-var MemberCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, err RouteError) = memberCheck
-var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
-var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, err RouteError) = userCheck
-
-// This is mostly for errors.go, please create *HeaderVars on the spot instead of relying on this or the atomic store underlying it, if possible
-// TODO: Write a test for this
-func getDefaultHeaderVar() *HeaderVars {
-	return &HeaderVars{Site: site, ThemeName: fallbackTheme}
-}
+var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*common.HeaderVars, common.PanelStats, RouteError) = panelUserCheck
+var SimplePanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*common.HeaderLite, RouteError) = simplePanelUserCheck
+var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *common.HeaderLite, err RouteError) = simpleForumUserCheck
+var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *common.HeaderVars, err RouteError) = forumUserCheck
+var MemberCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *common.HeaderVars, err RouteError) = memberCheck
+var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *common.HeaderVars, err RouteError) = userCheck
+var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *common.HeaderVars, err RouteError) = userCheck
 
 // TODO: Support for left sidebars and sidebars on both sides
 // http.Request is for context.Context middleware. Mostly for plugin_guilds right now
-func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http.Request) {
+func BuildWidgets(zone string, data interface{}, headerVars *common.HeaderVars, r *http.Request) {
 	if vhooks["intercept_build_widgets"] != nil {
 		if runVhook("intercept_build_widgets", zone, data, headerVars, r).(bool) {
 			return
@@ -53,7 +49,7 @@ func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http
 	}
 }
 
-func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, rerr RouteError) {
+func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *common.HeaderLite, rerr RouteError) {
 	if !fstore.Exists(fid) {
 		return nil, PreError("The target forum doesn't exist.", w, r)
 	}
@@ -77,7 +73,7 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	return headerLite, nil
 }
 
-func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, rerr RouteError) {
+func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *common.HeaderVars, rerr RouteError) {
 	headerVars, rerr = UserCheck(w, r, user)
 	if rerr != nil {
 		return headerVars, rerr
@@ -130,7 +126,7 @@ func cascadeForumPerms(fperms ForumPerms, user *User) {
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
-func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, stats PanelStats, rerr RouteError) {
+func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *common.HeaderVars, stats common.PanelStats, rerr RouteError) {
 	var themeName = defaultThemeBox.Load().(string)
 
 	cookie, err := r.Cookie("current_theme")
@@ -192,7 +188,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 	return headerVars, stats, nil
 }
 
-func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
+func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *common.HeaderLite, rerr RouteError) {
 	return &HeaderLite{
 		Site:     site,
 		Settings: settingBox.Load().(SettingBox),
@@ -200,7 +196,7 @@ func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h
 }
 
 // TODO: Add this to the member routes
-func memberCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, rerr RouteError) {
+func memberCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *common.HeaderVars, rerr RouteError) {
 	headerVars, rerr = UserCheck(w, r, user)
 	if !user.Loggedin {
 		return headerVars, NoPermissions(w, r, *user)
@@ -209,7 +205,7 @@ func memberCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars
 }
 
 // SimpleUserCheck is back from the grave, yay :D
-func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
+func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *common.HeaderLite, rerr RouteError) {
 	headerLite = &HeaderLite{
 		Site:     site,
 		Settings: settingBox.Load().(SettingBox),
@@ -218,7 +214,7 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header
 }
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
-func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, rerr RouteError) {
+func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *common.HeaderVars, rerr RouteError) {
 	var themeName = defaultThemeBox.Load().(string)
 
 	cookie, err := r.Cookie("current_theme")
@@ -270,40 +266,37 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 }
 
 func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
-	user, ok := func(w http.ResponseWriter, r *http.Request) (User, bool) {
-		user, halt := auth.SessionCheck(w, r)
-		if halt {
-			return *user, false
-		}
-		if user == &guestUser {
-			return *user, true
-		}
-
-		h := w.Header()
-		h.Set("X-Frame-Options", "deny")
-		//h.Set("X-XSS-Protection", "1")
-		// TODO: Set the content policy header
-		return *user, true
-	}(w, r)
-	if !ok {
-		return user, false
+	user, halt := auth.SessionCheck(w, r)
+	if halt {
+		return *user, false
 	}
+	if user == &guestUser {
+		return *user, true
+	}
+
+	var usercpy = *user
 
 	// TODO: WIP. Refactor this to eliminate the unnecessary query
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		PreError("Bad IP", w, r)
-		return user, false
+		return usercpy, false
 	}
-	if host != user.LastIP {
-		_, err = stmts.updateLastIP.Exec(host, user.ID)
+	if host != usercpy.LastIP {
+		_, err = stmts.updateLastIP.Exec(host, usercpy.ID)
 		if err != nil {
 			InternalError(err, w, r)
-			return user, false
+			return usercpy, false
 		}
-		user.LastIP = host
+		usercpy.LastIP = host
 	}
-	return user, ok
+
+	h := w.Header()
+	h.Set("X-Frame-Options", "deny")
+	//h.Set("X-XSS-Protection", "1")
+	// TODO: Set the content policy header
+
+	return usercpy, true
 }
 
 // SuperModeOnly makes sure that only super mods or higher can access the panel routes
