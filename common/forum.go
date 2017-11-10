@@ -34,8 +34,6 @@ type Forum struct {
 	LastReplyer   *User
 	LastReplyerID int
 	LastTopicTime string // So that we can re-calculate the relative time on the spot in /forums/
-
-	//LastLock sync.RWMutex // ? - Is this safe to copy? Use a pointer to it? Should we do an fstore.Reload() instead?
 }
 
 // ? - What is this for?
@@ -53,28 +51,6 @@ func (forum *Forum) Copy() (fcopy Forum) {
 	//forum.LastLock.RUnlock()
 	return fcopy
 }
-
-/*func (forum *Forum) GetLast() (topic *Topic, user *User) {
-	forum.LastLock.RLock()
-	topic = forum.LastTopic
-	if topic == nil {
-		topic = &Topic{ID: 0}
-	}
-
-	user = forum.LastReplyer
-	if user == nil {
-		user = &User{ID: 0}
-	}
-	forum.LastLock.RUnlock()
-	return topic, user
-}
-
-func (forum *Forum) SetLast(topic *Topic, user *User) {
-	forum.LastLock.Lock()
-	forum.LastTopic = topic
-	forum.LastReplyer = user
-	forum.LastLock.Unlock()
-}*/
 
 // TODO: Write tests for this
 func (forum *Forum) Update(name string, desc string, active bool, preset string) error {

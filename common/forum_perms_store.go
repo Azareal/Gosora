@@ -1,11 +1,11 @@
-package main
+package common
 
 import (
 	"database/sql"
 	"encoding/json"
 	"log"
 
-	"./query_gen/lib"
+	"../query_gen/lib"
 )
 
 var fpstore ForumPermsStore

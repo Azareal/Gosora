@@ -1,5 +1,5 @@
 /* Under Heavy Construction */
-package main
+package common
 
 import (
 	"database/sql"
@@ -9,7 +9,7 @@ import (
 	"sort"
 	"sync"
 
-	"./query_gen/lib"
+	"../query_gen/lib"
 )
 
 var gstore GroupStore
