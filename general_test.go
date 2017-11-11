@@ -1,24 +1,21 @@
 package main
 
 import (
-	//"os"
 	"bytes"
+	"database/sql"
 	"errors"
 	"log"
-	"strconv"
-	"strings"
-	//"math/rand"
-	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"./common"
 	"./install/install"
+	"./query_gen/lib"
 	//"runtime/pprof"
-	//_ "github.com/go-sql-driver/mysql"
-	//"github.com/erikstmartin/go-testdb"
 	//"github.com/husobee/vestigo"
 )
 
@@ -75,16 +72,16 @@ func gloinit() (err error) {
 		return err
 	}
 
-	err = initDatabase()
+	err = InitDatabase()
 	if err != nil {
 		return err
 	}
 
-	rstore, err = NewSQLReplyStore()
+	common.Rstore, err = common.NewSQLReplyStore()
 	if err != nil {
 		return err
 	}
-	prstore, err = NewSQLProfileReplyStore()
+	common.Prstore, err = common.NewSQLProfileReplyStore()
 	if err != nil {
 		return err
 	}
@@ -95,25 +92,29 @@ func gloinit() (err error) {
 	//	return err
 	//}
 
-	err = initTemplates()
+	err = common.InitTemplates()
 	if err != nil {
 		return err
 	}
 	dbProd.SetMaxOpenConns(64)
 
-	err = initPhrases()
+	err = common.InitPhrases()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Print("Loading the static files.")
-	err = initStaticFiles()
+	err = common.StaticFiles.Init()
 	if err != nil {
 		return err
 	}
-	auth = NewDefaultAuth()
 
-	err = LoadWordFilters()
+	common.Auth, err = common.NewDefaultAuth()
+	if err != nil {
+		return err
+	}
+
+	err = common.LoadWordFilters()
 	if err != nil {
 		return err
 	}
@@ -142,15 +143,15 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		admin, err := users.Get(1)
+		admin, err := common.Users.Get(1)
 		if err != nil {
 			b.Fatal(err)
 		}
 		if !admin.IsAdmin {
 			b.Fatal("UID1 is not an admin")
 		}
-		adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: year}
-		adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: year}
+		adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
+		adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
 
 		topicW := httptest.NewRecorder()
 		topicReq := httptest.NewRequest("get", "/topic/1", bytes.NewReader(nil))
@@ -159,7 +160,7 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 		topicReqAdmin.AddCookie(&adminSessionCookie)
 
 		// Deal with the session stuff, etc.
-		user, ok := PreRoute(topicW, topicReqAdmin)
+		user, ok := common.PreRoute(topicW, topicReqAdmin)
 		if !ok {
 			b.Fatal("Mysterious error!")
 		}
@@ -185,7 +186,7 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 		topicReq := httptest.NewRequest("get", "/topic/1", bytes.NewReader(nil))
 		for pb.Next() {
 			topicW.Body.Reset()
-			routeTopicID(topicW, topicReq, guestUser)
+			routeTopicID(topicW, topicReq, common.GuestUser)
 		}
 	})
 }
@@ -522,7 +523,7 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		var tu TopicUser
+		var tu common.TopicUser
 		for pb.Next() {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
@@ -546,9 +547,15 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		var tu TopicUser
+		var tu common.TopicUser
+
+		getTopicUser, err := qgen.Builder.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
+		if err != nil {
+			b.Fatal(err)
+		}
+
 		for pb.Next() {
-			err := stmts.getTopicUser.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+			err := getTopicUser.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
 				b.Fatal("No rows found!")
 				return
@@ -572,7 +579,7 @@ func BenchmarkUserGet(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var err error
 		for pb.Next() {
-			_, err = users.Get(1)
+			_, err = common.Users.Get(1)
 			if err != nil {
 				b.Fatal(err)
 				return
@@ -594,7 +601,7 @@ func BenchmarkUserBypassGet(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var err error
 		for pb.Next() {
-			_, err = users.BypassGet(1)
+			_, err = common.Users.BypassGet(1)
 			if err != nil {
 				b.Fatal(err)
 				return
@@ -605,7 +612,7 @@ func BenchmarkUserBypassGet(b *testing.B) {
 
 func BenchmarkQueriesSerial(b *testing.B) {
 	b.ReportAllocs()
-	var tu TopicUser
+	var tu common.TopicUser
 	b.Run("topic", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
@@ -637,7 +644,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 		}
 	})
 
-	var replyItem ReplyUser
+	var replyItem common.ReplyUser
 	var isSuperAdmin bool
 	var group int
 	b.Run("topic_replies_scan", func(b *testing.B) {
@@ -997,32 +1004,32 @@ func BenchmarkParserSerial(b *testing.B) {
 	b.ReportAllocs()
 	b.Run("empty_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("", 0, "")
+			_ = common.ParseMessage("", 0, "")
 		}
 	})
 	b.Run("short_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going?", 0, "")
+			_ = common.ParseMessage("Hey everyone, how's it going?", 0, "")
 		}
 	})
 	b.Run("one_smily", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going? :)", 0, "")
+			_ = common.ParseMessage("Hey everyone, how's it going? :)", 0, "")
 		}
 	})
 	b.Run("five_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going? :):):):):)", 0, "")
+			_ = common.ParseMessage("Hey everyone, how's it going? :):):):):)", 0, "")
 		}
 	})
 	b.Run("ten_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going? :):):):):):):):):):)", 0, "")
+			_ = common.ParseMessage("Hey everyone, how's it going? :):):):):):):):):):)", 0, "")
 		}
 	})
 	b.Run("twenty_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = parseMessage("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)", 0, "")
+			_ = common.ParseMessage("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)", 0, "")
 		}
 	})
 }
@@ -1175,7 +1182,7 @@ func BenchmarkBBCodePluginWithFullParserSerial(b *testing.B) {
 }
 
 func TestLevels(t *testing.T) {
-	levels := getLevels(40)
+	levels := common.GetLevels(40)
 	for level, score := range levels {
 		sscore := strconv.FormatFloat(score, 'f', -1, 64)
 		t.Log("Level: " + strconv.Itoa(level) + " Score: " + sscore)

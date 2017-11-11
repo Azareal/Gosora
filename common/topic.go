@@ -129,18 +129,19 @@ func init() {
 	DbInits.Add(func() error {
 		acc := qgen.Builder.Accumulator()
 		topicStmts = TopicStmts{
-			addRepliesToTopic: acc.SimpleUpdate("topics", "postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()", "tid = ?"),
-			lock:              acc.SimpleUpdate("topics", "is_closed = 1", "tid = ?"),
-			unlock:            acc.SimpleUpdate("topics", "is_closed = 0", "tid = ?"),
-			stick:             acc.SimpleUpdate("topics", "sticky = 1", "tid = ?"),
-			unstick:           acc.SimpleUpdate("topics", "sticky = 0", "tid = ?"),
-			hasLikedTopic:     acc.SimpleSelect("likes", "targetItem", "sentBy = ? and targetItem = ? and targetType = 'topics'", "", ""),
-			createLike:        acc.SimpleInsert("likes", "weight, targetItem, targetType, sentBy", "?,?,?,?"),
-			addLikesToTopic:   acc.SimpleUpdate("topics", "likeCount = likeCount + ?", "tid = ?"),
-			delete:            acc.SimpleDelete("topics", "tid = ?"),
-			edit:              acc.SimpleUpdate("topics", "title = ?, content = ?, parsed_content = ?", "tid = ?"),
-			createActionReply: acc.SimpleInsert("replies", "tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''"),
-			getTopicUser:      acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
+			addRepliesToTopic: acc.Update("topics").Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
+			lock:              acc.Update("topics").Set("is_closed = 1").Where("tid = ?").Prepare(),
+			unlock:            acc.Update("topics").Set("is_closed = 0").Where("tid = ?").Prepare(),
+			stick:             acc.Update("topics").Set("sticky = 1").Where("tid = ?").Prepare(),
+			unstick:           acc.Update("topics").Set("sticky = 0").Where("tid = ?").Prepare(),
+			hasLikedTopic:     acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'topics'").Prepare(),
+			createLike:        acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
+			addLikesToTopic:   acc.Update("topics").Set("likeCount = likeCount + ?").Where("tid = ?").Prepare(),
+			delete:            acc.Delete("topics").Where("tid = ?").Prepare(),
+			edit:              acc.Update("topics").Set("title = ?, content = ?, parsed_content = ?").Where("tid = ?").Prepare(),
+			createActionReply: acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
+
+			getTopicUser: acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
 		}
 		return acc.FirstError()
 	})

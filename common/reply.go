@@ -75,7 +75,7 @@ func init() {
 		acc := qgen.Builder.Accumulator()
 		replyStmts = ReplyStmts{
 			isLiked:                acc.SimpleSelect("likes", "targetItem", "sentBy = ? and targetItem = ? and targetType = 'replies'", "", ""),
-			createLike:             acc.SimpleInsert("likes", "weight, targetItem, targetType, sentBy", "?,?,?,?"),
+			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
 			delete:                 acc.SimpleDelete("replies", "rid = ?"),
 			addLikesToReply:        acc.SimpleUpdate("replies", "likeCount = likeCount + ?", "rid = ?"),
 			removeRepliesFromTopic: acc.SimpleUpdate("topics", "postCount = postCount - ?", "tid = ?"),

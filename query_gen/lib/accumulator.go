@@ -186,3 +186,113 @@ func (build *accBuilder) PurgeTx(tx *sql.Tx, table string) (stmt *sql.Stmt) {
 	res, err := build.adapter.Purge("_builder", table)
 	return build.prepareTx(tx, res, err)
 }
+
+func (build *accBuilder) Delete(table string) *deleteBuilder {
+	return &deleteBuilder{table, "", build}
+}
+
+type deleteBuilder struct {
+	table string
+	where string
+
+	build *accBuilder
+}
+
+func (delete *deleteBuilder) Where(where string) *deleteBuilder {
+	delete.where = where
+	return delete
+}
+
+func (delete *deleteBuilder) Prepare() *sql.Stmt {
+	return delete.build.SimpleDelete(delete.table, delete.where)
+}
+
+func (build *accBuilder) Update(table string) *updateBuilder {
+	return &updateBuilder{table, "", "", build}
+}
+
+type updateBuilder struct {
+	table string
+	set   string
+	where string
+
+	build *accBuilder
+}
+
+func (update *updateBuilder) Set(set string) *updateBuilder {
+	update.set = set
+	return update
+}
+
+func (update *updateBuilder) Where(where string) *updateBuilder {
+	update.where = where
+	return update
+}
+
+func (update *updateBuilder) Prepare() *sql.Stmt {
+	return update.build.SimpleUpdate(update.table, update.set, update.where)
+}
+
+func (build *accBuilder) Select(table string) *selectBuilder {
+	return &selectBuilder{table, "", "", "", "", build}
+}
+
+type selectBuilder struct {
+	table   string
+	columns string
+	where   string
+	orderby string
+	limit   string
+
+	build *accBuilder
+}
+
+func (selectItem *selectBuilder) Columns(columns string) *selectBuilder {
+	selectItem.columns = columns
+	return selectItem
+}
+
+func (selectItem *selectBuilder) Where(where string) *selectBuilder {
+	selectItem.where = where
+	return selectItem
+}
+
+func (selectItem *selectBuilder) Orderby(orderby string) *selectBuilder {
+	selectItem.orderby = orderby
+	return selectItem
+}
+
+func (selectItem *selectBuilder) Limit(limit string) *selectBuilder {
+	selectItem.limit = limit
+	return selectItem
+}
+
+func (selectItem *selectBuilder) Prepare() *sql.Stmt {
+	return selectItem.build.SimpleSelect(selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
+}
+
+func (build *accBuilder) Insert(table string) *insertBuilder {
+	return &insertBuilder{table, "", "", build}
+}
+
+type insertBuilder struct {
+	table   string
+	columns string
+	fields  string
+
+	build *accBuilder
+}
+
+func (insert *insertBuilder) Columns(columns string) *insertBuilder {
+	insert.columns = columns
+	return insert
+}
+
+func (insert *insertBuilder) Fields(fields string) *insertBuilder {
+	insert.fields = fields
+	return insert
+}
+
+func (insert *insertBuilder) Prepare() *sql.Stmt {
+	return insert.build.SimpleInsert(insert.table, insert.columns, insert.fields)
+}
