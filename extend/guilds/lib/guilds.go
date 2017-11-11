@@ -110,7 +110,7 @@ func PrebuildTmplList(user common.User, headerVars *common.HeaderVars) common.CT
 		},
 	}
 	listPage := ListPage{"Guild List", user, headerVars, guildList}
-	return common.CTmpl{"guilds-guild-list", "guilds_guild_list", "templates/", "guilds.ListPage", listPage}
+	return common.CTmpl{"guilds_guild_list", "guilds_guild_list.html", "templates/", "guilds.ListPage", listPage}
 }
 
 // TODO: Do this properly via the widget system

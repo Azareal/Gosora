@@ -268,7 +268,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		return *user, true
 	}
 
-	var usercpy *User
+	var usercpy *User = BlankUser()
 	*usercpy = *user
 
 	// TODO: WIP. Refactor this to eliminate the unnecessary query

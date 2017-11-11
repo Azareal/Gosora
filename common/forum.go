@@ -104,7 +104,7 @@ func (sf SortForum) Less(i, j int) bool {
 }
 
 // ! Don't use this outside of tests and possibly template_init.go
-func makeDummyForum(fid int, link string, name string, desc string, active bool, preset string, parentID int, parentType string, topicCount int) *Forum {
+func BlankForum(fid int, link string, name string, desc string, active bool, preset string, parentID int, parentType string, topicCount int) *Forum {
 	return &Forum{ID: fid, Link: link, Name: name, Desc: desc, Active: active, Preset: preset, ParentID: parentID, ParentType: parentType, TopicCount: topicCount}
 }
 

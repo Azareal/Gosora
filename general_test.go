@@ -95,7 +95,10 @@ func gloinit() (err error) {
 	//	return err
 	//}
 
-	initTemplates()
+	err = initTemplates()
+	if err != nil {
+		return err
+	}
 	dbProd.SetMaxOpenConns(64)
 
 	err = initPhrases()

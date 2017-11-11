@@ -99,7 +99,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	common.InitTemplates()
+	err = common.InitTemplates()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	err = common.InitPhrases()
 	if err != nil {

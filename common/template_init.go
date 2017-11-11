@@ -156,7 +156,7 @@ func compileTemplates() error {
 
 	//var topicList []TopicUser
 	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
-	forumItem := makeDummyForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
+	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	forumPage := ForumPage{"General Forum", user, headerVars, topicsList, forumItem, 1, 1}
 	forumTmpl, err := c.Compile("forum.html", "templates/", "ForumPage", forumPage, varList)
 	if err != nil {
@@ -164,6 +164,9 @@ func compileTemplates() error {
 	}
 
 	// Let plugins register their own templates
+	if Dev.DebugMode {
+		log.Print("Registering the templates for the plugins")
+	}
 	for _, tmplfunc := range PrebuildTmplList {
 		tmplItem := tmplfunc(user, headerVars)
 		varList = make(map[string]tmpl.VarItem)
@@ -198,11 +201,14 @@ func writeTemplate(name string, content string) {
 	}
 }
 
-func InitTemplates() {
+func InitTemplates() error {
 	if Dev.DebugMode {
 		log.Print("Initialising the template system")
 	}
-	compileTemplates()
+	err := compileTemplates()
+	if err != nil {
+		return err
+	}
 
 	// TODO: Add support for 64-bit integers
 	// TODO: Add support for floats
@@ -269,4 +275,6 @@ func InitTemplates() {
 	Templates.Funcs(fmap)
 	template.Must(Templates.ParseGlob("templates/*"))
 	template.Must(Templates.ParseGlob("pages/*"))
+
+	return nil
 }
