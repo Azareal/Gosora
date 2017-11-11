@@ -9,15 +9,14 @@ import "strconv"
 
 // nolint
 func init() {
-	template_forum_handle = template_forum
-	//o_template_forum_handle = template_forum
-	ctemplates = append(ctemplates,"forum")
-	TmplPtrMap["forum"] = &template_forum_handle
-	common.TmplPtrMap["o_forum"] = template_forum
+	common.Template_forum_handle = Template_forum
+	common.Ctemplates = append(common.Ctemplates,"forum")
+	common.TmplPtrMap["forum"] = &common.Template_forum_handle
+	common.TmplPtrMap["o_forum"] = Template_forum
 }
 
 // nolint
-func template_forum(tmpl_forum_vars ForumPage, w http.ResponseWriter) error {
+func Template_forum(tmpl_forum_vars common.ForumPage, w http.ResponseWriter) error {
 w.Write(header_0)
 w.Write([]byte(tmpl_forum_vars.Title))
 w.Write(header_1)

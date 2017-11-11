@@ -9,15 +9,14 @@ import "./common"
 
 // nolint
 func init() {
-	template_topic_alt_handle = template_topic_alt
-	//o_template_topic_alt_handle = template_topic_alt
-	ctemplates = append(ctemplates,"topic_alt")
-	TmplPtrMap["topic_alt"] = &template_topic_alt_handle
-	common.TmplPtrMap["o_topic_alt"] = template_topic_alt
+	common.Template_topic_alt_handle = Template_topic_alt
+	common.Ctemplates = append(common.Ctemplates,"topic_alt")
+	common.TmplPtrMap["topic_alt"] = &common.Template_topic_alt_handle
+	common.TmplPtrMap["o_topic_alt"] = Template_topic_alt
 }
 
 // nolint
-func template_topic_alt(tmpl_topic_alt_vars TopicPage, w http.ResponseWriter) error {
+func Template_topic_alt(tmpl_topic_alt_vars common.TopicPage, w http.ResponseWriter) error {
 w.Write(header_0)
 w.Write([]byte(tmpl_topic_alt_vars.Title))
 w.Write(header_1)

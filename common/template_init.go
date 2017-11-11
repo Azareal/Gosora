@@ -9,6 +9,7 @@ import (
 	"./templates"
 )
 
+var Ctemplates []string
 var Templates = template.New("")
 var PrebuildTmplList []func(User, *HeaderVars) CTmpl
 
@@ -18,6 +19,7 @@ type CTmpl struct {
 	Path       string
 	StructName string
 	Data       interface{}
+	Imports    []string
 }
 
 // nolint
@@ -30,11 +32,11 @@ func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) error {
 }
 
 // nolint
-var template_topic_handle func(TopicPage, http.ResponseWriter) error = interpreted_topic_template
-var template_topic_alt_handle func(TopicPage, http.ResponseWriter) error = interpreted_topic_template
+var Template_topic_handle func(TopicPage, http.ResponseWriter) error = interpreted_topic_template
+var Template_topic_alt_handle func(TopicPage, http.ResponseWriter) error = interpreted_topic_template
 
 // nolint
-var template_topics_handle func(TopicsPage, http.ResponseWriter) error = func(pi TopicsPage, w http.ResponseWriter) error {
+var Template_topics_handle func(TopicsPage, http.ResponseWriter) error = func(pi TopicsPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["topics"]
 	if !ok {
 		mapping = "topics"
@@ -43,7 +45,7 @@ var template_topics_handle func(TopicsPage, http.ResponseWriter) error = func(pi
 }
 
 // nolint
-var template_forum_handle func(ForumPage, http.ResponseWriter) error = func(pi ForumPage, w http.ResponseWriter) error {
+var Template_forum_handle func(ForumPage, http.ResponseWriter) error = func(pi ForumPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["forum"]
 	if !ok {
 		mapping = "forum"
@@ -52,7 +54,7 @@ var template_forum_handle func(ForumPage, http.ResponseWriter) error = func(pi F
 }
 
 // nolint
-var template_forums_handle func(ForumsPage, http.ResponseWriter) error = func(pi ForumsPage, w http.ResponseWriter) error {
+var Template_forums_handle func(ForumsPage, http.ResponseWriter) error = func(pi ForumsPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["forums"]
 	if !ok {
 		mapping = "forums"
@@ -61,7 +63,7 @@ var template_forums_handle func(ForumsPage, http.ResponseWriter) error = func(pi
 }
 
 // nolint
-var template_profile_handle func(ProfilePage, http.ResponseWriter) error = func(pi ProfilePage, w http.ResponseWriter) error {
+var Template_profile_handle func(ProfilePage, http.ResponseWriter) error = func(pi ProfilePage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["profile"]
 	if !ok {
 		mapping = "profile"
@@ -70,7 +72,7 @@ var template_profile_handle func(ProfilePage, http.ResponseWriter) error = func(
 }
 
 // nolint
-var template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) error = func(pi CreateTopicPage, w http.ResponseWriter) error {
+var Template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) error = func(pi CreateTopicPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["create-topic"]
 	if !ok {
 		mapping = "create-topic"
@@ -112,18 +114,18 @@ func compileTemplates() error {
 
 	var varList = make(map[string]tmpl.VarItem)
 	tpage := TopicPage{"Title", user, headerVars, replyList, topic, 1, 1}
-	topicIDTmpl, err := c.Compile("topic.html", "templates/", "TopicPage", tpage, varList)
+	topicIDTmpl, err := c.Compile("topic.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err
 	}
-	topicIDAltTmpl, err := c.Compile("topic_alt.html", "templates/", "TopicPage", tpage, varList)
+	topicIDAltTmpl, err := c.Compile("topic_alt.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err
 	}
 
 	varList = make(map[string]tmpl.VarItem)
 	ppage := ProfilePage{"User 526", user, headerVars, replyList, user}
-	profileTmpl, err := c.Compile("profile.html", "templates/", "ProfilePage", ppage, varList)
+	profileTmpl, err := c.Compile("profile.html", "templates/", "common.ProfilePage", ppage, varList)
 	if err != nil {
 		return err
 	}
@@ -141,7 +143,7 @@ func compileTemplates() error {
 	}
 	varList = make(map[string]tmpl.VarItem)
 	forumsPage := ForumsPage{"Forum List", user, headerVars, forumList}
-	forumsTmpl, err := c.Compile("forums.html", "templates/", "ForumsPage", forumsPage, varList)
+	forumsTmpl, err := c.Compile("forums.html", "templates/", "common.ForumsPage", forumsPage, varList)
 	if err != nil {
 		return err
 	}
@@ -149,7 +151,7 @@ func compileTemplates() error {
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, "Date", time.Now(), "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
 	topicsPage := TopicsPage{"Topic List", user, headerVars, topicsList, forumList, Config.DefaultForum}
-	topicsTmpl, err := c.Compile("topics.html", "templates/", "TopicsPage", topicsPage, varList)
+	topicsTmpl, err := c.Compile("topics.html", "templates/", "common.TopicsPage", topicsPage, varList)
 	if err != nil {
 		return err
 	}
@@ -158,7 +160,7 @@ func compileTemplates() error {
 	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	forumPage := ForumPage{"General Forum", user, headerVars, topicsList, forumItem, 1, 1}
-	forumTmpl, err := c.Compile("forum.html", "templates/", "ForumPage", forumPage, varList)
+	forumTmpl, err := c.Compile("forum.html", "templates/", "common.ForumPage", forumPage, varList)
 	if err != nil {
 		return err
 	}
@@ -167,10 +169,12 @@ func compileTemplates() error {
 	if Dev.DebugMode {
 		log.Print("Registering the templates for the plugins")
 	}
+	c.SkipHandles(true)
+
 	for _, tmplfunc := range PrebuildTmplList {
 		tmplItem := tmplfunc(user, headerVars)
 		varList = make(map[string]tmpl.VarItem)
-		compiledTmpl, err := c.Compile(tmplItem.Filename, tmplItem.Path, tmplItem.StructName, tmplItem.Data, varList)
+		compiledTmpl, err := c.Compile(tmplItem.Filename, tmplItem.Path, tmplItem.StructName, tmplItem.Data, varList, tmplItem.Imports...)
 		if err != nil {
 			return err
 		}
