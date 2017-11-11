@@ -32,7 +32,7 @@ func main() {
 					out += "\n\t\t\t\t\t" + runnable.Contents
 				} else {
 					out += `
-				err = ` + runnable.Contents + `(w,req,user)
+				err = common.` + runnable.Contents + `(w,req,user)
 				if err != nil {
 					router.handleError(err,w,req,user)
 					return
@@ -65,7 +65,7 @@ func main() {
 				out += "\t\t\t" + runnable.Contents
 			} else {
 				out += `
-			err = ` + runnable.Contents + `(w,req,user)
+			err = common.` + runnable.Contents + `(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
 				return
@@ -89,7 +89,7 @@ func main() {
 						out += "\n\t\t\t\t\t" + runnable.Contents
 					} else {
 						out += `
-					err = ` + runnable.Contents + `(w,req,user)
+					err = common.` + runnable.Contents + `(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
 						return
@@ -113,7 +113,7 @@ func main() {
 						out += "\n\t\t\t\t\t" + runnable.Contents
 					} else {
 						out += `
-				err = ` + runnable.Contents + `(w,req,user)
+				err = common.` + runnable.Contents + `(w,req,user)
 				if err != nil {
 					router.handleError(err,w,req,user)
 					return
@@ -137,17 +137,21 @@ func main() {
 
 	fileData += `package main
 
-import "log"
-import "strings"
-import "sync"
-import "errors"
-import "net/http"
+import (
+	"log"
+	"strings"
+	"sync"
+	"errors"
+	"net/http"
+
+	"./common"
+)
 
 var ErrNoRoute = errors.New("That route doesn't exist.")
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	extra_routes map[string]func(http.ResponseWriter, *http.Request, User) RouteError
+	extra_routes map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError
 	
 	sync.RWMutex
 }
@@ -155,26 +159,26 @@ type GenRouter struct {
 func NewGenRouter(uploads http.Handler) *GenRouter {
 	return &GenRouter{
 		UploadHandler: http.StripPrefix("/uploads/",uploads).ServeHTTP,
-		extra_routes: make(map[string]func(http.ResponseWriter, *http.Request, User) RouteError),
+		extra_routes: make(map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError),
 	}
 }
 
-func (router *GenRouter) handleError(err RouteError, w http.ResponseWriter, r *http.Request, user User) {
+func (router *GenRouter) handleError(err common.RouteError, w http.ResponseWriter, r *http.Request, user common.User) {
 	if err.Handled() {
 		return
 	}
 	
 	if err.Type() == "system" {
-		InternalErrorJSQ(err,w,r,err.Json())
+		common.InternalErrorJSQ(err, w, r, err.JSON())
 		return
 	}
-	LocalErrorJSQ(err.Error(),w,r,user,err.Json())
+	common.LocalErrorJSQ(err.Error(), w, r, user,err.JSON())
 }
 
 func (router *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, User) RouteError) {
+func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, common.User) common.RouteError) {
 	router.Lock()
 	router.extra_routes[pattern] = handle
 	router.Unlock()
@@ -187,7 +191,7 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 		router.Unlock()
 		return ErrNoRoute
 	}
-	delete(router.extra_routes,pattern)
+	delete(router.extra_routes, pattern)
 	router.Unlock()
 	return nil
 }
@@ -210,7 +214,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
 	}
 	
-	if dev.SuperDebug {
+	if common.Dev.SuperDebug {
 		log.Print("before routeStatic")
 		log.Print("prefix: ", prefix)
 		log.Print("req.URL.Path: ", req.URL.Path)
@@ -220,29 +224,29 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if prefix == "/static" {
 		req.URL.Path += extra_data
-		routeStatic(w,req)
+		routeStatic(w, req)
 		return
 	}
 	
-	if dev.SuperDebug {
+	if common.Dev.SuperDebug {
 		log.Print("before PreRoute")
 	}
 	
 	// Deal with the session stuff, etc.
-	user, ok := PreRoute(w,req)
+	user, ok := common.PreRoute(w, req)
 	if !ok {
 		return
 	}
 	
-	if dev.SuperDebug {
+	if common.Dev.SuperDebug {
 		log.Print("after PreRoute")
 	}
 	
-	var err RouteError
+	var err common.RouteError
 	switch(prefix) {` + out + `
 		case "/uploads":
 			if extra_data == "" {
-				NotFound(w,req)
+				common.NotFound(w,req)
 				return
 			}
 			req.URL.Path += extra_data
@@ -261,10 +265,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 			
 			if extra_data != "" {
-				NotFound(w,req)
+				common.NotFound(w,req)
 				return
 			}
-			config.DefaultRoute(w,req,user)
+			common.Config.DefaultRoute(w,req,user)
 		default:
 			// A fallback for the routes which haven't been converted to the new router yet or plugins
 			router.RLock()
@@ -279,7 +283,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 				return
 			}
-			NotFound(w,req)
+			common.NotFound(w,req)
 	}
 }
 `

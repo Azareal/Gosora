@@ -6,10 +6,14 @@
  */
 package main
 
-import "log"
-import "strings"
-import "strconv"
-import "errors"
+import (
+	"errors"
+	"log"
+	"strconv"
+	"strings"
+
+	"./common"
+)
 
 // These notes are for me, don't worry about it too much ^_^
 /*
@@ -26,10 +30,10 @@ import "errors"
 "{x}{created a new topic}{topic}"
 */
 
-func buildAlert(asid int, event string, elementType string, actorID int, targetUserID int, elementID int, user User /* The current user */) (string, error) {
-	var targetUser *User
+func buildAlert(asid int, event string, elementType string, actorID int, targetUserID int, elementID int, user common.User /* The current user */) (string, error) {
+	var targetUser *common.User
 
-	actor, err := users.Get(actorID)
+	actor, err := common.Users.Get(actorID)
 	if err != nil {
 		return "", errors.New("Unable to find the actor")
 	}
@@ -52,7 +56,7 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 	case "forum":
 		if event == "reply" {
 			act = "created a new topic"
-			topic, err := topics.Get(elementID)
+			topic, err := common.Topics.Get(elementID)
 			if err != nil {
 				return "", errors.New("Unable to find the linked topic")
 			}
@@ -64,7 +68,7 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 			act = "did something in a forum"
 		}
 	case "topic":
-		topic, err := topics.Get(elementID)
+		topic, err := common.Topics.Get(elementID)
 		if err != nil {
 			return "", errors.New("Unable to find the linked topic")
 		}
@@ -75,7 +79,7 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 			postAct = " your topic"
 		}
 	case "user":
-		targetUser, err = users.Get(elementID)
+		targetUser, err = common.Users.Get(elementID)
 		if err != nil {
 			return "", errors.New("Unable to find the target user")
 		}
@@ -83,7 +87,9 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 		endFrag = "'s profile"
 		url = targetUser.Link
 	case "post":
-		topic, err := getTopicByReply(elementID)
+		reply := common.BlankReply()
+		reply.ID = elementID
+		topic, err := reply.Topic()
 		if err != nil {
 			return "", errors.New("Unable to find the linked reply or parent topic")
 		}

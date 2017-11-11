@@ -5,6 +5,7 @@ package main
 
 import "log"
 import "database/sql"
+import "./common"
 
 // nolint
 type Stmts struct {
@@ -12,21 +13,14 @@ type Stmts struct {
 	getSettings *sql.Stmt
 	getSetting *sql.Stmt
 	getFullSetting *sql.Stmt
-	getFullSettings *sql.Stmt
-	getPlugins *sql.Stmt
-	getThemes *sql.Stmt
-	getWidgets *sql.Stmt
 	isPluginActive *sql.Stmt
 	getUsersOffset *sql.Stmt
-	getWordFilters *sql.Stmt
 	isThemeDefault *sql.Stmt
 	getModlogs *sql.Stmt
 	getModlogsOffset *sql.Stmt
 	getReplyTID *sql.Stmt
 	getTopicFID *sql.Stmt
 	getUserReplyUID *sql.Stmt
-	hasLikedTopic *sql.Stmt
-	hasLikedReply *sql.Stmt
 	getUserName *sql.Stmt
 	getEmailsByUser *sql.Stmt
 	getTopicBasic *sql.Stmt
@@ -34,20 +28,14 @@ type Stmts struct {
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
 	getForumTopicsOffset *sql.Stmt
-	getExpiredScheduledGroups *sql.Stmt
-	getSync *sql.Stmt
 	getAttachment *sql.Stmt
 	getTopicRepliesOffset *sql.Stmt
 	getTopicList *sql.Stmt
-	getTopicUser *sql.Stmt
-	getTopicByReply *sql.Stmt
 	getTopicReplies *sql.Stmt
 	getForumTopics *sql.Stmt
 	getProfileReplies *sql.Stmt
 	getWatchers *sql.Stmt
 	createReport *sql.Stmt
-	createActionReply *sql.Stmt
-	createLike *sql.Stmt
 	addActivity *sql.Stmt
 	notifyOne *sql.Stmt
 	addEmail *sql.Stmt
@@ -55,57 +43,27 @@ type Stmts struct {
 	addForumPermsToForum *sql.Stmt
 	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
-	addModlogEntry *sql.Stmt
-	addAdminlogEntry *sql.Stmt
 	addAttachment *sql.Stmt
 	createWordFilter *sql.Stmt
-	addRepliesToTopic *sql.Stmt
-	removeRepliesFromTopic *sql.Stmt
-	addLikesToTopic *sql.Stmt
-	addLikesToReply *sql.Stmt
-	editTopic *sql.Stmt
 	editReply *sql.Stmt
-	stickTopic *sql.Stmt
-	unstickTopic *sql.Stmt
-	lockTopic *sql.Stmt
-	unlockTopic *sql.Stmt
-	updateLastIP *sql.Stmt
-	updateSession *sql.Stmt
-	setPassword *sql.Stmt
-	setAvatar *sql.Stmt
-	setUsername *sql.Stmt
-	changeGroup *sql.Stmt
-	activateUser *sql.Stmt
-	updateUserLevel *sql.Stmt
-	incrementUserScore *sql.Stmt
-	incrementUserPosts *sql.Stmt
-	incrementUserBigposts *sql.Stmt
-	incrementUserMegaposts *sql.Stmt
-	incrementUserTopics *sql.Stmt
 	editProfileReply *sql.Stmt
-	updateForum *sql.Stmt
 	updateSetting *sql.Stmt
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
+	updateForum *sql.Stmt
 	updateUser *sql.Stmt
-	updateUserGroup *sql.Stmt
 	updateGroupPerms *sql.Stmt
-	updateGroupRank *sql.Stmt
 	updateGroup *sql.Stmt
 	updateEmail *sql.Stmt
 	verifyEmail *sql.Stmt
 	setTempGroup *sql.Stmt
 	updateWordFilter *sql.Stmt
 	bumpSync *sql.Stmt
-	deleteUser *sql.Stmt
-	deleteTopic *sql.Stmt
-	deleteReply *sql.Stmt
 	deleteProfileReply *sql.Stmt
 	deleteActivityStreamMatch *sql.Stmt
 	deleteWordFilter *sql.Stmt
 	reportExists *sql.Stmt
-	groupCount *sql.Stmt
 	modlogCount *sql.Stmt
 	notifyWatchers *sql.Stmt
 
@@ -124,7 +82,7 @@ type Stmts struct {
 
 // nolint
 func _gen_mssql() (err error) {
-	if dev.DebugMode {
+	if common.Dev.DebugMode {
 		log.Print("Building the generated statements")
 	}
 	
@@ -156,34 +114,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing getFullSettings statement.")
-	stmts.getFullSettings, err = db.Prepare("SELECT [name],[content],[type],[constraints] FROM [settings]")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [name],[content],[type],[constraints] FROM [settings]")
-		return err
-	}
-		
-	log.Print("Preparing getPlugins statement.")
-	stmts.getPlugins, err = db.Prepare("SELECT [uname],[active],[installed] FROM [plugins]")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [uname],[active],[installed] FROM [plugins]")
-		return err
-	}
-		
-	log.Print("Preparing getThemes statement.")
-	stmts.getThemes, err = db.Prepare("SELECT [uname],[default] FROM [themes]")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [uname],[default] FROM [themes]")
-		return err
-	}
-		
-	log.Print("Preparing getWidgets statement.")
-	stmts.getWidgets, err = db.Prepare("SELECT [position],[side],[type],[active],[location],[data] FROM [widgets] ORDER BY position ASC")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [position],[side],[type],[active],[location],[data] FROM [widgets] ORDER BY position ASC")
-		return err
-	}
-		
 	log.Print("Preparing isPluginActive statement.")
 	stmts.isPluginActive, err = db.Prepare("SELECT [active] FROM [plugins] WHERE [uname] = ?1")
 	if err != nil {
@@ -195,13 +125,6 @@ func _gen_mssql() (err error) {
 	stmts.getUsersOffset, err = db.Prepare("SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users] ORDER BY uid ASC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users] ORDER BY uid ASC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
-		return err
-	}
-		
-	log.Print("Preparing getWordFilters statement.")
-	stmts.getWordFilters, err = db.Prepare("SELECT [wfid],[find],[replacement] FROM [word_filters]")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [wfid],[find],[replacement] FROM [word_filters]")
 		return err
 	}
 		
@@ -244,20 +167,6 @@ func _gen_mssql() (err error) {
 	stmts.getUserReplyUID, err = db.Prepare("SELECT [uid] FROM [users_replies] WHERE [rid] = ?1")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [uid] FROM [users_replies] WHERE [rid] = ?1")
-		return err
-	}
-		
-	log.Print("Preparing hasLikedTopic statement.")
-	stmts.hasLikedTopic, err = db.Prepare("SELECT [targetItem] FROM [likes] WHERE [sentBy] = ?1 AND [targetItem] = ?2 AND [targetType] = 'topics'")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [targetItem] FROM [likes] WHERE [sentBy] = ?1 AND [targetItem] = ?2 AND [targetType] = 'topics'")
-		return err
-	}
-		
-	log.Print("Preparing hasLikedReply statement.")
-	stmts.hasLikedReply, err = db.Prepare("SELECT [targetItem] FROM [likes] WHERE [sentBy] = ?1 AND [targetItem] = ?2 AND [targetType] = 'replies'")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [targetItem] FROM [likes] WHERE [sentBy] = ?1 AND [targetItem] = ?2 AND [targetType] = 'replies'")
 		return err
 	}
 		
@@ -310,20 +219,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing getExpiredScheduledGroups statement.")
-	stmts.getExpiredScheduledGroups, err = db.Prepare("SELECT [uid] FROM [users_groups_scheduler] WHERE GETDATE() > [revert_at] AND [temporary] = 1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [uid] FROM [users_groups_scheduler] WHERE GETDATE() > [revert_at] AND [temporary] = 1")
-		return err
-	}
-		
-	log.Print("Preparing getSync statement.")
-	stmts.getSync, err = db.Prepare("SELECT [last_update] FROM [sync]")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [last_update] FROM [sync]")
-		return err
-	}
-		
 	log.Print("Preparing getAttachment statement.")
 	stmts.getAttachment, err = db.Prepare("SELECT [sectionID],[sectionTable],[originID],[originTable],[uploadedBy],[path] FROM [attachments] WHERE [path] = ?1 AND [sectionID] = ?2 AND [sectionTable] = ?3")
 	if err != nil {
@@ -342,20 +237,6 @@ func _gen_mssql() (err error) {
 	stmts.getTopicList, err = db.Prepare("SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
-		return err
-	}
-		
-	log.Print("Preparing getTopicUser statement.")
-	stmts.getTopicUser, err = db.Prepare("SELECT [topics].[title],[topics].[content],[topics].[createdBy],[topics].[createdAt],[topics].[is_closed],[topics].[sticky],[topics].[parentID],[topics].[ipaddress],[topics].[postCount],[topics].[likeCount],[users].[name],[users].[avatar],[users].[group],[users].[url_prefix],[users].[url_name],[users].[level] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  WHERE [tid] = ?1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [topics].[title],[topics].[content],[topics].[createdBy],[topics].[createdAt],[topics].[is_closed],[topics].[sticky],[topics].[parentID],[topics].[ipaddress],[topics].[postCount],[topics].[likeCount],[users].[name],[users].[avatar],[users].[group],[users].[url_prefix],[users].[url_name],[users].[level] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  WHERE [tid] = ?1")
-		return err
-	}
-		
-	log.Print("Preparing getTopicByReply statement.")
-	stmts.getTopicByReply, err = db.Prepare("SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[createdAt],[topics].[is_closed],[topics].[sticky],[topics].[parentID],[topics].[ipaddress],[topics].[postCount],[topics].[likeCount],[topics].[data] FROM [replies] LEFT JOIN [topics] ON [replies].[tid] = [topics].[tid]  WHERE [rid] = ?1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[createdAt],[topics].[is_closed],[topics].[sticky],[topics].[parentID],[topics].[ipaddress],[topics].[postCount],[topics].[likeCount],[topics].[data] FROM [replies] LEFT JOIN [topics] ON [replies].[tid] = [topics].[tid]  WHERE [rid] = ?1")
 		return err
 	}
 		
@@ -391,20 +272,6 @@ func _gen_mssql() (err error) {
 	stmts.createReport, err = db.Prepare("INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[createdBy],[lastReplyBy],[data],[parentID],[css_class]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?,1,'report')")
 	if err != nil {
 		log.Print("Bad Query: ","INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[createdBy],[lastReplyBy],[data],[parentID],[css_class]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?,1,'report')")
-		return err
-	}
-		
-	log.Print("Preparing createActionReply statement.")
-	stmts.createActionReply, err = db.Prepare("INSERT INTO [replies] ([tid],[actionType],[ipaddress],[createdBy],[createdAt],[lastUpdated],[content],[parsed_content]) VALUES (?,?,?,?,GETUTCDATE(),GETUTCDATE(),'','')")
-	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [replies] ([tid],[actionType],[ipaddress],[createdBy],[createdAt],[lastUpdated],[content],[parsed_content]) VALUES (?,?,?,?,GETUTCDATE(),GETUTCDATE(),'','')")
-		return err
-	}
-		
-	log.Print("Preparing createLike statement.")
-	stmts.createLike, err = db.Prepare("INSERT INTO [likes] ([weight],[targetItem],[targetType],[sentBy]) VALUES (?,?,?,?)")
-	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [likes] ([weight],[targetItem],[targetType],[sentBy]) VALUES (?,?,?,?)")
 		return err
 	}
 		
@@ -457,20 +324,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing addModlogEntry statement.")
-	stmts.addModlogEntry, err = db.Prepare("INSERT INTO [moderation_logs] ([action],[elementID],[elementType],[ipaddress],[actorID],[doneAt]) VALUES (?,?,?,?,?,GETUTCDATE())")
-	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [moderation_logs] ([action],[elementID],[elementType],[ipaddress],[actorID],[doneAt]) VALUES (?,?,?,?,?,GETUTCDATE())")
-		return err
-	}
-		
-	log.Print("Preparing addAdminlogEntry statement.")
-	stmts.addAdminlogEntry, err = db.Prepare("INSERT INTO [administration_logs] ([action],[elementID],[elementType],[ipaddress],[actorID],[doneAt]) VALUES (?,?,?,?,?,GETUTCDATE())")
-	if err != nil {
-		log.Print("Bad Query: ","INSERT INTO [administration_logs] ([action],[elementID],[elementType],[ipaddress],[actorID],[doneAt]) VALUES (?,?,?,?,?,GETUTCDATE())")
-		return err
-	}
-		
 	log.Print("Preparing addAttachment statement.")
 	stmts.addAttachment, err = db.Prepare("INSERT INTO [attachments] ([sectionID],[sectionTable],[originID],[originTable],[uploadedBy],[path]) VALUES (?,?,?,?,?,?)")
 	if err != nil {
@@ -485,41 +338,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing addRepliesToTopic statement.")
-	stmts.addRepliesToTopic, err = db.Prepare("UPDATE [topics] SET [postCount] = [postCount] + ?,[lastReplyBy] = ?,[lastReplyAt] = GETUTCDATE() WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [topics] SET [postCount] = [postCount] + ?,[lastReplyBy] = ?,[lastReplyAt] = GETUTCDATE() WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing removeRepliesFromTopic statement.")
-	stmts.removeRepliesFromTopic, err = db.Prepare("UPDATE [topics] SET [postCount] = [postCount] - ? WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [topics] SET [postCount] = [postCount] - ? WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing addLikesToTopic statement.")
-	stmts.addLikesToTopic, err = db.Prepare("UPDATE [topics] SET [likeCount] = [likeCount] + ? WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [topics] SET [likeCount] = [likeCount] + ? WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing addLikesToReply statement.")
-	stmts.addLikesToReply, err = db.Prepare("UPDATE [replies] SET [likeCount] = [likeCount] + ? WHERE [rid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [replies] SET [likeCount] = [likeCount] + ? WHERE [rid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing editTopic statement.")
-	stmts.editTopic, err = db.Prepare("UPDATE [topics] SET [title] = ?,[content] = ?,[parsed_content] = ? WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [topics] SET [title] = ?,[content] = ?,[parsed_content] = ? WHERE [tid] = ?")
-		return err
-	}
-		
 	log.Print("Preparing editReply statement.")
 	stmts.editReply, err = db.Prepare("UPDATE [replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
 	if err != nil {
@@ -527,136 +345,10 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing stickTopic statement.")
-	stmts.stickTopic, err = db.Prepare("UPDATE [topics] SET [sticky] = 1 WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [topics] SET [sticky] = 1 WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing unstickTopic statement.")
-	stmts.unstickTopic, err = db.Prepare("UPDATE [topics] SET [sticky] = 0 WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [topics] SET [sticky] = 0 WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing lockTopic statement.")
-	stmts.lockTopic, err = db.Prepare("UPDATE [topics] SET [is_closed] = 1 WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [topics] SET [is_closed] = 1 WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing unlockTopic statement.")
-	stmts.unlockTopic, err = db.Prepare("UPDATE [topics] SET [is_closed] = 0 WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [topics] SET [is_closed] = 0 WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing updateLastIP statement.")
-	stmts.updateLastIP, err = db.Prepare("UPDATE [users] SET [last_ip] = ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [last_ip] = ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing updateSession statement.")
-	stmts.updateSession, err = db.Prepare("UPDATE [users] SET [session] = ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [session] = ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing setPassword statement.")
-	stmts.setPassword, err = db.Prepare("UPDATE [users] SET [password] = ?,[salt] = ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [password] = ?,[salt] = ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing setAvatar statement.")
-	stmts.setAvatar, err = db.Prepare("UPDATE [users] SET [avatar] = ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [avatar] = ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing setUsername statement.")
-	stmts.setUsername, err = db.Prepare("UPDATE [users] SET [name] = ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [name] = ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing changeGroup statement.")
-	stmts.changeGroup, err = db.Prepare("UPDATE [users] SET [group] = ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [group] = ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing activateUser statement.")
-	stmts.activateUser, err = db.Prepare("UPDATE [users] SET [active] = 1 WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [active] = 1 WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing updateUserLevel statement.")
-	stmts.updateUserLevel, err = db.Prepare("UPDATE [users] SET [level] = ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [level] = ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing incrementUserScore statement.")
-	stmts.incrementUserScore, err = db.Prepare("UPDATE [users] SET [score] = [score] + ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [score] = [score] + ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing incrementUserPosts statement.")
-	stmts.incrementUserPosts, err = db.Prepare("UPDATE [users] SET [posts] = [posts] + ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [posts] = [posts] + ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing incrementUserBigposts statement.")
-	stmts.incrementUserBigposts, err = db.Prepare("UPDATE [users] SET [posts] = [posts] + ?,[bigposts] = [bigposts] + ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [posts] = [posts] + ?,[bigposts] = [bigposts] + ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing incrementUserMegaposts statement.")
-	stmts.incrementUserMegaposts, err = db.Prepare("UPDATE [users] SET [posts] = [posts] + ?,[bigposts] = [bigposts] + ?,[megaposts] = [megaposts] + ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [posts] = [posts] + ?,[bigposts] = [bigposts] + ?,[megaposts] = [megaposts] + ? WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing incrementUserTopics statement.")
-	stmts.incrementUserTopics, err = db.Prepare("UPDATE [users] SET [topics] = [topics] + ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [topics] = [topics] + ? WHERE [uid] = ?")
-		return err
-	}
-		
 	log.Print("Preparing editProfileReply statement.")
 	stmts.editProfileReply, err = db.Prepare("UPDATE [users_replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
 	if err != nil {
 		log.Print("Bad Query: ","UPDATE [users_replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing updateForum statement.")
-	stmts.updateForum, err = db.Prepare("UPDATE [forums] SET [name] = ?,[desc] = ?,[active] = ?,[preset] = ? WHERE [fid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [forums] SET [name] = ?,[desc] = ?,[active] = ?,[preset] = ? WHERE [fid] = ?")
 		return err
 	}
 		
@@ -688,6 +380,13 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
+	log.Print("Preparing updateForum statement.")
+	stmts.updateForum, err = db.Prepare("UPDATE [forums] SET [name] = ?,[desc] = ?,[active] = ?,[preset] = ? WHERE [fid] = ?")
+	if err != nil {
+		log.Print("Bad Query: ","UPDATE [forums] SET [name] = ?,[desc] = ?,[active] = ?,[preset] = ? WHERE [fid] = ?")
+		return err
+	}
+		
 	log.Print("Preparing updateUser statement.")
 	stmts.updateUser, err = db.Prepare("UPDATE [users] SET [name] = ?,[email] = ?,[group] = ? WHERE [uid] = ?")
 	if err != nil {
@@ -695,24 +394,10 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing updateUserGroup statement.")
-	stmts.updateUserGroup, err = db.Prepare("UPDATE [users] SET [group] = ? WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users] SET [group] = ? WHERE [uid] = ?")
-		return err
-	}
-		
 	log.Print("Preparing updateGroupPerms statement.")
 	stmts.updateGroupPerms, err = db.Prepare("UPDATE [users_groups] SET [permissions] = ? WHERE [gid] = ?")
 	if err != nil {
 		log.Print("Bad Query: ","UPDATE [users_groups] SET [permissions] = ? WHERE [gid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing updateGroupRank statement.")
-	stmts.updateGroupRank, err = db.Prepare("UPDATE [users_groups] SET [is_admin] = ?,[is_mod] = ?,[is_banned] = ? WHERE [gid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users_groups] SET [is_admin] = ?,[is_mod] = ?,[is_banned] = ? WHERE [gid] = ?")
 		return err
 	}
 		
@@ -758,27 +443,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing deleteUser statement.")
-	stmts.deleteUser, err = db.Prepare("DELETE FROM [users] WHERE [uid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","DELETE FROM [users] WHERE [uid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing deleteTopic statement.")
-	stmts.deleteTopic, err = db.Prepare("DELETE FROM [topics] WHERE [tid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","DELETE FROM [topics] WHERE [tid] = ?")
-		return err
-	}
-		
-	log.Print("Preparing deleteReply statement.")
-	stmts.deleteReply, err = db.Prepare("DELETE FROM [replies] WHERE [rid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","DELETE FROM [replies] WHERE [rid] = ?")
-		return err
-	}
-		
 	log.Print("Preparing deleteProfileReply statement.")
 	stmts.deleteProfileReply, err = db.Prepare("DELETE FROM [users_replies] WHERE [rid] = ?")
 	if err != nil {
@@ -804,13 +468,6 @@ func _gen_mssql() (err error) {
 	stmts.reportExists, err = db.Prepare("SELECT COUNT(*) AS [count] FROM [topics] WHERE [data] = ? AND [data] != '' AND [parentID] = 1")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT COUNT(*) AS [count] FROM [topics] WHERE [data] = ? AND [data] != '' AND [parentID] = 1")
-		return err
-	}
-		
-	log.Print("Preparing groupCount statement.")
-	stmts.groupCount, err = db.Prepare("SELECT COUNT(*) AS [count] FROM [users_groups]")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT COUNT(*) AS [count] FROM [users_groups]")
 		return err
 	}
 		

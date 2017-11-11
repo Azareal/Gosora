@@ -1,5 +1,7 @@
 package main
 
+import "./common"
+
 func init() {
 	/*
 		The UName field should match the name in the URL minus plugin_ and the file extension. The same name as the map index. Please choose a unique name which won't clash with any other plugins.
@@ -26,7 +28,7 @@ func init() {
 
 		That Uninstallation field which is currently unused is for not only deactivating this plugin, but for purging any data associated with it such a new tables or data produced by the end-user.
 	*/
-	plugins["skeleton"] = NewPlugin("skeleton", "Skeleton", "Azareal", "", "", "", "", initSkeleton, activateSkeleton, deactivateSkeleton, nil, nil)
+	common.Plugins["skeleton"] = common.NewPlugin("skeleton", "Skeleton", "Azareal", "", "", "", "", initSkeleton, activateSkeleton, deactivateSkeleton, nil, nil)
 }
 
 func initSkeleton() error { return nil }

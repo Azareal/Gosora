@@ -1,4 +1,4 @@
-package main
+package common
 
 import "errors"
 
@@ -17,10 +17,10 @@ var ErrStoreCapacityOverflow = errors.New("This datastore has reached it's maxim
 
 // nolint
 type DataStore interface {
-	Load(id int) error
+	DirtyGet(id int) interface{}
 	Get(id int) (interface{}, error)
 	BypassGet(id int) (interface{}, error)
-	//GetGlobalCount()
+	//GlobalCount()
 }
 
 // nolint
@@ -32,6 +32,9 @@ type DataCache interface {
 	CacheAddUnsafe(item interface{}) error
 	CacheRemove(id int) error
 	CacheRemoveUnsafe(id int) error
-	GetLength() int
+	Reload(id int) error
+	Flush()
+	Length() int
+	SetCapacity(capacity int)
 	GetCapacity() int
 }

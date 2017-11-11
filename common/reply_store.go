@@ -3,7 +3,7 @@ package common
 import "database/sql"
 import "../query_gen/lib"
 
-var rstore ReplyStore
+var Rstore ReplyStore
 
 type ReplyStore interface {
 	Get(id int) (*Reply, error)
@@ -31,8 +31,8 @@ func (store *SQLReplyStore) Get(id int) (*Reply, error) {
 
 // TODO: Write a test for this
 func (store *SQLReplyStore) Create(topic *Topic, content string, ipaddress string, uid int) (id int, err error) {
-	wcount := wordCount(content)
-	res, err := store.create.Exec(topic.ID, content, parseMessage(content, topic.ParentID, "forums"), ipaddress, wcount, uid)
+	wcount := WordCount(content)
+	res, err := store.create.Exec(topic.ID, content, ParseMessage(content, topic.ParentID, "forums"), ipaddress, wcount, uid)
 	if err != nil {
 		return 0, err
 	}

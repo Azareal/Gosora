@@ -20,11 +20,12 @@ import (
 // TODO: Add BulkGetMap
 // TODO: Add some sort of update method
 // ? - Should we add stick, lock, unstick, and unlock methods? These might be better on the Topics not the TopicStore
-var topics TopicStore
+var Topics TopicStore
 var ErrNoTitle = errors.New("This message is missing a title")
 var ErrNoBody = errors.New("This message is missing a body")
 
 type TopicStore interface {
+	DirtyGet(id int) *Topic
 	Get(id int) (*Topic, error)
 	BypassGet(id int) (*Topic, error)
 	Exists(id int) bool
@@ -93,6 +94,24 @@ func (mts *MemoryTopicStore) CacheGetUnsafe(id int) (*Topic, error) {
 	return item, ErrNoRows
 }
 
+func (mts *MemoryTopicStore) DirtyGet(id int) *Topic {
+	mts.RLock()
+	topic, ok := mts.items[id]
+	mts.RUnlock()
+	if ok {
+		return topic
+	}
+
+	topic = &Topic{ID: id}
+	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	if err == nil {
+		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
+		_ = mts.CacheAdd(topic)
+		return topic
+	}
+	return BlankTopic()
+}
+
 func (mts *MemoryTopicStore) Get(id int) (*Topic, error) {
 	mts.RLock()
 	topic, ok := mts.items[id]
@@ -104,7 +123,7 @@ func (mts *MemoryTopicStore) Get(id int) (*Topic, error) {
 	topic = &Topic{ID: id}
 	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
-		topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
+		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 		_ = mts.CacheAdd(topic)
 	}
 	return topic, err
@@ -114,7 +133,7 @@ func (mts *MemoryTopicStore) Get(id int) (*Topic, error) {
 func (mts *MemoryTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID: id}
 	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
+	topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 	return topic, err
 }
 
@@ -122,7 +141,7 @@ func (mts *MemoryTopicStore) Reload(id int) error {
 	topic := &Topic{ID: id}
 	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
 	if err == nil {
-		topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
+		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 		_ = mts.CacheSet(topic)
 	} else {
 		_ = mts.CacheRemove(id)
@@ -141,12 +160,12 @@ func (mts *MemoryTopicStore) Create(fid int, topicName string, content string, u
 	}
 
 	content = strings.TrimSpace(content)
-	parsedContent := parseMessage(content, fid, "forums")
+	parsedContent := ParseMessage(content, fid, "forums")
 	if strings.TrimSpace(parsedContent) == "" {
 		return 0, ErrNoBody
 	}
 
-	wcount := wordCount(content)
+	wcount := WordCount(content)
 	// TODO: Move this statement into the topic store
 	res, err := mts.create.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
 	if err != nil {
@@ -158,8 +177,7 @@ func (mts *MemoryTopicStore) Create(fid int, topicName string, content string, u
 		return 0, err
 	}
 
-	err = fstore.AddTopic(int(lastID), uid, fid)
-	return int(lastID), err
+	return int(lastID), Fstore.AddTopic(int(lastID), uid, fid)
 }
 
 func (mts *MemoryTopicStore) CacheSet(item *Topic) error {
@@ -268,10 +286,20 @@ func NewSQLTopicStore() (*SQLTopicStore, error) {
 	}, acc.FirstError()
 }
 
+func (sts *SQLTopicStore) DirtyGet(id int) *Topic {
+	topic := &Topic{ID: id}
+	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
+	if err != nil {
+		return BlankTopic()
+	}
+	return topic
+}
+
 func (sts *SQLTopicStore) Get(id int) (*Topic, error) {
 	topic := Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
+	topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 	return &topic, err
 }
 
@@ -279,7 +307,7 @@ func (sts *SQLTopicStore) Get(id int) (*Topic, error) {
 func (sts *SQLTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID: id}
 	err := sts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = buildTopicURL(nameToSlug(topic.Title), id)
+	topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 	return topic, err
 }
 
@@ -294,12 +322,12 @@ func (sts *SQLTopicStore) Create(fid int, topicName string, content string, uid 
 	}
 
 	content = strings.TrimSpace(content)
-	parsedContent := parseMessage(content, fid, "forums")
+	parsedContent := ParseMessage(content, fid, "forums")
 	if strings.TrimSpace(parsedContent) == "" {
 		return 0, ErrNoBody
 	}
 
-	wcount := wordCount(content)
+	wcount := WordCount(content)
 	// TODO: Move this statement into the topic store
 	res, err := sts.create.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
 	if err != nil {
@@ -311,8 +339,7 @@ func (sts *SQLTopicStore) Create(fid int, topicName string, content string, uid 
 		return 0, err
 	}
 
-	err = fstore.AddTopic(int(lastID), uid, fid)
-	return int(lastID), err
+	return int(lastID), Fstore.AddTopic(int(lastID), uid, fid)
 }
 
 // ? - What're we going to do about this?

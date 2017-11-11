@@ -2,9 +2,11 @@ package common
 
 import (
 	"database/sql"
+
+	"../query_gen/lib"
 )
 
-var prstore ProfileReplyStore
+var Prstore ProfileReplyStore
 
 type ProfileReplyStore interface {
 	Get(id int) (*Reply, error)
@@ -33,7 +35,7 @@ func (store *SQLProfileReplyStore) Get(id int) (*Reply, error) {
 }
 
 func (store *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error) {
-	res, err := store.create.Exec(profileID, content, parseMessage(content, 0, ""), createdBy, ipaddress)
+	res, err := store.create.Exec(profileID, content, ParseMessage(content, 0, ""), createdBy, ipaddress)
 	if err != nil {
 		return 0, err
 	}

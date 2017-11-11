@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"./common"
 	"./install/install"
 	//"runtime/pprof"
 	//_ "github.com/go-sql-driver/mysql"
@@ -46,28 +47,28 @@ func ResetTables() (err error) {
 }
 
 func gloinit() (err error) {
-	dev.DebugMode = false
+	common.Dev.DebugMode = false
 	//nogrouplog = true
 	startTime = time.Now()
 
-	err = processConfig()
+	err = common.ProcessConfig()
 	if err != nil {
 		return err
 	}
 
-	err = initThemes()
+	err = common.InitThemes()
 	if err != nil {
 		return err
 	}
 
-	switchToTestDB()
+	common.SwitchToTestDB()
 
 	var ok bool
 	installAdapter, ok = install.Lookup(dbAdapter)
 	if !ok {
 		return errors.New("We couldn't find the adapter '" + dbAdapter + "'")
 	}
-	installAdapter.SetConfig(dbConfig.Host, dbConfig.Username, dbConfig.Password, dbConfig.Dbname, dbConfig.Port)
+	installAdapter.SetConfig(common.DbConfig.Host, common.DbConfig.Username, common.DbConfig.Password, common.DbConfig.Dbname, common.DbConfig.Port)
 
 	err = ResetTables()
 	if err != nil {

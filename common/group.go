@@ -1,5 +1,8 @@
 package common
 
+import "database/sql"
+import "../query_gen/lib"
+
 var blankGroup = Group{ID: 0, Name: ""}
 
 type GroupAdmin struct {
@@ -27,13 +30,29 @@ type Group struct {
 	CanSee          []int // The IDs of the forums this group can see
 }
 
+type GroupStmts struct {
+	updateGroupRank *sql.Stmt
+}
+
+var groupStmts GroupStmts
+
+func init() {
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		groupStmts = GroupStmts{
+			updateGroupRank: acc.SimpleUpdate("users_groups", "is_admin = ?, is_mod = ?, is_banned = ?", "gid = ?"),
+		}
+		return acc.FirstError()
+	})
+}
+
 func (group *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err error) {
-	_, err = stmts.updateGroupRank.Exec(isAdmin, isMod, isBanned, group.ID)
+	_, err = groupStmts.updateGroupRank.Exec(isAdmin, isMod, isBanned, group.ID)
 	if err != nil {
 		return err
 	}
 
-	gstore.Reload(group.ID)
+	Gstore.Reload(group.ID)
 	return nil
 }
 

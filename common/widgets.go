@@ -1,14 +1,13 @@
 /* Copyright Azareal 2017 - 2018 */
-package main
+package common
 
 import "log"
 import "bytes"
 import "sync"
 import "encoding/json"
+import "../query_gen/lib"
 
-//import "html/template"
-
-var docks WidgetDocks
+var Docks WidgetDocks
 var widgetUpdateMutex sync.RWMutex
 
 type WidgetDocks struct {
@@ -41,8 +40,12 @@ type NameTextPair struct {
 }
 
 // TODO: Make a store for this?
-func initWidgets() error {
-	rows, err := stmts.getWidgets.Query()
+func InitWidgets() error {
+	getWidgets, err := qgen.Builder.SimpleSelect("widgets", "position, side, type, active,  location, data", "", "position ASC", "")
+	if err != nil {
+		return err
+	}
+	rows, err := getWidgets.Query()
 	if err != nil {
 		return err
 	}
@@ -71,7 +74,7 @@ func initWidgets() error {
 			}
 
 			var b bytes.Buffer
-			err = templates.ExecuteTemplate(&b, "widget_simple.html", tmp)
+			err = Templates.ExecuteTemplate(&b, "widget_simple.html", tmp)
 			if err != nil {
 				return err
 			}
@@ -92,13 +95,13 @@ func initWidgets() error {
 	}
 
 	widgetUpdateMutex.Lock()
-	docks.LeftSidebar = leftWidgets
-	docks.RightSidebar = rightWidgets
+	Docks.LeftSidebar = leftWidgets
+	Docks.RightSidebar = rightWidgets
 	widgetUpdateMutex.Unlock()
 
-	if dev.SuperDebug {
-		log.Print("docks.LeftSidebar", docks.LeftSidebar)
-		log.Print("docks.RightSidebar", docks.RightSidebar)
+	if Dev.SuperDebug {
+		log.Print("Docks.LeftSidebar", Docks.LeftSidebar)
+		log.Print("Docks.RightSidebar", Docks.RightSidebar)
 	}
 
 	return nil

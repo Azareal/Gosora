@@ -6,12 +6,14 @@
  */
 package common
 
-//import "fmt"
 import (
+	"database/sql"
 	"html"
 	"html/template"
 	"strconv"
 	"time"
+
+	"../query_gen/lib"
 )
 
 // This is also in reply.go
@@ -105,10 +107,49 @@ type TopicsRow struct {
 	ForumLink string
 }
 
+type TopicStmts struct {
+	addRepliesToTopic *sql.Stmt
+	lock              *sql.Stmt
+	unlock            *sql.Stmt
+	stick             *sql.Stmt
+	unstick           *sql.Stmt
+	hasLikedTopic     *sql.Stmt
+	createLike        *sql.Stmt
+	addLikesToTopic   *sql.Stmt
+	delete            *sql.Stmt
+	edit              *sql.Stmt
+	createActionReply *sql.Stmt
+
+	getTopicUser *sql.Stmt // TODO: Can we get rid of this?
+}
+
+var topicStmts TopicStmts
+
+func init() {
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		topicStmts = TopicStmts{
+			addRepliesToTopic: acc.SimpleUpdate("topics", "postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()", "tid = ?"),
+			lock:              acc.SimpleUpdate("topics", "is_closed = 1", "tid = ?"),
+			unlock:            acc.SimpleUpdate("topics", "is_closed = 0", "tid = ?"),
+			stick:             acc.SimpleUpdate("topics", "sticky = 1", "tid = ?"),
+			unstick:           acc.SimpleUpdate("topics", "sticky = 0", "tid = ?"),
+			hasLikedTopic:     acc.SimpleSelect("likes", "targetItem", "sentBy = ? and targetItem = ? and targetType = 'topics'", "", ""),
+			createLike:        acc.SimpleInsert("likes", "weight, targetItem, targetType, sentBy", "?,?,?,?"),
+			addLikesToTopic:   acc.SimpleUpdate("topics", "likeCount = likeCount + ?", "tid = ?"),
+			delete:            acc.SimpleDelete("topics", "tid = ?"),
+			edit:              acc.SimpleUpdate("topics", "title = ?, content = ?, parsed_content = ?", "tid = ?"),
+			createActionReply: acc.SimpleInsert("replies", "tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''"),
+			getTopicUser:      acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
+		}
+		return acc.FirstError()
+	})
+}
+
 // Flush the topic out of the cache
 // ? - We do a CacheRemove() here instead of mutating the pointer to avoid creating a race condition
 func (topic *Topic) cacheRemove() {
-	tcache, ok := topics.(TopicCache)
+	tcache, ok := Topics.(TopicCache)
 	if ok {
 		tcache.CacheRemove(topic.ID)
 	}
@@ -116,32 +157,32 @@ func (topic *Topic) cacheRemove() {
 
 // TODO: Write a test for this
 func (topic *Topic) AddReply(uid int) (err error) {
-	_, err = stmts.addRepliesToTopic.Exec(1, uid, topic.ID)
+	_, err = topicStmts.addRepliesToTopic.Exec(1, uid, topic.ID)
 	topic.cacheRemove()
 	return err
 }
 
 func (topic *Topic) Lock() (err error) {
-	_, err = stmts.lockTopic.Exec(topic.ID)
+	_, err = topicStmts.lock.Exec(topic.ID)
 	topic.cacheRemove()
 	return err
 }
 
 func (topic *Topic) Unlock() (err error) {
-	_, err = stmts.unlockTopic.Exec(topic.ID)
+	_, err = topicStmts.unlock.Exec(topic.ID)
 	topic.cacheRemove()
 	return err
 }
 
 // TODO: We might want more consistent terminology rather than using stick in some places and pin in others. If you don't understand the difference, there is none, they are one and the same.
 func (topic *Topic) Stick() (err error) {
-	_, err = stmts.stickTopic.Exec(topic.ID)
+	_, err = topicStmts.stick.Exec(topic.ID)
 	topic.cacheRemove()
 	return err
 }
 
 func (topic *Topic) Unstick() (err error) {
-	_, err = stmts.unstickTopic.Exec(topic.ID)
+	_, err = topicStmts.unstick.Exec(topic.ID)
 	topic.cacheRemove()
 	return err
 }
@@ -150,19 +191,19 @@ func (topic *Topic) Unstick() (err error) {
 // TODO: Use a transaction for this
 func (topic *Topic) Like(score int, uid int) (err error) {
 	var tid int // Unused
-	err = stmts.hasLikedTopic.QueryRow(uid, topic.ID).Scan(&tid)
+	err = topicStmts.hasLikedTopic.QueryRow(uid, topic.ID).Scan(&tid)
 	if err != nil && err != ErrNoRows {
 		return err
 	} else if err != ErrNoRows {
 		return ErrAlreadyLiked
 	}
 
-	_, err = stmts.createLike.Exec(score, tid, "topics", uid)
+	_, err = topicStmts.createLike.Exec(score, tid, "topics", uid)
 	if err != nil {
 		return err
 	}
 
-	_, err = stmts.addLikesToTopic.Exec(1, tid)
+	_, err = topicStmts.addLikesToTopic.Exec(1, tid)
 	topic.cacheRemove()
 	return err
 }
@@ -174,10 +215,10 @@ func (topic *Topic) Unlike(uid int) error {
 
 // TODO: Use a transaction here
 func (topic *Topic) Delete() error {
-	topicCreator, err := users.Get(topic.CreatedBy)
+	topicCreator, err := Users.Get(topic.CreatedBy)
 	if err == nil {
-		wcount := wordCount(topic.Content)
-		err = topicCreator.decreasePostStats(wcount, true)
+		wcount := WordCount(topic.Content)
+		err = topicCreator.DecreasePostStats(wcount, true)
 		if err != nil {
 			return err
 		}
@@ -185,31 +226,31 @@ func (topic *Topic) Delete() error {
 		return err
 	}
 
-	err = fstore.RemoveTopic(topic.ParentID)
+	err = Fstore.RemoveTopic(topic.ParentID)
 	if err != nil && err != ErrNoRows {
 		return err
 	}
 
-	_, err = stmts.deleteTopic.Exec(topic.ID)
+	_, err = topicStmts.delete.Exec(topic.ID)
 	topic.cacheRemove()
 	return err
 }
 
 func (topic *Topic) Update(name string, content string) error {
-	content = preparseMessage(content)
-	parsed_content := parseMessage(html.EscapeString(content), topic.ParentID, "forums")
-
-	_, err := stmts.editTopic.Exec(name, content, parsed_content, topic.ID)
+	content = PreparseMessage(content)
+	parsedContent := ParseMessage(html.EscapeString(content), topic.ParentID, "forums")
+	_, err := topicStmts.edit.Exec(name, content, parsedContent, topic.ID)
 	topic.cacheRemove()
 	return err
 }
 
+// TODO: Have this go through the ReplyStore?
 func (topic *Topic) CreateActionReply(action string, ipaddress string, user User) (err error) {
-	_, err = stmts.createActionReply.Exec(topic.ID, action, ipaddress, user.ID)
+	_, err = topicStmts.createActionReply.Exec(topic.ID, action, ipaddress, user.ID)
 	if err != nil {
 		return err
 	}
-	_, err = stmts.addRepliesToTopic.Exec(1, user.ID, topic.ID)
+	_, err = topicStmts.addRepliesToTopic.Exec(1, user.ID, topic.ID)
 	topic.cacheRemove()
 	// ? - Update the last topic cache for the parent forum?
 	return err
@@ -221,13 +262,13 @@ func (topic *Topic) Copy() Topic {
 }
 
 // TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser
-func getTopicUser(tid int) (TopicUser, error) {
-	tcache, tok := topics.(TopicCache)
-	ucache, uok := users.(UserCache)
+func GetTopicUser(tid int) (TopicUser, error) {
+	tcache, tok := Topics.(TopicCache)
+	ucache, uok := Users.(UserCache)
 	if tok && uok {
 		topic, err := tcache.CacheGet(tid)
 		if err == nil {
-			user, err := users.Get(topic.CreatedBy)
+			user, err := Users.Get(topic.CreatedBy)
 			if err != nil {
 				return TopicUser{ID: tid}, err
 			}
@@ -235,11 +276,11 @@ func getTopicUser(tid int) (TopicUser, error) {
 			// We might be better off just passing separate topic and user structs to the caller?
 			return copyTopicToTopicUser(topic, user), nil
 		} else if ucache.Length() < ucache.GetCapacity() {
-			topic, err = topics.Get(tid)
+			topic, err = Topics.Get(tid)
 			if err != nil {
 				return TopicUser{ID: tid}, err
 			}
-			user, err := users.Get(topic.CreatedBy)
+			user, err := Users.Get(topic.CreatedBy)
 			if err != nil {
 				return TopicUser{ID: tid}, err
 			}
@@ -248,14 +289,14 @@ func getTopicUser(tid int) (TopicUser, error) {
 	}
 
 	tu := TopicUser{ID: tid}
-	err := stmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
-	tu.Link = buildTopicURL(nameToSlug(tu.Title), tu.ID)
-	tu.UserLink = buildProfileURL(nameToSlug(tu.CreatedByName), tu.CreatedBy)
-	tu.Tag = gstore.DirtyGet(tu.Group).Tag
+	err := topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+	tu.Link = BuildTopicURL(NameToSlug(tu.Title), tu.ID)
+	tu.UserLink = BuildProfileURL(NameToSlug(tu.CreatedByName), tu.CreatedBy)
+	tu.Tag = Gstore.DirtyGet(tu.Group).Tag
 
 	if tok {
 		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, ParentID: tu.ParentID, IPAddress: tu.IPAddress, PostCount: tu.PostCount, LikeCount: tu.LikeCount}
-		//log.Printf("the_topic: %+v\n", theTopic)
+		//log.Printf("theTopic: %+v\n", theTopic)
 		_ = tcache.CacheAdd(&theTopic)
 	}
 	return tu, err
@@ -289,18 +330,11 @@ func copyTopicToTopicUser(topic *Topic, user *User) (tu TopicUser) {
 }
 
 // For use in tests and for generating blank topics for forums which don't have a last poster
-func getDummyTopic() *Topic {
+func BlankTopic() *Topic {
 	return &Topic{ID: 0, Title: ""}
 }
 
-func getTopicByReply(rid int) (*Topic, error) {
-	topic := Topic{ID: 0}
-	err := stmts.getTopicByReply.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = buildTopicURL(nameToSlug(topic.Title), topic.ID)
-	return &topic, err
-}
-
-func buildTopicURL(slug string, tid int) string {
+func BuildTopicURL(slug string, tid int) string {
 	if slug == "" {
 		return "/topic/" + strconv.Itoa(tid)
 	}

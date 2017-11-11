@@ -4,11 +4,13 @@
 *	Copyright Azareal 2017 - 2018
 *
  */
-package main
+package common
 
 import (
 	"log"
 	"time"
+
+	"../query_gen/lib"
 )
 
 var lastSync time.Time
@@ -17,8 +19,12 @@ func init() {
 	lastSync = time.Now()
 }
 
-func handleExpiredScheduledGroups() error {
-	rows, err := stmts.getExpiredScheduledGroups.Query()
+func HandleExpiredScheduledGroups() error {
+	getExpiredScheduledGroups, err := qgen.Builder.SimpleSelect("users_groups_scheduler", "uid", "UTC_TIMESTAMP() > revert_at AND temporary = 1", "", "")
+	if err != nil {
+		return err
+	}
+	rows, err := getExpiredScheduledGroups.Query()
 	if err != nil {
 		return err
 	}
@@ -32,7 +38,7 @@ func handleExpiredScheduledGroups() error {
 		}
 
 		// Sneaky way of initialising a *User, please use the methods on the UserStore instead
-		user := getDummyUser()
+		user := BlankUser()
 		user.ID = uid
 		err = user.RevertGroupUpdate()
 		if err != nil {
@@ -42,16 +48,20 @@ func handleExpiredScheduledGroups() error {
 	return rows.Err()
 }
 
-func handleServerSync() error {
+func HandleServerSync() error {
 	var lastUpdate time.Time
-	err := stmts.getSync.QueryRow().Scan(&lastUpdate)
+	getSync, err := qgen.Builder.SimpleSelect("sync", "last_update", "", "", "")
+	if err != nil {
+		return err
+	}
+	err = getSync.QueryRow().Scan(&lastUpdate)
 	if err != nil {
 		return err
 	}
 
 	if lastUpdate.After(lastSync) {
 		// TODO: A more granular sync
-		err = fstore.LoadForums()
+		err = Fstore.LoadForums()
 		if err != nil {
 			log.Print("Unable to reload the forums")
 			return err

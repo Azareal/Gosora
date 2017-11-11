@@ -2,12 +2,15 @@ package common
 
 //import "fmt"
 import (
+	"database/sql"
 	"strconv"
 	"strings"
 
+	"../query_gen/lib"
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// TODO: Do we really need this?
 type ForumAdmin struct {
 	ID         int
 	Name       string
@@ -44,11 +47,25 @@ type ForumSimple struct {
 	Preset string
 }
 
+type ForumStmts struct {
+	update *sql.Stmt
+}
+
+var forumStmts ForumStmts
+
+func init() {
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		forumStmts = ForumStmts{
+			update: acc.SimpleUpdate("forums", "name = ?, desc = ?, active = ?, preset = ?", "fid = ?"),
+		}
+		return acc.FirstError()
+	})
+}
+
 // Copy gives you a non-pointer concurrency safe copy of the forum
 func (forum *Forum) Copy() (fcopy Forum) {
-	//forum.LastLock.RLock()
 	fcopy = *forum
-	//forum.LastLock.RUnlock()
 	return fcopy
 }
 
@@ -58,17 +75,17 @@ func (forum *Forum) Update(name string, desc string, active bool, preset string)
 		name = forum.Name
 	}
 	preset = strings.TrimSpace(preset)
-	_, err := stmts.updateForum.Exec(name, desc, active, preset, forum.ID)
+	_, err := forumStmts.update.Exec(name, desc, active, preset, forum.ID)
 	if err != nil {
 		return err
 	}
 	if forum.Preset != preset || preset == "custom" || preset == "" {
-		err = permmapToQuery(presetToPermmap(preset), forum.ID)
+		err = PermmapToQuery(PresetToPermmap(preset), forum.ID)
 		if err != nil {
 			return err
 		}
 	}
-	_ = fstore.Reload(forum.ID)
+	_ = Fstore.Reload(forum.ID)
 	return nil
 }
 
@@ -91,13 +108,13 @@ func makeDummyForum(fid int, link string, name string, desc string, active bool,
 	return &Forum{ID: fid, Link: link, Name: name, Desc: desc, Active: active, Preset: preset, ParentID: parentID, ParentType: parentType, TopicCount: topicCount}
 }
 
-func buildForumURL(slug string, fid int) string {
+func BuildForumURL(slug string, fid int) string {
 	if slug == "" {
 		return "/forum/" + strconv.Itoa(fid)
 	}
 	return "/forum/" + slug + "." + strconv.Itoa(fid)
 }
 
-func getForumURLPrefix() string {
+func GetForumURLPrefix() string {
 	return "/forum/"
 }

@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	//"fmt"
@@ -9,19 +9,19 @@ import (
 	"strings"
 )
 
-var spaceGap = []byte("          ")
+var SpaceGap = []byte("          ")
 var httpProtBytes = []byte("http://")
-var invalidURL = []byte("<span style='color: red;'>[Invalid URL]</span>")
-var invalidTopic = []byte("<span style='color: red;'>[Invalid Topic]</span>")
-var invalidProfile = []byte("<span style='color: red;'>[Invalid Profile]</span>")
-var invalidForum = []byte("<span style='color: red;'>[Invalid Forum]</span>")
+var InvalidURL = []byte("<span style='color: red;'>[Invalid URL]</span>")
+var InvalidTopic = []byte("<span style='color: red;'>[Invalid Topic]</span>")
+var InvalidProfile = []byte("<span style='color: red;'>[Invalid Profile]</span>")
+var InvalidForum = []byte("<span style='color: red;'>[Invalid Forum]</span>")
 var unknownMedia = []byte("<span style='color: red;'>[Unknown Media]</span>")
-var urlOpen = []byte("<a href='")
-var urlOpen2 = []byte("'>")
+var UrlOpen = []byte("<a href='")
+var UrlOpen2 = []byte("'>")
 var bytesSinglequote = []byte("'")
 var bytesGreaterthan = []byte(">")
 var urlMention = []byte(" class='mention'")
-var urlClose = []byte("</a>")
+var UrlClose = []byte("</a>")
 var imageOpen = []byte("<a href=\"")
 var imageOpen2 = []byte("\"><img src='")
 var imageClose = []byte("' class='postImage' /></a>")
@@ -164,16 +164,16 @@ func shortcodeToUnicode(msg string) string {
 	return msg
 }
 
-func preparseMessage(msg string) string {
-	if sshooks["preparse_preassign"] != nil {
-		msg = runSshook("preparse_preassign", msg)
+func PreparseMessage(msg string) string {
+	if Sshooks["preparse_preassign"] != nil {
+		msg = RunSshook("preparse_preassign", msg)
 	}
 	return shortcodeToUnicode(msg)
 }
 
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
-func parseMessage(msg string, sectionID int, sectionType string /*, user User*/) string {
+func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/) string {
 	msg = strings.Replace(msg, ":)", "😀", -1)
 	msg = strings.Replace(msg, ":(", "😞", -1)
 	msg = strings.Replace(msg, ":D", "😃", -1)
@@ -185,7 +185,7 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 
 	// Word filter list. E.g. Swear words and other things the admins don't like
-	wordFilters := wordFilterBox.Load().(WordFilterBox)
+	wordFilters := WordFilterBox.Load().(WordFilterMap)
 	for _, filter := range wordFilters {
 		msg = strings.Replace(msg, filter.Find, filter.Replacement, -1)
 	}
@@ -194,7 +194,7 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	//log.Print("Parser Loop!")
 	var msgbytes = []byte(msg)
 	var outbytes []byte
-	msgbytes = append(msgbytes, spaceGap...)
+	msgbytes = append(msgbytes, SpaceGap...)
 	//log.Printf("string(msgbytes) %+v\n", `"`+string(msgbytes)+`"`)
 	var lastItem = 0
 	var i = 0
@@ -215,23 +215,23 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
 					i += 5
 					start := i
-					tid, intLen := coerceIntBytes(msgbytes[start:])
+					tid, intLen := CoerceIntBytes(msgbytes[start:])
 					i += intLen
 
-					topic, err := topics.Get(tid)
-					if err != nil || !fstore.Exists(topic.ParentID) {
-						outbytes = append(outbytes, invalidTopic...)
+					topic, err := Topics.Get(tid)
+					if err != nil || !Fstore.Exists(topic.ParentID) {
+						outbytes = append(outbytes, InvalidTopic...)
 						lastItem = i
 						continue
 					}
 
-					outbytes = append(outbytes, urlOpen...)
-					var urlBit = []byte(buildTopicURL("", tid))
+					outbytes = append(outbytes, UrlOpen...)
+					var urlBit = []byte(BuildTopicURL("", tid))
 					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, urlOpen2...)
+					outbytes = append(outbytes, UrlOpen2...)
 					var tidBit = []byte("#tid-" + strconv.Itoa(tid))
 					outbytes = append(outbytes, tidBit...)
-					outbytes = append(outbytes, urlClose...)
+					outbytes = append(outbytes, UrlClose...)
 					lastItem = i
 
 					//log.Print("string(msgbytes): ",string(msgbytes))
@@ -244,44 +244,46 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
 					i += 5
 					start := i
-					rid, intLen := coerceIntBytes(msgbytes[start:])
+					rid, intLen := CoerceIntBytes(msgbytes[start:])
 					i += intLen
 
-					topic, err := getTopicByReply(rid)
-					if err != nil || !fstore.Exists(topic.ParentID) {
-						outbytes = append(outbytes, invalidTopic...)
+					reply := BlankReply()
+					reply.ID = rid
+					topic, err := reply.Topic()
+					if err != nil || !Fstore.Exists(topic.ParentID) {
+						outbytes = append(outbytes, InvalidTopic...)
 						lastItem = i
 						continue
 					}
 
-					outbytes = append(outbytes, urlOpen...)
-					var urlBit = []byte(buildTopicURL("", topic.ID))
+					outbytes = append(outbytes, UrlOpen...)
+					var urlBit = []byte(BuildTopicURL("", topic.ID))
 					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, urlOpen2...)
+					outbytes = append(outbytes, UrlOpen2...)
 					var ridBit = []byte("#rid-" + strconv.Itoa(rid))
 					outbytes = append(outbytes, ridBit...)
-					outbytes = append(outbytes, urlClose...)
+					outbytes = append(outbytes, UrlClose...)
 					lastItem = i
 				} else if bytes.Equal(msgbytes[i+1:i+5], []byte("fid-")) {
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
 					i += 5
 					start := i
-					fid, intLen := coerceIntBytes(msgbytes[start:])
+					fid, intLen := CoerceIntBytes(msgbytes[start:])
 					i += intLen
 
-					if !fstore.Exists(fid) {
-						outbytes = append(outbytes, invalidForum...)
+					if !Fstore.Exists(fid) {
+						outbytes = append(outbytes, InvalidForum...)
 						lastItem = i
 						continue
 					}
 
-					outbytes = append(outbytes, urlOpen...)
-					var urlBit = []byte(buildForumURL("", fid))
+					outbytes = append(outbytes, UrlOpen...)
+					var urlBit = []byte(BuildForumURL("", fid))
 					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, urlOpen2...)
+					outbytes = append(outbytes, UrlOpen2...)
 					var fidBit = []byte("#fid-" + strconv.Itoa(fid))
 					outbytes = append(outbytes, fidBit...)
-					outbytes = append(outbytes, urlClose...)
+					outbytes = append(outbytes, UrlClose...)
 					lastItem = i
 				} else {
 					// TODO: Forum Shortcode Link
@@ -291,17 +293,17 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				outbytes = append(outbytes, msgbytes[lastItem:i]...)
 				i++
 				start := i
-				uid, intLen := coerceIntBytes(msgbytes[start:])
+				uid, intLen := CoerceIntBytes(msgbytes[start:])
 				i += intLen
 
-				menUser, err := users.Get(uid)
+				menUser, err := Users.Get(uid)
 				if err != nil {
-					outbytes = append(outbytes, invalidProfile...)
+					outbytes = append(outbytes, InvalidProfile...)
 					lastItem = i
 					continue
 				}
 
-				outbytes = append(outbytes, urlOpen...)
+				outbytes = append(outbytes, UrlOpen...)
 				var urlBit = []byte(menUser.Link)
 				outbytes = append(outbytes, urlBit...)
 				outbytes = append(outbytes, bytesSinglequote...)
@@ -309,7 +311,7 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				outbytes = append(outbytes, bytesGreaterthan...)
 				var uidBit = []byte("@" + menUser.Name)
 				outbytes = append(outbytes, uidBit...)
-				outbytes = append(outbytes, urlClose...)
+				outbytes = append(outbytes, UrlClose...)
 				lastItem = i
 
 				//log.Print(string(msgbytes))
@@ -338,21 +340,21 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 
 				//log.Print("Normal URL")
 				outbytes = append(outbytes, msgbytes[lastItem:i]...)
-				urlLen := partialURLBytesLen(msgbytes[i:])
+				urlLen := PartialURLBytesLen(msgbytes[i:])
 				if msgbytes[i+urlLen] > 32 { // space and invisibles
 					//log.Print("INVALID URL")
 					//log.Print("msgbytes[i+urlLen]: ", msgbytes[i+urlLen])
 					//log.Print("string(msgbytes[i+urlLen]): ", string(msgbytes[i+urlLen]))
 					//log.Print("msgbytes[i:i+urlLen]: ", msgbytes[i:i+urlLen])
 					//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
-					outbytes = append(outbytes, invalidURL...)
+					outbytes = append(outbytes, InvalidURL...)
 					i += urlLen
 					continue
 				}
 
 				media, ok := parseMediaBytes(msgbytes[i : i+urlLen])
 				if !ok {
-					outbytes = append(outbytes, invalidURL...)
+					outbytes = append(outbytes, InvalidURL...)
 					i += urlLen
 					continue
 				}
@@ -386,23 +388,23 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
-				outbytes = append(outbytes, urlOpen...)
+				outbytes = append(outbytes, UrlOpen...)
 				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, urlOpen2...)
+				outbytes = append(outbytes, UrlOpen2...)
 				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, urlClose...)
+				outbytes = append(outbytes, UrlClose...)
 				i += urlLen
 				lastItem = i
 			} else if msgbytes[i] == '/' && msgbytes[i+1] == '/' {
 				outbytes = append(outbytes, msgbytes[lastItem:i]...)
-				urlLen := partialURLBytesLen(msgbytes[i:])
+				urlLen := PartialURLBytesLen(msgbytes[i:])
 				if msgbytes[i+urlLen] > 32 { // space and invisibles
 					//log.Print("INVALID URL")
 					//log.Print("msgbytes[i+urlLen]: ", msgbytes[i+urlLen])
 					//log.Print("string(msgbytes[i+urlLen]): ", string(msgbytes[i+urlLen]))
 					//log.Print("msgbytes[i:i+urlLen]: ", msgbytes[i:i+urlLen])
 					//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
-					outbytes = append(outbytes, invalidURL...)
+					outbytes = append(outbytes, InvalidURL...)
 					i += urlLen
 					continue
 				}
@@ -412,7 +414,7 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
 				media, ok := parseMediaBytes(msgbytes[i : i+urlLen])
 				if !ok {
-					outbytes = append(outbytes, invalidURL...)
+					outbytes = append(outbytes, InvalidURL...)
 					i += urlLen
 					continue
 				}
@@ -446,11 +448,11 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
-				outbytes = append(outbytes, urlOpen...)
+				outbytes = append(outbytes, UrlOpen...)
 				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, urlOpen2...)
+				outbytes = append(outbytes, UrlOpen2...)
 				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, urlClose...)
+				outbytes = append(outbytes, UrlClose...)
 				i += urlLen
 				lastItem = i
 			}
@@ -474,24 +476,11 @@ func parseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	//log.Print("msg",`"`+msg+`"`)
 
 	msg = strings.Replace(msg, "\n", "<br>", -1)
-	if sshooks["parse_assign"] != nil {
-		msg = runSshook("parse_assign", msg)
+	if Sshooks["parse_assign"] != nil {
+		msg = RunSshook("parse_assign", msg)
 	}
 	return msg
 }
-
-// TODO: Write a test for this
-/*func regexParseMessage(msg string) string {
-	msg = strings.Replace(msg, ":)", "😀", -1)
-	msg = strings.Replace(msg, ":D", "😃", -1)
-	msg = strings.Replace(msg, ":P", "😛", -1)
-	msg = urlReg.ReplaceAllString(msg, "<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
-	msg = strings.Replace(msg, "\n", "<br>", -1)
-	if sshooks["parse_assign"] != nil {
-		msg = runSshook("parse_assign", msg)
-	}
-	return msg
-}*/
 
 // 6, 7, 8, 6, 2, 7
 // ftp://, http://, https:// git://, //, mailto: (not a URL, just here for length comparison purposes)
@@ -541,7 +530,7 @@ func validatedURLBytes(data []byte) (url []byte) {
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; datalen > i; i++ {
 		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
-			return invalidURL
+			return InvalidURL
 		}
 	}
 
@@ -550,7 +539,7 @@ func validatedURLBytes(data []byte) (url []byte) {
 }
 
 // TODO: Write a test for this
-func partialURLBytes(data []byte) (url []byte) {
+func PartialURLBytes(data []byte) (url []byte) {
 	datalen := len(data)
 	i := 0
 	end := datalen - 1
@@ -579,7 +568,7 @@ func partialURLBytes(data []byte) (url []byte) {
 }
 
 // TODO: Write a test for this
-func partialURLBytesLen(data []byte) int {
+func PartialURLBytesLen(data []byte) int {
 	datalen := len(data)
 	i := 0
 
@@ -632,13 +621,12 @@ func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
 	query := url.Query()
 	//log.Printf("query %+v\n", query)
 
-	var samesite = hostname == "localhost" || hostname == site.URL
+	var samesite = hostname == "localhost" || hostname == Site.URL
 	if samesite {
-		//log.Print("samesite")
-		hostname = strings.Split(site.URL, ":")[0]
+		hostname = strings.Split(Site.URL, ":")[0]
 		// ?- Test this as I'm not sure it'll do what it should. If someone's running SSL on port 80 or non-SSL on port 443 then... Well... They're in far worse trouble than this...
-		port = site.Port
-		if scheme == "" && site.EnableSsl {
+		port = Site.Port
+		if scheme == "" && Site.EnableSsl {
 			scheme = "https"
 		}
 	}
@@ -684,7 +672,7 @@ func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
 		extarr := strings.Split(lastFrag, ".")
 		if len(extarr) >= 2 {
 			ext := extarr[len(extarr)-1]
-			if imageFileExts.Contains(ext) {
+			if ImageFileExts.Contains(ext) {
 				media.Type = "image"
 				var sport string
 				if port != "443" && port != "80" {
@@ -704,7 +692,7 @@ func parseURL(data []byte) (*url.URL, error) {
 }
 
 // TODO: Write a test for this
-func coerceIntBytes(data []byte) (res int, length int) {
+func CoerceIntBytes(data []byte) (res int, length int) {
 	if !(data[0] > 47 && data[0] < 58) {
 		return 0, 1
 	}
@@ -728,7 +716,7 @@ func coerceIntBytes(data []byte) (res int, length int) {
 }
 
 // TODO: Write tests for this
-func paginate(count int, perPage int, maxPages int) []int {
+func Paginate(count int, perPage int, maxPages int) []int {
 	if count < perPage {
 		return []int{1}
 	}
@@ -745,7 +733,7 @@ func paginate(count int, perPage int, maxPages int) []int {
 }
 
 // TODO: Write tests for this
-func pageOffset(count int, page int, perPage int) (int, int, int) {
+func PageOffset(count int, page int, perPage int) (int, int, int) {
 	var offset int
 	lastPage := (count / perPage) + 1
 	if page > 1 {

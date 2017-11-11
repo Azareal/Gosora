@@ -346,6 +346,7 @@ package main
 
 import "log"
 import "database/sql"
+import "./common"
 
 // nolint
 type Stmts struct {
@@ -365,7 +366,7 @@ type Stmts struct {
 
 // nolint
 func _gen_pgsql() (err error) {
-	if dev.DebugMode {
+	if common.Dev.DebugMode {
 		log.Print("Building the generated statements")
 	}
 ` + body + `

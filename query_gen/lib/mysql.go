@@ -590,6 +590,7 @@ package main
 
 import "log"
 import "database/sql"
+import "./common"
 //import "./query_gen/lib"
 
 // nolint
@@ -610,7 +611,7 @@ type Stmts struct {
 
 // nolint
 func _gen_mysql() (err error) {
-	if dev.DebugMode {
+	if common.Dev.DebugMode {
 		log.Print("Building the generated statements")
 	}
 ` + body + `

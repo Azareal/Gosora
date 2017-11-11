@@ -6,24 +6,31 @@ import (
 	"strings"
 )
 
-var site = &Site{Name: "Magical Fairy Land", Language: "english"}
-var dbConfig = DBConfig{Host: "localhost"}
-var config Config
-var dev DevConfig
+// Site holds the basic settings which should be tweaked when setting up a site, we might move them to the settings table at some point
+var Site = &site{Name: "Magical Fairy Land", Language: "english"}
 
-type Site struct {
+// DbConfig holds the database configuration
+var DbConfig = dbConfig{Host: "localhost"}
+
+// Config holds the more technical settings
+var Config config
+
+// Dev holds build flags and other things which should only be modified during developers or to gather additional test data
+var Dev devConfig
+
+type site struct {
 	ShortName    string
-	Name         string // ? - Move this into the settings table? Should we make a second version of this for the abbreviation shown in the navbar?
-	Email        string // ? - Move this into the settings table?
+	Name         string
+	Email        string
 	URL          string
 	Port         string
 	EnableSsl    bool
 	EnableEmails bool
 	HasProxy     bool
-	Language     string // ? - Move this into the settings table?
+	Language     string
 }
 
-type DBConfig struct {
+type dbConfig struct {
 	// Production database
 	Host     string
 	Username string
@@ -39,7 +46,7 @@ type DBConfig struct {
 	TestPort     string
 }
 
-type Config struct {
+type config struct {
 	SslPrivkey   string
 	SslFullchain string
 
@@ -65,7 +72,7 @@ type Config struct {
 	ItemsPerPage int    // ? - Move this into the settings table?
 }
 
-type DevConfig struct {
+type devConfig struct {
 	DebugMode     bool
 	SuperDebug    bool
 	TemplateDebug bool
@@ -73,35 +80,35 @@ type DevConfig struct {
 	TestDB        bool
 }
 
-func processConfig() error {
-	config.Noavatar = strings.Replace(config.Noavatar, "{site_url}", site.URL, -1)
-	if site.Port != "80" && site.Port != "443" {
-		site.URL = strings.TrimSuffix(site.URL, "/")
-		site.URL = strings.TrimSuffix(site.URL, "\\")
-		site.URL = strings.TrimSuffix(site.URL, ":")
-		site.URL = site.URL + ":" + site.Port
+func ProcessConfig() error {
+	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
+	if Site.Port != "80" && Site.Port != "443" {
+		Site.URL = strings.TrimSuffix(Site.URL, "/")
+		Site.URL = strings.TrimSuffix(Site.URL, "\\")
+		Site.URL = strings.TrimSuffix(Site.URL, ":")
+		Site.URL = Site.URL + ":" + Site.Port
 	}
 	// We need this in here rather than verifyConfig as switchToTestDB() currently overwrites the values it verifies
-	if dbConfig.TestDbname == dbConfig.Dbname {
+	if DbConfig.TestDbname == DbConfig.Dbname {
 		return errors.New("Your test database can't have the same name as your production database")
 	}
-	if dev.TestDB {
-		switchToTestDB()
+	if Dev.TestDB {
+		SwitchToTestDB()
 	}
 	return nil
 }
 
-func verifyConfig() error {
-	if !fstore.Exists(config.DefaultForum) {
+func VerifyConfig() error {
+	if !Fstore.Exists(Config.DefaultForum) {
 		return errors.New("Invalid default forum")
 	}
 	return nil
 }
 
-func switchToTestDB() {
-	dbConfig.Host = dbConfig.TestHost
-	dbConfig.Username = dbConfig.TestUsername
-	dbConfig.Password = dbConfig.TestPassword
-	dbConfig.Dbname = dbConfig.TestDbname
-	dbConfig.Port = dbConfig.TestPort
+func SwitchToTestDB() {
+	DbConfig.Host = DbConfig.TestHost
+	DbConfig.Username = DbConfig.TestUsername
+	DbConfig.Password = DbConfig.TestPassword
+	DbConfig.Dbname = DbConfig.TestDbname
+	DbConfig.Port = DbConfig.TestPort
 }

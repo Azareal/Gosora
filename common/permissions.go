@@ -5,18 +5,24 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
+
+	"../query_gen/lib"
 )
 
 // TODO: Refactor the perms system
 
-var permUpdateMutex sync.Mutex
+var PermUpdateMutex sync.Mutex
 var BlankPerms Perms
 var BlankForumPerms ForumPerms
 var GuestPerms Perms
 var ReadForumPerms ForumPerms
 var ReadReplyForumPerms ForumPerms
 var ReadWriteForumPerms ForumPerms
+
+// AllPerms is a set of global permissions with everything set to true
 var AllPerms Perms
+
+// AllForumPerms is a set of forum local permissions with everything set to true
 var AllForumPerms ForumPerms
 var AllPluginPerms = make(map[string]bool)
 
@@ -216,15 +222,15 @@ func init() {
 		ExtData:   make(map[string]bool),
 	}
 
-	guestUser.Perms = GuestPerms
+	GuestUser.Perms = GuestPerms
 
-	if dev.DebugMode {
+	if Dev.DebugMode {
 		log.Printf("Guest Perms: %+v\n", GuestPerms)
 		log.Printf("All Perms: %+v\n", AllPerms)
 	}
 }
 
-func presetToPermmap(preset string) (out map[string]ForumPerms) {
+func PresetToPermmap(preset string) (out map[string]ForumPerms) {
 	out = make(map[string]ForumPerms)
 	switch preset {
 	case "all":
@@ -266,8 +272,8 @@ func presetToPermmap(preset string) (out map[string]ForumPerms) {
 	return out
 }
 
-func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
-	tx, err := db.Begin()
+func PermmapToQuery(permmap map[string]ForumPerms, fid int) error {
+	tx, err := qgen.Builder.Begin()
 	if err != nil {
 		return err
 	}
@@ -337,7 +343,7 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 
 	// 6 is the ID of the Not Loggedin Group
 	// TODO: Use a shared variable rather than a literal for the group ID
-	err = replaceForumPermsForGroupTx(tx, 6, map[int]string{fid: ""}, map[int]ForumPerms{fid: permmap["guests"]})
+	err = ReplaceForumPermsForGroupTx(tx, 6, map[int]string{fid: ""}, map[int]ForumPerms{fid: permmap["guests"]})
 	if err != nil {
 		return err
 	}
@@ -347,25 +353,25 @@ func permmapToQuery(permmap map[string]ForumPerms, fid int) error {
 		return err
 	}
 
-	permUpdateMutex.Lock()
-	defer permUpdateMutex.Unlock()
-	return fpstore.Reload(fid)
+	PermUpdateMutex.Lock()
+	defer PermUpdateMutex.Unlock()
+	return Fpstore.Reload(fid)
 }
 
-func replaceForumPermsForGroup(gid int, presetSet map[int]string, permSets map[int]ForumPerms) error {
-	tx, err := db.Begin()
+func ReplaceForumPermsForGroup(gid int, presetSet map[int]string, permSets map[int]ForumPerms) error {
+	tx, err := qgen.Builder.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	err = replaceForumPermsForGroupTx(tx, gid, presetSet, permSets)
+	err = ReplaceForumPermsForGroupTx(tx, gid, presetSet, permSets)
 	if err != nil {
 		return err
 	}
 	return tx.Commit()
 }
 
-func replaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string, permSets map[int]ForumPerms) error {
+func ReplaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string, permSets map[int]ForumPerms) error {
 	deleteForumPermsForGroupTx, err := qgen.Builder.SimpleDeleteTx(tx, "forums_permissions", "gid = ? AND fid = ?")
 	if err != nil {
 		return err
@@ -394,7 +400,7 @@ func replaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string,
 }
 
 // TODO: Refactor this and write tests for it
-func forumPermsToGroupForumPreset(fperms ForumPerms) string {
+func ForumPermsToGroupForumPreset(fperms ForumPerms) string {
 	if !fperms.Overrides {
 		return "default"
 	}
@@ -422,7 +428,7 @@ func forumPermsToGroupForumPreset(fperms ForumPerms) string {
 	return "custom"
 }
 
-func groupForumPresetToForumPerms(preset string) (fperms ForumPerms, changed bool) {
+func GroupForumPresetToForumPerms(preset string) (fperms ForumPerms, changed bool) {
 	switch preset {
 	case "read_only":
 		return ReadForumPerms, true
@@ -439,7 +445,7 @@ func groupForumPresetToForumPerms(preset string) (fperms ForumPerms, changed boo
 	return fperms, false
 }
 
-func stripInvalidGroupForumPreset(preset string) string {
+func StripInvalidGroupForumPreset(preset string) string {
 	switch preset {
 	case "read_only", "can_post", "can_moderate", "no_access", "default", "custom":
 		return preset
@@ -447,7 +453,7 @@ func stripInvalidGroupForumPreset(preset string) string {
 	return ""
 }
 
-func stripInvalidPreset(preset string) string {
+func StripInvalidPreset(preset string) string {
 	switch preset {
 	case "all", "announce", "members", "staff", "admins", "archive", "custom":
 		return preset
@@ -457,7 +463,7 @@ func stripInvalidPreset(preset string) string {
 }
 
 // TODO: Move this into the phrase system?
-func presetToLang(preset string) string {
+func PresetToLang(preset string) string {
 	phrases := GetAllPermPresets()
 	phrase, ok := phrases[preset]
 	if !ok {
@@ -467,10 +473,18 @@ func presetToLang(preset string) string {
 }
 
 // TODO: Is this racey?
-func rebuildGroupPermissions(gid int) error {
+// TODO: Test this along with the rest of the perms system
+func RebuildGroupPermissions(gid int) error {
 	var permstr []byte
 	log.Print("Reloading a group")
-	err := db.QueryRow("select permissions from users_groups where gid = ?", gid).Scan(&permstr)
+
+	// TODO: Avoid re-initting this all the time
+	getGroupPerms, err := qgen.Builder.SimpleSelect("users_groups", "permissions", "gid = ?", "", "")
+	if err != nil {
+		return err
+	}
+
+	err = getGroupPerms.QueryRow(gid).Scan(&permstr)
 	if err != nil {
 		return err
 	}
@@ -483,7 +497,7 @@ func rebuildGroupPermissions(gid int) error {
 		return err
 	}
 
-	group, err := gstore.Get(gid)
+	group, err := Gstore.Get(gid)
 	if err != nil {
 		return err
 	}
@@ -491,7 +505,7 @@ func rebuildGroupPermissions(gid int) error {
 	return nil
 }
 
-func overridePerms(perms *Perms, status bool) {
+func OverridePerms(perms *Perms, status bool) {
 	if status {
 		*perms = AllPerms
 	} else {
@@ -500,7 +514,7 @@ func overridePerms(perms *Perms, status bool) {
 }
 
 // TODO: We need a better way of overriding forum perms rather than setting them one by one
-func overrideForumPerms(perms *Perms, status bool) {
+func OverrideForumPerms(perms *Perms, status bool) {
 	perms.ViewTopic = status
 	perms.LikeItem = status
 	perms.CreateTopic = status
@@ -513,10 +527,10 @@ func overrideForumPerms(perms *Perms, status bool) {
 	perms.CloseTopic = status
 }
 
-func registerPluginPerm(name string) {
+func RegisterPluginPerm(name string) {
 	AllPluginPerms[name] = true
 }
 
-func deregisterPluginPerm(name string) {
+func DeregisterPluginPerm(name string) {
 	delete(AllPluginPerms, name)
 }

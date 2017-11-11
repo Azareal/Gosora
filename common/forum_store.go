@@ -17,10 +17,10 @@ import (
 	"../query_gen/lib"
 )
 
-var forumUpdateMutex sync.Mutex
+var ForumUpdateMutex sync.Mutex
 var forumCreateMutex sync.Mutex
 var forumPerms map[int]map[int]ForumPerms // [gid][fid]Perms // TODO: Add an abstraction around this and make it more thread-safe
-var fstore ForumStore
+var Fstore ForumStore
 
 // ForumStore is an interface for accessing the forums and the metadata stored on them
 type ForumStore interface {
@@ -110,26 +110,16 @@ func (mfs *MemoryForumStore) LoadForums() error {
 		}
 
 		if forum.Name == "" {
-			if dev.DebugMode {
+			if Dev.DebugMode {
 				log.Print("Adding a placeholder forum")
 			}
 		} else {
-			log.Printf("Adding the %s forum", forum.Name)
+			log.Printf("Adding the '%s' forum", forum.Name)
 		}
 
-		forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-
-		topic, err := topics.Get(forum.LastTopicID)
-		if err != nil {
-			topic = getDummyTopic()
-		}
-		user, err := users.Get(forum.LastReplyerID)
-		if err != nil {
-			user = getDummyUser()
-		}
-		forum.LastTopic = topic
-		forum.LastReplyer = user
-		//forum.SetLast(topic, user)
+		forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
+		forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
+		forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
 
 		addForum(forum)
 	}
@@ -178,19 +168,9 @@ func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 			return forum, err
 		}
 
-		forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-
-		topic, err := topics.Get(forum.LastTopicID)
-		if err != nil {
-			topic = getDummyTopic()
-		}
-		user, err := users.Get(forum.LastReplyerID)
-		if err != nil {
-			user = getDummyUser()
-		}
-		forum.LastTopic = topic
-		forum.LastReplyer = user
-		//forum.SetLast(topic, user)
+		forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
+		forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
+		forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
 
 		mfs.CacheSet(forum)
 		return forum, err
@@ -205,19 +185,9 @@ func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 		return nil, err
 	}
 
-	forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-
-	topic, err := topics.Get(forum.LastTopicID)
-	if err != nil {
-		topic = getDummyTopic()
-	}
-	user, err := users.Get(forum.LastReplyerID)
-	if err != nil {
-		user = getDummyUser()
-	}
-	forum.LastTopic = topic
-	forum.LastReplyer = user
-	//forum.SetLast(topic, user)
+	forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
+	forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
+	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
 
 	return forum, err
 }
@@ -228,19 +198,9 @@ func (mfs *MemoryForumStore) Reload(id int) error {
 	if err != nil {
 		return err
 	}
-	forum.Link = buildForumURL(nameToSlug(forum.Name), forum.ID)
-
-	topic, err := topics.Get(forum.LastTopicID)
-	if err != nil {
-		topic = getDummyTopic()
-	}
-	user, err := users.Get(forum.LastReplyerID)
-	if err != nil {
-		user = getDummyUser()
-	}
-	forum.LastTopic = topic
-	forum.LastReplyer = user
-	//forum.SetLast(topic, user)
+	forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
+	forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
+	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
 
 	mfs.CacheSet(forum)
 	return nil
@@ -372,7 +332,7 @@ func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active b
 		return 0, err
 	}
 
-	permmapToQuery(presetToPermmap(preset), fid)
+	PermmapToQuery(PresetToPermmap(preset), fid)
 	forumCreateMutex.Unlock()
 	return fid, nil
 }

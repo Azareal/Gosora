@@ -230,19 +230,11 @@ func writeSelects(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleSelect("getFullSetting", "settings", "name, type, constraints", "name = ?", "", "")
 
-	adapter.SimpleSelect("getFullSettings", "settings", "name, content, type, constraints", "", "", "")
-
-	adapter.SimpleSelect("getThemes", "themes", "uname, default", "", "", "")
-
-	adapter.SimpleSelect("getWidgets", "widgets", "position, side, type, active,  location, data", "", "position ASC", "")
-
 	adapter.SimpleSelect("isPluginActive", "plugins", "active", "uname = ?", "", "")
 
 	//adapter.SimpleSelect("isPluginInstalled","plugins","installed","uname = ?","","")
 
 	adapter.SimpleSelect("getUsersOffset", "users", "uid, name, group, active, is_super_admin, avatar", "", "uid ASC", "?,?")
-
-	adapter.SimpleSelect("getWordFilters", "word_filters", "wfid, find, replacement", "", "", "")
 
 	adapter.SimpleSelect("isThemeDefault", "themes", "default", "uname = ?", "", "")
 
@@ -255,10 +247,6 @@ func writeSelects(adapter qgen.DB_Adapter) error {
 	adapter.SimpleSelect("getTopicFID", "topics", "parentID", "tid = ?", "", "")
 
 	adapter.SimpleSelect("getUserReplyUID", "users_replies", "uid", "rid = ?", "", "")
-
-	adapter.SimpleSelect("hasLikedTopic", "likes", "targetItem", "sentBy = ? and targetItem = ? and targetType = 'topics'", "", "")
-
-	adapter.SimpleSelect("hasLikedReply", "likes", "targetItem", "sentBy = ? and targetItem = ? and targetType = 'replies'", "", "")
 
 	adapter.SimpleSelect("getUserName", "users", "name", "uid = ?", "", "")
 
@@ -274,10 +262,6 @@ func writeSelects(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleSelect("getForumTopicsOffset", "topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount", "parentID = ?", "sticky DESC, lastReplyAt DESC, createdBy DESC", "?,?")
 
-	adapter.SimpleSelect("getExpiredScheduledGroups", "users_groups_scheduler", "uid", "UTC_TIMESTAMP() > revert_at AND temporary = 1", "", "")
-
-	adapter.SimpleSelect("getSync", "sync", "last_update", "", "", "")
-
 	adapter.SimpleSelect("getAttachment", "attachments", "sectionID, sectionTable, originID, originTable, uploadedBy, path", "path = ? AND sectionID = ? AND sectionTable = ?", "", "")
 
 	return nil
@@ -287,11 +271,6 @@ func writeLeftJoins(adapter qgen.DB_Adapter) error {
 	adapter.SimpleLeftJoin("getTopicRepliesOffset", "replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?")
 
 	adapter.SimpleLeftJoin("getTopicList", "topics", "users", "topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar", "topics.createdBy = users.uid", "", "topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC", "")
-
-	// TODO: Can we get rid of this?
-	adapter.SimpleLeftJoin("getTopicUser", "topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
-
-	adapter.SimpleLeftJoin("getTopicByReply", "replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.data", "replies.tid = topics.tid", "rid = ?", "", "")
 
 	adapter.SimpleLeftJoin("getTopicReplies", "replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress", "replies.createdBy = users.uid", "tid = ?", "", "")
 
@@ -314,10 +293,6 @@ func writeInnerJoins(adapter qgen.DB_Adapter) (err error) {
 func writeInserts(adapter qgen.DB_Adapter) error {
 	adapter.SimpleInsert("createReport", "topics", "title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'")
 
-	adapter.SimpleInsert("createActionReply", "replies", "tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''")
-
-	adapter.SimpleInsert("createLike", "likes", "weight, targetItem, targetType, sentBy", "?,?,?,?")
-
 	adapter.SimpleInsert("addActivity", "activity_stream", "actor, targetUser, event, elementType, elementID", "?,?,?,?,?")
 
 	adapter.SimpleInsert("notifyOne", "activity_stream_matches", "watcher, asid", "?,?")
@@ -331,10 +306,6 @@ func writeInserts(adapter qgen.DB_Adapter) error {
 	adapter.SimpleInsert("addPlugin", "plugins", "uname, active, installed", "?,?,?")
 
 	adapter.SimpleInsert("addTheme", "themes", "uname, default", "?,?")
-
-	adapter.SimpleInsert("addModlogEntry", "moderation_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
-
-	adapter.SimpleInsert("addAdminlogEntry", "administration_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
 
 	adapter.SimpleInsert("addAttachment", "attachments", "sectionID, sectionTable, originID, originTable, uploadedBy, path", "?,?,?,?,?,?")
 
@@ -363,55 +334,9 @@ func writeReplaces(adapter qgen.DB_Adapter) (err error) {
 }*/
 
 func writeUpdates(adapter qgen.DB_Adapter) error {
-	adapter.SimpleUpdate("addRepliesToTopic", "topics", "postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()", "tid = ?")
-
-	adapter.SimpleUpdate("removeRepliesFromTopic", "topics", "postCount = postCount - ?", "tid = ?")
-
-	adapter.SimpleUpdate("addLikesToTopic", "topics", "likeCount = likeCount + ?", "tid = ?")
-
-	adapter.SimpleUpdate("addLikesToReply", "replies", "likeCount = likeCount + ?", "rid = ?")
-
-	adapter.SimpleUpdate("editTopic", "topics", "title = ?, content = ?, parsed_content = ?", "tid = ?")
-
 	adapter.SimpleUpdate("editReply", "replies", "content = ?, parsed_content = ?", "rid = ?")
 
-	adapter.SimpleUpdate("stickTopic", "topics", "sticky = 1", "tid = ?")
-
-	adapter.SimpleUpdate("unstickTopic", "topics", "sticky = 0", "tid = ?")
-
-	adapter.SimpleUpdate("lockTopic", "topics", "is_closed = 1", "tid = ?")
-
-	adapter.SimpleUpdate("unlockTopic", "topics", "is_closed = 0", "tid = ?")
-
-	adapter.SimpleUpdate("updateLastIP", "users", "last_ip = ?", "uid = ?")
-
-	adapter.SimpleUpdate("updateSession", "users", "session = ?", "uid = ?")
-
-	adapter.SimpleUpdate("setPassword", "users", "password = ?, salt = ?", "uid = ?")
-
-	adapter.SimpleUpdate("setAvatar", "users", "avatar = ?", "uid = ?")
-
-	adapter.SimpleUpdate("setUsername", "users", "name = ?", "uid = ?")
-
-	adapter.SimpleUpdate("changeGroup", "users", "group = ?", "uid = ?")
-
-	adapter.SimpleUpdate("activateUser", "users", "active = 1", "uid = ?")
-
-	adapter.SimpleUpdate("updateUserLevel", "users", "level = ?", "uid = ?")
-
-	adapter.SimpleUpdate("incrementUserScore", "users", "score = score + ?", "uid = ?")
-
-	adapter.SimpleUpdate("incrementUserPosts", "users", "posts = posts + ?", "uid = ?")
-
-	adapter.SimpleUpdate("incrementUserBigposts", "users", "posts = posts + ?, bigposts = bigposts + ?", "uid = ?")
-
-	adapter.SimpleUpdate("incrementUserMegaposts", "users", "posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?", "uid = ?")
-
-	adapter.SimpleUpdate("incrementUserTopics", "users", "topics =  topics + ?", "uid = ?")
-
 	adapter.SimpleUpdate("editProfileReply", "users_replies", "content = ?, parsed_content = ?", "rid = ?")
-
-	adapter.SimpleUpdate("updateForum", "forums", "name = ?, desc = ?, active = ?, preset = ?", "fid = ?")
 
 	adapter.SimpleUpdate("updateSetting", "settings", "content = ?", "name = ?")
 
@@ -421,13 +346,11 @@ func writeUpdates(adapter qgen.DB_Adapter) error {
 
 	adapter.SimpleUpdate("updateTheme", "themes", "default = ?", "uname = ?")
 
+	adapter.SimpleUpdate("updateForum", "forums", "name = ?, desc = ?, active = ?, preset = ?", "fid = ?")
+
 	adapter.SimpleUpdate("updateUser", "users", "name = ?, email = ?, group = ?", "uid = ?")
 
-	adapter.SimpleUpdate("updateUserGroup", "users", "group = ?", "uid = ?")
-
 	adapter.SimpleUpdate("updateGroupPerms", "users_groups", "permissions = ?", "gid = ?")
-
-	adapter.SimpleUpdate("updateGroupRank", "users_groups", "is_admin = ?, is_mod = ?, is_banned = ?", "gid = ?")
 
 	adapter.SimpleUpdate("updateGroup", "users_groups", "name = ?, tag = ?", "gid = ?")
 
@@ -445,12 +368,6 @@ func writeUpdates(adapter qgen.DB_Adapter) error {
 }
 
 func writeDeletes(adapter qgen.DB_Adapter) error {
-	adapter.SimpleDelete("deleteUser", "users", "uid = ?")
-
-	adapter.SimpleDelete("deleteTopic", "topics", "tid = ?")
-
-	adapter.SimpleDelete("deleteReply", "replies", "rid = ?")
-
 	adapter.SimpleDelete("deleteProfileReply", "users_replies", "rid = ?")
 
 	//adapter.SimpleDelete("deleteForumPermsByForum", "forums_permissions", "fid = ?")
@@ -465,8 +382,6 @@ func writeDeletes(adapter qgen.DB_Adapter) error {
 
 func writeSimpleCounts(adapter qgen.DB_Adapter) error {
 	adapter.SimpleCount("reportExists", "topics", "data = ? AND data != '' AND parentID = 1", "")
-
-	adapter.SimpleCount("groupCount", "users_groups", "", "")
 
 	adapter.SimpleCount("modlogCount", "moderation_logs", "", "")
 

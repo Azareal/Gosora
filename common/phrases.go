@@ -4,7 +4,7 @@
 * Copyright Azareal 2017 - 2018
 *
  */
-package main
+package common
 
 import (
 	"encoding/json"
@@ -20,7 +20,7 @@ import (
 // TODO: Let the admin edit phrases from inside the Control Panel? How should we persist these? Should we create a copy of the langpack or edit the primaries? Use the changeLangpack mutex for this?
 // nolint Be quiet megacheck, this *is* used
 var currentLangPack atomic.Value
-var langpackCount int // TODO: Use atomics for this
+var langPackCount int // TODO: Use atomics for this
 
 // TODO: We'll be implementing the level phrases in the software proper very very soon!
 type LevelPhrases struct {
@@ -44,10 +44,9 @@ type LanguagePack struct {
 }
 
 // TODO: Add the ability to edit language JSON files from the Control Panel and automatically scan the files for changes
-////var langpacks = map[string]*LanguagePack
-var langpacks sync.Map // nolint it is used
+var langPacks sync.Map // nolint it is used
 
-func initPhrases() error {
+func InitPhrases() error {
 	log.Print("Loading the language packs")
 	err := filepath.Walk("./langs", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
@@ -61,8 +60,8 @@ func initPhrases() error {
 
 		var ext = filepath.Ext("/langs/" + path)
 		if ext != ".json" {
-			if dev.DebugMode {
-				log.Print("Found a " + ext + "in /langs/")
+			if Dev.DebugMode {
+				log.Printf("Found a '%s' in /langs/", ext)
 			}
 			return nil
 		}
@@ -74,8 +73,8 @@ func initPhrases() error {
 		}
 
 		log.Print("Adding the '" + langPack.Name + "' language pack")
-		langpacks.Store(langPack.Name, &langPack)
-		langpackCount++
+		langPacks.Store(langPack.Name, &langPack)
+		langPackCount++
 
 		return nil
 	})
@@ -83,13 +82,13 @@ func initPhrases() error {
 	if err != nil {
 		return err
 	}
-	if langpackCount == 0 {
+	if langPackCount == 0 {
 		return errors.New("You don't have any language packs")
 	}
 
-	langPack, ok := langpacks.Load(site.Language)
+	langPack, ok := langPacks.Load(Site.Language)
 	if !ok {
-		return errors.New("Couldn't find the " + site.Language + " language pack")
+		return errors.New("Couldn't find the " + Site.Language + " language pack")
 	}
 	currentLangPack.Store(langPack)
 	return nil
@@ -167,7 +166,7 @@ func DeletePhrase() {
 // TODO: Use atomics to store the pointer of the current active langpack?
 // nolint
 func ChangeLanguagePack(name string) (exists bool) {
-	pack, ok := langpacks.Load(name)
+	pack, ok := langPacks.Load(name)
 	if !ok {
 		return false
 	}

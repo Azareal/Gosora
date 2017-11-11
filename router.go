@@ -2,9 +2,13 @@
 package main
 
 //import "fmt"
-import "strings"
-import "sync"
-import "net/http"
+import (
+	"net/http"
+	"strings"
+	"sync"
+
+	"./common"
+)
 
 // TODO: Support the new handler signatures created by our efforts to move the PreRoute middleware into the generated router
 // nolint Stop linting the uselessness of this file, we never know when we might need this file again
@@ -59,5 +63,5 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	//log.Print("req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')]",req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')])
-	NotFound(w, req)
+	common.NotFound(w, req)
 }

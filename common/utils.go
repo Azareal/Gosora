@@ -12,12 +12,13 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net/smtp"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
+
+	"../query_gen/lib"
 )
 
 // Version stores a Gosora version
@@ -53,7 +54,7 @@ func GenerateSafeString(length int) (string, error) {
 }
 
 // TODO: Write a test for this
-func relativeTimeFromString(in string) (string, error) {
+func RelativeTimeFromString(in string) (string, error) {
 	if in == "" {
 		return "", nil
 	}
@@ -63,11 +64,11 @@ func relativeTimeFromString(in string) (string, error) {
 		return "", err
 	}
 
-	return relativeTime(t), nil
+	return RelativeTime(t), nil
 }
 
 // TODO: Write a test for this
-func relativeTime(t time.Time) string {
+func RelativeTime(t time.Time) string {
 	diff := time.Since(t)
 	hours := diff.Hours()
 	seconds := diff.Seconds()
@@ -105,36 +106,36 @@ func relativeTime(t time.Time) string {
 }
 
 // TODO: Write a test for this
-func convertByteUnit(bytes float64) (float64, string) {
+func ConvertByteUnit(bytes float64) (float64, string) {
 	switch {
-	case bytes >= float64(petabyte):
-		return bytes / float64(petabyte), "PB"
-	case bytes >= float64(terabyte):
-		return bytes / float64(terabyte), "TB"
-	case bytes >= float64(gigabyte):
-		return bytes / float64(gigabyte), "GB"
-	case bytes >= float64(megabyte):
-		return bytes / float64(megabyte), "MB"
-	case bytes >= float64(kilobyte):
-		return bytes / float64(kilobyte), "KB"
+	case bytes >= float64(Petabyte):
+		return bytes / float64(Petabyte), "PB"
+	case bytes >= float64(Terabyte):
+		return bytes / float64(Terabyte), "TB"
+	case bytes >= float64(Gigabyte):
+		return bytes / float64(Gigabyte), "GB"
+	case bytes >= float64(Megabyte):
+		return bytes / float64(Megabyte), "MB"
+	case bytes >= float64(Kilobyte):
+		return bytes / float64(Kilobyte), "KB"
 	default:
 		return bytes, " bytes"
 	}
 }
 
 // TODO: Write a test for this
-func convertByteInUnit(bytes float64, unit string) (count float64) {
+func ConvertByteInUnit(bytes float64, unit string) (count float64) {
 	switch unit {
 	case "PB":
-		count = bytes / float64(petabyte)
+		count = bytes / float64(Petabyte)
 	case "TB":
-		count = bytes / float64(terabyte)
+		count = bytes / float64(Terabyte)
 	case "GB":
-		count = bytes / float64(gigabyte)
+		count = bytes / float64(Gigabyte)
 	case "MB":
-		count = bytes / float64(megabyte)
+		count = bytes / float64(Megabyte)
 	case "KB":
-		count = bytes / float64(kilobyte)
+		count = bytes / float64(Kilobyte)
 	default:
 		count = 0.1
 	}
@@ -146,7 +147,7 @@ func convertByteInUnit(bytes float64, unit string) (count float64) {
 }
 
 // TODO: Write a test for this
-func convertUnit(num int) (int, string) {
+func ConvertUnit(num int) (int, string) {
 	switch {
 	case num >= 1000000000000:
 		return num / 1000000000000, "T"
@@ -162,7 +163,7 @@ func convertUnit(num int) (int, string) {
 }
 
 // TODO: Write a test for this
-func convertFriendlyUnit(num int) (int, string) {
+func ConvertFriendlyUnit(num int) (int, string) {
 	switch {
 	case num >= 1000000000000000:
 		return 0, " quadrillion"
@@ -179,7 +180,7 @@ func convertFriendlyUnit(num int) (int, string) {
 	}
 }
 
-func nameToSlug(name string) (slug string) {
+func NameToSlug(name string) (slug string) {
 	name = strings.TrimSpace(name)
 	name = strings.Replace(name, "  ", " ", -1)
 
@@ -199,58 +200,8 @@ func nameToSlug(name string) (slug string) {
 	return slug
 }
 
-// TODO: Refactor this
-func SendEmail(email string, subject string, msg string) bool {
-	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
-	if vhooks["email_send_intercept"] != nil {
-		return vhooks["email_send_intercept"](email, subject, msg).(bool)
-	}
-	body := "Subject: " + subject + "\n\n" + msg + "\n"
-
-	con, err := smtp.Dial(config.SMTPServer + ":" + config.SMTPPort)
-	if err != nil {
-		return false
-	}
-
-	if config.SMTPUsername != "" {
-		auth := smtp.PlainAuth("", config.SMTPUsername, config.SMTPPassword, config.SMTPServer)
-		err = con.Auth(auth)
-		if err != nil {
-			return false
-		}
-	}
-
-	err = con.Mail(site.Email)
-	if err != nil {
-		return false
-	}
-	err = con.Rcpt(email)
-	if err != nil {
-		return false
-	}
-
-	emailData, err := con.Data()
-	if err != nil {
-		return false
-	}
-	_, err = fmt.Fprintf(emailData, body)
-	if err != nil {
-		return false
-	}
-
-	err = emailData.Close()
-	if err != nil {
-		return false
-	}
-	err = con.Quit()
-	if err != nil {
-		return false
-	}
-	return true
-}
-
 // TODO: Write a test for this
-func weakPassword(password string) error {
+func WeakPassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("your password needs to be at-least eight characters long")
 	}
@@ -335,7 +286,7 @@ func Stripslashes(text string) string {
 }
 
 // TODO: Write a test for this
-func wordCount(input string) (count int) {
+func WordCount(input string) (count int) {
 	input = strings.TrimSpace(input)
 	if input == "" {
 		return 0
@@ -355,7 +306,7 @@ func wordCount(input string) (count int) {
 }
 
 // TODO: Write a test for this
-func getLevel(score int) (level int) {
+func GetLevel(score int) (level int) {
 	var base float64 = 25
 	var current, prev float64
 	var expFactor = 2.8
@@ -376,7 +327,7 @@ func getLevel(score int) (level int) {
 }
 
 // TODO: Write a test for this
-func getLevelScore(getLevel int) (score int) {
+func GetLevelScore(getLevel int) (score int) {
 	var base float64 = 25
 	var current, prev float64
 	var level int
@@ -398,7 +349,7 @@ func getLevelScore(getLevel int) (score int) {
 }
 
 // TODO: Write a test for this
-func getLevels(maxLevel int) []float64 {
+func GetLevels(maxLevel int) []float64 {
 	var base float64 = 25
 	var current, prev float64 // = 0
 	var expFactor = 2.8
@@ -417,7 +368,7 @@ func getLevels(maxLevel int) []float64 {
 	return out
 }
 
-func buildSlug(slug string, id int) string {
+func BuildSlug(slug string, id int) string {
 	if slug == "" {
 		return strconv.Itoa(id)
 	}
@@ -425,13 +376,21 @@ func buildSlug(slug string, id int) string {
 }
 
 // TODO: Make a store for this?
-func addModLog(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
-	_, err = stmts.addModlogEntry.Exec(action, elementID, elementType, ipaddress, actorID)
+func AddModLog(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
+	addModLogEntry, err := qgen.Builder.SimpleInsert("moderation_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
+	if err != nil {
+		return err
+	}
+	_, err = addModLogEntry.Exec(action, elementID, elementType, ipaddress, actorID)
 	return err
 }
 
 // TODO: Make a store for this?
-func addAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) (err error) {
-	_, err = stmts.addAdminlogEntry.Exec(action, elementID, elementType, ipaddress, actorID)
+func AddAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) (err error) {
+	addAdminLogEntry, err := qgen.Builder.SimpleInsert("administration_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
+	if err != nil {
+		return err
+	}
+	_, err = addAdminLogEntry.Exec(action, elementID, elementType, ipaddress, actorID)
 	return err
 }

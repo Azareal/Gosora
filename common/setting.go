@@ -3,6 +3,7 @@ package common
 import "strconv"
 import "strings"
 import "sync/atomic"
+import "../query_gen/lib"
 
 // SettingMap is a map type specifically for holding the various settings admins set to toggle features on and off or to otherwise alter Gosora's behaviour from the Control Panel
 type SettingMap map[string]interface{}
@@ -27,7 +28,12 @@ func init() {
 }
 
 func LoadSettings() error {
-	rows, err := stmts.getFullSettings.Query()
+	// TODO: Stop doing this inline
+	getFullSettings, err := qgen.Builder.SimpleSelect("settings", "name, content, type, constraints", "", "", "")
+	if err != nil {
+		return err
+	}
+	rows, err := getFullSettings.Query()
 	if err != nil {
 		return err
 	}

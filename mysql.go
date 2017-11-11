@@ -8,12 +8,16 @@
  */
 package main
 
-import "log"
+import (
+	"database/sql"
+	"log"
 
-//import "time"
-import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
-import "./query_gen/lib"
+	//import "time"
+
+	"./common"
+	"./query_gen/lib"
+	_ "github.com/go-sql-driver/mysql"
+)
 
 var dbCollation = "utf8mb4_general_ci"
 
@@ -24,13 +28,13 @@ func init() {
 
 func initMySQL() (err error) {
 	var _dbpassword string
-	if dbConfig.Password != "" {
-		_dbpassword = ":" + dbConfig.Password
+	if common.DbConfig.Password != "" {
+		_dbpassword = ":" + common.DbConfig.Password
 	}
 
 	// TODO: Move this bit to the query gen lib
 	// Open the database connection
-	db, err = sql.Open("mysql", dbConfig.Username+_dbpassword+"@tcp("+dbConfig.Host+":"+dbConfig.Port+")/"+dbConfig.Dbname+"?collation="+dbCollation+"&parseTime=true")
+	db, err = sql.Open("mysql", common.DbConfig.Username+_dbpassword+"@tcp("+common.DbConfig.Host+":"+common.DbConfig.Port+")/"+common.DbConfig.Dbname+"?collation="+dbCollation+"&parseTime=true")
 	if err != nil {
 		return err
 	}

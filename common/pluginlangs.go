@@ -89,7 +89,7 @@ func InitPluginLangs() error {
 		if err != nil {
 			return err
 		}
-		plugins[plugin.UName] = pplugin
+		Plugins[plugin.UName] = pplugin
 	}
 	return nil
 }

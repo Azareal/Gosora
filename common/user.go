@@ -15,12 +15,14 @@ import (
 	"strings"
 	"time"
 
+	"../query_gen/lib"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // TODO: Replace any literals with this
 var BanGroup = 4
 
+// GuestUser is an instance of user which holds guest data to avoid having to initialise a guest every time
 var GuestUser = User{ID: 0, Link: "#", Group: 6, Perms: GuestPerms}
 
 //func(real_password string, password string, salt string) (err error)
@@ -57,12 +59,48 @@ type User struct {
 	TempGroup    int
 }
 
-type Email struct {
-	UserID    int
-	Email     string
-	Validated bool
-	Primary   bool
-	Token     string
+type UserStmts struct {
+	activate           *sql.Stmt
+	changeGroup        *sql.Stmt
+	delete             *sql.Stmt
+	setAvatar          *sql.Stmt
+	setUsername        *sql.Stmt
+	updateGroup        *sql.Stmt
+	incrementTopics    *sql.Stmt
+	updateLevel        *sql.Stmt
+	incrementScore     *sql.Stmt
+	incrementPosts     *sql.Stmt
+	incrementBigposts  *sql.Stmt
+	incrementMegaposts *sql.Stmt
+	updateLastIP       *sql.Stmt
+
+	setPassword *sql.Stmt
+}
+
+var userStmts UserStmts
+
+func init() {
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		userStmts = UserStmts{
+			activate:           acc.SimpleUpdate("users", "active = 1", "uid = ?"),
+			changeGroup:        acc.SimpleUpdate("users", "group = ?", "uid = ?"),
+			delete:             acc.SimpleDelete("users", "uid = ?"),
+			setAvatar:          acc.SimpleUpdate("users", "avatar = ?", "uid = ?"),
+			setUsername:        acc.SimpleUpdate("users", "name = ?", "uid = ?"),
+			updateGroup:        acc.SimpleUpdate("users", "group = ?", "uid = ?"),
+			incrementTopics:    acc.SimpleUpdate("users", "topics =  topics + ?", "uid = ?"),
+			updateLevel:        acc.SimpleUpdate("users", "level = ?", "uid = ?"),
+			incrementScore:     acc.SimpleUpdate("users", "score = score + ?", "uid = ?"),
+			incrementPosts:     acc.SimpleUpdate("users", "posts = posts + ?", "uid = ?"),
+			incrementBigposts:  acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?", "uid = ?"),
+			incrementMegaposts: acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?", "uid = ?"),
+			updateLastIP:       acc.SimpleUpdate("users", "last_ip = ?", "uid = ?"),
+
+			setPassword: acc.SimpleUpdate("users", "password = ?, salt = ?", "uid = ?"),
+		}
+		return acc.FirstError()
+	})
 }
 
 func (user *User) Init() {
@@ -71,15 +109,22 @@ func (user *User) Init() {
 			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
 		}
 	} else {
-		user.Avatar = strings.Replace(config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
+		user.Avatar = strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 	}
-	user.Link = buildProfileURL(nameToSlug(user.Name), user.ID)
-	user.Tag = gstore.DirtyGet(user.Group).Tag
-	user.initPerms()
+	user.Link = BuildProfileURL(NameToSlug(user.Name), user.ID)
+	user.Tag = Gstore.DirtyGet(user.Group).Tag
+	user.InitPerms()
+}
+
+func (user *User) CacheRemove() {
+	ucache, ok := Users.(UserCache)
+	if ok {
+		ucache.CacheRemove(user.ID)
+	}
 }
 
 func (user *User) Ban(duration time.Duration, issuedBy int) error {
-	return user.ScheduleGroupUpdate(banGroup, issuedBy, duration)
+	return user.ScheduleGroupUpdate(BanGroup, issuedBy, duration)
 }
 
 func (user *User) Unban() error {
@@ -112,7 +157,7 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	}
 	revertAt := time.Now().Add(duration)
 
-	tx, err := db.Begin()
+	tx, err := qgen.Builder.Begin()
 	if err != nil {
 		return err
 	}
@@ -138,15 +183,12 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	}
 	err = tx.Commit()
 
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
+	user.CacheRemove()
 	return err
 }
 
 func (user *User) RevertGroupUpdate() error {
-	tx, err := db.Begin()
+	tx, err := qgen.Builder.Begin()
 	if err != nil {
 		return err
 	}
@@ -163,25 +205,19 @@ func (user *User) RevertGroupUpdate() error {
 	}
 	err = tx.Commit()
 
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
+	user.CacheRemove()
 	return err
 }
 
 // TODO: Use a transaction here
 // ? - Add a Deactivate method? Not really needed, if someone's been bad you could do a ban, I guess it might be useful, if someone says that email x isn't actually owned by the user in question?
 func (user *User) Activate() (err error) {
-	_, err = stmts.activateUser.Exec(user.ID)
+	_, err = userStmts.activate.Exec(user.ID)
 	if err != nil {
 		return err
 	}
-	_, err = stmts.changeGroup.Exec(config.DefaultGroup, user.ID)
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
+	_, err = userStmts.changeGroup.Exec(Config.DefaultGroup, user.ID)
+	user.CacheRemove()
 	return err
 }
 
@@ -189,111 +225,105 @@ func (user *User) Activate() (err error) {
 // TODO: Delete this user's content too?
 // TODO: Expose this to the admin?
 func (user *User) Delete() error {
-	_, err := stmts.deleteUser.Exec(user.ID)
+	_, err := userStmts.delete.Exec(user.ID)
 	if err != nil {
 		return err
 	}
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
+	user.CacheRemove()
 	return err
 }
 
 func (user *User) ChangeName(username string) (err error) {
-	_, err = stmts.setUsername.Exec(username, user.ID)
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
+	_, err = userStmts.setUsername.Exec(username, user.ID)
+	user.CacheRemove()
 	return err
 }
 
 func (user *User) ChangeAvatar(avatar string) (err error) {
-	_, err = stmts.setAvatar.Exec(avatar, user.ID)
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
+	_, err = userStmts.setAvatar.Exec(avatar, user.ID)
+	user.CacheRemove()
 	return err
 }
 
 func (user *User) ChangeGroup(group int) (err error) {
-	_, err = stmts.updateUserGroup.Exec(group, user.ID)
-	ucache, ok := users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
-	}
+	_, err = userStmts.updateGroup.Exec(group, user.ID)
+	user.CacheRemove()
 	return err
 }
 
-func (user *User) increasePostStats(wcount int, topic bool) (err error) {
+// ! Only updates the database not the *User for safety reasons
+func (user *User) UpdateIP(host string) error {
+	_, err := userStmts.updateLastIP.Exec(host, user.ID)
+	return err
+}
+
+func (user *User) IncreasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := 1
 	if topic {
-		_, err = stmts.incrementUserTopics.Exec(1, user.ID)
+		_, err = userStmts.incrementTopics.Exec(1, user.ID)
 		if err != nil {
 			return err
 		}
 		baseScore = 2
 	}
 
-	settings := settingBox.Load().(SettingBox)
+	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = stmts.incrementUserMegaposts.Exec(1, 1, 1, user.ID)
+		_, err = userStmts.incrementMegaposts.Exec(1, 1, 1, user.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = stmts.incrementUserBigposts.Exec(1, 1, user.ID)
+		_, err = userStmts.incrementBigposts.Exec(1, 1, user.ID)
 		mod = 1
 	} else {
-		_, err = stmts.incrementUserPosts.Exec(1, user.ID)
+		_, err = userStmts.incrementPosts.Exec(1, user.ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = stmts.incrementUserScore.Exec(baseScore+mod, user.ID)
+	_, err = userStmts.incrementScore.Exec(baseScore+mod, user.ID)
 	if err != nil {
 		return err
 	}
 	//log.Print(user.Score + base_score + mod)
 	//log.Print(getLevel(user.Score + base_score + mod))
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = stmts.updateUserLevel.Exec(getLevel(user.Score+baseScore+mod), user.ID)
+	_, err = userStmts.updateLevel.Exec(GetLevel(user.Score+baseScore+mod), user.ID)
 	return err
 }
 
-func (user *User) decreasePostStats(wcount int, topic bool) (err error) {
+func (user *User) DecreasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := -1
 	if topic {
-		_, err = stmts.incrementUserTopics.Exec(-1, user.ID)
+		_, err = userStmts.incrementTopics.Exec(-1, user.ID)
 		if err != nil {
 			return err
 		}
 		baseScore = -2
 	}
 
-	settings := settingBox.Load().(SettingBox)
+	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = stmts.incrementUserMegaposts.Exec(-1, -1, -1, user.ID)
+		_, err = userStmts.incrementMegaposts.Exec(-1, -1, -1, user.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = stmts.incrementUserBigposts.Exec(-1, -1, user.ID)
+		_, err = userStmts.incrementBigposts.Exec(-1, -1, user.ID)
 		mod = 1
 	} else {
-		_, err = stmts.incrementUserPosts.Exec(-1, user.ID)
+		_, err = userStmts.incrementPosts.Exec(-1, user.ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = stmts.incrementUserScore.Exec(baseScore-mod, user.ID)
+	_, err = userStmts.incrementScore.Exec(baseScore-mod, user.ID)
 	if err != nil {
 		return err
 	}
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = stmts.updateUserLevel.Exec(getLevel(user.Score-baseScore-mod), user.ID)
+	_, err = userStmts.updateLevel.Exec(GetLevel(user.Score-baseScore-mod), user.ID)
 	return err
 }
 
@@ -303,12 +333,12 @@ func (user *User) Copy() User {
 }
 
 // TODO: Write unit tests for this
-func (user *User) initPerms() {
+func (user *User) InitPerms() {
 	if user.TempGroup != 0 {
 		user.Group = user.TempGroup
 	}
 
-	group := gstore.DirtyGet(user.Group)
+	group := Gstore.DirtyGet(user.Group)
 	if user.IsSuperAdmin {
 		user.Perms = AllPerms
 		user.PluginPerms = AllPluginPerms
@@ -332,7 +362,7 @@ func BcryptCheckPassword(realPassword string, password string, salt string) (err
 
 // Investigate. Do we need the extra salt?
 func BcryptGeneratePassword(password string) (hashedPassword string, salt string, err error) {
-	salt, err = GenerateSafeString(saltLength)
+	salt, err = GenerateSafeString(SaltLength)
 	if err != nil {
 		return "", "", err
 	}
@@ -353,25 +383,14 @@ func BcryptGeneratePasswordNoSalt(password string) (hash string, err error) {
 	return string(hashedPassword), nil
 }
 
+// TODO: Move this to *User
 func SetPassword(uid int, password string) error {
 	hashedPassword, salt, err := GeneratePassword(password)
 	if err != nil {
 		return err
 	}
-	_, err = stmts.setPassword.Exec(hashedPassword, salt, uid)
+	_, err = userStmts.setPassword.Exec(hashedPassword, salt, uid)
 	return err
-}
-
-func SendValidationEmail(username string, email string, token string) bool {
-	var schema = "http"
-	if site.EnableSsl {
-		schema += "s"
-	}
-
-	// TODO: Move these to the phrase system
-	subject := "Validate Your Email @ " + site.Name
-	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + site.URL + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
-	return SendEmail(email, subject, msg)
 }
 
 // TODO: Write units tests for this
@@ -382,7 +401,7 @@ func wordsToScore(wcount int, topic bool) (score int) {
 		score = 1
 	}
 
-	settings := settingBox.Load().(SettingBox)
+	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
 		score += 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
@@ -392,12 +411,12 @@ func wordsToScore(wcount int, topic bool) (score int) {
 }
 
 // For use in tests and to help generate dummy users for forums which don't have last posters
-func getDummyUser() *User {
+func BlankUser() *User {
 	return &User{ID: 0, Name: ""}
 }
 
 // TODO: Write unit tests for this
-func buildProfileURL(slug string, uid int) string {
+func BuildProfileURL(slug string, uid int) string {
 	if slug == "" {
 		return "/user/" + strconv.Itoa(uid)
 	}

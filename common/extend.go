@@ -18,13 +18,13 @@ type PluginList map[string]*Plugin
 var Plugins PluginList = make(map[string]*Plugin)
 
 // Hooks with a single argument. Is this redundant? Might be useful for inlining, as variadics aren't inlined? Are closures even inlined to begin with?
-var hooks = map[string][]func(interface{}) interface{}{
+var Hooks = map[string][]func(interface{}) interface{}{
 	"forums_frow_assign":       nil,
 	"topic_create_frow_assign": nil,
 }
 
 // Hooks with a variable number of arguments
-var vhooks = map[string]func(...interface{}) interface{}{
+var Vhooks = map[string]func(...interface{}) interface{}{
 	"intercept_build_widgets": nil,
 	"forum_trow_assign":       nil,
 	"topics_topic_row_assign": nil,
@@ -35,7 +35,7 @@ var vhooks = map[string]func(...interface{}) interface{}{
 }
 
 // Hooks with a variable number of arguments and return values for skipping the parent function and propagating an error upwards
-var vhookSkippable = map[string]func(...interface{}) (bool, RouteError){
+var VhookSkippable = map[string]func(...interface{}) (bool, RouteError){
 	"simple_forum_check_pre_perms": nil,
 	"forum_check_pre_perms":        nil,
 }
@@ -65,13 +65,13 @@ var messageHooks = map[string][]func(Message, PageInt, ...interface{}) interface
 }
 
 // Hooks which take in and spit out a string. This is usually used for parser components
-var sshooks = map[string][]func(string) string{
+var Sshooks = map[string][]func(string) string{
 	"preparse_preassign": nil,
 	"parse_assign":       nil,
 }
 
 // The hooks which run before the template is rendered for a route
-var preRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User, interface{}) bool{
+var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User, interface{}) bool{
 	"pre_render": nil,
 
 	"pre_render_forum_list":   nil,
@@ -137,7 +137,7 @@ type Plugin struct {
 	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins
 }
 
-func initExtend() (err error) {
+func InitExtend() (err error) {
 	err = InitPluginLangs()
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func initExtend() (err error) {
 	return Plugins.Load()
 }
 
-// LoadPlugins polls the database to see which plugins have been activated and which have been installed
+// Load polls the database to see which plugins have been activated and which have been installed
 func (plugins PluginList) Load() error {
 	getPlugins, err := qgen.Builder.SimpleSelect("plugins", "uname, active, installed", "", "", "")
 	if err != nil {
@@ -206,37 +206,37 @@ func NewPlugin(uname string, name string, author string, url string, settings st
 func (plugin *Plugin) AddHook(name string, handler interface{}) {
 	switch h := handler.(type) {
 	case func(interface{}) interface{}:
-		if len(hooks[name]) == 0 {
+		if len(Hooks[name]) == 0 {
 			var hookSlice []func(interface{}) interface{}
 			hookSlice = append(hookSlice, h)
-			hooks[name] = hookSlice
+			Hooks[name] = hookSlice
 		} else {
-			hooks[name] = append(hooks[name], h)
+			Hooks[name] = append(Hooks[name], h)
 		}
-		plugin.Hooks[name] = len(hooks[name])
+		plugin.Hooks[name] = len(Hooks[name])
 	case func(string) string:
-		if len(sshooks[name]) == 0 {
+		if len(Sshooks[name]) == 0 {
 			var hookSlice []func(string) string
 			hookSlice = append(hookSlice, h)
-			sshooks[name] = hookSlice
+			Sshooks[name] = hookSlice
 		} else {
-			sshooks[name] = append(sshooks[name], h)
+			Sshooks[name] = append(Sshooks[name], h)
 		}
-		plugin.Hooks[name] = len(sshooks[name])
+		plugin.Hooks[name] = len(Sshooks[name])
 	case func(http.ResponseWriter, *http.Request, *User, interface{}) bool:
-		if len(preRenderHooks[name]) == 0 {
+		if len(PreRenderHooks[name]) == 0 {
 			var hookSlice []func(http.ResponseWriter, *http.Request, *User, interface{}) bool
 			hookSlice = append(hookSlice, h)
-			preRenderHooks[name] = hookSlice
+			PreRenderHooks[name] = hookSlice
 		} else {
-			preRenderHooks[name] = append(preRenderHooks[name], h)
+			PreRenderHooks[name] = append(PreRenderHooks[name], h)
 		}
-		plugin.Hooks[name] = len(preRenderHooks[name])
+		plugin.Hooks[name] = len(PreRenderHooks[name])
 	case func(...interface{}) interface{}:
-		vhooks[name] = h
+		Vhooks[name] = h
 		plugin.Hooks[name] = 0
 	case func(...interface{}) (bool, RouteError):
-		vhookSkippable[name] = h
+		VhookSkippable[name] = h
 		plugin.Hooks[name] = 0
 	default:
 		panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
@@ -248,35 +248,35 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 	switch handler.(type) {
 	case func(interface{}) interface{}:
 		key := plugin.Hooks[name]
-		hook := hooks[name]
+		hook := Hooks[name]
 		if len(hook) == 1 {
 			hook = []func(interface{}) interface{}{}
 		} else {
 			hook = append(hook[:key], hook[key+1:]...)
 		}
-		hooks[name] = hook
+		Hooks[name] = hook
 	case func(string) string:
 		key := plugin.Hooks[name]
-		hook := sshooks[name]
+		hook := Sshooks[name]
 		if len(hook) == 1 {
 			hook = []func(string) string{}
 		} else {
 			hook = append(hook[:key], hook[key+1:]...)
 		}
-		sshooks[name] = hook
+		Sshooks[name] = hook
 	case func(http.ResponseWriter, *http.Request, *User, interface{}) bool:
 		key := plugin.Hooks[name]
-		hook := preRenderHooks[name]
+		hook := PreRenderHooks[name]
 		if len(hook) == 1 {
 			hook = []func(http.ResponseWriter, *http.Request, *User, interface{}) bool{}
 		} else {
 			hook = append(hook[:key], hook[key+1:]...)
 		}
-		preRenderHooks[name] = hook
+		PreRenderHooks[name] = hook
 	case func(...interface{}) interface{}:
-		delete(vhooks, name)
+		delete(Vhooks, name)
 	case func(...interface{}) (bool, RouteError):
-		delete(vhookSkippable, name)
+		delete(VhookSkippable, name)
 	default:
 		panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
 	}
@@ -285,18 +285,18 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 
 var pluginsInited = false
 
-func initPlugins() {
+func InitPlugins() {
 	for name, body := range Plugins {
-		log.Print("Added plugin " + name)
+		log.Printf("Added plugin %s", name)
 		if body.Active {
-			log.Print("Initialised plugin " + name)
+			log.Printf("Initialised plugin %s", name)
 			if Plugins[name].Init != nil {
 				err := Plugins[name].Init()
 				if err != nil {
 					log.Print(err)
 				}
 			} else {
-				log.Print("Plugin " + name + " doesn't have an initialiser.")
+				log.Printf("Plugin %s doesn't have an initialiser.", name)
 			}
 		}
 	}
@@ -304,49 +304,49 @@ func initPlugins() {
 }
 
 // ? - Are the following functions racey?
-func runHook(name string, data interface{}) interface{} {
-	for _, hook := range hooks[name] {
+func RunHook(name string, data interface{}) interface{} {
+	for _, hook := range Hooks[name] {
 		data = hook(data)
 	}
 	return data
 }
 
-func runHookNoreturn(name string, data interface{}) {
-	for _, hook := range hooks[name] {
+func RunHookNoreturn(name string, data interface{}) {
+	for _, hook := range Hooks[name] {
 		_ = hook(data)
 	}
 }
 
-func runVhook(name string, data ...interface{}) interface{} {
-	return vhooks[name](data...)
+func RunVhook(name string, data ...interface{}) interface{} {
+	return Vhooks[name](data...)
 }
 
-func runVhookSkippable(name string, data ...interface{}) (bool, RouteError) {
-	return vhookSkippable[name](data...)
+func RunVhookSkippable(name string, data ...interface{}) (bool, RouteError) {
+	return VhookSkippable[name](data...)
 }
 
-func runVhookNoreturn(name string, data ...interface{}) {
-	_ = vhooks[name](data...)
+func RunVhookNoreturn(name string, data ...interface{}) {
+	_ = Vhooks[name](data...)
 }
 
 // Trying to get a teeny bit of type-safety where-ever possible, especially for such a critical set of hooks
-func runSshook(name string, data string) string {
-	for _, hook := range sshooks[name] {
+func RunSshook(name string, data string) string {
+	for _, hook := range Sshooks[name] {
 		data = hook(data)
 	}
 	return data
 }
 
-func runPreRenderHook(name string, w http.ResponseWriter, r *http.Request, user *User, data interface{}) (halt bool) {
+func RunPreRenderHook(name string, w http.ResponseWriter, r *http.Request, user *User, data interface{}) (halt bool) {
 	// This hook runs on ALL pre_render hooks
-	for _, hook := range preRenderHooks["pre_render"] {
+	for _, hook := range PreRenderHooks["pre_render"] {
 		if hook(w, r, user, data) {
 			return true
 		}
 	}
 
 	// The actual pre_render hook
-	for _, hook := range preRenderHooks[name] {
+	for _, hook := range PreRenderHooks[name] {
 		if hook(w, r, user, data) {
 			return true
 		}

@@ -8,15 +8,17 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"../query_gen/lib"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // TODO: Add the watchdog goroutine
 // TODO: Add some sort of update method
-var users UserStore
-var errAccountExists = errors.New("this username is already in use")
+var Users UserStore
+var ErrAccountExists = errors.New("this username is already in use")
 
 type UserStore interface {
+	DirtyGet(id int) *User
 	Get(id int) (*User, error)
 	Exists(id int) bool
 	//BulkGet(ids []int) ([]*User, error)
@@ -84,6 +86,25 @@ func (mus *MemoryUserStore) CacheGetUnsafe(id int) (*User, error) {
 		return item, nil
 	}
 	return item, ErrNoRows
+}
+
+func (mus *MemoryUserStore) DirtyGet(id int) *User {
+	mus.RLock()
+	user, ok := mus.items[id]
+	mus.RUnlock()
+	if ok {
+		return user
+	}
+
+	user = &User{ID: id, Loggedin: true}
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+
+	user.Init()
+	if err == nil {
+		mus.CacheSet(user)
+		return user
+	}
+	return BlankUser()
 }
 
 func (mus *MemoryUserStore) Get(id int) (*User, error) {
@@ -188,7 +209,7 @@ func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 
 		// We probably don't need this, but it might be useful in case of bugs in BulkCascadeGetMap
 		if sidList == "" {
-			if dev.DebugMode {
+			if Dev.DebugMode {
 				log.Print("This data is sampled later in the BulkCascadeGetMap function, so it might miss the cached IDs")
 				log.Print("idCount", idCount)
 				log.Print("ids", ids)
@@ -298,10 +319,10 @@ func (mus *MemoryUserStore) Create(username string, password string, email strin
 	// Is this username already taken..?
 	err := mus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
-		return 0, errAccountExists
+		return 0, ErrAccountExists
 	}
 
-	salt, err := GenerateSafeString(saltLength)
+	salt, err := GenerateSafeString(SaltLength)
 	if err != nil {
 		return 0, err
 	}
@@ -370,6 +391,17 @@ func NewSQLUserStore() (*SQLUserStore, error) {
 	}, acc.FirstError()
 }
 
+func (mus *SQLUserStore) DirtyGet(id int) *User {
+	user := &User{ID: id, Loggedin: true}
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+
+	user.Init()
+	if err != nil {
+		return BlankUser()
+	}
+	return user
+}
+
 func (mus *SQLUserStore) Get(id int) (*User, error) {
 	user := &User{ID: id, Loggedin: true}
 	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
@@ -436,10 +468,10 @@ func (mus *SQLUserStore) Create(username string, password string, email string, 
 	// Is this username already taken..?
 	err := mus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
-		return 0, errAccountExists
+		return 0, ErrAccountExists
 	}
 
-	salt, err := GenerateSafeString(saltLength)
+	salt, err := GenerateSafeString(SaltLength)
 	if err != nil {
 		return 0, err
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	//"fmt"
 
+	"./common"
 	"./extend/guilds/lib"
 	"./query_gen/lib"
 )
@@ -11,75 +12,58 @@ import (
 
 // TODO: Add a plugin interface instead of having a bunch of argument to AddPlugin?
 func init() {
-	plugins["guilds"] = NewPlugin("guilds", "Guilds", "Azareal", "http://github.com/Azareal", "", "", "", initGuilds, nil, deactivateGuilds, installGuilds, nil)
+	common.Plugins["guilds"] = common.NewPlugin("guilds", "Guilds", "Azareal", "http://github.com/Azareal", "", "", "", initGuilds, nil, deactivateGuilds, installGuilds, nil)
 
 	// TODO: Is it possible to avoid doing this when the plugin isn't activated?
-	prebuildTmplList = append(prebuildTmplList, guilds.PrebuildTmplList)
+	common.PrebuildTmplList = append(common.PrebuildTmplList, guilds.PrebuildTmplList)
 }
 
 func initGuilds() (err error) {
-	plugins["guilds"].AddHook("intercept_build_widgets", guilds.Widgets)
-	plugins["guilds"].AddHook("trow_assign", guilds.TrowAssign)
-	plugins["guilds"].AddHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
-	plugins["guilds"].AddHook("pre_render_view_forum", guilds.PreRenderViewForum)
-	plugins["guilds"].AddHook("simple_forum_check_pre_perms", guilds.ForumCheck)
-	plugins["guilds"].AddHook("forum_check_pre_perms", guilds.ForumCheck)
+	common.Plugins["guilds"].AddHook("intercept_build_widgets", guilds.Widgets)
+	common.Plugins["guilds"].AddHook("trow_assign", guilds.TrowAssign)
+	common.Plugins["guilds"].AddHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
+	common.Plugins["guilds"].AddHook("pre_render_view_forum", guilds.PreRenderViewForum)
+	common.Plugins["guilds"].AddHook("simple_forum_check_pre_perms", guilds.ForumCheck)
+	common.Plugins["guilds"].AddHook("forum_check_pre_perms", guilds.ForumCheck)
 	// TODO: Auto-grant this perm to admins upon installation?
-	registerPluginPerm("CreateGuild")
-	router.HandleFunc("/guilds/", guilds.GuildList)
-	router.HandleFunc("/guild/", guilds.ViewGuild)
-	router.HandleFunc("/guild/create/", guilds.CreateGuild)
-	router.HandleFunc("/guild/create/submit/", guilds.CreateGuildSubmit)
-	router.HandleFunc("/guild/members/", guilds.MemberList)
+	common.RegisterPluginPerm("CreateGuild")
+	router.HandleFunc("/guilds/", guilds.RouteGuildList)
+	router.HandleFunc("/guild/", guilds.MiddleViewGuild)
+	router.HandleFunc("/guild/create/", guilds.RouteCreateGuild)
+	router.HandleFunc("/guild/create/submit/", guilds.RouteCreateGuildSubmit)
+	router.HandleFunc("/guild/members/", guilds.RouteMemberList)
 
-	guilds.ListStmt, err = qgen.Builder.SimpleSelect("guilds", "guildID, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime", "", "", "")
-	if err != nil {
-		return err
-	}
-	guilds.GetGuildStmt, err = qgen.Builder.SimpleSelect("guilds", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "guildID = ?", "", "")
-	if err != nil {
-		return err
-	}
-	guilds.MemberListStmt, err = qgen.Builder.SimpleSelect("guilds_members", "guildID, uid, rank, posts, joinedAt", "", "", "")
-	if err != nil {
-		return err
-	}
-	guilds.MemberListJoinStmt, err = qgen.Builder.SimpleLeftJoin("guilds_members", "users", "users.uid, guilds_members.rank, guilds_members.posts, guilds_members.joinedAt, users.name, users.avatar", "guilds_members.uid = users.uid", "guilds_members.guildID = ?", "guilds_members.rank DESC, guilds_members.joinedat ASC", "")
-	if err != nil {
-		return err
-	}
-	guilds.GetMemberStmt, err = qgen.Builder.SimpleSelect("guilds_members", "rank, posts, joinedAt", "guildID = ? AND uid = ?", "", "")
-	if err != nil {
-		return err
-	}
-	guilds.CreateGuildStmt, err = qgen.Builder.SimpleInsert("guilds", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
-	if err != nil {
-		return err
-	}
-	guilds.AttachForumStmt, err = qgen.Builder.SimpleUpdate("forums", "parentID = ?, parentType = 'guild'", "fid = ?")
-	if err != nil {
-		return err
-	}
-	guilds.UnattachForumStmt, err = qgen.Builder.SimpleUpdate("forums", "parentID = 0, parentType = ''", "fid = ?")
-	if err != nil {
-		return err
-	}
-	guilds.AddMemberStmt, err = qgen.Builder.SimpleInsert("guilds_members", "guildID, uid, rank, posts, joinedAt", "?,?,?,0,UTC_TIMESTAMP()")
-	if err != nil {
-		return err
-	}
+	acc := qgen.Builder.Accumulator()
 
-	return nil
+	guilds.ListStmt = acc.SimpleSelect("guilds", "guildID, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime", "", "", "")
+
+	guilds.GetGuildStmt = acc.SimpleSelect("guilds", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "guildID = ?", "", "")
+
+	guilds.MemberListStmt = acc.SimpleSelect("guilds_members", "guildID, uid, rank, posts, joinedAt", "", "", "")
+
+	guilds.MemberListJoinStmt = acc.SimpleLeftJoin("guilds_members", "users", "users.uid, guilds_members.rank, guilds_members.posts, guilds_members.joinedAt, users.name, users.avatar", "guilds_members.uid = users.uid", "guilds_members.guildID = ?", "guilds_members.rank DESC, guilds_members.joinedat ASC", "")
+
+	guilds.GetMemberStmt = acc.SimpleSelect("guilds_members", "rank, posts, joinedAt", "guildID = ? AND uid = ?", "", "")
+
+	guilds.CreateGuildStmt = acc.SimpleInsert("guilds", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
+
+	guilds.AttachForumStmt = acc.SimpleUpdate("forums", "parentID = ?, parentType = 'guild'", "fid = ?")
+
+	guilds.UnattachForumStmt = acc.SimpleUpdate("forums", "parentID = 0, parentType = ''", "fid = ?")
+
+	guilds.AddMemberStmt = acc.SimpleInsert("guilds_members", "guildID, uid, rank, posts, joinedAt", "?,?,?,0,UTC_TIMESTAMP()")
+
+	return acc.FirstError()
 }
 
 func deactivateGuilds() {
-	plugins["guilds"].RemoveHook("intercept_build_widgets", guilds.Widgets)
-	plugins["guilds"].RemoveHook("trow_assign", guilds.TrowAssign)
-	plugins["guilds"].RemoveHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
-	plugins["guilds"].RemoveHook("pre_render_view_forum", guilds.PreRenderViewForum)
-	plugins["guilds"].RemoveHook("simple_forum_check_pre_perms", guilds.ForumCheck)
-	plugins["guilds"].RemoveHook("forum_check_pre_perms", guilds.ForumCheck)
-	deregisterPluginPerm("CreateGuild")
+	common.Plugins["guilds"].RemoveHook("intercept_build_widgets", guilds.Widgets)
+	common.Plugins["guilds"].RemoveHook("trow_assign", guilds.TrowAssign)
+	common.Plugins["guilds"].RemoveHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
+	common.Plugins["guilds"].RemoveHook("pre_render_view_forum", guilds.PreRenderViewForum)
+	common.Plugins["guilds"].RemoveHook("simple_forum_check_pre_perms", guilds.ForumCheck)
+	common.Plugins["guilds"].RemoveHook("forum_check_pre_perms", guilds.ForumCheck)
+	common.DeregisterPluginPerm("CreateGuild")
 	_ = router.RemoveFunc("/guilds/")
 	_ = router.RemoveFunc("/guild/")
 	_ = router.RemoveFunc("/guild/create/")

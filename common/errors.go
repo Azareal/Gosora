@@ -21,7 +21,7 @@ var tList []interface{}
 type RouteError interface {
 	Type() string
 	Error() string
-	Json() bool
+	JSON() bool
 	Handled() bool
 }
 
@@ -49,7 +49,7 @@ func (err *RouteErrorImpl) Error() string {
 }
 
 // Respond with JSON?
-func (err *RouteErrorImpl) Json() bool {
+func (err *RouteErrorImpl) JSON() bool {
 	return err.json
 }
 
@@ -86,7 +86,7 @@ func InternalError(err error, w http.ResponseWriter, r *http.Request) RouteError
 	// TODO: Centralise the user struct somewhere else
 	user := User{0, "guest", "Guest", "", 0, false, false, false, false, false, false, GuestPerms, nil, "", false, "", "", "", "", "", 0, 0, "0.0.0.0.0", 0}
 	pi := Page{"Internal Server Error", user, DefaultHeaderVar(), tList, "A problem has occurred in the system."}
-	err = templates.ExecuteTemplate(w, "error.html", pi)
+	err = Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
 		log.Print(err)
 	}
@@ -119,33 +119,16 @@ func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) RouteErr
 	return HandledRouteError()
 }
 
-// ? - Where is this used? Should we use it more?
-// LoginRequired is an error shown to the end-user when they try to access an area which requires them to login
-func LoginRequired(w http.ResponseWriter, r *http.Request, user User) RouteError {
-	w.WriteHeader(401)
-	pi := Page{"Local Error", user, DefaultHeaderVar(), tList, "You need to login to do that."}
-	if preRenderHooks["pre_render_error"] != nil {
-		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err := templates.ExecuteTemplate(w, "error.html", pi)
-	if err != nil {
-		LogError(err)
-	}
-	return HandledRouteError()
-}
-
 func PreError(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
 	user := User{ID: 0, Group: 6, Perms: GuestPerms}
 	pi := Page{"Error", user, DefaultHeaderVar(), tList, errmsg}
-	if preRenderHooks["pre_render_error"] != nil {
-		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
+	if PreRenderHooks["pre_render_error"] != nil {
+		if RunPreRenderHook("pre_render_error", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err := templates.ExecuteTemplate(w, "error.html", pi)
+	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
 		LogError(err)
 	}
@@ -169,12 +152,12 @@ func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, isJs boo
 func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(500)
 	pi := Page{"Local Error", user, DefaultHeaderVar(), tList, errmsg}
-	if preRenderHooks["pre_render_error"] != nil {
-		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
+	if PreRenderHooks["pre_render_error"] != nil {
+		if RunPreRenderHook("pre_render_error", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err := templates.ExecuteTemplate(w, "error.html", pi)
+	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
 		LogError(err)
 	}
@@ -200,12 +183,12 @@ func NoPermissions(w http.ResponseWriter, r *http.Request, user User) RouteError
 	w.WriteHeader(403)
 	pi := Page{"Local Error", user, DefaultHeaderVar(), tList, "You don't have permission to do that."}
 	// TODO: What to do about this hook?
-	if preRenderHooks["pre_render_error"] != nil {
-		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
+	if PreRenderHooks["pre_render_error"] != nil {
+		if RunPreRenderHook("pre_render_error", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err := templates.ExecuteTemplate(w, "error.html", pi)
+	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
 		LogError(err)
 	}
@@ -229,12 +212,12 @@ func NoPermissionsJS(w http.ResponseWriter, r *http.Request, user User) RouteErr
 func Banned(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
 	pi := Page{"Banned", user, DefaultHeaderVar(), tList, "You have been banned from this site."}
-	if preRenderHooks["pre_render_error"] != nil {
-		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
+	if PreRenderHooks["pre_render_error"] != nil {
+		if RunPreRenderHook("pre_render_error", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err := templates.ExecuteTemplate(w, "error.html", pi)
+	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
 		LogError(err)
 	}
@@ -258,21 +241,33 @@ func BannedJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
 
 // nolint
 func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
-	w.WriteHeader(401)
 	if !isJs {
-		pi := Page{"Local Error", user, DefaultHeaderVar(), tList, "You need to login to do that."}
-		if preRenderHooks["pre_render_error"] != nil {
-			if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
-				return nil
-			}
-		}
-		err := templates.ExecuteTemplate(w, "error.html", pi)
-		if err != nil {
-			LogError(err)
-		}
-	} else {
-		_, _ = w.Write([]byte(`{"errmsg":"You need to login to do that."}`))
+		return LoginRequired(w, r, user)
 	}
+	return LoginRequiredJS(w, r, user)
+}
+
+// ? - Where is this used? Should we use it more?
+// LoginRequired is an error shown to the end-user when they try to access an area which requires them to login
+func LoginRequired(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	w.WriteHeader(401)
+	pi := Page{"Local Error", user, DefaultHeaderVar(), tList, "You need to login to do that."}
+	if PreRenderHooks["pre_render_error"] != nil {
+		if RunPreRenderHook("pre_render_error", w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err := Templates.ExecuteTemplate(w, "error.html", pi)
+	if err != nil {
+		LogError(err)
+	}
+	return HandledRouteError()
+}
+
+// nolint
+func LoginRequiredJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	w.WriteHeader(401)
+	_, _ = w.Write([]byte(`{"errmsg":"You need to login to do that."}`))
 	return HandledRouteError()
 }
 
@@ -281,12 +276,12 @@ func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bo
 func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
 	pi := Page{"Security Error", user, DefaultHeaderVar(), tList, "There was a security issue with your request."}
-	if preRenderHooks["pre_render_security_error"] != nil {
-		if runPreRenderHook("pre_render_security_error", w, r, &user, &pi) {
+	if PreRenderHooks["pre_render_security_error"] != nil {
+		if RunPreRenderHook("pre_render_security_error", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err := templates.ExecuteTemplate(w, "error.html", pi)
+	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
 		LogError(err)
 	}
@@ -301,7 +296,7 @@ func NotFound(w http.ResponseWriter, r *http.Request) RouteError {
 	// TODO: Centralise the user struct somewhere else
 	user := User{0, "guest", "Guest", "", 0, false, false, false, false, false, false, GuestPerms, nil, "", false, "", "", "", "", "", 0, 0, "0.0.0.0.0", 0}
 	pi := Page{"Not Found", user, DefaultHeaderVar(), tList, "The requested page doesn't exist."}
-	err := templates.ExecuteTemplate(w, "error.html", pi)
+	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
 		LogError(err)
 	}
@@ -312,12 +307,12 @@ func NotFound(w http.ResponseWriter, r *http.Request) RouteError {
 func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(errcode)
 	pi := Page{errtitle, user, DefaultHeaderVar(), tList, errmsg}
-	if preRenderHooks["pre_render_error"] != nil {
-		if runPreRenderHook("pre_render_error", w, r, &user, &pi) {
+	if PreRenderHooks["pre_render_error"] != nil {
+		if RunPreRenderHook("pre_render_error", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err := templates.ExecuteTemplate(w, "error.html", pi)
+	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
 		LogError(err)
 	}

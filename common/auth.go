@@ -4,18 +4,17 @@
 * Copyright Azareal 2017 - 2018
 *
  */
-package main
+package common
 
-import "log"
 import "errors"
 import "strconv"
 import "net/http"
 import "database/sql"
 
-import "./query_gen/lib"
 import "golang.org/x/crypto/bcrypt"
+import "../query_gen/lib"
 
-var auth Auth
+var Auth AuthInt
 
 // ErrMismatchedHashAndPassword is thrown whenever a hash doesn't match it's unhashed password
 var ErrMismatchedHashAndPassword = bcrypt.ErrMismatchedHashAndPassword
@@ -27,8 +26,8 @@ var ErrWrongPassword = errors.New("That's not the correct password.")
 var ErrSecretError = errors.New("There was a glitch in the system. Please contact your local administrator.")
 var ErrNoUserByName = errors.New("We couldn't find an account with that username.")
 
-// Auth is the main authentication interface.
-type Auth interface {
+// AuthInt is the main authentication interface.
+type AuthInt interface {
 	Authenticate(username string, password string) (uid int, err error)
 	Logout(w http.ResponseWriter, uid int)
 	ForceLogout(uid int) error
@@ -40,24 +39,19 @@ type Auth interface {
 
 // DefaultAuth is the default authenticator used by Gosora, may be swapped with an alternate authenticator in some situations. E.g. To support LDAP.
 type DefaultAuth struct {
-	login  *sql.Stmt
-	logout *sql.Stmt
+	login         *sql.Stmt
+	logout        *sql.Stmt
+	updateSession *sql.Stmt
 }
 
 // NewDefaultAuth is a factory for spitting out DefaultAuths
-func NewDefaultAuth() *DefaultAuth {
-	loginStmt, err := qgen.Builder.SimpleSelect("users", "uid, password, salt", "name = ?", "", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-	logoutStmt, err := qgen.Builder.SimpleUpdate("users", "session = ''", "uid = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
+func NewDefaultAuth() (*DefaultAuth, error) {
+	acc := qgen.Builder.Accumulator()
 	return &DefaultAuth{
-		login:  loginStmt,
-		logout: logoutStmt,
-	}
+		login:         acc.SimpleSelect("users", "uid, password, salt", "name = ?", "", ""),
+		logout:        acc.SimpleUpdate("users", "session = ''", "uid = ?"),
+		updateSession: acc.SimpleUpdate("users", "session = ?", "uid = ?"),
+	}, acc.FirstError()
 }
 
 // Authenticate checks if a specific username and password is valid and returns the UID for the corresponding user, if so. Otherwise, a user safe error.
@@ -97,7 +91,7 @@ func (auth *DefaultAuth) ForceLogout(uid int) error {
 	}
 
 	// Flush the user out of the cache
-	ucache, ok := users.(UserCache)
+	ucache, ok := Users.(UserCache)
 	if ok {
 		ucache.CacheRemove(uid)
 	}
@@ -107,18 +101,18 @@ func (auth *DefaultAuth) ForceLogout(uid int) error {
 
 // Logout logs you out of the computer you requested the logout for, but not the other computers you're logged in with
 func (auth *DefaultAuth) Logout(w http.ResponseWriter, _ int) {
-	cookie := http.Cookie{Name: "uid", Value: "", Path: "/", MaxAge: year}
+	cookie := http.Cookie{Name: "uid", Value: "", Path: "/", MaxAge: Year}
 	http.SetCookie(w, &cookie)
-	cookie = http.Cookie{Name: "session", Value: "", Path: "/", MaxAge: year}
+	cookie = http.Cookie{Name: "session", Value: "", Path: "/", MaxAge: Year}
 	http.SetCookie(w, &cookie)
 }
 
 // TODO: Set the cookie domain
 // SetCookies sets the two cookies required for the current user to be recognised as a specific user in future requests
 func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session string) {
-	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: year}
+	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: Year}
 	http.SetCookie(w, &cookie)
-	cookie = http.Cookie{Name: "session", Value: session, Path: "/", MaxAge: year}
+	cookie = http.Cookie{Name: "session", Value: session, Path: "/", MaxAge: Year}
 	http.SetCookie(w, &cookie)
 }
 
@@ -144,20 +138,20 @@ func (auth *DefaultAuth) GetCookies(r *http.Request) (uid int, session string, e
 func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (user *User, halt bool) {
 	uid, session, err := auth.GetCookies(r)
 	if err != nil {
-		return &guestUser, false
+		return &GuestUser, false
 	}
 
 	// Is this session valid..?
-	user, err = users.Get(uid)
+	user, err = Users.Get(uid)
 	if err == ErrNoRows {
-		return &guestUser, false
+		return &GuestUser, false
 	} else if err != nil {
 		InternalError(err, w, r)
-		return &guestUser, true
+		return &GuestUser, true
 	}
 
 	if user.Session == "" || session != user.Session {
-		return &guestUser, false
+		return &GuestUser, false
 	}
 
 	return user, false
@@ -165,18 +159,18 @@ func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (u
 
 // CreateSession generates a new session to allow a remote client to stay logged in as a specific user
 func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
-	session, err = GenerateSafeString(sessionLength)
+	session, err = GenerateSafeString(SessionLength)
 	if err != nil {
 		return "", err
 	}
 
-	_, err = stmts.updateSession.Exec(session, uid)
+	_, err = auth.updateSession.Exec(session, uid)
 	if err != nil {
 		return "", err
 	}
 
 	// Flush the user data from the cache
-	ucache, ok := users.(UserCache)
+	ucache, ok := Users.(UserCache)
 	if ok {
 		ucache.CacheRemove(uid)
 	}

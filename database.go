@@ -1,8 +1,11 @@
 package main
 
-import "log"
+import (
+	"database/sql"
+	"log"
 
-import "database/sql"
+	"./common"
+)
 
 var stmts *Stmts
 
@@ -15,7 +18,7 @@ var ErrNoRows = sql.ErrNoRows
 
 var _initDatabase func() error
 
-func initDatabase() (err error) {
+func InitDatabase() (err error) {
 	stmts = &Stmts{Mocks: false}
 
 	// Engine specific code
@@ -25,70 +28,69 @@ func initDatabase() (err error) {
 	}
 	globs = &Globs{stmts}
 
-	log.Print("Loading the usergroups.")
-	gstore, err = NewMemoryGroupStore()
+	err = common.DbInits.Run()
 	if err != nil {
 		return err
 	}
-	err = gstore.LoadGroups()
+
+	log.Print("Loading the usergroups.")
+	common.Gstore, err = common.NewMemoryGroupStore()
 	if err != nil {
 		return err
+	}
+	err2 := common.Gstore.LoadGroups()
+	if err2 != nil {
+		return err2
 	}
 
 	// We have to put this here, otherwise LoadForums() won't be able to get the last poster data when building it's forums
 	log.Print("Initialising the user and topic stores")
-	if config.CacheTopicUser == CACHE_STATIC {
-		users, err = NewMemoryUserStore(config.UserCacheCapacity)
-		if err != nil {
-			return err
-		}
-		topics, err = NewMemoryTopicStore(config.TopicCacheCapacity)
-		if err != nil {
-			return err
-		}
+	if common.Config.CacheTopicUser == common.CACHE_STATIC {
+		common.Users, err = common.NewMemoryUserStore(common.Config.UserCacheCapacity)
+		common.Topics, err2 = common.NewMemoryTopicStore(common.Config.TopicCacheCapacity)
 	} else {
-		users, err = NewSQLUserStore()
-		if err != nil {
-			return err
-		}
-		topics, err = NewSQLTopicStore()
-		if err != nil {
-			return err
-		}
+		common.Users, err = common.NewSQLUserStore()
+		common.Topics, err2 = common.NewSQLTopicStore()
 	}
-
-	log.Print("Loading the forums.")
-	fstore, err = NewMemoryForumStore()
 	if err != nil {
 		return err
 	}
-	err = fstore.LoadForums()
+	if err2 != nil {
+		return err2
+	}
+
+	log.Print("Loading the forums.")
+	common.Fstore, err = common.NewMemoryForumStore()
+	if err != nil {
+		return err
+	}
+	err = common.Fstore.LoadForums()
 	if err != nil {
 		return err
 	}
 
 	log.Print("Loading the forum permissions.")
-	fpstore, err = NewMemoryForumPermsStore()
+	common.Fpstore, err = common.NewMemoryForumPermsStore()
 	if err != nil {
 		return err
 	}
-	err = fpstore.Init()
+	err = common.Fpstore.Init()
 	if err != nil {
 		return err
 	}
 
 	log.Print("Loading the settings.")
-	err = LoadSettings()
+	err = common.LoadSettings()
 	if err != nil {
 		return err
 	}
 
 	log.Print("Loading the plugins.")
-	err = initExtend()
+	err = common.InitExtend()
 	if err != nil {
 		return err
 	}
 
 	log.Print("Loading the themes.")
-	return LoadThemeActiveStatus()
+	return common.Themes.LoadActiveStatus()
 }

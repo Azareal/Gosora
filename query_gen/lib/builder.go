@@ -37,6 +37,10 @@ func (build *builder) GetAdapter() DB_Adapter {
 	return build.adapter
 }
 
+func (build *builder) Begin() (*sql.Tx, error) {
+	return build.conn.Begin()
+}
+
 func (build *builder) Tx(handler func(*TransactionBuilder) error) error {
 	tx, err := build.conn.Begin()
 	if err != nil {
@@ -50,101 +54,60 @@ func (build *builder) Tx(handler func(*TransactionBuilder) error) error {
 	return tx.Commit()
 }
 
-func (build *builder) SimpleSelect(table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleSelect("_builder", table, columns, where, orderby, limit)
+func (build *builder) prepare(res string, err error) (*sql.Stmt, error) {
 	if err != nil {
-		return stmt, err
+		return nil, err
 	}
 	return build.conn.Prepare(res)
+}
+
+func (build *builder) SimpleSelect(table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
+	return build.prepare(build.adapter.SimpleSelect("_builder", table, columns, where, orderby, limit))
 }
 
 func (build *builder) SimpleCount(table string, where string, limit string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleCount("_builder", table, where, limit)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleCount("_builder", table, where, limit))
 }
 
 func (build *builder) SimpleLeftJoin(table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleLeftJoin("_builder", table1, table2, columns, joiners, where, orderby, limit)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleLeftJoin("_builder", table1, table2, columns, joiners, where, orderby, limit))
 }
 
 func (build *builder) SimpleInnerJoin(table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleInnerJoin("_builder", table1, table2, columns, joiners, where, orderby, limit)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleInnerJoin("_builder", table1, table2, columns, joiners, where, orderby, limit))
 }
 
 func (build *builder) CreateTable(table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.CreateTable("_builder", table, charset, collation, columns, keys)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.CreateTable("_builder", table, charset, collation, columns, keys))
 }
 
 func (build *builder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleInsert("_builder", table, columns, fields)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleInsert("_builder", table, columns, fields))
 }
 
 func (build *builder) SimpleInsertSelect(ins DB_Insert, sel DB_Select) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleInsertSelect("_builder", ins, sel)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleInsertSelect("_builder", ins, sel))
 }
 
 func (build *builder) SimpleInsertLeftJoin(ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleInsertLeftJoin("_builder", ins, sel)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleInsertLeftJoin("_builder", ins, sel))
 }
 
 func (build *builder) SimpleInsertInnerJoin(ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleInsertInnerJoin("_builder", ins, sel)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleInsertInnerJoin("_builder", ins, sel))
 }
 
 func (build *builder) SimpleUpdate(table string, set string, where string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleUpdate("_builder", table, set, where)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleUpdate("_builder", table, set, where))
 }
 
 func (build *builder) SimpleDelete(table string, where string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleDelete("_builder", table, where)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.SimpleDelete("_builder", table, where))
 }
 
 // I don't know why you need this, but here it is x.x
 func (build *builder) Purge(table string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.Purge("_builder", table)
-	if err != nil {
-		return stmt, err
-	}
-	return build.conn.Prepare(res)
+	return build.prepare(build.adapter.Purge("_builder", table))
 }
 
 // These ones support transactions

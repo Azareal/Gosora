@@ -4,6 +4,8 @@ package main
 import (
 	"log"
 	"strings"
+
+	"./common"
 )
 
 var markdownMaxDepth = 25 // How deep the parser will go when parsing Markdown strings
@@ -19,11 +21,11 @@ var markdownStrikeTagOpen []byte
 var markdownStrikeTagClose []byte
 
 func init() {
-	plugins["markdown"] = NewPlugin("markdown", "Markdown", "Azareal", "http://github.com/Azareal", "", "", "", initMarkdown, nil, deactivateMarkdown, nil, nil)
+	common.Plugins["markdown"] = common.NewPlugin("markdown", "Markdown", "Azareal", "http://github.com/Azareal", "", "", "", initMarkdown, nil, deactivateMarkdown, nil, nil)
 }
 
 func initMarkdown() error {
-	plugins["markdown"].AddHook("parse_assign", markdownParse)
+	common.Plugins["markdown"].AddHook("parse_assign", markdownParse)
 
 	markdownUnclosedElement = []byte("<span style='color: red;'>[Unclosed Element]</span>")
 
@@ -39,7 +41,7 @@ func initMarkdown() error {
 }
 
 func deactivateMarkdown() {
-	plugins["markdown"].RemoveHook("parse_assign", markdownParse)
+	common.Plugins["markdown"].RemoveHook("parse_assign", markdownParse)
 }
 
 // An adapter for the parser, so that the parser can call itself recursively.

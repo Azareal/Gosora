@@ -11,7 +11,7 @@ type HeaderVars struct {
 	Scripts     []string
 	Stylesheets []string
 	Widgets     PageWidgets
-	Site        *Site
+	Site        *site
 	Settings    map[string]interface{}
 	Themes      map[string]Theme // TODO: Use a slice containing every theme instead of the main map for speed
 	ThemeName   string
@@ -21,7 +21,7 @@ type HeaderVars struct {
 
 // TODO: Add this to routes which don't use templates. E.g. Json APIs.
 type HeaderLite struct {
-	Site     *Site
+	Site     *site
 	Settings SettingMap
 	ExtData  ExtData
 }
@@ -34,7 +34,7 @@ type PageWidgets struct {
 // TODO: Add a ExtDataHolder interface with methods for manipulating the contents?
 // ? - Could we use a sync.Map instead?
 type ExtData struct {
-	items map[string]interface{} // Key: pluginname
+	Items map[string]interface{} // Key: pluginname
 	sync.RWMutex
 }
 
@@ -226,7 +226,7 @@ type PanelEditGroupPermsPage struct {
 	GlobalPerms []NameLangToggle
 }
 
-type backupItem struct {
+type BackupItem struct {
 	SQLURL string
 
 	// TODO: Add an easier to parse format here for Gosora to be able to more easily reimport portions of the dump and to strip unnecessary data (e.g. table defs and parsed post data)
@@ -239,10 +239,10 @@ type PanelBackupPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
-	Backups     []backupItem
+	Backups     []BackupItem
 }
 
-type logItem struct {
+type LogItem struct {
 	Action    template.HTML
 	IPAddress string
 	DoneAt    string
@@ -253,7 +253,7 @@ type PanelLogsPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
-	Logs        []logItem
+	Logs        []LogItem
 	PageList    []int
 	Page        int
 	LastPage    int
@@ -282,5 +282,5 @@ type AreYouSure struct {
 // This is mostly for errors.go, please create *HeaderVars on the spot instead of relying on this or the atomic store underlying it, if possible
 // TODO: Write a test for this
 func DefaultHeaderVar() *HeaderVars {
-	return &HeaderVars{Site: site, ThemeName: fallbackTheme}
+	return &HeaderVars{Site: Site, ThemeName: fallbackTheme}
 }

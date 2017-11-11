@@ -14,65 +14,12 @@ import (
 	"os"
 	"time"
 	//"runtime/pprof"
+	"./common"
 )
 
-var version = Version{Major: 0, Minor: 1, Patch: 0, Tag: "dev"}
-
-const hour int = 60 * 60
-const day int = hour * 24
-const week int = day * 7
-const month int = day * 30
-const year int = day * 365
-const kilobyte int = 1024
-const megabyte int = kilobyte * 1024
-const gigabyte int = megabyte * 1024
-const terabyte int = gigabyte * 1024
-const petabyte int = terabyte * 1024
-const saltLength int = 32
-const sessionLength int = 80
-
+var version = common.Version{Major: 0, Minor: 1, Patch: 0, Tag: "dev"}
 var router *GenRouter
 var startTime time.Time
-
-// ? - Make this more customisable?
-var externalSites = map[string]string{
-	"YT": "https://www.youtube.com/",
-}
-
-type StringList []string
-
-// ? - Should we allow users to upload .php or .go files? It could cause security issues. We could store them with a mangled extension to render them inert
-// TODO: Let admins manage this from the Control Panel
-var allowedFileExts = StringList{
-	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", "apng", // images
-
-	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", // text
-
-	"mp3", "mp4", "avi", "wmv", "webm", // video
-
-	"otf", "woff2", "woff", "ttf", "eot", // fonts
-}
-var imageFileExts = StringList{
-	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", "apng",
-}
-var archiveFileExts = StringList{
-	"bz2", "zip", "gz", "7z", "tar", "cab",
-}
-var executableFileExts = StringList{
-	"exe", "jar", "phar", "shar", "iso",
-}
-
-// TODO: Write a test for this
-func (slice StringList) Contains(needle string) bool {
-	for _, item := range slice {
-		if item == needle {
-			return true
-		}
-	}
-	return false
-}
-
-var staticFiles = make(map[string]SFile)
 var logWriter = io.MultiWriter(os.Stderr)
 
 // TODO: Wrap the globals in here so we can pass pointers to them to subpackages
@@ -128,58 +75,61 @@ func main() {
 	startTime = time.Now()
 
 	log.Print("Processing configuration data")
-	err = processConfig()
+	err = common.ProcessConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = initThemes()
+	err = common.InitThemes()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = initDatabase()
+	err = InitDatabase()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rstore, err = NewSQLReplyStore()
+	common.Rstore, err = common.NewSQLReplyStore()
 	if err != nil {
 		log.Fatal(err)
 	}
-	prstore, err = NewSQLProfileReplyStore()
+	common.Prstore, err = common.NewSQLProfileReplyStore()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	initTemplates()
+	common.InitTemplates()
 
-	err = initPhrases()
+	err = common.InitPhrases()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Print("Loading the static files.")
-	err = initStaticFiles()
+	err = common.StaticFiles.Init()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Print("Initialising the widgets")
-	err = initWidgets()
+	err = common.InitWidgets()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Print("Initialising the authentication system")
-	auth = NewDefaultAuth()
-
-	err = LoadWordFilters()
+	common.Auth, err = common.NewDefaultAuth()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = verifyConfig()
+	err = common.LoadWordFilters()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = common.VerifyConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -195,18 +145,18 @@ func main() {
 				//log.Print("Running the second ticker")
 				// TODO: Add a plugin hook here
 
-				err := handleExpiredScheduledGroups()
+				err := common.HandleExpiredScheduledGroups()
 				if err != nil {
-					LogError(err)
+					common.LogError(err)
 				}
 
 				// TODO: Handle delayed moderation tasks
 				// TODO: Handle the daily clean-up. Move this to a 24 hour task?
 
 				// Sync with the database, if there are any changes
-				err = handleServerSync()
+				err = common.HandleServerSync()
 				if err != nil {
-					LogError(err)
+					common.LogError(err)
 				}
 
 				// TODO: Manage the TopicStore, UserStore, and ForumStore
@@ -264,7 +214,7 @@ func main() {
 	router.HandleFunc("/ws/", routeWebsockets)
 
 	log.Print("Initialising the plugins")
-	initPlugins()
+	common.InitPlugins()
 
 	defer db.Close()
 
@@ -274,17 +224,17 @@ func main() {
 
 	// TODO: Let users run *both* HTTP and HTTPS
 	log.Print("Initialising the HTTP server")
-	if !site.EnableSsl {
-		if site.Port == "" {
-			site.Port = "80"
+	if !common.Site.EnableSsl {
+		if common.Site.Port == "" {
+			common.Site.Port = "80"
 		}
-		log.Print("Listening on port " + site.Port)
-		err = http.ListenAndServe(":"+site.Port, router)
+		log.Print("Listening on port " + common.Site.Port)
+		err = http.ListenAndServe(":"+common.Site.Port, router)
 	} else {
-		if site.Port == "" {
-			site.Port = "443"
+		if common.Site.Port == "" {
+			common.Site.Port = "443"
 		}
-		if site.Port == "80" || site.Port == "443" {
+		if common.Site.Port == "80" || common.Site.Port == "443" {
 			// We should also run the server on port 80
 			// TODO: Redirect to port 443
 			go func() {
@@ -295,8 +245,8 @@ func main() {
 				}
 			}()
 		}
-		log.Print("Listening on port " + site.Port)
-		err = http.ListenAndServeTLS(":"+site.Port, config.SslFullchain, config.SslPrivkey, router)
+		log.Printf("Listening on port %s", common.Site.Port)
+		err = http.ListenAndServeTLS(":"+common.Site.Port, common.Config.SslFullchain, common.Config.SslPrivkey, router)
 	}
 
 	// Why did the server stop?

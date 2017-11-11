@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"./common"
 	"github.com/Azareal/gopsutil/cpu"
 	"github.com/Azareal/gopsutil/mem"
 	"github.com/gorilla/websocket"
@@ -25,7 +26,7 @@ import (
 
 type WSUser struct {
 	conn *websocket.Conn
-	User *User
+	User *common.User
 }
 
 type WSHub struct {
@@ -164,13 +165,13 @@ func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType st
 }
 
 // TODO: How should we handle errors for this?
-func routeWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func routeWebsockets(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil
 	}
-	userptr, err := users.Get(user.ID)
-	if err != nil && err != ErrStoreCapacityOverflow {
+	userptr, err := common.Users.Get(user.ID)
+	if err != nil && err != common.ErrStoreCapacityOverflow {
 		return nil
 	}
 
@@ -341,9 +342,9 @@ AdminStatLoop:
 				onlineUsersColour = "stat_red"
 			}
 
-			totonline, totunit = convertFriendlyUnit(totonline)
-			uonline, uunit = convertFriendlyUnit(uonline)
-			gonline, gunit = convertFriendlyUnit(gonline)
+			totonline, totunit = common.ConvertFriendlyUnit(totonline)
+			uonline, uunit = common.ConvertFriendlyUnit(uonline)
+			gonline, gunit = common.ConvertFriendlyUnit(gonline)
 		}
 
 		if cpuerr != nil {
@@ -364,8 +365,8 @@ AdminStatLoop:
 			if ramerr != nil {
 				ramstr = "Unknown"
 			} else {
-				totalCount, totalUnit := convertByteUnit(float64(memres.Total))
-				usedCount := convertByteInUnit(float64(memres.Total-memres.Available), totalUnit)
+				totalCount, totalUnit := common.ConvertByteUnit(float64(memres.Total))
+				usedCount := common.ConvertByteInUnit(float64(memres.Total-memres.Available), totalUnit)
 
 				// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
 				var totstr string

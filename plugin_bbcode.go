@@ -10,9 +10,11 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+
+	"./common"
 )
 
-var random *rand.Rand
+var bbcodeRandom *rand.Rand
 var bbcodeInvalidNumber []byte
 var bbcodeNoNegative []byte
 var bbcodeMissingTag []byte
@@ -27,12 +29,12 @@ var bbcodeQuotes *regexp.Regexp
 var bbcodeCode *regexp.Regexp
 
 func init() {
-	plugins["bbcode"] = NewPlugin("bbcode", "BBCode", "Azareal", "http://github.com/Azareal", "", "", "", initBbcode, nil, deactivateBbcode, nil, nil)
+	common.Plugins["bbcode"] = common.NewPlugin("bbcode", "BBCode", "Azareal", "http://github.com/Azareal", "", "", "", initBbcode, nil, deactivateBbcode, nil, nil)
 }
 
 func initBbcode() error {
 	//plugins["bbcode"].AddHook("parse_assign", bbcode_parse_without_code)
-	plugins["bbcode"].AddHook("parse_assign", bbcodeFullParse)
+	common.Plugins["bbcode"].AddHook("parse_assign", bbcodeFullParse)
 
 	bbcodeInvalidNumber = []byte("<span style='color: red;'>[Invalid Number]</span>")
 	bbcodeNoNegative = []byte("<span style='color: red;'>[No Negative Numbers]</span>")
@@ -48,13 +50,12 @@ func initBbcode() error {
 	bbcodeQuotes = regexp.MustCompile(`\[quote\](.*)\[/quote\]`)
 	bbcodeCode = regexp.MustCompile(`\[code\](.*)\[/code\]`)
 
-	random = rand.New(rand.NewSource(time.Now().UnixNano()))
+	bbcodeRandom = rand.New(rand.NewSource(time.Now().UnixNano()))
 	return nil
 }
 
 func deactivateBbcode() {
-	//plugins["bbcode"].RemoveHook("parse_assign", bbcode_parse_without_code)
-	plugins["bbcode"].RemoveHook("parse_assign", bbcodeFullParse)
+	common.Plugins["bbcode"].RemoveHook("parse_assign", bbcodeFullParse)
 }
 
 func bbcodeRegexParse(msg string) string {
@@ -213,7 +214,7 @@ func bbcodeFullParse(msg string) string {
 	var complexBbc bool
 
 	msgbytes := []byte(msg)
-	msgbytes = append(msgbytes, spaceGap...)
+	msgbytes = append(msgbytes, common.SpaceGap...)
 	//log.Print("BBCode Simple Pre:","`"+string(msgbytes)+"`")
 	//log.Print("----")
 
@@ -306,7 +307,7 @@ func bbcodeFullParse(msg string) string {
 		if hasS {
 			msgbytes = append(bytes.TrimSpace(msgbytes), closeStrike...)
 		}
-		msgbytes = append(msgbytes, spaceGap...)
+		msgbytes = append(msgbytes, common.SpaceGap...)
 	}
 
 	if complexBbc {
@@ -357,21 +358,21 @@ func bbcodeParseURL(i int, start int, lastTag int, msgbytes []byte, outbytes []b
 	start = i + 5
 	outbytes = append(outbytes, msgbytes[lastTag:i]...)
 	i = start
-	i += partialURLBytesLen(msgbytes[start:])
+	i += common.PartialURLBytesLen(msgbytes[start:])
 	//log.Print("Partial Bytes: ", string(msgbytes[start:]))
 	//log.Print("-----")
 	if !bytes.Equal(msgbytes[i:i+6], []byte("[/url]")) {
 		//log.Print("Invalid Bytes: ", string(msgbytes[i:i+6]))
 		//log.Print("-----")
-		outbytes = append(outbytes, invalidURL...)
+		outbytes = append(outbytes, common.InvalidURL...)
 		return i, start, lastTag, outbytes
 	}
 
-	outbytes = append(outbytes, urlOpen...)
+	outbytes = append(outbytes, common.UrlOpen...)
 	outbytes = append(outbytes, msgbytes[start:i]...)
-	outbytes = append(outbytes, urlOpen2...)
+	outbytes = append(outbytes, common.UrlOpen2...)
 	outbytes = append(outbytes, msgbytes[start:i]...)
-	outbytes = append(outbytes, urlClose...)
+	outbytes = append(outbytes, common.UrlClose...)
 	i += 6
 	lastTag = i
 
@@ -411,7 +412,7 @@ func bbcodeParseRand(i int, start int, lastTag int, msgbytes []byte, outbytes []
 	if number == 0 {
 		dat = []byte("0")
 	} else {
-		dat = []byte(strconv.FormatInt((random.Int63n(number)), 10))
+		dat = []byte(strconv.FormatInt((bbcodeRandom.Int63n(number)), 10))
 	}
 
 	outbytes = append(outbytes, dat...)

@@ -17,13 +17,15 @@ import (
 	"sync"
 	"sync/atomic"
 	"text/template"
+
+	"../query_gen/lib"
 )
 
 type ThemeList map[string]Theme
 
-//var themes ThemeList = make(map[string]Theme)
+var Themes ThemeList = make(map[string]Theme)
 var DefaultThemeBox atomic.Value
-var changeDefaultThemeMutex sync.Mutex
+var ChangeDefaultThemeMutex sync.Mutex
 
 // TODO: Use this when the default theme doesn't exist
 var fallbackTheme = "shadow"
@@ -73,14 +75,19 @@ type ThemeResource struct {
 }
 
 func init() {
-	defaultThemeBox.Store(fallbackTheme)
+	DefaultThemeBox.Store(fallbackTheme)
 }
 
 // TODO: Make the initThemes and LoadThemes functions less confusing
 // ? - Delete themes which no longer exist in the themes folder from the database?
-func LoadThemeActiveStatus() error {
-	changeDefaultThemeMutex.Lock()
-	rows, err := stmts.getThemes.Query()
+func (themes ThemeList) LoadActiveStatus() error {
+	getThemes, err := qgen.Builder.SimpleSelect("themes", "uname, default", "", "", "")
+	if err != nil {
+		return err
+	}
+
+	ChangeDefaultThemeMutex.Lock()
+	rows, err := getThemes.Query()
 	if err != nil {
 		return err
 	}
@@ -103,8 +110,8 @@ func LoadThemeActiveStatus() error {
 		if defaultThemeSwitch {
 			log.Print("Loading the default theme '" + theme.Name + "'")
 			theme.Active = true
-			defaultThemeBox.Store(theme.Name)
-			mapThemeTemplates(theme)
+			DefaultThemeBox.Store(theme.Name)
+			MapThemeTemplates(theme)
 		} else {
 			log.Print("Loading the theme '" + theme.Name + "'")
 			theme.Active = false
@@ -112,11 +119,11 @@ func LoadThemeActiveStatus() error {
 
 		themes[uname] = theme
 	}
-	changeDefaultThemeMutex.Unlock()
+	ChangeDefaultThemeMutex.Unlock()
 	return rows.Err()
 }
 
-func initThemes() error {
+func InitThemes() error {
 	themeFiles, err := ioutil.ReadDir("./themes")
 	if err != nil {
 		return err
@@ -156,10 +163,10 @@ func initThemes() error {
 		}
 
 		if theme.FullImage != "" {
-			if dev.DebugMode {
+			if Dev.DebugMode {
 				log.Print("Adding theme image")
 			}
-			err = addStaticFile("./themes/"+themeName+"/"+theme.FullImage, "./themes/"+themeName)
+			err = StaticFiles.Add("./themes/"+themeName+"/"+theme.FullImage, "./themes/"+themeName)
 			if err != nil {
 				return err
 			}
@@ -170,7 +177,7 @@ func initThemes() error {
 		if theme.Templates != nil {
 			for _, themeTmpl := range theme.Templates {
 				theme.TemplatesMap[themeTmpl.Name] = themeTmpl.Source
-				theme.TmplPtr[themeTmpl.Name] = tmplPtrMap["o_"+themeTmpl.Source]
+				theme.TmplPtr[themeTmpl.Name] = TmplPtrMap["o_"+themeTmpl.Source]
 			}
 		}
 
@@ -178,20 +185,20 @@ func initThemes() error {
 		template.Must(theme.ResourceTemplates.ParseGlob("./themes/" + theme.Name + "/public/*.css"))
 
 		// It should be safe for us to load the files for all the themes in memory, as-long as the admin hasn't setup a ridiculous number of themes
-		err = addThemeStaticFiles(theme)
+		err = AddThemeStaticFiles(theme)
 		if err != nil {
 			return err
 		}
 
-		themes[theme.Name] = theme
+		Themes[theme.Name] = theme
 	}
 	return nil
 }
 
-func addThemeStaticFiles(theme Theme) error {
+func AddThemeStaticFiles(theme Theme) error {
 	// TODO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
 	return filepath.Walk("./themes/"+theme.Name+"/public", func(path string, f os.FileInfo, err error) error {
-		if dev.DebugMode {
+		if Dev.DebugMode {
 			log.Print("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
 		}
 		if err != nil {
@@ -224,16 +231,16 @@ func addThemeStaticFiles(theme Theme) error {
 
 		path = strings.TrimPrefix(path, "themes/"+theme.Name+"/public")
 		gzipData := compressBytesGzip(data)
-		staticFiles["/static/"+theme.Name+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
+		StaticFiles["/static/"+theme.Name+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
 
-		if dev.DebugMode {
+		if Dev.DebugMode {
 			log.Print("Added the '/" + theme.Name + path + "' static file for theme " + theme.Name + ".")
 		}
 		return nil
 	})
 }
 
-func mapThemeTemplates(theme Theme) {
+func MapThemeTemplates(theme Theme) {
 	if theme.Templates != nil {
 		for _, themeTmpl := range theme.Templates {
 			if themeTmpl.Name == "" {
@@ -245,11 +252,11 @@ func mapThemeTemplates(theme Theme) {
 
 			// `go generate` is one possibility for letting plugins inject custom page structs, but it would simply add another step of compilation. It might be simpler than the current build process from the perspective of the administrator?
 
-			destTmplPtr, ok := tmplPtrMap[themeTmpl.Name]
+			destTmplPtr, ok := TmplPtrMap[themeTmpl.Name]
 			if !ok {
 				return
 			}
-			sourceTmplPtr, ok := tmplPtrMap[themeTmpl.Source]
+			sourceTmplPtr, ok := TmplPtrMap[themeTmpl.Source]
 			if !ok {
 				log.Fatal("The source template doesn't exist!")
 			}
@@ -325,20 +332,20 @@ func mapThemeTemplates(theme Theme) {
 	}
 }
 
-func resetTemplateOverrides() {
+func ResetTemplateOverrides() {
 	log.Print("Resetting the template overrides")
 
 	for name := range overridenTemplates {
 		log.Print("Resetting '" + name + "' template override")
 
-		originPointer, ok := tmplPtrMap["o_"+name]
+		originPointer, ok := TmplPtrMap["o_"+name]
 		if !ok {
 			//log.Fatal("The origin template doesn't exist!")
 			log.Print("The origin template doesn't exist!")
 			return
 		}
 
-		destTmplPtr, ok := tmplPtrMap[name]
+		destTmplPtr, ok := TmplPtrMap[name]
 		if !ok {
 			//log.Fatal("The destination template doesn't exist!")
 			log.Print("The destination template doesn't exist!")
@@ -447,11 +454,11 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w http.Resp
 	case func(Page, http.ResponseWriter) error:
 		return tmplO(pi.(Page), w)
 	case string:
-		mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap[template]
+		mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap[template]
 		if !ok {
 			mapping = template
 		}
-		return templates.ExecuteTemplate(w, mapping+".html", pi)
+		return Templates.ExecuteTemplate(w, mapping+".html", pi)
 	default:
 		log.Print("theme ", theme)
 		log.Print("template ", template)
@@ -474,11 +481,11 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w http.Resp
 
 // GetThemeTemplate attempts to get the template for a specific theme, otherwise it falls back on the default template pointer, which if absent will fallback onto the template interpreter
 func GetThemeTemplate(theme string, template string) interface{} {
-	tmpl, ok := themes[theme].TmplPtr[template]
+	tmpl, ok := Themes[theme].TmplPtr[template]
 	if ok {
 		return tmpl
 	}
-	tmpl, ok = tmplPtrMap[template]
+	tmpl, ok = TmplPtrMap[template]
 	if ok {
 		return tmpl
 	}
@@ -487,19 +494,19 @@ func GetThemeTemplate(theme string, template string) interface{} {
 
 // CreateThemeTemplate creates a theme template on the current default theme
 func CreateThemeTemplate(theme string, name string) {
-	themes[theme].TmplPtr[name] = func(pi Page, w http.ResponseWriter) error {
-		mapping, ok := themes[defaultThemeBox.Load().(string)].TemplatesMap[name]
+	Themes[theme].TmplPtr[name] = func(pi Page, w http.ResponseWriter) error {
+		mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap[name]
 		if !ok {
 			mapping = name
 		}
-		return templates.ExecuteTemplate(w, mapping+".html", pi)
+		return Templates.ExecuteTemplate(w, mapping+".html", pi)
 	}
 }
 
 func GetDefaultThemeName() string {
-	return defaultThemeBox.Load().(string)
+	return DefaultThemeBox.Load().(string)
 }
 
 func SetDefaultThemeName(name string) {
-	defaultThemeBox.Store(name)
+	DefaultThemeBox.Store(name)
 }

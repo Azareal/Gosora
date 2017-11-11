@@ -12,7 +12,7 @@ import (
 	"../query_gen/lib"
 )
 
-var gstore GroupStore
+var Gstore GroupStore
 
 // ? - We could fallback onto the database when an item can't be found in the cache?
 type GroupStore interface {
@@ -38,6 +38,7 @@ type MemoryGroupStore struct {
 	groupCount int
 	getAll     *sql.Stmt
 	get        *sql.Stmt
+	count      *sql.Stmt
 
 	sync.RWMutex
 }
@@ -49,6 +50,7 @@ func NewMemoryGroupStore() (*MemoryGroupStore, error) {
 		groupCount: 0,
 		getAll:     acc.SimpleSelect("users_groups", "gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "", "", ""),
 		get:        acc.SimpleSelect("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "gid = ?", "", ""),
+		count:      acc.SimpleCount("users_groups", "", ""),
 	}, acc.FirstError()
 }
 
@@ -84,7 +86,7 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 	}
 	mgs.groupCount = i
 
-	if dev.DebugMode {
+	if Dev.DebugMode {
 		log.Print("Binding the Not Loggedin Group")
 	}
 	GuestPerms = mgs.dirtyGetUnsafe(6).Perms
@@ -146,7 +148,7 @@ func (mgs *MemoryGroupStore) Reload(id int) error {
 	}
 	mgs.CacheSet(group)
 
-	err = rebuildGroupPermissions(id)
+	err = RebuildGroupPermissions(id)
 	if err != nil {
 		LogError(err)
 	}
@@ -160,7 +162,7 @@ func (mgs *MemoryGroupStore) initGroup(group *Group) error {
 		log.Print("bad group perms: ", group.PermissionsText)
 		return err
 	}
-	if dev.DebugMode {
+	if Dev.DebugMode {
 		log.Printf(group.Name+": %+v\n", group.Perms)
 	}
 
@@ -170,7 +172,7 @@ func (mgs *MemoryGroupStore) initGroup(group *Group) error {
 		log.Print("bad group plugin perms: ", group.PluginPermsText)
 		return err
 	}
-	if dev.DebugMode {
+	if Dev.DebugMode {
 		log.Printf(group.Name+": %+v\n", group.PluginPerms)
 	}
 
@@ -200,7 +202,7 @@ func (mgs *MemoryGroupStore) Exists(gid int) bool {
 // ? Allow two groups with the same name?
 func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (gid int, err error) {
 	var permstr = "{}"
-	tx, err := db.Begin()
+	tx, err := qgen.Builder.Begin()
 	if err != nil {
 		return 0, err
 	}
@@ -226,20 +228,20 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	var blankIntList []int
 	var pluginPerms = make(map[string]bool)
 	var pluginPermsBytes = []byte("{}")
-	if vhooks["create_group_preappend"] != nil {
-		runVhook("create_group_preappend", &pluginPerms, &pluginPermsBytes)
+	if Vhooks["create_group_preappend"] != nil {
+		RunVhook("create_group_preappend", &pluginPerms, &pluginPermsBytes)
 	}
 
 	// Generate the forum permissions based on the presets...
-	fdata, err := fstore.GetAll()
+	fdata, err := Fstore.GetAll()
 	if err != nil {
 		return 0, err
 	}
 
 	var presetSet = make(map[int]string)
 	var permSet = make(map[int]ForumPerms)
-	permUpdateMutex.Lock()
-	defer permUpdateMutex.Unlock()
+	PermUpdateMutex.Lock()
+	defer PermUpdateMutex.Unlock()
 	for _, forum := range fdata {
 		var thePreset string
 		if isAdmin {
@@ -252,7 +254,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 			thePreset = "members"
 		}
 
-		permmap := presetToPermmap(forum.Preset)
+		permmap := PresetToPermmap(forum.Preset)
 		permItem := permmap[thePreset]
 		permItem.Overrides = true
 
@@ -260,7 +262,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 		presetSet[forum.ID] = forum.Preset
 	}
 
-	err = replaceForumPermsForGroupTx(tx, gid, presetSet, permSet)
+	err = ReplaceForumPermsForGroupTx(tx, gid, presetSet, permSet)
 	if err != nil {
 		return 0, err
 	}
@@ -281,7 +283,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	mgs.Unlock()
 
 	for _, forum := range fdata {
-		err = fpstore.Reload(forum.ID)
+		err = Fpstore.Reload(forum.ID)
 		if err != nil {
 			return gid, err
 		}
@@ -344,8 +346,10 @@ func (mgs *MemoryGroupStore) Length() int {
 	return mgs.groupCount
 }
 
-func (mgs *MemoryGroupStore) GlobalCount() int {
-	mgs.RLock()
-	defer mgs.RUnlock()
-	return mgs.groupCount
+func (mgs *MemoryGroupStore) GlobalCount() (count int) {
+	err := mgs.count.QueryRow().Scan(&count)
+	if err != nil {
+		LogError(err)
+	}
+	return count
 }

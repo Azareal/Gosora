@@ -97,67 +97,69 @@ func main() {
 
 	configContents := []byte(`package main
 
+import "./common"
+
 func init() {
 	// Site Info
-	site.ShortName = "` + siteShortName + `" // This should be less than three letters to fit in the navbar
-	site.Name = "` + siteName + `"
-	site.Email = ""
-	site.URL = "` + siteURL + `"
-	site.Port = "` + serverPort + `"
-	site.EnableSsl = false
-	site.EnableEmails = false
-	site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
-	config.SslPrivkey = ""
-	config.SslFullchain = ""
-	site.Language = "english"
+	common.Site.ShortName = "` + siteShortName + `" // This should be less than three letters to fit in the navbar
+	common.Site.Name = "` + siteName + `"
+	common.Site.Email = ""
+	common.Site.URL = "` + siteURL + `"
+	common.Site.Port = "` + serverPort + `"
+	common.Site.EnableSsl = false
+	common.Site.EnableEmails = false
+	common.Site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
+	common.Config.SslPrivkey = ""
+	common.Config.SslFullchain = ""
+	common.Site.Language = "english"
 
 	// Database details
-	dbConfig.Host = "` + adap.DBHost() + `"
-	dbConfig.Username = "` + adap.DBUsername() + `"
-	dbConfig.Password = "` + adap.DBPassword() + `"
-	dbConfig.Dbname = "` + adap.DBName() + `"
-	dbConfig.Port = "` + adap.DBPort() + `" // You probably won't need to change this
+	common.DbConfig.Host = "` + adap.DBHost() + `"
+	common.DbConfig.Username = "` + adap.DBUsername() + `"
+	common.DbConfig.Password = "` + adap.DBPassword() + `"
+	common.DbConfig.Dbname = "` + adap.DBName() + `"
+	common.DbConfig.Port = "` + adap.DBPort() + `" // You probably won't need to change this
 
 	// Test Database details
-    dbConfig.TestHost = ""
-    dbConfig.TestUsername = ""
-    dbConfig.TestPassword = ""
-    dbConfig.TestDbname = "" // The name of the test database, leave blank to disable. DON'T USE YOUR PRODUCTION DATABASE FOR THIS. LEAVE BLANK IF YOU DON'T KNOW WHAT THIS MEANS.
-	dbConfig.TestPort = ""
+    common.DbConfig.TestHost = ""
+    common.DbConfig.TestUsername = ""
+    common.DbConfig.TestPassword = ""
+    common.DbConfig.TestDbname = "" // The name of the test database, leave blank to disable. DON'T USE YOUR PRODUCTION DATABASE FOR THIS. LEAVE BLANK IF YOU DON'T KNOW WHAT THIS MEANS.
+	common.DbConfig.TestPort = ""
 
 	// Limiters
-	config.MaxRequestSize = 5 * megabyte
+	common.Config.MaxRequestSize = 5 * common.Megabyte
 
 	// Caching
-	config.CacheTopicUser = CACHE_STATIC
-	config.UserCacheCapacity = 120 // The max number of users held in memory
-	config.TopicCacheCapacity = 200 // The max number of topics held in memory
+	common.Config.CacheTopicUser = common.CACHE_STATIC
+	common.Config.UserCacheCapacity = 120 // The max number of users held in memory
+	common.Config.TopicCacheCapacity = 200 // The max number of topics held in memory
 
 	// Email
-	config.SMTPServer = ""
-	config.SMTPUsername = ""
-	config.SMTPPassword = ""
-	config.SMTPPort = "25"
+	common.Config.SMTPServer = ""
+	common.Config.SMTPUsername = ""
+	common.Config.SMTPPassword = ""
+	common.Config.SMTPPort = "25"
 
 	// Misc
-	config.DefaultRoute = routeTopics
-	config.DefaultGroup = 3 // Should be a setting in the database
-	config.ActivationGroup = 5 // Should be a setting in the database
-	config.StaffCSS = "staff_post"
-	config.DefaultForum = 2
-	config.MinifyTemplates = true
-	config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
+	common.Config.DefaultRoute = routeTopics
+	common.Config.DefaultGroup = 3 // Should be a setting in the database
+	common.Config.ActivationGroup = 5 // Should be a setting in the database
+	common.Config.StaffCSS = "staff_post"
+	common.Config.DefaultForum = 2
+	common.Config.MinifyTemplates = true
+	common.Config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
 
-	//config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
-	config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"
-	config.ItemsPerPage = 25
+	//common.Config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
+	common.Config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"
+	common.Config.ItemsPerPage = 25
 
 	// Developer flags
-	dev.DebugMode = true
-	//dev.SuperDebug = true
-	//dev.TemplateDebug = true
-	//dev.Profiling = true
-	//dev.TestDB = true
+	common.Dev.DebugMode = true
+	//common.Dev.SuperDebug = true
+	//common.Dev.TemplateDebug = true
+	//common.Dev.Profiling = true
+	//common.Dev.TestDB = true
 }
 `)
 

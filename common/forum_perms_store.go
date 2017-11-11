@@ -8,7 +8,7 @@ import (
 	"../query_gen/lib"
 )
 
-var fpstore ForumPermsStore
+var Fpstore ForumPermsStore
 
 type ForumPermsStore interface {
 	Init() error
@@ -40,11 +40,11 @@ func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
 }
 
 func (fps *MemoryForumPermsStore) Init() error {
-	fids, err := fstore.GetAllIDs()
+	fids, err := Fstore.GetAllIDs()
 	if err != nil {
 		return err
 	}
-	if dev.SuperDebug {
+	if Dev.SuperDebug {
 		log.Print("fids: ", fids)
 	}
 
@@ -54,9 +54,9 @@ func (fps *MemoryForumPermsStore) Init() error {
 	}
 	defer rows.Close()
 
-	if dev.DebugMode {
+	if Dev.DebugMode {
 		log.Print("Adding the forum permissions")
-		if dev.SuperDebug {
+		if Dev.SuperDebug {
 			log.Print("forumPerms[gid][fid]")
 		}
 	}
@@ -72,7 +72,7 @@ func (fps *MemoryForumPermsStore) Init() error {
 			return err
 		}
 
-		if dev.SuperDebug {
+		if Dev.SuperDebug {
 			log.Print("perms: ", string(perms))
 		}
 		err = json.Unmarshal(perms, &pperms)
@@ -86,7 +86,7 @@ func (fps *MemoryForumPermsStore) Init() error {
 			forumPerms[gid] = make(map[int]ForumPerms)
 		}
 
-		if dev.SuperDebug {
+		if Dev.SuperDebug {
 			log.Print("gid: ", gid)
 			log.Print("fid: ", fid)
 			log.Printf("perms: %+v\n", pperms)
@@ -99,10 +99,10 @@ func (fps *MemoryForumPermsStore) Init() error {
 
 // TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?
 func (fps *MemoryForumPermsStore) Reload(fid int) error {
-	if dev.DebugMode {
+	if Dev.DebugMode {
 		log.Printf("Reloading the forum permissions for forum #%d", fid)
 	}
-	fids, err := fstore.GetAllIDs()
+	fids, err := Fstore.GetAllIDs()
 	if err != nil {
 		return err
 	}
@@ -138,20 +138,20 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 }
 
 func (fps *MemoryForumPermsStore) cascadePermSetToGroups(forumPerms map[int]map[int]ForumPerms, fids []int) error {
-	groups, err := gstore.GetAll()
+	groups, err := Gstore.GetAll()
 	if err != nil {
 		return err
 	}
 
 	for _, group := range groups {
-		if dev.DebugMode {
+		if Dev.DebugMode {
 			log.Printf("Updating the forum permissions for Group #%d", group.ID)
 		}
 		group.Forums = []ForumPerms{BlankForumPerms}
 		group.CanSee = []int{}
 		fps.cascadePermSetToGroup(forumPerms, group, fids)
 
-		if dev.SuperDebug {
+		if Dev.SuperDebug {
 			log.Printf("group.CanSee (length %d): %+v \n", len(group.CanSee), group.CanSee)
 			log.Printf("group.Forums (length %d): %+v\n", len(group.Forums), group.Forums)
 		}
@@ -161,12 +161,12 @@ func (fps *MemoryForumPermsStore) cascadePermSetToGroups(forumPerms map[int]map[
 
 func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[int]ForumPerms, group *Group, fids []int) {
 	for _, fid := range fids {
-		if dev.SuperDebug {
+		if Dev.SuperDebug {
 			log.Printf("Forum #%+v\n", fid)
 		}
 		forumPerm, ok := forumPerms[group.ID][fid]
 		if ok {
-			//log.Print("Overriding permissions for forum #%d",fid)
+			//log.Printf("Overriding permissions for forum #%d",fid)
 			group.Forums = append(group.Forums, forumPerm)
 		} else {
 			//log.Printf("Inheriting from group defaults for forum #%d",fid)
@@ -181,7 +181,7 @@ func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[i
 			group.CanSee = append(group.CanSee, fid)
 		}
 
-		if dev.SuperDebug {
+		if Dev.SuperDebug {
 			log.Print("group.ID: ", group.ID)
 			log.Printf("forumPerm: %+v\n", forumPerm)
 			log.Print("group.CanSee: ", group.CanSee)
@@ -191,7 +191,7 @@ func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[i
 
 func (fps *MemoryForumPermsStore) Get(fid int, gid int) (fperms ForumPerms, err error) {
 	// TODO: Add a hook here and have plugin_guilds use it
-	group, err := gstore.Get(gid)
+	group, err := Gstore.Get(gid)
 	if err != nil {
 		return fperms, ErrNoRows
 	}

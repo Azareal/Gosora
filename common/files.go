@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"bytes"
@@ -12,6 +12,10 @@ import (
 	"os"
 	"path/filepath"
 )
+
+type SFileList map[string]SFile
+
+var StaticFiles SFileList = make(map[string]SFile)
 
 type SFile struct {
 	Data             []byte
@@ -28,7 +32,7 @@ type CSSData struct {
 	ComingSoon string
 }
 
-func initStaticFiles() error {
+func (list SFileList) Init() error {
 	return filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
 			return nil
@@ -44,16 +48,16 @@ func initStaticFiles() error {
 		var ext = filepath.Ext("/public/" + path)
 		gzipData := compressBytesGzip(data)
 
-		staticFiles["/static/"+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
+		list["/static/"+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
 
-		if dev.DebugMode {
+		if Dev.DebugMode {
 			log.Print("Added the '" + path + "' static file.")
 		}
 		return nil
 	})
 }
 
-func addStaticFile(path string, prefix string) error {
+func (list SFileList) Add(path string, prefix string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -71,10 +75,10 @@ func addStaticFile(path string, prefix string) error {
 	path = strings.TrimPrefix(path, prefix)
 	gzipData := compressBytesGzip(data)
 
-	staticFiles["/static"+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
+	list["/static"+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
 
-	if dev.DebugMode {
-		log.Print("Added the '" + path + "' static file")
+	if Dev.DebugMode {
+		log.Printf("Added the '%s' static file", path)
 	}
 	return nil
 }
