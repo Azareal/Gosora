@@ -7,6 +7,7 @@
 package common
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 
@@ -137,6 +138,22 @@ type Plugin struct {
 	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins
 }
 
+type ExtendStmts struct {
+	getPlugins *sql.Stmt
+}
+
+var extendStmts ExtendStmts
+
+func init() {
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		extendStmts = ExtendStmts{
+			getPlugins: acc.Select("plugins").Columns("uname, active, installed").Prepare(),
+		}
+		return acc.FirstError()
+	})
+}
+
 func InitExtend() (err error) {
 	err = InitPluginLangs()
 	if err != nil {
@@ -147,11 +164,7 @@ func InitExtend() (err error) {
 
 // Load polls the database to see which plugins have been activated and which have been installed
 func (plugins PluginList) Load() error {
-	getPlugins, err := qgen.Builder.SimpleSelect("plugins", "uname, active, installed", "", "", "")
-	if err != nil {
-		return err
-	}
-	rows, err := getPlugins.Query()
+	rows, err := extendStmts.getPlugins.Query()
 	if err != nil {
 		return err
 	}
@@ -283,24 +296,24 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 	delete(plugin.Hooks, name)
 }
 
-var pluginsInited = false
+var PluginsInited = false
 
 func InitPlugins() {
 	for name, body := range Plugins {
-		log.Printf("Added plugin %s", name)
+		log.Printf("Added plugin '%s'", name)
 		if body.Active {
-			log.Printf("Initialised plugin %s", name)
+			log.Printf("Initialised plugin '%s'", name)
 			if Plugins[name].Init != nil {
 				err := Plugins[name].Init()
 				if err != nil {
 					log.Print(err)
 				}
 			} else {
-				log.Printf("Plugin %s doesn't have an initialiser.", name)
+				log.Printf("Plugin '%s' doesn't have an initialiser.", name)
 			}
 		}
 	}
-	pluginsInited = true
+	PluginsInited = true
 }
 
 // ? - Are the following functions racey?

@@ -202,6 +202,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	defer topicCountStmt.Close()
 
 	var topicCount int
 	err = topicCountStmt.QueryRow(argList...).Scan(&topicCount)
@@ -229,6 +230,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	defer stmt.Close()
 
 	argList = append(argList, offset)
 	argList = append(argList, common.Config.ItemsPerPage)

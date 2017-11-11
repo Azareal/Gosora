@@ -1,7 +1,11 @@
 package common
 
-import "sync/atomic"
-import "../query_gen/lib"
+import (
+	"database/sql"
+	"sync/atomic"
+
+	"../query_gen/lib"
+)
 
 type WordFilter struct {
 	ID          int
@@ -12,16 +16,25 @@ type WordFilterMap map[int]WordFilter
 
 var WordFilterBox atomic.Value // An atomic value holding a WordFilterBox
 
+type FilterStmts struct {
+	getWordFilters *sql.Stmt
+}
+
+var filterStmts FilterStmts
+
 func init() {
 	WordFilterBox.Store(WordFilterMap(make(map[int]WordFilter)))
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		filterStmts = FilterStmts{
+			getWordFilters: acc.Select("word_filters").Columns("wfid, find, replacement").Prepare(),
+		}
+		return acc.FirstError()
+	})
 }
 
 func LoadWordFilters() error {
-	getWordFilters, err := qgen.Builder.SimpleSelect("word_filters", "wfid, find, replacement", "", "", "")
-	if err != nil {
-		return err
-	}
-	rows, err := getWordFilters.Query()
+	rows, err := filterStmts.getWordFilters.Query()
 	if err != nil {
 		return err
 	}

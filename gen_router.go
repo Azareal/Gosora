@@ -192,50 +192,134 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				case "/panel/forums/":
 					err = routePanelForums(w,req,user)
 				case "/panel/forums/create/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelForumsCreateSubmit(w,req,user)
 				case "/panel/forums/delete/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelForumsDelete(w,req,user,extra_data)
 				case "/panel/forums/delete/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelForumsDeleteSubmit(w,req,user,extra_data)
 				case "/panel/forums/edit/":
 					err = routePanelForumsEdit(w,req,user,extra_data)
 				case "/panel/forums/edit/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelForumsEditSubmit(w,req,user,extra_data)
 				case "/panel/forums/edit/perms/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelForumsEditPermsSubmit(w,req,user,extra_data)
 				case "/panel/settings/":
 					err = routePanelSettings(w,req,user)
 				case "/panel/settings/edit/":
 					err = routePanelSetting(w,req,user,extra_data)
 				case "/panel/settings/edit/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelSettingEdit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/":
 					err = routePanelWordFilters(w,req,user)
 				case "/panel/settings/word-filters/create/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelWordFiltersCreate(w,req,user)
 				case "/panel/settings/word-filters/edit/":
 					err = routePanelWordFiltersEdit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/edit/submit/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelWordFiltersEditSubmit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/delete/submit/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelWordFiltersDeleteSubmit(w,req,user,extra_data)
 				case "/panel/themes/":
 					err = routePanelThemes(w,req,user)
 				case "/panel/themes/default/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelThemesSetDefault(w,req,user,extra_data)
 				case "/panel/plugins/":
 					err = routePanelPlugins(w,req,user)
 				case "/panel/plugins/activate/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelPluginsActivate(w,req,user,extra_data)
 				case "/panel/plugins/deactivate/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelPluginsDeactivate(w,req,user,extra_data)
 				case "/panel/plugins/install/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelPluginsInstall(w,req,user,extra_data)
 				case "/panel/users/":
 					err = routePanelUsers(w,req,user)
 				case "/panel/users/edit/":
 					err = routePanelUsersEdit(w,req,user,extra_data)
 				case "/panel/users/edit/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelUsersEditSubmit(w,req,user,extra_data)
 				case "/panel/groups/":
 					err = routePanelGroups(w,req,user)
@@ -244,16 +328,40 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				case "/panel/groups/edit/perms/":
 					err = routePanelGroupsEditPerms(w,req,user,extra_data)
 				case "/panel/groups/edit/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelGroupsEditSubmit(w,req,user,extra_data)
 				case "/panel/groups/edit/perms/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelGroupsEditPermsSubmit(w,req,user,extra_data)
 				case "/panel/groups/create/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelGroupsCreateSubmit(w,req,user)
 				case "/panel/backups/":
 					err = routePanelBackups(w,req,user,extra_data)
 				case "/panel/logs/mod/":
 					err = routePanelLogsMod(w,req,user)
 				case "/panel/debug/":
+					err = common.AdminOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routePanelDebug(w,req,user)
 				default:
 					err = routePanel(w,req,user)

@@ -553,6 +553,7 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
+		defer getTopicUser.Close()
 
 		for pb.Next() {
 			err := getTopicUser.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)

@@ -28,6 +28,7 @@ func InitDatabase() (err error) {
 	}
 	globs = &Globs{stmts}
 
+	log.Print("Running the db handlers.")
 	err = common.DbInits.Run()
 	if err != nil {
 		return err

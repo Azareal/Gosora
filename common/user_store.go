@@ -170,12 +170,8 @@ func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 	}
 	qlist = qlist[0 : len(qlist)-1]
 
-	stmt, err := qgen.Builder.SimpleSelect("users", "uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid IN("+qlist+")", "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := stmt.Query(uidList...)
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("users").Columns("uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(uidList...)
 	if err != nil {
 		return nil, err
 	}
@@ -187,13 +183,8 @@ func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 			return nil, err
 		}
 
-		// Initialise the user
 		user.Init()
-
-		// Add it to the cache...
-		_ = mus.CacheSet(user)
-
-		// Add it to the list to be returned
+		mus.CacheSet(user)
 		list[user.ID] = user
 	}
 
@@ -219,10 +210,10 @@ func (mus *MemoryUserStore) BulkGetMap(ids []int) (list map[int]*User, err error
 		}
 		sidList = sidList[0 : len(sidList)-1]
 
-		return list, errors.New("Unable to find the users with the following IDs: " + sidList)
+		err = errors.New("Unable to find the users with the following IDs: " + sidList)
 	}
 
-	return list, nil
+	return list, err
 }
 
 func (mus *MemoryUserStore) BypassGet(id int) (*User, error) {
@@ -420,12 +411,8 @@ func (mus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 	}
 	qlist = qlist[0 : len(qlist)-1]
 
-	stmt, err := qgen.Builder.SimpleSelect("users", "uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid IN("+qlist+")", "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := stmt.Query(uidList...)
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("users").Columns("uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(uidList...)
 	if err != nil {
 		return nil, err
 	}
@@ -438,10 +425,7 @@ func (mus *SQLUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 			return nil, err
 		}
 
-		// Initialise the user
 		user.Init()
-
-		// Add it to the list to be returned
 		list[user.ID] = user
 	}
 

@@ -229,21 +229,13 @@ func routePanelForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 		return common.NoPermissions(w, r, user)
 	}
 
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
-	}
-
 	fname := r.PostFormValue("forum-name")
 	fdesc := r.PostFormValue("forum-desc")
 	fpreset := common.StripInvalidPreset(r.PostFormValue("forum-preset"))
 	factive := r.PostFormValue("forum-name")
 	active := (factive == "on" || factive == "1")
 
-	_, err = common.Fstore.Create(fname, fdesc, active, fpreset)
+	_, err := common.Fstore.Create(fname, fdesc, active, fpreset)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -260,9 +252,6 @@ func routePanelForumsDelete(w http.ResponseWriter, r *http.Request, user common.
 	}
 	if !user.Perms.ManageForums {
 		return common.NoPermissions(w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
 	}
 
 	fid, err := strconv.Atoi(sfid)
@@ -300,9 +289,6 @@ func routePanelForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c
 	}
 	if !user.Perms.ManageForums {
 		return common.NoPermissions(w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
 	}
 
 	fid, err := strconv.Atoi(sfid)
@@ -380,14 +366,6 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 	if !user.Perms.ManageForums {
 		return common.NoPermissions(w, r, user)
 	}
-
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
-	}
 	isJs := (r.PostFormValue("js") == "1")
 
 	fid, err := strconv.Atoi(sfid)
@@ -434,14 +412,6 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 	}
 	if !user.Perms.ManageForums {
 		return common.NoPermissions(w, r, user)
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
 	}
 	isJs := (r.PostFormValue("js") == "1")
 
@@ -620,18 +590,10 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.U
 		return common.NoPermissions(w, r, user)
 	}
 
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
-	}
-
 	var stype, sconstraints string
 	scontent := r.PostFormValue("setting-value")
 
-	err = stmts.getFullSetting.QueryRow(sname).Scan(&sname, &stype, &sconstraints)
+	err := stmts.getFullSetting.QueryRow(sname).Scan(&sname, &stype, &sconstraints)
 	if err == ErrNoRows {
 		return common.LocalError("The setting you want to edit doesn't exist.", w, r, user)
 	} else if err != nil {
@@ -665,7 +627,7 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.U
 func routePanelWordFilters(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
-		return nil
+		return ferr
 	}
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
@@ -692,11 +654,6 @@ func routePanelWordFiltersCreate(w http.ResponseWriter, r *http.Request, user co
 	}
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
 	}
 	isJs := (r.PostFormValue("js") == "1")
 
@@ -755,11 +712,6 @@ func routePanelWordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, use
 	if ferr != nil {
 		return ferr
 	}
-
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
 	// TODO: Either call it isJs or js rather than flip-flopping back and forth across the routes x.x
 	isJs := (r.PostFormValue("isJs") == "1")
 	if !user.Perms.EditSettings {
@@ -798,10 +750,6 @@ func routePanelWordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, u
 		return ferr
 	}
 
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
 	isJs := (r.PostFormValue("isJs") == "1")
 	if !user.Perms.EditSettings {
 		return common.NoPermissionsJSQ(w, r, user, isJs)
@@ -860,16 +808,11 @@ func routePanelPluginsActivate(w http.ResponseWriter, r *http.Request, user comm
 	if !user.Perms.ManagePlugins {
 		return common.NoPermissions(w, r, user)
 	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
-	}
 
-	//log.Print("uname","'"+uname+"'")
 	plugin, ok := common.Plugins[uname]
 	if !ok {
 		return common.LocalError("The plugin isn't registered in the system", w, r, user)
 	}
-
 	if plugin.Installable && !plugin.Installed {
 		return common.LocalError("You can't activate this plugin without installing it first", w, r, user)
 	}
@@ -888,26 +831,19 @@ func routePanelPluginsActivate(w http.ResponseWriter, r *http.Request, user comm
 		}
 	}
 
-	//log.Print("err", err)
-	//log.Print("active", active)
 	if hasPlugin {
 		if active {
 			return common.LocalError("The plugin is already active", w, r, user)
 		}
-		//log.Print("updatePlugin")
 		_, err = stmts.updatePlugin.Exec(1, uname)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
 	} else {
-		//log.Print("addPlugin")
-		_, err := stmts.addPlugin.Exec(uname, 1, 0)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
+		_, err = stmts.addPlugin.Exec(uname, 1, 0)
+	}
+	if err != nil {
+		return common.InternalError(err, w, r)
 	}
 
-	log.Print("Activating plugin '" + plugin.Name + "'")
+	log.Printf("Activating plugin '%s'", plugin.Name)
 	plugin.Active = true
 	common.Plugins[uname] = plugin
 	err = common.Plugins[uname].Init()
@@ -926,9 +862,6 @@ func routePanelPluginsDeactivate(w http.ResponseWriter, r *http.Request, user co
 	}
 	if !user.Perms.ManagePlugins {
 		return common.NoPermissions(w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
 	}
 
 	plugin, ok := common.Plugins[uname]
@@ -967,9 +900,6 @@ func routePanelPluginsInstall(w http.ResponseWriter, r *http.Request, user commo
 	}
 	if !user.Perms.ManagePlugins {
 		return common.NoPermissions(w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
 	}
 
 	plugin, ok := common.Plugins[uname]
@@ -1096,7 +1026,6 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 	if ferr != nil {
 		return ferr
 	}
-
 	if !user.Perms.EditUser {
 		return common.NoPermissions(w, r, user)
 	}
@@ -1154,9 +1083,6 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 	}
 	if !user.Perms.EditUser {
 		return common.NoPermissions(w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
 	}
 
 	uid, err := strconv.Atoi(suid)
@@ -1434,9 +1360,6 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 	if !user.Perms.EditGroup {
 		return common.NoPermissions(w, r, user)
 	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
-	}
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
@@ -1527,9 +1450,6 @@ func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 	if !user.Perms.EditGroup {
 		return common.NoPermissions(w, r, user)
 	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
-	}
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
@@ -1551,7 +1471,6 @@ func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return common.LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.", w, r, user)
 	}
 
-	////var lpmap map[string]bool = make(map[string]bool)
 	var pmap = make(map[string]bool)
 	if user.Perms.EditGroupLocalPerms {
 		for _, perm := range common.LocalPermList {
@@ -1560,7 +1479,6 @@ func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		}
 	}
 
-	////var gpmap map[string]bool = make(map[string]bool)
 	if user.Perms.EditGroupGlobalPerms {
 		for _, perm := range common.GlobalPermList {
 			pvalue := r.PostFormValue("group-perm-" + perm)
@@ -1592,9 +1510,6 @@ func routePanelGroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	}
 	if !user.Perms.EditGroup {
 		return common.NoPermissions(w, r, user)
-	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
 	}
 
 	groupName := r.PostFormValue("group-name")
@@ -1673,9 +1588,6 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user com
 	if !user.Perms.ManageThemes {
 		return common.NoPermissions(w, r, user)
 	}
-	if r.FormValue("session") != user.Session {
-		return common.SecurityError(w, r, user)
-	}
 
 	theme, ok := common.Themes[uname]
 	if !ok {
@@ -1686,7 +1598,6 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user com
 	}
 
 	var isDefault bool
-	log.Print("uname", uname) // TODO: Do we need to log this?
 	err := stmts.isThemeDefault.QueryRow(uname).Scan(&isDefault)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
@@ -1694,19 +1605,15 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user com
 
 	hasTheme := err != ErrNoRows
 	if hasTheme {
-		log.Print("isDefault", isDefault) // TODO: Do we need to log this?
 		if isDefault {
 			return common.LocalError("The theme is already active", w, r, user)
 		}
 		_, err = stmts.updateTheme.Exec(1, uname)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
 	} else {
-		_, err := stmts.addTheme.Exec(uname, 1)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
+		_, err = stmts.addTheme.Exec(uname, 1)
+	}
+	if err != nil {
+		return common.InternalError(err, w, r)
 	}
 
 	// TODO: Make this less racey
@@ -1907,9 +1814,6 @@ func routePanelDebug(w http.ResponseWriter, r *http.Request, user common.User) c
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
-	}
-	if !user.IsAdmin {
-		return common.NoPermissions(w, r, user)
 	}
 
 	uptime := "..."

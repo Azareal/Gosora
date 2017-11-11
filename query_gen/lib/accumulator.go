@@ -271,6 +271,14 @@ func (selectItem *selectBuilder) Prepare() *sql.Stmt {
 	return selectItem.build.SimpleSelect(selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
 }
 
+func (selectItem *selectBuilder) Query(args ...interface{}) (*sql.Rows, error) {
+	stmt := selectItem.Prepare()
+	if stmt != nil {
+		return stmt.Query(args...)
+	}
+	return nil, selectItem.FirstError()
+}
+
 func (build *accBuilder) Insert(table string) *insertBuilder {
 	return &insertBuilder{table, "", "", build}
 }

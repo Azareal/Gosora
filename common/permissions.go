@@ -483,6 +483,7 @@ func RebuildGroupPermissions(gid int) error {
 	if err != nil {
 		return err
 	}
+	defer getGroupPerms.Close()
 
 	err = getGroupPerms.QueryRow(gid).Scan(&permstr)
 	if err != nil {

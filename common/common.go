@@ -1,6 +1,8 @@
 package common
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 // nolint I don't want to write comments for each of these o.o
 const Hour int = 60 * 60
@@ -60,11 +62,11 @@ func (slice StringList) Contains(needle string) bool {
 	return false
 }
 
-type DBInits []func() error
+type dbInits []func() error
 
-var DbInits DBInits
+var DbInits dbInits
 
-func (inits DBInits) Run() error {
+func (inits dbInits) Run() error {
 	for _, init := range inits {
 		err := init()
 		if err != nil {
@@ -74,6 +76,6 @@ func (inits DBInits) Run() error {
 	return nil
 }
 
-func (inits DBInits) Add(init ...func() error) {
-	inits = append(inits, init...)
+func (inits dbInits) Add(init ...func() error) {
+	DbInits = dbInits(append(DbInits, init...))
 }

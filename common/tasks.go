@@ -7,24 +7,35 @@
 package common
 
 import (
+	"database/sql"
 	"log"
 	"time"
 
 	"../query_gen/lib"
 )
 
+type TaskStmts struct {
+	getExpiredScheduledGroups *sql.Stmt
+	getSync                   *sql.Stmt
+}
+
+var taskStmts TaskStmts
 var lastSync time.Time
 
 func init() {
 	lastSync = time.Now()
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		taskStmts = TaskStmts{
+			getExpiredScheduledGroups: acc.SimpleSelect("users_groups_scheduler", "uid", "UTC_TIMESTAMP() > revert_at AND temporary = 1", "", ""),
+			getSync:                   acc.SimpleSelect("sync", "last_update", "", "", ""),
+		}
+		return acc.FirstError()
+	})
 }
 
 func HandleExpiredScheduledGroups() error {
-	getExpiredScheduledGroups, err := qgen.Builder.SimpleSelect("users_groups_scheduler", "uid", "UTC_TIMESTAMP() > revert_at AND temporary = 1", "", "")
-	if err != nil {
-		return err
-	}
-	rows, err := getExpiredScheduledGroups.Query()
+	rows, err := taskStmts.getExpiredScheduledGroups.Query()
 	if err != nil {
 		return err
 	}
@@ -50,11 +61,7 @@ func HandleExpiredScheduledGroups() error {
 
 func HandleServerSync() error {
 	var lastUpdate time.Time
-	getSync, err := qgen.Builder.SimpleSelect("sync", "last_update", "", "", "")
-	if err != nil {
-		return err
-	}
-	err = getSync.QueryRow().Scan(&lastUpdate)
+	err := taskStmts.getSync.QueryRow().Scan(&lastUpdate)
 	if err != nil {
 		return err
 	}

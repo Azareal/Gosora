@@ -17,8 +17,6 @@ import (
 	"strings"
 	"time"
 	"unicode"
-
-	"../query_gen/lib"
 )
 
 // Version stores a Gosora version
@@ -373,24 +371,4 @@ func BuildSlug(slug string, id int) string {
 		return strconv.Itoa(id)
 	}
 	return slug + "." + strconv.Itoa(id)
-}
-
-// TODO: Make a store for this?
-func AddModLog(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
-	addModLogEntry, err := qgen.Builder.SimpleInsert("moderation_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
-	if err != nil {
-		return err
-	}
-	_, err = addModLogEntry.Exec(action, elementID, elementType, ipaddress, actorID)
-	return err
-}
-
-// TODO: Make a store for this?
-func AddAdminLog(action string, elementID string, elementType int, ipaddress string, actorID int) (err error) {
-	addAdminLogEntry, err := qgen.Builder.SimpleInsert("administration_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "?,?,?,?,?,UTC_TIMESTAMP()")
-	if err != nil {
-		return err
-	}
-	_, err = addAdminLogEntry.Exec(action, elementID, elementType, ipaddress, actorID)
-	return err
 }

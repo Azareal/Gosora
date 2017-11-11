@@ -1,11 +1,15 @@
 /* Copyright Azareal 2017 - 2018 */
 package common
 
-import "log"
-import "bytes"
-import "sync"
-import "encoding/json"
-import "../query_gen/lib"
+import (
+	"bytes"
+	"database/sql"
+	"encoding/json"
+	"log"
+	"sync"
+
+	"../query_gen/lib"
+)
 
 var Docks WidgetDocks
 var widgetUpdateMutex sync.RWMutex
@@ -39,13 +43,25 @@ type NameTextPair struct {
 	Text string
 }
 
+type WidgetStmts struct {
+	getWidgets *sql.Stmt
+}
+
+var widgetStmts WidgetStmts
+
+func init() {
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		widgetStmts = WidgetStmts{
+			getWidgets: acc.Select("widgets").Columns("position, side, type, active,  location, data").Orderby("position ASC").Prepare(),
+		}
+		return acc.FirstError()
+	})
+}
+
 // TODO: Make a store for this?
 func InitWidgets() error {
-	getWidgets, err := qgen.Builder.SimpleSelect("widgets", "position, side, type, active,  location, data", "", "position ASC", "")
-	if err != nil {
-		return err
-	}
-	rows, err := getWidgets.Query()
+	rows, err := widgetStmts.getWidgets.Query()
 	if err != nil {
 		return err
 	}

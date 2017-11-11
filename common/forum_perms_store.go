@@ -25,18 +25,11 @@ type MemoryForumPermsStore struct {
 }
 
 func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
-	getPermsStmt, err := qgen.Builder.SimpleSelect("forums_permissions", "gid, fid, permissions", "", "gid ASC, fid ASC", "")
-	if err != nil {
-		return nil, err
-	}
-	getPermsByForumStmt, err := qgen.Builder.SimpleSelect("forums_permissions", "gid, permissions", "fid = ?", "gid ASC", "")
-	if err != nil {
-		return nil, err
-	}
+	acc := qgen.Builder.Accumulator()
 	return &MemoryForumPermsStore{
-		get:        getPermsStmt,
-		getByForum: getPermsByForumStmt,
-	}, nil
+		get:        acc.Select("forums_permissions").Columns("gid, fid, permissions").Orderby("gid ASC, fid ASC").Prepare(),
+		getByForum: acc.Select("forums_permissions").Columns("gid, permissions").Where("fid = ?").Orderby("gid ASC").Prepare(),
+	}, acc.FirstError()
 }
 
 func (fps *MemoryForumPermsStore) Init() error {

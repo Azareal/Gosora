@@ -62,45 +62,45 @@ func buildPanelRoutes() {
 	panelGroup.Routes(
 		Route("routePanel", "/panel/"),
 		Route("routePanelForums", "/panel/forums/"),
-		Route("routePanelForumsCreateSubmit", "/panel/forums/create/"),
-		Route("routePanelForumsDelete", "/panel/forums/delete/", "extra_data"),
-		Route("routePanelForumsDeleteSubmit", "/panel/forums/delete/submit/", "extra_data"),
+		Route("routePanelForumsCreateSubmit", "/panel/forums/create/").Before("NoSessionMismatch"),
+		Route("routePanelForumsDelete", "/panel/forums/delete/", "extra_data").Before("NoSessionMismatch"),
+		Route("routePanelForumsDeleteSubmit", "/panel/forums/delete/submit/", "extra_data").Before("NoSessionMismatch"),
 		Route("routePanelForumsEdit", "/panel/forums/edit/", "extra_data"),
-		Route("routePanelForumsEditSubmit", "/panel/forums/edit/submit/", "extra_data"),
-		Route("routePanelForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "extra_data"),
+		Route("routePanelForumsEditSubmit", "/panel/forums/edit/submit/", "extra_data").Before("NoSessionMismatch"),
+		Route("routePanelForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "extra_data").Before("NoSessionMismatch"),
 
 		Route("routePanelSettings", "/panel/settings/"),
 		Route("routePanelSetting", "/panel/settings/edit/", "extra_data"),
-		Route("routePanelSettingEdit", "/panel/settings/edit/submit/", "extra_data"),
+		Route("routePanelSettingEdit", "/panel/settings/edit/submit/", "extra_data").Before("NoSessionMismatch"),
 
 		Route("routePanelWordFilters", "/panel/settings/word-filters/"),
-		Route("routePanelWordFiltersCreate", "/panel/settings/word-filters/create/"),
+		Route("routePanelWordFiltersCreate", "/panel/settings/word-filters/create/").Before("ParseForm"),
 		Route("routePanelWordFiltersEdit", "/panel/settings/word-filters/edit/", "extra_data"),
-		Route("routePanelWordFiltersEditSubmit", "/panel/settings/word-filters/edit/submit/", "extra_data"),
-		Route("routePanelWordFiltersDeleteSubmit", "/panel/settings/word-filters/delete/submit/", "extra_data"),
+		Route("routePanelWordFiltersEditSubmit", "/panel/settings/word-filters/edit/submit/", "extra_data").Before("ParseForm"),
+		Route("routePanelWordFiltersDeleteSubmit", "/panel/settings/word-filters/delete/submit/", "extra_data").Before("ParseForm"),
 
 		Route("routePanelThemes", "/panel/themes/"),
-		Route("routePanelThemesSetDefault", "/panel/themes/default/", "extra_data"),
+		Route("routePanelThemesSetDefault", "/panel/themes/default/", "extra_data").Before("NoSessionMismatch"),
 
 		Route("routePanelPlugins", "/panel/plugins/"),
-		Route("routePanelPluginsActivate", "/panel/plugins/activate/", "extra_data"),
-		Route("routePanelPluginsDeactivate", "/panel/plugins/deactivate/", "extra_data"),
-		Route("routePanelPluginsInstall", "/panel/plugins/install/", "extra_data"),
+		Route("routePanelPluginsActivate", "/panel/plugins/activate/", "extra_data").Before("NoSessionMismatch"),
+		Route("routePanelPluginsDeactivate", "/panel/plugins/deactivate/", "extra_data").Before("NoSessionMismatch"),
+		Route("routePanelPluginsInstall", "/panel/plugins/install/", "extra_data").Before("NoSessionMismatch"),
 
 		Route("routePanelUsers", "/panel/users/"),
 		Route("routePanelUsersEdit", "/panel/users/edit/", "extra_data"),
-		Route("routePanelUsersEditSubmit", "/panel/users/edit/submit/", "extra_data"),
+		Route("routePanelUsersEditSubmit", "/panel/users/edit/submit/", "extra_data").Before("NoSessionMismatch"),
 
 		Route("routePanelGroups", "/panel/groups/"),
 		Route("routePanelGroupsEdit", "/panel/groups/edit/", "extra_data"),
 		Route("routePanelGroupsEditPerms", "/panel/groups/edit/perms/", "extra_data"),
-		Route("routePanelGroupsEditSubmit", "/panel/groups/edit/submit/", "extra_data"),
-		Route("routePanelGroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "extra_data"),
-		Route("routePanelGroupsCreateSubmit", "/panel/groups/create/"),
+		Route("routePanelGroupsEditSubmit", "/panel/groups/edit/submit/", "extra_data").Before("NoSessionMismatch"),
+		Route("routePanelGroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "extra_data").Before("NoSessionMismatch"),
+		Route("routePanelGroupsCreateSubmit", "/panel/groups/create/").Before("NoSessionMismatch"),
 
 		Route("routePanelBackups", "/panel/backups/", "extra_data"),
 		Route("routePanelLogsMod", "/panel/logs/mod/"),
-		Route("routePanelDebug", "/panel/debug/"),
+		Route("routePanelDebug", "/panel/debug/").Before("AdminOnly"),
 	)
 	addRouteGroup(panelGroup)
 }

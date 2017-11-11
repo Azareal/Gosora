@@ -4,6 +4,7 @@ package common
 import (
 	//"fmt"
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -74,20 +75,28 @@ type ThemeResource struct {
 	Location string
 }
 
+type ThemeStmts struct {
+	getThemes *sql.Stmt
+}
+
+var themeStmts ThemeStmts
+
 func init() {
 	DefaultThemeBox.Store(fallbackTheme)
+	DbInits.Add(func() error {
+		acc := qgen.Builder.Accumulator()
+		themeStmts = ThemeStmts{
+			getThemes: acc.Select("themes").Columns("uname, default").Prepare(),
+		}
+		return acc.FirstError()
+	})
 }
 
 // TODO: Make the initThemes and LoadThemes functions less confusing
 // ? - Delete themes which no longer exist in the themes folder from the database?
 func (themes ThemeList) LoadActiveStatus() error {
-	getThemes, err := qgen.Builder.SimpleSelect("themes", "uname, default", "", "", "")
-	if err != nil {
-		return err
-	}
-
 	ChangeDefaultThemeMutex.Lock()
-	rows, err := getThemes.Query()
+	rows, err := themeStmts.getThemes.Query()
 	if err != nil {
 		return err
 	}
