@@ -13,7 +13,7 @@ func init() {
 // A set of wrappers around the generator methods, so that we can use this inline in Gosora
 type builder struct {
 	conn    *sql.DB
-	adapter DB_Adapter
+	adapter Adapter
 }
 
 func (build *builder) Accumulator() *Accumulator {
@@ -33,7 +33,7 @@ func (build *builder) SetAdapter(name string) error {
 	return nil
 }
 
-func (build *builder) GetAdapter() DB_Adapter {
+func (build *builder) GetAdapter() Adapter {
 	return build.adapter
 }
 
@@ -77,7 +77,7 @@ func (build *builder) SimpleInnerJoin(table1 string, table2 string, columns stri
 	return build.prepare(build.adapter.SimpleInnerJoin("_builder", table1, table2, columns, joiners, where, orderby, limit))
 }
 
-func (build *builder) CreateTable(table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (stmt *sql.Stmt, err error) {
+func (build *builder) CreateTable(table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (stmt *sql.Stmt, err error) {
 	return build.prepare(build.adapter.CreateTable("_builder", table, charset, collation, columns, keys))
 }
 
@@ -85,15 +85,15 @@ func (build *builder) SimpleInsert(table string, columns string, fields string) 
 	return build.prepare(build.adapter.SimpleInsert("_builder", table, columns, fields))
 }
 
-func (build *builder) SimpleInsertSelect(ins DB_Insert, sel DB_Select) (stmt *sql.Stmt, err error) {
+func (build *builder) SimpleInsertSelect(ins DBInsert, sel DBSelect) (stmt *sql.Stmt, err error) {
 	return build.prepare(build.adapter.SimpleInsertSelect("_builder", ins, sel))
 }
 
-func (build *builder) SimpleInsertLeftJoin(ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
+func (build *builder) SimpleInsertLeftJoin(ins DBInsert, sel DBJoin) (stmt *sql.Stmt, err error) {
 	return build.prepare(build.adapter.SimpleInsertLeftJoin("_builder", ins, sel))
 }
 
-func (build *builder) SimpleInsertInnerJoin(ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
+func (build *builder) SimpleInsertInnerJoin(ins DBInsert, sel DBJoin) (stmt *sql.Stmt, err error) {
 	return build.prepare(build.adapter.SimpleInsertInnerJoin("_builder", ins, sel))
 }
 
@@ -143,7 +143,7 @@ func (build *builder) SimpleInnerJoinTx(tx *sql.Tx, table1 string, table2 string
 	return tx.Prepare(res)
 }
 
-func (build *builder) CreateTableTx(tx *sql.Tx, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (stmt *sql.Stmt, err error) {
+func (build *builder) CreateTableTx(tx *sql.Tx, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (stmt *sql.Stmt, err error) {
 	res, err := build.adapter.CreateTable("_builder", table, charset, collation, columns, keys)
 	if err != nil {
 		return stmt, err
@@ -159,7 +159,7 @@ func (build *builder) SimpleInsertTx(tx *sql.Tx, table string, columns string, f
 	return tx.Prepare(res)
 }
 
-func (build *builder) SimpleInsertSelectTx(tx *sql.Tx, ins DB_Insert, sel DB_Select) (stmt *sql.Stmt, err error) {
+func (build *builder) SimpleInsertSelectTx(tx *sql.Tx, ins DBInsert, sel DBSelect) (stmt *sql.Stmt, err error) {
 	res, err := build.adapter.SimpleInsertSelect("_builder", ins, sel)
 	if err != nil {
 		return stmt, err
@@ -167,7 +167,7 @@ func (build *builder) SimpleInsertSelectTx(tx *sql.Tx, ins DB_Insert, sel DB_Sel
 	return tx.Prepare(res)
 }
 
-func (build *builder) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
+func (build *builder) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DBInsert, sel DBJoin) (stmt *sql.Stmt, err error) {
 	res, err := build.adapter.SimpleInsertLeftJoin("_builder", ins, sel)
 	if err != nil {
 		return stmt, err
@@ -175,7 +175,7 @@ func (build *builder) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_J
 	return tx.Prepare(res)
 }
 
-func (build *builder) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt, err error) {
+func (build *builder) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DBInsert, sel DBJoin) (stmt *sql.Stmt, err error) {
 	res, err := build.adapter.SimpleInsertInnerJoin("_builder", ins, sel)
 	if err != nil {
 		return stmt, err

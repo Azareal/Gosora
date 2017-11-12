@@ -7,7 +7,7 @@ import (
 
 type Accumulator struct {
 	conn     *sql.DB
-	adapter  DB_Adapter
+	adapter  Adapter
 	firstErr error
 }
 
@@ -24,7 +24,7 @@ func (build *Accumulator) SetAdapter(name string) error {
 	return nil
 }
 
-func (build *Accumulator) GetAdapter() DB_Adapter {
+func (build *Accumulator) GetAdapter() Adapter {
 	return build.adapter
 }
 
@@ -82,7 +82,7 @@ func (build *Accumulator) SimpleInnerJoin(table1 string, table2 string, columns 
 	return build.prepare(build.adapter.SimpleInnerJoin("_builder", table1, table2, columns, joiners, where, orderby, limit))
 }
 
-func (build *Accumulator) CreateTable(table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) *sql.Stmt {
+func (build *Accumulator) CreateTable(table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) *sql.Stmt {
 	return build.prepare(build.adapter.CreateTable("_builder", table, charset, collation, columns, keys))
 }
 
@@ -90,15 +90,15 @@ func (build *Accumulator) SimpleInsert(table string, columns string, fields stri
 	return build.prepare(build.adapter.SimpleInsert("_builder", table, columns, fields))
 }
 
-func (build *Accumulator) SimpleInsertSelect(ins DB_Insert, sel DB_Select) *sql.Stmt {
+func (build *Accumulator) SimpleInsertSelect(ins DBInsert, sel DBSelect) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleInsertSelect("_builder", ins, sel))
 }
 
-func (build *Accumulator) SimpleInsertLeftJoin(ins DB_Insert, sel DB_Join) *sql.Stmt {
+func (build *Accumulator) SimpleInsertLeftJoin(ins DBInsert, sel DBJoin) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleInsertLeftJoin("_builder", ins, sel))
 }
 
-func (build *Accumulator) SimpleInsertInnerJoin(ins DB_Insert, sel DB_Join) *sql.Stmt {
+func (build *Accumulator) SimpleInsertInnerJoin(ins DBInsert, sel DBJoin) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleInsertInnerJoin("_builder", ins, sel))
 }
 
@@ -146,7 +146,7 @@ func (build *Accumulator) SimpleInnerJoinTx(tx *sql.Tx, table1 string, table2 st
 	return build.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) CreateTableTx(tx *sql.Tx, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (stmt *sql.Stmt) {
+func (build *Accumulator) CreateTableTx(tx *sql.Tx, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (stmt *sql.Stmt) {
 	res, err := build.adapter.CreateTable("_builder", table, charset, collation, columns, keys)
 	return build.prepareTx(tx, res, err)
 }
@@ -156,17 +156,17 @@ func (build *Accumulator) SimpleInsertTx(tx *sql.Tx, table string, columns strin
 	return build.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleInsertSelectTx(tx *sql.Tx, ins DB_Insert, sel DB_Select) (stmt *sql.Stmt) {
+func (build *Accumulator) SimpleInsertSelectTx(tx *sql.Tx, ins DBInsert, sel DBSelect) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleInsertSelect("_builder", ins, sel)
 	return build.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt) {
+func (build *Accumulator) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DBInsert, sel DBJoin) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleInsertLeftJoin("_builder", ins, sel)
 	return build.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DB_Insert, sel DB_Join) (stmt *sql.Stmt) {
+func (build *Accumulator) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DBInsert, sel DBJoin) (stmt *sql.Stmt) {
 	res, err := build.adapter.SimpleInsertInnerJoin("_builder", ins, sel)
 	return build.prepareTx(tx, res, err)
 }
@@ -187,146 +187,22 @@ func (build *Accumulator) PurgeTx(tx *sql.Tx, table string) (stmt *sql.Stmt) {
 	return build.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) Delete(table string) *deleteBuilder {
-	return &deleteBuilder{table, "", build}
+func (build *Accumulator) Delete(table string) *accDeleteBuilder {
+	return &accDeleteBuilder{table, "", build}
 }
 
-type deleteBuilder struct {
-	table string
-	where string
-
-	build *Accumulator
+func (build *Accumulator) Update(table string) *accUpdateBuilder {
+	return &accUpdateBuilder{table, "", "", build}
 }
 
-func (delete *deleteBuilder) Where(where string) *deleteBuilder {
-	delete.where = where
-	return delete
+func (build *Accumulator) Select(table string) *accSelectBuilder {
+	return &accSelectBuilder{table, "", "", "", "", build}
 }
 
-func (delete *deleteBuilder) Prepare() *sql.Stmt {
-	return delete.build.SimpleDelete(delete.table, delete.where)
+func (build *Accumulator) Insert(table string) *accInsertBuilder {
+	return &accInsertBuilder{table, "", "", build}
 }
 
-func (build *Accumulator) Update(table string) *updateBuilder {
-	return &updateBuilder{table, "", "", build}
-}
-
-type updateBuilder struct {
-	table string
-	set   string
-	where string
-
-	build *Accumulator
-}
-
-func (update *updateBuilder) Set(set string) *updateBuilder {
-	update.set = set
-	return update
-}
-
-func (update *updateBuilder) Where(where string) *updateBuilder {
-	update.where = where
-	return update
-}
-
-func (update *updateBuilder) Prepare() *sql.Stmt {
-	return update.build.SimpleUpdate(update.table, update.set, update.where)
-}
-
-func (build *Accumulator) Select(table string) *selectBuilder {
-	return &selectBuilder{table, "", "", "", "", build}
-}
-
-type selectBuilder struct {
-	table   string
-	columns string
-	where   string
-	orderby string
-	limit   string
-
-	build *Accumulator
-}
-
-func (selectItem *selectBuilder) Columns(columns string) *selectBuilder {
-	selectItem.columns = columns
-	return selectItem
-}
-
-func (selectItem *selectBuilder) Where(where string) *selectBuilder {
-	selectItem.where = where
-	return selectItem
-}
-
-func (selectItem *selectBuilder) Orderby(orderby string) *selectBuilder {
-	selectItem.orderby = orderby
-	return selectItem
-}
-
-func (selectItem *selectBuilder) Limit(limit string) *selectBuilder {
-	selectItem.limit = limit
-	return selectItem
-}
-
-func (selectItem *selectBuilder) Prepare() *sql.Stmt {
-	return selectItem.build.SimpleSelect(selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
-}
-
-func (selectItem *selectBuilder) Query(args ...interface{}) (*sql.Rows, error) {
-	stmt := selectItem.Prepare()
-	if stmt != nil {
-		return stmt.Query(args...)
-	}
-	return nil, selectItem.build.FirstError()
-}
-
-func (build *Accumulator) Insert(table string) *insertBuilder {
-	return &insertBuilder{table, "", "", build}
-}
-
-type insertBuilder struct {
-	table   string
-	columns string
-	fields  string
-
-	build *Accumulator
-}
-
-func (insert *insertBuilder) Columns(columns string) *insertBuilder {
-	insert.columns = columns
-	return insert
-}
-
-func (insert *insertBuilder) Fields(fields string) *insertBuilder {
-	insert.fields = fields
-	return insert
-}
-
-func (insert *insertBuilder) Prepare() *sql.Stmt {
-	return insert.build.SimpleInsert(insert.table, insert.columns, insert.fields)
-}
-
-func (build *Accumulator) Count(table string) *countBuilder {
-	return &countBuilder{table, "", "", build}
-}
-
-type countBuilder struct {
-	table string
-	where string
-	limit string
-
-	build *Accumulator
-}
-
-func (count *countBuilder) Where(where string) *countBuilder {
-	count.where = where
-	return count
-}
-
-func (count *countBuilder) Limit(limit string) *countBuilder {
-	count.limit = limit
-	return count
-}
-
-func (count *countBuilder) Prepare() *sql.Stmt {
-	return count.build.SimpleCount(count.table, count.where, count.limit)
+func (build *Accumulator) Count(table string) *accCountBuilder {
+	return &accCountBuilder{table, "", "", build}
 }

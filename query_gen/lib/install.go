@@ -16,7 +16,7 @@ type DB_Install_Instruction struct {
 // A set of wrappers around the generator methods, so we can use this in the installer
 // TODO: Re-implement the query generation, query builder and installer adapters as layers on-top of a query text adapter
 type installer struct {
-	adapter      DB_Adapter
+	adapter      Adapter
 	instructions []DB_Install_Instruction
 	plugins      []QueryPlugin
 }
@@ -31,7 +31,7 @@ func (install *installer) SetAdapter(name string) error {
 	return nil
 }
 
-func (install *installer) SetAdapterInstance(adapter DB_Adapter) {
+func (install *installer) SetAdapterInstance(adapter Adapter) {
 	install.adapter = adapter
 	install.instructions = []DB_Install_Instruction{}
 }
@@ -40,7 +40,7 @@ func (install *installer) RegisterPlugin(plugin QueryPlugin) {
 	install.plugins = append(install.plugins, plugin)
 }
 
-func (install *installer) CreateTable(table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) error {
+func (install *installer) CreateTable(table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) error {
 	for _, plugin := range install.plugins {
 		err := plugin.Hook("CreateTableStart", table, charset, collation, columns, keys)
 		if err != nil {

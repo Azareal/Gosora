@@ -82,23 +82,23 @@ func deactivateGuilds() {
 // TODO: Stop accessing the query builder directly and add a feature in Gosora which is more easily reversed, if an error comes up during the installation process
 func installGuilds() error {
 	guildTableStmt, err := qgen.Builder.CreateTable("guilds", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DB_Table_Column{
-			qgen.DB_Table_Column{"guildID", "int", 0, false, true, ""},
-			qgen.DB_Table_Column{"name", "varchar", 100, false, false, ""},
-			qgen.DB_Table_Column{"desc", "varchar", 200, false, false, ""},
-			qgen.DB_Table_Column{"active", "boolean", 1, false, false, ""},
-			qgen.DB_Table_Column{"privacy", "smallint", 0, false, false, ""},
-			qgen.DB_Table_Column{"joinable", "smallint", 0, false, false, "0"},
-			qgen.DB_Table_Column{"owner", "int", 0, false, false, ""},
-			qgen.DB_Table_Column{"memberCount", "int", 0, false, false, ""},
-			qgen.DB_Table_Column{"mainForum", "int", 0, false, false, "0"}, // The board the user lands on when they click on a group, we'll make it possible for group admins to change what users land on
-			//qgen.DB_Table_Column{"boards","varchar",255,false,false,""}, // Cap the max number of boards at 8 to avoid overflowing the confines of a 64-bit integer?
-			qgen.DB_Table_Column{"backdrop", "varchar", 200, false, false, ""}, // File extension for the uploaded file, or an external link
-			qgen.DB_Table_Column{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DB_Table_Column{"lastUpdateTime", "datetime", 0, false, false, ""},
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"guildID", "int", 0, false, true, ""},
+			qgen.DBTableColumn{"name", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"desc", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"active", "boolean", 1, false, false, ""},
+			qgen.DBTableColumn{"privacy", "smallint", 0, false, false, ""},
+			qgen.DBTableColumn{"joinable", "smallint", 0, false, false, "0"},
+			qgen.DBTableColumn{"owner", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"memberCount", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"mainForum", "int", 0, false, false, "0"}, // The board the user lands on when they click on a group, we'll make it possible for group admins to change what users land on
+			//qgen.DBTableColumn{"boards","varchar",255,false,false,""}, // Cap the max number of boards at 8 to avoid overflowing the confines of a 64-bit integer?
+			qgen.DBTableColumn{"backdrop", "varchar", 200, false, false, ""}, // File extension for the uploaded file, or an external link
+			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
+			qgen.DBTableColumn{"lastUpdateTime", "datetime", 0, false, false, ""},
 		},
-		[]qgen.DB_Table_Key{
-			qgen.DB_Table_Key{"guildID", "primary"},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"guildID", "primary"},
 		},
 	)
 	if err != nil {
@@ -111,14 +111,14 @@ func installGuilds() error {
 	}
 
 	guildMembersTableStmt, err := qgen.Builder.CreateTable("guilds_members", "", "",
-		[]qgen.DB_Table_Column{
-			qgen.DB_Table_Column{"guildID", "int", 0, false, false, ""},
-			qgen.DB_Table_Column{"uid", "int", 0, false, false, ""},
-			qgen.DB_Table_Column{"rank", "int", 0, false, false, "0"},  /* 0: Member. 1: Mod. 2: Admin. */
-			qgen.DB_Table_Column{"posts", "int", 0, false, false, "0"}, /* Per-Group post count. Should we do some sort of score system? */
-			qgen.DB_Table_Column{"joinedAt", "datetime", 0, false, false, ""},
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"guildID", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"rank", "int", 0, false, false, "0"},  /* 0: Member. 1: Mod. 2: Admin. */
+			qgen.DBTableColumn{"posts", "int", 0, false, false, "0"}, /* Per-Group post count. Should we do some sort of score system? */
+			qgen.DBTableColumn{"joinedAt", "datetime", 0, false, false, ""},
 		},
-		[]qgen.DB_Table_Key{},
+		[]qgen.DBTableKey{},
 	)
 	if err != nil {
 		return err

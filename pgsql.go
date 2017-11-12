@@ -4,12 +4,14 @@
 /* Super experimental and incomplete. DON'T USE IT YET! */
 package main
 
-import "strings"
+import (
+	"database/sql"
+	"strings"
 
-//import "time"
-import "database/sql"
-import _ "github.com/lib/pq"
-import "./query_gen/lib"
+	"./common"
+	"./query_gen/lib"
+	_ "github.com/lib/pq"
+)
 
 // TODO: Add support for SSL for all database drivers, not just pgsql
 var db_sslmode = "disable" // verify-full
@@ -23,10 +25,10 @@ func initPgsql() (err error) {
 	// TODO: Investigate connect_timeout to see what it does exactly and whether it's relevant to us
 	var _dbpassword string
 	if dbpassword != "" {
-		_dbpassword = " password='" + _escape_bit(db_config.Password) + "'"
+		_dbpassword = " password='" + _escape_bit(common.DbConfig.Password) + "'"
 	}
 	// TODO: Move this bit to the query gen lib
-	db, err = sql.Open("postgres", "host='"+_escape_bit(db_config.Host)+"' port='"+_escape_bit(db_config.Port)+"' user='"+_escape_bit(db_config.Username)+"' dbname='"+_escape_bit(config.Dbname)+"'"+_dbpassword+" sslmode='"+db_sslmode+"'")
+	db, err = sql.Open("postgres", "host='"+_escape_bit(common.DbConfig.Host)+"' port='"+_escape_bit(common.DbConfig.Port)+"' user='"+_escape_bit(common.DbConfig.Username)+"' dbname='"+_escape_bit(common.Config.Dbname)+"'"+_dbpassword+" sslmode='"+db_sslmode+"'")
 	if err != nil {
 		return err
 	}

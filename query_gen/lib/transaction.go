@@ -20,7 +20,7 @@ func (stmt *transactionStmt) Exec(args ...interface{}) (*sql.Result, error) {
 
 type TransactionBuilder struct {
 	tx         *sql.Tx
-	adapter    DB_Adapter
+	adapter    Adapter
 	textToStmt map[string]*transactionStmt
 }
 

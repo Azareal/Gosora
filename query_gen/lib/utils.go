@@ -13,13 +13,13 @@ import (
 	"strings"
 )
 
-func processColumns(colstr string) (columns []DB_Column) {
+func processColumns(colstr string) (columns []DBColumn) {
 	if colstr == "" {
 		return columns
 	}
 	colstr = strings.Replace(colstr, " as ", " AS ", -1)
 	for _, segment := range strings.Split(colstr, ",") {
-		var outcol DB_Column
+		var outcol DBColumn
 		dotHalves := strings.Split(strings.TrimSpace(segment), ".")
 
 		var halves []string
@@ -49,12 +49,12 @@ func processColumns(colstr string) (columns []DB_Column) {
 }
 
 // TODO: Allow order by statements without a direction
-func processOrderby(orderstr string) (order []DB_Order) {
+func processOrderby(orderstr string) (order []DBOrder) {
 	if orderstr == "" {
 		return order
 	}
 	for _, segment := range strings.Split(orderstr, ",") {
-		var outorder DB_Order
+		var outorder DBOrder
 		halves := strings.Split(strings.TrimSpace(segment), " ")
 		if len(halves) != 2 {
 			continue
@@ -66,14 +66,14 @@ func processOrderby(orderstr string) (order []DB_Order) {
 	return order
 }
 
-func processJoiner(joinstr string) (joiner []DB_Joiner) {
+func processJoiner(joinstr string) (joiner []DBJoiner) {
 	if joinstr == "" {
 		return joiner
 	}
 	joinstr = strings.Replace(joinstr, " on ", " ON ", -1)
 	joinstr = strings.Replace(joinstr, " and ", " AND ", -1)
 	for _, segment := range strings.Split(joinstr, " AND ") {
-		var outjoin DB_Joiner
+		var outjoin DBJoiner
 		var parseOffset int
 		var left, right string
 
@@ -93,7 +93,7 @@ func processJoiner(joinstr string) (joiner []DB_Joiner) {
 	return joiner
 }
 
-func processWhere(wherestr string) (where []DB_Where) {
+func processWhere(wherestr string) (where []DBWhere) {
 	if wherestr == "" {
 		return where
 	}
@@ -102,7 +102,7 @@ func processWhere(wherestr string) (where []DB_Where) {
 	var buffer string
 	var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
 	for _, segment := range strings.Split(wherestr, " AND ") {
-		var tmpWhere DB_Where
+		var tmpWhere DBWhere
 		segment += ")"
 		for i := 0; i < len(segment); i++ {
 			char := segment[i]
@@ -124,7 +124,7 @@ func processWhere(wherestr string) (where []DB_Where) {
 					buffer = string(char)
 				} else if char == '?' {
 					//fmt.Println("Expr:","?")
-					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{"?", "substitute"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"?", "substitute"})
 				}
 			case 1: // number
 				if '0' <= char && char <= '9' {
@@ -133,7 +133,7 @@ func processWhere(wherestr string) (where []DB_Where) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "number"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "number"})
 				}
 			case 2: // column
 				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_' {
@@ -145,7 +145,7 @@ func processWhere(wherestr string) (where []DB_Where) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:", buffer)
-					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "column"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "column"})
 				}
 			case 3: // function
 				var preI = i
@@ -160,7 +160,7 @@ func processWhere(wherestr string) (where []DB_Where) {
 				//fmt.Println("string(i)", string(halves[1][i]))
 				buffer += segment[preI:i] + string(segment[i])
 				//fmt.Println("Expr:",buffer)
-				tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "function"})
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "function"})
 				optype = 0
 			case 4: // string
 				if char != '\'' {
@@ -168,7 +168,7 @@ func processWhere(wherestr string) (where []DB_Where) {
 				} else {
 					optype = 0
 					//fmt.Println("Expr:",buffer)
-					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "string"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "string"})
 				}
 			case 5: // operator
 				if isOpByte(char) {
@@ -177,10 +177,10 @@ func processWhere(wherestr string) (where []DB_Where) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmpWhere.Expr = append(tmpWhere.Expr, DB_Token{buffer, "operator"})
+					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "operator"})
 				}
 			default:
-				panic("Bad optype in _process_where")
+				panic("Bad optype in processWhere")
 			}
 		}
 		where = append(where, tmpWhere)
@@ -188,11 +188,10 @@ func processWhere(wherestr string) (where []DB_Where) {
 	return where
 }
 
-func processSet(setstr string) (setter []DB_Setter) {
+func processSet(setstr string) (setter []DBSetter) {
 	if setstr == "" {
 		return setter
 	}
-	//fmt.Println("setstr",setstr)
 
 	// First pass, splitting the string by commas while ignoring the innards of functions
 	var setset []string
@@ -217,7 +216,7 @@ func processSet(setstr string) (setter []DB_Setter) {
 	// Second pass. Break this setitem into manageable chunks
 	buffer = ""
 	for _, setitem := range setset {
-		var tmpSetter DB_Setter
+		var tmpSetter DBSetter
 		halves := strings.Split(setitem, "=")
 		if len(halves) != 2 {
 			continue
@@ -246,7 +245,7 @@ func processSet(setstr string) (setter []DB_Setter) {
 					buffer = string(char)
 				} else if char == '?' {
 					//fmt.Println("Expr:","?")
-					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{"?", "substitute"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{"?", "substitute"})
 				}
 			case 1: // number
 				if '0' <= char && char <= '9' {
@@ -255,7 +254,7 @@ func processSet(setstr string) (setter []DB_Setter) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "number"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "number"})
 				}
 			case 2: // column
 				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
@@ -267,7 +266,7 @@ func processSet(setstr string) (setter []DB_Setter) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:",buffer)
-					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "column"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "column"})
 				}
 			case 3: // function
 				var preI = i
@@ -282,7 +281,7 @@ func processSet(setstr string) (setter []DB_Setter) {
 				//fmt.Println("string(i)",string(halves[1][i]))
 				buffer += halves[1][preI:i] + string(halves[1][i])
 				//fmt.Println("Expr:",buffer)
-				tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "function"})
+				tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "function"})
 				optype = 0
 			case 4: // string
 				if char != '\'' {
@@ -290,7 +289,7 @@ func processSet(setstr string) (setter []DB_Setter) {
 				} else {
 					optype = 0
 					//fmt.Println("Expr:", buffer)
-					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "string"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "string"})
 				}
 			case 5: // operator
 				if isOpByte(char) {
@@ -299,7 +298,7 @@ func processSet(setstr string) (setter []DB_Setter) {
 					optype = 0
 					i--
 					//fmt.Println("Expr:", buffer)
-					tmpSetter.Expr = append(tmpSetter.Expr, DB_Token{buffer, "operator"})
+					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "operator"})
 				}
 			default:
 				panic("Bad optype in processSet")
@@ -307,11 +306,10 @@ func processSet(setstr string) (setter []DB_Setter) {
 		}
 		setter = append(setter, tmpSetter)
 	}
-	//fmt.Println("setter",setter)
 	return setter
 }
 
-func processLimit(limitstr string) (limiter DB_Limit) {
+func processLimit(limitstr string) (limiter DBLimit) {
 	halves := strings.Split(limitstr, ",")
 	if len(halves) == 2 {
 		limiter.Offset = halves[0]
@@ -330,7 +328,7 @@ func isOpRune(char rune) bool {
 	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
 }
 
-func processFields(fieldstr string) (fields []DB_Field) {
+func processFields(fieldstr string) (fields []DBField) {
 	if fieldstr == "" {
 		return fields
 	}
@@ -340,11 +338,11 @@ func processFields(fieldstr string) (fields []DB_Field) {
 	for i := 0; i < len(fieldstr); i++ {
 		if fieldstr[i] == '(' {
 			i = skipFunctionCall(fieldstr, i-1)
-			fields = append(fields, DB_Field{Name: fieldstr[lastItem : i+1], Type: getIdentifierType(fieldstr[lastItem : i+1])})
+			fields = append(fields, DBField{Name: fieldstr[lastItem : i+1], Type: getIdentifierType(fieldstr[lastItem : i+1])})
 			buffer = ""
 			lastItem = i + 2
 		} else if fieldstr[i] == ',' && buffer != "" {
-			fields = append(fields, DB_Field{Name: buffer, Type: getIdentifierType(buffer)})
+			fields = append(fields, DBField{Name: buffer, Type: getIdentifierType(buffer)})
 			buffer = ""
 			lastItem = i + 1
 		} else if (fieldstr[i] > 32) && fieldstr[i] != ',' && fieldstr[i] != ')' {

@@ -6,14 +6,14 @@ import "strconv"
 import "errors"
 
 func init() {
-	DB_Registry = append(DB_Registry,
-		&PgsqlAdapter{Name: "pgsql", Buffer: make(map[string]DB_Stmt)},
+	Registry = append(Registry,
+		&PgsqlAdapter{Name: "pgsql", Buffer: make(map[string]DBStmt)},
 	)
 }
 
 type PgsqlAdapter struct {
 	Name        string // ? - Do we really need this? Can't we hard-code this?
-	Buffer      map[string]DB_Stmt
+	Buffer      map[string]DBStmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
@@ -22,17 +22,17 @@ func (adapter *PgsqlAdapter) GetName() string {
 	return adapter.Name
 }
 
-func (adapter *PgsqlAdapter) GetStmt(name string) DB_Stmt {
+func (adapter *PgsqlAdapter) GetStmt(name string) DBStmt {
 	return adapter.Buffer[name]
 }
 
-func (adapter *PgsqlAdapter) GetStmts() map[string]DB_Stmt {
+func (adapter *PgsqlAdapter) GetStmts() map[string]DBStmt {
 	return adapter.Buffer
 }
 
 // TODO: Implement this
 // We may need to change the CreateTable API to better suit PGSQL and the other database drivers which are coming up
-func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
+func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -45,7 +45,7 @@ func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset stri
 
 	var querystr = "CREATE TABLE `" + table + "` ("
 	for _, column := range columns {
-		if column.Auto_Increment {
+		if column.AutoIncrement {
 			column.Type = "serial"
 		} else if column.Type == "createdAt" {
 			column.Type = "timestamp"
@@ -293,17 +293,17 @@ func (adapter *PgsqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
+func (adapter *PgsqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelect) (string, error) {
 	return "", nil
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *PgsqlAdapter) SimpleInsertLeftJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
 	return "", nil
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *PgsqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
 	return "", nil
 }
 
@@ -316,6 +316,11 @@ func (adapter *PgsqlAdapter) SimpleCount(name string, table string, where string
 		return "", errors.New("You need a name for this table")
 	}
 	return "", nil
+}
+
+func (adapter *PgsqlAdapter) Select(nlist ...string) *selectPrebuilder {
+	name := optString(nlist, "_builder")
+	return &selectPrebuilder{name, "", "", "", "", "", adapter}
 }
 
 func (adapter *PgsqlAdapter) Write() error {
@@ -378,7 +383,7 @@ func _gen_pgsql() (err error) {
 
 // Internal methods, not exposed in the interface
 func (adapter *PgsqlAdapter) pushStatement(name string, stype string, querystr string) {
-	adapter.Buffer[name] = DB_Stmt{querystr, stype}
+	adapter.Buffer[name] = DBStmt{querystr, stype}
 	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }
 

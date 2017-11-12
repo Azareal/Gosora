@@ -9,14 +9,14 @@ import (
 )
 
 func init() {
-	DB_Registry = append(DB_Registry,
-		&MssqlAdapter{Name: "mssql", Buffer: make(map[string]DB_Stmt)},
+	Registry = append(Registry,
+		&MssqlAdapter{Name: "mssql", Buffer: make(map[string]DBStmt)},
 	)
 }
 
 type MssqlAdapter struct {
 	Name        string // ? - Do we really need this? Can't we hard-code this?
-	Buffer      map[string]DB_Stmt
+	Buffer      map[string]DBStmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 	keys        map[string]string
 }
@@ -26,17 +26,17 @@ func (adapter *MssqlAdapter) GetName() string {
 	return adapter.Name
 }
 
-func (adapter *MssqlAdapter) GetStmt(name string) DB_Stmt {
+func (adapter *MssqlAdapter) GetStmt(name string) DBStmt {
 	return adapter.Buffer[name]
 }
 
-func (adapter *MssqlAdapter) GetStmts() map[string]DB_Stmt {
+func (adapter *MssqlAdapter) GetStmts() map[string]DBStmt {
 	return adapter.Buffer
 }
 
 // TODO: Convert any remaining stringy types to nvarchar
 // We may need to change the CreateTable API to better suit Mssql and the other database drivers which are coming up
-func (adapter *MssqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
+func (adapter *MssqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -89,7 +89,7 @@ func (adapter *MssqlAdapter) CreateTable(name string, table string, charset stri
 		}
 
 		// ! Not exactly the meaning of auto increment...
-		if column.Auto_Increment {
+		if column.AutoIncrement {
 			end += " IDENTITY"
 		}
 
@@ -770,7 +770,7 @@ func (adapter *MssqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 	return querystr, nil
 }
 
-func (adapter *MssqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
+func (adapter *MssqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelect) (string, error) {
 	// TODO: More errors.
 	// TODO: Add this to the MySQL adapter in order to make this problem more discoverable?
 	if len(sel.Orderby) == 0 && sel.Limit != "" {
@@ -885,7 +885,7 @@ func (adapter *MssqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel 
 	return querystr, nil
 }
 
-func (adapter *MssqlAdapter) simpleJoin(name string, ins DB_Insert, sel DB_Join, joinType string) (string, error) {
+func (adapter *MssqlAdapter) simpleJoin(name string, ins DBInsert, sel DBJoin, joinType string) (string, error) {
 	// TODO: More errors.
 	// TODO: Add this to the MySQL adapter in order to make this problem more discoverable?
 	if len(sel.Orderby) == 0 && sel.Limit != "" {
@@ -1015,11 +1015,11 @@ func (adapter *MssqlAdapter) simpleJoin(name string, ins DB_Insert, sel DB_Join,
 	return querystr, nil
 }
 
-func (adapter *MssqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *MssqlAdapter) SimpleInsertLeftJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
 	return adapter.simpleJoin(name, ins, sel, "LEFT")
 }
 
-func (adapter *MssqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *MssqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
 	return adapter.simpleJoin(name, ins, sel, "INNER")
 }
 
@@ -1036,9 +1036,6 @@ func (adapter *MssqlAdapter) SimpleCount(name string, table string, where string
 	// TODO: Add support for BETWEEN x.x
 	if len(where) != 0 {
 		querystr += " WHERE"
-		//fmt.Println("SimpleCount:",name)
-		//fmt.Println("where:",where)
-		//fmt.Println("processWhere:",processWhere(where))
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
@@ -1067,6 +1064,11 @@ func (adapter *MssqlAdapter) SimpleCount(name string, table string, where string
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
 	return querystr, nil
+}
+
+func (adapter *MssqlAdapter) Select(nlist ...string) *selectPrebuilder {
+	name := optString(nlist, "_builder")
+	return &selectPrebuilder{name, "", "", "", "", "", adapter}
 }
 
 func (adapter *MssqlAdapter) Write() error {
@@ -1130,7 +1132,7 @@ func _gen_mssql() (err error) {
 
 // Internal methods, not exposed in the interface
 func (adapter *MssqlAdapter) pushStatement(name string, stype string, querystr string) {
-	adapter.Buffer[name] = DB_Stmt{querystr, stype}
+	adapter.Buffer[name] = DBStmt{querystr, stype}
 	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }
 

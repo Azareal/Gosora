@@ -7,14 +7,14 @@ import "strconv"
 import "errors"
 
 func init() {
-	DB_Registry = append(DB_Registry,
-		&MysqlAdapter{Name: "mysql", Buffer: make(map[string]DB_Stmt)},
+	Registry = append(Registry,
+		&MysqlAdapter{Name: "mysql", Buffer: make(map[string]DBStmt)},
 	)
 }
 
 type MysqlAdapter struct {
 	Name        string // ? - Do we really need this? Can't we hard-code this?
-	Buffer      map[string]DB_Stmt
+	Buffer      map[string]DBStmt
 	BufferOrder []string // Map iteration order is random, so we need this to track the order, so we don't get huge diffs every commit
 }
 
@@ -23,15 +23,15 @@ func (adapter *MysqlAdapter) GetName() string {
 	return adapter.Name
 }
 
-func (adapter *MysqlAdapter) GetStmt(name string) DB_Stmt {
+func (adapter *MysqlAdapter) GetStmt(name string) DBStmt {
 	return adapter.Buffer[name]
 }
 
-func (adapter *MysqlAdapter) GetStmts() map[string]DB_Stmt {
+func (adapter *MysqlAdapter) GetStmts() map[string]DBStmt {
 	return adapter.Buffer
 }
 
-func (adapter *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DB_Table_Column, keys []DB_Table_Key) (string, error) {
+func (adapter *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -71,7 +71,7 @@ func (adapter *MysqlAdapter) CreateTable(name string, table string, charset stri
 			end += " not null"
 		}
 
-		if column.Auto_Increment {
+		if column.AutoIncrement {
 			end += " AUTO_INCREMENT"
 		}
 
@@ -430,7 +430,7 @@ func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 	return querystr, nil
 }
 
-func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel DB_Select) (string, error) {
+func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelect) (string, error) {
 	whereStr, err := adapter.buildWhere(sel.Where)
 	if err != nil {
 		return "", err
@@ -443,7 +443,7 @@ func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DB_Insert, sel 
 	return querystr, nil
 }
 
-func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
 	whereStr, err := adapter.buildJoinWhere(sel.Where)
 	if err != nil {
 		return "", err
@@ -520,7 +520,7 @@ func (adapter *MysqlAdapter) buildJoinColumns(columns string) (querystr string) 
 	return querystr[0 : len(querystr)-1]
 }
 
-func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DB_Insert, sel DB_Join) (string, error) {
+func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
 	whereStr, err := adapter.buildJoinWhere(sel.Where)
 	if err != nil {
 		return "", err
@@ -550,6 +550,11 @@ func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
 	return querystr, nil
+}
+
+func (adapter *MysqlAdapter) Select(nlist ...string) *selectPrebuilder {
+	name := optString(nlist, "_builder")
+	return &selectPrebuilder{name, "", "", "", "", "", adapter}
 }
 
 func (adapter *MysqlAdapter) Write() error {
@@ -623,7 +628,7 @@ func _gen_mysql() (err error) {
 
 // Internal methods, not exposed in the interface
 func (adapter *MysqlAdapter) pushStatement(name string, stype string, querystr string) {
-	adapter.Buffer[name] = DB_Stmt{querystr, stype}
+	adapter.Buffer[name] = DBStmt{querystr, stype}
 	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }
 

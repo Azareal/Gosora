@@ -23,8 +23,8 @@ func main() {
 	}()
 
 	log.Println("Running the query generator")
-	for _, adapter := range qgen.DB_Registry {
-		log.Println("Building the queries for the " + adapter.GetName() + " adapter")
+	for _, adapter := range qgen.Registry {
+		log.Printf("Building the queries for the %s adapter", adapter.GetName())
 		qgen.Install.SetAdapterInstance(adapter)
 		qgen.Install.RegisterPlugin(NewPrimaryKeySpitter()) // TODO: Do we really need to fill the spitter for every adapter?
 
@@ -44,7 +44,7 @@ func main() {
 }
 
 // nolint
-func writeStatements(adapter qgen.DB_Adapter) error {
+func writeStatements(adapter qgen.Adapter) error {
 	err := createTables(adapter)
 	if err != nil {
 		return err
@@ -118,7 +118,7 @@ func writeStatements(adapter qgen.DB_Adapter) error {
 	return nil
 }
 
-func seedTables(adapter qgen.DB_Adapter) error {
+func seedTables(adapter qgen.Adapter) error {
 	qgen.Install.SimpleInsert("sync", "last_update", "UTC_TIMESTAMP()")
 
 	qgen.Install.SimpleInsert("settings", "name, content, type", "'url_tags','1','bool'")
@@ -219,22 +219,22 @@ func seedTables(adapter qgen.DB_Adapter) error {
 	return nil
 }
 
-func writeSelects(adapter qgen.DB_Adapter) error {
+func writeSelects(adapter qgen.Adapter) error {
 	// Looking for getTopic? Your statement is in another castle
 
-	adapter.SimpleSelect("getPassword", "users", "password, salt", "uid = ?", "", "")
+	adapter.Select("getPassword").Table("users").Columns("password, salt").Where("uid = ?").Parse()
 
-	adapter.SimpleSelect("getSettings", "settings", "name, content, type", "", "", "")
+	adapter.Select("getSettings").Table("settings").Columns("name, content, type").Parse()
 
-	adapter.SimpleSelect("getSetting", "settings", "content, type", "name = ?", "", "")
+	adapter.Select("getSetting").Table("settings").Columns("content, type").Where("name = ?").Parse()
 
-	adapter.SimpleSelect("getFullSetting", "settings", "name, type, constraints", "name = ?", "", "")
+	adapter.Select("getFullSetting").Table("settings").Columns("name, type, constraints").Where("name = ?").Parse()
 
-	adapter.SimpleSelect("isPluginActive", "plugins", "active", "uname = ?", "", "")
+	adapter.Select("isPluginActive").Table("plugins").Columns("active").Where("uname = ?").Parse()
 
 	//adapter.SimpleSelect("isPluginInstalled","plugins","installed","uname = ?","","")
 
-	adapter.SimpleSelect("getUsersOffset", "users", "uid, name, group, active, is_super_admin, avatar", "", "uid ASC", "?,?")
+	adapter.Select("getUsersOffset").Table("users").Columns("uid, name, group, active, is_super_admin, avatar").Orderby("uid ASC").Limit("?,?").Parse()
 
 	adapter.SimpleSelect("isThemeDefault", "themes", "default", "uname = ?", "", "")
 
@@ -267,7 +267,7 @@ func writeSelects(adapter qgen.DB_Adapter) error {
 	return nil
 }
 
-func writeLeftJoins(adapter qgen.DB_Adapter) error {
+func writeLeftJoins(adapter qgen.Adapter) error {
 	adapter.SimpleLeftJoin("getTopicRepliesOffset", "replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?")
 
 	adapter.SimpleLeftJoin("getTopicList", "topics", "users", "topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar", "topics.createdBy = users.uid", "", "topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC", "")
@@ -281,7 +281,7 @@ func writeLeftJoins(adapter qgen.DB_Adapter) error {
 	return nil
 }
 
-func writeInnerJoins(adapter qgen.DB_Adapter) (err error) {
+func writeInnerJoins(adapter qgen.Adapter) (err error) {
 	_, err = adapter.SimpleInnerJoin("getWatchers", "activity_stream", "activity_subscriptions", "activity_subscriptions.user", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", "")
 	if err != nil {
 		return err
@@ -290,7 +290,7 @@ func writeInnerJoins(adapter qgen.DB_Adapter) (err error) {
 	return nil
 }
 
-func writeInserts(adapter qgen.DB_Adapter) error {
+func writeInserts(adapter qgen.Adapter) error {
 	adapter.SimpleInsert("createReport", "topics", "title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'")
 
 	adapter.SimpleInsert("addActivity", "activity_stream", "actor, targetUser, event, elementType, elementID", "?,?,?,?,?")
@@ -314,12 +314,12 @@ func writeInserts(adapter qgen.DB_Adapter) error {
 	return nil
 }
 
-func writeReplaces(adapter qgen.DB_Adapter) (err error) {
+func writeReplaces(adapter qgen.Adapter) (err error) {
 	return nil
 }
 
 // ! Upserts are broken atm
-/*func writeUpserts(adapter qgen.DB_Adapter) (err error) {
+/*func writeUpserts(adapter qgen.Adapter) (err error) {
 	_, err = adapter.SimpleUpsert("addForumPermsToGroup", "forums_permissions", "gid, fid, preset, permissions", "?,?,?,?", "gid = ? AND fid = ?")
 	if err != nil {
 		return err
@@ -333,7 +333,7 @@ func writeReplaces(adapter qgen.DB_Adapter) (err error) {
 	return nil
 }*/
 
-func writeUpdates(adapter qgen.DB_Adapter) error {
+func writeUpdates(adapter qgen.Adapter) error {
 	adapter.SimpleUpdate("editReply", "replies", "content = ?, parsed_content = ?", "rid = ?")
 
 	adapter.SimpleUpdate("editProfileReply", "users_replies", "content = ?, parsed_content = ?", "rid = ?")
@@ -367,7 +367,7 @@ func writeUpdates(adapter qgen.DB_Adapter) error {
 	return nil
 }
 
-func writeDeletes(adapter qgen.DB_Adapter) error {
+func writeDeletes(adapter qgen.Adapter) error {
 	adapter.SimpleDelete("deleteProfileReply", "users_replies", "rid = ?")
 
 	//adapter.SimpleDelete("deleteForumPermsByForum", "forums_permissions", "fid = ?")
@@ -380,7 +380,7 @@ func writeDeletes(adapter qgen.DB_Adapter) error {
 	return nil
 }
 
-func writeSimpleCounts(adapter qgen.DB_Adapter) error {
+func writeSimpleCounts(adapter qgen.Adapter) error {
 	adapter.SimpleCount("reportExists", "topics", "data = ? AND data != '' AND parentID = 1", "")
 
 	adapter.SimpleCount("modlogCount", "moderation_logs", "", "")
@@ -388,7 +388,7 @@ func writeSimpleCounts(adapter qgen.DB_Adapter) error {
 	return nil
 }
 
-func writeInsertSelects(adapter qgen.DB_Adapter) error {
+func writeInsertSelects(adapter qgen.Adapter) error {
 	/*adapter.SimpleInsertSelect("addForumPermsToForumAdmins",
 		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 1", "", ""},
@@ -408,14 +408,14 @@ func writeInsertSelects(adapter qgen.DB_Adapter) error {
 }
 
 // nolint
-func writeInsertLeftJoins(adapter qgen.DB_Adapter) error {
+func writeInsertLeftJoins(adapter qgen.Adapter) error {
 	return nil
 }
 
-func writeInsertInnerJoins(adapter qgen.DB_Adapter) error {
+func writeInsertInnerJoins(adapter qgen.Adapter) error {
 	adapter.SimpleInsertInnerJoin("notifyWatchers",
-		qgen.DB_Insert{"activity_stream_matches", "watcher, asid", ""},
-		qgen.DB_Join{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""},
+		qgen.DBInsert{"activity_stream_matches", "watcher, asid", ""},
+		qgen.DBJoin{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""},
 	)
 
 	return nil
