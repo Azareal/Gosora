@@ -118,6 +118,9 @@ type Adapter interface {
 
 	Select(name ...string) *selectPrebuilder
 	Insert(name ...string) *insertPrebuilder
+	Update(name ...string) *updatePrebuilder
+	Delete(name ...string) *deletePrebuilder
+
 	Write() error
 }
 

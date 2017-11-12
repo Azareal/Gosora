@@ -3,6 +3,7 @@ package qgen
 
 import (
 	"database/sql"
+	"log"
 )
 
 type Accumulator struct {
@@ -42,6 +43,7 @@ func (build *Accumulator) recordError(err error) {
 }
 
 func (build *Accumulator) prepare(res string, err error) *sql.Stmt {
+	log.Print("res: ", res)
 	if err != nil {
 		build.recordError(err)
 		return nil

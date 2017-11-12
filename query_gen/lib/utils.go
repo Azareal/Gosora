@@ -93,6 +93,46 @@ func processJoiner(joinstr string) (joiner []DBJoiner) {
 	return joiner
 }
 
+func parseNumber(tmpWhere *DBWhere, segment string, i int) int {
+	var buffer string
+	for ; i < len(segment); i++ {
+		char := segment[i]
+		if '0' <= char && char <= '9' {
+			buffer += string(char)
+		} else {
+			i--
+			tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "number"})
+			return i
+		}
+	}
+	return i
+}
+
+func parseColumn(tmpWhere *DBWhere, segment string, i int) int {
+	var buffer string
+	for ; i < len(segment); i++ {
+		char := segment[i]
+		if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_' {
+			buffer += string(char)
+		} else if char == '(' {
+			return parseFunction(tmpWhere, segment, buffer, i)
+		} else {
+			i--
+			tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "column"})
+			return i
+		}
+	}
+	return i
+}
+
+func parseFunction(tmpWhere *DBWhere, segment string, buffer string, i int) int {
+	var preI = i
+	i = skipFunctionCall(segment, i-1)
+	buffer += segment[preI:i] + string(segment[i])
+	tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "function"})
+	return i
+}
+
 func processWhere(wherestr string) (where []DBWhere) {
 	if wherestr == "" {
 		return where
@@ -102,20 +142,16 @@ func processWhere(wherestr string) (where []DBWhere) {
 	var buffer string
 	var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
 	for _, segment := range strings.Split(wherestr, " AND ") {
-		var tmpWhere DBWhere
+		var tmpWhere = &DBWhere{[]DBToken{}}
 		segment += ")"
 		for i := 0; i < len(segment); i++ {
 			char := segment[i]
-			//fmt.Println("optype", optype)
 			switch optype {
 			case 0: // unknown
-				//fmt.Println("case 0:", char, string(char))
 				if '0' <= char && char <= '9' {
-					optype = 1
-					buffer = string(char)
+					i = parseNumber(tmpWhere, segment, i)
 				} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
-					optype = 2
-					buffer = string(char)
+					i = parseColumn(tmpWhere, segment, i)
 				} else if char == '\'' {
 					optype = 4
 					buffer = ""
@@ -123,51 +159,13 @@ func processWhere(wherestr string) (where []DBWhere) {
 					optype = 5
 					buffer = string(char)
 				} else if char == '?' {
-					//fmt.Println("Expr:","?")
 					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"?", "substitute"})
 				}
-			case 1: // number
-				if '0' <= char && char <= '9' {
-					buffer += string(char)
-				} else {
-					optype = 0
-					i--
-					//fmt.Println("Expr:",buffer)
-					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "number"})
-				}
-			case 2: // column
-				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_' {
-					buffer += string(char)
-				} else if char == '(' {
-					optype = 3
-					i--
-				} else {
-					optype = 0
-					i--
-					//fmt.Println("Expr:", buffer)
-					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "column"})
-				}
-			case 3: // function
-				var preI = i
-				//fmt.Println("buffer", buffer)
-				//fmt.Println("len(halves)", len(halves[1]))
-				//fmt.Println("preI", string(halves[1][preI]))
-				//fmt.Println("msg prior to preI", halves[1][0:preI])
-				i = skipFunctionCall(segment, i-1)
-				//fmt.Println("i",i)
-				//fmt.Println("msg prior to i-1", halves[1][0:i-1])
-				//fmt.Println("string(i-1)", string(halves[1][i-1]))
-				//fmt.Println("string(i)", string(halves[1][i]))
-				buffer += segment[preI:i] + string(segment[i])
-				//fmt.Println("Expr:",buffer)
-				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "function"})
-				optype = 0
 			case 4: // string
 				if char != '\'' {
 					buffer += string(char)
 				} else {
 					optype = 0
-					//fmt.Println("Expr:",buffer)
 					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "string"})
 				}
 			case 5: // operator
@@ -176,14 +174,13 @@ func processWhere(wherestr string) (where []DBWhere) {
 				} else {
 					optype = 0
 					i--
-					//fmt.Println("Expr:",buffer)
 					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "operator"})
 				}
 			default:
 				panic("Bad optype in processWhere")
 			}
 		}
-		where = append(where, tmpWhere)
+		where = append(where, *tmpWhere)
 	}
 	return where
 }
@@ -222,13 +219,14 @@ func processSet(setstr string) (setter []DBSetter) {
 			continue
 		}
 		tmpSetter.Column = strings.TrimSpace(halves[0])
+		segment := halves[1] + ")"
 
-		halves[1] += ")"
 		var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
-		//fmt.Println("halves[1]",halves[1])
-		for i := 0; i < len(halves[1]); i++ {
-			char := halves[1][i]
+		//fmt.Println("segment", segment)
+		for i := 0; i < len(segment); i++ {
+			char := segment[i]
 			//fmt.Println("optype",optype)
+			//fmt.Println("Expr:",buffer)
 			switch optype {
 			case 0: // unknown
 				if '0' <= char && char <= '9' {
@@ -244,7 +242,6 @@ func processSet(setstr string) (setter []DBSetter) {
 					optype = 5
 					buffer = string(char)
 				} else if char == '?' {
-					//fmt.Println("Expr:","?")
 					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{"?", "substitute"})
 				}
 			case 1: // number
@@ -253,7 +250,6 @@ func processSet(setstr string) (setter []DBSetter) {
 				} else {
 					optype = 0
 					i--
-					//fmt.Println("Expr:",buffer)
 					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "number"})
 				}
 			case 2: // column
@@ -265,22 +261,12 @@ func processSet(setstr string) (setter []DBSetter) {
 				} else {
 					optype = 0
 					i--
-					//fmt.Println("Expr:",buffer)
 					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "column"})
 				}
 			case 3: // function
 				var preI = i
-				//fmt.Println("buffer",buffer)
-				//fmt.Println("len(halves)",len(halves[1]))
-				//fmt.Println("preI",string(halves[1][preI]))
-				//fmt.Println("msg prior to preI",halves[1][0:preI])
-				i = skipFunctionCall(halves[1], i-1)
-				//fmt.Println("i",i)
-				//fmt.Println("msg prior to i-1",halves[1][0:i-1])
-				//fmt.Println("string(i-1)",string(halves[1][i-1]))
-				//fmt.Println("string(i)",string(halves[1][i]))
-				buffer += halves[1][preI:i] + string(halves[1][i])
-				//fmt.Println("Expr:",buffer)
+				i = skipFunctionCall(segment, i-1)
+				buffer += segment[preI:i] + string(segment[i])
 				tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "function"})
 				optype = 0
 			case 4: // string
@@ -288,7 +274,6 @@ func processSet(setstr string) (setter []DBSetter) {
 					buffer += string(char)
 				} else {
 					optype = 0
-					//fmt.Println("Expr:", buffer)
 					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "string"})
 				}
 			case 5: // operator
@@ -297,7 +282,6 @@ func processSet(setstr string) (setter []DBSetter) {
 				} else {
 					optype = 0
 					i--
-					//fmt.Println("Expr:", buffer)
 					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "operator"})
 				}
 			default:

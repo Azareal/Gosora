@@ -328,6 +328,16 @@ func (adapter *PgsqlAdapter) Insert(nlist ...string) *insertPrebuilder {
 	return &insertPrebuilder{name, "", "", "", adapter}
 }
 
+func (adapter *PgsqlAdapter) Update(nlist ...string) *updatePrebuilder {
+	name := optString(nlist, "_builder")
+	return &updatePrebuilder{name, "", "", "", adapter}
+}
+
+func (adapter *PgsqlAdapter) Delete(nlist ...string) *deletePrebuilder {
+	name := optString(nlist, "_builder")
+	return &deletePrebuilder{name, "", "", adapter}
+}
+
 func (adapter *PgsqlAdapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {

@@ -45,10 +45,14 @@ a {
 	padding-top: 14px;
 	display: flex;
 	/*background-color: hsl(0,0%,97%);*/
+	padding-left: 0px;
+	padding-right: 0px;
 }
 
 #main {
 	width: 100%;
+	padding-left: 8px;
+	padding-right: 8px;
 }
 .sidebar {
 	width: 200px;
@@ -750,8 +754,19 @@ select, input, textarea {
 }
 
 .footer {
-	border: 1px solid var(--element-border-color);
-	border-bottom: 2px solid var(--element-border-color);
+	border-top: 1px solid var(--element-border-color);
+	padding: 12px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-top: 14px;
+	margin-left: -8px;
+	margin-right: -8px;
+}
+.footer #poweredBy {
+	font-size: 17px;
+}
+.footer #poweredBy span {
+	font-size: 16px;
 }
 
 @media(max-width: 670px) {

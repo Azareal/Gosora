@@ -297,19 +297,19 @@ func writeInserts(adapter qgen.Adapter) error {
 
 	adapter.Insert("notifyOne").Table("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Parse()
 
-	adapter.SimpleInsert("addEmail", "emails", "email, uid, validated, token", "?,?,?,?")
+	adapter.Insert("addEmail").Table("emails").Columns("email, uid, validated, token").Fields("?,?,?,?").Parse()
 
-	adapter.SimpleInsert("addSubscription", "activity_subscriptions", "user, targetID, targetType, level", "?,?,?,2")
+	adapter.Insert("addSubscription").Table("activity_subscriptions").Columns("user, targetID, targetType, level").Fields("?,?,?,2").Parse()
 
-	adapter.SimpleInsert("addForumPermsToForum", "forums_permissions", "gid,fid,preset,permissions", "?,?,?,?")
+	adapter.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
 
-	adapter.SimpleInsert("addPlugin", "plugins", "uname, active, installed", "?,?,?")
+	adapter.Insert("addPlugin").Table("plugins").Columns("uname, active, installed").Fields("?,?,?").Parse()
 
-	adapter.SimpleInsert("addTheme", "themes", "uname, default", "?,?")
+	adapter.Insert("addTheme").Table("themes").Columns("uname, default").Fields("?,?").Parse()
 
-	adapter.SimpleInsert("addAttachment", "attachments", "sectionID, sectionTable, originID, originTable, uploadedBy, path", "?,?,?,?,?,?")
+	adapter.Insert("addAttachment").Table("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Fields("?,?,?,?,?,?").Parse()
 
-	adapter.SimpleInsert("createWordFilter", "word_filters", "find, replacement", "?,?")
+	adapter.Insert("createWordFilter").Table("word_filters").Columns("find, replacement").Fields("?,?").Parse()
 
 	return nil
 }
@@ -334,48 +334,48 @@ func writeReplaces(adapter qgen.Adapter) (err error) {
 }*/
 
 func writeUpdates(adapter qgen.Adapter) error {
-	adapter.SimpleUpdate("editReply", "replies", "content = ?, parsed_content = ?", "rid = ?")
+	adapter.Update("editReply").Table("replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
 
-	adapter.SimpleUpdate("editProfileReply", "users_replies", "content = ?, parsed_content = ?", "rid = ?")
+	adapter.Update("editProfileReply").Table("users_replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
 
-	adapter.SimpleUpdate("updateSetting", "settings", "content = ?", "name = ?")
+	adapter.Update("updateSetting").Table("settings").Set("content = ?").Where("name = ?").Parse()
 
-	adapter.SimpleUpdate("updatePlugin", "plugins", "active = ?", "uname = ?")
+	adapter.Update("updatePlugin").Table("plugins").Set("active = ?").Where("uname = ?").Parse()
 
-	adapter.SimpleUpdate("updatePluginInstall", "plugins", "installed = ?", "uname = ?")
+	adapter.Update("updatePluginInstall").Table("plugins").Set("installed = ?").Where("uname = ?").Parse()
 
-	adapter.SimpleUpdate("updateTheme", "themes", "default = ?", "uname = ?")
+	adapter.Update("updateTheme").Table("themes").Set("default = ?").Where("uname = ?").Parse()
 
-	adapter.SimpleUpdate("updateForum", "forums", "name = ?, desc = ?, active = ?, preset = ?", "fid = ?")
+	adapter.Update("updateForum").Table("forums").Set("name = ?, desc = ?, active = ?, preset = ?").Where("fid = ?").Parse()
 
-	adapter.SimpleUpdate("updateUser", "users", "name = ?, email = ?, group = ?", "uid = ?")
+	adapter.Update("updateUser").Table("users").Set("name = ?, email = ?, group = ?").Where("uid = ?").Parse()
 
-	adapter.SimpleUpdate("updateGroupPerms", "users_groups", "permissions = ?", "gid = ?")
+	adapter.Update("updateGroupPerms").Table("users_groups").Set("permissions = ?").Where("gid = ?").Parse()
 
-	adapter.SimpleUpdate("updateGroup", "users_groups", "name = ?, tag = ?", "gid = ?")
+	adapter.Update("updateGroup").Table("users_groups").Set("name = ?, tag = ?").Where("gid = ?").Parse()
 
-	adapter.SimpleUpdate("updateEmail", "emails", "email = ?, uid = ?, validated = ?, token = ?", "email = ?")
+	adapter.Update("updateEmail").Table("emails").Set("email = ?, uid = ?, validated = ?, token = ?").Where("email = ?").Parse()
 
-	adapter.SimpleUpdate("verifyEmail", "emails", "validated = 1, token = ''", "email = ?") // Need to fix this: Empty string isn't working, it gets set to 1 instead x.x -- Has this been fixed?
+	adapter.Update("verifyEmail").Table("emails").Set("validated = 1, token = ''").Where("email = ?").Parse() // Need to fix this: Empty string isn't working, it gets set to 1 instead x.x -- Has this been fixed?
 
-	adapter.SimpleUpdate("setTempGroup", "users", "temp_group = ?", "uid = ?")
+	adapter.Update("setTempGroup").Table("users").Set("temp_group = ?").Where("uid = ?").Parse()
 
-	adapter.SimpleUpdate("updateWordFilter", "word_filters", "find = ?, replacement = ?", "wfid = ?")
+	adapter.Update("updateWordFilter").Table("word_filters").Set("find = ?, replacement = ?").Where("wfid = ?").Parse()
 
-	adapter.SimpleUpdate("bumpSync", "sync", "last_update = UTC_TIMESTAMP()", "")
+	adapter.Update("bumpSync").Table("sync").Set("last_update = UTC_TIMESTAMP()").Parse()
 
 	return nil
 }
 
 func writeDeletes(adapter qgen.Adapter) error {
-	adapter.SimpleDelete("deleteProfileReply", "users_replies", "rid = ?")
+	adapter.Delete("deleteProfileReply").Table("users_replies").Where("rid = ?").Parse()
 
-	//adapter.SimpleDelete("deleteForumPermsByForum", "forums_permissions", "fid = ?")
+	//adapter.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid = ?").Parse()
 
-	adapter.SimpleDelete("deleteActivityStreamMatch", "activity_stream_matches", "watcher = ? AND asid = ?")
-	//adapter.SimpleDelete("deleteActivityStreamMatchesByWatcher","activity_stream_matches","watcher = ?")
+	adapter.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher = ? AND asid = ?").Parse()
+	//adapter.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher = ?").Parse()
 
-	adapter.SimpleDelete("deleteWordFilter", "word_filters", "wfid = ?")
+	adapter.Delete("deleteWordFilter").Table("word_filters").Where("wfid = ?").Parse()
 
 	return nil
 }

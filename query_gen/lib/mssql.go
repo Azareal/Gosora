@@ -1076,6 +1076,16 @@ func (adapter *MssqlAdapter) Insert(nlist ...string) *insertPrebuilder {
 	return &insertPrebuilder{name, "", "", "", adapter}
 }
 
+func (adapter *MssqlAdapter) Update(nlist ...string) *updatePrebuilder {
+	name := optString(nlist, "_builder")
+	return &updatePrebuilder{name, "", "", "", adapter}
+}
+
+func (adapter *MssqlAdapter) Delete(nlist ...string) *deletePrebuilder {
+	name := optString(nlist, "_builder")
+	return &deletePrebuilder{name, "", "", adapter}
+}
+
 func (adapter *MssqlAdapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {
