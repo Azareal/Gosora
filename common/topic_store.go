@@ -69,10 +69,10 @@ func NewMemoryTopicStore(capacity int) (*MemoryTopicStore, error) {
 	return &MemoryTopicStore{
 		items:      make(map[int]*Topic),
 		capacity:   capacity,
-		get:        acc.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", ""),
-		exists:     acc.SimpleSelect("topics", "tid", "tid = ?", "", ""),
-		topicCount: acc.SimpleCount("topics", "", ""),
-		create:     acc.SimpleInsert("topics", "parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?"),
+		get:        acc.Select("topics").Columns("title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data").Where("tid = ?").Prepare(),
+		exists:     acc.Select("topics").Columns("tid").Where("tid = ?").Prepare(),
+		topicCount: acc.Count("topics").Prepare(),
+		create:     acc.Insert("topics").Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -279,10 +279,10 @@ type SQLTopicStore struct {
 func NewSQLTopicStore() (*SQLTopicStore, error) {
 	acc := qgen.Builder.Accumulator()
 	return &SQLTopicStore{
-		get:        acc.SimpleSelect("topics", "title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data", "tid = ?", "", ""),
-		exists:     acc.SimpleSelect("topics", "tid", "tid = ?", "", ""),
-		topicCount: acc.SimpleCount("topics", "", ""),
-		create:     acc.SimpleInsert("topics", "parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy", "?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?"),
+		get:        acc.Select("topics").Columns("title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, postCount, likeCount, data").Where("tid = ?").Prepare(),
+		exists:     acc.Select("topics").Columns("tid").Where("tid = ?").Prepare(),
+		topicCount: acc.Count("topics").Prepare(),
+		create:     acc.Insert("topics").Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
 	}, acc.FirstError()
 }
 

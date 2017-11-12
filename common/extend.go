@@ -145,8 +145,7 @@ type ExtendStmts struct {
 var extendStmts ExtendStmts
 
 func init() {
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		extendStmts = ExtendStmts{
 			getPlugins: acc.Select("plugins").Columns("uname, active, installed").Prepare(),
 		}

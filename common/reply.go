@@ -71,14 +71,13 @@ type ReplyStmts struct {
 }
 
 func init() {
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		replyStmts = ReplyStmts{
-			isLiked:                acc.SimpleSelect("likes", "targetItem", "sentBy = ? and targetItem = ? and targetType = 'replies'", "", ""),
+			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'replies'").Prepare(),
 			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
-			delete:                 acc.SimpleDelete("replies", "rid = ?"),
-			addLikesToReply:        acc.SimpleUpdate("replies", "likeCount = likeCount + ?", "rid = ?"),
-			removeRepliesFromTopic: acc.SimpleUpdate("topics", "postCount = postCount - ?", "tid = ?"),
+			delete:                 acc.Delete("replies").Where("rid = ?").Prepare(),
+			addLikesToReply:        acc.Update("replies").Set("likeCount = likeCount + ?").Where("rid = ?").Prepare(),
+			removeRepliesFromTopic: acc.Update("topics").Set("postCount = postCount - ?").Where("tid = ?").Prepare(),
 			getParent:              acc.SimpleLeftJoin("replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.data", "replies.tid = topics.tid", "rid = ?", "", ""),
 		}
 		return acc.FirstError()

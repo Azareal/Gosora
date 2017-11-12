@@ -35,23 +35,23 @@ func initGuilds() (err error) {
 
 	acc := qgen.Builder.Accumulator()
 
-	guilds.ListStmt = acc.SimpleSelect("guilds", "guildID, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime", "", "", "")
+	guilds.ListStmt = acc.Select("guilds").Columns("guildID, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime").Prepare()
 
-	guilds.GetGuildStmt = acc.SimpleSelect("guilds", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "guildID = ?", "", "")
+	guilds.GetGuildStmt = acc.Select("guilds").Columns("name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime").Where("guildID = ?").Prepare()
 
-	guilds.MemberListStmt = acc.SimpleSelect("guilds_members", "guildID, uid, rank, posts, joinedAt", "", "", "")
+	guilds.MemberListStmt = acc.Select("guilds_members").Columns("guildID, uid, rank, posts, joinedAt").Prepare()
 
 	guilds.MemberListJoinStmt = acc.SimpleLeftJoin("guilds_members", "users", "users.uid, guilds_members.rank, guilds_members.posts, guilds_members.joinedAt, users.name, users.avatar", "guilds_members.uid = users.uid", "guilds_members.guildID = ?", "guilds_members.rank DESC, guilds_members.joinedat ASC", "")
 
-	guilds.GetMemberStmt = acc.SimpleSelect("guilds_members", "rank, posts, joinedAt", "guildID = ? AND uid = ?", "", "")
+	guilds.GetMemberStmt = acc.Select("guilds_members").Columns("rank, posts, joinedAt").Where("guildID = ? AND uid = ?").Prepare()
 
-	guilds.CreateGuildStmt = acc.SimpleInsert("guilds", "name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime", "?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()")
+	guilds.CreateGuildStmt = acc.Insert("guilds").Columns("name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime").Fields("?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare()
 
-	guilds.AttachForumStmt = acc.SimpleUpdate("forums", "parentID = ?, parentType = 'guild'", "fid = ?")
+	guilds.AttachForumStmt = acc.Update("forums").Set("parentID = ?, parentType = 'guild'").Where("fid = ?").Prepare()
 
-	guilds.UnattachForumStmt = acc.SimpleUpdate("forums", "parentID = 0, parentType = ''", "fid = ?")
+	guilds.UnattachForumStmt = acc.Update("forums").Set("parentID = 0, parentType = ''").Where("fid = ?").Prepare()
 
-	guilds.AddMemberStmt = acc.SimpleInsert("guilds_members", "guildID, uid, rank, posts, joinedAt", "?,?,?,0,UTC_TIMESTAMP()")
+	guilds.AddMemberStmt = acc.Insert("guilds_members").Columns("guildID, uid, rank, posts, joinedAt").Fields("?,?,?,0,UTC_TIMESTAMP()").Prepare()
 
 	return acc.FirstError()
 }

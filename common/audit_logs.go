@@ -14,8 +14,7 @@ type LogStmts struct {
 var logStmts LogStmts
 
 func init() {
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		logStmts = LogStmts{
 			addModLogEntry:   acc.Insert("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 			addAdminLogEntry: acc.Insert("administration_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),

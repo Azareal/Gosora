@@ -83,8 +83,7 @@ var themeStmts ThemeStmts
 
 func init() {
 	DefaultThemeBox.Store(fallbackTheme)
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		themeStmts = ThemeStmts{
 			getThemes: acc.Select("themes").Columns("uname, default").Prepare(),
 		}

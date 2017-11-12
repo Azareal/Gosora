@@ -16,8 +16,8 @@ type builder struct {
 	adapter DB_Adapter
 }
 
-func (build *builder) Accumulator() *accBuilder {
-	return &accBuilder{build.conn, build.adapter, nil}
+func (build *builder) Accumulator() *Accumulator {
+	return &Accumulator{build.conn, build.adapter, nil}
 }
 
 func (build *builder) SetConn(conn *sql.DB) {

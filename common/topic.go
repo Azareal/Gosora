@@ -126,8 +126,7 @@ type TopicStmts struct {
 var topicStmts TopicStmts
 
 func init() {
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		topicStmts = TopicStmts{
 			addRepliesToTopic: acc.Update("topics").Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
 			lock:              acc.Update("topics").Set("is_closed = 1").Where("tid = ?").Prepare(),

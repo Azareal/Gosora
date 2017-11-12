@@ -35,8 +35,7 @@ var settingStmts SettingStmts
 
 func init() {
 	SettingBox.Store(SettingMap(make(map[string]interface{})))
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		settingStmts = SettingStmts{
 			getFull: acc.Select("settings").Columns("name, content, type, constraints").Prepare(),
 		}

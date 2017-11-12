@@ -74,14 +74,14 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 	acc := qgen.Builder.Accumulator()
 	// TODO: Do a proper delete
 	return &MemoryForumStore{
-		get:          acc.SimpleSelect("forums", "name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "fid = ?", "", ""),
-		getAll:       acc.SimpleSelect("forums", "fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID", "", "fid ASC", ""),
-		delete:       acc.SimpleUpdate("forums", "name= '', active = 0", "fid = ?"),
-		create:       acc.SimpleInsert("forums", "name, desc, active, preset", "?,?,?,?"),
-		count:        acc.SimpleCount("forums", "name != ''", ""),
-		updateCache:  acc.SimpleUpdate("forums", "lastTopicID = ?, lastReplyerID = ?", "fid = ?"),
-		addTopics:    acc.SimpleUpdate("forums", "topicCount = topicCount + ?", "fid = ?"),
-		removeTopics: acc.SimpleUpdate("forums", "topicCount = topicCount - ?", "fid = ?"),
+		get:          acc.Select("forums").Columns("name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
+		getAll:       acc.Select("forums").Columns("fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("fid ASC").Prepare(),
+		delete:       acc.Update("forums").Set("name= '', active = 0").Where("fid = ?").Prepare(),
+		create:       acc.Insert("forums").Columns("name, desc, active, preset").Fields("?,?,?,?").Prepare(),
+		count:        acc.Count("forums").Where("name != ''").Prepare(),
+		updateCache:  acc.Update("forums").Set("lastTopicID = ?, lastReplyerID = ?").Where("fid = ?").Prepare(),
+		addTopics:    acc.Update("forums").Set("topicCount = topicCount + ?").Where("fid = ?").Prepare(),
+		removeTopics: acc.Update("forums").Set("topicCount = topicCount - ?").Where("fid = ?").Prepare(),
 	}, acc.FirstError()
 }
 

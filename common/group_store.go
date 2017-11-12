@@ -48,9 +48,9 @@ func NewMemoryGroupStore() (*MemoryGroupStore, error) {
 	return &MemoryGroupStore{
 		groups:     make(map[int]*Group),
 		groupCount: 0,
-		getAll:     acc.SimpleSelect("users_groups", "gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "", "", ""),
-		get:        acc.SimpleSelect("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", "gid = ?", "", ""),
-		count:      acc.SimpleCount("users_groups", "", ""),
+		getAll:     acc.Select("users_groups").Columns("gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Prepare(),
+		get:        acc.Select("users_groups").Columns("name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Where("gid = ?").Prepare(),
+		count:      acc.Count("users_groups").Prepare(),
 	}, acc.FirstError()
 }
 

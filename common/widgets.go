@@ -50,8 +50,7 @@ type WidgetStmts struct {
 var widgetStmts WidgetStmts
 
 func init() {
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		widgetStmts = WidgetStmts{
 			getWidgets: acc.Select("widgets").Columns("position, side, type, active,  location, data").Orderby("position ASC").Prepare(),
 		}

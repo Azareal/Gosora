@@ -24,11 +24,10 @@ var lastSync time.Time
 
 func init() {
 	lastSync = time.Now()
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		taskStmts = TaskStmts{
-			getExpiredScheduledGroups: acc.SimpleSelect("users_groups_scheduler", "uid", "UTC_TIMESTAMP() > revert_at AND temporary = 1", "", ""),
-			getSync:                   acc.SimpleSelect("sync", "last_update", "", "", ""),
+			getExpiredScheduledGroups: acc.Select("users_groups_scheduler").Columns("uid").Where("UTC_TIMESTAMP() > revert_at AND temporary = 1").Prepare(),
+			getSync:                   acc.Select("sync").Columns("last_update").Prepare(),
 		}
 		return acc.FirstError()
 	})

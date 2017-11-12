@@ -37,10 +37,9 @@ type GroupStmts struct {
 var groupStmts GroupStmts
 
 func init() {
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		groupStmts = GroupStmts{
-			updateGroupRank: acc.SimpleUpdate("users_groups", "is_admin = ?, is_mod = ?, is_banned = ?", "gid = ?"),
+			updateGroupRank: acc.Update("users_groups").Set("is_admin = ?, is_mod = ?, is_banned = ?").Where("gid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})

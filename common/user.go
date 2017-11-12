@@ -80,8 +80,7 @@ type UserStmts struct {
 var userStmts UserStmts
 
 func init() {
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		userStmts = UserStmts{
 			activate:           acc.SimpleUpdate("users", "active = 1", "uid = ?"),
 			changeGroup:        acc.SimpleUpdate("users", "group = ?", "uid = ?"),

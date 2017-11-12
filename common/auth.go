@@ -48,9 +48,9 @@ type DefaultAuth struct {
 func NewDefaultAuth() (*DefaultAuth, error) {
 	acc := qgen.Builder.Accumulator()
 	return &DefaultAuth{
-		login:         acc.SimpleSelect("users", "uid, password, salt", "name = ?", "", ""),
-		logout:        acc.SimpleUpdate("users", "session = ''", "uid = ?"),
-		updateSession: acc.SimpleUpdate("users", "session = ?", "uid = ?"),
+		login:         acc.Select("users").Columns("uid, password, salt").Where("name = ?").Prepare(),
+		logout:        acc.Update("users").Set("session = ''").Where("uid = ?").Prepare(),
+		updateSession: acc.Update("users").Set("session = ?").Where("uid = ?").Prepare(),
 	}, acc.FirstError()
 }
 

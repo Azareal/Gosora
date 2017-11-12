@@ -54,10 +54,9 @@ type ForumStmts struct {
 var forumStmts ForumStmts
 
 func init() {
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		forumStmts = ForumStmts{
-			update: acc.SimpleUpdate("forums", "name = ?, desc = ?, active = ?, preset = ?", "fid = ?"),
+			update: acc.Update("forums").Set("name = ?, desc = ?, active = ?, preset = ?").Where("fid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})

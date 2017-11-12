@@ -2,6 +2,8 @@ package common
 
 import (
 	"database/sql"
+
+	"../query_gen/lib"
 )
 
 // nolint I don't want to write comments for each of these o.o
@@ -62,13 +64,14 @@ func (slice StringList) Contains(needle string) bool {
 	return false
 }
 
-type dbInits []func() error
+type dbInits []func(acc *qgen.Accumulator) error
 
 var DbInits dbInits
 
 func (inits dbInits) Run() error {
 	for _, init := range inits {
-		err := init()
+		acc := qgen.Builder.Accumulator()
+		err := init(acc)
 		if err != nil {
 			return err
 		}
@@ -76,6 +79,6 @@ func (inits dbInits) Run() error {
 	return nil
 }
 
-func (inits dbInits) Add(init ...func() error) {
+func (inits dbInits) Add(init ...func(acc *qgen.Accumulator) error) {
 	DbInits = dbInits(append(DbInits, init...))
 }

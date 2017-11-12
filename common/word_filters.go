@@ -24,8 +24,7 @@ var filterStmts FilterStmts
 
 func init() {
 	WordFilterBox.Store(WordFilterMap(make(map[int]WordFilter)))
-	DbInits.Add(func() error {
-		acc := qgen.Builder.Accumulator()
+	DbInits.Add(func(acc *qgen.Accumulator) error {
 		filterStmts = FilterStmts{
 			getWordFilters: acc.Select("word_filters").Columns("wfid, find, replacement").Prepare(),
 		}

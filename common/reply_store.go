@@ -18,8 +18,8 @@ type SQLReplyStore struct {
 func NewSQLReplyStore() (*SQLReplyStore, error) {
 	acc := qgen.Builder.Accumulator()
 	return &SQLReplyStore{
-		get:    acc.SimpleSelect("replies", "tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount", "rid = ?", "", ""),
-		create: acc.SimpleInsert("replies", "tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?"),
+		get:    acc.Select("replies").Columns("tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount").Where("rid = ?").Prepare(),
+		create: acc.Insert("replies").Columns("tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?").Prepare(),
 	}, acc.FirstError()
 }
 
