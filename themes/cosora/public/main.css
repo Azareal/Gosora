@@ -699,18 +699,18 @@ select, input, textarea {
 	margin-right: 10px;
 }
 
-#profile_container, #profile_left_pane {
+#profile_container, #profile_left_pane .topBlock {
 	display: flex;
 }
 #profile_left_lane {
 	margin-left: 8px;
 	margin-right: 16px;
-	border: 1px solid var(--element-border-color);
-	border-bottom: 2px solid var(--element-border-color);
 }
-#profile_left_pane {
+#profile_left_pane .topBlock {
 	flex-direction: column;
 	padding-bottom: 18px;
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
 }
 #profile_left_pane .avatarRow {
 	padding: 24px;
@@ -731,11 +731,25 @@ select, input, textarea {
 #profile_left_pane .profileName {
 	font-size: 19px;
 }
+#profile_left_pane .passiveBlock .passive {
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+	margin-top: 6px;
+	padding: 12px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
 #profile_right_lane {
 	width: 100%;
 	margin-right: 12px;
 }
 #profile_right_lane .colstack_item {
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+}
+
+.footer {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 }

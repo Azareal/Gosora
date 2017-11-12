@@ -52,12 +52,7 @@ func main() {
 	}
 
 	for _, group := range routeGroups {
-		var end int
-		if group.Path[len(group.Path)-1] == '/' {
-			end = len(group.Path) - 1
-		} else {
-			end = len(group.Path) - 1
-		}
+		var end = len(group.Path) - 1
 		out += `
 		case "` + group.Path[0:end] + `":`
 		for _, runnable := range group.RunBefore {
@@ -84,7 +79,24 @@ func main() {
 
 			out += "\n\t\t\t\tcase \"" + route.Path + "\":"
 			if len(route.RunBefore) > 0 {
+			skipRunnable:
 				for _, runnable := range route.RunBefore {
+					for _, gRunnable := range group.RunBefore {
+						if gRunnable.Contents == runnable.Contents {
+							continue
+						}
+						// TODO: Stop hard-coding these
+						if gRunnable.Contents == "AdminOnly" && runnable.Contents == "MemberOnly" {
+							continue skipRunnable
+						}
+						if gRunnable.Contents == "AdminOnly" && runnable.Contents == "SuperModOnly" {
+							continue skipRunnable
+						}
+						if gRunnable.Contents == "SuperModOnly" && runnable.Contents == "MemberOnly" {
+							continue skipRunnable
+						}
+					}
+
 					if runnable.Literal {
 						out += "\n\t\t\t\t\t" + runnable.Contents
 					} else {
@@ -227,7 +239,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		routeStatic(w, req)
 		return
 	}
-	
 	if common.Dev.SuperDebug {
 		log.Print("before PreRoute")
 	}
@@ -237,7 +248,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if common.Dev.SuperDebug {
 		log.Print("after PreRoute")
 	}

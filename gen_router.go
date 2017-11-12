@@ -92,7 +92,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		routeStatic(w, req)
 		return
 	}
-	
 	if common.Dev.SuperDebug {
 		log.Print("before PreRoute")
 	}
@@ -102,7 +101,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		return
 	}
-	
 	if common.Dev.SuperDebug {
 		log.Print("after PreRoute")
 	}
@@ -130,29 +128,29 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				router.handleError(err,w,req,user)
 			}
 		case "/theme":
+				err = common.ParseForm(w,req,user)
+				if err != nil {
+					router.handleError(err,w,req,user)
+					return
+				}
+				
 			err = routeChangeTheme(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
 		case "/attachs":
+				err = common.ParseForm(w,req,user)
+				if err != nil {
+					router.handleError(err,w,req,user)
+					return
+				}
+				
 			err = routeShowAttachment(w,req,user,extra_data)
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
 		case "/report":
-			err = common.MemberOnly(w,req,user)
-			if err != nil {
-				router.handleError(err,w,req,user)
-				return
-			}
-			
 			err = common.NoBanned(w,req,user)
-			if err != nil {
-				router.handleError(err,w,req,user)
-				return
-			}
-			
-			err = common.NoSessionMismatch(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
 				return
@@ -160,6 +158,18 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			
 			switch(req.URL.Path) {
 				case "/report/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routeReportSubmit(w,req,user,extra_data)
 			}
 			if err != nil {
@@ -248,7 +258,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				case "/panel/settings/word-filters/":
 					err = routePanelWordFilters(w,req,user)
 				case "/panel/settings/word-filters/create/":
-					err = common.ParseForm(w,req,user)
+					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
 						return
@@ -258,7 +268,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				case "/panel/settings/word-filters/edit/":
 					err = routePanelWordFiltersEdit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/edit/submit/":
-					err = common.ParseForm(w,req,user)
+					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
 						return
@@ -266,7 +276,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					
 					err = routePanelWordFiltersEditSubmit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/delete/submit/":
-					err = common.ParseForm(w,req,user)
+					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
 						return
@@ -418,6 +428,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					
 					err = routeAccountEditUsername(w,req,user)
 				case "/user/edit/username/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = common.MemberOnly(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
@@ -434,6 +450,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					
 					err = routeAccountEditEmail(w,req,user)
 				case "/user/edit/token/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = common.MemberOnly(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
@@ -449,15 +471,15 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				router.handleError(err,w,req,user)
 			}
 		case "/users":
-			err = common.MemberOnly(w,req,user)
-			if err != nil {
-				router.handleError(err,w,req,user)
-				return
-			}
-			
 			switch(req.URL.Path) {
 				case "/users/ban/submit/":
 					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = common.MemberOnly(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
 						return
@@ -471,6 +493,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routeUnban(w,req,user)
 				case "/users/activate/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -479,8 +507,20 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routeActivate(w,req,user)
 				case "/users/ips/":
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					err = routeIps(w,req,user)
 			}
 			if err != nil {

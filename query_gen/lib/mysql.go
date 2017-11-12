@@ -557,6 +557,11 @@ func (adapter *MysqlAdapter) Select(nlist ...string) *selectPrebuilder {
 	return &selectPrebuilder{name, "", "", "", "", "", adapter}
 }
 
+func (adapter *MysqlAdapter) Insert(nlist ...string) *insertPrebuilder {
+	name := optString(nlist, "_builder")
+	return &insertPrebuilder{name, "", "", "", adapter}
+}
+
 func (adapter *MysqlAdapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {

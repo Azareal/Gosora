@@ -232,37 +232,37 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	adapter.Select("isPluginActive").Table("plugins").Columns("active").Where("uname = ?").Parse()
 
-	//adapter.SimpleSelect("isPluginInstalled","plugins","installed","uname = ?","","")
+	//adapter.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()
 
 	adapter.Select("getUsersOffset").Table("users").Columns("uid, name, group, active, is_super_admin, avatar").Orderby("uid ASC").Limit("?,?").Parse()
 
-	adapter.SimpleSelect("isThemeDefault", "themes", "default", "uname = ?", "", "")
+	adapter.Select("isThemeDefault").Table("themes").Columns("default").Where("uname = ?").Parse()
 
-	adapter.SimpleSelect("getModlogs", "moderation_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "", "", "")
+	adapter.Select("getModlogs").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Parse()
 
-	adapter.SimpleSelect("getModlogsOffset", "moderation_logs", "action, elementID, elementType, ipaddress, actorID, doneAt", "", "doneAt DESC", "?,?")
+	adapter.Select("getModlogsOffset").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Parse()
 
-	adapter.SimpleSelect("getReplyTID", "replies", "tid", "rid = ?", "", "")
+	adapter.Select("getReplyTID").Table("replies").Columns("tid").Where("rid = ?").Parse()
 
-	adapter.SimpleSelect("getTopicFID", "topics", "parentID", "tid = ?", "", "")
+	adapter.Select("getTopicFID").Table("topics").Columns("parentID").Where("tid = ?").Parse()
 
-	adapter.SimpleSelect("getUserReplyUID", "users_replies", "uid", "rid = ?", "", "")
+	adapter.Select("getUserReplyUID").Table("users_replies").Columns("uid").Where("rid = ?").Parse()
 
-	adapter.SimpleSelect("getUserName", "users", "name", "uid = ?", "", "")
+	adapter.Select("getUserName").Table("users").Columns("name").Where("uid = ?").Parse()
 
-	adapter.SimpleSelect("getEmailsByUser", "emails", "email, validated, token", "uid = ?", "", "")
+	adapter.Select("getEmailsByUser").Table("emails").Columns("email, validated, token").Where("uid = ?").Parse()
 
-	adapter.SimpleSelect("getTopicBasic", "topics", "title, content", "tid = ?", "", "")
+	adapter.Select("getTopicBasic").Table("topics").Columns("title, content").Where("tid = ?").Parse()
 
-	adapter.SimpleSelect("getActivityEntry", "activity_stream", "actor, targetUser, event, elementType, elementID", "asid = ?", "", "")
+	adapter.Select("getActivityEntry").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Where("asid = ?").Parse()
 
-	adapter.SimpleSelect("forumEntryExists", "forums", "fid", "name = ''", "fid ASC", "0,1")
+	adapter.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
 
-	adapter.SimpleSelect("groupEntryExists", "users_groups", "gid", "name = ''", "gid ASC", "0,1")
+	adapter.Select("groupEntryExists").Table("users_groups").Columns("gid").Where("name = ''").Orderby("gid ASC").Limit("0,1").Parse()
 
-	adapter.SimpleSelect("getForumTopicsOffset", "topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount", "parentID = ?", "sticky DESC, lastReplyAt DESC, createdBy DESC", "?,?")
+	adapter.Select("getForumTopicsOffset").Table("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount").Where("parentID = ?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Parse()
 
-	adapter.SimpleSelect("getAttachment", "attachments", "sectionID, sectionTable, originID, originTable, uploadedBy, path", "path = ? AND sectionID = ? AND sectionTable = ?", "", "")
+	adapter.Select("getAttachment").Table("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path = ? AND sectionID = ? AND sectionTable = ?").Parse()
 
 	return nil
 }
@@ -291,11 +291,11 @@ func writeInnerJoins(adapter qgen.Adapter) (err error) {
 }
 
 func writeInserts(adapter qgen.Adapter) error {
-	adapter.SimpleInsert("createReport", "topics", "title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class", "?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'")
+	adapter.Insert("createReport").Table("topics").Columns("title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'").Parse()
 
-	adapter.SimpleInsert("addActivity", "activity_stream", "actor, targetUser, event, elementType, elementID", "?,?,?,?,?")
+	adapter.Insert("addActivity").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Fields("?,?,?,?,?").Parse()
 
-	adapter.SimpleInsert("notifyOne", "activity_stream_matches", "watcher, asid", "?,?")
+	adapter.Insert("notifyOne").Table("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Parse()
 
 	adapter.SimpleInsert("addEmail", "emails", "email, uid, validated, token", "?,?,?,?")
 

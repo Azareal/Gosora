@@ -918,30 +918,14 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.Use
 // TODO: Set the cookie domain
 func routeChangeTheme(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	//headerLite, _ := SimpleUserCheck(w, r, &user)
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
-
 	// TODO: Rename isJs to something else, just in case we rewrite the JS side in WebAssembly?
 	isJs := (r.PostFormValue("isJs") == "1")
-
 	newTheme := html.EscapeString(r.PostFormValue("newTheme"))
 
 	theme, ok := common.Themes[newTheme]
 	if !ok || theme.HideFromThemes {
-		// TODO: Should we be logging this?
-		log.Print("Bad Theme: ", newTheme)
 		return common.LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
 	}
-
-	// TODO: Store the current theme in the user's account?
-	/*if user.Loggedin {
-		_, err = stmts.changeTheme.Exec(newTheme, user.ID)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-	}*/
 
 	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: common.Year}
 	http.SetCookie(w, &cookie)

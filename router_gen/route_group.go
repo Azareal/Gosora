@@ -7,7 +7,12 @@ type RouteGroup struct {
 }
 
 func newRouteGroup(path string, routes ...*RouteImpl) *RouteGroup {
-	return &RouteGroup{path, routes, []Runnable{}}
+	group := &RouteGroup{Path: path}
+	for _, route := range routes {
+		route.Parent = group
+		group.RouteList = append(group.RouteList, route)
+	}
+	return group
 }
 
 func (group *RouteGroup) Not(path ...string) *RouteSubset {
@@ -45,6 +50,9 @@ func (group *RouteGroup) LitBefore(lines ...string) *RouteGroup {
 }
 
 func (group *RouteGroup) Routes(routes ...*RouteImpl) *RouteGroup {
-	group.RouteList = append(group.RouteList, routes...)
+	for _, route := range routes {
+		route.Parent = group
+		group.RouteList = append(group.RouteList, route)
+	}
 	return group
 }

@@ -985,11 +985,6 @@ func routeLogout(w http.ResponseWriter, r *http.Request, user common.User) commo
 }
 
 func routeShowAttachment(w http.ResponseWriter, r *http.Request, user common.User, filename string) common.RouteError {
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
-
 	filename = common.Stripslashes(filename)
 	var ext = filepath.Ext("./attachs/" + filename)
 	//log.Print("ext ", ext)

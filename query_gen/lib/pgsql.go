@@ -323,6 +323,11 @@ func (adapter *PgsqlAdapter) Select(nlist ...string) *selectPrebuilder {
 	return &selectPrebuilder{name, "", "", "", "", "", adapter}
 }
 
+func (adapter *PgsqlAdapter) Insert(nlist ...string) *insertPrebuilder {
+	name := optString(nlist, "_builder")
+	return &insertPrebuilder{name, "", "", "", adapter}
+}
+
 func (adapter *PgsqlAdapter) Write() error {
 	var stmts, body string
 	for _, name := range adapter.BufferOrder {

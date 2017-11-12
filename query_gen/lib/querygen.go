@@ -117,9 +117,8 @@ type Adapter interface {
 	SimpleCount(string, string, string, string) (string, error)
 
 	Select(name ...string) *selectPrebuilder
+	Insert(name ...string) *insertPrebuilder
 	Write() error
-
-	// TODO: Add a simple query builder
 }
 
 func GetAdapter(name string) (adap Adapter, err error) {
