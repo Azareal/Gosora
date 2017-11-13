@@ -56,7 +56,6 @@ type ForumCache interface {
 type MemoryForumStore struct {
 	forums    sync.Map     // map[int]*Forum
 	forumView atomic.Value // []*Forum
-	//fids []int
 
 	get          *sql.Stmt
 	getAll       *sql.Stmt

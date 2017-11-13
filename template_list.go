@@ -882,7 +882,6 @@ var forum_7 = []byte(`">&gt;</a></div>`)
 var forum_8 = []byte(`
 
 <main>
-
 <div id="forum_head_block" class="rowblock rowhead topic_list_title_block">
 	<div class="rowitem forum_title`)
 var forum_9 = []byte(` has_opt`)

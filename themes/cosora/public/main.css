@@ -157,7 +157,7 @@ ul {
 	display: none;
 }
 
-.rowblock, .colstack_item {
+.rowblock, .colstack_head {
 	margin-bottom: 12px;
 	border: 1px solid var(--header-border-color);
 	border-bottom: 2px solid var(--header-border-color);
@@ -180,6 +180,16 @@ ul {
 	margin-block-start: 0;
 	margin-block-end: 0;
 	display: inline-block;
+}
+
+.colstack {
+	display: flex;
+}
+#main .colstack_left {
+	width: 300px;
+}
+#main .colstack_right {
+	width: calc(90% - 300px);
 }
 
 .extra_little_row_avatar {
@@ -735,7 +745,7 @@ select, input, textarea {
 #profile_left_pane .profileName {
 	font-size: 19px;
 }
-#profile_left_pane .passiveBlock .passive {
+.rowmenu .passive {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 	margin-top: 6px;
@@ -743,14 +753,48 @@ select, input, textarea {
 	padding-top: 10px;
 	padding-bottom: 10px;
 }
+.rowmenu {
+	padding-left: 12px;
+	padding-right: 12px;
+}
+.rowmenu .passive:hover {
+	margin-left: 4px;
+}
+#profile_left_pane .passiveBlock .passive {
+	padding-left: 12px;
+}
 
 #profile_right_lane {
 	width: 100%;
 	margin-right: 12px;
 }
-#profile_right_lane .colstack_item {
+#profile_right_lane .colstack_item, .colstack_right .colstack_item {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
+	margin-left: 16px;
+}
+
+.form_item {
+	display: flex;
+}
+.form_item form, .colstack_item .formrow {
+	display: contents;
+}
+.colstack_right .formrow {
+	padding-left: 16px;
+	padding-right: 16px;
+	padding-bottom: 4px;
+}
+.colstack_right .formrow:first-child {
+	padding-top: 16px;
+}
+.colstack_right .formrow:last-child {
+	padding-bottom: 16px;
+}
+.colstack_item:not(#profile_right_lane) .formrow .formlabel {
+	width: min-content;
+	margin-right: 12px;
+	white-space: nowrap;
 }
 
 .footer {

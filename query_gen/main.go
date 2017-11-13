@@ -228,10 +228,6 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	build.Select("getSettings").Table("settings").Columns("name, content, type").Parse()
 
-	build.Select("getSetting").Table("settings").Columns("content, type").Where("name = ?").Parse()
-
-	build.Select("getFullSetting").Table("settings").Columns("name, type, constraints").Where("name = ?").Parse()
-
 	build.Select("isPluginActive").Table("plugins").Columns("active").Where("uname = ?").Parse()
 
 	//build.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()

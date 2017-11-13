@@ -1,28 +1,24 @@
 {{template "header.html" . }}
 <main>
-
-<div class="rowblock rowhead">
-	<div class="rowitem">
-		<h1>IP Search</h1>
+	<div class="rowblock rowhead">
+		<div class="rowitem">
+			<h1>IP Search</h1>
+		</div>
 	</div>
-</div>
-
-<form action="/users/ips/" method="get" id="ip-search-form"></form>
-<div class="rowblock ip_search_block">
-	<div class="rowitem passive">
-		<input form="ip-search-form" name="ip" class="ip_search_input" type="search" placeholder="🔍︎" {{if .IP}}value="{{.IP}}"{{end}}/>
-		<input form="ip-search-form" class="ip_search_search" type="submit" value="Search" />
+	<form action="/users/ips/" method="get" id="ip-search-form"></form>
+	<div class="rowblock ip_search_block">
+		<div class="rowitem passive">
+			<input form="ip-search-form" name="ip" class="ip_search_input" type="search" placeholder="🔍︎" {{if .IP}}value="{{.IP}}"{{end}}/>
+			<input form="ip-search-form" class="ip_search_search" type="submit" value="Search" />
+		</div>
 	</div>
-</div>
-
-{{if .IP}}
-<div class="rowblock bgavatars">
-	{{range .ItemList}}<div class="rowitem"{{if .Avatar}} style="background-image: url('{{.Avatar}}');"{{end}}>
-		<a href="{{.Link}}">{{.Name}}</a>
+	{{if .IP}}
+	<div class="rowblock bgavatars">
+		{{range .ItemList}}<div class="rowitem"{{if .Avatar}} style="background-image: url('{{.Avatar}}');"{{end}}>
+			<a href="{{.Link}}">{{.Name}}</a>
+		</div>
+		{{else}}<div class="rowitem">No users found.</div>{{end}}
 	</div>
-	{{else}}<div class="rowitem">No users found.</div>{{end}}
-</div>
-{{end}}
-
+	{{end}}
 </main>
 {{template "footer.html" . }}

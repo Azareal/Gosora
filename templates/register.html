@@ -1,32 +1,30 @@
 {{template "header.html" . }}
 <main>
-
-<div class="rowblock rowhead">
-	<div class="rowitem"><h1>Create Account</h1></div>
-</div>
-<div class="rowblock">
-	<form action="/accounts/create/submit/" method="post">
-		<div class="formrow">
-			<div class="formitem formlabel"><a id="username_label">Account Name</a></div>
-			<div class="formitem"><input name="username" type="text" placeholder="Account Name" aria-labelledby="username_label" required /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem formlabel"><a id="email_label">Email</a></div>
-			<div class="formitem"><input name="email" type="email" placeholder="joe.doe@example.com" aria-labelledby="email_label" required /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem formlabel"><a id="password_label">Password</a></div>
-			<div class="formitem"><input name="password" type="password" autocomplete="new-password" placeholder="*****" aria-labelledby="password_label" required /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem formlabel"><a id="confirm_password_label">Confirm Password</a></div>
-			<div class="formitem"><input name="confirm_password" type="password" placeholder="*****" aria-labelledby="confirm_password_label" required /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><button name="register-button" class="formbutton">Create Account</div></div>
-		</div>
-	</form>
-</div>
-
+	<div class="rowblock rowhead">
+		<div class="rowitem"><h1>Create Account</h1></div>
+	</div>
+	<div class="rowblock">
+		<form action="/accounts/create/submit/" method="post">
+			<div class="formrow">
+				<div class="formitem formlabel"><a id="username_label">Account Name</a></div>
+				<div class="formitem"><input name="username" type="text" placeholder="Account Name" aria-labelledby="username_label" required /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a id="email_label">Email</a></div>
+				<div class="formitem"><input name="email" type="email" placeholder="joe.doe@example.com" aria-labelledby="email_label" required /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a id="password_label">Password</a></div>
+				<div class="formitem"><input name="password" type="password" autocomplete="new-password" placeholder="*****" aria-labelledby="password_label" required /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a id="confirm_password_label">Confirm Password</a></div>
+				<div class="formitem"><input name="confirm_password" type="password" placeholder="*****" aria-labelledby="confirm_password_label" required /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem"><button name="register-button" class="formbutton">Create Account</div></div>
+			</div>
+		</form>
+	</div>
 </main>
 {{template "footer.html" . }}

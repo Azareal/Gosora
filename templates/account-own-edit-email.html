@@ -1,20 +1,22 @@
 {{template "header.html" . }}
-{{template "account-menu.html" . }}
-<main class="colstack_right">
-	<div class="colstack_item colstack_head rowhead">
-		<div class="rowitem"><h1>Emails</h1></div>
-	</div>
-	<div class="colstack_item">
-		<!-- TODO: Do we need this inline CSS? -->
-		{{range .ItemList}}
-		<div class="rowitem" style="font-weight: normal;">
-			<a style="text-transform: none;">{{.Email}}</a>
-			<span style="float: right">
-			<span class="username">{{if .Primary}}Primary{{else}}Secondary{{end}}</span>
-			{{if .Validated}}<span class="username" style="color: green;">Verified</span>{{else}}<a class="username" style="color: crimson;">Resend Verification Email</a>{{end}}
-			</span>
+<main class="colstack account">
+	{{template "account-menu.html" . }}
+	<div class="colstack_right">
+		<div class="colstack_item colstack_head rowhead">
+			<div class="rowitem"><h1>Emails</h1></div>
 		</div>
-		{{end}}
+		<div class="colstack_item">
+			<!-- TODO: Do we need this inline CSS? -->
+			{{range .ItemList}}
+			<div class="rowitem" style="font-weight: normal;">
+				<a style="text-transform: none;">{{.Email}}</a>
+				<span style="float: right">
+				<span class="username">{{if .Primary}}Primary{{else}}Secondary{{end}}</span>
+				{{if .Validated}}<span class="username" style="color: green;">Verified</span>{{else}}<a class="username" style="color: crimson;">Resend Verification Email</a>{{end}}
+				</span>
+			</div>
+			{{end}}
+		</div>
 	</div>
 </main>
 {{template "footer.html" . }}

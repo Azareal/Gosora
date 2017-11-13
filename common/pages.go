@@ -12,7 +12,7 @@ type HeaderVars struct {
 	Stylesheets []string
 	Widgets     PageWidgets
 	Site        *site
-	Settings    map[string]interface{}
+	Settings    SettingMap
 	Themes      map[string]Theme // TODO: Use a slice containing every theme instead of the main map for speed
 	ThemeName   string
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?

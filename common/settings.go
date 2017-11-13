@@ -9,10 +9,15 @@ import (
 	"../query_gen/lib"
 )
 
+var SettingBox atomic.Value // An atomic value pointing to a SettingBox
+
 // SettingMap is a map type specifically for holding the various settings admins set to toggle features on and off or to otherwise alter Gosora's behaviour from the Control Panel
 type SettingMap map[string]interface{}
 
-var SettingBox atomic.Value // An atomic value pointing to a SettingBox
+type SettingStore interface {
+	ParseSetting(sname string, scontent string, stype string, sconstraint string) string
+	BypassGet(name string) (*Setting, error)
+}
 
 type OptionLabel struct {
 	Label    string
@@ -28,7 +33,8 @@ type Setting struct {
 }
 
 type SettingStmts struct {
-	getFull *sql.Stmt
+	getAll *sql.Stmt
+	get    *sql.Stmt
 }
 
 var settingStmts SettingStmts
@@ -37,14 +43,15 @@ func init() {
 	SettingBox.Store(SettingMap(make(map[string]interface{})))
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		settingStmts = SettingStmts{
-			getFull: acc.Select("settings").Columns("name, content, type, constraints").Prepare(),
+			getAll: acc.Select("settings").Columns("name, content, type, constraints").Prepare(),
+			get:    acc.Select("settings").Columns("content, type, constraints").Where("name = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
 }
 
 func LoadSettings() error {
-	rows, err := settingStmts.getFull.Query()
+	rows, err := settingStmts.getAll.Query()
 	if err != nil {
 		return err
 	}
@@ -112,4 +119,10 @@ func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string,
 		ssBox[sname] = scontent
 	}
 	return ""
+}
+
+func (sBox SettingMap) BypassGet(name string) (*Setting, error) {
+	setting := &Setting{Name: name}
+	err := settingStmts.get.QueryRow(name).Scan(&setting.Content, &setting.Type, &setting.Constraint)
+	return setting, err
 }

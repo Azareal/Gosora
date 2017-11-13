@@ -1013,12 +1013,6 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	//case "forums":
 	//case "users":
 	//case "pages":
-	// This might not be possible. We might need .xml paths for sitemaps
-	/*case "sitemap":
-	if format != "xml" {
-		PreError("You can only fetch sitemaps in the XML format!",w,r)
-		return
-	}*/
 	default:
 		return common.PreErrorJS("Invalid Module", w, r)
 	}

@@ -1,21 +1,23 @@
 {{template "header.html" . }}
-<div class="rowblock rowhead">
-	<div class="rowitem"><h1>Login</h1></div>
-</div>
-<div class="rowblock">
-	<form action="/accounts/login/submit/" method="post">
-		<div class="formrow">
-			<div class="formitem formlabel"><a>Account Name</a></div>
-			<div class="formitem"><input name="username" type="text" placeholder="Account Name" required /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem formlabel"><a>Password</a></div>
-			<div class="formitem"><input name="password" type="password" autocomplete="current-password" placeholder="*****" required /></div>
-		</div>
-		<div class="formrow">
-			<div class="formitem"><button name="login-button" class="formbutton">Login</div>
-			<div class="formitem" style="color: #505050; font-size: 12px; font-weight: normal; float: right;">Don't have an account?</div>
-		</div>
-	</form>
-</div>
+<main>
+	<div class="rowblock rowhead">
+		<div class="rowitem"><h1>Login</h1></div>
+	</div>
+	<div class="rowblock">
+		<form action="/accounts/login/submit/" method="post">
+			<div class="formrow">
+				<div class="formitem formlabel"><a>Account Name</a></div>
+				<div class="formitem"><input name="username" type="text" placeholder="Account Name" required /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>Password</a></div>
+				<div class="formitem"><input name="password" type="password" autocomplete="current-password" placeholder="*****" required /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem"><button name="login-button" class="formbutton">Login</div>
+				<div class="formitem" style="color: #505050; font-size: 12px; font-weight: normal; float: right;">Don't have an account?</div>
+			</div>
+		</form>
+	</div>
+</main>
 {{template "footer.html" . }}

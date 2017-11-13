@@ -455,7 +455,6 @@ func routePanelSettings(w http.ResponseWriter, r *http.Request, user common.User
 		return common.NoPermissions(w, r, user)
 	}
 
-	//log.Print("headerVars.Settings",headerVars.Settings)
 	var settingList = make(map[string]interface{})
 	rows, err := stmts.getSettings.Query()
 	if err != nil {
@@ -515,9 +514,8 @@ func routePanelSetting(w http.ResponseWriter, r *http.Request, user common.User,
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
 	}
-	setting := common.Setting{sname, "", "", ""}
 
-	err := stmts.getSetting.QueryRow(setting.Name).Scan(&setting.Content, &setting.Type)
+	setting, err := headerVars.Settings.BypassGet(sname)
 	if err == ErrNoRows {
 		return common.LocalError("The setting you want to edit doesn't exist.", w, r, user)
 	} else if err != nil {
@@ -532,8 +530,7 @@ func routePanelSetting(w http.ResponseWriter, r *http.Request, user common.User,
 			return common.LocalError("The value of this setting couldn't be converted to an integer", w, r, user)
 		}
 
-		labels := strings.Split(llist, ",")
-		for index, label := range labels {
+		for index, label := range strings.Split(llist, ",") {
 			itemList = append(itemList, common.OptionLabel{
 				Label:    label,
 				Value:    index + 1,
@@ -564,17 +561,15 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.U
 		return common.NoPermissions(w, r, user)
 	}
 
-	var stype, sconstraints string
 	scontent := r.PostFormValue("setting-value")
-
-	err := stmts.getFullSetting.QueryRow(sname).Scan(&sname, &stype, &sconstraints)
+	setting, err := headerLite.Settings.BypassGet(sname)
 	if err == ErrNoRows {
 		return common.LocalError("The setting you want to edit doesn't exist.", w, r, user)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
-	if stype == "bool" {
+	if setting.Type == "bool" {
 		if scontent == "on" || scontent == "1" {
 			scontent = "1"
 		} else {
@@ -588,10 +583,11 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.U
 		return common.InternalError(err, w, r)
 	}
 
-	errmsg := headerLite.Settings.ParseSetting(sname, scontent, stype, sconstraints)
+	errmsg := headerLite.Settings.ParseSetting(sname, scontent, setting.Type, setting.Constraint)
 	if errmsg != "" {
 		return common.LocalError(errmsg, w, r, user)
 	}
+	// TODO: Do a reload instead?
 	common.SettingBox.Store(headerLite.Settings)
 
 	http.Redirect(w, r, "/panel/settings/", http.StatusSeeOther)
@@ -649,6 +645,7 @@ func routePanelWordFiltersCreate(w http.ResponseWriter, r *http.Request, user co
 	}
 
 	common.AddWordFilter(int(lastID), find, replacement)
+
 	if !isJs {
 		http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther)
 	} else {

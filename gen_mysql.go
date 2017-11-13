@@ -13,8 +13,6 @@ import "./common"
 type Stmts struct {
 	getPassword *sql.Stmt
 	getSettings *sql.Stmt
-	getSetting *sql.Stmt
-	getFullSetting *sql.Stmt
 	isPluginActive *sql.Stmt
 	getUsersOffset *sql.Stmt
 	isThemeDefault *sql.Stmt
@@ -95,18 +93,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing getSettings statement.")
 	stmts.getSettings, err = db.Prepare("SELECT `name`,`content`,`type` FROM `settings`")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing getSetting statement.")
-	stmts.getSetting, err = db.Prepare("SELECT `content`,`type` FROM `settings` WHERE `name` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing getFullSetting statement.")
-	stmts.getFullSetting, err = db.Prepare("SELECT `name`,`type`,`constraints` FROM `settings` WHERE `name` = ?")
 	if err != nil {
 		return err
 	}

@@ -1,23 +1,25 @@
 {{template "header.html" . }}
-{{template "account-menu.html" . }}
-<main class="colstack_right">
-	<div class="colstack_item colstack_head rowhead">
-		<div class="rowitem"><h1>Edit Username</h1></div>
-	</div>
-	<div class="colstack_item">
-		<form action="/user/edit/username/submit/" method="post">
-			<div class="formrow real_first_child">
-				<div class="formitem formlabel"><a>Current Username</a></div>
-				<div class="formitem formlabel">{{.CurrentUser.Name}}</div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>New Username</a></div>
-				<div class="formitem"><input name="account-new-username" type="text" required /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem"><button name="account-button" class="formbutton form_middle_button">Update</button></div>
-			</div>
-		</form>
+<main class="colstack account">
+	{{template "account-menu.html" . }}
+	<div class="colstack_right">
+		<div class="colstack_item colstack_head rowhead">
+			<div class="rowitem"><h1>Edit Username</h1></div>
+		</div>
+		<div class="colstack_item form_item">
+			<form action="/user/edit/username/submit/" method="post">
+				<div class="formrow real_first_child">
+					<div class="formitem formlabel"><a>Current Username</a></div>
+					<div class="formitem formlabel">{{.CurrentUser.Name}}</div>
+				</div>
+				<div class="formrow">
+					<div class="formitem formlabel"><a>New Username</a></div>
+					<div class="formitem"><input name="account-new-username" type="text" required /></div>
+				</div>
+				<div class="formrow">
+					<div class="formitem"><button name="account-button" class="formbutton form_middle_button">Update</button></div>
+				</div>
+			</form>
+		</div>
 	</div>
 </main>
 {{template "footer.html" . }}

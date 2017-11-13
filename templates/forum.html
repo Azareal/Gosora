@@ -5,96 +5,94 @@
 <div id="nextFloat" class="next_button"><a class="next_link" aria-label="Go to the next page" rel="next" href="/forum/{{.Forum.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 
 <main>
-
-<div id="forum_head_block" class="rowblock rowhead topic_list_title_block">
-	<div class="rowitem forum_title{{if ne .CurrentUser.ID 0}} has_opt{{end}}"><h1>{{.Title}}</h1>
+	<div id="forum_head_block" class="rowblock rowhead topic_list_title_block">
+		<div class="rowitem forum_title{{if ne .CurrentUser.ID 0}} has_opt{{end}}">
+			<h1>{{.Title}}</h1>
+		</div>
+		{{if ne .CurrentUser.ID 0}}
+			{{if .CurrentUser.Perms.CreateTopic}}
+			<div class="pre_opt auto_hide"></div>
+			<div class="opt create_topic_opt" title="Create Topic" aria-label="Create a topic"><a class="create_topic_link" href="/topics/create/{{.Forum.ID}}"></a></div>
+			{{/** TODO: Add a permissions check for this **/}}
+			<div class="opt mod_opt" title="Moderate">
+				<a class="moderate_link" href="#"></a>
+			</div>
+			{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic" aria-label="You don't have the permissions needed to make a topic in this forum"><a></a></div>{{end}}
+			<div style="clear: both;"></div>
+		{{end}}
 	</div>
 	{{if ne .CurrentUser.ID 0}}
-		{{if .CurrentUser.Perms.CreateTopic}}
-		<div class="pre_opt auto_hide"></div>
-		<div class="opt create_topic_opt" title="Create Topic" aria-label="Create a topic"><a class="create_topic_link" href="/topics/create/{{.Forum.ID}}"></a></div>
-		{{/** TODO: Add a permissions check for this **/}}
-		<div class="opt mod_opt" title="Moderate">
-			<a class="moderate_link" href="#"></a>
-		</div>
-		{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic" aria-label="You don't have the permissions needed to make a topic in this forum"><a></a></div>{{end}}
-		<div style="clear: both;"></div>
-	{{end}}
-</div>
-{{if ne .CurrentUser.ID 0}}
-<div class="mod_floater auto_hide">
-	<form method="post">
-	<div class="mod_floater_head">
-		<span>What do you want to do with these 18 topics?</span>
+	<div class="mod_floater auto_hide">
+		<form method="post">
+			<div class="mod_floater_head">
+				<span>What do you want to do with these 18 topics?</span>
+			</div>
+			<div class="mod_floater_body">
+				<select class="mod_floater_options">
+					<option val="delete">Delete them</option>
+					<option val="lock">Lock them</option>
+				</select>
+				<button>Run</button>
+			</div>
+		</form>
 	</div>
-	<div class="mod_floater_body">
-		<select class="mod_floater_options">
-			<option val="delete">Delete them</option>
-			<option val="lock">Lock them</option>
-		</select>
-		<button>Run</button>
-	</div>
-	</form>
-</div>
-
-{{if .CurrentUser.Perms.CreateTopic}}
-<div id="forum_topic_create_form" class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
-	<form id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
-	{{if .CurrentUser.Avatar}}<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" />{{end}}
-	<input form="topic_create_form_form" id="topic_board_input" name="topic-board" value="{{.Forum.ID}}" type="hidden">
-	<div class="main_form">
-	<div class="topic_meta">
-		<div class="formrow topic_name_row real_first_child">
-			<div class="formitem">
-				<input form="topic_create_form_form" name="topic-name" placeholder="What's up?" required>
+	{{if .CurrentUser.Perms.CreateTopic}}
+	<div id="forum_topic_create_form" class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
+		<form id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
+		{{if .CurrentUser.Avatar}}<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" />{{end}}
+		<input form="topic_create_form_form" id="topic_board_input" name="topic-board" value="{{.Forum.ID}}" type="hidden">
+		<div class="main_form">
+			<div class="topic_meta">
+				<div class="formrow topic_name_row real_first_child">
+					<div class="formitem">
+						<input form="topic_create_form_form" name="topic-name" placeholder="What's up?" required>
+					</div>
+				</div>
+			</div>
+			<div class="formrow topic_content_row">
+				<div class="formitem">
+					<textarea form="topic_create_form_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
+				</div>
+			</div>
+			<div class="formrow quick_button_row">
+				<div class="formitem">
+					<button form="topic_create_form_form" name="topic-button" class="formbutton">Create Topic</button>
+					{{if .CurrentUser.Perms.UploadFiles}}
+					<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />
+					<label for="upload_files" class="formbutton add_file_button">Add File</label>
+					<div id="upload_file_dock"></div>{{end}}
+					<button class="formbutton close_form">Cancel</button>
+				</div>
 			</div>
 		</div>
 	</div>
-	<div class="formrow topic_content_row">
-		<div class="formitem">
-			<textarea form="topic_create_form_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
+	{{end}}
+	{{end}}
+	<div id="forum_topic_list" class="rowblock topic_list">
+		{{range .ItemList}}<div class="topic_row" data-tid="{{.ID}}">
+		<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
+			<span class="selector"></span>
+			{{if .Creator.Avatar}}<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" /></a>{{end}}
+			<span class="topic_inner_left">
+				<a class="rowtopic" href="{{.Link}}"><span>{{.Title}}</span></a>
+				<br /><a class="rowsmall starter" href="{{.Creator.Link}}">{{.Creator.Name}}</a>
+				{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
+				{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>{{end}}
+				{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>{{end}}
+			</span>
+			<span class="topic_inner_right rowsmall" style="float: right;">
+				<span class="replyCount">{{.PostCount}}</span><br />
+				<span class="likeCount">{{.LikeCount}}</span>
+			</span>
 		</div>
-	</div>
-	<div class="formrow quick_button_row">
-		<div class="formitem">
-			<button form="topic_create_form_form" name="topic-button" class="formbutton">Create Topic</button>
-			{{if .CurrentUser.Perms.UploadFiles}}
-			<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />
-			<label for="upload_files" class="formbutton add_file_button">Add File</label>
-			<div id="upload_file_dock"></div>{{end}}
-			<button class="formbutton close_form">Cancel</button>
+		<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
+			{{if .LastUser.Avatar}}<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" /></a>{{end}}
+			<span>
+				<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
+				<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
+			</span>
 		</div>
+		</div>{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
 	</div>
-	</div>
-</div>
-{{end}}
-{{end}}
-<div id="forum_topic_list" class="rowblock topic_list">
-	{{range .ItemList}}<div class="topic_row" data-tid="{{.ID}}">
-	<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
-		<span class="selector"></span>
-		{{if .Creator.Avatar}}<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" /></a>{{end}}
-		<span class="topic_inner_left">
-			<a class="rowtopic" href="{{.Link}}"><span>{{.Title}}</span></a>
-			<br /><a class="rowsmall starter" href="{{.Creator.Link}}">{{.Creator.Name}}</a>
-			{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
-			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>{{end}}
-			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="Status: Pinned"> | &#x1F4CD;&#xFE0E</span>{{end}}
-		</span>
-		<span class="topic_inner_right rowsmall" style="float: right;">
-			<span class="replyCount">{{.PostCount}}</span><br />
-			<span class="likeCount">{{.LikeCount}}</span>
-		</span>
-	</div>
-	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
-		{{if .LastUser.Avatar}}<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" /></a>{{end}}
-		<span>
-			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
-			<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
-		</span>
-	</div>
-	</div>{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
-</div>
-
 </main>
 {{template "footer.html" . }}
