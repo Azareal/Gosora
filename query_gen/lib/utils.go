@@ -112,11 +112,12 @@ func (where *DBWhere) parseColumn(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
 		char := segment[i]
-		if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_' {
+		switch {
+		case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_':
 			buffer += string(char)
-		} else if char == '(' {
+		case char == '(':
 			return where.parseFunction(segment, buffer, i)
-		} else {
+		default:
 			i--
 			where.Expr = append(where.Expr, DBToken{buffer, "column"})
 			return i
