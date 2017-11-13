@@ -116,11 +116,7 @@ type Adapter interface {
 	SimpleInsertInnerJoin(string, DBInsert, DBJoin) (string, error)
 	SimpleCount(string, string, string, string) (string, error)
 
-	Select(name ...string) *selectPrebuilder
-	Insert(name ...string) *insertPrebuilder
-	Update(name ...string) *updatePrebuilder
-	Delete(name ...string) *deletePrebuilder
-
+	Builder() *prebuilder
 	Write() error
 }
 

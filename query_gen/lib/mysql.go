@@ -552,24 +552,8 @@ func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string
 	return querystr, nil
 }
 
-func (adapter *MysqlAdapter) Select(nlist ...string) *selectPrebuilder {
-	name := optString(nlist, "_builder")
-	return &selectPrebuilder{name, "", "", "", "", "", adapter}
-}
-
-func (adapter *MysqlAdapter) Insert(nlist ...string) *insertPrebuilder {
-	name := optString(nlist, "_builder")
-	return &insertPrebuilder{name, "", "", "", adapter}
-}
-
-func (adapter *MysqlAdapter) Update(nlist ...string) *updatePrebuilder {
-	name := optString(nlist, "_builder")
-	return &updatePrebuilder{name, "", "", "", adapter}
-}
-
-func (adapter *MysqlAdapter) Delete(nlist ...string) *deletePrebuilder {
-	name := optString(nlist, "_builder")
-	return &deletePrebuilder{name, "", "", adapter}
+func (adapter *MysqlAdapter) Builder() *prebuilder {
+	return &prebuilder{adapter}
 }
 
 func (adapter *MysqlAdapter) Write() error {

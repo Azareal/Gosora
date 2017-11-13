@@ -1066,24 +1066,8 @@ func (adapter *MssqlAdapter) SimpleCount(name string, table string, where string
 	return querystr, nil
 }
 
-func (adapter *MssqlAdapter) Select(nlist ...string) *selectPrebuilder {
-	name := optString(nlist, "_builder")
-	return &selectPrebuilder{name, "", "", "", "", "", adapter}
-}
-
-func (adapter *MssqlAdapter) Insert(nlist ...string) *insertPrebuilder {
-	name := optString(nlist, "_builder")
-	return &insertPrebuilder{name, "", "", "", adapter}
-}
-
-func (adapter *MssqlAdapter) Update(nlist ...string) *updatePrebuilder {
-	name := optString(nlist, "_builder")
-	return &updatePrebuilder{name, "", "", "", adapter}
-}
-
-func (adapter *MssqlAdapter) Delete(nlist ...string) *deletePrebuilder {
-	name := optString(nlist, "_builder")
-	return &deletePrebuilder{name, "", "", adapter}
+func (adapter *MssqlAdapter) Builder() *prebuilder {
+	return &prebuilder{adapter}
 }
 
 func (adapter *MssqlAdapter) Write() error {

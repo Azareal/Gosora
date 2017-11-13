@@ -93,7 +93,7 @@ func processJoiner(joinstr string) (joiner []DBJoiner) {
 	return joiner
 }
 
-func parseNumber(tmpWhere *DBWhere, segment string, i int) int {
+func (where *DBWhere) parseNumber(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
 		char := segment[i]
@@ -101,88 +101,169 @@ func parseNumber(tmpWhere *DBWhere, segment string, i int) int {
 			buffer += string(char)
 		} else {
 			i--
-			tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "number"})
+			where.Expr = append(where.Expr, DBToken{buffer, "number"})
 			return i
 		}
 	}
 	return i
 }
 
-func parseColumn(tmpWhere *DBWhere, segment string, i int) int {
+func (where *DBWhere) parseColumn(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
 		char := segment[i]
 		if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_' {
 			buffer += string(char)
 		} else if char == '(' {
-			return parseFunction(tmpWhere, segment, buffer, i)
+			return where.parseFunction(segment, buffer, i)
 		} else {
 			i--
-			tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "column"})
+			where.Expr = append(where.Expr, DBToken{buffer, "column"})
 			return i
 		}
 	}
 	return i
 }
 
-func parseFunction(tmpWhere *DBWhere, segment string, buffer string, i int) int {
+func (where *DBWhere) parseFunction(segment string, buffer string, i int) int {
 	var preI = i
 	i = skipFunctionCall(segment, i-1)
 	buffer += segment[preI:i] + string(segment[i])
-	tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "function"})
+	where.Expr = append(where.Expr, DBToken{buffer, "function"})
 	return i
 }
 
+func (where *DBWhere) parseString(segment string, i int) int {
+	var buffer string
+	i++
+	for ; i < len(segment); i++ {
+		char := segment[i]
+		if char != '\'' {
+			buffer += string(char)
+		} else {
+			where.Expr = append(where.Expr, DBToken{buffer, "string"})
+			return i
+		}
+	}
+	return i
+}
+
+func (where *DBWhere) parseOperator(segment string, i int) int {
+	var buffer string
+	for ; i < len(segment); i++ {
+		char := segment[i]
+		if isOpByte(char) {
+			buffer += string(char)
+		} else {
+			i--
+			where.Expr = append(where.Expr, DBToken{buffer, "operator"})
+			return i
+		}
+	}
+	return i
+}
+
+// TODO: Make this case insensitive
+func normalizeAnd(in string) string {
+	return strings.Replace(in, " and ", " AND ", -1)
+}
+
+// TODO: Write tests for this
 func processWhere(wherestr string) (where []DBWhere) {
 	if wherestr == "" {
 		return where
 	}
-	wherestr = strings.Replace(wherestr, " and ", " AND ", -1)
+	wherestr = normalizeAnd(wherestr)
 
-	var buffer string
-	var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
 	for _, segment := range strings.Split(wherestr, " AND ") {
 		var tmpWhere = &DBWhere{[]DBToken{}}
 		segment += ")"
 		for i := 0; i < len(segment); i++ {
 			char := segment[i]
-			switch optype {
-			case 0: // unknown
-				if '0' <= char && char <= '9' {
-					i = parseNumber(tmpWhere, segment, i)
-				} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
-					i = parseColumn(tmpWhere, segment, i)
-				} else if char == '\'' {
-					optype = 4
-					buffer = ""
-				} else if isOpByte(char) {
-					optype = 5
-					buffer = string(char)
-				} else if char == '?' {
-					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"?", "substitute"})
-				}
-			case 4: // string
-				if char != '\'' {
-					buffer += string(char)
-				} else {
-					optype = 0
-					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "string"})
-				}
-			case 5: // operator
-				if isOpByte(char) {
-					buffer += string(char)
-				} else {
-					optype = 0
-					i--
-					tmpWhere.Expr = append(tmpWhere.Expr, DBToken{buffer, "operator"})
-				}
-			default:
-				panic("Bad optype in processWhere")
+			if '0' <= char && char <= '9' {
+				i = tmpWhere.parseNumber(segment, i)
+			} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
+				i = tmpWhere.parseColumn(segment, i)
+			} else if char == '\'' {
+				i = tmpWhere.parseString(segment, i)
+			} else if isOpByte(char) {
+				i = tmpWhere.parseOperator(segment, i)
+			} else if char == '?' {
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"?", "substitute"})
 			}
 		}
 		where = append(where, *tmpWhere)
 	}
 	return where
+}
+
+func (setter *DBSetter) parseNumber(segment string, i int) int {
+	var buffer string
+	for ; i < len(segment); i++ {
+		char := segment[i]
+		if '0' <= char && char <= '9' {
+			buffer += string(char)
+		} else {
+			setter.Expr = append(setter.Expr, DBToken{buffer, "number"})
+			return i
+		}
+	}
+	return i
+}
+
+func (setter *DBSetter) parseColumn(segment string, i int) int {
+	var buffer string
+	for ; i < len(segment); i++ {
+		char := segment[i]
+		if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
+			buffer += string(char)
+		} else if char == '(' {
+			return setter.parseFunction(segment, buffer, i)
+		} else {
+			i--
+			setter.Expr = append(setter.Expr, DBToken{buffer, "column"})
+			return i
+		}
+	}
+	return i
+}
+
+func (setter *DBSetter) parseFunction(segment string, buffer string, i int) int {
+	var preI = i
+	i = skipFunctionCall(segment, i-1)
+	buffer += segment[preI:i] + string(segment[i])
+	setter.Expr = append(setter.Expr, DBToken{buffer, "function"})
+	return i
+}
+
+func (setter *DBSetter) parseString(segment string, i int) int {
+	var buffer string
+	i++
+	for ; i < len(segment); i++ {
+		char := segment[i]
+		if char != '\'' {
+			buffer += string(char)
+		} else {
+			setter.Expr = append(setter.Expr, DBToken{buffer, "string"})
+			return i
+		}
+	}
+	return i
+}
+
+func (setter *DBSetter) parseOperator(segment string, i int) int {
+	var buffer string
+	for ; i < len(segment); i++ {
+		char := segment[i]
+		if isOpByte(char) {
+			buffer += string(char)
+		} else {
+			i--
+			setter.Expr = append(setter.Expr, DBToken{buffer, "operator"})
+			return i
+		}
+	}
+	return i
 }
 
 func processSet(setstr string) (setter []DBSetter) {
@@ -211,84 +292,29 @@ func processSet(setstr string) (setter []DBSetter) {
 	}
 
 	// Second pass. Break this setitem into manageable chunks
-	buffer = ""
 	for _, setitem := range setset {
-		var tmpSetter DBSetter
 		halves := strings.Split(setitem, "=")
 		if len(halves) != 2 {
 			continue
 		}
-		tmpSetter.Column = strings.TrimSpace(halves[0])
+		tmpSetter := &DBSetter{Column: strings.TrimSpace(halves[0])}
 		segment := halves[1] + ")"
 
-		var optype int // 0: None, 1: Number, 2: Column, 3: Function, 4: String, 5: Operator
-		//fmt.Println("segment", segment)
 		for i := 0; i < len(segment); i++ {
 			char := segment[i]
-			//fmt.Println("optype",optype)
-			//fmt.Println("Expr:",buffer)
-			switch optype {
-			case 0: // unknown
-				if '0' <= char && char <= '9' {
-					optype = 1
-					buffer = string(char)
-				} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
-					optype = 2
-					buffer = string(char)
-				} else if char == '\'' {
-					optype = 4
-					buffer = ""
-				} else if isOpByte(char) {
-					optype = 5
-					buffer = string(char)
-				} else if char == '?' {
-					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{"?", "substitute"})
-				}
-			case 1: // number
-				if '0' <= char && char <= '9' {
-					buffer += string(char)
-				} else {
-					optype = 0
-					i--
-					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "number"})
-				}
-			case 2: // column
-				if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
-					buffer += string(char)
-				} else if char == '(' {
-					optype = 3
-					i--
-				} else {
-					optype = 0
-					i--
-					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "column"})
-				}
-			case 3: // function
-				var preI = i
-				i = skipFunctionCall(segment, i-1)
-				buffer += segment[preI:i] + string(segment[i])
-				tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "function"})
-				optype = 0
-			case 4: // string
-				if char != '\'' {
-					buffer += string(char)
-				} else {
-					optype = 0
-					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "string"})
-				}
-			case 5: // operator
-				if isOpByte(char) {
-					buffer += string(char)
-				} else {
-					optype = 0
-					i--
-					tmpSetter.Expr = append(tmpSetter.Expr, DBToken{buffer, "operator"})
-				}
-			default:
-				panic("Bad optype in processSet")
+			if '0' <= char && char <= '9' {
+				i = tmpSetter.parseNumber(segment, i)
+			} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
+				i = tmpSetter.parseColumn(segment, i)
+			} else if char == '\'' {
+				i = tmpSetter.parseString(segment, i)
+			} else if isOpByte(char) {
+				i = tmpSetter.parseOperator(segment, i)
+			} else if char == '?' {
+				tmpSetter.Expr = append(tmpSetter.Expr, DBToken{"?", "substitute"})
 			}
 		}
-		setter = append(setter, tmpSetter)
+		setter = append(setter, *tmpSetter)
 	}
 	return setter
 }

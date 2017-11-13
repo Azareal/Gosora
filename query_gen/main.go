@@ -220,49 +220,51 @@ func seedTables(adapter qgen.Adapter) error {
 }
 
 func writeSelects(adapter qgen.Adapter) error {
+	build := adapter.Builder()
+
 	// Looking for getTopic? Your statement is in another castle
 
-	adapter.Select("getPassword").Table("users").Columns("password, salt").Where("uid = ?").Parse()
+	build.Select("getPassword").Table("users").Columns("password, salt").Where("uid = ?").Parse()
 
-	adapter.Select("getSettings").Table("settings").Columns("name, content, type").Parse()
+	build.Select("getSettings").Table("settings").Columns("name, content, type").Parse()
 
-	adapter.Select("getSetting").Table("settings").Columns("content, type").Where("name = ?").Parse()
+	build.Select("getSetting").Table("settings").Columns("content, type").Where("name = ?").Parse()
 
-	adapter.Select("getFullSetting").Table("settings").Columns("name, type, constraints").Where("name = ?").Parse()
+	build.Select("getFullSetting").Table("settings").Columns("name, type, constraints").Where("name = ?").Parse()
 
-	adapter.Select("isPluginActive").Table("plugins").Columns("active").Where("uname = ?").Parse()
+	build.Select("isPluginActive").Table("plugins").Columns("active").Where("uname = ?").Parse()
 
-	//adapter.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()
+	//build.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()
 
-	adapter.Select("getUsersOffset").Table("users").Columns("uid, name, group, active, is_super_admin, avatar").Orderby("uid ASC").Limit("?,?").Parse()
+	build.Select("getUsersOffset").Table("users").Columns("uid, name, group, active, is_super_admin, avatar").Orderby("uid ASC").Limit("?,?").Parse()
 
-	adapter.Select("isThemeDefault").Table("themes").Columns("default").Where("uname = ?").Parse()
+	build.Select("isThemeDefault").Table("themes").Columns("default").Where("uname = ?").Parse()
 
-	adapter.Select("getModlogs").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Parse()
+	build.Select("getModlogs").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Parse()
 
-	adapter.Select("getModlogsOffset").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Parse()
+	build.Select("getModlogsOffset").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Parse()
 
-	adapter.Select("getReplyTID").Table("replies").Columns("tid").Where("rid = ?").Parse()
+	build.Select("getReplyTID").Table("replies").Columns("tid").Where("rid = ?").Parse()
 
-	adapter.Select("getTopicFID").Table("topics").Columns("parentID").Where("tid = ?").Parse()
+	build.Select("getTopicFID").Table("topics").Columns("parentID").Where("tid = ?").Parse()
 
-	adapter.Select("getUserReplyUID").Table("users_replies").Columns("uid").Where("rid = ?").Parse()
+	build.Select("getUserReplyUID").Table("users_replies").Columns("uid").Where("rid = ?").Parse()
 
-	adapter.Select("getUserName").Table("users").Columns("name").Where("uid = ?").Parse()
+	build.Select("getUserName").Table("users").Columns("name").Where("uid = ?").Parse()
 
-	adapter.Select("getEmailsByUser").Table("emails").Columns("email, validated, token").Where("uid = ?").Parse()
+	build.Select("getEmailsByUser").Table("emails").Columns("email, validated, token").Where("uid = ?").Parse()
 
-	adapter.Select("getTopicBasic").Table("topics").Columns("title, content").Where("tid = ?").Parse()
+	build.Select("getTopicBasic").Table("topics").Columns("title, content").Where("tid = ?").Parse()
 
-	adapter.Select("getActivityEntry").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Where("asid = ?").Parse()
+	build.Select("getActivityEntry").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Where("asid = ?").Parse()
 
-	adapter.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
+	build.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
 
-	adapter.Select("groupEntryExists").Table("users_groups").Columns("gid").Where("name = ''").Orderby("gid ASC").Limit("0,1").Parse()
+	build.Select("groupEntryExists").Table("users_groups").Columns("gid").Where("name = ''").Orderby("gid ASC").Limit("0,1").Parse()
 
-	adapter.Select("getForumTopicsOffset").Table("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount").Where("parentID = ?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Parse()
+	build.Select("getForumTopicsOffset").Table("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount").Where("parentID = ?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Parse()
 
-	adapter.Select("getAttachment").Table("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path = ? AND sectionID = ? AND sectionTable = ?").Parse()
+	build.Select("getAttachment").Table("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path = ? AND sectionID = ? AND sectionTable = ?").Parse()
 
 	return nil
 }
@@ -291,25 +293,27 @@ func writeInnerJoins(adapter qgen.Adapter) (err error) {
 }
 
 func writeInserts(adapter qgen.Adapter) error {
-	adapter.Insert("createReport").Table("topics").Columns("title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'").Parse()
+	build := adapter.Builder()
 
-	adapter.Insert("addActivity").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Fields("?,?,?,?,?").Parse()
+	build.Insert("createReport").Table("topics").Columns("title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'").Parse()
 
-	adapter.Insert("notifyOne").Table("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Parse()
+	build.Insert("addActivity").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Fields("?,?,?,?,?").Parse()
 
-	adapter.Insert("addEmail").Table("emails").Columns("email, uid, validated, token").Fields("?,?,?,?").Parse()
+	build.Insert("notifyOne").Table("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Parse()
 
-	adapter.Insert("addSubscription").Table("activity_subscriptions").Columns("user, targetID, targetType, level").Fields("?,?,?,2").Parse()
+	build.Insert("addEmail").Table("emails").Columns("email, uid, validated, token").Fields("?,?,?,?").Parse()
 
-	adapter.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
+	build.Insert("addSubscription").Table("activity_subscriptions").Columns("user, targetID, targetType, level").Fields("?,?,?,2").Parse()
 
-	adapter.Insert("addPlugin").Table("plugins").Columns("uname, active, installed").Fields("?,?,?").Parse()
+	build.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
 
-	adapter.Insert("addTheme").Table("themes").Columns("uname, default").Fields("?,?").Parse()
+	build.Insert("addPlugin").Table("plugins").Columns("uname, active, installed").Fields("?,?,?").Parse()
 
-	adapter.Insert("addAttachment").Table("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Fields("?,?,?,?,?,?").Parse()
+	build.Insert("addTheme").Table("themes").Columns("uname, default").Fields("?,?").Parse()
 
-	adapter.Insert("createWordFilter").Table("word_filters").Columns("find, replacement").Fields("?,?").Parse()
+	build.Insert("addAttachment").Table("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Fields("?,?,?,?,?,?").Parse()
+
+	build.Insert("createWordFilter").Table("word_filters").Columns("find, replacement").Fields("?,?").Parse()
 
 	return nil
 }
@@ -334,48 +338,52 @@ func writeReplaces(adapter qgen.Adapter) (err error) {
 }*/
 
 func writeUpdates(adapter qgen.Adapter) error {
-	adapter.Update("editReply").Table("replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
+	build := adapter.Builder()
 
-	adapter.Update("editProfileReply").Table("users_replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
+	build.Update("editReply").Table("replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
 
-	adapter.Update("updateSetting").Table("settings").Set("content = ?").Where("name = ?").Parse()
+	build.Update("editProfileReply").Table("users_replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
 
-	adapter.Update("updatePlugin").Table("plugins").Set("active = ?").Where("uname = ?").Parse()
+	build.Update("updateSetting").Table("settings").Set("content = ?").Where("name = ?").Parse()
 
-	adapter.Update("updatePluginInstall").Table("plugins").Set("installed = ?").Where("uname = ?").Parse()
+	build.Update("updatePlugin").Table("plugins").Set("active = ?").Where("uname = ?").Parse()
 
-	adapter.Update("updateTheme").Table("themes").Set("default = ?").Where("uname = ?").Parse()
+	build.Update("updatePluginInstall").Table("plugins").Set("installed = ?").Where("uname = ?").Parse()
 
-	adapter.Update("updateForum").Table("forums").Set("name = ?, desc = ?, active = ?, preset = ?").Where("fid = ?").Parse()
+	build.Update("updateTheme").Table("themes").Set("default = ?").Where("uname = ?").Parse()
 
-	adapter.Update("updateUser").Table("users").Set("name = ?, email = ?, group = ?").Where("uid = ?").Parse()
+	build.Update("updateForum").Table("forums").Set("name = ?, desc = ?, active = ?, preset = ?").Where("fid = ?").Parse()
 
-	adapter.Update("updateGroupPerms").Table("users_groups").Set("permissions = ?").Where("gid = ?").Parse()
+	build.Update("updateUser").Table("users").Set("name = ?, email = ?, group = ?").Where("uid = ?").Parse()
 
-	adapter.Update("updateGroup").Table("users_groups").Set("name = ?, tag = ?").Where("gid = ?").Parse()
+	build.Update("updateGroupPerms").Table("users_groups").Set("permissions = ?").Where("gid = ?").Parse()
 
-	adapter.Update("updateEmail").Table("emails").Set("email = ?, uid = ?, validated = ?, token = ?").Where("email = ?").Parse()
+	build.Update("updateGroup").Table("users_groups").Set("name = ?, tag = ?").Where("gid = ?").Parse()
 
-	adapter.Update("verifyEmail").Table("emails").Set("validated = 1, token = ''").Where("email = ?").Parse() // Need to fix this: Empty string isn't working, it gets set to 1 instead x.x -- Has this been fixed?
+	build.Update("updateEmail").Table("emails").Set("email = ?, uid = ?, validated = ?, token = ?").Where("email = ?").Parse()
 
-	adapter.Update("setTempGroup").Table("users").Set("temp_group = ?").Where("uid = ?").Parse()
+	build.Update("verifyEmail").Table("emails").Set("validated = 1, token = ''").Where("email = ?").Parse() // Need to fix this: Empty string isn't working, it gets set to 1 instead x.x -- Has this been fixed?
 
-	adapter.Update("updateWordFilter").Table("word_filters").Set("find = ?, replacement = ?").Where("wfid = ?").Parse()
+	build.Update("setTempGroup").Table("users").Set("temp_group = ?").Where("uid = ?").Parse()
 
-	adapter.Update("bumpSync").Table("sync").Set("last_update = UTC_TIMESTAMP()").Parse()
+	build.Update("updateWordFilter").Table("word_filters").Set("find = ?, replacement = ?").Where("wfid = ?").Parse()
+
+	build.Update("bumpSync").Table("sync").Set("last_update = UTC_TIMESTAMP()").Parse()
 
 	return nil
 }
 
 func writeDeletes(adapter qgen.Adapter) error {
-	adapter.Delete("deleteProfileReply").Table("users_replies").Where("rid = ?").Parse()
+	build := adapter.Builder()
 
-	//adapter.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid = ?").Parse()
+	build.Delete("deleteProfileReply").Table("users_replies").Where("rid = ?").Parse()
 
-	adapter.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher = ? AND asid = ?").Parse()
-	//adapter.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher = ?").Parse()
+	//build.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid = ?").Parse()
 
-	adapter.Delete("deleteWordFilter").Table("word_filters").Where("wfid = ?").Parse()
+	build.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher = ? AND asid = ?").Parse()
+	//build.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher = ?").Parse()
+
+	build.Delete("deleteWordFilter").Table("word_filters").Where("wfid = ?").Parse()
 
 	return nil
 }

@@ -1,5 +1,29 @@
 package qgen
 
+type prebuilder struct {
+	adapter Adapter
+}
+
+func (build *prebuilder) Select(nlist ...string) *selectPrebuilder {
+	name := optString(nlist, "_builder")
+	return &selectPrebuilder{name, "", "", "", "", "", build.adapter}
+}
+
+func (build *prebuilder) Insert(nlist ...string) *insertPrebuilder {
+	name := optString(nlist, "_builder")
+	return &insertPrebuilder{name, "", "", "", build.adapter}
+}
+
+func (build *prebuilder) Update(nlist ...string) *updatePrebuilder {
+	name := optString(nlist, "_builder")
+	return &updatePrebuilder{name, "", "", "", build.adapter}
+}
+
+func (build *prebuilder) Delete(nlist ...string) *deletePrebuilder {
+	name := optString(nlist, "_builder")
+	return &deletePrebuilder{name, "", "", build.adapter}
+}
+
 type deletePrebuilder struct {
 	name  string
 	table string

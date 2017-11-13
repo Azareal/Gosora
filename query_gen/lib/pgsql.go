@@ -318,24 +318,8 @@ func (adapter *PgsqlAdapter) SimpleCount(name string, table string, where string
 	return "", nil
 }
 
-func (adapter *PgsqlAdapter) Select(nlist ...string) *selectPrebuilder {
-	name := optString(nlist, "_builder")
-	return &selectPrebuilder{name, "", "", "", "", "", adapter}
-}
-
-func (adapter *PgsqlAdapter) Insert(nlist ...string) *insertPrebuilder {
-	name := optString(nlist, "_builder")
-	return &insertPrebuilder{name, "", "", "", adapter}
-}
-
-func (adapter *PgsqlAdapter) Update(nlist ...string) *updatePrebuilder {
-	name := optString(nlist, "_builder")
-	return &updatePrebuilder{name, "", "", "", adapter}
-}
-
-func (adapter *PgsqlAdapter) Delete(nlist ...string) *deletePrebuilder {
-	name := optString(nlist, "_builder")
-	return &deletePrebuilder{name, "", "", adapter}
+func (adapter *PgsqlAdapter) Builder() *prebuilder {
+	return &prebuilder{adapter}
 }
 
 func (adapter *PgsqlAdapter) Write() error {
