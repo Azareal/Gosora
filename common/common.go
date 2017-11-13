@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"log"
 
 	"../query_gen/lib"
 )
@@ -81,4 +82,28 @@ func (inits dbInits) Run() error {
 
 func (inits dbInits) Add(init ...func(acc *qgen.Accumulator) error) {
 	DbInits = dbInits(append(DbInits, init...))
+}
+
+func debugDetail(args ...interface{}) {
+	if Dev.SuperDebug {
+		log.Print(args...)
+	}
+}
+
+func debugDetailf(str string, args ...interface{}) {
+	if Dev.SuperDebug {
+		log.Printf(str, args...)
+	}
+}
+
+func debugLog(args ...interface{}) {
+	if Dev.DebugMode {
+		log.Print(args...)
+	}
+}
+
+func debugLogf(str string, args ...interface{}) {
+	if Dev.DebugMode {
+		log.Printf(str, args...)
+	}
 }

@@ -607,8 +607,8 @@ func TestForumPermsStore(t *testing.T) {
 	if !gloinited {
 		gloinit()
 	}
-	if !pluginsInited {
-		initPlugins()
+	if !common.PluginsInited {
+		common.InitPlugins()
 	}
 }
 
@@ -617,8 +617,8 @@ func TestGroupStore(t *testing.T) {
 	if !gloinited {
 		gloinit()
 	}
-	if !pluginsInited {
-		initPlugins()
+	if !common.PluginsInited {
+		common.InitPlugins()
 	}
 
 	_, err := common.Gstore.Get(-1)
@@ -728,8 +728,8 @@ func TestReplyStore(t *testing.T) {
 	if !gloinited {
 		gloinit()
 	}
-	if !pluginsInited {
-		initPlugins()
+	if !common.PluginsInited {
+		common.InitPlugins()
 	}
 
 	_, err := common.Rstore.Get(-1)
@@ -770,8 +770,8 @@ func TestProfileReplyStore(t *testing.T) {
 	if !gloinited {
 		gloinit()
 	}
-	if !pluginsInited {
-		initPlugins()
+	if !common.PluginsInited {
+		common.InitPlugins()
 	}
 
 	_, err := common.Prstore.Get(-1)
@@ -845,7 +845,7 @@ func TestAuth(t *testing.T) {
 
 	/* No extra salt tests, we might not need this extra salt, as bcrypt has it's own? */
 	realPassword = "Madame Cassandra's Mystic Orb"
-	t.Log("Set realPassword to '" + realPassword + "'")
+	t.Logf("Set realPassword to '%s'", realPassword)
 	t.Log("Hashing the real password")
 	hashedPassword, err = common.BcryptGeneratePasswordNoSalt(realPassword)
 	if err != nil {
@@ -853,34 +853,31 @@ func TestAuth(t *testing.T) {
 	}
 
 	password = realPassword
-	t.Log("Testing password '" + password + "'")
-	t.Log("Testing salt '" + salt + "'")
+	t.Logf("Testing password '%s'", password)
+	t.Logf("Testing salt '%s'", salt)
 	err = common.CheckPassword(hashedPassword, password, salt)
-	if err == ErrMismatchedHashAndPassword {
+	if err == common.ErrMismatchedHashAndPassword {
 		t.Error("The two don't match")
-	} else if err == ErrPasswordTooLong {
+	} else if err == common.ErrPasswordTooLong {
 		t.Error("CheckPassword thinks the password is too long")
 	} else if err != nil {
 		t.Error(err)
 	}
 
 	password = "hahaha"
-	t.Log("Testing password '" + password + "'")
-	t.Log("Testing salt '" + salt + "'")
+	t.Logf("Testing password '%s'", password)
+	t.Logf("Testing salt '%s'", salt)
 	err = common.CheckPassword(hashedPassword, password, salt)
-	if err == ErrPasswordTooLong {
+	if err == common.ErrPasswordTooLong {
 		t.Error("CheckPassword thinks the password is too long")
 	} else if err == nil {
 		t.Error("The two shouldn't match!")
 	}
 
 	password = "Madame Cassandra's Mystic"
-	t.Log("Testing password '" + password + "'")
-	t.Log("Testing salt '" + salt + "'")
+	t.Logf("Testing password '%s'", password)
+	t.Logf("Testing salt '%s'", salt)
 	err = common.CheckPassword(hashedPassword, password, salt)
-	if err == ErrPasswordTooLong {
-		t.Error("CheckPassword thinks the password is too long")
-	} else if err == nil {
-		t.Error("The two shouldn't match!")
-	}
+	expect(t, err != common.ErrPasswordTooLong, "CheckPassword thinks the password is too long")
+	expect(t, err != nil, "The two shouldn't match!")
 }

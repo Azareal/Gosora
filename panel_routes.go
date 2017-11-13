@@ -425,9 +425,6 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return common.LocalErrorJSQ("Invalid Group ID", w, r, user, isJs)
 	}
 
-	permPreset := common.StripInvalidGroupForumPreset(r.PostFormValue("perm_preset"))
-	fperms, changed := common.GroupForumPresetToForumPerms(permPreset)
-
 	forum, err := common.Fstore.Get(fid)
 	if err == ErrNoRows {
 		return common.LocalErrorJSQ("This forum doesn't exist", w, r, user, isJs)
@@ -435,33 +432,10 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	// ! IMPORTANT
-	// TODO: Refactor this
-	common.ForumUpdateMutex.Lock()
-	defer common.ForumUpdateMutex.Unlock()
-	if changed {
-		common.PermUpdateMutex.Lock()
-		defer common.PermUpdateMutex.Unlock()
-		group, err := common.Gstore.Get(gid)
-		if err != nil {
-			return common.LocalError("The group whose permissions you're updating doesn't exist.", w, r, user)
-		}
-		group.Forums[fid] = fperms
-
-		err = common.ReplaceForumPermsForGroup(gid, map[int]string{fid: permPreset}, map[int]common.ForumPerms{fid: fperms})
-		if err != nil {
-			return common.InternalErrorJSQ(err, w, r, isJs)
-		}
-
-		// TODO: Add this and replaceForumPermsForGroup into a transaction?
-		_, err = stmts.updateForum.Exec(forum.Name, forum.Desc, forum.Active, "", fid)
-		if err != nil {
-			return common.InternalErrorJSQ(err, w, r, isJs)
-		}
-		err = common.Fstore.Reload(fid)
-		if err != nil {
-			return common.LocalErrorJSQ("Unable to reload forum", w, r, user, isJs)
-		}
+	permPreset := common.StripInvalidGroupForumPreset(r.PostFormValue("perm_preset"))
+	err = forum.SetPreset(permPreset, gid)
+	if err != nil {
+		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
 	}
 
 	if !isJs {

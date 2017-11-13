@@ -69,14 +69,9 @@ func (ins *PgsqlInstaller) InitDatabase() (err error) {
 	// TODO: Create the database, if it doesn't exist
 
 	// Ready the query builder
-	qgen.Builder.SetConn(db)
-	err = qgen.Builder.SetAdapter("pgsql")
-	if err != nil {
-		return err
-	}
 	ins.db = db
-
-	return nil
+	qgen.Builder.SetConn(db)
+	return qgen.Builder.SetAdapter("pgsql")
 }
 
 func (ins *PgsqlInstaller) TableDefs() (err error) {

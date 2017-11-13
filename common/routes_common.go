@@ -101,7 +101,7 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 }
 
 // TODO: Put this on the user instance? Do we really want forum specific logic in there? Maybe, a method which spits a new pointer with the same contents as user?
-func cascadeForumPerms(fperms ForumPerms, user *User) {
+func cascadeForumPerms(fperms *ForumPerms, user *User) {
 	if fperms.Overrides && !user.IsSuperAdmin {
 		user.Perms.ViewTopic = fperms.ViewTopic
 		user.Perms.LikeItem = fperms.LikeItem

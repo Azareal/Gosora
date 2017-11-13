@@ -1,45 +1,19 @@
 package common
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log"
-	"sync"
 
 	"../query_gen/lib"
 )
 
 // TODO: Refactor the perms system
-
-var PermUpdateMutex sync.Mutex
 var BlankPerms Perms
-var BlankForumPerms ForumPerms
 var GuestPerms Perms
-var ReadForumPerms ForumPerms
-var ReadReplyForumPerms ForumPerms
-var ReadWriteForumPerms ForumPerms
 
 // AllPerms is a set of global permissions with everything set to true
 var AllPerms Perms
-
-// AllForumPerms is a set of forum local permissions with everything set to true
-var AllForumPerms ForumPerms
 var AllPluginPerms = make(map[string]bool)
-
-// ? - Can we avoid duplicating the items in this list in a bunch of places?
-
-var LocalPermList = []string{
-	"ViewTopic",
-	"LikeItem",
-	"CreateTopic",
-	"EditTopic",
-	"DeleteTopic",
-	"CreateReply",
-	"EditReply",
-	"DeleteReply",
-	"PinTopic",
-	"CloseTopic",
-}
 
 // ? - Can we avoid duplicating the items in this list in a bunch of places?
 var GlobalPermList = []string{
@@ -111,34 +85,9 @@ type Perms struct {
 	//ExtData map[string]bool
 }
 
-/* Inherit from group permissions for ones we don't have */
-type ForumPerms struct {
-	ViewTopic bool
-	//ViewOwnTopic bool
-	LikeItem    bool
-	CreateTopic bool
-	EditTopic   bool
-	DeleteTopic bool
-	CreateReply bool
-	//CreateReplyToOwn bool
-	EditReply bool
-	//EditOwnReply bool
-	DeleteReply bool
-	PinTopic    bool
-	CloseTopic  bool
-	//CloseOwnTopic bool
-
-	Overrides bool
-	ExtData   map[string]bool
-}
-
 func init() {
 	BlankPerms = Perms{
 	//ExtData: make(map[string]bool),
-	}
-
-	BlankForumPerms = ForumPerms{
-		ExtData: make(map[string]bool),
 	}
 
 	GuestPerms = Perms{
@@ -183,266 +132,9 @@ func init() {
 		//ExtData: make(map[string]bool),
 	}
 
-	AllForumPerms = ForumPerms{
-		ViewTopic:   true,
-		LikeItem:    true,
-		CreateTopic: true,
-		EditTopic:   true,
-		DeleteTopic: true,
-		CreateReply: true,
-		EditReply:   true,
-		DeleteReply: true,
-		PinTopic:    true,
-		CloseTopic:  true,
-
-		Overrides: true,
-		ExtData:   make(map[string]bool),
-	}
-
-	ReadWriteForumPerms = ForumPerms{
-		ViewTopic:   true,
-		LikeItem:    true,
-		CreateTopic: true,
-		CreateReply: true,
-		Overrides:   true,
-		ExtData:     make(map[string]bool),
-	}
-
-	ReadReplyForumPerms = ForumPerms{
-		ViewTopic:   true,
-		LikeItem:    true,
-		CreateReply: true,
-		Overrides:   true,
-		ExtData:     make(map[string]bool),
-	}
-
-	ReadForumPerms = ForumPerms{
-		ViewTopic: true,
-		Overrides: true,
-		ExtData:   make(map[string]bool),
-	}
-
 	GuestUser.Perms = GuestPerms
-
-	if Dev.DebugMode {
-		log.Printf("Guest Perms: %+v\n", GuestPerms)
-		log.Printf("All Perms: %+v\n", AllPerms)
-	}
-}
-
-func PresetToPermmap(preset string) (out map[string]ForumPerms) {
-	out = make(map[string]ForumPerms)
-	switch preset {
-	case "all":
-		out["guests"] = ReadForumPerms
-		out["members"] = ReadWriteForumPerms
-		out["staff"] = AllForumPerms
-		out["admins"] = AllForumPerms
-	case "announce":
-		out["guests"] = ReadForumPerms
-		out["members"] = ReadReplyForumPerms
-		out["staff"] = AllForumPerms
-		out["admins"] = AllForumPerms
-	case "members":
-		out["guests"] = BlankForumPerms
-		out["members"] = ReadWriteForumPerms
-		out["staff"] = AllForumPerms
-		out["admins"] = AllForumPerms
-	case "staff":
-		out["guests"] = BlankForumPerms
-		out["members"] = BlankForumPerms
-		out["staff"] = ReadWriteForumPerms
-		out["admins"] = AllForumPerms
-	case "admins":
-		out["guests"] = BlankForumPerms
-		out["members"] = BlankForumPerms
-		out["staff"] = BlankForumPerms
-		out["admins"] = AllForumPerms
-	case "archive":
-		out["guests"] = ReadForumPerms
-		out["members"] = ReadForumPerms
-		out["staff"] = ReadForumPerms
-		out["admins"] = ReadForumPerms //CurateForumPerms. Delete / Edit but no create?
-	default:
-		out["guests"] = BlankForumPerms
-		out["members"] = BlankForumPerms
-		out["staff"] = BlankForumPerms
-		out["admins"] = BlankForumPerms
-	}
-	return out
-}
-
-func PermmapToQuery(permmap map[string]ForumPerms, fid int) error {
-	tx, err := qgen.Builder.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	deleteForumPermsByForumTx, err := qgen.Builder.SimpleDeleteTx(tx, "forums_permissions", "fid = ?")
-	if err != nil {
-		return err
-	}
-
-	_, err = deleteForumPermsByForumTx.Exec(fid)
-	if err != nil {
-		return err
-	}
-
-	perms, err := json.Marshal(permmap["admins"])
-	if err != nil {
-		return err
-	}
-
-	addForumPermsToForumAdminsTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
-		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 1", "", ""},
-	)
-	if err != nil {
-		return err
-	}
-
-	_, err = addForumPermsToForumAdminsTx.Exec(fid, "", perms)
-	if err != nil {
-		return err
-	}
-
-	perms, err = json.Marshal(permmap["staff"])
-	if err != nil {
-		return err
-	}
-
-	addForumPermsToForumStaffTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
-		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 1", "", ""},
-	)
-	if err != nil {
-		return err
-	}
-	_, err = addForumPermsToForumStaffTx.Exec(fid, "", perms)
-	if err != nil {
-		return err
-	}
-
-	perms, err = json.Marshal(permmap["members"])
-	if err != nil {
-		return err
-	}
-
-	addForumPermsToForumMembersTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
-		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
-	)
-	if err != nil {
-		return err
-	}
-	_, err = addForumPermsToForumMembersTx.Exec(fid, "", perms)
-	if err != nil {
-		return err
-	}
-
-	// 6 is the ID of the Not Loggedin Group
-	// TODO: Use a shared variable rather than a literal for the group ID
-	err = ReplaceForumPermsForGroupTx(tx, 6, map[int]string{fid: ""}, map[int]ForumPerms{fid: permmap["guests"]})
-	if err != nil {
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-
-	PermUpdateMutex.Lock()
-	defer PermUpdateMutex.Unlock()
-	return Fpstore.Reload(fid)
-}
-
-func ReplaceForumPermsForGroup(gid int, presetSet map[int]string, permSets map[int]ForumPerms) error {
-	tx, err := qgen.Builder.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	err = ReplaceForumPermsForGroupTx(tx, gid, presetSet, permSets)
-	if err != nil {
-		return err
-	}
-	return tx.Commit()
-}
-
-func ReplaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string, permSets map[int]ForumPerms) error {
-	deleteForumPermsForGroupTx, err := qgen.Builder.SimpleDeleteTx(tx, "forums_permissions", "gid = ? AND fid = ?")
-	if err != nil {
-		return err
-	}
-
-	addForumPermsToGroupTx, err := qgen.Builder.SimpleInsertTx(tx, "forums_permissions", "gid, fid, preset, permissions", "?,?,?,?")
-	if err != nil {
-		return err
-	}
-	for fid, permSet := range permSets {
-		permstr, err := json.Marshal(permSet)
-		if err != nil {
-			return err
-		}
-		_, err = deleteForumPermsForGroupTx.Exec(gid, fid)
-		if err != nil {
-			return err
-		}
-		_, err = addForumPermsToGroupTx.Exec(gid, fid, presetSets[fid], string(permstr))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// TODO: Refactor this and write tests for it
-func ForumPermsToGroupForumPreset(fperms ForumPerms) string {
-	if !fperms.Overrides {
-		return "default"
-	}
-	if !fperms.ViewTopic {
-		return "no_access"
-	}
-	var canPost = (fperms.LikeItem && fperms.CreateTopic && fperms.CreateReply)
-	var canModerate = (canPost && fperms.EditTopic && fperms.DeleteTopic && fperms.EditReply && fperms.DeleteReply && fperms.PinTopic && fperms.CloseTopic)
-	if canModerate {
-		return "can_moderate"
-	}
-	if fperms.EditTopic || fperms.DeleteTopic || fperms.EditReply || fperms.DeleteReply || fperms.PinTopic || fperms.CloseTopic {
-		if !canPost {
-			return "custom"
-		}
-		return "quasi_mod"
-	}
-
-	if canPost {
-		return "can_post"
-	}
-	if fperms.ViewTopic && !fperms.LikeItem && !fperms.CreateTopic && !fperms.CreateReply {
-		return "read_only"
-	}
-	return "custom"
-}
-
-func GroupForumPresetToForumPerms(preset string) (fperms ForumPerms, changed bool) {
-	switch preset {
-	case "read_only":
-		return ReadForumPerms, true
-	case "can_post":
-		return ReadWriteForumPerms, true
-	case "can_moderate":
-		return AllForumPerms, true
-	case "no_access":
-		return ForumPerms{Overrides: true, ExtData: make(map[string]bool)}, true
-	case "default":
-		return BlankForumPerms, true
-		//case "custom": return fperms, false
-	}
-	return fperms, false
+	debugLogf("Guest Perms: %+v\n", GuestPerms)
+	debugLogf("All Perms: %+v\n", AllPerms)
 }
 
 func StripInvalidGroupForumPreset(preset string) string {
@@ -457,9 +149,8 @@ func StripInvalidPreset(preset string) string {
 	switch preset {
 	case "all", "announce", "members", "staff", "admins", "archive", "custom":
 		return preset
-	default:
-		return ""
 	}
+	return ""
 }
 
 // TODO: Move this into the phrase system?

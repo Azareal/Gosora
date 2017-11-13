@@ -352,8 +352,6 @@ func writeUpdates(adapter qgen.Adapter) error {
 
 	build.Update("updateTheme").Table("themes").Set("default = ?").Where("uname = ?").Parse()
 
-	build.Update("updateForum").Table("forums").Set("name = ?, desc = ?, active = ?, preset = ?").Where("fid = ?").Parse()
-
 	build.Update("updateUser").Table("users").Set("name = ?, email = ?, group = ?").Where("uid = ?").Parse()
 
 	build.Update("updateGroupPerms").Table("users_groups").Set("permissions = ?").Where("gid = ?").Parse()

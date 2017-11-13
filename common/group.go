@@ -26,7 +26,7 @@ type Group struct {
 	PermissionsText []byte
 	PluginPerms     map[string]bool // Custom permissions defined by plugins. What if two plugins declare the same permission, but they handle them in incompatible ways? Very unlikely, we probably don't need to worry about this, the plugin authors should be aware of each other to some extent
 	PluginPermsText []byte
-	Forums          []ForumPerms
+	Forums          []*ForumPerms
 	CanSee          []int // The IDs of the forums this group can see
 }
 

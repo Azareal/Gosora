@@ -849,13 +849,12 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	password := r.PostFormValue("password")
-	if password == "" {
+	switch password {
+	case "":
 		return common.LocalError("You didn't put in a password.", w, r, user)
-	}
-	if password == username {
+	case username:
 		return common.LocalError("You can't use your username as your password.", w, r, user)
-	}
-	if password == email {
+	case email:
 		return common.LocalError("You can't use your email as your password.", w, r, user)
 	}
 

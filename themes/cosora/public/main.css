@@ -157,7 +157,7 @@ ul {
 	display: none;
 }
 
-.rowblock {
+.rowblock, .colstack_item {
 	margin-bottom: 12px;
 	border: 1px solid var(--header-border-color);
 	border-bottom: 2px solid var(--header-border-color);

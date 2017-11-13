@@ -50,6 +50,17 @@ func (ins *MysqlInstaller) DefaultPort() string {
 	return "3306"
 }
 
+func (ins *MysqlInstaller) dbExists(dbName string) (bool, error) {
+	var waste string
+	err := ins.db.QueryRow("SHOW DATABASES LIKE '" + dbName + "'").Scan(&waste)
+	if err != nil && err != sql.ErrNoRows {
+		return false, err
+	} else if err == sql.ErrNoRows {
+		return false, nil
+	}
+	return true, nil
+}
+
 func (ins *MysqlInstaller) InitDatabase() (err error) {
 	_dbPassword := ins.dbPassword
 	if _dbPassword != "" {
@@ -67,13 +78,13 @@ func (ins *MysqlInstaller) InitDatabase() (err error) {
 	}
 	fmt.Println("Successfully connected to the database")
 
-	var waste string
-	err = db.QueryRow("SHOW DATABASES LIKE '" + ins.dbName + "'").Scan(&waste)
-	if err != nil && err != sql.ErrNoRows {
+	ins.db = db
+	ok, err := ins.dbExists(ins.dbName)
+	if err != nil {
 		return err
 	}
 
-	if err == sql.ErrNoRows {
+	if !ok {
 		fmt.Println("Unable to find the database. Attempting to create it")
 		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + ins.dbName)
 		if err != nil {
@@ -82,7 +93,7 @@ func (ins *MysqlInstaller) InitDatabase() (err error) {
 		fmt.Println("The database was successfully created")
 	}
 
-	fmt.Println("Switching to database " + ins.dbName)
+	fmt.Println("Switching to database ", ins.dbName)
 	_, err = db.Exec("USE " + ins.dbName)
 	if err != nil {
 		return err
@@ -90,13 +101,7 @@ func (ins *MysqlInstaller) InitDatabase() (err error) {
 
 	// Ready the query builder
 	qgen.Builder.SetConn(db)
-	err = qgen.Builder.SetAdapter("mysql")
-	if err != nil {
-		return err
-	}
-
-	ins.db = db
-	return nil
+	return qgen.Builder.SetAdapter("mysql")
 }
 
 func (ins *MysqlInstaller) TableDefs() (err error) {
@@ -122,7 +127,7 @@ func (ins *MysqlInstaller) TableDefs() (err error) {
 			return err
 		}
 
-		fmt.Println("Creating table '" + table + "'")
+		fmt.Printf("Creating table '%s'", table)
 		data, err := ioutil.ReadFile("./schema/mysql/" + f.Name())
 		if err != nil {
 			return err
@@ -135,7 +140,6 @@ func (ins *MysqlInstaller) TableDefs() (err error) {
 			return err
 		}
 	}
-	//fmt.Println("Finished creating the tables")
 	return nil
 }
 
@@ -163,8 +167,6 @@ func (ins *MysqlInstaller) InitialData() error {
 			return err
 		}
 	}
-
-	//fmt.Println("Finished inserting the database data")
 	return nil
 }
 

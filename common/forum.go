@@ -3,6 +3,7 @@ package common
 //import "fmt"
 import (
 	"database/sql"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -48,7 +49,8 @@ type ForumSimple struct {
 }
 
 type ForumStmts struct {
-	update *sql.Stmt
+	update    *sql.Stmt
+	setPreset *sql.Stmt
 }
 
 var forumStmts ForumStmts
@@ -56,7 +58,8 @@ var forumStmts ForumStmts
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		forumStmts = ForumStmts{
-			update: acc.Update("forums").Set("name = ?, desc = ?, active = ?, preset = ?").Where("fid = ?").Prepare(),
+			update:    acc.Update("forums").Set("name = ?, desc = ?, active = ?, preset = ?").Where("fid = ?").Prepare(),
+			setPreset: acc.Update("forums").Set("preset = ?").Where("fid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -85,6 +88,39 @@ func (forum *Forum) Update(name string, desc string, active bool, preset string)
 		}
 	}
 	_ = Fstore.Reload(forum.ID)
+	return nil
+}
+
+func (forum *Forum) SetPreset(preset string, gid int) error {
+	fperms, changed := GroupForumPresetToForumPerms(preset)
+	if changed {
+		return forum.setPreset(fperms, preset, gid)
+	}
+	return nil
+}
+
+// TODO: Refactor this
+func (forum *Forum) setPreset(fperms *ForumPerms, preset string, gid int) (err error) {
+	err = ReplaceForumPermsForGroup(gid, map[int]string{forum.ID: preset}, map[int]*ForumPerms{forum.ID: fperms})
+	if err != nil {
+		LogError(err)
+		return errors.New("Unable to update the permissions")
+	}
+
+	// TODO: Add this and replaceForumPermsForGroup into a transaction?
+	_, err = forumStmts.setPreset.Exec("", forum.ID)
+	if err != nil {
+		LogError(err)
+		return errors.New("Unable to update the forum")
+	}
+	err = Fstore.Reload(forum.ID)
+	if err != nil {
+		return errors.New("Unable to reload forum")
+	}
+	err = Fpstore.ReloadGroup(forum.ID, gid)
+	if err != nil {
+		return errors.New("Unable to reload the forum permissions")
+	}
 	return nil
 }
 

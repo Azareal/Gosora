@@ -17,9 +17,8 @@ import (
 	"../query_gen/lib"
 )
 
-var ForumUpdateMutex sync.Mutex
 var forumCreateMutex sync.Mutex
-var forumPerms map[int]map[int]ForumPerms // [gid][fid]Perms // TODO: Add an abstraction around this and make it more thread-safe
+var forumPerms map[int]map[int]*ForumPerms // [gid][fid]*ForumPerms // TODO: Add an abstraction around this and make it more thread-safe
 var Fstore ForumStore
 
 // ForumStore is an interface for accessing the forums and the metadata stored on them
@@ -110,9 +109,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 		}
 
 		if forum.Name == "" {
-			if Dev.DebugMode {
-				log.Print("Adding a placeholder forum")
-			}
+			debugLog("Adding a placeholder forum")
 		} else {
 			log.Printf("Adding the '%s' forum", forum.Name)
 		}
@@ -272,11 +269,8 @@ func (mfs *MemoryForumStore) Delete(id int) error {
 		return errors.New("You cannot delete the Reports forum")
 	}
 	_, err := mfs.delete.Exec(id)
-	if err != nil {
-		return err
-	}
 	mfs.CacheDelete(id)
-	return nil
+	return err
 }
 
 func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {

@@ -53,7 +53,6 @@ type Stmts struct {
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
-	updateForum *sql.Stmt
 	updateUser *sql.Stmt
 	updateGroupPerms *sql.Stmt
 	updateGroup *sql.Stmt
@@ -336,12 +335,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing updateTheme statement.")
 	stmts.updateTheme, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing updateForum statement.")
-	stmts.updateForum, err = db.Prepare("UPDATE `forums` SET `name` = ?,`desc` = ?,`active` = ?,`preset` = ? WHERE `fid` = ?")
 	if err != nil {
 		return err
 	}

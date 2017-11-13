@@ -181,15 +181,16 @@ func processWhere(wherestr string) (where []DBWhere) {
 		segment += ")"
 		for i := 0; i < len(segment); i++ {
 			char := segment[i]
-			if '0' <= char && char <= '9' {
+			switch {
+			case '0' <= char && char <= '9':
 				i = tmpWhere.parseNumber(segment, i)
-			} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
+			case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_':
 				i = tmpWhere.parseColumn(segment, i)
-			} else if char == '\'' {
+			case char == '\'':
 				i = tmpWhere.parseString(segment, i)
-			} else if isOpByte(char) {
+			case isOpByte(char):
 				i = tmpWhere.parseOperator(segment, i)
-			} else if char == '?' {
+			case char == '?':
 				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"?", "substitute"})
 			}
 		}
@@ -216,11 +217,12 @@ func (setter *DBSetter) parseColumn(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
 		char := segment[i]
-		if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
+		switch {
+		case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_':
 			buffer += string(char)
-		} else if char == '(' {
+		case char == '(':
 			return setter.parseFunction(segment, buffer, i)
-		} else {
+		default:
 			i--
 			setter.Expr = append(setter.Expr, DBToken{buffer, "column"})
 			return i
@@ -303,15 +305,16 @@ func processSet(setstr string) (setter []DBSetter) {
 
 		for i := 0; i < len(segment); i++ {
 			char := segment[i]
-			if '0' <= char && char <= '9' {
+			switch {
+			case '0' <= char && char <= '9':
 				i = tmpSetter.parseNumber(segment, i)
-			} else if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_' {
+			case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_':
 				i = tmpSetter.parseColumn(segment, i)
-			} else if char == '\'' {
+			case char == '\'':
 				i = tmpSetter.parseString(segment, i)
-			} else if isOpByte(char) {
+			case isOpByte(char):
 				i = tmpSetter.parseOperator(segment, i)
-			} else if char == '?' {
+			case char == '?':
 				tmpSetter.Expr = append(tmpSetter.Expr, DBToken{"?", "substitute"})
 			}
 		}

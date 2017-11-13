@@ -86,9 +86,7 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 	}
 	mgs.groupCount = i
 
-	if Dev.DebugMode {
-		log.Print("Binding the Not Loggedin Group")
-	}
+	debugLog("Binding the Not Loggedin Group")
 	GuestPerms = mgs.dirtyGetUnsafe(6).Perms
 	return nil
 }
@@ -172,9 +170,7 @@ func (mgs *MemoryGroupStore) initGroup(group *Group) error {
 		log.Print("bad group plugin perms: ", group.PluginPermsText)
 		return err
 	}
-	if Dev.DebugMode {
-		log.Printf(group.Name+": %+v\n", group.PluginPerms)
-	}
+	debugLogf(group.Name+": %+v\n", group.PluginPerms)
 
 	//group.Perms.ExtData = make(map[string]bool)
 	// TODO: Can we optimise the bit where this cascades down to the user now?
@@ -200,6 +196,7 @@ func (mgs *MemoryGroupStore) Exists(gid int) bool {
 }
 
 // ? Allow two groups with the same name?
+// TODO: Refactor this
 func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (gid int, err error) {
 	var permstr = "{}"
 	tx, err := qgen.Builder.Begin()
@@ -224,7 +221,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	gid = int(gid64)
 
 	var perms = BlankPerms
-	var blankForums []ForumPerms
+	var blankForums []*ForumPerms
 	var blankIntList []int
 	var pluginPerms = make(map[string]bool)
 	var pluginPermsBytes = []byte("{}")
@@ -239,18 +236,17 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	}
 
 	var presetSet = make(map[int]string)
-	var permSet = make(map[int]ForumPerms)
-	PermUpdateMutex.Lock()
-	defer PermUpdateMutex.Unlock()
+	var permSet = make(map[int]*ForumPerms)
 	for _, forum := range fdata {
 		var thePreset string
-		if isAdmin {
+		switch {
+		case isAdmin:
 			thePreset = "admins"
-		} else if isMod {
+		case isMod:
 			thePreset = "staff"
-		} else if isBanned {
+		case isBanned:
 			thePreset = "banned"
-		} else {
+		default:
 			thePreset = "members"
 		}
 
