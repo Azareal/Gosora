@@ -9,7 +9,7 @@ import (
 	"../query_gen/lib"
 )
 
-var Fpstore ForumPermsStore
+var FPStore ForumPermsStore
 
 type ForumPermsStore interface {
 	Init() error
@@ -41,7 +41,7 @@ func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
 func (fps *MemoryForumPermsStore) Init() error {
 	fps.updateMutex.Lock()
 	defer fps.updateMutex.Unlock()
-	fids, err := Fstore.GetAllIDs()
+	fids, err := Forums.GetAllIDs()
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,6 @@ func (fps *MemoryForumPermsStore) Init() error {
 	debugLog("Adding the forum permissions")
 	debugDetail("forumPerms[gid][fid]")
 
-	// Temporarily store the forum perms in a map before transferring it to a much faster and thread-safe slice
 	forumPerms = make(map[int]map[int]*ForumPerms)
 	for rows.Next() {
 		var gid, fid int
@@ -97,7 +96,7 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 	fps.updateMutex.Lock()
 	defer fps.updateMutex.Unlock()
 	debugLogf("Reloading the forum permissions for forum #%d", fid)
-	fids, err := Fstore.GetAllIDs()
+	fids, err := Forums.GetAllIDs()
 	if err != nil {
 		return err
 	}
@@ -143,7 +142,7 @@ func (fps *MemoryForumPermsStore) ReloadGroup(fid int, gid int) (err error) {
 	if err != nil {
 		return err
 	}
-	group, err := Gstore.Get(gid)
+	group, err := Groups.Get(gid)
 	if err != nil {
 		return err
 	}
@@ -153,7 +152,7 @@ func (fps *MemoryForumPermsStore) ReloadGroup(fid int, gid int) (err error) {
 }
 
 func (fps *MemoryForumPermsStore) cascadePermSetToGroups(forumPerms map[int]map[int]*ForumPerms, fids []int) error {
-	groups, err := Gstore.GetAll()
+	groups, err := Groups.GetAll()
 	if err != nil {
 		return err
 	}
@@ -200,7 +199,7 @@ func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[i
 
 // TODO: Add a hook here and have plugin_guilds use it
 func (fps *MemoryForumPermsStore) Get(fid int, gid int) (fperms *ForumPerms, err error) {
-	group, err := Gstore.Get(gid)
+	group, err := Groups.Get(gid)
 	if err != nil {
 		return fperms, ErrNoRows
 	}

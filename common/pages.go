@@ -13,8 +13,8 @@ type HeaderVars struct {
 	Widgets     PageWidgets
 	Site        *site
 	Settings    SettingMap
-	Themes      map[string]Theme // TODO: Use a slice containing every theme instead of the main map for speed
-	ThemeName   string
+	Themes      map[string]Theme // TODO: Use a slice containing every theme instead of the main map for speed?
+	Theme       Theme
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
 	ExtData ExtData
 }
@@ -282,5 +282,5 @@ type AreYouSure struct {
 // This is mostly for errors.go, please create *HeaderVars on the spot instead of relying on this or the atomic store underlying it, if possible
 // TODO: Write a test for this
 func DefaultHeaderVar() *HeaderVars {
-	return &HeaderVars{Site: Site, ThemeName: fallbackTheme}
+	return &HeaderVars{Site: Site, Theme: Themes[fallbackTheme]}
 }

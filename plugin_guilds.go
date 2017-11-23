@@ -33,19 +33,20 @@ func initGuilds() (err error) {
 	router.HandleFunc("/guild/create/submit/", guilds.RouteCreateGuildSubmit)
 	router.HandleFunc("/guild/members/", guilds.RouteMemberList)
 
+	guilds.Gstore, err = guilds.NewSQLGuildStore()
+	if err != nil {
+		return err
+	}
+
 	acc := qgen.Builder.Accumulator()
 
 	guilds.ListStmt = acc.Select("guilds").Columns("guildID, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime").Prepare()
-
-	guilds.GetGuildStmt = acc.Select("guilds").Columns("name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime").Where("guildID = ?").Prepare()
 
 	guilds.MemberListStmt = acc.Select("guilds_members").Columns("guildID, uid, rank, posts, joinedAt").Prepare()
 
 	guilds.MemberListJoinStmt = acc.SimpleLeftJoin("guilds_members", "users", "users.uid, guilds_members.rank, guilds_members.posts, guilds_members.joinedAt, users.name, users.avatar", "guilds_members.uid = users.uid", "guilds_members.guildID = ?", "guilds_members.rank DESC, guilds_members.joinedat ASC", "")
 
 	guilds.GetMemberStmt = acc.Select("guilds_members").Columns("rank, posts, joinedAt").Where("guildID = ? AND uid = ?").Prepare()
-
-	guilds.CreateGuildStmt = acc.Insert("guilds").Columns("name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime").Fields("?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare()
 
 	guilds.AttachForumStmt = acc.Update("forums").Set("parentID = ?, parentType = 'guild'").Where("fid = ?").Prepare()
 
@@ -72,8 +73,6 @@ func deactivateGuilds() {
 	_ = guilds.MemberListStmt.Close()
 	_ = guilds.MemberListJoinStmt.Close()
 	_ = guilds.GetMemberStmt.Close()
-	_ = guilds.GetGuildStmt.Close()
-	_ = guilds.CreateGuildStmt.Close()
 	_ = guilds.AttachForumStmt.Close()
 	_ = guilds.UnattachForumStmt.Close()
 	_ = guilds.AddMemberStmt.Close()

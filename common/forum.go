@@ -87,7 +87,7 @@ func (forum *Forum) Update(name string, desc string, active bool, preset string)
 			return err
 		}
 	}
-	_ = Fstore.Reload(forum.ID)
+	_ = Forums.Reload(forum.ID)
 	return nil
 }
 
@@ -113,11 +113,11 @@ func (forum *Forum) setPreset(fperms *ForumPerms, preset string, gid int) (err e
 		LogError(err)
 		return errors.New("Unable to update the forum")
 	}
-	err = Fstore.Reload(forum.ID)
+	err = Forums.Reload(forum.ID)
 	if err != nil {
 		return errors.New("Unable to reload forum")
 	}
-	err = Fpstore.ReloadGroup(forum.ID, gid)
+	err = FPStore.ReloadGroup(forum.ID, gid)
 	if err != nil {
 		return errors.New("Unable to reload the forum permissions")
 	}

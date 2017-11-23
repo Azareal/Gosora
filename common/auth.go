@@ -91,9 +91,9 @@ func (auth *DefaultAuth) ForceLogout(uid int) error {
 	}
 
 	// Flush the user out of the cache
-	ucache, ok := Users.(UserCache)
-	if ok {
-		ucache.CacheRemove(uid)
+	ucache := Users.GetCache()
+	if ucache != nil {
+		ucache.Remove(uid)
 	}
 
 	return nil
@@ -170,9 +170,9 @@ func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 	}
 
 	// Flush the user data from the cache
-	ucache, ok := Users.(UserCache)
-	if ok {
-		ucache.CacheRemove(uid)
+	ucache := Users.GetCache()
+	if ucache != nil {
+		ucache.Remove(uid)
 	}
 	return session, nil
 }

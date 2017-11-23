@@ -149,9 +149,9 @@ func init() {
 // Flush the topic out of the cache
 // ? - We do a CacheRemove() here instead of mutating the pointer to avoid creating a race condition
 func (topic *Topic) cacheRemove() {
-	tcache, ok := Topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(topic.ID)
+	tcache := Topics.(TopicCache)
+	if tcache != nil {
+		tcache.Remove(topic.ID)
 	}
 }
 
@@ -226,7 +226,7 @@ func (topic *Topic) Delete() error {
 		return err
 	}
 
-	err = Fstore.RemoveTopic(topic.ParentID)
+	err = Forums.RemoveTopic(topic.ParentID)
 	if err != nil && err != ErrNoRows {
 		return err
 	}
@@ -263,10 +263,10 @@ func (topic *Topic) Copy() Topic {
 
 // TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser
 func GetTopicUser(tid int) (TopicUser, error) {
-	tcache, tok := Topics.(TopicCache)
-	ucache, uok := Users.(UserCache)
-	if tok && uok {
-		topic, err := tcache.CacheGet(tid)
+	tcache := Topics.GetCache()
+	ucache := Users.GetCache()
+	if tcache != nil && ucache != nil {
+		topic, err := tcache.Get(tid)
 		if err == nil {
 			user, err := Users.Get(topic.CreatedBy)
 			if err != nil {
@@ -292,12 +292,12 @@ func GetTopicUser(tid int) (TopicUser, error) {
 	err := topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 	tu.Link = BuildTopicURL(NameToSlug(tu.Title), tu.ID)
 	tu.UserLink = BuildProfileURL(NameToSlug(tu.CreatedByName), tu.CreatedBy)
-	tu.Tag = Gstore.DirtyGet(tu.Group).Tag
+	tu.Tag = Groups.DirtyGet(tu.Group).Tag
 
-	if tok {
+	if tcache != nil {
 		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, ParentID: tu.ParentID, IPAddress: tu.IPAddress, PostCount: tu.PostCount, LikeCount: tu.LikeCount}
 		//log.Printf("theTopic: %+v\n", theTopic)
-		_ = tcache.CacheAdd(&theTopic)
+		_ = tcache.Add(&theTopic)
 	}
 	return tu, err
 }

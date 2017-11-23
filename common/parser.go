@@ -219,7 +219,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					i += intLen
 
 					topic, err := Topics.Get(tid)
-					if err != nil || !Fstore.Exists(topic.ParentID) {
+					if err != nil || !Forums.Exists(topic.ParentID) {
 						outbytes = append(outbytes, InvalidTopic...)
 						lastItem = i
 						continue
@@ -250,7 +250,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					reply := BlankReply()
 					reply.ID = rid
 					topic, err := reply.Topic()
-					if err != nil || !Fstore.Exists(topic.ParentID) {
+					if err != nil || !Forums.Exists(topic.ParentID) {
 						outbytes = append(outbytes, InvalidTopic...)
 						lastItem = i
 						continue
@@ -271,7 +271,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					fid, intLen := CoerceIntBytes(msgbytes[start:])
 					i += intLen
 
-					if !Fstore.Exists(fid) {
+					if !Forums.Exists(fid) {
 						outbytes = append(outbytes, InvalidForum...)
 						lastItem = i
 						continue

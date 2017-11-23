@@ -28,6 +28,16 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 	var cpustr = "Unknown"
 	var cpuColour string
 
+	lessThanSwitch := func(number int, lowerBound int, midBound int) string {
+		switch {
+		case number < lowerBound:
+			return "stat_green"
+		case number < midBound:
+			return "stat_orange"
+		}
+		return "stat_red"
+	}
+
 	var ramstr, ramColour string
 	memres, err := mem.VirtualMemory()
 	if err != nil {
@@ -37,7 +47,6 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 		usedCount := common.ConvertByteInUnit(float64(memres.Total-memres.Available), totalUnit)
 
 		// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
-		//log.Print("pre used_count",used_count)
 		var totstr string
 		if (totalCount - float64(int(totalCount))) > 0.85 {
 			usedCount += 1.0 - (totalCount - float64(int(totalCount)))
@@ -45,7 +54,6 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 		} else {
 			totstr = fmt.Sprintf("%.1f", totalCount)
 		}
-		//log.Print("post used_count",used_count)
 
 		if usedCount > totalCount {
 			usedCount = totalCount
@@ -53,31 +61,27 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 		ramstr = fmt.Sprintf("%.1f", usedCount) + " / " + totstr + totalUnit
 
 		ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
-		//log.Print("ramperc",ramperc)
-		if ramperc < 50 {
-			ramColour = "stat_green"
-		} else if ramperc < 75 {
-			ramColour = "stat_orange"
-		} else {
-			ramColour = "stat_red"
-		}
+		ramColour = lessThanSwitch(int(ramperc), 50, 75)
 	}
 
+	greaterThanSwitch := func(number int, lowerBound int, midBound int) string {
+		switch {
+		case number > midBound:
+			return "stat_green"
+		case number > lowerBound:
+			return "stat_orange"
+		}
+		return "stat_red"
+	}
+
+	// TODO: Add a stat store for this?
 	var postCount int
 	err = stmts.todaysPostCount.QueryRow().Scan(&postCount)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
 	var postInterval = "day"
-
-	var postColour string
-	if postCount > 25 {
-		postColour = "stat_green"
-	} else if postCount > 5 {
-		postColour = "stat_orange"
-	} else {
-		postColour = "stat_red"
-	}
+	var postColour = greaterThanSwitch(postCount, 5, 25)
 
 	var topicCount int
 	err = stmts.todaysTopicCount.QueryRow().Scan(&topicCount)
@@ -85,15 +89,7 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 		return common.InternalError(err, w, r)
 	}
 	var topicInterval = "day"
-
-	var topicColour string
-	if topicCount > 8 {
-		topicColour = "stat_green"
-	} else if topicCount > 0 {
-		topicColour = "stat_orange"
-	} else {
-		topicColour = "stat_red"
-	}
+	var topicColour = greaterThanSwitch(topicCount, 0, 8)
 
 	var reportCount int
 	err = stmts.todaysReportCount.QueryRow().Scan(&reportCount)
@@ -120,32 +116,9 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 		gonline := wsHub.guestCount()
 		totonline := uonline + gonline
 
-		var onlineColour string
-		if totonline > 10 {
-			onlineColour = "stat_green"
-		} else if totonline > 3 {
-			onlineColour = "stat_orange"
-		} else {
-			onlineColour = "stat_red"
-		}
-
-		var onlineGuestsColour string
-		if gonline > 10 {
-			onlineGuestsColour = "stat_green"
-		} else if gonline > 1 {
-			onlineGuestsColour = "stat_orange"
-		} else {
-			onlineGuestsColour = "stat_red"
-		}
-
-		var onlineUsersColour string
-		if uonline > 5 {
-			onlineUsersColour = "stat_green"
-		} else if uonline > 1 {
-			onlineUsersColour = "stat_orange"
-		} else {
-			onlineUsersColour = "stat_red"
-		}
+		var onlineColour = greaterThanSwitch(totonline, 3, 10)
+		var onlineGuestsColour = greaterThanSwitch(gonline, 1, 10)
+		var onlineUsersColour = greaterThanSwitch(uonline, 1, 5)
 
 		totonline, totunit := common.ConvertFriendlyUnit(totonline)
 		uonline, uunit := common.ConvertFriendlyUnit(uonline)
@@ -168,7 +141,7 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 	gridElements = append(gridElements, common.GridElement{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of unique visitors we've had over the last 7 days"*/})
 	gridElements = append(gridElements, common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
 
-	pi := common.PanelDashboardPage{"Control Panel Dashboard", user, headerVars, stats, gridElements}
+	pi := common.PanelDashboardPage{common.GetTitlePhrase("panel-dashboard"), user, headerVars, stats, gridElements}
 	if common.PreRenderHooks["pre_render_panel_dashboard"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_dashboard", w, r, &user, &pi) {
 			return nil
@@ -192,7 +165,7 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	// TODO: Paginate this?
 	var forumList []interface{}
-	forums, err := common.Fstore.GetAll()
+	forums, err := common.Forums.GetAll()
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -207,7 +180,7 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) 
 			forumList = append(forumList, fadmin)
 		}
 	}
-	pi := common.PanelPage{"Forum Manager", user, headerVars, stats, forumList, nil}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-forums"), user, headerVars, stats, forumList, nil}
 	if common.PreRenderHooks["pre_render_panel_forums"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_forums", w, r, &user, &pi) {
 			return nil
@@ -217,6 +190,7 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) 
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+
 	return nil
 }
 
@@ -235,7 +209,7 @@ func routePanelForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	factive := r.PostFormValue("forum-name")
 	active := (factive == "on" || factive == "1")
 
-	_, err := common.Fstore.Create(fname, fdesc, active, fpreset)
+	_, err := common.Forums.Create(fname, fdesc, active, fpreset)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -259,17 +233,18 @@ func routePanelForumsDelete(w http.ResponseWriter, r *http.Request, user common.
 		return common.LocalError("The provided Forum ID is not a valid number.", w, r, user)
 	}
 
-	forum, err := common.Fstore.Get(fid)
+	forum, err := common.Forums.Get(fid)
 	if err == ErrNoRows {
 		return common.LocalError("The forum you're trying to delete doesn't exist.", w, r, user)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	// TODO: Make this a phrase
 	confirmMsg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
 	yousure := common.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
-	pi := common.PanelPage{"Delete Forum", user, headerVars, stats, tList, yousure}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-delete-forum"), user, headerVars, stats, tList, yousure}
 	if common.PreRenderHooks["pre_render_panel_delete_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_delete_forum", w, r, &user, &pi) {
 			return nil
@@ -296,7 +271,7 @@ func routePanelForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c
 		return common.LocalError("The provided Forum ID is not a valid number.", w, r, user)
 	}
 
-	err = common.Fstore.Delete(fid)
+	err = common.Forums.Delete(fid)
 	if err == ErrNoRows {
 		return common.LocalError("The forum you're trying to delete doesn't exist.", w, r, user)
 	} else if err != nil {
@@ -321,7 +296,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		return common.LocalError("The provided Forum ID is not a valid number.", w, r, user)
 	}
 
-	forum, err := common.Fstore.Get(fid)
+	forum, err := common.Forums.Get(fid)
 	if err == ErrNoRows {
 		return common.LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
 	} else if err != nil {
@@ -332,7 +307,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		forum.Preset = "custom"
 	}
 
-	glist, err := common.Gstore.GetAll()
+	glist, err := common.Groups.GetAll()
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -345,7 +320,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(group.Forums[fid])})
 	}
 
-	pi := common.PanelEditForumPage{"Forum Editor", user, headerVars, stats, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
+	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel-edit-forum"), user, headerVars, stats, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
 	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 			return nil
@@ -355,6 +330,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+
 	return nil
 }
 
@@ -373,7 +349,7 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 		return common.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, user, isJs)
 	}
 
-	forum, err := common.Fstore.Get(fid)
+	forum, err := common.Forums.Get(fid)
 	if err == ErrNoRows {
 		return common.LocalErrorJSQ("The forum you're trying to edit doesn't exist.", w, r, user, isJs)
 	} else if err != nil {
@@ -425,7 +401,7 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return common.LocalErrorJSQ("Invalid Group ID", w, r, user, isJs)
 	}
 
-	forum, err := common.Fstore.Get(fid)
+	forum, err := common.Forums.Get(fid)
 	if err == ErrNoRows {
 		return common.LocalErrorJSQ("This forum doesn't exist", w, r, user, isJs)
 	} else if err != nil {
@@ -454,46 +430,35 @@ func routePanelSettings(w http.ResponseWriter, r *http.Request, user common.User
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
 	}
-
 	var settingList = make(map[string]interface{})
-	rows, err := stmts.getSettings.Query()
+
+	settings, err := headerVars.Settings.BypassGetAll()
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	// nolint need the type so people viewing this file understand what it returns without visiting setting.go
+	// nolint need the type so people viewing this file understand what it returns without visiting phrases.go
 	var settingLabels map[string]string = common.GetAllSettingLabels()
-	var sname, scontent, stype string
-	for rows.Next() {
-		err := rows.Scan(&sname, &scontent, &stype)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		if stype == "list" {
-			llist := settingLabels[sname]
+	for _, setting := range settings {
+		if setting.Type == "list" {
+			llist := settingLabels[setting.Name]
 			labels := strings.Split(llist, ",")
-			conv, err := strconv.Atoi(scontent)
+			conv, err := strconv.Atoi(setting.Content)
 			if err != nil {
-				return common.LocalError("The setting '"+sname+"' can't be converted to an integer", w, r, user)
+				return common.LocalError("The setting '"+setting.Name+"' can't be converted to an integer", w, r, user)
 			}
-			scontent = labels[conv-1]
-		} else if stype == "bool" {
-			if scontent == "1" {
-				scontent = "Yes"
+			setting.Content = labels[conv-1]
+		} else if setting.Type == "bool" {
+			if setting.Content == "1" {
+				setting.Content = "Yes"
 			} else {
-				scontent = "No"
+				setting.Content = "No"
 			}
 		}
-		settingList[sname] = scontent
-	}
-	err = rows.Err()
-	if err != nil {
-		return common.InternalError(err, w, r)
+		settingList[setting.Name] = setting.Content
 	}
 
-	pi := common.PanelPage{"Setting Manager", user, headerVars, stats, tList, settingList}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-settings"), user, headerVars, stats, tList, settingList}
 	if common.PreRenderHooks["pre_render_panel_settings"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_settings", w, r, &user, &pi) {
 			return nil
@@ -506,7 +471,7 @@ func routePanelSettings(w http.ResponseWriter, r *http.Request, user common.User
 	return nil
 }
 
-func routePanelSetting(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {
+func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -539,7 +504,7 @@ func routePanelSetting(w http.ResponseWriter, r *http.Request, user common.User,
 		}
 	}
 
-	pi := common.PanelPage{"Edit Setting", user, headerVars, stats, itemList, setting}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-setting"), user, headerVars, stats, itemList, setting}
 	if common.PreRenderHooks["pre_render_panel_setting"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_setting", w, r, &user, &pi) {
 			return nil
@@ -552,7 +517,7 @@ func routePanelSetting(w http.ResponseWriter, r *http.Request, user common.User,
 	return nil
 }
 
-func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {
+func routePanelSettingEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {
 	headerLite, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -562,33 +527,13 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	scontent := r.PostFormValue("setting-value")
-	setting, err := headerLite.Settings.BypassGet(sname)
-	if err == ErrNoRows {
-		return common.LocalError("The setting you want to edit doesn't exist.", w, r, user)
-	} else if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	if setting.Type == "bool" {
-		if scontent == "on" || scontent == "1" {
-			scontent = "1"
-		} else {
-			scontent = "0"
-		}
-	}
-
-	// TODO: Make this a method or function?
-	_, err = stmts.updateSetting.Exec(scontent, sname)
+	err := headerLite.Settings.Update(sname, scontent)
 	if err != nil {
+		if common.SafeSettingError(err) {
+			return common.LocalError(err.Error(), w, r, user)
+		}
 		return common.InternalError(err, w, r)
 	}
-
-	errmsg := headerLite.Settings.ParseSetting(sname, scontent, setting.Type, setting.Constraint)
-	if errmsg != "" {
-		return common.LocalError(errmsg, w, r, user)
-	}
-	// TODO: Do a reload instead?
-	common.SettingBox.Store(headerLite.Settings)
 
 	http.Redirect(w, r, "/panel/settings/", http.StatusSeeOther)
 	return nil
@@ -604,7 +549,7 @@ func routePanelWordFilters(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	var filterList = common.WordFilterBox.Load().(common.WordFilterMap)
-	pi := common.PanelPage{"Word Filter Manager", user, headerVars, stats, tList, filterList}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-word-filters"), user, headerVars, stats, tList, filterList}
 	if common.PreRenderHooks["pre_render_panel_word_filters"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_word_filters", w, r, &user, &pi) {
 			return nil
@@ -665,7 +610,7 @@ func routePanelWordFiltersEdit(w http.ResponseWriter, r *http.Request, user comm
 
 	_ = wfid
 
-	pi := common.PanelPage{"Edit Word Filter", user, headerVars, stats, tList, nil}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-word-filter"), user, headerVars, stats, tList, nil}
 	if common.PreRenderHooks["pre_render_panel_word_filters_edit"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_word_filters_edit", w, r, &user, &pi) {
 			return nil
@@ -758,7 +703,7 @@ func routePanelPlugins(w http.ResponseWriter, r *http.Request, user common.User)
 		pluginList = append(pluginList, plugin)
 	}
 
-	pi := common.PanelPage{"Plugin Manager", user, headerVars, stats, pluginList, nil}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-plugins"), user, headerVars, stats, pluginList, nil}
 	if common.PreRenderHooks["pre_render_panel_plugins"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_plugins", w, r, &user, &pi) {
 			return nil
@@ -966,8 +911,8 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user common.User) c
 			puser.Avatar = strings.Replace(common.Config.Noavatar, "{id}", strconv.Itoa(puser.ID), 1)
 		}
 
-		if common.Gstore.DirtyGet(puser.Group).Tag != "" {
-			puser.Tag = common.Gstore.DirtyGet(puser.Group).Tag
+		if common.Groups.DirtyGet(puser.Group).Tag != "" {
+			puser.Tag = common.Groups.DirtyGet(puser.Group).Tag
 		} else {
 			puser.Tag = ""
 		}
@@ -979,7 +924,7 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 
 	pageList := common.Paginate(stats.Users, perPage, 5)
-	pi := common.PanelUserPage{"User Manager", user, headerVars, stats, userList, pageList, page, lastPage}
+	pi := common.PanelUserPage{common.GetTitlePhrase("panel-users"), user, headerVars, stats, userList, pageList, page, lastPage}
 	if common.PreRenderHooks["pre_render_panel_users"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_users", w, r, &user, &pi) {
 			return nil
@@ -1018,7 +963,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	// ? - Should we stop admins from deleting all the groups? Maybe, protect the group they're currently using?
-	groups, err := common.Gstore.GetRange(1, 0) // ? - 0 = Go to the end
+	groups, err := common.Groups.GetRange(1, 0) // ? - 0 = Go to the end
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -1034,7 +979,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 		groupList = append(groupList, group)
 	}
 
-	pi := common.PanelPage{"User Editor", user, headerVars, stats, groupList, targetUser}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-user"), user, headerVars, stats, groupList, targetUser}
 	if common.PreRenderHooks["pre_render_panel_edit_user"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_user", w, r, &user, &pi) {
 			return nil
@@ -1095,7 +1040,7 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 		return common.LocalError("You need to provide a whole number for the group ID", w, r, user)
 	}
 
-	group, err := common.Gstore.Get(newgroup)
+	group, err := common.Groups.Get(newgroup)
 	if err == ErrNoRows {
 		return common.LocalError("The group you're trying to place this user in doesn't exist.", w, r, user)
 	} else if err != nil {
@@ -1109,6 +1054,7 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 		return common.LocalError("You need the EditUserGroupSuperMod permission to assign someone to a super mod group.", w, r, user)
 	}
 
+	// TODO: Move this query into common
 	_, err = stmts.updateUser.Exec(newname, newemail, newgroup, targetUser.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -1138,7 +1084,7 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	var count int
 	var groupList []common.GroupAdmin
-	groups, _ := common.Gstore.GetRange(offset, 0)
+	groups, _ := common.Groups.GetRange(offset, 0)
 	for _, group := range groups {
 		if count == perPage {
 			break
@@ -1149,6 +1095,7 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) 
 		var canEdit bool
 		var canDelete = false
 
+		// TODO: Use a switch for this
 		if group.IsAdmin {
 			rank = "Admin"
 			rankClass = "admin"
@@ -1173,7 +1120,7 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) 
 	//log.Printf("groupList: %+v\n", groupList)
 
 	pageList := common.Paginate(stats.Groups, perPage, 5)
-	pi := common.PanelGroupPage{"Group Manager", user, headerVars, stats, groupList, pageList, page, lastPage}
+	pi := common.PanelGroupPage{common.GetTitlePhrase("panel-groups"), user, headerVars, stats, groupList, pageList, page, lastPage}
 	if common.PreRenderHooks["pre_render_panel_groups"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_groups", w, r, &user, &pi) {
 			return nil
@@ -1201,7 +1148,7 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		return common.LocalError("You need to provide a whole number for the group ID", w, r, user)
 	}
 
-	group, err := common.Gstore.Get(gid)
+	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
 		return common.NotFound(w, r)
@@ -1232,7 +1179,7 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 
 	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
-	pi := common.PanelEditGroupPage{"Group Editor", user, headerVars, stats, group.ID, group.Name, group.Tag, rank, disableRank}
+	pi := common.PanelEditGroupPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, group.ID, group.Name, group.Tag, rank, disableRank}
 	if common.PreRenderHooks["pre_render_panel_edit_group"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_group", w, r, &user, &pi) {
 			return nil
@@ -1259,7 +1206,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 		return common.LocalError("The Group ID is not a valid integer.", w, r, user)
 	}
 
-	group, err := common.Gstore.Get(gid)
+	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
 		return common.NotFound(w, r)
@@ -1310,7 +1257,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 	globalPerms = append(globalPerms, common.NameLangToggle{"ViewIPs", common.GetGlobalPermPhrase("ViewIPs"), group.Perms.ViewIPs})
 	globalPerms = append(globalPerms, common.NameLangToggle{"UploadFiles", common.GetGlobalPermPhrase("UploadFiles"), group.Perms.UploadFiles})
 
-	pi := common.PanelEditGroupPermsPage{"Group Editor", user, headerVars, stats, group.ID, group.Name, localPerms, globalPerms}
+	pi := common.PanelEditGroupPermsPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, group.ID, group.Name, localPerms, globalPerms}
 	if common.PreRenderHooks["pre_render_panel_edit_group_perms"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
 			return nil
@@ -1337,7 +1284,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 		return common.LocalError("You need to provide a whole number for the group ID", w, r, user)
 	}
 
-	group, err := common.Gstore.Get(gid)
+	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
 		return common.NotFound(w, r)
@@ -1360,6 +1307,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 	rank := r.FormValue("group-type")
 
 	var originalRank string
+	// TODO: Use a switch for this
 	if group.IsAdmin {
 		originalRank = "Admin"
 	} else if group.IsMod {
@@ -1407,7 +1355,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	common.Gstore.Reload(gid)
+	common.Groups.Reload(gid)
 
 	http.Redirect(w, r, "/panel/groups/edit/"+strconv.Itoa(gid), http.StatusSeeOther)
 	return nil
@@ -1427,7 +1375,7 @@ func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return common.LocalError("The Group ID is not a valid integer.", w, r, user)
 	}
 
-	group, err := common.Gstore.Get(gid)
+	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters o.o")
 		return common.NotFound(w, r)
@@ -1508,7 +1456,7 @@ func routePanelGroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 		}
 	}
 
-	gid, err := common.Gstore.Create(groupName, groupTag, isAdmin, isMod, isBanned)
+	gid, err := common.Groups.Create(groupName, groupTag, isAdmin, isMod, isBanned)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -1538,7 +1486,7 @@ func routePanelThemes(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	}
 
-	pi := common.PanelThemesPage{"Theme Manager", user, headerVars, stats, pThemeList, vThemeList}
+	pi := common.PanelThemesPage{common.GetTitlePhrase("panel-themes"), user, headerVars, stats, pThemeList, vThemeList}
 	if common.PreRenderHooks["pre_render_panel_themes"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_themes", w, r, &user, &pi) {
 			return nil
@@ -1658,7 +1606,7 @@ func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User,
 		backupList = append(backupList, common.BackupItem{backupFile.Name(), backupFile.ModTime()})
 	}
 
-	pi := common.PanelBackupPage{"Backups", user, headerVars, stats, backupList}
+	pi := common.PanelBackupPage{common.GetTitlePhrase("panel-backups"), user, headerVars, stats, backupList}
 	err = common.Templates.ExecuteTemplate(w, "panel-backups.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -1672,12 +1620,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 		return ferr
 	}
 
-	var logCount int
-	err := stmts.modlogCount.QueryRow().Scan(&logCount)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
+	logCount := common.ModLogs.GlobalCount()
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 10
 	offset, page, lastPage := common.PageOffset(logCount, page, perPage)
@@ -1688,6 +1631,21 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 	defer rows.Close()
 
+	// TODO: Log errors when something really screwy is going on?
+	handleUnknownUser := func(user *common.User, err error) *common.User {
+		if err != nil {
+			return &common.User{Name: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
+		}
+		return user
+	}
+
+	handleUnknownTopic := func(topic *common.Topic, err error) *common.Topic {
+		if err != nil {
+			return &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
+		}
+		return topic
+	}
+
 	var logs []common.LogItem
 	var action, elementType, ipaddress, doneAt string
 	var elementID, actorID int
@@ -1697,68 +1655,41 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 			return common.InternalError(err, w, r)
 		}
 
-		actor, err := common.Users.Get(actorID)
-		if err != nil {
-			actor = &common.User{Name: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-		}
+		actor := handleUnknownUser(common.Users.Get(actorID))
 
 		switch action {
 		case "lock":
-			topic, err := common.Topics.Get(elementID)
-			if err != nil {
-				topic = &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-			}
-			action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was locked by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+			topic := handleUnknownTopic(common.Topics.Get(elementID))
+			action = fmt.Sprintf("<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
 		case "unlock":
-			topic, err := common.Topics.Get(elementID)
-			if err != nil {
-				topic = &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-			}
-			action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was reopened by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+			topic := handleUnknownTopic(common.Topics.Get(elementID))
+			action = fmt.Sprintf("<a href='%s'>%s</a> was reopened by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
 		case "stick":
-			topic, err := common.Topics.Get(elementID)
-			if err != nil {
-				topic = &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-			}
-			action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was pinned by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+			topic := handleUnknownTopic(common.Topics.Get(elementID))
+			action = fmt.Sprintf("<a href='%s'>%s</a> was pinned by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
 		case "unstick":
-			topic, err := common.Topics.Get(elementID)
-			if err != nil {
-				topic = &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-			}
-			action = "<a href='" + topic.Link + "'>" + topic.Title + "</a> was unpinned by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+			topic := handleUnknownTopic(common.Topics.Get(elementID))
+			action = fmt.Sprintf("<a href='%s'>%s</a> was unpinned by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
 		case "delete":
 			if elementType == "topic" {
-				action = "Topic #" + strconv.Itoa(elementID) + " was deleted by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+				action = fmt.Sprintf("Topic #%d was deleted by <a href='%s'>%s</a>", elementID, actor.Link, actor.Name)
 			} else {
 				reply := common.BlankReply()
 				reply.ID = elementID
-				topic, err := reply.Topic()
-				if err != nil {
-					topic = &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-				}
-				action = "A reply in <a href='" + topic.Link + "'>" + topic.Title + "</a> was deleted by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+				topic := handleUnknownTopic(reply.Topic())
+				action = fmt.Sprintf("A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
 			}
 		case "ban":
-			targetUser, err := common.Users.Get(elementID)
-			if err != nil {
-				targetUser = &common.User{Name: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-			}
-			action = "<a href='" + targetUser.Link + "'>" + targetUser.Name + "</a> was banned by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+			targetUser := handleUnknownUser(common.Users.Get(elementID))
+			action = fmt.Sprintf("<a href='%s'>%s</a> was banned by <a href='%s'>%s</a>", targetUser.Link, targetUser.Name, actor.Link, actor.Name)
 		case "unban":
-			targetUser, err := common.Users.Get(elementID)
-			if err != nil {
-				targetUser = &common.User{Name: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-			}
-			action = "<a href='" + targetUser.Link + "'>" + targetUser.Name + "</a> was unbanned by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+			targetUser := handleUnknownUser(common.Users.Get(elementID))
+			action = fmt.Sprintf("<a href='%s'>%s</a> was unbanned by <a href='%s'>%s</a>", targetUser.Link, targetUser.Name, actor.Link, actor.Name)
 		case "activate":
-			targetUser, err := common.Users.Get(elementID)
-			if err != nil {
-				targetUser = &common.User{Name: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-			}
-			action = "<a href='" + targetUser.Link + "'>" + targetUser.Name + "</a> was activated by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+			targetUser := handleUnknownUser(common.Users.Get(elementID))
+			action = fmt.Sprintf("<a href='%s'>%s</a> was activated by <a href='%s'>%s</a>", targetUser.Link, targetUser.Name, actor.Link, actor.Name)
 		default:
-			action = "Unknown action '" + action + "' by <a href='" + actor.Link + "'>" + actor.Name + "</a>"
+			action = fmt.Sprintf("Unknown action '%s' by <a href='%s'>%s</a>", action, actor.Link, actor.Name)
 		}
 		logs = append(logs, common.LogItem{Action: template.HTML(action), IPAddress: ipaddress, DoneAt: doneAt})
 	}
@@ -1768,7 +1699,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{"Moderation Logs", user, headerVars, stats, logs, pageList, page, lastPage}
+	pi := common.PanelLogsPage{common.GetTitlePhrase("panel-mod-logs"), user, headerVars, stats, logs, pageList, page, lastPage}
 	if common.PreRenderHooks["pre_render_panel_mod_log"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_mod_log", w, r, &user, &pi) {
 			return nil
@@ -1792,7 +1723,7 @@ func routePanelDebug(w http.ResponseWriter, r *http.Request, user common.User) c
 	openConnCount := dbStats.OpenConnections
 	// Disk I/O?
 
-	pi := common.PanelDebugPage{"Debug", user, headerVars, stats, uptime, openConnCount, dbAdapter}
+	pi := common.PanelDebugPage{common.GetTitlePhrase("panel-debug"), user, headerVars, stats, uptime, openConnCount, dbAdapter}
 	err := common.Templates.ExecuteTemplate(w, "panel-debug.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)

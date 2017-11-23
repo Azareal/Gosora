@@ -19,7 +19,7 @@ import (
 
 var forumCreateMutex sync.Mutex
 var forumPerms map[int]map[int]*ForumPerms // [gid][fid]*ForumPerms // TODO: Add an abstraction around this and make it more thread-safe
-var Fstore ForumStore
+var Forums ForumStore
 
 // ForumStore is an interface for accessing the forums and the metadata stored on them
 type ForumStore interface {

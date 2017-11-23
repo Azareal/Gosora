@@ -99,7 +99,7 @@ func ProcessConfig() error {
 }
 
 func VerifyConfig() error {
-	if !Fstore.Exists(Config.DefaultForum) {
+	if !Forums.Exists(Config.DefaultForum) {
 		return errors.New("Invalid default forum")
 	}
 	return nil

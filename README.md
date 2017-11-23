@@ -192,6 +192,8 @@ More images in the /images/ folder. Beware though, some of them are *really* out
 
 * ithub.com/denisenkom/go-mssqldb For interfacing with MSSQL. You will be able to pick this instead of MSSQL soon.
 
+* github.com/go-ego/riot A search engine library.
+
 # Bundled Plugins
 
 There are several plugins which are bundled with the software by default. These cover various common tasks which aren't common enough to clutter the core with or which have competing implementation methods (E.g. plugin_markdown vs plugin_bbcode for post mark-up).

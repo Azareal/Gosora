@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"runtime/debug"
-	"strconv"
 	"testing"
 	"time"
 
@@ -40,29 +39,39 @@ func TestUserStore(t *testing.T) {
 	}
 
 	var err error
-	common.Users, err = common.NewMemoryUserStore(common.Config.UserCacheCapacity)
+	ucache := common.NewMemoryUserCache(common.Config.UserCacheCapacity)
+	common.Users, err = common.NewDefaultUserStore(ucache)
 	expectNilErr(t, err)
-	common.Users.(common.UserCache).Flush()
+	ucache.Flush()
 	userStoreTest(t, 2)
-	common.Users, err = common.NewSQLUserStore()
+	common.Users, err = common.NewDefaultUserStore(nil)
 	expectNilErr(t, err)
 	userStoreTest(t, 3)
 }
 func userStoreTest(t *testing.T, newUserID int) {
-	ucache, hasCache := common.Users.(common.UserCache)
+	ucache := common.Users.GetCache()
 	// Go doesn't have short-circuiting, so this'll allow us to do one liner tests
-	if !hasCache {
-		ucache = &common.NullUserStore{}
+	isCacheLengthZero := func(ucache common.UserCache) bool {
+		if ucache == nil {
+			return true
+		}
+		return ucache.Length() == 0
 	}
-	expect(t, (!hasCache || ucache.Length() == 0), fmt.Sprintf("The initial ucache length should be zero, not %d", ucache.Length()))
+	cacheLength := func(ucache common.UserCache) int {
+		if ucache == nil {
+			return 0
+		}
+		return ucache.Length()
+	}
+	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("The initial ucache length should be zero, not %d", cacheLength(ucache)))
 
 	_, err := common.Users.Get(-1)
 	recordMustNotExist(t, err, "UID #-1 shouldn't exist")
-	expect(t, !hasCache || ucache.Length() == 0, fmt.Sprintf("We found %d items in the user cache and it's supposed to be empty", ucache.Length()))
+	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("We found %d items in the user cache and it's supposed to be empty", cacheLength(ucache)))
 
 	_, err = common.Users.Get(0)
 	recordMustNotExist(t, err, "UID #0 shouldn't exist")
-	expect(t, !hasCache || ucache.Length() == 0, fmt.Sprintf("We found %d items in the user cache and it's supposed to be empty", ucache.Length()))
+	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("We found %d items in the user cache and it's supposed to be empty", cacheLength(ucache)))
 
 	user, err := common.Users.Get(1)
 	recordMustExist(t, err, "Couldn't find UID #1")
@@ -79,24 +88,20 @@ func userStoreTest(t *testing.T, newUserID int) {
 	_, err = common.Users.Get(newUserID)
 	recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't exist", newUserID))
 
-	if hasCache {
+	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
 
-		_, err = ucache.CacheGet(-1)
+		_, err = ucache.Get(-1)
 		recordMustNotExist(t, err, "UID #-1 shouldn't exist, even in the cache")
-		_, err = ucache.CacheGet(0)
+		_, err = ucache.Get(0)
 		recordMustNotExist(t, err, "UID #0 shouldn't exist, even in the cache")
-		user, err = ucache.CacheGet(1)
+		user, err = ucache.Get(1)
 		recordMustExist(t, err, "Couldn't find UID #1 in the cache")
 
-		if user.ID != 1 {
-			t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
-		}
-		if user.Name != "Admin" {
-			t.Error("user.Name should be 'Admin', not '" + user.Name + "'")
-		}
+		expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
+		expect(t, user.Name == "Admin", fmt.Sprintf("user.Name should be 'Admin', not '%s'", user.Name))
 
-		_, err = ucache.CacheGet(newUserID)
+		_, err = ucache.Get(newUserID)
 		recordMustNotExist(t, err, "UID #%d shouldn't exist, even in the cache", newUserID)
 
 		ucache.Flush()
@@ -106,22 +111,12 @@ func userStoreTest(t *testing.T, newUserID int) {
 	// TODO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
 	var userList map[int]*common.User
 	userList, _ = common.Users.BulkGetMap([]int{-1})
-	if len(userList) > 0 {
-		t.Error("There shouldn't be any results for UID #-1")
-	}
-
-	if hasCache {
-		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
-	}
+	expect(t, len(userList) == 0, fmt.Sprintf("The userList length should be 0, not %d", len(userList)))
+	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
 
 	userList, _ = common.Users.BulkGetMap([]int{0})
-	if len(userList) > 0 {
-		t.Error("There shouldn't be any results for UID #0")
-	}
-
-	if hasCache {
-		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
-	}
+	expect(t, len(userList) == 0, fmt.Sprintf("The userList length should be 0, not %d", len(userList)))
+	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
 
 	userList, _ = common.Users.BulkGetMap([]int{1})
 	if len(userList) == 0 {
@@ -135,18 +130,14 @@ func userStoreTest(t *testing.T, newUserID int) {
 		t.Error("We couldn't find UID #1 in the returned map")
 		t.Error("userList", userList)
 	}
-	if user.ID != 1 {
-		t.Error("user.ID does not match the requested UID. Got '" + strconv.Itoa(user.ID) + "' instead.")
-	}
+	expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 
-	if hasCache {
+	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
-		user, err = ucache.CacheGet(1)
+		user, err = ucache.Get(1)
 		recordMustExist(t, err, "Couldn't find UID #1 in the cache")
 
-		if user.ID != 1 {
-			t.Errorf("user.ID does not match the requested UID. Got '%d' instead.", user.ID)
-		}
+		expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 		ucache.Flush()
 	}
 
@@ -155,7 +146,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expect(t, common.Users.Exists(1), "UID #1 should exist")
 	expect(t, !common.Users.Exists(newUserID), fmt.Sprintf("UID #%d shouldn't exist", newUserID))
 
-	expect(t, !hasCache || ucache.Length() == 0, fmt.Sprintf("User cache length should be 0, not %d", ucache.Length()))
+	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
 	expectIntToBeX(t, common.Users.GlobalCount(), 1, "The number of users should be one, not %d")
 
 	var awaitingActivation = 5
@@ -166,9 +157,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	if user.ID != newUserID {
-		t.Errorf("The UID of the user record should be %d", newUserID)
-	}
+	expect(t, user.ID == newUserID, fmt.Sprintf("The UID of the user record should be %d", newUserID))
 
 	expect(t, user.Name == "Sam", "The user should be named Sam")
 	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
@@ -178,9 +167,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expect(t, !user.IsBanned, "Sam should not be banned")
 	expectIntToBeX(t, user.Group, 5, "Sam should be in group 5")
 
-	if hasCache {
+	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
-		user, err = ucache.CacheGet(newUserID)
+		user, err = ucache.Get(newUserID)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
 		expect(t, user.ID == newUserID, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 	}
@@ -190,9 +179,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectIntToBeX(t, user.Group, 5, "Sam should still be in group 5 in this copy")
 
 	// ? - What if we change the caching mechanism so it isn't hard purged and reloaded? We'll deal with that when we come to it, but for now, this is a sign of a cache bug
-	if hasCache {
+	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
-		_, err = ucache.CacheGet(newUserID)
+		_, err = ucache.Get(newUserID)
 		recordMustNotExist(t, err, "UID #%d shouldn't be in the cache", newUserID)
 	}
 
@@ -216,18 +205,16 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectNilErr(t, err)
 	expect(t, user.Group == common.Config.DefaultGroup, fmt.Sprintf("Sam should be in group %d, not %d", common.Config.DefaultGroup, user.Group))
 
-	if hasCache {
+	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
-		_, err = ucache.CacheGet(2)
+		_, err = ucache.Get(2)
 		recordMustNotExist(t, err, "UID #%d shouldn't be in the cache", newUserID)
 	}
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	if user.ID != newUserID {
-		t.Errorf("The UID of the user record should be %d", newUserID)
-	}
 
+	expect(t, user.ID == newUserID, fmt.Sprintf("The UID of the user record should be %d", newUserID))
 	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
 	expect(t, !user.IsAdmin, "Sam should not be an admin")
 	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
@@ -242,9 +229,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectNilErr(t, err)
 	expectIntToBeX(t, user.Group, common.BanGroup, "Sam should still be in the ban group in this copy")
 
-	if hasCache {
+	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
-		_, err = ucache.CacheGet(newUserID)
+		_, err = ucache.Get(newUserID)
 		recordMustNotExist(t, err, "UID #%d shouldn't be in the cache", newUserID)
 	}
 
@@ -414,9 +401,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectNilErr(t, err)
 	expect(t, !common.Users.Exists(newUserID), fmt.Sprintf("UID #%d should no longer exist", newUserID))
 
-	if hasCache {
+	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
-		_, err = ucache.CacheGet(newUserID)
+		_, err = ucache.Get(newUserID)
 		recordMustNotExist(t, err, "UID #%d shouldn't be in the cache", newUserID)
 	}
 
@@ -505,10 +492,11 @@ func TestTopicStore(t *testing.T) {
 	}
 
 	var err error
-	common.Topics, err = common.NewMemoryTopicStore(common.Config.TopicCacheCapacity)
+	tcache := common.NewMemoryTopicCache(common.Config.TopicCacheCapacity)
+	common.Topics, err = common.NewDefaultTopicStore(tcache)
 	expectNilErr(t, err)
 	topicStoreTest(t)
-	common.Topics, err = common.NewSQLTopicStore()
+	common.Topics, err = common.NewDefaultTopicStore(nil)
 	expectNilErr(t, err)
 	topicStoreTest(t)
 }
@@ -526,25 +514,19 @@ func topicStoreTest(t *testing.T) {
 	recordMustExist(t, err, "Couldn't find TID #1")
 
 	if topic.ID != 1 {
-		t.Error("topic.ID does not match the requested TID. Got '" + strconv.Itoa(topic.ID) + "' instead.")
+		t.Error("topic.ID does not match the requested TID. Got '%d' instead.", topic.ID)
 	}
 
 	// TODO: Add BulkGetMap() to the TopicStore
 
 	ok := common.Topics.Exists(-1)
-	if ok {
-		t.Error("TID #-1 shouldn't exist")
-	}
+	expect(t, !ok, "TID #-1 shouldn't exist")
 
 	ok = common.Topics.Exists(0)
-	if ok {
-		t.Error("TID #0 shouldn't exist")
-	}
+	expect(t, !ok, "TID #0 shouldn't exist")
 
 	ok = common.Topics.Exists(1)
-	if !ok {
-		t.Error("TID #1 should exist")
-	}
+	expect(t, ok, "TID #1 should exist")
 
 	count := common.Topics.GlobalCount()
 	if count <= 0 {
@@ -563,17 +545,17 @@ func TestForumStore(t *testing.T) {
 		common.InitPlugins()
 	}
 
-	_, err := common.Fstore.Get(-1)
+	_, err := common.Forums.Get(-1)
 	recordMustNotExist(t, err, "FID #-1 shouldn't exist")
 
-	_, err = common.Fstore.Get(0)
+	_, err = common.Forums.Get(0)
 	recordMustNotExist(t, err, "FID #0 shouldn't exist")
 
-	forum, err := common.Fstore.Get(1)
+	forum, err := common.Forums.Get(1)
 	recordMustExist(t, err, "Couldn't find FID #1")
 
 	if forum.ID != 1 {
-		t.Error("forum.ID doesn't not match the requested FID. Got '" + strconv.Itoa(forum.ID) + "' instead.'")
+		t.Error("forum.ID doesn't not match the requested FID. Got '%d' instead.'", forum.ID)
 	}
 	// TODO: Check the preset and forum permissions
 	expect(t, forum.Name == "Reports", fmt.Sprintf("FID #0 is named '%s' and not 'Reports'", forum.Name))
@@ -581,7 +563,7 @@ func TestForumStore(t *testing.T) {
 	var expectDesc = "All the reports go here"
 	expect(t, forum.Desc == expectDesc, fmt.Sprintf("The forum description should be '%s' not '%s'", expectDesc, forum.Desc))
 
-	forum, err = common.Fstore.Get(2)
+	forum, err = common.Forums.Get(2)
 	recordMustExist(t, err, "Couldn't find FID #1")
 
 	expect(t, forum.ID == 2, fmt.Sprintf("The FID should be 2 not %d", forum.ID))
@@ -590,11 +572,11 @@ func TestForumStore(t *testing.T) {
 	expectDesc = "A place for general discussions which don't fit elsewhere"
 	expect(t, forum.Desc == expectDesc, fmt.Sprintf("The forum description should be '%s' not '%s'", expectDesc, forum.Desc))
 
-	ok := common.Fstore.Exists(-1)
+	ok := common.Forums.Exists(-1)
 	expect(t, !ok, "FID #-1 shouldn't exist")
-	ok = common.Fstore.Exists(0)
+	ok = common.Forums.Exists(0)
 	expect(t, !ok, "FID #0 shouldn't exist")
-	ok = common.Fstore.Exists(1)
+	ok = common.Forums.Exists(1)
 	expect(t, ok, "FID #1 should exist")
 
 	// TODO: Test forum creation
@@ -621,43 +603,38 @@ func TestGroupStore(t *testing.T) {
 		common.InitPlugins()
 	}
 
-	_, err := common.Gstore.Get(-1)
+	_, err := common.Groups.Get(-1)
 	recordMustNotExist(t, err, "GID #-1 shouldn't exist")
 
 	// TODO: Refactor the group store to remove GID #0
-	group, err := common.Gstore.Get(0)
+	group, err := common.Groups.Get(0)
 	recordMustExist(t, err, "Couldn't find GID #0")
 
-	if group.ID != 0 {
-		t.Errorf("group.ID doesn't not match the requested GID. Got '%d' instead.", group.ID)
-	}
+	expect(t, group.ID == 0, fmt.Sprintf("group.ID doesn't not match the requested GID. Got '%d' instead.", group.ID))
 	expect(t, group.Name == "Unknown", fmt.Sprintf("GID #0 is named '%s' and not 'Unknown'", group.Name))
 
-	group, err = common.Gstore.Get(1)
+	group, err = common.Groups.Get(1)
 	recordMustExist(t, err, "Couldn't find GID #1")
+	expect(t, group.ID == 1, fmt.Sprintf("group.ID doesn't not match the requested GID. Got '%d' instead.'", group.ID))
 
-	if group.ID != 1 {
-		t.Errorf("group.ID doesn't not match the requested GID. Got '%d' instead.'", group.ID)
-	}
-
-	ok := common.Gstore.Exists(-1)
+	ok := common.Groups.Exists(-1)
 	expect(t, !ok, "GID #-1 shouldn't exist")
 
 	// 0 aka Unknown, for system posts and other oddities
-	ok = common.Gstore.Exists(0)
+	ok = common.Groups.Exists(0)
 	expect(t, ok, "GID #0 should exist")
 
-	ok = common.Gstore.Exists(1)
+	ok = common.Groups.Exists(1)
 	expect(t, ok, "GID #1 should exist")
 
 	var isAdmin = true
 	var isMod = true
 	var isBanned = false
-	gid, err := common.Gstore.Create("Testing", "Test", isAdmin, isMod, isBanned)
+	gid, err := common.Groups.Create("Testing", "Test", isAdmin, isMod, isBanned)
 	expectNilErr(t, err)
-	expect(t, common.Gstore.Exists(gid), "The group we just made doesn't exist")
+	expect(t, common.Groups.Exists(gid), "The group we just made doesn't exist")
 
-	group, err = common.Gstore.Get(gid)
+	group, err = common.Groups.Get(gid)
 	expectNilErr(t, err)
 	expect(t, group.ID == gid, "The group ID should match the requested ID")
 	expect(t, group.IsAdmin, "This should be an admin group")
@@ -667,11 +644,11 @@ func TestGroupStore(t *testing.T) {
 	isAdmin = false
 	isMod = true
 	isBanned = true
-	gid, err = common.Gstore.Create("Testing 2", "Test", isAdmin, isMod, isBanned)
+	gid, err = common.Groups.Create("Testing 2", "Test", isAdmin, isMod, isBanned)
 	expectNilErr(t, err)
-	expect(t, common.Gstore.Exists(gid), "The group we just made doesn't exist")
+	expect(t, common.Groups.Exists(gid), "The group we just made doesn't exist")
 
-	group, err = common.Gstore.Get(gid)
+	group, err = common.Groups.Get(gid)
 	expectNilErr(t, err)
 	expect(t, group.ID == gid, "The group ID should match the requested ID")
 	expect(t, !group.IsAdmin, "This should not be an admin group")
@@ -682,7 +659,7 @@ func TestGroupStore(t *testing.T) {
 	err = group.ChangeRank(false, false, true)
 	expectNilErr(t, err)
 
-	group, err = common.Gstore.Get(gid)
+	group, err = common.Groups.Get(gid)
 	expectNilErr(t, err)
 	expect(t, group.ID == gid, "The group ID should match the requested ID")
 	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
@@ -692,7 +669,7 @@ func TestGroupStore(t *testing.T) {
 	err = group.ChangeRank(true, true, true)
 	expectNilErr(t, err)
 
-	group, err = common.Gstore.Get(gid)
+	group, err = common.Groups.Get(gid)
 	expectNilErr(t, err)
 	expect(t, group.ID == gid, "The group ID should match the requested ID")
 	expect(t, group.IsAdmin, "This should be an admin group")
@@ -702,7 +679,7 @@ func TestGroupStore(t *testing.T) {
 	err = group.ChangeRank(false, true, true)
 	expectNilErr(t, err)
 
-	group, err = common.Gstore.Get(gid)
+	group, err = common.Groups.Get(gid)
 	expectNilErr(t, err)
 	expect(t, group.ID == gid, "The group ID should match the requested ID")
 	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
@@ -710,9 +687,9 @@ func TestGroupStore(t *testing.T) {
 	expect(t, !group.IsBanned, "This shouldn't be a ban group")
 
 	// Make sure the data is static
-	common.Gstore.Reload(gid)
+	common.Groups.Reload(gid)
 
-	group, err = common.Gstore.Get(gid)
+	group, err = common.Groups.Get(gid)
 	expectNilErr(t, err)
 	expect(t, group.ID == gid, "The group ID should match the requested ID")
 	expect(t, !group.IsAdmin, "This shouldn't be an admin group")

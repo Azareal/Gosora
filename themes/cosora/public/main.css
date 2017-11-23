@@ -1,6 +1,6 @@
 :root {
-	--header-border-color: hsl(0,0%,85%);
-	--element-border-color: hsl(0,0%,90%);
+	--header-border-color: hsl(0,0%,80%);
+	--element-border-color: hsl(0,0%,85%);
 	--element-background-color: white;
 	--replies-lang-string: " replies";
 	--topics-lang-string: " topics";
@@ -45,8 +45,10 @@ a {
 	padding-top: 14px;
 	display: flex;
 	/*background-color: hsl(0,0%,97%);*/
+	background-color: hsl(0,0%,98%);
 	padding-left: 0px;
 	padding-right: 0px;
+	padding-bottom: 0px;
 }
 
 #main {
@@ -163,13 +165,21 @@ ul {
 	border-bottom: 2px solid var(--header-border-color);
 	background-color: var(--element-background-color);
 	margin-left: 12px;
+}
+.rowblock {
 	margin-right: 12px;
+}
+.colstack_right {
+	padding-right: 12px;
 }
 
 .rowhead, .opthead, .colstack_head {
 	padding: 13px;
 	padding-top: 14px;
 	padding-bottom: 14px;
+}
+.rowhead:not(:first-child), .opthead:not(:first-child), .colstack_head:not(:first-child) {
+	margin-top: 8px;
 }
 .rowhead h1, .opthead h1, .colstack_head h1 {
 	font-size: 20px;
@@ -181,14 +191,18 @@ ul {
 	margin-block-end: 0;
 	display: inline-block;
 }
+.colstack_head a h1 {
+	font-size: 16px;
+	color: var(--primary-link-color);
+}
 
 .colstack {
 	display: flex;
 }
-#main .colstack_left {
+.colstack:not(#profile_container) .colstack_left {
 	width: 300px;
 }
-#main .colstack_right {
+.colstack:not(#profile_container) .colstack_right {
 	width: calc(90% - 300px);
 }
 
@@ -412,8 +426,9 @@ label.uploadItem {
 	padding-left: 33px;
 }
 
-select, input, textarea {
+select, input, textarea, button {
 	border: 1px solid var(--header-border-color);
+	background: var(--element-background-color);
 	padding: 5px;
 	color: hsl(0,0%,30%);
 }
@@ -713,7 +728,7 @@ select, input, textarea {
 	margin-right: 10px;
 }
 
-#profile_container, #profile_left_pane .topBlock {
+#profile_left_pane .topBlock {
 	display: flex;
 }
 #profile_left_lane {
@@ -725,6 +740,7 @@ select, input, textarea {
 	padding-bottom: 18px;
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
+	background-color: var(--element-background-color);
 }
 #profile_left_pane .avatarRow {
 	padding: 24px;
@@ -748,17 +764,21 @@ select, input, textarea {
 .rowmenu .passive {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
+	background-color: var(--element-background-color);
 	margin-top: 6px;
 	padding: 12px;
 	padding-top: 10px;
 	padding-bottom: 10px;
 }
-.rowmenu {
+.colstack:not(#profile_container) .rowmenu {
 	padding-left: 12px;
-	padding-right: 12px;
 }
-.rowmenu .passive:hover {
-	margin-left: 4px;
+.colstack:not(#profile_container) .rowmenu .passive {
+	margin-top: 0px;
+	border-bottom: none;
+}
+.colstack:not(#profile_container) .rowmenu .passive:last-child {
+	border-bottom: 2px solid var(--element-border-color);
 }
 #profile_left_pane .passiveBlock .passive {
 	padding-left: 12px;
@@ -771,46 +791,144 @@ select, input, textarea {
 #profile_right_lane .colstack_item, .colstack_right .colstack_item {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
+}
+#profile_right_lane .colstack_item, .colstack_right .colstack_item, .colstack_right .colstack_grid {
 	margin-left: 16px;
 }
-
-.form_item {
-	display: flex;
+#profile_right_lane .topic_reply_form {
+	width: auto;
 }
-.form_item form, .colstack_item .formrow {
-	display: contents;
+
+.colstack_item .formrow {
+	display: flex;
 }
 .colstack_right .formrow {
 	padding-left: 16px;
 	padding-right: 16px;
 	padding-bottom: 4px;
+	border-right: 1px solid var(--element-border-color);
 }
 .colstack_right .formrow:first-child {
 	padding-top: 16px;
+}
+.colstack_right .formrow .formlabel {
+	padding-top: 5px;
 }
 .colstack_right .formrow:last-child {
 	padding-bottom: 16px;
 }
 .colstack_item:not(#profile_right_lane) .formrow .formlabel {
-	width: min-content;
+	width: 40%;
 	margin-right: 12px;
 	white-space: nowrap;
 }
+.formitem:only-child {
+	width: 100%;
+}
+.the_form .formitem:only-child button {
+	margin-left: auto;
+	margin-right: auto;
+}
+.quick_reply_form, .topic_reply_form, .the_form {
+	background: var(--element-background-color);
+}
+.formrow {
+	border-right: none !important;
+}
 
-.footer {
+.about, .footer {
 	border-top: 1px solid var(--element-border-color);
 	padding: 12px;
 	padding-top: 10px;
 	padding-bottom: 10px;
-	margin-top: 14px;
 	margin-left: -8px;
 	margin-right: -8px;
+	background-color: var(--element-background-color);
+	display: flex;
 }
-.footer #poweredBy {
+.about, #poweredBy {
 	font-size: 17px;
+	display: flex;
+	flex-direction: column;
 }
-.footer #poweredBy span {
+.about {
+	margin-top: 14px;
+}
+#poweredBy {
+	margin-right: auto;
+}
+#poweredBy span {
 	font-size: 16px;
+}
+#aboutTitle {
+	font-size: 18px;
+	margin: 8px;
+}
+#poweredByName {
+	font-size: 17px;
+    margin: 4px;
+}
+#aboutDesc {
+	margin-left: 8px;
+	margin-top: 8px;
+	width: 60%;
+}
+#aboutDesc p:last-child {
+	-webkit-margin-after: 8px;
+}
+#aboutDesc p:first-child {
+	-webkit-margin-before: 3px;
+}
+#poweredByDash, #poweredByMaker {
+	display: none;
+}
+#themeSelectorSelect {
+	padding: 3px;
+	margin-top: 2px;
+}
+
+.colstack_grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+}
+.grid_item {
+	background: var(--element-background-color);
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+	margin: 8px;
+	padding: 16px;
+	padding-left: 0px;
+	display: flex;
+	padding-top: 0px;
+	padding-bottom: 0px;
+	padding-right: 10px;
+}
+.grid_item span {
+	margin-top: 16px;
+	margin-bottom: 16px;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+#dash-version:before, #dash-cpu:before, #dash-ram:before {
+	display: inline-block;
+	background: hsl(0,0%,98%);
+	font: normal normal normal 14px/1 FontAwesome;
+	font-size: 20px;
+	padding-left: 17px;
+	padding-top: 16px;
+	padding-right: 19px;
+	color: hsl(0,0%,20%);
+	border-bottom: 1px solid var(--element-border-color);
+}
+#dash-version:before {
+	content: "\f126";
+}
+#dash-cpu:before {
+	content: "\f2db";
+}
+#dash-ram:before {
+	content: "\f233";
 }
 
 @media(max-width: 670px) {
@@ -818,3 +936,13 @@ select, input, textarea {
 		display: none;
 	}
 }
+
+/*#dash-cpu:before {
+	content: "\f2db";
+	width: 30px;
+	margin-right: 8px;
+	display: inline-block;
+	padding-left: 20px;
+	background: hsl(0,0%,98%);
+	font: normal normal normal 14px/1 FontAwesome;
+}*/

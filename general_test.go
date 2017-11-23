@@ -15,7 +15,6 @@ import (
 	"./common"
 	"./install/install"
 	"./query_gen/lib"
-	//"runtime/pprof"
 	//"github.com/husobee/vestigo"
 )
 
@@ -77,44 +76,7 @@ func gloinit() (err error) {
 		return err
 	}
 
-	common.Rstore, err = common.NewSQLReplyStore()
-	if err != nil {
-		return err
-	}
-	common.Prstore, err = common.NewSQLProfileReplyStore()
-	if err != nil {
-		return err
-	}
-
-	dbProd = db
-	//db_test, err = sql.Open("testdb","")
-	//if err != nil {
-	//	return err
-	//}
-
-	err = common.InitTemplates()
-	if err != nil {
-		return err
-	}
-	dbProd.SetMaxOpenConns(64)
-
-	err = common.InitPhrases()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Print("Loading the static files.")
-	err = common.StaticFiles.Init()
-	if err != nil {
-		return err
-	}
-
-	common.Auth, err = common.NewDefaultAuth()
-	if err != nil {
-		return err
-	}
-
-	err = common.LoadWordFilters()
+	err = afterDBInit()
 	if err != nil {
 		return err
 	}

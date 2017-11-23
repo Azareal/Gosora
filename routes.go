@@ -46,7 +46,7 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 	file, ok := common.StaticFiles[r.URL.Path]
 	if !ok {
 		if common.Dev.DebugMode {
-			log.Print("Failed to find '" + r.URL.Path + "'")
+			log.Printf("Failed to find '%s'", r.URL.Path)
 		}
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -103,7 +103,7 @@ func routeOverview(w http.ResponseWriter, r *http.Request, user common.User) com
 	}
 	common.BuildWidgets("overview", nil, headerVars, r)
 
-	pi := common.Page{"Overview", user, headerVars, tList, nil}
+	pi := common.Page{common.GetTitlePhrase("overview"), user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_overview"] != nil {
 		if common.RunPreRenderHook("pre_render_overview", w, r, &user, &pi) {
 			return nil
@@ -129,7 +129,7 @@ func routeCustomPage(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 	common.BuildWidgets("custom_page", name, headerVars, r)
 
-	pi := common.Page{"Page", user, headerVars, tList, nil}
+	pi := common.Page{common.GetTitlePhrase("page"), user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_custom_page"] != nil {
 		if common.RunPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
 			return nil
@@ -152,7 +152,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 
 	// TODO: Add a function for the qlist stuff
 	var qlist string
-	group, err := common.Gstore.Get(user.Group)
+	group, err := common.Groups.Get(user.Group)
 	if err != nil {
 		log.Printf("Group #%d doesn't exist despite being used by common.User #%d", user.Group, user.ID)
 		return common.LocalError("Something weird happened", w, r, user)
@@ -161,7 +161,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	// TODO: Make CanSee a method on *Group with a canSee field?
 	var canSee []int
 	if user.IsSuperAdmin {
-		canSee, err = common.Fstore.GetAllVisibleIDs()
+		canSee, err = common.Forums.GetAllVisibleIDs()
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
@@ -174,7 +174,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	var argList []interface{}
 
 	for _, fid := range canSee {
-		forum := common.Fstore.DirtyGet(fid)
+		forum := common.Forums.DirtyGet(fid)
 		if forum.Name != "" && forum.Active {
 			if forum.ParentType == "" || forum.ParentType == "forum" {
 				// Optimise Quick Topic away for guests
@@ -251,7 +251,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 
 		topicItem.Link = common.BuildTopicURL(common.NameToSlug(topicItem.Title), topicItem.ID)
 
-		forum := common.Fstore.DirtyGet(topicItem.ParentID)
+		forum := common.Forums.DirtyGet(topicItem.ParentID)
 		topicItem.ForumName = forum.Name
 		topicItem.ForumLink = forum.Link
 
@@ -291,13 +291,13 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 		topicItem.LastUser = userList[topicItem.LastReplyBy]
 	}
 
-	pi := common.TopicsPage{"All Topics", user, headerVars, topicList, forumList, common.Config.DefaultForum}
+	pi := common.TopicsPage{common.GetTitlePhrase("topics"), user, headerVars, topicList, forumList, common.Config.DefaultForum}
 	if common.PreRenderHooks["pre_render_topic_list"] != nil {
 		if common.RunPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err = common.RunThemeTemplate(headerVars.ThemeName, "topics", pi, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "topics", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -327,7 +327,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	}
 
 	// TODO: Fix this double-check
-	forum, err := common.Fstore.Get(fid)
+	forum, err := common.Forums.Get(fid)
 	if err == ErrNoRows {
 		return common.NotFound(w, r)
 	} else if err != nil {
@@ -408,7 +408,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 			return nil
 		}
 	}
-	err = common.RunThemeTemplate(headerVars.ThemeName, "forum", pi, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "forum", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -426,13 +426,12 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 	var forumList []common.Forum
 	var canSee []int
 	if user.IsSuperAdmin {
-		canSee, err = common.Fstore.GetAllVisibleIDs()
+		canSee, err = common.Forums.GetAllVisibleIDs()
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
-		//log.Print("canSee ", canSee)
 	} else {
-		group, err := common.Gstore.Get(user.Group)
+		group, err := common.Groups.Get(user.Group)
 		if err != nil {
 			log.Printf("Group #%d doesn't exist despite being used by common.User #%d", user.Group, user.ID)
 			return common.LocalError("Something weird happened", w, r, user)
@@ -442,7 +441,7 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 
 	for _, fid := range canSee {
 		// Avoid data races by copying the struct into something we can freely mold without worrying about breaking something somewhere else
-		var forum = common.Fstore.DirtyGet(fid).Copy()
+		var forum = common.Forums.DirtyGet(fid).Copy()
 		if forum.ParentID == 0 && forum.Name != "" && forum.Active {
 			if forum.LastTopicID != 0 {
 				if forum.LastTopic.ID != 0 && forum.LastReplyer.ID != 0 {
@@ -460,13 +459,13 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 		}
 	}
 
-	pi := common.ForumsPage{"Forum List", user, headerVars, forumList}
+	pi := common.ForumsPage{common.GetTitlePhrase("forums"), user, headerVars, forumList}
 	if common.PreRenderHooks["pre_render_forum_list"] != nil {
 		if common.RunPreRenderHook("pre_render_forum_list", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err = common.RunThemeTemplate(headerVars.ThemeName, "forums", pi, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "forums", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -481,6 +480,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) comm
 	page, _ = strconv.Atoi(r.FormValue("page"))
 
 	// SEO URLs...
+	// TODO: Make a shared function for this
 	halves := strings.Split(r.URL.Path[len("/topic/"):], ".")
 	if len(halves) < 2 {
 		halves = append(halves, halves[0])
@@ -520,7 +520,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) comm
 		user.Perms.CreateReply = false
 	}
 
-	postGroup, err := common.Gstore.Get(topic.Group)
+	postGroup, err := common.Groups.Get(topic.Group)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -574,7 +574,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) comm
 		replyItem.ContentHtml = common.ParseMessage(replyItem.Content, topic.ParentID, "forums")
 		replyItem.ContentLines = strings.Count(replyItem.Content, "\n")
 
-		postGroup, err = common.Gstore.Get(replyItem.Group)
+		postGroup, err = common.Groups.Get(replyItem.Group)
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
@@ -635,7 +635,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) comm
 			return nil
 		}
 	}
-	err = common.RunThemeTemplate(headerVars.ThemeName, "topic", tpage, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "topic", tpage, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -671,6 +671,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user common.User) comm
 		puser = &user
 	} else {
 		// Fetch the user data
+		// TODO: Add a shared function for checking for ErrNoRows and internal erroring if it's not that case?
 		puser, err = common.Users.Get(pid)
 		if err == ErrNoRows {
 			return common.NotFound(w, r)
@@ -692,7 +693,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user common.User) comm
 			return common.InternalError(err, w, r)
 		}
 
-		group, err := common.Gstore.Get(replyGroup)
+		group, err := common.Groups.Get(replyGroup)
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
@@ -733,6 +734,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user common.User) comm
 		return common.InternalError(err, w, r)
 	}
 
+	// TODO: Add a phrase for this title
 	ppage := common.ProfilePage{puser.Name + "'s Profile", user, headerVars, replyList, *puser}
 	if common.PreRenderHooks["pre_render_profile"] != nil {
 		if common.RunPreRenderHook("pre_render_profile", w, r, &user, &ppage) {
@@ -740,7 +742,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user common.User) comm
 		}
 	}
 
-	err = common.RunThemeTemplate(headerVars.ThemeName, "profile", ppage, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "profile", ppage, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -755,7 +757,7 @@ func routeLogin(w http.ResponseWriter, r *http.Request, user common.User) common
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	pi := common.Page{"Login", user, headerVars, tList, nil}
+	pi := common.Page{common.GetTitlePhrase("login"), user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_login"] != nil {
 		if common.RunPreRenderHook("pre_render_login", w, r, &user, &pi) {
 			return nil
@@ -803,7 +805,7 @@ func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	common.Auth.SetCookies(w, uid, session)
 	if user.IsAdmin {
-		// Is this error check reundant? We already check for the error in PreRoute for the same IP
+		// Is this error check redundant? We already check for the error in PreRoute for the same IP
 		// TODO: Should we be logging this?
 		log.Printf("#%d has logged in with IP %s", uid, user.LastIP)
 	}
@@ -819,7 +821,7 @@ func routeRegister(w http.ResponseWriter, r *http.Request, user common.User) com
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	pi := common.Page{"Registration", user, headerVars, tList, nil}
+	pi := common.Page{common.GetTitlePhrase("register"), user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_register"] != nil {
 		if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
 			return nil
@@ -937,10 +939,12 @@ func routeChangeTheme(w http.ResponseWriter, r *http.Request, user common.User) 
 	return nil
 }
 
-// TODO: We don't need support XML here to support sitemaps, we could handle those elsewhere
+// TODO: Refactor this
 var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
 
+// TODO: Refactor this endpoint
 func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	w.Header().Set("Content-Type", "application/json")
 	err := r.ParseForm()
 	if err != nil {
@@ -1008,11 +1012,6 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 			msglist = msglist[0 : len(msglist)-1]
 		}
 		_, _ = w.Write([]byte(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`))
-		//log.Print(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`)
-	//case "topics":
-	//case "forums":
-	//case "users":
-	//case "pages":
 	default:
 		return common.PreErrorJS("Invalid Module", w, r)
 	}

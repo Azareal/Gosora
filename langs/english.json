@@ -55,5 +55,36 @@
 	"Accounts": {
 		"VerifyEmailSubject": "Validate Your Email @  {{name}}",
 		"VerifyEmailBody": "Dear {{username}}, following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. {{schema}}://{{url}}/user/edit/token/{{token}}\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
+	},
+	"Errors": {
+		"NoPerms": {
+		}
+	},
+	"PageTitles": {
+		"overview":"Overview",
+		"page":"Page",
+		"topics":"All Topics",
+		"forums":"Forum List",
+		"login":"Login",
+		"register":"Registration",
+		"ip-search":"IP Search",
+
+		"panel-dashboard":"Control Panel Dashboard",
+		"panel-forums":"Forum Manager",
+		"panel-delete-forum":"Delete Forum",
+		"panel-edit-forum":"Forum Editor",
+		"panel-settings":"Setting Manager",
+		"panel-edit-setting":"Edit Setting",
+		"panel-word-filters":"Word Filter Manager",
+		"panel-edit-word-filter":"Edit Word Filter",
+		"panel-plugins":"Plugin Manager",
+		"panel-users":"User Manager",
+		"panel-edit-user":"User Editor",
+		"panel-groups":"Group Manager",
+		"panel-edit-group":"Group Editor",
+		"panel-themes":"Theme Manager",
+		"panel-backups":"Backups",
+		"panel-mod-logs":"Moderation Logs",
+		"panel-debug":"Debug"
 	}
 }

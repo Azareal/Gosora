@@ -7,8 +7,6 @@
 package common
 
 import (
-	//"log"
-	//"fmt"
 	"database/sql"
 	"errors"
 	"strconv"
@@ -111,14 +109,15 @@ func (user *User) Init() {
 		user.Avatar = strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
 	}
 	user.Link = BuildProfileURL(NameToSlug(user.Name), user.ID)
-	user.Tag = Gstore.DirtyGet(user.Group).Tag
+	user.Tag = Groups.DirtyGet(user.Group).Tag
 	user.InitPerms()
 }
 
+// TODO: Refactor this idiom into something shorter, maybe with a NullUserCache when one isn't set?
 func (user *User) CacheRemove() {
-	ucache, ok := Users.(UserCache)
-	if ok {
-		ucache.CacheRemove(user.ID)
+	ucache := Users.GetCache()
+	if ucache != nil {
+		ucache.Remove(user.ID)
 	}
 }
 
@@ -337,7 +336,7 @@ func (user *User) InitPerms() {
 		user.Group = user.TempGroup
 	}
 
-	group := Gstore.DirtyGet(user.Group)
+	group := Groups.DirtyGet(user.Group)
 	if user.IsSuperAdmin {
 		user.Perms = AllPerms
 		user.PluginPerms = AllPluginPerms

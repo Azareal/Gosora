@@ -22,7 +22,7 @@ import (
 	"../query_gen/lib"
 )
 
-type ThemeList map[string]Theme
+type ThemeList map[string]Theme // ? Use pointers instead?
 
 var Themes ThemeList = make(map[string]Theme)
 var DefaultThemeBox atomic.Value
@@ -47,6 +47,7 @@ type Theme struct {
 	Tag            string
 	URL            string
 	Sidebars       string // Allowed Values: left, right, both, false
+	AboutSegment   bool   // ? - Should this be a theme var instead?
 	//DisableMinifier // Is this really a good idea? I don't think themes should be fighting against the minifier
 	Settings          map[string]ThemeSetting
 	Templates         []TemplateMapping

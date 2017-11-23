@@ -96,7 +96,7 @@ func compileTemplates() error {
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
-		ThemeName:   DefaultThemeBox.Load().(string),
+		Theme:       Themes[DefaultThemeBox.Load().(string)],
 		NoticeList:  []string{"test"},
 		Stylesheets: []string{"panel"},
 		Scripts:     []string{"whatever"},
@@ -132,7 +132,7 @@ func compileTemplates() error {
 
 	// TODO: Use a dummy forum list to avoid o(n) problems
 	var forumList []Forum
-	forums, err := Fstore.GetAll()
+	forums, err := Forums.GetAll()
 	if err != nil {
 		return err
 	}

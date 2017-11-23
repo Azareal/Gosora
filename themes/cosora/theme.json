@@ -6,6 +6,7 @@
 	"URL": "github.com/Azareal/Gosora",
 	"Tag": "WIP",
 	"Sidebars":"right",
+	"AboutSegment":true,
 	"Templates": [
 		{
 			"Name": "topic",

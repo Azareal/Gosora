@@ -33,26 +33,37 @@ func init() {
 }
 
 func LoadWordFilters() error {
-	rows, err := filterStmts.getWordFilters.Query()
+	var wordFilters = WordFilterMap(make(map[int]WordFilter))
+	filters, err := wordFilters.BypassGetAll()
 	if err != nil {
 		return err
 	}
+
+	for _, filter := range filters {
+		wordFilters[filter.ID] = filter
+	}
+
+	WordFilterBox.Store(wordFilters)
+	return nil
+}
+
+// TODO: Return pointers to word filters intead to save memory?
+func (wBox WordFilterMap) BypassGetAll() (filters []WordFilter, err error) {
+	rows, err := filterStmts.getWordFilters.Query()
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 
-	var wordFilters = WordFilterMap(make(map[int]WordFilter))
-	var wfid int
-	var find string
-	var replacement string
-
 	for rows.Next() {
-		err := rows.Scan(&wfid, &find, &replacement)
+		filter := WordFilter{ID: 0}
+		err := rows.Scan(&filter.ID, &filter.Find, &filter.Replacement)
 		if err != nil {
-			return err
+			return filters, err
 		}
-		wordFilters[wfid] = WordFilter{ID: wfid, Find: find, Replacement: replacement}
+		filters = append(filters, filter)
 	}
-	WordFilterBox.Store(wordFilters)
-	return rows.Err()
+	return filters, rows.Err()
 }
 
 func AddWordFilter(id int, find string, replacement string) {

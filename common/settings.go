@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"errors"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -17,6 +18,7 @@ type SettingMap map[string]interface{}
 type SettingStore interface {
 	ParseSetting(sname string, scontent string, stype string, sconstraint string) string
 	BypassGet(name string) (*Setting, error)
+	BypassGetAll(name string) ([]*Setting, error)
 }
 
 type OptionLabel struct {
@@ -35,6 +37,7 @@ type Setting struct {
 type SettingStmts struct {
 	getAll *sql.Stmt
 	get    *sql.Stmt
+	update *sql.Stmt
 }
 
 var settingStmts SettingStmts
@@ -45,84 +48,135 @@ func init() {
 		settingStmts = SettingStmts{
 			getAll: acc.Select("settings").Columns("name, content, type, constraints").Prepare(),
 			get:    acc.Select("settings").Columns("content, type, constraints").Where("name = ?").Prepare(),
+			update: acc.Update("settings").Set("content = ?").Where("name = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
 }
 
 func LoadSettings() error {
-	rows, err := settingStmts.getAll.Query()
+	var sBox = SettingMap(make(map[string]interface{}))
+	settings, err := sBox.BypassGetAll()
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
 
-	var sBox = SettingMap(make(map[string]interface{}))
-	var sname, scontent, stype, sconstraints string
-	for rows.Next() {
-		err = rows.Scan(&sname, &scontent, &stype, &sconstraints)
+	for _, setting := range settings {
+		err = sBox.ParseSetting(setting.Name, setting.Content, setting.Type, setting.Constraint)
 		if err != nil {
 			return err
 		}
-		errmsg := sBox.ParseSetting(sname, scontent, stype, sconstraints)
-		if errmsg != "" {
-			return err
-		}
-	}
-	err = rows.Err()
-	if err != nil {
-		return err
 	}
 
 	SettingBox.Store(sBox)
 	return nil
 }
 
+// nolint
+var ErrNotInteger = errors.New("You were supposed to enter an integer x.x")
+var ErrSettingNotInteger = errors.New("Only integers are allowed in this setting x.x")
+var ErrBadConstraintNotInteger = errors.New("Invalid contraint! The constraint field wasn't an integer!")
+var ErrBadSettingRange = errors.New("Only integers between a certain range are allowed in this setting")
+
+// To avoid leaking internal state to the user
+// TODO: We need to add some sort of DualError interface
+func SafeSettingError(err error) bool {
+	return err == ErrNotInteger || err == ErrSettingNotInteger || err == ErrBadConstraintNotInteger || err == ErrBadSettingRange || err == ErrNoRows
+}
+
 // TODO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
-func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string, constraint string) string {
-	var err error
+func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string, constraint string) (err error) {
 	var ssBox = map[string]interface{}(sBox)
-	if stype == "bool" {
+	switch stype {
+	case "bool":
 		ssBox[sname] = (scontent == "1")
-	} else if stype == "int" {
+	case "int":
 		ssBox[sname], err = strconv.Atoi(scontent)
 		if err != nil {
-			return "You were supposed to enter an integer x.x\nType mismatch in " + sname
+			return ErrNotInteger
 		}
-	} else if stype == "int64" {
+	case "int64":
 		ssBox[sname], err = strconv.ParseInt(scontent, 10, 64)
 		if err != nil {
-			return "You were supposed to enter an integer x.x\nType mismatch in " + sname
+			return ErrNotInteger
 		}
-	} else if stype == "list" {
+	case "list":
 		cons := strings.Split(constraint, "-")
 		if len(cons) < 2 {
-			return "Invalid constraint! The second field wasn't set!"
+			return errors.New("Invalid constraint! The second field wasn't set!")
 		}
 
 		con1, err := strconv.Atoi(cons[0])
 		con2, err2 := strconv.Atoi(cons[1])
 		if err != nil || err2 != nil {
-			return "Invalid contraint! The constraint field wasn't an integer!"
+			return ErrBadConstraintNotInteger
 		}
 
 		value, err := strconv.Atoi(scontent)
 		if err != nil {
-			return "Only integers are allowed in this setting x.x\nType mismatch in " + sname
+			return ErrSettingNotInteger
 		}
 
 		if value < con1 || value > con2 {
-			return "Only integers between a certain range are allowed in this setting"
+			return ErrBadSettingRange
 		}
 		ssBox[sname] = value
-	} else {
+	default:
 		ssBox[sname] = scontent
 	}
-	return ""
+	return nil
 }
 
 func (sBox SettingMap) BypassGet(name string) (*Setting, error) {
 	setting := &Setting{Name: name}
 	err := settingStmts.get.QueryRow(name).Scan(&setting.Content, &setting.Type, &setting.Constraint)
 	return setting, err
+}
+
+func (sBox SettingMap) BypassGetAll() (settingList []*Setting, err error) {
+	rows, err := settingStmts.getAll.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		setting := &Setting{Name: ""}
+		err := rows.Scan(&setting.Name, &setting.Content, &setting.Type, &setting.Constraint)
+		if err != nil {
+			return nil, err
+		}
+		settingList = append(settingList, setting)
+	}
+	return settingList, rows.Err()
+}
+
+func (sBox SettingMap) Update(name string, content string) error {
+	setting, err := sBox.BypassGet(name)
+	if err == ErrNoRows {
+		return err
+	}
+
+	// TODO: Why is this here and not in a common function?
+	if setting.Type == "bool" {
+		if content == "on" || content == "1" {
+			content = "1"
+		} else {
+			content = "0"
+		}
+	}
+
+	// TODO: Make this a method or function?
+	_, err = settingStmts.update.Exec(content, name)
+	if err != nil {
+		return err
+	}
+
+	err = sBox.ParseSetting(name, content, setting.Type, setting.Constraint)
+	if err != nil {
+		return err
+	}
+	// TODO: Do a reload instead?
+	SettingBox.Store(sBox)
+	return nil
 }

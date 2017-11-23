@@ -189,7 +189,7 @@ func RebuildGroupPermissions(gid int) error {
 		return err
 	}
 
-	group, err := Gstore.Get(gid)
+	group, err := Groups.Get(gid)
 	if err != nil {
 		return err
 	}

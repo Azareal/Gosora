@@ -67,7 +67,7 @@ func HandleServerSync() error {
 
 	if lastUpdate.After(lastSync) {
 		// TODO: A more granular sync
-		err = Fstore.LoadForums()
+		err = Forums.LoadForums()
 		if err != nil {
 			log.Print("Unable to reload the forums")
 			return err

@@ -17,6 +17,7 @@ import (
 	"sync/atomic"
 )
 
+// TODO: Add a phrase store?
 // TODO: Let the admin edit phrases from inside the Control Panel? How should we persist these? Should we create a copy of the langpack or edit the primaries? Use the changeLangpack mutex for this?
 // nolint Be quiet megacheck, this *is* used
 var currentLangPack atomic.Value
@@ -40,7 +41,9 @@ type LanguagePack struct {
 	LocalPerms    map[string]string
 	SettingLabels map[string]string
 	PermPresets   map[string]string
-	Accounts      map[string]string // TODO: Apply these phrases in the software proper
+	Accounts      map[string]string            // TODO: Apply these phrases in the software proper
+	Errors        map[string]map[string]string // map[category]map[name]value
+	PageTitles    map[string]string
 }
 
 // TODO: Add the ability to edit language JSON files from the Control Panel and automatically scan the files for changes
@@ -114,7 +117,7 @@ func GetPhrase(name string) (string, bool) {
 func GetGlobalPermPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).GlobalPerms[name]
 	if !ok {
-		return "{name}"
+		return getPhrasePlaceholder()
 	}
 	return res
 }
@@ -122,7 +125,7 @@ func GetGlobalPermPhrase(name string) string {
 func GetLocalPermPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).LocalPerms[name]
 	if !ok {
-		return "{name}"
+		return getPhrasePlaceholder()
 	}
 	return res
 }
@@ -130,7 +133,7 @@ func GetLocalPermPhrase(name string) string {
 func GetSettingLabel(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).SettingLabels[name]
 	if !ok {
-		return "{name}"
+		return getPhrasePlaceholder()
 	}
 	return res
 }
@@ -146,9 +149,30 @@ func GetAllPermPresets() map[string]string {
 func GetAccountPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).Accounts[name]
 	if !ok {
-		return "{name}"
+		return getPhrasePlaceholder()
 	}
 	return res
+}
+
+// TODO: Does comma ok work with multi-dimensional maps?
+func GetErrorPhrase(category string, name string) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).Errors[category][name]
+	if !ok {
+		return getPhrasePlaceholder()
+	}
+	return res
+}
+
+func GetTitlePhrase(name string) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).PageTitles[name]
+	if !ok {
+		return getPhrasePlaceholder()
+	}
+	return res
+}
+
+func getPhrasePlaceholder() string {
+	return "{name}"
 }
 
 // ? - Use runtime reflection for updating phrases?

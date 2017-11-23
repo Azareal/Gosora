@@ -112,9 +112,9 @@ func (reply *Reply) Delete() error {
 	}
 	// TODO: Move this bit to *Topic
 	_, err = replyStmts.removeRepliesFromTopic.Exec(1, reply.ParentID)
-	tcache, ok := Topics.(TopicCache)
-	if ok {
-		tcache.CacheRemove(reply.ParentID)
+	tcache := Topics.GetCache()
+	if tcache != nil {
+		tcache.Remove(reply.ParentID)
 	}
 	return err
 }

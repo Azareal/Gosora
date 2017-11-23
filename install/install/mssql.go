@@ -1,7 +1,6 @@
 /*
 *
 * Gosora MSSQL Interface
-* Under heavy development
 * Copyright Azareal 2017 - 2018
 *
  */
@@ -80,14 +79,9 @@ func (ins *MssqlInstaller) InitDatabase() (err error) {
 	// TODO: Create the database, if it doesn't exist
 
 	// Ready the query builder
-	qgen.Builder.SetConn(db)
-	err = qgen.Builder.SetAdapter("mssql")
-	if err != nil {
-		return err
-	}
 	ins.db = db
-
-	return nil
+	qgen.Builder.SetConn(db)
+	return qgen.Builder.SetAdapter("mssql")
 }
 
 func (ins *MssqlInstaller) TableDefs() (err error) {
@@ -126,7 +120,6 @@ func (ins *MssqlInstaller) TableDefs() (err error) {
 			return err
 		}
 	}
-	//fmt.Println("Finished creating the tables")
 	return nil
 }
 
@@ -150,8 +143,6 @@ func (ins *MssqlInstaller) InitialData() (err error) {
 			return err
 		}
 	}
-
-	//fmt.Println("Finished inserting the database data")
 	return nil
 }
 

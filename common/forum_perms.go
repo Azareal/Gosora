@@ -22,6 +22,7 @@ var LocalPermList = []string{
 	"CloseTopic",
 }
 
+// TODO: Rename this to ForumPermSet?
 /* Inherit from group permissions for ones we don't have */
 type ForumPerms struct {
 	ViewTopic bool
@@ -165,7 +166,7 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	return Fpstore.Reload(fid)
+	return FPStore.Reload(fid)
 }
 
 func ReplaceForumPermsForGroup(gid int, presetSet map[int]string, permSets map[int]*ForumPerms) error {

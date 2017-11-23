@@ -352,11 +352,12 @@ AdminStatLoop:
 		} else {
 			calcperc := int(cpuPerc[0]) / runtime.NumCPU()
 			cpustr = strconv.Itoa(calcperc)
-			if calcperc < 30 {
+			switch {
+			case calcperc < 30:
 				cpuColour = "stat_green"
-			} else if calcperc < 75 {
+			case calcperc < 75:
 				cpuColour = "stat_orange"
-			} else {
+			default:
 				cpuColour = "stat_red"
 			}
 		}
@@ -409,20 +410,20 @@ AdminStatLoop:
 
 			// nolint
 			if !noStatUpdates {
-				w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + totunit + " online\r"))
-				w.Write([]byte("set #dash-gonline " + strconv.Itoa(gonline) + gunit + " guests online\r"))
-				w.Write([]byte("set #dash-uonline " + strconv.Itoa(uonline) + uunit + " users online\r"))
+				w.Write([]byte("set #dash-totonline <span>" + strconv.Itoa(totonline) + totunit + " online</span>\r"))
+				w.Write([]byte("set #dash-gonline <span>" + strconv.Itoa(gonline) + gunit + " guests online</span>\r"))
+				w.Write([]byte("set #dash-uonline <span>" + strconv.Itoa(uonline) + uunit + " users online</span>\r"))
 
 				w.Write([]byte("set-class #dash-totonline grid_item grid_stat " + onlineColour + "\r"))
 				w.Write([]byte("set-class #dash-gonline grid_item grid_stat " + onlineGuestsColour + "\r"))
 				w.Write([]byte("set-class #dash-uonline grid_item grid_stat " + onlineUsersColour + "\r"))
 			}
 
-			w.Write([]byte("set #dash-cpu CPU: " + cpustr + "%\r"))
+			w.Write([]byte("set #dash-cpu <span>CPU: " + cpustr + "%</span>\r"))
 			w.Write([]byte("set-class #dash-cpu grid_item grid_istat " + cpuColour + "\r"))
 
 			if !noRAMUpdates {
-				w.Write([]byte("set #dash-ram RAM: " + ramstr + "\r"))
+				w.Write([]byte("set #dash-ram <span>RAM: " + ramstr + "</span>\r"))
 				w.Write([]byte("set-class #dash-ram grid_item grid_istat " + ramColour + "\r"))
 			}
 

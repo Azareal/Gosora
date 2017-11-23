@@ -28,21 +28,23 @@ type VarItemReflect struct {
 	Value       reflect.Value
 }
 type CTemplateSet struct {
-	tlist          map[string]*parse.Tree
-	dir            string
-	funcMap        map[string]interface{}
-	importMap      map[string]string
-	Fragments      map[string]int
-	FragmentCursor map[string]int
-	FragOut        string
-	varList        map[string]VarItem
-	localVars      map[string]map[string]VarItemReflect
-	stats          map[string]int
-	pVarList       string
-	pVarPosition   int
-	previousNode   parse.NodeType
-	currentNode    parse.NodeType
-	nextNode       parse.NodeType
+	tlist                map[string]*parse.Tree
+	dir                  string
+	funcMap              map[string]interface{}
+	importMap            map[string]string
+	Fragments            map[string]int
+	FragmentCursor       map[string]int
+	FragOut              string
+	varList              map[string]VarItem
+	localVars            map[string]map[string]VarItemReflect
+	hasDispInt           bool
+	localDispStructIndex int
+	stats                map[string]int
+	pVarList             string
+	pVarPosition         int
+	previousNode         parse.NodeType
+	currentNode          parse.NodeType
+	nextNode             parse.NodeType
 	//tempVars map[string]string
 	doImports   bool
 	minify      bool
@@ -102,6 +104,8 @@ func (c *CTemplateSet) Compile(name string, dir string, expects string, expectsI
 	}
 
 	c.varList = varList
+	c.hasDispInt = false
+	c.localDispStructIndex = 0
 	//c.pVarList = ""
 	//c.pVarPosition = 0
 	c.stats = make(map[string]int)
@@ -187,7 +191,6 @@ w.Write([]byte(`, " + ", -1)
 
 	c.log("Output!")
 	c.log(fout)
-	//log.Fatal("remove the log.Fatal line")
 	return fout, nil
 }
 
@@ -334,10 +337,8 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 			varbit += ".(" + cur.Type().Name() + ")"
 		}
 
-		for _, id := range n.Ident {
-			c.log("Data Kind:", cur.Kind().String())
-			c.log("Field Bit:", id)
-
+		// ! Might not work so well for non-struct pointers
+		skipPointers := func(cur reflect.Value, id string) reflect.Value {
 			if cur.Kind() == reflect.Ptr {
 				c.log("Looping over pointer")
 				for cur.Kind() == reflect.Ptr {
@@ -346,40 +347,87 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 				c.log("Data Kind:", cur.Kind().String())
 				c.log("Field Bit:", id)
 			}
+			return cur
+		}
+
+		var assLines string
+		var multiline = false
+		for _, id := range n.Ident {
+			c.log("Data Kind:", cur.Kind().String())
+			c.log("Field Bit:", id)
+			cur = skipPointers(cur, id)
 
 			if !cur.IsValid() {
-				if c.debug {
-					fmt.Println("Debug Data:")
-					fmt.Println("Holdreflect:", holdreflect)
-					fmt.Println("Holdreflect.Kind():", holdreflect.Kind())
-					if !c.superDebug {
-						fmt.Println("cur.Kind():", cur.Kind().String())
-					}
-					fmt.Println("")
+				c.error("Debug Data:")
+				c.error("Holdreflect:", holdreflect)
+				c.error("Holdreflect.Kind():", holdreflect.Kind())
+				if !c.superDebug {
+					c.error("cur.Kind():", cur.Kind().String())
 				}
-
-				panic(varholder + varbit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+				c.error("")
+				if !multiline {
+					panic(varholder + varbit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+				} else {
+					panic(varbit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+				}
 			}
 
-			cur = cur.FieldByName(id)
-			if cur.Kind() == reflect.Interface {
-				cur = cur.Elem()
-				// TODO: Surely, there's a better way of detecting this?
-				/*if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
-				varbit = "string(" + varbit + "." + id + ")"*/
-				//if cur.Kind() == reflect.String && cur.Type().Name() != "string" {
-				if cur.Type().PkgPath() != "main" && cur.Type().PkgPath() != "" {
-					c.importMap["html/template"] = "html/template"
-					varbit += "." + id + ".(" + strings.TrimPrefix(cur.Type().PkgPath(), "html/") + "." + cur.Type().Name() + ")"
+			c.log("in-loop varbit: " + varbit)
+			if cur.Kind() == reflect.Map {
+				cur = cur.MapIndex(reflect.ValueOf(id))
+				varbit += "[\"" + id + "\"]"
+				cur = skipPointers(cur, id)
+
+				if cur.Kind() == reflect.Struct || cur.Kind() == reflect.Interface {
+					// TODO: Move the newVarByte declaration to the top level or to the if level, if a dispInt is only used in a particular if statement
+					var dispStr, newVarByte string
+					if cur.Kind() == reflect.Interface {
+						dispStr = "Int"
+						if !c.hasDispInt {
+							newVarByte = ":"
+							c.hasDispInt = true
+						}
+					}
+					// TODO: De-dupe identical struct types rather than allocating a variable for each one
+					if cur.Kind() == reflect.Struct {
+						dispStr = "Struct" + strconv.Itoa(c.localDispStructIndex)
+						newVarByte = ":"
+						c.localDispStructIndex++
+					}
+					varbit = "disp" + dispStr + " " + newVarByte + "= " + varholder + varbit + "\n"
+					varholder = "disp" + dispStr
+					multiline = true
 				} else {
-					varbit += "." + id + ".(" + cur.Type().Name() + ")"
+					continue
 				}
-			} else {
+			}
+			if cur.Kind() != reflect.Interface {
+				cur = cur.FieldByName(id)
 				varbit += "." + id
 			}
-			c.log("End Cycle")
+
+			// TODO: Handle deeply nested pointers mixed with interfaces mixed with pointers better
+			if cur.Kind() == reflect.Interface {
+				cur = cur.Elem()
+				varbit += ".("
+				// TODO: Surely, there's a better way of doing this?
+				if cur.Type().PkgPath() != "main" && cur.Type().PkgPath() != "" {
+					c.importMap["html/template"] = "html/template"
+					varbit += strings.TrimPrefix(cur.Type().PkgPath(), "html/") + "."
+				}
+				varbit += cur.Type().Name() + ")"
+			}
+			c.log("End Cycle: ", varbit)
 		}
-		out = c.compileVarsub(varholder+varbit, cur)
+
+		if multiline {
+			assSplit := strings.Split(varbit, "\n")
+			varbit = assSplit[len(assSplit)-1]
+			assSplit = assSplit[:len(assSplit)-1]
+			assLines = strings.Join(assSplit, "\n") + "\n"
+		}
+		varbit = varholder + varbit
+		out = c.compileVarsub(varbit, cur, assLines)
 
 		for _, varItem := range c.varList {
 			if strings.HasPrefix(out, varItem.Destination) {
@@ -389,20 +437,21 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 		return out
 	case *parse.DotNode:
 		c.log("Dot Node:", node.String())
-		return c.compileVarsub(varholder, holdreflect)
+		return c.compileVarsub(varholder, holdreflect, "")
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.VariableNode:
 		c.log("Variable Node:", n.String())
 		c.log(n.Ident)
 		varname, reflectVal := c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
-		return c.compileVarsub(varname, reflectVal)
+		return c.compileVarsub(varname, reflectVal, "")
 	case *parse.StringNode:
 		return n.Quoted
 	case *parse.IdentifierNode:
 		c.log("Identifier Node:", node)
 		c.log("Identifier Node Args:", node.Args)
-		return c.compileVarsub(c.compileIdentSwitch(varholder, holdreflect, templateName, node))
+		out, outval := c.compileIdentSwitch(varholder, holdreflect, templateName, node)
+		return c.compileVarsub(out, outval, "")
 	default:
 		return c.unknownNode(node)
 	}
@@ -525,7 +574,6 @@ func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, 
 
 func (c *CTemplateSet) compileIdentSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, val reflect.Value) {
 	c.log("in compileIdentSwitch")
-	//var outbuf map[int]string
 ArgLoop:
 	for pos := 0; pos < len(node.Args); pos++ {
 		id := node.Args[pos]
@@ -728,7 +776,7 @@ func (c *CTemplateSet) compileBoolsub(varname string, varholder string, template
 	return out
 }
 
-func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value) string {
+func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines string) (out string) {
 	c.log("in compileVarsub")
 	for _, varItem := range c.varList {
 		if strings.HasPrefix(varname, varItem.Destination) {
@@ -747,29 +795,33 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value) string {
 		val = val.Elem()
 	}
 
+	c.log("varname: ", varname)
+	c.log("assLines: ", assLines)
 	switch val.Kind() {
 	case reflect.Int:
 		c.importMap["strconv"] = "strconv"
-		return "w.Write([]byte(strconv.Itoa(" + varname + ")))\n"
+		out = "w.Write([]byte(strconv.Itoa(" + varname + ")))\n"
 	case reflect.Bool:
-		return "if " + varname + " {\nw.Write([]byte(\"true\"))} else {\nw.Write([]byte(\"false\"))\n}\n"
+		out = "if " + varname + " {\nw.Write([]byte(\"true\"))} else {\nw.Write([]byte(\"false\"))\n}\n"
 	case reflect.String:
 		if val.Type().Name() != "string" && !strings.HasPrefix(varname, "string(") {
-			return "w.Write([]byte(string(" + varname + ")))\n"
+			varname = "string(" + varname + ")"
 		}
-		return "w.Write([]byte(" + varname + "))\n"
+		out = "w.Write([]byte(" + varname + "))\n"
 	case reflect.Int64:
 		c.importMap["strconv"] = "strconv"
-		return "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))"
+		out = "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))"
 	default:
 		if !val.IsValid() {
-			panic(varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+			panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}
 		fmt.Println("Unknown Variable Name:", varname)
 		fmt.Println("Unknown Kind:", val.Kind())
 		fmt.Println("Unknown Type:", val.Type().Name())
 		panic("// I don't know what this variable's type is o.o\n")
 	}
+	c.log("out: ", out)
+	return assLines + out
 }
 
 func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflect.Value, node *parse.TemplateNode) (out string) {
@@ -827,6 +879,12 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 
 func (c *CTemplateSet) log(args ...interface{}) {
 	if c.superDebug {
+		fmt.Println(args...)
+	}
+}
+
+func (c *CTemplateSet) error(args ...interface{}) {
+	if c.debug {
 		fmt.Println(args...)
 	}
 }

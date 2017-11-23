@@ -12,7 +12,7 @@ import (
 	"../query_gen/lib"
 )
 
-var Gstore GroupStore
+var Groups GroupStore
 
 // ? - We could fallback onto the database when an item can't be found in the cache?
 type GroupStore interface {
@@ -230,7 +230,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	}
 
 	// Generate the forum permissions based on the presets...
-	fdata, err := Fstore.GetAll()
+	fdata, err := Forums.GetAll()
 	if err != nil {
 		return 0, err
 	}
@@ -279,7 +279,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	mgs.Unlock()
 
 	for _, forum := range fdata {
-		err = Fpstore.Reload(forum.ID)
+		err = FPStore.Reload(forum.ID)
 		if err != nil {
 			return gid, err
 		}

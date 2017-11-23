@@ -31,8 +31,7 @@ func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http
 		}
 	}
 
-	//log.Print("Themes[headerVars.ThemeName].Sidebars", Themes[headerVars.ThemeName].Sidebars)
-	if Themes[headerVars.ThemeName].Sidebars == "right" {
+	if Themes[headerVars.Theme.Name].Sidebars == "right" {
 		if len(Docks.RightSidebar) != 0 {
 			var sbody string
 			for _, widget := range Docks.RightSidebar {
@@ -48,7 +47,7 @@ func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http
 }
 
 func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, rerr RouteError) {
-	if !Fstore.Exists(fid) {
+	if !Forums.Exists(fid) {
 		return nil, PreError("The target forum doesn't exist.", w, r)
 	}
 
@@ -61,7 +60,7 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 		}
 	}
 
-	fperms, err := Fpstore.Get(fid, user.Group)
+	fperms, err := FPStore.Get(fid, user.Group)
 	if err != nil {
 		// TODO: Refactor this
 		log.Printf("Unable to get the forum perms for Group #%d for User #%d", user.Group, user.ID)
@@ -76,7 +75,7 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 	if rerr != nil {
 		return headerVars, rerr
 	}
-	if !Fstore.Exists(fid) {
+	if !Forums.Exists(fid) {
 		return headerVars, NotFound(w, r)
 	}
 
@@ -88,14 +87,12 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 		}
 	}
 
-	fperms, err := Fpstore.Get(fid, user.Group)
+	fperms, err := FPStore.Get(fid, user.Group)
 	if err != nil {
 		// TODO: Refactor this
 		log.Printf("Unable to get the forum perms for Group #%d for User #%d", user.Group, user.ID)
 		return nil, PreError("Something weird happened", w, r)
 	}
-	//log.Printf("user.Perms: %+v\n", user.Perms)
-	//log.Printf("fperms: %+v\n", fperms)
 	cascadeForumPerms(fperms, user)
 	return headerVars, rerr
 }
@@ -125,28 +122,30 @@ func cascadeForumPerms(fperms *ForumPerms, user *User) {
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
 func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, stats PanelStats, rerr RouteError) {
-	var themeName = DefaultThemeBox.Load().(string)
+	var theme Theme
 
 	cookie, err := r.Cookie("current_theme")
 	if err == nil {
-		cookie := html.EscapeString(cookie.Value)
-		theme, ok := Themes[cookie]
+		inTheme, ok := Themes[html.EscapeString(cookie.Value)]
 		if ok && !theme.HideFromThemes {
-			themeName = cookie
+			theme = inTheme
 		}
+	}
+	if theme.Name == "" {
+		theme = Themes[DefaultThemeBox.Load().(string)]
 	}
 
 	headerVars = &HeaderVars{
-		Site:      Site,
-		Settings:  SettingBox.Load().(SettingMap),
-		Themes:    Themes,
-		ThemeName: themeName,
+		Site:     Site,
+		Settings: SettingBox.Load().(SettingMap),
+		Themes:   Themes,
+		Theme:    theme,
 	}
 	// TODO: We should probably initialise headerVars.ExtData
 
-	headerVars.Stylesheets = append(headerVars.Stylesheets, headerVars.ThemeName+"/panel.css")
-	if len(Themes[headerVars.ThemeName].Resources) > 0 {
-		rlist := Themes[headerVars.ThemeName].Resources
+	headerVars.Stylesheets = append(headerVars.Stylesheets, theme.Name+"/panel.css")
+	if len(theme.Resources) > 0 {
+		rlist := theme.Resources
 		for _, resource := range rlist {
 			if resource.Location == "global" || resource.Location == "panel" {
 				extarr := strings.Split(resource.Name, ".")
@@ -161,8 +160,8 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 	}
 
 	stats.Users = Users.GlobalCount()
-	stats.Groups = Gstore.GlobalCount()
-	stats.Forums = Fstore.GlobalCount() // TODO: Stop it from showing the blanked forums
+	stats.Groups = Groups.GlobalCount()
+	stats.Forums = Forums.GlobalCount() // TODO: Stop it from showing the blanked forums
 	stats.Settings = len(headerVars.Settings)
 	stats.WordFilters = len(WordFilterBox.Load().(WordFilterMap))
 	stats.Themes = len(Themes)
@@ -170,12 +169,17 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 
 	pusher, ok := w.(http.Pusher)
 	if ok {
-		pusher.Push("/static/"+headerVars.ThemeName+"/main.css", nil)
-		pusher.Push("/static/"+headerVars.ThemeName+"/panel.css", nil)
+		pusher.Push("/static/"+theme.Name+"/main.css", nil)
+		pusher.Push("/static/"+theme.Name+"/panel.css", nil)
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
-		// TODO: Push the theme CSS files
-		// TODO: Push the theme scripts
+		// TODO: Test these
+		for _, sheet := range headerVars.Stylesheets {
+			pusher.Push("/static/"+sheet, nil)
+		}
+		for _, script := range headerVars.Scripts {
+			pusher.Push("/static/"+script, nil)
+		}
 		// TODO: Push avatars?
 	}
 
@@ -209,30 +213,32 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
 func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, rerr RouteError) {
-	var themeName = DefaultThemeBox.Load().(string)
+	var theme Theme
 
 	cookie, err := r.Cookie("current_theme")
 	if err == nil {
-		cookie := html.EscapeString(cookie.Value)
-		theme, ok := Themes[cookie]
+		inTheme, ok := Themes[html.EscapeString(cookie.Value)]
 		if ok && !theme.HideFromThemes {
-			themeName = cookie
+			theme = inTheme
 		}
+	}
+	if theme.Name == "" {
+		theme = Themes[DefaultThemeBox.Load().(string)]
 	}
 
 	headerVars = &HeaderVars{
-		Site:      Site,
-		Settings:  SettingBox.Load().(SettingMap),
-		Themes:    Themes,
-		ThemeName: themeName,
+		Site:     Site,
+		Settings: SettingBox.Load().(SettingMap),
+		Themes:   Themes,
+		Theme:    theme,
 	}
 
 	if user.IsBanned {
 		headerVars.NoticeList = append(headerVars.NoticeList, "Your account has been suspended. Some of your permissions may have been revoked.")
 	}
 
-	if len(Themes[headerVars.ThemeName].Resources) > 0 {
-		rlist := Themes[headerVars.ThemeName].Resources
+	if len(theme.Resources) > 0 {
+		rlist := theme.Resources
 		for _, resource := range rlist {
 			if resource.Location == "global" || resource.Location == "frontend" {
 				extarr := strings.Split(resource.Name, ".")
@@ -248,11 +254,16 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 
 	pusher, ok := w.(http.Pusher)
 	if ok {
-		pusher.Push("/static/"+headerVars.ThemeName+"/main.css", nil)
+		pusher.Push("/static/"+theme.Name+"/main.css", nil)
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
-		// TODO: Push the theme CSS files
-		// TODO: Push the theme scripts
+		// TODO: Test these
+		for _, sheet := range headerVars.Stylesheets {
+			pusher.Push("/static/"+sheet, nil)
+		}
+		for _, script := range headerVars.Scripts {
+			pusher.Push("/static/"+script, nil)
+		}
 		// TODO: Push avatars?
 	}
 
@@ -343,4 +354,8 @@ func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteE
 		return SecurityError(w, r, user)
 	}
 	return nil
+}
+
+func ReqIsJson(r *http.Request) bool {
+	return r.Header.Get("Content-type") == "application/json"
 }

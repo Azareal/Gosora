@@ -246,7 +246,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				case "/panel/settings/":
 					err = routePanelSettings(w,req,user)
 				case "/panel/settings/edit/":
-					err = routePanelSetting(w,req,user,extra_data)
+					err = routePanelSettingEdit(w,req,user,extra_data)
 				case "/panel/settings/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -254,7 +254,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = routePanelSettingEdit(w,req,user,extra_data)
+					err = routePanelSettingEditSubmit(w,req,user,extra_data)
 				case "/panel/settings/word-filters/":
 					err = routePanelWordFilters(w,req,user)
 				case "/panel/settings/word-filters/create/":

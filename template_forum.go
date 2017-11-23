@@ -22,7 +22,7 @@ w.Write([]byte(tmpl_forum_vars.Title))
 w.Write(header_1)
 w.Write([]byte(tmpl_forum_vars.Header.Site.Name))
 w.Write(header_2)
-w.Write([]byte(tmpl_forum_vars.Header.ThemeName))
+w.Write([]byte(tmpl_forum_vars.Header.Theme.Name))
 w.Write(header_3)
 if len(tmpl_forum_vars.Header.Stylesheets) != 0 {
 for _, item := range tmpl_forum_vars.Header.Stylesheets {
@@ -203,28 +203,37 @@ w.Write(forum_57)
 w.Write(forum_58)
 }
 w.Write(forum_59)
+if tmpl_forum_vars.Header.Theme.AboutSegment {
 w.Write(footer_0)
+dispInt := tmpl_forum_vars.Header.Settings["about_segment_title"]
+w.Write([]byte(dispInt.(string)))
+w.Write(footer_1)
+dispInt = tmpl_forum_vars.Header.Settings["about_segment_body"]
+w.Write([]byte(dispInt.(string)))
+w.Write(footer_2)
+}
+w.Write(footer_3)
 if len(tmpl_forum_vars.Header.Themes) != 0 {
 for _, item := range tmpl_forum_vars.Header.Themes {
 if !item.HideFromThemes {
-w.Write(footer_1)
-w.Write([]byte(item.Name))
-w.Write(footer_2)
-if tmpl_forum_vars.Header.ThemeName == item.Name {
-w.Write(footer_3)
-}
 w.Write(footer_4)
-w.Write([]byte(item.FriendlyName))
+w.Write([]byte(item.Name))
 w.Write(footer_5)
-}
-}
-}
+if tmpl_forum_vars.Header.Theme.Name == item.Name {
 w.Write(footer_6)
-if tmpl_forum_vars.Header.Widgets.RightSidebar != "" {
+}
 w.Write(footer_7)
-w.Write([]byte(string(tmpl_forum_vars.Header.Widgets.RightSidebar)))
+w.Write([]byte(item.FriendlyName))
 w.Write(footer_8)
 }
+}
+}
 w.Write(footer_9)
+if tmpl_forum_vars.Header.Widgets.RightSidebar != "" {
+w.Write(footer_10)
+w.Write([]byte(string(tmpl_forum_vars.Header.Widgets.RightSidebar)))
+w.Write(footer_11)
+}
+w.Write(footer_12)
 	return nil
 }

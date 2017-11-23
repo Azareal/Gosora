@@ -15,6 +15,7 @@ import (
 
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 // TODO: Disable stat updates in posts handled by plugin_guilds
+// TODO: Make sure this route is member only
 func routeEditTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	err := r.ParseForm()
 	if err != nil {
@@ -50,7 +51,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user common.User) co
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	err = common.Fstore.UpdateLastTopic(topic.ID, user.ID, topic.ParentID)
+	err = common.Forums.UpdateLastTopic(topic.ID, user.ID, topic.ParentID)
 	if err != nil && err != ErrNoRows {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
@@ -65,11 +66,12 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user common.User) co
 
 // TODO: Add support for soft-deletion and add a permission for hard delete in addition to the usual
 // TODO: Disable stat updates in posts handled by plugin_guilds
+// TODO: Make sure this route is member only
 func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
 	var isJs = false
-	if r.Header.Get("Content-type") == "application/json" {
+	if common.ReqIsJson(r) {
 		if r.Body == nil {
 			return common.PreErrorJS("No request body", w, r)
 		}
@@ -114,7 +116,7 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user common.User) 
 			return common.InternalErrorJSQ(err, w, r, isJs)
 		}
 
-		err = common.AddModLog("delete", tid, "topic", user.LastIP, user.ID)
+		err = common.ModLogs.Create("delete", tid, "topic", user.LastIP, user.ID)
 		if err != nil {
 			return common.InternalErrorJSQ(err, w, r, isJs)
 		}
@@ -158,7 +160,7 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.AddModLog("stick", tid, "topic", user.LastIP, user.ID)
+	err = common.ModLogs.Create("stick", tid, "topic", user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -197,7 +199,7 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user common.User)
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.AddModLog("unstick", tid, "topic", user.LastIP, user.ID)
+	err = common.ModLogs.Create("unstick", tid, "topic", user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -214,7 +216,7 @@ func routeLockTopic(w http.ResponseWriter, r *http.Request, user common.User) co
 	// TODO: Move this to some sort of middleware
 	var tids []int
 	var isJs = false
-	if r.Header.Get("Content-type") == "application/json" {
+	if common.ReqIsJson(r) {
 		if r.Body == nil {
 			return common.PreErrorJS("No request body", w, r)
 		}
@@ -256,7 +258,7 @@ func routeLockTopic(w http.ResponseWriter, r *http.Request, user common.User) co
 			return common.InternalErrorJSQ(err, w, r, isJs)
 		}
 
-		err = common.AddModLog("lock", tid, "topic", user.LastIP, user.ID)
+		err = common.ModLogs.Create("lock", tid, "topic", user.LastIP, user.ID)
 		if err != nil {
 			return common.InternalErrorJSQ(err, w, r, isJs)
 		}
@@ -299,7 +301,7 @@ func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user common.User) 
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.AddModLog("unlock", tid, "topic", user.LastIP, user.ID)
+	err = common.ModLogs.Create("unlock", tid, "topic", user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -425,7 +427,7 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	err = common.AddModLog("delete", reply.ParentID, "reply", user.LastIP, user.ID)
+	err = common.ModLogs.Create("delete", reply.ParentID, "reply", user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
@@ -588,7 +590,7 @@ func routeIps(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		return common.InternalError(err, w, r)
 	}
 
-	pi := common.IPSearchPage{"IP Search", user, headerVars, userList, ip}
+	pi := common.IPSearchPage{common.GetTitlePhrase("ip-search"), user, headerVars, userList, ip}
 	if common.PreRenderHooks["pre_render_ips"] != nil {
 		if common.RunPreRenderHook("pre_render_ips", w, r, &user, &pi) {
 			return nil
@@ -610,9 +612,9 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User) co
 	if err != nil {
 		return common.LocalError("The provided common.User ID is not a valid number.", w, r, user)
 	}
-	/*if uid == -2 {
-		return common.LocalError("Stop trying to ban Merlin! Ban admin! Bad! No!",w,r,user)
-	}*/
+	if uid == -2 {
+		return common.LocalError("Why don't you like Merlin?", w, r, user)
+	}
 
 	targetUser, err := common.Users.Get(uid)
 	if err == ErrNoRows {
@@ -622,7 +624,7 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User) co
 	}
 
 	// TODO: Is there a difference between IsMod and IsSuperMod? Should we delete the redundant one?
-	if targetUser.IsSuperAdmin || targetUser.IsAdmin || targetUser.IsMod {
+	if targetUser.IsMod {
 		return common.LocalError("You may not ban another staff member.", w, r, user)
 	}
 	if uid == user.ID {
@@ -665,7 +667,7 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User) co
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.AddModLog("ban", uid, "user", user.LastIP, user.ID)
+	err = common.ModLogs.Create("ban", uid, "user", user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -704,7 +706,7 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user common.User) common
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.AddModLog("unban", uid, "user", user.LastIP, user.ID)
+	err = common.ModLogs.Create("unban", uid, "user", user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -738,7 +740,7 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user common.User) com
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.AddModLog("activate", targetUser.ID, "user", user.LastIP, user.ID)
+	err = common.ModLogs.Create("activate", targetUser.ID, "user", user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

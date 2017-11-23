@@ -26,7 +26,7 @@ func main() {
 	for _, adapter := range qgen.Registry {
 		log.Printf("Building the queries for the %s adapter", adapter.GetName())
 		qgen.Install.SetAdapterInstance(adapter)
-		qgen.Install.RegisterPlugin(NewPrimaryKeySpitter()) // TODO: Do we really need to fill the spitter for every adapter?
+		qgen.Install.AddPlugins(NewPrimaryKeySpitter()) // TODO: Do we really need to fill the spitter for every adapter?
 
 		err := writeStatements(adapter)
 		if err != nil {
@@ -75,16 +75,6 @@ func writeStatements(adapter qgen.Adapter) error {
 		return err
 	}
 
-	/*err = writeReplaces(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeUpserts(adapter)
-	if err != nil {
-		return err
-	}*/
-
 	err = writeUpdates(adapter)
 	if err != nil {
 		return err
@@ -125,6 +115,8 @@ func seedTables(adapter qgen.Adapter) error {
 	qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
 	qgen.Install.SimpleInsert("settings", "name, content, type", "'bigpost_min_words','250','int'")
 	qgen.Install.SimpleInsert("settings", "name, content, type", "'megapost_min_words','1000','int'")
+	qgen.Install.SimpleInsert("settings", "name, content, type", "'about_segment_title','','text'")
+	qgen.Install.SimpleInsert("settings", "name, content, type", "'about_segment_body','','text'")
 	qgen.Install.SimpleInsert("themes", "uname, default", "'tempra-simple',1")
 	qgen.Install.SimpleInsert("emails", "email, uid, validated", "'admin@localhost',1,1") // ? - Use a different default email or let the admin input it during installation?
 
@@ -168,6 +160,7 @@ func seedTables(adapter qgen.Adapter) error {
 		CloseTopic
 	*/
 
+	// TODO: Set the permissions on a struct and then serialize the struct and insert that instead of writing raw JSON
 	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, tag", `'Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,1,"Admin"`)
 
 	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, tag", `'Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true}','{}',1,"Mod"`)
@@ -225,8 +218,6 @@ func writeSelects(adapter qgen.Adapter) error {
 	// Looking for getTopic? Your statement is in another castle
 
 	build.Select("getPassword").Table("users").Columns("password, salt").Where("uid = ?").Parse()
-
-	build.Select("getSettings").Table("settings").Columns("name, content, type").Parse()
 
 	build.Select("isPluginActive").Table("plugins").Columns("active").Where("uname = ?").Parse()
 
@@ -314,33 +305,12 @@ func writeInserts(adapter qgen.Adapter) error {
 	return nil
 }
 
-func writeReplaces(adapter qgen.Adapter) (err error) {
-	return nil
-}
-
-// ! Upserts are broken atm
-/*func writeUpserts(adapter qgen.Adapter) (err error) {
-	_, err = adapter.SimpleUpsert("addForumPermsToGroup", "forums_permissions", "gid, fid, preset, permissions", "?,?,?,?", "gid = ? AND fid = ?")
-	if err != nil {
-		return err
-	}
-
-	_, err = adapter.SimpleUpsert("replaceScheduleGroup", "users_groups_scheduler", "uid, set_group, issued_by, issued_at, revert_at, temporary", "?,?,?,UTC_TIMESTAMP(),?,?", "uid = ?")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}*/
-
 func writeUpdates(adapter qgen.Adapter) error {
 	build := adapter.Builder()
 
 	build.Update("editReply").Table("replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
 
 	build.Update("editProfileReply").Table("users_replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
-
-	build.Update("updateSetting").Table("settings").Set("content = ?").Where("name = ?").Parse()
 
 	build.Update("updatePlugin").Table("plugins").Set("active = ?").Where("uname = ?").Parse()
 
@@ -384,8 +354,6 @@ func writeDeletes(adapter qgen.Adapter) error {
 
 func writeSimpleCounts(adapter qgen.Adapter) error {
 	adapter.SimpleCount("reportExists", "topics", "data = ? AND data != '' AND parentID = 1", "")
-
-	adapter.SimpleCount("modlogCount", "moderation_logs", "", "")
 
 	return nil
 }

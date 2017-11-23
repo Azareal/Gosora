@@ -21,8 +21,6 @@ var ListStmt *sql.Stmt
 var MemberListStmt *sql.Stmt
 var MemberListJoinStmt *sql.Stmt
 var GetMemberStmt *sql.Stmt
-var GetGuildStmt *sql.Stmt
-var CreateGuildStmt *sql.Stmt
 var AttachForumStmt *sql.Stmt
 var UnattachForumStmt *sql.Stmt
 var AddMemberStmt *sql.Stmt
@@ -105,8 +103,8 @@ func PrebuildTmplList(user common.User, headerVars *common.HeaderVars) common.CT
 			CreatedAt:      "date",
 			LastUpdateTime: "date",
 			MainForumID:    1,
-			MainForum:      common.Fstore.DirtyGet(1),
-			Forums:         []*common.Forum{common.Fstore.DirtyGet(1)},
+			MainForum:      common.Forums.DirtyGet(1),
+			Forums:         []*common.Forum{common.Forums.DirtyGet(1)},
 		},
 	}
 	listPage := ListPage{"Guild List", user, headerVars, guildList}
@@ -127,9 +125,9 @@ func CommonAreaWidgets(headerVars *common.HeaderVars) {
 		return
 	}
 
-	if common.Themes[headerVars.ThemeName].Sidebars == "left" {
+	if common.Themes[headerVars.Theme.Name].Sidebars == "left" {
 		headerVars.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
-	} else if common.Themes[headerVars.ThemeName].Sidebars == "right" || common.Themes[headerVars.ThemeName].Sidebars == "both" {
+	} else if common.Themes[headerVars.Theme.Name].Sidebars == "right" || common.Themes[headerVars.Theme.Name].Sidebars == "both" {
 		headerVars.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
 	}
 }
@@ -151,9 +149,9 @@ func GuildWidgets(headerVars *common.HeaderVars, guildItem *Guild) (success bool
 		return false
 	}
 
-	if themes[headerVars.ThemeName].Sidebars == "left" {
+	if themes[headerVars.Theme.Name].Sidebars == "left" {
 		headerVars.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
-	} else if themes[headerVars.ThemeName].Sidebars == "right" || themes[headerVars.ThemeName].Sidebars == "both" {
+	} else if themes[headerVars.Theme.Name].Sidebars == "right" || themes[headerVars.Theme.Name].Sidebars == "both" {
 		headerVars.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
 	} else {
 		return false
@@ -194,17 +192,11 @@ func RouteGuildList(w http.ResponseWriter, r *http.Request, user common.User) co
 	}
 
 	pi := ListPage{"Guild List", user, headerVars, guildList}
-	err = common.RunThemeTemplate(headerVars.ThemeName, "guilds_guild_list", pi, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "guilds_guild_list", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 	return nil
-}
-
-func GetGuild(guildID int) (guildItem *Guild, err error) {
-	guildItem = &Guild{ID: guildID}
-	err = GetGuildStmt.QueryRow(guildID).Scan(&guildItem.Name, &guildItem.Desc, &guildItem.Active, &guildItem.Privacy, &guildItem.Joinable, &guildItem.Owner, &guildItem.MemberCount, &guildItem.MainForumID, &guildItem.Backdrop, &guildItem.CreatedAt, &guildItem.LastUpdateTime)
-	return guildItem, err
 }
 
 func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -218,7 +210,7 @@ func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.PreError("Not a valid guild ID", w, r)
 	}
 
-	guildItem, err := GetGuild(guildID)
+	guildItem, err := Gstore.Get(guildID)
 	if err != nil {
 		return common.LocalError("Bad guild", w, r, user)
 	}
@@ -277,32 +269,28 @@ func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	// Create the backing forum
-	fid, err := common.Fstore.Create(guildName, "", true, "")
+	fid, err := common.Forums.Create(guildName, "", true, "")
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
-	res, err := CreateGuildStmt.Exec(guildName, guildDesc, guildActive, guildPrivacy, user.ID, fid)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	lastID, err := res.LastInsertId()
+	gid, err := Gstore.Create(guildName, guildDesc, guildActive, guildPrivacy, user.ID, fid)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
 	// Add the main backing forum to the forum list
-	err = AttachForum(int(lastID), fid)
+	err = AttachForum(gid, fid)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
-	_, err = AddMemberStmt.Exec(lastID, user.ID, 2)
+	_, err = AddMemberStmt.Exec(gid, user.ID, 2)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
-	http.Redirect(w, r, BuildGuildURL(common.NameToSlug(guildName), int(lastID)), http.StatusSeeOther)
+	http.Redirect(w, r, BuildGuildURL(common.NameToSlug(guildName), gid), http.StatusSeeOther)
 	return nil
 }
 
@@ -322,9 +310,7 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.PreError("Not a valid group ID", w, r)
 	}
 
-	var guildItem = &Guild{ID: guildID}
-	var mainForum int // Unused
-	err = GetGuildStmt.QueryRow(guildID).Scan(&guildItem.Name, &guildItem.Desc, &guildItem.Active, &guildItem.Privacy, &guildItem.Joinable, &guildItem.Owner, &guildItem.MemberCount, &mainForum, &guildItem.Backdrop, &guildItem.CreatedAt, &guildItem.LastUpdateTime)
+	guildItem, err := Gstore.Get(guildID)
 	if err != nil {
 		return common.LocalError("Bad group", w, r, user)
 	}
@@ -380,7 +366,7 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 			return nil
 		}
 	}
-	err = common.RunThemeTemplate(headerVars.ThemeName, "guilds_member_list", pi, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "guilds_member_list", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -439,7 +425,7 @@ func TrowAssign(args ...interface{}) interface{} {
 // TODO: It would be nice, if you could select one of the boards in the group from that drop-down rather than just the one you got linked from
 func TopicCreatePreLoop(args ...interface{}) interface{} {
 	var fid = args[2].(int)
-	if common.Fstore.DirtyGet(fid).ParentType == "guild" {
+	if common.Forums.DirtyGet(fid).ParentType == "guild" {
 		var strictmode = args[5].(*bool)
 		*strictmode = true
 	}
@@ -452,14 +438,14 @@ func TopicCreatePreLoop(args ...interface{}) interface{} {
 func ForumCheck(args ...interface{}) (skip bool, rerr common.RouteError) {
 	var r = args[1].(*http.Request)
 	var fid = args[3].(*int)
-	var forum = common.Fstore.DirtyGet(*fid)
+	var forum = common.Forums.DirtyGet(*fid)
 
 	if forum.ParentType == "guild" {
 		var err error
 		var w = args[0].(http.ResponseWriter)
 		guildItem, ok := r.Context().Value("guilds_current_group").(*Guild)
 		if !ok {
-			guildItem, err = GetGuild(forum.ParentID)
+			guildItem, err = Gstore.Get(forum.ParentID)
 			if err != nil {
 				return true, common.InternalError(errors.New("Unable to find the parent group for a forum"), w, r)
 			}

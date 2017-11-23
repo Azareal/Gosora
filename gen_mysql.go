@@ -12,7 +12,6 @@ import "./common"
 // nolint
 type Stmts struct {
 	getPassword *sql.Stmt
-	getSettings *sql.Stmt
 	isPluginActive *sql.Stmt
 	getUsersOffset *sql.Stmt
 	isThemeDefault *sql.Stmt
@@ -47,7 +46,6 @@ type Stmts struct {
 	createWordFilter *sql.Stmt
 	editReply *sql.Stmt
 	editProfileReply *sql.Stmt
-	updateSetting *sql.Stmt
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
@@ -63,7 +61,6 @@ type Stmts struct {
 	deleteActivityStreamMatch *sql.Stmt
 	deleteWordFilter *sql.Stmt
 	reportExists *sql.Stmt
-	modlogCount *sql.Stmt
 	notifyWatchers *sql.Stmt
 
 	getActivityFeedByWatcher *sql.Stmt
@@ -87,12 +84,6 @@ func _gen_mysql() (err error) {
 	
 	log.Print("Preparing getPassword statement.")
 	stmts.getPassword, err = db.Prepare("SELECT `password`,`salt` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing getSettings statement.")
-	stmts.getSettings, err = db.Prepare("SELECT `name`,`content`,`type` FROM `settings`")
 	if err != nil {
 		return err
 	}
@@ -301,12 +292,6 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing updateSetting statement.")
-	stmts.updateSetting, err = db.Prepare("UPDATE `settings` SET `content` = ? WHERE `name` = ?")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing updatePlugin statement.")
 	stmts.updatePlugin, err = db.Prepare("UPDATE `plugins` SET `active` = ? WHERE `uname` = ?")
 	if err != nil {
@@ -393,12 +378,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing reportExists statement.")
 	stmts.reportExists, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `topics` WHERE `data` = ? AND `data` != '' AND `parentID` = 1")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing modlogCount statement.")
-	stmts.modlogCount, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `moderation_logs`")
 	if err != nil {
 		return err
 	}

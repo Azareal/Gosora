@@ -11,7 +11,6 @@ import "./common"
 type Stmts struct {
 	editReply *sql.Stmt
 	editProfileReply *sql.Stmt
-	updateSetting *sql.Stmt
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
@@ -51,12 +50,6 @@ func _gen_pgsql() (err error) {
 		
 	log.Print("Preparing editProfileReply statement.")
 	stmts.editProfileReply, err = db.Prepare("UPDATE `users_replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing updateSetting statement.")
-	stmts.updateSetting, err = db.Prepare("UPDATE `settings` SET `content` = ? WHERE `name` = ?")
 	if err != nil {
 		return err
 	}

@@ -29,6 +29,61 @@ type Globs struct {
 	stmts *Stmts
 }
 
+func afterDBInit() (err error) {
+	common.Rstore, err = common.NewSQLReplyStore()
+	if err != nil {
+		return err
+	}
+	common.Prstore, err = common.NewSQLProfileReplyStore()
+	if err != nil {
+		return err
+	}
+
+	err = common.InitTemplates()
+	if err != nil {
+		return err
+	}
+	err = common.InitPhrases()
+	if err != nil {
+		return err
+	}
+
+	log.Print("Loading the static files.")
+	err = common.StaticFiles.Init()
+	if err != nil {
+		return err
+	}
+
+	log.Print("Initialising the widgets")
+	err = common.InitWidgets()
+	if err != nil {
+		return err
+	}
+
+	log.Print("Initialising the authentication system")
+	common.Auth, err = common.NewDefaultAuth()
+	if err != nil {
+		return err
+	}
+
+	err = common.LoadWordFilters()
+	if err != nil {
+		return err
+	}
+
+	common.ModLogs, err = common.NewModLogStore()
+	if err != nil {
+		return err
+	}
+
+	common.AdminLogs, err = common.NewAdminLogStore()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // TODO: Split this function up
 func main() {
 	// TODO: Recover from panics
@@ -90,44 +145,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	common.Rstore, err = common.NewSQLReplyStore()
-	if err != nil {
-		log.Fatal(err)
-	}
-	common.Prstore, err = common.NewSQLProfileReplyStore()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = common.InitTemplates()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = common.InitPhrases()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Print("Loading the static files.")
-	err = common.StaticFiles.Init()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Print("Initialising the widgets")
-	err = common.InitWidgets()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Print("Initialising the authentication system")
-	common.Auth, err = common.NewDefaultAuth()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = common.LoadWordFilters()
+	err = afterDBInit()
 	if err != nil {
 		log.Fatal(err)
 	}

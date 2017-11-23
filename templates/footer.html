@@ -1,10 +1,16 @@
+{{if .Header.Theme.AboutSegment}}<div class="about">
+	<a id="aboutTitle">{{.Header.Settings.about_segment_title}}</a>
+	<span id="aboutDesc">{{.Header.Settings.about_segment_body}}</span>
+</div>{{end}}
 <div class="footer">
-	<div id="poweredBy">Powered by Gosora - <span>Made with love by Azareal</span></div>
+	<div id="poweredBy">
+		<a id="poweredByName" href="https://github.com/Azareal/Gosora">Powered by Gosora</a><span id="poweredByDash"> - </span><span id="poweredByMaker">Made with love by Azareal</span>
+	</div>
 	<form action="/theme/" method="post">
 		<div id="themeSelector" style="float: right;">
 			<select id="themeSelectorSelect" name="themeSelector" aria-label="Change the site's appearance">
 				{{range .Header.Themes}}
-    			{{if not .HideFromThemes}}<option val="{{.Name}}"{{if eq $.Header.ThemeName .Name}} selected{{end}}>{{.FriendlyName}}</option>{{end}}
+    			{{if not .HideFromThemes}}<option val="{{.Name}}"{{if eq $.Header.Theme.Name .Name}} selected{{end}}>{{.FriendlyName}}</option>{{end}}
 				{{end}}
 			</select>
 		</div>

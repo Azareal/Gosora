@@ -55,12 +55,12 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user common.User, 
 	var forumList []common.Forum
 	var canSee []int
 	if user.IsSuperAdmin {
-		canSee, err = common.Fstore.GetAllVisibleIDs()
+		canSee, err = common.Forums.GetAllVisibleIDs()
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
 	} else {
-		group, err := common.Gstore.Get(user.Group)
+		group, err := common.Groups.Get(user.Group)
 		if err != nil {
 			// TODO: Refactor this
 			common.LocalError("Something weird happened behind the scenes", w, r, user)
@@ -78,7 +78,7 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user common.User, 
 		}
 
 		// Do a bulk forum fetch, just in case it's the SqlForumStore?
-		forum := common.Fstore.DirtyGet(ffid)
+		forum := common.Forums.DirtyGet(ffid)
 		if forum.Name != "" && forum.Active {
 			fcopy := forum.Copy()
 			if common.Hooks["topic_create_frow_assign"] != nil {
@@ -98,7 +98,7 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user common.User, 
 		}
 	}
 
-	err = common.RunThemeTemplate(headerVars.ThemeName, "create-topic", ctpage, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "create-topic", ctpage, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -340,7 +340,7 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user common.User) 
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.Fstore.UpdateLastTopic(tid, user.ID, topic.ParentID)
+	err = common.Forums.UpdateLastTopic(tid, user.ID, topic.ParentID)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -623,7 +623,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.Fstore.AddTopic(int(lastID), user.ID, fid)
+	err = common.Forums.AddTopic(int(lastID), user.ID, fid)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}

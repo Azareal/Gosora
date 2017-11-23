@@ -35,47 +35,50 @@ func InitDatabase() (err error) {
 	}
 
 	log.Print("Loading the usergroups.")
-	common.Gstore, err = common.NewMemoryGroupStore()
+	common.Groups, err = common.NewMemoryGroupStore()
 	if err != nil {
 		return err
 	}
-	err2 := common.Gstore.LoadGroups()
+	err2 := common.Groups.LoadGroups()
 	if err2 != nil {
 		return err2
 	}
 
 	// We have to put this here, otherwise LoadForums() won't be able to get the last poster data when building it's forums
 	log.Print("Initialising the user and topic stores")
+
+	var ucache common.UserCache
+	var tcache common.TopicCache
 	if common.Config.CacheTopicUser == common.CACHE_STATIC {
-		common.Users, err = common.NewMemoryUserStore(common.Config.UserCacheCapacity)
-		common.Topics, err2 = common.NewMemoryTopicStore(common.Config.TopicCacheCapacity)
-	} else {
-		common.Users, err = common.NewSQLUserStore()
-		common.Topics, err2 = common.NewSQLTopicStore()
+		ucache = common.NewMemoryUserCache(common.Config.UserCacheCapacity)
+		tcache = common.NewMemoryTopicCache(common.Config.TopicCacheCapacity)
 	}
+
+	common.Users, err = common.NewDefaultUserStore(ucache)
 	if err != nil {
 		return err
 	}
-	if err2 != nil {
+	common.Topics, err = common.NewDefaultTopicStore(tcache)
+	if err != nil {
 		return err2
 	}
 
 	log.Print("Loading the forums.")
-	common.Fstore, err = common.NewMemoryForumStore()
+	common.Forums, err = common.NewMemoryForumStore()
 	if err != nil {
 		return err
 	}
-	err = common.Fstore.LoadForums()
+	err = common.Forums.LoadForums()
 	if err != nil {
 		return err
 	}
 
 	log.Print("Loading the forum permissions.")
-	common.Fpstore, err = common.NewMemoryForumPermsStore()
+	common.FPStore, err = common.NewMemoryForumPermsStore()
 	if err != nil {
 		return err
 	}
-	err = common.Fpstore.Init()
+	err = common.FPStore.Init()
 	if err != nil {
 		return err
 	}

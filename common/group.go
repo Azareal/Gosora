@@ -51,7 +51,7 @@ func (group *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err err
 		return err
 	}
 
-	Gstore.Reload(group.ID)
+	Groups.Reload(group.ID)
 	return nil
 }
 

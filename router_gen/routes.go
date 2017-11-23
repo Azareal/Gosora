@@ -68,8 +68,8 @@ func buildPanelRoutes() {
 		Action("routePanelForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "extra_data"),
 
 		View("routePanelSettings", "/panel/settings/"),
-		View("routePanelSetting", "/panel/settings/edit/", "extra_data"),
-		Action("routePanelSettingEdit", "/panel/settings/edit/submit/", "extra_data"),
+		View("routePanelSettingEdit", "/panel/settings/edit/", "extra_data"),
+		Action("routePanelSettingEditSubmit", "/panel/settings/edit/submit/", "extra_data"),
 
 		View("routePanelWordFilters", "/panel/settings/word-filters/"),
 		Action("routePanelWordFiltersCreate", "/panel/settings/word-filters/create/"),

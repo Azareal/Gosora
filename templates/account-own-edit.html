@@ -1,11 +1,11 @@
 {{template "header.html" . }}
-<main class="colstack account">
+<div class="colstack account">
 	{{template "account-menu.html" . }}
-	<div class="colstack_right">
+	<main class="colstack_right">
 		<div class="colstack_item colstack_head rowhead">
 			<div class="rowitem"><h1>Edit Password</h1></div>
 		</div>
-		<div class="colstack_item form_item">
+		<div class="colstack_item the_form">
 			<form action="/user/edit/critical/submit/" method="post">
 				<div class="formrow real_first_child">
 					<div class="formitem formlabel"><a>Current Password</a></div>
@@ -24,6 +24,6 @@
 				</div>
 			</form>
 		</div>
-	</div>
-</main>
+	</main>
+</div>
 {{template "footer.html" . }}
