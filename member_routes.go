@@ -41,8 +41,8 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user common.User, 
 	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
 		return common.NoPermissions(w, r, user)
 	}
-
-	common.BuildWidgets("create_topic", nil, headerVars, r)
+	headerVars.Zone = "create_topic"
+	headerVars.Writer = w
 
 	// Lock this to the forum being linked?
 	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)

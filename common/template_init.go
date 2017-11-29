@@ -138,7 +138,6 @@ func compileTemplates() error {
 	}
 
 	for _, forum := range forums {
-		//log.Printf("*forum %+v\n", *forum)
 		forumList = append(forumList, *forum)
 	}
 	varList = make(map[string]tmpl.VarItem)
@@ -270,6 +269,10 @@ func InitTemplates() error {
 			return 0
 		}
 		return leftInt / rightInt
+	}
+
+	fmap["dock"] = func(dock interface{}, headerVarInt interface{}) interface{} {
+		return template.HTML(BuildWidget(dock.(string), headerVarInt.(*HeaderVars)))
 	}
 
 	// The interpreted templates...

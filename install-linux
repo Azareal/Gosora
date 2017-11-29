@@ -28,6 +28,9 @@ go get -u github.com/robertkrimen/otto
 echo "Installing the Rez Image Resizer"
 go get -u github.com/bamiaux/rez
 
+echo "Installing fsnotify"
+go get -u github.com/fsnotify/fsnotify
+
 
 echo "Building the installer"
 cd ./install

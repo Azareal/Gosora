@@ -111,6 +111,8 @@ go get -u github.com/lib/pq
 
 go get -u github.com/denisenkom/go-mssqldb
 
+go get -u github.com/fsnotify/fsnotify
+
 
 go generate
 
@@ -166,7 +168,7 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 More images in the /images/ folder. Beware though, some of them are *really* outdated.
 
-# Dependencies
+# Dependencies (a few of these like Riot aren't currently in use, but we anticipate that we'll need some sort of search engine library in the very immediate future)
 
 * Go 1.9
 
@@ -193,6 +195,10 @@ More images in the /images/ folder. Beware though, some of them are *really* out
 * ithub.com/denisenkom/go-mssqldb For interfacing with MSSQL. You will be able to pick this instead of MSSQL soon.
 
 * github.com/go-ego/riot A search engine library.
+
+* github.com/bamiaux/rez An image resizer (e.g. for spitting out thumbnails)
+
+* github.com/fsnotify/fsnotify A library for watching events on the file system.
 
 # Bundled Plugins
 

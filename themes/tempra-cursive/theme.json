@@ -8,5 +8,5 @@
 	"MobileFriendly": true,
 	"HideFromThemes": true,
 	"URL": "github.com/Azareal/Gosora",
-	"Sidebars":"right"
+	"Docks":["rightSidebar"]
 }

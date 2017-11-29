@@ -26,7 +26,6 @@ var Hooks = map[string][]func(interface{}) interface{}{
 
 // Hooks with a variable number of arguments
 var Vhooks = map[string]func(...interface{}) interface{}{
-	"intercept_build_widgets": nil,
 	"forum_trow_assign":       nil,
 	"topics_topic_row_assign": nil,
 	//"topics_user_row_assign": nil,

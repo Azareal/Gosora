@@ -2,7 +2,6 @@ package common
 
 import (
 	"html"
-	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -21,30 +20,6 @@ var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid 
 var MemberCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, err RouteError) = memberCheck
 var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
 var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, err RouteError) = userCheck
-
-// TODO: Support for left sidebars and sidebars on both sides
-// http.Request is for context.Context middleware. Mostly for plugin_guilds right now
-func BuildWidgets(zone string, data interface{}, headerVars *HeaderVars, r *http.Request) {
-	if Vhooks["intercept_build_widgets"] != nil {
-		if RunVhook("intercept_build_widgets", zone, data, headerVars, r).(bool) {
-			return
-		}
-	}
-
-	if Themes[headerVars.Theme.Name].Sidebars == "right" {
-		if len(Docks.RightSidebar) != 0 {
-			var sbody string
-			for _, widget := range Docks.RightSidebar {
-				if widget.Enabled {
-					if widget.Location == "global" || widget.Location == zone {
-						sbody += widget.Body
-					}
-				}
-			}
-			headerVars.Widgets.RightSidebar = template.HTML(sbody)
-		}
-	}
-}
 
 func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, rerr RouteError) {
 	if !Forums.Exists(fid) {
@@ -140,6 +115,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		Settings: SettingBox.Load().(SettingMap),
 		Themes:   Themes,
 		Theme:    theme,
+		Zone:     "panel",
 	}
 	// TODO: We should probably initialise headerVars.ExtData
 
@@ -231,6 +207,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 		Settings: SettingBox.Load().(SettingMap),
 		Themes:   Themes,
 		Theme:    theme,
+		Zone:     "frontend",
 	}
 
 	if user.IsBanned {

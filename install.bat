@@ -85,6 +85,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Installing fsnotify
+go get -u github.com/fsnotify/fsnotify
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 
 echo Building the installer
 go generate

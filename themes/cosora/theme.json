@@ -5,7 +5,7 @@
 	"Creator": "Azareal",
 	"URL": "github.com/Azareal/Gosora",
 	"Tag": "WIP",
-	"Sidebars":"right",
+	"Docks":["rightSidebar","footer"],
 	"AboutSegment":true,
 	"Templates": [
 		{

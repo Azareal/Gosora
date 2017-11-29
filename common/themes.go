@@ -30,25 +30,22 @@ var ChangeDefaultThemeMutex sync.Mutex
 
 // TODO: Use this when the default theme doesn't exist
 var fallbackTheme = "shadow"
-
-//var overridenTemplates map[string]interface{} = make(map[string]interface{})
 var overridenTemplates = make(map[string]bool)
 
 type Theme struct {
-	Name           string
-	FriendlyName   string
-	Version        string
-	Creator        string
-	FullImage      string
-	MobileFriendly bool
-	Disabled       bool
-	HideFromThemes bool
-	ForkOf         string
-	Tag            string
-	URL            string
-	Sidebars       string // Allowed Values: left, right, both, false
-	AboutSegment   bool   // ? - Should this be a theme var instead?
-	//DisableMinifier // Is this really a good idea? I don't think themes should be fighting against the minifier
+	Name              string
+	FriendlyName      string
+	Version           string
+	Creator           string
+	FullImage         string
+	MobileFriendly    bool
+	Disabled          bool
+	HideFromThemes    bool
+	ForkOf            string
+	Tag               string
+	URL               string
+	Docks             []string // Allowed Values: leftSidebar, rightSidebar, footer
+	AboutSegment      bool     // ? - Should this be a theme var instead?
 	Settings          map[string]ThemeSetting
 	Templates         []TemplateMapping
 	TemplatesMap      map[string]string
@@ -117,12 +114,12 @@ func (themes ThemeList) LoadActiveStatus() error {
 		}
 
 		if defaultThemeSwitch {
-			log.Print("Loading the default theme '" + theme.Name + "'")
+			log.Printf("Loading the default theme '%s'", theme.Name)
 			theme.Active = true
 			DefaultThemeBox.Store(theme.Name)
 			MapThemeTemplates(theme)
 		} else {
-			log.Print("Loading the theme '" + theme.Name + "'")
+			log.Printf("Loading the theme '%s'", theme.Name)
 			theme.Active = false
 		}
 
@@ -144,7 +141,7 @@ func InitThemes() error {
 		}
 
 		themeName := themeFile.Name()
-		log.Print("Adding theme '" + themeName + "'")
+		log.Printf("Adding theme '%s'", themeName)
 		themeFile, err := ioutil.ReadFile("./themes/" + themeName + "/theme.json")
 		if err != nil {
 			return err
@@ -172,9 +169,7 @@ func InitThemes() error {
 		}
 
 		if theme.FullImage != "" {
-			if Dev.DebugMode {
-				log.Print("Adding theme image")
-			}
+			debugLog("Adding theme image")
 			err = StaticFiles.Add("./themes/"+themeName+"/"+theme.FullImage, "./themes/"+themeName)
 			if err != nil {
 				return err
@@ -207,9 +202,7 @@ func InitThemes() error {
 func AddThemeStaticFiles(theme Theme) error {
 	// TODO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
 	return filepath.Walk("./themes/"+theme.Name+"/public", func(path string, f os.FileInfo, err error) error {
-		if Dev.DebugMode {
-			log.Print("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
-		}
+		debugLog("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
 		if err != nil {
 			return err
 		}
@@ -224,13 +217,10 @@ func AddThemeStaticFiles(theme Theme) error {
 		}
 
 		var ext = filepath.Ext(path)
-		//log.Print("path ",path)
-		//log.Print("ext ",ext)
 		if ext == ".css" && len(data) != 0 {
 			var b bytes.Buffer
 			var pieces = strings.Split(path, "/")
 			var filename = pieces[len(pieces)-1]
-			//log.Print("filename ", filename)
 			err = theme.ResourceTemplates.ExecuteTemplate(&b, filename, CSSData{ComingSoon: "We don't have any data to pass you yet!"})
 			if err != nil {
 				return err
@@ -242,9 +232,7 @@ func AddThemeStaticFiles(theme Theme) error {
 		gzipData := compressBytesGzip(data)
 		StaticFiles["/static/"+theme.Name+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
 
-		if Dev.DebugMode {
-			log.Print("Added the '/" + theme.Name + path + "' static file for theme " + theme.Name + ".")
-		}
+		debugLog("Added the '/" + theme.Name + path + "' static file for theme " + theme.Name + ".")
 		return nil
 	})
 }
@@ -349,14 +337,12 @@ func ResetTemplateOverrides() {
 
 		originPointer, ok := TmplPtrMap["o_"+name]
 		if !ok {
-			//log.Fatal("The origin template doesn't exist!")
 			log.Print("The origin template doesn't exist!")
 			return
 		}
 
 		destTmplPtr, ok := TmplPtrMap[name]
 		if !ok {
-			//log.Fatal("The destination template doesn't exist!")
 			log.Print("The destination template doesn't exist!")
 			return
 		}
@@ -518,4 +504,13 @@ func GetDefaultThemeName() string {
 
 func SetDefaultThemeName(name string) {
 	DefaultThemeBox.Store(name)
+}
+
+func (theme Theme) HasDock(name string) bool {
+	for _, dock := range theme.Docks {
+		if dock == name {
+			return true
+		}
+	}
+	return false
 }

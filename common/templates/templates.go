@@ -91,6 +91,7 @@ func (c *CTemplateSet) Compile(name string, dir string, expects string, expectsI
 		"subtract": true,
 		"multiply": true,
 		"divide":   true,
+		"dock":     true,
 	}
 
 	c.importMap = map[string]string{
@@ -450,7 +451,10 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 	case *parse.IdentifierNode:
 		c.log("Identifier Node:", node)
 		c.log("Identifier Node Args:", node.Args)
-		out, outval := c.compileIdentSwitch(varholder, holdreflect, templateName, node)
+		out, outval, lit := c.compileIdentSwitch(varholder, holdreflect, templateName, node)
+		if lit {
+			return out
+		}
 		return c.compileVarsub(out, outval, "")
 	default:
 		return c.unknownNode(node)
@@ -507,7 +511,7 @@ func (c *CTemplateSet) unknownNode(node parse.Node) (out string) {
 
 func (c *CTemplateSet) compileIdentSwitchN(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
 	c.log("in compileIdentSwitchN")
-	out, _ = c.compileIdentSwitch(varholder, holdreflect, templateName, node)
+	out, _, _ = c.compileIdentSwitch(varholder, holdreflect, templateName, node)
 	return out
 }
 
@@ -541,7 +545,7 @@ func (c *CTemplateSet) simpleMath(varholder string, holdreflect reflect.Value, t
 }
 
 func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, symbol string) (pos2 int, out string) {
-	c.log("Building " + symbol + " function")
+	c.logf("Building %s function", symbol)
 	if pos == 0 {
 		fmt.Println("pos:", pos)
 		panic(symbol + " is missing a left operand")
@@ -572,7 +576,7 @@ func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, 
 	return pos, out
 }
 
-func (c *CTemplateSet) compileIdentSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, val reflect.Value) {
+func (c *CTemplateSet) compileIdentSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, val reflect.Value, literal bool) {
 	c.log("in compileIdentSwitch")
 ArgLoop:
 	for pos := 0; pos < len(node.Args); pos++ {
@@ -624,6 +628,35 @@ ArgLoop:
 			out += rout
 			val = rval
 			break ArgLoop
+		case "dock":
+			var leftParam, rightParam string
+			// TODO: Implement string literals properly
+			leftOperand := node.Args[pos+1].String()
+			rightOperand := node.Args[pos+2].String()
+
+			if len(leftOperand) == 0 || len(rightOperand) == 0 {
+				panic("The left or right operand for function dock cannot be left blank")
+			}
+			if leftOperand[0] == '"' {
+				leftParam = leftOperand
+			} else {
+				leftParam, _ = c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
+			}
+			if rightOperand[0] == '"' {
+				panic("The right operand for function dock cannot be a string")
+			}
+
+			rightParam, val3 := c.compileIfVarsub(rightOperand, varholder, templateName, holdreflect)
+			if val3.IsValid() {
+				val = val3
+			} else {
+				panic("val3 is invalid")
+			}
+
+			// TODO: Refactor this
+			out = "w.Write([]byte(common.BuildWidget(" + leftParam + "," + rightParam + ")))\n"
+			literal = true
+			break ArgLoop
 		default:
 			c.log("Variable!")
 			if len(node.Args) > (pos + 1) {
@@ -635,7 +668,7 @@ ArgLoop:
 			out += c.compileIfVarsubN(id.String(), varholder, templateName, holdreflect)
 		}
 	}
-	return out, val
+	return out, val, literal
 }
 
 func (c *CTemplateSet) compileReflectSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, outVal reflect.Value) {
@@ -778,6 +811,12 @@ func (c *CTemplateSet) compileBoolsub(varname string, varholder string, template
 
 func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines string) (out string) {
 	c.log("in compileVarsub")
+
+	// Is this a literal string?
+	if len(varname) != 0 && varname[0] == '"' {
+		return assLines + "w.Write([]byte(" + varname + "))\n"
+	}
+
 	for _, varItem := range c.varList {
 		if strings.HasPrefix(varname, varItem.Destination) {
 			varname = strings.Replace(varname, varItem.Destination, varItem.Name, 1)
@@ -818,7 +857,7 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines
 		fmt.Println("Unknown Variable Name:", varname)
 		fmt.Println("Unknown Kind:", val.Kind())
 		fmt.Println("Unknown Type:", val.Type().Name())
-		panic("// I don't know what this variable's type is o.o\n")
+		panic("-- I don't know what this variable's type is o.o\n")
 	}
 	c.log("out: ", out)
 	return assLines + out
@@ -826,7 +865,7 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines
 
 func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflect.Value, node *parse.TemplateNode) (out string) {
 	c.log("in compileSubtemplate")
-	c.log("Template Node:", node.Name)
+	c.log("Template Node: ", node.Name)
 
 	fname := strings.TrimSuffix(node.Name, filepath.Ext(node.Name))
 	varholder := "tmpl_" + fname + "_vars"
@@ -841,8 +880,8 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 			case *parse.NilNode:
 				panic("Nil is not a command x.x")
 			default:
-				out = "var " + varholder + " := false\n"
-				out += c.compileCommand(cmd)
+				c.log("Unknown Node: ", firstWord)
+				panic("")
 			}
 		}
 	}
@@ -883,14 +922,16 @@ func (c *CTemplateSet) log(args ...interface{}) {
 	}
 }
 
+func (c *CTemplateSet) logf(left string, args ...interface{}) {
+	if c.superDebug {
+		fmt.Printf(left, args...)
+	}
+}
+
 func (c *CTemplateSet) error(args ...interface{}) {
 	if c.debug {
 		fmt.Println(args...)
 	}
-}
-
-func (c *CTemplateSet) compileCommand(*parse.CommandNode) (out string) {
-	panic("Uh oh! Something went wrong!")
 }
 
 // TODO: Write unit tests for this

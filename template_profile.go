@@ -161,37 +161,26 @@ w.Write(profile_41)
 }
 w.Write(profile_42)
 w.Write(profile_43)
-if tmpl_profile_vars.Header.Theme.AboutSegment {
 w.Write(footer_0)
-dispInt := tmpl_profile_vars.Header.Settings["about_segment_title"]
-w.Write([]byte(dispInt.(string)))
+w.Write([]byte(common.BuildWidget("footer",tmpl_profile_vars.Header)))
 w.Write(footer_1)
-dispInt = tmpl_profile_vars.Header.Settings["about_segment_body"]
-w.Write([]byte(dispInt.(string)))
-w.Write(footer_2)
-}
-w.Write(footer_3)
 if len(tmpl_profile_vars.Header.Themes) != 0 {
 for _, item := range tmpl_profile_vars.Header.Themes {
 if !item.HideFromThemes {
-w.Write(footer_4)
+w.Write(footer_2)
 w.Write([]byte(item.Name))
-w.Write(footer_5)
+w.Write(footer_3)
 if tmpl_profile_vars.Header.Theme.Name == item.Name {
+w.Write(footer_4)
+}
+w.Write(footer_5)
+w.Write([]byte(item.FriendlyName))
 w.Write(footer_6)
 }
+}
+}
 w.Write(footer_7)
-w.Write([]byte(item.FriendlyName))
+w.Write([]byte(common.BuildWidget("rightSidebar",tmpl_profile_vars.Header)))
 w.Write(footer_8)
-}
-}
-}
-w.Write(footer_9)
-if tmpl_profile_vars.Header.Widgets.RightSidebar != "" {
-w.Write(footer_10)
-w.Write([]byte(string(tmpl_profile_vars.Header.Widgets.RightSidebar)))
-w.Write(footer_11)
-}
-w.Write(footer_12)
 	return nil
 }

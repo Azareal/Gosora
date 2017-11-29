@@ -6,7 +6,7 @@
 	"FullImage": "tempra-conflux.png",
 	"MobileFriendly": true,
 	"URL": "github.com/Azareal/Gosora",
-	"Sidebars":"right",
+	"Docks":["rightSidebar"],
 	"Templates": [
 		{
 			"Name": "topic",

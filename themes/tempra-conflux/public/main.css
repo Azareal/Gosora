@@ -860,7 +860,7 @@ button.username {
 	margin-bottom: 6px !important;
 }
 
-.footer {
+#poweredByHolder {
 	border: 1px solid var(--main-border-color);
 	margin-top: 12px;
 	clear: both;
@@ -871,7 +871,7 @@ button.username {
 	background-color: white;
 	border-bottom: 1.5px inset var(--main-border-color);
 }
-.footer select {
+#poweredByHolder select {
 	padding: 2px;
 	margin-top: 1px;
 }
@@ -902,13 +902,13 @@ button.username {
 
 /* Firefox specific CSS */
 @supports (-moz-appearance: none) {
-	.footer, .rowmenu, #profile_right_lane .topic_reply_form, .content_container {
+	#poweredByHolder, .rowmenu, #profile_right_lane .topic_reply_form, .content_container {
 		border-bottom: 2px inset hsl(0,0%,40%);
 	}
 }
 /* Edge... We can't get the exact shade here, because of how they implemented it x.x */
 @supports (-ms-ime-align:auto) {
-	.footer, .rowmenu, #profile_right_lane .topic_reply_form, .content_container {
+	#poweredByHolder, .rowmenu, #profile_right_lane .topic_reply_form, .content_container {
 		border-bottom: 1.5px inset hsl(0,0%,100%);
 	}
 }

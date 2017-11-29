@@ -264,36 +264,31 @@ var topic_100 = []byte(`
 </main>
 
 `)
-var footer_0 = []byte(`<div class="about">
-	<a id="aboutTitle">`)
-var footer_1 = []byte(`</a>
-	<span id="aboutDesc">`)
-var footer_2 = []byte(`</span>
-</div>`)
-var footer_3 = []byte(`
-<div class="footer">
-	<div id="poweredBy">
-		<a id="poweredByName" href="https://github.com/Azareal/Gosora">Powered by Gosora</a><span id="poweredByDash"> - </span><span id="poweredByMaker">Made with love by Azareal</span>
-	</div>
-	<form action="/theme/" method="post">
-		<div id="themeSelector" style="float: right;">
-			<select id="themeSelectorSelect" name="themeSelector" aria-label="Change the site's appearance">
-				`)
-var footer_4 = []byte(`<option val="`)
-var footer_5 = []byte(`"`)
-var footer_6 = []byte(` selected`)
-var footer_7 = []byte(`>`)
-var footer_8 = []byte(`</option>`)
-var footer_9 = []byte(`
-			</select>
+var footer_0 = []byte(`<div class="footer">
+	`)
+var footer_1 = []byte(`
+	<div id="poweredByHolder" class="footerBit">
+		<div id="poweredBy">
+			<a id="poweredByName" href="https://github.com/Azareal/Gosora">Powered by Gosora</a><span id="poweredByDash"> - </span><span id="poweredByMaker">Made with love by Azareal</span>
 		</div>
-	</form>
+		<form action="/theme/" method="post">
+			<div id="themeSelector" style="float: right;">
+				<select id="themeSelectorSelect" name="themeSelector" aria-label="Change the site's appearance">
+				`)
+var footer_2 = []byte(`<option val="`)
+var footer_3 = []byte(`"`)
+var footer_4 = []byte(` selected`)
+var footer_5 = []byte(`>`)
+var footer_6 = []byte(`</option>`)
+var footer_7 = []byte(`
+				</select>
+			</div>
+		</form>
+	</div>
 </div>
 					</div>
-				`)
-var footer_10 = []byte(`<aside class="sidebar">`)
-var footer_11 = []byte(`</aside>`)
-var footer_12 = []byte(`
+				<aside class="sidebar">`)
+var footer_8 = []byte(`</aside>
 				<div style="clear: both;"></div>
 			</div>
 		</div>

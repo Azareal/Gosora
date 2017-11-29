@@ -112,6 +112,7 @@ func PrebuildTmplList(user common.User, headerVars *common.HeaderVars) common.CT
 }
 
 // TODO: Do this properly via the widget system
+// TODO: REWRITE THIS
 func CommonAreaWidgets(headerVars *common.HeaderVars) {
 	// TODO: Hot Groups? Featured Groups? Official Groups?
 	var b bytes.Buffer
@@ -125,9 +126,9 @@ func CommonAreaWidgets(headerVars *common.HeaderVars) {
 		return
 	}
 
-	if common.Themes[headerVars.Theme.Name].Sidebars == "left" {
+	if headerVars.Theme.HasDock("leftSidebar") {
 		headerVars.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
-	} else if common.Themes[headerVars.Theme.Name].Sidebars == "right" || common.Themes[headerVars.Theme.Name].Sidebars == "both" {
+	} else if headerVars.Theme.HasDock("rightSidebar") {
 		headerVars.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
 	}
 }

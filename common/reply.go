@@ -131,6 +131,10 @@ func (reply *Reply) Copy() Reply {
 	return *reply
 }
 
-func BlankReply() *Reply {
-	return &Reply{ID: 0}
+func BlankReply(ids ...int) *Reply {
+	var id int
+	if len(ids) != 0 {
+		id = ids[0]
+	}
+	return &Reply{ID: id}
 }

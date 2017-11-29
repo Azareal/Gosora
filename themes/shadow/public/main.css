@@ -511,7 +511,7 @@ input, select, textarea {
 	padding-left: 30px;
 }
 
-.footer {
+#poweredByHolder {
     background-color: var(--main-block-color);
     margin-top: 5px;
     padding: 10px;
@@ -521,7 +521,7 @@ input, select, textarea {
 	clear: left;
     height: 25px;
 }
-.footer select {
+#poweredByHolder select {
     background-color: var(--input-background-color);
     border: 1px solid var(--input-border-color);
     color: var(--input-text-color);

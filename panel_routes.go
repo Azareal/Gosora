@@ -1614,6 +1614,60 @@ func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User,
 	return nil
 }
 
+// TODO: Log errors when something really screwy is going on?
+func handleUnknownUser(user *common.User, err error) *common.User {
+	if err != nil {
+		return &common.User{Name: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
+	}
+	return user
+}
+func handleUnknownTopic(topic *common.Topic, err error) *common.Topic {
+	if err != nil {
+		return &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
+	}
+	return topic
+}
+
+func modlogsElementType(action string, elementType string, elementID int, actor *common.User) (out string) {
+	switch elementType {
+	case "topic":
+		topic := handleUnknownTopic(common.Topics.Get(elementID))
+		switch action {
+		case "lock":
+			out = "<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>"
+		case "unlock":
+			out = "<a href='%s'>%s</a> was reopened by <a href='%s'>%s</a>"
+		case "stick":
+			out = "<a href='%s'>%s</a> was pinned by <a href='%s'>%s</a>"
+		case "unstick":
+			out = "<a href='%s'>%s</a> was unpinned by <a href='%s'>%s</a>"
+		case "delete":
+			return fmt.Sprintf("Topic #%d was deleted by <a href='%s'>%s</a>", elementID, actor.Link, actor.Name)
+		}
+		out = fmt.Sprintf(out, topic.Link, topic.Title, actor.Link, actor.Name)
+	case "user":
+		targetUser := handleUnknownUser(common.Users.Get(elementID))
+		switch action {
+		case "ban":
+			out = "<a href='%s'>%s</a> was banned by <a href='%s'>%s</a>"
+		case "unban":
+			out = "<a href='%s'>%s</a> was unbanned by <a href='%s'>%s</a>"
+		case "activate":
+			out = "<a href='%s'>%s</a> was activated by <a href='%s'>%s</a>"
+		}
+		out = fmt.Sprintf(out, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
+	case "reply":
+		if action == "delete" {
+			topic := handleUnknownTopic(common.BlankReply(elementID).Topic())
+			out = fmt.Sprintf("A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
+		}
+	}
+	if out == "" {
+		out = fmt.Sprintf("Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>", action, elementType, actor.Link, actor.Name)
+	}
+	return out
+}
+
 func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -1631,21 +1685,6 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 	defer rows.Close()
 
-	// TODO: Log errors when something really screwy is going on?
-	handleUnknownUser := func(user *common.User, err error) *common.User {
-		if err != nil {
-			return &common.User{Name: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-		}
-		return user
-	}
-
-	handleUnknownTopic := func(topic *common.Topic, err error) *common.Topic {
-		if err != nil {
-			return &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
-		}
-		return topic
-	}
-
 	var logs []common.LogItem
 	var action, elementType, ipaddress, doneAt string
 	var elementID, actorID int
@@ -1656,41 +1695,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 		}
 
 		actor := handleUnknownUser(common.Users.Get(actorID))
-
-		switch action {
-		case "lock":
-			topic := handleUnknownTopic(common.Topics.Get(elementID))
-			action = fmt.Sprintf("<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
-		case "unlock":
-			topic := handleUnknownTopic(common.Topics.Get(elementID))
-			action = fmt.Sprintf("<a href='%s'>%s</a> was reopened by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
-		case "stick":
-			topic := handleUnknownTopic(common.Topics.Get(elementID))
-			action = fmt.Sprintf("<a href='%s'>%s</a> was pinned by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
-		case "unstick":
-			topic := handleUnknownTopic(common.Topics.Get(elementID))
-			action = fmt.Sprintf("<a href='%s'>%s</a> was unpinned by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
-		case "delete":
-			if elementType == "topic" {
-				action = fmt.Sprintf("Topic #%d was deleted by <a href='%s'>%s</a>", elementID, actor.Link, actor.Name)
-			} else {
-				reply := common.BlankReply()
-				reply.ID = elementID
-				topic := handleUnknownTopic(reply.Topic())
-				action = fmt.Sprintf("A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
-			}
-		case "ban":
-			targetUser := handleUnknownUser(common.Users.Get(elementID))
-			action = fmt.Sprintf("<a href='%s'>%s</a> was banned by <a href='%s'>%s</a>", targetUser.Link, targetUser.Name, actor.Link, actor.Name)
-		case "unban":
-			targetUser := handleUnknownUser(common.Users.Get(elementID))
-			action = fmt.Sprintf("<a href='%s'>%s</a> was unbanned by <a href='%s'>%s</a>", targetUser.Link, targetUser.Name, actor.Link, actor.Name)
-		case "activate":
-			targetUser := handleUnknownUser(common.Users.Get(elementID))
-			action = fmt.Sprintf("<a href='%s'>%s</a> was activated by <a href='%s'>%s</a>", targetUser.Link, targetUser.Name, actor.Link, actor.Name)
-		default:
-			action = fmt.Sprintf("Unknown action '%s' by <a href='%s'>%s</a>", action, actor.Link, actor.Name)
-		}
+		action = modlogsElementType(action, elementType, elementID, actor)
 		logs = append(logs, common.LogItem{Action: template.HTML(action), IPAddress: ipaddress, DoneAt: doneAt})
 	}
 	err = rows.Err()

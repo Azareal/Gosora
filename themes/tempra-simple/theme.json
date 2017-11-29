@@ -6,7 +6,7 @@
 	"FullImage": "tempra-simple.png",
 	"MobileFriendly": true,
 	"URL": "github.com/Azareal/Gosora",
-	"Sidebars":"right",
+	"Docks":["rightSidebar"],
 	"Resources": [
 		{
 			"Name":"tempra-simple/misc.js",

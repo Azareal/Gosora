@@ -12,6 +12,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 	//"runtime/pprof"
 	"./common"
@@ -144,6 +146,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
 	err = afterDBInit()
 	if err != nil {
@@ -158,7 +161,7 @@ func main() {
 	// Run this goroutine once a second
 	secondTicker := time.NewTicker(1 * time.Second)
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
-	//hour_ticker := time.NewTicker(1 * time.Hour)
+	//hourTicker := time.NewTicker(1 * time.Hour)
 	go func() {
 		for {
 			select {
@@ -231,13 +234,18 @@ func main() {
 	router.HandleFunc("/profile/reply/edit/submit/", routeProfileReplyEditSubmit)
 	router.HandleFunc("/profile/reply/delete/submit/", routeProfileReplyDeleteSubmit)
 	//router.HandleFunc("/user/edit/submit/", routeLogout) // routeLogout? what on earth? o.o
-	//router.HandleFunc("/exit/", routeExit)
 	router.HandleFunc("/ws/", routeWebsockets)
 
 	log.Print("Initialising the plugins")
 	common.InitPlugins()
 
-	defer db.Close()
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+		// TODO: Gracefully shutdown the HTTP server
+		log.Fatal("Received a signal to shutdown: ", sig)
+	}()
 
 	//if profiling {
 	//	pprof.StopCPUProfile()

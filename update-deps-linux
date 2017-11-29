@@ -27,3 +27,6 @@ go get -u github.com/go-ego/riot
 
 echo "Updating the Rez Image Resizer"
 go get -u github.com/bamiaux/rez
+
+echo "Updating fsnotify"
+go get -u github.com/fsnotify/fsnotify

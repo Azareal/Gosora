@@ -101,7 +101,8 @@ func routeOverview(w http.ResponseWriter, r *http.Request, user common.User) com
 	if ferr != nil {
 		return ferr
 	}
-	common.BuildWidgets("overview", nil, headerVars, r)
+	headerVars.Zone = "overview"
+	headerVars.Writer = w
 
 	pi := common.Page{common.GetTitlePhrase("overview"), user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_overview"] != nil {
@@ -127,7 +128,8 @@ func routeCustomPage(w http.ResponseWriter, r *http.Request, user common.User) c
 	if common.Templates.Lookup("page_"+name) == nil {
 		return common.NotFound(w, r)
 	}
-	common.BuildWidgets("custom_page", name, headerVars, r)
+	headerVars.Zone = "custom_page"
+	headerVars.Writer = w
 
 	pi := common.Page{common.GetTitlePhrase("page"), user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_custom_page"] != nil {
@@ -148,7 +150,8 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	if ferr != nil {
 		return ferr
 	}
-	common.BuildWidgets("topics", nil, headerVars, r)
+	headerVars.Zone = "topics"
+	headerVars.Writer = w
 
 	// TODO: Add a function for the qlist stuff
 	var qlist string
@@ -333,8 +336,8 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
-
-	common.BuildWidgets("view_forum", forum, headerVars, r)
+	headerVars.Zone = "view_forum"
+	headerVars.Writer = w
 
 	// Calculate the offset
 	var offset int
@@ -420,7 +423,8 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 	if ferr != nil {
 		return ferr
 	}
-	common.BuildWidgets("forums", nil, headerVars, r)
+	headerVars.Zone = "forums"
+	headerVars.Writer = w
 
 	var err error
 	var forumList []common.Forum
@@ -509,8 +513,8 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) comm
 		//log.Printf("user.Perms: %+v\n", user.Perms)
 		return common.NoPermissions(w, r, user)
 	}
-
-	common.BuildWidgets("view_topic", &topic, headerVars, r)
+	headerVars.Zone = "view_topic"
+	headerVars.Writer = w
 
 	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")
