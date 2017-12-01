@@ -22,9 +22,9 @@ import (
 	"../query_gen/lib"
 )
 
-type ThemeList map[string]Theme // ? Use pointers instead?
+type ThemeList map[string]*Theme
 
-var Themes ThemeList = make(map[string]Theme)
+var Themes ThemeList = make(map[string]*Theme)
 var DefaultThemeBox atomic.Value
 var ChangeDefaultThemeMutex sync.Mutex
 
@@ -45,7 +45,6 @@ type Theme struct {
 	Tag               string
 	URL               string
 	Docks             []string // Allowed Values: leftSidebar, rightSidebar, footer
-	AboutSegment      bool     // ? - Should this be a theme var instead?
 	Settings          map[string]ThemeSetting
 	Templates         []TemplateMapping
 	TemplatesMap      map[string]string
@@ -117,7 +116,7 @@ func (themes ThemeList) LoadActiveStatus() error {
 			log.Printf("Loading the default theme '%s'", theme.Name)
 			theme.Active = true
 			DefaultThemeBox.Store(theme.Name)
-			MapThemeTemplates(theme)
+			theme.MapTemplates()
 		} else {
 			log.Printf("Loading the theme '%s'", theme.Name)
 			theme.Active = false
@@ -147,8 +146,8 @@ func InitThemes() error {
 			return err
 		}
 
-		var theme Theme
-		err = json.Unmarshal(themeFile, &theme)
+		var theme = &Theme{Name: ""}
+		err = json.Unmarshal(themeFile, theme)
 		if err != nil {
 			return err
 		}
@@ -185,21 +184,25 @@ func InitThemes() error {
 			}
 		}
 
-		theme.ResourceTemplates = template.New("")
-		template.Must(theme.ResourceTemplates.ParseGlob("./themes/" + theme.Name + "/public/*.css"))
-
-		// It should be safe for us to load the files for all the themes in memory, as-long as the admin hasn't setup a ridiculous number of themes
-		err = AddThemeStaticFiles(theme)
+		err = theme.LoadStaticFiles()
 		if err != nil {
 			return err
 		}
-
 		Themes[theme.Name] = theme
 	}
 	return nil
 }
 
-func AddThemeStaticFiles(theme Theme) error {
+// TODO: It might be unsafe to call the template parsing functions with fsnotify, do something more concurrent
+func (theme *Theme) LoadStaticFiles() error {
+	theme.ResourceTemplates = template.New("")
+	template.Must(theme.ResourceTemplates.ParseGlob("./themes/" + theme.Name + "/public/*.css"))
+
+	// It should be safe for us to load the files for all the themes in memory, as-long as the admin hasn't setup a ridiculous number of themes
+	return theme.AddThemeStaticFiles()
+}
+
+func (theme *Theme) AddThemeStaticFiles() error {
 	// TODO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
 	return filepath.Walk("./themes/"+theme.Name+"/public", func(path string, f os.FileInfo, err error) error {
 		debugLog("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
@@ -230,14 +233,14 @@ func AddThemeStaticFiles(theme Theme) error {
 
 		path = strings.TrimPrefix(path, "themes/"+theme.Name+"/public")
 		gzipData := compressBytesGzip(data)
-		StaticFiles["/static/"+theme.Name+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
+		StaticFiles.Set("/static/"+theme.Name+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		debugLog("Added the '/" + theme.Name + path + "' static file for theme " + theme.Name + ".")
 		return nil
 	})
 }
 
-func MapThemeTemplates(theme Theme) {
+func (theme *Theme) MapTemplates() {
 	if theme.Templates != nil {
 		for _, themeTmpl := range theme.Templates {
 			if themeTmpl.Name == "" {

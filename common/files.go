@@ -2,9 +2,9 @@ package common
 
 import (
 	"bytes"
-	"log"
 	"mime"
 	"strings"
+	"sync"
 	//"errors"
 	"compress/gzip"
 	"io/ioutil"
@@ -16,6 +16,7 @@ import (
 type SFileList map[string]SFile
 
 var StaticFiles SFileList = make(map[string]SFile)
+var staticFileMutex sync.RWMutex
 
 type SFile struct {
 	Data             []byte
@@ -48,11 +49,9 @@ func (list SFileList) Init() error {
 		var ext = filepath.Ext("/public/" + path)
 		gzipData := compressBytesGzip(data)
 
-		list["/static/"+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
+		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
-		if Dev.DebugMode {
-			log.Print("Added the '" + path + "' static file.")
-		}
+		debugLogf("Added the '%s' static file.", path)
 		return nil
 	})
 }
@@ -75,12 +74,23 @@ func (list SFileList) Add(path string, prefix string) error {
 	path = strings.TrimPrefix(path, prefix)
 	gzipData := compressBytesGzip(data)
 
-	list["/static"+path] = SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)}
+	list.Set("/static"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
-	if Dev.DebugMode {
-		log.Printf("Added the '%s' static file", path)
-	}
+	debugLogf("Added the '%s' static file", path)
 	return nil
+}
+
+func (list SFileList) Get(name string) (file SFile, exists bool) {
+	staticFileMutex.RLock()
+	defer staticFileMutex.RUnlock()
+	file, exists = list[name]
+	return file, exists
+}
+
+func (list SFileList) Set(name string, data SFile) {
+	staticFileMutex.Lock()
+	defer staticFileMutex.Unlock()
+	list[name] = data
 }
 
 func compressBytesGzip(in []byte) []byte {

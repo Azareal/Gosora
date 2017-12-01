@@ -42,8 +42,7 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // GET functions
 func routeStatic(w http.ResponseWriter, r *http.Request) {
-	//log.Print("Outputting static file '" + r.URL.Path + "'")
-	file, ok := common.StaticFiles[r.URL.Path]
+	file, ok := common.StaticFiles.Get(r.URL.Path)
 	if !ok {
 		if common.Dev.DebugMode {
 			log.Printf("Failed to find '%s'", r.URL.Path)
@@ -61,11 +60,8 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 	}
 	h.Set("Last-Modified", file.FormattedModTime)
 	h.Set("Content-Type", file.Mimetype)
-	//Cache-Control: max-age=31536000
-	h.Set("Cache-Control", cacheControlMaxAge)
+	h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
 	h.Set("Vary", "Accept-Encoding")
-	//http.ServeContent(w,r,r.URL.Path,file.Info.ModTime(),file)
-	//w.Write(file.Data)
 	if strings.Contains(h.Get("Accept-Encoding"), "gzip") {
 		h.Set("Content-Encoding", "gzip")
 		h.Set("Content-Length", strconv.FormatInt(file.GzipLength, 10))
@@ -74,14 +70,8 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 		h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
 		io.Copy(w, bytes.NewReader(file.Data))
 	}
-	//io.CopyN(w, bytes.NewReader(file.Data), staticFiles[r.URL.Path].Length)
+	// Other options instead of io.Copy: io.CopyN(), w.Write(), http.ServeContent()
 }
-
-// Deprecated: Test route for stopping the server during a performance analysis
-/*func routeExit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError{
-	db.Close()
-	os.Exit(0)
-}*/
 
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
 // TODO: Add a sitemap
@@ -102,7 +92,6 @@ func routeOverview(w http.ResponseWriter, r *http.Request, user common.User) com
 		return ferr
 	}
 	headerVars.Zone = "overview"
-	headerVars.Writer = w
 
 	pi := common.Page{common.GetTitlePhrase("overview"), user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_overview"] != nil {
@@ -129,7 +118,6 @@ func routeCustomPage(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.NotFound(w, r)
 	}
 	headerVars.Zone = "custom_page"
-	headerVars.Writer = w
 
 	pi := common.Page{common.GetTitlePhrase("page"), user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_custom_page"] != nil {
@@ -151,7 +139,6 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 		return ferr
 	}
 	headerVars.Zone = "topics"
-	headerVars.Writer = w
 
 	// TODO: Add a function for the qlist stuff
 	var qlist string
@@ -337,7 +324,6 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 		return common.InternalError(err, w, r)
 	}
 	headerVars.Zone = "view_forum"
-	headerVars.Writer = w
 
 	// Calculate the offset
 	var offset int
@@ -424,7 +410,6 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 		return ferr
 	}
 	headerVars.Zone = "forums"
-	headerVars.Writer = w
 
 	var err error
 	var forumList []common.Forum
@@ -514,7 +499,6 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) comm
 		return common.NoPermissions(w, r, user)
 	}
 	headerVars.Zone = "view_topic"
-	headerVars.Writer = w
 
 	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")

@@ -495,6 +495,12 @@ select, input, textarea, button {
 	background-color: var(--element-background-color);
 	padding: 12px;
 }
+/* TODO: Refactor bgavatars to make the avatars rounded */
+.rowlist.bgavatars .rowitem {
+	background-repeat: no-repeat;
+	background-size: 40px;
+	padding-left: 46px;
+}
 
 .topic_list .rowtopic {
 	font-size: 17px;
@@ -958,5 +964,42 @@ select, input, textarea, button {
 @media(max-width: 670px) {
 	.topic_inner_right {
 		display: none;
+	}
+}
+@media(max-width: 520px) {
+	.topic_list {
+		display: flex;
+		flex-wrap: wrap;
+	}
+	.topic_list .topic_row {
+		display: block;
+		width: calc(50% - 6px);
+		float: left;
+	}
+	.topic_list .topic_row:nth-child(odd) {
+		margin-right: 12px;
+	}
+	.topic_left {
+		margin-bottom: 0px;
+		border-bottom: none;
+		border-right: 1px solid var(--element-border-color);
+	}
+	.topic_left .parent_forum {
+		display: none;
+	}
+	.topic_right.rowitem {
+		border-top: none;
+		border-left: 1px solid var(--element-border-color);
+		background-color: hsl(0,0%,90%);
+	}
+	.topic_right br, .topic_right img {
+		display: none;
+	}
+	.topic_right.topic_sticky {
+		border-bottom: 2px solid var(--element-border-color);
+	}
+	.topic_right > span {
+		margin-top: 6px;
+		margin-bottom: 6px;
 	}
 }

@@ -97,7 +97,7 @@ func cascadeForumPerms(fperms *ForumPerms, user *User) {
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
 func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, stats PanelStats, rerr RouteError) {
-	var theme Theme
+	var theme = &Theme{Name: ""}
 
 	cookie, err := r.Cookie("current_theme")
 	if err == nil {
@@ -116,6 +116,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		Themes:   Themes,
 		Theme:    theme,
 		Zone:     "panel",
+		Writer:   w,
 	}
 	// TODO: We should probably initialise headerVars.ExtData
 
@@ -189,7 +190,7 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
 func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, rerr RouteError) {
-	var theme Theme
+	var theme = &Theme{Name: ""}
 
 	cookie, err := r.Cookie("current_theme")
 	if err == nil {
@@ -208,6 +209,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 		Themes:   Themes,
 		Theme:    theme,
 		Zone:     "frontend",
+		Writer:   w,
 	}
 
 	if user.IsBanned {

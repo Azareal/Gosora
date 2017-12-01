@@ -14,8 +14,8 @@ type HeaderVars struct {
 	Widgets     PageWidgets
 	Site        *site
 	Settings    SettingMap
-	Themes      map[string]Theme // TODO: Use a slice containing every theme instead of the main map for speed?
-	Theme       Theme
+	Themes      map[string]*Theme // TODO: Use a slice containing every theme instead of the main map for speed?
+	Theme       *Theme
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
 	Zone    string
 	Writer  http.ResponseWriter
@@ -151,8 +151,8 @@ type PanelThemesPage struct {
 	CurrentUser   User
 	Header        *HeaderVars
 	Stats         PanelStats
-	PrimaryThemes []Theme
-	VariantThemes []Theme
+	PrimaryThemes []*Theme
+	VariantThemes []*Theme
 }
 
 type PanelUserPage struct {

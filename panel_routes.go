@@ -1473,7 +1473,7 @@ func routePanelThemes(w http.ResponseWriter, r *http.Request, user common.User) 
 		return common.NoPermissions(w, r, user)
 	}
 
-	var pThemeList, vThemeList []common.Theme
+	var pThemeList, vThemeList []*common.Theme
 	for _, theme := range common.Themes {
 		if theme.HideFromThemes {
 			continue
@@ -1557,7 +1557,7 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user com
 
 	common.DefaultThemeBox.Store(uname)
 	common.ResetTemplateOverrides()
-	common.MapThemeTemplates(theme)
+	theme.MapTemplates()
 	common.ChangeDefaultThemeMutex.Unlock()
 
 	http.Redirect(w, r, "/panel/themes/", http.StatusSeeOther)

@@ -13,10 +13,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 	//"runtime/pprof"
 	"./common"
+	"github.com/fsnotify/fsnotify"
 )
 
 var version = common.Version{Major: 0, Minor: 1, Patch: 0, Tag: "dev"}
@@ -55,13 +57,11 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
-
 	log.Print("Initialising the widgets")
 	err = common.InitWidgets()
 	if err != nil {
 		return err
 	}
-
 	log.Print("Initialising the authentication system")
 	common.Auth, err = common.NewDefaultAuth()
 	if err != nil {
@@ -72,12 +72,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
-
 	common.ModLogs, err = common.NewModLogStore()
 	if err != nil {
 		return err
 	}
-
 	common.AdminLogs, err = common.NewAdminLogStore()
 	if err != nil {
 		return err
@@ -156,6 +154,65 @@ func main() {
 	err = common.VerifyConfig()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
+				log.Println("event:", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Println("modified file:", event.Name)
+					var pathBits = strings.Split(event.Name, "\\")
+					if len(pathBits) > 0 {
+						if pathBits[0] == "themes" {
+							var themeName string
+							if len(pathBits) >= 1 {
+								themeName = pathBits[1]
+							}
+
+							if len(pathBits) >= 2 && pathBits[2] == "public" {
+								// TODO: Handle new themes freshly plopped into the folder?
+								theme, ok := common.Themes[themeName]
+								if ok {
+									err = theme.LoadStaticFiles()
+									if err != nil {
+										common.LogError(err)
+									}
+								}
+							}
+
+						}
+					}
+				} else if event.Op&fsnotify.Create == fsnotify.Create {
+					log.Println("new file:", event.Name)
+				}
+			case err := <-watcher.Errors:
+				log.Println("error:", err)
+			}
+		}
+	}()
+
+	// TODO: Keep tabs on the theme stuff, and the langpacks
+	err = watcher.Add("./public")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = watcher.Add("./templates")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, theme := range common.Themes {
+		err = watcher.Add("./themes/" + theme.Name + "/public")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Run this goroutine once a second

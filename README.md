@@ -86,7 +86,7 @@ Several important features for saving memory in the templates system may have to
 
 # Advanced Installation
 
-An example of running the commands directly on Windows.
+An example of running the commands directly on Windows. We're looking into reducing the number of commands you need to type, for instance, you could invoke the update-deps batch or shell files to install / update all of the dependencies instead of typing each `get get -u`
 
 Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms. Additionally, Linux doesn't require `StackExchange/wmi` or ``/x/sys/windows`
 
@@ -168,7 +168,7 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 More images in the /images/ folder. Beware though, some of them are *really* outdated.
 
-# Dependencies (a few of these like Riot aren't currently in use, but we anticipate that we'll need some sort of search engine library in the very immediate future)
+# Dependencies (a few of these like Rez aren't currently in use, but we anticipate that we'll need some sort of search engine library in the very immediate future)
 
 * Go 1.9
 
@@ -193,8 +193,6 @@ More images in the /images/ folder. Beware though, some of them are *really* out
 * github.com/lib/pq For interfacing with PostgreSQL. You will be able to pick this instead of MariaDB soon.
 
 * ithub.com/denisenkom/go-mssqldb For interfacing with MSSQL. You will be able to pick this instead of MSSQL soon.
-
-* github.com/go-ego/riot A search engine library.
 
 * github.com/bamiaux/rez An image resizer (e.g. for spitting out thumbnails)
 
