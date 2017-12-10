@@ -354,6 +354,14 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableKey{},
 	)
 
+	qgen.Install.CreateTable("viewchunks", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+		},
+		[]qgen.DBTableKey{},
+	)
+
 	qgen.Install.CreateTable("sync", "", "",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"last_update", "datetime", 0, false, false, ""},

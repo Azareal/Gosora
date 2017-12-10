@@ -13,6 +13,64 @@ import (
 )
 
 var ErrNoRoute = errors.New("That route doesn't exist.")
+var RouteMap = map[string]interface{}{
+	"routeAPI": routeAPI,
+	"routeOverview": routeOverview,
+	"routeForums": routeForums,
+	"routeForum": routeForum,
+	"routeChangeTheme": routeChangeTheme,
+	"routeShowAttachment": routeShowAttachment,
+	"routeReportSubmit": routeReportSubmit,
+	"routeTopicCreate": routeTopicCreate,
+	"routeTopics": routeTopics,
+	"routePanelForums": routePanelForums,
+	"routePanelForumsCreateSubmit": routePanelForumsCreateSubmit,
+	"routePanelForumsDelete": routePanelForumsDelete,
+	"routePanelForumsDeleteSubmit": routePanelForumsDeleteSubmit,
+	"routePanelForumsEdit": routePanelForumsEdit,
+	"routePanelForumsEditSubmit": routePanelForumsEditSubmit,
+	"routePanelForumsEditPermsSubmit": routePanelForumsEditPermsSubmit,
+	"routePanelSettings": routePanelSettings,
+	"routePanelSettingEdit": routePanelSettingEdit,
+	"routePanelSettingEditSubmit": routePanelSettingEditSubmit,
+	"routePanelWordFilters": routePanelWordFilters,
+	"routePanelWordFiltersCreate": routePanelWordFiltersCreate,
+	"routePanelWordFiltersEdit": routePanelWordFiltersEdit,
+	"routePanelWordFiltersEditSubmit": routePanelWordFiltersEditSubmit,
+	"routePanelWordFiltersDeleteSubmit": routePanelWordFiltersDeleteSubmit,
+	"routePanelThemes": routePanelThemes,
+	"routePanelThemesSetDefault": routePanelThemesSetDefault,
+	"routePanelPlugins": routePanelPlugins,
+	"routePanelPluginsActivate": routePanelPluginsActivate,
+	"routePanelPluginsDeactivate": routePanelPluginsDeactivate,
+	"routePanelPluginsInstall": routePanelPluginsInstall,
+	"routePanelUsers": routePanelUsers,
+	"routePanelUsersEdit": routePanelUsersEdit,
+	"routePanelUsersEditSubmit": routePanelUsersEditSubmit,
+	"routePanelGroups": routePanelGroups,
+	"routePanelGroupsEdit": routePanelGroupsEdit,
+	"routePanelGroupsEditPerms": routePanelGroupsEditPerms,
+	"routePanelGroupsEditSubmit": routePanelGroupsEditSubmit,
+	"routePanelGroupsEditPermsSubmit": routePanelGroupsEditPermsSubmit,
+	"routePanelGroupsCreateSubmit": routePanelGroupsCreateSubmit,
+	"routePanelBackups": routePanelBackups,
+	"routePanelLogsMod": routePanelLogsMod,
+	"routePanelDebug": routePanelDebug,
+	"routePanel": routePanel,
+	"routeAccountEditCritical": routeAccountEditCritical,
+	"routeAccountEditCriticalSubmit": routeAccountEditCriticalSubmit,
+	"routeAccountEditAvatar": routeAccountEditAvatar,
+	"routeAccountEditAvatarSubmit": routeAccountEditAvatarSubmit,
+	"routeAccountEditUsername": routeAccountEditUsername,
+	"routeAccountEditUsernameSubmit": routeAccountEditUsernameSubmit,
+	"routeAccountEditEmail": routeAccountEditEmail,
+	"routeAccountEditEmailTokenSubmit": routeAccountEditEmailTokenSubmit,
+	"routeProfile": routeProfile,
+	"routeBanSubmit": routeBanSubmit,
+	"routeUnban": routeUnban,
+	"routeActivate": routeActivate,
+	"routeIps": routeIps,
+}
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
@@ -45,27 +103,22 @@ func (router *GenRouter) Handle(_ string, _ http.Handler) {
 
 func (router *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, common.User) common.RouteError) {
 	router.Lock()
+	defer router.Unlock()
 	router.extra_routes[pattern] = handle
-	router.Unlock()
 }
 
 func (router *GenRouter) RemoveFunc(pattern string) error {
 	router.Lock()
+	defer router.Unlock()
 	_, ok := router.extra_routes[pattern]
 	if !ok {
-		router.Unlock()
 		return ErrNoRoute
 	}
 	delete(router.extra_routes, pattern)
-	router.Unlock()
 	return nil
 }
 
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	//if req.URL.Path == "/" {
-	//	default_route(w,req)
-	//	return
-	//}
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
 		w.WriteHeader(405)
 		w.Write([]byte(""))
@@ -95,6 +148,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if common.Dev.SuperDebug {
 		log.Print("before PreRoute")
 	}
+
+	// Increment the global view counter
+	common.GlobalViewCounter.Bump()
 	
 	// Deal with the session stuff, etc.
 	user, ok := common.PreRoute(w, req)

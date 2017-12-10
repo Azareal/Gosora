@@ -11,7 +11,7 @@
 {{template "panel-inner-menu.html" . }}
 </nav>
 
-<!-- Stop inlining this x.x -->
+{{/** Stop inlining this x.x **/}}
 <style type="text/css">
 .rowitem::after {
 	content: "";
@@ -24,7 +24,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>Primary Themes</h1></div>
 	</div>
-	<div id="panel_primary_themes" class="colstack_item panel_themes">
+	<div id="panel_primary_themes" class="colstack_item panel_themes complex_rowlist">
 		{{range .PrimaryThemes}}
 		<div class="theme_row rowitem editable_parent" style="{{if .FullImage}}background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;{{end}}">
 			<span style="float: left;">
@@ -39,6 +39,7 @@
 		</div>
 		{{end}}
 	</div>
+	{{if .VariantThemes}}
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>Variant Themes</h1></div>
 	</div>
@@ -57,6 +58,7 @@
 		</div>
 		{{end}}
 	</div>
+	{{end}}
 </main>
 
 </div>

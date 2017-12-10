@@ -3,9 +3,6 @@
 <div id="profile_container" class="colstack">
 
 <div id="profile_left_lane" class="colstack_left">
-	<!--<header class="colstack_item colstack_head rowhead">
-		<div class="rowitem"><h1>Profile</h1></div>
-	</header>-->
 	<div id="profile_left_pane" class="rowmenu">
 		<div class="topBlock">
 			<div class="rowitem avatarRow">
@@ -73,7 +70,8 @@
 		<div class="rowitem"><h1>Comments</h1></div>
 	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">{{range .ItemList}}
-		<div class="rowitem passive deletable_block editable_parent simple {{.ClassName}}" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;{{end}}">
+		<div class="rowitem passive deletable_block editable_parent simple {{.ClassName}}" style="background-image: url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;">
+			<img class="bgsub" src="{{.Avatar}}" />
 			<span class="editable_block user_content simple">{{.ContentHtml}}</span>
 			<span class="controls">
 				<a href="{{.UserLink}}" class="real_username username">{{.CreatedByName}}</a>&nbsp;&nbsp;

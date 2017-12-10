@@ -6,7 +6,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>Plugins</h1></div>
 	</div>
-	<div id="panel_plugins" class="colstack_item">
+	<div id="panel_plugins" class="colstack_item complex_rowlist">
 		{{range .ItemList}}
 		<div class="rowitem editable_parent">
 			<a {{if .URL}}href="{{.URL}}" {{end}}class="editable_block" class="panel_upshift">{{.Name}}</a><br />

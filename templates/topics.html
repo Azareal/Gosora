@@ -9,7 +9,7 @@
 		<div class="opt create_topic_opt" title="Create Topic" aria-label="Create a topic"><a class="create_topic_link" href="/topics/create/"></a></div>
 		{{/** TODO: Add a permissions check for this **/}}
 		<div class="opt mod_opt" title="Moderate">
-			<a class="moderate_link" href="#"></a>
+			<a class="moderate_link" href="#" aria-label="Moderate Posts"></a>
 		</div>
 		{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic" aria-label="You don't have the permissions needed to make a topic anywhere"><a></a></div>{{end}}
 		<div style="clear: both;"></div>
@@ -35,7 +35,7 @@
 {{if .ForumList}}
 <div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
 	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
-	{{if .CurrentUser.Avatar}}<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" />{{end}}
+	<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" />
 	<div class="main_form">
 		<div class="topic_meta">
 			<div class="formrow topic_board_row real_first_child">
@@ -72,7 +72,7 @@
 	{{range .TopicList}}<div class="topic_row" data-tid="{{.ID}}">
 	<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
 		<span class="selector"></span>
-		{{if .Creator.Avatar}}<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" /></a>{{end}}
+		<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" /></a>
 		<span class="topic_inner_left">
 			<a class="rowtopic" href="{{.Link}}"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
 			<br /><a class="rowsmall starter" href="{{.Creator.Link}}">{{.Creator.Name}}</a>
@@ -86,7 +86,7 @@
 		</span>
 	</div>
 	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
-		{{if .LastUser.Avatar}}<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" /></a>{{end}}
+		<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" /></a>
 		<span>
 			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
 			<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>

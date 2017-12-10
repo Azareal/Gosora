@@ -19,6 +19,8 @@ type TaskStmts struct {
 	getSync                   *sql.Stmt
 }
 
+var ScheduledSecondTasks []func() error
+var ScheduledFifteenMinuteTasks []func() error
 var taskStmts TaskStmts
 var lastSync time.Time
 
@@ -33,6 +35,17 @@ func init() {
 	})
 }
 
+// AddScheduledSecondTask is not concurrency safe
+func AddScheduledSecondTask(task func() error) {
+	ScheduledSecondTasks = append(ScheduledSecondTasks, task)
+}
+
+// AddScheduledFifteenMinuteTask is not concurrency safe
+func AddScheduledFifteenMinuteTask(task func() error) {
+	ScheduledFifteenMinuteTasks = append(ScheduledFifteenMinuteTasks, task)
+}
+
+// TODO: Use AddScheduledSecondTask
 func HandleExpiredScheduledGroups() error {
 	rows, err := taskStmts.getExpiredScheduledGroups.Query()
 	if err != nil {
@@ -58,6 +71,7 @@ func HandleExpiredScheduledGroups() error {
 	return rows.Err()
 }
 
+// TODO: Use AddScheduledSecondTask
 func HandleServerSync() error {
 	var lastUpdate time.Time
 	err := taskStmts.getSync.QueryRow().Scan(&lastUpdate)

@@ -165,10 +165,9 @@ func (widget *Widget) Build(hvars interface{}) (string, error) {
 		return widget.Body, nil
 	}
 
-	var b bytes.Buffer
 	var headerVars = hvars.(*HeaderVars)
 	err := RunThemeTemplate(headerVars.Theme.Name, widget.Body, hvars, headerVars.Writer)
-	return string(b.Bytes()), err
+	return "", err
 }
 
 // TODO: Make a store for this?

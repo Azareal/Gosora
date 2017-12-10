@@ -91,6 +91,18 @@
 	.grid_istat { margin-bottom: 0px; }
 }
 
+@media(max-width: 550px) {
+	#poweredByDash, #poweredByMaker {
+		display: none;
+	}
+}
+
+@media (max-width: 500px) {
+	.topic_list .topic_row {
+		grid-template-columns: calc(100% - 194px) 194px;
+	}
+}
+
 @media (max-width: 470px) {
 	.container {
 		border: none;
@@ -180,6 +192,15 @@
 	.rowtopic { font-size: 14px; }
 
 	.container { width: 100% !important; }
+}
+
+@media(max-width: 390px) {
+	.topic_list .topic_row {
+		display: block;
+	}
+	.topic_row .topic_right {
+		display: none;
+	}
 }
 
 @media (max-width: 330px) {

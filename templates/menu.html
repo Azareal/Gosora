@@ -2,24 +2,25 @@
 	<div class="move_left">
 	<div class="move_right">
 	<ul>{{/** Add a menu manager **/}}
-		<li class="menu_left menu_overview"><a href="/" rel="home">{{.Header.Site.ShortName}}</a></li>
-		<li class="menu_left menu_forums"><a href="/forums/">Forums</a></li>
-		<li class="menu_left menu_topics"><a href="/">Topics</a></li>
+		<li id="menu_overview" class="menu_left"><a href="/" rel="home">{{.Header.Site.ShortName}}</a></li>
+		<li id="menu_forums" class="menu_left"><a href="/forums/" aria-label="The Forum list" title="Forum List"></a></li>
+		<li class="menu_left menu_topics"><a href="/" aria-label="The topic list" title="Topic List"></a></li>
 		<li id="general_alerts" class="menu_right menu_alerts">
 			<div class="alert_bell"></div>
-			<div class="alert_counter"></div>
+			<div class="alert_counter" aria-label="The number of alerts"></div>
 			<div class="alert_aftercounter"></div>
-			<div class="alertList"></div>
+			<div class="alertList" aria-label="The alert list"></div>
 		</li>
 		{{if .CurrentUser.Loggedin}}
-		<li class="menu_left menu_account"><a href="/user/edit/critical/">Account</a></li>
-		<li class="menu_left menu_profile"><a href="{{.CurrentUser.Link}}">Profile</a></li>
-		<li class="menu_left menu_panel menu_account supermod_only"><a href="/panel/">Panel</a></li>
-		<li class="menu_left menu_logout"><a href="/accounts/logout/?session={{.CurrentUser.Session}}">Logout</a></li>
+		<li class="menu_left menu_account"><a href="/user/edit/critical/" aria-label="The account manager" title="Account Manager"></a></li>
+		<li class="menu_left menu_profile"><a href="{{.CurrentUser.Link}}" aria-label="Your profile" title="Your profile"></a></li>
+		<li class="menu_left menu_panel menu_account supermod_only"><a href="/panel/" aria-label="The Control Panel" title="Control Panel"></a></li>
+		<li class="menu_left menu_logout"><a href="/accounts/logout/?session={{.CurrentUser.Session}}" aria-label="Log out of your account" title="Logout"></a></li>
 		{{else}}
-		<li class="menu_left menu_register"><a href="/accounts/create/">Register</a></li>
-		<li class="menu_left menu_login"><a href="/accounts/login/">Login</a></li>
+		<li class="menu_left menu_register"><a href="/accounts/create/" aria-label="Create a new account" title="Register"></a></li>
+		<li class="menu_left menu_login"><a href="/accounts/login/" aria-label="Login to your account" title="Login"></a></li>
 		{{end}}
+		<li class="menu_left menu_hamburger" title="Menu"><a></a></li>
 	</ul>
 	</div>
 	</div>

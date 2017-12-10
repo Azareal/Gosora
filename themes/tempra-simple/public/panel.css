@@ -1,5 +1,16 @@
 /* Control Panel */
 
+.bgsub {
+	display: none;
+}
+
+.edit_button:before {
+	content: "Edit";
+}
+.delete_button:after {
+	content: "Delete";
+}
+
 .tag-mini {
 	text-transform: none;
 	margin-left: 0px;
@@ -15,7 +26,7 @@
 	font-size: 10px;
 }
 
-.panel_compactrow .panel_tag {
+.panel_compactrow .panel_tag, .panel_compacttext {
 	font-size: 14px;
 }
 .panel_compactrow {
@@ -23,9 +34,6 @@
 	padding-top: 10px;
 	padding-bottom: 10px;
 	padding-right: 10px;
-}
-.panel_compacttext {
-	font-size: 14px;
 }
 
 .panel_upshift {
@@ -40,47 +48,33 @@
 .panel_upshift:visited {
 	color: black;
 }
-/*.panel_tag_upshift {
-	margin-left: 2px;
-	position: relative;
-	top:-3px;
-	color: #505050;
-}*/
 
-.panel_floater {
+.panel_floater, .panel_buttons {
+	margin-left: auto;
 	float: right;
 }
-.panel_rank_tag_admin:before {
-	content: "👑";
+#panel_forums .rowitem {
+	display: flex;
 }
-.panel_rank_tag_mod:before {
-	content: "👮";
+#panel_forums .panel_floater {
+	margin-left: auto;
+	margin-top: -2px;
 }
-.panel_rank_tag_banned:before {
-	content: "⛓️";
-}
-.panel_rank_tag_guest:before {
-	content: "👽";
-}
-.panel_rank_tag_member:before {
-	content: "👪";
+#panel_forums .panel_buttons {
+	margin-left: 3px;
 }
 
-.forum_preset_announce:before {
-	content: "📣";
-}
-.forum_preset_members:before {
-	content: "👪";
-}
-.forum_preset_staff:before {
-	content: "👮";
-}
-.forum_preset_admins:before {
-	content: "👑";
-}
-.forum_preset_archive:before {
-	content: "☠️";
-}
+.panel_rank_tag_admin:before  { content: "👑"; }
+.panel_rank_tag_mod:before    { content: "👮"; }
+.panel_rank_tag_banned:before { content: "⛓️"; }
+.panel_rank_tag_guest:before  { content: "👽"; }
+.panel_rank_tag_member:before { content: "👪"; }
+
+.forum_preset_announce:before { content: "📣"; }
+.forum_preset_members:before  { content: "👪"; }
+.forum_preset_staff:before    { content: "👮"; }
+.forum_preset_admins:before   { content: "👑"; }
+.forum_preset_archive:before  { content: "☠️"; }
 .forum_preset_all, .forum_preset_custom, .forum_preset_ {
 	display: none !important;
 }
@@ -101,13 +95,14 @@
 	content: "No Access";
 	color: maroon;
 }
+.perm_preset_read_only:before, .perm_preset_can_post:before {
+	color: green;
+}
 .perm_preset_read_only:before {
 	content: "Read Only";
-	color: green;
 }
 .perm_preset_can_post:before {
 	content: "Can Post";
-	color: green;
 }
 .perm_preset_can_moderate:before {
 	content: "Can Moderate";
@@ -128,4 +123,10 @@
 /* TODO: Figure out how to handle this on the Control Panel */
 .footer {
 	display: none;
+}
+
+#panel_word_filters .itemSeparator:before {
+	content: " || ";
+	padding-left: 2px;
+	padding-right: 2px;
 }

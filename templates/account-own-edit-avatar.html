@@ -5,11 +5,9 @@
 		<div class="colstack_item colstack_head rowhead">
 			<div class="rowitem"><h1>Edit Avatar</h1></div>
 		</div>
-		{{if .CurrentUser.Avatar}}
 		<div class="colstack_item">
 			<div class="rowitem"><img src="{{.CurrentUser.Avatar}}" height="128px" max-width="128px" /></div>
 		</div>
-		{{end}}
 		<div class="colstack_item the_form">
 			<form action="/user/edit/avatar/submit/" method="post" enctype="multipart/form-data">
 				<div class="formrow real_first_child">

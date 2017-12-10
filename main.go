@@ -80,6 +80,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.GlobalViewCounter, err = common.NewGlobalViewCounter()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -163,43 +167,50 @@ func main() {
 	defer watcher.Close()
 
 	go func() {
+		var modifiedFileEvent = func(path string) error {
+			var pathBits = strings.Split(path, "\\")
+			if len(pathBits) == 0 {
+				return nil
+			}
+			if pathBits[0] == "themes" {
+				var themeName string
+				if len(pathBits) >= 2 {
+					themeName = pathBits[1]
+				}
+				if len(pathBits) >= 3 && pathBits[2] == "public" {
+					// TODO: Handle new themes freshly plopped into the folder?
+					theme, ok := common.Themes[themeName]
+					if ok {
+						return theme.LoadStaticFiles()
+					}
+				}
+			}
+			return nil
+		}
+
+		var err error
 		for {
 			select {
 			case event := <-watcher.Events:
 				log.Println("event:", event)
+				// TODO: Handle file deletes (and renames more graciously by removing the old version of it)
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					log.Println("modified file:", event.Name)
-					var pathBits = strings.Split(event.Name, "\\")
-					if len(pathBits) > 0 {
-						if pathBits[0] == "themes" {
-							var themeName string
-							if len(pathBits) >= 1 {
-								themeName = pathBits[1]
-							}
-
-							if len(pathBits) >= 2 && pathBits[2] == "public" {
-								// TODO: Handle new themes freshly plopped into the folder?
-								theme, ok := common.Themes[themeName]
-								if ok {
-									err = theme.LoadStaticFiles()
-									if err != nil {
-										common.LogError(err)
-									}
-								}
-							}
-
-						}
-					}
+					err = modifiedFileEvent(event.Name)
 				} else if event.Op&fsnotify.Create == fsnotify.Create {
 					log.Println("new file:", event.Name)
+					err = modifiedFileEvent(event.Name)
 				}
-			case err := <-watcher.Errors:
-				log.Println("error:", err)
+				if err != nil {
+					common.LogError(err)
+				}
+			case err = <-watcher.Errors:
+				common.LogError(err)
 			}
 		}
 	}()
 
-	// TODO: Keep tabs on the theme stuff, and the langpacks
+	// TODO: Keep tabs on the (non-resource) theme stuff, and the langpacks
 	err = watcher.Add("./public")
 	if err != nil {
 		log.Fatal(err)
@@ -226,6 +237,12 @@ func main() {
 				//log.Print("Running the second ticker")
 				// TODO: Add a plugin hook here
 
+				for _, task := range common.ScheduledSecondTasks {
+					if task() != nil {
+						common.LogError(err)
+					}
+				}
+
 				err := common.HandleExpiredScheduledGroups()
 				if err != nil {
 					common.LogError(err)
@@ -248,6 +265,12 @@ func main() {
 				// TODO: Add a plugin hook here
 			case <-fifteenMinuteTicker.C:
 				// TODO: Add a plugin hook here
+
+				for _, task := range common.ScheduledFifteenMinuteTasks {
+					if task() != nil {
+						common.LogError(err)
+					}
+				}
 
 				// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 				// TODO: Publish scheduled posts.

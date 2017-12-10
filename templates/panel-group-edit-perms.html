@@ -16,7 +16,7 @@
 		<div class="rowitem"><h1>{{.Name}} Group</h1></div>
 	</div>
 	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
-	<div id="panel_group" class="colstack_item rowlist">
+	<div id="panel_group" class="colstack_item rowlist formlist">
 		{{if .CurrentUser.Perms.EditGroupLocalPerms}}
 		{{range .LocalPerms}}
 		<div class="formrow">
@@ -39,7 +39,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>Extended Permissions</h1></div>
 	</div>
-	<div class="colstack_item rowlist">
+	<div class="colstack_item rowlist formlist">
 		{{if .CurrentUser.Perms.EditGroupGlobalPerms}}
 		{{range .GlobalPerms}}
 		<div class="formrow">

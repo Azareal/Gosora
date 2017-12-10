@@ -1,5 +1,12 @@
 /* Control Panel */
 
+.edit_button:before {
+	content: "Edit";
+}
+.delete_button:after {
+	content: "Delete";
+}
+
 .tag-mini {
 	margin-left: 0px;
 	padding-left: 0px;
@@ -34,6 +41,12 @@
 #panel_forums > .rowitem > .panel_floater > .panel_buttons > .panel_right_button {
 	color: #505050;
 	font-size: 14px;
+}
+
+#panel_word_filters .itemSeparator:before {
+	content: " || ";
+	padding-left: 2px;
+	padding-right: 2px;
 }
 
 .panel_rank_tag, .forum_preset, .forum_active {

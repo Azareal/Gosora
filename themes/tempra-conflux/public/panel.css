@@ -1,6 +1,19 @@
 /* Control Panel */
 
-.panel_upshift:visited { color: black; }
+.bgsub {
+	display: none;
+}
+
+.edit_button:before {
+	content: "Edit";
+}
+.delete_button:after {
+	content: "Delete";
+}
+
+.panel_upshift:visited {
+	color: black;
+}
 
 .panel_tag {
 	padding-left: 0px;
@@ -10,7 +23,6 @@
 	color: #202020;
 	font-size: 14px;
 }
-
 .tag-mini {
 	margin-left: 0px;
 	padding-left: 0px;
@@ -22,7 +34,8 @@
 	font-size: 13px;
 }
 
-.panel_floater {
+.panel_floater, .panel_buttons {
+	margin-left: auto;
 	float: right;
 }
 #panel_groups > .rowitem > .panel_floater {
@@ -31,11 +44,11 @@
 #panel_groups > .rowitem > .panel_floater > .panel_right_button {
 	float: right;
 }
-#panel_forums > .rowitem > .panel_floater {
-	float: none;
+#panel_forums .rowitem {
+	display: flex;
 }
-#panel_forums > .rowitem > .panel_floater > .panel_buttons {
-	float: right;
+#panel_forums > .rowitem > .panel_floater {
+	margin-left: 0px;
 }
 #panel_forums > .rowitem > span > .forum_name {
 	margin-right: 4px;
@@ -81,6 +94,12 @@
 .perm_preset_default:before { content: "Default"; }
 
 .theme_row > .panel_floater > .panel_right_button { margin-left: 5px; }
+
+#panel_word_filters .itemSeparator:before {
+	content: " || ";
+	padding-left: 2px;
+	padding-right: 2px;
+}
 
 @media(max-width: 1300px) {
 	.theme_row { background-image: none !important; }

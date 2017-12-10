@@ -14,7 +14,7 @@
 				{{if .RankClass}}<a class="panel_tag panel_rank_tag panel_rank_tag_{{.RankClass}}" title="{{.Rank}}"></a>
 				{{else}}<span class="panel_tag">{{.Rank}}</span>{{end}}
 
-				{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="panel_tag panel_right_button">Edit</a>{{end}}
+				{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="Edit Group"></a>{{end}}
 			</span>
 		</div>
 		{{end}}

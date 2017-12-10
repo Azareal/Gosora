@@ -65,6 +65,7 @@ body, #back {
 	display: none;
 }
 .nav {
+	padding-top: 16px;
 	border-bottom: 2px solid var(--header-border-color);
 }
 
@@ -82,29 +83,35 @@ li {
 	border-right: 1px solid var(--header-border-color);
 }
 
-.menu_overview {
+#menu_overview {
 	font-size: 22px;
 	margin-right: 12px;
 	letter-spacing: 1px;
 }
-.menu_left.menu_overview:after {
+#menu_overview:after {
 	margin-right: 5px !important;
 	height: 20px !important;
 }
 
-.menu_forums a:before, .menu_topics a:before, .alert_bell:before, .menu_account a:before, .menu_profile a:before, .menu_panel a:before, .menu_logout a:before {
+#menu_forums a:before, .menu_topics a:before, .alert_bell:before, .menu_account a:before, .menu_profile a:before, .menu_panel a:before, .menu_logout a:before {
 	font: normal normal normal 14px/1 FontAwesome;
 }
 
-.menu_forums a:before {
+#menu_forums a:before {
     content: "\f03a";
     margin-right: 6px;
+}
+#menu_forums a:after {
+	content: "Forums";
 }
 .menu_topics a:before {
     margin-right: 4px;
     content: "\f27b";
     position: relative;
     top: -2px;
+}
+.menu_topics a:after {
+	content: "Topics";
 }
 .menu_alerts {
 	color: var(--primary-link-color);
@@ -136,6 +143,9 @@ li {
     content: "\f2c3";
     margin-right: 6px;
 }
+.menu_account a:after {
+	content: "Account";
+}
 .menu_profile a:before {
     content: "\f2c0";
     margin-right: 5px;
@@ -143,13 +153,28 @@ li {
     top: -1px;
     font-size: 14px;
 }
+.menu_profile a:after {
+	content: "Profile";
+}
 .menu_panel a:before {
     margin-right: 6px;
     content: "\f108";
 }
+.menu_panel a:after {
+	content: "Panel";
+}
 .menu_logout a:before {
     content: "\f08b";
     margin-right: 3px;
+}
+.menu_logout a:after {
+	content: "Logout";
+}
+.menu_login a:after {
+	content: "Login";
+}
+.menu_register a:after {
+	content: "Register";
 }
 
 ul {
@@ -158,6 +183,7 @@ ul {
 	padding: 0px;
 	margin-left: 14px;
 	margin-bottom: 12px;
+	margin-top: 0px;
 }
 .alertList {
 	display: none;
@@ -169,7 +195,7 @@ ul {
 	border-bottom: 2px solid var(--header-border-color);
 	margin-left: 12px;
 }
-.rowblock:not(.topic_list), .colstack_head, .topic_row .rowitem {
+.rowblock:not(.topic_list):not(.forum_list), .colstack_head, .topic_row .rowitem, .forum_list .rowitem {
 	background-color: var(--element-background-color);
 }
 .rowblock {
@@ -495,15 +521,41 @@ select, input, textarea, button {
 	background-color: var(--element-background-color);
 	padding: 12px;
 }
-/* TODO: Refactor bgavatars to make the avatars rounded */
+.rowlist.bgavatars {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fill, 150px);
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	grid-gap: 6px 12px;
+}
+.rowlist .rowitem {
+	display: flex;
+}
 .rowlist.bgavatars .rowitem {
-	background-repeat: no-repeat;
-	background-size: 40px;
-	padding-left: 46px;
+	background-image: none !important;
+	flex-direction: column;
+}
+.rowlist.bgavatars .bgsub {
+	height: 80px;
+	width: 80px;
+	border-radius: 48px;
+	margin-top: 4px;
+	margin-bottom: 8px;
+}
+.rowlist.bgavatars .bgsub, .rowlist.bgavatars .rowitem > a, .rowlist.bgavatars .rowitem > span {
+	margin-left: auto;
+	margin-right: auto;
+}
+.rowlist .rowTitle {
+	font-size: 20px;
+	margin-bottom: 3px;
+}
+.rowlist .panel_compactrow {
+	padding: 16px;
 }
 
 .topic_list .rowtopic {
-	font-size: 17px;
+	font-size: 16px;
 	margin-right: 1px;
 	white-space: nowrap;
 	display: inline-block;
@@ -856,6 +908,33 @@ select, input, textarea, button {
 	border-right: none !important;
 }
 
+.to_right {
+	float: right;
+	margin-left: auto;
+}
+
+/* TODO: Highlight the one we're currently on? */
+.pageset {
+	display: flex;
+	margin-left: 16px;
+}
+.pageitem {
+	padding: 8px;
+	padding-left: 10px;
+	padding-right: 10px;
+	background: var(--element-background-color);
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+	border-left: none;
+	border-right: none;
+}
+.pageitem:first-child {
+	border-left: 1px solid var(--element-border-color);
+}
+.pageitem:last-child {
+	border-right: 1px solid var(--element-border-color);
+}
+
 /* TODO: Make widget_about's CSS less footer centric */
 .footer {
 	margin-top: 14px;
@@ -941,6 +1020,7 @@ select, input, textarea, button {
 	margin-right: auto;
 	text-align: center;
 }
+/* TODO: Move these to panel.css */
 #dash-version:before, #dash-cpu:before, #dash-ram:before {
 	display: inline-block;
 	background: hsl(0,0%,98%);
@@ -967,6 +1047,44 @@ select, input, textarea, button {
 	}
 }
 @media(max-width: 520px) {
+	#menu_overview {
+		font-size: 18px;
+		background-color: hsl(0,0%,97%);
+		margin-top: -16px;
+		margin-bottom: -11px;
+		margin-left: -14px;
+		margin-right: 16px;
+		padding-top: 16px;
+		padding-left: 14px;
+		padding-right: 4px;
+	}
+	#menu_overview::after {
+		height: 16px !important;
+	}
+	.menu_left a:after {
+		content: "" !important;
+	}
+	.menu_left:not(:last-child):after, .menu_alerts:after {
+		margin-left: 4px;
+		border-right: none;
+	}
+	.menu_alerts {
+		margin-right: 16px;
+	}
+	.alert_bell {
+		position: relative;
+		bottom: -1px;
+	}
+	.alert_bell:before {
+		font-size: 17px;
+	}
+	.alert_aftercounter {
+		display: none;
+	}
+	.rowhead h1, .opthead h1, .colstack_head h1 {
+		font-size: 18px;
+	}
+	
 	.topic_list {
 		display: flex;
 		flex-wrap: wrap;
@@ -990,7 +1108,7 @@ select, input, textarea, button {
 	.topic_right.rowitem {
 		border-top: none;
 		border-left: 1px solid var(--element-border-color);
-		background-color: hsl(0,0%,90%);
+		background-color: hsl(0,0%,95%);
 	}
 	.topic_right br, .topic_right img {
 		display: none;
@@ -1001,5 +1119,15 @@ select, input, textarea, button {
 	.topic_right > span {
 		margin-top: 6px;
 		margin-bottom: 6px;
+	}
+}
+@media(max-width: 450px) {
+	.topic_list .topic_row {
+		display: block;
+		width: 100%;
+		float: none;
+	}
+	.topic_list .topic_row:nth-child(odd) {
+		margin-right: 0px;
 	}
 }

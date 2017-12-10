@@ -1,3 +1,86 @@
-.about {
+.complex_rowlist {
+	background-color: inherit !important;
+	border: none !important;
+}
+.complex_rowlist .rowitem {
+	display: flex;
+}
+
+.panel_buttons, .panel_floater {
+	margin-left: auto;
+	display: flex;
+}
+.panel_buttons:before,
+.panel_floater:before,
+.edit_button:after,
+.delete_button:after {
+	color: hsl(0,0%,65%);
+}
+.panel_buttons:before,
+.panel_floater:before {
+	content: "";
+	border-left: 1px solid var(--element-border-color);
+	height: 15px;
+	margin-top: 2px;
+	margin-bottom: 0px;
+	margin-right: 0px;
+}
+.edit_button:after, .delete_button:after {
+	font: normal normal normal 14px/1 FontAwesome;
+    padding-left: 12px;
+    height: 20px;
+}
+.edit_button:after {
+	content: "\f040";
+}
+.delete_button:after {
+	content: "\f014";
+}
+
+#panel_users .panel_floater:before,
+#panel_forums .panel_floater:before,
+#forum_quick_perms .panel_floater:before,
+.panel_themes .panel_floater:before,
+#panel_backups .panel_floater:before {
+	border-left: none;
+}
+#panel_forums_name_box {
+	order: 0;
+}
+
+#panel_users .panel_tag:not(.panel_right_button) {
 	display: none;
+}
+
+#panel_word_filters .itemSeparator:before {
+	content: "|";
+	padding-left: 5px;
+	padding-right: 5px;
+	color: var(--primary-link-color);
+}
+
+/* TODO: Should we be using .formrows in #forum_quick_perms? Can we normalize it? Would this break the other themes? */
+.formlist:not(#forum_quick_perms),
+.panel_themes .rowitem,
+#panel_plugins .rowitem,
+#forum_quick_perms .formitem {
+	padding: 12px;
+	margin-bottom: 8px;
+	background-color: var(--element-background-color);
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+}
+.formlist .formrow {
+	padding: 0px !important;
+	margin: 0px;
+}
+.formlist .formitem {
+	padding: 8px;
+}
+#forum_quick_perms .panel_floater,
+.panel_theme_mobile, .panel_theme_tag {
+	display: none;
+}
+#panel_plugins .rowitem {
+	display: block;
 }

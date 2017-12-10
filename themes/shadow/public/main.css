@@ -58,15 +58,40 @@ li {
 	float: right;
 }
 
-.menu_overview {
+#menu_overview {
 	margin-right: 13px;
 	margin-left: 10px;
 	font-size: 16px;
 }
 
-.menu_left:not(.menu_overview) {
+.menu_left:not(#menu_overview) {
 	font-size: 15px;
 	padding-top: 13px;
+}
+
+#menu_forums a:after {
+	content: "Forums";
+}
+.menu_topics a:after {
+	content: "Topics";
+}
+.menu_account a:after {
+	content: "Account";
+}
+.menu_profile a:after {
+	content: "Profile";
+}
+.menu_panel a:after {
+	content: "Panel";
+}
+.menu_logout a:after {
+	content: "Logout";
+}
+.menu_login a:after {
+	content: "Login";
+}
+.menu_register a:after {
+	content: "Register";
 }
 
 .alert_bell {
@@ -194,8 +219,9 @@ a {
 	padding: 10px;
 }
 
-/* Algin to right in a flex head */
+/* Align to right in a flex head */
 .to_right {
+	float: right;
 	margin-left: auto;
 }
 
@@ -472,6 +498,9 @@ input, select, textarea {
 	margin-top: 5px;
 }
 
+.little_row_avatar {
+	display: none;
+}
 .topic_create_form .topic_board_row .formitem, .topic_create_form .topic_name_row .formitem {
 	padding-bottom: 5px;
 }
@@ -773,7 +802,7 @@ input, select, textarea {
 		height: 26px;
 	}
 
-	.menu_overview {
+	#menu_overview {
 		margin-right: 9px;
 		margin-left: 0px;
 		font-size: 15px;
@@ -783,7 +812,7 @@ input, select, textarea {
 	.menu_left {
 		margin-right: 7px;
 	}
-	.menu_left:not(.menu_overview) {
+	.menu_left:not(#menu_overview) {
 		font-size: 13px;
 		padding-top: 10px;
 	}
@@ -847,10 +876,10 @@ input, select, textarea {
 		ul {
 			height: 40px;
 		}
-		.menu_overview {
+		#menu_overview {
 			font-size: 16px;
 		}
-		.menu_left:not(.menu_overview) {
+		.menu_left:not(#menu_overview) {
 			font-size: 14px;
 			padding-top: 13px;
 		}
@@ -881,14 +910,11 @@ input, select, textarea {
 }
 
 @media(max-width: 500px) {
-	.topic_list .topic_inner_right {
-		display: block;
-	}
 	.topic_list .rowitem {
 		float: none;
 	}
 	.topic_list .topic_left {
-		width: calc(100% - 84px);
+		width: 100%;
 	}
 	.topic_list .topic_right {
 		display: none;

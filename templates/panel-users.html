@@ -8,8 +8,9 @@
 	</div>
 	<div id="panel_users" class="colstack_item rowlist bgavatars">
 		{{range .ItemList}}
-		<div class="rowitem editable_parent" style="{{if .Avatar}}background-image: url('{{.Avatar}}');{{end}}">
-			<a {{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}} "{{end}}class="editable_block">{{.Name}}</a>
+		<div class="rowitem editable_parent" style="background-image: url('{{.Avatar}}');">
+			<img class="bgsub" src="{{.Avatar}}" />
+			<a class="rowTitle" {{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}}" {{end}}class="editable_block">{{.Name}}</a>
 			<a href="/user/{{.ID}}" class="tag-mini">Profile</a>
 			{{if (.Tag) and (.IsSuperMod)}}<span style="float: right;"><span class="panel_tag" style="margin-left 4px;">{{.Tag}}</span></span>{{end}}
 

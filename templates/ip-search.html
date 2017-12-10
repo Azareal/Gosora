@@ -14,7 +14,7 @@
 	</div>
 	{{if .IP}}
 	<div class="rowblock bgavatars">
-		{{range .ItemList}}<div class="rowitem"{{if .Avatar}} style="background-image: url('{{.Avatar}}');"{{end}}>
+		{{range .ItemList}}<div class="rowitem" style="background-image: url('{{.Avatar}}');">
 			<a href="{{.Link}}">{{.Name}}</a>
 		</div>
 		{{else}}<div class="rowitem">No users found.</div>{{end}}

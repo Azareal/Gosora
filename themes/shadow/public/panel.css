@@ -1,11 +1,29 @@
+.bgsub {
+	display: none;
+}
+
 .rowlist .tag-mini {
 	font-size: 10px;
 	margin-left: 2px;
 }
 
+.panel_floater {
+	margin-left: auto;
+}
 .panel_right_button {
 	float: right;
 	margin-left: 5px;
+}
+
+.edit_button:before {
+	content: "Edit";
+}
+.delete_button:after {
+	content: "Delete";
+}
+
+#panel_forums .rowitem {
+	display: flex;
 }
 
 #panel_users .ban_button {
@@ -28,4 +46,10 @@
 }
 .builtin_forum_divider {
 	margin-bottom: 5px;
+}
+
+#panel_word_filters .itemSeparator:before {
+	content: " || ";
+	padding-left: 2px;
+	padding-right: 2px;
 }

@@ -32,7 +32,6 @@ li {
 li:hover { background: rgb(252,252,252); }
 li a {
 	text-decoration: none;
-	/*color: #515151;*/
 	color: black;
 	font-size: 17px;
 }
@@ -46,12 +45,37 @@ li a {
 	border-left: 1px solid hsl(0, 0%, 80%);
 	padding-right: 10px;
 }
-.menu_overview {
+#menu_overview {
 	background: none;
 	padding-right: 13px;
 }
-.menu_overview a {
+#menu_overview a {
 	padding-left: 3px;
+}
+
+#menu_forums a:after {
+	content: "Forums";
+}
+.menu_topics a:after {
+	content: "Topics";
+}
+.menu_account a:after {
+	content: "Account";
+}
+.menu_profile a:after {
+	content: "Profile";
+}
+.menu_panel a:after {
+	content: "Panel";
+}
+.menu_logout a:after {
+	content: "Logout";
+}
+.menu_login a:after {
+	content: "Login";
+}
+.menu_register a:after {
+	content: "Register";
 }
 
 .alert_bell:before {
@@ -196,7 +220,6 @@ li a {
 .colstack_grid {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	/*grid-gap: 15px;*/
 	grid-gap: 12px;
 	margin-left: 5px;
 	margin-top: 2px;
@@ -209,10 +232,7 @@ li a {
 	overflow: hidden;
 }
 .grid_stat, .grid_istat {
-	/*padding-top: 15px;*/
 	text-align: center;
-	/*padding-bottom: 15px;
-	font-size: 20px;*/
 	padding-top: 12px;
 	padding-bottom: 12px;
 	font-size: 16px;
@@ -252,10 +272,6 @@ li a {
 
 .rowitem {
 	width: 100%;
-	/*padding-left: 8px;
-	padding-right: 8px;
-	padding-top: 17px;
-	padding-bottom: 12px;*/
 	padding-left: 10px;
 	padding-top: 14px;
 	padding-bottom: 12px;
@@ -309,6 +325,11 @@ li a {
 	content: '🔒︎';
 }
 
+.to_right {
+	margin-left: auto;
+	float: right;
+}
+
 .rowlist {
 	font-size: 15px;
 }
@@ -339,7 +360,6 @@ li a {
 	float: left;
 	padding: 10px;
 	min-width: 20%;
-	/*font-size: 17px;*/
 	font-weight: normal;
 }
 .formitem:not(:last-child) {
@@ -361,12 +381,11 @@ li a {
 	float: none;
 }
 .formitem:not(:only-child) input, .formitem:not(:only-child) select {
-	padding: 3px;/*5px;*/
+	padding: 3px;
 }
 .formitem:not(:only-child).formlabel {
-	padding-top: 15px;/*18px;*/
-	padding-bottom: 12px;/*16px;*/
-	/*padding-left: 15px;*/
+	padding-top: 15px;
+	padding-bottom: 12px;
 }
 
 .formbutton, button {
@@ -450,6 +469,9 @@ li a {
 	padding: 10px;
 }
 
+.little_row_avatar {
+	display: none;
+}
 .topic_create_form .topic_button_row .formitem {
 	display: flex;
 }
@@ -631,7 +653,6 @@ button.username {
 	display: inline-block;
 	width: 100%;
 }
-
 .action_item {
 	padding: 14px;
 	text-align: center;
@@ -647,7 +668,6 @@ button.username {
 	width: 100%;
 	margin-bottom: 8px;
 }
-
 .level {
 	float: right;
 	color: #505050;
@@ -656,7 +676,6 @@ button.username {
 	padding-right: 5px;
 	font-size: 17px;
 }
-
 .mention {
 	font-weight: bold;
 }
@@ -737,6 +756,10 @@ button.username {
 }
 #poweredBy span {
 	font-size: 12px;
+}
+#poweredByName {
+	color: black;
+	text-decoration: none;
 }
 
 #profile_comments .rowitem {

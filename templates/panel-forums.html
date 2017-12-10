@@ -14,23 +14,21 @@
 	<div id="panel_forums" class="colstack_item rowlist">
 		{{range .ItemList}}
 		<div class="rowitem editable_parent">
-			<span class="panel_floater">
-			<span data-field="forum_active" data-type="list" class="panel_tag editable_block forum_active {{if .Active}}forum_active_Show" data-value="1{{else}}forum_active_Hide" data-value="0{{end}}" title="Hidden"></span>
-			<span data-field="forum_preset" data-type="list" data-value="{{.Preset}}" class="panel_tag editable_block forum_preset forum_preset_{{.Preset}}" title="{{.PresetLang}}"></span>
-
-			<span class="panel_buttons">
-				<a class="panel_tag edit_fields hide_on_edit panel_right_button">Edit</a>
-				<a class="panel_right_button" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>Update</button></a>
-				{{if gt .ID 1}}<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button hide_on_edit">Delete</a>{{end}}
-				<a href="/panel/forums/edit/{{.ID}}" class="panel_tag panel_right_button show_on_edit">Full Edit</a>
-			</span>
-			</span>
-			<span style="float: left;">
+			<span id="panel_forums_left_box">
 				{{/** TODO: Make sure the forum_active_name class is set and unset when the activity status of this forum is changed **/}}
 				<a data-field="forum_name" data-type="text" class="editable_block forum_name{{if not .Active}} forum_active_name{{end}}">{{.Name}}</a>
+				<br /><span data-field="forum_desc" data-type="text" class="editable_block forum_desc rowsmall">{{.Desc}}</span>
 			</span>
-			<br /><span data-field="forum_desc" data-type="text" class="editable_block forum_desc rowsmall">{{.Desc}}</span>
-			<div style="clear: both;"></div>
+			<span class="panel_floater">
+				<span data-field="forum_active" data-type="list" class="panel_tag editable_block forum_active {{if .Active}}forum_active_Show" data-value="1{{else}}forum_active_Hide" data-value="0{{end}}" title="Hidden"></span>
+				<span data-field="forum_preset" data-type="list" data-value="{{.Preset}}" class="panel_tag editable_block forum_preset forum_preset_{{.Preset}}" title="{{.PresetLang}}"></span>
+			</span>
+			<span class="panel_buttons">
+				<a class="panel_tag edit_fields hide_on_edit panel_right_button edit_button" aria-label="Edit Forum"></a>
+				<a class="panel_right_button" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>Update</button></a>
+				{{if gt .ID 1}}<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button hide_on_edit delete_button" aria-label="Delete Forum"></a>{{end}}
+				<a href="/panel/forums/edit/{{.ID}}" class="panel_tag panel_right_button show_on_edit">Full Edit</a>
+			</span>
 		</div>
 		{{end}}
 	</div>

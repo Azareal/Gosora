@@ -23,7 +23,7 @@
 </div>
 
 <article itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="The opening post for this topic">
-	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="{{if .Topic.Avatar}}background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
+	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
 		<p class="hide_on_edit topic_content user_content" itemprop="text" style="margin:0;padding:0;">{{.Topic.ContentHTML}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 
@@ -57,7 +57,7 @@
 		<span itemprop="text">{{.ActionType}}</span>
 	</article>
 {{else}}
-	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="{{if .Avatar}}background-image: url({{.Avatar}}), url(/static/{{$.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;{{end}}">
+	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="background-image: url({{.Avatar}}), url(/static/{{$.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
 		{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
 		<p class="editable_block user_content" itemprop="text" style="margin:0;padding:0;">{{.ContentHtml}}</p>
 

@@ -10,9 +10,7 @@ body {
 }
 
 /* Patch for Edge, until they fix emojis in arial x.x */
-@supports (-ms-ime-align:auto) {
-.user_content { font-family: Segoe UI Emoji, arial; }
-}
+@supports (-ms-ime-align:auto) { .user_content { font-family: Segoe UI Emoji, arial; } }
 
 ul {
 	padding-left: 0px;
@@ -32,7 +30,6 @@ li {
 li:hover { background: rgb(250,250,250); }
 li a {
 	text-decoration: none;
-	/*color: #515151;*/
 	color: black;
 	font-size: 17px;
 }
@@ -49,6 +46,31 @@ li a {
 	padding-right: 10px;
 }
 
+#menu_forums a:after {
+	content: "Forums";
+}
+.menu_topics a:after {
+	content: "Topics";
+}
+.menu_account a:after {
+	content: "Account";
+}
+.menu_profile a:after {
+	content: "Profile";
+}
+.menu_panel a:after {
+	content: "Panel";
+}
+.menu_logout a:after {
+	content: "Logout";
+}
+.menu_login a:after {
+	content: "Login";
+}
+.menu_register a:after {
+	content: "Register";
+}
+
 .alert_bell:before {
 	content: '🔔︎';
 }
@@ -56,7 +78,6 @@ li a {
 	cursor: default;
 }
 .menu_alerts {
-	/*padding-left: 7px;*/
 	font-size: 20px;
 	padding-top: 2px;
 	color: rgb(80,80,80);
@@ -649,7 +670,7 @@ button.username {
 }
 
 @media (max-width: 470px) {
-	.menu_overview, .menu_profile, .hide_on_micro { display: none; }
+	#menu_overview, .menu_profile, .hide_on_micro { display: none; }
 	.selectedAlert .alertList {
 		width: 135px;
 		margin-bottom: 5px;
