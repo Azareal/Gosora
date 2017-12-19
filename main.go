@@ -80,7 +80,11 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
-	common.GlobalViewCounter, err = common.NewGlobalViewCounter()
+	common.GlobalViewCounter, err = common.NewChunkedViewCounter()
+	if err != nil {
+		return err
+	}
+	common.RouteViewCounter, err = common.NewRouteViewCounter()
 	if err != nil {
 		return err
 	}

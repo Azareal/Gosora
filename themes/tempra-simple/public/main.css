@@ -337,7 +337,10 @@ li a {
 	padding-top: 10px;
 	padding-bottom: 10px;
 }
-.rowlist.bgavatars .rowitem {
+.bgsub {
+	display: none;
+}
+.bgavatars .rowitem {
 	background-repeat: no-repeat;
 	background-size: 40px;
 	padding-left: 46px;
@@ -679,7 +682,7 @@ button.username {
 .mention {
 	font-weight: bold;
 }
-.show_on_edit, .auto_hide {
+.show_on_edit, .auto_hide, .hide_on_big, .show_on_mobile {
 	display: none;
 }
 

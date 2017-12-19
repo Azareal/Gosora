@@ -26,7 +26,7 @@
 	</div>
 	<div id="panel_primary_themes" class="colstack_item panel_themes complex_rowlist">
 		{{range .PrimaryThemes}}
-		<div class="theme_row rowitem editable_parent" style="{{if .FullImage}}background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;{{end}}">
+		<div class="theme_row rowitem editable_parent"{{if .FullImage}} style="background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;"{{end}}>
 			<span style="float: left;">
 				<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size: 17px;">{{.FriendlyName}}</a><br />
 				<small class="panel_theme_author" style="margin-left: 2px;">Author: <a href="//{{.URL}}">{{.Creator}}</a></small>
@@ -45,7 +45,7 @@
 	</div>
 	<div id="panel_variant_themes" class="colstack_item panel_themes">
 		{{range .VariantThemes}}
-		<div class="theme_row rowitem editable_parent" style="{{if .FullImage}}background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;{{end}}">
+		<div class="theme_row rowitem editable_parent"{{if .FullImage}} style="background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;"{{end}}>
 			<span style="float: left;">
 				<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size: 17px;">{{.FriendlyName}}</a><br />
 				<small class="panel_theme_author" style="margin-left: 2px;">Author: <a href="//{{.URL}}">{{.Creator}}</a></small>

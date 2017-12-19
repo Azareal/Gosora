@@ -216,11 +216,14 @@ li a {
 	}
 }
 
+.bgsub {
+	display: none;
+}
 .rowlist .rowitem {
 	padding-top: 10px;
 	padding-bottom: 10px;
 }
-.rowlist.bgavatars .rowitem {
+.bgavatars .rowitem {
 	background-repeat: no-repeat;
 	background-size: 40px;
 	padding-left: 48px;
@@ -616,7 +619,7 @@ button.username {
 .mention {
 	font-weight: bold;
 }
-.show_on_edit, .auto_hide {
+.show_on_edit, .auto_hide, .hide_on_big, .show_on_mobile, .button_menu {
 	display: none;
 }
 
@@ -882,6 +885,31 @@ button.username {
 }
 .post_container .post_item:last-child .content_container {
 	margin-bottom: 6px !important;
+}
+
+.add_like:before {
+	content: "+1";
+}
+.button_container .open_edit:after, .edit_item:after {
+	content: "Edit";
+}
+.delete_item:after {
+	content: "Delete";
+}
+.lock_item:after {
+	content: "Lock";
+}
+.unlock_item:after {
+	content: "Unlock";
+}
+.pin_item:after {
+	content: "Pin";
+}
+.unpin_item:after {
+	content: "Unpin";
+}
+.report_item:after {
+	content: "Report";
 }
 
 #poweredByHolder {

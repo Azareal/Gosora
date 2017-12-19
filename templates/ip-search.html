@@ -1,5 +1,5 @@
 {{template "header.html" . }}
-<main>
+<main id="ip_search_container">
 	<div class="rowblock rowhead">
 		<div class="rowitem">
 			<h1>IP Search</h1>
@@ -8,14 +8,15 @@
 	<form action="/users/ips/" method="get" id="ip-search-form"></form>
 	<div class="rowblock ip_search_block">
 		<div class="rowitem passive">
-			<input form="ip-search-form" name="ip" class="ip_search_input" type="search" placeholder="🔍︎" {{if .IP}}value="{{.IP}}"{{end}}/>
+			<input form="ip-search-form" name="ip" class="ip_search_input" type="search" placeholder="🔍︎"{{if .IP}} value="{{.IP}}"{{end}} />
 			<input form="ip-search-form" class="ip_search_search" type="submit" value="Search" />
 		</div>
 	</div>
 	{{if .IP}}
-	<div class="rowblock bgavatars">
+	<div class="rowblock rowlist bgavatars">
 		{{range .ItemList}}<div class="rowitem" style="background-image: url('{{.Avatar}}');">
-			<a href="{{.Link}}">{{.Name}}</a>
+			<img src="{{.Avatar}}" class="bgsub" alt="{{.Name}}'s Avatar" />
+			<a class="rowTitle" href="{{.Link}}">{{.Name}}</a>
 		</div>
 		{{else}}<div class="rowitem">No users found.</div>{{end}}
 	</div>

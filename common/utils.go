@@ -73,9 +73,12 @@ func RelativeTime(t time.Time) string {
 	weeks := int(hours / 24 / 7)
 	months := int(hours / 24 / 31)
 	switch {
-	case months > 11:
-		//return t.Format("Mon Jan 2 2006")
-		return t.Format("Jan 2 2006")
+	case months > 3:
+		if t.Year() != time.Now().Year() {
+			//return t.Format("Mon Jan 2 2006")
+			return t.Format("Jan 2 2006")
+		}
+		return t.Format("Jan 2")
 	case months > 1:
 		return fmt.Sprintf("%d months ago", months)
 	case months == 1:

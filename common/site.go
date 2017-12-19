@@ -59,6 +59,7 @@ type config struct {
 	SMTPUsername string
 	SMTPPassword string
 	SMTPPort     string
+	//SMTPEnableTLS bool
 
 	DefaultRoute    func(http.ResponseWriter, *http.Request, User) RouteError
 	DefaultGroup    int

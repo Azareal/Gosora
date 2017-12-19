@@ -136,7 +136,7 @@ func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user U
 
 func LocalErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
-	_, _ = w.Write([]byte(`{'errmsg': '` + errmsg + `'}`))
+	_, _ = w.Write([]byte(`{"errmsg": "` + errmsg + `"}`))
 	return HandledRouteError()
 }
 

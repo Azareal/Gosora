@@ -149,7 +149,7 @@ func init() {
 // Flush the topic out of the cache
 // ? - We do a CacheRemove() here instead of mutating the pointer to avoid creating a race condition
 func (topic *Topic) cacheRemove() {
-	tcache := Topics.(TopicCache)
+	tcache := Topics.GetCache()
 	if tcache != nil {
 		tcache.Remove(topic.ID)
 	}

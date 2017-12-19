@@ -1569,9 +1569,6 @@ func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User,
 	if ferr != nil {
 		return ferr
 	}
-	if !user.IsSuperAdmin {
-		return common.NoPermissions(w, r, user)
-	}
 
 	if backupURL != "" {
 		// We don't want them trying to break out of this directory, it shouldn't hurt since it's a super admin, but it's always good to practice good security hygiene, especially if this is one of many instances on a managed server not controlled by the superadmin/s

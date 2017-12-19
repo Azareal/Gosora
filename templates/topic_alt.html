@@ -34,19 +34,21 @@
 			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 			<div class="button_container">
 				{{if .CurrentUser.Loggedin}}
-					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="action_button like_item add_like">+1</a>{{end}}
-					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit">Edit</a>{{end}}
-					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}" class="action_button delete_item">Delete</a>{{end}}
+					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="action_button like_item add_like" aria-label="Like this post" data-action="like"></a>{{end}}
+					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit" aria-label="Edit this post" data-action="edit"></a>{{end}}
+					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}" class="action_button delete_item" aria-label="Delete this post" data-action="delete"></a>{{end}}
 					{{if .CurrentUser.Perms.CloseTopic}}
-					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}' class="action_button">Unlock</a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}' class="action_button">Lock</a>{{end}}{{end}}
+					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}' class="action_button unlock_item" data-action="unlock"></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}' class="action_button lock_item" data-action="lock"></a>{{end}}{{end}}
 					{{if .CurrentUser.Perms.PinTopic}}
-					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}' class="action_button">Unpin</a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="action_button">Pin</a>{{end}}{{end}}
-					<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="action_button report_item">Report</a>
+					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}' class="action_button unpin_item" data-action="unpin"></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="action_button pin_item" data-action="pin"></a>{{end}}{{end}}
+					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IPAddress}}" title="IP Address" class="action_button ip_item_button hide_on_big" aria-label="This user's IP" data-action="ip"></a>{{end}}
+					<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="action_button report_item" aria-label="Report this post" data-action="report"></a>
+					<a href="#" class="action_button button_menu"></a>
 				{{end}}
-				<div class="action_button_right">
+				<div class="action_button_right{{if .Topic.LikeCount}} has_likes{{end}}">
 					{{if .Topic.LikeCount}}<a class="action_button like_count hide_on_micro">{{.Topic.LikeCount}}</a>{{end}}
 					<a class="action_button created_at hide_on_mobile">{{.Topic.RelativeCreatedAt}}</a>
-					{{if .CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button ip_item hide_on_mobile">{{.Topic.IPAddress}}</a>{{end}}
+					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IPAddress}}" title="IP Address" class="action_button ip_item hide_on_mobile">{{.Topic.IPAddress}}</a>{{end}}
 				</div>
 			</div>
 		</div><div style="clear:both;"></div>
@@ -68,15 +70,17 @@
 			<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
 			<div class="button_container">
 				{{if $.CurrentUser.Loggedin}}
-					{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="action_button like_item add_like">+1</a>{{end}}
-					{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="action_button edit_item">Edit</a>{{end}}
-					{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="action_button delete_item">Delete</a>{{end}}
-					<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="action_button report_item">Report</a>
+					{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="action_button like_item add_like" aria-label="Like this post" data-action="like"></a>{{end}}
+					{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="action_button edit_item" aria-label="Edit this post" data-action="edit"></a>{{end}}
+					{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="action_button delete_item" aria-label="Delete this post" data-action="delete"></a>{{end}}
+					{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="IP Address" class="action_button ip_item_button hide_on_big" aria-label="This user's IP Address" data-action="ip"></a>{{end}}
+					<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="action_button report_item" aria-label="Report this post" data-action="report"></a>
+					<a href="#" class="action_button button_menu"></a>
 				{{end}}
-				<div class="action_button_right">
+				<div class="action_button_right{{if .LikeCount}} has_likes{{end}}">
 					{{if .LikeCount}}<a class="action_button like_count hide_on_micro">{{.LikeCount}}</a>{{end}}
 					<a class="action_button created_at hide_on_mobile">{{.RelativeCreatedAt}}</a>
-					{{if $.CurrentUser.Perms.ViewIPs}}<a href="#" title="IP Address" class="action_button ip_item hide_on_mobile">{{.IPAddress}}</a>{{end}}
+					{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="IP Address" class="action_button ip_item hide_on_mobile">{{.IPAddress}}</a>{{end}}
 				</div>
 			</div>
 			{{end}}

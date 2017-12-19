@@ -107,3 +107,15 @@ func debugLogf(str string, args ...interface{}) {
 		log.Printf(str, args...)
 	}
 }
+
+// TODO: Make a neater API for this
+var routeMapEnum map[string]int
+var reverseRouteMapEnum map[int]string
+
+func SetRouteMapEnum(rme map[string]int) {
+	routeMapEnum = rme
+}
+
+func SetReverseRouteMapEnum(rrme map[int]string) {
+	reverseRouteMapEnum = rrme
+}

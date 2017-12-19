@@ -478,6 +478,28 @@ func TestPermsMiddleware(t *testing.T) {
 	expect(t, ferr == nil, "Logged in users should be able to access member areas")
 
 	// TODO: Loop over the /user/ routes and make sure only members can access the ones other than /user/username
+
+	// TODO: Write tests for AdminOnly()
+
+	user = common.BlankUser()
+
+	ferr = common.SuperAdminOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr != nil, "Blank users shouldn't be considered super admins")
+
+	user.IsSuperAdmin = false
+	ferr = common.SuperAdminOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr != nil, "Non-super admins shouldn't be allowed through the super admin gate")
+
+	user.IsSuperAdmin = true
+	ferr = common.SuperAdminOnly(dummyResponseRecorder, dummyRequest, *user)
+	expect(t, ferr == nil, "Super admins should be allowed through super admin gates")
+
+	// TODO: Make sure only super admins can access the backups route
+
+	//dummyResponseRecorder = httptest.NewRecorder()
+	//bytesBuffer = bytes.NewBuffer([]byte(""))
+	//dummyRequest = httptest.NewRequest("", "/panel/backups/", bytesBuffer)
+
 }
 
 func TestTopicStore(t *testing.T) {

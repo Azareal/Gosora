@@ -159,6 +159,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"postCount", "int", 0, false, false, "1"},
 			qgen.DBTableColumn{"likeCount", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"words", "int", 0, false, false, "0"},
+			//qgen.DBTableColumn{"views", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"css_class", "varchar", 100, false, false, "''"},
 			qgen.DBTableColumn{"data", "varchar", 200, false, false, "''"},
 		},
@@ -358,9 +359,21 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+			qgen.DBTableColumn{"route", "varchar", 200, false, false, ""},
 		},
 		[]qgen.DBTableKey{},
 	)
+
+	/*
+		qgen.Install.CreateTable("viewchunks_forums", "", "",
+			[]qgen.DBTableColumn{
+				qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
+				qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+				qgen.DBTableColumn{"forum", "int", 0, false, false, ""},
+			},
+			[]qgen.DBTableKey{},
+		)
+	*/
 
 	qgen.Install.CreateTable("sync", "", "",
 		[]qgen.DBTableColumn{

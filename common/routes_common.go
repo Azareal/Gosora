@@ -284,6 +284,14 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	return *usercpy, true
 }
 
+// SuperAdminOnly makes sure that only super admin can access certain critical panel routes
+func SuperAdminOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	if !user.IsSuperAdmin {
+		return NoPermissions(w, r, user)
+	}
+	return nil
+}
+
 // AdminOnly makes sure that only admins can access certain panel routes
 func AdminOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.IsAdmin {

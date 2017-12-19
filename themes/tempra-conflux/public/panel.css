@@ -1,9 +1,5 @@
 /* Control Panel */
 
-.bgsub {
-	display: none;
-}
-
 .edit_button:before {
 	content: "Edit";
 }

@@ -122,7 +122,7 @@ li {
 	content: "Alerts";
 }
 
-.menu_alerts .alertList, .auto_hide {
+.menu_alerts .alertList, .auto_hide, .hide_on_big, .show_on_mobile {
 	display: none;
 }
 .selectedAlert .alertList {
@@ -425,7 +425,6 @@ textarea.large {
 .formitem a {
 	font-size: 14px;
 }
-
 .rowmenu .rowitem, .rowlist .rowitem, .rowlist .formitem {
 	margin-top: 3px;
 	font-size: 13px;
@@ -448,6 +447,9 @@ textarea.large {
 	font-size: 13px;
 }
 
+.bgsub {
+	display: none;
+}
 .rowlist.bgavatars .rowitem {
 	background-repeat: no-repeat;
 	background-size: 40px;

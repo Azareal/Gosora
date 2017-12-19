@@ -35,7 +35,7 @@
 {{if .ForumList}}
 <div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
 	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
-	<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" />
+	<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" alt="Your Avatar" />
 	<div class="main_form">
 		<div class="topic_meta">
 			<div class="formrow topic_board_row real_first_child">
@@ -72,7 +72,7 @@
 	{{range .TopicList}}<div class="topic_row" data-tid="{{.ID}}">
 	<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
 		<span class="selector"></span>
-		<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" /></a>
+		<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" alt="{{.Creator.Name}}'s Avatar" /></a>
 		<span class="topic_inner_left">
 			<a class="rowtopic" href="{{.Link}}"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
 			<br /><a class="rowsmall starter" href="{{.Creator.Link}}">{{.Creator.Name}}</a>
@@ -86,7 +86,7 @@
 		</span>
 	</div>
 	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
-		<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" /></a>
+		<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" /></a>
 		<span>
 			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
 			<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
