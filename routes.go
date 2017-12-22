@@ -33,6 +33,7 @@ type HTTPSRedirect struct {
 }
 
 func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Connection", "close")
 	dest := "https://" + req.Host + req.URL.Path
 	if len(req.URL.RawQuery) > 0 {
 		dest += "?" + req.URL.RawQuery
@@ -107,26 +108,27 @@ func routeOverview(w http.ResponseWriter, r *http.Request, user common.User) com
 	return nil
 }
 
-func routeCustomPage(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeCustomPage(w http.ResponseWriter, r *http.Request, user common.User, name string) common.RouteError {
 	headerVars, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 
-	name := r.URL.Path[len("/pages/"):]
-	if common.Templates.Lookup("page_"+name) == nil {
+	// ! Is this safe?
+	if common.Templates.Lookup("page_"+name+".html") == nil {
 		return common.NotFound(w, r)
 	}
 	headerVars.Zone = "custom_page"
 
 	pi := common.Page{common.GetTitlePhrase("page"), user, headerVars, tList, nil}
+	// TODO: Pass the page name to the pre-render hook?
 	if common.PreRenderHooks["pre_render_custom_page"] != nil {
 		if common.RunPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
 			return nil
 		}
 	}
 
-	err := common.Templates.ExecuteTemplate(w, "page_"+name, pi)
+	err := common.Templates.ExecuteTemplate(w, "page_"+name+".html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

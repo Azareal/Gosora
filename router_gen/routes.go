@@ -4,7 +4,7 @@ package main
 func routes() {
 	addRoute(View("routeAPI", "/api/"))
 	addRoute(View("routeOverview", "/overview/"))
-	//addRoute("routeCustomPage","/pages/",""/*,"&extraData"*/)
+	addRoute(View("routeCustomPage", "/pages/", "extraData"))
 	addRoute(View("routeForums", "/forums/" /*,"&forums"*/))
 	addRoute(View("routeForum", "/forum/", "extraData"))
 	addRoute(AnonAction("routeChangeTheme", "/theme/"))

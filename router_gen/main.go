@@ -233,6 +233,10 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
+// TODO: Pass the default route or config struct to the router rather than accessing it via a package global
+// TODO: SetDefaultRoute
+// TODO: GetDefaultRoute
+
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
 		w.WriteHeader(405)
@@ -303,7 +307,17 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				common.NotFound(w,req)
 				return
 			}
-			common.Config.DefaultRoute(w,req,user) // TODO: Count these views
+
+			handle, ok := RouteMap[common.Config.DefaultRoute]
+			if !ok {
+				// TODO: Make this a startup error not a runtime one
+				log.Print("Unable to find the default route")
+				common.NotFound(w,req)
+				return
+			}
+			common.RouteViewCounter.Bump(routeMapEnum[common.Config.DefaultRoute])
+
+			handle.(func(http.ResponseWriter, *http.Request, common.User) common.RouteError)(w,req,user)
 		default:
 			// A fallback for the routes which haven't been converted to the new router yet or plugins
 			router.RLock()

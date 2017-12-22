@@ -5,6 +5,7 @@
 	"Creator": "Azareal",
 	"FullImage": "shadow.png",
 	"URL": "github.com/Azareal/Gosora",
+	"BgAvatars":true,
 	"Resources": [
 		{
 			"Name":"shadow/misc.js",

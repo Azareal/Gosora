@@ -6,7 +6,7 @@
 	<div id="profile_left_pane" class="rowmenu">
 		<div class="topBlock">
 			<div class="rowitem avatarRow">
-				<img src="{{.ProfileOwner.Avatar}}" class="avatar" />
+				<img src="{{.ProfileOwner.Avatar}}" class="avatar" alt="{{.ProfileOwner.Name}}'s Avatar" title="{{.ProfileOwner.Name}}'s Avatar" />
 			</div>
 			<div class="rowitem nameRow">
 				<span class="profileName">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username">{{.ProfileOwner.Tag}}</span>{{end}}
@@ -69,23 +69,9 @@
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
 		<div class="rowitem"><h1>Comments</h1></div>
 	</div>
-	<div id="profile_comments" class="colstack_item hash_hide">{{range .ItemList}}
-		<div class="rowitem passive deletable_block editable_parent simple {{.ClassName}}" style="background-image: url({{.Avatar}}), url(/static/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;">
-			<img class="bgsub" src="{{.Avatar}}" />
-			<span class="editable_block user_content simple">{{.ContentHtml}}</span>
-			<span class="controls">
-				<a href="{{.UserLink}}" class="real_username username">{{.CreatedByName}}</a>&nbsp;&nbsp;
-
-				{{if $.CurrentUser.IsMod}}<a href="/profile/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
-
-				<a href="/profile/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>{{end}}
-
-				<a class="mod_button" href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item flag_label"></button></a>
-
-				{{if .Tag}}<a class="username hide_on_mobile user_tag" style="float: right;">{{.Tag}}</a>{{end}}
-			</span>
-		</div>
-	{{end}}</div>
+	<div id="profile_comments" class="colstack_item hash_hide">
+		{{template "profile_comments_row.html" . }}
+	</div>
 
 {{if not .CurrentUser.IsBanned}}
 	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/" method="post">

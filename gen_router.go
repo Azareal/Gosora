@@ -17,6 +17,7 @@ var ErrNoRoute = errors.New("That route doesn't exist.")
 var RouteMap = map[string]interface{}{ 
 	"routeAPI": routeAPI,
 	"routeOverview": routeOverview,
+	"routeCustomPage": routeCustomPage,
 	"routeForums": routeForums,
 	"routeForum": routeForum,
 	"routeChangeTheme": routeChangeTheme,
@@ -77,118 +78,120 @@ var RouteMap = map[string]interface{}{
 var routeMapEnum = map[string]int{ 
 	"routeAPI": 0,
 	"routeOverview": 1,
-	"routeForums": 2,
-	"routeForum": 3,
-	"routeChangeTheme": 4,
-	"routeShowAttachment": 5,
-	"routeReportSubmit": 6,
-	"routeTopicCreate": 7,
-	"routeTopics": 8,
-	"routePanelForums": 9,
-	"routePanelForumsCreateSubmit": 10,
-	"routePanelForumsDelete": 11,
-	"routePanelForumsDeleteSubmit": 12,
-	"routePanelForumsEdit": 13,
-	"routePanelForumsEditSubmit": 14,
-	"routePanelForumsEditPermsSubmit": 15,
-	"routePanelSettings": 16,
-	"routePanelSettingEdit": 17,
-	"routePanelSettingEditSubmit": 18,
-	"routePanelWordFilters": 19,
-	"routePanelWordFiltersCreate": 20,
-	"routePanelWordFiltersEdit": 21,
-	"routePanelWordFiltersEditSubmit": 22,
-	"routePanelWordFiltersDeleteSubmit": 23,
-	"routePanelThemes": 24,
-	"routePanelThemesSetDefault": 25,
-	"routePanelPlugins": 26,
-	"routePanelPluginsActivate": 27,
-	"routePanelPluginsDeactivate": 28,
-	"routePanelPluginsInstall": 29,
-	"routePanelUsers": 30,
-	"routePanelUsersEdit": 31,
-	"routePanelUsersEditSubmit": 32,
-	"routePanelGroups": 33,
-	"routePanelGroupsEdit": 34,
-	"routePanelGroupsEditPerms": 35,
-	"routePanelGroupsEditSubmit": 36,
-	"routePanelGroupsEditPermsSubmit": 37,
-	"routePanelGroupsCreateSubmit": 38,
-	"routePanelBackups": 39,
-	"routePanelLogsMod": 40,
-	"routePanelDebug": 41,
-	"routePanel": 42,
-	"routeAccountEditCritical": 43,
-	"routeAccountEditCriticalSubmit": 44,
-	"routeAccountEditAvatar": 45,
-	"routeAccountEditAvatarSubmit": 46,
-	"routeAccountEditUsername": 47,
-	"routeAccountEditUsernameSubmit": 48,
-	"routeAccountEditEmail": 49,
-	"routeAccountEditEmailTokenSubmit": 50,
-	"routeProfile": 51,
-	"routeBanSubmit": 52,
-	"routeUnban": 53,
-	"routeActivate": 54,
-	"routeIps": 55,
+	"routeCustomPage": 2,
+	"routeForums": 3,
+	"routeForum": 4,
+	"routeChangeTheme": 5,
+	"routeShowAttachment": 6,
+	"routeReportSubmit": 7,
+	"routeTopicCreate": 8,
+	"routeTopics": 9,
+	"routePanelForums": 10,
+	"routePanelForumsCreateSubmit": 11,
+	"routePanelForumsDelete": 12,
+	"routePanelForumsDeleteSubmit": 13,
+	"routePanelForumsEdit": 14,
+	"routePanelForumsEditSubmit": 15,
+	"routePanelForumsEditPermsSubmit": 16,
+	"routePanelSettings": 17,
+	"routePanelSettingEdit": 18,
+	"routePanelSettingEditSubmit": 19,
+	"routePanelWordFilters": 20,
+	"routePanelWordFiltersCreate": 21,
+	"routePanelWordFiltersEdit": 22,
+	"routePanelWordFiltersEditSubmit": 23,
+	"routePanelWordFiltersDeleteSubmit": 24,
+	"routePanelThemes": 25,
+	"routePanelThemesSetDefault": 26,
+	"routePanelPlugins": 27,
+	"routePanelPluginsActivate": 28,
+	"routePanelPluginsDeactivate": 29,
+	"routePanelPluginsInstall": 30,
+	"routePanelUsers": 31,
+	"routePanelUsersEdit": 32,
+	"routePanelUsersEditSubmit": 33,
+	"routePanelGroups": 34,
+	"routePanelGroupsEdit": 35,
+	"routePanelGroupsEditPerms": 36,
+	"routePanelGroupsEditSubmit": 37,
+	"routePanelGroupsEditPermsSubmit": 38,
+	"routePanelGroupsCreateSubmit": 39,
+	"routePanelBackups": 40,
+	"routePanelLogsMod": 41,
+	"routePanelDebug": 42,
+	"routePanel": 43,
+	"routeAccountEditCritical": 44,
+	"routeAccountEditCriticalSubmit": 45,
+	"routeAccountEditAvatar": 46,
+	"routeAccountEditAvatarSubmit": 47,
+	"routeAccountEditUsername": 48,
+	"routeAccountEditUsernameSubmit": 49,
+	"routeAccountEditEmail": 50,
+	"routeAccountEditEmailTokenSubmit": 51,
+	"routeProfile": 52,
+	"routeBanSubmit": 53,
+	"routeUnban": 54,
+	"routeActivate": 55,
+	"routeIps": 56,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
 	1: "routeOverview",
-	2: "routeForums",
-	3: "routeForum",
-	4: "routeChangeTheme",
-	5: "routeShowAttachment",
-	6: "routeReportSubmit",
-	7: "routeTopicCreate",
-	8: "routeTopics",
-	9: "routePanelForums",
-	10: "routePanelForumsCreateSubmit",
-	11: "routePanelForumsDelete",
-	12: "routePanelForumsDeleteSubmit",
-	13: "routePanelForumsEdit",
-	14: "routePanelForumsEditSubmit",
-	15: "routePanelForumsEditPermsSubmit",
-	16: "routePanelSettings",
-	17: "routePanelSettingEdit",
-	18: "routePanelSettingEditSubmit",
-	19: "routePanelWordFilters",
-	20: "routePanelWordFiltersCreate",
-	21: "routePanelWordFiltersEdit",
-	22: "routePanelWordFiltersEditSubmit",
-	23: "routePanelWordFiltersDeleteSubmit",
-	24: "routePanelThemes",
-	25: "routePanelThemesSetDefault",
-	26: "routePanelPlugins",
-	27: "routePanelPluginsActivate",
-	28: "routePanelPluginsDeactivate",
-	29: "routePanelPluginsInstall",
-	30: "routePanelUsers",
-	31: "routePanelUsersEdit",
-	32: "routePanelUsersEditSubmit",
-	33: "routePanelGroups",
-	34: "routePanelGroupsEdit",
-	35: "routePanelGroupsEditPerms",
-	36: "routePanelGroupsEditSubmit",
-	37: "routePanelGroupsEditPermsSubmit",
-	38: "routePanelGroupsCreateSubmit",
-	39: "routePanelBackups",
-	40: "routePanelLogsMod",
-	41: "routePanelDebug",
-	42: "routePanel",
-	43: "routeAccountEditCritical",
-	44: "routeAccountEditCriticalSubmit",
-	45: "routeAccountEditAvatar",
-	46: "routeAccountEditAvatarSubmit",
-	47: "routeAccountEditUsername",
-	48: "routeAccountEditUsernameSubmit",
-	49: "routeAccountEditEmail",
-	50: "routeAccountEditEmailTokenSubmit",
-	51: "routeProfile",
-	52: "routeBanSubmit",
-	53: "routeUnban",
-	54: "routeActivate",
-	55: "routeIps",
+	2: "routeCustomPage",
+	3: "routeForums",
+	4: "routeForum",
+	5: "routeChangeTheme",
+	6: "routeShowAttachment",
+	7: "routeReportSubmit",
+	8: "routeTopicCreate",
+	9: "routeTopics",
+	10: "routePanelForums",
+	11: "routePanelForumsCreateSubmit",
+	12: "routePanelForumsDelete",
+	13: "routePanelForumsDeleteSubmit",
+	14: "routePanelForumsEdit",
+	15: "routePanelForumsEditSubmit",
+	16: "routePanelForumsEditPermsSubmit",
+	17: "routePanelSettings",
+	18: "routePanelSettingEdit",
+	19: "routePanelSettingEditSubmit",
+	20: "routePanelWordFilters",
+	21: "routePanelWordFiltersCreate",
+	22: "routePanelWordFiltersEdit",
+	23: "routePanelWordFiltersEditSubmit",
+	24: "routePanelWordFiltersDeleteSubmit",
+	25: "routePanelThemes",
+	26: "routePanelThemesSetDefault",
+	27: "routePanelPlugins",
+	28: "routePanelPluginsActivate",
+	29: "routePanelPluginsDeactivate",
+	30: "routePanelPluginsInstall",
+	31: "routePanelUsers",
+	32: "routePanelUsersEdit",
+	33: "routePanelUsersEditSubmit",
+	34: "routePanelGroups",
+	35: "routePanelGroupsEdit",
+	36: "routePanelGroupsEditPerms",
+	37: "routePanelGroupsEditSubmit",
+	38: "routePanelGroupsEditPermsSubmit",
+	39: "routePanelGroupsCreateSubmit",
+	40: "routePanelBackups",
+	41: "routePanelLogsMod",
+	42: "routePanelDebug",
+	43: "routePanel",
+	44: "routeAccountEditCritical",
+	45: "routeAccountEditCriticalSubmit",
+	46: "routeAccountEditAvatar",
+	47: "routeAccountEditAvatarSubmit",
+	48: "routeAccountEditUsername",
+	49: "routeAccountEditUsernameSubmit",
+	50: "routeAccountEditEmail",
+	51: "routeAccountEditEmailTokenSubmit",
+	52: "routeProfile",
+	53: "routeBanSubmit",
+	54: "routeUnban",
+	55: "routeActivate",
+	56: "routeIps",
 }
 
 // TODO: Stop spilling these into the package scope?
@@ -242,6 +245,10 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 	delete(router.extraRoutes, pattern)
 	return nil
 }
+
+// TODO: Pass the default route or config struct to the router rather than accessing it via a package global
+// TODO: SetDefaultRoute
+// TODO: GetDefaultRoute
 
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
@@ -301,14 +308,20 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
-		case "/forums":
+		case "/pages":
 			common.RouteViewCounter.Bump(2)
+			err = routeCustomPage(w,req,user,extraData)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
+		case "/forums":
+			common.RouteViewCounter.Bump(3)
 			err = routeForums(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
 		case "/forum":
-			common.RouteViewCounter.Bump(3)
+			common.RouteViewCounter.Bump(4)
 			err = routeForum(w,req,user,extraData)
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -320,7 +333,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					return
 				}
 				
-			common.RouteViewCounter.Bump(4)
+			common.RouteViewCounter.Bump(5)
 			err = routeChangeTheme(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -332,7 +345,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					return
 				}
 				
-			common.RouteViewCounter.Bump(5)
+			common.RouteViewCounter.Bump(6)
 			err = routeShowAttachment(w,req,user,extraData)
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -358,7 +371,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(6)
+					common.RouteViewCounter.Bump(7)
 					err = routeReportSubmit(w,req,user,extraData)
 			}
 			if err != nil {
@@ -373,10 +386,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(7)
+					common.RouteViewCounter.Bump(8)
 					err = routeTopicCreate(w,req,user,extraData)
 				default:
-					common.RouteViewCounter.Bump(8)
+					common.RouteViewCounter.Bump(9)
 					err = routeTopics(w,req,user)
 			}
 			if err != nil {
@@ -391,7 +404,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			
 			switch(req.URL.Path) {
 				case "/panel/forums/":
-					common.RouteViewCounter.Bump(9)
+					common.RouteViewCounter.Bump(10)
 					err = routePanelForums(w,req,user)
 				case "/panel/forums/create/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -400,7 +413,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(10)
+					common.RouteViewCounter.Bump(11)
 					err = routePanelForumsCreateSubmit(w,req,user)
 				case "/panel/forums/delete/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -409,7 +422,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(11)
+					common.RouteViewCounter.Bump(12)
 					err = routePanelForumsDelete(w,req,user,extraData)
 				case "/panel/forums/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -418,10 +431,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(12)
+					common.RouteViewCounter.Bump(13)
 					err = routePanelForumsDeleteSubmit(w,req,user,extraData)
 				case "/panel/forums/edit/":
-					common.RouteViewCounter.Bump(13)
+					common.RouteViewCounter.Bump(14)
 					err = routePanelForumsEdit(w,req,user,extraData)
 				case "/panel/forums/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -430,7 +443,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(14)
+					common.RouteViewCounter.Bump(15)
 					err = routePanelForumsEditSubmit(w,req,user,extraData)
 				case "/panel/forums/edit/perms/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -439,13 +452,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(15)
+					common.RouteViewCounter.Bump(16)
 					err = routePanelForumsEditPermsSubmit(w,req,user,extraData)
 				case "/panel/settings/":
-					common.RouteViewCounter.Bump(16)
+					common.RouteViewCounter.Bump(17)
 					err = routePanelSettings(w,req,user)
 				case "/panel/settings/edit/":
-					common.RouteViewCounter.Bump(17)
+					common.RouteViewCounter.Bump(18)
 					err = routePanelSettingEdit(w,req,user,extraData)
 				case "/panel/settings/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -454,10 +467,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(18)
+					common.RouteViewCounter.Bump(19)
 					err = routePanelSettingEditSubmit(w,req,user,extraData)
 				case "/panel/settings/word-filters/":
-					common.RouteViewCounter.Bump(19)
+					common.RouteViewCounter.Bump(20)
 					err = routePanelWordFilters(w,req,user)
 				case "/panel/settings/word-filters/create/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -466,10 +479,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(20)
+					common.RouteViewCounter.Bump(21)
 					err = routePanelWordFiltersCreate(w,req,user)
 				case "/panel/settings/word-filters/edit/":
-					common.RouteViewCounter.Bump(21)
+					common.RouteViewCounter.Bump(22)
 					err = routePanelWordFiltersEdit(w,req,user,extraData)
 				case "/panel/settings/word-filters/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -478,7 +491,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(22)
+					common.RouteViewCounter.Bump(23)
 					err = routePanelWordFiltersEditSubmit(w,req,user,extraData)
 				case "/panel/settings/word-filters/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -487,10 +500,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(23)
+					common.RouteViewCounter.Bump(24)
 					err = routePanelWordFiltersDeleteSubmit(w,req,user,extraData)
 				case "/panel/themes/":
-					common.RouteViewCounter.Bump(24)
+					common.RouteViewCounter.Bump(25)
 					err = routePanelThemes(w,req,user)
 				case "/panel/themes/default/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -499,10 +512,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(25)
+					common.RouteViewCounter.Bump(26)
 					err = routePanelThemesSetDefault(w,req,user,extraData)
 				case "/panel/plugins/":
-					common.RouteViewCounter.Bump(26)
+					common.RouteViewCounter.Bump(27)
 					err = routePanelPlugins(w,req,user)
 				case "/panel/plugins/activate/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -511,7 +524,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(27)
+					common.RouteViewCounter.Bump(28)
 					err = routePanelPluginsActivate(w,req,user,extraData)
 				case "/panel/plugins/deactivate/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -520,7 +533,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(28)
+					common.RouteViewCounter.Bump(29)
 					err = routePanelPluginsDeactivate(w,req,user,extraData)
 				case "/panel/plugins/install/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -529,13 +542,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(29)
+					common.RouteViewCounter.Bump(30)
 					err = routePanelPluginsInstall(w,req,user,extraData)
 				case "/panel/users/":
-					common.RouteViewCounter.Bump(30)
+					common.RouteViewCounter.Bump(31)
 					err = routePanelUsers(w,req,user)
 				case "/panel/users/edit/":
-					common.RouteViewCounter.Bump(31)
+					common.RouteViewCounter.Bump(32)
 					err = routePanelUsersEdit(w,req,user,extraData)
 				case "/panel/users/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -544,16 +557,16 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(32)
+					common.RouteViewCounter.Bump(33)
 					err = routePanelUsersEditSubmit(w,req,user,extraData)
 				case "/panel/groups/":
-					common.RouteViewCounter.Bump(33)
+					common.RouteViewCounter.Bump(34)
 					err = routePanelGroups(w,req,user)
 				case "/panel/groups/edit/":
-					common.RouteViewCounter.Bump(34)
+					common.RouteViewCounter.Bump(35)
 					err = routePanelGroupsEdit(w,req,user,extraData)
 				case "/panel/groups/edit/perms/":
-					common.RouteViewCounter.Bump(35)
+					common.RouteViewCounter.Bump(36)
 					err = routePanelGroupsEditPerms(w,req,user,extraData)
 				case "/panel/groups/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -562,7 +575,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(36)
+					common.RouteViewCounter.Bump(37)
 					err = routePanelGroupsEditSubmit(w,req,user,extraData)
 				case "/panel/groups/edit/perms/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -571,7 +584,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(37)
+					common.RouteViewCounter.Bump(38)
 					err = routePanelGroupsEditPermsSubmit(w,req,user,extraData)
 				case "/panel/groups/create/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -580,7 +593,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(38)
+					common.RouteViewCounter.Bump(39)
 					err = routePanelGroupsCreateSubmit(w,req,user)
 				case "/panel/backups/":
 					err = common.SuperAdminOnly(w,req,user)
@@ -589,10 +602,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(39)
+					common.RouteViewCounter.Bump(40)
 					err = routePanelBackups(w,req,user,extraData)
 				case "/panel/logs/mod/":
-					common.RouteViewCounter.Bump(40)
+					common.RouteViewCounter.Bump(41)
 					err = routePanelLogsMod(w,req,user)
 				case "/panel/debug/":
 					err = common.AdminOnly(w,req,user)
@@ -601,10 +614,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(41)
+					common.RouteViewCounter.Bump(42)
 					err = routePanelDebug(w,req,user)
 				default:
-					common.RouteViewCounter.Bump(42)
+					common.RouteViewCounter.Bump(43)
 					err = routePanel(w,req,user)
 			}
 			if err != nil {
@@ -619,7 +632,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(43)
+					common.RouteViewCounter.Bump(44)
 					err = routeAccountEditCritical(w,req,user)
 				case "/user/edit/critical/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -634,7 +647,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(44)
+					common.RouteViewCounter.Bump(45)
 					err = routeAccountEditCriticalSubmit(w,req,user)
 				case "/user/edit/avatar/":
 					err = common.MemberOnly(w,req,user)
@@ -643,7 +656,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(45)
+					common.RouteViewCounter.Bump(46)
 					err = routeAccountEditAvatar(w,req,user)
 				case "/user/edit/avatar/submit/":
 					err = common.MemberOnly(w,req,user)
@@ -652,7 +665,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(46)
+					common.RouteViewCounter.Bump(47)
 					err = routeAccountEditAvatarSubmit(w,req,user)
 				case "/user/edit/username/":
 					err = common.MemberOnly(w,req,user)
@@ -661,7 +674,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(47)
+					common.RouteViewCounter.Bump(48)
 					err = routeAccountEditUsername(w,req,user)
 				case "/user/edit/username/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -676,7 +689,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(48)
+					common.RouteViewCounter.Bump(49)
 					err = routeAccountEditUsernameSubmit(w,req,user)
 				case "/user/edit/email/":
 					err = common.MemberOnly(w,req,user)
@@ -685,7 +698,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(49)
+					common.RouteViewCounter.Bump(50)
 					err = routeAccountEditEmail(w,req,user)
 				case "/user/edit/token/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -700,11 +713,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(50)
+					common.RouteViewCounter.Bump(51)
 					err = routeAccountEditEmailTokenSubmit(w,req,user,extraData)
 				default:
 					req.URL.Path += extraData
-					common.RouteViewCounter.Bump(51)
+					common.RouteViewCounter.Bump(52)
 					err = routeProfile(w,req,user)
 			}
 			if err != nil {
@@ -725,7 +738,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(52)
+					common.RouteViewCounter.Bump(53)
 					err = routeBanSubmit(w,req,user)
 				case "/users/unban/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -740,7 +753,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(53)
+					common.RouteViewCounter.Bump(54)
 					err = routeUnban(w,req,user)
 				case "/users/activate/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -755,7 +768,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(54)
+					common.RouteViewCounter.Bump(55)
 					err = routeActivate(w,req,user)
 				case "/users/ips/":
 					err = common.MemberOnly(w,req,user)
@@ -764,7 +777,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(55)
+					common.RouteViewCounter.Bump(56)
 					err = routeIps(w,req,user)
 			}
 			if err != nil {
@@ -794,7 +807,17 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				common.NotFound(w,req)
 				return
 			}
-			common.Config.DefaultRoute(w,req,user) // TODO: Count these views
+
+			handle, ok := RouteMap[common.Config.DefaultRoute]
+			if !ok {
+				// TODO: Make this a startup error not a runtime one
+				log.Print("Unable to find the default route")
+				common.NotFound(w,req)
+				return
+			}
+			common.RouteViewCounter.Bump(routeMapEnum[common.Config.DefaultRoute])
+
+			handle.(func(http.ResponseWriter, *http.Request, common.User) common.RouteError)(w,req,user)
 		default:
 			// A fallback for the routes which haven't been converted to the new router yet or plugins
 			router.RLock()

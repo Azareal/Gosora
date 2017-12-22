@@ -143,58 +143,62 @@ w.Write([]byte(item.Creator.Link))
 w.Write(forum_30)
 w.Write([]byte(item.Creator.Avatar))
 w.Write(forum_31)
-w.Write([]byte(item.Creator.Avatar))
-w.Write(forum_32)
-w.Write([]byte(item.Link))
-w.Write(forum_33)
-w.Write([]byte(item.Title))
-w.Write(forum_34)
-w.Write([]byte(item.Creator.Link))
-w.Write(forum_35)
 w.Write([]byte(item.Creator.Name))
+w.Write(forum_32)
+w.Write([]byte(item.Creator.Name))
+w.Write(forum_33)
+w.Write([]byte(item.Link))
+w.Write(forum_34)
+w.Write([]byte(item.Title))
+w.Write(forum_35)
+w.Write([]byte(item.Creator.Link))
 w.Write(forum_36)
-if item.IsClosed {
+w.Write([]byte(item.Creator.Name))
 w.Write(forum_37)
-}
-if item.Sticky {
+if item.IsClosed {
 w.Write(forum_38)
 }
-w.Write(forum_39)
-w.Write([]byte(strconv.Itoa(item.PostCount)))
-w.Write(forum_40)
-w.Write([]byte(strconv.Itoa(item.LikeCount)))
-w.Write(forum_41)
 if item.Sticky {
+w.Write(forum_39)
+}
+w.Write(forum_40)
+w.Write([]byte(strconv.Itoa(item.PostCount)))
+w.Write(forum_41)
+w.Write([]byte(strconv.Itoa(item.LikeCount)))
 w.Write(forum_42)
+if item.Sticky {
+w.Write(forum_43)
 } else {
 if item.IsClosed {
-w.Write(forum_43)
-}
-}
 w.Write(forum_44)
-w.Write([]byte(item.LastUser.Link))
+}
+}
 w.Write(forum_45)
-w.Write([]byte(item.LastUser.Avatar))
-w.Write(forum_46)
-w.Write([]byte(item.LastUser.Name))
-w.Write(forum_47)
 w.Write([]byte(item.LastUser.Link))
+w.Write(forum_46)
+w.Write([]byte(item.LastUser.Avatar))
+w.Write(forum_47)
+w.Write([]byte(item.LastUser.Name))
 w.Write(forum_48)
 w.Write([]byte(item.LastUser.Name))
 w.Write(forum_49)
-w.Write([]byte(item.RelativeLastReplyAt))
+w.Write([]byte(item.LastUser.Link))
 w.Write(forum_50)
+w.Write([]byte(item.LastUser.Name))
+w.Write(forum_51)
+w.Write([]byte(item.RelativeLastReplyAt))
+w.Write(forum_52)
 }
 } else {
-w.Write(forum_51)
-if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
-w.Write(forum_52)
-w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
 w.Write(forum_53)
-}
+if tmpl_forum_vars.CurrentUser.Perms.CreateTopic {
 w.Write(forum_54)
-}
+w.Write([]byte(strconv.Itoa(tmpl_forum_vars.Forum.ID)))
 w.Write(forum_55)
+}
+w.Write(forum_56)
+}
+w.Write(forum_57)
 w.Write(footer_0)
 w.Write([]byte(common.BuildWidget("footer",tmpl_forum_vars.Header)))
 w.Write(footer_1)

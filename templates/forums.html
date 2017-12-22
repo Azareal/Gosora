@@ -16,7 +16,7 @@
 		</span>
 
 		<span class="forum_right shift_right">
-			{{if .LastReplyer.Avatar}}<img class="extra_little_row_avatar" src="{{.LastReplyer.Avatar}}" height=64 width=64 />{{end}}
+			{{if .LastReplyer.Avatar}}<img class="extra_little_row_avatar" src="{{.LastReplyer.Avatar}}" height=64 width=64 alt="{{.LastReplyer.Name}}'s Avatar" title="{{.LastReplyer.Name}}'s Avatar" />{{end}}
 			<span>
 				<a href="{{.LastTopic.Link}}">{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}None{{end}}</a>
 				{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}

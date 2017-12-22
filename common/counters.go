@@ -32,10 +32,8 @@ func NewChunkedViewCounter() (*ChunkedViewCounter, error) {
 
 func (counter *ChunkedViewCounter) Tick() (err error) {
 	var oldBucket = counter.currentBucket
-	var nextBucket int64
-	if counter.currentBucket == 1 {
-		nextBucket = 0
-	} else {
+	var nextBucket int64 // 0
+	if counter.currentBucket == 0 {
 		nextBucket = 1
 	}
 	atomic.AddInt64(&counter.buckets[oldBucket], counter.buckets[nextBucket])

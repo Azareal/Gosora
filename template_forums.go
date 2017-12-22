@@ -97,27 +97,31 @@ if item.LastReplyer.Avatar != "" {
 w.Write(forums_10)
 w.Write([]byte(item.LastReplyer.Avatar))
 w.Write(forums_11)
-}
+w.Write([]byte(item.LastReplyer.Name))
 w.Write(forums_12)
-w.Write([]byte(item.LastTopic.Link))
+w.Write([]byte(item.LastReplyer.Name))
 w.Write(forums_13)
+}
+w.Write(forums_14)
+w.Write([]byte(item.LastTopic.Link))
+w.Write(forums_15)
 if item.LastTopic.Title != "" {
 w.Write([]byte(item.LastTopic.Title))
 } else {
-w.Write(forums_14)
-}
-w.Write(forums_15)
-if item.LastTopicTime != "" {
 w.Write(forums_16)
-w.Write([]byte(item.LastTopicTime))
+}
 w.Write(forums_17)
-}
+if item.LastTopicTime != "" {
 w.Write(forums_18)
-}
-} else {
+w.Write([]byte(item.LastTopicTime))
 w.Write(forums_19)
 }
 w.Write(forums_20)
+}
+} else {
+w.Write(forums_21)
+}
+w.Write(forums_22)
 w.Write(footer_0)
 w.Write([]byte(common.BuildWidget("footer",tmpl_forums_vars.Header)))
 w.Write(footer_1)

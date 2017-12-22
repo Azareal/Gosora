@@ -929,6 +929,22 @@ select, input, textarea, button {
 #profile_comments .rowitem {
 	background-image: none !important;
 }
+#profile_comments .comment .userbit {
+	display: flex;
+	margin-left: 14px;
+	margin-top: 14px;
+	margin-bottom: 8px;
+}
+#profile_comments .comment img {
+	width: 40px;
+	height: 40px;
+	border-radius: 62px;
+	margin-right: 8px;
+}
+#profile_comments .comment .nameAndTitle {
+	display: flex;
+	flex-direction: column;
+}
 
 .colstack_item .formrow {
 	display: flex;

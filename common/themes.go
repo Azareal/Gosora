@@ -41,6 +41,7 @@ type Theme struct {
 	MobileFriendly    bool
 	Disabled          bool
 	HideFromThemes    bool
+	BgAvatars         bool // For profiles, at the moment
 	ForkOf            string
 	Tag               string
 	URL               string

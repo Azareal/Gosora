@@ -2,7 +2,6 @@ package common
 
 import (
 	"errors"
-	"net/http"
 	"strings"
 )
 
@@ -61,7 +60,7 @@ type config struct {
 	SMTPPort     string
 	//SMTPEnableTLS bool
 
-	DefaultRoute    func(http.ResponseWriter, *http.Request, User) RouteError
+	DefaultRoute    string
 	DefaultGroup    int
 	ActivationGroup int
 	StaffCSS        string // ? - Move this into the settings table? Might be better to implement this as Group CSS

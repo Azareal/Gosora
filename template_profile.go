@@ -79,86 +79,128 @@ w.Write([]byte(tmpl_profile_vars.ProfileOwner.Avatar))
 w.Write(profile_1)
 w.Write([]byte(tmpl_profile_vars.ProfileOwner.Name))
 w.Write(profile_2)
-if tmpl_profile_vars.ProfileOwner.Tag != "" {
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Name))
 w.Write(profile_3)
-w.Write([]byte(tmpl_profile_vars.ProfileOwner.Tag))
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Name))
 w.Write(profile_4)
-}
+if tmpl_profile_vars.ProfileOwner.Tag != "" {
 w.Write(profile_5)
-if tmpl_profile_vars.CurrentUser.IsSuperMod && !tmpl_profile_vars.ProfileOwner.IsSuperMod {
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Tag))
 w.Write(profile_6)
-if tmpl_profile_vars.ProfileOwner.IsBanned {
+}
 w.Write(profile_7)
-w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+if tmpl_profile_vars.CurrentUser.IsSuperMod && !tmpl_profile_vars.ProfileOwner.IsSuperMod {
 w.Write(profile_8)
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+if tmpl_profile_vars.ProfileOwner.IsBanned {
 w.Write(profile_9)
-} else {
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
 w.Write(profile_10)
-}
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
 w.Write(profile_11)
-}
+} else {
 w.Write(profile_12)
-w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
-w.Write(profile_13)
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(profile_14)
-if tmpl_profile_vars.CurrentUser.Perms.BanUsers {
-w.Write(profile_15)
-w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
-w.Write(profile_16)
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(profile_17)
-w.Write(profile_18)
 }
+w.Write(profile_13)
+}
+w.Write(profile_14)
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write(profile_15)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_16)
+if tmpl_profile_vars.CurrentUser.Perms.BanUsers {
+w.Write(profile_17)
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write(profile_18)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
 w.Write(profile_19)
+w.Write(profile_20)
+}
+w.Write(profile_21)
+if tmpl_profile_vars.Header.Theme.BgAvatars {
 if len(tmpl_profile_vars.ItemList) != 0 {
 for _, item := range tmpl_profile_vars.ItemList {
-w.Write(profile_20)
+w.Write(profile_comments_row_0)
 w.Write([]byte(item.ClassName))
-w.Write(profile_21)
+w.Write(profile_comments_row_1)
 w.Write([]byte(item.Avatar))
-w.Write(profile_22)
+w.Write(profile_comments_row_2)
 if item.ContentLines <= 5 {
-w.Write(profile_23)
+w.Write(profile_comments_row_3)
 }
-w.Write(profile_24)
-w.Write([]byte(item.Avatar))
-w.Write(profile_25)
+w.Write(profile_comments_row_4)
 w.Write([]byte(item.ContentHtml))
-w.Write(profile_26)
+w.Write(profile_comments_row_5)
 w.Write([]byte(item.UserLink))
-w.Write(profile_27)
+w.Write(profile_comments_row_6)
 w.Write([]byte(item.CreatedByName))
-w.Write(profile_28)
+w.Write(profile_comments_row_7)
 if tmpl_profile_vars.CurrentUser.IsMod {
-w.Write(profile_29)
+w.Write(profile_comments_row_8)
 w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(profile_30)
+w.Write(profile_comments_row_9)
 w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(profile_31)
+w.Write(profile_comments_row_10)
 }
-w.Write(profile_32)
+w.Write(profile_comments_row_11)
 w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(profile_33)
+w.Write(profile_comments_row_12)
 w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(profile_34)
+w.Write(profile_comments_row_13)
 if item.Tag != "" {
-w.Write(profile_35)
+w.Write(profile_comments_row_14)
 w.Write([]byte(item.Tag))
-w.Write(profile_36)
+w.Write(profile_comments_row_15)
 }
-w.Write(profile_37)
+w.Write(profile_comments_row_16)
 }
 }
-w.Write(profile_38)
+} else {
+if len(tmpl_profile_vars.ItemList) != 0 {
+for _, item := range tmpl_profile_vars.ItemList {
+w.Write(profile_comments_row_17)
+w.Write([]byte(item.ClassName))
+w.Write(profile_comments_row_18)
+w.Write([]byte(item.Avatar))
+w.Write(profile_comments_row_19)
+w.Write([]byte(item.CreatedByName))
+w.Write(profile_comments_row_20)
+w.Write([]byte(item.CreatedByName))
+w.Write(profile_comments_row_21)
+w.Write([]byte(item.UserLink))
+w.Write(profile_comments_row_22)
+w.Write([]byte(item.CreatedByName))
+w.Write(profile_comments_row_23)
+if item.Tag != "" {
+w.Write(profile_comments_row_24)
+w.Write([]byte(item.Tag))
+w.Write(profile_comments_row_25)
+}
+w.Write(profile_comments_row_26)
+w.Write([]byte(item.ContentHtml))
+w.Write(profile_comments_row_27)
+if tmpl_profile_vars.CurrentUser.IsMod {
+w.Write(profile_comments_row_28)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_comments_row_29)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_comments_row_30)
+}
+w.Write(profile_comments_row_31)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_comments_row_32)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_comments_row_33)
+}
+}
+}
+w.Write(profile_22)
 if !tmpl_profile_vars.CurrentUser.IsBanned {
-w.Write(profile_39)
+w.Write(profile_23)
 w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
-w.Write(profile_40)
+w.Write(profile_24)
 }
-w.Write(profile_41)
-w.Write(profile_42)
+w.Write(profile_25)
+w.Write(profile_26)
 w.Write(footer_0)
 w.Write([]byte(common.BuildWidget("footer",tmpl_profile_vars.Header)))
 w.Write(footer_1)

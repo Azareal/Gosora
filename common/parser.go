@@ -165,7 +165,7 @@ func shortcodeToUnicode(msg string) string {
 }
 
 func PreparseMessage(msg string) string {
-	msg = strings.Replace(msg, "<p><br>", "<br>", -1)
+	msg = strings.Replace(msg, "<p><br>", "\n", -1)
 	msg = strings.Replace(msg, "<p>", "\n", -1)
 	msg = strings.Replace(msg, "</p>", "", -1)
 	msg = strings.Replace(msg, "<br>", "\n", -1)
