@@ -702,6 +702,9 @@ input, select, textarea {
 	float: right;
 	font-weight: normal;
 }
+#profile_left_pane .report_item:after {
+	content: "Report";
+}
 #profile_left_lane .profileName {
 	font-size: 18px;
 }

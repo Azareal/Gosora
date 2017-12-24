@@ -10,7 +10,8 @@ import (
 )
 
 var GlobalViewCounter *ChunkedViewCounter
-var RouteViewCounter *RouteViewCounterImpl
+var RouteViewCounter *DefaultRouteViewCounter
+var TopicViewCounter *DefaultTopicViewCounter
 
 type ChunkedViewCounter struct {
 	buckets       [2]int64
@@ -64,18 +65,18 @@ type RWMutexCounterBucket struct {
 }
 
 // The name of the struct clashes with the name of the variable, so we're adding Impl to the end
-type RouteViewCounterImpl struct {
+type DefaultRouteViewCounter struct {
 	routeBuckets []*RWMutexCounterBucket //[RouteID]count
 	insert       *sql.Stmt
 }
 
-func NewRouteViewCounter() (*RouteViewCounterImpl, error) {
+func NewDefaultRouteViewCounter() (*DefaultRouteViewCounter, error) {
 	acc := qgen.Builder.Accumulator()
 	var routeBuckets = make([]*RWMutexCounterBucket, len(routeMapEnum))
 	for bucketID, _ := range routeBuckets {
 		routeBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
 	}
-	counter := &RouteViewCounterImpl{
+	counter := &DefaultRouteViewCounter{
 		routeBuckets: routeBuckets,
 		insert:       acc.Insert("viewchunks").Columns("count, createdAt, route").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
@@ -84,7 +85,7 @@ func NewRouteViewCounter() (*RouteViewCounterImpl, error) {
 	return counter, acc.FirstError()
 }
 
-func (counter *RouteViewCounterImpl) Tick() error {
+func (counter *DefaultRouteViewCounter) Tick() error {
 	for routeID, routeBucket := range counter.routeBuckets {
 		var count int
 		routeBucket.RLock()
@@ -100,7 +101,7 @@ func (counter *RouteViewCounterImpl) Tick() error {
 	return nil
 }
 
-func (counter *RouteViewCounterImpl) insertChunk(count int, route int) error {
+func (counter *DefaultRouteViewCounter) insertChunk(count int, route int) error {
 	if count == 0 {
 		return nil
 	}
@@ -110,7 +111,7 @@ func (counter *RouteViewCounterImpl) insertChunk(count int, route int) error {
 	return err
 }
 
-func (counter *RouteViewCounterImpl) Bump(route int) {
+func (counter *DefaultRouteViewCounter) Bump(route int) {
 	// TODO: Test this check
 	log.Print("counter.routeBuckets[route]: ", counter.routeBuckets[route])
 	if len(counter.routeBuckets) <= route {
@@ -140,7 +141,7 @@ type ForumViewCounter struct {
 }*/
 
 // TODO: Use two odd-even maps for now, and move to something more concurrent later, maybe a sharded map?
-type TopicViewCounter struct {
+type DefaultTopicViewCounter struct {
 	oddTopics  map[int]*RWMutexCounterBucket // map[tid]struct{counter,sync.RWMutex}
 	evenTopics map[int]*RWMutexCounterBucket
 	oddLock    sync.RWMutex
@@ -149,19 +150,19 @@ type TopicViewCounter struct {
 	update *sql.Stmt
 }
 
-func NewTopicViewCounter() (*TopicViewCounter, error) {
+func NewDefaultTopicViewCounter() (*DefaultTopicViewCounter, error) {
 	acc := qgen.Builder.Accumulator()
-	counter := &TopicViewCounter{
+	counter := &DefaultTopicViewCounter{
 		oddTopics:  make(map[int]*RWMutexCounterBucket),
 		evenTopics: make(map[int]*RWMutexCounterBucket),
-		update:     acc.Update("topics").Set("views = ?").Where("tid = ?").Prepare(), // TODO: Add the views column to the topics table
+		update:     acc.Update("topics").Set("views = views + ?").Where("tid = ?").Prepare(),
 	}
 	AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
 	//AddScheduledSecondTask(counter.Tick)
 	return counter, acc.FirstError()
 }
 
-func (counter *TopicViewCounter) Tick() error {
+func (counter *DefaultTopicViewCounter) Tick() error {
 	counter.oddLock.RLock()
 	for topicID, topic := range counter.oddTopics {
 		var count int
@@ -191,7 +192,7 @@ func (counter *TopicViewCounter) Tick() error {
 	return nil
 }
 
-func (counter *TopicViewCounter) insertChunk(count int, topicID int) error {
+func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) error {
 	if count == 0 {
 		return nil
 	}
@@ -200,7 +201,7 @@ func (counter *TopicViewCounter) insertChunk(count int, topicID int) error {
 	return err
 }
 
-func (counter *TopicViewCounter) Bump(topicID int) {
+func (counter *DefaultTopicViewCounter) Bump(topicID int) {
 	// Is the ID even?
 	if topicID%2 == 0 {
 		counter.evenLock.Lock()

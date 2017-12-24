@@ -783,6 +783,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
+		/*case "/sitemaps": // TODO: Count these views
+			req.URL.Path += extraData
+			err = sitemapSwitch(w,req)
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}*/
 		case "/uploads":
 			if extraData == "" {
 				common.NotFound(w,req)
@@ -801,6 +807,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						router.handleError(err,w,req,user)
 					}
 					return
+				/*case "sitemap.xml":
+					err = routeSitemapXml(w,req) // TODO: Count these views
+					if err != nil {
+						router.handleError(err,w,req,user)
+					}
+					return*/
 			}
 			
 			if extraData != "" {

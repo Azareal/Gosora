@@ -741,6 +741,9 @@ button.username {
 	float: right;
 	font-weight: normal;
 }
+#profile_left_pane .report_item:after {
+	content: "Report";
+}
 #profile_right_lane {
 	width: calc(100% - 230px);
 }

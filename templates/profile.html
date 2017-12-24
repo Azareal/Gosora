@@ -21,7 +21,7 @@
 			{{else}}<a href="#ban_user" class="profile_menu_item">Ban</a>{{end}}
 			</div>{{end}}
 			<div class="rowitem passive">
-				<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item">Report</a>
+				<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="Report User" title="Report User"></a>
 			</div>
 		</div>
 	</div>
@@ -31,7 +31,7 @@
 	{{if .CurrentUser.Perms.BanUsers}}
 	<!-- TODO: Inline the display: none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
-			<div class="rowitem"><h1>Ban User</h1></div>
+			<div class="rowitem"><h1><a>Ban User</a></h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" method="post" style="display: none;">
 		{{/** TODO: Put a JS duration calculator here instead of this text? **/}}
@@ -67,7 +67,7 @@
 	{{end}}
 
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
-		<div class="rowitem"><h1>Comments</h1></div>
+		<div class="rowitem"><h1><a>Comments</a></h1></div>
 	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">
 		{{template "profile_comments_row.html" . }}

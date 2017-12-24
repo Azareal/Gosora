@@ -800,6 +800,9 @@ button.username {
 #profile_left_lane .profileName {
 	font-size: 18px;
 }
+#profile_left_lane .report_item:after {
+	content: "Report";
+}
 #profile_right_lane {
 	width: calc(100% - 245px);
 }

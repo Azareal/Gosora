@@ -159,7 +159,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"postCount", "int", 0, false, false, "1"},
 			qgen.DBTableColumn{"likeCount", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"words", "int", 0, false, false, "0"},
-			//qgen.DBTableColumn{"views", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"views", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"css_class", "varchar", 100, false, false, "''"},
 			qgen.DBTableColumn{"data", "varchar", 200, false, false, "''"},
 		},

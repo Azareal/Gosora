@@ -574,6 +574,9 @@ button.username {
 	float: right;
 	font-weight: normal;
 }
+#profile_left_pane .report_item:after {
+	content: "Report";
+}
 
 /* Media Queries */
 

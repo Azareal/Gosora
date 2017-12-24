@@ -181,6 +181,8 @@ func ConvertFriendlyUnit(num int) (int, string) {
 	}
 }
 
+// TODO: Make slugs optional for certain languages across the entirety of Gosora?
+// TODO: Let plugins replace NameToSlug and the URL building logic with their own
 func NameToSlug(name string) (slug string) {
 	name = strings.TrimSpace(name)
 	name = strings.Replace(name, "  ", " ", -1)

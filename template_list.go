@@ -548,7 +548,7 @@ var profile_14 = []byte(`
 			<div class="rowitem passive">
 				<a href="/report/submit/`)
 var profile_15 = []byte(`?session=`)
-var profile_16 = []byte(`&type=user" class="profile_menu_item report_item">Report</a>
+var profile_16 = []byte(`&type=user" class="profile_menu_item report_item" aria-label="Report User" title="Report User"></a>
 			</div>
 		</div>
 	</div>
@@ -559,7 +559,7 @@ var profile_16 = []byte(`&type=user" class="profile_menu_item report_item">Repor
 var profile_17 = []byte(`
 	<!-- TODO: Inline the display: none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
-			<div class="rowitem"><h1>Ban User</h1></div>
+			<div class="rowitem"><h1><a>Ban User</a></h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/`)
 var profile_18 = []byte(`?session=`)
@@ -599,7 +599,7 @@ var profile_20 = []byte(`
 var profile_21 = []byte(`
 
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
-		<div class="rowitem"><h1>Comments</h1></div>
+		<div class="rowitem"><h1><a>Comments</a></h1></div>
 	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">
 		`)
@@ -665,7 +665,6 @@ var profile_comments_row_29 = []byte(`" class="mod_button" title="Edit Item"><bu
 var profile_comments_row_30 = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>
 					`)
 var profile_comments_row_31 = []byte(`
-
 					<a class="mod_button" href="/report/submit/`)
 var profile_comments_row_32 = []byte(`?session=`)
 var profile_comments_row_33 = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>

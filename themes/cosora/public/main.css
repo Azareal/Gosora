@@ -860,21 +860,24 @@ select, input, textarea, button {
 }
 #profile_left_lane {
 	margin-left: 8px;
-	margin-right: 16px;
+	margin-right: 4px;
 }
 #profile_left_pane .topBlock {
 	flex-direction: column;
-	padding-bottom: 18px;
+	padding-bottom: 12px;
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 	background-color: var(--element-background-color);
 }
 #profile_left_pane .avatarRow {
-	padding: 24px;
-	padding-bottom: 8px;
+	padding: 28px;
+	padding-bottom: 4px;
+	padding-top: 22px;
 }
 #profile_left_pane .avatar {
 	border-radius: 80px;
+	height: 100px;
+    width: 100px;
 }
 #profile_left_pane .nameRow {
 	display: flex;
@@ -926,6 +929,12 @@ select, input, textarea, button {
 #profile_right_lane .topic_reply_form {
 	width: auto;
 }
+#profile_comments_head {
+	margin-top: 6px;
+}
+#profile_comments {
+	margin-bottom: 12px;
+}
 #profile_comments .rowitem {
 	background-image: none !important;
 }
@@ -944,6 +953,22 @@ select, input, textarea, button {
 #profile_comments .comment .nameAndTitle {
 	display: flex;
 	flex-direction: column;
+	margin-top: 2px;
+}
+#profile_comments .comment .nameAndTitle .user_tag {
+	font-size: 15px;
+}
+#profile_comments .comment .content_column {
+	padding-left: 14px;
+	padding-right: 14px;
+	display: flex;
+	width: 100%
+}
+#profile_comments .comment .controls {
+	margin-left: auto;
+}
+#profile_comments_form .topic_reply_form {
+	border-top: 1px solid var(--element-border-color) !important;
 }
 
 .colstack_item .formrow {
@@ -1333,7 +1358,7 @@ select, input, textarea, button {
 	.pin_item:after, .unpin_item:after {
 		content: "\f08d";
 	}
-	.report_item:after {
+	.report_item:not(.profile_menu_item):after {
 		content: "\f024";
 	}
 	.unpin_item, .unlock_item {
@@ -1382,7 +1407,7 @@ select, input, textarea, button {
 		margin-left: -3px;
 		margin-right: -3px;
 	}
-	.edit_item, .button_container .open_edit, .delete_item, .pin_item, .unpin_item, .lock_item, .unlock_item, .ip_item_button, .report_item {
+	.edit_item, .button_container .open_edit, .delete_item, .pin_item, .unpin_item, .lock_item, .unlock_item, .ip_item_button, .report_item:not(.profile_menu_item) {
 		display: none;
 	}
 	.button_menu:after {

@@ -5,6 +5,7 @@
 	"Creator": "Azareal",
 	"FullImage": "tempra-conflux.png",
 	"MobileFriendly": true,
+	"BgAvatars":true,
 	"URL": "github.com/Azareal/Gosora",
 	"Docks":["rightSidebar"],
 	"Templates": [

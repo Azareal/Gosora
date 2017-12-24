@@ -84,7 +84,11 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
-	common.RouteViewCounter, err = common.NewRouteViewCounter()
+	common.RouteViewCounter, err = common.NewDefaultRouteViewCounter()
+	if err != nil {
+		return err
+	}
+	common.TopicViewCounter, err = common.NewDefaultTopicViewCounter()
 	if err != nil {
 		return err
 	}

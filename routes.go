@@ -7,11 +7,10 @@
 package main
 
 import (
-	"log"
-	//"fmt"
 	"bytes"
 	"html"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -72,19 +71,6 @@ func routeStatic(w http.ResponseWriter, r *http.Request) {
 		io.Copy(w, bytes.NewReader(file.Data))
 	}
 	// Other options instead of io.Copy: io.CopyN(), w.Write(), http.ServeContent()
-}
-
-// TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
-// TODO: Add a sitemap
-// TODO: Add an API so that plugins can register disallowed areas. E.g. /guilds/join for plugin_guilds
-func routeRobotsTxt(w http.ResponseWriter, r *http.Request) common.RouteError {
-	_, _ = w.Write([]byte(`User-agent: *
-Disallow: /panel/
-Disallow: /topics/create/
-Disallow: /user/edit/
-Disallow: /accounts/
-`))
-	return nil
 }
 
 func routeOverview(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -150,7 +136,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 		return common.LocalError("Something weird happened", w, r, user)
 	}
 
-	// TODO: Make CanSee a method on *Group with a canSee field?
+	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
 	var canSee []int
 	if user.IsSuperAdmin {
 		canSee, err = common.Forums.GetAllVisibleIDs()
@@ -168,19 +154,16 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	for _, fid := range canSee {
 		forum := common.Forums.DirtyGet(fid)
 		if forum.Name != "" && forum.Active {
-			if forum.ParentType == "" || forum.ParentType == "forum" {
-				// Optimise Quick Topic away for guests
-				if user.Loggedin {
-					fcopy := forum.Copy()
-					// TODO: Add a hook here for plugin_guilds
-					forumList = append(forumList, fcopy)
-				}
+			// This bit's for quick topic, as we don't want unbound forums (e.g. ones in plugin_socialgroups) showing up
+			if (forum.ParentType == "" || forum.ParentType == "forum") && user.Loggedin {
+				fcopy := forum.Copy()
+				// TODO: Add a hook here for plugin_guilds
+				forumList = append(forumList, fcopy)
 			}
 			// ? - Should we be showing plugin_guilds posts on /topics/?
 			// ? - Would it be useful, if we could post in social groups from /topics/?
 			argList = append(argList, strconv.Itoa(fid))
 			qlist += "?,"
-
 		}
 	}
 
@@ -190,6 +173,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	}
 	qlist = qlist[0 : len(qlist)-1]
 
+	// TODO: Abstract this
 	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "parentID IN("+qlist+")", "")
 	if err != nil {
 		return common.InternalError(err, w, r)
