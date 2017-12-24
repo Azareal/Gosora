@@ -25,6 +25,10 @@ $(document).ready(function(){
 		btns: btnlist,
 		autogrow: true,
 	});
+	$('#profile_comments_form .topic_reply_form .input_content').trumbowyg({
+		btns: [['viewHTML'],['strong','em','del'],['link'],['insertImage'],['removeformat']],
+		autogrow: true,
+	});
 
 	// TODO: Refactor this to use `each` less
 	$('.button_menu').click(function(){

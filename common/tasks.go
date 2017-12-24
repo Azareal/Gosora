@@ -21,6 +21,7 @@ type TaskStmts struct {
 
 var ScheduledSecondTasks []func() error
 var ScheduledFifteenMinuteTasks []func() error
+var ShutdownTasks []func() error
 var taskStmts TaskStmts
 var lastSync time.Time
 
@@ -43,6 +44,11 @@ func AddScheduledSecondTask(task func() error) {
 // AddScheduledFifteenMinuteTask is not concurrency safe
 func AddScheduledFifteenMinuteTask(task func() error) {
 	ScheduledFifteenMinuteTasks = append(ScheduledFifteenMinuteTasks, task)
+}
+
+// AddShutdownTask is not concurrency safe
+func AddShutdownTask(task func() error) {
+	ShutdownTasks = append(ShutdownTasks, task)
 }
 
 // TODO: Use AddScheduledSecondTask

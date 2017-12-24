@@ -47,7 +47,7 @@ func routeSitemapXml(w http.ResponseWriter, r *http.Request) common.RouteError {
 	writeXMLHeader(w, r)
 	w.Write([]byte("<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"))
 	sitemapItem("sitemaps/topics.xml")
-	sitemapItem("sitemaps/forums.xml")
+	//sitemapItem("sitemaps/forums.xml")
 	//sitemapItem("sitemaps/users.xml")
 	w.Write([]byte("</sitemapindex>"))
 

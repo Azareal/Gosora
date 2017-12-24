@@ -72,6 +72,8 @@ var RouteMap = map[string]interface{}{
 	"routeUnban": routeUnban,
 	"routeActivate": routeActivate,
 	"routeIps": routeIps,
+	"routeDynamic": routeDynamic,
+	"routeUploads": routeUploads,
 }
 
 // ! NEVER RELY ON THESE REMAINING THE SAME BETWEEN COMMITS
@@ -133,6 +135,8 @@ var routeMapEnum = map[string]int{
 	"routeUnban": 54,
 	"routeActivate": 55,
 	"routeIps": 56,
+	"routeDynamic": 57,
+	"routeUploads": 58,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
@@ -192,6 +196,8 @@ var reverseRouteMapEnum = map[int]string{
 	54: "routeUnban",
 	55: "routeActivate",
 	56: "routeIps",
+	57: "routeDynamic",
+	58: "routeUploads",
 }
 
 // TODO: Stop spilling these into the package scope?
@@ -794,6 +800,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				common.NotFound(w,req)
 				return
 			}
+			common.RouteViewCounter.Bump(58)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
@@ -837,8 +844,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.RUnlock()
 			
 			if ok {
+				common.RouteViewCounter.Bump(57) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
-				err = handle(w,req,user) // TODO: Count these views
+				err = handle(w,req,user)
 				if err != nil {
 					router.handleError(err,w,req,user)
 				}

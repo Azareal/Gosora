@@ -234,6 +234,14 @@ func main() {
 		}
 	}
 
+	var runTasks = func(tasks []func() error) {
+		for _, task := range tasks {
+			if task() != nil {
+				common.LogError(err)
+			}
+		}
+	}
+
 	// Run this goroutine once a second
 	secondTicker := time.NewTicker(1 * time.Second)
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
@@ -242,22 +250,16 @@ func main() {
 		for {
 			select {
 			case <-secondTicker.C:
-				//log.Print("Running the second ticker")
 				// TODO: Add a plugin hook here
+				runTasks(common.ScheduledSecondTasks)
 
-				for _, task := range common.ScheduledSecondTasks {
-					if task() != nil {
-						common.LogError(err)
-					}
-				}
-
+				// TODO: Stop hard-coding this
 				err := common.HandleExpiredScheduledGroups()
 				if err != nil {
 					common.LogError(err)
 				}
 
 				// TODO: Handle delayed moderation tasks
-				// TODO: Handle the daily clean-up. Move this to a 24 hour task?
 
 				// Sync with the database, if there are any changes
 				err = common.HandleServerSync()
@@ -273,18 +275,15 @@ func main() {
 				// TODO: Add a plugin hook here
 			case <-fifteenMinuteTicker.C:
 				// TODO: Add a plugin hook here
-
-				for _, task := range common.ScheduledFifteenMinuteTasks {
-					if task() != nil {
-						common.LogError(err)
-					}
-				}
+				runTasks(common.ScheduledFifteenMinuteTasks)
 
 				// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 				// TODO: Publish scheduled posts.
 
 				// TODO: Add a plugin hook here
 			}
+
+			// TODO: Handle the daily clean-up.
 		}
 	}()
 
@@ -329,6 +328,7 @@ func main() {
 	go func() {
 		sig := <-sigs
 		// TODO: Gracefully shutdown the HTTP server
+		runTasks(common.ShutdownTasks)
 		log.Fatal("Received a signal to shutdown: ", sig)
 	}()
 

@@ -2,7 +2,6 @@ package common
 
 import (
 	"database/sql"
-	"log"
 	"sync"
 	"sync/atomic"
 
@@ -28,6 +27,7 @@ func NewChunkedViewCounter() (*ChunkedViewCounter, error) {
 	}
 	AddScheduledFifteenMinuteTask(counter.Tick) // This is run once every fifteen minutes to match the frequency of the RouteViewCounter
 	//AddScheduledSecondTask(counter.Tick)
+	AddShutdownTask(counter.Tick)
 	return counter, acc.FirstError()
 }
 
@@ -82,6 +82,7 @@ func NewDefaultRouteViewCounter() (*DefaultRouteViewCounter, error) {
 	}
 	AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
 	//AddScheduledSecondTask(counter.Tick)
+	AddShutdownTask(counter.Tick)
 	return counter, acc.FirstError()
 }
 
@@ -113,7 +114,7 @@ func (counter *DefaultRouteViewCounter) insertChunk(count int, route int) error 
 
 func (counter *DefaultRouteViewCounter) Bump(route int) {
 	// TODO: Test this check
-	log.Print("counter.routeBuckets[route]: ", counter.routeBuckets[route])
+	debugLog("counter.routeBuckets[", route, "]: ", counter.routeBuckets[route])
 	if len(counter.routeBuckets) <= route {
 		return
 	}
@@ -157,41 +158,53 @@ func NewDefaultTopicViewCounter() (*DefaultTopicViewCounter, error) {
 		evenTopics: make(map[int]*RWMutexCounterBucket),
 		update:     acc.Update("topics").Set("views = views + ?").Where("tid = ?").Prepare(),
 	}
-	AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
+	AddScheduledFifteenMinuteTask(counter.Tick) // Who knows how many topics we have queued up, we probably don't want this running too frequently
 	//AddScheduledSecondTask(counter.Tick)
+	AddShutdownTask(counter.Tick)
 	return counter, acc.FirstError()
 }
 
 func (counter *DefaultTopicViewCounter) Tick() error {
 	counter.oddLock.RLock()
-	for topicID, topic := range counter.oddTopics {
+	oddTopics := counter.oddTopics
+	counter.oddLock.RUnlock()
+	for topicID, topic := range oddTopics {
 		var count int
 		topic.RLock()
 		count = topic.counter
 		topic.RUnlock()
+		// TODO: Only delete the bucket when it's zero to avoid hitting popular topics?
+		counter.oddLock.Lock()
+		delete(counter.oddTopics, topicID)
+		counter.oddLock.Unlock()
 		err := counter.insertChunk(count, topicID)
 		if err != nil {
 			return err
 		}
 	}
-	counter.oddLock.RUnlock()
 
 	counter.evenLock.RLock()
-	for topicID, topic := range counter.evenTopics {
+	evenTopics := counter.evenTopics
+	counter.evenLock.RUnlock()
+	for topicID, topic := range evenTopics {
 		var count int
 		topic.RLock()
 		count = topic.counter
 		topic.RUnlock()
+		// TODO: Only delete the bucket when it's zero to avoid hitting popular topics?
+		counter.evenLock.Lock()
+		delete(counter.evenTopics, topicID)
+		counter.evenLock.Unlock()
 		err := counter.insertChunk(count, topicID)
 		if err != nil {
 			return err
 		}
 	}
-	counter.evenLock.RUnlock()
 
 	return nil
 }
 
+// TODO: Optimise this further. E.g. Using IN() on every one view topic. Rinse and repeat for two views, three views, four views and five views.
 func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) error {
 	if count == 0 {
 		return nil
@@ -204,9 +217,9 @@ func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) erro
 func (counter *DefaultTopicViewCounter) Bump(topicID int) {
 	// Is the ID even?
 	if topicID%2 == 0 {
-		counter.evenLock.Lock()
+		counter.evenLock.RLock()
 		topic, ok := counter.evenTopics[topicID]
-		counter.evenLock.Unlock()
+		counter.evenLock.RUnlock()
 		if ok {
 			topic.Lock()
 			topic.counter++
@@ -219,9 +232,9 @@ func (counter *DefaultTopicViewCounter) Bump(topicID int) {
 		return
 	}
 
-	counter.oddLock.Lock()
+	counter.oddLock.RLock()
 	topic, ok := counter.oddTopics[topicID]
-	counter.oddLock.Unlock()
+	counter.oddLock.RUnlock()
 	if ok {
 		topic.Lock()
 		topic.counter++

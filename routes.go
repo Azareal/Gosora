@@ -40,6 +40,12 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, dest, http.StatusTemporaryRedirect)
 }
 
+// Temporary stubs for view tracking
+func routeDynamic() {
+}
+func routeUploads() {
+}
+
 // GET functions
 func routeStatic(w http.ResponseWriter, r *http.Request) {
 	file, ok := common.StaticFiles.Get(r.URL.Path)
@@ -613,6 +619,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) comm
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	common.TopicViewCounter.Bump(topic.ID) // TODO Move this into the router?
 	return nil
 }
 

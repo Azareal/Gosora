@@ -150,6 +150,9 @@ func main() {
 			}`
 	}
 
+	// Stubs for us to refer to these routes through
+	mapIt("routeDynamic")
+	mapIt("routeUploads")
 	tmplVars.AllRouteNames = allRouteNames
 	tmplVars.AllRouteMap = allRouteMap
 
@@ -294,6 +297,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				common.NotFound(w,req)
 				return
 			}
+			common.RouteViewCounter.Bump({{.AllRouteMap.routeUploads}})
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
@@ -337,8 +341,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.RUnlock()
 			
 			if ok {
+				common.RouteViewCounter.Bump({{.AllRouteMap.routeDynamic}}) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
-				err = handle(w,req,user) // TODO: Count these views
+				err = handle(w,req,user)
 				if err != nil {
 					router.handleError(err,w,req,user)
 				}

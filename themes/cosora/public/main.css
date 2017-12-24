@@ -479,6 +479,9 @@ select, input, textarea, button {
 	width: 100%;
 	height: min-content;
 }
+.topic_reply_form .formrow {
+	padding: 0px !important;
+}
 .topic_reply_form .trumbowyg-button-pane:after {
 	display: none;
 }
@@ -934,6 +937,9 @@ select, input, textarea, button {
 }
 #profile_comments {
 	margin-bottom: 12px;
+}
+#profile_comments:empty {
+	display: none !important;
 }
 #profile_comments .rowitem {
 	background-image: none !important;

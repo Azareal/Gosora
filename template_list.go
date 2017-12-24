@@ -601,8 +601,7 @@ var profile_21 = []byte(`
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
 		<div class="rowitem"><h1><a>Comments</a></h1></div>
 	</div>
-	<div id="profile_comments" class="colstack_item hash_hide">
-		`)
+	<div id="profile_comments" class="colstack_item hash_hide">`)
 var profile_comments_row_0 = []byte(`
 		<div class="rowitem passive deletable_block editable_parent simple `)
 var profile_comments_row_1 = []byte(`" style="background-image: url(`)
@@ -672,8 +671,7 @@ var profile_comments_row_33 = []byte(`&type=user-reply"><button class="username 
 			</div>
 		</div>
 	`)
-var profile_22 = []byte(`
-	</div>
+var profile_22 = []byte(`</div>
 
 `)
 var profile_23 = []byte(`
@@ -682,9 +680,9 @@ var profile_23 = []byte(`
 var profile_24 = []byte(`' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top: none;">
 			<div class="formrow">
-				<div class="formitem"><textarea name="reply-content" placeholder="Insert reply here"></textarea></div>
+				<div class="formitem"><textarea class="input_content" name="reply-content" placeholder="Insert comment here"></textarea></div>
 			</div>
-			<div class="formrow">
+			<div class="formrow quick_button_row">
 				<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
 			</div>
 		</div>
