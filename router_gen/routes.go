@@ -47,9 +47,9 @@ func buildUserRoutes() {
 	// TODO: Auto test and manual test these routes
 	userGroup = newRouteGroup("/users/")
 	userGroup.Routes(
-		Action("routeBanSubmit", "/users/ban/submit/"),
-		Action("routeUnban", "/users/unban/"),
-		Action("routeActivate", "/users/activate/"),
+		Action("routeBanSubmit", "/users/ban/submit/", "extraData"),
+		Action("routeUnban", "/users/unban/", "extraData"),
+		Action("routeActivate", "/users/activate/", "extraData"),
 		MemberView("routeIps", "/users/ips/"), // TODO: .Perms("ViewIPs")?
 	)
 	addRouteGroup(userGroup)

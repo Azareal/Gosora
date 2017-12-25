@@ -745,7 +745,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(53)
-					err = routeBanSubmit(w,req,user)
+					err = routeBanSubmit(w,req,user,extraData)
 				case "/users/unban/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -760,7 +760,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(54)
-					err = routeUnban(w,req,user)
+					err = routeUnban(w,req,user,extraData)
 				case "/users/activate/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -775,7 +775,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(55)
-					err = routeActivate(w,req,user)
+					err = routeActivate(w,req,user,extraData)
 				case "/users/ips/":
 					err = common.MemberOnly(w,req,user)
 					if err != nil {

@@ -155,9 +155,15 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 		return err
 	}
 
-	// 6 is the ID of the Not Loggedin Group
-	// TODO: Use a shared variable rather than a literal for the group ID
-	err = ReplaceForumPermsForGroupTx(tx, 6, map[int]string{fid: ""}, map[int]*ForumPerms{fid: permmap["guests"]})
+	// TODO: The group ID is probably a variable somewhere. Find it and use it.
+	// Group 5 is the Awaiting Activation group
+	err = ReplaceForumPermsForGroupTx(tx, 5, map[int]string{fid: ""}, map[int]*ForumPerms{fid: permmap["guests"]})
+	if err != nil {
+		return err
+	}
+
+	// TODO: Consult a config setting instead of GuestUser?
+	err = ReplaceForumPermsForGroupTx(tx, GuestUser.Group, map[int]string{fid: ""}, map[int]*ForumPerms{fid: permmap["guests"]})
 	if err != nil {
 		return err
 	}

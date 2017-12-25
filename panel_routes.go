@@ -948,7 +948,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return common.LocalError("The provided common.User ID is not a valid number.", w, r, user)
+		return common.LocalError("The provided UserID is not a valid number.", w, r, user)
 	}
 
 	targetUser, err := common.Users.Get(uid)
@@ -1003,7 +1003,7 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return common.LocalError("The provided common.User ID is not a valid number.", w, r, user)
+		return common.LocalError("The provided UserID is not a valid number.", w, r, user)
 	}
 
 	targetUser, err := common.Users.Get(uid)

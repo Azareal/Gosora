@@ -643,7 +643,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user common.User) comm
 
 	pid, err := strconv.Atoi(halves[1])
 	if err != nil {
-		return common.LocalError("The provided common.User ID is not a valid number.", w, r, user)
+		return common.LocalError("The provided UserID is not a valid number.", w, r, user)
 	}
 
 	var puser *common.User

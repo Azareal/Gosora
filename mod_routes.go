@@ -603,14 +603,14 @@ func routeIps(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	return nil
 }
 
-func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
 	if !user.Perms.BanUsers {
 		return common.NoPermissions(w, r, user)
 	}
 
-	uid, err := strconv.Atoi(r.URL.Path[len("/users/ban/submit/"):])
+	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return common.LocalError("The provided common.User ID is not a valid number.", w, r, user)
+		return common.LocalError("The provided UserID is not a valid number.", w, r, user)
 	}
 	if uid == -2 {
 		return common.LocalError("Why don't you like Merlin?", w, r, user)
@@ -676,14 +676,14 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User) co
 	return nil
 }
 
-func routeUnban(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeUnban(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
 	if !user.Perms.BanUsers {
 		return common.NoPermissions(w, r, user)
 	}
 
-	uid, err := strconv.Atoi(r.URL.Path[len("/users/unban/"):])
+	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return common.LocalError("The provided common.User ID is not a valid number.", w, r, user)
+		return common.LocalError("The provided UserID is not a valid number.", w, r, user)
 	}
 
 	targetUser, err := common.Users.Get(uid)
@@ -715,14 +715,14 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user common.User) common
 	return nil
 }
 
-func routeActivate(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeActivate(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
 	if !user.Perms.ActivateUsers {
 		return common.NoPermissions(w, r, user)
 	}
 
-	uid, err := strconv.Atoi(r.URL.Path[len("/users/activate/"):])
+	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return common.LocalError("The provided common.User ID is not a valid number.", w, r, user)
+		return common.LocalError("The provided UserID is not a valid number.", w, r, user)
 	}
 
 	targetUser, err := common.Users.Get(uid)
