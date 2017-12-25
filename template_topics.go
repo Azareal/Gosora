@@ -44,10 +44,16 @@ w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
 w.Write(header_10)
 w.Write([]byte(tmpl_topics_vars.Header.Site.URL))
 w.Write(header_11)
-if !tmpl_topics_vars.CurrentUser.IsSuperMod {
+if tmpl_topics_vars.Header.MetaDesc != "" {
 w.Write(header_12)
-}
+w.Write([]byte(tmpl_topics_vars.Header.MetaDesc))
 w.Write(header_13)
+}
+w.Write(header_14)
+if !tmpl_topics_vars.CurrentUser.IsSuperMod {
+w.Write(header_15)
+}
+w.Write(header_16)
 w.Write(menu_0)
 w.Write(menu_1)
 w.Write([]byte(tmpl_topics_vars.Header.Site.ShortName))
@@ -62,16 +68,16 @@ w.Write(menu_5)
 w.Write(menu_6)
 }
 w.Write(menu_7)
-w.Write(header_14)
+w.Write(header_17)
 if tmpl_topics_vars.Header.Widgets.RightSidebar != "" {
-w.Write(header_15)
+w.Write(header_18)
 }
-w.Write(header_16)
+w.Write(header_19)
 if len(tmpl_topics_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_topics_vars.Header.NoticeList {
-w.Write(header_17)
+w.Write(header_20)
 w.Write([]byte(item))
-w.Write(header_18)
+w.Write(header_21)
 }
 }
 w.Write(topics_0)

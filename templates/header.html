@@ -16,6 +16,7 @@
 		</script>
 		<script type="text/javascript" src="/static/global.js"></script>
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
+		{{if .Header.MetaDesc}}<meta name="description" content="{{.Header.MetaDesc}}" />{{end}}
 	</head>
 	<body>
 		<style>{{if not .CurrentUser.IsSuperMod}}.supermod_only { display: none !important; }{{end}}</style>

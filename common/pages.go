@@ -17,9 +17,10 @@ type HeaderVars struct {
 	Themes      map[string]*Theme // TODO: Use a slice containing every theme instead of the main map for speed?
 	Theme       *Theme
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
-	Zone    string
-	Writer  http.ResponseWriter
-	ExtData ExtData
+	Zone     string
+	MetaDesc string
+	Writer   http.ResponseWriter
+	ExtData  ExtData
 }
 
 // TODO: Add this to routes which don't use templates. E.g. Json APIs.

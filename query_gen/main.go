@@ -115,6 +115,7 @@ func seedTables(adapter qgen.Adapter) error {
 	qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
 	qgen.Install.SimpleInsert("settings", "name, content, type", "'bigpost_min_words','250','int'")
 	qgen.Install.SimpleInsert("settings", "name, content, type", "'megapost_min_words','1000','int'")
+	qgen.Install.SimpleInsert("settings", "name, content, type", "'meta_desc','','html-attribute'")
 	qgen.Install.SimpleInsert("themes", "uname, default", "'tempra-simple',1")
 	qgen.Install.SimpleInsert("emails", "email, uid, validated", "'admin@localhost',1,1") // ? - Use a different default email or let the admin input it during installation?
 

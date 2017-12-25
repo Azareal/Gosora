@@ -133,6 +133,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 		return ferr
 	}
 	headerVars.Zone = "topics"
+	headerVars.MetaDesc = headerVars.Settings["meta_desc"].(string)
 
 	// TODO: Add a function for the qlist stuff
 	var qlist string
@@ -316,6 +317,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 		return common.InternalError(err, w, r)
 	}
 	headerVars.Zone = "view_forum"
+	headerVars.MetaDesc = headerVars.Settings["meta_desc"].(string)
 
 	// Calculate the offset
 	var offset int

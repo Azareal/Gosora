@@ -129,6 +129,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	if !ok {
 		t.Error("We couldn't find UID #1 in the returned map")
 		t.Error("userList", userList)
+		return
 	}
 	expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 
@@ -600,8 +601,26 @@ func TestForumStore(t *testing.T) {
 	expect(t, !ok, "FID #0 shouldn't exist")
 	ok = common.Forums.Exists(1)
 	expect(t, ok, "FID #1 should exist")
+	ok = common.Forums.Exists(2)
+	expect(t, ok, "FID #2 should exist")
+	ok = common.Forums.Exists(3)
+	expect(t, !ok, "FID #3 shouldn't exist")
 
-	// TODO: Test forum creation
+	fid, err := common.Forums.Create("Test Forum", "", true, "all")
+	expectNilErr(t, err)
+	expect(t, fid == 3, "The first forum we create should have an ID of 3")
+	ok = common.Forums.Exists(3)
+	expect(t, ok, "FID #2 should exist")
+
+	forum, err = common.Forums.Get(3)
+	recordMustExist(t, err, "Couldn't find FID #3")
+
+	expect(t, forum.ID == 2, fmt.Sprintf("The FID should be 3 not %d", forum.ID))
+	expect(t, forum.Name == "Test Forum", fmt.Sprintf("The name of the forum should be 'Test Forum' not '%s'", forum.Name))
+	expect(t, forum.Active, fmt.Sprintf("The test forum should be active"))
+	expect(t, forum.Desc == "", fmt.Sprintf("The forum description should be blank not '%s'", expectDesc, forum.Desc))
+
+	// TODO: More forum creation tests
 	// TODO: Test forum deletion
 	// TODO: Test forum update
 }

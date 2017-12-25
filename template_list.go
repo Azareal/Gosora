@@ -30,11 +30,15 @@ var header_11 = []byte(`";
 		</script>
 		<script type="text/javascript" src="/static/global.js"></script>
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
+		`)
+var header_12 = []byte(`<meta name="description" content="`)
+var header_13 = []byte(`" />`)
+var header_14 = []byte(`
 	</head>
 	<body>
 		<style>`)
-var header_12 = []byte(`.supermod_only { display: none !important; }`)
-var header_13 = []byte(`</style>
+var header_15 = []byte(`.supermod_only { display: none !important; }`)
+var header_16 = []byte(`</style>
 		<div class="container">
 `)
 var menu_0 = []byte(`<nav class="nav">
@@ -73,13 +77,13 @@ var menu_7 = []byte(`
 	<div style="clear: both;"></div>
 </nav>
 `)
-var header_14 = []byte(`
+var header_17 = []byte(`
 <div id="back"><div id="main" `)
-var header_15 = []byte(`class="shrink_main"`)
-var header_16 = []byte(`>
+var header_18 = []byte(`class="shrink_main"`)
+var header_19 = []byte(`>
 `)
-var header_17 = []byte(`<div class="alert">`)
-var header_18 = []byte(`</div>`)
+var header_20 = []byte(`<div class="alert">`)
+var header_21 = []byte(`</div>`)
 var topic_0 = []byte(`
 
 <form id="edit_topic_form" action='/topic/edit/submit/`)
