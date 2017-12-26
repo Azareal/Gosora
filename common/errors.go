@@ -99,6 +99,26 @@ func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) RouteErr
 	return HandledRouteError()
 }
 
+var xmlInternalError = []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<error>A problem has occured</error>`)
+
+func InternalErrorXML(err error, w http.ResponseWriter, r *http.Request) RouteError {
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(500)
+	w.Write(xmlInternalError)
+	LogError(err)
+	return HandledRouteError()
+}
+
+// TODO: Stop killing the instance upon hitting an error with InternalError* and deprecate this
+func SilentInternalErrorXML(err error, w http.ResponseWriter, r *http.Request) RouteError {
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(500)
+	w.Write(xmlInternalError)
+	log.Print("InternalError: ", err)
+	return HandledRouteError()
+}
+
 func PreError(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
 	pi := Page{"Error", GuestUser, DefaultHeaderVar(), tList, errmsg}

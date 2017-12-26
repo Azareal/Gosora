@@ -135,8 +135,6 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	headerVars.Zone = "topics"
 	headerVars.MetaDesc = headerVars.Settings["meta_desc"].(string)
 
-	// TODO: Add a function for the qlist stuff
-	var qlist string
 	group, err := common.Groups.Get(user.Group)
 	if err != nil {
 		log.Printf("Group #%d doesn't exist despite being used by common.User #%d", user.Group, user.ID)
@@ -156,39 +154,28 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 
 	// We need a list of the visible forums for Quick Topic
 	var forumList []common.Forum
-	var argList []interface{}
-
 	for _, fid := range canSee {
 		forum := common.Forums.DirtyGet(fid)
 		if forum.Name != "" && forum.Active {
 			// This bit's for quick topic, as we don't want unbound forums (e.g. ones in plugin_socialgroups) showing up
+			// ? - Would it be useful, if we could post in social groups from /topics/?
 			if (forum.ParentType == "" || forum.ParentType == "forum") && user.Loggedin {
 				fcopy := forum.Copy()
 				// TODO: Add a hook here for plugin_guilds
 				forumList = append(forumList, fcopy)
 			}
-			// ? - Should we be showing plugin_guilds posts on /topics/?
-			// ? - Would it be useful, if we could post in social groups from /topics/?
-			argList = append(argList, strconv.Itoa(fid))
-			qlist += "?,"
 		}
 	}
+
+	// ? - Should we be showing plugin_guilds posts on /topics/?
+	argList, qlist := common.ForumListToArgQ(forumList)
 
 	// ! Need an inline error not a page level error
 	if qlist == "" {
 		return common.NotFound(w, r)
 	}
-	qlist = qlist[0 : len(qlist)-1]
 
-	// TODO: Abstract this
-	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "parentID IN("+qlist+")", "")
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	defer topicCountStmt.Close()
-
-	var topicCount int
-	err = topicCountStmt.QueryRow(argList...).Scan(&topicCount)
+	topicCount, err := common.ArgQToTopicCount(argList, qlist)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -304,7 +291,6 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	if ferr != nil {
 		return ferr
 	}
-
 	if !user.Perms.ViewTopic {
 		return common.NoPermissions(w, r, user)
 	}

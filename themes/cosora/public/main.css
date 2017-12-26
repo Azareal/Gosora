@@ -580,19 +580,11 @@ select, input, textarea, button {
 	display: inline-block;
 }
 .topic_list .rowtopic span {
-	max-width: 112px;
+	max-width: 162px;
 	overflow: hidden;
 	color: var(--primary-text-color);
 }
-
 .topic_list .rowsmall {
-	font-size: 15px;
-}
-
-.topic_list .rowsmall.starter:before {
-	content: "\f007";
-	font: normal normal normal 14px/1 FontAwesome;
-	margin-right: 5px;
 	font-size: 15px;
 }
 
@@ -606,7 +598,6 @@ select, input, textarea, button {
 .topic_list .lastReplyAt {
 	font-size: 14px;
 }
-
 .topic_list .topic_status_e {
 	display: none;
 }
@@ -615,7 +606,6 @@ select, input, textarea, button {
 	flex: 1 1 calc(100% - 380px);
 	border-right: none;
 }
-
 .topic_inner_right {
 	margin-left: 15%;
 	margin-right: auto;
@@ -633,12 +623,9 @@ select, input, textarea, button {
 .topic_inner_right {
 	margin-top: 12px;
 }
-
 .topic_inner_right span {
-	/*font-size: 15px;*/
 	font-size: 16px;
 }
-
 .topic_inner_right span:after {
 	font-size: 13.5px;
 }
@@ -656,7 +643,6 @@ select, input, textarea, button {
 	content: var(--likes-lang-string);
 	color: var(--lightened-primary-text-color);
 }
-
 .parent_forum {
 	color: var(--lightened-primary-text-color);
 }
@@ -684,7 +670,7 @@ select, input, textarea, button {
 	margin-top: 12px;
 	margin-left: 8px;
 	margin-bottom: 14px;
-	width: 240px;
+	width: 220px;
 }
 .topic_right > span {
 	margin-top: 12px;
@@ -698,7 +684,7 @@ select, input, textarea, button {
 	background-color: hsl(81, 60%, 95%);
 }
 
-@element .topic_left .rowtopic and (min-width: 110px) {
+@element .topic_left .rowtopic and (min-width: 160px) {
 	$this, $this span, $this + .parent_forum {
 		float: left;
 	}
@@ -709,6 +695,18 @@ select, input, textarea, button {
 	$this:after {
 		content: "...";
 		float: left;
+	}
+}
+
+@element .topic_list and (min-width: 738px) {
+	.topic_left .topic_inner_left {
+		width: calc(240px + 1%);
+	}
+}
+
+@element .topic_list and (min-width: 875px) {
+	.topic_left .topic_inner_left {
+		width: calc(240px + 10%);
 	}
 }
 
@@ -777,6 +775,9 @@ select, input, textarea, button {
 }
 .userinfo .tag_block {
 	color: var(--extra-lightened-primary-text-color);
+}
+.post_item .user_content {
+	margin-bottom: 10px;
 }
 .button_container {
 	margin-top: auto;

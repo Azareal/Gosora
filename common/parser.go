@@ -165,10 +165,10 @@ func shortcodeToUnicode(msg string) string {
 }
 
 func PreparseMessage(msg string) string {
-	msg = strings.Replace(msg, "<p><br>", "\n", -1)
-	msg = strings.Replace(msg, "<p>", "\n", -1)
+	msg = strings.Replace(msg, "<p><br>", "\n\n", -1)
+	msg = strings.Replace(msg, "<p>", "\n\n", -1)
 	msg = strings.Replace(msg, "</p>", "", -1)
-	msg = strings.Replace(msg, "<br>", "\n", -1)
+	msg = strings.Replace(msg, "<br>", "\n\n", -1)
 	if Sshooks["preparse_preassign"] != nil {
 		msg = RunSshook("preparse_preassign", msg)
 	}

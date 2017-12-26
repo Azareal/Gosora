@@ -1,13 +1,13 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"./common"
-	"./query_gen/lib"
 )
 
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
@@ -23,8 +23,6 @@ Disallow: /report/
 	return nil
 }
 
-var xmlInternalError = []byte(`<?xml version="1.0" encoding="UTF-8"?>
-<error>A problem has occured</error>`)
 var sitemapPageCap = 40000 // 40k, bump it up to 50k once we gzip this? Does brotli work on sitemaps?
 
 func writeXMLHeader(w http.ResponseWriter, r *http.Request) {
@@ -110,11 +108,7 @@ func routeSitemapForums(w http.ResponseWriter, r *http.Request) common.RouteErro
 
 	group, err := common.Groups.Get(common.GuestUser.Group)
 	if err != nil {
-		log.Print("The guest group doesn't exist for some reason")
-		// TODO: Add XML error handling to errors.go
-		w.WriteHeader(500)
-		w.Write(xmlInternalError)
-		return common.HandledRouteError()
+		return common.SilentInternalErrorXML(errors.New("The guest group doesn't exist for some reason"), w, r)
 	}
 
 	writeXMLHeader(w, r)
@@ -145,54 +139,29 @@ func routeSitemapTopics(w http.ResponseWriter, r *http.Request) common.RouteErro
 </sitemap>
 `))
 	}
-	writeXMLHeader(w, r)
 
 	group, err := common.Groups.Get(common.GuestUser.Group)
 	if err != nil {
-		log.Print("The guest group doesn't exist for some reason")
-		// TODO: Add XML error handling to errors.go
-		w.WriteHeader(500)
-		w.Write(xmlInternalError)
-		return common.HandledRouteError()
+		return common.SilentInternalErrorXML(errors.New("The guest group doesn't exist for some reason"), w, r)
 	}
 
-	var argList []interface{}
-	var qlist string
+	var visibleForums []common.Forum
 	for _, fid := range group.CanSee {
 		forum := common.Forums.DirtyGet(fid)
 		if forum.Name != "" && forum.Active {
-			argList = append(argList, strconv.Itoa(fid))
-			qlist += "?,"
+			visibleForums = append(visibleForums, forum.Copy())
 		}
 	}
-	if qlist != "" {
-		qlist = qlist[0 : len(qlist)-1]
-	}
 
-	// TODO: Abstract this
-	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "parentID IN("+qlist+")", "")
+	topicCount, err := common.TopicCountInForums(visibleForums)
 	if err != nil {
-		// TODO: Add XML error handling to errors.go
-		w.WriteHeader(500)
-		w.Write(xmlInternalError)
-		common.LogError(err)
-		return common.HandledRouteError()
-	}
-	defer topicCountStmt.Close()
-
-	var topicCount int
-	err = topicCountStmt.QueryRow(argList...).Scan(&topicCount)
-	if err != nil && err != ErrNoRows {
-		// TODO: Add XML error handling to errors.go
-		w.WriteHeader(500)
-		w.Write(xmlInternalError)
-		common.LogError(err)
-		return common.HandledRouteError()
+		return common.InternalErrorXML(err, w, r)
 	}
 
 	var pageCount = topicCount / sitemapPageCap
 	//log.Print("topicCount", topicCount)
 	//log.Print("pageCount", pageCount)
+	writeXMLHeader(w, r)
 	w.Write([]byte("<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"))
 	for i := 0; i <= pageCount; i++ {
 		sitemapItem("sitemaps/topics_page_" + strconv.Itoa(i) + ".xml")
@@ -215,45 +184,21 @@ func routeSitemapTopic(w http.ResponseWriter, r *http.Request, page int) common.
 
 	group, err := common.Groups.Get(common.GuestUser.Group)
 	if err != nil {
-		log.Print("The guest group doesn't exist for some reason")
-		// TODO: Add XML error handling to errors.go
-		w.WriteHeader(500)
-		w.Write(xmlInternalError)
-		return common.HandledRouteError()
+		return common.SilentInternalErrorXML(errors.New("The guest group doesn't exist for some reason"), w, r)
 	}
 
-	var argList []interface{}
-	var qlist string
+	var visibleForums []common.Forum
 	for _, fid := range group.CanSee {
 		forum := common.Forums.DirtyGet(fid)
 		if forum.Name != "" && forum.Active {
-			argList = append(argList, strconv.Itoa(fid))
-			qlist += "?,"
+			visibleForums = append(visibleForums, forum.Copy())
 		}
 	}
-	if qlist != "" {
-		qlist = qlist[0 : len(qlist)-1]
-	}
 
-	// TODO: Abstract this
-	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "parentID IN("+qlist+")", "")
+	argList, qlist := common.ForumListToArgQ(visibleForums)
+	topicCount, err := common.ArgQToTopicCount(argList, qlist)
 	if err != nil {
-		// TODO: Add XML error handling to errors.go
-		w.WriteHeader(500)
-		w.Write(xmlInternalError)
-		common.LogError(err)
-		return common.HandledRouteError()
-	}
-	defer topicCountStmt.Close()
-
-	var topicCount int
-	err = topicCountStmt.QueryRow(argList...).Scan(&topicCount)
-	if err != nil && err != ErrNoRows {
-		// TODO: Add XML error handling to errors.go
-		w.WriteHeader(500)
-		w.Write(xmlInternalError)
-		common.LogError(err)
-		return common.HandledRouteError()
+		return common.InternalErrorXML(err, w, r)
 	}
 
 	var pageCount = topicCount / sitemapPageCap

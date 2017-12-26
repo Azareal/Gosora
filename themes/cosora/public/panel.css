@@ -77,10 +77,41 @@
 .formlist .formitem {
 	padding: 8px;
 }
-#forum_quick_perms .panel_floater,
 .panel_theme_mobile, .panel_theme_tag {
 	display: none;
 }
 #panel_plugins .rowitem {
 	display: block;
+}
+
+#forum_quick_perms .formitem {
+	display: flex;
+}
+#forum_quick_perms .formitem .edit_fields {
+	margin-left: 3px;
+	margin-top: 1px;
+}
+.perm_preset_no_access:before {
+	content: "No Access";
+	color: hsl(0,100%,20%);
+}
+.perm_preset_read_only:before, .perm_preset_can_post:before {
+	color: hsl(120,100%,20%);
+}
+.perm_preset_read_only:before {
+	content: "Read Only";
+}
+.perm_preset_can_post:before {
+	content: "Can Post";
+}
+.perm_preset_can_moderate:before {
+	content: "Can Moderate";
+	color: hsl(240,100%,20%);
+}
+.perm_preset_custom:before {
+	content: "Custom";
+	color: hsl(0,0%,20%);
+}
+.perm_preset_default:before {
+	content: "Default";
 }

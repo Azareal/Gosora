@@ -27,6 +27,7 @@ type ForumStore interface {
 	DirtyGet(id int) *Forum
 	Get(id int) (*Forum, error)
 	BypassGet(id int) (*Forum, error)
+	BulkGetCopy(ids []int) (forums []Forum, err error)
 	Reload(id int) error // ? - Should we move this to ForumCache? It might require us to do some unnecessary casting though
 	//Update(Forum) error
 	Delete(id int) error
@@ -186,6 +187,19 @@ func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
 
 	return forum, err
+}
+
+// TODO: Optimise this
+func (mfs *MemoryForumStore) BulkGetCopy(ids []int) (forums []Forum, err error) {
+	forums = make([]Forum, len(ids))
+	for i, id := range ids {
+		forum, err := mfs.Get(id)
+		if err != nil {
+			return nil, err
+		}
+		forums[i] = forum.Copy()
+	}
+	return forums, nil
 }
 
 func (mfs *MemoryForumStore) Reload(id int) error {
