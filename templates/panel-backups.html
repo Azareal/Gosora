@@ -1,22 +1,22 @@
 {{template "header.html" . }}
-<div class="colstack">
-{{template "panel-menu.html" . }}
-<main class="colstack_right">
-	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Backups</h1></div>
-	</div>
-	<div id="panel_backups" class="colstack_item rowlist">
-		{{range .Backups}}
-		<div class="rowitem panel_compactrow">
-			<span>{{.SQLURL}}</span>
-			<span class="panel_floater">
-				<a href="/panel/backups/{{.SQLURL}}" class="panel_tag panel_right_button">Download</a>
-			</span>
+<div class="colstack panel_stack">
+	{{template "panel-menu.html" . }}
+	<main class="colstack_right">
+		<div class="colstack_item colstack_head">
+			<div class="rowitem"><h1>Backups</h1></div>
 		</div>
-		{{else}}
-		<div class="rowitem">There aren't any backups available at this time.</div>
-		{{end}}
-	</div>
-</main>
+		<div id="panel_backups" class="colstack_item rowlist">
+			{{range .Backups}}
+			<div class="rowitem panel_compactrow">
+				<span>{{.SQLURL}}</span>
+				<span class="panel_floater">
+					<a href="/panel/backups/{{.SQLURL}}" class="panel_tag panel_right_button">Download</a>
+				</span>
+			</div>
+			{{else}}
+			<div class="rowitem">There aren't any backups available at this time.</div>
+			{{end}}
+		</div>
+	</main>
 </div>
 {{template "footer.html" . }}

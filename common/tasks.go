@@ -25,6 +25,7 @@ var ShutdownTasks []func() error
 var taskStmts TaskStmts
 var lastSync time.Time
 
+// TODO: Add a TaskInits.Add
 func init() {
 	lastSync = time.Now()
 	DbInits.Add(func(acc *qgen.Accumulator) error {

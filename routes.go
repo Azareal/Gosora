@@ -303,7 +303,6 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 		return common.InternalError(err, w, r)
 	}
 	headerVars.Zone = "view_forum"
-	headerVars.MetaDesc = headerVars.Settings["meta_desc"].(string)
 
 	// Calculate the offset
 	var offset int
@@ -390,6 +389,7 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 		return ferr
 	}
 	headerVars.Zone = "forums"
+	headerVars.MetaDesc = headerVars.Settings["meta_desc"].(string)
 
 	var err error
 	var forumList []common.Forum

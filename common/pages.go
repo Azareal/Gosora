@@ -125,6 +125,7 @@ type PanelPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	ItemList    []interface{}
 	Something   interface{}
 }
@@ -144,6 +145,7 @@ type PanelDashboardPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	GridItems   []GridElement
 }
 
@@ -152,6 +154,7 @@ type PanelThemesPage struct {
 	CurrentUser   User
 	Header        *HeaderVars
 	Stats         PanelStats
+	Zone          string
 	PrimaryThemes []*Theme
 	VariantThemes []*Theme
 }
@@ -161,6 +164,7 @@ type PanelUserPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	ItemList    []User
 	PageList    []int
 	Page        int
@@ -172,6 +176,7 @@ type PanelGroupPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	ItemList    []GroupAdmin
 	PageList    []int
 	Page        int
@@ -183,6 +188,7 @@ type PanelEditGroupPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	ID          int
 	Name        string
 	Tag         string
@@ -200,6 +206,7 @@ type PanelEditForumPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	ID          int
 	Name        string
 	Desc        string
@@ -207,11 +214,6 @@ type PanelEditForumPage struct {
 	Preset      string
 	Groups      []GroupForumPermPreset
 }
-
-/*type NameLangPair struct {
-	Name    string
-	LangStr string
-}*/
 
 type NameLangToggle struct {
 	Name    string
@@ -224,6 +226,7 @@ type PanelEditGroupPermsPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	ID          int
 	Name        string
 	LocalPerms  []NameLangToggle
@@ -243,6 +246,7 @@ type PanelBackupPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	Backups     []BackupItem
 }
 
@@ -257,6 +261,7 @@ type PanelLogsPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	Logs        []LogItem
 	PageList    []int
 	Page        int
@@ -268,6 +273,7 @@ type PanelDebugPage struct {
 	CurrentUser User
 	Header      *HeaderVars
 	Stats       PanelStats
+	Zone        string
 	Uptime      string
 	OpenConns   int
 	DBAdapter   string

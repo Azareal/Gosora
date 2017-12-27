@@ -1,8 +1,8 @@
 {{template "header.html" . }}
-<main>
+<main itemscope itemtype="http://schema.org/ItemList">
 
 <div class="rowblock rowhead topic_list_title_block">
-	<div class="rowitem topic_list_title{{if ne .CurrentUser.ID 0}} has_opt{{end}}"><h1>All Topics</h1></div>
+	<div class="rowitem topic_list_title{{if ne .CurrentUser.ID 0}} has_opt{{end}}"><h1 itemprop="name">All Topics</h1></div>
 	{{if ne .CurrentUser.ID 0}}
 		{{if .ForumList}}
 		<div class="pre_opt auto_hide"></div>
@@ -74,7 +74,7 @@
 		<span class="selector"></span>
 		<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" alt="{{.Creator.Name}}'s Avatar" title="{{.Creator.Name}}'s Avatar" /></a>
 		<span class="topic_inner_left">
-			<a class="rowtopic" href="{{.Link}}"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
+			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
 			<br /><a class="rowsmall starter" href="{{.Creator.Link}}">{{.Creator.Name}}</a>
 			{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
 			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="Status: Closed"> | &#x1F512;&#xFE0E</span>{{end}}

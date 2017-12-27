@@ -68,7 +68,7 @@ body, #back {
 }
 .nav {
 	padding-top: 16px;
-	border-bottom: 2px solid var(--header-border-color);
+	border-bottom: 1.5px solid var(--header-border-color);
 }
 
 li {

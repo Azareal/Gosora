@@ -1,15 +1,16 @@
 {{template "header.html" . }}
-<main>
+<main itemscope itemtype="http://schema.org/ItemList">
 
 <div class="rowblock opthead">
-	<div class="rowitem"><h1>Forums</h1></div>
+	<div class="rowitem"><h1 itemprop="name">Forums</h1></div>
 </div>
 <div class="rowblock forum_list">
-	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopic.Title)}}datarow{{end}}">
+	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopic.Title)}}datarow {{end}}"itemprop="itemListElement" itemscope
+      itemtype="http://schema.org/ListItem">
 		<span class="forum_left shift_left">
-			<a href="{{.Link}}">{{.Name}}</a>
+			<a href="{{.Link}}" itemprop="item">{{.Name}}</a>
 		{{if .Desc}}
-			<br /><span class="rowsmall">{{.Desc}}</span>
+			<br /><span class="rowsmall" itemprop="description">{{.Desc}}</span>
 		{{else}}
 			<br /><span class="rowsmall" style="font-style: italic;">No description</span>
 		{{end}}

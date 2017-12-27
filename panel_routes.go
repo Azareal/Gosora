@@ -141,7 +141,7 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 	gridElements = append(gridElements, common.GridElement{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of unique visitors we've had over the last 7 days"*/})
 	gridElements = append(gridElements, common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
 
-	pi := common.PanelDashboardPage{common.GetTitlePhrase("panel-dashboard"), user, headerVars, stats, gridElements}
+	pi := common.PanelDashboardPage{common.GetTitlePhrase("panel-dashboard"), user, headerVars, stats, "dashboard", gridElements}
 	if common.PreRenderHooks["pre_render_panel_dashboard"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_dashboard", w, r, &user, &pi) {
 			return nil
@@ -180,7 +180,7 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) 
 			forumList = append(forumList, fadmin)
 		}
 	}
-	pi := common.PanelPage{common.GetTitlePhrase("panel-forums"), user, headerVars, stats, forumList, nil}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-forums"), user, headerVars, stats, "forums", forumList, nil}
 	if common.PreRenderHooks["pre_render_panel_forums"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_forums", w, r, &user, &pi) {
 			return nil
@@ -244,7 +244,7 @@ func routePanelForumsDelete(w http.ResponseWriter, r *http.Request, user common.
 	confirmMsg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
 	yousure := common.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-delete-forum"), user, headerVars, stats, tList, yousure}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-delete-forum"), user, headerVars, stats, "forums", tList, yousure}
 	if common.PreRenderHooks["pre_render_panel_delete_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_delete_forum", w, r, &user, &pi) {
 			return nil
@@ -320,7 +320,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(group.Forums[fid])})
 	}
 
-	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel-edit-forum"), user, headerVars, stats, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
+	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel-edit-forum"), user, headerVars, stats, "forums", forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
 	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 			return nil
@@ -458,7 +458,7 @@ func routePanelSettings(w http.ResponseWriter, r *http.Request, user common.User
 		settingList[setting.Name] = setting.Content
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-settings"), user, headerVars, stats, tList, settingList}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-settings"), user, headerVars, stats, "settings", tList, settingList}
 	if common.PreRenderHooks["pre_render_panel_settings"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_settings", w, r, &user, &pi) {
 			return nil
@@ -504,7 +504,7 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.U
 		}
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-setting"), user, headerVars, stats, itemList, setting}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-setting"), user, headerVars, stats, "settings", itemList, setting}
 	if common.PreRenderHooks["pre_render_panel_setting"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_setting", w, r, &user, &pi) {
 			return nil
@@ -549,7 +549,7 @@ func routePanelWordFilters(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	var filterList = common.WordFilterBox.Load().(common.WordFilterMap)
-	pi := common.PanelPage{common.GetTitlePhrase("panel-word-filters"), user, headerVars, stats, tList, filterList}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-word-filters"), user, headerVars, stats, "word-filters", tList, filterList}
 	if common.PreRenderHooks["pre_render_panel_word_filters"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_word_filters", w, r, &user, &pi) {
 			return nil
@@ -610,7 +610,7 @@ func routePanelWordFiltersEdit(w http.ResponseWriter, r *http.Request, user comm
 
 	_ = wfid
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-word-filter"), user, headerVars, stats, tList, nil}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-word-filter"), user, headerVars, stats, "word-filters", tList, nil}
 	if common.PreRenderHooks["pre_render_panel_word_filters_edit"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_word_filters_edit", w, r, &user, &pi) {
 			return nil
@@ -703,7 +703,7 @@ func routePanelPlugins(w http.ResponseWriter, r *http.Request, user common.User)
 		pluginList = append(pluginList, plugin)
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-plugins"), user, headerVars, stats, pluginList, nil}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-plugins"), user, headerVars, stats, "plugins", pluginList, nil}
 	if common.PreRenderHooks["pre_render_panel_plugins"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_plugins", w, r, &user, &pi) {
 			return nil
@@ -924,7 +924,7 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 
 	pageList := common.Paginate(stats.Users, perPage, 5)
-	pi := common.PanelUserPage{common.GetTitlePhrase("panel-users"), user, headerVars, stats, userList, pageList, page, lastPage}
+	pi := common.PanelUserPage{common.GetTitlePhrase("panel-users"), user, headerVars, stats, "users", userList, pageList, page, lastPage}
 	if common.PreRenderHooks["pre_render_panel_users"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_users", w, r, &user, &pi) {
 			return nil
@@ -979,7 +979,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 		groupList = append(groupList, group)
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-user"), user, headerVars, stats, groupList, targetUser}
+	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-user"), user, headerVars, stats, "users", groupList, targetUser}
 	if common.PreRenderHooks["pre_render_panel_edit_user"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_user", w, r, &user, &pi) {
 			return nil
@@ -1120,7 +1120,7 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) 
 	//log.Printf("groupList: %+v\n", groupList)
 
 	pageList := common.Paginate(stats.Groups, perPage, 5)
-	pi := common.PanelGroupPage{common.GetTitlePhrase("panel-groups"), user, headerVars, stats, groupList, pageList, page, lastPage}
+	pi := common.PanelGroupPage{common.GetTitlePhrase("panel-groups"), user, headerVars, stats, "groups", groupList, pageList, page, lastPage}
 	if common.PreRenderHooks["pre_render_panel_groups"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_groups", w, r, &user, &pi) {
 			return nil
@@ -1179,7 +1179,7 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 
 	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
-	pi := common.PanelEditGroupPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, group.ID, group.Name, group.Tag, rank, disableRank}
+	pi := common.PanelEditGroupPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, "groups", group.ID, group.Name, group.Tag, rank, disableRank}
 	if common.PreRenderHooks["pre_render_panel_edit_group"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_group", w, r, &user, &pi) {
 			return nil
@@ -1257,7 +1257,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 	globalPerms = append(globalPerms, common.NameLangToggle{"ViewIPs", common.GetGlobalPermPhrase("ViewIPs"), group.Perms.ViewIPs})
 	globalPerms = append(globalPerms, common.NameLangToggle{"UploadFiles", common.GetGlobalPermPhrase("UploadFiles"), group.Perms.UploadFiles})
 
-	pi := common.PanelEditGroupPermsPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, group.ID, group.Name, localPerms, globalPerms}
+	pi := common.PanelEditGroupPermsPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, "groups", group.ID, group.Name, localPerms, globalPerms}
 	if common.PreRenderHooks["pre_render_panel_edit_group_perms"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
 			return nil
@@ -1486,7 +1486,7 @@ func routePanelThemes(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	}
 
-	pi := common.PanelThemesPage{common.GetTitlePhrase("panel-themes"), user, headerVars, stats, pThemeList, vThemeList}
+	pi := common.PanelThemesPage{common.GetTitlePhrase("panel-themes"), user, headerVars, stats, "themes", pThemeList, vThemeList}
 	if common.PreRenderHooks["pre_render_panel_themes"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_themes", w, r, &user, &pi) {
 			return nil
@@ -1603,7 +1603,7 @@ func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User,
 		backupList = append(backupList, common.BackupItem{backupFile.Name(), backupFile.ModTime()})
 	}
 
-	pi := common.PanelBackupPage{common.GetTitlePhrase("panel-backups"), user, headerVars, stats, backupList}
+	pi := common.PanelBackupPage{common.GetTitlePhrase("panel-backups"), user, headerVars, stats, "backups", backupList}
 	err = common.Templates.ExecuteTemplate(w, "panel-backups.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -1701,7 +1701,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{common.GetTitlePhrase("panel-mod-logs"), user, headerVars, stats, logs, pageList, page, lastPage}
+	pi := common.PanelLogsPage{common.GetTitlePhrase("panel-mod-logs"), user, headerVars, stats, "logs", logs, pageList, page, lastPage}
 	if common.PreRenderHooks["pre_render_panel_mod_log"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_mod_log", w, r, &user, &pi) {
 			return nil
@@ -1725,7 +1725,7 @@ func routePanelDebug(w http.ResponseWriter, r *http.Request, user common.User) c
 	openConnCount := dbStats.OpenConnections
 	// Disk I/O?
 
-	pi := common.PanelDebugPage{common.GetTitlePhrase("panel-debug"), user, headerVars, stats, uptime, openConnCount, dbAdapter}
+	pi := common.PanelDebugPage{common.GetTitlePhrase("panel-debug"), user, headerVars, stats, "debug", uptime, openConnCount, dbAdapter}
 	err := common.Templates.ExecuteTemplate(w, "panel-debug.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)

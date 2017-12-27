@@ -20,9 +20,32 @@
 	{{if .CurrentUser.Perms.ManageThemes}}<div class="rowitem passive">
 		<a href="/panel/themes/">Themes</a> <a class="menu_stats" href="#">({{.Stats.Themes}})</a>
 	</div>{{end}}
+</div>
+<div class="colstack_item colstack_head">
+	<div class="rowitem"><a href="#">Events</a></div>
+</div>
+<div class="colstack_item rowmenu">
+	<div class="rowitem passive">
+		<a href="/panel/analytics/views/">Statistics</a>
+	</div>
+	{{if eq .Zone "analytics"}}
+		<div class="rowitem passive submenu">
+			<a href="/panel/analytics/posts/">Posts</a>
+		</div>
+		<div class="rowitem passive submenu">
+			<a href="/panel/analytics/crawlers/">Crawlers</a>
+		</div>
+	{{end}}
 	<div class="rowitem passive">
 		<a href="/forum/1">Reports</a> <a class="menu_stats" href="#">({{.Stats.Reports}})</a>
 	</div>
+	<div class="rowitem passive">
+		<a href="/panel/logs/mod/">Logs</a>
+	</div>
+	{{if eq .Zone "logs"}}
+		<div class="rowitem passive submenu"><a href="/panel/logs/mod/">Moderators</a></div>
+		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive submenu"><a>Administrators</a></div>{{end}}
+	{{end}}
 </div>
 <div class="colstack_item colstack_head">
 	<div class="rowitem"><a href="#">System</a></div>
@@ -34,9 +57,6 @@
 	{{if .CurrentUser.IsSuperAdmin}}<div class="rowitem passive">
 		<a href="/panel/backups/">Backups</a>
 	</div>{{end}}
-	<div class="rowitem passive">
-		<a href="/panel/logs/mod/">Logs</a>
-	</div>
 	{{if .CurrentUser.IsAdmin}}<div class="rowitem passive">
 		<a href="/panel/debug/">Debug</a>
 	</div>{{end}}

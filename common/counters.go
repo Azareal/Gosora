@@ -245,20 +245,3 @@ func (counter *DefaultTopicViewCounter) Bump(topicID int) {
 		counter.oddLock.Unlock()
 	}
 }
-
-type TreeCounterNode struct {
-	Value  int64
-	Zero   *TreeCounterNode
-	One    *TreeCounterNode
-	Parent *TreeCounterNode
-}
-
-// MEGA EXPERIMENTAL. Start from the right-most bits in the integer and move leftwards
-type TreeTopicViewCounter struct {
-	zero *TreeCounterNode
-	one  *TreeCounterNode
-}
-
-func (counter *TreeTopicViewCounter) Bump(topicID int64) {
-
-}

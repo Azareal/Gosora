@@ -1,43 +1,42 @@
 {{template "header.html" . }}
-<div class="colstack">
-<nav class="colstack_left" aria-label="The control panel menu">
-	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a href="/panel/logs/mod/">Logs</a></div>
-	</div>
-	<div class="colstack_item rowmenu">
-		<div class="rowitem passive"><a href="/panel/logs/mod/">Moderation Logs</a></div>
-		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>Administration Logs</a></div>{{end}}
-	</div>
+<div class="colstack panel_stack">
+	<nav class="colstack_left" aria-label="The control panel menu">
+		<div class="colstack_item colstack_head submenu_fallback">
+			<div class="rowitem"><a href="/panel/logs/mod/">Logs</a></div>
+		</div>
+		<div class="colstack_item rowmenu submenu_fallback">
+			<div class="rowitem passive"><a href="/panel/logs/mod/">Moderation Logs</a></div>
+			{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive"><a>Administration Logs</a></div>{{end}}
+		</div>
 {{template "panel-inner-menu.html" . }}
-</nav>
-<main class="colstack_right">
-	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Administration Logs</h1></div>
-	</div>
-	<div id="panel_adminlogs" class="colstack_item rowlist">
-		{{range .Logs}}
-		<div class="rowitem panel_compactrow">
-			<span style="float: left;">
-				<span>{{.Action}}</span><br />
-				<small style="margin-left: 2px;font-size: 12px;">{{.IPAddress}}</small>
-			</span>
-			<span class="to_right">
-				<span style="font-size: 14px;">{{.DoneAt}}</span>
-			</span>
-			<div style="clear: both;"></div>
+	</nav>
+	<main class="colstack_right">
+		<div class="colstack_item colstack_head">
+			<div class="rowitem"><h1>Administration Logs</h1></div>
+		</div>
+		<div id="panel_adminlogs" class="colstack_item rowlist">
+			{{range .Logs}}
+			<div class="rowitem panel_compactrow">
+				<span style="float: left;">
+					<span>{{.Action}}</span><br />
+					<small style="margin-left: 2px;font-size: 12px;">{{.IPAddress}}</small>
+				</span>
+				<span class="to_right">
+					<span style="font-size: 14px;">{{.DoneAt}}</span>
+				</span>
+				<div style="clear: both;"></div>
+			</div>
+			{{end}}
+		</div>
+		{{if gt .LastPage 1}}
+		<div class="pageset">
+			{{if gt .Page 1}}<div class="pageitem"><a href="?page={{subtract .Page 1}}" aria-label="Previous Page">Prev</a></div>{{end}}
+			{{range .PageList}}
+			<div class="pageitem"><a href="?page={{.}}" aria-label="Page {{.}}">{{.}}</a></div>
+			{{end}}
+			{{if ne .LastPage .Page}}<div class="pageitem"><a href="?page={{add .Page 1}}" aria-label="Next Page">Next</a></div>{{end}}
 		</div>
 		{{end}}
-	</div>
-	{{if gt .LastPage 1}}
-	<div class="pageset">
-		{{if gt .Page 1}}<div class="pageitem"><a href="?page={{subtract .Page 1}}" aria-label="Previous Page">Prev</a></div>{{end}}
-		{{range .PageList}}
-		<div class="pageitem"><a href="?page={{.}}" aria-label="Page {{.}}">{{.}}</a></div>
-		{{end}}
-		{{if ne .LastPage .Page}}<div class="pageitem"><a href="?page={{add .Page 1}}" aria-label="Next Page">Next</a></div>{{end}}
-	</div>
-	{{end}}
-</main>
-
+	</main>
 </div>
 {{template "footer.html" . }}
