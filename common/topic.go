@@ -8,6 +8,7 @@ package common
 
 import (
 	"database/sql"
+	"html"
 	"html/template"
 	"strconv"
 	"time"
@@ -235,8 +236,10 @@ func (topic *Topic) Delete() error {
 	return err
 }
 
+// TODO: Write tests for this
 func (topic *Topic) Update(name string, content string) error {
-	content = PreparseMessage(content)
+	name = html.EscapeString(html.UnescapeString(name))
+	content = PreparseMessage(html.UnescapeString(content))
 	parsedContent := ParseMessage(content, topic.ParentID, "forums")
 	_, err := topicStmts.edit.Exec(name, content, parsedContent, topic.ID)
 	topic.cacheRemove()
