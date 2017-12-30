@@ -153,17 +153,14 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 	}
 
 	// We need a list of the visible forums for Quick Topic
+	// ? - Would it be useful, if we could post in social groups from /topics/?
 	var forumList []common.Forum
 	for _, fid := range canSee {
 		forum := common.Forums.DirtyGet(fid)
-		if forum.Name != "" && forum.Active {
-			// This bit's for quick topic, as we don't want unbound forums (e.g. ones in plugin_socialgroups) showing up
-			// ? - Would it be useful, if we could post in social groups from /topics/?
-			if (forum.ParentType == "" || forum.ParentType == "forum") && user.Loggedin {
-				fcopy := forum.Copy()
-				// TODO: Add a hook here for plugin_guilds
-				forumList = append(forumList, fcopy)
-			}
+		if forum.Name != "" && forum.Active && (forum.ParentType == "" || forum.ParentType == "forum") {
+			fcopy := forum.Copy()
+			// TODO: Add a hook here for plugin_guilds
+			forumList = append(forumList, fcopy)
 		}
 	}
 

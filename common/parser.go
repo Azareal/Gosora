@@ -175,7 +175,29 @@ func PreparseMessage(msg string) string {
 		msg = RunSshook("preparse_preassign", msg)
 	}
 	msg = html.EscapeString(msg)
+	/*var runes = []rune(msg)
+	msg = ""
+	//var inBold = false
+	//var unclosedBolds = 0
+	for i := 0; i < len(runes); i++ {
+		char := runes[i]
+		if char == '&' && peek(i, 1, runes) == 'l' && peek(i, 2, runes) == 't' && peek(i, 2, runes) == ';' {
+			i += 2
+
+		} else {
+			msg += string(char)
+		}
+	}*/
 	return shortcodeToUnicode(msg)
+}
+
+// TODO: Test this
+// TODO: Use this elsewhere in the parser?
+func peek(cur int, skip int, runes []rune) rune {
+	if (cur + skip) < len(runes) {
+		return runes[cur+skip]
+	}
+	return 0 // null byte
 }
 
 // TODO: Write a test for this
