@@ -254,6 +254,7 @@ func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user common.
 
 	var guildActive = true
 	var guildName = html.EscapeString(r.PostFormValue("group_name"))
+	// TODO: Allow Markdown / BBCode / Limited HTML in the description?
 	var guildDesc = html.EscapeString(r.PostFormValue("group_desc"))
 	var gprivacy = r.PostFormValue("group_privacy")
 

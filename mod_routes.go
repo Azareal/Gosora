@@ -4,7 +4,6 @@ import (
 	//"log"
 	//"fmt"
 	"encoding/json"
-	"html"
 	"log"
 	"net/http"
 	"strconv"
@@ -45,7 +44,8 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user common.User) co
 	}
 
 	topicName := r.PostFormValue("topic_name")
-	topicContent := html.EscapeString(r.PostFormValue("topic_content"))
+	topicContent := common.PreparseMessage(r.PostFormValue("topic_content"))
+	// TODO: Fully parse the post and store it in the parsed column
 	err = topic.Update(topicName, topicContent)
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
@@ -352,7 +352,7 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 		return common.NoPermissionsJSQ(w, r, user, isJs)
 	}
 
-	content := html.EscapeString(common.PreparseMessage(r.PostFormValue("edit_item")))
+	content := common.PreparseMessage(r.PostFormValue("edit_item"))
 	_, err = stmts.editReply.Exec(content, common.ParseMessage(content, fid, "forums"), rid)
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
@@ -457,7 +457,7 @@ func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user co
 		return common.NoPermissionsJSQ(w, r, user, isJs)
 	}
 
-	content := html.EscapeString(common.PreparseMessage(r.PostFormValue("edit_item")))
+	content := common.PreparseMessage(r.PostFormValue("edit_item"))
 	_, err = stmts.editProfileReply.Exec(content, common.ParseMessage(content, 0, ""), rid)
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)

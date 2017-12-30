@@ -624,6 +624,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user common.User) comm
 	var replyList []common.ReplyUser
 
 	// SEO URLs...
+	// TODO: Do a 301 if it's the wrong username? Do a canonical too?
 	halves := strings.Split(r.URL.Path[len("/user/"):], ".")
 	if len(halves) < 2 {
 		halves = append(halves, halves[0])

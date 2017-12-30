@@ -121,7 +121,6 @@ func (hub *WSHub) pushAlert(targetUser int, asid int, event string, elementType 
 }
 
 func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
-	//log.Print("In pushAlerts")
 	var wsUsers []*WSUser
 	hub.users.RLock()
 	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
@@ -139,18 +138,15 @@ func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType st
 			continue
 		}
 
-		//log.Print("Building alert")
 		alert, err := buildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
 		if err != nil {
 			errs = append(errs, err)
 		}
 
-		//log.Print("Getting WS Writer")
 		w, err := wsUser.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			errs = append(errs, err)
 		}
-
 		w.Write([]byte(alert))
 		w.Close()
 	}
@@ -294,6 +290,26 @@ func adminStatsTicker() {
 
 	var totunit, uunit, gunit string
 
+	lessThanSwitch := func(number int, lowerBound int, midBound int) string {
+		switch {
+		case number < lowerBound:
+			return "stat_green"
+		case number < midBound:
+			return "stat_orange"
+		}
+		return "stat_red"
+	}
+
+	greaterThanSwitch := func(number int, lowerBound int, midBound int) string {
+		switch {
+		case number > midBound:
+			return "stat_green"
+		case number > lowerBound:
+			return "stat_orange"
+		}
+		return "stat_red"
+	}
+
 AdminStatLoop:
 	for {
 		adminStatsMutex.RLock()
@@ -308,6 +324,7 @@ AdminStatLoop:
 		uonline := wsHub.userCount()
 		gonline := wsHub.guestCount()
 		totonline := uonline + gonline
+		reqCount := 0
 
 		// It's far more likely that the CPU Usage will change than the other stats, so we'll optimise them separately...
 		noStatUpdates = (uonline == lastUonline && gonline == lastGonline && totonline == lastTotonline)
@@ -318,29 +335,9 @@ AdminStatLoop:
 		}
 
 		if !noStatUpdates {
-			if totonline > 10 {
-				onlineColour = "stat_green"
-			} else if totonline > 3 {
-				onlineColour = "stat_orange"
-			} else {
-				onlineColour = "stat_red"
-			}
-
-			if gonline > 10 {
-				onlineGuestsColour = "stat_green"
-			} else if gonline > 1 {
-				onlineGuestsColour = "stat_orange"
-			} else {
-				onlineGuestsColour = "stat_red"
-			}
-
-			if uonline > 5 {
-				onlineUsersColour = "stat_green"
-			} else if uonline > 1 {
-				onlineUsersColour = "stat_orange"
-			} else {
-				onlineUsersColour = "stat_red"
-			}
+			onlineColour = greaterThanSwitch(totonline, 3, 10)
+			onlineGuestsColour = greaterThanSwitch(gonline, 1, 10)
+			onlineUsersColour = greaterThanSwitch(uonline, 1, 5)
 
 			totonline, totunit = common.ConvertFriendlyUnit(totonline)
 			uonline, uunit = common.ConvertFriendlyUnit(uonline)
@@ -384,13 +381,7 @@ AdminStatLoop:
 				ramstr = fmt.Sprintf("%.1f", usedCount) + " / " + totstr + totalUnit
 
 				ramperc := ((memres.Total - memres.Available) * 100) / memres.Total
-				if ramperc < 50 {
-					ramColour = "stat_green"
-				} else if ramperc < 75 {
-					ramColour = "stat_orange"
-				} else {
-					ramColour = "stat_red"
-				}
+				ramColour = lessThanSwitch(int(ramperc), 50, 75)
 			}
 		}
 
@@ -401,7 +392,6 @@ AdminStatLoop:
 		for watcher := range watchers {
 			w, err := watcher.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				//log.Print(err.Error())
 				adminStatsMutex.Lock()
 				delete(adminStatsWatchers, watcher)
 				adminStatsMutex.Unlock()
@@ -413,10 +403,12 @@ AdminStatLoop:
 				w.Write([]byte("set #dash-totonline <span>" + strconv.Itoa(totonline) + totunit + " online</span>\r"))
 				w.Write([]byte("set #dash-gonline <span>" + strconv.Itoa(gonline) + gunit + " guests online</span>\r"))
 				w.Write([]byte("set #dash-uonline <span>" + strconv.Itoa(uonline) + uunit + " users online</span>\r"))
+				w.Write([]byte("set #dash-reqs <span>" + strconv.Itoa(reqCount) + " reqs / second</span>\r"))
 
 				w.Write([]byte("set-class #dash-totonline grid_item grid_stat " + onlineColour + "\r"))
 				w.Write([]byte("set-class #dash-gonline grid_item grid_stat " + onlineGuestsColour + "\r"))
 				w.Write([]byte("set-class #dash-uonline grid_item grid_stat " + onlineUsersColour + "\r"))
+				//w.Write([]byte("set-class #dash-reqs grid_item grid_stat grid_end_group \r"))
 			}
 
 			w.Write([]byte("set #dash-cpu <span>CPU: " + cpustr + "%</span>\r"))

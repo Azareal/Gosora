@@ -1128,7 +1128,7 @@ select, input, textarea, button {
 	text-align: center;
 }
 /* TODO: Move these to panel.css */
-#dash-version:before, #dash-cpu:before, #dash-ram:before {
+#dash-version:before, #dash-cpu:before, #dash-ram:before, #dash-totonline:before, #dash-gonline:before, #dash-uonline:before, #dash-reqs:before, #dash-postsperday:before, #dash-topicsperday:before {
 	display: inline-block;
 	background: var(--tinted-background-color);
 	font: normal normal normal 14px/1 FontAwesome;
@@ -1146,6 +1146,15 @@ select, input, textarea, button {
 }
 #dash-ram:before {
 	content: "\f233";
+}
+#dash-totonline:before, #dash-gonline:before, #dash-uonline:before {
+	content: "\f007";
+}
+#dash-reqs:before {
+	content: "\f080";
+}
+#dash-postsperday:before, #dash-topicsperday:before {
+	content: "\f27b";
 }
 
 @media(min-width: 721px) {

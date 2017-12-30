@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -75,35 +76,33 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 	}
 
 	// TODO: Add a stat store for this?
-	var postCount int
-	err = stmts.todaysPostCount.QueryRow().Scan(&postCount)
-	if err != nil && err != ErrNoRows {
-		return common.InternalError(err, w, r)
+	var intErr error
+	var extractStat = func(stmt *sql.Stmt) (stat int) {
+		err := stmt.QueryRow().Scan(&stat)
+		if err != nil && err != ErrNoRows {
+			intErr = err
+		}
+		return stat
 	}
+
+	var postCount = extractStat(stmts.todaysPostCount)
 	var postInterval = "day"
 	var postColour = greaterThanSwitch(postCount, 5, 25)
 
-	var topicCount int
-	err = stmts.todaysTopicCount.QueryRow().Scan(&topicCount)
-	if err != nil && err != ErrNoRows {
-		return common.InternalError(err, w, r)
-	}
+	var topicCount = extractStat(stmts.todaysTopicCount)
 	var topicInterval = "day"
 	var topicColour = greaterThanSwitch(topicCount, 0, 8)
 
-	var reportCount int
-	err = stmts.todaysReportCount.QueryRow().Scan(&reportCount)
-	if err != nil && err != ErrNoRows {
-		return common.InternalError(err, w, r)
-	}
+	var reportCount = extractStat(stmts.todaysReportCount)
 	var reportInterval = "week"
 
-	var newUserCount int
-	err = stmts.todaysNewUserCount.QueryRow().Scan(&newUserCount)
-	if err != nil && err != ErrNoRows {
-		return common.InternalError(err, w, r)
-	}
+	var newUserCount = extractStat(stmts.todaysNewUserCount)
 	var newUserInterval = "week"
+
+	// Did any of the extractStats fail?
+	if intErr != nil {
+		return common.InternalError(intErr, w, r)
+	}
 
 	var gridElements = []common.GridElement{
 		common.GridElement{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
@@ -115,6 +114,7 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 		uonline := wsHub.userCount()
 		gonline := wsHub.guestCount()
 		totonline := uonline + gonline
+		reqCount := 0
 
 		var onlineColour = greaterThanSwitch(totonline, 3, 10)
 		var onlineGuestsColour = greaterThanSwitch(gonline, 1, 10)
@@ -127,19 +127,22 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 		gridElements = append(gridElements, common.GridElement{"dash-totonline", strconv.Itoa(totonline) + totunit + " online", 3, "grid_stat " + onlineColour, "", "", "The number of people who are currently online"})
 		gridElements = append(gridElements, common.GridElement{"dash-gonline", strconv.Itoa(gonline) + gunit + " guests online", 4, "grid_stat " + onlineGuestsColour, "", "", "The number of guests who are currently online"})
 		gridElements = append(gridElements, common.GridElement{"dash-uonline", strconv.Itoa(uonline) + uunit + " users online", 5, "grid_stat " + onlineUsersColour, "", "", "The number of logged-in users who are currently online"})
+		gridElements = append(gridElements, common.GridElement{"dash-reqs", strconv.Itoa(reqCount) + " reqs / second", 7, "grid_stat grid_end_group " + topicColour, "", "", "The number of requests over the last 24 hours"})
 	}
 
 	gridElements = append(gridElements, common.GridElement{"dash-postsperday", strconv.Itoa(postCount) + " posts / " + postInterval, 6, "grid_stat " + postColour, "", "", "The number of new posts over the last 24 hours"})
 	gridElements = append(gridElements, common.GridElement{"dash-topicsperday", strconv.Itoa(topicCount) + " topics / " + topicInterval, 7, "grid_stat " + topicColour, "", "", "The number of new topics over the last 24 hours"})
-	gridElements = append(gridElements, common.GridElement{"dash-totonlineperday", "20 online / day", 8, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The people online over the last 24 hours"*/})
+	gridElements = append(gridElements, common.GridElement{"dash-totonlineperday", "20 online / day", 8, "grid_stat stat_disabled", "", "", "Coming Soon!" /*, "The people online over the last 24 hours"*/})
 
 	gridElements = append(gridElements, common.GridElement{"dash-searches", "8 searches / week", 9, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of searches over the last 7 days"*/})
 	gridElements = append(gridElements, common.GridElement{"dash-newusers", strconv.Itoa(newUserCount) + " new users / " + newUserInterval, 10, "grid_stat", "", "", "The number of new users over the last 7 days"})
 	gridElements = append(gridElements, common.GridElement{"dash-reports", strconv.Itoa(reportCount) + " reports / " + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days"})
 
-	gridElements = append(gridElements, common.GridElement{"dash-minperuser", "2 minutes / user / week", 12, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
-	gridElements = append(gridElements, common.GridElement{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of unique visitors we've had over the last 7 days"*/})
-	gridElements = append(gridElements, common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
+	if false {
+		gridElements = append(gridElements, common.GridElement{"dash-minperuser", "2 minutes / user / week", 12, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
+		gridElements = append(gridElements, common.GridElement{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of unique visitors we've had over the last 7 days"*/})
+		gridElements = append(gridElements, common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
+	}
 
 	pi := common.PanelDashboardPage{common.GetTitlePhrase("panel-dashboard"), user, headerVars, stats, "dashboard", gridElements}
 	if common.PreRenderHooks["pre_render_panel_dashboard"] != nil {
@@ -418,6 +421,25 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		http.Redirect(w, r, "/panel/forums/edit/"+strconv.Itoa(fid), http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)
+	}
+	return nil
+}
+
+func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	pi := common.PanelPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", tList, nil}
+	if common.PreRenderHooks["pre_render_panel_analytics"] != nil {
+		if common.RunPreRenderHook("pre_render_panel_analytics", w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err := common.Templates.ExecuteTemplate(w, "panel-analytics-views.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
 	}
 	return nil
 }

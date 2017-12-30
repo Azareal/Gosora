@@ -3,6 +3,7 @@ package common
 import (
 	//"fmt"
 	"bytes"
+	"html"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -164,6 +165,7 @@ func shortcodeToUnicode(msg string) string {
 	return msg
 }
 
+// TODO: Write a test for this
 func PreparseMessage(msg string) string {
 	msg = strings.Replace(msg, "<p><br>", "\n\n", -1)
 	msg = strings.Replace(msg, "<p>", "\n\n", -1)
@@ -172,6 +174,7 @@ func PreparseMessage(msg string) string {
 	if Sshooks["preparse_preassign"] != nil {
 		msg = RunSshook("preparse_preassign", msg)
 	}
+	msg = html.EscapeString(msg)
 	return shortcodeToUnicode(msg)
 }
 
@@ -317,13 +320,6 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				outbytes = append(outbytes, uidBit...)
 				outbytes = append(outbytes, UrlClose...)
 				lastItem = i
-
-				//log.Print(string(msgbytes))
-				//log.Print(msgbytes)
-				//log.Print("msgbytes[lastItem - 1]: ", msgbytes[lastItem - 1])
-				//log.Print("lastItem - 1: ", lastItem - 1)
-				//log.Print("msgbytes[lastItem]: ", msgbytes[lastItem])
-				//log.Print("lastItem: ", lastItem)
 			} else if msgbytes[i] == 'h' || msgbytes[i] == 'f' || msgbytes[i] == 'g' {
 				//log.Print("IN hfg")
 				if msgbytes[i+1] == 't' && msgbytes[i+2] == 't' && msgbytes[i+3] == 'p' {

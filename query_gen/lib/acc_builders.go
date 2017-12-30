@@ -122,6 +122,9 @@ func (count *accCountBuilder) Limit(limit string) *accCountBuilder {
 	return count
 }
 
+// TODO: Add QueryRow for this and use it in statistics.go
 func (count *accCountBuilder) Prepare() *sql.Stmt {
 	return count.build.SimpleCount(count.table, count.where, count.limit)
 }
+
+// TODO: Add a Sum builder for summing viewchunks up into one number for the dashboard?

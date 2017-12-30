@@ -96,6 +96,7 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_panel_forums":            nil,
 	"pre_render_panel_delete_forum":      nil,
 	"pre_render_panel_edit_forum":        nil,
+	"pre_render_panel_analytics":         nil,
 	"pre_render_panel_settings":          nil,
 	"pre_render_panel_setting":           nil,
 	"pre_render_panel_word_filters":      nil,

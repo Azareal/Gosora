@@ -6,6 +6,8 @@
 }
 .colstack_left {
 	background-color: hsl(0,0%,90%);
+	margin-top: -0.5px;
+	border-right: 1px solid var(--element-border-color);
 }
 .colstack_left .colstack_head {
 	margin-top: -1px;
@@ -21,9 +23,6 @@
 .colstack_left .rowmenu .passive:last-child {
     border-bottom: 0.5px solid var(--element-border-color) !important;
 }
-/*.colstack_left > *:not(.colstack_head):last-child {
-	border-bottom: 0.5px solid var(--element-border-color) !important;
-}*/
 .submenu {
 	margin-left: 12px;
 }

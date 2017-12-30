@@ -89,6 +89,8 @@ func buildPanelRoutes() {
 		View("routePanelUsersEdit", "/panel/users/edit/", "extraData"),
 		Action("routePanelUsersEditSubmit", "/panel/users/edit/submit/", "extraData"),
 
+		View("routePanelAnalyticsViews", "/panel/analytics/views/"),
+
 		View("routePanelGroups", "/panel/groups/"),
 		View("routePanelGroupsEdit", "/panel/groups/edit/", "extraData"),
 		View("routePanelGroupsEditPerms", "/panel/groups/edit/perms/", "extraData"),

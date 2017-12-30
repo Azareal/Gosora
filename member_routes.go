@@ -133,7 +133,8 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	topicName := html.EscapeString(r.PostFormValue("topic-name"))
-	content := html.EscapeString(common.PreparseMessage(r.PostFormValue("topic-content")))
+	content := common.PreparseMessage(r.PostFormValue("topic-content"))
+	// TODO: Fully parse the post and store it in the parsed column
 	tid, err := common.Topics.Create(fid, topicName, content, user.ID, user.LastIP)
 	if err != nil {
 		switch err {
@@ -333,7 +334,8 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user common.User) 
 		}
 	}
 
-	content := common.PreparseMessage(html.EscapeString(r.PostFormValue("reply-content")))
+	content := common.PreparseMessage(r.PostFormValue("reply-content"))
+	// TODO: Fully parse the post and put that in the parsed column
 	_, err = common.Rstore.Create(topic, content, user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -527,7 +529,8 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user common
 		return common.LocalError("Invalid UID", w, r, user)
 	}
 
-	content := html.EscapeString(common.PreparseMessage(r.PostFormValue("reply-content")))
+	content := common.PreparseMessage(r.PostFormValue("reply-content"))
+	// TODO: Fully parse the post and store it in the parsed column
 	_, err = common.Prstore.Create(uid, content, user.ID, user.LastIP)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -726,7 +729,6 @@ func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c
 	if ferr != nil {
 		return ferr
 	}
-
 	err := r.ParseMultipartForm(int64(common.Megabyte))
 	if err != nil {
 		return common.LocalError("Upload failed", w, r, user)
@@ -786,8 +788,8 @@ func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c
 		return common.InternalError(err, w, r)
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
-
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your avatar was successfully updated")
+
 	pi := common.Page{"Edit Avatar", user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_account_own_edit_avatar"] != nil {
 		if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
@@ -807,7 +809,7 @@ func routeAccountEditUsername(w http.ResponseWriter, r *http.Request, user commo
 		return ferr
 	}
 
-	pi := common.Page{"Edit common.Username", user, headerVars, tList, user.Name}
+	pi := common.Page{"Edit Username", user, headerVars, tList, user.Name}
 	if common.PreRenderHooks["pre_render_account_own_edit_username"] != nil {
 		if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
 			return nil
@@ -834,7 +836,7 @@ func routeAccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user
 	user.Name = newUsername
 
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your username was successfully updated")
-	pi := common.Page{"Edit common.Username", user, headerVars, tList, nil}
+	pi := common.Page{"Edit Username", user, headerVars, tList, nil}
 	if common.PreRenderHooks["pre_render_account_own_edit_username"] != nil {
 		if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
 			return nil
@@ -885,10 +887,10 @@ func routeAccountEditEmail(w http.ResponseWriter, r *http.Request, user common.U
 		email.Primary = true
 		emailList = append(emailList, email)
 	}
-
 	if !common.Site.EnableEmails {
 		headerVars.NoticeList = append(headerVars.NoticeList, "The mail system is currently disabled.")
 	}
+
 	pi := common.Page{"Email Manager", user, headerVars, emailList, nil}
 	if common.PreRenderHooks["pre_render_account_own_edit_email"] != nil {
 		if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
