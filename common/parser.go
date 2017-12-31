@@ -4,6 +4,7 @@ import (
 	//"fmt"
 	"bytes"
 	"html"
+	"log"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -166,28 +167,74 @@ func shortcodeToUnicode(msg string) string {
 }
 
 // TODO: Write tests for this
+// TODO: Preparse Markdown and normalize it into HTML?
 func PreparseMessage(msg string) string {
 	msg = strings.Replace(msg, "<p><br>", "\n\n", -1)
 	msg = strings.Replace(msg, "<p>", "\n\n", -1)
 	msg = strings.Replace(msg, "</p>", "", -1)
 	msg = strings.Replace(msg, "<br>", "\n\n", -1)
+	msg = strings.TrimSpace(msg) // There are a few useful cases for having spaces, but I'd like to stop the WYSIWYG from inserting random lines here and there
 	if Sshooks["preparse_preassign"] != nil {
 		msg = RunSshook("preparse_preassign", msg)
 	}
 	msg = html.EscapeString(msg)
-	/*var runes = []rune(msg)
+
+	var runes = []rune(msg)
 	msg = ""
-	//var inBold = false
-	//var unclosedBolds = 0
+	var inBold = false
+	var inItalic = false
+	var stepForward = func(i int, step int, runes []rune) int {
+		i += step
+		if i < len(runes) {
+			return i
+		}
+		return i - step
+	}
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
-		if char == '&' && peek(i, 1, runes) == 'l' && peek(i, 2, runes) == 't' && peek(i, 2, runes) == ';' {
-			i += 2
-
+		log.Print("string(char): ", string(char))
+		if char == '&' && peek(i, 1, runes) == 'l' && peek(i, 2, runes) == 't' && peek(i, 3, runes) == ';' {
+			log.Print("past less than")
+			i = stepForward(i, 4, runes)
+			char := runes[i]
+			if char == '/' {
+				log.Print("in /")
+				i = stepForward(i, 1, runes)
+				char := runes[i]
+				if inItalic && char == 'e' && peekMatch(i, "m&gt;", runes) {
+					log.Print("in inItalic")
+					i += 5
+					inItalic = false
+					msg += "</em>"
+				} else if inBold && char == 's' && peekMatch(i, "trong&gt;", runes) {
+					log.Print("in inBold")
+					i += 9
+					inBold = false
+					msg += "</strong>"
+				}
+			} else if !inItalic && char == 'e' && peekMatch(i, "m&gt;", runes) {
+				log.Print("in !inItalic")
+				i += 5
+				inItalic = true
+				msg += "<em>"
+			} else if !inBold && char == 's' && peekMatch(i, "trong&gt;", runes) {
+				log.Print("in !inBold")
+				i += 9
+				inBold = true
+				msg += "<strong>"
+			}
 		} else {
 			msg += string(char)
 		}
-	}*/
+	}
+
+	if inItalic {
+		msg += "</em>"
+	}
+	if inBold {
+		msg += "</strong>"
+	}
+
 	return shortcodeToUnicode(msg)
 }
 
@@ -198,6 +245,19 @@ func peek(cur int, skip int, runes []rune) rune {
 		return runes[cur+skip]
 	}
 	return 0 // null byte
+}
+
+// TODO: Test this
+func peekMatch(cur int, phrase string, runes []rune) bool {
+	if cur+len(phrase) > len(runes) {
+		return false
+	}
+	for i, char := range phrase {
+		if runes[cur+i+1] != char {
+			return false
+		}
+	}
+	return true
 }
 
 // TODO: Write a test for this

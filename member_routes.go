@@ -132,7 +132,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user common.
 		return common.NoPermissions(w, r, user)
 	}
 
-	topicName := html.EscapeString(r.PostFormValue("topic-name"))
+	topicName := html.EscapeString(strings.Replace(r.PostFormValue("topic-name"), "\n", "", -1))
 	content := common.PreparseMessage(r.PostFormValue("topic-content"))
 	// TODO: Fully parse the post and store it in the parsed column
 	tid, err := common.Topics.Create(fid, topicName, content, user.ID, user.LastIP)
@@ -828,7 +828,7 @@ func routeAccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user
 		return ferr
 	}
 
-	newUsername := html.EscapeString(r.PostFormValue("account-new-username"))
+	newUsername := html.EscapeString(strings.Replace(r.PostFormValue("account-new-username"), "\n", "", -1))
 	err := user.ChangeName(newUsername)
 	if err != nil {
 		return common.LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)

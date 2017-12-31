@@ -11,6 +11,7 @@ import (
 	"html"
 	"html/template"
 	"strconv"
+	"strings"
 	"time"
 
 	"../query_gen/lib"
@@ -238,7 +239,7 @@ func (topic *Topic) Delete() error {
 
 // TODO: Write tests for this
 func (topic *Topic) Update(name string, content string) error {
-	name = html.EscapeString(html.UnescapeString(name))
+	name = html.EscapeString(strings.Replace(html.UnescapeString(name), "\n", "", -1))
 	content = PreparseMessage(html.UnescapeString(content))
 	parsedContent := ParseMessage(content, topic.ParentID, "forums")
 	_, err := topicStmts.edit.Exec(name, content, parsedContent, topic.ID)

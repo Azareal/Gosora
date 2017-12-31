@@ -1039,12 +1039,14 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 		return common.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
 	}
 
-	newname := html.EscapeString(r.PostFormValue("user-name"))
+	newname := html.EscapeString(strings.Replace(r.PostFormValue("user-name"), "\n", "", -1))
 	if newname == "" {
 		return common.LocalError("You didn't put in a username.", w, r, user)
 	}
 
-	newemail := html.EscapeString(r.PostFormValue("user-email"))
+	// TODO: How should activation factor into admin set emails?
+	// TODO: How should we handle secondary emails? Do we even have secondary emails implemented?
+	newemail := html.EscapeString(strings.Replace(r.PostFormValue("user-email"), "\n", "", -1))
 	if newemail == "" {
 		return common.LocalError("You didn't put in an email address.", w, r, user)
 	}

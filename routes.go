@@ -749,7 +749,8 @@ func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user common.User) 
 		return common.LocalError("Bad Form", w, r, user)
 	}
 
-	uid, err := common.Auth.Authenticate(html.EscapeString(r.PostFormValue("username")), r.PostFormValue("password"))
+	username := html.EscapeString(strings.Replace(r.PostFormValue("username"), "\n", "", -1))
+	uid, err := common.Auth.Authenticate(username, r.PostFormValue("password"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
@@ -808,11 +809,11 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.Use
 	if err != nil {
 		return common.LocalError("Bad Form", w, r, user)
 	}
-	username := html.EscapeString(r.PostFormValue("username"))
+	username := html.EscapeString(strings.Replace(r.PostFormValue("username"), "\n", "", -1))
 	if username == "" {
 		return common.LocalError("You didn't put in a username.", w, r, user)
 	}
-	email := html.EscapeString(r.PostFormValue("email"))
+	email := html.EscapeString(strings.Replace(r.PostFormValue("email"), "\n", "", -1))
 	if email == "" {
 		return common.LocalError("You didn't put in an email.", w, r, user)
 	}
@@ -827,6 +828,7 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.Use
 		return common.LocalError("You can't use your email as your password.", w, r, user)
 	}
 
+	// ?  Move this into Create()? What if we want to programatically set weak passwords for tests?
 	err = common.WeakPassword(password)
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
