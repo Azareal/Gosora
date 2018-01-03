@@ -14,8 +14,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"./common"
+	"./query_gen/lib"
 	"github.com/Azareal/gopsutil/mem"
 )
 
@@ -430,14 +432,72 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	if ferr != nil {
 		return ferr
 	}
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", tList, nil}
+	var revLabelList []int64
+	var labelList []int64
+	var viewMap = make(map[int64]int64)
+	var currentTime = time.Now().Unix()
+
+	for i := 1; i <= 12; i++ {
+		var label = currentTime - int64(i*60*30)
+		revLabelList = append(revLabelList, label)
+		viewMap[label] = 0
+	}
+	for _, value := range revLabelList {
+		labelList = append(labelList, value)
+	}
+
+	var viewList []int64
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("viewchunks").Columns("count, createdAt, route").Where("route = ''").DateCutoff("createdAt", 6, "hour").Query()
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		log.Print("WE HAVE ROWS")
+		var count int64
+		var createdAt time.Time
+		var route string
+		err := rows.Scan(&count, &createdAt, &route)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		log.Print("count: ", count)
+		log.Print("createdAt: ", createdAt)
+		log.Print("route: ", route)
+
+		var unixCreatedAt = createdAt.Unix()
+		log.Print("unixCreatedAt: ", unixCreatedAt)
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				viewMap[value] += count
+				break
+			}
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	for _, value := range revLabelList {
+		viewList = append(viewList, viewMap[value])
+	}
+	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	log.Printf("graph: %+v\n", graph)
+
+	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", graph}
 	if common.PreRenderHooks["pre_render_panel_analytics"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_analytics", w, r, &user, &pi) {
 			return nil
 		}
 	}
-	err := common.Templates.ExecuteTemplate(w, "panel-analytics-views.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "panel-analytics-views.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

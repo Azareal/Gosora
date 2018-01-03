@@ -1,12 +1,18 @@
 package qgen
 
+type dateCutoff struct {
+	Column   string
+	Quantity int
+	Unit     string
+}
+
 type prebuilder struct {
 	adapter Adapter
 }
 
 func (build *prebuilder) Select(nlist ...string) *selectPrebuilder {
 	name := optString(nlist, "_builder")
-	return &selectPrebuilder{name, "", "", "", "", "", build.adapter}
+	return &selectPrebuilder{name, "", "", "", "", "", nil, build.adapter}
 }
 
 func (build *prebuilder) Insert(nlist ...string) *insertPrebuilder {
@@ -83,12 +89,13 @@ func (update *updatePrebuilder) Parse() {
 }
 
 type selectPrebuilder struct {
-	name    string
-	table   string
-	columns string
-	where   string
-	orderby string
-	limit   string
+	name       string
+	table      string
+	columns    string
+	where      string
+	orderby    string
+	limit      string
+	dateCutoff *dateCutoff
 
 	build Adapter
 }
@@ -118,10 +125,23 @@ func (selectItem *selectPrebuilder) Limit(limit string) *selectPrebuilder {
 	return selectItem
 }
 
+// TODO: We probably want to avoid the double allocation of two builders somehow
+func (selectItem *selectPrebuilder) FromAcc(accBuilder *accSelectBuilder) *selectPrebuilder {
+	selectItem.table = accBuilder.table
+	selectItem.columns = accBuilder.columns
+	selectItem.where = accBuilder.where
+	selectItem.dateCutoff = accBuilder.dateCutoff
+	selectItem.orderby = accBuilder.orderby
+	selectItem.limit = accBuilder.limit
+	return selectItem
+}
+
+// TODO: Add support for dateCutoff
 func (selectItem *selectPrebuilder) Text() (string, error) {
 	return selectItem.build.SimpleSelect(selectItem.name, selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
 }
 
+// TODO: Add support for dateCutoff
 func (selectItem *selectPrebuilder) Parse() {
 	selectItem.build.SimpleSelect(selectItem.name, selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
 }

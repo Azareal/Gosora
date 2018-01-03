@@ -253,6 +253,20 @@ func (adapter *PgsqlAdapter) SimpleSelect(name string, table string, columns str
 }
 
 // TODO: Implement this
+func (adapter *PgsqlAdapter) ComplexSelect(prebuilder *selectPrebuilder) (string, error) {
+	if prebuilder.name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if prebuilder.table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if len(prebuilder.columns) == 0 {
+		return "", errors.New("No columns found for ComplexSelect")
+	}
+	return "", nil
+}
+
+// TODO: Implement this
 func (adapter *PgsqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")

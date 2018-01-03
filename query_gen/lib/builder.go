@@ -1,7 +1,6 @@
 /* WIP Under Construction */
 package qgen
 
-//import "log"
 import "database/sql"
 
 var Builder *builder

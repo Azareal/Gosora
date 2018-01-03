@@ -4,7 +4,6 @@ import (
 	//"fmt"
 	"bytes"
 	"html"
-	"log"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -183,6 +182,8 @@ func PreparseMessage(msg string) string {
 	msg = ""
 	var inBold = false
 	var inItalic = false
+	var inStrike = false
+	var inUnderline = false
 	var stepForward = func(i int, step int, runes []rune) int {
 		i += step
 		if i < len(runes) {
@@ -192,36 +193,45 @@ func PreparseMessage(msg string) string {
 	}
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
-		log.Print("string(char): ", string(char))
 		if char == '&' && peek(i, 1, runes) == 'l' && peek(i, 2, runes) == 't' && peek(i, 3, runes) == ';' {
-			log.Print("past less than")
 			i = stepForward(i, 4, runes)
 			char := runes[i]
 			if char == '/' {
-				log.Print("in /")
 				i = stepForward(i, 1, runes)
 				char := runes[i]
 				if inItalic && char == 'e' && peekMatch(i, "m&gt;", runes) {
-					log.Print("in inItalic")
 					i += 5
 					inItalic = false
 					msg += "</em>"
 				} else if inBold && char == 's' && peekMatch(i, "trong&gt;", runes) {
-					log.Print("in inBold")
 					i += 9
 					inBold = false
 					msg += "</strong>"
+				} else if inStrike && char == 'd' && peekMatch(i, "el&gt;", runes) {
+					i += 6
+					inStrike = false
+					msg += "</del>"
+				} else if inUnderline && char == 'u' && peekMatch(i, "&gt;", runes) {
+					i += 4
+					inUnderline = false
+					msg += "</u>"
 				}
 			} else if !inItalic && char == 'e' && peekMatch(i, "m&gt;", runes) {
-				log.Print("in !inItalic")
 				i += 5
 				inItalic = true
 				msg += "<em>"
 			} else if !inBold && char == 's' && peekMatch(i, "trong&gt;", runes) {
-				log.Print("in !inBold")
 				i += 9
 				inBold = true
 				msg += "<strong>"
+			} else if !inStrike && char == 'd' && peekMatch(i, "el&gt;", runes) {
+				i += 6
+				inStrike = true
+				msg += "<del>"
+			} else if !inUnderline && char == 'u' && peekMatch(i, "&gt;", runes) {
+				i += 4
+				inUnderline = true
+				msg += "<u>"
 			}
 		} else {
 			msg += string(char)
@@ -233,6 +243,12 @@ func PreparseMessage(msg string) string {
 	}
 	if inBold {
 		msg += "</strong>"
+	}
+	if inStrike {
+		msg += "</del>"
+	}
+	if inUnderline {
+		msg += "</u>"
 	}
 
 	return shortcodeToUnicode(msg)

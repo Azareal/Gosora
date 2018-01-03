@@ -435,7 +435,6 @@ func (adapter *MssqlAdapter) SimpleSelect(name string, table string, columns str
 	for _, column := range colslice {
 		querystr += "[" + strings.TrimSpace(column) + "],"
 	}
-	// Remove the trailing comma
 	querystr = querystr[0 : len(querystr)-1]
 
 	querystr += " FROM [" + table + "]"
@@ -508,6 +507,11 @@ func (adapter *MssqlAdapter) SimpleSelect(name string, table string, columns str
 	}
 	adapter.pushStatement(name, "select", querystr)
 	return querystr, nil
+}
+
+// TODO: ComplexSelect
+func (adapter *MssqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (string, error) {
+	return "", nil
 }
 
 func (adapter *MssqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {

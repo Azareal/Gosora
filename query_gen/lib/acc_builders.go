@@ -41,11 +41,12 @@ func (update *accUpdateBuilder) Prepare() *sql.Stmt {
 }
 
 type accSelectBuilder struct {
-	table   string
-	columns string
-	where   string
-	orderby string
-	limit   string
+	table      string
+	columns    string
+	where      string
+	orderby    string
+	limit      string
+	dateCutoff *dateCutoff // We might want to do this in a slightly less hacky way
 
 	build *Accumulator
 }
@@ -60,6 +61,11 @@ func (selectItem *accSelectBuilder) Where(where string) *accSelectBuilder {
 	return selectItem
 }
 
+func (selectItem *accSelectBuilder) DateCutoff(column string, quantity int, unit string) *accSelectBuilder {
+	selectItem.dateCutoff = &dateCutoff{column, quantity, unit}
+	return selectItem
+}
+
 func (selectItem *accSelectBuilder) Orderby(orderby string) *accSelectBuilder {
 	selectItem.orderby = orderby
 	return selectItem
@@ -71,6 +77,11 @@ func (selectItem *accSelectBuilder) Limit(limit string) *accSelectBuilder {
 }
 
 func (selectItem *accSelectBuilder) Prepare() *sql.Stmt {
+	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
+	if selectItem.dateCutoff != nil {
+		selectBuilder := selectItem.build.GetAdapter().Builder().Select().FromAcc(selectItem)
+		return selectItem.build.prepare(selectItem.build.GetAdapter().ComplexSelect(selectBuilder))
+	}
 	return selectItem.build.SimpleSelect(selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
 }
 

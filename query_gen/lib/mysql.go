@@ -304,10 +304,39 @@ func (adapter *MysqlAdapter) Purge(name string, table string) (string, error) {
 	return "DELETE FROM `" + table + "`", nil
 }
 
-// TODO: Add support for BETWEEN x.x
 func (adapter *MysqlAdapter) buildWhere(where string) (querystr string, err error) {
+	if len(where) == 0 {
+		return "", nil
+	}
+	querystr = " WHERE"
+	for _, loc := range processWhere(where) {
+		for _, token := range loc.Expr {
+			switch token.Type {
+			case "function", "operator", "number", "substitute":
+				querystr += " " + token.Contents
+			case "column":
+				querystr += " `" + token.Contents + "`"
+			case "string":
+				querystr += " '" + token.Contents + "'"
+			default:
+				return querystr, errors.New("This token doesn't exist o_o")
+			}
+		}
+		querystr += " AND"
+	}
+	return querystr[0 : len(querystr)-4], nil
+}
+
+// The new version of buildWhere() currently only used in ComplexSelect for complex OO builder queries
+func (adapter *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (querystr string, err error) {
+	if len(where) == 0 && dateCutoff == nil {
+		return "", nil
+	}
+	querystr = " WHERE"
+	if dateCutoff != nil {
+		querystr += " " + dateCutoff.Column + " BETWEEN (UTC_TIMESTAMP() - interval " + strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + ") AND UTC_TIMESTAMP() AND"
+	}
 	if len(where) != 0 {
-		querystr = " WHERE"
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
@@ -323,9 +352,8 @@ func (adapter *MysqlAdapter) buildWhere(where string) (querystr string, err erro
 			}
 			querystr += " AND"
 		}
-		querystr = querystr[0 : len(querystr)-4]
 	}
-	return querystr, nil
+	return querystr[0 : len(querystr)-4], nil
 }
 
 func (adapter *MysqlAdapter) buildOrderby(orderby string) (querystr string) {
@@ -354,8 +382,7 @@ func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns str
 	var querystr = "SELECT "
 
 	// Slice up the user friendly strings into something easier to process
-	var colslice = strings.Split(strings.TrimSpace(columns), ",")
-	for _, column := range colslice {
+	for _, column := range strings.Split(strings.TrimSpace(columns), ",") {
 		querystr += "`" + strings.TrimSpace(column) + "`,"
 	}
 	querystr = querystr[0 : len(querystr)-1]
@@ -369,6 +396,37 @@ func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns str
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
+	return querystr, nil
+}
+
+func (adapter *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (string, error) {
+	if preBuilder.name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if preBuilder.table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if len(preBuilder.columns) == 0 {
+		return "", errors.New("No columns found for ComplexSelect")
+	}
+
+	var querystr = "SELECT "
+
+	// Slice up the user friendly strings into something easier to process
+	for _, column := range strings.Split(strings.TrimSpace(preBuilder.columns), ",") {
+		querystr += "`" + strings.TrimSpace(column) + "`,"
+	}
+	querystr = querystr[0 : len(querystr)-1]
+
+	whereStr, err := adapter.buildFlexiWhere(preBuilder.where, preBuilder.dateCutoff)
+	if err != nil {
+		return querystr, err
+	}
+
+	querystr += " FROM `" + preBuilder.table + "`" + whereStr + adapter.buildOrderby(preBuilder.orderby) + adapter.buildLimit(preBuilder.limit)
+
+	querystr = strings.TrimSpace(querystr)
+	adapter.pushStatement(preBuilder.name, "select", querystr)
 	return querystr, nil
 }
 

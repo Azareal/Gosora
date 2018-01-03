@@ -149,6 +149,20 @@ type PanelDashboardPage struct {
 	GridItems   []GridElement
 }
 
+type PanelTimeGraph struct {
+	Series []int64 // The counts on the left
+	Labels []int64 // unixtimes for the bottom, gets converted into 1:00, 2:00, etc. with JS
+}
+
+type PanelAnalyticsPage struct {
+	Title        string
+	CurrentUser  User
+	Header       *HeaderVars
+	Stats        PanelStats
+	Zone         string
+	PrimaryGraph PanelTimeGraph
+}
+
 type PanelThemesPage struct {
 	Title         string
 	CurrentUser   User

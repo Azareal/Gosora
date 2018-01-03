@@ -155,3 +155,17 @@
 .perm_preset_default:before {
 	content: "Default";
 }
+
+.colstack_graph_holder {
+	background-color: var(--element-background-color);
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+	margin-left: 16px;
+	padding-top: 16px;
+}
+.ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
+    stroke: hsl(359,98%,53%) !important;
+}
+.ct-point {
+	stroke: hsl(359,98%,33%) !important;
+}

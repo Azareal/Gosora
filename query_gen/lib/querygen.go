@@ -100,11 +100,6 @@ type Adapter interface {
 	GetName() string
 	CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
-
-	// ! DEPRECATED
-	//SimpleReplace(name string, table string, columns string, fields string) (string, error)
-	// ! NOTE: MySQL doesn't support upserts properly, so I'm removing this from the interface until we find a way to patch it in
-	//SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error)
 	SimpleUpdate(name string, table string, set string, where string) (string, error)
 	SimpleDelete(name string, table string, where string) (string, error)
 	Purge(name string, table string) (string, error)
@@ -115,6 +110,8 @@ type Adapter interface {
 	SimpleInsertLeftJoin(string, DBInsert, DBJoin) (string, error)
 	SimpleInsertInnerJoin(string, DBInsert, DBJoin) (string, error)
 	SimpleCount(string, string, string, string) (string, error)
+
+	ComplexSelect(*selectPrebuilder) (string, error)
 
 	Builder() *prebuilder
 	Write() error
