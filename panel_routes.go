@@ -450,26 +450,24 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	}
 
 	var viewList []int64
+	log.Print("in routePanelAnalyticsViews")
 
 	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks").Columns("count, createdAt, route").Where("route = ''").DateCutoff("createdAt", 6, "hour").Query()
+	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", 6, "hour").Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		log.Print("WE HAVE ROWS")
 		var count int64
 		var createdAt time.Time
-		var route string
-		err := rows.Scan(&count, &createdAt, &route)
+		err := rows.Scan(&count, &createdAt)
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
 		log.Print("count: ", count)
 		log.Print("createdAt: ", createdAt)
-		log.Print("route: ", route)
 
 		var unixCreatedAt = createdAt.Unix()
 		log.Print("unixCreatedAt: ", unixCreatedAt)
@@ -498,6 +496,61 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 		}
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-analytics-views.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	var routeMap = make(map[string]int)
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("viewchunks").Columns("count, createdAt, route").Where("route != ''").DateCutoff("createdAt", 1, "day").Query()
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int
+		var createdAt time.Time
+		var route string
+		err := rows.Scan(&count, &createdAt, &route)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		log.Print("count: ", count)
+		log.Print("createdAt: ", createdAt)
+		log.Print("route: ", route)
+		routeMap[route] += count
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Sort this slice
+	var routeItems []common.PanelAnalyticsRoutesItem
+	for route, count := range routeMap {
+		routeItems = append(routeItems, common.PanelAnalyticsRoutesItem{
+			Route: route,
+			Count: count,
+		})
+	}
+
+	pi := common.PanelAnalyticsRoutesPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", routeItems}
+	if common.PreRenderHooks["pre_render_panel_analytics_routes"] != nil {
+		if common.RunPreRenderHook("pre_render_panel_analytics_routes", w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err = common.Templates.ExecuteTemplate(w, "panel-analytics-routes.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

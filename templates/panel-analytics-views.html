@@ -5,7 +5,7 @@
 		<div class="colstack_item colstack_head">
 			<div class="rowitem"><a>Views</a></div>
 		</div>
-		<div id="panel_analytics" class="colstack_graph_holder">
+		<div id="panel_analytics_views" class="colstack_graph_holder">
 			<div class="ct-chart"></div>
 		</div>
 	</main>
@@ -23,6 +23,7 @@ for(const i in rawLabels) {
 	console.log("label:", label);
 	labels.push(label);
 }
+labels = labels.reverse()
 
 let seriesData = [{{range .PrimaryGraph.Series}}
 {{.}},{{end}}

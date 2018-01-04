@@ -163,6 +163,20 @@ type PanelAnalyticsPage struct {
 	PrimaryGraph PanelTimeGraph
 }
 
+type PanelAnalyticsRoutesItem struct {
+	Route string
+	Count int
+}
+
+type PanelAnalyticsRoutesPage struct {
+	Title       string
+	CurrentUser User
+	Header      *HeaderVars
+	Stats       PanelStats
+	Zone        string
+	ItemList       []PanelAnalyticsRoutesItem
+}
+
 type PanelThemesPage struct {
 	Title         string
 	CurrentUser   User
