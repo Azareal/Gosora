@@ -406,16 +406,15 @@ ul {
 	height: 27px;
 	width: 100px;
 	margin-left: 10px;
-	border: none;
-	border-bottom: 1px solid var(--header-border-color);
-	outline: none;
 }
 .topic_name_row input, .ip_search_input {
 	width: 100%;
-	border: none;
-	border-bottom: 1px solid var(--header-border-color);
 	display: inline-block;
 	padding-left: 8px;
+}
+input, select {
+	border: none;
+	border-bottom: 1px solid var(--header-border-color);
 	outline: none;
 }
 .topic_content_row textarea {
@@ -423,11 +422,16 @@ ul {
 	width: 100%;
 }
 
+.formbutton {
+	margin-top: 12px;
+	margin-left: auto;
+	margin-right: auto;
+}
 .quick_button_row .formitem {
 	display: flex;
 	margin-left: 2px;
 }
-.quick_button_row button, .quick_button_row label, .ip_search_search {
+.quick_button_row button, .quick_button_row label, .ip_search_search, .formbutton {
 	padding-left: 10px;
 	padding-right: 10px;
 	padding-top: 6px;
@@ -442,6 +446,9 @@ ul {
 	outline: none;
 	background: hsl(209, 97%, 56%);
 	border-radius: 2px;
+}
+.quick_button_row button, .quick_button_row label, .ip_search_search {
+	margin-right: 0px;
 }
 .quick_button_row button, .quick_button_row label {
 	margin-left: 10px;
@@ -463,11 +470,23 @@ label.uploadItem {
 	padding-left: 33px;
 }
 
-select, input, textarea, button {
+button {
 	border: 1px solid var(--header-border-color);
+}
+select, input, textarea, button {
 	background: var(--element-background-color);
 	padding: 5px;
 	color: hsl(0,0%,30%);
+}
+input, select {
+	color: var(--primary-text-color);
+}
+input:not(:focus):not([type="submit"]), select:not(:focus) {
+	color: var(--light-text-color);
+}
+textarea {
+	outline: none;
+	border: 1px solid var(--header-border-color);
 }
 
 .topic_reply_container {
@@ -1003,6 +1022,7 @@ select, input, textarea, button {
 }
 .formitem:only-child {
 	width: 100%;
+	display: flex;
 }
 .the_form .formitem:only-child button {
 	margin-left: auto;
@@ -1100,7 +1120,7 @@ select, input, textarea, button {
 }
 #themeSelectorSelect {
 	padding: 3px;
-	margin-top: 2px;
+	margin-top: 0px;
 }
 
 .colstack_grid {

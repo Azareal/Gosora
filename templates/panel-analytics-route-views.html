@@ -1,0 +1,40 @@
+{{template "header.html" . }}
+<div class="colstack panel_stack">
+{{template "panel-menu.html" . }}
+	<main id="panel_dashboard_right" class="colstack_right">
+		<div class="colstack_item colstack_head">
+			<div class="rowitem"><a>{{.Route}} Views</a></div>
+		</div>
+		<div id="panel_analytics_views" class="colstack_graph_holder">
+			<div class="ct-chart"></div>
+		</div>
+	</main>
+</div>
+<script>
+let labels = [];
+let rawLabels = [{{range .PrimaryGraph.Labels}}
+{{.}},{{end}}
+];
+for(const i in rawLabels) {
+	let date = new Date(rawLabels[i]*1000);
+	console.log("date: ", date);
+	let minutes = "0" + date.getMinutes();
+	let label = date.getHours() + ":" + minutes.substr(-2);
+	console.log("label:", label);
+	labels.push(label);
+}
+labels = labels.reverse()
+
+let seriesData = [{{range .PrimaryGraph.Series}}
+{{.}},{{end}}
+];
+seriesData = seriesData.reverse();
+
+Chartist.Line('.ct-chart', {
+  labels: labels,
+  series: [seriesData],
+}, {
+  height: '250px',
+});
+</script>
+{{template "footer.html" . }}

@@ -174,7 +174,17 @@ type PanelAnalyticsRoutesPage struct {
 	Header      *HeaderVars
 	Stats       PanelStats
 	Zone        string
-	ItemList       []PanelAnalyticsRoutesItem
+	ItemList    []PanelAnalyticsRoutesItem
+}
+
+type PanelAnalyticsRoutePage struct {
+	Title        string
+	CurrentUser  User
+	Header       *HeaderVars
+	Stats        PanelStats
+	Zone         string
+	Route        string
+	PrimaryGraph PanelTimeGraph
 }
 
 type PanelThemesPage struct {

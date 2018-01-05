@@ -510,7 +510,7 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 	var routeMap = make(map[string]int)
 
 	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks").Columns("count, createdAt, route").Where("route != ''").DateCutoff("createdAt", 1, "day").Query()
+	rows, err := acc.Select("viewchunks").Columns("count, route").Where("route != ''").DateCutoff("createdAt", 1, "day").Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -518,15 +518,13 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 
 	for rows.Next() {
 		var count int
-		var createdAt time.Time
 		var route string
-		err := rows.Scan(&count, &createdAt, &route)
+		err := rows.Scan(&count, &route)
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
 
 		log.Print("count: ", count)
-		log.Print("createdAt: ", createdAt)
 		log.Print("route: ", route)
 		routeMap[route] += count
 	}
@@ -551,6 +549,81 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 		}
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-analytics-routes.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.User, route string) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
+
+	var revLabelList []int64
+	var labelList []int64
+	var viewMap = make(map[int64]int64)
+	var currentTime = time.Now().Unix()
+
+	for i := 1; i <= 12; i++ {
+		var label = currentTime - int64(i*60*30)
+		revLabelList = append(revLabelList, label)
+		viewMap[label] = 0
+	}
+	for _, value := range revLabelList {
+		labelList = append(labelList, value)
+	}
+
+	var viewList []int64
+	log.Print("in routePanelAnalyticsRouteViews")
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", 6, "hour").Query(route)
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int64
+		var createdAt time.Time
+		err := rows.Scan(&count, &createdAt)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		log.Print("count: ", count)
+		log.Print("createdAt: ", createdAt)
+
+		var unixCreatedAt = createdAt.Unix()
+		log.Print("unixCreatedAt: ", unixCreatedAt)
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				viewMap[value] += count
+				break
+			}
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	for _, value := range revLabelList {
+		viewList = append(viewList, viewMap[value])
+	}
+	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	log.Printf("graph: %+v\n", graph)
+
+	pi := common.PanelAnalyticsRoutePage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", html.EscapeString(route), graph}
+	if common.PreRenderHooks["pre_render_panel_analytics_route_views"] != nil {
+		if common.RunPreRenderHook("pre_render_panel_analytics_route_views", w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err = common.Templates.ExecuteTemplate(w, "panel-analytics-route-views.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

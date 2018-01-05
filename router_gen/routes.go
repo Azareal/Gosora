@@ -91,6 +91,7 @@ func buildPanelRoutes() {
 
 		View("routePanelAnalyticsViews", "/panel/analytics/views/"),
 		View("routePanelAnalyticsRoutes", "/panel/analytics/routes/"),
+		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 
 		View("routePanelGroups", "/panel/groups/"),
 		View("routePanelGroupsEdit", "/panel/groups/edit/", "extraData"),
