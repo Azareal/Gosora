@@ -154,6 +154,11 @@ type PanelTimeGraph struct {
 	Labels []int64 // unixtimes for the bottom, gets converted into 1:00, 2:00, etc. with JS
 }
 
+type PanelAnalyticsItem struct {
+	Time  int64
+	Count int64
+}
+
 type PanelAnalyticsPage struct {
 	Title        string
 	CurrentUser  User
@@ -161,6 +166,8 @@ type PanelAnalyticsPage struct {
 	Stats        PanelStats
 	Zone         string
 	PrimaryGraph PanelTimeGraph
+	ViewItems    []PanelAnalyticsItem
+	TimeRange    string
 }
 
 type PanelAnalyticsRoutesItem struct {
@@ -185,6 +192,7 @@ type PanelAnalyticsRoutePage struct {
 	Zone         string
 	Route        string
 	PrimaryGraph PanelTimeGraph
+	TimeRange    string
 }
 
 type PanelThemesPage struct {

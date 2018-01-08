@@ -427,6 +427,58 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 	return nil
 }
 
+func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ManageForums {
+		return common.NoPermissions(w, r, user)
+	}
+
+	fid, err := strconv.Atoi(sfid)
+	if err != nil {
+		return common.LocalError("The provided Forum ID is not a valid number.", w, r, user)
+	}
+
+	forum, err := common.Forums.Get(fid)
+	if err == ErrNoRows {
+		return common.LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	if forum.Preset == "" {
+		forum.Preset = "custom"
+	}
+
+	glist, err := common.Groups.GetAll()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	var gplist []common.GroupForumPermPreset
+	for gid, group := range glist {
+		if gid == 0 {
+			continue
+		}
+		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(group.Forums[fid])})
+	}
+
+	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel-edit-forum"), user, headerVars, stats, "forums", forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
+	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
+		if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err = common.Templates.ExecuteTemplate(w, "panel-forum-edit-perms.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	return nil
+}
+
 func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -435,13 +487,36 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
 	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
 
+	var timeQuantity = 6
+	var timeUnit = "hour"
+	var timeSlices = 12
+	var sliceWidth = 60 * 30
+	var timeRange = "six-hours"
+
+	switch r.FormValue("timeRange") {
+	case "one-day":
+		timeQuantity = 1
+		timeUnit = "day"
+		timeSlices = 24
+		sliceWidth = 60 * 60
+		timeRange = "one-day"
+	case "twelve-hours":
+		timeQuantity = 12
+		timeSlices = 24
+		timeRange = "twelve-hours"
+	case "six-hours", "":
+		timeRange = "six-hours"
+	default:
+		return common.LocalError("Unknown time range", w, r, user)
+	}
+
 	var revLabelList []int64
 	var labelList []int64
 	var viewMap = make(map[int64]int64)
 	var currentTime = time.Now().Unix()
 
-	for i := 1; i <= 12; i++ {
-		var label = currentTime - int64(i*60*30)
+	for i := 1; i <= timeSlices; i++ {
+		var label = currentTime - int64(i*sliceWidth)
 		revLabelList = append(revLabelList, label)
 		viewMap[label] = 0
 	}
@@ -453,7 +528,7 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	log.Print("in routePanelAnalyticsViews")
 
 	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", 6, "hour").Query()
+	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", timeQuantity, timeUnit).Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -483,13 +558,15 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 		return common.InternalError(err, w, r)
 	}
 
+	var viewItems []common.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
+		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	log.Printf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", graph}
+	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange}
 	if common.PreRenderHooks["pre_render_panel_analytics"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_analytics", w, r, &user, &pi) {
 			return nil
@@ -563,13 +640,36 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
 	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
 
+	var timeQuantity = 6
+	var timeUnit = "hour"
+	var timeSlices = 12
+	var sliceWidth = 60 * 30
+	var timeRange = "six-hours"
+
+	switch r.FormValue("timeRange") {
+	case "one-day":
+		timeQuantity = 1
+		timeUnit = "day"
+		timeSlices = 24
+		sliceWidth = 60 * 60
+		timeRange = "one-day"
+	case "twelve-hours":
+		timeQuantity = 12
+		timeSlices = 24
+		timeRange = "twelve-hours"
+	case "six-hours", "":
+		timeRange = "six-hours"
+	default:
+		return common.LocalError("Unknown time range", w, r, user)
+	}
+
 	var revLabelList []int64
 	var labelList []int64
 	var viewMap = make(map[int64]int64)
 	var currentTime = time.Now().Unix()
 
-	for i := 1; i <= 12; i++ {
-		var label = currentTime - int64(i*60*30)
+	for i := 1; i <= timeSlices; i++ {
+		var label = currentTime - int64(i*sliceWidth)
 		revLabelList = append(revLabelList, label)
 		viewMap[label] = 0
 	}
@@ -581,7 +681,7 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	log.Print("in routePanelAnalyticsRouteViews")
 
 	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", 6, "hour").Query(route)
+	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", timeQuantity, timeUnit).Query(route)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -617,7 +717,7 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	log.Printf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsRoutePage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", html.EscapeString(route), graph}
+	pi := common.PanelAnalyticsRoutePage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", html.EscapeString(route), graph, timeRange}
 	if common.PreRenderHooks["pre_render_panel_analytics_route_views"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_analytics_route_views", w, r, &user, &pi) {
 			return nil

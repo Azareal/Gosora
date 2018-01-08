@@ -66,6 +66,7 @@ func buildPanelRoutes() {
 		View("routePanelForumsEdit", "/panel/forums/edit/", "extraData"),
 		Action("routePanelForumsEditSubmit", "/panel/forums/edit/submit/", "extraData"),
 		Action("routePanelForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "extraData"),
+		View("routePanelForumsEditPermsAdvance", "/panel/forums/edit/perms/", "extraData"),
 
 		View("routePanelSettings", "/panel/settings/"),
 		View("routePanelSettingEdit", "/panel/settings/edit/", "extraData"),
@@ -89,7 +90,7 @@ func buildPanelRoutes() {
 		View("routePanelUsersEdit", "/panel/users/edit/", "extraData"),
 		Action("routePanelUsersEditSubmit", "/panel/users/edit/submit/", "extraData"),
 
-		View("routePanelAnalyticsViews", "/panel/analytics/views/"),
+		View("routePanelAnalyticsViews", "/panel/analytics/views/").Before("ParseForm"),
 		View("routePanelAnalyticsRoutes", "/panel/analytics/routes/"),
 		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 

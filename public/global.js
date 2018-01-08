@@ -248,15 +248,13 @@ $(document).ready(function(){
 		$(this).closest('.deletable_block').remove();
 	});
 
-	$(".edit_item").click(function(event)
-	{
+	$(".edit_item").click(function(event){
 		event.preventDefault();
 		let blockParent = $(this).closest('.editable_parent');
 		let block = blockParent.find('.editable_block').eq(0);
 		block.html("<textarea style='width: 99%;' name='edit_item'>" + block.html() + "</textarea><br /><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit' type='submit'>Update</button></a>");
 
-		$(".submit_edit").click(function(event)
-		{
+		$(".submit_edit").click(function(event){
 			event.preventDefault();
 			let blockParent = $(this).closest('.editable_parent');
 			let block = blockParent.find('.editable_block').eq(0);
@@ -267,6 +265,12 @@ $(document).ready(function(){
 			//console.log("Form Action:",formAction);
 			$.ajax({ url: formAction, type: "POST", error: ajaxError, dataType: "json", data: { isJs: "1", edit_item: newContent }
 			});
+		});
+	});
+
+	$("#forum_quick_perms").click(function(){
+		$(".submit_edit").click(function(event){
+
 		});
 	});
 
@@ -536,8 +540,16 @@ $(document).ready(function(){
 		});
 	});
 
+	// The time range selector for the time graphs in the Control Panel
+	$(".timeRangeSelector").change(function(){
+		console.log("Changed the time range to " + this.options[this.selectedIndex].getAttribute("val"));
+		window.location = this.form.getAttribute("action")+"?timeRange=" + this.options[this.selectedIndex].getAttribute("val"); // Do a redirect as a form submission refuses to work properly
+	});
+
 	this.onkeyup = function(event) {
 		if(event.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
 		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
 	};
+
+
 });

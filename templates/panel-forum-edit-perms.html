@@ -1,0 +1,31 @@
+{{template "header.html" . }}
+<div class="colstack panel_stack">
+{{template "panel-menu.html" . }}
+
+<main class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem"><h1>{{.Name}} Forum</h1></div>
+	</div>
+	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
+		<div class="colstack_item rowlist formlist panel_forum_perms">
+			{{range .Perms}}
+			<div class="formrow">
+				<div class="formitem">
+					<a>{{.LangStr}}</a>
+					<div class="to_right">
+						<select name="forum-perm-{{.Name}}">
+							<option{{if .Toggle}} selected{{end}} value=1>Yes</option>
+							<option{{if not .Toggle}} selected{{end}} value=0>No</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			{{end}}
+			<div class="formrow">
+				<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">Update Forum</button></div>
+			</div>
+		</div>
+	</form>
+</main>
+</div>
+{{template "footer.html" . }}

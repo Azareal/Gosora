@@ -17,6 +17,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
 			qgen.DBTableColumn{"lastActiveAt", "datetime", 0, false, false, ""},
 			qgen.DBTableColumn{"session", "varchar", 200, false, false, "''"},
+			//qgen.DBTableColumn{"authToken", "varchar", 200, false, false, "''"},
 			qgen.DBTableColumn{"last_ip", "varchar", 200, false, false, "0.0.0.0.0"},
 			qgen.DBTableColumn{"email", "varchar", 200, false, false, "''"},
 			qgen.DBTableColumn{"avatar", "varchar", 100, false, false, "''"},

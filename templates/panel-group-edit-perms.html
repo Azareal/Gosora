@@ -16,13 +16,13 @@
 		<div class="rowitem"><h1>{{.Name}} Group</h1></div>
 	</div>
 	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
-	<div id="panel_group" class="colstack_item rowlist formlist">
-		{{if .CurrentUser.Perms.EditGroupLocalPerms}}
+	{{if .CurrentUser.Perms.EditGroupLocalPerms}}
+	<div class="colstack_item rowlist formlist panel_group_perms">
 		{{range .LocalPerms}}
 		<div class="formrow">
 			<div class="formitem">
 				<a>{{.LangStr}}</a>
-				<div style="float: right;">
+				<div class="to_right">
 					<select name="group-perm-{{.Name}}">
 						<option{{if .Toggle}} selected{{end}} value=1>Yes</option>
 						<option{{if not .Toggle}} selected{{end}} value=0>No</option>
@@ -31,21 +31,21 @@
 			</div>
 		</div>
 		{{end}}
-		{{end}}
 		<div class="formrow">
 			<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">Update Group</button></div>
 		</div>
 	</div>
+	{{end}}
+	{{if .CurrentUser.Perms.EditGroupGlobalPerms}}
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>Extended Permissions</h1></div>
 	</div>
-	<div class="colstack_item rowlist formlist">
-		{{if .CurrentUser.Perms.EditGroupGlobalPerms}}
+	<div class="colstack_item rowlist formlist panel_group_perms">
 		{{range .GlobalPerms}}
 		<div class="formrow">
 			<div class="formitem">
 				<a>{{.LangStr}}</a>
-				<div style="float: right;">
+				<div class="to_right">
 					<select name="group-perm-{{.Name}}">
 						<option{{if .Toggle}} selected{{end}} value=1>Yes</option>
 						<option{{if not .Toggle}} selected{{end}} value=0>No</option>
@@ -54,11 +54,11 @@
 			</div>
 		</div>
 		{{end}}
-		{{end}}
 		<div class="formrow">
 			<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">Update Group</button></div>
 		</div>
 	</div>
+	{{end}}
 	</form>
 </main>
 </div>

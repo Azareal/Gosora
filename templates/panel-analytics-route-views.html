@@ -2,9 +2,18 @@
 <div class="colstack panel_stack">
 {{template "panel-menu.html" . }}
 	<main id="panel_dashboard_right" class="colstack_right">
-		<div class="colstack_item colstack_head">
-			<div class="rowitem"><a>{{.Route}} Views</a></div>
-		</div>
+		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/route/{{.Route}}" method="get">
+			<div class="colstack_item colstack_head">
+				<div class="rowitem">
+					<a>{{.Route}} Views</a>
+					<select class="timeRangeSelector to_right" name="timeRange">
+						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>1 day</option>
+						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>12 hours</option>
+						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>6 hours</option>
+					</select>
+				</div>
+			</div>
+		</form>
 		<div id="panel_analytics_views" class="colstack_graph_holder">
 			<div class="ct-chart"></div>
 		</div>

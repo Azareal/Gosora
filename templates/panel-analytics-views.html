@@ -2,12 +2,29 @@
 <div class="colstack panel_stack">
 {{template "panel-menu.html" . }}
 	<main id="panel_dashboard_right" class="colstack_right">
-		<div class="colstack_item colstack_head">
-			<div class="rowitem"><a>Views</a></div>
-		</div>
+		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/views/" method="get">
+			<div class="colstack_item colstack_head">
+				<div class="rowitem">
+					<a>Views</a>
+					<select class="timeRangeSelector to_right" name="timeRange">
+						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>1 day</option>
+						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>12 hours</option>
+						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>6 hours</option>
+					</select>
+				</div>
+			</div>
+		</form>
 		<div id="panel_analytics_views" class="colstack_graph_holder">
-			<div class="ct-chart"></div>
+			<div class="ct_chart"></div>
 		</div>
+		{{/**}}<div id="panel_analytics_views_table" class="colstack_item rowlist">
+			{{range .ViewItems}}
+			<div class="rowitem panel_compactrow editable_parent">
+				<a class="panel_upshift unix_to_minute_time">{{.Time}}</a>
+				<span class="panel_compacttext to_right">{{.Count}} views</span>
+			</div>
+			{{end}}
+		</div>{{**/}}
 	</main>
 </div>
 <script>
@@ -30,7 +47,7 @@ let seriesData = [{{range .PrimaryGraph.Series}}
 ];
 seriesData = seriesData.reverse();
 
-Chartist.Line('.ct-chart', {
+Chartist.Line('.ct_chart', {
   labels: labels,
   series: [seriesData],
 }, {

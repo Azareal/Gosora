@@ -45,16 +45,17 @@ type User struct {
 	Perms        Perms
 	PluginPerms  map[string]bool
 	Session      string
-	Loggedin     bool
-	Avatar       string
-	Message      string
-	URLPrefix    string // Move this to another table? Create a user lite?
-	URLName      string
-	Tag          string
-	Level        int
-	Score        int
-	LastIP       string // ! This part of the UserCache data might fall out of date
-	TempGroup    int
+	//AuthToken    string
+	Loggedin  bool
+	Avatar    string
+	Message   string
+	URLPrefix string // Move this to another table? Create a user lite?
+	URLName   string
+	Tag       string
+	Level     int
+	Score     int
+	LastIP    string // ! This part of the UserCache data might fall out of date
+	TempGroup int
 }
 
 type UserStmts struct {
