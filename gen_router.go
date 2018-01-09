@@ -348,6 +348,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump(9)
 	case strings.Contains(ua,"OPR"): // Pretends to be Chrome, needs to run before that
 		common.AgentViewCounter.Bump(3)
+	case strings.Contains(ua,"Edge"):
+		common.AgentViewCounter.Bump(5)
 	case strings.Contains(ua,"Chrome"):
 		common.AgentViewCounter.Bump(2)
 	case strings.Contains(ua,"Firefox"):
@@ -358,6 +360,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump(6)
 	case strings.Contains(ua,"Baiduspider"):
 		common.AgentViewCounter.Bump(10)
+	case strings.Contains(ua,"DuckDuckBot"):
+		common.AgentViewCounter.Bump(11)
 	default:
 		common.AgentViewCounter.Bump(0)
 	}
