@@ -221,7 +221,7 @@ var agentMapEnum = map[string]int{
 	"opera": 3,
 	"safari": 4,
 	"edge": 5,
-	"internet-explorer": 6,
+	"internetexplorer": 6,
 	"googlebot": 7,
 	"yandex": 8,
 	"bing": 9,
@@ -235,7 +235,7 @@ var reverseAgentMapEnum = map[int]string{
 	3: "opera",
 	4: "safari",
 	5: "edge",
-	6: "internet-explorer",
+	6: "internetexplorer",
 	7: "googlebot",
 	8: "yandex",
 	9: "bing",
@@ -342,6 +342,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	switch {
 	case strings.Contains(ua,"Google"):
 		common.AgentViewCounter.Bump(7)
+	case strings.Contains(ua,"Yandex"):
+		common.AgentViewCounter.Bump(8)
+	case strings.Contains(ua,"bingbot"), strings.Contains(ua,"BingPreview"):
+		common.AgentViewCounter.Bump(9)
 	case strings.Contains(ua,"OPR"): // Pretends to be Chrome, needs to run before that
 		common.AgentViewCounter.Bump(3)
 	case strings.Contains(ua,"Chrome"):
@@ -350,6 +354,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump(1)
 	case strings.Contains(ua,"Safari"):
 		common.AgentViewCounter.Bump(4)
+	case strings.Contains(ua,"MSIE"):
+		common.AgentViewCounter.Bump(6)
+	case strings.Contains(ua,"Baiduspider"):
+		common.AgentViewCounter.Bump(10)
 	default:
 		common.AgentViewCounter.Bump(0)
 	}

@@ -164,7 +164,7 @@ func main() {
 		"opera",
 		"safari",
 		"edge",
-		"internet-explorer",
+		"internetexplorer",
 
 		"googlebot",
 		"yandex",
@@ -311,6 +311,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	switch {
 	case strings.Contains(ua,"Google"):
 		common.AgentViewCounter.Bump({{.AllAgentMap.googlebot}})
+	case strings.Contains(ua,"Yandex"):
+		common.AgentViewCounter.Bump({{.AllAgentMap.yandex}})
+	case strings.Contains(ua,"bingbot"), strings.Contains(ua,"BingPreview"):
+		common.AgentViewCounter.Bump({{.AllAgentMap.bing}})
 	case strings.Contains(ua,"OPR"): // Pretends to be Chrome, needs to run before that
 		common.AgentViewCounter.Bump({{.AllAgentMap.opera}})
 	case strings.Contains(ua,"Chrome"):
@@ -319,6 +323,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump({{.AllAgentMap.firefox}})
 	case strings.Contains(ua,"Safari"):
 		common.AgentViewCounter.Bump({{.AllAgentMap.safari}})
+	case strings.Contains(ua,"MSIE"):
+		common.AgentViewCounter.Bump({{.AllAgentMap.internetexplorer}})
+	case strings.Contains(ua,"Baiduspider"):
+		common.AgentViewCounter.Bump({{.AllAgentMap.baidu}})
 	default:
 		common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
 	}
