@@ -119,3 +119,14 @@ func SetRouteMapEnum(rme map[string]int) {
 func SetReverseRouteMapEnum(rrme map[int]string) {
 	reverseRouteMapEnum = rrme
 }
+
+var agentMapEnum map[string]int
+var reverseAgentMapEnum map[int]string
+
+func SetAgentMapEnum(ame map[string]int) {
+	agentMapEnum = ame
+}
+
+func SetReverseAgentMapEnum(rame map[int]string) {
+	reverseAgentMapEnum = rame
+}

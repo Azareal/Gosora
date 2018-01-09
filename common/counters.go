@@ -9,6 +9,7 @@ import (
 )
 
 var GlobalViewCounter *ChunkedViewCounter
+var AgentViewCounter *DefaultAgentViewCounter
 var RouteViewCounter *DefaultRouteViewCounter
 var TopicViewCounter *DefaultTopicViewCounter
 
@@ -64,7 +65,64 @@ type RWMutexCounterBucket struct {
 	sync.RWMutex
 }
 
-// The name of the struct clashes with the name of the variable, so we're adding Impl to the end
+type DefaultAgentViewCounter struct {
+	agentBuckets []*RWMutexCounterBucket //[AgentID]count
+	insert       *sql.Stmt
+}
+
+func NewDefaultAgentViewCounter() (*DefaultAgentViewCounter, error) {
+	acc := qgen.Builder.Accumulator()
+	var agentBuckets = make([]*RWMutexCounterBucket, len(agentMapEnum))
+	for bucketID, _ := range agentBuckets {
+		agentBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
+	}
+	counter := &DefaultAgentViewCounter{
+		agentBuckets: agentBuckets,
+		insert:       acc.Insert("viewchunks_agents").Columns("count, createdAt, browser").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
+	}
+	AddScheduledFifteenMinuteTask(counter.Tick)
+	//AddScheduledSecondTask(counter.Tick)
+	AddShutdownTask(counter.Tick)
+	return counter, acc.FirstError()
+}
+
+func (counter *DefaultAgentViewCounter) Tick() error {
+	for agentID, agentBucket := range counter.agentBuckets {
+		var count int
+		agentBucket.RLock()
+		count = agentBucket.counter
+		agentBucket.counter = 0
+		agentBucket.RUnlock()
+
+		err := counter.insertChunk(count, agentID) // TODO: Bulk insert for speed?
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (counter *DefaultAgentViewCounter) insertChunk(count int, agent int) error {
+	if count == 0 {
+		return nil
+	}
+	var agentName = reverseAgentMapEnum[agent]
+	debugLogf("Inserting a viewchunk with a count of %d for agent %s (%d)", count, agentName, agent)
+	_, err := counter.insert.Exec(count, agentName)
+	return err
+}
+
+func (counter *DefaultAgentViewCounter) Bump(agent int) {
+	// TODO: Test this check
+	debugLog("counter.agentBuckets[", agent, "]: ", counter.agentBuckets[agent])
+	if len(counter.agentBuckets) <= agent || agent < 0 {
+		return
+	}
+	counter.agentBuckets[agent].Lock()
+	counter.agentBuckets[agent].counter++
+	counter.agentBuckets[agent].Unlock()
+}
+
 type DefaultRouteViewCounter struct {
 	routeBuckets []*RWMutexCounterBucket //[RouteID]count
 	insert       *sql.Stmt
@@ -115,7 +173,7 @@ func (counter *DefaultRouteViewCounter) insertChunk(count int, route int) error 
 func (counter *DefaultRouteViewCounter) Bump(route int) {
 	// TODO: Test this check
 	debugLog("counter.routeBuckets[", route, "]: ", counter.routeBuckets[route])
-	if len(counter.routeBuckets) <= route {
+	if len(counter.routeBuckets) <= route || route < 0 {
 		return
 	}
 	counter.routeBuckets[route].Lock()

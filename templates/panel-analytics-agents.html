@@ -1,0 +1,18 @@
+{{template "header.html" . }}
+<div class="colstack panel_stack">
+{{template "panel-menu.html" . }}
+	<main id="panel_dashboard_right" class="colstack_right">
+		<div class="colstack_item colstack_head">
+			<div class="rowitem"><a>Agents (24 hours)</a></div>
+		</div>
+		<div id="panel_analytics_agents" class="colstack_item rowlist">
+			{{range .ItemList}}
+			<div class="rowitem panel_compactrow editable_parent">
+				<a href="/panel/analytics/agent/{{.Agent}}" class="panel_upshift">{{.Agent}}</a>
+				<span class="panel_compacttext to_right">{{.Count}} views</span>
+			</div>
+			{{end}}
+		</div>
+	</main>
+</div>
+{{template "footer.html" . }}

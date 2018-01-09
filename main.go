@@ -84,6 +84,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.AgentViewCounter, err = common.NewDefaultAgentViewCounter()
+	if err != nil {
+		return err
+	}
 	common.RouteViewCounter, err = common.NewDefaultRouteViewCounter()
 	if err != nil {
 		return err

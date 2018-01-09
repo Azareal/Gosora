@@ -579,59 +579,6 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	return nil
 }
 
-func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
-	var routeMap = make(map[string]int)
-
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks").Columns("count, route").Where("route != ''").DateCutoff("createdAt", 1, "day").Query()
-	if err != nil && err != ErrNoRows {
-		return common.InternalError(err, w, r)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var count int
-		var route string
-		err := rows.Scan(&count, &route)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		log.Print("count: ", count)
-		log.Print("route: ", route)
-		routeMap[route] += count
-	}
-	err = rows.Err()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// TODO: Sort this slice
-	var routeItems []common.PanelAnalyticsRoutesItem
-	for route, count := range routeMap {
-		routeItems = append(routeItems, common.PanelAnalyticsRoutesItem{
-			Route: route,
-			Count: count,
-		})
-	}
-
-	pi := common.PanelAnalyticsRoutesPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", routeItems}
-	if common.PreRenderHooks["pre_render_panel_analytics_routes"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_analytics_routes", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-analytics-routes.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
-}
-
 func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.User, route string) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -724,6 +671,112 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 		}
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-analytics-route-views.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	var routeMap = make(map[string]int)
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("viewchunks").Columns("count, route").Where("route != ''").DateCutoff("createdAt", 1, "day").Query()
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int
+		var route string
+		err := rows.Scan(&count, &route)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		log.Print("count: ", count)
+		log.Print("route: ", route)
+		routeMap[route] += count
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Sort this slice
+	var routeItems []common.PanelAnalyticsRoutesItem
+	for route, count := range routeMap {
+		routeItems = append(routeItems, common.PanelAnalyticsRoutesItem{
+			Route: route,
+			Count: count,
+		})
+	}
+
+	pi := common.PanelAnalyticsRoutesPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", routeItems}
+	if common.PreRenderHooks["pre_render_panel_analytics_routes"] != nil {
+		if common.RunPreRenderHook("pre_render_panel_analytics_routes", w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err = common.Templates.ExecuteTemplate(w, "panel-analytics-routes.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	var agentMap = make(map[string]int)
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("viewchunks_agents").Columns("count, browser").DateCutoff("createdAt", 1, "day").Query()
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int
+		var agent string
+		err := rows.Scan(&count, &agent)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		log.Print("count: ", count)
+		log.Print("agent: ", agent)
+		agentMap[agent] += count
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Sort this slice
+	var agentItems []common.PanelAnalyticsAgentsItem
+	for agent, count := range agentMap {
+		agentItems = append(agentItems, common.PanelAnalyticsAgentsItem{
+			Agent: agent,
+			Count: count,
+		})
+	}
+
+	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", agentItems}
+	if common.PreRenderHooks["pre_render_panel_analytics_agents"] != nil {
+		if common.RunPreRenderHook("pre_render_panel_analytics_agents", w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err = common.Templates.ExecuteTemplate(w, "panel-analytics-agents.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

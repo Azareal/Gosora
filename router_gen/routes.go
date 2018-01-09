@@ -92,6 +92,7 @@ func buildPanelRoutes() {
 
 		View("routePanelAnalyticsViews", "/panel/analytics/views/").Before("ParseForm"),
 		View("routePanelAnalyticsRoutes", "/panel/analytics/routes/"),
+		View("routePanelAnalyticsAgents", "/panel/analytics/agents/"),
 		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 
 		View("routePanelGroups", "/panel/groups/"),

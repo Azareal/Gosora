@@ -168,10 +168,10 @@
 	padding-top: 16px;
 }
 .ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
-    stroke: hsl(359,98%,33%) !important;
+    stroke: hsl(359,98%,53%) !important;
 }
 .ct-point {
-	stroke: hsl(359,98%,53%) !important;
+	stroke: hsl(359,98%,33%) !important;
 }
 .ct-point:hover {
 	stroke: hsl(359,98%,50%) !important;

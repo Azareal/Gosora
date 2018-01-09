@@ -184,6 +184,20 @@ type PanelAnalyticsRoutesPage struct {
 	ItemList    []PanelAnalyticsRoutesItem
 }
 
+type PanelAnalyticsAgentsItem struct {
+	Agent string
+	Count int
+}
+
+type PanelAnalyticsAgentsPage struct {
+	Title       string
+	CurrentUser User
+	Header      *HeaderVars
+	Stats       PanelStats
+	Zone        string
+	ItemList    []PanelAnalyticsAgentsItem
+}
+
 type PanelAnalyticsRoutePage struct {
 	Title        string
 	CurrentUser  User

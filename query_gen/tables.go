@@ -365,6 +365,16 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableKey{},
 	)
 
+	qgen.Install.CreateTable("viewchunks_agents", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+			qgen.DBTableColumn{"browser", "varchar", 200, false, false, ""}, // googlebot, firefox, opera, etc.
+			//qgen.DBTableColumn{"version","varchar",0,false,false,""}, // the version of the browser or bot
+		},
+		[]qgen.DBTableKey{},
+	)
+
 	/*
 		qgen.Install.CreateTable("viewchunks_forums", "", "",
 			[]qgen.DBTableColumn{
