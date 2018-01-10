@@ -73,9 +73,9 @@ var Template_profile_handle func(ProfilePage, http.ResponseWriter) error = func(
 
 // nolint
 var Template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) error = func(pi CreateTopicPage, w http.ResponseWriter) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["create-topic"]
+	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["create_topic"]
 	if !ok {
-		mapping = "create-topic"
+		mapping = "create_topic"
 	}
 	return Templates.ExecuteTemplate(w, mapping+".html", pi)
 }

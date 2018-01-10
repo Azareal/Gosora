@@ -209,6 +209,17 @@ type PanelAnalyticsRoutePage struct {
 	TimeRange    string
 }
 
+type PanelAnalyticsAgentPage struct {
+	Title        string
+	CurrentUser  User
+	Header       *HeaderVars
+	Stats        PanelStats
+	Zone         string
+	Agent        string
+	PrimaryGraph PanelTimeGraph
+	TimeRange    string
+}
+
 type PanelThemesPage struct {
 	Title         string
 	CurrentUser   User
@@ -279,6 +290,21 @@ type NameLangToggle struct {
 	Name    string
 	LangStr string
 	Toggle  bool
+}
+
+type PanelEditForumGroupPage struct {
+	Title       string
+	CurrentUser User
+	Header      *HeaderVars
+	Stats       PanelStats
+	Zone        string
+	ForumID     int
+	GroupID     int
+	Name        string
+	Desc        string
+	Active      bool
+	Preset      string
+	Perms       []NameLangToggle
 }
 
 type PanelEditGroupPermsPage struct {

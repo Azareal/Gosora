@@ -94,13 +94,13 @@ func (forum *Forum) Update(name string, desc string, active bool, preset string)
 func (forum *Forum) SetPreset(preset string, gid int) error {
 	fperms, changed := GroupForumPresetToForumPerms(preset)
 	if changed {
-		return forum.setPreset(fperms, preset, gid)
+		return forum.SetPerms(fperms, preset, gid)
 	}
 	return nil
 }
 
 // TODO: Refactor this
-func (forum *Forum) setPreset(fperms *ForumPerms, preset string, gid int) (err error) {
+func (forum *Forum) SetPerms(fperms *ForumPerms, preset string, gid int) (err error) {
 	err = ReplaceForumPermsForGroup(gid, map[int]string{forum.ID: preset}, map[int]*ForumPerms{forum.ID: fperms})
 	if err != nil {
 		LogError(err)

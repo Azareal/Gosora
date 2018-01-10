@@ -6,7 +6,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{.Name}} Forum</h1></div>
 	</div>
-	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
+	<form action="/panel/forums/edit/perms/adv/submit/{{.ForumID}}-{{.GroupID}}?session={{.CurrentUser.Session}}" method="post">
 		<div class="colstack_item rowlist formlist panel_forum_perms">
 			{{range .Perms}}
 			<div class="formrow">

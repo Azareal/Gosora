@@ -333,6 +333,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump({{.AllAgentMap.duckduckgo}})
 	default:
 		common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
+		if common.Dev.DebugMode {
+			log.Print("Unknown UA: ", ua)
+		}
 	}
 	
 	// Deal with the session stuff, etc.

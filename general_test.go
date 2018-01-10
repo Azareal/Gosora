@@ -51,12 +51,10 @@ func gloinit() (err error) {
 	if err != nil {
 		return err
 	}
-
 	err = common.InitThemes()
 	if err != nil {
 		return err
 	}
-
 	common.SwitchToTestDB()
 
 	var ok bool
@@ -70,12 +68,10 @@ func gloinit() (err error) {
 	if err != nil {
 		return err
 	}
-
 	err = InitDatabase()
 	if err != nil {
 		return err
 	}
-
 	err = afterDBInit()
 	if err != nil {
 		return err

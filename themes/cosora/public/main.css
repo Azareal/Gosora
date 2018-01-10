@@ -431,7 +431,7 @@ input, select {
 	display: flex;
 	margin-left: 2px;
 }
-.quick_button_row button, .quick_button_row label, .ip_search_search, .formbutton {
+.quick_button_row button, .quick_button_row label, .ip_search_search, .formbutton, button {
 	padding-left: 10px;
 	padding-right: 10px;
 	padding-top: 6px;
@@ -470,10 +470,7 @@ label.uploadItem {
 	padding-left: 33px;
 }
 
-button {
-	border: 1px solid var(--header-border-color);
-}
-select, input, textarea, button {
+select, input, textarea {
 	background: var(--element-background-color);
 	padding: 5px;
 	color: hsl(0,0%,30%);

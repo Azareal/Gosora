@@ -546,6 +546,16 @@ $(document).ready(function(){
 		window.location = this.form.getAttribute("action")+"?timeRange=" + this.options[this.selectedIndex].getAttribute("val"); // Do a redirect as a form submission refuses to work properly
 	});
 
+	$(".unix_to_24_hour_time").each(function(){
+		let unixTime = this.innerText;
+		let date = new Date(unixTime*1000);
+		console.log("date: ", date);
+		let minutes = "0" + date.getMinutes();
+		let formattedTime = date.getHours() + ":" + minutes.substr(-2);
+		console.log("formattedTime:", formattedTime);
+		this.innerText = formattedTime;
+	});
+
 	this.onkeyup = function(event) {
 		if(event.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
 		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();

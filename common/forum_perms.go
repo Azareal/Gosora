@@ -217,6 +217,7 @@ func ReplaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string,
 }
 
 // TODO: Refactor this and write tests for it
+// TODO: We really need to improve the thread safety of this
 func ForumPermsToGroupForumPreset(fperms *ForumPerms) string {
 	if !fperms.Overrides {
 		return "default"

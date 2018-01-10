@@ -97,7 +97,7 @@ func routeTopicCreate(w http.ResponseWriter, r *http.Request, user common.User, 
 		}
 	}
 
-	err = common.RunThemeTemplate(headerVars.Theme.Name, "create-topic", ctpage, w)
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "create_topic", ctpage, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -646,7 +646,7 @@ func routeAccountEditCritical(w http.ResponseWriter, r *http.Request, user commo
 			return nil
 		}
 	}
-	err := common.Templates.ExecuteTemplate(w, "account-own-edit.html", pi)
+	err := common.Templates.ExecuteTemplate(w, "account_own_edit.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -692,7 +692,7 @@ func routeAccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user
 			return nil
 		}
 	}
-	err = common.Templates.ExecuteTemplate(w, "account-own-edit.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "account_own_edit.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -711,7 +711,7 @@ func routeAccountEditAvatar(w http.ResponseWriter, r *http.Request, user common.
 			return nil
 		}
 	}
-	err := common.Templates.ExecuteTemplate(w, "account-own-edit-avatar.html", pi)
+	err := common.Templates.ExecuteTemplate(w, "account_own_edit_avatar.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -796,7 +796,7 @@ func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c
 			return nil
 		}
 	}
-	err = common.Templates.ExecuteTemplate(w, "account-own-edit-avatar.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "account_own_edit_avatar.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -815,7 +815,7 @@ func routeAccountEditUsername(w http.ResponseWriter, r *http.Request, user commo
 			return nil
 		}
 	}
-	err := common.Templates.ExecuteTemplate(w, "account-own-edit-username.html", pi)
+	err := common.Templates.ExecuteTemplate(w, "account_own_edit_username.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -842,7 +842,7 @@ func routeAccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user
 			return nil
 		}
 	}
-	err = common.Templates.ExecuteTemplate(w, "account-own-edit-username.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "account_own_edit_username.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -897,7 +897,7 @@ func routeAccountEditEmail(w http.ResponseWriter, r *http.Request, user common.U
 			return nil
 		}
 	}
-	err = common.Templates.ExecuteTemplate(w, "account-own-edit-email.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "account_own_edit_email.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -969,7 +969,7 @@ func routeAccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, us
 			return nil
 		}
 	}
-	err = common.Templates.ExecuteTemplate(w, "account-own-edit-email.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "account_own_edit_email.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

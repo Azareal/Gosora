@@ -21,6 +21,30 @@ import (
 	"github.com/Azareal/gopsutil/mem"
 )
 
+// We're trying to reduce the amount of boilerplate in here, so I added these two functions, they might wind up circulating outside this file in the future
+func panelSuccessRedirect(dest string, w http.ResponseWriter, r *http.Request, isJs bool) common.RouteError {
+	if !isJs {
+		http.Redirect(w, r, dest, http.StatusSeeOther)
+	} else {
+		w.Write(successJSONBytes)
+	}
+	return nil
+}
+
+// TODO: Implement this properly
+/*func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, user common.User, pi interface{}) common.RouteError {
+	if common.PreRenderHooks["pre_render_"+tmplName] != nil {
+		if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err = common.Templates.ExecuteTemplate(w, tmplName+".html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}*/
+
 func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -152,11 +176,12 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 			return nil
 		}
 	}
-	err = common.Templates.ExecuteTemplate(w, "panel-dashboard.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "panel_dashboard.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 	return nil
+	//return panelRenderTemplate("panel_dashboard",w,r,user,pi)
 }
 
 func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -255,7 +280,7 @@ func routePanelForumsDelete(w http.ResponseWriter, r *http.Request, user common.
 			return nil
 		}
 	}
-	err = common.Templates.ExecuteTemplate(w, "areyousure.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "are_you_sure.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -322,6 +347,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		if gid == 0 {
 			continue
 		}
+		// TODO: Don't access the cache on the group directly
 		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(group.Forums[fid])})
 	}
 
@@ -377,13 +403,7 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
-
-	if !isJs {
-		http.Redirect(w, r, "/panel/forums/", http.StatusSeeOther)
-	} else {
-		w.Write(successJSONBytes)
-	}
-	return nil
+	return panelSuccessRedirect("/panel/forums/", w, r, isJs)
 }
 
 func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
@@ -419,15 +439,30 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
 	}
 
-	if !isJs {
-		http.Redirect(w, r, "/panel/forums/edit/"+strconv.Itoa(fid), http.StatusSeeOther)
-	} else {
-		w.Write(successJSONBytes)
-	}
-	return nil
+	return panelSuccessRedirect("/panel/forums/edit/"+strconv.Itoa(fid), w, r, isJs)
 }
 
-func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
+// A helper function for the Advanced portion of the Forum Perms Editor
+func panelForumPermsExtractDash(paramList string) (fid int, gid int, err error) {
+	params := strings.Split(paramList, "-")
+	if len(params) != 2 {
+		return fid, gid, errors.New("Parameter count mismatch")
+	}
+
+	fid, err = strconv.Atoi(params[0])
+	if err != nil {
+		return fid, gid, errors.New("The provided Forum ID is not a valid number.")
+	}
+
+	gid, err = strconv.Atoi(params[1])
+	if err != nil {
+		err = errors.New("The provided Group ID is not a valid number.")
+	}
+
+	return fid, gid, err
+}
+
+func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user common.User, paramList string) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -436,9 +471,9 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 		return common.NoPermissions(w, r, user)
 	}
 
-	fid, err := strconv.Atoi(sfid)
+	fid, gid, err := panelForumPermsExtractDash(paramList)
 	if err != nil {
-		return common.LocalError("The provided Forum ID is not a valid number.", w, r, user)
+		return common.LocalError(err.Error(), w, r, user)
 	}
 
 	forum, err := common.Forums.Get(fid)
@@ -452,20 +487,33 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 		forum.Preset = "custom"
 	}
 
-	glist, err := common.Groups.GetAll()
-	if err != nil {
+	forumPerms, err := common.FPStore.Get(fid, gid)
+	if err == ErrNoRows {
+		return common.LocalError("The requested group doesn't exist.", w, r, user)
+	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
-	var gplist []common.GroupForumPermPreset
-	for gid, group := range glist {
-		if gid == 0 {
-			continue
-		}
-		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(group.Forums[fid])})
-	}
+	var formattedPermList []common.NameLangToggle
 
-	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel-edit-forum"), user, headerVars, stats, "forums", forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
+	// TODO: Load the phrases in bulk for efficiency?
+	// TODO: Reduce the amount of code duplication between this and the group editor. Also, can we grind this down into one line or use a code generator to stay current more easily?
+	var addNameLangToggle = func(permStr string, perm bool) {
+		formattedPermList = append(formattedPermList, common.NameLangToggle{permStr, common.GetLocalPermPhrase(permStr), perm})
+	}
+	addNameLangToggle("ViewTopic", forumPerms.ViewTopic)
+	addNameLangToggle("LikeItem", forumPerms.LikeItem)
+	addNameLangToggle("CreateTopic", forumPerms.CreateTopic)
+	//<--
+	addNameLangToggle("EditTopic", forumPerms.EditTopic)
+	addNameLangToggle("DeleteTopic", forumPerms.DeleteTopic)
+	addNameLangToggle("CreateReply", forumPerms.CreateReply)
+	addNameLangToggle("EditReply", forumPerms.EditReply)
+	addNameLangToggle("DeleteReply", forumPerms.DeleteReply)
+	addNameLangToggle("PinTopic", forumPerms.PinTopic)
+	addNameLangToggle("CloseTopic", forumPerms.CloseTopic)
+
+	pi := common.PanelEditForumGroupPage{common.GetTitlePhrase("panel-edit-forum"), user, headerVars, stats, "forums", forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
 	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 			return nil
@@ -477,6 +525,60 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 	}
 
 	return nil
+}
+
+func routePanelForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user common.User, paramList string) common.RouteError {
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ManageForums {
+		return common.NoPermissions(w, r, user)
+	}
+	isJs := (r.PostFormValue("js") == "1")
+
+	fid, gid, err := panelForumPermsExtractDash(paramList)
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
+	forum, err := common.Forums.Get(fid)
+	if err == ErrNoRows {
+		return common.LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	forumPerms, err := common.FPStore.GetCopy(fid, gid)
+	if err == ErrNoRows {
+		return common.LocalError("The requested group doesn't exist.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	var extractPerm = func(name string) bool {
+		pvalue := r.PostFormValue("forum-perm-" + name)
+		return (pvalue == "1")
+	}
+
+	// TODO: Generate this code?
+	forumPerms.ViewTopic = extractPerm("ViewTopic")
+	forumPerms.LikeItem = extractPerm("LikeItem")
+	forumPerms.CreateTopic = extractPerm("CreateTopic")
+	forumPerms.EditTopic = extractPerm("EditTopic")
+	forumPerms.DeleteTopic = extractPerm("DeleteTopic")
+	forumPerms.CreateReply = extractPerm("CreateReply")
+	forumPerms.EditReply = extractPerm("EditReply")
+	forumPerms.DeleteReply = extractPerm("DeleteReply")
+	forumPerms.PinTopic = extractPerm("PinTopic")
+	forumPerms.CloseTopic = extractPerm("CloseTopic")
+
+	err = forum.SetPerms(&forumPerms, "custom", gid)
+	if err != nil {
+		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
+	}
+
+	return panelSuccessRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid), w, r, isJs)
 }
 
 func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -628,6 +730,7 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	log.Print("in routePanelAnalyticsRouteViews")
 
 	acc := qgen.Builder.Accumulator()
+	// TODO: Validate the route is valid
 	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", timeQuantity, timeUnit).Query(route)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
@@ -671,6 +774,105 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 		}
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-analytics-route-views.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.User, agent string) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
+
+	var timeQuantity = 6
+	var timeUnit = "hour"
+	var timeSlices = 12
+	var sliceWidth = 60 * 30
+	var timeRange = "six-hours"
+
+	switch r.FormValue("timeRange") {
+	case "one-day":
+		timeQuantity = 1
+		timeUnit = "day"
+		timeSlices = 24
+		sliceWidth = 60 * 60
+		timeRange = "one-day"
+	case "twelve-hours":
+		timeQuantity = 12
+		timeSlices = 24
+		timeRange = "twelve-hours"
+	case "six-hours", "":
+		timeRange = "six-hours"
+	default:
+		return common.LocalError("Unknown time range", w, r, user)
+	}
+
+	var revLabelList []int64
+	var labelList []int64
+	var viewMap = make(map[int64]int64)
+	var currentTime = time.Now().Unix()
+
+	for i := 1; i <= timeSlices; i++ {
+		var label = currentTime - int64(i*sliceWidth)
+		revLabelList = append(revLabelList, label)
+		viewMap[label] = 0
+	}
+	for _, value := range revLabelList {
+		labelList = append(labelList, value)
+	}
+
+	var viewList []int64
+	log.Print("in routePanelAnalyticsAgentViews")
+
+	acc := qgen.Builder.Accumulator()
+	// TODO: Verify the agent is valid
+	rows, err := acc.Select("viewchunks_agents").Columns("count, createdAt").Where("browser = ?").DateCutoff("createdAt", timeQuantity, timeUnit).Query(agent)
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int64
+		var createdAt time.Time
+		err := rows.Scan(&count, &createdAt)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		log.Print("count: ", count)
+		log.Print("createdAt: ", createdAt)
+
+		var unixCreatedAt = createdAt.Unix()
+		log.Print("unixCreatedAt: ", unixCreatedAt)
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				viewMap[value] += count
+				break
+			}
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	for _, value := range revLabelList {
+		viewList = append(viewList, viewMap[value])
+	}
+	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	log.Printf("graph: %+v\n", graph)
+
+	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", html.EscapeString(agent), graph, timeRange}
+	if common.PreRenderHooks["pre_render_panel_analytics_agent_views"] != nil {
+		if common.RunPreRenderHook("pre_render_panel_analytics_agent_views", w, r, &user, &pi) {
+			return nil
+		}
+	}
+	err = common.Templates.ExecuteTemplate(w, "panel-analytics-agent-views.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -951,13 +1153,7 @@ func routePanelWordFiltersCreate(w http.ResponseWriter, r *http.Request, user co
 	}
 
 	common.AddWordFilter(int(lastID), find, replacement)
-
-	if !isJs {
-		http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther)
-	} else {
-		w.Write(successJSONBytes)
-	}
-	return nil
+	return panelSuccessRedirect("/panel/settings/word-filters/", w, r, isJs)
 }
 
 func routePanelWordFiltersEdit(w http.ResponseWriter, r *http.Request, user common.User, wfid string) common.RouteError {
@@ -1586,39 +1782,48 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 
 	// TODO: Load the phrases in bulk for efficiency?
 	var localPerms []common.NameLangToggle
-	localPerms = append(localPerms, common.NameLangToggle{"ViewTopic", common.GetLocalPermPhrase("ViewTopic"), group.Perms.ViewTopic})
-	localPerms = append(localPerms, common.NameLangToggle{"LikeItem", common.GetLocalPermPhrase("LikeItem"), group.Perms.LikeItem})
-	localPerms = append(localPerms, common.NameLangToggle{"CreateTopic", common.GetLocalPermPhrase("CreateTopic"), group.Perms.CreateTopic})
+
+	var addLocalPerm = func(permStr string, perm bool) {
+		localPerms = append(localPerms, common.NameLangToggle{permStr, common.GetLocalPermPhrase(permStr), perm})
+	}
+
+	addLocalPerm("ViewTopic", group.Perms.ViewTopic)
+	addLocalPerm("LikeItem", group.Perms.LikeItem)
+	addLocalPerm("CreateTopic", group.Perms.CreateTopic)
 	//<--
-	localPerms = append(localPerms, common.NameLangToggle{"EditTopic", common.GetLocalPermPhrase("EditTopic"), group.Perms.EditTopic})
-	localPerms = append(localPerms, common.NameLangToggle{"DeleteTopic", common.GetLocalPermPhrase("DeleteTopic"), group.Perms.DeleteTopic})
-	localPerms = append(localPerms, common.NameLangToggle{"CreateReply", common.GetLocalPermPhrase("CreateReply"), group.Perms.CreateReply})
-	localPerms = append(localPerms, common.NameLangToggle{"EditReply", common.GetLocalPermPhrase("EditReply"), group.Perms.EditReply})
-	localPerms = append(localPerms, common.NameLangToggle{"DeleteReply", common.GetLocalPermPhrase("DeleteReply"), group.Perms.DeleteReply})
-	localPerms = append(localPerms, common.NameLangToggle{"PinTopic", common.GetLocalPermPhrase("PinTopic"), group.Perms.PinTopic})
-	localPerms = append(localPerms, common.NameLangToggle{"CloseTopic", common.GetLocalPermPhrase("CloseTopic"), group.Perms.CloseTopic})
+	addLocalPerm("EditTopic", group.Perms.EditTopic)
+	addLocalPerm("DeleteTopic", group.Perms.DeleteTopic)
+	addLocalPerm("CreateReply", group.Perms.CreateReply)
+	addLocalPerm("EditReply", group.Perms.EditReply)
+	addLocalPerm("DeleteReply", group.Perms.DeleteReply)
+	addLocalPerm("PinTopic", group.Perms.PinTopic)
+	addLocalPerm("CloseTopic", group.Perms.CloseTopic)
 
 	var globalPerms []common.NameLangToggle
-	globalPerms = append(globalPerms, common.NameLangToggle{"BanUsers", common.GetGlobalPermPhrase("BanUsers"), group.Perms.BanUsers})
-	globalPerms = append(globalPerms, common.NameLangToggle{"ActivateUsers", common.GetGlobalPermPhrase("ActivateUsers"), group.Perms.ActivateUsers})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditUser", common.GetGlobalPermPhrase("EditUser"), group.Perms.EditUser})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditUserEmail", common.GetGlobalPermPhrase("EditUserEmail"), group.Perms.EditUserEmail})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditUserPassword", common.GetGlobalPermPhrase("EditUserPassword"), group.Perms.EditUserPassword})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditUserGroup", common.GetGlobalPermPhrase("EditUserGroup"), group.Perms.EditUserGroup})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditUserGroupSuperMod", common.GetGlobalPermPhrase("EditUserGroupSuperMod"), group.Perms.EditUserGroupSuperMod})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditUserGroupAdmin", common.GetGlobalPermPhrase("EditUserGroupAdmin"), group.Perms.EditUserGroupAdmin})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditGroup", common.GetGlobalPermPhrase("EditGroup"), group.Perms.EditGroup})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditGroupLocalPerms", common.GetGlobalPermPhrase("EditGroupLocalPerms"), group.Perms.EditGroupLocalPerms})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditGroupGlobalPerms", common.GetGlobalPermPhrase("EditGroupGlobalPerms"), group.Perms.EditGroupGlobalPerms})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditGroupSuperMod", common.GetGlobalPermPhrase("EditGroupSuperMod"), group.Perms.EditGroupSuperMod})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditGroupAdmin", common.GetGlobalPermPhrase("EditGroupAdmin"), group.Perms.EditGroupAdmin})
-	globalPerms = append(globalPerms, common.NameLangToggle{"ManageForums", common.GetGlobalPermPhrase("ManageForums"), group.Perms.ManageForums})
-	globalPerms = append(globalPerms, common.NameLangToggle{"EditSettings", common.GetGlobalPermPhrase("EditSettings"), group.Perms.EditSettings})
-	globalPerms = append(globalPerms, common.NameLangToggle{"ManageThemes", common.GetGlobalPermPhrase("ManageThemes"), group.Perms.ManageThemes})
-	globalPerms = append(globalPerms, common.NameLangToggle{"ManagePlugins", common.GetGlobalPermPhrase("ManagePlugins"), group.Perms.ManagePlugins})
-	globalPerms = append(globalPerms, common.NameLangToggle{"ViewAdminLogs", common.GetGlobalPermPhrase("ViewAdminLogs"), group.Perms.ViewAdminLogs})
-	globalPerms = append(globalPerms, common.NameLangToggle{"ViewIPs", common.GetGlobalPermPhrase("ViewIPs"), group.Perms.ViewIPs})
-	globalPerms = append(globalPerms, common.NameLangToggle{"UploadFiles", common.GetGlobalPermPhrase("UploadFiles"), group.Perms.UploadFiles})
+	var addGlobalPerm = func(permStr string, perm bool) {
+		globalPerms = append(globalPerms, common.NameLangToggle{permStr, common.GetGlobalPermPhrase(permStr), perm})
+	}
+
+	addGlobalPerm("BanUsers", group.Perms.BanUsers)
+	addGlobalPerm("ActivateUsers", group.Perms.ActivateUsers)
+	addGlobalPerm("EditUser", group.Perms.EditUser)
+	addGlobalPerm("EditUserEmail", group.Perms.EditUserEmail)
+	addGlobalPerm("EditUserPassword", group.Perms.EditUserPassword)
+	addGlobalPerm("EditUserGroup", group.Perms.EditUserGroup)
+	addGlobalPerm("EditUserGroupSuperMod", group.Perms.EditUserGroupSuperMod)
+	addGlobalPerm("EditUserGroupAdmin", group.Perms.EditUserGroupAdmin)
+	addGlobalPerm("EditGroup", group.Perms.EditGroup)
+	addGlobalPerm("EditGroupLocalPerms", group.Perms.EditGroupLocalPerms)
+	addGlobalPerm("EditGroupGlobalPerms", group.Perms.EditGroupGlobalPerms)
+	addGlobalPerm("EditGroupSuperMod", group.Perms.EditGroupSuperMod)
+	addGlobalPerm("EditGroupAdmin", group.Perms.EditGroupAdmin)
+	addGlobalPerm("ManageForums", group.Perms.ManageForums)
+	addGlobalPerm("EditSettings", group.Perms.EditSettings)
+	addGlobalPerm("ManageThemes", group.Perms.ManageThemes)
+	addGlobalPerm("ManagePlugins", group.Perms.ManagePlugins)
+	addGlobalPerm("ViewAdminLogs", group.Perms.ViewAdminLogs)
+	addGlobalPerm("ViewIPs", group.Perms.ViewIPs)
+	addGlobalPerm("UploadFiles", group.Perms.UploadFiles)
 
 	pi := common.PanelEditGroupPermsPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, "groups", group.ID, group.Name, localPerms, globalPerms}
 	if common.PreRenderHooks["pre_render_panel_edit_group_perms"] != nil {
@@ -1768,6 +1973,7 @@ func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		}
 	}
 
+	// TODO: Abstract this
 	pjson, err := json.Marshal(pmap)
 	if err != nil {
 		return common.LocalError("Unable to marshal the data", w, r, user)

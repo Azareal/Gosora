@@ -14,6 +14,7 @@ var FPStore ForumPermsStore
 type ForumPermsStore interface {
 	Init() error
 	Get(fid int, gid int) (fperms *ForumPerms, err error)
+	GetCopy(fid int, gid int) (fperms ForumPerms, err error)
 	Reload(id int) error
 	ReloadGroup(fid int, gid int) error
 }
@@ -198,10 +199,22 @@ func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[i
 }
 
 // TODO: Add a hook here and have plugin_guilds use it
+// TODO: Check if the forum exists?
+// TODO: Fix the races
 func (fps *MemoryForumPermsStore) Get(fid int, gid int) (fperms *ForumPerms, err error) {
 	group, err := Groups.Get(gid)
 	if err != nil {
 		return fperms, ErrNoRows
 	}
 	return group.Forums[fid], nil
+}
+
+// TODO: Check if the forum exists?
+// TODO: Fix the races
+func (fps *MemoryForumPermsStore) GetCopy(fid int, gid int) (fperms ForumPerms, err error) {
+	group, err := Groups.Get(gid)
+	if err != nil {
+		return fperms, ErrNoRows
+	}
+	return *group.Forums[fid], nil
 }

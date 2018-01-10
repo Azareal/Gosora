@@ -59,6 +59,7 @@ var form_vars = {'perm_preset': ['can_moderate','can_post','read_only','no_acces
 				<div class="panel_floater">
 					<span data-field="perm_preset" data-type="list" data-value="{{.Preset}}" class="editable_block perm_preset perm_preset_{{.Preset}}"></span>
 					<a class="panel_right_button" href="/panel/forums/edit/perms/submit/{{$.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>Update</button></a>
+					<a class="panel_right_button" href="/panel/forums/edit/perms/{{$.ID}}-{{.Group.ID}}"><button class='panel_tag show_on_edit' type='submit'>Full Edit</button></a>
 				</div>
 			</div>
 		</div>

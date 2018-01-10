@@ -171,8 +171,22 @@
     stroke: hsl(359,98%,53%) !important;
 }
 .ct-point {
-	stroke: hsl(359,98%,33%) !important;
+	stroke: hsl(359,98%,23%) !important;
 }
 .ct-point:hover {
-	stroke: hsl(359,98%,50%) !important;
+	stroke: hsl(359,98%,20%) !important;
 }
+.timeRangeSelector {
+	margin-top: -5px;
+}
+
+/* Experimental header tweaks */
+.colstack_head a {
+    font-size: 17px;
+}
+/*
+#panel_analytics_views_table .rowlist .panel_compactrow {
+    padding: 14px;
+    font-size: 16px;
+}
+*/
