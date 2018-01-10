@@ -334,7 +334,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	default:
 		common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
 		if common.Dev.DebugMode {
-			log.Print("Unknown UA: ", ua)
+			log.Print("Unknown UA: ", req.UserAgent())
 		}
 	}
 	
