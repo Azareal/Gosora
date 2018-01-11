@@ -15,6 +15,7 @@ type Stmts struct {
 	isThemeDefault *sql.Stmt
 	getModlogs *sql.Stmt
 	getModlogsOffset *sql.Stmt
+	getAdminlogsOffset *sql.Stmt
 	getReplyTID *sql.Stmt
 	getTopicFID *sql.Stmt
 	getUserReplyUID *sql.Stmt
@@ -119,6 +120,13 @@ func _gen_mssql() (err error) {
 	stmts.getModlogsOffset, err = db.Prepare("SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
+		return err
+	}
+		
+	log.Print("Preparing getAdminlogsOffset statement.")
+	stmts.getAdminlogsOffset, err = db.Prepare("SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [administration_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
+	if err != nil {
+		log.Print("Bad Query: ","SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [administration_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
 		return err
 	}
 		

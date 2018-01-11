@@ -17,6 +17,7 @@
 </div>
 
 {{if ne .CurrentUser.ID 0}}
+{{/** TODO: Hide these from unauthorised users? **/}}
 <div class="mod_floater auto_hide">
 	<form method="post">
 	<div class="mod_floater_head">
@@ -26,6 +27,7 @@
 		<select class="mod_floater_options">
 			<option val="delete">Delete them</option>
 			<option val="lock">Lock them</option>
+			<option val="move">Move them</option>
 		</select>
 		<button class="mod_floater_submit">Run</button>
 	</div>
@@ -33,6 +35,24 @@
 </div>
 
 {{if .ForumList}}
+{{/** TODO: Have a seperate forum list for moving topics? Maybe an AJAX forum search compatible with plugin_guilds? **/}}
+{{/** TODO: Add ARIA attributes for this **/}}
+<div id="mod_topic_mover" class="modal_pane auto_hide">
+	<form action="/topic/move/submit/" method="post">
+		<div class="pane_header">
+			<h3>Move Topics (3)</h3>
+		</div>
+		<div class="pane_body">
+			<div class="pane_table">
+				<div class="pane_row"></div>
+				{{range .ForumList}}<div class="pane_row">{{.Name}}</div>{{end}}
+			</div>
+		</div>
+		<div class="pane_buttons">
+			<button>Move Topics</button>
+		</div>
+	</form>
+</div>
 <div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
 	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
 	<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" alt="Your Avatar" title="Your Avatar" />

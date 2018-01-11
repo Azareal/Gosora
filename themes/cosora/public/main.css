@@ -220,15 +220,17 @@ ul {
 	font-size: 20px;
 	font-weight: normal;
 	color: var(--primary-text-color);
-	-webkit-margin-before: 0;
-	-webkit-margin-after: 0;
-	margin-block-start: 0;
-	margin-block-end: 0;
 	display: inline-block;
 }
 .colstack_head a h1 {
 	font-size: 16px;
 	color: var(--primary-link-color);
+}
+h1, h3 {
+	-webkit-margin-before: 0;
+	-webkit-margin-after: 0;
+	margin-block-start: 0;
+	margin-block-end: 0;
 }
 
 .colstack {
@@ -261,9 +263,9 @@ ul {
 	position: fixed;
 	bottom: 15px;
 	right: 15px;
-	background-color: var(--inverse-primary-text-color);
 	width: 200px;
 	height: 115px;
+	background-color: var(--inverse-primary-text-color);
 	border: 1px solid var(--header-border-color);
 	border-bottom: 2px solid var(--header-border-color);
 	z-index: 9999;
@@ -306,6 +308,17 @@ ul {
 	font-size: 13px;
 	font-weight: bold;
 	margin-top: -2px;
+}
+
+.modal_pane {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	background-color: var(--inverse-primary-text-color);
+	border: 1px solid var(--header-border-color);
+	border-bottom: 2px solid var(--header-border-color);
+	padding: 8px;
 }
 
 @keyframes fadein {

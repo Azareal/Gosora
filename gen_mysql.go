@@ -17,6 +17,7 @@ type Stmts struct {
 	isThemeDefault *sql.Stmt
 	getModlogs *sql.Stmt
 	getModlogsOffset *sql.Stmt
+	getAdminlogsOffset *sql.Stmt
 	getReplyTID *sql.Stmt
 	getTopicFID *sql.Stmt
 	getUserReplyUID *sql.Stmt
@@ -114,6 +115,12 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing getModlogsOffset statement.")
 	stmts.getModlogsOffset, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs` ORDER BY doneAt DESC LIMIT ?,?")
+	if err != nil {
+		return err
+	}
+		
+	log.Print("Preparing getAdminlogsOffset statement.")
+	stmts.getAdminlogsOffset, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `administration_logs` ORDER BY doneAt DESC LIMIT ?,?")
 	if err != nil {
 		return err
 	}

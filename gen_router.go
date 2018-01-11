@@ -233,6 +233,9 @@ var agentMapEnum = map[string]int{
 	"bing": 9,
 	"baidu": 10,
 	"duckduckgo": 11,
+	"discord": 12,
+	"lynx": 13,
+	"blank": 14,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -247,6 +250,9 @@ var reverseAgentMapEnum = map[int]string{
 	9: "bing",
 	10: "baidu",
 	11: "duckduckgo",
+	12: "discord",
+	13: "lynx",
+	14: "blank",
 }
 
 // TODO: Stop spilling these into the package scope?
@@ -344,7 +350,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
-	ua := strings.TrimSuffix(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36") // Noise, no one's going to be running this and it complicates implementing an efficient UA parser, particularly the more efficient right-to-left one I have in mind
+	ua := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36")) // Noise, no one's going to be running this and it complicates implementing an efficient UA parser, particularly the more efficient right-to-left one I have in mind
 	switch {
 	case strings.Contains(ua,"Google"):
 		common.AgentViewCounter.Bump(7)
@@ -368,6 +374,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump(10)
 	case strings.Contains(ua,"DuckDuckBot"):
 		common.AgentViewCounter.Bump(11)
+	case strings.Contains(ua,"Discordbot"):
+		common.AgentViewCounter.Bump(12)
+	case strings.Contains(ua,"Lynx"):
+		common.AgentViewCounter.Bump(13)
+	case ua == "":
+		common.AgentViewCounter.Bump(14)
 	default:
 		common.AgentViewCounter.Bump(0)
 		if common.Dev.DebugMode {

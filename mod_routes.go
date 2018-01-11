@@ -312,6 +312,48 @@ func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user common.User) 
 	return nil
 }
 
+func routeMoveTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	return common.NoPermissions(w, r, user)
+
+	tid, err := strconv.Atoi(r.URL.Path[len("/topic/move/submit/"):])
+	if err != nil {
+		return common.PreError("The provided TopicID is not a valid number.", w, r)
+	}
+
+	topic, err := common.Topics.Get(tid)
+	if err == ErrNoRows {
+		return common.PreError("The topic you tried to move doesn't exist.", w, r)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Add hooks to make use of headerLite
+	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic { // TODO: MoveTopic permission?
+		return common.NoPermissions(w, r, user)
+	}
+
+	err = topic.Unlock()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	err = common.ModLogs.Create("move", tid, "topic", user.LastIP, user.ID)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	err = topic.CreateActionReply("move", user.LastIP, user)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	return nil
+}
+
 // TODO: Disable stat updates in posts handled by plugin_guilds
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

@@ -230,6 +230,8 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	build.Select("getModlogsOffset").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Parse()
 
+	build.Select("getAdminlogsOffset").Table("administration_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Parse()
+
 	build.Select("getReplyTID").Table("replies").Columns("tid").Where("rid = ?").Parse()
 
 	build.Select("getTopicFID").Table("topics").Columns("parentID").Where("tid = ?").Parse()

@@ -506,6 +506,14 @@ $(document).ready(function(){
 			let optionNode = selectNode.options[selectNode.selectedIndex];
 			let action = optionNode.getAttribute("val");
 			//console.log("action",action);
+
+			// Handle these specially
+			switch(action) {
+				case "move":
+					console.log("move action");
+					$("#mod_topic_mover").removeClass("auto_hide");
+					return;
+			}
 			
 			let url = "/topic/"+action+"/submit/";
 			//console.log("JSON.stringify(selectedTopics) ", JSON.stringify(selectedTopics));

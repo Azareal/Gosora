@@ -174,7 +174,7 @@
 	stroke: hsl(359,98%,23%) !important;
 }
 .ct-point:hover {
-	stroke: hsl(359,98%,20%) !important;
+	stroke: hsl(359,98%,30%) !important;
 }
 .timeRangeSelector {
 	margin-top: -5px;

@@ -171,6 +171,9 @@ func main() {
 		"bing",
 		"baidu",
 		"duckduckgo",
+		"discord",
+		"lynx",
+		"blank",
 	}
 
 	tmplVars.AllAgentMap = make(map[string]int)
@@ -307,7 +310,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
-	ua := strings.TrimSuffix(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36") // Noise, no one's going to be running this and it complicates implementing an efficient UA parser, particularly the more efficient right-to-left one I have in mind
+	ua := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36")) // Noise, no one's going to be running this and it complicates implementing an efficient UA parser, particularly the more efficient right-to-left one I have in mind
 	switch {
 	case strings.Contains(ua,"Google"):
 		common.AgentViewCounter.Bump({{.AllAgentMap.googlebot}})
@@ -331,6 +334,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump({{.AllAgentMap.baidu}})
 	case strings.Contains(ua,"DuckDuckBot"):
 		common.AgentViewCounter.Bump({{.AllAgentMap.duckduckgo}})
+	case strings.Contains(ua,"Discordbot"):
+		common.AgentViewCounter.Bump({{.AllAgentMap.discord}})
+	case strings.Contains(ua,"Lynx"):
+		common.AgentViewCounter.Bump({{.AllAgentMap.lynx}})
+	case ua == "":
+		common.AgentViewCounter.Bump({{.AllAgentMap.blank}})
 	default:
 		common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
 		if common.Dev.DebugMode {

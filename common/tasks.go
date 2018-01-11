@@ -19,6 +19,7 @@ type TaskStmts struct {
 	getSync                   *sql.Stmt
 }
 
+var ScheduledHalfSecondTasks []func() error
 var ScheduledSecondTasks []func() error
 var ScheduledFifteenMinuteTasks []func() error
 var ShutdownTasks []func() error
@@ -35,6 +36,11 @@ func init() {
 		}
 		return acc.FirstError()
 	})
+}
+
+// AddScheduledHalfSecondTask is not concurrency safe
+func AddScheduledHalfSecondTask(task func() error) {
+	ScheduledHalfSecondTasks = append(ScheduledHalfSecondTasks, task)
 }
 
 // AddScheduledSecondTask is not concurrency safe

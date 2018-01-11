@@ -30,20 +30,18 @@ func panelSuccessRedirect(dest string, w http.ResponseWriter, r *http.Request, i
 	}
 	return nil
 }
-
-// TODO: Implement this properly
-/*func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, user common.User, pi interface{}) common.RouteError {
+func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, user common.User, pi interface{}) common.RouteError {
 	if common.PreRenderHooks["pre_render_"+tmplName] != nil {
-		if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, &pi) {
+		if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, pi) {
 			return nil
 		}
 	}
-	err = common.Templates.ExecuteTemplate(w, tmplName+".html", pi)
+	err := common.Templates.ExecuteTemplate(w, tmplName+".html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 	return nil
-}*/
+}
 
 func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
@@ -170,18 +168,8 @@ func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common
 		gridElements = append(gridElements, common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
 	}
 
-	pi := common.PanelDashboardPage{common.GetTitlePhrase("panel-dashboard"), user, headerVars, stats, "dashboard", gridElements}
-	if common.PreRenderHooks["pre_render_panel_dashboard"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_dashboard", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel_dashboard.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
-	//return panelRenderTemplate("panel_dashboard",w,r,user,pi)
+	pi := common.PanelDashboardPage{common.GetTitlePhrase("panel_dashboard"), user, headerVars, stats, "dashboard", gridElements}
+	return panelRenderTemplate("panel_dashboard", w, r, user, &pi)
 }
 
 func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -210,18 +198,8 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) 
 			forumList = append(forumList, fadmin)
 		}
 	}
-	pi := common.PanelPage{common.GetTitlePhrase("panel-forums"), user, headerVars, stats, "forums", forumList, nil}
-	if common.PreRenderHooks["pre_render_panel_forums"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_forums", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-forums.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	return nil
+	pi := common.PanelPage{common.GetTitlePhrase("panel_forums"), user, headerVars, stats, "forums", forumList, nil}
+	return panelRenderTemplate("panel_forums", w, r, user, &pi)
 }
 
 func routePanelForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -274,7 +252,7 @@ func routePanelForumsDelete(w http.ResponseWriter, r *http.Request, user common.
 	confirmMsg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
 	yousure := common.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-delete-forum"), user, headerVars, stats, "forums", tList, yousure}
+	pi := common.PanelPage{common.GetTitlePhrase("panel_delete_forum"), user, headerVars, stats, "forums", tList, yousure}
 	if common.PreRenderHooks["pre_render_panel_delete_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_delete_forum", w, r, &user, &pi) {
 			return nil
@@ -351,7 +329,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(group.Forums[fid])})
 	}
 
-	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel-edit-forum"), user, headerVars, stats, "forums", forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
+	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
 	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 			return nil
@@ -513,7 +491,7 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 	addNameLangToggle("PinTopic", forumPerms.PinTopic)
 	addNameLangToggle("CloseTopic", forumPerms.CloseTopic)
 
-	pi := common.PanelEditForumGroupPage{common.GetTitlePhrase("panel-edit-forum"), user, headerVars, stats, "forums", forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
+	pi := common.PanelEditForumGroupPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
 	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 			return nil
@@ -596,6 +574,12 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	var timeRange = "six-hours"
 
 	switch r.FormValue("timeRange") {
+	case "two-days": // Two days is experimental
+		timeQuantity = 2
+		timeUnit = "day"
+		timeSlices = 24
+		sliceWidth = 60 * 60 * 2
+		timeRange = "two-days"
 	case "one-day":
 		timeQuantity = 1
 		timeUnit = "day"
@@ -668,7 +652,7 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	log.Printf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange}
+	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange}
 	if common.PreRenderHooks["pre_render_panel_analytics"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_analytics", w, r, &user, &pi) {
 			return nil
@@ -696,6 +680,12 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	var timeRange = "six-hours"
 
 	switch r.FormValue("timeRange") {
+	case "two-days": // Two days is experimental
+		timeQuantity = 2
+		timeUnit = "day"
+		timeSlices = 24
+		sliceWidth = 60 * 60 * 2
+		timeRange = "two-days"
 	case "one-day":
 		timeQuantity = 1
 		timeUnit = "day"
@@ -767,17 +757,8 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	log.Printf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsRoutePage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", html.EscapeString(route), graph, timeRange}
-	if common.PreRenderHooks["pre_render_panel_analytics_route_views"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_analytics_route_views", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-analytics-route-views.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelAnalyticsRoutePage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", html.EscapeString(route), graph, timeRange}
+	return panelRenderTemplate("panel_analytics_route_views", w, r, user, &pi)
 }
 
 func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.User, agent string) common.RouteError {
@@ -795,6 +776,12 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	var timeRange = "six-hours"
 
 	switch r.FormValue("timeRange") {
+	case "two-days": // Two days is experimental
+		timeQuantity = 2
+		timeUnit = "day"
+		timeSlices = 24
+		sliceWidth = 60 * 60 * 2
+		timeRange = "two-days"
 	case "one-day":
 		timeQuantity = 1
 		timeUnit = "day"
@@ -866,17 +853,8 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	log.Printf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", html.EscapeString(agent), graph, timeRange}
-	if common.PreRenderHooks["pre_render_panel_analytics_agent_views"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_analytics_agent_views", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-analytics-agent-views.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", html.EscapeString(agent), graph, timeRange}
+	return panelRenderTemplate("panel_analytics_agent_views", w, r, user, &pi)
 }
 
 func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -919,17 +897,8 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 		})
 	}
 
-	pi := common.PanelAnalyticsRoutesPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", routeItems}
-	if common.PreRenderHooks["pre_render_panel_analytics_routes"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_analytics_routes", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-analytics-routes.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelAnalyticsRoutesPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", routeItems}
+	return panelRenderTemplate("panel_analytics_routes", w, r, user, &pi)
 }
 
 func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -972,17 +941,8 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel-analytics"), user, headerVars, stats, "analytics", agentItems}
-	if common.PreRenderHooks["pre_render_panel_analytics_agents"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_analytics_agents", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-analytics-agents.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", agentItems}
+	return panelRenderTemplate("panel_analytics_agents", w, r, user, &pi)
 }
 
 func routePanelSettings(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -1021,17 +981,8 @@ func routePanelSettings(w http.ResponseWriter, r *http.Request, user common.User
 		settingList[setting.Name] = setting.Content
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-settings"), user, headerVars, stats, "settings", tList, settingList}
-	if common.PreRenderHooks["pre_render_panel_settings"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_settings", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-settings.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelPage{common.GetTitlePhrase("panel_settings"), user, headerVars, stats, "settings", tList, settingList}
+	return panelRenderTemplate("panel_settings", w, r, user, &pi)
 }
 
 func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {
@@ -1067,17 +1018,8 @@ func routePanelSettingEdit(w http.ResponseWriter, r *http.Request, user common.U
 		}
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-setting"), user, headerVars, stats, "settings", itemList, setting}
-	if common.PreRenderHooks["pre_render_panel_setting"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_setting", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-setting.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelPage{common.GetTitlePhrase("panel_edit_setting"), user, headerVars, stats, "settings", itemList, setting}
+	return panelRenderTemplate("panel_setting", w, r, user, &pi)
 }
 
 func routePanelSettingEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {
@@ -1112,17 +1054,8 @@ func routePanelWordFilters(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	var filterList = common.WordFilterBox.Load().(common.WordFilterMap)
-	pi := common.PanelPage{common.GetTitlePhrase("panel-word-filters"), user, headerVars, stats, "word-filters", tList, filterList}
-	if common.PreRenderHooks["pre_render_panel_word_filters"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_word_filters", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err := common.Templates.ExecuteTemplate(w, "panel-word-filters.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelPage{common.GetTitlePhrase("panel_word_filters"), user, headerVars, stats, "word-filters", tList, filterList}
+	return panelRenderTemplate("panel_word_filters", w, r, user, &pi)
 }
 
 func routePanelWordFiltersCreate(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -1156,6 +1089,7 @@ func routePanelWordFiltersCreate(w http.ResponseWriter, r *http.Request, user co
 	return panelSuccessRedirect("/panel/settings/word-filters/", w, r, isJs)
 }
 
+// TODO: Implement this as a non-JS fallback
 func routePanelWordFiltersEdit(w http.ResponseWriter, r *http.Request, user common.User, wfid string) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -1167,17 +1101,8 @@ func routePanelWordFiltersEdit(w http.ResponseWriter, r *http.Request, user comm
 
 	_ = wfid
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-word-filter"), user, headerVars, stats, "word-filters", tList, nil}
-	if common.PreRenderHooks["pre_render_panel_word_filters_edit"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_word_filters_edit", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err := common.Templates.ExecuteTemplate(w, "panel-word-filters-edit.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelPage{common.GetTitlePhrase("panel_edit_word_filter"), user, headerVars, stats, "word-filters", tList, nil}
+	return panelRenderTemplate("panel_word_filters_edit", w, r, user, &pi)
 }
 
 func routePanelWordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, wfid string) common.RouteError {
@@ -1260,17 +1185,8 @@ func routePanelPlugins(w http.ResponseWriter, r *http.Request, user common.User)
 		pluginList = append(pluginList, plugin)
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-plugins"), user, headerVars, stats, "plugins", pluginList, nil}
-	if common.PreRenderHooks["pre_render_panel_plugins"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_plugins", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err := common.Templates.ExecuteTemplate(w, "panel-plugins.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelPage{common.GetTitlePhrase("panel_plugins"), user, headerVars, stats, "plugins", pluginList, nil}
+	return panelRenderTemplate("panel_plugins", w, r, user, &pi)
 }
 
 func routePanelPluginsActivate(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
@@ -1481,17 +1397,8 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 
 	pageList := common.Paginate(stats.Users, perPage, 5)
-	pi := common.PanelUserPage{common.GetTitlePhrase("panel-users"), user, headerVars, stats, "users", userList, pageList, page, lastPage}
-	if common.PreRenderHooks["pre_render_panel_users"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_users", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel-users.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelUserPage{common.GetTitlePhrase("panel_users"), user, headerVars, stats, "users", userList, pageList, page, lastPage}
+	return panelRenderTemplate("panel_users", w, r, user, &pi)
 }
 
 func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
@@ -1536,7 +1443,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 		groupList = append(groupList, group)
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel-edit-user"), user, headerVars, stats, "users", groupList, targetUser}
+	pi := common.PanelPage{common.GetTitlePhrase("panel_edit_user"), user, headerVars, stats, "users", groupList, targetUser}
 	if common.PreRenderHooks["pre_render_panel_edit_user"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_user", w, r, &user, &pi) {
 			return nil
@@ -1679,18 +1586,8 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) 
 	//log.Printf("groupList: %+v\n", groupList)
 
 	pageList := common.Paginate(stats.Groups, perPage, 5)
-	pi := common.PanelGroupPage{common.GetTitlePhrase("panel-groups"), user, headerVars, stats, "groups", groupList, pageList, page, lastPage}
-	if common.PreRenderHooks["pre_render_panel_groups"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_groups", w, r, &user, &pi) {
-			return nil
-		}
-	}
-
-	err := common.Templates.ExecuteTemplate(w, "panel-groups.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelGroupPage{common.GetTitlePhrase("panel_groups"), user, headerVars, stats, "groups", groupList, pageList, page, lastPage}
+	return panelRenderTemplate("panel_groups", w, r, user, &pi)
 }
 
 func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
@@ -1738,7 +1635,7 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 
 	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
-	pi := common.PanelEditGroupPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, "groups", group.ID, group.Name, group.Tag, rank, disableRank}
+	pi := common.PanelEditGroupPage{common.GetTitlePhrase("panel_edit_group"), user, headerVars, stats, "groups", group.ID, group.Name, group.Tag, rank, disableRank}
 	if common.PreRenderHooks["pre_render_panel_edit_group"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_group", w, r, &user, &pi) {
 			return nil
@@ -1825,7 +1722,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 	addGlobalPerm("ViewIPs", group.Perms.ViewIPs)
 	addGlobalPerm("UploadFiles", group.Perms.UploadFiles)
 
-	pi := common.PanelEditGroupPermsPage{common.GetTitlePhrase("panel-edit-group"), user, headerVars, stats, "groups", group.ID, group.Name, localPerms, globalPerms}
+	pi := common.PanelEditGroupPermsPage{common.GetTitlePhrase("panel_edit_group"), user, headerVars, stats, "groups", group.ID, group.Name, localPerms, globalPerms}
 	if common.PreRenderHooks["pre_render_panel_edit_group_perms"] != nil {
 		if common.RunPreRenderHook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
 			return nil
@@ -2055,17 +1952,8 @@ func routePanelThemes(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	}
 
-	pi := common.PanelThemesPage{common.GetTitlePhrase("panel-themes"), user, headerVars, stats, "themes", pThemeList, vThemeList}
-	if common.PreRenderHooks["pre_render_panel_themes"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_themes", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err := common.Templates.ExecuteTemplate(w, "panel-themes.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelThemesPage{common.GetTitlePhrase("panel_themes"), user, headerVars, stats, "themes", pThemeList, vThemeList}
+	return panelRenderTemplate("panel_themes", w, r, user, &pi)
 }
 
 func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
@@ -2172,12 +2060,8 @@ func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User,
 		backupList = append(backupList, common.BackupItem{backupFile.Name(), backupFile.ModTime()})
 	}
 
-	pi := common.PanelBackupPage{common.GetTitlePhrase("panel-backups"), user, headerVars, stats, "backups", backupList}
-	err = common.Templates.ExecuteTemplate(w, "panel-backups.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelBackupPage{common.GetTitlePhrase("panel_backups"), user, headerVars, stats, "backups", backupList}
+	return panelRenderTemplate("panel_backups", w, r, user, &pi)
 }
 
 // TODO: Log errors when something really screwy is going on?
@@ -2270,17 +2154,48 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{common.GetTitlePhrase("panel-mod-logs"), user, headerVars, stats, "logs", logs, pageList, page, lastPage}
-	if common.PreRenderHooks["pre_render_panel_mod_log"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_mod_log", w, r, &user, &pi) {
-			return nil
-		}
+	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_mod_logs"), user, headerVars, stats, "logs", logs, pageList, page, lastPage}
+	return panelRenderTemplate("panel_modlogs", w, r, user, &pi)
+}
+
+func routePanelLogsAdmin(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
 	}
-	err = common.Templates.ExecuteTemplate(w, "panel-modlogs.html", pi)
+
+	logCount := common.ModLogs.GlobalCount()
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	perPage := 10
+	offset, page, lastPage := common.PageOffset(logCount, page, perPage)
+
+	rows, err := stmts.getAdminlogsOffset.Query(offset, perPage)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	return nil
+	defer rows.Close()
+
+	var logs []common.LogItem
+	var action, elementType, ipaddress, doneAt string
+	var elementID, actorID int
+	for rows.Next() {
+		err := rows.Scan(&action, &elementID, &elementType, &ipaddress, &actorID, &doneAt)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		actor := handleUnknownUser(common.Users.Get(actorID))
+		action = modlogsElementType(action, elementType, elementID, actor)
+		logs = append(logs, common.LogItem{Action: template.HTML(action), IPAddress: ipaddress, DoneAt: doneAt})
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	pageList := common.Paginate(logCount, perPage, 5)
+	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_admin_logs"), user, headerVars, stats, "logs", logs, pageList, page, lastPage}
+	return panelRenderTemplate("panel_adminlogs", w, r, user, &pi)
 }
 
 func routePanelDebug(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -2294,10 +2209,6 @@ func routePanelDebug(w http.ResponseWriter, r *http.Request, user common.User) c
 	openConnCount := dbStats.OpenConnections
 	// Disk I/O?
 
-	pi := common.PanelDebugPage{common.GetTitlePhrase("panel-debug"), user, headerVars, stats, "debug", uptime, openConnCount, dbAdapter}
-	err := common.Templates.ExecuteTemplate(w, "panel-debug.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.PanelDebugPage{common.GetTitlePhrase("panel_debug"), user, headerVars, stats, "debug", uptime, openConnCount, dbAdapter}
+	return panelRenderTemplate("panel_debug", w, r, user, &pi)
 }

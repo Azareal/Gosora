@@ -246,13 +246,18 @@ func main() {
 		}
 	}
 
-	// Run this goroutine once a second
+	// Run this goroutine once every half second
+	halfSecondTicker := time.NewTicker(time.Second / 2)
 	secondTicker := time.NewTicker(1 * time.Second)
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
 	//hourTicker := time.NewTicker(1 * time.Hour)
 	go func() {
 		for {
 			select {
+			case <-halfSecondTicker.C:
+				// TODO: Add a plugin hook here
+				runTasks(common.ScheduledHalfSecondTasks)
+				// TODO: Add a plugin hook here
 			case <-secondTicker.C:
 				// TODO: Add a plugin hook here
 				runTasks(common.ScheduledSecondTasks)
@@ -291,13 +296,14 @@ func main() {
 		}
 	}()
 
+	// TODO: Move these routes into the new routes list
 	log.Print("Initialising the router")
 	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	router.HandleFunc("/topic/create/submit/", routeTopicCreateSubmit)
 	router.HandleFunc("/topic/", routeTopicID)
 	router.HandleFunc("/reply/create/", routeCreateReply)
-	//router.HandleFunc("/reply/edit/", routeReplyEdit)
-	//router.HandleFunc("/reply/delete/", routeReplyDelete)
+	//router.HandleFunc("/reply/edit/", routeReplyEdit) // No js fallback
+	//router.HandleFunc("/reply/delete/", routeReplyDelete) // No js confirmation page? We could have a confirmation modal for the JS case
 	router.HandleFunc("/reply/edit/submit/", routeReplyEditSubmit)
 	router.HandleFunc("/reply/delete/submit/", routeReplyDeleteSubmit)
 	router.HandleFunc("/reply/like/submit/", routeReplyLikeSubmit)
@@ -307,6 +313,7 @@ func main() {
 	router.HandleFunc("/topic/unstick/submit/", routeUnstickTopic)
 	router.HandleFunc("/topic/lock/submit/", routeLockTopic)
 	router.HandleFunc("/topic/unlock/submit/", routeUnlockTopic)
+	router.HandleFunc("/topic/move/submit/", routeMoveTopic)
 	router.HandleFunc("/topic/like/submit/", routeLikeTopic)
 
 	// Accounts

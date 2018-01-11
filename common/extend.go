@@ -112,7 +112,7 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_panel_edit_group":            nil,
 	"pre_render_panel_edit_group_perms":      nil,
 	"pre_render_panel_themes":                nil,
-	"pre_render_panel_mod_log":               nil,
+	"pre_render_panel_modlogs":               nil,
 
 	"pre_render_error":          nil, // Note: This hook isn't run for a few errors whose templates are computed at startup and reused, such as InternalError. This hook is also not available in JS mode.
 	"pre_render_security_error": nil,
