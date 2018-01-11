@@ -340,10 +340,20 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump({{.AllAgentMap.lynx}})
 	case ua == "":
 		common.AgentViewCounter.Bump({{.AllAgentMap.blank}})
+		if common.Dev.DebugMode {
+			log.Print("prefix: ", prefix)
+			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("extraData: ", extraData)
+			log.Print("req.Referer(): ", req.Referer())
+		}
 	default:
 		common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
 		if common.Dev.DebugMode {
 			log.Print("Unknown UA: ", req.UserAgent())
+			log.Print("prefix: ", prefix)
+			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("extraData: ", extraData)
+			log.Print("req.Referer(): ", req.Referer())
 		}
 	}
 	
