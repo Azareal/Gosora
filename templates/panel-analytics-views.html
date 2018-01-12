@@ -7,6 +7,7 @@
 				<div class="rowitem">
 					<a>Views</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
+						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
 						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>2 days</option>
 						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>1 day</option>
 						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>12 hours</option>

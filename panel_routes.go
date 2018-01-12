@@ -574,6 +574,12 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	var timeRange = "six-hours"
 
 	switch r.FormValue("timeRange") {
+	case "one-month":
+		timeQuantity = 30
+		timeUnit = "day"
+		timeSlices = 30
+		sliceWidth = 60 * 60 * 24
+		timeRange = "one-month"
 	case "two-days": // Two days is experimental
 		timeQuantity = 2
 		timeUnit = "day"
@@ -680,6 +686,12 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	var timeRange = "six-hours"
 
 	switch r.FormValue("timeRange") {
+	case "one-month":
+		timeQuantity = 30
+		timeUnit = "day"
+		timeSlices = 30
+		sliceWidth = 60 * 60 * 24
+		timeRange = "one-month"
 	case "two-days": // Two days is experimental
 		timeQuantity = 2
 		timeUnit = "day"
@@ -776,6 +788,12 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	var timeRange = "six-hours"
 
 	switch r.FormValue("timeRange") {
+	case "one-month":
+		timeQuantity = 30
+		timeUnit = "day"
+		timeSlices = 30
+		sliceWidth = 60 * 60 * 24
+		timeRange = "one-month"
 	case "two-days": // Two days is experimental
 		timeQuantity = 2
 		timeUnit = "day"

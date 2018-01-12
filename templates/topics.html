@@ -44,8 +44,7 @@
 		</div>
 		<div class="pane_body">
 			<div class="pane_table">
-				<div class="pane_row"></div>
-				{{range .ForumList}}<div class="pane_row">{{.Name}}</div>{{end}}
+				{{range .ForumList}}<div id="mover_fid_{{.ID}}" data-fid="{{.ID}}" class="pane_row">{{.Name}}</div>{{end}}
 			</div>
 		</div>
 		<div class="pane_buttons">

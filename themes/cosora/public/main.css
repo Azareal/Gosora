@@ -289,14 +289,12 @@ h1, h3 {
 }
 .mod_floater_body select {
 	margin-left: auto;
-	border: none;
 	border-bottom: 1px solid var(--header-border-color);
 	outline: none;
 }
 .mod_floater_body button {
 	margin-left: 10px;
 	margin-right: auto;
-	border: none;
 	outline: none;
 	padding-left: 10px;
 	background: hsl(9, 97%, 56%);
@@ -318,9 +316,37 @@ h1, h3 {
 	background-color: var(--inverse-primary-text-color);
 	border: 1px solid var(--header-border-color);
 	border-bottom: 2px solid var(--header-border-color);
-	padding: 8px;
-	padding-left: 12px;
-	padding-right: 12px;
+	/*padding: 8px;*/
+	padding-left: 16px;
+	padding-right: 16px;
+	z-index: 9999;
+	animation: fadein 0.8s;
+}
+
+.pane_header {
+	color: hsl(0,0%,55%);
+	padding-top: 12px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--element-border-color);
+	margin-bottom: 2px;
+}
+.pane_header h3 {
+	font-size: 14px;
+	font-weight: normal;
+}
+
+.pane_row {
+	color: var(--light-text-color);
+	border-bottom: 1px solid var(--element-border-color);
+	font-size: 13px;
+	padding-top: 5px;
+	padding-bottom: 8px;
+	margin-bottom: 3px;
+}
+
+.pane_buttons {
+	padding-top: 12px;
+	padding-bottom: 16px;
 }
 
 @keyframes fadein {

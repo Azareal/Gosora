@@ -329,6 +329,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if common.Dev.SuperDebug {
 		log.Print("before routeStatic")
+		log.Print("Method: ", req.Method)
+		for key, value := range req.Header {
+			for _, vvalue := range value {
+				log.Print("Header '" + key + "': " + vvalue + "!!")
+			}
+		}
 		log.Print("prefix: ", prefix)
 		log.Print("req.URL.Path: ", req.URL.Path)
 		log.Print("extraData: ", extraData)
@@ -381,6 +387,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	case ua == "":
 		common.AgentViewCounter.Bump(14)
 		if common.Dev.DebugMode {
+			log.Print("Blank UA: ", req.UserAgent())
+			log.Print("Method: ", req.Method)
+			for key, value := range req.Header {
+				for _, vvalue := range value {
+					log.Print("Header '" + key + "': " + vvalue + "!!")
+				}
+			}
 			log.Print("prefix: ", prefix)
 			log.Print("req.URL.Path: ", req.URL.Path)
 			log.Print("extraData: ", extraData)
@@ -390,6 +403,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump(0)
 		if common.Dev.DebugMode {
 			log.Print("Unknown UA: ", req.UserAgent())
+			log.Print("Method: ", req.Method)
+			for key, value := range req.Header {
+				for _, vvalue := range value {
+					log.Print("Header '" + key + "': " + vvalue + "!!")
+				}
+			}
 			log.Print("prefix: ", prefix)
 			log.Print("req.URL.Path: ", req.URL.Path)
 			log.Print("extraData: ", extraData)
