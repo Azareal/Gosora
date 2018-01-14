@@ -72,7 +72,7 @@
 	<div id="profile_comments" class="colstack_item hash_hide">{{template "profile_comments_row.html" . }}</div>
 
 {{if not .CurrentUser.IsBanned}}
-	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/" method="post">
+	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?session={{.CurrentUser.Session}}" method="post">
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top: none;">
 			<div class="formrow">

@@ -94,6 +94,9 @@ var RouteMap = map[string]interface{}{
 	"routeReplyEditSubmit": routeReplyEditSubmit,
 	"routeReplyDeleteSubmit": routeReplyDeleteSubmit,
 	"routeReplyLikeSubmit": routeReplyLikeSubmit,
+	"routeProfileReplyCreateSubmit": routeProfileReplyCreateSubmit,
+	"routeProfileReplyEditSubmit": routeProfileReplyEditSubmit,
+	"routeProfileReplyDeleteSubmit": routeProfileReplyDeleteSubmit,
 	"routeDynamic": routeDynamic,
 	"routeUploads": routeUploads,
 }
@@ -179,8 +182,11 @@ var routeMapEnum = map[string]int{
 	"routeReplyEditSubmit": 76,
 	"routeReplyDeleteSubmit": 77,
 	"routeReplyLikeSubmit": 78,
-	"routeDynamic": 79,
-	"routeUploads": 80,
+	"routeProfileReplyCreateSubmit": 79,
+	"routeProfileReplyEditSubmit": 80,
+	"routeProfileReplyDeleteSubmit": 81,
+	"routeDynamic": 82,
+	"routeUploads": 83,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
@@ -262,8 +268,11 @@ var reverseRouteMapEnum = map[int]string{
 	76: "routeReplyEditSubmit",
 	77: "routeReplyDeleteSubmit",
 	78: "routeReplyLikeSubmit",
-	79: "routeDynamic",
-	80: "routeUploads",
+	79: "routeProfileReplyCreateSubmit",
+	80: "routeProfileReplyEditSubmit",
+	81: "routeProfileReplyDeleteSubmit",
+	82: "routeDynamic",
+	83: "routeUploads",
 }
 var agentMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -1234,6 +1243,57 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
+		case "/profile":
+			switch(req.URL.Path) {
+				case "/profile/reply/create/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					common.RouteViewCounter.Bump(79)
+					err = routeProfileReplyCreateSubmit(w,req,user)
+				case "/profile/reply/edit/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					common.RouteViewCounter.Bump(80)
+					err = routeProfileReplyEditSubmit(w,req,user,extraData)
+				case "/profile/reply/delete/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					common.RouteViewCounter.Bump(81)
+					err = routeProfileReplyDeleteSubmit(w,req,user,extraData)
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData
 			err = sitemapSwitch(w,req)
@@ -1245,7 +1305,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				common.NotFound(w,req)
 				return
 			}
-			common.RouteViewCounter.Bump(80)
+			common.RouteViewCounter.Bump(83)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
@@ -1289,7 +1349,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.RUnlock()
 			
 			if ok {
-				common.RouteViewCounter.Bump(79) // TODO: Be more specific about *which* dynamic route it is
+				common.RouteViewCounter.Bump(82) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				err = handle(w,req,user)
 				if err != nil {

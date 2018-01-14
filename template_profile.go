@@ -144,69 +144,79 @@ if tmpl_profile_vars.CurrentUser.IsMod {
 w.Write(profile_comments_row_8)
 w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(profile_comments_row_9)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(profile_comments_row_10)
-}
-w.Write(profile_comments_row_11)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(profile_comments_row_12)
 w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(profile_comments_row_13)
-if item.Tag != "" {
-w.Write(profile_comments_row_14)
-w.Write([]byte(item.Tag))
-w.Write(profile_comments_row_15)
+w.Write(profile_comments_row_10)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_comments_row_11)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_comments_row_12)
 }
+w.Write(profile_comments_row_13)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_comments_row_14)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_comments_row_15)
+if item.Tag != "" {
 w.Write(profile_comments_row_16)
+w.Write([]byte(item.Tag))
+w.Write(profile_comments_row_17)
+}
+w.Write(profile_comments_row_18)
 }
 }
 } else {
 if len(tmpl_profile_vars.ItemList) != 0 {
 for _, item := range tmpl_profile_vars.ItemList {
-w.Write(profile_comments_row_17)
-w.Write([]byte(item.ClassName))
-w.Write(profile_comments_row_18)
-w.Write([]byte(item.Avatar))
 w.Write(profile_comments_row_19)
-w.Write([]byte(item.CreatedByName))
+w.Write([]byte(item.ClassName))
 w.Write(profile_comments_row_20)
-w.Write([]byte(item.CreatedByName))
+w.Write([]byte(item.Avatar))
 w.Write(profile_comments_row_21)
-w.Write([]byte(item.UserLink))
+w.Write([]byte(item.CreatedByName))
 w.Write(profile_comments_row_22)
 w.Write([]byte(item.CreatedByName))
 w.Write(profile_comments_row_23)
-if item.Tag != "" {
+w.Write([]byte(item.UserLink))
 w.Write(profile_comments_row_24)
-w.Write([]byte(item.Tag))
+w.Write([]byte(item.CreatedByName))
 w.Write(profile_comments_row_25)
-}
+if item.Tag != "" {
 w.Write(profile_comments_row_26)
-w.Write([]byte(item.ContentHtml))
+w.Write([]byte(item.Tag))
 w.Write(profile_comments_row_27)
-if tmpl_profile_vars.CurrentUser.IsMod {
-w.Write(profile_comments_row_28)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(profile_comments_row_29)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(profile_comments_row_30)
 }
-w.Write(profile_comments_row_31)
+w.Write(profile_comments_row_28)
+w.Write([]byte(item.ContentHtml))
+w.Write(profile_comments_row_29)
+if tmpl_profile_vars.CurrentUser.IsMod {
+w.Write(profile_comments_row_30)
 w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(profile_comments_row_32)
+w.Write(profile_comments_row_31)
 w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_comments_row_32)
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(profile_comments_row_33)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_comments_row_34)
+}
+w.Write(profile_comments_row_35)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(profile_comments_row_36)
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_comments_row_37)
 }
 }
 }
 w.Write(profile_22)
 if !tmpl_profile_vars.CurrentUser.IsBanned {
 w.Write(profile_23)
-w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
 w.Write(profile_24)
-}
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
 w.Write(profile_25)
+}
 w.Write(profile_26)
+w.Write(profile_27)
 w.Write(footer_0)
 w.Write([]byte(common.BuildWidget("footer",tmpl_profile_vars.Header)))
 w.Write(footer_1)

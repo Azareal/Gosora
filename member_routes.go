@@ -495,14 +495,9 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 	return nil
 }
 
-func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
 		return common.NoPermissions(w, r, user)
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
 	}
 
 	uid, err := strconv.Atoi(r.PostFormValue("uid"))

@@ -647,56 +647,60 @@ var profile_comments_row_7 = []byte(`</a>&nbsp;&nbsp;
 
 				`)
 var profile_comments_row_8 = []byte(`<a href="/profile/reply/edit/submit/`)
-var profile_comments_row_9 = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
+var profile_comments_row_9 = []byte(`?session=`)
+var profile_comments_row_10 = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
 
 				<a href="/profile/reply/delete/submit/`)
-var profile_comments_row_10 = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>`)
-var profile_comments_row_11 = []byte(`
+var profile_comments_row_11 = []byte(`?session=`)
+var profile_comments_row_12 = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>`)
+var profile_comments_row_13 = []byte(`
 
 				<a class="mod_button" href="/report/submit/`)
-var profile_comments_row_12 = []byte(`?session=`)
-var profile_comments_row_13 = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>
+var profile_comments_row_14 = []byte(`?session=`)
+var profile_comments_row_15 = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>
 
 				`)
-var profile_comments_row_14 = []byte(`<a class="username hide_on_mobile user_tag" style="float: right;">`)
-var profile_comments_row_15 = []byte(`</a>`)
-var profile_comments_row_16 = []byte(`
+var profile_comments_row_16 = []byte(`<a class="username hide_on_mobile user_tag" style="float: right;">`)
+var profile_comments_row_17 = []byte(`</a>`)
+var profile_comments_row_18 = []byte(`
 			</span>
 		</div>
 	`)
-var profile_comments_row_17 = []byte(`
+var profile_comments_row_19 = []byte(`
 		<div class="rowitem passive deletable_block editable_parent comment `)
-var profile_comments_row_18 = []byte(`">
+var profile_comments_row_20 = []byte(`">
 			<div class="userbit">
 				<img src="`)
-var profile_comments_row_19 = []byte(`" alt="`)
-var profile_comments_row_20 = []byte(`'s Avatar" title="`)
-var profile_comments_row_21 = []byte(`'s Avatar" />
+var profile_comments_row_21 = []byte(`" alt="`)
+var profile_comments_row_22 = []byte(`'s Avatar" title="`)
+var profile_comments_row_23 = []byte(`'s Avatar" />
 				<span class="nameAndTitle">
 					<a href="`)
-var profile_comments_row_22 = []byte(`" class="real_username username">`)
-var profile_comments_row_23 = []byte(`</a>
+var profile_comments_row_24 = []byte(`" class="real_username username">`)
+var profile_comments_row_25 = []byte(`</a>
 					`)
-var profile_comments_row_24 = []byte(`<a class="username hide_on_mobile user_tag" style="float: right;">`)
-var profile_comments_row_25 = []byte(`</a>`)
-var profile_comments_row_26 = []byte(`
+var profile_comments_row_26 = []byte(`<a class="username hide_on_mobile user_tag" style="float: right;">`)
+var profile_comments_row_27 = []byte(`</a>`)
+var profile_comments_row_28 = []byte(`
 				</span>
 			</div>
 			<div class="content_column">
 				<span class="editable_block user_content">`)
-var profile_comments_row_27 = []byte(`</span>
+var profile_comments_row_29 = []byte(`</span>
 				<span class="controls">
 					`)
-var profile_comments_row_28 = []byte(`
+var profile_comments_row_30 = []byte(`
 						<a href="/profile/reply/edit/submit/`)
-var profile_comments_row_29 = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
+var profile_comments_row_31 = []byte(`?session=`)
+var profile_comments_row_32 = []byte(`" class="mod_button" title="Edit Item"><button class="username edit_item edit_label"></button></a>
 						<a href="/profile/reply/delete/submit/`)
-var profile_comments_row_30 = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>
+var profile_comments_row_33 = []byte(`?session=`)
+var profile_comments_row_34 = []byte(`" class="mod_button" title="Delete Item"><button class="username delete_item trash_label"></button></a>
 					`)
-var profile_comments_row_31 = []byte(`
+var profile_comments_row_35 = []byte(`
 					<a class="mod_button" href="/report/submit/`)
-var profile_comments_row_32 = []byte(`?session=`)
-var profile_comments_row_33 = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>
+var profile_comments_row_36 = []byte(`?session=`)
+var profile_comments_row_37 = []byte(`&type=user-reply"><button class="username report_item flag_label"></button></a>
 				</span>
 			</div>
 		</div>
@@ -705,9 +709,10 @@ var profile_22 = []byte(`</div>
 
 `)
 var profile_23 = []byte(`
-	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/" method="post">
+	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?session=`)
+var profile_24 = []byte(`" method="post">
 		<input name="uid" value='`)
-var profile_24 = []byte(`' type="hidden" />
+var profile_25 = []byte(`' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top: none;">
 			<div class="formrow">
 				<div class="formitem"><textarea class="input_content" name="reply-content" placeholder="Insert comment here"></textarea></div>
@@ -718,13 +723,13 @@ var profile_24 = []byte(`' type="hidden" />
 		</div>
 	</form>
 `)
-var profile_25 = []byte(`
+var profile_26 = []byte(`
 </div>
 
 </div>
 
 `)
-var profile_26 = []byte(`
+var profile_27 = []byte(`
 <script type="text/javascript">
 function handle_profile_hashbit() {
 	var hash_class = ""

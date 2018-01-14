@@ -476,14 +476,10 @@ func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.
 	return nil
 }
 
-func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
-	}
+func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
 	isJs := (r.PostFormValue("js") == "1")
 
-	rid, err := strconv.Atoi(r.URL.Path[len("/profile/reply/edit/submit/"):])
+	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return common.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
 	}
@@ -513,14 +509,10 @@ func routeProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user co
 	return nil
 }
 
-func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
-	}
+func routeProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
 	isJs := (r.PostFormValue("isJs") == "1")
 
-	rid, err := strconv.Atoi(r.URL.Path[len("/profile/reply/delete/submit/"):])
+	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return common.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
 	}

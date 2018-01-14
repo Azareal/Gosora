@@ -28,6 +28,7 @@ func routes() {
 	buildUserRoutes()
 	buildTopicRoutes()
 	buildReplyRoutes()
+	buildProfileReplyRoutes()
 }
 
 // TODO: Test the email token route
@@ -86,6 +87,18 @@ func buildReplyRoutes() {
 		Action("routeReplyLikeSubmit", "/reply/like/submit/", "extraData"),
 	)
 	addRouteGroup(replyGroup)
+}
+
+// TODO: Move these into /user/?
+func buildProfileReplyRoutes() {
+	//router.HandleFunc("/user/edit/submit/", routeLogout) // routeLogout? what on earth? o.o
+	pReplyGroup := newRouteGroup("/profile/")
+	pReplyGroup.Routes(
+		Action("routeProfileReplyCreateSubmit", "/profile/reply/create/"), // TODO: Add /submit/ to the end
+		Action("routeProfileReplyEditSubmit", "/profile/reply/edit/submit/", "extraData"),
+		Action("routeProfileReplyDeleteSubmit", "/profile/reply/delete/submit/", "extraData"),
+	)
+	addRouteGroup(pReplyGroup)
 }
 
 func buildPanelRoutes() {

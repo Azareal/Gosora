@@ -312,11 +312,6 @@ func main() {
 	router.HandleFunc("/accounts/create/submit/", routeRegisterSubmit)
 	//router.HandleFunc("/accounts/list/", routeLogin) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
 
-	// TODO: Move these into /user/?
-	router.HandleFunc("/profile/reply/create/", routeProfileReplyCreate)
-	router.HandleFunc("/profile/reply/edit/submit/", routeProfileReplyEditSubmit)
-	router.HandleFunc("/profile/reply/delete/submit/", routeProfileReplyDeleteSubmit)
-	//router.HandleFunc("/user/edit/submit/", routeLogout) // routeLogout? what on earth? o.o
 	router.HandleFunc("/ws/", routeWebsockets)
 
 	log.Print("Initialising the plugins")
