@@ -438,7 +438,7 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 	return nil
 }
 
-func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User, urlBit string) common.RouteError {
 	var err error
 	var page, offset int
 	var replyList []common.ReplyUser
@@ -447,7 +447,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User) comm
 
 	// SEO URLs...
 	// TODO: Make a shared function for this
-	halves := strings.Split(r.URL.Path[len("/topic/"):], ".")
+	halves := strings.Split(urlBit, ".")
 	if len(halves) < 2 {
 		halves = append(halves, halves[0])
 	}

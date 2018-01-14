@@ -4,7 +4,7 @@
 		<div class="rowitem"><h1>Create Topic</h1></div>
 	</div>
 	<div class="rowblock">
-		<form id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
+		<form id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/?session={{.CurrentUser.Session}}" method="post"></form>
 		<div class="formrow real_first_child">
 			<div class="formitem formlabel"><a>Board</a></div>
 			<div class="formitem"><select form="topic_create_form_form" id="topic_board_input" name="topic-board">

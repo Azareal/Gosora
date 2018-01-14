@@ -112,6 +112,7 @@ type TopicStmts struct {
 	addRepliesToTopic *sql.Stmt
 	lock              *sql.Stmt
 	unlock            *sql.Stmt
+	moveTo            *sql.Stmt
 	stick             *sql.Stmt
 	unstick           *sql.Stmt
 	hasLikedTopic     *sql.Stmt
@@ -132,6 +133,7 @@ func init() {
 			addRepliesToTopic: acc.Update("topics").Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
 			lock:              acc.Update("topics").Set("is_closed = 1").Where("tid = ?").Prepare(),
 			unlock:            acc.Update("topics").Set("is_closed = 0").Where("tid = ?").Prepare(),
+			moveTo:            acc.Update("topics").Set("parentID = ?").Where("tid = ?").Prepare(),
 			stick:             acc.Update("topics").Set("sticky = 1").Where("tid = ?").Prepare(),
 			unstick:           acc.Update("topics").Set("sticky = 0").Where("tid = ?").Prepare(),
 			hasLikedTopic:     acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'topics'").Prepare(),
@@ -171,6 +173,12 @@ func (topic *Topic) Lock() (err error) {
 
 func (topic *Topic) Unlock() (err error) {
 	_, err = topicStmts.unlock.Exec(topic.ID)
+	topic.cacheRemove()
+	return err
+}
+
+func (topic *Topic) MoveTo(destForum int) (err error) {
+	_, err = topicStmts.moveTo.Exec(destForum, topic.ID)
 	topic.cacheRemove()
 	return err
 }

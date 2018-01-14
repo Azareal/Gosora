@@ -26,6 +26,8 @@ func routes() {
 
 	buildPanelRoutes()
 	buildUserRoutes()
+	buildTopicRoutes()
+	buildReplyRoutes()
 }
 
 // TODO: Test the email token route
@@ -36,7 +38,7 @@ func buildUserRoutes() {
 		MemberView("routeAccountEditCritical", "/user/edit/critical/"),
 		Action("routeAccountEditCriticalSubmit", "/user/edit/critical/submit/"), // TODO: Full test this
 		MemberView("routeAccountEditAvatar", "/user/edit/avatar/"),
-		UploadAction("routeAccountEditAvatarSubmit", "/user/edit/avatar/submit/"),
+		UploadAction("routeAccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("common.Config.MaxRequestSize"),
 		MemberView("routeAccountEditUsername", "/user/edit/username/"),
 		Action("routeAccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
 		MemberView("routeAccountEditEmail", "/user/edit/email/"),
@@ -53,6 +55,37 @@ func buildUserRoutes() {
 		MemberView("routeIps", "/users/ips/"), // TODO: .Perms("ViewIPs")?
 	)
 	addRouteGroup(userGroup)
+}
+
+func buildTopicRoutes() {
+	topicGroup := newRouteGroup("/topic/")
+	topicGroup.Routes(
+		View("routeTopicID", "/topic/", "extraData"),
+		Action("routeTopicCreateSubmit", "/topic/create/submit/"),
+		Action("routeEditTopicSubmit", "/topic/edit/submit/", "extraData"),
+		Action("routeDeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
+		Action("routeStickTopicSubmit", "/topic/stick/submit/", "extraData"),
+		Action("routeUnstickTopicSubmit", "/topic/unstick/submit/", "extraData"),
+		Action("routeLockTopicSubmit", "/topic/lock/submit/").LitBefore("req.URL.Path += extraData"),
+		Action("routeUnlockTopicSubmit", "/topic/unlock/submit/", "extraData"),
+		Action("routeMoveTopicSubmit", "/topic/move/submit/", "extraData"),
+		Action("routeLikeTopicSubmit", "/topic/like/submit/", "extraData"),
+	)
+	addRouteGroup(topicGroup)
+}
+
+func buildReplyRoutes() {
+	//router.HandleFunc("/reply/edit/", routeReplyEdit) // No js fallback
+	//router.HandleFunc("/reply/delete/", routeReplyDelete) // No js confirmation page? We could have a confirmation modal for the JS case
+	replyGroup := newRouteGroup("/reply/")
+	replyGroup.Routes(
+		// TODO: Reduce this to 1MB for attachments for each file?
+		UploadAction("routeCreateReplySubmit", "/reply/create/").MaxSizeVar("common.Config.MaxRequestSize"), // TODO: Rename the route so it's /reply/create/submit/
+		Action("routeReplyEditSubmit", "/reply/edit/submit/", "extraData"),
+		Action("routeReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
+		Action("routeReplyLikeSubmit", "/reply/like/submit/", "extraData"),
+	)
+	addRouteGroup(replyGroup)
 }
 
 func buildPanelRoutes() {
@@ -96,6 +129,7 @@ func buildPanelRoutes() {
 		View("routePanelAnalyticsAgents", "/panel/analytics/agents/"),
 		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 		View("routePanelAnalyticsAgentViews", "/panel/analytics/agent/", "extraData"),
+		View("routePanelAnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
 
 		View("routePanelGroups", "/panel/groups/"),
 		View("routePanelGroupsEdit", "/panel/groups/edit/", "extraData"),

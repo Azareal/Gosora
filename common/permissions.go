@@ -78,8 +78,9 @@ type Perms struct {
 	EditReply bool
 	//EditOwnReply bool
 	DeleteReply bool
-	PinTopic    bool
-	CloseTopic  bool
+	//DeleteOwnReply bool
+	PinTopic   bool
+	CloseTopic bool
 	//CloseOwnTopic bool
 
 	//ExtData map[string]bool

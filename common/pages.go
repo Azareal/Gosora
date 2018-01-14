@@ -206,6 +206,7 @@ type PanelAnalyticsRoutePage struct {
 	Zone         string
 	Route        string
 	PrimaryGraph PanelTimeGraph
+	ViewItems    []PanelAnalyticsItem
 	TimeRange    string
 }
 

@@ -1,6 +1,6 @@
 {{template "header.html" . }}
 
-<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}' method="post"></form>
+<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' method="post"></form>
 {{if gt .Page 1}}<link rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}" />
 <div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="Go to the previous page" rel="prev" href="/topic/{{.Topic.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
 
@@ -30,16 +30,16 @@
 		<span class="controls" aria-label="Controls and Author Information">
 
 		<a href="{{.Topic.UserLink}}" class="username real_username" rel="author">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
-		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}" class="mod_button" title="Love it" {{if .Topic.Liked}}aria-label="Unlike this topic"{{else}}aria-label="Like this topic"{{end}} style="color:#202020;">
+		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="mod_button" title="Love it" {{if .Topic.Liked}}aria-label="Unlike this topic"{{else}}aria-label="Like this topic"{{end}} style="color:#202020;">
 		<button class="username like_label"{{if .Topic.Liked}} style="background-color:#D6FFD6;"{{end}}></button></a>{{end}}
 
 		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic" aria-label="Edit this topic"><button class="username edit_label"></button></a>{{end}}
 
-		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Delete Topic" aria-label="Delete this topic"><button class="username trash_label"></button></a>{{end}}
+		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="Delete Topic" aria-label="Delete this topic"><button class="username trash_label"></button></a>{{end}}
 
-		{{if .CurrentUser.Perms.CloseTopic}}{{if .Topic.IsClosed}}<a class="mod_button" href='/topic/unlock/submit/{{.Topic.ID}}' style="font-weight:normal;" title="Unlock Topic" aria-label="Unlock this topic"><button class="username unlock_label"></button></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Lock Topic" aria-label="Lock this topic"><button class="username lock_label"></button></a>{{end}}{{end}}
+		{{if .CurrentUser.Perms.CloseTopic}}{{if .Topic.IsClosed}}<a class="mod_button" href='/topic/unlock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' style="font-weight:normal;" title="Unlock Topic" aria-label="Unlock this topic"><button class="username unlock_label"></button></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="Lock Topic" aria-label="Lock this topic"><button class="username lock_label"></button></a>{{end}}{{end}}
 
-		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}' style="font-weight:normal;" title="Unpin Topic" aria-label="Unpin this topic"><button class="username unpin_label"></button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}' class="mod_button" style="font-weight:normal;" title="Pin Topic" aria-label="Pin this topic"><button class="username pin_label"></button></a>{{end}}{{end}}
+		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' style="font-weight:normal;" title="Unpin Topic" aria-label="Unpin this topic"><button class="username unpin_label"></button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="Pin Topic" aria-label="Pin this topic"><button class="username pin_label"></button></a>{{end}}{{end}}
 		{{if .CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.Topic.IPAddress}}' style="font-weight:normal;" title="View IP" aria-label="The poster's IP is {{.Topic.IPAddress}}"><button class="username ip_label"></button></a>{{end}}
 		<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag this topic" aria-label="Flag this topic" rel="nofollow"><button class="username flag_label"></button></a>
 
@@ -64,11 +64,11 @@
 		<span class="controls">
 
 		<a href="{{.UserLink}}" class="username real_username" rel="author">{{.CreatedByName}}</a>&nbsp;&nbsp;
-		{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username like_label"{{if .Liked}} style="background-color:#D6FFD6;"{{end}}></button></a>{{end}}
+		{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="Love it" style="color:#202020;"><button class="username like_label"{{if .Liked}} style="background-color:#D6FFD6;"{{end}}></button></a>{{end}}
 
-		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}" class="mod_button" title="Edit Reply"><button class="username edit_item edit_label"></button></a>{{end}}
+		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="Edit Reply"><button class="username edit_item edit_label"></button></a>{{end}}
 
-		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}" class="mod_button" title="Delete Reply"><button class="username delete_item trash_label"></button></a>{{end}}
+		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="Delete Reply"><button class="username delete_item trash_label"></button></a>{{end}}
 		{{if $.CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.IPAddress}}' style="font-weight:normal;" title="View IP"><button class="username ip_label"></button></a>{{end}}
 		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button report_item" title="Flag this reply" aria-label="Flag this reply" rel="nofollow"><button class="username report_item flag_label"></button></a>
 
@@ -82,7 +82,7 @@
 
 {{if .CurrentUser.Perms.CreateReply}}
 <div class="rowblock topic_reply_form quick_create_form">
-	<form id="reply_form" enctype="multipart/form-data" action="/reply/create/" method="post"></form>
+	<form id="reply_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>
 	<input form="reply_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
 	<div class="formrow real_first_child">
 		<div class="formitem">

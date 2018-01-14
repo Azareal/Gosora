@@ -80,7 +80,7 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
-	common.GlobalViewCounter, err = common.NewChunkedViewCounter()
+	common.GlobalViewCounter, err = common.NewGlobalViewCounter()
 	if err != nil {
 		return err
 	}
@@ -89,6 +89,10 @@ func afterDBInit() (err error) {
 		return err
 	}
 	common.RouteViewCounter, err = common.NewDefaultRouteViewCounter()
+	if err != nil {
+		return err
+	}
+	common.PostCounter, err = common.NewPostCounter()
 	if err != nil {
 		return err
 	}
@@ -299,22 +303,6 @@ func main() {
 	// TODO: Move these routes into the new routes list
 	log.Print("Initialising the router")
 	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	router.HandleFunc("/topic/create/submit/", routeTopicCreateSubmit)
-	router.HandleFunc("/topic/", routeTopicID)
-	router.HandleFunc("/reply/create/", routeCreateReply)
-	//router.HandleFunc("/reply/edit/", routeReplyEdit) // No js fallback
-	//router.HandleFunc("/reply/delete/", routeReplyDelete) // No js confirmation page? We could have a confirmation modal for the JS case
-	router.HandleFunc("/reply/edit/submit/", routeReplyEditSubmit)
-	router.HandleFunc("/reply/delete/submit/", routeReplyDeleteSubmit)
-	router.HandleFunc("/reply/like/submit/", routeReplyLikeSubmit)
-	router.HandleFunc("/topic/edit/submit/", routeEditTopic)
-	router.HandleFunc("/topic/delete/submit/", routeDeleteTopic)
-	router.HandleFunc("/topic/stick/submit/", routeStickTopic)
-	router.HandleFunc("/topic/unstick/submit/", routeUnstickTopic)
-	router.HandleFunc("/topic/lock/submit/", routeLockTopic)
-	router.HandleFunc("/topic/unlock/submit/", routeUnlockTopic)
-	router.HandleFunc("/topic/move/submit/", routeMoveTopic)
-	router.HandleFunc("/topic/like/submit/", routeLikeTopic)
 
 	// Accounts
 	router.HandleFunc("/accounts/login/", routeLogin)

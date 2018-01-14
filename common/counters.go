@@ -8,21 +8,25 @@ import (
 	"../query_gen/lib"
 )
 
-var GlobalViewCounter *ChunkedViewCounter
+// Global counters
+var GlobalViewCounter *DefaultViewCounter
 var AgentViewCounter *DefaultAgentViewCounter
 var RouteViewCounter *DefaultRouteViewCounter
+var PostCounter *DefaultPostCounter
+
+// Local counters
 var TopicViewCounter *DefaultTopicViewCounter
 
-type ChunkedViewCounter struct {
+type DefaultViewCounter struct {
 	buckets       [2]int64
 	currentBucket int64
 
 	insert *sql.Stmt
 }
 
-func NewChunkedViewCounter() (*ChunkedViewCounter, error) {
+func NewGlobalViewCounter() (*DefaultViewCounter, error) {
 	acc := qgen.Builder.Accumulator()
-	counter := &ChunkedViewCounter{
+	counter := &DefaultViewCounter{
 		currentBucket: 0,
 		insert:        acc.Insert("viewchunks").Columns("count, createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),
 	}
@@ -32,7 +36,7 @@ func NewChunkedViewCounter() (*ChunkedViewCounter, error) {
 	return counter, acc.FirstError()
 }
 
-func (counter *ChunkedViewCounter) Tick() (err error) {
+func (counter *DefaultViewCounter) Tick() (err error) {
 	var oldBucket = counter.currentBucket
 	var nextBucket int64 // 0
 	if counter.currentBucket == 0 {
@@ -47,15 +51,62 @@ func (counter *ChunkedViewCounter) Tick() (err error) {
 	return counter.insertChunk(previousViewChunk)
 }
 
-func (counter *ChunkedViewCounter) Bump() {
+func (counter *DefaultViewCounter) Bump() {
 	atomic.AddInt64(&counter.buckets[counter.currentBucket], 1)
 }
 
-func (counter *ChunkedViewCounter) insertChunk(count int64) error {
+func (counter *DefaultViewCounter) insertChunk(count int64) error {
 	if count == 0 {
 		return nil
 	}
 	debugLogf("Inserting a viewchunk with a count of %d", count)
+	_, err := counter.insert.Exec(count)
+	return err
+}
+
+type DefaultPostCounter struct {
+	buckets       [2]int64
+	currentBucket int64
+
+	insert *sql.Stmt
+}
+
+func NewPostCounter() (*DefaultPostCounter, error) {
+	acc := qgen.Builder.Accumulator()
+	counter := &DefaultPostCounter{
+		currentBucket: 0,
+		insert:        acc.Insert("postchunks").Columns("count, createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),
+	}
+	AddScheduledFifteenMinuteTask(counter.Tick)
+	//AddScheduledSecondTask(counter.Tick)
+	AddShutdownTask(counter.Tick)
+	return counter, acc.FirstError()
+}
+
+func (counter *DefaultPostCounter) Tick() (err error) {
+	var oldBucket = counter.currentBucket
+	var nextBucket int64 // 0
+	if counter.currentBucket == 0 {
+		nextBucket = 1
+	}
+	atomic.AddInt64(&counter.buckets[oldBucket], counter.buckets[nextBucket])
+	atomic.StoreInt64(&counter.buckets[nextBucket], 0)
+	atomic.StoreInt64(&counter.currentBucket, nextBucket)
+
+	var previousViewChunk = counter.buckets[oldBucket]
+	atomic.AddInt64(&counter.buckets[oldBucket], -previousViewChunk)
+	return counter.insertChunk(previousViewChunk)
+}
+
+func (counter *DefaultPostCounter) Bump() {
+	atomic.AddInt64(&counter.buckets[counter.currentBucket], 1)
+}
+
+func (counter *DefaultPostCounter) insertChunk(count int64) error {
+	if count == 0 {
+		return nil
+	}
+	debugLogf("Inserting a postchunk with a count of %d", count)
 	_, err := counter.insert.Exec(count)
 	return err
 }
@@ -114,7 +165,7 @@ func (counter *DefaultAgentViewCounter) insertChunk(count int, agent int) error 
 
 func (counter *DefaultAgentViewCounter) Bump(agent int) {
 	// TODO: Test this check
-	debugLog("counter.agentBuckets[", agent, "]: ", counter.agentBuckets[agent])
+	debugDetail("counter.agentBuckets[", agent, "]: ", counter.agentBuckets[agent])
 	if len(counter.agentBuckets) <= agent || agent < 0 {
 		return
 	}

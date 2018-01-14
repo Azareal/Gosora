@@ -95,10 +95,25 @@ func AnonAction(fname string, path string, args ...string) *RouteImpl {
 	return route(fname, path, args...).Before("ParseForm")
 }
 
-func UploadAction(fname string, path string, args ...string) *RouteImpl {
+// Make this it's own type to force the user to manipulate methods on it to set parameters
+type uploadAction struct {
+	Route *RouteImpl
+}
+
+func UploadAction(fname string, path string, args ...string) *uploadAction {
 	route := route(fname, path, args...)
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
 		route.Before("MemberOnly")
 	}
-	return route
+	return &uploadAction{route}
+}
+
+func (action *uploadAction) MaxSizeVar(varName string) *RouteImpl {
+	action.Route.LitBefore(`err = common.HandleUploadRoute(w,req,user,` + varName + `)
+			if err != nil {
+				router.handleError(err,w,req,user)
+				return
+			}`)
+	action.Route.Before("NoUploadSessionMismatch")
+	return action.Route
 }

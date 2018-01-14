@@ -6,6 +6,9 @@ var conn;
 var selectedTopics = [];
 var attachItemCallback = function(){}
 
+// Topic move
+var forumToMoveTo = 0;
+
 // TODO: Write a friendlier error handler which uses a .notice or something, we could have a specialised one for alerts
 function ajaxError(xhr,status,errstr) {
 	console.log("The AJAX request failed");
@@ -500,6 +503,20 @@ $(document).ready(function(){
 				$(".mod_floater").removeClass("auto_hide");
 			});
 		});
+
+		let bulkActionSender = function(action, selectedTopics) {
+			let url = "/topic/"+action+"/submit/?session=" + session;
+			$.ajax({
+				url: url,
+				type: "POST",
+				data: JSON.stringify(selectedTopics),
+				contentType: "application/json",
+				error: ajaxError,
+				success: function() {
+					window.location.reload();
+				}
+			});
+		};
 		$(".mod_floater_submit").click(function(event){
 			event.preventDefault();
 			let selectNode = this.form.querySelector(".mod_floater_options");
@@ -511,22 +528,24 @@ $(document).ready(function(){
 			switch(action) {
 				case "move":
 					console.log("move action");
+					let modTopicMover = $("#mod_topic_mover");
 					$("#mod_topic_mover").removeClass("auto_hide");
+					$("#mod_topic_mover .pane_row").click(function(){
+						modTopicMover.find(".pane_row").removeClass("pane_selected");
+						let fid = this.getAttribute("data-fid");
+						if (fid == null) {
+							return;
+						}
+						this.classList.add("pane_selected");
+						console.log("fid: " + fid);
+						let moverFid = document.getElementById("#mover_fid");
+						console.log("moverFid: ", moverFid);
+						moverFid.value = fid;
+					});
 					return;
 			}
 			
-			let url = "/topic/"+action+"/submit/";
-			//console.log("JSON.stringify(selectedTopics) ", JSON.stringify(selectedTopics));
-			$.ajax({
-				url: url,
-				type: "POST",
-				data: JSON.stringify(selectedTopics),
-				contentType: "application/json",
-				error: ajaxError,
-				success: function() {
-					window.location.reload();
-				}
-			});
+			bulkActionSender(action,selectedTopics);
 		});
 	});
 

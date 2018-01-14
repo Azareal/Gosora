@@ -228,24 +228,12 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user common.
 		}
 	}
 
+	common.PostCounter.Bump()
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	return nil
 }
 
-func routeCreateReply(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	// TODO: Reduce this to 1MB for attachments for each file?
-	// TODO: Reuse this code more
-	if r.ContentLength > int64(common.Config.MaxRequestSize) {
-		size, unit := common.ConvertByteUnit(float64(common.Config.MaxRequestSize))
-		return common.CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
-	}
-	r.Body = http.MaxBytesReader(w, r.Body, int64(common.Config.MaxRequestSize))
-
-	err := r.ParseMultipartForm(int64(common.Megabyte))
-	if err != nil {
-		return common.LocalError("Unable to parse the form", w, r, user)
-	}
-
+func routeCreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
 		return common.PreError("Failed to convert the Topic ID", w, r)
@@ -372,17 +360,14 @@ func routeCreateReply(w http.ResponseWriter, r *http.Request, user common.User) 
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+
+	common.PostCounter.Bump()
 	return nil
 }
 
 // TODO: Refactor this
-func routeLikeTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
-
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/like/submit/"):])
+func routeLikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
+	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return common.PreError("Topic IDs can only ever be numbers.", w, r)
 	}
@@ -442,13 +427,8 @@ func routeLikeTopic(w http.ResponseWriter, r *http.Request, user common.User) co
 	return nil
 }
 
-func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
-
-	rid, err := strconv.Atoi(r.URL.Path[len("/reply/like/submit/"):])
+func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
+	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return common.PreError("The provided Reply ID is not a valid number.", w, r)
 	}
@@ -524,9 +504,13 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user common
 	if err != nil {
 		return common.LocalError("Bad Form", w, r, user)
 	}
+
 	uid, err := strconv.Atoi(r.PostFormValue("uid"))
 	if err != nil {
 		return common.LocalError("Invalid UID", w, r, user)
+	}
+	if !common.Users.Exists(uid) {
+		return common.LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
 	}
 
 	content := common.PreparseMessage(r.PostFormValue("reply-content"))
@@ -536,10 +520,7 @@ func routeProfileReplyCreate(w http.ResponseWriter, r *http.Request, user common
 		return common.InternalError(err, w, r)
 	}
 
-	if !common.Users.Exists(uid) {
-		return common.LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
-	}
-
+	common.PostCounter.Bump()
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
 	return nil
 }
@@ -629,6 +610,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
+	common.PostCounter.Bump()
 
 	http.Redirect(w, r, "/topic/"+strconv.FormatInt(lastID, 10), http.StatusSeeOther)
 	return nil
@@ -719,19 +701,9 @@ func routeAccountEditAvatar(w http.ResponseWriter, r *http.Request, user common.
 }
 
 func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	if r.ContentLength > int64(common.Config.MaxRequestSize) {
-		size, unit := common.ConvertByteUnit(float64(common.Config.MaxRequestSize))
-		return common.CustomError("Your avatar's too big. Avatars must be smaller than "+strconv.Itoa(int(size))+unit, http.StatusExpectationFailed, "Error", w, r, user)
-	}
-	r.Body = http.MaxBytesReader(w, r.Body, int64(common.Config.MaxRequestSize))
-
 	headerVars, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
-	}
-	err := r.ParseMultipartForm(int64(common.Megabyte))
-	if err != nil {
-		return common.LocalError("Upload failed", w, r, user)
 	}
 
 	var filename, ext string
@@ -783,7 +755,7 @@ func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c
 		}
 	}
 
-	err = user.ChangeAvatar("." + ext)
+	err := user.ChangeAvatar("." + ext)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

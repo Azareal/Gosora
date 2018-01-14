@@ -15,15 +15,10 @@ import (
 
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 // TODO: Disable stat updates in posts handled by plugin_guilds
-// TODO: Make sure this route is member only
-func routeEditTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
+func routeEditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
 	isJs := (r.PostFormValue("js") == "1")
 
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/edit/submit/"):])
+	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return common.PreErrorJSQ("The provided TopicID is not a valid number.", w, r, isJs)
 	}
@@ -64,8 +59,7 @@ func routeEditTopic(w http.ResponseWriter, r *http.Request, user common.User) co
 
 // TODO: Add support for soft-deletion and add a permission for hard delete in addition to the usual
 // TODO: Disable stat updates in posts handled by plugin_guilds
-// TODO: Make sure this route is member only
-func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeDeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
 	var isJs = false
@@ -131,8 +125,8 @@ func routeDeleteTopic(w http.ResponseWriter, r *http.Request, user common.User) 
 	return nil
 }
 
-func routeStickTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/stick/submit/"):])
+func routeStickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
+	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return common.PreError("The provided TopicID is not a valid number.", w, r)
 	}
@@ -170,8 +164,8 @@ func routeStickTopic(w http.ResponseWriter, r *http.Request, user common.User) c
 	return nil
 }
 
-func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unstick/submit/"):])
+func routeUnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
+	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return common.PreError("The provided TopicID is not a valid number.", w, r)
 	}
@@ -210,7 +204,7 @@ func routeUnstickTopic(w http.ResponseWriter, r *http.Request, user common.User)
 	return nil
 }
 
-func routeLockTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeLockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
 	var isJs = false
@@ -272,8 +266,8 @@ func routeLockTopic(w http.ResponseWriter, r *http.Request, user common.User) co
 	return nil
 }
 
-func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/unlock/submit/"):])
+func routeUnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
+	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return common.PreError("The provided TopicID is not a valid number.", w, r)
 	}
@@ -312,58 +306,70 @@ func routeUnlockTopic(w http.ResponseWriter, r *http.Request, user common.User) 
 	return nil
 }
 
-func routeMoveTopic(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	return common.NoPermissions(w, r, user)
+// ! JS only route
+// TODO: Figure a way to get this route to work without JS
+func routeMoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
+	// Not fully implemented
+	return common.NoPermissionsJS(w, r, user)
 
-	tid, err := strconv.Atoi(r.URL.Path[len("/topic/move/submit/"):])
+	// TODO: Move this to some sort of middleware
+	var tids []int
+	if r.Body == nil {
+		return common.PreErrorJS("No request body", w, r)
+	}
+	err := json.NewDecoder(r.Body).Decode(&tids)
 	if err != nil {
-		return common.PreError("The provided TopicID is not a valid number.", w, r)
+		return common.PreErrorJS("We weren't able to parse your data", w, r)
+	}
+	if len(tids) == 0 {
+		return common.LocalErrorJS("You haven't provided any IDs", w, r)
+	}
+	fid := 0
+
+	for _, tid := range tids {
+		topic, err := common.Topics.Get(tid)
+		if err == ErrNoRows {
+			return common.PreErrorJS("The topic you tried to move doesn't exist.", w, r)
+		} else if err != nil {
+			return common.InternalErrorJS(err, w, r)
+		}
+
+		// TODO: Add hooks to make use of headerLite
+		_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+		if ferr != nil {
+			return ferr
+		}
+		if !user.Perms.ViewTopic || !user.IsSuperMod { // TODO: Add a MoveTo permission
+			return common.NoPermissionsJS(w, r, user)
+		}
+
+		err = topic.MoveTo(fid)
+		if err != nil {
+			return common.InternalErrorJS(err, w, r)
+		}
+
+		err = common.ModLogs.Create("move", tid, "topic", user.LastIP, user.ID)
+		if err != nil {
+			return common.InternalErrorJS(err, w, r)
+		}
+		err = topic.CreateActionReply("move", user.LastIP, user)
+		if err != nil {
+			return common.InternalErrorJS(err, w, r)
+		}
 	}
 
-	topic, err := common.Topics.Get(tid)
-	if err == ErrNoRows {
-		return common.PreError("The topic you tried to move doesn't exist.", w, r)
-	} else if err != nil {
-		return common.InternalError(err, w, r)
+	if len(tids) == 1 {
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(tids[0]), http.StatusSeeOther)
 	}
-
-	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if ferr != nil {
-		return ferr
-	}
-	if !user.Perms.ViewTopic { // TODO: MoveTopic permission?
-		return common.NoPermissions(w, r, user)
-	}
-
-	err = topic.Unlock()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	err = common.ModLogs.Create("move", tid, "topic", user.LastIP, user.ID)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	err = topic.CreateActionReply("move", user.LastIP, user)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	return nil
 }
 
 // TODO: Disable stat updates in posts handled by plugin_guilds
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
-func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
+func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
 	isJs := (r.PostFormValue("js") == "1")
 
-	rid, err := strconv.Atoi(r.URL.Path[len("/reply/edit/submit/"):])
+	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return common.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
 	}
@@ -408,14 +414,10 @@ func routeReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 
 // TODO: Refactor this
 // TODO: Disable stat updates in posts handled by plugin_guilds
-func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	err := r.ParseForm()
-	if err != nil {
-		return common.PreError("Bad Form", w, r)
-	}
+func routeReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
 	isJs := (r.PostFormValue("isJs") == "1")
 
-	rid, err := strconv.Atoi(r.URL.Path[len("/reply/delete/submit/"):])
+	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return common.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
 	}

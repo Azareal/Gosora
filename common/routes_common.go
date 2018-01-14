@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -345,4 +346,26 @@ func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteE
 
 func ReqIsJson(r *http.Request) bool {
 	return r.Header.Get("Content-type") == "application/json"
+}
+
+func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user User, maxFileSize int) RouteError {
+	// TODO: Reuse this code more
+	if r.ContentLength > int64(maxFileSize) {
+		size, unit := ConvertByteUnit(float64(maxFileSize))
+		return CustomError("Your upload is too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxFileSize))
+
+	err := r.ParseMultipartForm(int64(Megabyte))
+	if err != nil {
+		return LocalError("Bad Form", w, r, user)
+	}
+	return nil
+}
+
+func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	if r.FormValue("session") != user.Session {
+		return SecurityError(w, r, user)
+	}
+	return nil
 }

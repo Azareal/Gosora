@@ -317,15 +317,14 @@ h1, h3 {
 	border: 1px solid var(--header-border-color);
 	border-bottom: 2px solid var(--header-border-color);
 	/*padding: 8px;*/
-	padding-left: 16px;
-	padding-right: 16px;
+	padding-left: 24px;
+	padding-right: 24px;
 	z-index: 9999;
 	animation: fadein 0.8s;
 }
-
 .pane_header {
 	color: hsl(0,0%,55%);
-	padding-top: 12px;
+	padding-top: 16px;
 	padding-bottom: 12px;
 	border-bottom: 1px solid var(--element-border-color);
 	margin-bottom: 2px;
@@ -339,9 +338,13 @@ h1, h3 {
 	color: var(--light-text-color);
 	border-bottom: 1px solid var(--element-border-color);
 	font-size: 13px;
-	padding-top: 5px;
-	padding-bottom: 8px;
+	padding-top: 12px;
+	padding-bottom: 12px;
 	margin-bottom: 3px;
+	cursor: pointer;
+}
+.pane_selected {
+	font-weight: bold;
 }
 
 .pane_buttons {

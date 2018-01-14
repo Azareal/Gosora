@@ -299,6 +299,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log.Print("req.URL.Path: ", req.URL.Path)
 		log.Print("extraData: ", extraData)
 		log.Print("req.Referer(): ", req.Referer())
+		log.Print("req.RemoteAddr: ", req.RemoteAddr)
 	}
 	
 	if prefix == "/static" {
@@ -349,6 +350,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if common.Dev.DebugMode {
 			log.Print("Blank UA: ", req.UserAgent())
 			log.Print("Method: ", req.Method)
+
 			for key, value := range req.Header {
 				for _, vvalue := range value {
 					log.Print("Header '" + key + "': " + vvalue + "!!")
@@ -358,6 +360,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			log.Print("req.URL.Path: ", req.URL.Path)
 			log.Print("extraData: ", extraData)
 			log.Print("req.Referer(): ", req.Referer())
+			log.Print("req.RemoteAddr: ", req.RemoteAddr)
 		}
 	default:
 		common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
@@ -373,6 +376,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			log.Print("req.URL.Path: ", req.URL.Path)
 			log.Print("extraData: ", extraData)
 			log.Print("req.Referer(): ", req.Referer())
+			log.Print("req.RemoteAddr: ", req.RemoteAddr)
 		}
 	}
 	

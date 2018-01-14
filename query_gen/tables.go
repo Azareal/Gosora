@@ -386,6 +386,15 @@ func createTables(adapter qgen.Adapter) error {
 		)
 	*/
 
+	qgen.Install.CreateTable("postchunks", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+			// TODO: Add a column for the parent topic / profile?
+		},
+		[]qgen.DBTableKey{},
+	)
+
 	qgen.Install.CreateTable("sync", "", "",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"last_update", "datetime", 0, false, false, ""},
