@@ -309,22 +309,23 @@ func routeUnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.
 // ! JS only route
 // TODO: Figure a way to get this route to work without JS
 func routeMoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
-	// Not fully implemented
-	return common.NoPermissionsJS(w, r, user)
+	fid, err := strconv.Atoi(sfid)
+	if err != nil {
+		return common.PreErrorJS("The provided Forum ID is not a valid number.", w, r)
+	}
 
 	// TODO: Move this to some sort of middleware
 	var tids []int
 	if r.Body == nil {
 		return common.PreErrorJS("No request body", w, r)
 	}
-	err := json.NewDecoder(r.Body).Decode(&tids)
+	err = json.NewDecoder(r.Body).Decode(&tids)
 	if err != nil {
 		return common.PreErrorJS("We weren't able to parse your data", w, r)
 	}
 	if len(tids) == 0 {
 		return common.LocalErrorJS("You haven't provided any IDs", w, r)
 	}
-	fid := 0
 
 	for _, tid := range tids {
 		topic, err := common.Topics.Get(tid)
@@ -339,7 +340,8 @@ func routeMoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 		if ferr != nil {
 			return ferr
 		}
-		if !user.Perms.ViewTopic || !user.IsSuperMod { // TODO: Add a MoveTo permission
+		// TODO: Make sure the mod has MoveTopic in the destination forum too
+		if !user.Perms.ViewTopic || !user.Perms.MoveTopic {
 			return common.NoPermissionsJS(w, r, user)
 		}
 
@@ -348,6 +350,7 @@ func routeMoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 			return common.InternalErrorJS(err, w, r)
 		}
 
+		// TODO: Log more data so we can list the destination forum in the action post?
 		err = common.ModLogs.Create("move", tid, "topic", user.LastIP, user.ID)
 		if err != nil {
 			return common.InternalErrorJS(err, w, r)

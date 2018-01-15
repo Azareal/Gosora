@@ -288,8 +288,9 @@ var agentMapEnum = map[string]int{
 	"baidu": 10,
 	"duckduckgo": 11,
 	"discord": 12,
-	"lynx": 13,
-	"blank": 14,
+	"cloudflarealwayson": 13,
+	"lynx": 14,
+	"blank": 15,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -305,8 +306,9 @@ var reverseAgentMapEnum = map[int]string{
 	10: "baidu",
 	11: "duckduckgo",
 	12: "discord",
-	13: "lynx",
-	14: "blank",
+	13: "cloudflarealwayson",
+	14: "lynx",
+	15: "blank",
 }
 
 // TODO: Stop spilling these into the package scope?
@@ -438,9 +440,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	case strings.Contains(ua,"Discordbot"):
 		common.AgentViewCounter.Bump(12)
 	case strings.Contains(ua,"Lynx"):
+		common.AgentViewCounter.Bump(14)
+	case strings.Contains(ua,"CloudFlare-AlwaysOnline"):
 		common.AgentViewCounter.Bump(13)
 	case ua == "":
-		common.AgentViewCounter.Bump(14)
+		common.AgentViewCounter.Bump(15)
 		if common.Dev.DebugMode {
 			log.Print("Blank UA: ", req.UserAgent())
 			log.Print("Method: ", req.Method)

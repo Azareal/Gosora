@@ -37,7 +37,8 @@
 		"EditReply":   "Can edit replies",
 		"DeleteReply": "Can delete replies",
 		"PinTopic":    "Can pin topics",
-		"CloseTopic":  "Can lock topics"
+		"CloseTopic":  "Can lock topics",
+		"MoveTopic": "Can move topics in or out"
 	},
 	"SettingLabels": {
 		"activation_type": "Activate All,Email Activation,Admin Approval"

@@ -504,8 +504,8 @@ $(document).ready(function(){
 			});
 		});
 
-		let bulkActionSender = function(action, selectedTopics) {
-			let url = "/topic/"+action+"/submit/?session=" + session;
+		let bulkActionSender = function(action, selectedTopics, fragBit) {
+			let url = "/topic/"+action+"/submit/"+fragBit+"?session=" + session;
 			$.ajax({
 				url: url,
 				type: "POST",
@@ -538,14 +538,17 @@ $(document).ready(function(){
 						}
 						this.classList.add("pane_selected");
 						console.log("fid: " + fid);
-						let moverFid = document.getElementById("#mover_fid");
-						console.log("moverFid: ", moverFid);
-						moverFid.value = fid;
+						forumToMoveTo = fid;
+
+						$("#mover_submit").click(function(event){
+							event.preventDefault();
+							bulkActionSender("move",selectedTopics,forumToMoveTo);
+						});
 					});
 					return;
 			}
 			
-			bulkActionSender(action,selectedTopics);
+			bulkActionSender(action,selectedTopics,"");
 		});
 	});
 

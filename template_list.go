@@ -865,7 +865,7 @@ var topics_15 = []byte(`
 			</div>
 		</div>
 		<div class="pane_buttons">
-			<button>Move Topics</button>
+			<button id="mover_submit">Move Topics</button>
 		</div>
 	</form>
 </div>

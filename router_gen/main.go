@@ -172,6 +172,7 @@ func main() {
 		"baidu",
 		"duckduckgo",
 		"discord",
+		"cloudflarealwayson",
 		"lynx",
 		"blank",
 	}
@@ -345,6 +346,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump({{.AllAgentMap.discord}})
 	case strings.Contains(ua,"Lynx"):
 		common.AgentViewCounter.Bump({{.AllAgentMap.lynx}})
+	case strings.Contains(ua,"CloudFlare-AlwaysOnline"):
+		common.AgentViewCounter.Bump({{.AllAgentMap.cloudflarealwayson}})
 	case ua == "":
 		common.AgentViewCounter.Bump({{.AllAgentMap.blank}})
 		if common.Dev.DebugMode {

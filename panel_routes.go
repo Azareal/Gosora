@@ -490,6 +490,7 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 	addNameLangToggle("DeleteReply", forumPerms.DeleteReply)
 	addNameLangToggle("PinTopic", forumPerms.PinTopic)
 	addNameLangToggle("CloseTopic", forumPerms.CloseTopic)
+	addNameLangToggle("MoveTopic", forumPerms.MoveTopic)
 
 	pi := common.PanelEditForumGroupPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
 	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
@@ -550,6 +551,7 @@ func routePanelForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Reque
 	forumPerms.DeleteReply = extractPerm("DeleteReply")
 	forumPerms.PinTopic = extractPerm("PinTopic")
 	forumPerms.CloseTopic = extractPerm("CloseTopic")
+	forumPerms.MoveTopic = extractPerm("MoveTopic")
 
 	err = forum.SetPerms(&forumPerms, "custom", gid)
 	if err != nil {
@@ -1765,6 +1767,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 	addLocalPerm("DeleteReply", group.Perms.DeleteReply)
 	addLocalPerm("PinTopic", group.Perms.PinTopic)
 	addLocalPerm("CloseTopic", group.Perms.CloseTopic)
+	addLocalPerm("MoveTopic", group.Perms.MoveTopic)
 
 	var globalPerms []common.NameLangToggle
 	var addGlobalPerm = func(permStr string, perm bool) {

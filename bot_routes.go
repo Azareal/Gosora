@@ -13,6 +13,7 @@ import (
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
 // TODO: Add an API so that plugins can register disallowed areas. E.g. /guilds/join for plugin_guilds
 func routeRobotsTxt(w http.ResponseWriter, r *http.Request) common.RouteError {
+	// TODO: Do we have to put * or something at the end of the paths?
 	_, _ = w.Write([]byte(`User-agent: *
 Disallow: /panel/
 Disallow: /topics/create/

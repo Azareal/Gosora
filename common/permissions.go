@@ -82,6 +82,7 @@ type Perms struct {
 	PinTopic   bool
 	CloseTopic bool
 	//CloseOwnTopic bool
+	MoveTopic bool
 
 	//ExtData map[string]bool
 }
@@ -129,6 +130,7 @@ func init() {
 		DeleteReply: true,
 		PinTopic:    true,
 		CloseTopic:  true,
+		MoveTopic:   true,
 
 		//ExtData: make(map[string]bool),
 	}
@@ -218,6 +220,7 @@ func OverrideForumPerms(perms *Perms, status bool) {
 	perms.DeleteReply = status
 	perms.PinTopic = status
 	perms.CloseTopic = status
+	perms.MoveTopic = status
 }
 
 func RegisterPluginPerm(name string) {

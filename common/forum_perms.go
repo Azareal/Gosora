@@ -20,6 +20,7 @@ var LocalPermList = []string{
 	"DeleteReply",
 	"PinTopic",
 	"CloseTopic",
+	"MoveTopic",
 }
 
 // TODO: Rename this to ForumPermSet?
@@ -39,6 +40,7 @@ type ForumPerms struct {
 	PinTopic    bool
 	CloseTopic  bool
 	//CloseOwnTopic bool
+	MoveTopic bool
 
 	Overrides bool
 	ExtData   map[string]bool
@@ -226,11 +228,11 @@ func ForumPermsToGroupForumPreset(fperms *ForumPerms) string {
 		return "no_access"
 	}
 	var canPost = (fperms.LikeItem && fperms.CreateTopic && fperms.CreateReply)
-	var canModerate = (canPost && fperms.EditTopic && fperms.DeleteTopic && fperms.EditReply && fperms.DeleteReply && fperms.PinTopic && fperms.CloseTopic)
+	var canModerate = (canPost && fperms.EditTopic && fperms.DeleteTopic && fperms.EditReply && fperms.DeleteReply && fperms.PinTopic && fperms.CloseTopic && fperms.MoveTopic)
 	if canModerate {
 		return "can_moderate"
 	}
-	if fperms.EditTopic || fperms.DeleteTopic || fperms.EditReply || fperms.DeleteReply || fperms.PinTopic || fperms.CloseTopic {
+	if fperms.EditTopic || fperms.DeleteTopic || fperms.EditReply || fperms.DeleteReply || fperms.PinTopic || fperms.CloseTopic || fperms.MoveTopic {
 		if !canPost {
 			return "custom"
 		}
@@ -308,6 +310,7 @@ func AllForumPerms() *ForumPerms {
 		DeleteReply: true,
 		PinTopic:    true,
 		CloseTopic:  true,
+		MoveTopic:   true,
 
 		Overrides: true,
 		ExtData:   make(map[string]bool),

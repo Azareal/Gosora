@@ -86,6 +86,7 @@ func cascadeForumPerms(fperms *ForumPerms, user *User) {
 		user.Perms.DeleteReply = fperms.DeleteReply
 		user.Perms.PinTopic = fperms.PinTopic
 		user.Perms.CloseTopic = fperms.CloseTopic
+		user.Perms.MoveTopic = fperms.MoveTopic
 
 		if len(fperms.ExtData) != 0 {
 			for name, perm := range fperms.ExtData {
