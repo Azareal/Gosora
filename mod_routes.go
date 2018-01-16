@@ -340,7 +340,13 @@ func routeMoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 		if ferr != nil {
 			return ferr
 		}
-		// TODO: Make sure the mod has MoveTopic in the destination forum too
+		if !user.Perms.ViewTopic || !user.Perms.MoveTopic {
+			return common.NoPermissionsJS(w, r, user)
+		}
+		_, ferr = common.SimpleForumUserCheck(w, r, &user, fid)
+		if ferr != nil {
+			return ferr
+		}
 		if !user.Perms.ViewTopic || !user.Perms.MoveTopic {
 			return common.NoPermissionsJS(w, r, user)
 		}

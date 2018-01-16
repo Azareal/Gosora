@@ -58,6 +58,9 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 			act = "created a new topic"
 			topic, err := common.Topics.Get(elementID)
 			if err != nil {
+				if common.Dev.DebugMode {
+					log.Print("Unable to find linked topic " + strconv.Itoa(elementID))
+				}
 				return "", errors.New("Unable to find the linked topic")
 			}
 			url = topic.Link
@@ -70,6 +73,9 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 	case "topic":
 		topic, err := common.Topics.Get(elementID)
 		if err != nil {
+			if common.Dev.DebugMode {
+				log.Print("Unable to find linked topic " + strconv.Itoa(elementID))
+			}
 			return "", errors.New("Unable to find the linked topic")
 		}
 		url = topic.Link
@@ -81,6 +87,9 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 	case "user":
 		targetUser, err = common.Users.Get(elementID)
 		if err != nil {
+			if common.Dev.DebugMode {
+				log.Print("Unable to find target user " + strconv.Itoa(elementID))
+			}
 			return "", errors.New("Unable to find the target user")
 		}
 		area = targetUser.Name

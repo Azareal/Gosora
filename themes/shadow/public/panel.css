@@ -49,3 +49,17 @@
 	padding-left: 2px;
 	padding-right: 2px;
 }
+
+.colstack_graph_holder {
+	background-color: var(--main-block-color);
+	padding: 10px;
+}
+.ct-label {
+	color: var(--input-text-color) !important;
+}
+.ct-chart-line, .ct-grid {
+	stroke: var(--input-text-color) !important;
+}
+.ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
+    stroke: hsl(359,98%,43%) !important;
+}

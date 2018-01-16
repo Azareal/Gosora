@@ -577,6 +577,8 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User, urlB
 			case "unstick":
 				replyItem.ActionType = "This topic has been unpinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 				replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
+			case "move":
+				replyItem.ActionType = "This topic has been moved by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 			default:
 				replyItem.ActionType = replyItem.ActionType + " has happened"
 				replyItem.ActionIcon = ""

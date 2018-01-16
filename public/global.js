@@ -65,8 +65,8 @@ function loadAlerts(menuAlerts)
 				}
 
 				if("avatar" in msg) {
-					alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
-					alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>");
+					alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><img src='"+msg.avatar+"' class='bgsub' /><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
+					alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><img src='"+msg.avatar+"' class='bgsub' /><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>");
 				} else {
 					alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
 					alertList.push("<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>");
