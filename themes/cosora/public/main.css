@@ -207,15 +207,21 @@ ul {
 	font-size: 15px;
 	display: flex;
 }
+.alertItem.withAvatar .text {
+	margin-top: 8px;
+}
 .alertItem.withAvatar:not(:last-child) .text {
 	border-bottom: 1px solid var(--element-border-color);
-	margin-top: 8px;
+	padding-bottom: 16px;
 }
 .alertItem .bgsub {
 	width: 32px;
 	height: 32px;
 	border-radius: 30px;
 	margin-right: 12px;
+}
+.alertItem.withAvatar:not(:first-child) {
+    padding-top: 0px;
 }
 
 .rowblock, .colstack_head {
@@ -818,6 +824,18 @@ textarea {
 .shift_right {
 	margin-left: auto;
 	margin-right: 8px;
+}
+
+.topic_item {
+	display: flex;
+}
+.topic_item .topic_name_input {
+	width: 100%;
+	padding-left: 12px;
+	margin-right: 12px;
+}
+.topic_item .formbutton {
+	margin-top: 0px;
 }
 
 .post_item {

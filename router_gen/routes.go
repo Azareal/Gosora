@@ -29,6 +29,7 @@ func routes() {
 	buildTopicRoutes()
 	buildReplyRoutes()
 	buildProfileReplyRoutes()
+	buildAccountRoutes()
 }
 
 // TODO: Test the email token route
@@ -101,6 +102,19 @@ func buildProfileReplyRoutes() {
 	addRouteGroup(pReplyGroup)
 }
 
+func buildAccountRoutes() {
+	//router.HandleFunc("/accounts/list/", routeLogin) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
+	accReplyGroup := newRouteGroup("/accounts/")
+	accReplyGroup.Routes(
+		View("routeLogin", "/accounts/login/"),
+		View("routeRegister", "/accounts/create/"),
+		Action("routeLogout", "/accounts/logout/"),
+		AnonAction("routeLoginSubmit", "/accounts/login/submit/"), // TODO: Guard this with a token, maybe the IP hashed with a rotated key?
+		AnonAction("routeRegisterSubmit", "/accounts/create/submit/"),
+	)
+	addRouteGroup(accReplyGroup)
+}
+
 func buildPanelRoutes() {
 	panelGroup := newRouteGroup("/panel/").Before("SuperModOnly")
 	panelGroup.Routes(
@@ -138,8 +152,8 @@ func buildPanelRoutes() {
 		Action("routePanelUsersEditSubmit", "/panel/users/edit/submit/", "extraData"),
 
 		View("routePanelAnalyticsViews", "/panel/analytics/views/").Before("ParseForm"),
-		View("routePanelAnalyticsRoutes", "/panel/analytics/routes/"),
-		View("routePanelAnalyticsAgents", "/panel/analytics/agents/"),
+		View("routePanelAnalyticsRoutes", "/panel/analytics/routes/").Before("ParseForm"),
+		View("routePanelAnalyticsAgents", "/panel/analytics/agents/").Before("ParseForm"),
 		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 		View("routePanelAnalyticsAgentViews", "/panel/analytics/agent/", "extraData"),
 		View("routePanelAnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),

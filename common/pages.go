@@ -182,6 +182,7 @@ type PanelAnalyticsRoutesPage struct {
 	Stats       PanelStats
 	Zone        string
 	ItemList    []PanelAnalyticsRoutesItem
+	TimeRange   string
 }
 
 type PanelAnalyticsAgentsItem struct {
@@ -196,6 +197,7 @@ type PanelAnalyticsAgentsPage struct {
 	Stats       PanelStats
 	Zone        string
 	ItemList    []PanelAnalyticsAgentsItem
+	TimeRange   string
 }
 
 type PanelAnalyticsRoutePage struct {

@@ -97,6 +97,11 @@ var RouteMap = map[string]interface{}{
 	"routeProfileReplyCreateSubmit": routeProfileReplyCreateSubmit,
 	"routeProfileReplyEditSubmit": routeProfileReplyEditSubmit,
 	"routeProfileReplyDeleteSubmit": routeProfileReplyDeleteSubmit,
+	"routeLogin": routeLogin,
+	"routeRegister": routeRegister,
+	"routeLogout": routeLogout,
+	"routeLoginSubmit": routeLoginSubmit,
+	"routeRegisterSubmit": routeRegisterSubmit,
 	"routeDynamic": routeDynamic,
 	"routeUploads": routeUploads,
 }
@@ -185,8 +190,13 @@ var routeMapEnum = map[string]int{
 	"routeProfileReplyCreateSubmit": 79,
 	"routeProfileReplyEditSubmit": 80,
 	"routeProfileReplyDeleteSubmit": 81,
-	"routeDynamic": 82,
-	"routeUploads": 83,
+	"routeLogin": 82,
+	"routeRegister": 83,
+	"routeLogout": 84,
+	"routeLoginSubmit": 85,
+	"routeRegisterSubmit": 86,
+	"routeDynamic": 87,
+	"routeUploads": 88,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
@@ -271,8 +281,13 @@ var reverseRouteMapEnum = map[int]string{
 	79: "routeProfileReplyCreateSubmit",
 	80: "routeProfileReplyEditSubmit",
 	81: "routeProfileReplyDeleteSubmit",
-	82: "routeDynamic",
-	83: "routeUploads",
+	82: "routeLogin",
+	83: "routeRegister",
+	84: "routeLogout",
+	85: "routeLoginSubmit",
+	86: "routeRegisterSubmit",
+	87: "routeDynamic",
+	88: "routeUploads",
 }
 var agentMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -379,6 +394,19 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var prefix, extraData string
 	prefix = req.URL.Path[0:strings.IndexByte(req.URL.Path[1:],'/') + 1]
 	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
+		// TODO: Cover more suspicious strings and at a lower layer than this and more efficiently
+		if strings.Contains(req.URL.Path,"'") || strings.Contains(req.URL.Path,";") || strings.Contains(req.URL.Path,"\"") || strings.Contains(req.URL.Path,"`") || strings.Contains(req.URL.Path,"%") {
+			log.Print("Suspicious UA: ", req.UserAgent())
+			log.Print("Method: ", req.Method)
+			for key, value := range req.Header {
+				for _, vvalue := range value {
+					log.Print("Header '" + key + "': " + vvalue + "!!")
+				}
+			}
+			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("req.Referer(): ", req.Referer())
+			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		}
 		extraData = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
 		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
 	}
@@ -775,9 +803,21 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					common.RouteViewCounter.Bump(36)
 					err = routePanelAnalyticsViews(w,req,user)
 				case "/panel/analytics/routes/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					common.RouteViewCounter.Bump(37)
 					err = routePanelAnalyticsRoutes(w,req,user)
 				case "/panel/analytics/agents/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					common.RouteViewCounter.Bump(38)
 					err = routePanelAnalyticsAgents(w,req,user)
 				case "/panel/analytics/route/":
@@ -1298,6 +1338,51 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
+		case "/accounts":
+			switch(req.URL.Path) {
+				case "/accounts/login/":
+					common.RouteViewCounter.Bump(82)
+					err = routeLogin(w,req,user)
+				case "/accounts/create/":
+					common.RouteViewCounter.Bump(83)
+					err = routeRegister(w,req,user)
+				case "/accounts/logout/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					common.RouteViewCounter.Bump(84)
+					err = routeLogout(w,req,user)
+				case "/accounts/login/submit/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					common.RouteViewCounter.Bump(85)
+					err = routeLoginSubmit(w,req,user)
+				case "/accounts/create/submit/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					common.RouteViewCounter.Bump(86)
+					err = routeRegisterSubmit(w,req,user)
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData
 			err = sitemapSwitch(w,req)
@@ -1309,7 +1394,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				common.NotFound(w,req)
 				return
 			}
-			common.RouteViewCounter.Bump(83)
+			common.RouteViewCounter.Bump(88)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
@@ -1353,7 +1438,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.RUnlock()
 			
 			if ok {
-				common.RouteViewCounter.Bump(82) // TODO: Be more specific about *which* dynamic route it is
+				common.RouteViewCounter.Bump(87) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				err = handle(w,req,user)
 				if err != nil {

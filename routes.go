@@ -746,10 +746,6 @@ func routeLoginSubmit(w http.ResponseWriter, r *http.Request, user common.User) 
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
-	}
 
 	username := html.EscapeString(strings.Replace(r.PostFormValue("username"), "\n", "", -1))
 	uid, err := common.Auth.Authenticate(username, r.PostFormValue("password"))
@@ -807,10 +803,6 @@ func routeRegister(w http.ResponseWriter, r *http.Request, user common.User) com
 func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerLite, _ := common.SimpleUserCheck(w, r, &user)
 
-	err := r.ParseForm()
-	if err != nil {
-		return common.LocalError("Bad Form", w, r, user)
-	}
 	username := html.EscapeString(strings.Replace(r.PostFormValue("username"), "\n", "", -1))
 	if username == "" {
 		return common.LocalError("You didn't put in a username.", w, r, user)
@@ -831,13 +823,15 @@ func routeRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	// ?  Move this into Create()? What if we want to programatically set weak passwords for tests?
-	err = common.WeakPassword(password)
+	err := common.WeakPassword(password)
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
 
 	confirmPassword := r.PostFormValue("confirm_password")
-	log.Print("Registration Attempt! common.Username: " + username) // TODO: Add more controls over what is logged when?
+	if common.Dev.DebugMode {
+		log.Print("Registration Attempt! Username: " + username) // TODO: Add more controls over what is logged when?
+	}
 
 	// Do the two inputted passwords match..?
 	if password != confirmPassword {

@@ -16,11 +16,25 @@ import (
 	"./common"
 )
 
+// Experimenting
+/*func memberRenderTemplate(tmplName string, themeName string, w http.ResponseWriter, r *http.Request, user common.User, pi interface{}) common.RouteError {
+	if common.PreRenderHooks["pre_render_"+tmplName] != nil {
+		if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, pi) {
+			return nil
+		}
+	}
+
+	err := common.RunThemeTemplate(themeName, tmplName, pi, w)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}*/
+
 // ? - Should we add a new permission or permission zone (like per-forum permissions) specifically for profile comment creation
 // ? - Should we allow banned users to make reports? How should we handle report abuse?
 // TODO: Add a permission to stop certain users from using custom avatars
 // ? - Log username changes and put restrictions on this?
-
 func routeTopicCreate(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
 	var fid int
 	var err error

@@ -834,39 +834,9 @@ func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user commo
 	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
 	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
 
-	var timeQuantity = 6
-	var timeUnit = "hour"
-	var timeSlices = 12
-	var sliceWidth = 60 * 30
-	var timeRange = "six-hours"
-
-	switch r.FormValue("timeRange") {
-	case "one-month":
-		timeQuantity = 30
-		timeUnit = "day"
-		timeSlices = 30
-		sliceWidth = 60 * 60 * 24
-		timeRange = "one-month"
-	case "two-days": // Two days is experimental
-		timeQuantity = 2
-		timeUnit = "day"
-		timeSlices = 24
-		sliceWidth = 60 * 60 * 2
-		timeRange = "two-days"
-	case "one-day":
-		timeQuantity = 1
-		timeUnit = "day"
-		timeSlices = 24
-		sliceWidth = 60 * 60
-		timeRange = "one-day"
-	case "twelve-hours":
-		timeQuantity = 12
-		timeSlices = 24
-		timeRange = "twelve-hours"
-	case "six-hours", "":
-		timeRange = "six-hours"
-	default:
-		return common.LocalError("Unknown time range", w, r, user)
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
 	}
 
 	var revLabelList []int64
@@ -874,8 +844,8 @@ func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user commo
 	var viewMap = make(map[int64]int64)
 	var currentTime = time.Now().Unix()
 
-	for i := 1; i <= timeSlices; i++ {
-		var label = currentTime - int64(i*sliceWidth)
+	for i := 1; i <= timeRange.Slices; i++ {
+		var label = currentTime - int64(i*timeRange.SliceWidth)
 		revLabelList = append(revLabelList, label)
 		viewMap[label] = 0
 	}
@@ -887,7 +857,7 @@ func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user commo
 	log.Print("in routePanelAnalyticsPosts")
 
 	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("postchunks").Columns("count, createdAt").DateCutoff("createdAt", timeQuantity, timeUnit).Query()
+	rows, err := acc.Select("postchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -925,7 +895,7 @@ func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user commo
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	log.Printf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange}
+	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_posts", w, r, user, &pi)
 }
 
@@ -936,8 +906,13 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 	}
 	var routeMap = make(map[string]int)
 
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
 	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks").Columns("count, route").Where("route != ''").DateCutoff("createdAt", 1, "day").Query()
+	rows, err := acc.Select("viewchunks").Columns("count, route").Where("route != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -969,7 +944,7 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 		})
 	}
 
-	pi := common.PanelAnalyticsRoutesPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", routeItems}
+	pi := common.PanelAnalyticsRoutesPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", routeItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_routes", w, r, user, &pi)
 }
 
@@ -980,8 +955,13 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 	}
 	var agentMap = make(map[string]int)
 
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
 	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks_agents").Columns("count, browser").DateCutoff("createdAt", 1, "day").Query()
+	rows, err := acc.Select("viewchunks_agents").Columns("count, browser").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -1013,7 +993,7 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", agentItems}
+	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", agentItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_agents", w, r, user, &pi)
 }
 
@@ -1505,7 +1485,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	var groupList []interface{}
-	for _, group := range groups[1:] {
+	for _, group := range groups {
 		if !user.Perms.EditUserGroupAdmin && group.IsAdmin {
 			continue
 		}
@@ -1600,6 +1580,8 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 
 	if newpassword != "" {
 		common.SetPassword(targetUser.ID, newpassword)
+		// Log the user out as a safety precaution
+		common.Auth.ForceLogout(targetUser.ID)
 	}
 
 	targetUser.CacheRemove()

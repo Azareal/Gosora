@@ -130,7 +130,7 @@ func main() {
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()
-	f, err := os.OpenFile("./operations.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile("./ops.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -303,15 +303,6 @@ func main() {
 	// TODO: Move these routes into the new routes list
 	log.Print("Initialising the router")
 	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
-
-	// Accounts
-	router.HandleFunc("/accounts/login/", routeLogin)
-	router.HandleFunc("/accounts/create/", routeRegister)
-	router.HandleFunc("/accounts/logout/", routeLogout)
-	router.HandleFunc("/accounts/login/submit/", routeLoginSubmit)
-	router.HandleFunc("/accounts/create/submit/", routeRegisterSubmit)
-	//router.HandleFunc("/accounts/list/", routeLogin) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
-
 	router.HandleFunc("/ws/", routeWebsockets)
 
 	log.Print("Initialising the plugins")
