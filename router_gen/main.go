@@ -281,26 +281,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte(""))
 		return
 	}
-	
-	var prefix, extraData string
-	prefix = req.URL.Path[0:strings.IndexByte(req.URL.Path[1:],'/') + 1]
-	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
-		// TODO: Cover more suspicious strings and at a lower layer than this
-		for _, char := range req.URL.Path {
-			if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
-				log.Print("Suspicious UA: ", req.UserAgent())
-				log.Print("Method: ", req.Method)
-				for key, value := range req.Header {
-					for _, vvalue := range value {
-						log.Print("Header '" + key + "': " + vvalue + "!!")
-					}
-				}
-				log.Print("req.URL.Path: ", req.URL.Path)
-				log.Print("req.Referer(): ", req.Referer())
-				log.Print("req.RemoteAddr: ", req.RemoteAddr)
-			}
-		}
-		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") {
+
+	// TODO: Cover more suspicious strings and at a lower layer than this
+	for _, char := range req.URL.Path {
+		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
 			log.Print("Suspicious UA: ", req.UserAgent())
 			log.Print("Method: ", req.Method)
 			for key, value := range req.Header {
@@ -312,6 +296,23 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			log.Print("req.Referer(): ", req.Referer())
 			log.Print("req.RemoteAddr: ", req.RemoteAddr)
 		}
+	}
+	if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") {
+		log.Print("Suspicious UA: ", req.UserAgent())
+		log.Print("Method: ", req.Method)
+		for key, value := range req.Header {
+			for _, vvalue := range value {
+				log.Print("Header '" + key + "': " + vvalue + "!!")
+			}
+		}
+		log.Print("req.URL.Path: ", req.URL.Path)
+		log.Print("req.Referer(): ", req.Referer())
+		log.Print("req.RemoteAddr: ", req.RemoteAddr)
+	}
+	
+	var prefix, extraData string
+	prefix = req.URL.Path[0:strings.IndexByte(req.URL.Path[1:],'/') + 1]
+	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
 		extraData = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
 		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
 	}
