@@ -2,10 +2,10 @@
 <div class="colstack panel_stack">
 {{template "panel-menu.html" . }}
 	<main id="panel_dashboard_right" class="colstack_right">
-		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/posts/" method="get">
+		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/topics/" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
-					<a>Post Counts</a>
+					<a>Topic Counts</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
 						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
 						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>2 days</option>
@@ -16,13 +16,13 @@
 				</div>
 			</div>
 		</form>
-		<div id="panel_analytics_posts" class="colstack_graph_holder">
-			<div class="ct_chart" aria-label="Post Chart"></div>
+		<div id="panel_analytics_topics" class="colstack_graph_holder">
+			<div class="ct_chart" aria-label="Topic Chart"></div>
 		</div>
 		<div class="colstack_item colstack_head">
 			<div class="rowitem"><a>Details</a></div>
 		</div>
-		<div id="panel_analytics_posts_table" class="colstack_item rowlist" aria-label="Post Table, this has the same information as the post chart">
+		<div id="panel_analytics_topics_table" class="colstack_item rowlist" aria-label="Topic Table, this has the same information as the topic chart">
 			{{range .ViewItems}}
 			<div class="rowitem panel_compactrow editable_parent">
 				<a class="panel_upshift unix_to_24_hour_time">{{.Time}}</a>

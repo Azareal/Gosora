@@ -1138,6 +1138,22 @@ textarea {
 	margin-left: auto;
 }
 
+#create_topic_page .close_form, #create_topic_page .formlabel, #login_page .formlabel, #register_page .formlabel {
+	display: none;
+}
+#login_page .formrow:not(:first-child):not(:last-child), #register_page .formrow:not(:first-child):not(:last-child) {
+	margin-top: 4px;
+}
+#login_page .formrow:not(:first-child), #register_page .formrow:not(:first-child) {
+	padding-top: 3px;
+}
+#login_page .formrow:not(:last-child), #register_page .formrow:not(:last-child) {
+	padding-bottom: 0px;
+}
+#login_page .formrow, #register_page .formrow {
+	padding: 16px;
+}
+
 /* TODO: Highlight the one we're currently on? */
 .pageset {
 	display: flex;

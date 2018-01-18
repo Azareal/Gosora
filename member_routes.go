@@ -243,6 +243,7 @@ func routeTopicCreateSubmit(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	common.PostCounter.Bump()
+	common.TopicCounter.Bump()
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	return nil
 }

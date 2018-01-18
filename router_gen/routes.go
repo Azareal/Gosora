@@ -30,6 +30,8 @@ func routes() {
 	buildReplyRoutes()
 	buildProfileReplyRoutes()
 	buildAccountRoutes()
+
+	addRoute(Special("routeWebsockets", "/ws/"))
 }
 
 // TODO: Test the email token route
@@ -64,7 +66,7 @@ func buildTopicRoutes() {
 	topicGroup.Routes(
 		View("routeTopicID", "/topic/", "extraData"),
 		Action("routeTopicCreateSubmit", "/topic/create/submit/"),
-		Action("routeEditTopicSubmit", "/topic/edit/submit/", "extraData"),
+		Action("routes.EditTopicSubmit", "/topic/edit/submit/", "extraData"),
 		Action("routeDeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
 		Action("routeStickTopicSubmit", "/topic/stick/submit/", "extraData"),
 		Action("routeUnstickTopicSubmit", "/topic/unstick/submit/", "extraData"),
@@ -134,7 +136,7 @@ func buildPanelRoutes() {
 		Action("routePanelSettingEditSubmit", "/panel/settings/edit/submit/", "extraData"),
 
 		View("routePanelWordFilters", "/panel/settings/word-filters/"),
-		Action("routePanelWordFiltersCreate", "/panel/settings/word-filters/create/"),
+		Action("routePanelWordFiltersCreateSubmit", "/panel/settings/word-filters/create/"),
 		View("routePanelWordFiltersEdit", "/panel/settings/word-filters/edit/", "extraData"),
 		Action("routePanelWordFiltersEditSubmit", "/panel/settings/word-filters/edit/submit/", "extraData"),
 		Action("routePanelWordFiltersDeleteSubmit", "/panel/settings/word-filters/delete/submit/", "extraData"),
@@ -157,6 +159,7 @@ func buildPanelRoutes() {
 		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 		View("routePanelAnalyticsAgentViews", "/panel/analytics/agent/", "extraData"),
 		View("routePanelAnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
+		View("routePanelAnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
 
 		View("routePanelGroups", "/panel/groups/"),
 		View("routePanelGroupsEdit", "/panel/groups/edit/", "extraData"),

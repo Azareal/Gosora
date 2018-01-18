@@ -95,6 +95,10 @@ func AnonAction(fname string, path string, args ...string) *RouteImpl {
 	return route(fname, path, args...).Before("ParseForm")
 }
 
+func Special(fname string, path string, args ...string) *RouteImpl {
+	return route(fname, path, args...).LitBefore("req.URL.Path += extraData")
+}
+
 // Make this it's own type to force the user to manipulate methods on it to set parameters
 type uploadAction struct {
 	Route *RouteImpl

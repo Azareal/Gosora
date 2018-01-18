@@ -96,6 +96,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.TopicCounter, err = common.NewTopicCounter()
+	if err != nil {
+		return err
+	}
 	common.TopicViewCounter, err = common.NewDefaultTopicViewCounter()
 	if err != nil {
 		return err
@@ -300,10 +304,8 @@ func main() {
 		}
 	}()
 
-	// TODO: Move these routes into the new routes list
 	log.Print("Initialising the router")
 	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	router.HandleFunc("/ws/", routeWebsockets)
 
 	log.Print("Initialising the plugins")
 	common.InitPlugins()

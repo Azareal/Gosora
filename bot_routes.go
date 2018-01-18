@@ -15,11 +15,11 @@ import (
 func routeRobotsTxt(w http.ResponseWriter, r *http.Request) common.RouteError {
 	// TODO: Do we have to put * or something at the end of the paths?
 	_, _ = w.Write([]byte(`User-agent: *
-Disallow: /panel/
+Disallow: /panel/*
 Disallow: /topics/create/
-Disallow: /user/edit/
-Disallow: /accounts/
-Disallow: /report/
+Disallow: /user/edit/*
+Disallow: /accounts/*
+Disallow: /report/*
 `))
 	return nil
 }

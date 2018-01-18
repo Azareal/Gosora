@@ -826,6 +826,79 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	return panelRenderTemplate("panel_analytics_agent_views", w, r, user, &pi)
 }
 
+func routePanelAnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
+
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
+	var revLabelList []int64
+	var labelList []int64
+	var viewMap = make(map[int64]int64)
+	var currentTime = time.Now().Unix()
+
+	for i := 1; i <= timeRange.Slices; i++ {
+		var label = currentTime - int64(i*timeRange.SliceWidth)
+		revLabelList = append(revLabelList, label)
+		viewMap[label] = 0
+	}
+	for _, value := range revLabelList {
+		labelList = append(labelList, value)
+	}
+
+	var viewList []int64
+	log.Print("in routePanelAnalyticsTopics")
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("topicchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int64
+		var createdAt time.Time
+		err := rows.Scan(&count, &createdAt)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		log.Print("count: ", count)
+		log.Print("createdAt: ", createdAt)
+
+		var unixCreatedAt = createdAt.Unix()
+		log.Print("unixCreatedAt: ", unixCreatedAt)
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				viewMap[value] += count
+				break
+			}
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	var viewItems []common.PanelAnalyticsItem
+	for _, value := range revLabelList {
+		viewList = append(viewList, viewMap[value])
+		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
+	}
+	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	log.Printf("graph: %+v\n", graph)
+
+	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange.Range}
+	return panelRenderTemplate("panel_analytics_topics", w, r, user, &pi)
+}
+
 func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -1110,7 +1183,7 @@ func routePanelWordFilters(w http.ResponseWriter, r *http.Request, user common.U
 	return panelRenderTemplate("panel_word_filters", w, r, user, &pi)
 }
 
-func routePanelWordFiltersCreate(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routePanelWordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
