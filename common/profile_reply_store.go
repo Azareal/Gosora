@@ -9,7 +9,7 @@ import (
 var Prstore ProfileReplyStore
 
 type ProfileReplyStore interface {
-	Get(id int) (*Reply, error)
+	Get(id int) (*ProfileReply, error)
 	Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error)
 }
 
@@ -28,8 +28,8 @@ func NewSQLProfileReplyStore() (*SQLProfileReplyStore, error) {
 	}, acc.FirstError()
 }
 
-func (store *SQLProfileReplyStore) Get(id int) (*Reply, error) {
-	reply := Reply{ID: id}
+func (store *SQLProfileReplyStore) Get(id int) (*ProfileReply, error) {
+	reply := ProfileReply{ID: id}
 	err := store.get.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress)
 	return &reply, err
 }

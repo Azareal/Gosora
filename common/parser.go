@@ -177,7 +177,7 @@ func PreparseMessage(msg string) string {
 		msg = RunSshook("preparse_preassign", msg)
 	}
 	msg = html.EscapeString(msg)
-	msg = strings.Replace(msg,"&nbsp;","",-1)
+	msg = strings.Replace(msg, "&nbsp;", "", -1)
 
 	var runes = []rune(msg)
 	msg = ""
@@ -353,9 +353,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					rid, intLen := CoerceIntBytes(msgbytes[start:])
 					i += intLen
 
-					reply := BlankReply()
-					reply.ID = rid
-					topic, err := reply.Topic()
+					topic, err := TopicByReplyID(rid)
 					if err != nil || !Forums.Exists(topic.ParentID) {
 						outbytes = append(outbytes, InvalidTopic...)
 						lastItem = i

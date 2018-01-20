@@ -1050,6 +1050,16 @@ textarea {
 #profile_right_lane .topic_reply_form {
 	width: auto;
 }
+#profile_comments .topRow {
+	display: flex;
+}
+#profile_comments .topRow .controls {
+	padding-top: 16px;
+	padding-right: 16px;
+}
+#profile_comments .content_column {
+	margin-bottom: 16px;
+}
 #profile_comments_head {
 	margin-top: 6px;
 }

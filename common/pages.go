@@ -67,6 +67,9 @@ type TopicsPage struct {
 	TopicList    []*TopicsRow
 	ForumList    []Forum
 	DefaultForum int
+	PageList     []int
+	Page         int
+	LastPage     int
 }
 
 type ForumPage struct {

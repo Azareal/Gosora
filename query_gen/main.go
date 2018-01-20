@@ -233,11 +233,7 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	build.Select("getAdminlogsOffset").Table("administration_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Parse()
 
-	build.Select("getReplyTID").Table("replies").Columns("tid").Where("rid = ?").Parse()
-
 	build.Select("getTopicFID").Table("topics").Columns("parentID").Where("tid = ?").Parse()
-
-	build.Select("getUserReplyUID").Table("users_replies").Columns("uid").Where("rid = ?").Parse()
 
 	build.Select("getUserName").Table("users").Columns("name").Where("uid = ?").Parse()
 
@@ -312,8 +308,6 @@ func writeUpdates(adapter qgen.Adapter) error {
 
 	build.Update("editReply").Table("replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
 
-	build.Update("editProfileReply").Table("users_replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
-
 	build.Update("updatePlugin").Table("plugins").Set("active = ?").Where("uname = ?").Parse()
 
 	build.Update("updatePluginInstall").Table("plugins").Set("installed = ?").Where("uname = ?").Parse()
@@ -341,8 +335,6 @@ func writeUpdates(adapter qgen.Adapter) error {
 
 func writeDeletes(adapter qgen.Adapter) error {
 	build := adapter.Builder()
-
-	build.Delete("deleteProfileReply").Table("users_replies").Where("rid = ?").Parse()
 
 	//build.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid = ?").Parse()
 

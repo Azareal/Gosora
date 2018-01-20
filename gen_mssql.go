@@ -16,9 +16,7 @@ type Stmts struct {
 	getModlogs *sql.Stmt
 	getModlogsOffset *sql.Stmt
 	getAdminlogsOffset *sql.Stmt
-	getReplyTID *sql.Stmt
 	getTopicFID *sql.Stmt
-	getUserReplyUID *sql.Stmt
 	getUserName *sql.Stmt
 	getEmailsByUser *sql.Stmt
 	getTopicBasic *sql.Stmt
@@ -44,7 +42,6 @@ type Stmts struct {
 	addAttachment *sql.Stmt
 	createWordFilter *sql.Stmt
 	editReply *sql.Stmt
-	editProfileReply *sql.Stmt
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
@@ -56,7 +53,6 @@ type Stmts struct {
 	setTempGroup *sql.Stmt
 	updateWordFilter *sql.Stmt
 	bumpSync *sql.Stmt
-	deleteProfileReply *sql.Stmt
 	deleteActivityStreamMatch *sql.Stmt
 	deleteWordFilter *sql.Stmt
 	reportExists *sql.Stmt
@@ -130,24 +126,10 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing getReplyTID statement.")
-	stmts.getReplyTID, err = db.Prepare("SELECT [tid] FROM [replies] WHERE [rid] = ?1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [tid] FROM [replies] WHERE [rid] = ?1")
-		return err
-	}
-		
 	log.Print("Preparing getTopicFID statement.")
 	stmts.getTopicFID, err = db.Prepare("SELECT [parentID] FROM [topics] WHERE [tid] = ?1")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [parentID] FROM [topics] WHERE [tid] = ?1")
-		return err
-	}
-		
-	log.Print("Preparing getUserReplyUID statement.")
-	stmts.getUserReplyUID, err = db.Prepare("SELECT [uid] FROM [users_replies] WHERE [rid] = ?1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [uid] FROM [users_replies] WHERE [rid] = ?1")
 		return err
 	}
 		
@@ -326,13 +308,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing editProfileReply statement.")
-	stmts.editProfileReply, err = db.Prepare("UPDATE [users_replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","UPDATE [users_replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
-		return err
-	}
-		
 	log.Print("Preparing updatePlugin statement.")
 	stmts.updatePlugin, err = db.Prepare("UPDATE [plugins] SET [active] = ? WHERE [uname] = ?")
 	if err != nil {
@@ -407,13 +382,6 @@ func _gen_mssql() (err error) {
 	stmts.bumpSync, err = db.Prepare("UPDATE [sync] SET [last_update] = GETUTCDATE()")
 	if err != nil {
 		log.Print("Bad Query: ","UPDATE [sync] SET [last_update] = GETUTCDATE()")
-		return err
-	}
-		
-	log.Print("Preparing deleteProfileReply statement.")
-	stmts.deleteProfileReply, err = db.Prepare("DELETE FROM [users_replies] WHERE [rid] = ?")
-	if err != nil {
-		log.Print("Bad Query: ","DELETE FROM [users_replies] WHERE [rid] = ?")
 		return err
 	}
 		

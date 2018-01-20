@@ -9,6 +9,7 @@ package common
 import (
 	"database/sql"
 	"errors"
+	"html"
 	"time"
 
 	"../query_gen/lib"
@@ -64,10 +65,10 @@ var replyStmts ReplyStmts
 type ReplyStmts struct {
 	isLiked                *sql.Stmt
 	createLike             *sql.Stmt
+	edit                   *sql.Stmt
 	delete                 *sql.Stmt
 	addLikesToReply        *sql.Stmt
 	removeRepliesFromTopic *sql.Stmt
-	getParent              *sql.Stmt
 }
 
 func init() {
@@ -75,10 +76,10 @@ func init() {
 		replyStmts = ReplyStmts{
 			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'replies'").Prepare(),
 			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
+			edit:                   acc.Update("replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Prepare(),
 			delete:                 acc.Delete("replies").Where("rid = ?").Prepare(),
 			addLikesToReply:        acc.Update("replies").Set("likeCount = likeCount + ?").Where("rid = ?").Prepare(),
 			removeRepliesFromTopic: acc.Update("topics").Set("postCount = postCount - ?").Where("tid = ?").Prepare(),
-			getParent:              acc.SimpleLeftJoin("replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.data", "replies.tid = topics.tid", "rid = ?", "", ""),
 		}
 		return acc.FirstError()
 	})
@@ -119,22 +120,22 @@ func (reply *Reply) Delete() error {
 	return err
 }
 
+func (reply *Reply) SetBody(content string) error {
+	topic, err := reply.Topic()
+	if err != nil {
+		return err
+	}
+	content = PreparseMessage(html.UnescapeString(content))
+	parsedContent := ParseMessage(content, topic.ParentID, "forums")
+	_, err = replyStmts.edit.Exec(content, parsedContent, reply.ID)
+	return err
+}
+
 func (reply *Reply) Topic() (*Topic, error) {
-	topic := Topic{ID: 0}
-	err := replyStmts.getParent.QueryRow(reply.ID).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
-	topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
-	return &topic, err
+	return Topics.Get(reply.ParentID)
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the reply
 func (reply *Reply) Copy() Reply {
 	return *reply
-}
-
-func BlankReply(ids ...int) *Reply {
-	var id int
-	if len(ids) != 0 {
-		id = ids[0]
-	}
-	return &Reply{ID: id}
 }

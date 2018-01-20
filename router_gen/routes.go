@@ -67,12 +67,12 @@ func buildTopicRoutes() {
 		View("routeTopicID", "/topic/", "extraData"),
 		Action("routeTopicCreateSubmit", "/topic/create/submit/"),
 		Action("routes.EditTopicSubmit", "/topic/edit/submit/", "extraData"),
-		Action("routeDeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
-		Action("routeStickTopicSubmit", "/topic/stick/submit/", "extraData"),
-		Action("routeUnstickTopicSubmit", "/topic/unstick/submit/", "extraData"),
-		Action("routeLockTopicSubmit", "/topic/lock/submit/").LitBefore("req.URL.Path += extraData"),
-		Action("routeUnlockTopicSubmit", "/topic/unlock/submit/", "extraData"),
-		Action("routeMoveTopicSubmit", "/topic/move/submit/", "extraData"),
+		Action("routes.DeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
+		Action("routes.StickTopicSubmit", "/topic/stick/submit/", "extraData"),
+		Action("routes.UnstickTopicSubmit", "/topic/unstick/submit/", "extraData"),
+		Action("routes.LockTopicSubmit", "/topic/lock/submit/").LitBefore("req.URL.Path += extraData"),
+		Action("routes.UnlockTopicSubmit", "/topic/unlock/submit/", "extraData"),
+		Action("routes.MoveTopicSubmit", "/topic/move/submit/", "extraData"),
 		Action("routeLikeTopicSubmit", "/topic/like/submit/", "extraData"),
 	)
 	addRouteGroup(topicGroup)
@@ -85,8 +85,8 @@ func buildReplyRoutes() {
 	replyGroup.Routes(
 		// TODO: Reduce this to 1MB for attachments for each file?
 		UploadAction("routeCreateReplySubmit", "/reply/create/").MaxSizeVar("common.Config.MaxRequestSize"), // TODO: Rename the route so it's /reply/create/submit/
-		Action("routeReplyEditSubmit", "/reply/edit/submit/", "extraData"),
-		Action("routeReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
+		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
+		Action("routes.ReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
 		Action("routeReplyLikeSubmit", "/reply/like/submit/", "extraData"),
 	)
 	addRouteGroup(replyGroup)
@@ -98,8 +98,8 @@ func buildProfileReplyRoutes() {
 	pReplyGroup := newRouteGroup("/profile/")
 	pReplyGroup.Routes(
 		Action("routeProfileReplyCreateSubmit", "/profile/reply/create/"), // TODO: Add /submit/ to the end
-		Action("routeProfileReplyEditSubmit", "/profile/reply/edit/submit/", "extraData"),
-		Action("routeProfileReplyDeleteSubmit", "/profile/reply/delete/submit/", "extraData"),
+		Action("routes.ProfileReplyEditSubmit", "/profile/reply/edit/submit/", "extraData"),
+		Action("routes.ProfileReplyDeleteSubmit", "/profile/reply/delete/submit/", "extraData"),
 	)
 	addRouteGroup(pReplyGroup)
 }

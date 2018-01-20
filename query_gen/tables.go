@@ -207,10 +207,11 @@ func createTables(adapter qgen.Adapter) error {
 
 	qgen.Install.CreateTable("revisions", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"index", "int", 0, false, false, ""}, // TODO: Replace this with a proper revision ID x.x
+			qgen.DBTableColumn{"reviseID", "int", 0, false, true, ""},
 			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"contentID", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"contentType", "varchar", 100, false, false, "replies"},
+			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]qgen.DBTableKey{},
 	)

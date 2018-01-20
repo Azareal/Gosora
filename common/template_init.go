@@ -149,7 +149,7 @@ func compileTemplates() error {
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, "Date", time.Now(), "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
-	topicsPage := TopicsPage{"Topic List", user, headerVars, topicsList, forumList, Config.DefaultForum}
+	topicsPage := TopicsPage{"Topic List", user, headerVars, topicsList, forumList, Config.DefaultForum, []int{1}, 1, 1}
 	topicsTmpl, err := c.Compile("topics.html", "templates/", "common.TopicsPage", topicsPage, varList)
 	if err != nil {
 		return err

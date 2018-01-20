@@ -115,5 +115,15 @@
 	</div>{{else}}<div class="rowitem passive">There aren't any topics yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">Start one?</a>{{end}}</div>{{end}}
 </div>
 
+{{if gt .LastPage 1}}
+<div class="pageset">
+	{{if gt .Page 1}}<div class="pageitem"><a href="?page={{subtract .Page 1}}">Prev</a></div>{{end}}
+	{{range .PageList}}
+	<div class="pageitem"><a href="?page={{.}}">{{.}}</a></div>
+	{{end}}
+	{{if ne .LastPage .Page}}<div class="pageitem"><a href="?page={{add .Page 1}}">Next</a></div>{{end}}
+</div>
+{{end}}
+
 </main>
 {{template "footer.html" . }}

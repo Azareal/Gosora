@@ -96,9 +96,7 @@ func buildAlert(asid int, event string, elementType string, actorID int, targetU
 		endFrag = "'s profile"
 		url = targetUser.Link
 	case "post":
-		reply := common.BlankReply()
-		reply.ID = elementID
-		topic, err := reply.Topic()
+		topic, err := common.TopicByReplyID(elementID)
 		if err != nil {
 			return "", errors.New("Unable to find the linked reply or parent topic")
 		}

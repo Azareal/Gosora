@@ -217,6 +217,30 @@ w.Write(topics_60)
 w.Write(topics_61)
 }
 w.Write(topics_62)
+if tmpl_topics_vars.LastPage > 1 {
+w.Write(topics_63)
+if tmpl_topics_vars.Page > 1 {
+w.Write(topics_64)
+w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page - 1)))
+w.Write(topics_65)
+}
+if len(tmpl_topics_vars.PageList) != 0 {
+for _, item := range tmpl_topics_vars.PageList {
+w.Write(topics_66)
+w.Write([]byte(strconv.Itoa(item)))
+w.Write(topics_67)
+w.Write([]byte(strconv.Itoa(item)))
+w.Write(topics_68)
+}
+}
+if tmpl_topics_vars.LastPage != tmpl_topics_vars.Page {
+w.Write(topics_69)
+w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page + 1)))
+w.Write(topics_70)
+}
+w.Write(topics_71)
+}
+w.Write(topics_72)
 w.Write(footer_0)
 w.Write([]byte(common.BuildWidget("footer",tmpl_topics_vars.Header)))
 w.Write(footer_1)

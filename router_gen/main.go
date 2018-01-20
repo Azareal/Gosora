@@ -279,25 +279,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
 		w.WriteHeader(405)
 		w.Write([]byte(""))
-		return
-	}
-
-	// TODO: Cover more suspicious strings and at a lower layer than this
-	for _, char := range req.URL.Path {
-		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
-			log.Print("Suspicious UA: ", req.UserAgent())
-			log.Print("Method: ", req.Method)
-			for key, value := range req.Header {
-				for _, vvalue := range value {
-					log.Print("Header '" + key + "': " + vvalue + "!!")
-				}
-			}
-			log.Print("req.URL.Path: ", req.URL.Path)
-			log.Print("req.Referer(): ", req.Referer())
-			log.Print("req.RemoteAddr: ", req.RemoteAddr)
-		}
-	}
-	if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") {
 		log.Print("Suspicious UA: ", req.UserAgent())
 		log.Print("Method: ", req.Method)
 		for key, value := range req.Header {
@@ -306,8 +287,43 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 		log.Print("req.URL.Path: ", req.URL.Path)
+		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 		log.Print("req.Referer(): ", req.Referer())
 		log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		return
+	}
+
+	if common.Dev.DebugMode {
+		// TODO: Cover more suspicious strings and at a lower layer than this
+		for _, char := range req.URL.Path {
+			if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
+				log.Print("Suspicious UA: ", req.UserAgent())
+				log.Print("Method: ", req.Method)
+				for key, value := range req.Header {
+					for _, vvalue := range value {
+						log.Print("Header '" + key + "': " + vvalue + "!!")
+					}
+				}
+				log.Print("req.URL.Path: ", req.URL.Path)
+				log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
+				log.Print("req.Referer(): ", req.Referer())
+				log.Print("req.RemoteAddr: ", req.RemoteAddr)
+				break
+			}
+		}
+		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") {
+			log.Print("Suspicious UA: ", req.UserAgent())
+			log.Print("Method: ", req.Method)
+			for key, value := range req.Header {
+				for _, vvalue := range value {
+					log.Print("Header '" + key + "': " + vvalue + "!!")
+				}
+			}
+			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
+			log.Print("req.Referer(): ", req.Referer())
+			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		}
 	}
 	
 	var prefix, extraData string
@@ -327,6 +343,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		log.Print("prefix: ", prefix)
 		log.Print("req.URL.Path: ", req.URL.Path)
+		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 		log.Print("extraData: ", extraData)
 		log.Print("req.Referer(): ", req.Referer())
 		log.Print("req.RemoteAddr: ", req.RemoteAddr)
@@ -390,6 +407,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 			log.Print("prefix: ", prefix)
 			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("extraData: ", extraData)
 			log.Print("req.Referer(): ", req.Referer())
 			log.Print("req.RemoteAddr: ", req.RemoteAddr)
@@ -406,6 +424,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 			log.Print("prefix: ", prefix)
 			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("extraData: ", extraData)
 			log.Print("req.Referer(): ", req.Referer())
 			log.Print("req.RemoteAddr: ", req.RemoteAddr)

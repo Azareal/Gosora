@@ -123,6 +123,7 @@ type TopicStmts struct {
 	createActionReply *sql.Stmt
 
 	getTopicUser *sql.Stmt // TODO: Can we get rid of this?
+	getByReplyID *sql.Stmt
 }
 
 var topicStmts TopicStmts
@@ -144,6 +145,7 @@ func init() {
 			createActionReply: acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
 			getTopicUser: acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
+			getByReplyID: acc.SimpleLeftJoin("replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.data", "replies.tid = topics.tid", "rid = ?", "", ""),
 		}
 		return acc.FirstError()
 	})
@@ -270,6 +272,13 @@ func (topic *Topic) CreateActionReply(action string, ipaddress string, user User
 // Copy gives you a non-pointer concurrency safe copy of the topic
 func (topic *Topic) Copy() Topic {
 	return *topic
+}
+
+func TopicByReplyID(rid int) (*Topic, error) {
+	topic := Topic{ID: 0}
+	err := topicStmts.getByReplyID.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Data)
+	topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
+	return &topic, err
 }
 
 // TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser

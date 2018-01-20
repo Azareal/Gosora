@@ -179,18 +179,7 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 
 	// Get the current page
 	page, _ := strconv.Atoi(r.FormValue("page"))
-
-	// Calculate the offset
-	var offset int
-	lastPage := (topicCount / common.Config.ItemsPerPage) + 1
-	if page > 1 {
-		offset = (common.Config.ItemsPerPage * page) - common.Config.ItemsPerPage
-	} else if page == -1 {
-		page = lastPage
-		offset = (common.Config.ItemsPerPage * page) - common.Config.ItemsPerPage
-	} else {
-		page = 1
-	}
+	offset, page, lastPage := common.PageOffset(topicCount, page, common.Config.ItemsPerPage)
 
 	var topicList []*common.TopicsRow
 	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, postCount, likeCount", "parentID IN("+qlist+")", "sticky DESC, lastReplyAt DESC, createdBy DESC", "?,?")
@@ -258,7 +247,8 @@ func routeTopics(w http.ResponseWriter, r *http.Request, user common.User) commo
 		topicItem.LastUser = userList[topicItem.LastReplyBy]
 	}
 
-	pi := common.TopicsPage{common.GetTitlePhrase("topics"), user, headerVars, topicList, forumList, common.Config.DefaultForum}
+	pageList := common.Paginate(topicCount, common.Config.ItemsPerPage, 5)
+	pi := common.TopicsPage{common.GetTitlePhrase("topics"), user, headerVars, topicList, forumList, common.Config.DefaultForum, pageList, page, lastPage}
 	if common.PreRenderHooks["pre_render_topic_list"] != nil {
 		if common.RunPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
 			return nil

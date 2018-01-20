@@ -2236,7 +2236,7 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 		out = fmt.Sprintf(out, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
 	case "reply":
 		if action == "delete" {
-			topic := handleUnknownTopic(common.BlankReply(elementID).Topic())
+			topic := handleUnknownTopic(common.TopicByReplyID(elementID))
 			out = fmt.Sprintf("A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
 		}
 	}

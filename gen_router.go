@@ -85,21 +85,21 @@ var RouteMap = map[string]interface{}{
 	"routeIps": routeIps,
 	"routeTopicCreateSubmit": routeTopicCreateSubmit,
 	"routes.EditTopicSubmit": routes.EditTopicSubmit,
-	"routeDeleteTopicSubmit": routeDeleteTopicSubmit,
-	"routeStickTopicSubmit": routeStickTopicSubmit,
-	"routeUnstickTopicSubmit": routeUnstickTopicSubmit,
-	"routeLockTopicSubmit": routeLockTopicSubmit,
-	"routeUnlockTopicSubmit": routeUnlockTopicSubmit,
-	"routeMoveTopicSubmit": routeMoveTopicSubmit,
+	"routes.DeleteTopicSubmit": routes.DeleteTopicSubmit,
+	"routes.StickTopicSubmit": routes.StickTopicSubmit,
+	"routes.UnstickTopicSubmit": routes.UnstickTopicSubmit,
+	"routes.LockTopicSubmit": routes.LockTopicSubmit,
+	"routes.UnlockTopicSubmit": routes.UnlockTopicSubmit,
+	"routes.MoveTopicSubmit": routes.MoveTopicSubmit,
 	"routeLikeTopicSubmit": routeLikeTopicSubmit,
 	"routeTopicID": routeTopicID,
 	"routeCreateReplySubmit": routeCreateReplySubmit,
-	"routeReplyEditSubmit": routeReplyEditSubmit,
-	"routeReplyDeleteSubmit": routeReplyDeleteSubmit,
+	"routes.ReplyEditSubmit": routes.ReplyEditSubmit,
+	"routes.ReplyDeleteSubmit": routes.ReplyDeleteSubmit,
 	"routeReplyLikeSubmit": routeReplyLikeSubmit,
 	"routeProfileReplyCreateSubmit": routeProfileReplyCreateSubmit,
-	"routeProfileReplyEditSubmit": routeProfileReplyEditSubmit,
-	"routeProfileReplyDeleteSubmit": routeProfileReplyDeleteSubmit,
+	"routes.ProfileReplyEditSubmit": routes.ProfileReplyEditSubmit,
+	"routes.ProfileReplyDeleteSubmit": routes.ProfileReplyDeleteSubmit,
 	"routeLogin": routeLogin,
 	"routeRegister": routeRegister,
 	"routeLogout": routeLogout,
@@ -180,21 +180,21 @@ var routeMapEnum = map[string]int{
 	"routeIps": 66,
 	"routeTopicCreateSubmit": 67,
 	"routes.EditTopicSubmit": 68,
-	"routeDeleteTopicSubmit": 69,
-	"routeStickTopicSubmit": 70,
-	"routeUnstickTopicSubmit": 71,
-	"routeLockTopicSubmit": 72,
-	"routeUnlockTopicSubmit": 73,
-	"routeMoveTopicSubmit": 74,
+	"routes.DeleteTopicSubmit": 69,
+	"routes.StickTopicSubmit": 70,
+	"routes.UnstickTopicSubmit": 71,
+	"routes.LockTopicSubmit": 72,
+	"routes.UnlockTopicSubmit": 73,
+	"routes.MoveTopicSubmit": 74,
 	"routeLikeTopicSubmit": 75,
 	"routeTopicID": 76,
 	"routeCreateReplySubmit": 77,
-	"routeReplyEditSubmit": 78,
-	"routeReplyDeleteSubmit": 79,
+	"routes.ReplyEditSubmit": 78,
+	"routes.ReplyDeleteSubmit": 79,
 	"routeReplyLikeSubmit": 80,
 	"routeProfileReplyCreateSubmit": 81,
-	"routeProfileReplyEditSubmit": 82,
-	"routeProfileReplyDeleteSubmit": 83,
+	"routes.ProfileReplyEditSubmit": 82,
+	"routes.ProfileReplyDeleteSubmit": 83,
 	"routeLogin": 84,
 	"routeRegister": 85,
 	"routeLogout": 86,
@@ -273,21 +273,21 @@ var reverseRouteMapEnum = map[int]string{
 	66: "routeIps",
 	67: "routeTopicCreateSubmit",
 	68: "routes.EditTopicSubmit",
-	69: "routeDeleteTopicSubmit",
-	70: "routeStickTopicSubmit",
-	71: "routeUnstickTopicSubmit",
-	72: "routeLockTopicSubmit",
-	73: "routeUnlockTopicSubmit",
-	74: "routeMoveTopicSubmit",
+	69: "routes.DeleteTopicSubmit",
+	70: "routes.StickTopicSubmit",
+	71: "routes.UnstickTopicSubmit",
+	72: "routes.LockTopicSubmit",
+	73: "routes.UnlockTopicSubmit",
+	74: "routes.MoveTopicSubmit",
 	75: "routeLikeTopicSubmit",
 	76: "routeTopicID",
 	77: "routeCreateReplySubmit",
-	78: "routeReplyEditSubmit",
-	79: "routeReplyDeleteSubmit",
+	78: "routes.ReplyEditSubmit",
+	79: "routes.ReplyDeleteSubmit",
 	80: "routeReplyLikeSubmit",
 	81: "routeProfileReplyCreateSubmit",
-	82: "routeProfileReplyEditSubmit",
-	83: "routeProfileReplyDeleteSubmit",
+	82: "routes.ProfileReplyEditSubmit",
+	83: "routes.ProfileReplyDeleteSubmit",
 	84: "routeLogin",
 	85: "routeRegister",
 	86: "routeLogout",
@@ -395,25 +395,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
 		w.WriteHeader(405)
 		w.Write([]byte(""))
-		return
-	}
-
-	// TODO: Cover more suspicious strings and at a lower layer than this
-	for _, char := range req.URL.Path {
-		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
-			log.Print("Suspicious UA: ", req.UserAgent())
-			log.Print("Method: ", req.Method)
-			for key, value := range req.Header {
-				for _, vvalue := range value {
-					log.Print("Header '" + key + "': " + vvalue + "!!")
-				}
-			}
-			log.Print("req.URL.Path: ", req.URL.Path)
-			log.Print("req.Referer(): ", req.Referer())
-			log.Print("req.RemoteAddr: ", req.RemoteAddr)
-		}
-	}
-	if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") {
 		log.Print("Suspicious UA: ", req.UserAgent())
 		log.Print("Method: ", req.Method)
 		for key, value := range req.Header {
@@ -422,8 +403,43 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 		log.Print("req.URL.Path: ", req.URL.Path)
+		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 		log.Print("req.Referer(): ", req.Referer())
 		log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		return
+	}
+
+	if common.Dev.DebugMode {
+		// TODO: Cover more suspicious strings and at a lower layer than this
+		for _, char := range req.URL.Path {
+			if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
+				log.Print("Suspicious UA: ", req.UserAgent())
+				log.Print("Method: ", req.Method)
+				for key, value := range req.Header {
+					for _, vvalue := range value {
+						log.Print("Header '" + key + "': " + vvalue + "!!")
+					}
+				}
+				log.Print("req.URL.Path: ", req.URL.Path)
+				log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
+				log.Print("req.Referer(): ", req.Referer())
+				log.Print("req.RemoteAddr: ", req.RemoteAddr)
+				break
+			}
+		}
+		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") {
+			log.Print("Suspicious UA: ", req.UserAgent())
+			log.Print("Method: ", req.Method)
+			for key, value := range req.Header {
+				for _, vvalue := range value {
+					log.Print("Header '" + key + "': " + vvalue + "!!")
+				}
+			}
+			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
+			log.Print("req.Referer(): ", req.Referer())
+			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		}
 	}
 	
 	var prefix, extraData string
@@ -443,6 +459,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		log.Print("prefix: ", prefix)
 		log.Print("req.URL.Path: ", req.URL.Path)
+		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 		log.Print("extraData: ", extraData)
 		log.Print("req.Referer(): ", req.Referer())
 		log.Print("req.RemoteAddr: ", req.RemoteAddr)
@@ -506,6 +523,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 			log.Print("prefix: ", prefix)
 			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("extraData: ", extraData)
 			log.Print("req.Referer(): ", req.Referer())
 			log.Print("req.RemoteAddr: ", req.RemoteAddr)
@@ -522,6 +540,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 			log.Print("prefix: ", prefix)
 			log.Print("req.URL.Path: ", req.URL.Path)
+			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("extraData: ", extraData)
 			log.Print("req.Referer(): ", req.Referer())
 			log.Print("req.RemoteAddr: ", req.RemoteAddr)
@@ -1155,7 +1174,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					
 					req.URL.Path += extraData
 					common.RouteViewCounter.Bump(69)
-					err = routeDeleteTopicSubmit(w,req,user)
+					err = routes.DeleteTopicSubmit(w,req,user)
 				case "/topic/stick/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1170,7 +1189,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(70)
-					err = routeStickTopicSubmit(w,req,user,extraData)
+					err = routes.StickTopicSubmit(w,req,user,extraData)
 				case "/topic/unstick/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1185,7 +1204,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(71)
-					err = routeUnstickTopicSubmit(w,req,user,extraData)
+					err = routes.UnstickTopicSubmit(w,req,user,extraData)
 				case "/topic/lock/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1201,7 +1220,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					
 					req.URL.Path += extraData
 					common.RouteViewCounter.Bump(72)
-					err = routeLockTopicSubmit(w,req,user)
+					err = routes.LockTopicSubmit(w,req,user)
 				case "/topic/unlock/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1216,7 +1235,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(73)
-					err = routeUnlockTopicSubmit(w,req,user,extraData)
+					err = routes.UnlockTopicSubmit(w,req,user,extraData)
 				case "/topic/move/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1231,7 +1250,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(74)
-					err = routeMoveTopicSubmit(w,req,user,extraData)
+					err = routes.MoveTopicSubmit(w,req,user,extraData)
 				case "/topic/like/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1290,7 +1309,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(78)
-					err = routeReplyEditSubmit(w,req,user,extraData)
+					err = routes.ReplyEditSubmit(w,req,user,extraData)
 				case "/reply/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1305,7 +1324,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(79)
-					err = routeReplyDeleteSubmit(w,req,user,extraData)
+					err = routes.ReplyDeleteSubmit(w,req,user,extraData)
 				case "/reply/like/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1356,7 +1375,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(82)
-					err = routeProfileReplyEditSubmit(w,req,user,extraData)
+					err = routes.ProfileReplyEditSubmit(w,req,user,extraData)
 				case "/profile/reply/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1371,7 +1390,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(83)
-					err = routeProfileReplyDeleteSubmit(w,req,user,extraData)
+					err = routes.ProfileReplyDeleteSubmit(w,req,user,extraData)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)
