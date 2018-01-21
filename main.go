@@ -80,6 +80,11 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.IPSearch, err = common.NewDefaultIPSearcher()
+	if err != nil {
+		return err
+	}
+
 	common.GlobalViewCounter, err = common.NewGlobalViewCounter()
 	if err != nil {
 		return err

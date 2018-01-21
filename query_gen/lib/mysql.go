@@ -2,9 +2,11 @@
 package qgen
 
 //import "fmt"
-import "strings"
-import "strconv"
-import "errors"
+import (
+	"errors"
+	"strconv"
+	"strings"
+)
 
 func init() {
 	Registry = append(Registry,
@@ -399,7 +401,7 @@ func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns str
 	return querystr, nil
 }
 
-func (adapter *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (string, error) {
+func (adapter *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out string, err error) {
 	if preBuilder.name == "" {
 		return "", errors.New("You need a name for this statement")
 	}
@@ -418,9 +420,19 @@ func (adapter *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (string
 	}
 	querystr = querystr[0 : len(querystr)-1]
 
-	whereStr, err := adapter.buildFlexiWhere(preBuilder.where, preBuilder.dateCutoff)
-	if err != nil {
-		return querystr, err
+	var whereStr string
+	// TODO: Let callers have a Where() and a InQ()
+	if preBuilder.inChain != nil {
+		whereStr, err = adapter.ComplexSelect(preBuilder.inChain)
+		if err != nil {
+			return querystr, err
+		}
+		whereStr = " WHERE `" + preBuilder.inColumn + "` IN(" + whereStr + ")"
+	} else {
+		whereStr, err = adapter.buildFlexiWhere(preBuilder.where, preBuilder.dateCutoff)
+		if err != nil {
+			return querystr, err
+		}
 	}
 
 	querystr += " FROM `" + preBuilder.table + "`" + whereStr + adapter.buildOrderby(preBuilder.orderby) + adapter.buildLimit(preBuilder.limit)
@@ -664,9 +676,6 @@ type Stmts struct {
 	todaysTopicCount *sql.Stmt
 	todaysReportCount *sql.Stmt
 	todaysNewUserCount *sql.Stmt
-	findUsersByIPUsers *sql.Stmt
-	findUsersByIPTopics *sql.Stmt
-	findUsersByIPReplies *sql.Stmt
 
 	Mocks bool
 }

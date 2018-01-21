@@ -22,7 +22,7 @@ func initGuilds() (err error) {
 	common.Plugins["guilds"].AddHook("intercept_build_widgets", guilds.Widgets)
 	common.Plugins["guilds"].AddHook("trow_assign", guilds.TrowAssign)
 	common.Plugins["guilds"].AddHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
-	common.Plugins["guilds"].AddHook("pre_render_view_forum", guilds.PreRenderViewForum)
+	common.Plugins["guilds"].AddHook("pre_render_forum", guilds.PreRenderViewForum)
 	common.Plugins["guilds"].AddHook("simple_forum_check_pre_perms", guilds.ForumCheck)
 	common.Plugins["guilds"].AddHook("forum_check_pre_perms", guilds.ForumCheck)
 	// TODO: Auto-grant this perm to admins upon installation?
@@ -61,7 +61,7 @@ func deactivateGuilds() {
 	common.Plugins["guilds"].RemoveHook("intercept_build_widgets", guilds.Widgets)
 	common.Plugins["guilds"].RemoveHook("trow_assign", guilds.TrowAssign)
 	common.Plugins["guilds"].RemoveHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
-	common.Plugins["guilds"].RemoveHook("pre_render_view_forum", guilds.PreRenderViewForum)
+	common.Plugins["guilds"].RemoveHook("pre_render_forum", guilds.PreRenderViewForum)
 	common.Plugins["guilds"].RemoveHook("simple_forum_check_pre_perms", guilds.ForumCheck)
 	common.Plugins["guilds"].RemoveHook("forum_check_pre_perms", guilds.ForumCheck)
 	common.DeregisterPluginPerm("CreateGuild")

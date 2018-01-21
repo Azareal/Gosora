@@ -47,6 +47,8 @@ type accSelectBuilder struct {
 	orderby    string
 	limit      string
 	dateCutoff *dateCutoff // We might want to do this in a slightly less hacky way
+	inChain    *accSelectBuilder
+	inColumn   string
 
 	build *Accumulator
 }
@@ -58,6 +60,12 @@ func (selectItem *accSelectBuilder) Columns(columns string) *accSelectBuilder {
 
 func (selectItem *accSelectBuilder) Where(where string) *accSelectBuilder {
 	selectItem.where = where
+	return selectItem
+}
+
+func (selectItem *accSelectBuilder) InQ(column string, subBuilder *accSelectBuilder) *accSelectBuilder {
+	selectItem.inChain = subBuilder
+	selectItem.inColumn = column
 	return selectItem
 }
 
@@ -78,7 +86,7 @@ func (selectItem *accSelectBuilder) Limit(limit string) *accSelectBuilder {
 
 func (selectItem *accSelectBuilder) Prepare() *sql.Stmt {
 	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
-	if selectItem.dateCutoff != nil {
+	if selectItem.dateCutoff != nil || selectItem.inChain != nil {
 		selectBuilder := selectItem.build.GetAdapter().Builder().Select().FromAcc(selectItem)
 		return selectItem.build.prepare(selectItem.build.GetAdapter().ComplexSelect(selectBuilder))
 	}

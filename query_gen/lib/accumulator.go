@@ -198,7 +198,7 @@ func (build *Accumulator) Update(table string) *accUpdateBuilder {
 }
 
 func (build *Accumulator) Select(table string) *accSelectBuilder {
-	return &accSelectBuilder{table, "", "", "", "", nil, build}
+	return &accSelectBuilder{table, "", "", "", "", nil, nil, "", build}
 }
 
 func (build *Accumulator) Insert(table string) *accInsertBuilder {

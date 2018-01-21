@@ -1,108 +1,15 @@
-package main
+package routes
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 	"time"
 
-	"./common"
+	"../common"
 )
 
-func routeIps(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
-	if !user.Perms.ViewIPs {
-		return common.NoPermissions(w, r, user)
-	}
-
-	var ip = r.FormValue("ip")
-	var uid int
-	var reqUserList = make(map[int]bool)
-
-	rows, err := stmts.findUsersByIPUsers.Query(ip)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&uid)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-		reqUserList[uid] = true
-	}
-	err = rows.Err()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	rows2, err := stmts.findUsersByIPTopics.Query(ip)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	defer rows2.Close()
-
-	for rows2.Next() {
-		err := rows2.Scan(&uid)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-		reqUserList[uid] = true
-	}
-	err = rows2.Err()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	rows3, err := stmts.findUsersByIPReplies.Query(ip)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	defer rows3.Close()
-
-	for rows3.Next() {
-		err := rows3.Scan(&uid)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-		reqUserList[uid] = true
-	}
-	err = rows3.Err()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// Convert the user ID map to a slice, then bulk load the users
-	var idSlice = make([]int, len(reqUserList))
-	var i int
-	for userID := range reqUserList {
-		idSlice[i] = userID
-		i++
-	}
-
-	// TODO: What if a user is deleted via the Control Panel?
-	userList, err := common.Users.BulkGetMap(idSlice)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	pi := common.IPSearchPage{common.GetTitlePhrase("ip-search"), user, headerVars, userList, ip}
-	if common.PreRenderHooks["pre_render_ips"] != nil {
-		if common.RunPreRenderHook("pre_render_ips", w, r, &user, &pi) {
-			return nil
-		}
-	}
-	err = common.Templates.ExecuteTemplate(w, "ip-search.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
-}
-
-func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
+func BanUserSubmit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
 	if !user.Perms.BanUsers {
 		return common.NoPermissions(w, r, user)
 	}
@@ -116,7 +23,7 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User, su
 	}
 
 	targetUser, err := common.Users.Get(uid)
-	if err == ErrNoRows {
+	if err == sql.ErrNoRows {
 		return common.LocalError("The user you're trying to ban no longer exists.", w, r, user)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
@@ -160,7 +67,7 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User, su
 	}
 
 	err = targetUser.Ban(duration, user.ID)
-	if err == ErrNoRows {
+	if err == sql.ErrNoRows {
 		return common.LocalError("The user you're trying to ban no longer exists.", w, r, user)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
@@ -175,7 +82,7 @@ func routeBanSubmit(w http.ResponseWriter, r *http.Request, user common.User, su
 	return nil
 }
 
-func routeUnban(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
+func UnbanUser(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
 	if !user.Perms.BanUsers {
 		return common.NoPermissions(w, r, user)
 	}
@@ -186,7 +93,7 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user common.User, suid s
 	}
 
 	targetUser, err := common.Users.Get(uid)
-	if err == ErrNoRows {
+	if err == sql.ErrNoRows {
 		return common.LocalError("The user you're trying to unban no longer exists.", w, r, user)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
@@ -199,7 +106,7 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user common.User, suid s
 	err = targetUser.Unban()
 	if err == common.ErrNoTempGroup {
 		return common.LocalError("The user you're trying to unban is not banned", w, r, user)
-	} else if err == ErrNoRows {
+	} else if err == sql.ErrNoRows {
 		return common.LocalError("The user you're trying to unban no longer exists.", w, r, user)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
@@ -214,7 +121,7 @@ func routeUnban(w http.ResponseWriter, r *http.Request, user common.User, suid s
 	return nil
 }
 
-func routeActivate(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
+func ActivateUser(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
 	if !user.Perms.ActivateUsers {
 		return common.NoPermissions(w, r, user)
 	}
@@ -225,7 +132,7 @@ func routeActivate(w http.ResponseWriter, r *http.Request, user common.User, sui
 	}
 
 	targetUser, err := common.Users.Get(uid)
-	if err == ErrNoRows {
+	if err == sql.ErrNoRows {
 		return common.LocalError("The account you're trying to activate no longer exists.", w, r, user)
 	} else if err != nil {
 		return common.InternalError(err, w, r)

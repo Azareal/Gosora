@@ -75,56 +75,41 @@ func initMSSQL() (err error) {
 	}
 
 	// TODO: Is there a less noisy way of doing this for tests?
-	log.Print("Preparing get_activity_feed_by_watcher statement.")
+	log.Print("Preparing getActivityFeedByWatcher statement.")
 	getActivityFeedByWatcherStmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM [activity_stream_matches] INNER JOIN [activity_stream] ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE [watcher] = ? ORDER BY activity_stream.asid ASC OFFSET 0 ROWS FETCH NEXT 8 ROWS ONLY")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing get_activity_count_by_watcher statement.")
+	log.Print("Preparing getActivityCountByWatcher statement.")
 	getActivityCountByWatcherStmt, err = db.Prepare("SELECT count(*) FROM [activity_stream_matches] INNER JOIN [activity_stream] ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE [watcher] = ?")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todays_post_count statement.")
+	log.Print("Preparing todaysPostCount statement.")
 	todaysPostCountStmt, err = db.Prepare("select count(*) from replies where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todays_topic_count statement.")
+	log.Print("Preparing todaysTopicCount statement.")
 	todaysTopicCountStmt, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todays_report_count statement.")
+	log.Print("Preparing todaysReportCount statement.")
 	todaysReportCountStmt, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE()) and parentID = 1")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todays_newuser_count statement.")
+	log.Print("Preparing todaysNewUserCount statement.")
 	todaysNewUserCountStmt, err = db.Prepare("select count(*) from users where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
 	if err != nil {
 		return err
 	}
 
-	// ? - Why is this a custom query? Are we planning a union or something?
-	log.Print("Preparing find_users_by_ip_users statement.")
-	findUsersByIPUsersStmt, err = db.Prepare("select uid from users where last_ip = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing find_users_by_ip_topics statement.")
-	findUsersByIPTopicsStmt, err = db.Prepare("select uid from users where uid in(select createdBy from topics where ipaddress = ?)")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing find_users_by_ip_replies statement.")
-	findUsersByIPRepliesStmt, err = db.Prepare("select uid from users where uid in(select createdBy from replies where ipaddress = ?)")
-	return err
+	return nil
 }

@@ -20,7 +20,7 @@ func routes() {
 
 	topicGroup := newRouteGroup("/topics/",
 		View("routeTopics", "/topics/"),
-		MemberView("routeTopicCreate", "/topics/create/", "extraData"),
+		MemberView("routes.CreateTopic", "/topics/create/", "extraData"),
 	)
 	addRouteGroup(topicGroup)
 
@@ -53,10 +53,10 @@ func buildUserRoutes() {
 	// TODO: Auto test and manual test these routes
 	userGroup = newRouteGroup("/users/")
 	userGroup.Routes(
-		Action("routeBanSubmit", "/users/ban/submit/", "extraData"),
-		Action("routeUnban", "/users/unban/", "extraData"),
-		Action("routeActivate", "/users/activate/", "extraData"),
-		MemberView("routeIps", "/users/ips/"), // TODO: .Perms("ViewIPs")?
+		Action("routes.BanUserSubmit", "/users/ban/submit/", "extraData"),
+		Action("routes.UnbanUser", "/users/unban/", "extraData"),
+		Action("routes.ActivateUser", "/users/activate/", "extraData"),
+		MemberView("routes.IPSearch", "/users/ips/"), // TODO: .Perms("ViewIPs")?
 	)
 	addRouteGroup(userGroup)
 }
@@ -65,7 +65,7 @@ func buildTopicRoutes() {
 	topicGroup := newRouteGroup("/topic/")
 	topicGroup.Routes(
 		View("routeTopicID", "/topic/", "extraData"),
-		Action("routeTopicCreateSubmit", "/topic/create/submit/"),
+		Action("routeCreateTopicSubmit", "/topic/create/submit/"),
 		Action("routes.EditTopicSubmit", "/topic/edit/submit/", "extraData"),
 		Action("routes.DeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
 		Action("routes.StickTopicSubmit", "/topic/stick/submit/", "extraData"),

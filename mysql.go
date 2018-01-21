@@ -69,55 +69,41 @@ func initMySQL() (err error) {
 	}
 
 	// TODO: Is there a less noisy way of doing this for tests?
-	log.Print("Preparing get_activity_feed_by_watcher statement.")
+	log.Print("Preparing getActivityFeedByWatcher statement.")
 	stmts.getActivityFeedByWatcher, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid ASC LIMIT 8")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing get_activity_count_by_watcher statement.")
+	log.Print("Preparing getActivityCountByWatcher statement.")
 	stmts.getActivityCountByWatcher, err = db.Prepare("SELECT count(*) FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todays_post_count statement.")
+	log.Print("Preparing todaysPostCount statement.")
 	stmts.todaysPostCount, err = db.Prepare("select count(*) from replies where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todays_topic_count statement.")
+	log.Print("Preparing todaysTopicCount statement.")
 	stmts.todaysTopicCount, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todays_report_count statement.")
+	log.Print("Preparing todaysReportCount statement.")
 	stmts.todaysReportCount, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() and parentID = 1")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todays_newuser_count statement.")
+	log.Print("Preparing todaysNewUserCount statement.")
 	stmts.todaysNewUserCount, err = db.Prepare("select count(*) from users where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing find_users_by_ip_users statement.")
-	stmts.findUsersByIPUsers, err = db.Prepare("select uid from users where last_ip = ?")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing find_users_by_ip_topics statement.")
-	stmts.findUsersByIPTopics, err = db.Prepare("select uid from users where uid in(select createdBy from topics where ipaddress = ?)")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing find_users_by_ip_replies statement.")
-	stmts.findUsersByIPReplies, err = db.Prepare("select uid from users where uid in(select createdBy from replies where ipaddress = ?)")
-	return err
+	return nil
 }

@@ -12,7 +12,7 @@ type prebuilder struct {
 
 func (build *prebuilder) Select(nlist ...string) *selectPrebuilder {
 	name := optString(nlist, "_builder")
-	return &selectPrebuilder{name, "", "", "", "", "", nil, build.adapter}
+	return &selectPrebuilder{name, "", "", "", "", "", nil, nil, "", build.adapter}
 }
 
 func (build *prebuilder) Insert(nlist ...string) *insertPrebuilder {
@@ -96,6 +96,8 @@ type selectPrebuilder struct {
 	orderby    string
 	limit      string
 	dateCutoff *dateCutoff
+	inChain    *selectPrebuilder
+	inColumn   string // for inChain
 
 	build Adapter
 }
@@ -115,6 +117,11 @@ func (selectItem *selectPrebuilder) Where(where string) *selectPrebuilder {
 	return selectItem
 }
 
+func (selectItem *selectPrebuilder) InQ(subBuilder *selectPrebuilder) *selectPrebuilder {
+	selectItem.inChain = subBuilder
+	return selectItem
+}
+
 func (selectItem *selectPrebuilder) Orderby(orderby string) *selectPrebuilder {
 	selectItem.orderby = orderby
 	return selectItem
@@ -130,9 +137,14 @@ func (selectItem *selectPrebuilder) FromAcc(accBuilder *accSelectBuilder) *selec
 	selectItem.table = accBuilder.table
 	selectItem.columns = accBuilder.columns
 	selectItem.where = accBuilder.where
-	selectItem.dateCutoff = accBuilder.dateCutoff
 	selectItem.orderby = accBuilder.orderby
 	selectItem.limit = accBuilder.limit
+
+	selectItem.dateCutoff = accBuilder.dateCutoff
+	if accBuilder.inChain != nil {
+		selectItem.inChain = &selectPrebuilder{"__builder", accBuilder.inChain.table, accBuilder.inChain.columns, accBuilder.inChain.where, accBuilder.inChain.orderby, accBuilder.inChain.limit, accBuilder.inChain.dateCutoff, nil, "", selectItem.build}
+		selectItem.inColumn = accBuilder.inColumn
+	}
 	return selectItem
 }
 

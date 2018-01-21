@@ -1,3 +1,4 @@
+/public/chartist/**
 /public/trumbowyg/**
 /public/jquery-emojiarea/**
 /public/font-awesome-4.7.0/**
@@ -17,3 +18,4 @@ template_profile.go
 gen_mysql.go
 gen_mssql.go
 gen_pgsql.go
+gen_router.go

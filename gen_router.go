@@ -25,7 +25,7 @@ var RouteMap = map[string]interface{}{
 	"routeShowAttachment": routeShowAttachment,
 	"routeWebsockets": routeWebsockets,
 	"routeReportSubmit": routeReportSubmit,
-	"routeTopicCreate": routeTopicCreate,
+	"routes.CreateTopic": routes.CreateTopic,
 	"routeTopics": routeTopics,
 	"routePanelForums": routePanelForums,
 	"routePanelForumsCreateSubmit": routePanelForumsCreateSubmit,
@@ -79,11 +79,11 @@ var RouteMap = map[string]interface{}{
 	"routeAccountEditEmail": routeAccountEditEmail,
 	"routeAccountEditEmailTokenSubmit": routeAccountEditEmailTokenSubmit,
 	"routeProfile": routeProfile,
-	"routeBanSubmit": routeBanSubmit,
-	"routeUnban": routeUnban,
-	"routeActivate": routeActivate,
-	"routeIps": routeIps,
-	"routeTopicCreateSubmit": routeTopicCreateSubmit,
+	"routes.BanUserSubmit": routes.BanUserSubmit,
+	"routes.UnbanUser": routes.UnbanUser,
+	"routes.ActivateUser": routes.ActivateUser,
+	"routes.IPSearch": routes.IPSearch,
+	"routeCreateTopicSubmit": routeCreateTopicSubmit,
 	"routes.EditTopicSubmit": routes.EditTopicSubmit,
 	"routes.DeleteTopicSubmit": routes.DeleteTopicSubmit,
 	"routes.StickTopicSubmit": routes.StickTopicSubmit,
@@ -120,7 +120,7 @@ var routeMapEnum = map[string]int{
 	"routeShowAttachment": 6,
 	"routeWebsockets": 7,
 	"routeReportSubmit": 8,
-	"routeTopicCreate": 9,
+	"routes.CreateTopic": 9,
 	"routeTopics": 10,
 	"routePanelForums": 11,
 	"routePanelForumsCreateSubmit": 12,
@@ -174,11 +174,11 @@ var routeMapEnum = map[string]int{
 	"routeAccountEditEmail": 60,
 	"routeAccountEditEmailTokenSubmit": 61,
 	"routeProfile": 62,
-	"routeBanSubmit": 63,
-	"routeUnban": 64,
-	"routeActivate": 65,
-	"routeIps": 66,
-	"routeTopicCreateSubmit": 67,
+	"routes.BanUserSubmit": 63,
+	"routes.UnbanUser": 64,
+	"routes.ActivateUser": 65,
+	"routes.IPSearch": 66,
+	"routeCreateTopicSubmit": 67,
 	"routes.EditTopicSubmit": 68,
 	"routes.DeleteTopicSubmit": 69,
 	"routes.StickTopicSubmit": 70,
@@ -213,7 +213,7 @@ var reverseRouteMapEnum = map[int]string{
 	6: "routeShowAttachment",
 	7: "routeWebsockets",
 	8: "routeReportSubmit",
-	9: "routeTopicCreate",
+	9: "routes.CreateTopic",
 	10: "routeTopics",
 	11: "routePanelForums",
 	12: "routePanelForumsCreateSubmit",
@@ -267,11 +267,11 @@ var reverseRouteMapEnum = map[int]string{
 	60: "routeAccountEditEmail",
 	61: "routeAccountEditEmailTokenSubmit",
 	62: "routeProfile",
-	63: "routeBanSubmit",
-	64: "routeUnban",
-	65: "routeActivate",
-	66: "routeIps",
-	67: "routeTopicCreateSubmit",
+	63: "routes.BanUserSubmit",
+	64: "routes.UnbanUser",
+	65: "routes.ActivateUser",
+	66: "routes.IPSearch",
+	67: "routeCreateTopicSubmit",
 	68: "routes.EditTopicSubmit",
 	69: "routes.DeleteTopicSubmit",
 	70: "routes.StickTopicSubmit",
@@ -657,7 +657,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(9)
-					err = routeTopicCreate(w,req,user,extraData)
+					err = routes.CreateTopic(w,req,user,extraData)
 				default:
 					common.RouteViewCounter.Bump(10)
 					err = routeTopics(w,req,user)
@@ -1083,7 +1083,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(63)
-					err = routeBanSubmit(w,req,user,extraData)
+					err = routes.BanUserSubmit(w,req,user,extraData)
 				case "/users/unban/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1098,7 +1098,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(64)
-					err = routeUnban(w,req,user,extraData)
+					err = routes.UnbanUser(w,req,user,extraData)
 				case "/users/activate/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1113,7 +1113,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(65)
-					err = routeActivate(w,req,user,extraData)
+					err = routes.ActivateUser(w,req,user,extraData)
 				case "/users/ips/":
 					err = common.MemberOnly(w,req,user)
 					if err != nil {
@@ -1122,7 +1122,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(66)
-					err = routeIps(w,req,user)
+					err = routes.IPSearch(w,req,user)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -1143,7 +1143,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(67)
-					err = routeTopicCreateSubmit(w,req,user)
+					err = routeCreateTopicSubmit(w,req,user)
 				case "/topic/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {

@@ -12,6 +12,93 @@ import (
 
 var successJSONBytes = []byte(`{"success":"1"}`)
 
+// ? - Should we add a new permission or permission zone (like per-forum permissions) specifically for profile comment creation
+// ? - Should we allow banned users to make reports? How should we handle report abuse?
+// TODO: Add a permission to stop certain users from using custom avatars
+// ? - Log username changes and put restrictions on this?
+func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
+	var fid int
+	var err error
+	if sfid != "" {
+		fid, err = strconv.Atoi(sfid)
+		if err != nil {
+			return common.LocalError("You didn't provide a valid number for the forum ID.", w, r, user)
+		}
+	}
+	if fid == 0 {
+		fid = common.Config.DefaultForum
+	}
+
+	headerVars, ferr := common.ForumUserCheck(w, r, &user, fid)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
+		return common.NoPermissions(w, r, user)
+	}
+	headerVars.Zone = "create_topic"
+
+	// Lock this to the forum being linked?
+	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
+	var strictmode bool
+	if common.Vhooks["topic_create_pre_loop"] != nil {
+		common.RunVhook("topic_create_pre_loop", w, r, fid, &headerVars, &user, &strictmode)
+	}
+
+	// TODO: Re-add support for plugin_guilds
+	var forumList []common.Forum
+	var canSee []int
+	if user.IsSuperAdmin {
+		canSee, err = common.Forums.GetAllVisibleIDs()
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+	} else {
+		group, err := common.Groups.Get(user.Group)
+		if err != nil {
+			// TODO: Refactor this
+			common.LocalError("Something weird happened behind the scenes", w, r, user)
+			log.Printf("Group #%d doesn't exist, but it's set on common.User #%d", user.Group, user.ID)
+			return nil
+		}
+		canSee = group.CanSee
+	}
+
+	// TODO: plugin_superadmin needs to be able to override this loop. Skip flag on topic_create_pre_loop?
+	for _, ffid := range canSee {
+		// TODO: Surely, there's a better way of doing this. I've added it in for now to support plugin_guilds, but we really need to clean this up
+		if strictmode && ffid != fid {
+			continue
+		}
+
+		// Do a bulk forum fetch, just in case it's the SqlForumStore?
+		forum := common.Forums.DirtyGet(ffid)
+		if forum.Name != "" && forum.Active {
+			fcopy := forum.Copy()
+			if common.Hooks["topic_create_frow_assign"] != nil {
+				// TODO: Add the skip feature to all the other row based hooks?
+				if common.RunHook("topic_create_frow_assign", &fcopy).(bool) {
+					continue
+				}
+			}
+			forumList = append(forumList, fcopy)
+		}
+	}
+
+	ctpage := common.CreateTopicPage{"Create Topic", user, headerVars, forumList, fid}
+	if common.PreRenderHooks["pre_render_create_topic"] != nil {
+		if common.RunPreRenderHook("pre_render_create_topic", w, r, &user, &ctpage) {
+			return nil
+		}
+	}
+
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "create_topic", ctpage, w)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 // TODO: Disable stat updates in posts handled by plugin_guilds
 func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
@@ -149,11 +236,7 @@ func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.ModLogs.Create("stick", tid, "topic", user.LastIP, user.ID)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	err = topic.CreateActionReply("stick", user.LastIP, user)
+	err = addTopicAction("stick", topic, user)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -188,11 +271,7 @@ func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.ModLogs.Create("unstick", tid, "topic", user.LastIP, user.ID)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	err = topic.CreateActionReply("unstick", user.LastIP, user)
+	err = addTopicAction("unstick", topic, user)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -247,11 +326,7 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) c
 			return common.InternalErrorJSQ(err, w, r, isJs)
 		}
 
-		err = common.ModLogs.Create("lock", tid, "topic", user.LastIP, user.ID)
-		if err != nil {
-			return common.InternalErrorJSQ(err, w, r, isJs)
-		}
-		err = topic.CreateActionReply("lock", user.LastIP, user)
+		err = addTopicAction("lock", topic, user)
 		if err != nil {
 			return common.InternalErrorJSQ(err, w, r, isJs)
 		}
@@ -290,11 +365,7 @@ func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 		return common.InternalError(err, w, r)
 	}
 
-	err = common.ModLogs.Create("unlock", tid, "topic", user.LastIP, user.ID)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	err = topic.CreateActionReply("unlock", user.LastIP, user)
+	err = addTopicAction("unlock", topic, user)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -354,11 +425,7 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		}
 
 		// TODO: Log more data so we can list the destination forum in the action post?
-		err = common.ModLogs.Create("move", tid, "topic", user.LastIP, user.ID)
-		if err != nil {
-			return common.InternalErrorJS(err, w, r)
-		}
-		err = topic.CreateActionReply("move", user.LastIP, user)
+		err = addTopicAction("move", topic, user)
 		if err != nil {
 			return common.InternalErrorJS(err, w, r)
 		}
@@ -368,4 +435,12 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tids[0]), http.StatusSeeOther)
 	}
 	return nil
+}
+
+func addTopicAction(action string, topic *common.Topic, user common.User) error {
+	err := common.ModLogs.Create(action, topic.ID, "topic", user.LastIP, user.ID)
+	if err != nil {
+		return err
+	}
+	return topic.CreateActionReply(action, user.LastIP, user)
 }

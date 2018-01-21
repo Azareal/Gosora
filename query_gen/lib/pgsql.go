@@ -375,9 +375,6 @@ type Stmts struct {
 	todaysTopicCount *sql.Stmt
 	todaysReportCount *sql.Stmt
 	todaysNewUserCount *sql.Stmt
-	findUsersByIPUsers *sql.Stmt
-	findUsersByIPTopics *sql.Stmt
-	findUsersByIPReplies *sql.Stmt
 
 	Mocks bool
 }

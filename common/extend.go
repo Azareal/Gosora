@@ -75,7 +75,7 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render": nil,
 
 	"pre_render_forum_list":   nil,
-	"pre_render_view_forum":   nil,
+	"pre_render_forum":        nil,
 	"pre_render_topic_list":   nil,
 	"pre_render_view_topic":   nil,
 	"pre_render_profile":      nil,
@@ -90,7 +90,7 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_login":                     nil,
 	"pre_render_register":                  nil,
 	"pre_render_ban":                       nil,
-	"pre_render_ips":                       nil,
+	"pre_render_ip_search":                 nil,
 
 	"pre_render_panel_dashboard":             nil,
 	"pre_render_panel_forums":                nil,

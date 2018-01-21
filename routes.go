@@ -291,18 +291,8 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	}
 	headerVars.Zone = "view_forum"
 
-	// Calculate the offset
-	var offset int
-	// TODO: Does forum.TopicCount take the deleted items into consideration for guests?
-	lastPage := (forum.TopicCount / common.Config.ItemsPerPage) + 1
-	if page > 1 {
-		offset = (common.Config.ItemsPerPage * page) - common.Config.ItemsPerPage
-	} else if page == -1 {
-		page = lastPage
-		offset = (common.Config.ItemsPerPage * page) - common.Config.ItemsPerPage
-	} else {
-		page = 1
-	}
+	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
+	offset, page, lastPage := common.PageOffset(forum.TopicCount, page, common.Config.ItemsPerPage)
 
 	// TODO: Move this to *Forum
 	rows, err := stmts.getForumTopicsOffset.Query(fid, offset, common.Config.ItemsPerPage)
@@ -358,8 +348,8 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	}
 
 	pi := common.ForumPage{forum.Name, user, headerVars, topicList, forum, page, lastPage}
-	if common.PreRenderHooks["pre_render_view_forum"] != nil {
-		if common.RunPreRenderHook("pre_render_view_forum", w, r, &user, &pi) {
+	if common.PreRenderHooks["pre_render_forum"] != nil {
+		if common.RunPreRenderHook("pre_render_forum", w, r, &user, &pi) {
 			return nil
 		}
 	}
@@ -430,10 +420,9 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 
 func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User, urlBit string) common.RouteError {
 	var err error
-	var page, offset int
 	var replyList []common.ReplyUser
 
-	page, _ = strconv.Atoi(r.FormValue("page"))
+	page, _ := strconv.Atoi(r.FormValue("page"))
 
 	// SEO URLs...
 	// TODO: Make a shared function for this
@@ -496,16 +485,7 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User, urlB
 	}
 
 	// Calculate the offset
-	lastPage := (topic.PostCount / common.Config.ItemsPerPage) + 1
-	if page > 1 {
-		offset = (common.Config.ItemsPerPage * page) - common.Config.ItemsPerPage
-	} else if page == -1 {
-		page = lastPage
-		offset = (common.Config.ItemsPerPage * page) - common.Config.ItemsPerPage
-	} else {
-		page = 1
-	}
-
+	offset, page, lastPage := common.PageOffset(topic.PostCount, page, common.Config.ItemsPerPage)
 	tpage := common.TopicPage{topic.Title, user, headerVars, replyList, topic, page, lastPage}
 
 	// Get the replies..
@@ -918,7 +898,6 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		if err != nil {
 			return common.PreErrorJS("Invalid asid", w, r)
 		}
-
 		_, err = stmts.deleteActivityStreamMatch.Exec(user.ID, asid)
 		if err != nil {
 			return common.InternalError(err, w, r)
@@ -957,7 +936,6 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 			}
 			msglist += res + ","
 		}
-
 		err = rows.Err()
 		if err != nil {
 			return common.InternalErrorJS(err, w, r)
