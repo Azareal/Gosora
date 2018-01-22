@@ -84,6 +84,14 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.Subscriptions, err = common.NewDefaultSubscriptionStore()
+	if err != nil {
+		return err
+	}
+	common.Attachments, err = common.NewDefaultAttachmentStore()
+	if err != nil {
+		return err
+	}
 
 	common.GlobalViewCounter, err = common.NewGlobalViewCounter()
 	if err != nil {

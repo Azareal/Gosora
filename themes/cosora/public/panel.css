@@ -91,6 +91,9 @@
 #panel_users .panel_tag:not(.panel_right_button) {
 	display: none;
 }
+.panel_right_button + .panel_right_button {
+	margin-left: 3px;
+}
 
 .panel_group_perms .formitem a {
 	margin-top: 5px;
@@ -126,6 +129,12 @@
 }
 #panel_plugins .rowitem {
 	display: block;
+}
+
+#panel_users .rowitem .rowTitle {
+	border-bottom: 1px solid var(--lighter-text-color);
+	padding-bottom: 4px;
+	margin-bottom: 4px;
 }
 
 #forum_quick_perms .formitem {
@@ -190,3 +199,7 @@
     font-size: 16px;
 }
 */
+
+.pageset {
+	margin-left: 16px;
+}

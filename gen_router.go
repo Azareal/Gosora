@@ -69,7 +69,7 @@ var RouteMap = map[string]interface{}{
 	"routePanelBackups": routePanelBackups,
 	"routePanelLogsMod": routePanelLogsMod,
 	"routePanelDebug": routePanelDebug,
-	"routePanel": routePanel,
+	"routePanelDashboard": routePanelDashboard,
 	"routeAccountEditCritical": routeAccountEditCritical,
 	"routeAccountEditCriticalSubmit": routeAccountEditCriticalSubmit,
 	"routeAccountEditAvatar": routeAccountEditAvatar,
@@ -83,7 +83,7 @@ var RouteMap = map[string]interface{}{
 	"routes.UnbanUser": routes.UnbanUser,
 	"routes.ActivateUser": routes.ActivateUser,
 	"routes.IPSearch": routes.IPSearch,
-	"routeCreateTopicSubmit": routeCreateTopicSubmit,
+	"routes.CreateTopicSubmit": routes.CreateTopicSubmit,
 	"routes.EditTopicSubmit": routes.EditTopicSubmit,
 	"routes.DeleteTopicSubmit": routes.DeleteTopicSubmit,
 	"routes.StickTopicSubmit": routes.StickTopicSubmit,
@@ -164,7 +164,7 @@ var routeMapEnum = map[string]int{
 	"routePanelBackups": 50,
 	"routePanelLogsMod": 51,
 	"routePanelDebug": 52,
-	"routePanel": 53,
+	"routePanelDashboard": 53,
 	"routeAccountEditCritical": 54,
 	"routeAccountEditCriticalSubmit": 55,
 	"routeAccountEditAvatar": 56,
@@ -178,7 +178,7 @@ var routeMapEnum = map[string]int{
 	"routes.UnbanUser": 64,
 	"routes.ActivateUser": 65,
 	"routes.IPSearch": 66,
-	"routeCreateTopicSubmit": 67,
+	"routes.CreateTopicSubmit": 67,
 	"routes.EditTopicSubmit": 68,
 	"routes.DeleteTopicSubmit": 69,
 	"routes.StickTopicSubmit": 70,
@@ -257,7 +257,7 @@ var reverseRouteMapEnum = map[int]string{
 	50: "routePanelBackups",
 	51: "routePanelLogsMod",
 	52: "routePanelDebug",
-	53: "routePanel",
+	53: "routePanelDashboard",
 	54: "routeAccountEditCritical",
 	55: "routeAccountEditCriticalSubmit",
 	56: "routeAccountEditAvatar",
@@ -271,7 +271,7 @@ var reverseRouteMapEnum = map[int]string{
 	64: "routes.UnbanUser",
 	65: "routes.ActivateUser",
 	66: "routes.IPSearch",
-	67: "routeCreateTopicSubmit",
+	67: "routes.CreateTopicSubmit",
 	68: "routes.EditTopicSubmit",
 	69: "routes.DeleteTopicSubmit",
 	70: "routes.StickTopicSubmit",
@@ -951,7 +951,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					err = routePanelDebug(w,req,user)
 				default:
 					common.RouteViewCounter.Bump(53)
-					err = routePanel(w,req,user)
+					err = routePanelDashboard(w,req,user)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -1130,20 +1130,25 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		case "/topic":
 			switch(req.URL.Path) {
 				case "/topic/create/submit/":
-					err = common.NoSessionMismatch(w,req,user)
-					if err != nil {
-						router.handleError(err,w,req,user)
-						return
-					}
-					
 					err = common.MemberOnly(w,req,user)
 					if err != nil {
 						router.handleError(err,w,req,user)
 						return
 					}
 					
+					err = common.HandleUploadRoute(w,req,user,common.Config.MaxRequestSize)
+			if err != nil {
+				router.handleError(err,w,req,user)
+				return
+			}
+					err = common.NoUploadSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
 					common.RouteViewCounter.Bump(67)
-					err = routeCreateTopicSubmit(w,req,user)
+					err = routes.CreateTopicSubmit(w,req,user)
 				case "/topic/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {

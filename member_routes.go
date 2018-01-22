@@ -16,135 +16,6 @@ import (
 	"./common"
 )
 
-func routeCreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	// TODO: Reduce this to 1MB for attachments for each file?
-	if r.ContentLength > int64(common.Config.MaxRequestSize) {
-		size, unit := common.ConvertByteUnit(float64(common.Config.MaxRequestSize))
-		return common.CustomError("Your attachments are too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
-	}
-	r.Body = http.MaxBytesReader(w, r.Body, int64(common.Config.MaxRequestSize))
-
-	err := r.ParseMultipartForm(int64(common.Megabyte))
-	if err != nil {
-		return common.LocalError("Unable to parse the form", w, r, user)
-	}
-
-	fid, err := strconv.Atoi(r.PostFormValue("topic-board"))
-	if err != nil {
-		return common.LocalError("The provided ForumID is not a valid number.", w, r, user)
-	}
-
-	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, fid)
-	if ferr != nil {
-		return ferr
-	}
-	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
-		return common.NoPermissions(w, r, user)
-	}
-
-	topicName := html.EscapeString(strings.Replace(r.PostFormValue("topic-name"), "\n", "", -1))
-	content := common.PreparseMessage(r.PostFormValue("topic-content"))
-	// TODO: Fully parse the post and store it in the parsed column
-	tid, err := common.Topics.Create(fid, topicName, content, user.ID, user.LastIP)
-	if err != nil {
-		switch err {
-		case common.ErrNoRows:
-			return common.LocalError("Something went wrong, perhaps the forum got deleted?", w, r, user)
-		case common.ErrNoTitle:
-			return common.LocalError("This topic doesn't have a title", w, r, user)
-		case common.ErrNoBody:
-			return common.LocalError("This topic doesn't have a body", w, r, user)
-		default:
-			return common.InternalError(err, w, r)
-		}
-	}
-
-	_, err = stmts.addSubscription.Exec(user.ID, tid, "topic")
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	err = user.IncreasePostStats(common.WordCount(content), true)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// Handle the file attachments
-	// TODO: Stop duplicating this code
-	if user.Perms.UploadFiles {
-		files, ok := r.MultipartForm.File["upload_files"]
-		if ok {
-			if len(files) > 5 {
-				return common.LocalError("You can't attach more than five files", w, r, user)
-			}
-
-			for _, file := range files {
-				if common.Dev.DebugMode {
-					log.Print("file.Filename ", file.Filename)
-				}
-				extarr := strings.Split(file.Filename, ".")
-				if len(extarr) < 2 {
-					return common.LocalError("Bad file", w, r, user)
-				}
-				ext := extarr[len(extarr)-1]
-
-				// TODO: Can we do this without a regex?
-				reg, err := regexp.Compile("[^A-Za-z0-9]+")
-				if err != nil {
-					return common.LocalError("Bad file extension", w, r, user)
-				}
-				ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
-				if !common.AllowedFileExts.Contains(ext) {
-					return common.LocalError("You're not allowed to upload files with this extension", w, r, user)
-				}
-
-				infile, err := file.Open()
-				if err != nil {
-					return common.LocalError("Upload failed", w, r, user)
-				}
-				defer infile.Close()
-
-				hasher := sha256.New()
-				_, err = io.Copy(hasher, infile)
-				if err != nil {
-					return common.LocalError("Upload failed [Hashing Failed]", w, r, user)
-				}
-				infile.Close()
-
-				checksum := hex.EncodeToString(hasher.Sum(nil))
-				filename := checksum + "." + ext
-				outfile, err := os.Create("." + "/attachs/" + filename)
-				if err != nil {
-					return common.LocalError("Upload failed [File Creation Failed]", w, r, user)
-				}
-				defer outfile.Close()
-
-				infile, err = file.Open()
-				if err != nil {
-					return common.LocalError("Upload failed", w, r, user)
-				}
-				defer infile.Close()
-
-				_, err = io.Copy(outfile, infile)
-				if err != nil {
-					return common.LocalError("Upload failed [Copy Failed]", w, r, user)
-				}
-
-				_, err = stmts.addAttachment.Exec(fid, "forums", tid, "topics", user.ID, filename)
-				if err != nil {
-					return common.InternalError(err, w, r)
-				}
-			}
-		}
-	}
-
-	common.PostCounter.Bump()
-	common.TopicCounter.Bump()
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
-	return nil
-}
-
 func routeCreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
@@ -226,7 +97,7 @@ func routeCreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.
 					return common.LocalError("Upload failed [Copy Failed]", w, r, user)
 				}
 
-				_, err = stmts.addAttachment.Exec(topic.ParentID, "forums", tid, "replies", user.ID, filename)
+				err = common.Attachments.Add(topic.ParentID, "forums", tid, "replies", user.ID, filename)
 				if err != nil {
 					return common.InternalError(err, w, r)
 				}

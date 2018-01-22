@@ -65,7 +65,7 @@ func buildTopicRoutes() {
 	topicGroup := newRouteGroup("/topic/")
 	topicGroup.Routes(
 		View("routeTopicID", "/topic/", "extraData"),
-		Action("routeCreateTopicSubmit", "/topic/create/submit/"),
+		UploadAction("routes.CreateTopicSubmit", "/topic/create/submit/").MaxSizeVar("common.Config.MaxRequestSize"),
 		Action("routes.EditTopicSubmit", "/topic/edit/submit/", "extraData"),
 		Action("routes.DeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
 		Action("routes.StickTopicSubmit", "/topic/stick/submit/", "extraData"),
@@ -120,7 +120,7 @@ func buildAccountRoutes() {
 func buildPanelRoutes() {
 	panelGroup := newRouteGroup("/panel/").Before("SuperModOnly")
 	panelGroup.Routes(
-		View("routePanel", "/panel/"),
+		View("routePanelDashboard", "/panel/"),
 		View("routePanelForums", "/panel/forums/"),
 		Action("routePanelForumsCreateSubmit", "/panel/forums/create/"),
 		Action("routePanelForumsDelete", "/panel/forums/delete/", "extraData"),

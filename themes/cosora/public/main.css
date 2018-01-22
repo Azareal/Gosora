@@ -642,6 +642,10 @@ textarea {
 .rowlist.bgavatars .rowitem {
 	flex-direction: column;
 }
+.rowlist.bgavatars .rowitem {
+	padding-top: 16px;
+	padding-bottom: 10px;
+}
 .bgavatars .bgsub {
 	border-radius: 30px;
     height: 48px;
@@ -1060,6 +1064,28 @@ textarea {
 #profile_comments .content_column {
 	margin-bottom: 16px;
 }
+#profile_comments button {
+	background: inherit;
+	color: var(--lighter-text-color);
+	padding-left: 8px;
+	padding-right: 8px;
+	cursor: pointer;
+}
+#profile_comments button:hover {
+	color: var(--light-text-color);
+}
+#profile_comments button.edit_item:after {
+	font: normal normal normal 14px/1 FontAwesome;
+	content: "\f040";
+}
+#profile_comments button.delete_item:after {
+	font: normal normal normal 14px/1 FontAwesome;
+	content: "\f1f8";
+}
+#profile_comments button.report_item:after {
+	font: normal normal normal 14px/1 FontAwesome;
+	content: "\f024";
+}
 #profile_comments_head {
 	margin-top: 6px;
 }
@@ -1167,7 +1193,7 @@ textarea {
 /* TODO: Highlight the one we're currently on? */
 .pageset {
 	display: flex;
-	margin-left: 16px;
+	margin-left: 14px;
 }
 .pageitem {
 	padding: 8px;

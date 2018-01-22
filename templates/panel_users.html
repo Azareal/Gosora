@@ -10,8 +10,8 @@
 		{{range .ItemList}}
 		<div class="rowitem editable_parent" style="background-image: url('{{.Avatar}}');">
 			<img class="bgsub" src="{{.Avatar}}" alt="{{.Name}}'s Avatar" />
-			<a class="rowTitle" {{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}}" {{end}}class="editable_block">{{.Name}}</a>
-			<a href="/user/{{.ID}}" class="tag-mini">Profile</a>
+			<a class="rowTitle editable_block"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}}"{{end}}>{{.Name}}</a>
+			<a href="/user/{{.ID}}" class="tag-mini profile_url">Profile</a>
 			{{if (.Tag) and (.IsSuperMod)}}<span style="float: right;"><span class="panel_tag" style="margin-left 4px;">{{.Tag}}</span></span>{{end}}
 
 			<span class="panel_floater">

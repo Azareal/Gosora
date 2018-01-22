@@ -43,7 +43,7 @@ func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request
 	return nil
 }
 
-func routePanel(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr

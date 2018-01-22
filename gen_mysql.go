@@ -37,11 +37,9 @@ type Stmts struct {
 	addActivity *sql.Stmt
 	notifyOne *sql.Stmt
 	addEmail *sql.Stmt
-	addSubscription *sql.Stmt
 	addForumPermsToForum *sql.Stmt
 	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
-	addAttachment *sql.Stmt
 	createWordFilter *sql.Stmt
 	editReply *sql.Stmt
 	updatePlugin *sql.Stmt
@@ -232,12 +230,6 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing addSubscription statement.")
-	stmts.addSubscription, err = db.Prepare("INSERT INTO `activity_subscriptions`(`user`,`targetID`,`targetType`,`level`) VALUES (?,?,?,2)")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing addForumPermsToForum statement.")
 	stmts.addForumPermsToForum, err = db.Prepare("INSERT INTO `forums_permissions`(`gid`,`fid`,`preset`,`permissions`) VALUES (?,?,?,?)")
 	if err != nil {
@@ -252,12 +244,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing addTheme statement.")
 	stmts.addTheme, err = db.Prepare("INSERT INTO `themes`(`uname`,`default`) VALUES (?,?)")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing addAttachment statement.")
-	stmts.addAttachment, err = db.Prepare("INSERT INTO `attachments`(`sectionID`,`sectionTable`,`originID`,`originTable`,`uploadedBy`,`path`) VALUES (?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}

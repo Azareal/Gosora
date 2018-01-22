@@ -13,18 +13,20 @@ type IPSearcher interface {
 }
 
 type DefaultIPSearcher struct {
-	searchUsers   *sql.Stmt
-	searchReplies *sql.Stmt
-	searchTopics  *sql.Stmt
+	searchUsers        *sql.Stmt
+	searchTopics       *sql.Stmt
+	searchReplies      *sql.Stmt
+	searchUsersReplies *sql.Stmt
 }
 
 // NewDefaultIPSearcher gives you a new instance of DefaultIPSearcher
 func NewDefaultIPSearcher() (*DefaultIPSearcher, error) {
 	acc := qgen.Builder.Accumulator()
 	return &DefaultIPSearcher{
-		searchUsers:   acc.Select("users").Columns("uid").Where("last_ip = ?").Prepare(),
-		searchTopics:  acc.Select("users").Columns("uid").InQ("uid", acc.Select("topics").Columns("createdBy").Where("ipaddress = ?")).Prepare(),
-		searchReplies: acc.Select("users").Columns("uid").InQ("uid", acc.Select("replies").Columns("createdBy").Where("ipaddress = ?")).Prepare(),
+		searchUsers:        acc.Select("users").Columns("uid").Where("last_ip = ?").Prepare(),
+		searchTopics:       acc.Select("users").Columns("uid").InQ("uid", acc.Select("topics").Columns("createdBy").Where("ipaddress = ?")).Prepare(),
+		searchReplies:      acc.Select("users").Columns("uid").InQ("uid", acc.Select("replies").Columns("createdBy").Where("ipaddress = ?")).Prepare(),
+		searchUsersReplies: acc.Select("users").Columns("uid").InQ("uid", acc.Select("users_replies").Columns("createdBy").Where("ipaddress = ?")).Prepare(),
 	}, acc.FirstError()
 }
 
@@ -53,13 +55,15 @@ func (searcher *DefaultIPSearcher) Lookup(ip string) (uids []int, err error) {
 	if err != nil {
 		return uids, err
 	}
-
 	err = runQuery(searcher.searchTopics)
 	if err != nil {
 		return uids, err
 	}
-
 	err = runQuery(searcher.searchReplies)
+	if err != nil {
+		return uids, err
+	}
+	err = runQuery(searcher.searchUsersReplies)
 	if err != nil {
 		return uids, err
 	}
