@@ -1329,10 +1329,25 @@ textarea {
 }
 
 @media(min-width: 1000px) {
+	.footer {
+		margin-left: -8px;
+		margin-right: -8px;
+	}
+	.footerBit, .footer .widget {
+		border-top: 1px solid var(--header-border-color);
+		border-left: 1px solid var(--header-border-color);
+		border-right: 1px solid var(--header-border-color);
+	}
+	#poweredByHolder {
+		border-bottom: 2px solid var(--header-border-color);
+	}
 	#main {
 		max-width: 1000px;
 		margin-left: auto;
 		margin-right: auto;
+		padding-top: 18px;
+		padding-left: 16px;
+		padding-right: 16px;
 		border-left: 1px solid hsl(20,0%,95%);
 		border-right: 1px solid hsl(20,0%,95%);
 	}
