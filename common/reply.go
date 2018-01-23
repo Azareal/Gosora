@@ -76,7 +76,7 @@ func init() {
 		replyStmts = ReplyStmts{
 			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'replies'").Prepare(),
 			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
-			edit:                   acc.Update("replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Prepare(),
+			edit:                   acc.Update("replies").Set("content = ?, parsed_content = ?, poll = ?").Where("rid = ?").Prepare(),
 			delete:                 acc.Delete("replies").Where("rid = ?").Prepare(),
 			addLikesToReply:        acc.Update("replies").Set("likeCount = likeCount + ?").Where("rid = ?").Prepare(),
 			removeRepliesFromTopic: acc.Update("topics").Set("postCount = postCount - ?").Where("tid = ?").Prepare(),
@@ -120,15 +120,19 @@ func (reply *Reply) Delete() error {
 	return err
 }
 
-func (reply *Reply) SetBody(content string) error {
+func (reply *Reply) SetPost(content string) error {
 	topic, err := reply.Topic()
 	if err != nil {
 		return err
 	}
 	content = PreparseMessage(html.UnescapeString(content))
 	parsedContent := ParseMessage(content, topic.ParentID, "forums")
-	_, err = replyStmts.edit.Exec(content, parsedContent, reply.ID)
+	_, err = replyStmts.edit.Exec(content, parsedContent, 0, reply.ID)
 	return err
+}
+
+func (reply *Reply) SetPoll(content string) error {
+	return nil
 }
 
 func (reply *Reply) Topic() (*Topic, error) {

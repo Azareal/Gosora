@@ -171,8 +171,8 @@ func createTables(adapter qgen.Adapter) error {
 
 	qgen.Install.CreateTable("replies", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"rid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"tid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"rid", "int", 0, false, true, ""},  // TODO: Rename to replyID?
+			qgen.DBTableColumn{"tid", "int", 0, false, false, ""}, // TODO: Rename to topicID?
 			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"parsed_content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
@@ -184,6 +184,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"likeCount", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"words", "int", 0, false, false, "1"}, // ? - replies has a default of 1 and topics has 0? why?
 			qgen.DBTableColumn{"actionType", "varchar", 20, false, false, "''"},
+			qgen.DBTableColumn{"poll", "boolean", 0, false, false, "0"},
 		},
 		[]qgen.DBTableKey{
 			qgen.DBTableKey{"rid", "primary"},

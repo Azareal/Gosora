@@ -70,7 +70,7 @@ var RouteMap = map[string]interface{}{
 	"routePanelLogsMod": routePanelLogsMod,
 	"routePanelDebug": routePanelDebug,
 	"routePanelDashboard": routePanelDashboard,
-	"routeAccountEditCritical": routeAccountEditCritical,
+	"routes.AccountEditCritical": routes.AccountEditCritical,
 	"routeAccountEditCriticalSubmit": routeAccountEditCriticalSubmit,
 	"routeAccountEditAvatar": routeAccountEditAvatar,
 	"routeAccountEditAvatarSubmit": routeAccountEditAvatarSubmit,
@@ -165,7 +165,7 @@ var routeMapEnum = map[string]int{
 	"routePanelLogsMod": 51,
 	"routePanelDebug": 52,
 	"routePanelDashboard": 53,
-	"routeAccountEditCritical": 54,
+	"routes.AccountEditCritical": 54,
 	"routeAccountEditCriticalSubmit": 55,
 	"routeAccountEditAvatar": 56,
 	"routeAccountEditAvatarSubmit": 57,
@@ -258,7 +258,7 @@ var reverseRouteMapEnum = map[int]string{
 	51: "routePanelLogsMod",
 	52: "routePanelDebug",
 	53: "routePanelDashboard",
-	54: "routeAccountEditCritical",
+	54: "routes.AccountEditCritical",
 	55: "routeAccountEditCriticalSubmit",
 	56: "routeAccountEditAvatar",
 	57: "routeAccountEditAvatarSubmit",
@@ -966,7 +966,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(54)
-					err = routeAccountEditCritical(w,req,user)
+					err = routes.AccountEditCritical(w,req,user)
 				case "/user/edit/critical/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {

@@ -42,12 +42,12 @@ a {
 	color: var(--primary-link-color);
 }
 
-body, #back {
+body, #main {
 	background-color: var(--tinted-background-color);
 }
 #back {
 	padding: 8px;
-	padding-top: 14px;
+	padding-top: 0px;
 	display: flex;
 	padding-left: 0px;
 	padding-right: 0px;
@@ -59,6 +59,7 @@ body, #back {
 
 #main {
 	width: 100%;
+	padding-top: 14px;
 	padding-left: 8px;
 	padding-right: 8px;
 }
@@ -1325,6 +1326,19 @@ textarea {
 }
 #dash-postsperday:before, #dash-topicsperday:before {
 	content: "\f27b";
+}
+
+@media(min-width: 1000px) {
+	#main {
+		max-width: 1000px;
+		margin-left: auto;
+		margin-right: auto;
+		border-left: 1px solid hsl(20,0%,95%);
+		border-right: 1px solid hsl(20,0%,95%);
+	}
+	#back {
+		background-color: hsl(0,0%,95%);
+	}
 }
 
 @media(min-width: 721px) {

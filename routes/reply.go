@@ -41,7 +41,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		return common.NoPermissionsJSQ(w, r, user, isJs)
 	}
 
-	err = reply.SetBody(r.PostFormValue("edit_item"))
+	err = reply.SetPost(r.PostFormValue("edit_item"))
 	if err == sql.ErrNoRows {
 		return common.PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
 	} else if err != nil {

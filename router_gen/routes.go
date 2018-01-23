@@ -39,7 +39,7 @@ func buildUserRoutes() {
 	userGroup := newRouteGroup("/user/")
 	userGroup.Routes(
 		View("routeProfile", "/user/").LitBefore("req.URL.Path += extraData"),
-		MemberView("routeAccountEditCritical", "/user/edit/critical/"),
+		MemberView("routes.AccountEditCritical", "/user/edit/critical/"),
 		Action("routeAccountEditCriticalSubmit", "/user/edit/critical/submit/"), // TODO: Full test this
 		MemberView("routeAccountEditAvatar", "/user/edit/avatar/"),
 		UploadAction("routeAccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("common.Config.MaxRequestSize"),
