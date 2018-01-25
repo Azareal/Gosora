@@ -60,6 +60,9 @@ func (adapter *MssqlAdapter) CreateTable(name string, table string, charset stri
 		case "text":
 			column.Type = "nvarchar"
 			max = true
+		case "json":
+			column.Type = "nvarchar"
+			max = true
 		case "boolean":
 			column.Type = "bit"
 		}

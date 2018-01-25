@@ -66,6 +66,7 @@ type ReplyStmts struct {
 	isLiked                *sql.Stmt
 	createLike             *sql.Stmt
 	edit                   *sql.Stmt
+	setPoll                *sql.Stmt
 	delete                 *sql.Stmt
 	addLikesToReply        *sql.Stmt
 	removeRepliesFromTopic *sql.Stmt
@@ -76,7 +77,8 @@ func init() {
 		replyStmts = ReplyStmts{
 			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'replies'").Prepare(),
 			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
-			edit:                   acc.Update("replies").Set("content = ?, parsed_content = ?, poll = ?").Where("rid = ?").Prepare(),
+			edit:                   acc.Update("replies").Set("content = ?, parsed_content = ?").Where("rid = ? AND poll = 0").Prepare(),
+			setPoll:                acc.Update("replies").Set("content = '', parsed_content = '', poll = ?").Where("rid = ? AND poll = 0").Prepare(),
 			delete:                 acc.Delete("replies").Where("rid = ?").Prepare(),
 			addLikesToReply:        acc.Update("replies").Set("likeCount = likeCount + ?").Where("rid = ?").Prepare(),
 			removeRepliesFromTopic: acc.Update("topics").Set("postCount = postCount - ?").Where("tid = ?").Prepare(),
@@ -127,12 +129,13 @@ func (reply *Reply) SetPost(content string) error {
 	}
 	content = PreparseMessage(html.UnescapeString(content))
 	parsedContent := ParseMessage(content, topic.ParentID, "forums")
-	_, err = replyStmts.edit.Exec(content, parsedContent, 0, reply.ID)
+	_, err = replyStmts.edit.Exec(content, parsedContent, reply.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
 	return err
 }
 
-func (reply *Reply) SetPoll(content string) error {
-	return nil
+func (reply *Reply) SetPoll(pollID int) error {
+	_, err := replyStmts.setPoll.Exec(pollID, reply.ID) // TODO: Sniff if this changed anything to see if we hit a poll
+	return err
 }
 
 func (reply *Reply) Topic() (*Topic, error) {

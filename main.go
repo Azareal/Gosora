@@ -92,6 +92,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.Polls, err = common.NewDefaultPollStore(common.NewMemoryPollCache(100)) // TODO: Max number of polls held in cache, make this a config item
+	if err != nil {
+		return err
+	}
 
 	common.GlobalViewCounter, err = common.NewGlobalViewCounter()
 	if err != nil {

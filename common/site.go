@@ -22,6 +22,7 @@ type site struct {
 	Name         string
 	Email        string
 	URL          string
+	Host         string
 	Port         string
 	EnableSsl    bool
 	EnableEmails bool
@@ -82,6 +83,7 @@ type devConfig struct {
 
 func ProcessConfig() error {
 	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
+	Site.Host = Site.URL
 	if Site.Port != "80" && Site.Port != "443" {
 		Site.URL = strings.TrimSuffix(Site.URL, "/")
 		Site.URL = strings.TrimSuffix(Site.URL, "\\")

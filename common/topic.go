@@ -120,6 +120,7 @@ type TopicStmts struct {
 	addLikesToTopic   *sql.Stmt
 	delete            *sql.Stmt
 	edit              *sql.Stmt
+	setPoll           *sql.Stmt
 	createActionReply *sql.Stmt
 
 	getTopicUser *sql.Stmt // TODO: Can we get rid of this?
@@ -141,7 +142,8 @@ func init() {
 			createLike:        acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
 			addLikesToTopic:   acc.Update("topics").Set("likeCount = likeCount + ?").Where("tid = ?").Prepare(),
 			delete:            acc.Delete("topics").Where("tid = ?").Prepare(),
-			edit:              acc.Update("topics").Set("title = ?, content = ?, parsed_content = ?").Where("tid = ?").Prepare(),
+			edit:              acc.Update("topics").Set("title = ?, content = ?, parsed_content = ?").Where("tid = ?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
+			setPoll:           acc.Update("topics").Set("content = '', parsed_content = '', poll = ?").Where("tid = ? AND poll = 0").Prepare(),
 			createActionReply: acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
 			getTopicUser: acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
@@ -254,6 +256,11 @@ func (topic *Topic) Update(name string, content string) error {
 	parsedContent := ParseMessage(content, topic.ParentID, "forums")
 	_, err := topicStmts.edit.Exec(name, content, parsedContent, topic.ID)
 	topic.cacheRemove()
+	return err
+}
+
+func (topic *Topic) SetPoll(pollID int) error {
+	_, err := topicStmts.setPoll.Exec(pollID, topic.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
 	return err
 }
 

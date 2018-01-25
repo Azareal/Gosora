@@ -162,6 +162,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"words", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"views", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"css_class", "varchar", 100, false, false, "''"},
+			qgen.DBTableColumn{"poll", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"data", "varchar", 200, false, false, "''"},
 		},
 		[]qgen.DBTableKey{
@@ -184,7 +185,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"likeCount", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"words", "int", 0, false, false, "1"}, // ? - replies has a default of 1 and topics has 0? why?
 			qgen.DBTableColumn{"actionType", "varchar", 20, false, false, "''"},
-			qgen.DBTableColumn{"poll", "boolean", 0, false, false, "0"},
+			qgen.DBTableColumn{"poll", "int", 0, false, false, "0"},
 		},
 		[]qgen.DBTableKey{
 			qgen.DBTableKey{"rid", "primary"},
@@ -213,6 +214,27 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"contentID", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"contentType", "varchar", 100, false, false, "replies"},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
+		},
+		[]qgen.DBTableKey{},
+	)
+
+	qgen.Install.CreateTable("polls", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"pollID", "int", 0, false, true, ""},
+			qgen.DBTableColumn{"type", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"options", "json", 0, false, false, ""},
+			qgen.DBTableColumn{"votes", "int", 0, false, false, "0"},
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"pollID", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("polls_voters", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"pollID", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"option", "int", 0, false, false, "0"},
 		},
 		[]qgen.DBTableKey{},
 	)

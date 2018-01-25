@@ -900,9 +900,19 @@ var topics_23 = []byte(`
 				<textarea form="topic_create_form_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
 			</div>
 		</div>
+		<div class="formrow poll_content_row auto_hide">
+			<div class="formitem">
+				<div class="pollinput">
+					<input type="checkbox" disabled />
+					<label class="pollinputlabel"></label>
+					<input type="text" placeholder="Add new poll option" />
+				</div>
+			</div>
+		</div>
 		<div class="formrow quick_button_row">
 			<div class="formitem">
 				<button form="topic_create_form_form" class="formbutton">Create Topic</button>
+				<button form="topic_create_form_form" class="formbutton" id="add_poll_button">Add Poll</button>
 				`)
 var topics_24 = []byte(`
 				<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />
@@ -1071,9 +1081,15 @@ var forum_21 = []byte(`" type="hidden">
 					<textarea form="topic_create_form_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
 				</div>
 			</div>
+			<div class="formrow poll_content_row auto_hide">
+				<div class="formitem">
+					Poll stuff
+				</div>
+			</div>
 			<div class="formrow quick_button_row">
 				<div class="formitem">
 					<button form="topic_create_form_form" name="topic-button" class="formbutton">Create Topic</button>
+					<button form="topic_create_form_form" class="formbutton" id="add_poll_button">Add Poll</button>
 					`)
 var forum_22 = []byte(`
 					<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />

@@ -49,6 +49,8 @@ func (adapter *MysqlAdapter) CreateTable(name string, table string, charset stri
 		// Make it easier to support Cassandra in the future
 		if column.Type == "createdAt" {
 			column.Type = "datetime"
+		} else if column.Type == "json" {
+			column.Type = "text"
 		}
 
 		var size string

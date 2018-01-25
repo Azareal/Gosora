@@ -12,6 +12,6 @@ CREATE TABLE `replies` (
 	`likeCount` int DEFAULT 0 not null,
 	`words` int DEFAULT 1 not null,
 	`actionType` varchar (20) DEFAULT '' not null,
-	`poll` boolean DEFAULT 0 not null,
+	`poll` int DEFAULT 0 not null,
 	primary key(`rid`)
 );

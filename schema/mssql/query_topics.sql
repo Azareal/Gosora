@@ -16,6 +16,7 @@ CREATE TABLE [topics] (
 	[words] int DEFAULT 0 not null,
 	[views] int DEFAULT 0 not null,
 	[css_class] nvarchar (100) DEFAULT '' not null,
+	[poll] int DEFAULT 0 not null,
 	[data] nvarchar (200) DEFAULT '' not null,
 	primary key([tid])
 );

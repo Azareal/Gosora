@@ -591,5 +591,8 @@ $(document).ready(function(){
 		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
 	};
 
-
+	$("#add_poll_button").click(function(event){
+		event.preventDefault();
+		$(".poll_content_row").removeClass("auto_hide");
+	});
 });

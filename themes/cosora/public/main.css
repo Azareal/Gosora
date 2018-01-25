@@ -502,6 +502,20 @@ input, select {
 	width: 100%;
 }
 
+input[type=checkbox] {
+	display: none;
+}
+input[type=checkbox] + label {
+	width: 10px;
+	border: black;
+	background-color: var(--element-background-color);
+}
+.poll_content_row {
+	padding-left: 20px;
+	padding-top: 4px;
+	padding-bottom: 2px;
+}
+
 .formbutton {
 	margin-top: 12px;
 	margin-left: auto;
@@ -533,6 +547,9 @@ input, select {
 .quick_button_row button, .quick_button_row label {
 	margin-left: 10px;
 	margin-top: 8px;
+}
+.quick_button_row #add_poll_button {
+	background: hsl(209, 47%, 56%);
 }
 .quick_button_row .add_file_button {
 	background: hsl(129, 57%, 56%);

@@ -16,6 +16,7 @@ CREATE TABLE `topics` (
 	`words` int DEFAULT 0 not null,
 	`views` int DEFAULT 0 not null,
 	`css_class` varchar(100) DEFAULT '' not null,
+	`poll` int DEFAULT 0 not null,
 	`data` varchar(200) DEFAULT '' not null,
 	primary key(`tid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;

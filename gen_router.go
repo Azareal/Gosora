@@ -311,8 +311,10 @@ var agentMapEnum = map[string]int{
 	"duckduckgo": 11,
 	"discord": 12,
 	"cloudflarealwayson": 13,
-	"lynx": 14,
-	"blank": 15,
+	"uptimebot": 14,
+	"lynx": 15,
+	"blank": 16,
+	"malformed": 17,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -329,8 +331,10 @@ var reverseAgentMapEnum = map[int]string{
 	11: "duckduckgo",
 	12: "discord",
 	13: "cloudflarealwayson",
-	14: "lynx",
-	15: "blank",
+	14: "uptimebot",
+	15: "lynx",
+	16: "blank",
+	17: "malformed",
 }
 
 // TODO: Stop spilling these into the package scope?
@@ -392,20 +396,23 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 // TODO: GetDefaultRoute
 
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' {
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
 		w.WriteHeader(405)
 		w.Write([]byte(""))
-		log.Print("Suspicious UA: ", req.UserAgent())
+		log.Print("Malformed Request")
+		log.Print("UA: ", req.UserAgent())
 		log.Print("Method: ", req.Method)
 		for key, value := range req.Header {
 			for _, vvalue := range value {
 				log.Print("Header '" + key + "': " + vvalue + "!!")
 			}
 		}
+		log.Print("req.Host: ", req.Host)
 		log.Print("req.URL.Path: ", req.URL.Path)
 		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 		log.Print("req.Referer(): ", req.Referer())
 		log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		common.AgentViewCounter.Bump(17)
 		return
 	}
 
@@ -420,6 +427,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						log.Print("Header '" + key + "': " + vvalue + "!!")
 					}
 				}
+				log.Print("req.Host: ", req.Host)
 				log.Print("req.URL.Path: ", req.URL.Path)
 				log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 				log.Print("req.Referer(): ", req.Referer())
@@ -435,6 +443,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					log.Print("Header '" + key + "': " + vvalue + "!!")
 				}
 			}
+			log.Print("req.Host: ", req.Host)
 			log.Print("req.URL.Path: ", req.URL.Path)
 			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("req.Referer(): ", req.Referer())
@@ -458,6 +467,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 		log.Print("prefix: ", prefix)
+		log.Print("req.Host: ", req.Host)
 		log.Print("req.URL.Path: ", req.URL.Path)
 		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 		log.Print("extraData: ", extraData)
@@ -507,11 +517,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	case strings.Contains(ua,"Discordbot"):
 		common.AgentViewCounter.Bump(12)
 	case strings.Contains(ua,"Lynx"):
-		common.AgentViewCounter.Bump(14)
+		common.AgentViewCounter.Bump(15)
 	case strings.Contains(ua,"CloudFlare-AlwaysOnline"):
 		common.AgentViewCounter.Bump(13)
+	case strings.Contains(ua,"Uptimebot"):
+		common.AgentViewCounter.Bump(14)
 	case ua == "":
-		common.AgentViewCounter.Bump(15)
+		common.AgentViewCounter.Bump(16)
 		if common.Dev.DebugMode {
 			log.Print("Blank UA: ", req.UserAgent())
 			log.Print("Method: ", req.Method)
@@ -522,6 +534,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 			log.Print("prefix: ", prefix)
+			log.Print("req.Host: ", req.Host)
 			log.Print("req.URL.Path: ", req.URL.Path)
 			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("extraData: ", extraData)
@@ -539,6 +552,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 			log.Print("prefix: ", prefix)
+			log.Print("req.Host: ", req.Host)
 			log.Print("req.URL.Path: ", req.URL.Path)
 			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("extraData: ", extraData)
