@@ -535,6 +535,10 @@ input[type=checkbox]:checked + label .sel {
 	display: none;
 }
 
+.poll_option_text {
+	font-size: 15px;
+}
+
 .formbutton {
 	margin-top: 12px;
 	margin-left: auto;
