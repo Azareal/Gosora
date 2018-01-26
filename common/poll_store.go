@@ -1,7 +1,11 @@
 package common
 
-import "database/sql"
-import "../query_gen/lib"
+import (
+	"database/sql"
+	"encoding/json"
+
+	"../query_gen/lib"
+)
 
 var Polls PollStore
 
@@ -11,9 +15,19 @@ type Poll struct {
 	//AntiCheat bool // Apply various mitigations for cheating
 	// GroupPower map[gid]points // The number of points a group can spend in this poll, defaults to 1
 
-	Options   []string
-	Results   map[int]int // map[optionIndex]points
-	VoteCount int
+	Options      map[int]string
+	Results      map[int]int  // map[optionIndex]points
+	QuickOptions []PollOption // TODO: Fix up the template transpiler so we don't need to use this hack anymore
+	VoteCount    int
+}
+
+func (poll *Poll) Copy() Poll {
+	return *poll
+}
+
+type PollOption struct {
+	ID    int
+	Value string
 }
 
 type Pollable interface {
@@ -23,7 +37,7 @@ type Pollable interface {
 type PollStore interface {
 	Get(id int) (*Poll, error)
 	Exists(id int) bool
-	Create(parent Pollable, pollType int, pollOptions []string) (int, error)
+	Create(parent Pollable, pollType int, pollOptions map[int]string) (int, error)
 	Reload(id int) error
 	//GlobalCount() int
 
@@ -72,8 +86,14 @@ func (store *DefaultPollStore) Get(id int) (*Poll, error) {
 
 	poll = &Poll{ID: id}
 	var optionTxt []byte
-	err = store.get.QueryRow(id).Scan(&poll.Type, optionTxt, &poll.VoteCount)
+	err = store.get.QueryRow(id).Scan(&poll.Type, &optionTxt, &poll.VoteCount)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(optionTxt, &poll.Options)
 	if err == nil {
+		poll.QuickOptions = store.unpackOptionsMap(poll.Options)
 		store.cache.Set(poll)
 	}
 	return poll, err
@@ -82,17 +102,38 @@ func (store *DefaultPollStore) Get(id int) (*Poll, error) {
 func (store *DefaultPollStore) Reload(id int) error {
 	poll := &Poll{ID: id}
 	var optionTxt []byte
-	err := store.get.QueryRow(id).Scan(&poll.Type, optionTxt, &poll.VoteCount)
+	err := store.get.QueryRow(id).Scan(&poll.Type, &optionTxt, &poll.VoteCount)
 	if err != nil {
 		store.cache.Remove(id)
 		return err
 	}
+
+	err = json.Unmarshal(optionTxt, &poll.Options)
+	if err != nil {
+		store.cache.Remove(id)
+		return err
+	}
+
+	poll.QuickOptions = store.unpackOptionsMap(poll.Options)
 	_ = store.cache.Set(poll)
 	return nil
 }
 
-func (store *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions []string) (id int, err error) {
-	res, err := store.create.Exec(pollType, pollOptions)
+func (store *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOption {
+	options := make([]PollOption, len(rawOptions))
+	for id, option := range rawOptions {
+		options[id] = PollOption{id, option}
+	}
+	return options
+}
+
+func (store *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map[int]string) (id int, err error) {
+	pollOptionsTxt, err := json.Marshal(pollOptions)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := store.create.Exec(pollType, pollOptionsTxt) //pollOptionsTxt
 	if err != nil {
 		return 0, err
 	}

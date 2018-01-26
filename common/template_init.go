@@ -108,12 +108,16 @@ func compileTemplates() error {
 	log.Print("Compiling the templates")
 
 	var now = time.Now()
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 0, 1, "classname", "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, "", 0, "", "", "", "", "", 58, false}
+	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
+		PollOption{0, "Nothing"},
+		PollOption{1, "Something"},
+	}, VoteCount: 7}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 0, 1, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, "", 0, "", "", "", "", "", 58, false}
 	var replyList []ReplyUser
 	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, RelativeTime(now), 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
 	var varList = make(map[string]tmpl.VarItem)
-	tpage := TopicPage{"Title", user, headerVars, replyList, topic, 1, 1}
+	tpage := TopicPage{"Title", user, headerVars, replyList, topic, poll, 1, 1}
 	topicIDTmpl, err := c.Compile("topic.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err

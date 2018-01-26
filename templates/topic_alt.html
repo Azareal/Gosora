@@ -23,6 +23,28 @@
 </div>
 
 <div class="rowblock post_container">
+	{{if .Poll.ID}}
+	<article class="rowitem passive deletable_block editable_parent post_item top_post">
+		<div class="userinfo" aria-label="The information on the poster">
+			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+			<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
+			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
+		</div>
+		<div class="content_container">
+			<div class="hide_on_edit topic_content user_content" itemprop="text">
+				{{range .Poll.QuickOptions}}
+				<div class="poll_option">
+					<input id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}" />
+					<label class="poll_option_label" for="poll_option_{{.ID}}">
+						<div class="sel"></div>
+					</label>
+					<span class="poll_option_text">{{.Value}}</span>
+				</div>
+				{{end}}
+			</div>
+		</div>
+	</article>
+	{{end}}
 	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="The opening post for this topic">
 		<div class="userinfo" aria-label="The information on the poster">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>

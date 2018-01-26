@@ -55,6 +55,7 @@
 </div>
 <div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
 	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/?session={{.CurrentUser.Session}}" method="post"></form>
+	<input form="topic_create_form_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 	<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" alt="Your Avatar" title="Your Avatar" />
 	<div class="main_form">
 		<div class="topic_meta">
@@ -76,10 +77,10 @@
 		</div>
 		<div class="formrow poll_content_row auto_hide">
 			<div class="formitem">
-				<div class="pollinput">
+				<div class="pollinput" data-pollinput="0">
 					<input type="checkbox" disabled />
 					<label class="pollinputlabel"></label>
-					<input type="text" placeholder="Add new poll option" />
+					<input form="topic_create_form_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="Add new poll option" />
 				</div>
 			</div>
 		</div>

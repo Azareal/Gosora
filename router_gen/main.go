@@ -155,6 +155,7 @@ func main() {
 	// Stubs for us to refer to these routes through
 	mapIt("routeDynamic")
 	mapIt("routeUploads")
+	mapIt("BadRoute")
 	tmplVars.AllRouteNames = allRouteNames
 	tmplVars.AllRouteMap = allRouteMap
 	tmplVars.AllAgentNames = []string{
@@ -177,6 +178,7 @@ func main() {
 		"lynx",
 		"blank",
 		"malformed",
+		"suspicious",
 	}
 
 	tmplVars.AllAgentMap = make(map[string]int)
@@ -279,7 +281,7 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
-		w.WriteHeader(405)
+		w.WriteHeader(200) // 405
 		w.Write([]byte(""))
 		log.Print("Malformed Request")
 		log.Print("UA: ", req.UserAgent())
@@ -314,10 +316,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 				log.Print("req.Referer(): ", req.Referer())
 				log.Print("req.RemoteAddr: ", req.RemoteAddr)
+				common.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
 				break
 			}
 		}
-		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") {
+		// TODO: Flag any requests which has a dot with anything but a number after that
+		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(req.URL.Path,".php") || strings.Contains(req.URL.Path,".asp") || strings.Contains(req.URL.Path,".cgi") {
 			log.Print("Suspicious UA: ", req.UserAgent())
 			log.Print("Method: ", req.Method)
 			for key, value := range req.Header {
@@ -330,6 +334,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("req.Referer(): ", req.Referer())
 			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+			common.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
 		}
 	}
 	
@@ -518,7 +523,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 				return
 			}
-			common.NotFound(w,req) // TODO: Collect all the error view counts so we can add a replacement for GlobalViewCounter by adding up the view counts of every route? Complex and may be inaccurate, collecting it globally and locally would at-least help find places we aren't capturing views
+
+			common.RouteViewCounter.Bump({{.AllRouteMap.BadRoute}})
+			common.NotFound(w,req)
 	}
 }
 `

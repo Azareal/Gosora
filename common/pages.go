@@ -56,6 +56,7 @@ type TopicPage struct {
 	Header      *HeaderVars
 	ItemList    []ReplyUser
 	Topic       TopicUser
+	Poll        Poll
 	Page        int
 	LastPage    int
 }

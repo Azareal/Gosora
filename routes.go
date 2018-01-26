@@ -45,6 +45,8 @@ func routeDynamic() {
 }
 func routeUploads() {
 }
+func BadRoute() {
+}
 
 // GET functions
 func routeStatic(w http.ResponseWriter, r *http.Request) {
@@ -484,9 +486,18 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User, urlB
 		topic.Avatar = strings.Replace(common.Config.Noavatar, "{id}", strconv.Itoa(topic.CreatedBy), 1)
 	}
 
+	var poll *common.Poll
+	if topic.Poll != 0 {
+		poll, err = common.Polls.Get(topic.Poll)
+		if err != nil {
+			log.Print("Couldn't find the attached poll for topic " + strconv.Itoa(topic.ID))
+			return common.InternalError(err, w, r)
+		}
+	}
+
 	// Calculate the offset
 	offset, page, lastPage := common.PageOffset(topic.PostCount, page, common.Config.ItemsPerPage)
-	tpage := common.TopicPage{topic.Title, user, headerVars, replyList, topic, page, lastPage}
+	tpage := common.TopicPage{topic.Title, user, headerVars, replyList, topic, poll.Copy(), page, lastPage}
 
 	// Get the replies..
 	rows, err := stmts.getTopicRepliesOffset.Query(topic.ID, offset, common.Config.ItemsPerPage)

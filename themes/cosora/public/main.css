@@ -292,9 +292,6 @@ h1, h3 {
 	border-radius: 30px;
 }
 
-.auto_hide, .show_on_edit {
-	display: none;
-}
 .mod_floater {
 	position: fixed;
 	bottom: 15px;
@@ -506,14 +503,36 @@ input[type=checkbox] {
 	display: none;
 }
 input[type=checkbox] + label {
-	width: 10px;
-	border: black;
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	margin-bottom: -2px;
+	border: 1px solid var(--element-border-color);
 	background-color: var(--element-background-color);
+}
+/*input[type=checkbox]:checked + label {
+	background-color: purple;
+}*/
+input[type=checkbox]:checked + label .sel {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
+	background: var(--element-border-color);
 }
 .poll_content_row {
 	padding-left: 20px;
 	padding-top: 4px;
 	padding-bottom: 2px;
+}
+.poll_content_row .formitem {
+	display: flex;
+	flex-direction: column;
+}
+.pollinput:not(:only-child):not(:first-child) {
+	margin-bottom: 5px;
+}
+.auto_hide, .show_on_edit {
+	display: none;
 }
 
 .formbutton {

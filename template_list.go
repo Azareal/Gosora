@@ -350,171 +350,209 @@ var topic_alt_20 = []byte(`
 </div>
 
 <div class="rowblock post_container">
+	`)
+var topic_alt_21 = []byte(`
+	<article class="rowitem passive deletable_block editable_parent post_item top_post">
+		<div class="userinfo" aria-label="The information on the poster">
+			<div class="avatar_item" style="background-image: url(`)
+var topic_alt_22 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+			<a href="`)
+var topic_alt_23 = []byte(`" class="the_name" rel="author">`)
+var topic_alt_24 = []byte(`</a>
+			`)
+var topic_alt_25 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
+var topic_alt_26 = []byte(`</div><div class="tag_post"></div></div>`)
+var topic_alt_27 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level `)
+var topic_alt_28 = []byte(`</div><div class="tag_post"></div></div>`)
+var topic_alt_29 = []byte(`
+		</div>
+		<div class="content_container">
+			<div class="hide_on_edit topic_content user_content" itemprop="text">
+				`)
+var topic_alt_30 = []byte(`
+				<div class="poll_option">
+					<input id="poll_option_`)
+var topic_alt_31 = []byte(`" name="poll_option_input" type="checkbox" value="`)
+var topic_alt_32 = []byte(`" />
+					<label class="poll_option_label" for="poll_option_`)
+var topic_alt_33 = []byte(`">
+						<div class="sel"></div>
+					</label>
+					<span class="poll_option_text">`)
+var topic_alt_34 = []byte(`</span>
+				</div>
+				`)
+var topic_alt_35 = []byte(`
+			</div>
+		</div>
+	</article>
+	`)
+var topic_alt_36 = []byte(`
 	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="The opening post for this topic">
 		<div class="userinfo" aria-label="The information on the poster">
 			<div class="avatar_item" style="background-image: url(`)
-var topic_alt_21 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+var topic_alt_37 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="`)
-var topic_alt_22 = []byte(`" class="the_name" rel="author">`)
-var topic_alt_23 = []byte(`</a>
+var topic_alt_38 = []byte(`" class="the_name" rel="author">`)
+var topic_alt_39 = []byte(`</a>
 			`)
-var topic_alt_24 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
-var topic_alt_25 = []byte(`</div><div class="tag_post"></div></div>`)
-var topic_alt_26 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level `)
-var topic_alt_27 = []byte(`</div><div class="tag_post"></div></div>`)
-var topic_alt_28 = []byte(`
+var topic_alt_40 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
+var topic_alt_41 = []byte(`</div><div class="tag_post"></div></div>`)
+var topic_alt_42 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level `)
+var topic_alt_43 = []byte(`</div><div class="tag_post"></div></div>`)
+var topic_alt_44 = []byte(`
 		</div>
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content" itemprop="text">`)
-var topic_alt_29 = []byte(`</div>
+var topic_alt_45 = []byte(`</div>
 			<textarea name="topic_content" class="show_on_edit topic_content_input">`)
-var topic_alt_30 = []byte(`</textarea>
+var topic_alt_46 = []byte(`</textarea>
 			<div class="button_container">
 				`)
-var topic_alt_31 = []byte(`<a href="/topic/like/submit/`)
-var topic_alt_32 = []byte(`?session=`)
-var topic_alt_33 = []byte(`" class="action_button like_item add_like" aria-label="Like this post" data-action="like"></a>`)
-var topic_alt_34 = []byte(`<a href="/topic/edit/`)
-var topic_alt_35 = []byte(`" class="action_button open_edit" aria-label="Edit this post" data-action="edit"></a>`)
-var topic_alt_36 = []byte(`<a href="/topic/delete/submit/`)
-var topic_alt_37 = []byte(`?session=`)
-var topic_alt_38 = []byte(`" class="action_button delete_item" aria-label="Delete this post" data-action="delete"></a>`)
-var topic_alt_39 = []byte(`<a href='/topic/unlock/submit/`)
-var topic_alt_40 = []byte(`?session=`)
-var topic_alt_41 = []byte(`' class="action_button unlock_item" data-action="unlock"></a>`)
-var topic_alt_42 = []byte(`<a href='/topic/lock/submit/`)
-var topic_alt_43 = []byte(`?session=`)
-var topic_alt_44 = []byte(`' class="action_button lock_item" data-action="lock"></a>`)
-var topic_alt_45 = []byte(`<a href='/topic/unstick/submit/`)
-var topic_alt_46 = []byte(`?session=`)
-var topic_alt_47 = []byte(`' class="action_button unpin_item" data-action="unpin"></a>`)
-var topic_alt_48 = []byte(`<a href='/topic/stick/submit/`)
-var topic_alt_49 = []byte(`?session=`)
-var topic_alt_50 = []byte(`' class="action_button pin_item" data-action="pin"></a>`)
-var topic_alt_51 = []byte(`<a href="/users/ips/?ip=`)
-var topic_alt_52 = []byte(`" title="IP Address" class="action_button ip_item_button hide_on_big" aria-label="This user's IP" data-action="ip"></a>`)
-var topic_alt_53 = []byte(`
+var topic_alt_47 = []byte(`<a href="/topic/like/submit/`)
+var topic_alt_48 = []byte(`?session=`)
+var topic_alt_49 = []byte(`" class="action_button like_item add_like" aria-label="Like this post" data-action="like"></a>`)
+var topic_alt_50 = []byte(`<a href="/topic/edit/`)
+var topic_alt_51 = []byte(`" class="action_button open_edit" aria-label="Edit this post" data-action="edit"></a>`)
+var topic_alt_52 = []byte(`<a href="/topic/delete/submit/`)
+var topic_alt_53 = []byte(`?session=`)
+var topic_alt_54 = []byte(`" class="action_button delete_item" aria-label="Delete this post" data-action="delete"></a>`)
+var topic_alt_55 = []byte(`<a href='/topic/unlock/submit/`)
+var topic_alt_56 = []byte(`?session=`)
+var topic_alt_57 = []byte(`' class="action_button unlock_item" data-action="unlock"></a>`)
+var topic_alt_58 = []byte(`<a href='/topic/lock/submit/`)
+var topic_alt_59 = []byte(`?session=`)
+var topic_alt_60 = []byte(`' class="action_button lock_item" data-action="lock"></a>`)
+var topic_alt_61 = []byte(`<a href='/topic/unstick/submit/`)
+var topic_alt_62 = []byte(`?session=`)
+var topic_alt_63 = []byte(`' class="action_button unpin_item" data-action="unpin"></a>`)
+var topic_alt_64 = []byte(`<a href='/topic/stick/submit/`)
+var topic_alt_65 = []byte(`?session=`)
+var topic_alt_66 = []byte(`' class="action_button pin_item" data-action="pin"></a>`)
+var topic_alt_67 = []byte(`<a href="/users/ips/?ip=`)
+var topic_alt_68 = []byte(`" title="IP Address" class="action_button ip_item_button hide_on_big" aria-label="This user's IP" data-action="ip"></a>`)
+var topic_alt_69 = []byte(`
 					<a href="/report/submit/`)
-var topic_alt_54 = []byte(`?session=`)
-var topic_alt_55 = []byte(`&type=topic" class="action_button report_item" aria-label="Report this post" data-action="report"></a>
+var topic_alt_70 = []byte(`?session=`)
+var topic_alt_71 = []byte(`&type=topic" class="action_button report_item" aria-label="Report this post" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				`)
-var topic_alt_56 = []byte(`
+var topic_alt_72 = []byte(`
 				<div class="action_button_right`)
-var topic_alt_57 = []byte(` has_likes`)
-var topic_alt_58 = []byte(`">
+var topic_alt_73 = []byte(` has_likes`)
+var topic_alt_74 = []byte(`">
 					`)
-var topic_alt_59 = []byte(`<a class="action_button like_count hide_on_micro">`)
-var topic_alt_60 = []byte(`</a>`)
-var topic_alt_61 = []byte(`
+var topic_alt_75 = []byte(`<a class="action_button like_count hide_on_micro">`)
+var topic_alt_76 = []byte(`</a>`)
+var topic_alt_77 = []byte(`
 					<a class="action_button created_at hide_on_mobile">`)
-var topic_alt_62 = []byte(`</a>
+var topic_alt_78 = []byte(`</a>
 					`)
-var topic_alt_63 = []byte(`<a href="/users/ips/?ip=`)
-var topic_alt_64 = []byte(`" title="IP Address" class="action_button ip_item hide_on_mobile">`)
-var topic_alt_65 = []byte(`</a>`)
-var topic_alt_66 = []byte(`
+var topic_alt_79 = []byte(`<a href="/users/ips/?ip=`)
+var topic_alt_80 = []byte(`" title="IP Address" class="action_button ip_item hide_on_mobile">`)
+var topic_alt_81 = []byte(`</a>`)
+var topic_alt_82 = []byte(`
 				</div>
 			</div>
 		</div><div style="clear:both;"></div>
 	</article>
 
 	`)
-var topic_alt_67 = []byte(`
+var topic_alt_83 = []byte(`
 	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item `)
-var topic_alt_68 = []byte(`action_item`)
-var topic_alt_69 = []byte(`">
+var topic_alt_84 = []byte(`action_item`)
+var topic_alt_85 = []byte(`">
 		<div class="userinfo" aria-label="The information on the poster">
 			<div class="avatar_item" style="background-image: url(`)
-var topic_alt_70 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+var topic_alt_86 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="`)
-var topic_alt_71 = []byte(`" class="the_name" rel="author">`)
-var topic_alt_72 = []byte(`</a>
+var topic_alt_87 = []byte(`" class="the_name" rel="author">`)
+var topic_alt_88 = []byte(`</a>
 			`)
-var topic_alt_73 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
-var topic_alt_74 = []byte(`</div><div class="tag_post"></div></div>`)
-var topic_alt_75 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level `)
-var topic_alt_76 = []byte(`</div><div class="tag_post"></div></div>`)
-var topic_alt_77 = []byte(`
+var topic_alt_89 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
+var topic_alt_90 = []byte(`</div><div class="tag_post"></div></div>`)
+var topic_alt_91 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level `)
+var topic_alt_92 = []byte(`</div><div class="tag_post"></div></div>`)
+var topic_alt_93 = []byte(`
 		</div>
 		<div class="content_container" `)
-var topic_alt_78 = []byte(`style="margin-left: 0px;"`)
-var topic_alt_79 = []byte(`>
+var topic_alt_94 = []byte(`style="margin-left: 0px;"`)
+var topic_alt_95 = []byte(`>
 			`)
-var topic_alt_80 = []byte(`
+var topic_alt_96 = []byte(`
 				<span class="action_icon" style="font-size: 18px;padding-right: 5px;">`)
-var topic_alt_81 = []byte(`</span>
+var topic_alt_97 = []byte(`</span>
 				<span itemprop="text">`)
-var topic_alt_82 = []byte(`</span>
+var topic_alt_98 = []byte(`</span>
 			`)
-var topic_alt_83 = []byte(`
+var topic_alt_99 = []byte(`
 			<div class="editable_block user_content" itemprop="text">`)
-var topic_alt_84 = []byte(`</div>
+var topic_alt_100 = []byte(`</div>
 			<div class="button_container">
 				`)
-var topic_alt_85 = []byte(`<a href="/reply/like/submit/`)
-var topic_alt_86 = []byte(`?session=`)
-var topic_alt_87 = []byte(`" class="action_button like_item add_like" aria-label="Like this post" data-action="like"></a>`)
-var topic_alt_88 = []byte(`<a href="/reply/edit/submit/`)
-var topic_alt_89 = []byte(`?session=`)
-var topic_alt_90 = []byte(`" class="action_button edit_item" aria-label="Edit this post" data-action="edit"></a>`)
-var topic_alt_91 = []byte(`<a href="/reply/delete/submit/`)
-var topic_alt_92 = []byte(`?session=`)
-var topic_alt_93 = []byte(`" class="action_button delete_item" aria-label="Delete this post" data-action="delete"></a>`)
-var topic_alt_94 = []byte(`<a href="/users/ips/?ip=`)
-var topic_alt_95 = []byte(`" title="IP Address" class="action_button ip_item_button hide_on_big" aria-label="This user's IP Address" data-action="ip"></a>`)
-var topic_alt_96 = []byte(`
+var topic_alt_101 = []byte(`<a href="/reply/like/submit/`)
+var topic_alt_102 = []byte(`?session=`)
+var topic_alt_103 = []byte(`" class="action_button like_item add_like" aria-label="Like this post" data-action="like"></a>`)
+var topic_alt_104 = []byte(`<a href="/reply/edit/submit/`)
+var topic_alt_105 = []byte(`?session=`)
+var topic_alt_106 = []byte(`" class="action_button edit_item" aria-label="Edit this post" data-action="edit"></a>`)
+var topic_alt_107 = []byte(`<a href="/reply/delete/submit/`)
+var topic_alt_108 = []byte(`?session=`)
+var topic_alt_109 = []byte(`" class="action_button delete_item" aria-label="Delete this post" data-action="delete"></a>`)
+var topic_alt_110 = []byte(`<a href="/users/ips/?ip=`)
+var topic_alt_111 = []byte(`" title="IP Address" class="action_button ip_item_button hide_on_big" aria-label="This user's IP Address" data-action="ip"></a>`)
+var topic_alt_112 = []byte(`
 					<a href="/report/submit/`)
-var topic_alt_97 = []byte(`?session=`)
-var topic_alt_98 = []byte(`&type=reply" class="action_button report_item" aria-label="Report this post" data-action="report"></a>
+var topic_alt_113 = []byte(`?session=`)
+var topic_alt_114 = []byte(`&type=reply" class="action_button report_item" aria-label="Report this post" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				`)
-var topic_alt_99 = []byte(`
+var topic_alt_115 = []byte(`
 				<div class="action_button_right`)
-var topic_alt_100 = []byte(` has_likes`)
-var topic_alt_101 = []byte(`">
+var topic_alt_116 = []byte(` has_likes`)
+var topic_alt_117 = []byte(`">
 					`)
-var topic_alt_102 = []byte(`<a class="action_button like_count hide_on_micro">`)
-var topic_alt_103 = []byte(`</a>`)
-var topic_alt_104 = []byte(`
+var topic_alt_118 = []byte(`<a class="action_button like_count hide_on_micro">`)
+var topic_alt_119 = []byte(`</a>`)
+var topic_alt_120 = []byte(`
 					<a class="action_button created_at hide_on_mobile">`)
-var topic_alt_105 = []byte(`</a>
+var topic_alt_121 = []byte(`</a>
 					`)
-var topic_alt_106 = []byte(`<a href="/users/ips/?ip=`)
-var topic_alt_107 = []byte(`" title="IP Address" class="action_button ip_item hide_on_mobile">`)
-var topic_alt_108 = []byte(`</a>`)
-var topic_alt_109 = []byte(`
+var topic_alt_122 = []byte(`<a href="/users/ips/?ip=`)
+var topic_alt_123 = []byte(`" title="IP Address" class="action_button ip_item hide_on_mobile">`)
+var topic_alt_124 = []byte(`</a>`)
+var topic_alt_125 = []byte(`
 				</div>
 			</div>
 			`)
-var topic_alt_110 = []byte(`
+var topic_alt_126 = []byte(`
 		</div>
 		<div style="clear:both;"></div>
 	</article>
 `)
-var topic_alt_111 = []byte(`</div>
+var topic_alt_127 = []byte(`</div>
 
 `)
-var topic_alt_112 = []byte(`
+var topic_alt_128 = []byte(`
 <div class="rowblock topic_reply_container">
 	<div class="userinfo" aria-label="The information on the poster">
 		<div class="avatar_item" style="background-image: url(`)
-var topic_alt_113 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+var topic_alt_129 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 		<a href="`)
-var topic_alt_114 = []byte(`" class="the_name" rel="author">`)
-var topic_alt_115 = []byte(`</a>
+var topic_alt_130 = []byte(`" class="the_name" rel="author">`)
+var topic_alt_131 = []byte(`</a>
 		`)
-var topic_alt_116 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
-var topic_alt_117 = []byte(`</div><div class="tag_post"></div></div>`)
-var topic_alt_118 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level `)
-var topic_alt_119 = []byte(`</div><div class="tag_post"></div></div>`)
-var topic_alt_120 = []byte(`
+var topic_alt_132 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
+var topic_alt_133 = []byte(`</div><div class="tag_post"></div></div>`)
+var topic_alt_134 = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level `)
+var topic_alt_135 = []byte(`</div><div class="tag_post"></div></div>`)
+var topic_alt_136 = []byte(`
 	</div>
 	<div class="rowblock topic_reply_form quick_create_form">
 		<form id="reply_form" enctype="multipart/form-data" action="/reply/create/?session=`)
-var topic_alt_121 = []byte(`" method="post"></form>
+var topic_alt_137 = []byte(`" method="post"></form>
 		<input form="reply_form" name="tid" value='`)
-var topic_alt_122 = []byte(`' type="hidden" />
+var topic_alt_138 = []byte(`' type="hidden" />
 		<div class="formrow real_first_child">
 			<div class="formitem">
 				<textarea id="input_content" form="reply_form" name="reply-content" placeholder="What do you think?" required></textarea>
@@ -524,17 +562,17 @@ var topic_alt_122 = []byte(`' type="hidden" />
 			<div class="formitem">
 				<button form="reply_form" name="reply-button" class="formbutton">Create Reply</button>
 				`)
-var topic_alt_123 = []byte(`
+var topic_alt_139 = []byte(`
 				<input name="upload_files" form="reply_form" id="upload_files" multiple type="file" style="display: none;" />
 				<label for="upload_files" class="formbutton add_file_button">Add File</label>
 				<div id="upload_file_dock"></div>`)
-var topic_alt_124 = []byte(`
+var topic_alt_140 = []byte(`
 			</div>
 		</div>
 	</div>
 </div>
 `)
-var topic_alt_125 = []byte(`
+var topic_alt_141 = []byte(`
 
 </main>
 
@@ -874,6 +912,7 @@ var topics_15 = []byte(`
 <div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
 	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/?session=`)
 var topics_16 = []byte(`" method="post"></form>
+	<input form="topic_create_form_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 	<img class="little_row_avatar" src="`)
 var topics_17 = []byte(`" height="64" alt="Your Avatar" title="Your Avatar" />
 	<div class="main_form">
@@ -902,10 +941,10 @@ var topics_23 = []byte(`
 		</div>
 		<div class="formrow poll_content_row auto_hide">
 			<div class="formitem">
-				<div class="pollinput">
+				<div class="pollinput" data-pollinput="0">
 					<input type="checkbox" disabled />
 					<label class="pollinputlabel"></label>
-					<input type="text" placeholder="Add new poll option" />
+					<input form="topic_create_form_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="Add new poll option" />
 				</div>
 			</div>
 		</div>

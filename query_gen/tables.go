@@ -230,11 +230,13 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("polls_voters", "utf8mb4", "utf8mb4_general_ci",
+	qgen.Install.CreateTable("polls_votes", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"pollID", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"option", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"castAt", "createdAt", 0, false, false, ""},
+			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 		},
 		[]qgen.DBTableKey{},
 	)

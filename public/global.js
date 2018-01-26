@@ -591,8 +591,25 @@ $(document).ready(function(){
 		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
 	};
 
+	function addPollInput() {
+		console.log("clicked on pollinputinput");
+		let dataPollInput = $(this).parent().attr("data-pollinput");
+		console.log("dataPollInput: ", dataPollInput);
+		if(dataPollInput == undefined) return;
+		if(dataPollInput != (pollInputIndex-1)) return;
+
+		$(".poll_content_row .formitem").append("<div class='pollinput' data-pollinput='"+pollInputIndex+"'><input type='checkbox' disabled /><label class='pollinputlabel'></label><input form='topic_create_form_form' name='pollinputitem["+pollInputIndex+"]' class='pollinputinput' type='text' placeholder='Add new poll option' /></div>");
+		pollInputIndex++;
+		console.log("new pollInputIndex: ", pollInputIndex);
+		$(".pollinputinput").off("click");
+		$(".pollinputinput").click(addPollInput);
+	}
+
+	var pollInputIndex = 1;
 	$("#add_poll_button").click(function(event){
 		event.preventDefault();
 		$(".poll_content_row").removeClass("auto_hide");
+		$("#has_poll_input").val("1");
+		$(".pollinputinput").click(addPollInput);
 	});
 });

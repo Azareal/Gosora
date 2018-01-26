@@ -133,8 +133,54 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 			return common.LocalError("This topic doesn't have a title", w, r, user)
 		case common.ErrNoBody:
 			return common.LocalError("This topic doesn't have a body", w, r, user)
-		default:
-			return common.InternalError(err, w, r)
+		}
+		return common.InternalError(err, w, r)
+	}
+
+	topic, err := common.Topics.Get(tid)
+	if err != nil {
+		return common.LocalError("Unable to load the topic", w, r, user)
+	}
+	if r.PostFormValue("has_poll") == "1" {
+		var maxPollOptions = 10
+		var pollInputItems = make(map[int]string)
+		var pollInputCount = 0
+		for key, values := range r.Form {
+			//if common.Dev.SuperDebug {
+			log.Print("key: ", key)
+			log.Printf("values: %+v\n", values)
+			//}
+			for _, value := range values {
+				if strings.HasPrefix(key, "pollinputitem[") {
+					halves := strings.Split(key, "[")
+					if len(halves) != 2 {
+						return common.LocalError("Malformed pollinputitem", w, r, user)
+					}
+					halves[1] = strings.TrimSuffix(halves[1], "]")
+
+					index, err := strconv.Atoi(halves[1])
+					if err != nil {
+						return common.LocalError("Malformed pollinputitem", w, r, user)
+					}
+
+					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
+					_, exists := pollInputItems[index]
+					if !exists {
+						pollInputCount++
+						pollInputItems[index] = html.EscapeString(value)
+
+						if len(pollInputItems) >= maxPollOptions {
+							break
+						}
+					}
+				}
+			}
+		}
+
+		pollType := 0 // Basic single choice
+		_, err := common.Polls.Create(topic, pollType, pollInputItems)
+		if err != nil {
+			return common.LocalError("Failed to add poll to topic", w, r, user) // TODO: Might need to be an internal error as it could leave phantom polls?
 		}
 	}
 

@@ -107,6 +107,7 @@ var RouteMap = map[string]interface{}{
 	"routeRegisterSubmit": routeRegisterSubmit,
 	"routeDynamic": routeDynamic,
 	"routeUploads": routeUploads,
+	"BadRoute": BadRoute,
 }
 
 // ! NEVER RELY ON THESE REMAINING THE SAME BETWEEN COMMITS
@@ -202,6 +203,7 @@ var routeMapEnum = map[string]int{
 	"routeRegisterSubmit": 88,
 	"routeDynamic": 89,
 	"routeUploads": 90,
+	"BadRoute": 91,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
@@ -295,6 +297,7 @@ var reverseRouteMapEnum = map[int]string{
 	88: "routeRegisterSubmit",
 	89: "routeDynamic",
 	90: "routeUploads",
+	91: "BadRoute",
 }
 var agentMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -315,6 +318,7 @@ var agentMapEnum = map[string]int{
 	"lynx": 15,
 	"blank": 16,
 	"malformed": 17,
+	"suspicious": 18,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -335,6 +339,7 @@ var reverseAgentMapEnum = map[int]string{
 	15: "lynx",
 	16: "blank",
 	17: "malformed",
+	18: "suspicious",
 }
 
 // TODO: Stop spilling these into the package scope?
@@ -397,7 +402,7 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
-		w.WriteHeader(405)
+		w.WriteHeader(200) // 405
 		w.Write([]byte(""))
 		log.Print("Malformed Request")
 		log.Print("UA: ", req.UserAgent())
@@ -432,10 +437,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 				log.Print("req.Referer(): ", req.Referer())
 				log.Print("req.RemoteAddr: ", req.RemoteAddr)
+				common.AgentViewCounter.Bump(18)
 				break
 			}
 		}
-		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") {
+		// TODO: Flag any requests which has a dot with anything but a number after that
+		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(req.URL.Path,".php") || strings.Contains(req.URL.Path,".asp") || strings.Contains(req.URL.Path,".cgi") {
 			log.Print("Suspicious UA: ", req.UserAgent())
 			log.Print("Method: ", req.Method)
 			for key, value := range req.Header {
@@ -448,6 +455,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
 			log.Print("req.Referer(): ", req.Referer())
 			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+			common.AgentViewCounter.Bump(18)
 		}
 	}
 	
@@ -1522,6 +1530,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 				return
 			}
-			common.NotFound(w,req) // TODO: Collect all the error view counts so we can add a replacement for GlobalViewCounter by adding up the view counts of every route? Complex and may be inaccurate, collecting it globally and locally would at-least help find places we aren't capturing views
+
+			common.RouteViewCounter.Bump(91)
+			common.NotFound(w,req)
 	}
 }
