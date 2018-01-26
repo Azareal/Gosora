@@ -1030,19 +1030,25 @@ var topics_62 = []byte(`
 var topics_63 = []byte(`
 <div class="pageset">
 	`)
-var topics_64 = []byte(`<div class="pageitem"><a href="?page=`)
-var topics_65 = []byte(`">Prev</a></div>`)
-var topics_66 = []byte(`
+var topics_64 = []byte(`
+	<link rel="prev" href="?page=`)
+var topics_65 = []byte(`" />
 	<div class="pageitem"><a href="?page=`)
-var topics_67 = []byte(`">`)
-var topics_68 = []byte(`</a></div>
+var topics_66 = []byte(`" rel="prev" aria-label="Go to the previous page">Prev</a></div>`)
+var topics_67 = []byte(`
+	<div class="pageitem"><a href="?page=`)
+var topics_68 = []byte(`">`)
+var topics_69 = []byte(`</a></div>
 	`)
-var topics_69 = []byte(`<div class="pageitem"><a href="?page=`)
-var topics_70 = []byte(`">Next</a></div>`)
-var topics_71 = []byte(`
+var topics_70 = []byte(`
+	<link rel="next" href="?page=`)
+var topics_71 = []byte(`" />
+	<div class="pageitem"><a href="?page=`)
+var topics_72 = []byte(`" rel="next" aria-label="Go to the next page">Next</a></div>`)
+var topics_73 = []byte(`
 </div>
 `)
-var topics_72 = []byte(`
+var topics_74 = []byte(`
 
 </main>
 `)
