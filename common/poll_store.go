@@ -10,8 +10,10 @@ import (
 var Polls PollStore
 
 type Poll struct {
-	ID   int
-	Type int // 0: Single choice, 1: Multiple choice, 2: Multiple choice w/ points
+	ID          int
+	ParentID    int
+	ParentTable string
+	Type        int // 0: Single choice, 1: Multiple choice, 2: Multiple choice w/ points
 	//AntiCheat bool // Apply various mitigations for cheating
 	// GroupPower map[gid]points // The number of points a group can spend in this poll, defaults to 1
 
@@ -19,6 +21,10 @@ type Poll struct {
 	Results      map[int]int  // map[optionIndex]points
 	QuickOptions []PollOption // TODO: Fix up the template transpiler so we don't need to use this hack anymore
 	VoteCount    int
+}
+
+func (poll *Poll) CastVote(optionIndex int, uid int, ipaddress string) error {
+	return Polls.CastVote(optionIndex, poll.ID, uid, ipaddress) // TODO: Move the query into a pollStmts rather than having it in the store
 }
 
 func (poll *Poll) Copy() Poll {
@@ -31,6 +37,8 @@ type PollOption struct {
 }
 
 type Pollable interface {
+	GetID() int
+	GetTable() string
 	SetPoll(pollID int) error
 }
 
@@ -38,6 +46,7 @@ type PollStore interface {
 	Get(id int) (*Poll, error)
 	Exists(id int) bool
 	Create(parent Pollable, pollType int, pollOptions map[int]string) (int, error)
+	CastVote(optionIndex int, pollID int, uid int, ipaddress string) error
 	Reload(id int) error
 	//GlobalCount() int
 
@@ -48,10 +57,12 @@ type PollStore interface {
 type DefaultPollStore struct {
 	cache PollCache
 
-	get    *sql.Stmt
-	exists *sql.Stmt
-	create *sql.Stmt
-	delete *sql.Stmt
+	get                *sql.Stmt
+	exists             *sql.Stmt
+	create             *sql.Stmt
+	addVote            *sql.Stmt
+	incrementVoteCount *sql.Stmt
+	delete             *sql.Stmt
 	//pollCount      *sql.Stmt
 }
 
@@ -62,10 +73,12 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 	}
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultPollStore{
-		cache:  cache,
-		get:    acc.Select("polls").Columns("type, options, votes").Where("pollID = ?").Prepare(),
-		exists: acc.Select("polls").Columns("pollID").Where("pollID = ?").Prepare(),
-		create: acc.Insert("polls").Columns("type, options").Fields("?,?").Prepare(),
+		cache:              cache,
+		get:                acc.Select("polls").Columns("parentID, parentTable, type, options, votes").Where("pollID = ?").Prepare(),
+		exists:             acc.Select("polls").Columns("pollID").Where("pollID = ?").Prepare(),
+		create:             acc.Insert("polls").Columns("parentID, parentTable, type, options").Fields("?,?,?,?").Prepare(),
+		addVote:            acc.Insert("polls_votes").Columns("pollID, uid, option, castAt, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?").Prepare(),
+		incrementVoteCount: acc.Update("polls").Set("votes = votes + 1").Where("pollID = ?").Prepare(),
 		//pollCount: acc.SimpleCount("polls", "", ""),
 	}, acc.FirstError()
 }
@@ -86,7 +99,7 @@ func (store *DefaultPollStore) Get(id int) (*Poll, error) {
 
 	poll = &Poll{ID: id}
 	var optionTxt []byte
-	err = store.get.QueryRow(id).Scan(&poll.Type, &optionTxt, &poll.VoteCount)
+	err = store.get.QueryRow(id).Scan(&poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +115,7 @@ func (store *DefaultPollStore) Get(id int) (*Poll, error) {
 func (store *DefaultPollStore) Reload(id int) error {
 	poll := &Poll{ID: id}
 	var optionTxt []byte
-	err := store.get.QueryRow(id).Scan(&poll.Type, &optionTxt, &poll.VoteCount)
+	err := store.get.QueryRow(id).Scan(&poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
 	if err != nil {
 		store.cache.Remove(id)
 		return err
@@ -127,13 +140,23 @@ func (store *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []Pol
 	return options
 }
 
+// TODO: Use a transaction for this?
+func (store *DefaultPollStore) CastVote(optionIndex int, pollID int, uid int, ipaddress string) error {
+	_, err := store.addVote.Exec(pollID, uid, optionIndex, ipaddress)
+	if err != nil {
+		return err
+	}
+	_, err = store.incrementVoteCount.Exec(pollID)
+	return err
+}
+
 func (store *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map[int]string) (id int, err error) {
 	pollOptionsTxt, err := json.Marshal(pollOptions)
 	if err != nil {
 		return 0, err
 	}
 
-	res, err := store.create.Exec(pollType, pollOptionsTxt) //pollOptionsTxt
+	res, err := store.create.Exec(parent.GetID(), parent.GetTable(), pollType, pollOptionsTxt)
 	if err != nil {
 		return 0, err
 	}

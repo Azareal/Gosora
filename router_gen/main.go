@@ -275,27 +275,36 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
+func (router *GenRouter) DumpRequest(req *http.Request) {
+	log.Print("UA: ", req.UserAgent())
+	log.Print("Method: ", req.Method)
+	for key, value := range req.Header {
+		for _, vvalue := range value {
+			log.Print("Header '" + key + "': " + vvalue + "!!")
+		}
+	}
+	log.Print("req.Host: ", req.Host)
+	log.Print("req.URL.Path: ", req.URL.Path)
+	log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
+	log.Print("req.Referer(): ", req.Referer())
+	log.Print("req.RemoteAddr: ", req.RemoteAddr)
+}
+
+func (router *GenRouter) SuspiciousRequest(req *http.Request) {
+	log.Print("Supicious Request")
+	router.DumpRequest(req)
+	common.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
+}
+
 // TODO: Pass the default route or config struct to the router rather than accessing it via a package global
 // TODO: SetDefaultRoute
 // TODO: GetDefaultRoute
-
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
-		w.WriteHeader(200) // 405
+		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		log.Print("Malformed Request")
-		log.Print("UA: ", req.UserAgent())
-		log.Print("Method: ", req.Method)
-		for key, value := range req.Header {
-			for _, vvalue := range value {
-				log.Print("Header '" + key + "': " + vvalue + "!!")
-			}
-		}
-		log.Print("req.Host: ", req.Host)
-		log.Print("req.URL.Path: ", req.URL.Path)
-		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-		log.Print("req.Referer(): ", req.Referer())
-		log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		router.DumpRequest(req)
 		common.AgentViewCounter.Bump({{.AllAgentMap.malformed}})
 		return
 	}
@@ -304,37 +313,14 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// TODO: Cover more suspicious strings and at a lower layer than this
 		for _, char := range req.URL.Path {
 			if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
-				log.Print("Suspicious UA: ", req.UserAgent())
-				log.Print("Method: ", req.Method)
-				for key, value := range req.Header {
-					for _, vvalue := range value {
-						log.Print("Header '" + key + "': " + vvalue + "!!")
-					}
-				}
-				log.Print("req.Host: ", req.Host)
-				log.Print("req.URL.Path: ", req.URL.Path)
-				log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-				log.Print("req.Referer(): ", req.Referer())
-				log.Print("req.RemoteAddr: ", req.RemoteAddr)
-				common.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
+				router.SuspiciousRequest(req)
 				break
 			}
 		}
+		lowerPath := strings.ToLower(req.URL.Path)
 		// TODO: Flag any requests which has a dot with anything but a number after that
-		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(req.URL.Path,".php") || strings.Contains(req.URL.Path,".asp") || strings.Contains(req.URL.Path,".cgi") {
-			log.Print("Suspicious UA: ", req.UserAgent())
-			log.Print("Method: ", req.Method)
-			for key, value := range req.Header {
-				for _, vvalue := range value {
-					log.Print("Header '" + key + "': " + vvalue + "!!")
-				}
-			}
-			log.Print("req.Host: ", req.Host)
-			log.Print("req.URL.Path: ", req.URL.Path)
-			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-			log.Print("req.Referer(): ", req.Referer())
-			log.Print("req.RemoteAddr: ", req.RemoteAddr)
-			common.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
+		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") {
+			router.SuspiciousRequest(req)
 		}
 	}
 	
@@ -413,38 +399,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump({{.AllAgentMap.blank}})
 		if common.Dev.DebugMode {
 			log.Print("Blank UA: ", req.UserAgent())
-			log.Print("Method: ", req.Method)
-
-			for key, value := range req.Header {
-				for _, vvalue := range value {
-					log.Print("Header '" + key + "': " + vvalue + "!!")
-				}
-			}
-			log.Print("prefix: ", prefix)
-			log.Print("req.Host: ", req.Host)
-			log.Print("req.URL.Path: ", req.URL.Path)
-			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-			log.Print("extraData: ", extraData)
-			log.Print("req.Referer(): ", req.Referer())
-			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+			router.DumpRequest(req)
 		}
 	default:
 		common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
 		if common.Dev.DebugMode {
 			log.Print("Unknown UA: ", req.UserAgent())
-			log.Print("Method: ", req.Method)
-			for key, value := range req.Header {
-				for _, vvalue := range value {
-					log.Print("Header '" + key + "': " + vvalue + "!!")
-				}
-			}
-			log.Print("prefix: ", prefix)
-			log.Print("req.Host: ", req.Host)
-			log.Print("req.URL.Path: ", req.URL.Path)
-			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-			log.Print("extraData: ", extraData)
-			log.Print("req.Referer(): ", req.Referer())
-			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+			router.DumpRequest(req)
 		}
 	}
 	
@@ -492,7 +453,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					return*/
 			}
-			
 			if extraData != "" {
 				common.NotFound(w,req)
 				return
@@ -524,6 +484,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
+			lowerPath := strings.ToLower(req.URL.Path)
+			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") {
+				router.SuspiciousRequest(req)
+			}
 			common.RouteViewCounter.Bump({{.AllRouteMap.BadRoute}})
 			common.NotFound(w,req)
 	}

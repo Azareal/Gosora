@@ -510,9 +510,6 @@ input[type=checkbox] + label {
 	border: 1px solid var(--element-border-color);
 	background-color: var(--element-background-color);
 }
-/*input[type=checkbox]:checked + label {
-	background-color: purple;
-}*/
 input[type=checkbox]:checked + label .sel {
 	display: inline-block;
 	width: 5px;
@@ -535,8 +532,34 @@ input[type=checkbox]:checked + label .sel {
 	display: none;
 }
 
+input[type=checkbox] + label.poll_option_label {
+	width: 18px;
+	height: 18px;
+}
+input[type=checkbox]:checked + label.poll_option_label .sel {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	margin-left: 3px;
+	background: var(--element-border-color);
+}
+/*.poll_option {
+	margin-bottom: 3px;
+}*/
 .poll_option_text {
+	display: inline-block;
+	margin-left: 3px;
 	font-size: 15px;
+	position: relative;
+	top: -1px;
+	color: var(--light-text-color);
+}
+.poll_buttons {
+	display: flex;
+	margin-top: 8px;
+}
+.poll_buttons button {
+	margin-right: 5px;
 }
 
 .formbutton {

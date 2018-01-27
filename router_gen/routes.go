@@ -29,6 +29,7 @@ func routes() {
 	buildTopicRoutes()
 	buildReplyRoutes()
 	buildProfileReplyRoutes()
+	buildPollRoutes()
 	buildAccountRoutes()
 
 	addRoute(Special("routeWebsockets", "/ws/"))
@@ -102,6 +103,14 @@ func buildProfileReplyRoutes() {
 		Action("routes.ProfileReplyDeleteSubmit", "/profile/reply/delete/submit/", "extraData"),
 	)
 	addRouteGroup(pReplyGroup)
+}
+
+func buildPollRoutes() {
+	pollGroup := newRouteGroup("/poll/")
+	pollGroup.Routes(
+		Action("routes.PollVote", "/poll/vote/", "extraData"),
+	)
+	addRouteGroup(pollGroup)
 }
 
 func buildAccountRoutes() {

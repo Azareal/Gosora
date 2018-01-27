@@ -144,7 +144,6 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 	if r.PostFormValue("has_poll") == "1" {
 		var maxPollOptions = 10
 		var pollInputItems = make(map[int]string)
-		var pollInputCount = 0
 		for key, values := range r.Form {
 			//if common.Dev.SuperDebug {
 			log.Print("key: ", key)
@@ -165,8 +164,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 
 					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
 					_, exists := pollInputItems[index]
-					if !exists {
-						pollInputCount++
+					if !exists && len(html.EscapeString(value)) != 0 {
 						pollInputItems[index] = html.EscapeString(value)
 
 						if len(pollInputItems) >= maxPollOptions {
@@ -177,8 +175,14 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 			}
 		}
 
+		// Make sure the indices are sequential to avoid out of bounds issues
+		var seqPollInputItems = make(map[int]string)
+		for i := 0; i < len(pollInputItems); i++ {
+			seqPollInputItems[i] = pollInputItems[i]
+		}
+
 		pollType := 0 // Basic single choice
-		_, err := common.Polls.Create(topic, pollType, pollInputItems)
+		_, err := common.Polls.Create(topic, pollType, seqPollInputItems)
 		if err != nil {
 			return common.LocalError("Failed to add poll to topic", w, r, user) // TODO: Might need to be an internal error as it could leave phantom polls?
 		}

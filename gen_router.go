@@ -100,6 +100,7 @@ var RouteMap = map[string]interface{}{
 	"routeProfileReplyCreateSubmit": routeProfileReplyCreateSubmit,
 	"routes.ProfileReplyEditSubmit": routes.ProfileReplyEditSubmit,
 	"routes.ProfileReplyDeleteSubmit": routes.ProfileReplyDeleteSubmit,
+	"routes.PollVote": routes.PollVote,
 	"routeLogin": routeLogin,
 	"routeRegister": routeRegister,
 	"routeLogout": routeLogout,
@@ -196,14 +197,15 @@ var routeMapEnum = map[string]int{
 	"routeProfileReplyCreateSubmit": 81,
 	"routes.ProfileReplyEditSubmit": 82,
 	"routes.ProfileReplyDeleteSubmit": 83,
-	"routeLogin": 84,
-	"routeRegister": 85,
-	"routeLogout": 86,
-	"routeLoginSubmit": 87,
-	"routeRegisterSubmit": 88,
-	"routeDynamic": 89,
-	"routeUploads": 90,
-	"BadRoute": 91,
+	"routes.PollVote": 84,
+	"routeLogin": 85,
+	"routeRegister": 86,
+	"routeLogout": 87,
+	"routeLoginSubmit": 88,
+	"routeRegisterSubmit": 89,
+	"routeDynamic": 90,
+	"routeUploads": 91,
+	"BadRoute": 92,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
@@ -290,14 +292,15 @@ var reverseRouteMapEnum = map[int]string{
 	81: "routeProfileReplyCreateSubmit",
 	82: "routes.ProfileReplyEditSubmit",
 	83: "routes.ProfileReplyDeleteSubmit",
-	84: "routeLogin",
-	85: "routeRegister",
-	86: "routeLogout",
-	87: "routeLoginSubmit",
-	88: "routeRegisterSubmit",
-	89: "routeDynamic",
-	90: "routeUploads",
-	91: "BadRoute",
+	84: "routes.PollVote",
+	85: "routeLogin",
+	86: "routeRegister",
+	87: "routeLogout",
+	88: "routeLoginSubmit",
+	89: "routeRegisterSubmit",
+	90: "routeDynamic",
+	91: "routeUploads",
+	92: "BadRoute",
 }
 var agentMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -396,27 +399,36 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
+func (router *GenRouter) DumpRequest(req *http.Request) {
+	log.Print("UA: ", req.UserAgent())
+	log.Print("Method: ", req.Method)
+	for key, value := range req.Header {
+		for _, vvalue := range value {
+			log.Print("Header '" + key + "': " + vvalue + "!!")
+		}
+	}
+	log.Print("req.Host: ", req.Host)
+	log.Print("req.URL.Path: ", req.URL.Path)
+	log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
+	log.Print("req.Referer(): ", req.Referer())
+	log.Print("req.RemoteAddr: ", req.RemoteAddr)
+}
+
+func (router *GenRouter) SuspiciousRequest(req *http.Request) {
+	log.Print("Supicious Request")
+	router.DumpRequest(req)
+	common.AgentViewCounter.Bump(18)
+}
+
 // TODO: Pass the default route or config struct to the router rather than accessing it via a package global
 // TODO: SetDefaultRoute
 // TODO: GetDefaultRoute
-
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
-		w.WriteHeader(200) // 405
+		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		log.Print("Malformed Request")
-		log.Print("UA: ", req.UserAgent())
-		log.Print("Method: ", req.Method)
-		for key, value := range req.Header {
-			for _, vvalue := range value {
-				log.Print("Header '" + key + "': " + vvalue + "!!")
-			}
-		}
-		log.Print("req.Host: ", req.Host)
-		log.Print("req.URL.Path: ", req.URL.Path)
-		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-		log.Print("req.Referer(): ", req.Referer())
-		log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		router.DumpRequest(req)
 		common.AgentViewCounter.Bump(17)
 		return
 	}
@@ -425,37 +437,14 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// TODO: Cover more suspicious strings and at a lower layer than this
 		for _, char := range req.URL.Path {
 			if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
-				log.Print("Suspicious UA: ", req.UserAgent())
-				log.Print("Method: ", req.Method)
-				for key, value := range req.Header {
-					for _, vvalue := range value {
-						log.Print("Header '" + key + "': " + vvalue + "!!")
-					}
-				}
-				log.Print("req.Host: ", req.Host)
-				log.Print("req.URL.Path: ", req.URL.Path)
-				log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-				log.Print("req.Referer(): ", req.Referer())
-				log.Print("req.RemoteAddr: ", req.RemoteAddr)
-				common.AgentViewCounter.Bump(18)
+				router.SuspiciousRequest(req)
 				break
 			}
 		}
+		lowerPath := strings.ToLower(req.URL.Path)
 		// TODO: Flag any requests which has a dot with anything but a number after that
-		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(req.URL.Path,".php") || strings.Contains(req.URL.Path,".asp") || strings.Contains(req.URL.Path,".cgi") {
-			log.Print("Suspicious UA: ", req.UserAgent())
-			log.Print("Method: ", req.Method)
-			for key, value := range req.Header {
-				for _, vvalue := range value {
-					log.Print("Header '" + key + "': " + vvalue + "!!")
-				}
-			}
-			log.Print("req.Host: ", req.Host)
-			log.Print("req.URL.Path: ", req.URL.Path)
-			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-			log.Print("req.Referer(): ", req.Referer())
-			log.Print("req.RemoteAddr: ", req.RemoteAddr)
-			common.AgentViewCounter.Bump(18)
+		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") {
+			router.SuspiciousRequest(req)
 		}
 	}
 	
@@ -534,38 +523,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.AgentViewCounter.Bump(16)
 		if common.Dev.DebugMode {
 			log.Print("Blank UA: ", req.UserAgent())
-			log.Print("Method: ", req.Method)
-
-			for key, value := range req.Header {
-				for _, vvalue := range value {
-					log.Print("Header '" + key + "': " + vvalue + "!!")
-				}
-			}
-			log.Print("prefix: ", prefix)
-			log.Print("req.Host: ", req.Host)
-			log.Print("req.URL.Path: ", req.URL.Path)
-			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-			log.Print("extraData: ", extraData)
-			log.Print("req.Referer(): ", req.Referer())
-			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+			router.DumpRequest(req)
 		}
 	default:
 		common.AgentViewCounter.Bump(0)
 		if common.Dev.DebugMode {
 			log.Print("Unknown UA: ", req.UserAgent())
-			log.Print("Method: ", req.Method)
-			for key, value := range req.Header {
-				for _, vvalue := range value {
-					log.Print("Header '" + key + "': " + vvalue + "!!")
-				}
-			}
-			log.Print("prefix: ", prefix)
-			log.Print("req.Host: ", req.Host)
-			log.Print("req.URL.Path: ", req.URL.Path)
-			log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-			log.Print("extraData: ", extraData)
-			log.Print("req.Referer(): ", req.Referer())
-			log.Print("req.RemoteAddr: ", req.RemoteAddr)
+			router.DumpRequest(req)
 		}
 	}
 	
@@ -1422,13 +1386,34 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
+		case "/poll":
+			switch(req.URL.Path) {
+				case "/poll/vote/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						router.handleError(err,w,req,user)
+						return
+					}
+					
+					common.RouteViewCounter.Bump(84)
+					err = routes.PollVote(w,req,user,extraData)
+			}
+			if err != nil {
+				router.handleError(err,w,req,user)
+			}
 		case "/accounts":
 			switch(req.URL.Path) {
 				case "/accounts/login/":
-					common.RouteViewCounter.Bump(84)
+					common.RouteViewCounter.Bump(85)
 					err = routeLogin(w,req,user)
 				case "/accounts/create/":
-					common.RouteViewCounter.Bump(85)
+					common.RouteViewCounter.Bump(86)
 					err = routeRegister(w,req,user)
 				case "/accounts/logout/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1443,7 +1428,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(86)
+					common.RouteViewCounter.Bump(87)
 					err = routeLogout(w,req,user)
 				case "/accounts/login/submit/":
 					err = common.ParseForm(w,req,user)
@@ -1452,7 +1437,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(87)
+					common.RouteViewCounter.Bump(88)
 					err = routeLoginSubmit(w,req,user)
 				case "/accounts/create/submit/":
 					err = common.ParseForm(w,req,user)
@@ -1461,7 +1446,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(88)
+					common.RouteViewCounter.Bump(89)
 					err = routeRegisterSubmit(w,req,user)
 			}
 			if err != nil {
@@ -1478,7 +1463,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				common.NotFound(w,req)
 				return
 			}
-			common.RouteViewCounter.Bump(90)
+			common.RouteViewCounter.Bump(91)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
@@ -1499,7 +1484,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					return*/
 			}
-			
 			if extraData != "" {
 				common.NotFound(w,req)
 				return
@@ -1522,7 +1506,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.RUnlock()
 			
 			if ok {
-				common.RouteViewCounter.Bump(89) // TODO: Be more specific about *which* dynamic route it is
+				common.RouteViewCounter.Bump(90) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				err = handle(w,req,user)
 				if err != nil {
@@ -1531,7 +1515,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			common.RouteViewCounter.Bump(91)
+			lowerPath := strings.ToLower(req.URL.Path)
+			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") {
+				router.SuspiciousRequest(req)
+			}
+			common.RouteViewCounter.Bump(92)
 			common.NotFound(w,req)
 	}
 }

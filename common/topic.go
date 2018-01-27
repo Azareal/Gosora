@@ -263,6 +263,7 @@ func (topic *Topic) Update(name string, content string) error {
 
 func (topic *Topic) SetPoll(pollID int) error {
 	_, err := topicStmts.setPoll.Exec(pollID, topic.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
+	topic.cacheRemove()
 	return err
 }
 
@@ -276,6 +277,13 @@ func (topic *Topic) CreateActionReply(action string, ipaddress string, user User
 	topic.cacheRemove()
 	// ? - Update the last topic cache for the parent forum?
 	return err
+}
+
+func (topic *Topic) GetID() int {
+	return topic.ID
+}
+func (topic *Topic) GetTable() string {
+	return "topics"
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the topic

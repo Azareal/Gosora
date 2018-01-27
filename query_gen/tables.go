@@ -221,6 +221,8 @@ func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("polls", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"pollID", "int", 0, false, true, ""},
+			qgen.DBTableColumn{"parentID", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"parentTable", "varchar", 100, false, false, "topics"}, // topics, replies
 			qgen.DBTableColumn{"type", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"options", "json", 0, false, false, ""},
 			qgen.DBTableColumn{"votes", "int", 0, false, false, "0"},
