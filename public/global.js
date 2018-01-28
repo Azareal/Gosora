@@ -245,8 +245,7 @@ $(document).ready(function(){
 		});
 	});
 
-	$(".delete_item").click(function(event)
-	{
+	$(".delete_item").click(function(event) {
 		postLink(event);
 		$(this).closest('.deletable_block').remove();
 	});
@@ -268,12 +267,6 @@ $(document).ready(function(){
 			//console.log("Form Action:",formAction);
 			$.ajax({ url: formAction, type: "POST", error: ajaxError, dataType: "json", data: { isJs: "1", edit_item: newContent }
 			});
-		});
-	});
-
-	$("#forum_quick_perms").click(function(){
-		$(".submit_edit").click(function(event){
-
 		});
 	});
 
@@ -316,8 +309,7 @@ $(document).ready(function(){
 		blockParent.find('.editable_block').each(function(){
 			var fieldName = this.getAttribute("data-field");
 			var fieldType = this.getAttribute("data-type");
-			if(fieldType=="list")
-			{
+			if(fieldType=="list") {
 				var fieldValue = this.getAttribute("data-value");
 				if(fieldName in form_vars) var it = form_vars[fieldName];
 				else var it = ['No','Yes'];
@@ -611,5 +603,23 @@ $(document).ready(function(){
 		$(".poll_content_row").removeClass("auto_hide");
 		$("#has_poll_input").val("1");
 		$(".pollinputinput").click(addPollInput);
+	});
+
+	$(".poll_results_button").click(function(){
+		let pollID = $(this).attr("data-poll-id");
+		$("#poll_results_" + pollID + " .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
+		fetch("/poll/results/" + pollID, {
+			credentials: 'same-origin'
+		}).then((response) => response.text()).catch((error) => console.error("Error:",error)).then((rawData) => {
+			// TODO: Make sure the received data is actually a list of integers
+			let data = JSON.parse(rawData);
+			console.log("rawData: ", rawData);
+			console.log("series: ", data);
+			Chartist.Pie('#poll_results_chart_' + pollID, {
+ 				series: data,
+			}, {
+				height: '100%',
+			});
+		})
 	});
 });

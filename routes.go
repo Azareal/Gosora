@@ -457,6 +457,9 @@ func routeTopicID(w http.ResponseWriter, r *http.Request, user common.User, urlB
 		return common.NoPermissions(w, r, user)
 	}
 	headerVars.Zone = "view_topic"
+	// TODO: Only include these on pages with polls
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
 
 	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")

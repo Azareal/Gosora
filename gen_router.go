@@ -101,6 +101,7 @@ var RouteMap = map[string]interface{}{
 	"routes.ProfileReplyEditSubmit": routes.ProfileReplyEditSubmit,
 	"routes.ProfileReplyDeleteSubmit": routes.ProfileReplyDeleteSubmit,
 	"routes.PollVote": routes.PollVote,
+	"routes.PollResults": routes.PollResults,
 	"routeLogin": routeLogin,
 	"routeRegister": routeRegister,
 	"routeLogout": routeLogout,
@@ -198,14 +199,15 @@ var routeMapEnum = map[string]int{
 	"routes.ProfileReplyEditSubmit": 82,
 	"routes.ProfileReplyDeleteSubmit": 83,
 	"routes.PollVote": 84,
-	"routeLogin": 85,
-	"routeRegister": 86,
-	"routeLogout": 87,
-	"routeLoginSubmit": 88,
-	"routeRegisterSubmit": 89,
-	"routeDynamic": 90,
-	"routeUploads": 91,
-	"BadRoute": 92,
+	"routes.PollResults": 85,
+	"routeLogin": 86,
+	"routeRegister": 87,
+	"routeLogout": 88,
+	"routeLoginSubmit": 89,
+	"routeRegisterSubmit": 90,
+	"routeDynamic": 91,
+	"routeUploads": 92,
+	"BadRoute": 93,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
@@ -293,14 +295,15 @@ var reverseRouteMapEnum = map[int]string{
 	82: "routes.ProfileReplyEditSubmit",
 	83: "routes.ProfileReplyDeleteSubmit",
 	84: "routes.PollVote",
-	85: "routeLogin",
-	86: "routeRegister",
-	87: "routeLogout",
-	88: "routeLoginSubmit",
-	89: "routeRegisterSubmit",
-	90: "routeDynamic",
-	91: "routeUploads",
-	92: "BadRoute",
+	85: "routes.PollResults",
+	86: "routeLogin",
+	87: "routeRegister",
+	88: "routeLogout",
+	89: "routeLoginSubmit",
+	90: "routeRegisterSubmit",
+	91: "routeDynamic",
+	92: "routeUploads",
+	93: "BadRoute",
 }
 var agentMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -415,7 +418,7 @@ func (router *GenRouter) DumpRequest(req *http.Request) {
 }
 
 func (router *GenRouter) SuspiciousRequest(req *http.Request) {
-	log.Print("Supicious Request")
+	log.Print("Suspicious Request")
 	router.DumpRequest(req)
 	common.AgentViewCounter.Bump(18)
 }
@@ -424,6 +427,22 @@ func (router *GenRouter) SuspiciousRequest(req *http.Request) {
 // TODO: SetDefaultRoute
 // TODO: GetDefaultRoute
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Redirect www. requests to the right place
+	if req.Host == "www." + common.Site.Host {
+		w.Header().Set("Connection", "close")
+		var s string
+		if common.Site.EnableSsl {
+			s = "s"
+		}
+		dest := "http"+s+"://" + req.Host + req.URL.Path
+		if len(req.URL.RawQuery) > 0 {
+			dest += "?" + req.URL.RawQuery
+		}
+		http.Redirect(w, req, dest, http.StatusMovedPermanently)
+		return
+	}
+
+	// Deflect malformed requests
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
@@ -1403,6 +1422,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					
 					common.RouteViewCounter.Bump(84)
 					err = routes.PollVote(w,req,user,extraData)
+				case "/poll/results/":
+					common.RouteViewCounter.Bump(85)
+					err = routes.PollResults(w,req,user,extraData)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -1410,10 +1432,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		case "/accounts":
 			switch(req.URL.Path) {
 				case "/accounts/login/":
-					common.RouteViewCounter.Bump(85)
+					common.RouteViewCounter.Bump(86)
 					err = routeLogin(w,req,user)
 				case "/accounts/create/":
-					common.RouteViewCounter.Bump(86)
+					common.RouteViewCounter.Bump(87)
 					err = routeRegister(w,req,user)
 				case "/accounts/logout/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1428,7 +1450,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(87)
+					common.RouteViewCounter.Bump(88)
 					err = routeLogout(w,req,user)
 				case "/accounts/login/submit/":
 					err = common.ParseForm(w,req,user)
@@ -1437,7 +1459,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(88)
+					common.RouteViewCounter.Bump(89)
 					err = routeLoginSubmit(w,req,user)
 				case "/accounts/create/submit/":
 					err = common.ParseForm(w,req,user)
@@ -1446,7 +1468,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					common.RouteViewCounter.Bump(89)
+					common.RouteViewCounter.Bump(90)
 					err = routeRegisterSubmit(w,req,user)
 			}
 			if err != nil {
@@ -1463,7 +1485,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				common.NotFound(w,req)
 				return
 			}
-			common.RouteViewCounter.Bump(91)
+			common.RouteViewCounter.Bump(92)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
@@ -1506,7 +1528,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.RUnlock()
 			
 			if ok {
-				common.RouteViewCounter.Bump(90) // TODO: Be more specific about *which* dynamic route it is
+				common.RouteViewCounter.Bump(91) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				err = handle(w,req,user)
 				if err != nil {
@@ -1519,7 +1541,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") {
 				router.SuspiciousRequest(req)
 			}
-			common.RouteViewCounter.Bump(92)
+			common.RouteViewCounter.Bump(93)
 			common.NotFound(w,req)
 	}
 }

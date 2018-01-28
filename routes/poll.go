@@ -3,10 +3,12 @@ package routes
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
 	"../common"
+	"../query_gen/lib"
 )
 
 func PollVote(w http.ResponseWriter, r *http.Request, user common.User, sPollID string) common.RouteError {
@@ -63,5 +65,49 @@ func PollVote(w http.ResponseWriter, r *http.Request, user common.User, sPollID 
 	}
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID), http.StatusSeeOther)
+	return nil
+}
+
+func PollResults(w http.ResponseWriter, r *http.Request, user common.User, sPollID string) common.RouteError {
+	log.Print("in PollResults")
+	pollID, err := strconv.Atoi(sPollID)
+	if err != nil {
+		return common.PreError("The provided PollID is not a valid number.", w, r)
+	}
+
+	poll, err := common.Polls.Get(pollID)
+	if err == sql.ErrNoRows {
+		return common.PreError("The poll you tried to vote for doesn't exist.", w, r)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Abstract this
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("polls_options").Columns("votes").Where("pollID = ?").Orderby("option ASC").Query(poll.ID)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	var optionList = ""
+	for rows.Next() {
+		var votes int
+		err := rows.Scan(&votes)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		optionList += strconv.Itoa(votes) + ","
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Implement a version of this which doesn't rely so much on sequential order
+	if len(optionList) > 0 {
+		optionList = optionList[:len(optionList)-1]
+	}
+	w.Write([]byte("[" + optionList + "]"))
 	return nil
 }

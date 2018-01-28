@@ -550,9 +550,16 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	display: inline-block;
 	margin-left: 3px;
 	font-size: 15px;
+	/*font-weight: bold;*/
 	position: relative;
 	top: -1px;
 	color: var(--light-text-color);
+}
+#poll_option_text_0 {
+	color: #d70206;
+}
+#poll_option_text_1 {
+	color: #f05b4f;
 }
 .poll_buttons {
 	display: flex;

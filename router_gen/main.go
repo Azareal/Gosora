@@ -291,7 +291,7 @@ func (router *GenRouter) DumpRequest(req *http.Request) {
 }
 
 func (router *GenRouter) SuspiciousRequest(req *http.Request) {
-	log.Print("Supicious Request")
+	log.Print("Suspicious Request")
 	router.DumpRequest(req)
 	common.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
 }
@@ -300,6 +300,22 @@ func (router *GenRouter) SuspiciousRequest(req *http.Request) {
 // TODO: SetDefaultRoute
 // TODO: GetDefaultRoute
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Redirect www. requests to the right place
+	if req.Host == "www." + common.Site.Host {
+		w.Header().Set("Connection", "close")
+		var s string
+		if common.Site.EnableSsl {
+			s = "s"
+		}
+		dest := "http"+s+"://" + req.Host + req.URL.Path
+		if len(req.URL.RawQuery) > 0 {
+			dest += "?" + req.URL.RawQuery
+		}
+		http.Redirect(w, req, dest, http.StatusMovedPermanently)
+		return
+	}
+
+	// Deflect malformed requests
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
