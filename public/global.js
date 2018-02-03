@@ -590,7 +590,7 @@ $(document).ready(function(){
 		if(dataPollInput == undefined) return;
 		if(dataPollInput != (pollInputIndex-1)) return;
 
-		$(".poll_content_row .formitem").append("<div class='pollinput' data-pollinput='"+pollInputIndex+"'><input type='checkbox' disabled /><label class='pollinputlabel'></label><input form='topic_create_form_form' name='pollinputitem["+pollInputIndex+"]' class='pollinputinput' type='text' placeholder='Add new poll option' /></div>");
+		$(".poll_content_row .formitem").append("<div class='pollinput' data-pollinput='"+pollInputIndex+"'><input type='checkbox' disabled /><label class='pollinputlabel'></label><input form='quick_post_form' name='pollinputitem["+pollInputIndex+"]' class='pollinputinput' type='text' placeholder='Add new poll option' /></div>");
 		pollInputIndex++;
 		console.log("new pollInputIndex: ", pollInputIndex);
 		$(".pollinputinput").off("click");
@@ -605,9 +605,11 @@ $(document).ready(function(){
 		$(".pollinputinput").click(addPollInput);
 	});
 
+	//id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide"
 	$(".poll_results_button").click(function(){
 		let pollID = $(this).attr("data-poll-id");
 		$("#poll_results_" + pollID + " .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
+		$("#poll_results_" + pollID).removeClass("auto_hide");
 		fetch("/poll/results/" + pollID, {
 			credentials: 'same-origin'
 		}).then((response) => response.text()).catch((error) => console.error("Error:",error)).then((rawData) => {
@@ -618,7 +620,7 @@ $(document).ready(function(){
 			Chartist.Pie('#poll_results_chart_' + pollID, {
  				series: data,
 			}, {
-				height: '100%',
+				height: '120px',
 			});
 		})
 	});

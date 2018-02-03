@@ -78,7 +78,7 @@ func init() {
 			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'replies'").Prepare(),
 			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
 			edit:                   acc.Update("replies").Set("content = ?, parsed_content = ?").Where("rid = ? AND poll = 0").Prepare(),
-			setPoll:                acc.Update("replies").Set("content = '', parsed_content = '', poll = ?").Where("rid = ? AND poll = 0").Prepare(),
+			setPoll:                acc.Update("replies").Set("poll = ?").Where("rid = ? AND poll = 0").Prepare(),
 			delete:                 acc.Delete("replies").Where("rid = ?").Prepare(),
 			addLikesToReply:        acc.Update("replies").Set("likeCount = likeCount + ?").Where("rid = ?").Prepare(),
 			removeRepliesFromTopic: acc.Update("topics").Set("postCount = postCount - ?").Where("tid = ?").Prepare(),
@@ -140,6 +140,14 @@ func (reply *Reply) SetPoll(pollID int) error {
 
 func (reply *Reply) Topic() (*Topic, error) {
 	return Topics.Get(reply.ParentID)
+}
+
+func (reply *Reply) GetID() int {
+	return reply.ID
+}
+
+func (reply *Reply) GetTable() string {
+	return "replies"
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the reply

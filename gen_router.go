@@ -17,8 +17,8 @@ var ErrNoRoute = errors.New("That route doesn't exist.")
 // TODO: What about the /uploads/ route? x.x
 var RouteMap = map[string]interface{}{ 
 	"routeAPI": routeAPI,
-	"routeOverview": routeOverview,
-	"routeCustomPage": routeCustomPage,
+	"routes.Overview": routes.Overview,
+	"routes.CustomPage": routes.CustomPage,
 	"routeForums": routeForums,
 	"routeForum": routeForum,
 	"routeChangeTheme": routeChangeTheme,
@@ -92,7 +92,7 @@ var RouteMap = map[string]interface{}{
 	"routes.UnlockTopicSubmit": routes.UnlockTopicSubmit,
 	"routes.MoveTopicSubmit": routes.MoveTopicSubmit,
 	"routeLikeTopicSubmit": routeLikeTopicSubmit,
-	"routeTopicID": routeTopicID,
+	"routes.ViewTopic": routes.ViewTopic,
 	"routeCreateReplySubmit": routeCreateReplySubmit,
 	"routes.ReplyEditSubmit": routes.ReplyEditSubmit,
 	"routes.ReplyDeleteSubmit": routes.ReplyDeleteSubmit,
@@ -102,11 +102,11 @@ var RouteMap = map[string]interface{}{
 	"routes.ProfileReplyDeleteSubmit": routes.ProfileReplyDeleteSubmit,
 	"routes.PollVote": routes.PollVote,
 	"routes.PollResults": routes.PollResults,
-	"routeLogin": routeLogin,
-	"routeRegister": routeRegister,
+	"routes.AccountLogin": routes.AccountLogin,
+	"routes.AccountRegister": routes.AccountRegister,
 	"routeLogout": routeLogout,
-	"routeLoginSubmit": routeLoginSubmit,
-	"routeRegisterSubmit": routeRegisterSubmit,
+	"routes.AccountLoginSubmit": routes.AccountLoginSubmit,
+	"routes.AccountRegisterSubmit": routes.AccountRegisterSubmit,
 	"routeDynamic": routeDynamic,
 	"routeUploads": routeUploads,
 	"BadRoute": BadRoute,
@@ -115,8 +115,8 @@ var RouteMap = map[string]interface{}{
 // ! NEVER RELY ON THESE REMAINING THE SAME BETWEEN COMMITS
 var routeMapEnum = map[string]int{ 
 	"routeAPI": 0,
-	"routeOverview": 1,
-	"routeCustomPage": 2,
+	"routes.Overview": 1,
+	"routes.CustomPage": 2,
 	"routeForums": 3,
 	"routeForum": 4,
 	"routeChangeTheme": 5,
@@ -190,7 +190,7 @@ var routeMapEnum = map[string]int{
 	"routes.UnlockTopicSubmit": 73,
 	"routes.MoveTopicSubmit": 74,
 	"routeLikeTopicSubmit": 75,
-	"routeTopicID": 76,
+	"routes.ViewTopic": 76,
 	"routeCreateReplySubmit": 77,
 	"routes.ReplyEditSubmit": 78,
 	"routes.ReplyDeleteSubmit": 79,
@@ -200,19 +200,19 @@ var routeMapEnum = map[string]int{
 	"routes.ProfileReplyDeleteSubmit": 83,
 	"routes.PollVote": 84,
 	"routes.PollResults": 85,
-	"routeLogin": 86,
-	"routeRegister": 87,
+	"routes.AccountLogin": 86,
+	"routes.AccountRegister": 87,
 	"routeLogout": 88,
-	"routeLoginSubmit": 89,
-	"routeRegisterSubmit": 90,
+	"routes.AccountLoginSubmit": 89,
+	"routes.AccountRegisterSubmit": 90,
 	"routeDynamic": 91,
 	"routeUploads": 92,
 	"BadRoute": 93,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
-	1: "routeOverview",
-	2: "routeCustomPage",
+	1: "routes.Overview",
+	2: "routes.CustomPage",
 	3: "routeForums",
 	4: "routeForum",
 	5: "routeChangeTheme",
@@ -286,7 +286,7 @@ var reverseRouteMapEnum = map[int]string{
 	73: "routes.UnlockTopicSubmit",
 	74: "routes.MoveTopicSubmit",
 	75: "routeLikeTopicSubmit",
-	76: "routeTopicID",
+	76: "routes.ViewTopic",
 	77: "routeCreateReplySubmit",
 	78: "routes.ReplyEditSubmit",
 	79: "routes.ReplyDeleteSubmit",
@@ -296,11 +296,11 @@ var reverseRouteMapEnum = map[int]string{
 	83: "routes.ProfileReplyDeleteSubmit",
 	84: "routes.PollVote",
 	85: "routes.PollResults",
-	86: "routeLogin",
-	87: "routeRegister",
+	86: "routes.AccountLogin",
+	87: "routes.AccountRegister",
 	88: "routeLogout",
-	89: "routeLoginSubmit",
-	90: "routeRegisterSubmit",
+	89: "routes.AccountLoginSubmit",
+	90: "routes.AccountRegisterSubmit",
 	91: "routeDynamic",
 	92: "routeUploads",
 	93: "BadRoute",
@@ -313,18 +313,22 @@ var agentMapEnum = map[string]int{
 	"safari": 4,
 	"edge": 5,
 	"internetexplorer": 6,
-	"googlebot": 7,
-	"yandex": 8,
-	"bing": 9,
-	"baidu": 10,
-	"duckduckgo": 11,
-	"discord": 12,
-	"cloudflarealwayson": 13,
-	"uptimebot": 14,
-	"lynx": 15,
-	"blank": 16,
-	"malformed": 17,
-	"suspicious": 18,
+	"androidchrome": 7,
+	"mobilesafari": 8,
+	"ucbrowser": 9,
+	"googlebot": 10,
+	"yandex": 11,
+	"bing": 12,
+	"baidu": 13,
+	"duckduckgo": 14,
+	"discord": 15,
+	"cloudflare": 16,
+	"uptimebot": 17,
+	"lynx": 18,
+	"blank": 19,
+	"malformed": 20,
+	"suspicious": 21,
+	"zgrab": 22,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -334,19 +338,51 @@ var reverseAgentMapEnum = map[int]string{
 	4: "safari",
 	5: "edge",
 	6: "internetexplorer",
-	7: "googlebot",
-	8: "yandex",
-	9: "bing",
-	10: "baidu",
-	11: "duckduckgo",
-	12: "discord",
-	13: "cloudflarealwayson",
-	14: "uptimebot",
-	15: "lynx",
-	16: "blank",
-	17: "malformed",
-	18: "suspicious",
+	7: "androidchrome",
+	8: "mobilesafari",
+	9: "ucbrowser",
+	10: "googlebot",
+	11: "yandex",
+	12: "bing",
+	13: "baidu",
+	14: "duckduckgo",
+	15: "discord",
+	16: "cloudflare",
+	17: "uptimebot",
+	18: "lynx",
+	19: "blank",
+	20: "malformed",
+	21: "suspicious",
+	22: "zgrab",
 }
+var markToAgent = map[string]string{
+	"OPR":"opera",
+	"Chrome":"chrome",
+	"Firefox":"firefox",
+	"MSIE":"internetexplorer",
+	//"Trident":"internetexplorer",
+	"Edge":"edge",
+	"Lynx":"lynx", // There's a rare android variant of lynx which isn't covered by this
+	"UCBrowser":"ucbrowser",
+
+	"Google":"googlebot",
+	"Googlebot":"googlebot",
+	"yandex": "yandex", // from the URL
+	"DuckDuckBot":"duckduckgo",
+	"Baiduspider":"baidu",
+	"bingbot":"bing",
+	"BingPreview":"bing",
+	"CloudFlare":"cloudflare", // Track alwayson specifically in case there are other bots?
+	"Uptimebot":"uptimebot",
+	"Discordbot":"discord",
+
+	"zgrab":"zgrab",
+}
+/*var agentRank = map[string]int{
+	"opera":9,
+	"chrome":8,
+	"safari":1,
+}*/
 
 // TODO: Stop spilling these into the package scope?
 func init() {
@@ -420,7 +456,7 @@ func (router *GenRouter) DumpRequest(req *http.Request) {
 func (router *GenRouter) SuspiciousRequest(req *http.Request) {
 	log.Print("Suspicious Request")
 	router.DumpRequest(req)
-	common.AgentViewCounter.Bump(18)
+	common.AgentViewCounter.Bump(21)
 }
 
 // TODO: Pass the default route or config struct to the router rather than accessing it via a package global
@@ -448,7 +484,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte(""))
 		log.Print("Malformed Request")
 		router.DumpRequest(req)
-		common.AgentViewCounter.Bump(17)
+		common.AgentViewCounter.Bump(20)
 		return
 	}
 
@@ -475,7 +511,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	if common.Dev.SuperDebug {
-		log.Print("before routeStatic")
+		log.Print("before routes.StaticFile")
 		log.Print("Method: ", req.Method)
 		for key, value := range req.Header {
 			for _, vvalue := range value {
@@ -493,7 +529,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if prefix == "/static" {
 		req.URL.Path += extraData
-		routeStatic(w, req)
+		routes.StaticFile(w, req)
 		return
 	}
 	if common.Dev.SuperDebug {
@@ -506,49 +542,65 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
-	ua := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36")) // Noise, no one's going to be running this and it complicates implementing an efficient UA parser, particularly the more efficient right-to-left one I have in mind
-	switch {
-	case strings.Contains(ua,"Google"):
-		common.AgentViewCounter.Bump(7)
-	case strings.Contains(ua,"Yandex"):
-		common.AgentViewCounter.Bump(8)
-	case strings.Contains(ua,"bingbot"), strings.Contains(ua,"BingPreview"):
-		common.AgentViewCounter.Bump(9)
-	case strings.Contains(ua,"OPR"): // Pretends to be Chrome, needs to run before that
-		common.AgentViewCounter.Bump(3)
-	case strings.Contains(ua,"Edge"):
-		common.AgentViewCounter.Bump(5)
-	case strings.Contains(ua,"Chrome"):
-		common.AgentViewCounter.Bump(2)
-	case strings.Contains(ua,"Firefox"):
-		common.AgentViewCounter.Bump(1)
-	case strings.Contains(ua,"Safari"):
-		common.AgentViewCounter.Bump(4)
-	case strings.Contains(ua,"MSIE"):
-		common.AgentViewCounter.Bump(6)
-	case strings.Contains(ua,"Baiduspider"):
-		common.AgentViewCounter.Bump(10)
-	case strings.Contains(ua,"DuckDuckBot"):
-		common.AgentViewCounter.Bump(11)
-	case strings.Contains(ua,"Discordbot"):
-		common.AgentViewCounter.Bump(12)
-	case strings.Contains(ua,"Lynx"):
-		common.AgentViewCounter.Bump(15)
-	case strings.Contains(ua,"CloudFlare-AlwaysOnline"):
-		common.AgentViewCounter.Bump(13)
-	case strings.Contains(ua,"Uptimebot"):
-		common.AgentViewCounter.Bump(14)
-	case ua == "":
-		common.AgentViewCounter.Bump(16)
+	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
+	if ua == "" {
+		common.AgentViewCounter.Bump(19)
 		if common.Dev.DebugMode {
 			log.Print("Blank UA: ", req.UserAgent())
 			router.DumpRequest(req)
 		}
-	default:
-		common.AgentViewCounter.Bump(0)
+	} else {
+		// WIP UA Parser
+		var indices []int
+		var items []string
+		var buffer []rune
+		for index, item := range ua {
+			if (item > 64 && item < 91) || (item > 96 && item < 123) {
+				buffer = append(buffer, item)
+			} else if len(buffer) != 0 {
+				items = append(items, string(buffer))
+				indices = append(indices, index - 1)
+				buffer = buffer[:0]
+			}
+		}
+
+		// Iterate over this in reverse as the real UA tends to be on the right side
+		var agent string
+		for i := len(items) - 1; i >= 0; i-- {
+			fAgent, ok := markToAgent[items[i]]
+			if ok {
+				agent = fAgent
+				if agent != "safari" {
+					break
+				}
+			}
+		}
+
 		if common.Dev.DebugMode {
-			log.Print("Unknown UA: ", req.UserAgent())
-			router.DumpRequest(req)
+			log.Print("parsed agent: ",agent)
+		}
+		
+		// Special handling
+		switch(agent) {
+		case "chrome":
+			for _, mark := range items {
+				if mark == "Android" {
+					agent = "androidchrome"
+					break
+				}
+			}
+		case "zgrab":
+			router.SuspiciousRequest(req)
+		}
+		
+		if agent == "" {
+			common.AgentViewCounter.Bump(0)
+			if common.Dev.DebugMode {
+				log.Print("Unknown UA: ", req.UserAgent())
+				router.DumpRequest(req)
+			}
+		} else {
+			common.AgentViewCounter.Bump(agentMapEnum[agent])
 		}
 	}
 	
@@ -572,13 +624,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		case "/overview":
 			common.RouteViewCounter.Bump(1)
-			err = routeOverview(w,req,user)
+			err = routes.Overview(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
 		case "/pages":
 			common.RouteViewCounter.Bump(2)
-			err = routeCustomPage(w,req,user,extraData)
+			err = routes.CustomPage(w,req,user,extraData)
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
@@ -1278,7 +1330,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					err = routeLikeTopicSubmit(w,req,user,extraData)
 				default:
 					common.RouteViewCounter.Bump(76)
-					err = routeTopicID(w,req,user, extraData)
+					err = routes.ViewTopic(w,req,user, extraData)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -1433,10 +1485,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			switch(req.URL.Path) {
 				case "/accounts/login/":
 					common.RouteViewCounter.Bump(86)
-					err = routeLogin(w,req,user)
+					err = routes.AccountLogin(w,req,user)
 				case "/accounts/create/":
 					common.RouteViewCounter.Bump(87)
-					err = routeRegister(w,req,user)
+					err = routes.AccountRegister(w,req,user)
 				case "/accounts/logout/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1460,7 +1512,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(89)
-					err = routeLoginSubmit(w,req,user)
+					err = routes.AccountLoginSubmit(w,req,user)
 				case "/accounts/create/submit/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1469,7 +1521,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					common.RouteViewCounter.Bump(90)
-					err = routeRegisterSubmit(w,req,user)
+					err = routes.AccountRegisterSubmit(w,req,user)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -1537,8 +1589,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
+			// TODO: Log all bad routes for the admin to figure out where users are going wrong?
 			lowerPath := strings.ToLower(req.URL.Path)
-			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") {
+			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") || strings.Contains(lowerPath,"//") || strings.Contains(lowerPath,"\\\\") {
 				router.SuspiciousRequest(req)
 			}
 			common.RouteViewCounter.Bump(93)

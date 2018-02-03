@@ -27,7 +27,6 @@ type Stmts struct {
 	groupEntryExists *sql.Stmt
 	getForumTopicsOffset *sql.Stmt
 	getAttachment *sql.Stmt
-	getTopicRepliesOffset *sql.Stmt
 	getTopicList *sql.Stmt
 	getTopicReplies *sql.Stmt
 	getForumTopics *sql.Stmt
@@ -36,7 +35,6 @@ type Stmts struct {
 	createReport *sql.Stmt
 	addActivity *sql.Stmt
 	notifyOne *sql.Stmt
-	addEmail *sql.Stmt
 	addForumPermsToForum *sql.Stmt
 	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
@@ -170,12 +168,6 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	log.Print("Preparing getTopicRepliesOffset statement.")
-	stmts.getTopicRepliesOffset, err = db.Prepare("SELECT `replies`.`rid`, `replies`.`content`, `replies`.`createdBy`, `replies`.`createdAt`, `replies`.`lastEdit`, `replies`.`lastEditBy`, `users`.`avatar`, `users`.`name`, `users`.`group`, `users`.`url_prefix`, `users`.`url_name`, `users`.`level`, `replies`.`ipaddress`, `replies`.`likeCount`, `replies`.`actionType` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `replies`.`tid` = ? ORDER BY replies.rid ASC LIMIT ?,?")
-	if err != nil {
-		return err
-	}
-		
 	log.Print("Preparing getTopicList statement.")
 	stmts.getTopicList, err = db.Prepare("SELECT `topics`.`tid`, `topics`.`title`, `topics`.`content`, `topics`.`createdBy`, `topics`.`is_closed`, `topics`.`sticky`, `topics`.`createdAt`, `topics`.`parentID`, `users`.`name`, `users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
 	if err != nil {
@@ -220,12 +212,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing notifyOne statement.")
 	stmts.notifyOne, err = db.Prepare("INSERT INTO `activity_stream_matches`(`watcher`,`asid`) VALUES (?,?)")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing addEmail statement.")
-	stmts.addEmail, err = db.Prepare("INSERT INTO `emails`(`email`,`uid`,`validated`,`token`) VALUES (?,?,?,?)")
 	if err != nil {
 		return err
 	}

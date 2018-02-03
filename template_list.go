@@ -126,157 +126,207 @@ var topic_20 = []byte(`' type="text" />
 var topic_21 = []byte(`
 	</div>
 </div>
-
-<article itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="The opening post for this topic">
-	<div class="rowitem passive editable_parent post_item `)
+<article class="rowblock post_container poll">
+	<div class="rowitem passive editable_parent post_item poll_item `)
 var topic_22 = []byte(`" style="background-image: url(`)
 var topic_23 = []byte(`), url(/static/`)
 var topic_24 = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
 var topic_25 = []byte(`-1`)
 var topic_26 = []byte(`0px;background-repeat:no-repeat, repeat-y;">
+		<div class="topic_content user_content" style="margin:0;padding:0;">
+			`)
+var topic_27 = []byte(`
+			<div class="poll_option">
+				<input form="poll_`)
+var topic_28 = []byte(`_form" id="poll_option_`)
+var topic_29 = []byte(`" name="poll_option_input" type="checkbox" value="`)
+var topic_30 = []byte(`" />
+				<label class="poll_option_label" for="poll_option_`)
+var topic_31 = []byte(`">
+					<div class="sel"></div>
+				</label>
+				<span id="poll_option_text_`)
+var topic_32 = []byte(`" class="poll_option_text">`)
+var topic_33 = []byte(`</span>
+			</div>
+			`)
+var topic_34 = []byte(`
+			<div class="poll_buttons">
+				<button form="poll_`)
+var topic_35 = []byte(`_form" class="poll_vote_button">Vote</button>
+				<button class="poll_results_button" data-poll-id="`)
+var topic_36 = []byte(`">Results</button>
+				<a href="#"><button class="poll_cancel_button">Cancel</button></a>
+			</div>
+		</div>
+		<div id="poll_results_`)
+var topic_37 = []byte(`" class="poll_results auto_hide">
+			<div class="topic_content user_content"></div>
+		</div>
+	</div>
+</article>
+
+<article itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="The opening post for this topic">
+	<div class="rowitem passive editable_parent post_item `)
+var topic_38 = []byte(`" style="background-image: url(`)
+var topic_39 = []byte(`), url(/static/`)
+var topic_40 = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
+var topic_41 = []byte(`-1`)
+var topic_42 = []byte(`0px;background-repeat:no-repeat, repeat-y;">
 		<p class="hide_on_edit topic_content user_content" itemprop="text" style="margin:0;padding:0;">`)
-var topic_27 = []byte(`</p>
+var topic_43 = []byte(`</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">`)
-var topic_28 = []byte(`</textarea>
+var topic_44 = []byte(`</textarea>
 
 		<span class="controls" aria-label="Controls and Author Information">
 
 		<a href="`)
-var topic_29 = []byte(`" class="username real_username" rel="author">`)
-var topic_30 = []byte(`</a>&nbsp;&nbsp;
+var topic_45 = []byte(`" class="username real_username" rel="author">`)
+var topic_46 = []byte(`</a>&nbsp;&nbsp;
 		`)
-var topic_31 = []byte(`<a href="/topic/like/submit/`)
-var topic_32 = []byte(`?session=`)
-var topic_33 = []byte(`" class="mod_button" title="Love it" `)
-var topic_34 = []byte(`aria-label="Unlike this topic"`)
-var topic_35 = []byte(`aria-label="Like this topic"`)
-var topic_36 = []byte(` style="color:#202020;">
-		<button class="username like_label"`)
-var topic_37 = []byte(` style="background-color:#D6FFD6;"`)
-var topic_38 = []byte(`></button></a>`)
-var topic_39 = []byte(`<a href='/topic/edit/`)
-var topic_40 = []byte(`' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic" aria-label="Edit this topic"><button class="username edit_label"></button></a>`)
-var topic_41 = []byte(`<a href='/topic/delete/submit/`)
-var topic_42 = []byte(`?session=`)
-var topic_43 = []byte(`' class="mod_button" style="font-weight:normal;" title="Delete Topic" aria-label="Delete this topic"><button class="username trash_label"></button></a>`)
-var topic_44 = []byte(`<a class="mod_button" href='/topic/unlock/submit/`)
-var topic_45 = []byte(`?session=`)
-var topic_46 = []byte(`' style="font-weight:normal;" title="Unlock Topic" aria-label="Unlock this topic"><button class="username unlock_label"></button></a>`)
-var topic_47 = []byte(`<a href='/topic/lock/submit/`)
+var topic_47 = []byte(`<a href="/topic/like/submit/`)
 var topic_48 = []byte(`?session=`)
-var topic_49 = []byte(`' class="mod_button" style="font-weight:normal;" title="Lock Topic" aria-label="Lock this topic"><button class="username lock_label"></button></a>`)
-var topic_50 = []byte(`<a class="mod_button" href='/topic/unstick/submit/`)
-var topic_51 = []byte(`?session=`)
-var topic_52 = []byte(`' style="font-weight:normal;" title="Unpin Topic" aria-label="Unpin this topic"><button class="username unpin_label"></button></a>`)
-var topic_53 = []byte(`<a href='/topic/stick/submit/`)
-var topic_54 = []byte(`?session=`)
-var topic_55 = []byte(`' class="mod_button" style="font-weight:normal;" title="Pin Topic" aria-label="Pin this topic"><button class="username pin_label"></button></a>`)
-var topic_56 = []byte(`<a class="mod_button" href='/users/ips/?ip=`)
-var topic_57 = []byte(`' style="font-weight:normal;" title="View IP" aria-label="The poster's IP is `)
-var topic_58 = []byte(`"><button class="username ip_label"></button></a>`)
-var topic_59 = []byte(`
+var topic_49 = []byte(`" class="mod_button" title="Love it" `)
+var topic_50 = []byte(`aria-label="Unlike this topic"`)
+var topic_51 = []byte(`aria-label="Like this topic"`)
+var topic_52 = []byte(` style="color:#202020;">
+		<button class="username like_label"`)
+var topic_53 = []byte(` style="background-color:#D6FFD6;"`)
+var topic_54 = []byte(`></button></a>`)
+var topic_55 = []byte(`<a href='/topic/edit/`)
+var topic_56 = []byte(`' class="mod_button open_edit" style="font-weight:normal;" title="Edit Topic" aria-label="Edit this topic"><button class="username edit_label"></button></a>`)
+var topic_57 = []byte(`<a href='/topic/delete/submit/`)
+var topic_58 = []byte(`?session=`)
+var topic_59 = []byte(`' class="mod_button" style="font-weight:normal;" title="Delete Topic" aria-label="Delete this topic"><button class="username trash_label"></button></a>`)
+var topic_60 = []byte(`<a class="mod_button" href='/topic/unlock/submit/`)
+var topic_61 = []byte(`?session=`)
+var topic_62 = []byte(`' style="font-weight:normal;" title="Unlock Topic" aria-label="Unlock this topic"><button class="username unlock_label"></button></a>`)
+var topic_63 = []byte(`<a href='/topic/lock/submit/`)
+var topic_64 = []byte(`?session=`)
+var topic_65 = []byte(`' class="mod_button" style="font-weight:normal;" title="Lock Topic" aria-label="Lock this topic"><button class="username lock_label"></button></a>`)
+var topic_66 = []byte(`<a class="mod_button" href='/topic/unstick/submit/`)
+var topic_67 = []byte(`?session=`)
+var topic_68 = []byte(`' style="font-weight:normal;" title="Unpin Topic" aria-label="Unpin this topic"><button class="username unpin_label"></button></a>`)
+var topic_69 = []byte(`<a href='/topic/stick/submit/`)
+var topic_70 = []byte(`?session=`)
+var topic_71 = []byte(`' class="mod_button" style="font-weight:normal;" title="Pin Topic" aria-label="Pin this topic"><button class="username pin_label"></button></a>`)
+var topic_72 = []byte(`<a class="mod_button" href='/users/ips/?ip=`)
+var topic_73 = []byte(`' style="font-weight:normal;" title="View IP" aria-label="The poster's IP is `)
+var topic_74 = []byte(`"><button class="username ip_label"></button></a>`)
+var topic_75 = []byte(`
 		<a href="/report/submit/`)
-var topic_60 = []byte(`?session=`)
-var topic_61 = []byte(`&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag this topic" aria-label="Flag this topic" rel="nofollow"><button class="username flag_label"></button></a>
+var topic_76 = []byte(`?session=`)
+var topic_77 = []byte(`&type=topic" class="mod_button report_item" style="font-weight:normal;" title="Flag this topic" aria-label="Flag this topic" rel="nofollow"><button class="username flag_label"></button></a>
 
 		`)
-var topic_62 = []byte(`<a class="username hide_on_micro like_count" aria-label="The number of likes on this topic">`)
-var topic_63 = []byte(`</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>`)
-var topic_64 = []byte(`<a class="username hide_on_micro user_tag">`)
-var topic_65 = []byte(`</a>`)
-var topic_66 = []byte(`<a class="username hide_on_micro level" aria-label="The poster's level">`)
-var topic_67 = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="Level"></a>`)
-var topic_68 = []byte(`
+var topic_78 = []byte(`<a class="username hide_on_micro like_count" aria-label="The number of likes on this topic">`)
+var topic_79 = []byte(`</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>`)
+var topic_80 = []byte(`<a class="username hide_on_micro user_tag">`)
+var topic_81 = []byte(`</a>`)
+var topic_82 = []byte(`<a class="username hide_on_micro level" aria-label="The poster's level">`)
+var topic_83 = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="Level"></a>`)
+var topic_84 = []byte(`
 
 		</span>
 	</div>
 </article>
 
 <div class="rowblock post_container" aria-label="The current page for this topic" style="overflow: hidden;">`)
-var topic_69 = []byte(`
+var topic_85 = []byte(`
 	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item action_item">
 		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">`)
-var topic_70 = []byte(`</span>
+var topic_86 = []byte(`</span>
 		<span itemprop="text">`)
-var topic_71 = []byte(`</span>
+var topic_87 = []byte(`</span>
 	</article>
 `)
-var topic_72 = []byte(`
+var topic_88 = []byte(`
 	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item `)
-var topic_73 = []byte(`" style="background-image: url(`)
-var topic_74 = []byte(`), url(/static/`)
-var topic_75 = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
-var topic_76 = []byte(`-1`)
-var topic_77 = []byte(`0px;background-repeat:no-repeat, repeat-y;">
+var topic_89 = []byte(`" style="background-image: url(`)
+var topic_90 = []byte(`), url(/static/`)
+var topic_91 = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
+var topic_92 = []byte(`-1`)
+var topic_93 = []byte(`0px;background-repeat:no-repeat, repeat-y;">
 		`)
-var topic_78 = []byte(`
+var topic_94 = []byte(`
 		<p class="editable_block user_content" itemprop="text" style="margin:0;padding:0;">`)
-var topic_79 = []byte(`</p>
+var topic_95 = []byte(`</p>
 
 		<span class="controls">
 
 		<a href="`)
-var topic_80 = []byte(`" class="username real_username" rel="author">`)
-var topic_81 = []byte(`</a>&nbsp;&nbsp;
+var topic_96 = []byte(`" class="username real_username" rel="author">`)
+var topic_97 = []byte(`</a>&nbsp;&nbsp;
 		`)
-var topic_82 = []byte(`<a href="/reply/like/submit/`)
-var topic_83 = []byte(`?session=`)
-var topic_84 = []byte(`" class="mod_button" title="Love it" style="color:#202020;"><button class="username like_label"`)
-var topic_85 = []byte(` style="background-color:#D6FFD6;"`)
-var topic_86 = []byte(`></button></a>`)
-var topic_87 = []byte(`<a href="/reply/edit/submit/`)
-var topic_88 = []byte(`?session=`)
-var topic_89 = []byte(`" class="mod_button" title="Edit Reply"><button class="username edit_item edit_label"></button></a>`)
-var topic_90 = []byte(`<a href="/reply/delete/submit/`)
-var topic_91 = []byte(`?session=`)
-var topic_92 = []byte(`" class="mod_button" title="Delete Reply"><button class="username delete_item trash_label"></button></a>`)
-var topic_93 = []byte(`<a class="mod_button" href='/users/ips/?ip=`)
-var topic_94 = []byte(`' style="font-weight:normal;" title="View IP"><button class="username ip_label"></button></a>`)
-var topic_95 = []byte(`
+var topic_98 = []byte(`<a href="/reply/like/submit/`)
+var topic_99 = []byte(`?session=`)
+var topic_100 = []byte(`" class="mod_button" title="Love it" style="color:#202020;"><button class="username like_label"`)
+var topic_101 = []byte(` style="background-color:#D6FFD6;"`)
+var topic_102 = []byte(`></button></a>`)
+var topic_103 = []byte(`<a href="/reply/edit/submit/`)
+var topic_104 = []byte(`?session=`)
+var topic_105 = []byte(`" class="mod_button" title="Edit Reply"><button class="username edit_item edit_label"></button></a>`)
+var topic_106 = []byte(`<a href="/reply/delete/submit/`)
+var topic_107 = []byte(`?session=`)
+var topic_108 = []byte(`" class="mod_button" title="Delete Reply"><button class="username delete_item trash_label"></button></a>`)
+var topic_109 = []byte(`<a class="mod_button" href='/users/ips/?ip=`)
+var topic_110 = []byte(`' style="font-weight:normal;" title="View IP"><button class="username ip_label"></button></a>`)
+var topic_111 = []byte(`
 		<a href="/report/submit/`)
-var topic_96 = []byte(`?session=`)
-var topic_97 = []byte(`&type=reply" class="mod_button report_item" title="Flag this reply" aria-label="Flag this reply" rel="nofollow"><button class="username report_item flag_label"></button></a>
+var topic_112 = []byte(`?session=`)
+var topic_113 = []byte(`&type=reply" class="mod_button report_item" title="Flag this reply" aria-label="Flag this reply" rel="nofollow"><button class="username report_item flag_label"></button></a>
 
 		`)
-var topic_98 = []byte(`<a class="username hide_on_micro like_count">`)
-var topic_99 = []byte(`</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>`)
-var topic_100 = []byte(`<a class="username hide_on_micro user_tag">`)
-var topic_101 = []byte(`</a>`)
-var topic_102 = []byte(`<a class="username hide_on_micro level">`)
-var topic_103 = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="Level"></a>`)
-var topic_104 = []byte(`
+var topic_114 = []byte(`<a class="username hide_on_micro like_count">`)
+var topic_115 = []byte(`</a><a class="username hide_on_micro like_count_label" title="Like Count"></a>`)
+var topic_116 = []byte(`<a class="username hide_on_micro user_tag">`)
+var topic_117 = []byte(`</a>`)
+var topic_118 = []byte(`<a class="username hide_on_micro level">`)
+var topic_119 = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="Level"></a>`)
+var topic_120 = []byte(`
 
 		</span>
 	</article>
 `)
-var topic_105 = []byte(`</div>
+var topic_121 = []byte(`</div>
 
 `)
-var topic_106 = []byte(`
+var topic_122 = []byte(`
 <div class="rowblock topic_reply_form quick_create_form">
-	<form id="reply_form" enctype="multipart/form-data" action="/reply/create/?session=`)
-var topic_107 = []byte(`" method="post"></form>
-	<input form="reply_form" name="tid" value='`)
-var topic_108 = []byte(`' type="hidden" />
+	<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session=`)
+var topic_123 = []byte(`" method="post"></form>
+	<input form="quick_post_form" name="tid" value='`)
+var topic_124 = []byte(`' type="hidden" />
+	<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 	<div class="formrow real_first_child">
 		<div class="formitem">
-			<textarea id="input_content" form="reply_form" name="reply-content" placeholder="Insert reply here" required></textarea>
+			<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="Insert reply here" required></textarea>
+		</div>
+	</div>
+	<div class="formrow poll_content_row auto_hide">
+		<div class="formitem">
+			<div class="pollinput" data-pollinput="0">
+				<input type="checkbox" disabled />
+				<label class="pollinputlabel"></label>
+				<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="Add new poll option" />
+			</div>
 		</div>
 	</div>
 	<div class="formrow quick_button_row">
 		<div class="formitem">
-			<button form="reply_form" name="reply-button" class="formbutton">Create Reply</button>
+			<button form="quick_post_form" name="reply-button" class="formbutton">Create Reply</button>
+			<button form="quick_post_form" class="formbutton" id="add_poll_button">Add Poll</button>
 			`)
-var topic_109 = []byte(`
-			<input name="upload_files" form="reply_form" id="upload_files" multiple type="file" style="display: none;" />
+var topic_125 = []byte(`
+			<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
 			<label for="upload_files" class="formbutton add_file_button">Add File</label>
 			<div id="upload_file_dock"></div>`)
-var topic_110 = []byte(`
+var topic_126 = []byte(`
 		</div>
 	</div>
 </div>
 `)
-var topic_111 = []byte(`
+var topic_127 = []byte(`
 
 </main>
 
@@ -357,7 +407,7 @@ var topic_alt_21 = []byte(`
 var topic_alt_22 = []byte(`_form" action="/poll/vote/`)
 var topic_alt_23 = []byte(`?session=`)
 var topic_alt_24 = []byte(`" method="post"></form>
-	<article class="rowitem passive deletable_block editable_parent post_item top_post hide_on_edit">
+	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
 		<div class="userinfo" aria-label="The information on the poster">
 			<div class="avatar_item" style="background-image: url(`)
 var topic_alt_25 = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
@@ -568,21 +618,32 @@ var topic_alt_144 = []byte(`</div><div class="tag_post"></div></div>`)
 var topic_alt_145 = []byte(`
 	</div>
 	<div class="rowblock topic_reply_form quick_create_form">
-		<form id="reply_form" enctype="multipart/form-data" action="/reply/create/?session=`)
+		<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session=`)
 var topic_alt_146 = []byte(`" method="post"></form>
-		<input form="reply_form" name="tid" value='`)
+		<input form="quick_post_form" name="tid" value='`)
 var topic_alt_147 = []byte(`' type="hidden" />
+		<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 		<div class="formrow real_first_child">
 			<div class="formitem">
-				<textarea id="input_content" form="reply_form" name="reply-content" placeholder="What do you think?" required></textarea>
+				<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="What do you think?" required></textarea>
+			</div>
+		</div>
+		<div class="formrow poll_content_row auto_hide">
+			<div class="formitem">
+				<div class="pollinput" data-pollinput="0">
+					<input type="checkbox" disabled />
+					<label class="pollinputlabel"></label>
+					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="Add new poll option" />
+				</div>
 			</div>
 		</div>
 		<div class="formrow quick_button_row">
 			<div class="formitem">
-				<button form="reply_form" name="reply-button" class="formbutton">Create Reply</button>
+				<button form="quick_post_form" name="reply-button" class="formbutton">Create Reply</button>
+				<button form="quick_post_form" class="formbutton" id="add_poll_button">Add Poll</button>
 				`)
 var topic_alt_148 = []byte(`
-				<input name="upload_files" form="reply_form" id="upload_files" multiple type="file" style="display: none;" />
+				<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
 				<label for="upload_files" class="formbutton add_file_button">Add File</label>
 				<div id="upload_file_dock"></div>`)
 var topic_alt_149 = []byte(`
@@ -929,15 +990,15 @@ var topics_15 = []byte(`
 	</form>
 </div>
 <div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
-	<form name="topic_create_form_form" id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/?session=`)
+	<form name="topic_create_form_form" id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?session=`)
 var topics_16 = []byte(`" method="post"></form>
-	<input form="topic_create_form_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
+	<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 	<img class="little_row_avatar" src="`)
 var topics_17 = []byte(`" height="64" alt="Your Avatar" title="Your Avatar" />
 	<div class="main_form">
 		<div class="topic_meta">
 			<div class="formrow topic_board_row real_first_child">
-				<div class="formitem"><select form="topic_create_form_form" id="topic_board_input" name="topic-board">
+				<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="topic-board">
 					`)
 var topics_18 = []byte(`<option `)
 var topics_19 = []byte(`selected`)
@@ -949,13 +1010,13 @@ var topics_23 = []byte(`
 			</div>
 			<div class="formrow topic_name_row">
 				<div class="formitem">
-					<input form="topic_create_form_form" name="topic-name" placeholder="What's up?" required>
+					<input form="quick_post_form" name="topic-name" placeholder="What's up?" required>
 				</div>
 			</div>
 		</div>
 		<div class="formrow topic_content_row">
 			<div class="formitem">
-				<textarea form="topic_create_form_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
+				<textarea form="quick_post_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
 			</div>
 		</div>
 		<div class="formrow poll_content_row auto_hide">
@@ -963,17 +1024,17 @@ var topics_23 = []byte(`
 				<div class="pollinput" data-pollinput="0">
 					<input type="checkbox" disabled />
 					<label class="pollinputlabel"></label>
-					<input form="topic_create_form_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="Add new poll option" />
+					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="Add new poll option" />
 				</div>
 			</div>
 		</div>
 		<div class="formrow quick_button_row">
 			<div class="formitem">
-				<button form="topic_create_form_form" class="formbutton">Create Topic</button>
-				<button form="topic_create_form_form" class="formbutton" id="add_poll_button">Add Poll</button>
+				<button form="quick_post_form" class="formbutton">Create Topic</button>
+				<button form="quick_post_form" class="formbutton" id="add_poll_button">Add Poll</button>
 				`)
 var topics_24 = []byte(`
-				<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />
+				<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
 				<label for="upload_files" class="formbutton add_file_button">Add File</label>
 				<div id="upload_file_dock"></div>`)
 var topics_25 = []byte(`
@@ -1127,22 +1188,22 @@ var forum_18 = []byte(`
 	`)
 var forum_19 = []byte(`
 	<div id="forum_topic_create_form" class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="Quick Topic Form">
-		<form id="topic_create_form_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
+		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
 		<img class="little_row_avatar" src="`)
 var forum_20 = []byte(`" height="64" alt="Your Avatar" title="Your Avatar" />
-		<input form="topic_create_form_form" id="topic_board_input" name="topic-board" value="`)
+		<input form="quick_post_form" id="topic_board_input" name="topic-board" value="`)
 var forum_21 = []byte(`" type="hidden">
 		<div class="main_form">
 			<div class="topic_meta">
 				<div class="formrow topic_name_row real_first_child">
 					<div class="formitem">
-						<input form="topic_create_form_form" name="topic-name" placeholder="What's up?" required>
+						<input form="quick_post_form" name="topic-name" placeholder="What's up?" required>
 					</div>
 				</div>
 			</div>
 			<div class="formrow topic_content_row">
 				<div class="formitem">
-					<textarea form="topic_create_form_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
+					<textarea form="quick_post_form" id="input_content" name="topic-content" placeholder="Insert post here" required></textarea>
 				</div>
 			</div>
 			<div class="formrow poll_content_row auto_hide">
@@ -1152,11 +1213,11 @@ var forum_21 = []byte(`" type="hidden">
 			</div>
 			<div class="formrow quick_button_row">
 				<div class="formitem">
-					<button form="topic_create_form_form" name="topic-button" class="formbutton">Create Topic</button>
-					<button form="topic_create_form_form" class="formbutton" id="add_poll_button">Add Poll</button>
+					<button form="quick_post_form" name="topic-button" class="formbutton">Create Topic</button>
+					<button form="quick_post_form" class="formbutton" id="add_poll_button">Add Poll</button>
 					`)
 var forum_22 = []byte(`
-					<input name="upload_files" form="topic_create_form_form" id="upload_files" multiple type="file" style="display: none;" />
+					<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
 					<label for="upload_files" class="formbutton add_file_button">Add File</label>
 					<div id="upload_file_dock"></div>`)
 var forum_23 = []byte(`

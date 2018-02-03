@@ -102,13 +102,7 @@ func init() {
 }
 
 func (user *User) Init() {
-	if user.Avatar != "" {
-		if user.Avatar[0] == '.' {
-			user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + user.Avatar
-		}
-	} else {
-		user.Avatar = strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(user.ID), 1)
-	}
+	user.Avatar = BuildAvatar(user.ID, user.Avatar)
 	user.Link = BuildProfileURL(NameToSlug(user.Name), user.ID)
 	user.Tag = Groups.DirtyGet(user.Group).Tag
 	user.InitPerms()
@@ -353,6 +347,17 @@ func (user *User) InitPerms() {
 	if user.IsBanned && user.IsSuperMod {
 		user.IsBanned = false
 	}
+}
+
+// ? Make this part of *User?
+func BuildAvatar(uid int, avatar string) string {
+	if avatar != "" {
+		if avatar[0] == '.' {
+			return "/uploads/avatar_" + strconv.Itoa(uid) + avatar
+		}
+		return avatar
+	}
+	return strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1)
 }
 
 func BcryptCheckPassword(realPassword string, password string, salt string) (err error) {

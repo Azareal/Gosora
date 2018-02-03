@@ -10,6 +10,9 @@
 	--input-background-color: #444444;
 	--input-border-color: #555555;
 	--input-text-color: #999999;
+	--bright-input-background-color: #555555;
+	--bright-input-border-color: #666666;
+	--input-text-color: #a3a3a3;
 }
 
 body {
@@ -122,8 +125,11 @@ li {
 	content: "Alerts";
 }
 
-.menu_alerts .alertList, .auto_hide, .hide_on_big, .show_on_mobile {
+.menu_alerts .alertList, .hide_on_big, .show_on_mobile {
 	display: none;
+}
+.auto_hide {
+	display: none !important;
 }
 .selectedAlert .alertList {
 	display: block;
@@ -478,7 +484,6 @@ textarea.large {
 	padding: 5px;
  	width: calc(100% - 16px);
 }
-
 .formitem select {
 	background-color: var(--input-background-color);
 	border: 1px solid var(--input-border-color);
@@ -486,7 +491,6 @@ textarea.large {
 	font-size: 13px;
 	padding: 4px;
 }
-
 .rowlist .formitem select {
 	padding: 2px;
 	font-size: 11px;
@@ -532,7 +536,7 @@ input, select, textarea {
 .quick_button_row .formitem, .quick_create_form .upload_file_dock {
 	display: flex;
 }
-.quick_create_form .add_file_button {
+.quick_create_form .add_file_button, .quick_create_form #add_poll_button {
 	margin-left: 8px;
 }
 .quick_create_form .close_form {
@@ -569,6 +573,64 @@ input, select, textarea {
 }
 #poweredBy span {
 	font-size: 12px;
+}
+
+.poll_item {
+	display: flex;
+}
+.poll_option {
+	margin-bottom: 3px;
+}
+input[type=checkbox] {
+	display: none;
+}
+input[type=checkbox] + label {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	margin-bottom: -2px;
+	border: 1px solid var(--bright-input-border-color);
+	background-color: var(--bright-input-background-color);
+}
+input[type=checkbox]:checked + label .sel {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
+	background-color: var(--bright-input-background-color);
+}
+input[type=checkbox] + label.poll_option_label {
+	width: 14px;
+	height: 14px;
+	margin-right: 3px;
+	background-color: var(--bright-input-background-color);
+    border: 1px solid var(--bright-input-border-color);
+    color: var(--bright-input-text-color);
+}
+input[type=checkbox]:checked + label.poll_option_label .sel {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	margin-left: 3px;
+	background: var(--bright-input-border-color);
+}
+
+/*#poll_option_text_0 {
+	color: hsl(359,98%,43%);
+}*/
+.poll_buttons {
+	margin-top: 12px;
+}
+.poll_buttons button {
+	background-color: var(--bright-input-background-color);
+	border: 1px solid var(--bright-input-border-color);
+	color: var(--bright-input-text-color);
+	padding: 7px;
+	padding-bottom: 6px;
+	font-size: 13px;
+}
+.poll_results {
+	margin-left: auto;
+	max-height: 120px;
 }
 
 /* Forum View */

@@ -21,6 +21,29 @@
 		{{end}}
 	</div>
 </div>
+<article class="rowblock post_container poll">
+	<div class="rowitem passive editable_parent post_item poll_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
+		<div class="topic_content user_content" style="margin:0;padding:0;">
+			{{range .Poll.QuickOptions}}
+			<div class="poll_option">
+				<input form="poll_{{$.Poll.ID}}_form" id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}" />
+				<label class="poll_option_label" for="poll_option_{{.ID}}">
+					<div class="sel"></div>
+				</label>
+				<span id="poll_option_text_{{.ID}}" class="poll_option_text">{{.Value}}</span>
+			</div>
+			{{end}}
+			<div class="poll_buttons">
+				<button form="poll_{{.Poll.ID}}_form" class="poll_vote_button">Vote</button>
+				<button class="poll_results_button" data-poll-id="{{.Poll.ID}}">Results</button>
+				<a href="#"><button class="poll_cancel_button">Cancel</button></a>
+			</div>
+		</div>
+		<div id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide">
+			<div class="topic_content user_content"></div>
+		</div>
+	</div>
+</article>
 
 <article itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="The opening post for this topic">
 	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
@@ -82,18 +105,29 @@
 
 {{if .CurrentUser.Perms.CreateReply}}
 <div class="rowblock topic_reply_form quick_create_form">
-	<form id="reply_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>
-	<input form="reply_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
+	<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>
+	<input form="quick_post_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
+	<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 	<div class="formrow real_first_child">
 		<div class="formitem">
-			<textarea id="input_content" form="reply_form" name="reply-content" placeholder="Insert reply here" required></textarea>
+			<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="Insert reply here" required></textarea>
+		</div>
+	</div>
+	<div class="formrow poll_content_row auto_hide">
+		<div class="formitem">
+			<div class="pollinput" data-pollinput="0">
+				<input type="checkbox" disabled />
+				<label class="pollinputlabel"></label>
+				<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="Add new poll option" />
+			</div>
 		</div>
 	</div>
 	<div class="formrow quick_button_row">
 		<div class="formitem">
-			<button form="reply_form" name="reply-button" class="formbutton">Create Reply</button>
+			<button form="quick_post_form" name="reply-button" class="formbutton">Create Reply</button>
+			<button form="quick_post_form" class="formbutton" id="add_poll_button">Add Poll</button>
 			{{if .CurrentUser.Perms.UploadFiles}}
-			<input name="upload_files" form="reply_form" id="upload_files" multiple type="file" style="display: none;" />
+			<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
 			<label for="upload_files" class="formbutton add_file_button">Add File</label>
 			<div id="upload_file_dock"></div>{{end}}
 		</div>

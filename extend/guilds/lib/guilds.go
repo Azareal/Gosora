@@ -333,13 +333,7 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 			return common.InternalError(err, w, r)
 		}
 		guildMember.Link = common.BuildProfileURL(common.NameToSlug(guildMember.User.Name), guildMember.User.ID)
-		if guildMember.User.Avatar != "" {
-			if guildMember.User.Avatar[0] == '.' {
-				guildMember.User.Avatar = "/uploads/avatar_" + strconv.Itoa(guildMember.User.ID) + guildMember.User.Avatar
-			}
-		} else {
-			guildMember.User.Avatar = strings.Replace(common.Config.Noavatar, "{id}", strconv.Itoa(guildMember.User.ID), 1)
-		}
+		guildMember.User.Avatar = common.BuildAvatar(guildMember.User.ID, guildMember.User.Avatar)
 		guildMember.JoinedAt, _ = common.RelativeTimeFromString(guildMember.JoinedAt)
 		if guildItem.Owner == guildMember.User.ID {
 			guildMember.RankString = "Owner"

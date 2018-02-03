@@ -3,8 +3,8 @@ package main
 // TODO: How should we handle headerLite and headerVar?
 func routes() {
 	addRoute(View("routeAPI", "/api/"))
-	addRoute(View("routeOverview", "/overview/"))
-	addRoute(View("routeCustomPage", "/pages/", "extraData"))
+	addRoute(View("routes.Overview", "/overview/"))
+	addRoute(View("routes.CustomPage", "/pages/", "extraData"))
 	addRoute(View("routeForums", "/forums/" /*,"&forums"*/))
 	addRoute(View("routeForum", "/forum/", "extraData"))
 	addRoute(AnonAction("routeChangeTheme", "/theme/"))
@@ -65,7 +65,7 @@ func buildUserRoutes() {
 func buildTopicRoutes() {
 	topicGroup := newRouteGroup("/topic/")
 	topicGroup.Routes(
-		View("routeTopicID", "/topic/", "extraData"),
+		View("routes.ViewTopic", "/topic/", "extraData"),
 		UploadAction("routes.CreateTopicSubmit", "/topic/create/submit/").MaxSizeVar("common.Config.MaxRequestSize"),
 		Action("routes.EditTopicSubmit", "/topic/edit/submit/", "extraData"),
 		Action("routes.DeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
@@ -118,11 +118,11 @@ func buildAccountRoutes() {
 	//router.HandleFunc("/accounts/list/", routeLogin) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
 	accReplyGroup := newRouteGroup("/accounts/")
 	accReplyGroup.Routes(
-		View("routeLogin", "/accounts/login/"),
-		View("routeRegister", "/accounts/create/"),
+		View("routes.AccountLogin", "/accounts/login/"),
+		View("routes.AccountRegister", "/accounts/create/"),
 		Action("routeLogout", "/accounts/logout/"),
-		AnonAction("routeLoginSubmit", "/accounts/login/submit/"), // TODO: Guard this with a token, maybe the IP hashed with a rotated key?
-		AnonAction("routeRegisterSubmit", "/accounts/create/submit/"),
+		AnonAction("routes.AccountLoginSubmit", "/accounts/login/submit/"), // TODO: Guard this with a token, maybe the IP hashed with a rotated key?
+		AnonAction("routes.AccountRegisterSubmit", "/accounts/create/submit/"),
 	)
 	addRouteGroup(accReplyGroup)
 }

@@ -15,9 +15,176 @@ import (
 	"strings"
 
 	"../common"
+	"../query_gen/lib"
 )
 
 var successJSONBytes = []byte(`{"success":"1"}`)
+
+func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit string) common.RouteError {
+	var err error
+	var replyList []common.ReplyUser
+	page, _ := strconv.Atoi(r.FormValue("page"))
+
+	// SEO URLs...
+	// TODO: Make a shared function for this
+	halves := strings.Split(urlBit, ".")
+	if len(halves) < 2 {
+		halves = append(halves, halves[0])
+	}
+
+	tid, err := strconv.Atoi(halves[1])
+	if err != nil {
+		return common.PreError("The provided TopicID is not a valid number.", w, r)
+	}
+
+	// Get the topic...
+	topic, err := common.GetTopicUser(tid)
+	if err == sql.ErrNoRows {
+		return common.NotFound(w, r)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	topic.ClassName = ""
+	//log.Printf("topic: %+v\n", topic)
+
+	headerVars, ferr := common.ForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic {
+		//log.Printf("user.Perms: %+v\n", user.Perms)
+		return common.NoPermissions(w, r, user)
+	}
+	headerVars.Zone = "view_topic"
+	// TODO: Only include these on pages with polls
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
+
+	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
+	topic.ContentLines = strings.Count(topic.Content, "\n")
+
+	// We don't want users posting in locked topics...
+	if topic.IsClosed && !user.IsMod {
+		user.Perms.CreateReply = false
+	}
+
+	postGroup, err := common.Groups.Get(topic.Group)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	topic.Tag = postGroup.Tag
+	if postGroup.IsMod || postGroup.IsAdmin {
+		topic.ClassName = common.Config.StaffCSS
+	}
+	topic.RelativeCreatedAt = common.RelativeTime(topic.CreatedAt)
+
+	// TODO: Make a function for this? Build a more sophisticated noavatar handling system?
+	topic.Avatar = common.BuildAvatar(topic.CreatedBy, topic.Avatar)
+
+	var poll common.Poll
+	if topic.Poll != 0 {
+		pPoll, err := common.Polls.Get(topic.Poll)
+		if err != nil {
+			log.Print("Couldn't find the attached poll for topic " + strconv.Itoa(topic.ID))
+			return common.InternalError(err, w, r)
+		}
+		poll = pPoll.Copy()
+	}
+
+	// Calculate the offset
+	offset, page, lastPage := common.PageOffset(topic.PostCount, page, common.Config.ItemsPerPage)
+	tpage := common.TopicPage{topic.Title, user, headerVars, replyList, topic, poll, page, lastPage}
+
+	// Get the replies..
+	// TODO: Reuse this statement rather than preparing it on the spot, maybe via a TopicList abstraction
+	stmt, err := qgen.Builder.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?")
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	rows, err := stmt.Query(topic.ID, offset, common.Config.ItemsPerPage)
+	if err == sql.ErrNoRows {
+		return common.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	replyItem := common.ReplyUser{ClassName: ""}
+	for rows.Next() {
+		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.ActionType)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		replyItem.UserLink = common.BuildProfileURL(common.NameToSlug(replyItem.CreatedByName), replyItem.CreatedBy)
+		replyItem.ParentID = topic.ID
+		replyItem.ContentHtml = common.ParseMessage(replyItem.Content, topic.ParentID, "forums")
+		replyItem.ContentLines = strings.Count(replyItem.Content, "\n")
+
+		postGroup, err = common.Groups.Get(replyItem.Group)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		if postGroup.IsMod || postGroup.IsAdmin {
+			replyItem.ClassName = common.Config.StaffCSS
+		} else {
+			replyItem.ClassName = ""
+		}
+
+		// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the common.UserStore initialise this?
+		replyItem.Avatar = common.BuildAvatar(replyItem.CreatedBy, replyItem.Avatar)
+		replyItem.Tag = postGroup.Tag
+		replyItem.RelativeCreatedAt = common.RelativeTime(replyItem.CreatedAt)
+
+		// We really shouldn't have inline HTML, we should do something about this...
+		if replyItem.ActionType != "" {
+			switch replyItem.ActionType {
+			case "lock":
+				replyItem.ActionType = "This topic has been locked by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+				replyItem.ActionIcon = "&#x1F512;&#xFE0E"
+			case "unlock":
+				replyItem.ActionType = "This topic has been reopened by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+				replyItem.ActionIcon = "&#x1F513;&#xFE0E"
+			case "stick":
+				replyItem.ActionType = "This topic has been pinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+				replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
+			case "unstick":
+				replyItem.ActionType = "This topic has been unpinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+				replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
+			case "move":
+				replyItem.ActionType = "This topic has been moved by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+			default:
+				replyItem.ActionType = replyItem.ActionType + " has happened"
+				replyItem.ActionIcon = ""
+			}
+		}
+		replyItem.Liked = false
+
+		if common.Vhooks["topic_reply_row_assign"] != nil {
+			common.RunVhook("topic_reply_row_assign", &tpage, &replyItem)
+		}
+		replyList = append(replyList, replyItem)
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	tpage.ItemList = replyList
+	if common.PreRenderHooks["pre_render_view_topic"] != nil {
+		if common.RunPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
+			return nil
+		}
+	}
+	err = common.RunThemeTemplate(headerVars.Theme.Name, "topic", tpage, w)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	common.TopicViewCounter.Bump(topic.ID) // TODO Move this into the router?
+	return nil
+}
 
 // ? - Should we add a new permission or permission zone (like per-forum permissions) specifically for profile comment creation
 // ? - Should we allow banned users to make reports? How should we handle report abuse?

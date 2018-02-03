@@ -568,6 +568,10 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 .poll_buttons button {
 	margin-right: 5px;
 }
+.topic_reply_form .pollinput {
+	margin-left: 16px;
+	margin-top: 4px;
+}
 
 .formbutton {
 	margin-top: 12px;

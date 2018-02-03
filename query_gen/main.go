@@ -255,8 +255,6 @@ func writeSelects(adapter qgen.Adapter) error {
 }
 
 func writeLeftJoins(adapter qgen.Adapter) error {
-	adapter.SimpleLeftJoin("getTopicRepliesOffset", "replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?")
-
 	adapter.SimpleLeftJoin("getTopicList", "topics", "users", "topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.parentID, users.name, users.avatar", "topics.createdBy = users.uid", "", "topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy DESC", "")
 
 	adapter.SimpleLeftJoin("getTopicReplies", "replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress", "replies.createdBy = users.uid", "tid = ?", "", "")
@@ -285,8 +283,6 @@ func writeInserts(adapter qgen.Adapter) error {
 	build.Insert("addActivity").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Fields("?,?,?,?,?").Parse()
 
 	build.Insert("notifyOne").Table("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Parse()
-
-	build.Insert("addEmail").Table("emails").Columns("email, uid, validated, token").Fields("?,?,?,?").Parse()
 
 	build.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
 

@@ -107,9 +107,59 @@ func routeCreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.
 
 	content := common.PreparseMessage(r.PostFormValue("reply-content"))
 	// TODO: Fully parse the post and put that in the parsed column
-	_, err = common.Rstore.Create(topic, content, user.LastIP, user.ID)
+	rid, err := common.Rstore.Create(topic, content, user.LastIP, user.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
+	}
+
+	reply, err := common.Rstore.Get(rid)
+	if err != nil {
+		return common.LocalError("Unable to load the reply", w, r, user)
+	}
+	if r.PostFormValue("has_poll") == "1" {
+		var maxPollOptions = 10
+		var pollInputItems = make(map[int]string)
+		for key, values := range r.Form {
+			//if common.Dev.SuperDebug {
+			log.Print("key: ", key)
+			log.Printf("values: %+v\n", values)
+			//}
+			for _, value := range values {
+				if strings.HasPrefix(key, "pollinputitem[") {
+					halves := strings.Split(key, "[")
+					if len(halves) != 2 {
+						return common.LocalError("Malformed pollinputitem", w, r, user)
+					}
+					halves[1] = strings.TrimSuffix(halves[1], "]")
+
+					index, err := strconv.Atoi(halves[1])
+					if err != nil {
+						return common.LocalError("Malformed pollinputitem", w, r, user)
+					}
+
+					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
+					_, exists := pollInputItems[index]
+					if !exists && len(html.EscapeString(value)) != 0 {
+						pollInputItems[index] = html.EscapeString(value)
+						if len(pollInputItems) >= maxPollOptions {
+							break
+						}
+					}
+				}
+			}
+		}
+
+		// Make sure the indices are sequential to avoid out of bounds issues
+		var seqPollInputItems = make(map[int]string)
+		for i := 0; i < len(pollInputItems); i++ {
+			seqPollInputItems[i] = pollInputItems[i]
+		}
+
+		pollType := 0 // Basic single choice
+		_, err := common.Polls.Create(reply, pollType, seqPollInputItems)
+		if err != nil {
+			return common.LocalError("Failed to add poll to reply", w, r, user) // TODO: Might need to be an internal error as it could leave phantom polls?
+		}
 	}
 
 	err = common.Forums.UpdateLastTopic(tid, user.ID, topic.ParentID)

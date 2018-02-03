@@ -1501,14 +1501,7 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user common.User) c
 		}
 
 		puser.InitPerms()
-		if puser.Avatar != "" {
-			if puser.Avatar[0] == '.' {
-				puser.Avatar = "/uploads/avatar_" + strconv.Itoa(puser.ID) + puser.Avatar
-			}
-		} else {
-			puser.Avatar = strings.Replace(common.Config.Noavatar, "{id}", strconv.Itoa(puser.ID), 1)
-		}
-
+		puser.Avatar = common.BuildAvatar(puser.ID, puser.Avatar)
 		if common.Groups.DirtyGet(puser.Group).Tag != "" {
 			puser.Tag = common.Groups.DirtyGet(puser.Group).Tag
 		} else {

@@ -167,18 +167,23 @@ func main() {
 		"edge",
 		"internetexplorer",
 
+		"androidchrome",
+		"mobilesafari", // Coming soon
+		"ucbrowser",
+
 		"googlebot",
 		"yandex",
 		"bing",
 		"baidu",
 		"duckduckgo",
 		"discord",
-		"cloudflarealwayson",
+		"cloudflare",
 		"uptimebot",
 		"lynx",
 		"blank",
 		"malformed",
 		"suspicious",
+		"zgrab",
 	}
 
 	tmplVars.AllAgentMap = make(map[string]int)
@@ -220,6 +225,34 @@ var agentMapEnum = map[string]int{ {{range $index, $element := .AllAgentNames}}
 var reverseAgentMapEnum = map[int]string{ {{range $index, $element := .AllAgentNames}}
 	{{$index}}: "{{$element}}",{{end}}
 }
+var markToAgent = map[string]string{
+	"OPR":"opera",
+	"Chrome":"chrome",
+	"Firefox":"firefox",
+	"MSIE":"internetexplorer",
+	//"Trident":"internetexplorer",
+	"Edge":"edge",
+	"Lynx":"lynx", // There's a rare android variant of lynx which isn't covered by this
+	"UCBrowser":"ucbrowser",
+
+	"Google":"googlebot",
+	"Googlebot":"googlebot",
+	"yandex": "yandex", // from the URL
+	"DuckDuckBot":"duckduckgo",
+	"Baiduspider":"baidu",
+	"bingbot":"bing",
+	"BingPreview":"bing",
+	"CloudFlare":"cloudflare", // Track alwayson specifically in case there are other bots?
+	"Uptimebot":"uptimebot",
+	"Discordbot":"discord",
+
+	"zgrab":"zgrab",
+}
+/*var agentRank = map[string]int{
+	"opera":9,
+	"chrome":8,
+	"safari":1,
+}*/
 
 // TODO: Stop spilling these into the package scope?
 func init() {
@@ -348,7 +381,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	if common.Dev.SuperDebug {
-		log.Print("before routeStatic")
+		log.Print("before routes.StaticFile")
 		log.Print("Method: ", req.Method)
 		for key, value := range req.Header {
 			for _, vvalue := range value {
@@ -366,7 +399,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if prefix == "/static" {
 		req.URL.Path += extraData
-		routeStatic(w, req)
+		routes.StaticFile(w, req)
 		return
 	}
 	if common.Dev.SuperDebug {
@@ -379,49 +412,65 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
-	ua := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36")) // Noise, no one's going to be running this and it complicates implementing an efficient UA parser, particularly the more efficient right-to-left one I have in mind
-	switch {
-	case strings.Contains(ua,"Google"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.googlebot}})
-	case strings.Contains(ua,"Yandex"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.yandex}})
-	case strings.Contains(ua,"bingbot"), strings.Contains(ua,"BingPreview"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.bing}})
-	case strings.Contains(ua,"OPR"): // Pretends to be Chrome, needs to run before that
-		common.AgentViewCounter.Bump({{.AllAgentMap.opera}})
-	case strings.Contains(ua,"Edge"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.edge}})
-	case strings.Contains(ua,"Chrome"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.chrome}})
-	case strings.Contains(ua,"Firefox"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.firefox}})
-	case strings.Contains(ua,"Safari"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.safari}})
-	case strings.Contains(ua,"MSIE"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.internetexplorer}})
-	case strings.Contains(ua,"Baiduspider"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.baidu}})
-	case strings.Contains(ua,"DuckDuckBot"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.duckduckgo}})
-	case strings.Contains(ua,"Discordbot"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.discord}})
-	case strings.Contains(ua,"Lynx"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.lynx}})
-	case strings.Contains(ua,"CloudFlare-AlwaysOnline"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.cloudflarealwayson}})
-	case strings.Contains(ua,"Uptimebot"):
-		common.AgentViewCounter.Bump({{.AllAgentMap.uptimebot}})
-	case ua == "":
+	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
+	if ua == "" {
 		common.AgentViewCounter.Bump({{.AllAgentMap.blank}})
 		if common.Dev.DebugMode {
 			log.Print("Blank UA: ", req.UserAgent())
 			router.DumpRequest(req)
 		}
-	default:
-		common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
+	} else {
+		// WIP UA Parser
+		var indices []int
+		var items []string
+		var buffer []rune
+		for index, item := range ua {
+			if (item > 64 && item < 91) || (item > 96 && item < 123) {
+				buffer = append(buffer, item)
+			} else if len(buffer) != 0 {
+				items = append(items, string(buffer))
+				indices = append(indices, index - 1)
+				buffer = buffer[:0]
+			}
+		}
+
+		// Iterate over this in reverse as the real UA tends to be on the right side
+		var agent string
+		for i := len(items) - 1; i >= 0; i-- {
+			fAgent, ok := markToAgent[items[i]]
+			if ok {
+				agent = fAgent
+				if agent != "safari" {
+					break
+				}
+			}
+		}
+
 		if common.Dev.DebugMode {
-			log.Print("Unknown UA: ", req.UserAgent())
-			router.DumpRequest(req)
+			log.Print("parsed agent: ",agent)
+		}
+		
+		// Special handling
+		switch(agent) {
+		case "chrome":
+			for _, mark := range items {
+				if mark == "Android" {
+					agent = "androidchrome"
+					break
+				}
+			}
+		case "zgrab":
+			router.SuspiciousRequest(req)
+		}
+		
+		if agent == "" {
+			common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
+			if common.Dev.DebugMode {
+				log.Print("Unknown UA: ", req.UserAgent())
+				router.DumpRequest(req)
+			}
+		} else {
+			common.AgentViewCounter.Bump(agentMapEnum[agent])
 		}
 	}
 	
@@ -500,8 +549,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
+			// TODO: Log all bad routes for the admin to figure out where users are going wrong?
 			lowerPath := strings.ToLower(req.URL.Path)
-			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") {
+			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") || strings.Contains(lowerPath,"//") || strings.Contains(lowerPath,"\\\\") {
 				router.SuspiciousRequest(req)
 			}
 			common.RouteViewCounter.Bump({{.AllRouteMap.BadRoute}})

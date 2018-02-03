@@ -25,7 +25,7 @@
 <div class="rowblock post_container">
 	{{if .Poll.ID}}
 	<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
-	<article class="rowitem passive deletable_block editable_parent post_item top_post hide_on_edit">
+	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
 		<div class="userinfo" aria-label="The information on the poster">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
@@ -128,18 +128,29 @@
 		{{if .CurrentUser.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.CurrentUser.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">Level {{.CurrentUser.Level}}</div><div class="tag_post"></div></div>{{end}}
 	</div>
 	<div class="rowblock topic_reply_form quick_create_form">
-		<form id="reply_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>
-		<input form="reply_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
+		<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>
+		<input form="quick_post_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
+		<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 		<div class="formrow real_first_child">
 			<div class="formitem">
-				<textarea id="input_content" form="reply_form" name="reply-content" placeholder="What do you think?" required></textarea>
+				<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="What do you think?" required></textarea>
+			</div>
+		</div>
+		<div class="formrow poll_content_row auto_hide">
+			<div class="formitem">
+				<div class="pollinput" data-pollinput="0">
+					<input type="checkbox" disabled />
+					<label class="pollinputlabel"></label>
+					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="Add new poll option" />
+				</div>
 			</div>
 		</div>
 		<div class="formrow quick_button_row">
 			<div class="formitem">
-				<button form="reply_form" name="reply-button" class="formbutton">Create Reply</button>
+				<button form="quick_post_form" name="reply-button" class="formbutton">Create Reply</button>
+				<button form="quick_post_form" class="formbutton" id="add_poll_button">Add Poll</button>
 				{{if .CurrentUser.Perms.UploadFiles}}
-				<input name="upload_files" form="reply_form" id="upload_files" multiple type="file" style="display: none;" />
+				<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
 				<label for="upload_files" class="formbutton add_file_button">Add File</label>
 				<div id="upload_file_dock"></div>{{end}}
 			</div>

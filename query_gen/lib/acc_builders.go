@@ -123,6 +123,14 @@ func (insert *accInsertBuilder) Prepare() *sql.Stmt {
 	return insert.build.SimpleInsert(insert.table, insert.columns, insert.fields)
 }
 
+func (insert *accInsertBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
+	stmt := insert.Prepare()
+	if stmt != nil {
+		return stmt.Exec(args...)
+	}
+	return res, insert.build.FirstError()
+}
+
 type accCountBuilder struct {
 	table string
 	where string
