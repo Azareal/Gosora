@@ -801,7 +801,7 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 		}
 
 		var unixCreatedAt = createdAt.Unix()
-		if common.Dev.DebugMode {
+		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
@@ -883,7 +883,7 @@ func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user
 		}
 
 		var unixCreatedAt = createdAt.Unix()
-		if common.Dev.DebugMode {
+		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
@@ -963,7 +963,7 @@ func routePanelAnalyticsTopics(w http.ResponseWriter, r *http.Request, user comm
 		}
 
 		var unixCreatedAt = createdAt.Unix()
-		if common.Dev.DebugMode {
+		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
@@ -1039,7 +1039,7 @@ func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user commo
 		}
 
 		var unixCreatedAt = createdAt.Unix()
-		if common.Dev.DebugMode {
+		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
@@ -1096,7 +1096,7 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 			return common.InternalError(err, w, r)
 		}
 
-		if common.Dev.DebugMode {
+		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("route: ", route)
 		}
@@ -1147,7 +1147,7 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 			return common.InternalError(err, w, r)
 		}
 
-		if common.Dev.DebugMode {
+		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("agent: ", agent)
 		}
@@ -1203,7 +1203,7 @@ func routePanelAnalyticsSystems(w http.ResponseWriter, r *http.Request, user com
 			return common.InternalError(err, w, r)
 		}
 
-		if common.Dev.DebugMode {
+		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("system: ", system)
 		}

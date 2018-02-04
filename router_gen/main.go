@@ -460,7 +460,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		for index, item := range ua {
 			if (item > 64 && item < 91) || (item > 96 && item < 123) {
 				buffer = append(buffer, item)
-			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == '.' || item == '+' || (item == ':' && runeEquals(buffer,[]rune("http"))) || item == ',' || item == '/' {
+			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == '.' || item == '+' || (item == ':' && (runeEquals(buffer,[]rune("http")) || runeEquals(buffer,[]rune("rv")))) || item == ',' || item == '/' {
 				if len(buffer) != 0 {
 					items = append(items, string(buffer))
 					indices = append(indices, index - 1)
