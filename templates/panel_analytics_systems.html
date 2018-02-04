@@ -2,10 +2,10 @@
 <div class="colstack panel_stack">
 {{template "panel-menu.html" . }}
 	<main id="panel_dashboard_right" class="colstack_right">
-		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/agents/" method="get">
+		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/systems/" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
-					<a>User Agents</a>
+					<a>Operating Systems</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
 						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
 						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>2 days</option>
@@ -16,10 +16,10 @@
 				</div>
 			</div>
 		</form>
-		<div id="panel_analytics_agents" class="colstack_item rowlist">
+		<div id="panel_analytics_systems" class="colstack_item rowlist">
 			{{range .ItemList}}
 			<div class="rowitem panel_compactrow editable_parent">
-				<a href="/panel/analytics/agent/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
+				<a href="/panel/analytics/system/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
 				<span class="panel_compacttext to_right">{{.Count}} views</span>
 			</div>
 			{{end}}

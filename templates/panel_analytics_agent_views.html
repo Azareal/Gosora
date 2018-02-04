@@ -5,7 +5,7 @@
 		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/agent/{{.Agent}}" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
-					<a>{{.Agent}} Views</a>
+					<a>{{.FriendlyAgent}} Views</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
 						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
 						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>2 days</option>

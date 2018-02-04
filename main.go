@@ -105,6 +105,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.OSViewCounter, err = common.NewDefaultOSViewCounter()
+	if err != nil {
+		return err
+	}
 	common.RouteViewCounter, err = common.NewDefaultRouteViewCounter()
 	if err != nil {
 		return err

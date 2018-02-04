@@ -130,3 +130,14 @@ func SetAgentMapEnum(ame map[string]int) {
 func SetReverseAgentMapEnum(rame map[int]string) {
 	reverseAgentMapEnum = rame
 }
+
+var osMapEnum map[string]int
+var reverseOSMapEnum map[int]string
+
+func SetOSMapEnum(osme map[string]int) {
+	osMapEnum = osme
+}
+
+func SetReverseOSMapEnum(rosme map[int]string) {
+	reverseOSMapEnum = rosme
+}

@@ -799,11 +799,14 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
-		log.Print("count: ", count)
-		log.Print("createdAt: ", createdAt)
 
 		var unixCreatedAt = createdAt.Unix()
-		log.Print("unixCreatedAt: ", unixCreatedAt)
+		if common.Dev.DebugMode {
+			log.Print("count: ", count)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+
 		for _, value := range labelList {
 			if unixCreatedAt > value {
 				viewMap[value] += count
@@ -822,8 +825,96 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	log.Printf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", html.EscapeString(agent), graph, timeRange.Range}
+	// ? Only allow valid agents? The problem with this is that agents wind up getting renamed and it would take a migration to get them all up to snuff
+	agent = html.EscapeString(agent)
+	friendlyAgent, ok := common.GetUserAgentPhrase(agent)
+	if !ok {
+		friendlyAgent = agent
+	}
+
+	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", agent, friendlyAgent, graph, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_agent_views", w, r, user, &pi)
+}
+
+func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.User, system string) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
+
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
+	var revLabelList []int64
+	var labelList []int64
+	var viewMap = make(map[int64]int64)
+	var currentTime = time.Now().Unix()
+
+	for i := 1; i <= timeRange.Slices; i++ {
+		var label = currentTime - int64(i*timeRange.SliceWidth)
+		revLabelList = append(revLabelList, label)
+		viewMap[label] = 0
+	}
+	for _, value := range revLabelList {
+		labelList = append(labelList, value)
+	}
+
+	var viewList []int64
+	log.Print("in routePanelAnalyticsSystemViews")
+
+	acc := qgen.Builder.Accumulator()
+	// TODO: Verify the agent is valid
+	rows, err := acc.Select("viewchunks_systems").Columns("count, createdAt").Where("system = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(system)
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int64
+		var createdAt time.Time
+		err := rows.Scan(&count, &createdAt)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		var unixCreatedAt = createdAt.Unix()
+		if common.Dev.DebugMode {
+			log.Print("count: ", count)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				viewMap[value] += count
+				break
+			}
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	for _, value := range revLabelList {
+		viewList = append(viewList, viewMap[value])
+	}
+	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	log.Printf("graph: %+v\n", graph)
+
+	system = html.EscapeString(system)
+	friendlySystem, ok := common.GetOSPhrase(system)
+	if !ok {
+		friendlySystem = system
+	}
+
+	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", system, friendlySystem, graph, timeRange.Range}
+	return panelRenderTemplate("panel_analytics_system_views", w, r, user, &pi)
 }
 
 func routePanelAnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -870,11 +961,14 @@ func routePanelAnalyticsTopics(w http.ResponseWriter, r *http.Request, user comm
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
-		log.Print("count: ", count)
-		log.Print("createdAt: ", createdAt)
 
 		var unixCreatedAt = createdAt.Unix()
-		log.Print("unixCreatedAt: ", unixCreatedAt)
+		if common.Dev.DebugMode {
+			log.Print("count: ", count)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+
 		for _, value := range labelList {
 			if unixCreatedAt > value {
 				viewMap[value] += count
@@ -943,11 +1037,14 @@ func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user commo
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
-		log.Print("count: ", count)
-		log.Print("createdAt: ", createdAt)
 
 		var unixCreatedAt = createdAt.Unix()
-		log.Print("unixCreatedAt: ", unixCreatedAt)
+		if common.Dev.DebugMode {
+			log.Print("count: ", count)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+
 		for _, value := range labelList {
 			if unixCreatedAt > value {
 				viewMap[value] += count
@@ -999,8 +1096,10 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 			return common.InternalError(err, w, r)
 		}
 
-		log.Print("count: ", count)
-		log.Print("route: ", route)
+		if common.Dev.DebugMode {
+			log.Print("count: ", count)
+			log.Print("route: ", route)
+		}
 		routeMap[route] += count
 	}
 	err = rows.Err()
@@ -1048,8 +1147,10 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 			return common.InternalError(err, w, r)
 		}
 
-		log.Print("count: ", count)
-		log.Print("agent: ", agent)
+		if common.Dev.DebugMode {
+			log.Print("count: ", count)
+			log.Print("agent: ", agent)
+		}
 		agentMap[agent] += count
 	}
 	err = rows.Err()
@@ -1060,14 +1161,75 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 	// TODO: Sort this slice
 	var agentItems []common.PanelAnalyticsAgentsItem
 	for agent, count := range agentMap {
+		aAgent, ok := common.GetUserAgentPhrase(agent)
+		if !ok {
+			aAgent = agent
+		}
 		agentItems = append(agentItems, common.PanelAnalyticsAgentsItem{
-			Agent: agent,
-			Count: count,
+			Agent:         agent,
+			FriendlyAgent: aAgent,
+			Count:         count,
 		})
 	}
 
 	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", agentItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_agents", w, r, user, &pi)
+}
+
+func routePanelAnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	var osMap = make(map[string]int)
+
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("viewchunks_systems").Columns("count, system").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int
+		var system string
+		err := rows.Scan(&count, &system)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		if common.Dev.DebugMode {
+			log.Print("count: ", count)
+			log.Print("system: ", system)
+		}
+		osMap[system] += count
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Sort this slice
+	var systemItems []common.PanelAnalyticsAgentsItem
+	for system, count := range osMap {
+		sSystem, ok := common.GetOSPhrase(system)
+		if !ok {
+			sSystem = system
+		}
+		systemItems = append(systemItems, common.PanelAnalyticsAgentsItem{
+			Agent:         system,
+			FriendlyAgent: sSystem,
+			Count:         count,
+		})
+	}
+
+	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", systemItems, timeRange.Range}
+	return panelRenderTemplate("panel_analytics_systems", w, r, user, &pi)
 }
 
 func routePanelSettings(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

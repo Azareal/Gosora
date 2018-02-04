@@ -190,8 +190,9 @@ type PanelAnalyticsRoutesPage struct {
 }
 
 type PanelAnalyticsAgentsItem struct {
-	Agent string
-	Count int
+	Agent         string
+	FriendlyAgent string
+	Count         int
 }
 
 type PanelAnalyticsAgentsPage struct {
@@ -223,6 +224,7 @@ type PanelAnalyticsAgentPage struct {
 	Stats        PanelStats
 	Zone         string
 	Agent        string
+	FriendlyAgent string
 	PrimaryGraph PanelTimeGraph
 	TimeRange    string
 }

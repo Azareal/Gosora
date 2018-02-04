@@ -89,5 +89,45 @@
 		"panel_mod_logs":"Moderation Logs",
 		"panel_admin_logs":"Administration Logs",
 		"panel_debug":"Debug"
+	},
+
+	"UserAgents": {
+		"chrome": "Google Chrome",
+		"firefox":"Mozilla Firefox",
+		"opera":"Opera",
+		"safari":"Safari",
+		"edge": "Edge",
+		"internetexplorer":"MS Internet Explorer",
+		"trident":"Trident Engine",
+		"androidchrome":"Chrome for Android",
+		"mobilesafari":"Mobile Safari",
+		"samsung":"Samsung Browser",
+		"ucbrowser":"UCBrowser",
+
+		"googlebot":"Googlebot",
+		"yandex":"Yandex",
+		"bing":"Bing",
+		"baidu":"Baidu",
+		"duckduckgo":"DuckDuckBot",
+		"seznambot":"SeznamBot",
+		"discord":"Discord",
+		"twitter":"Twitterbot",
+		"cloudflare":"Cloudflare Alwayson",
+		"uptimebot":"Uptimebot",
+		"discourse":"Discourse Forum Onebox",
+		"lynx":"Lynx",
+		
+		"zgrab":"Zgrab Application Scanner",
+		"suspicious":"Suspicious",
+		"unknown":"Unknown",
+		"blank":"Blank",
+		"malformed":"Malformed"
+	},
+	"OperatingSystems": {
+		"windows": "Microsoft Windows",
+		"linux":"Linux",
+		"android": "Android",
+		"iphone":"iPhone",
+		"unknown":"Unknown"
 	}
 }

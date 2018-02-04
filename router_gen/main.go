@@ -19,6 +19,8 @@ type TmplVars struct {
 	AllRouteMap   map[string]int
 	AllAgentNames []string
 	AllAgentMap   map[string]int
+	AllOSNames    []string
+	AllOSMap      map[string]int
 }
 
 func main() {
@@ -158,6 +160,20 @@ func main() {
 	mapIt("BadRoute")
 	tmplVars.AllRouteNames = allRouteNames
 	tmplVars.AllRouteMap = allRouteMap
+
+	tmplVars.AllOSNames = []string{
+		"unknown",
+		"windows",
+		"linux",
+		"mac",
+		"android",
+		"iphone",
+	}
+	tmplVars.AllOSMap = make(map[string]int)
+	for id, os := range tmplVars.AllOSNames {
+		tmplVars.AllOSMap[os] = id
+	}
+
 	tmplVars.AllAgentNames = []string{
 		"unknown",
 		"firefox",
@@ -166,9 +182,11 @@ func main() {
 		"safari",
 		"edge",
 		"internetexplorer",
+		"trident", // Hack to support IE11
 
 		"androidchrome",
-		"mobilesafari", // Coming soon
+		"mobilesafari",
+		"samsung",
 		"ucbrowser",
 
 		"googlebot",
@@ -176,9 +194,12 @@ func main() {
 		"bing",
 		"baidu",
 		"duckduckgo",
+		"seznambot",
 		"discord",
+		"twitter",
 		"cloudflare",
 		"uptimebot",
+		"discourse",
 		"lynx",
 		"blank",
 		"malformed",
@@ -219,6 +240,12 @@ var routeMapEnum = map[string]int{ {{range $index, $element := .AllRouteNames}}
 var reverseRouteMapEnum = map[int]string{ {{range $index, $element := .AllRouteNames}}
 	{{$index}}: "{{$element}}",{{end}}
 }
+var osMapEnum = map[string]int{ {{range $index, $element := .AllOSNames}}
+	"{{$element}}": {{$index}},{{end}}
+}
+var reverseOSMapEnum = map[int]string{ {{range $index, $element := .AllOSNames}}
+	{{$index}}: "{{$element}}",{{end}}
+}
 var agentMapEnum = map[string]int{ {{range $index, $element := .AllAgentNames}}
 	"{{$element}}": {{$index}},{{end}}
 }
@@ -230,9 +257,10 @@ var markToAgent = map[string]string{
 	"Chrome":"chrome",
 	"Firefox":"firefox",
 	"MSIE":"internetexplorer",
-	//"Trident":"internetexplorer",
+	"Trident":"trident", // Hack to support IE11
 	"Edge":"edge",
 	"Lynx":"lynx", // There's a rare android variant of lynx which isn't covered by this
+	"SamsungBrowser":"samsung",
 	"UCBrowser":"ucbrowser",
 
 	"Google":"googlebot",
@@ -242,9 +270,12 @@ var markToAgent = map[string]string{
 	"Baiduspider":"baidu",
 	"bingbot":"bing",
 	"BingPreview":"bing",
+	"SeznamBot":"seznambot",
 	"CloudFlare":"cloudflare", // Track alwayson specifically in case there are other bots?
 	"Uptimebot":"uptimebot",
 	"Discordbot":"discord",
+	"Twitterbot":"twitter",
+	"Discourse":"discourse",
 
 	"zgrab":"zgrab",
 }
@@ -260,6 +291,8 @@ func init() {
 	common.SetReverseRouteMapEnum(reverseRouteMapEnum)
 	common.SetAgentMapEnum(agentMapEnum)
 	common.SetReverseAgentMapEnum(reverseAgentMapEnum)
+	common.SetOSMapEnum(osMapEnum)
+	common.SetReverseOSMapEnum(reverseOSMapEnum)
 }
 
 type GenRouter struct {
@@ -382,19 +415,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	if common.Dev.SuperDebug {
 		log.Print("before routes.StaticFile")
-		log.Print("Method: ", req.Method)
-		for key, value := range req.Header {
-			for _, vvalue := range value {
-				log.Print("Header '" + key + "': " + vvalue + "!!")
-			}
-		}
-		log.Print("prefix: ", prefix)
-		log.Print("req.Host: ", req.Host)
-		log.Print("req.URL.Path: ", req.URL.Path)
-		log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-		log.Print("extraData: ", extraData)
-		log.Print("req.Referer(): ", req.Referer())
-		log.Print("req.RemoteAddr: ", req.RemoteAddr)
+		router.DumpRequest(req)
 	}
 	
 	if prefix == "/static" {
@@ -420,6 +441,18 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.DumpRequest(req)
 		}
 	} else {
+		var runeEquals = func(a []rune, b []rune) bool {
+			if len(a) != len(b) {
+				return false
+			}
+			for i, item := range a {
+				if item != b[i] {
+					return false
+				}
+			}
+			return true
+		}
+		
 		// WIP UA Parser
 		var indices []int
 		var items []string
@@ -427,10 +460,20 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		for index, item := range ua {
 			if (item > 64 && item < 91) || (item > 96 && item < 123) {
 				buffer = append(buffer, item)
-			} else if len(buffer) != 0 {
-				items = append(items, string(buffer))
-				indices = append(indices, index - 1)
-				buffer = buffer[:0]
+			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == '.' || item == '+' || (item == ':' && runeEquals(buffer,[]rune("http"))) || item == ',' || item == '/' {
+				if len(buffer) != 0 {
+					items = append(items, string(buffer))
+					indices = append(indices, index - 1)
+					buffer = buffer[:0]
+				}
+			} else {
+				// TODO: Test this
+				items = items[:0]
+				indices = indices[:0]
+				router.SuspiciousRequest(req)
+				log.Print("UA Buffer: ", buffer)
+				log.Print("UA Buffer String: ", string(buffer))
+				break
 			}
 		}
 
@@ -445,19 +488,47 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 		}
+		if common.Dev.SuperDebug {
+			log.Print("parsed agent: ", agent)
+		}
 
-		if common.Dev.DebugMode {
-			log.Print("parsed agent: ",agent)
+		var os string
+		for _, mark := range items {
+			switch(mark) {
+			case "Windows":
+				os = "windows"
+			case "Linux":
+				os = "linux"
+			case "Mac":
+				os = "mac"
+			case "iPhone":
+				os = "iphone"
+			case "Android":
+				os = "android"
+			}
+		}
+		if os == "" {
+			os = "unknown"
+		}
+		if common.Dev.SuperDebug {
+			log.Print("os: ", os)
+			log.Printf("items: %+v\n",items)
 		}
 		
 		// Special handling
 		switch(agent) {
 		case "chrome":
-			for _, mark := range items {
-				if mark == "Android" {
-					agent = "androidchrome"
-					break
-				}
+			if os == "android" {
+				agent = "androidchrome"
+			}
+		case "safari":
+			if os == "iphone" {
+				agent = "mobilesafari"
+			}
+		case "trident":
+			// Hack to support IE11, change this after we start logging versions
+			if strings.Contains(ua,"rv:11") {
+				agent = "internetexplorer"
 			}
 		case "zgrab":
 			router.SuspiciousRequest(req)
@@ -472,6 +543,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		} else {
 			common.AgentViewCounter.Bump(agentMapEnum[agent])
 		}
+		common.OSViewCounter.Bump(osMapEnum[os])
 	}
 	
 	// Deal with the session stuff, etc.
@@ -551,7 +623,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 			// TODO: Log all bad routes for the admin to figure out where users are going wrong?
 			lowerPath := strings.ToLower(req.URL.Path)
-			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") || strings.Contains(lowerPath,"//") || strings.Contains(lowerPath,"\\\\") {
+			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") || strings.Contains(lowerPath,"//") || strings.Contains(lowerPath,"\\\\") || strings.Contains(lowerPath,"wp") || strings.Contains(lowerPath,"wordpress") || strings.Contains(lowerPath,"config") || strings.Contains(lowerPath,"setup") || strings.Contains(lowerPath,"install") || strings.Contains(lowerPath,"update") || strings.Contains(lowerPath,"php") {
 				router.SuspiciousRequest(req)
 			}
 			common.RouteViewCounter.Bump({{.AllRouteMap.BadRoute}})

@@ -34,16 +34,18 @@ type LevelPhrases struct {
 
 // ! For the sake of thread safety, you must never modify a *LanguagePack directly, but to create a copy of it and overwrite the entry in the sync.Map
 type LanguagePack struct {
-	Name          string
-	Phrases       map[string]string // Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
-	Levels        LevelPhrases
-	GlobalPerms   map[string]string
-	LocalPerms    map[string]string
-	SettingLabels map[string]string
-	PermPresets   map[string]string
-	Accounts      map[string]string            // TODO: Apply these phrases in the software proper
-	Errors        map[string]map[string]string // map[category]map[name]value
-	PageTitles    map[string]string
+	Name             string
+	Phrases          map[string]string // Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
+	Levels           LevelPhrases
+	GlobalPerms      map[string]string
+	LocalPerms       map[string]string
+	SettingLabels    map[string]string
+	PermPresets      map[string]string
+	Accounts         map[string]string // TODO: Apply these phrases in the software proper
+	UserAgents       map[string]string
+	OperatingSystems map[string]string
+	Errors           map[string]map[string]string // map[category]map[name]value
+	PageTitles       map[string]string
 }
 
 // TODO: Add the ability to edit language JSON files from the Control Panel and automatically scan the files for changes
@@ -152,6 +154,22 @@ func GetAccountPhrase(name string) string {
 		return getPhrasePlaceholder()
 	}
 	return res
+}
+
+func GetUserAgentPhrase(name string) (string, bool) {
+	res, ok := currentLangPack.Load().(*LanguagePack).UserAgents[name]
+	if !ok {
+		return "", false
+	}
+	return res, true
+}
+
+func GetOSPhrase(name string) (string, bool) {
+	res, ok := currentLangPack.Load().(*LanguagePack).OperatingSystems[name]
+	if !ok {
+		return "", false
+	}
+	return res, true
 }
 
 // TODO: Does comma ok work with multi-dimensional maps?
