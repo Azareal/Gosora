@@ -545,6 +545,17 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		common.OSViewCounter.Bump(osMapEnum[os])
 	}
+
+	referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P
+	if referrer != "" {
+		// ? Optimise this a little?
+		referrer = strings.TrimPrefix(strings.TrimPrefix(referrer,"http://"),"https://")
+		referrer = strings.Split(referrer,"/")[0]
+		portless := strings.Split(referrer,":")[0]
+		if portless != "localhost" && portless != "127.0.0.1" && portless != common.Site.Host {
+			common.ReferrerTracker.Bump(referrer)
+		}
+	}
 	
 	// Deal with the session stuff, etc.
 	user, ok := common.PreRoute(w, req)

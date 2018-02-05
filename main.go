@@ -125,6 +125,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.ReferrerTracker, err = common.NewDefaultReferrerTracker()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

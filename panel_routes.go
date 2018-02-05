@@ -917,6 +917,81 @@ func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user
 	return panelRenderTemplate("panel_analytics_system_views", w, r, user, &pi)
 }
 
+func routePanelAnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.User, domain string) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
+
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
+	var revLabelList []int64
+	var labelList []int64
+	var viewMap = make(map[int64]int64)
+	var currentTime = time.Now().Unix()
+
+	for i := 1; i <= timeRange.Slices; i++ {
+		var label = currentTime - int64(i*timeRange.SliceWidth)
+		revLabelList = append(revLabelList, label)
+		viewMap[label] = 0
+	}
+	for _, value := range revLabelList {
+		labelList = append(labelList, value)
+	}
+
+	var viewList []int64
+	log.Print("in routePanelAnalyticsReferrerViews")
+
+	acc := qgen.Builder.Accumulator()
+	// TODO: Verify the agent is valid
+	rows, err := acc.Select("viewchunks_referrers").Columns("count, createdAt").Where("domain = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(domain)
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int64
+		var createdAt time.Time
+		err := rows.Scan(&count, &createdAt)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		var unixCreatedAt = createdAt.Unix()
+		if common.Dev.SuperDebug {
+			log.Print("count: ", count)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				viewMap[value] += count
+				break
+			}
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	for _, value := range revLabelList {
+		viewList = append(viewList, viewMap[value])
+	}
+	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	log.Printf("graph: %+v\n", graph)
+
+	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", html.EscapeString(domain), "", graph, timeRange.Range}
+	return panelRenderTemplate("panel_analytics_referrer_views", w, r, user, &pi)
+}
+
 func routePanelAnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -1230,6 +1305,57 @@ func routePanelAnalyticsSystems(w http.ResponseWriter, r *http.Request, user com
 
 	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", systemItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_systems", w, r, user, &pi)
+}
+
+func routePanelAnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	var refMap = make(map[string]int)
+
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("viewchunks_referrers").Columns("count, domain").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var count int
+		var domain string
+		err := rows.Scan(&count, &domain)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+
+		if common.Dev.SuperDebug {
+			log.Print("count: ", count)
+			log.Print("domain: ", domain)
+		}
+		refMap[domain] += count
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Sort this slice
+	var refItems []common.PanelAnalyticsAgentsItem
+	for domain, count := range refMap {
+		refItems = append(refItems, common.PanelAnalyticsAgentsItem{
+			Agent: html.EscapeString(domain),
+			Count: count,
+		})
+	}
+
+	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", refItems, timeRange.Range}
+	return panelRenderTemplate("panel_analytics_referrers", w, r, user, &pi)
 }
 
 func routePanelSettings(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

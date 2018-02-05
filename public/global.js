@@ -411,11 +411,11 @@ $(document).ready(function(){
 		event.stopPropagation();
 	})
 
-	$(".create_topic_link").click(function(event){
+	$(".create_topic_link").click((event) => {
 		event.preventDefault();
 		$(".topic_create_form").show();
 	});
-	$(".topic_create_form .close_form").click(function(){
+	$(".topic_create_form .close_form").click((event) => {
 		event.preventDefault();
 		$(".topic_create_form").hide();
 	});
@@ -504,7 +504,7 @@ $(document).ready(function(){
 				data: JSON.stringify(selectedTopics),
 				contentType: "application/json",
 				error: ajaxError,
-				success: function() {
+				success: () => {
 					window.location.reload();
 				}
 			});
@@ -514,7 +514,7 @@ $(document).ready(function(){
 			let selectNode = this.form.querySelector(".mod_floater_options");
 			let optionNode = selectNode.options[selectNode.selectedIndex];
 			let action = optionNode.getAttribute("val");
-			//console.log("action",action);
+			//console.log("action", action);
 
 			// Handle these specially
 			switch(action) {
@@ -598,7 +598,7 @@ $(document).ready(function(){
 	}
 
 	var pollInputIndex = 1;
-	$("#add_poll_button").click(function(event){
+	$("#add_poll_button").click((event) => {
 		event.preventDefault();
 		$(".poll_content_row").removeClass("auto_hide");
 		$("#has_poll_input").val("1");

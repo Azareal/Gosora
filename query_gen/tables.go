@@ -416,7 +416,16 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"system", "varchar", 200, false, false, ""}, // windows, android, bot, etc.
+			qgen.DBTableColumn{"system", "varchar", 200, false, false, ""}, // windows, android, unknown, etc.
+		},
+		[]qgen.DBTableKey{},
+	)
+
+	qgen.Install.CreateTable("viewchunks_referrers", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+			qgen.DBTableColumn{"domain", "varchar", 200, false, false, ""},
 		},
 		[]qgen.DBTableKey{},
 	)

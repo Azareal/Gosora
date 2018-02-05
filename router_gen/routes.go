@@ -167,9 +167,11 @@ func buildPanelRoutes() {
 		View("routePanelAnalyticsRoutes", "/panel/analytics/routes/").Before("ParseForm"),
 		View("routePanelAnalyticsAgents", "/panel/analytics/agents/").Before("ParseForm"),
 		View("routePanelAnalyticsSystems", "/panel/analytics/systems/").Before("ParseForm"),
+		View("routePanelAnalyticsReferrers", "/panel/analytics/referrers/").Before("ParseForm"),
 		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 		View("routePanelAnalyticsAgentViews", "/panel/analytics/agent/", "extraData"),
 		View("routePanelAnalyticsSystemViews", "/panel/analytics/system/", "extraData"),
+		View("routePanelAnalyticsReferrerViews", "/panel/analytics/referrer/", "extraData"),
 		View("routePanelAnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
 		View("routePanelAnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
 
