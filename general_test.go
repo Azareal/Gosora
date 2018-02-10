@@ -15,6 +15,7 @@ import (
 	"./common"
 	"./install/install"
 	"./query_gen/lib"
+	"./routes"
 	//"github.com/husobee/vestigo"
 )
 
@@ -99,35 +100,102 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
+
+	admin, err := common.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
+	adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
 
 	b.RunParallel(func(pb *testing.PB) {
-		admin, err := common.Users.Get(1)
+		for pb.Next() {
+			topicW := httptest.NewRecorder()
+			topicReqAdmin := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			topicReqAdmin.AddCookie(&adminUIDCookie)
+			topicReqAdmin.AddCookie(&adminSessionCookie)
+
+			// Deal with the session stuff, etc.
+			user, ok := common.PreRoute(topicW, topicReqAdmin)
+			if !ok {
+				b.Fatal("Mysterious error!")
+			}
+			//topicW.Body.Reset()
+			routes.ViewTopic(topicW, topicReqAdmin, user, "1")
+			if topicW.Code != 200 {
+				b.Log(topicW.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+	})
+
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
+}
+
+func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
 		if err != nil {
 			b.Fatal(err)
 		}
-		if !admin.IsAdmin {
-			b.Fatal("UID1 is not an admin")
-		}
-		adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
-		adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
+	}
+	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
 
-		topicW := httptest.NewRecorder()
-		topicReq := httptest.NewRequest("get", "/topic/1", bytes.NewReader(nil))
-		topicReqAdmin := topicReq
-		topicReqAdmin.AddCookie(&adminUIDCookie)
-		topicReqAdmin.AddCookie(&adminSessionCookie)
+	admin, err := common.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
+	adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
 
-		// Deal with the session stuff, etc.
-		user, ok := common.PreRoute(topicW, topicReqAdmin)
-		if !ok {
-			b.Fatal("Mysterious error!")
-		}
-
+	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			topicW.Body.Reset()
-			routeTopicID(topicW, topicReqAdmin, user)
+			topicW := httptest.NewRecorder()
+			topicReqAdmin := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			topicReqAdmin.AddCookie(&adminUIDCookie)
+			topicReqAdmin.AddCookie(&adminSessionCookie)
+			topicReqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			topicReqAdmin.Header.Set("Host", "localhost")
+			topicReqAdmin.Host = "localhost"
+			//topicW.Body.Reset()
+			router.ServeHTTP(topicW, topicReqAdmin)
+			if topicW.Code != 200 {
+				b.Log(topicW.Body)
+				b.Fatal("HTTP Error!")
+			}
 		}
 	})
+
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
+}
+
+func BenchmarkTopicAdminRouteParallelAlt(b *testing.B) {
+	BenchmarkTopicAdminRouteParallel(b)
+}
+
+func BenchmarkTopicAdminRouteParallelWithRouterAlt(b *testing.B) {
+	BenchmarkTopicAdminRouteParallelWithRouter(b)
+}
+
+func BenchmarkTopicAdminRouteParallelAltAlt(b *testing.B) {
+	BenchmarkTopicAdminRouteParallel(b)
 }
 
 func BenchmarkTopicGuestRouteParallel(b *testing.B) {
@@ -138,15 +206,225 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
 
 	b.RunParallel(func(pb *testing.PB) {
-		topicW := httptest.NewRecorder()
-		topicReq := httptest.NewRequest("get", "/topic/1", bytes.NewReader(nil))
 		for pb.Next() {
-			topicW.Body.Reset()
-			routeTopicID(topicW, topicReq, common.GuestUser)
+			topicW := httptest.NewRecorder()
+			topicReq := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			//topicW.Body.Reset()
+			routes.ViewTopic(topicW, topicReq, common.GuestUser, "1")
+			if topicW.Code != 200 {
+				b.Log(topicW.Body)
+				b.Fatal("HTTP Error!")
+			}
 		}
 	})
+
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
+}
+
+func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = true
+	common.Dev.SuperDebug = false
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			topicW := httptest.NewRecorder()
+			topicReq := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			//topicW.Body.Reset()
+			routes.ViewTopic(topicW, topicReq, common.GuestUser, "1")
+			if topicW.Code != 200 {
+				b.Log(topicW.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+	})
+
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
+}
+
+func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
+
+	/*f, err := os.Create("BenchmarkTopicGuestRouteParallelWithRouter.prof")
+	if err != nil {
+		b.Fatal(err)
+	}
+	pprof.StartCPUProfile(f)*/
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			topicW := httptest.NewRecorder()
+			topicReq := httptest.NewRequest("GET", "/topic/hm.1", bytes.NewReader(nil))
+			topicReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			topicReq.Header.Set("Host", "localhost")
+			topicReq.Host = "localhost"
+			//topicW.Body.Reset()
+			router.ServeHTTP(topicW, topicReq)
+			if topicW.Code != 200 {
+				b.Log(topicW.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+	})
+
+	//defer pprof.StopCPUProfile()
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
+}
+
+func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			badW := httptest.NewRecorder()
+			badReq := httptest.NewRequest("GET", "/garble/haa", bytes.NewReader(nil))
+			badReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			badReq.Header.Set("Host", "localhost")
+			badReq.Host = "localhost"
+			router.ServeHTTP(badW, badReq)
+		}
+	})
+
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
+}
+
+func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			listW := httptest.NewRecorder()
+			listReq := httptest.NewRequest("GET", "/topics/", bytes.NewReader(nil))
+			listReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			listReq.Header.Set("Host", "localhost")
+			listReq.Host = "localhost"
+			router.ServeHTTP(listW, listReq)
+			if listW.Code != 200 {
+				b.Log(listW.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+	})
+
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
+}
+
+func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			listW := httptest.NewRecorder()
+			listReq := httptest.NewRequest("GET", "/forums/", bytes.NewReader(nil))
+			listReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			listReq.Header.Set("Host", "localhost")
+			listReq.Host = "localhost"
+			router.ServeHTTP(listW, listReq)
+			if listW.Code != 200 {
+				b.Log(listW.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+	})
+
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
+}
+
+func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	if !gloinited {
+		err := gloinit()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			listW := httptest.NewRecorder()
+			listReq := httptest.NewRequest("GET", "/forum/general.2", bytes.NewReader(nil))
+			listReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			listReq.Header.Set("Host", "localhost")
+			listReq.Host = "localhost"
+			router.ServeHTTP(listW, listReq)
+			if listW.Code != 200 {
+				b.Log(listW.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+	})
+
+	common.Dev.DebugMode = prev
+	common.Dev.SuperDebug = prev2
 }
 
 // TODO: Make these routes compatible with the changes to the router
@@ -165,19 +443,19 @@ func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 		if !admin.Is_Admin {
 			panic("UID1 is not an admin")
 		}
-		admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
-		admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
+		adminUidCookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
+		adminSessionCookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
 
-		forums_w := httptest.NewRecorder()
-		forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
-		forums_req_admin := forums_req
-		forums_req_admin.AddCookie(&admin_uid_cookie)
-		forums_req_admin.AddCookie(&admin_session_cookie)
-		forums_handler := http.HandlerFunc(route_forums)
+		forumsW := httptest.NewRecorder()
+		forumsReq := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
+		forumsReq_admin := forums_req
+		forumsReq_admin.AddCookie(&adminUidCookie)
+		forumsReq_admin.AddCookie(&adminSessionCookie)
+		forumsHandler := http.HandlerFunc(route_forums)
 
 		for pb.Next() {
-			forums_w.Body.Reset()
-			forums_handler.ServeHTTP(forums_w,forums_req_admin)
+			forumsW.Body.Reset()
+			forumsHandler.ServeHTTP(forumsW,forumsReqAdmin)
 		}
 	})
 }
@@ -196,47 +474,29 @@ func BenchmarkForumsAdminRouteParallelProf(b *testing.B) {
 		if !admin.Is_Admin {
 			panic("UID1 is not an admin")
 		}
-		admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
-		admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path: "/",MaxAge: year}
+		adminUidCookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
+		adminSessionCookie := http.Cookie{Name:"session",Value: admin.Session,Path: "/",MaxAge: year}
 
-		forums_w := httptest.NewRecorder()
-		forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
-		forums_req_admin := forums_req
-		forums_req_admin.AddCookie(&admin_uid_cookie)
-		forums_req_admin.AddCookie(&admin_session_cookie)
-		forums_handler := http.HandlerFunc(route_forums)
+		forumsW := httptest.NewRecorder()
+		forumsReq := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
+		forumsReqAdmin := forumsReq
+		forumsReqAdmin.AddCookie(&admin_uid_cookie)
+		forumsReqAdmin.AddCookie(&admin_session_cookie)
+		forumsHandler := http.HandlerFunc(route_forums)
 		f, err := os.Create("cpu_forums_admin_parallel.prof")
 		if err != nil {
 			log.Fatal(err)
 		}
 		pprof.StartCPUProfile(f)
 		for pb.Next() {
-			forums_w.Body.Reset()
-			forums_handler.ServeHTTP(forums_w,forums_req_admin)
+			forumsW.Body.Reset()
+			forumsHandler.ServeHTTP(forumsW,forumsReqAdmin)
 		}
 		pprof.StopCPUProfile()
 	})
 }
 
-func BenchmarkForumsGuestRouteParallel(b *testing.B) {
-	b.ReportAllocs()
-	if !gloinited {
-		gloinit()
-	}
-
-	b.RunParallel(func(pb *testing.PB) {
-		forums_w := httptest.NewRecorder()
-		forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
-		forums_handler := http.HandlerFunc(route_forums)
-		for pb.Next() {
-			forums_w.Body.Reset()
-			forums_handler.ServeHTTP(forums_w,forums_req)
-		}
-	})
-}
-*/
-
-/*func BenchmarkRoutesSerial(b *testing.B) {
+func BenchmarkRoutesSerial(b *testing.B) {
 	b.ReportAllocs()
 	admin, err := users.Get(1)
 	if err != nil {

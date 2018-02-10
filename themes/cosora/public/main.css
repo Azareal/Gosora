@@ -917,6 +917,9 @@ textarea {
 	margin-top: 0px;
 }
 
+.postImage {
+	width: 100%;
+}
 .post_item {
 	display: flex;
 	margin-bottom: 16px;

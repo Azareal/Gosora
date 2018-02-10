@@ -19,7 +19,7 @@ func routes() {
 	addRouteGroup(reportGroup)
 
 	topicGroup := newRouteGroup("/topics/",
-		View("routeTopics", "/topics/"),
+		View("routes.TopicList", "/topics/"),
 		MemberView("routes.CreateTopic", "/topics/create/", "extraData"),
 	)
 	addRouteGroup(topicGroup)

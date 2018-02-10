@@ -21,6 +21,7 @@
 		{{end}}
 	</div>
 </div>
+{{if .Poll.ID}}
 <article class="rowblock post_container poll">
 	<div class="rowitem passive editable_parent post_item poll_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
 		<div class="topic_content user_content" style="margin:0;padding:0;">
@@ -44,6 +45,7 @@
 		</div>
 	</div>
 </article>
+{{end}}
 
 <article itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="The opening post for this topic">
 	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">

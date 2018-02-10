@@ -383,6 +383,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Deflect malformed requests
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
+		//log.Print("len(req.URL.Path): ",len(req.URL.Path))
+		//log.Print("req.URL.Path[0]: ",req.URL.Path[0])
+		//log.Print("req.Host: ",req.Host)
+		//log.Print("common.Site.Host: ",common.Site.Host)
+		
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		log.Print("Malformed Request")

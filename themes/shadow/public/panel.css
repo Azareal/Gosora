@@ -1,3 +1,16 @@
+.submenu a {
+	margin-left: 4px;
+}
+.colstack_head .rowitem {
+	display: flex;
+}
+.colstack_head .rowitem h1, .colstack_head .rowitem a {
+	margin-right: auto;
+}
+.colstack_head .rowitem a h1 {
+	margin-right: 0px;
+}
+
 .rowlist .tag-mini {
 	font-size: 10px;
 	margin-left: 2px;

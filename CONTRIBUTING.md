@@ -24,8 +24,6 @@ Always use strict mode.
 
 Don't worry about ES5, we're targetting modern browsers. If we decide to backport code to older browsers, then we'll transpile the files.
 
-Don't use await until Edge gets around to implementing it.
-
 To keep consistency with Go code, variables must be camelCase.
 
 # JSON

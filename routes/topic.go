@@ -18,6 +18,22 @@ import (
 	"../query_gen/lib"
 )
 
+type TopicStmts struct {
+	getReplies *sql.Stmt
+}
+
+var topicStmts TopicStmts
+
+// TODO: Move these DbInits into a TopicList abstraction
+func init() {
+	common.DbInits.Add(func(acc *qgen.Accumulator) error {
+		topicStmts = TopicStmts{
+			getReplies: acc.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?"),
+		}
+		return acc.FirstError()
+	})
+}
+
 var successJSONBytes = []byte(`{"success":"1"}`)
 
 func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit string) common.RouteError {
@@ -97,12 +113,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	tpage := common.TopicPage{topic.Title, user, headerVars, replyList, topic, poll, page, lastPage}
 
 	// Get the replies..
-	// TODO: Reuse this statement rather than preparing it on the spot, maybe via a TopicList abstraction
-	stmt, err := qgen.Builder.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?")
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	rows, err := stmt.Query(topic.ID, offset, common.Config.ItemsPerPage)
+	rows, err := topicStmts.getReplies.Query(topic.ID, offset, common.Config.ItemsPerPage)
 	if err == sql.ErrNoRows {
 		return common.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
 	} else if err != nil {
@@ -165,14 +176,16 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		if common.Vhooks["topic_reply_row_assign"] != nil {
 			common.RunVhook("topic_reply_row_assign", &tpage, &replyItem)
 		}
-		replyList = append(replyList, replyItem)
+		//replyList = append(replyList, replyItem)
+		// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
+		tpage.ItemList = append(tpage.ItemList, replyItem)
 	}
 	err = rows.Err()
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
-	tpage.ItemList = replyList
+	//tpage.ItemList = replyList
 	if common.PreRenderHooks["pre_render_view_topic"] != nil {
 		if common.RunPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
 			return nil

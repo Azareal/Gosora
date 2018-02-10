@@ -126,6 +126,7 @@
 	"OperatingSystems": {
 		"windows": "Microsoft Windows",
 		"linux":"Linux",
+		"mac":"Apple Mac",
 		"android": "Android",
 		"iphone":"iPhone",
 		"unknown":"Unknown"

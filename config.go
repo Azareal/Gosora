@@ -45,7 +45,7 @@ func init() {
 	common.Config.SMTPPort = "25"
 
 	// Misc
-	common.Config.DefaultRoute = "routeTopics"
+	common.Config.DefaultRoute = "routes.TopicList"
 	common.Config.DefaultGroup = 3    // Should be a setting in the database
 	common.Config.ActivationGroup = 5 // Should be a setting in the database
 	common.Config.StaffCSS = "staff_post"

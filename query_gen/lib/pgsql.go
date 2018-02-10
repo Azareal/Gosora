@@ -393,6 +393,9 @@ func _gen_pgsql() (err error) {
 
 // Internal methods, not exposed in the interface
 func (adapter *PgsqlAdapter) pushStatement(name string, stype string, querystr string) {
+	if name[0] == '_' {
+		return
+	}
 	adapter.Buffer[name] = DBStmt{querystr, stype}
 	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }

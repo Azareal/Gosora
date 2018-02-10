@@ -96,6 +96,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	common.TopicList, err = common.NewDefaultTopicList()
+	if err != nil {
+		return err
+	}
 
 	common.GlobalViewCounter, err = common.NewGlobalViewCounter()
 	if err != nil {

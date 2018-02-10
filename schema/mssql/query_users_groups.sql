@@ -6,6 +6,7 @@ CREATE TABLE [users_groups] (
 	[is_mod] bit DEFAULT 0 not null,
 	[is_admin] bit DEFAULT 0 not null,
 	[is_banned] bit DEFAULT 0 not null,
+	[user_count] int DEFAULT 0 not null,
 	[tag] nvarchar (50) DEFAULT '' not null,
 	primary key([gid])
 );

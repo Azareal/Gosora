@@ -1135,6 +1135,9 @@ func _gen_mssql() (err error) {
 
 // Internal methods, not exposed in the interface
 func (adapter *MssqlAdapter) pushStatement(name string, stype string, querystr string) {
+	if name[0] == '_' {
+		return
+	}
 	adapter.Buffer[name] = DBStmt{querystr, stype}
 	adapter.BufferOrder = append(adapter.BufferOrder, name)
 }

@@ -1,9 +1,11 @@
 package common
 
-import "log"
-import "sync"
-import "net/http"
-import "runtime/debug"
+import (
+	"log"
+	"net/http"
+	"runtime/debug"
+	"sync"
+)
 
 // TODO: Use the error_buffer variable to construct the system log in the Control Panel. Should we log errors caused by users too? Or just collect statistics on those or do nothing? Intercept recover()? Could we intercept the logger instead here? We might get too much information, if we intercept the logger, maybe make it part of the Debug page?
 // ? - Should we pass HeaderVars / HeaderLite rather than forcing the errors to pull the global HeaderVars instance?
@@ -120,6 +122,7 @@ func SilentInternalErrorXML(err error, w http.ResponseWriter, r *http.Request) R
 }
 
 func PreError(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
+	//LogError(errors.New(errmsg))
 	w.WriteHeader(500)
 	pi := Page{"Error", GuestUser, DefaultHeaderVar(), tList, errmsg}
 	handleErrorTemplate(w, r, pi)
@@ -141,6 +144,7 @@ func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, isJs boo
 
 // LocalError is an error shown to the end-user when something goes wrong and it's not the software's fault
 func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) RouteError {
+	//LogError(errors.New(errmsg))
 	w.WriteHeader(500)
 	pi := Page{"Local Error", user, DefaultHeaderVar(), tList, errmsg}
 	handleErrorTemplate(w, r, pi)
@@ -277,6 +281,7 @@ func CustomErrorJS(errmsg string, errcode int, w http.ResponseWriter, r *http.Re
 }
 
 func handleErrorTemplate(w http.ResponseWriter, r *http.Request, pi Page) {
+	//LogError(errors.New("error happened"))
 	// TODO: What to do about this hook?
 	if PreRenderHooks["pre_render_error"] != nil {
 		if RunPreRenderHook("pre_render_error", w, r, &pi.CurrentUser, &pi) {

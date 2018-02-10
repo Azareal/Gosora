@@ -39,6 +39,7 @@ type MemoryGroupStore struct {
 	getAll     *sql.Stmt
 	get        *sql.Stmt
 	count      *sql.Stmt
+	userCount  *sql.Stmt
 
 	sync.RWMutex
 }
@@ -51,6 +52,7 @@ func NewMemoryGroupStore() (*MemoryGroupStore, error) {
 		getAll:     acc.Select("users_groups").Columns("gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Prepare(),
 		get:        acc.Select("users_groups").Columns("name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Where("gid = ?").Prepare(),
 		count:      acc.Count("users_groups").Prepare(),
+		userCount:  acc.Count("users").Where("group = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -177,6 +179,11 @@ func (mgs *MemoryGroupStore) initGroup(group *Group) error {
 	if group.IsAdmin || group.IsMod {
 		group.IsBanned = false
 	}
+
+	err = mgs.userCount.QueryRow(group.ID).Scan(&group.UserCount)
+	if err != sql.ErrNoRows {
+		return err
+	}
 	return nil
 }
 
@@ -274,7 +281,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	}
 
 	mgs.Lock()
-	mgs.groups[gid] = &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankForums, blankIntList}
+	mgs.groups[gid] = &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankForums, blankIntList, 0}
 	mgs.groupCount++
 	mgs.Unlock()
 

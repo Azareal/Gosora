@@ -28,6 +28,7 @@ type Group struct {
 	PluginPermsText []byte
 	Forums          []*ForumPerms
 	CanSee          []int // The IDs of the forums this group can see
+	UserCount       int   // ! Might be temporary as I might want to lean on the database instead for this
 }
 
 type GroupStmts struct {

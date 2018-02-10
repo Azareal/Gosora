@@ -26,7 +26,7 @@ var RouteMap = map[string]interface{}{
 	"routeWebsockets": routeWebsockets,
 	"routeReportSubmit": routeReportSubmit,
 	"routes.CreateTopic": routes.CreateTopic,
-	"routeTopics": routeTopics,
+	"routes.TopicList": routes.TopicList,
 	"routePanelForums": routePanelForums,
 	"routePanelForumsCreateSubmit": routePanelForumsCreateSubmit,
 	"routePanelForumsDelete": routePanelForumsDelete,
@@ -128,7 +128,7 @@ var routeMapEnum = map[string]int{
 	"routeWebsockets": 7,
 	"routeReportSubmit": 8,
 	"routes.CreateTopic": 9,
-	"routeTopics": 10,
+	"routes.TopicList": 10,
 	"routePanelForums": 11,
 	"routePanelForumsCreateSubmit": 12,
 	"routePanelForumsDelete": 13,
@@ -228,7 +228,7 @@ var reverseRouteMapEnum = map[int]string{
 	7: "routeWebsockets",
 	8: "routeReportSubmit",
 	9: "routes.CreateTopic",
-	10: "routeTopics",
+	10: "routes.TopicList",
 	11: "routePanelForums",
 	12: "routePanelForumsCreateSubmit",
 	13: "routePanelForumsDelete",
@@ -524,6 +524,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Deflect malformed requests
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
+		//log.Print("len(req.URL.Path): ",len(req.URL.Path))
+		//log.Print("req.URL.Path[0]: ",req.URL.Path[0])
+		//log.Print("req.Host: ",req.Host)
+		//log.Print("common.Site.Host: ",common.Site.Host)
+		
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		log.Print("Malformed Request")
@@ -687,13 +692,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		common.OSViewCounter.Bump(osMapEnum[os])
 	}
 
-	referrer := req.Header.Get("Referer") // Check the referrer header too? :P
+	referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P
 	if referrer != "" {
 		// ? Optimise this a little?
 		referrer = strings.TrimPrefix(strings.TrimPrefix(referrer,"http://"),"https://")
 		referrer = strings.Split(referrer,"/")[0]
 		portless := strings.Split(referrer,":")[0]
-		if portless != "localhost" && portless != "127.0.0.1" && portless == common.Site.Host {
+		if portless != "localhost" && portless != "127.0.0.1" && portless != common.Site.Host {
 			common.ReferrerTracker.Bump(referrer)
 		}
 	}
@@ -811,7 +816,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					err = routes.CreateTopic(w,req,user,extraData)
 				default:
 					common.RouteViewCounter.Bump(10)
-					err = routeTopics(w,req,user)
+					err = routes.TopicList(w,req,user)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)

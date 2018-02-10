@@ -27,8 +27,6 @@ type Stmts struct {
 	groupEntryExists *sql.Stmt
 	getForumTopicsOffset *sql.Stmt
 	getAttachment *sql.Stmt
-	getTopicList *sql.Stmt
-	getTopicReplies *sql.Stmt
 	getForumTopics *sql.Stmt
 	getProfileReplies *sql.Stmt
 	getWatchers *sql.Stmt
@@ -164,18 +162,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing getAttachment statement.")
 	stmts.getAttachment, err = db.Prepare("SELECT `sectionID`,`sectionTable`,`originID`,`originTable`,`uploadedBy`,`path` FROM `attachments` WHERE `path` = ? AND `sectionID` = ? AND `sectionTable` = ?")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing getTopicList statement.")
-	stmts.getTopicList, err = db.Prepare("SELECT `topics`.`tid`, `topics`.`title`, `topics`.`content`, `topics`.`createdBy`, `topics`.`is_closed`, `topics`.`sticky`, `topics`.`createdAt`, `topics`.`parentID`, `users`.`name`, `users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing getTopicReplies statement.")
-	stmts.getTopicReplies, err = db.Prepare("SELECT `replies`.`rid`, `replies`.`content`, `replies`.`createdBy`, `replies`.`createdAt`, `replies`.`lastEdit`, `replies`.`lastEditBy`, `users`.`avatar`, `users`.`name`, `users`.`group`, `users`.`url_prefix`, `users`.`url_name`, `users`.`level`, `replies`.`ipaddress` FROM `replies` LEFT JOIN `users` ON `replies`.`createdBy` = `users`.`uid`  WHERE `tid` = ?")
 	if err != nil {
 		return err
 	}

@@ -25,8 +25,6 @@ type Stmts struct {
 	groupEntryExists *sql.Stmt
 	getForumTopicsOffset *sql.Stmt
 	getAttachment *sql.Stmt
-	getTopicList *sql.Stmt
-	getTopicReplies *sql.Stmt
 	getForumTopics *sql.Stmt
 	getProfileReplies *sql.Stmt
 	getWatchers *sql.Stmt
@@ -179,20 +177,6 @@ func _gen_mssql() (err error) {
 	stmts.getAttachment, err = db.Prepare("SELECT [sectionID],[sectionTable],[originID],[originTable],[uploadedBy],[path] FROM [attachments] WHERE [path] = ?1 AND [sectionID] = ?2 AND [sectionTable] = ?3")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [sectionID],[sectionTable],[originID],[originTable],[uploadedBy],[path] FROM [attachments] WHERE [path] = ?1 AND [sectionID] = ?2 AND [sectionTable] = ?3")
-		return err
-	}
-		
-	log.Print("Preparing getTopicList statement.")
-	stmts.getTopicList, err = db.Prepare("SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
-		return err
-	}
-		
-	log.Print("Preparing getTopicReplies statement.")
-	stmts.getTopicReplies, err = db.Prepare("SELECT [replies].[rid],[replies].[content],[replies].[createdBy],[replies].[createdAt],[replies].[lastEdit],[replies].[lastEditBy],[users].[avatar],[users].[name],[users].[group],[users].[url_prefix],[users].[url_name],[users].[level],[replies].[ipaddress] FROM [replies] LEFT JOIN [users] ON [replies].[createdBy] = [users].[uid]  WHERE [tid] = ?1")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [replies].[rid],[replies].[content],[replies].[createdBy],[replies].[createdAt],[replies].[lastEdit],[replies].[lastEditBy],[users].[avatar],[users].[name],[users].[group],[users].[url_prefix],[users].[url_name],[users].[level],[replies].[ipaddress] FROM [replies] LEFT JOIN [users] ON [replies].[createdBy] = [users].[uid]  WHERE [tid] = ?1")
 		return err
 	}
 		

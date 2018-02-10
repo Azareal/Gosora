@@ -82,11 +82,10 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		userStmts = UserStmts{
 			activate:           acc.SimpleUpdate("users", "active = 1", "uid = ?"),
-			changeGroup:        acc.SimpleUpdate("users", "group = ?", "uid = ?"),
+			changeGroup:        acc.SimpleUpdate("users", "group = ?", "uid = ?"), // TODO: Implement user_count for users_groups here
 			delete:             acc.SimpleDelete("users", "uid = ?"),
 			setAvatar:          acc.SimpleUpdate("users", "avatar = ?", "uid = ?"),
 			setUsername:        acc.SimpleUpdate("users", "name = ?", "uid = ?"),
-			updateGroup:        acc.SimpleUpdate("users", "group = ?", "uid = ?"),
 			incrementTopics:    acc.SimpleUpdate("users", "topics =  topics + ?", "uid = ?"),
 			updateLevel:        acc.SimpleUpdate("users", "level = ?", "uid = ?"),
 			incrementScore:     acc.SimpleUpdate("users", "score = score + ?", "uid = ?"),

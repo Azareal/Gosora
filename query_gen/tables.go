@@ -48,6 +48,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"is_mod", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"is_admin", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"is_banned", "boolean", 0, false, false, "0"},
+			qgen.DBTableColumn{"user_count", "int", 0, false, false, "0"}, // TODO: Implement this
 
 			qgen.DBTableColumn{"tag", "varchar", 50, false, false, "''"},
 		},
@@ -215,7 +216,9 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"contentType", "varchar", 100, false, false, "replies"},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"reviseID", "primary"},
+		},
 	)
 
 	qgen.Install.CreateTable("polls", "utf8mb4", "utf8mb4_general_ci",

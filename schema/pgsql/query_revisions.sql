@@ -3,5 +3,6 @@ CREATE TABLE `revisions` (
 	`content` text not null,
 	`contentID` int not null,
 	`contentType` varchar (100) DEFAULT 'replies' not null,
-	`createdAt` timestamp not null
+	`createdAt` timestamp not null,
+	primary key(`reviseID`)
 );
