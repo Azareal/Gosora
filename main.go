@@ -289,14 +289,20 @@ func main() {
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
 	//hourTicker := time.NewTicker(1 * time.Hour)
 	go func() {
+		var runHook = func(name string) {
+			err := common.RunTaskHook(name)
+			if err != nil {
+				common.LogError(err)
+			}
+		}
 		for {
 			select {
 			case <-halfSecondTicker.C:
-				// TODO: Add a plugin hook here
+				runHook("before_half_second_tick")
 				runTasks(common.ScheduledHalfSecondTasks)
-				// TODO: Add a plugin hook here
+				runHook("after_half_second_tick")
 			case <-secondTicker.C:
-				// TODO: Add a plugin hook here
+				runHook("before_second_tick")
 				runTasks(common.ScheduledSecondTasks)
 
 				// TODO: Stop hard-coding this
@@ -317,16 +323,14 @@ func main() {
 				// TODO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
 				// TODO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
 				// TODO: Rescan the static files for changes
-
-				// TODO: Add a plugin hook here
+				runHook("after_second_tick")
 			case <-fifteenMinuteTicker.C:
-				// TODO: Add a plugin hook here
+				runHook("before_fifteen_minute_tick")
 				runTasks(common.ScheduledFifteenMinuteTasks)
 
 				// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 				// TODO: Publish scheduled posts.
-
-				// TODO: Add a plugin hook here
+				runHook("after_fifteen_minute_tick")
 			}
 
 			// TODO: Handle the daily clean-up.

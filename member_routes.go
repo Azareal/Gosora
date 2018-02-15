@@ -405,10 +405,11 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 		title = "Topic: " + title
 		content = content + "\n\nOriginal Post: #tid-" + strconv.Itoa(itemID)
 	} else {
-		if common.Vhooks["report_preassign"] != nil {
-			common.RunVhookNoreturn("report_preassign", &itemID, &itemType)
+		_, hasHook := common.RunVhookNeedHook("report_preassign", &itemID, &itemType)
+		if hasHook {
 			return nil
 		}
+
 		// Don't try to guess the type
 		return common.LocalError("Unknown type", w, r, user)
 	}

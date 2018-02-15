@@ -85,7 +85,13 @@ func HandleExpiredScheduledGroups() error {
 }
 
 // TODO: Use AddScheduledSecondTask
+// TODO: Be a little more granular with the synchronisation
 func HandleServerSync() error {
+	// We don't want to run any unnecessary queries when there is nothing to synchronise
+	/*if Config.ServerCount > 1 {
+		return nil
+	}*/
+
 	var lastUpdate time.Time
 	err := taskStmts.getSync.QueryRow().Scan(&lastUpdate)
 	if err != nil {
@@ -93,7 +99,6 @@ func HandleServerSync() error {
 	}
 
 	if lastUpdate.After(lastSync) {
-		// TODO: A more granular sync
 		err = Forums.LoadForums()
 		if err != nil {
 			log.Print("Unable to reload the forums")

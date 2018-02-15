@@ -1,4 +1,6 @@
-/* Control Panel */
+.submenu a {
+	margin-left: 8px;
+}
 
 .edit_button:before {
 	content: "Edit";
@@ -125,4 +127,14 @@
 	content: " || ";
 	padding-left: 2px;
 	padding-right: 2px;
+}
+.ct_chart {
+	padding-left: 10px;
+    padding-top: 14px;
+    padding-bottom: 4px;
+    padding-right: 10px;
+	margin-bottom: 12px;
+
+	background-color: white;
+	border: 1px solid hsl(0,0%,85%);
 }

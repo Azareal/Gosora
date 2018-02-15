@@ -16,6 +16,11 @@
 	margin-left: 2px;
 }
 
+.timeRangeSelector {
+	padding: 2px;
+	margin-top: -3px;
+	margin-bottom: -3px;
+}
 .panel_floater {
 	margin-left: auto;
 }

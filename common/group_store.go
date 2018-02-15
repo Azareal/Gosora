@@ -232,9 +232,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	var blankIntList []int
 	var pluginPerms = make(map[string]bool)
 	var pluginPermsBytes = []byte("{}")
-	if Vhooks["create_group_preappend"] != nil {
-		RunVhook("create_group_preappend", &pluginPerms, &pluginPermsBytes)
-	}
+	RunVhook("create_group_preappend", &pluginPerms, &pluginPermsBytes)
 
 	// Generate the forum permissions based on the presets...
 	fdata, err := Forums.GetAll()

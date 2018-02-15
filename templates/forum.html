@@ -1,8 +1,7 @@
 {{template "header.html" . }}
 
 {{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="Go to the previous page" rel="prev" href="/forum/{{.Forum.ID}}?page={{subtract .Page 1}}">&lt;</a></div>{{end}}
-{{if ne .LastPage .Page}}<link rel="prerender" href="/forum/{{.Forum.ID}}?page={{add .Page 1}}" />
-<div id="nextFloat" class="next_button"><a class="next_link" aria-label="Go to the next page" rel="next" href="/forum/{{.Forum.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
+{{if ne .LastPage .Page}}<div id="nextFloat" class="next_button"><a class="next_link" aria-label="Go to the next page" rel="next" href="/forum/{{.Forum.ID}}?page={{add .Page 1}}">&gt;</a></div>{{end}}
 
 <main itemscope itemtype="http://schema.org/ItemList">
 	<div id="forum_head_block" class="rowblock rowhead topic_list_title_block">
@@ -101,5 +100,19 @@
 		</div>
 		</div>{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
 	</div>
+
+{{if gt .LastPage 1}}
+<div class="pageset">
+	{{if gt .Page 1}}<div class="pageitem"><a href="?page={{subtract .Page 1}}" rel="prev" aria-label="Go to the previous page">Prev</a></div>
+	<link rel="prev" href="?page={{subtract .Page 1}}" />{{end}}
+	{{range .PageList}}
+	<div class="pageitem"><a href="?page={{.}}">{{.}}</a></div>
+	{{end}}
+	{{if ne .LastPage .Page}}
+	<link rel="next" href="?page={{add .Page 1}}" />
+	<div class="pageitem"><a href="?page={{add .Page 1}}" rel="next" aria-label="Go to the next page">Next</a></div>{{end}}
+</div>
+{{end}}
+
 </main>
 {{template "footer.html" . }}

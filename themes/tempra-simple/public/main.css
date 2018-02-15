@@ -372,8 +372,18 @@ li a {
 	border: none;
 }
 
+input, select {
+	padding: 3px;
+}
 /* Mostly for textareas */
-.formitem:only-child { width: 100%; }
+.formitem:only-child {
+	width: 100%;
+}
+.formitem:only-child select {
+	padding: 1px;
+	margin-top: -1px;
+	margin-bottom: -1px;
+}
 .formitem textarea {
 	width: 100%;
 	height: 100px;
@@ -382,9 +392,6 @@ li a {
 .formitem:has-child() {
 	margin: 0 auto;
 	float: none;
-}
-.formitem:not(:only-child) input, .formitem:not(:only-child) select {
-	padding: 3px;
 }
 .formitem:not(:only-child).formlabel {
 	padding-top: 15px;
@@ -417,6 +424,9 @@ li a {
 
 /* Topics */
 
+.topic_list {
+	border-bottom: none;
+}
 .topic_list .topic_row {
 	display: grid;
 	grid-template-columns: calc(100% - 204px) 204px;
@@ -737,6 +747,10 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	margin-left: auto;
 }
 
+.quick_create_form  .pollinputlabel {
+	display: none;
+}
+
 .alert {
 	display: block;
 	padding: 5px;
@@ -869,7 +883,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 .pageset {
 	display: flex;
 	margin-bottom: 10px;
-	margin-top: -5px;
+	margin-top: 8px;
 }
 .pageitem {
 	background-color: white;
@@ -881,6 +895,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 .pageitem a {
 	color: black;
 	text-decoration: none;
+}
+.colstack_right .pageset {
+	margin-top: -5px;
 }
 
 {{template "media.partial.css" }}

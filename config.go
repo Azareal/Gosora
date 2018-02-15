@@ -51,7 +51,7 @@ func init() {
 	common.Config.StaffCSS = "staff_post"
 	common.Config.DefaultForum = 2
 	common.Config.MinifyTemplates = true
-	common.Config.MultiServer = false // Experimental: Enable Cross-Server Synchronisation and several other features
+	common.Config.ServerCount = 1 // Experimental: Enable Cross-Server Synchronisation and several other features
 
 	//common.Config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
 	common.Config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"

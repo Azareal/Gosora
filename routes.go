@@ -97,9 +97,7 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 		topicItem.Link = common.BuildTopicURL(common.NameToSlug(topicItem.Title), topicItem.ID)
 		topicItem.RelativeLastReplyAt = common.RelativeTime(topicItem.LastReplyAt)
 
-		if common.Vhooks["forum_trow_assign"] != nil {
-			common.RunVhook("forum_trow_assign", &topicItem, &forum)
-		}
+		common.RunVhook("forum_trow_assign", &topicItem, &forum)
 		topicList = append(topicList, &topicItem)
 		reqUserList[topicItem.CreatedBy] = true
 		reqUserList[topicItem.LastReplyBy] = true
@@ -130,7 +128,8 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 		topicItem.LastUser = userList[topicItem.LastReplyBy]
 	}
 
-	pi := common.ForumPage{forum.Name, user, headerVars, topicList, forum, page, lastPage}
+	pageList := common.Paginate(forum.TopicCount, common.Config.ItemsPerPage, 5)
+	pi := common.ForumPage{forum.Name, user, headerVars, topicList, forum, pageList, page, lastPage}
 	if common.PreRenderHooks["pre_render_forum"] != nil {
 		if common.RunPreRenderHook("pre_render_forum", w, r, &user, &pi) {
 			return nil

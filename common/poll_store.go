@@ -3,6 +3,9 @@ package common
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"log"
+	"strconv"
 
 	"../query_gen/lib"
 )
@@ -114,6 +117,92 @@ func (store *DefaultPollStore) Get(id int) (*Poll, error) {
 		store.cache.Set(poll)
 	}
 	return poll, err
+}
+
+// TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
+// TODO: ID of 0 should always error?
+func (store *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error) {
+	var idCount = len(ids)
+	list = make(map[int]*Poll)
+	if idCount == 0 {
+		return list, nil
+	}
+
+	var stillHere []int
+	sliceList := store.cache.BulkGet(ids)
+	for i, sliceItem := range sliceList {
+		if sliceItem != nil {
+			list[sliceItem.ID] = sliceItem
+		} else {
+			stillHere = append(stillHere, ids[i])
+		}
+	}
+	ids = stillHere
+
+	// If every user is in the cache, then return immediately
+	if len(ids) == 0 {
+		return list, nil
+	}
+
+	// TODO: Add a function for the qlist stuff
+	var qlist string
+	var pollIDList []interface{}
+	for _, id := range ids {
+		pollIDList = append(pollIDList, strconv.Itoa(id))
+		qlist += "?,"
+	}
+	qlist = qlist[0 : len(qlist)-1]
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("polls").Columns("pollID, parentID, parentTable, type, options, votes").Where("pollID IN(" + qlist + ")").Query(pollIDList...)
+	if err != nil {
+		return list, err
+	}
+
+	for rows.Next() {
+		poll := &Poll{ID: 0}
+		var optionTxt []byte
+		err := rows.Scan(&poll.ID, &poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
+		if err != nil {
+			return list, err
+		}
+
+		err = json.Unmarshal(optionTxt, &poll.Options)
+		if err != nil {
+			return list, err
+		}
+		poll.QuickOptions = store.unpackOptionsMap(poll.Options)
+		store.cache.Set(poll)
+
+		list[poll.ID] = poll
+	}
+
+	// Did we miss any polls?
+	if idCount > len(list) {
+		var sidList string
+		for _, id := range ids {
+			_, ok := list[id]
+			if !ok {
+				sidList += strconv.Itoa(id) + ","
+			}
+		}
+
+		// We probably don't need this, but it might be useful in case of bugs in BulkCascadeGetMap
+		if sidList == "" {
+			if Dev.DebugMode {
+				log.Print("This data is sampled later in the BulkCascadeGetMap function, so it might miss the cached IDs")
+				log.Print("idCount", idCount)
+				log.Print("ids", ids)
+				log.Print("list", list)
+			}
+			return list, errors.New("We weren't able to find a poll, but we don't know which one")
+		}
+		sidList = sidList[0 : len(sidList)-1]
+
+		err = errors.New("Unable to find the polls with the following IDs: " + sidList)
+	}
+
+	return list, err
 }
 
 func (store *DefaultPollStore) Reload(id int) error {

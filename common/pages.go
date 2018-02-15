@@ -79,6 +79,7 @@ type ForumPage struct {
 	Header      *HeaderVars
 	ItemList    []*TopicsRow
 	Forum       *Forum
+	PageList    []int
 	Page        int
 	LastPage    int
 }
@@ -218,15 +219,15 @@ type PanelAnalyticsRoutePage struct {
 }
 
 type PanelAnalyticsAgentPage struct {
-	Title        string
-	CurrentUser  User
-	Header       *HeaderVars
-	Stats        PanelStats
-	Zone         string
-	Agent        string
+	Title         string
+	CurrentUser   User
+	Header        *HeaderVars
+	Stats         PanelStats
+	Zone          string
+	Agent         string
 	FriendlyAgent string
-	PrimaryGraph PanelTimeGraph
-	TimeRange    string
+	PrimaryGraph  PanelTimeGraph
+	TimeRange     string
 }
 
 type PanelThemesPage struct {

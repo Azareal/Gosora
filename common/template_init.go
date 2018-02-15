@@ -162,7 +162,7 @@ func compileTemplates() error {
 	//var topicList []TopicUser
 	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
-	forumPage := ForumPage{"General Forum", user, headerVars, topicsList, forumItem, 1, 1}
+	forumPage := ForumPage{"General Forum", user, headerVars, topicsList, forumItem, []int{1}, 1, 1}
 	forumTmpl, err := c.Compile("forum.html", "templates/", "common.ForumPage", forumPage, varList)
 	if err != nil {
 		return err

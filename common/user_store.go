@@ -128,14 +128,14 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 	acc := qgen.Builder.Accumulator()
 	rows, err := acc.Select("users").Columns("uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(uidList...)
 	if err != nil {
-		return nil, err
+		return list, err
 	}
 
 	for rows.Next() {
 		user := &User{Loggedin: true}
 		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 		if err != nil {
-			return nil, err
+			return list, err
 		}
 
 		user.Init()

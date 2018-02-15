@@ -122,6 +122,10 @@ func (tList *DefaultTopicList) Tick() error {
 		if err != nil {
 			return err
 		}
+		if group.UserCount == 0 {
+			continue
+		}
+
 		topicList, forumList, pageList, page, lastPage, err := tList.getListByGroup(group, 1)
 		if err != nil {
 			return err
@@ -258,9 +262,7 @@ func (tList *DefaultTopicList) getList(page int, argList []interface{}, qlist st
 		topicItem.RelativeLastReplyAt = RelativeTime(topicItem.LastReplyAt)
 
 		// TODO: Rename this Vhook to better reflect moving the topic list from /routes/ to /common/
-		if Vhooks["topics_topic_row_assign"] != nil {
-			RunVhook("topics_topic_row_assign", &topicItem, &forum)
-		}
+		RunVhook("topics_topic_row_assign", &topicItem, &forum)
 		topicList = append(topicList, &topicItem)
 		reqUserList[topicItem.CreatedBy] = true
 		reqUserList[topicItem.LastReplyBy] = true

@@ -37,8 +37,6 @@ func init() {
 var successJSONBytes = []byte(`{"success":"1"}`)
 
 func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit string) common.RouteError {
-	var err error
-	var replyList []common.ReplyUser
 	page, _ := strconv.Atoi(r.FormValue("page"))
 
 	// SEO URLs...
@@ -110,82 +108,80 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 
 	// Calculate the offset
 	offset, page, lastPage := common.PageOffset(topic.PostCount, page, common.Config.ItemsPerPage)
-	tpage := common.TopicPage{topic.Title, user, headerVars, replyList, topic, poll, page, lastPage}
+	tpage := common.TopicPage{topic.Title, user, headerVars, []common.ReplyUser{}, topic, poll, page, lastPage}
 
-	// Get the replies..
-	rows, err := topicStmts.getReplies.Query(topic.ID, offset, common.Config.ItemsPerPage)
-	if err == sql.ErrNoRows {
-		return common.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
-	} else if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	defer rows.Close()
-
-	replyItem := common.ReplyUser{ClassName: ""}
-	for rows.Next() {
-		err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.ActionType)
-		if err != nil {
+	// Get the replies if we have any...
+	if topic.PostCount > 0 {
+		rows, err := topicStmts.getReplies.Query(topic.ID, offset, common.Config.ItemsPerPage)
+		if err == sql.ErrNoRows {
+			return common.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
+		} else if err != nil {
 			return common.InternalError(err, w, r)
 		}
+		defer rows.Close()
 
-		replyItem.UserLink = common.BuildProfileURL(common.NameToSlug(replyItem.CreatedByName), replyItem.CreatedBy)
-		replyItem.ParentID = topic.ID
-		replyItem.ContentHtml = common.ParseMessage(replyItem.Content, topic.ParentID, "forums")
-		replyItem.ContentLines = strings.Count(replyItem.Content, "\n")
-
-		postGroup, err = common.Groups.Get(replyItem.Group)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		if postGroup.IsMod || postGroup.IsAdmin {
-			replyItem.ClassName = common.Config.StaffCSS
-		} else {
-			replyItem.ClassName = ""
-		}
-
-		// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the common.UserStore initialise this?
-		replyItem.Avatar = common.BuildAvatar(replyItem.CreatedBy, replyItem.Avatar)
-		replyItem.Tag = postGroup.Tag
-		replyItem.RelativeCreatedAt = common.RelativeTime(replyItem.CreatedAt)
-
-		// We really shouldn't have inline HTML, we should do something about this...
-		if replyItem.ActionType != "" {
-			switch replyItem.ActionType {
-			case "lock":
-				replyItem.ActionType = "This topic has been locked by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
-				replyItem.ActionIcon = "&#x1F512;&#xFE0E"
-			case "unlock":
-				replyItem.ActionType = "This topic has been reopened by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
-				replyItem.ActionIcon = "&#x1F513;&#xFE0E"
-			case "stick":
-				replyItem.ActionType = "This topic has been pinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
-				replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
-			case "unstick":
-				replyItem.ActionType = "This topic has been unpinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
-				replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
-			case "move":
-				replyItem.ActionType = "This topic has been moved by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
-			default:
-				replyItem.ActionType = replyItem.ActionType + " has happened"
-				replyItem.ActionIcon = ""
+		replyItem := common.ReplyUser{ClassName: ""}
+		for rows.Next() {
+			err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.ActionType)
+			if err != nil {
+				return common.InternalError(err, w, r)
 			}
-		}
-		replyItem.Liked = false
 
-		if common.Vhooks["topic_reply_row_assign"] != nil {
+			replyItem.UserLink = common.BuildProfileURL(common.NameToSlug(replyItem.CreatedByName), replyItem.CreatedBy)
+			replyItem.ParentID = topic.ID
+			replyItem.ContentHtml = common.ParseMessage(replyItem.Content, topic.ParentID, "forums")
+			replyItem.ContentLines = strings.Count(replyItem.Content, "\n")
+
+			postGroup, err = common.Groups.Get(replyItem.Group)
+			if err != nil {
+				return common.InternalError(err, w, r)
+			}
+
+			if postGroup.IsMod || postGroup.IsAdmin {
+				replyItem.ClassName = common.Config.StaffCSS
+			} else {
+				replyItem.ClassName = ""
+			}
+
+			// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the common.UserStore initialise this?
+			replyItem.Avatar = common.BuildAvatar(replyItem.CreatedBy, replyItem.Avatar)
+			replyItem.Tag = postGroup.Tag
+			replyItem.RelativeCreatedAt = common.RelativeTime(replyItem.CreatedAt)
+
+			// We really shouldn't have inline HTML, we should do something about this...
+			if replyItem.ActionType != "" {
+				switch replyItem.ActionType {
+				case "lock":
+					replyItem.ActionType = "This topic has been locked by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
+				case "unlock":
+					replyItem.ActionType = "This topic has been reopened by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
+				case "stick":
+					replyItem.ActionType = "This topic has been pinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
+				case "unstick":
+					replyItem.ActionType = "This topic has been unpinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
+				case "move":
+					replyItem.ActionType = "This topic has been moved by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+				default:
+					replyItem.ActionType = replyItem.ActionType + " has happened"
+					replyItem.ActionIcon = ""
+				}
+			}
+			replyItem.Liked = false
+
 			common.RunVhook("topic_reply_row_assign", &tpage, &replyItem)
+			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
+			tpage.ItemList = append(tpage.ItemList, replyItem)
 		}
-		//replyList = append(replyList, replyItem)
-		// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
-		tpage.ItemList = append(tpage.ItemList, replyItem)
-	}
-	err = rows.Err()
-	if err != nil {
-		return common.InternalError(err, w, r)
+		err = rows.Err()
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
 	}
 
-	//tpage.ItemList = replyList
 	if common.PreRenderHooks["pre_render_view_topic"] != nil {
 		if common.RunPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
 			return nil
@@ -195,7 +191,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	common.TopicViewCounter.Bump(topic.ID) // TODO Move this into the router?
+	common.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
 	return nil
 }
 
@@ -228,9 +224,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 	// Lock this to the forum being linked?
 	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
 	var strictmode bool
-	if common.Vhooks["topic_create_pre_loop"] != nil {
-		common.RunVhook("topic_create_pre_loop", w, r, fid, &headerVars, &user, &strictmode)
-	}
+	common.RunVhook("topic_create_pre_loop", w, r, fid, &headerVars, &user, &strictmode)
 
 	// TODO: Re-add support for plugin_guilds
 	var forumList []common.Forum

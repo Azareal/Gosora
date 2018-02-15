@@ -484,7 +484,7 @@ textarea.large {
 	padding: 5px;
  	width: calc(100% - 16px);
 }
-.formitem select {
+select {
 	background-color: var(--input-background-color);
 	border: 1px solid var(--input-border-color);
 	color: var(--input-text-color);
@@ -612,6 +612,13 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	height: 10px;
 	margin-left: 3px;
 	background: var(--bright-input-border-color);
+}
+.pollinput {
+	display: flex;
+	margin-bottom: 8px;
+}
+.quick_create_form  .pollinputlabel {
+	display: none;
 }
 
 /*#poll_option_text_0 {

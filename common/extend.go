@@ -42,6 +42,15 @@ var VhookSkippable = map[string]func(...interface{}) (bool, RouteError){
 
 //var vhookErrorable = map[string]func(...interface{}) (interface{}, RouteError){}
 
+var taskHooks = map[string][]func() error{
+	"before_half_second_tick":    nil,
+	"after_half_second_tick":     nil,
+	"before_second_tick":         nil,
+	"after_second_tick":          nil,
+	"before_fifteen_minute_tick": nil,
+	"after_fifteen_minute_tick":  nil,
+}
+
 // Coming Soon:
 type Message interface {
 	ID() int
@@ -225,6 +234,7 @@ func NewPlugin(uname string, name string, author string, url string, settings st
 }
 
 // ? - Is this racey?
+// TODO: Generate the cases in this switch
 func (plugin *Plugin) AddHook(name string, handler interface{}) {
 	switch h := handler.(type) {
 	case func(interface{}) interface{}:
@@ -254,6 +264,15 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 			PreRenderHooks[name] = append(PreRenderHooks[name], h)
 		}
 		plugin.Hooks[name] = len(PreRenderHooks[name])
+	case func() error: // ! We might want a more generic name, as we might use this signature for things other than tasks hooks
+		if len(taskHooks[name]) == 0 {
+			var hookSlice []func() error
+			hookSlice = append(hookSlice, h)
+			taskHooks[name] = hookSlice
+		} else {
+			taskHooks[name] = append(taskHooks[name], h)
+		}
+		plugin.Hooks[name] = len(taskHooks[name])
 	case func(...interface{}) interface{}:
 		Vhooks[name] = h
 		plugin.Hooks[name] = 0
@@ -266,6 +285,7 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 }
 
 // ? - Is this racey?
+// TODO: Generate the cases in this switch
 func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 	switch handler.(type) {
 	case func(interface{}) interface{}:
@@ -295,6 +315,15 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 			hook = append(hook[:key], hook[key+1:]...)
 		}
 		PreRenderHooks[name] = hook
+	case func() error:
+		key := plugin.Hooks[name]
+		hook := taskHooks[name]
+		if len(hook) == 1 {
+			hook = []func() error{}
+		} else {
+			hook = append(hook[:key], hook[key+1:]...)
+		}
+		taskHooks[name] = hook
 	case func(...interface{}) interface{}:
 		delete(Vhooks, name)
 	case func(...interface{}) (bool, RouteError):
@@ -340,7 +369,11 @@ func RunHookNoreturn(name string, data interface{}) {
 }
 
 func RunVhook(name string, data ...interface{}) interface{} {
-	return Vhooks[name](data...)
+	hook := Vhooks[name]
+	if hook != nil {
+		return hook(data...)
+	}
+	return nil
 }
 
 func RunVhookSkippable(name string, data ...interface{}) (bool, RouteError) {
@@ -348,7 +381,29 @@ func RunVhookSkippable(name string, data ...interface{}) (bool, RouteError) {
 }
 
 func RunVhookNoreturn(name string, data ...interface{}) {
-	_ = Vhooks[name](data...)
+	hook := Vhooks[name]
+	if hook != nil {
+		_ = hook(data...)
+	}
+}
+
+// TODO: Find a better way of doing this
+func RunVhookNeedHook(name string, data ...interface{}) (ret interface{}, hasHook bool) {
+	hook := Vhooks[name]
+	if hook != nil {
+		return hook(data...), true
+	}
+	return nil, false
+}
+
+func RunTaskHook(name string) error {
+	for _, hook := range taskHooks[name] {
+		err := hook()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Trying to get a teeny bit of type-safety where-ever possible, especially for such a critical set of hooks
@@ -360,14 +415,14 @@ func RunSshook(name string, data string) string {
 }
 
 func RunPreRenderHook(name string, w http.ResponseWriter, r *http.Request, user *User, data interface{}) (halt bool) {
-	// This hook runs on ALL pre_render hooks
+	// This hook runs on ALL PreRender hooks
 	for _, hook := range PreRenderHooks["pre_render"] {
 		if hook(w, r, user, data) {
 			return true
 		}
 	}
 
-	// The actual pre_render hook
+	// The actual PreRender hook
 	for _, hook := range PreRenderHooks[name] {
 		if hook(w, r, user, data) {
 			return true

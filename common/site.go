@@ -67,7 +67,7 @@ type config struct {
 	StaffCSS        string // ? - Move this into the settings table? Might be better to implement this as Group CSS
 	DefaultForum    int    // The forum posts go in by default, this used to be covered by the Uncategorised Forum, but we want to replace it with a more robust solution. Make this a setting?
 	MinifyTemplates bool
-	MultiServer     bool
+	ServerCount     int
 
 	Noavatar     string // ? - Move this into the settings table?
 	ItemsPerPage int    // ? - Move this into the settings table?
@@ -103,6 +103,9 @@ func ProcessConfig() error {
 func VerifyConfig() error {
 	if !Forums.Exists(Config.DefaultForum) {
 		return errors.New("Invalid default forum")
+	}
+	if Config.ServerCount < 1 {
+		return errors.New("You can't have less than one server")
 	}
 	return nil
 }

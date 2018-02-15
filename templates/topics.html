@@ -128,9 +128,8 @@
 
 {{if gt .LastPage 1}}
 <div class="pageset">
-	{{if gt .Page 1}}
-	<link rel="prev" href="?page={{subtract .Page 1}}" />
-	<div class="pageitem"><a href="?page={{subtract .Page 1}}" rel="prev" aria-label="Go to the previous page">Prev</a></div>{{end}}
+	{{if gt .Page 1}}<div class="pageitem"><a href="?page={{subtract .Page 1}}" rel="prev" aria-label="Go to the previous page">Prev</a></div>
+	<link rel="prev" href="?page={{subtract .Page 1}}" />{{end}}
 	{{range .PageList}}
 	<div class="pageitem"><a href="?page={{.}}">{{.}}</a></div>
 	{{end}}
