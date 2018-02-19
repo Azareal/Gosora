@@ -3,7 +3,6 @@ package routes
 import (
 	"bytes"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,9 +17,7 @@ var cacheControlMaxAge = "max-age=" + strconv.Itoa(common.Day) // TODO: Make thi
 func StaticFile(w http.ResponseWriter, r *http.Request) {
 	file, ok := common.StaticFiles.Get(r.URL.Path)
 	if !ok {
-		if common.Dev.DebugMode {
-			log.Printf("Failed to find '%s'", r.URL.Path)
-		}
+		common.DebugLogf("Failed to find '%s'", r.URL.Path)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -55,12 +52,9 @@ func Overview(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	headerVars.Zone = "overview"
 
 	pi := common.Page{common.GetTitlePhrase("overview"), user, headerVars, tList, nil}
-	if common.PreRenderHooks["pre_render_overview"] != nil {
-		if common.RunPreRenderHook("pre_render_overview", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_overview", w, r, &user, &pi) {
+		return nil
 	}
-
 	err := common.Templates.ExecuteTemplate(w, "overview.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -73,19 +67,17 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, name s
 	if ferr != nil {
 		return ferr
 	}
+	headerVars.Zone = "custom_page"
 
 	// ! Is this safe?
 	if common.Templates.Lookup("page_"+name+".html") == nil {
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, headerVars)
 	}
-	headerVars.Zone = "custom_page"
 
 	pi := common.Page{common.GetTitlePhrase("page"), user, headerVars, tList, nil}
 	// TODO: Pass the page name to the pre-render hook?
-	if common.PreRenderHooks["pre_render_custom_page"] != nil {
-		if common.RunPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
+		return nil
 	}
 
 	err := common.Templates.ExecuteTemplate(w, "page_"+name+".html", pi)

@@ -34,9 +34,7 @@ type Stmts struct {
 
 // nolint
 func _gen_pgsql() (err error) {
-	if common.Dev.DebugMode {
-		log.Print("Building the generated statements")
-	}
+	common.DebugLog("Building the generated statements")
 	
 	log.Print("Preparing editReply statement.")
 	stmts.editReply, err = db.Prepare("UPDATE `replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ?")

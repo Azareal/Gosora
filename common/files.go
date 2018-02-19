@@ -51,7 +51,7 @@ func (list SFileList) Init() error {
 
 		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
-		debugLogf("Added the '%s' static file.", path)
+		DebugLogf("Added the '%s' static file.", path)
 		return nil
 	})
 }
@@ -76,7 +76,7 @@ func (list SFileList) Add(path string, prefix string) error {
 
 	list.Set("/static"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
-	debugLogf("Added the '%s' static file", path)
+	DebugLogf("Added the '%s' static file", path)
 	return nil
 }
 

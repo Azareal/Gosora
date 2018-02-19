@@ -28,7 +28,7 @@
 				<a class="panel_upshift unix_to_24_hour_time">{{.Time}}</a>
 				<span class="panel_compacttext to_right">{{.Count}} views</span>
 			</div>
-			{{end}}
+			{{else}}<div class="rowitem passive rowmsg">No posts could be found in the selected time range</div>{{end}}
 		</div>
 	</main>
 </div>

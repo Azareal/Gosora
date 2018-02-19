@@ -173,9 +173,7 @@ func PreparseMessage(msg string) string {
 	msg = strings.Replace(msg, "</p>", "", -1)
 	msg = strings.Replace(msg, "<br>", "\n\n", -1)
 	msg = strings.TrimSpace(msg) // There are a few useful cases for having spaces, but I'd like to stop the WYSIWYG from inserting random lines here and there
-	if Sshooks["preparse_preassign"] != nil {
-		msg = RunSshook("preparse_preassign", msg)
-	}
+	msg = RunSshook("preparse_preassign", msg)
 	msg = html.EscapeString(msg)
 	msg = strings.Replace(msg, "&nbsp;", "", -1)
 
@@ -573,9 +571,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	//log.Print("msg",`"`+msg+`"`)
 
 	msg = strings.Replace(msg, "\n", "<br>", -1)
-	if Sshooks["parse_assign"] != nil {
-		msg = RunSshook("parse_assign", msg)
-	}
+	msg = RunSshook("parse_assign", msg)
 	return msg
 }
 

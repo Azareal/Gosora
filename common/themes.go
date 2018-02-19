@@ -169,7 +169,7 @@ func InitThemes() error {
 		}
 
 		if theme.FullImage != "" {
-			debugLog("Adding theme image")
+			DebugLog("Adding theme image")
 			err = StaticFiles.Add("./themes/"+themeName+"/"+theme.FullImage, "./themes/"+themeName)
 			if err != nil {
 				return err
@@ -206,7 +206,7 @@ func (theme *Theme) LoadStaticFiles() error {
 func (theme *Theme) AddThemeStaticFiles() error {
 	// TODO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
 	return filepath.Walk("./themes/"+theme.Name+"/public", func(path string, f os.FileInfo, err error) error {
-		debugLog("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
+		DebugLog("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
 		if err != nil {
 			return err
 		}
@@ -236,7 +236,7 @@ func (theme *Theme) AddThemeStaticFiles() error {
 		gzipData := compressBytesGzip(data)
 		StaticFiles.Set("/static/"+theme.Name+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
-		debugLog("Added the '/" + theme.Name + path + "' static file for theme " + theme.Name + ".")
+		DebugLog("Added the '/" + theme.Name + path + "' static file for theme " + theme.Name + ".")
 		return nil
 	})
 }

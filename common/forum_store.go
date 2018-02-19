@@ -109,7 +109,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 		}
 
 		if forum.Name == "" {
-			debugLog("Adding a placeholder forum")
+			DebugLog("Adding a placeholder forum")
 		} else {
 			log.Printf("Adding the '%s' forum", forum.Name)
 		}

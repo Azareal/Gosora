@@ -22,7 +22,7 @@
 				<a href="/panel/analytics/system/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
 				<span class="panel_compacttext to_right">{{.Count}} views</span>
 			</div>
-			{{end}}
+			{{else}}<div class="rowitem passive rowmsg">No operating systems could be found in the selected time range</div>{{end}}
 		</div>
 	</main>
 </div>

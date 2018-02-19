@@ -43,15 +43,13 @@ func TopicList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	//log.Printf("topicList: %+v\n", topicList)
 	//log.Printf("forumList: %+v\n", forumList)
 	if len(topicList) == 0 {
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, headerVars)
 	}
 
 	pi := common.TopicsPage{common.GetTitlePhrase("topics"), user, headerVars, topicList, forumList, common.Config.DefaultForum, pageList, page, lastPage}
-	if common.PreRenderHooks["pre_render_topic_list"] != nil {
-		if common.RunPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
+	if common.RunPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
 			return nil
 		}
-	}
 	err = common.RunThemeTemplate(headerVars.Theme.Name, "topics", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)

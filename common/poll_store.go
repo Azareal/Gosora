@@ -189,6 +189,7 @@ func (store *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err er
 
 		// We probably don't need this, but it might be useful in case of bugs in BulkCascadeGetMap
 		if sidList == "" {
+			// TODO: Bulk log this
 			if Dev.DebugMode {
 				log.Print("This data is sampled later in the BulkCascadeGetMap function, so it might miss the cached IDs")
 				log.Print("idCount", idCount)

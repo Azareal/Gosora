@@ -84,60 +84,26 @@ func (inits dbInits) Add(init ...func(acc *qgen.Accumulator) error) {
 	DbInits = dbInits(append(DbInits, init...))
 }
 
-func debugDetail(args ...interface{}) {
+func DebugDetail(args ...interface{}) {
 	if Dev.SuperDebug {
 		log.Print(args...)
 	}
 }
 
-func debugDetailf(str string, args ...interface{}) {
+func DebugDetailf(str string, args ...interface{}) {
 	if Dev.SuperDebug {
 		log.Printf(str, args...)
 	}
 }
 
-func debugLog(args ...interface{}) {
+func DebugLog(args ...interface{}) {
 	if Dev.DebugMode {
 		log.Print(args...)
 	}
 }
 
-func debugLogf(str string, args ...interface{}) {
+func DebugLogf(str string, args ...interface{}) {
 	if Dev.DebugMode {
 		log.Printf(str, args...)
 	}
-}
-
-// TODO: Make a neater API for this
-var routeMapEnum map[string]int
-var reverseRouteMapEnum map[int]string
-
-func SetRouteMapEnum(rme map[string]int) {
-	routeMapEnum = rme
-}
-
-func SetReverseRouteMapEnum(rrme map[int]string) {
-	reverseRouteMapEnum = rrme
-}
-
-var agentMapEnum map[string]int
-var reverseAgentMapEnum map[int]string
-
-func SetAgentMapEnum(ame map[string]int) {
-	agentMapEnum = ame
-}
-
-func SetReverseAgentMapEnum(rame map[int]string) {
-	reverseAgentMapEnum = rame
-}
-
-var osMapEnum map[string]int
-var reverseOSMapEnum map[int]string
-
-func SetOSMapEnum(osme map[string]int) {
-	osMapEnum = osme
-}
-
-func SetReverseOSMapEnum(rosme map[int]string) {
-	reverseOSMapEnum = rosme
 }

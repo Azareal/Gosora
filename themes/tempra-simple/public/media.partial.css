@@ -20,7 +20,7 @@
 	}
 	ul {
 		height: 30px;
-		margin-top: 8px;
+		margin-top: 14px;
 	}
 	.menu_left, .menu_right { padding-right: 9px; }
 	.menu_alerts {
@@ -30,8 +30,8 @@
 	}
 
 	body {
-		padding-left: 4px;
-		padding-right: 4px;
+		padding-left: 12px;
+		padding-right: 12px;
 		margin: 0px !important;
 		width: 100% !important;
 		height: 100% !important;

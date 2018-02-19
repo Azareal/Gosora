@@ -88,7 +88,7 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 	}
 	mgs.groupCount = i
 
-	debugLog("Binding the Not Loggedin Group")
+	DebugLog("Binding the Not Loggedin Group")
 	GuestPerms = mgs.dirtyGetUnsafe(6).Perms
 	return nil
 }
@@ -162,9 +162,7 @@ func (mgs *MemoryGroupStore) initGroup(group *Group) error {
 		log.Print("bad group perms: ", group.PermissionsText)
 		return err
 	}
-	if Dev.DebugMode {
-		log.Printf(group.Name+": %+v\n", group.Perms)
-	}
+	DebugLogf(group.Name+": %+v\n", group.Perms)
 
 	err = json.Unmarshal(group.PluginPermsText, &group.PluginPerms)
 	if err != nil {
@@ -172,7 +170,7 @@ func (mgs *MemoryGroupStore) initGroup(group *Group) error {
 		log.Print("bad group plugin perms: ", group.PluginPermsText)
 		return err
 	}
-	debugLogf(group.Name+": %+v\n", group.PluginPerms)
+	DebugLogf(group.Name+": %+v\n", group.PluginPerms)
 
 	//group.Perms.ExtData = make(map[string]bool)
 	// TODO: Can we optimise the bit where this cascades down to the user now?

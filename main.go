@@ -16,8 +16,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	//"runtime/pprof"
+
 	"./common"
+	"./common/counters"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -101,35 +102,35 @@ func afterDBInit() (err error) {
 		return err
 	}
 
-	common.GlobalViewCounter, err = common.NewGlobalViewCounter()
+	counters.GlobalViewCounter, err = counters.NewGlobalViewCounter()
 	if err != nil {
 		return err
 	}
-	common.AgentViewCounter, err = common.NewDefaultAgentViewCounter()
+	counters.AgentViewCounter, err = counters.NewDefaultAgentViewCounter()
 	if err != nil {
 		return err
 	}
-	common.OSViewCounter, err = common.NewDefaultOSViewCounter()
+	counters.OSViewCounter, err = counters.NewDefaultOSViewCounter()
 	if err != nil {
 		return err
 	}
-	common.RouteViewCounter, err = common.NewDefaultRouteViewCounter()
+	counters.RouteViewCounter, err = counters.NewDefaultRouteViewCounter()
 	if err != nil {
 		return err
 	}
-	common.PostCounter, err = common.NewPostCounter()
+	counters.PostCounter, err = counters.NewPostCounter()
 	if err != nil {
 		return err
 	}
-	common.TopicCounter, err = common.NewTopicCounter()
+	counters.TopicCounter, err = counters.NewTopicCounter()
 	if err != nil {
 		return err
 	}
-	common.TopicViewCounter, err = common.NewDefaultTopicViewCounter()
+	counters.TopicViewCounter, err = counters.NewDefaultTopicViewCounter()
 	if err != nil {
 		return err
 	}
-	common.ReferrerTracker, err = common.NewDefaultReferrerTracker()
+	counters.ReferrerTracker, err = counters.NewDefaultReferrerTracker()
 	if err != nil {
 		return err
 	}

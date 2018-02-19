@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -79,10 +78,9 @@ func sitemapSwitch(w http.ResponseWriter, r *http.Request) common.RouteError {
 			spath = strings.TrimSuffix(spath, ".xml")
 			page, err := strconv.Atoi(spath)
 			if err != nil {
-				if common.Dev.DebugMode {
-					log.Printf("Unable to convert string '%s' to integer in fuzzy route", spath)
-				}
-				return common.NotFound(w, r)
+				// ? What's this? Do we need it? Was it just a quick trace?
+				common.DebugLogf("Unable to convert string '%s' to integer in fuzzy route", spath)
+				return common.NotFound(w, r, nil)
 			}
 			return fuzzy.Handle(w, r, page)
 		}
@@ -90,7 +88,7 @@ func sitemapSwitch(w http.ResponseWriter, r *http.Request) common.RouteError {
 
 	route, ok := sitemapRoutes[path]
 	if !ok {
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, nil)
 	}
 	return route(w, r)
 }

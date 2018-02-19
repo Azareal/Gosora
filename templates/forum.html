@@ -98,7 +98,7 @@
 				<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
 			</span>
 		</div>
-		</div>{{else}}<div class="rowitem passive">There aren't any topics in this forum yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
+		</div>{{else}}<div class="rowitem passive rowmsg">There aren't any topics in this forum yet.{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">Start one?</a>{{end}}</div>{{end}}
 	</div>
 
 {{if gt .LastPage 1}}

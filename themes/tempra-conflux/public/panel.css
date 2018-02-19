@@ -1,4 +1,10 @@
-/* Control Panel */
+/*.submenu {
+	padding-left: 18px;
+}*/
+.submenu:before {
+	content:"–";
+	margin-right: 8px;
+}
 
 .edit_button:before {
 	content: "Edit";
@@ -95,6 +101,18 @@
 	content: " || ";
 	padding-left: 2px;
 	padding-right: 2px;
+}
+
+.ct_chart {
+	padding-left: 10px;
+    padding-top: 18px;
+    padding-bottom: 2px;
+    padding-right: 10px;
+	margin-bottom: 12px;
+
+	background-color: white;
+	border: 1px solid var(--main-border-color);
+	border-bottom: 1.5px inset var(--main-border-color);
 }
 
 @media(max-width: 1300px) {

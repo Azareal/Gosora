@@ -70,7 +70,7 @@ func main() {
 		var end = len(route.Path) - 1
 		out += "\n\t\tcase \"" + route.Path[0:end] + "\":"
 		out += runBefore(route.RunBefore, 4)
-		out += "\n\t\t\tcommon.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+		out += "\n\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 		out += "\n\t\t\terr = " + route.Name + "(w,req,user"
 		for _, item := range route.Vars {
 			out += "," + item
@@ -128,7 +128,7 @@ func main() {
 					}
 				}
 			}
-			out += "\n\t\t\t\t\tcommon.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+			out += "\n\t\t\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 			out += "\n\t\t\t\t\terr = " + route.Name + "(w,req,user"
 			for _, item := range route.Vars {
 				out += "," + item
@@ -140,7 +140,7 @@ func main() {
 			mapIt(defaultRoute.Name)
 			out += "\n\t\t\t\tdefault:"
 			out += runBefore(defaultRoute.RunBefore, 4)
-			out += "\n\t\t\t\t\tcommon.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
+			out += "\n\t\t\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
 			out += "\n\t\t\t\t\terr = " + defaultRoute.Name + "(w,req,user"
 			for _, item := range defaultRoute.Vars {
 				out += ", " + item
@@ -157,6 +157,7 @@ func main() {
 	// Stubs for us to refer to these routes through
 	mapIt("routeDynamic")
 	mapIt("routeUploads")
+	mapIt("routes.StaticFile")
 	mapIt("BadRoute")
 	tmplVars.AllRouteNames = allRouteNames
 	tmplVars.AllRouteMap = allRouteMap
@@ -224,6 +225,7 @@ import (
 	"net/http"
 
 	"./common"
+	"./common/counters"
 	"./routes"
 )
 
@@ -287,12 +289,12 @@ var markToAgent = map[string]string{
 
 // TODO: Stop spilling these into the package scope?
 func init() {
-	common.SetRouteMapEnum(routeMapEnum)
-	common.SetReverseRouteMapEnum(reverseRouteMapEnum)
-	common.SetAgentMapEnum(agentMapEnum)
-	common.SetReverseAgentMapEnum(reverseAgentMapEnum)
-	common.SetOSMapEnum(osMapEnum)
-	common.SetReverseOSMapEnum(reverseOSMapEnum)
+	counters.SetRouteMapEnum(routeMapEnum)
+	counters.SetReverseRouteMapEnum(reverseRouteMapEnum)
+	counters.SetAgentMapEnum(agentMapEnum)
+	counters.SetReverseAgentMapEnum(reverseAgentMapEnum)
+	counters.SetOSMapEnum(osMapEnum)
+	counters.SetReverseOSMapEnum(reverseOSMapEnum)
 }
 
 type GenRouter struct {
@@ -359,7 +361,7 @@ func (router *GenRouter) DumpRequest(req *http.Request) {
 func (router *GenRouter) SuspiciousRequest(req *http.Request) {
 	log.Print("Suspicious Request")
 	router.DumpRequest(req)
-	common.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
+	counters.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
 }
 
 // TODO: Pass the default route or config struct to the router rather than accessing it via a package global
@@ -392,7 +394,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte(""))
 		log.Print("Malformed Request")
 		router.DumpRequest(req)
-		common.AgentViewCounter.Bump({{.AllAgentMap.malformed}})
+		counters.AgentViewCounter.Bump({{.AllAgentMap.malformed}})
 		return
 	}
 
@@ -422,8 +424,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log.Print("before routes.StaticFile")
 		router.DumpRequest(req)
 	}
+	// Increment the request counter
+	counters.GlobalViewCounter.Bump()
 	
 	if prefix == "/static" {
+		counters.RouteViewCounter.Bump({{ index .AllRouteMap "routes.StaticFile" }})
 		req.URL.Path += extraData
 		routes.StaticFile(w, req)
 		return
@@ -432,15 +437,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log.Print("before PreRoute")
 	}
 
-	// Increment the global view counter
-	common.GlobalViewCounter.Bump()
-
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
-		common.AgentViewCounter.Bump({{.AllAgentMap.blank}})
+		counters.AgentViewCounter.Bump({{.AllAgentMap.blank}})
 		if common.Dev.DebugMode {
 			log.Print("Blank UA: ", req.UserAgent())
 			router.DumpRequest(req)
@@ -540,15 +542,15 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		
 		if agent == "" {
-			common.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
+			counters.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
 			if common.Dev.DebugMode {
 				log.Print("Unknown UA: ", req.UserAgent())
 				router.DumpRequest(req)
 			}
 		} else {
-			common.AgentViewCounter.Bump(agentMapEnum[agent])
+			counters.AgentViewCounter.Bump(agentMapEnum[agent])
 		}
-		common.OSViewCounter.Bump(osMapEnum[os])
+		counters.OSViewCounter.Bump(osMapEnum[os])
 	}
 
 	referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P
@@ -558,7 +560,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		referrer = strings.Split(referrer,"/")[0]
 		portless := strings.Split(referrer,":")[0]
 		if portless != "localhost" && portless != "127.0.0.1" && portless != common.Site.Host {
-			common.ReferrerTracker.Bump(referrer)
+			counters.ReferrerTracker.Bump(referrer)
 		}
 	}
 	
@@ -582,10 +584,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}*/
 		case "/uploads":
 			if extraData == "" {
-				common.NotFound(w,req)
+				common.NotFound(w,req,nil)
 				return
 			}
-			common.RouteViewCounter.Bump({{.AllRouteMap.routeUploads}})
+			counters.RouteViewCounter.Bump({{.AllRouteMap.routeUploads}})
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
@@ -607,7 +609,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					return*/
 			}
 			if extraData != "" {
-				common.NotFound(w,req)
+				common.NotFound(w,req,nil)
 				return
 			}
 
@@ -615,10 +617,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if !ok {
 				// TODO: Make this a startup error not a runtime one
 				log.Print("Unable to find the default route")
-				common.NotFound(w,req)
+				common.NotFound(w,req,nil)
 				return
 			}
-			common.RouteViewCounter.Bump(routeMapEnum[common.Config.DefaultRoute])
+			counters.RouteViewCounter.Bump(routeMapEnum[common.Config.DefaultRoute])
 
 			handle.(func(http.ResponseWriter, *http.Request, common.User) common.RouteError)(w,req,user)
 		default:
@@ -628,7 +630,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			router.RUnlock()
 			
 			if ok {
-				common.RouteViewCounter.Bump({{.AllRouteMap.routeDynamic}}) // TODO: Be more specific about *which* dynamic route it is
+				counters.RouteViewCounter.Bump({{.AllRouteMap.routeDynamic}}) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				err = handle(w,req,user)
 				if err != nil {
@@ -642,8 +644,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") || strings.Contains(lowerPath,"//") || strings.Contains(lowerPath,"\\\\") || strings.Contains(lowerPath,"wp") || strings.Contains(lowerPath,"wordpress") || strings.Contains(lowerPath,"config") || strings.Contains(lowerPath,"setup") || strings.Contains(lowerPath,"install") || strings.Contains(lowerPath,"update") || strings.Contains(lowerPath,"php") {
 				router.SuspiciousRequest(req)
 			}
-			common.RouteViewCounter.Bump({{.AllRouteMap.BadRoute}})
-			common.NotFound(w,req)
+			counters.RouteViewCounter.Bump({{.AllRouteMap.BadRoute}})
+			common.NotFound(w,req,nil)
 	}
 }
 `

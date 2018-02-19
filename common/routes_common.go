@@ -52,7 +52,7 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 		return headerVars, rerr
 	}
 	if !Forums.Exists(fid) {
-		return headerVars, NotFound(w, r)
+		return headerVars, NotFound(w, r, headerVars)
 	}
 
 	if VhookSkippable["forum_check_pre_perms"] != nil {
@@ -353,7 +353,7 @@ func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user User, maxFil
 	// TODO: Reuse this code more
 	if r.ContentLength > int64(maxFileSize) {
 		size, unit := ConvertByteUnit(float64(maxFileSize))
-		return CustomError("Your upload is too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, user)
+		return CustomError("Your upload is too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, nil, user)
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxFileSize))
 

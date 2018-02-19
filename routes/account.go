@@ -22,10 +22,8 @@ func AccountLogin(w http.ResponseWriter, r *http.Request, user common.User) comm
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
 	pi := common.Page{common.GetTitlePhrase("login"), user, headerVars, tList, nil}
-	if common.PreRenderHooks["pre_render_login"] != nil {
-		if common.RunPreRenderHook("pre_render_login", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_login", w, r, &user, &pi) {
+		return nil
 	}
 	err := common.Templates.ExecuteTemplate(w, "login.html", pi)
 	if err != nil {
@@ -83,10 +81,8 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
 	pi := common.Page{common.GetTitlePhrase("register"), user, headerVars, tList, nil}
-	if common.PreRenderHooks["pre_render_register"] != nil {
-		if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
+		return nil
 	}
 	err := common.Templates.ExecuteTemplate(w, "register.html", pi)
 	if err != nil {
@@ -124,9 +120,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	confirmPassword := r.PostFormValue("confirm_password")
-	if common.Dev.DebugMode {
-		log.Print("Registration Attempt! Username: " + username) // TODO: Add more controls over what is logged when?
-	}
+	common.DebugLog("Registration Attempt! Username: " + username) // TODO: Add more controls over what is logged when?
 
 	// Do the two inputted passwords match..?
 	if password != confirmPassword {
@@ -187,10 +181,8 @@ func AccountEditCritical(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pi := common.Page{"Edit Password", user, headerVars, tList, nil}
-	if common.PreRenderHooks["pre_render_account_own_edit_critical"] != nil {
-		if common.RunPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
+		return nil
 	}
 	err := common.Templates.ExecuteTemplate(w, "account_own_edit.html", pi)
 	if err != nil {

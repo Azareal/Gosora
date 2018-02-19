@@ -215,8 +215,9 @@ func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user common.User) c
 	if err != nil {
 		return common.LocalError("Bad guild", w, r, user)
 	}
+	// TODO: Build and pass headerVars
 	if !guildItem.Active {
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, nil)
 	}
 
 	return nil
@@ -357,11 +358,9 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 
 	pi := MemberListPage{"Guild Member List", user, headerVars, guildMembers, guildItem, 0, 0}
 	// A plugin with plugins. Pluginception!
-	if common.PreRenderHooks["pre_render_guilds_member_list"] != nil {
-		if common.RunPreRenderHook("pre_render_guilds_member_list", w, r, &user, &pi) {
+	if common.RunPreRenderHook("pre_render_guilds_member_list", w, r, &user, &pi) {
 			return nil
 		}
-	}
 	err = common.RunThemeTemplate(headerVars.Theme.Name, "guilds_member_list", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -446,7 +445,7 @@ func ForumCheck(args ...interface{}) (skip bool, rerr common.RouteError) {
 				return true, common.InternalError(errors.New("Unable to find the parent group for a forum"), w, r)
 			}
 			if !guildItem.Active {
-				return true, common.NotFound(w, r)
+				return true, common.NotFound(w, r, nil) // TODO: Can we pull headerVars out of args?
 			}
 			r = r.WithContext(context.WithValue(r.Context(), "guilds_current_group", guildItem))
 		}

@@ -64,9 +64,7 @@ type Stmts struct {
 
 // nolint
 func _gen_mssql() (err error) {
-	if common.Dev.DebugMode {
-		log.Print("Building the generated statements")
-	}
+	common.DebugLog("Building the generated statements")
 	
 	log.Print("Preparing getPassword statement.")
 	stmts.getPassword, err = db.Prepare("SELECT [password],[salt] FROM [users] WHERE [uid] = ?1")

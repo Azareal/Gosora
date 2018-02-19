@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"./common"
+	"./common/counters"
 )
 
 func routeCreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -194,7 +195,7 @@ func routeCreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.
 		return common.InternalError(err, w, r)
 	}
 
-	common.PostCounter.Bump()
+	counters.PostCounter.Bump()
 	return nil
 }
 
@@ -348,7 +349,7 @@ func routeProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user 
 		return common.InternalError(err, w, r)
 	}
 
-	common.PostCounter.Bump()
+	counters.PostCounter.Bump()
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
 	return nil
 }
@@ -398,7 +399,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 	} else if itemType == "topic" {
 		err = stmts.getTopicBasic.QueryRow(itemID).Scan(&title, &content)
 		if err == ErrNoRows {
-			return common.NotFound(w, r)
+			return common.NotFound(w, r, nil)
 		} else if err != nil {
 			return common.InternalError(err, w, r)
 		}
@@ -439,7 +440,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	common.PostCounter.Bump()
+	counters.PostCounter.Bump()
 
 	http.Redirect(w, r, "/topic/"+strconv.FormatInt(lastID, 10), http.StatusSeeOther)
 	return nil
@@ -479,10 +480,8 @@ func routeAccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user
 
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your password was successfully updated")
 	pi := common.Page{"Edit Password", user, headerVars, tList, nil}
-	if common.PreRenderHooks["pre_render_account_own_edit_critical"] != nil {
-		if common.RunPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "account_own_edit.html", pi)
 	if err != nil {
@@ -498,10 +497,8 @@ func routeAccountEditAvatar(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	pi := common.Page{"Edit Avatar", user, headerVars, tList, nil}
-	if common.PreRenderHooks["pre_render_account_own_edit_avatar"] != nil {
-		if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
+		return nil
 	}
 	err := common.Templates.ExecuteTemplate(w, "account_own_edit_avatar.html", pi)
 	if err != nil {
@@ -573,10 +570,8 @@ func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your avatar was successfully updated")
 
 	pi := common.Page{"Edit Avatar", user, headerVars, tList, nil}
-	if common.PreRenderHooks["pre_render_account_own_edit_avatar"] != nil {
-		if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "account_own_edit_avatar.html", pi)
 	if err != nil {
@@ -592,10 +587,8 @@ func routeAccountEditUsername(w http.ResponseWriter, r *http.Request, user commo
 	}
 
 	pi := common.Page{"Edit Username", user, headerVars, tList, user.Name}
-	if common.PreRenderHooks["pre_render_account_own_edit_username"] != nil {
-		if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
+		return nil
 	}
 	err := common.Templates.ExecuteTemplate(w, "account_own_edit_username.html", pi)
 	if err != nil {
@@ -619,10 +612,8 @@ func routeAccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user
 
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your username was successfully updated")
 	pi := common.Page{"Edit Username", user, headerVars, tList, nil}
-	if common.PreRenderHooks["pre_render_account_own_edit_username"] != nil {
-		if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "account_own_edit_username.html", pi)
 	if err != nil {
@@ -674,10 +665,8 @@ func routeAccountEditEmail(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	pi := common.Page{"Email Manager", user, headerVars, emailList, nil}
-	if common.PreRenderHooks["pre_render_account_own_edit_email"] != nil {
-		if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "account_own_edit_email.html", pi)
 	if err != nil {
@@ -746,10 +735,8 @@ func routeAccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, us
 	}
 	headerVars.NoticeList = append(headerVars.NoticeList, "Your email was successfully verified")
 	pi := common.Page{"Email Manager", user, headerVars, emailList, nil}
-	if common.PreRenderHooks["pre_render_account_own_edit_email"] != nil {
-		if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "account_own_edit_email.html", pi)
 	if err != nil {
@@ -786,7 +773,7 @@ func routeShowAttachment(w http.ResponseWriter, r *http.Request, user common.Use
 	var originID, uploadedBy int
 	err = stmts.getAttachment.QueryRow(filename, sectionID, sectionTable).Scan(&sectionID, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
 	if err == ErrNoRows {
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, nil)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}

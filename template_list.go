@@ -921,7 +921,7 @@ var forums_20 = []byte(`
 		<div style="clear: both;"></div>
 	</div>
 	`)
-var forums_21 = []byte(`<div class="rowitem passive">You don't have access to any forums.</div>`)
+var forums_21 = []byte(`<div class="rowitem passive rowmsg">You don't have access to any forums.</div>`)
 var forums_22 = []byte(`
 </div>
 
@@ -1104,7 +1104,7 @@ var topics_58 = []byte(`</span>
 		</span>
 	</div>
 	</div>`)
-var topics_59 = []byte(`<div class="rowitem passive">There aren't any topics yet.`)
+var topics_59 = []byte(`<div class="rowitem passive rowmsg">There aren't any topics yet.`)
 var topics_60 = []byte(` <a href="/topics/create/">Start one?</a>`)
 var topics_61 = []byte(`</div>`)
 var topics_62 = []byte(`
@@ -1279,7 +1279,7 @@ var forum_50 = []byte(`</span>
 			</span>
 		</div>
 		</div>`)
-var forum_51 = []byte(`<div class="rowitem passive">There aren't any topics in this forum yet.`)
+var forum_51 = []byte(`<div class="rowitem passive rowmsg">There aren't any topics in this forum yet.`)
 var forum_52 = []byte(` <a href="/topics/create/`)
 var forum_53 = []byte(`">Start one?</a>`)
 var forum_54 = []byte(`</div>`)

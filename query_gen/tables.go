@@ -433,16 +433,14 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableKey{},
 	)
 
-	/*
-		qgen.Install.CreateTable("viewchunks_forums", "", "",
-			[]qgen.DBTableColumn{
-				qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-				qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
-				qgen.DBTableColumn{"forum", "int", 0, false, false, ""},
-			},
-			[]qgen.DBTableKey{},
-		)
-	*/
+	qgen.Install.CreateTable("viewchunks_forums", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+			qgen.DBTableColumn{"forum", "int", 0, false, false, ""},
+		},
+		[]qgen.DBTableKey{},
+	)
 
 	qgen.Install.CreateTable("topicchunks", "", "",
 		[]qgen.DBTableColumn{

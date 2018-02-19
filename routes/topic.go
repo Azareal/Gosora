@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"../common"
+	"../common/counters"
 	"../query_gen/lib"
 )
 
@@ -54,7 +55,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	// Get the topic...
 	topic, err := common.GetTopicUser(tid)
 	if err == sql.ErrNoRows {
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, nil) // TODO: Can we add a simplified invocation of headerVars here? This is likely to be an extremely common NotFound
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -182,16 +183,14 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		}
 	}
 
-	if common.PreRenderHooks["pre_render_view_topic"] != nil {
-		if common.RunPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
+		return nil
 	}
 	err = common.RunThemeTemplate(headerVars.Theme.Name, "topic", tpage, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	common.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
+	counters.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
 	return nil
 }
 
@@ -256,6 +255,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 		forum := common.Forums.DirtyGet(ffid)
 		if forum.Name != "" && forum.Active {
 			fcopy := forum.Copy()
+			// TODO: Abstract this
 			if common.Hooks["topic_create_frow_assign"] != nil {
 				// TODO: Add the skip feature to all the other row based hooks?
 				if common.RunHook("topic_create_frow_assign", &fcopy).(bool) {
@@ -267,10 +267,8 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 	}
 
 	ctpage := common.CreateTopicPage{"Create Topic", user, headerVars, forumList, fid}
-	if common.PreRenderHooks["pre_render_create_topic"] != nil {
-		if common.RunPreRenderHook("pre_render_create_topic", w, r, &user, &ctpage) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_create_topic", w, r, &user, &ctpage) {
+		return nil
 	}
 
 	err = common.RunThemeTemplate(headerVars.Theme.Name, "create_topic", ctpage, w)
@@ -382,9 +380,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 			}
 
 			for _, file := range files {
-				if common.Dev.DebugMode {
-					log.Print("file.Filename ", file.Filename)
-				}
+				common.DebugLog("file.Filename ", file.Filename)
 				extarr := strings.Split(file.Filename, ".")
 				if len(extarr) < 2 {
 					return common.LocalError("Bad file", w, r, user)
@@ -441,8 +437,8 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		}
 	}
 
-	common.PostCounter.Bump()
-	common.TopicCounter.Bump()
+	counters.PostCounter.Bump()
+	counters.TopicCounter.Bump()
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	return nil
 }

@@ -64,15 +64,15 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	if !user.Perms.ViewTopic {
 		return common.NoPermissions(w, r, user)
 	}
+	headerVars.Zone = "view_forum"
 
 	// TODO: Fix this double-check
 	forum, err := common.Forums.Get(fid)
 	if err == ErrNoRows {
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, headerVars)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	headerVars.Zone = "view_forum"
 
 	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
 	offset, page, lastPage := common.PageOffset(forum.TopicCount, page, common.Config.ItemsPerPage)
@@ -130,10 +130,8 @@ func routeForum(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 
 	pageList := common.Paginate(forum.TopicCount, common.Config.ItemsPerPage, 5)
 	pi := common.ForumPage{forum.Name, user, headerVars, topicList, forum, pageList, page, lastPage}
-	if common.PreRenderHooks["pre_render_forum"] != nil {
-		if common.RunPreRenderHook("pre_render_forum", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_forum", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.RunThemeTemplate(headerVars.Theme.Name, "forum", pi, w)
 	if err != nil {
@@ -180,18 +178,14 @@ func routeForums(w http.ResponseWriter, r *http.Request, user common.User) commo
 			} else {
 				forum.LastTopicTime = ""
 			}
-			if common.Hooks["forums_frow_assign"] != nil {
-				common.RunHook("forums_frow_assign", &forum)
-			}
+			common.RunHook("forums_frow_assign", &forum)
 			forumList = append(forumList, forum)
 		}
 	}
 
 	pi := common.ForumsPage{common.GetTitlePhrase("forums"), user, headerVars, forumList}
-	if common.PreRenderHooks["pre_render_forum_list"] != nil {
-		if common.RunPreRenderHook("pre_render_forum_list", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_forum_list", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.RunThemeTemplate(headerVars.Theme.Name, "forums", pi, w)
 	if err != nil {
@@ -233,7 +227,7 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user common.User) comm
 		// TODO: Add a shared function for checking for ErrNoRows and internal erroring if it's not that case?
 		puser, err = common.Users.Get(pid)
 		if err == ErrNoRows {
-			return common.NotFound(w, r)
+			return common.NotFound(w, r, headerVars)
 		} else if err != nil {
 			return common.InternalError(err, w, r)
 		}
@@ -288,10 +282,8 @@ func routeProfile(w http.ResponseWriter, r *http.Request, user common.User) comm
 
 	// TODO: Add a phrase for this title
 	ppage := common.ProfilePage{puser.Name + "'s Profile", user, headerVars, replyList, *puser}
-	if common.PreRenderHooks["pre_render_profile"] != nil {
-		if common.RunPreRenderHook("pre_render_profile", w, r, &user, &ppage) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_profile", w, r, &user, &ppage) {
+		return nil
 	}
 
 	err = common.RunThemeTemplate(headerVars.Theme.Name, "profile", ppage, w)

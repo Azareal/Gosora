@@ -232,6 +232,7 @@ ul {
 	margin-left: 12px;
 }
 /* TODO: Reduce the number of nots */
+/* TODO: Apply the property to the rowitem on the colstack_head rather than the container itself */
 .rowblock:not(.topic_list):not(.forum_list):not(.post_container):not(.topic_reply_container), .colstack_head, .topic_row .rowitem, .forum_list .rowitem {
 	background-color: var(--element-background-color);
 }
@@ -267,6 +268,15 @@ h1, h3 {
 	margin-block-end: 0;
 	margin-top: 0px;
 	margin-bottom: 0px;
+}
+
+.rowmsg.rowitem {
+	padding: 12px;
+}
+.topic_list .rowmsg.rowitem,
+.forum_list .rowmsg.rowitem {
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
 }
 
 .colstack {
@@ -692,8 +702,8 @@ textarea {
     margin-bottom: 8px;
     padding: 4px;
 	display: flex;
-    border: 1px solid var(--element-border-color);
-    border-bottom: 2px solid var(--element-border-color);
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
 }
 .rowlist .rowitem {
 	background-color: var(--element-background-color);

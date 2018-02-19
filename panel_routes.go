@@ -31,10 +31,8 @@ func panelSuccessRedirect(dest string, w http.ResponseWriter, r *http.Request, i
 	return nil
 }
 func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, user common.User, pi interface{}) common.RouteError {
-	if common.PreRenderHooks["pre_render_"+tmplName] != nil {
-		if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, pi) {
+		return nil
 	}
 	err := common.Templates.ExecuteTemplate(w, tmplName+".html", pi)
 	if err != nil {
@@ -253,10 +251,8 @@ func routePanelForumsDelete(w http.ResponseWriter, r *http.Request, user common.
 	yousure := common.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
 	pi := common.PanelPage{common.GetTitlePhrase("panel_delete_forum"), user, headerVars, stats, "forums", tList, yousure}
-	if common.PreRenderHooks["pre_render_panel_delete_forum"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_delete_forum", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_panel_delete_forum", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "are_you_sure.html", pi)
 	if err != nil {
@@ -330,10 +326,8 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 	}
 
 	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
-	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-forum-edit.html", pi)
 	if err != nil {
@@ -493,10 +487,8 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 	addNameLangToggle("MoveTopic", forumPerms.MoveTopic)
 
 	pi := common.PanelEditForumGroupPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
-	if common.PreRenderHooks["pre_render_panel_edit_forum"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-forum-edit-perms.html", pi)
 	if err != nil {
@@ -801,6 +793,7 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 		}
 
 		var unixCreatedAt = createdAt.Unix()
+		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
@@ -883,6 +876,7 @@ func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user
 		}
 
 		var unixCreatedAt = createdAt.Unix()
+		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
@@ -964,6 +958,7 @@ func routePanelAnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, us
 		}
 
 		var unixCreatedAt = createdAt.Unix()
+		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
@@ -1038,6 +1033,7 @@ func routePanelAnalyticsTopics(w http.ResponseWriter, r *http.Request, user comm
 		}
 
 		var unixCreatedAt = createdAt.Unix()
+		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
@@ -1171,6 +1167,7 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 			return common.InternalError(err, w, r)
 		}
 
+		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("route: ", route)
@@ -1222,6 +1219,7 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 			return common.InternalError(err, w, r)
 		}
 
+		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("agent: ", agent)
@@ -1278,6 +1276,7 @@ func routePanelAnalyticsSystems(w http.ResponseWriter, r *http.Request, user com
 			return common.InternalError(err, w, r)
 		}
 
+		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("system: ", system)
@@ -1334,6 +1333,7 @@ func routePanelAnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c
 			return common.InternalError(err, w, r)
 		}
 
+		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("domain: ", domain)
@@ -1850,10 +1850,8 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pi := common.PanelPage{common.GetTitlePhrase("panel_edit_user"), user, headerVars, stats, "users", groupList, targetUser}
-	if common.PreRenderHooks["pre_render_panel_edit_user"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_edit_user", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_panel_edit_user", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-user-edit.html", pi)
 	if err != nil {
@@ -2015,7 +2013,7 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, headerVars)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -2044,10 +2042,8 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
 	pi := common.PanelEditGroupPage{common.GetTitlePhrase("panel_edit_group"), user, headerVars, stats, "groups", group.ID, group.Name, group.Tag, rank, disableRank}
-	if common.PreRenderHooks["pre_render_panel_edit_group"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_edit_group", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_panel_edit_group", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-group-edit.html", pi)
 	if err != nil {
@@ -2073,7 +2069,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, headerVars)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -2132,10 +2128,8 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 	addGlobalPerm("UploadFiles", group.Perms.UploadFiles)
 
 	pi := common.PanelEditGroupPermsPage{common.GetTitlePhrase("panel_edit_group"), user, headerVars, stats, "groups", group.ID, group.Name, localPerms, globalPerms}
-	if common.PreRenderHooks["pre_render_panel_edit_group_perms"] != nil {
-		if common.RunPreRenderHook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
-			return nil
-		}
+	if common.RunPreRenderHook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
+		return nil
 	}
 	err = common.Templates.ExecuteTemplate(w, "panel-group-edit-perms.html", pi)
 	if err != nil {
@@ -2161,7 +2155,7 @@ func routePanelGroupsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, nil)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -2252,7 +2246,7 @@ func routePanelGroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters o.o")
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, nil)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -2444,7 +2438,7 @@ func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User,
 		if ext == ".sql" {
 			info, err := os.Stat("./backups/" + backupURL)
 			if err != nil {
-				return common.NotFound(w, r)
+				return common.NotFound(w, r, headerVars)
 			}
 			// TODO: Change the served filename to gosora_backup_%timestamp%.sql, the time the file was generated, not when it was modified aka what the name of it should be
 			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.sql")
@@ -2453,7 +2447,7 @@ func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User,
 			http.ServeFile(w, r, "./backups/"+backupURL)
 			return nil
 		}
-		return common.NotFound(w, r)
+		return common.NotFound(w, r, headerVars)
 	}
 
 	var backupList []common.BackupItem
@@ -2487,23 +2481,34 @@ func handleUnknownTopic(topic *common.Topic, err error) *common.Topic {
 	return topic
 }
 
+// TODO: Move the log building logic into /common/ and it's own abstraction
+func topicElementTypeAction(action string, elementType string, elementID int, actor *common.User, topic *common.Topic) (out string) {
+	if action == "delete" {
+		return fmt.Sprintf("Topic #%d was deleted by <a href='%s'>%s</a>", elementID, actor.Link, actor.Name)
+	}
+
+	switch action {
+	case "lock":
+		out = "<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>"
+	case "unlock":
+		out = "<a href='%s'>%s</a> was reopened by <a href='%s'>%s</a>"
+	case "stick":
+		out = "<a href='%s'>%s</a> was pinned by <a href='%s'>%s</a>"
+	case "unstick":
+		out = "<a href='%s'>%s</a> was unpinned by <a href='%s'>%s</a>"
+	case "move":
+		out = "<a href='%s'>%s</a> was moved by <a href='%s'>%s</a>" // TODO: Add where it was moved to, we'll have to change the source data for that, most likely? Investigate that and try to work this in
+	default:
+		return fmt.Sprintf("Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>", action, elementType, actor.Link, actor.Name)
+	}
+	return fmt.Sprintf(out, topic.Link, topic.Title, actor.Link, actor.Name)
+}
+
 func modlogsElementType(action string, elementType string, elementID int, actor *common.User) (out string) {
 	switch elementType {
 	case "topic":
 		topic := handleUnknownTopic(common.Topics.Get(elementID))
-		switch action {
-		case "lock":
-			out = "<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>"
-		case "unlock":
-			out = "<a href='%s'>%s</a> was reopened by <a href='%s'>%s</a>"
-		case "stick":
-			out = "<a href='%s'>%s</a> was pinned by <a href='%s'>%s</a>"
-		case "unstick":
-			out = "<a href='%s'>%s</a> was unpinned by <a href='%s'>%s</a>"
-		case "delete":
-			return fmt.Sprintf("Topic #%d was deleted by <a href='%s'>%s</a>", elementID, actor.Link, actor.Name)
-		}
-		out = fmt.Sprintf(out, topic.Link, topic.Title, actor.Link, actor.Name)
+		out = topicElementTypeAction(action, elementType, elementID, actor, topic)
 	case "user":
 		targetUser := handleUnknownUser(common.Users.Get(elementID))
 		switch action {
@@ -2521,6 +2526,7 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 			out = fmt.Sprintf("A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
 		}
 	}
+
 	if out == "" {
 		out = fmt.Sprintf("Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>", action, elementType, actor.Link, actor.Name)
 	}

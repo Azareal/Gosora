@@ -238,10 +238,8 @@ func LoginRequiredJS(w http.ResponseWriter, r *http.Request, user User) RouteErr
 func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
 	pi := Page{"Security Error", user, DefaultHeaderVar(), tList, "There was a security issue with your request."}
-	if PreRenderHooks["pre_render_security_error"] != nil {
-		if RunPreRenderHook("pre_render_security_error", w, r, &user, &pi) {
-			return nil
-		}
+	if RunPreRenderHook("pre_render_security_error", w, r, &user, &pi) {
+		return nil
 	}
 	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {
@@ -253,22 +251,28 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError
 // NotFound is used when the requested page doesn't exist
 // ? - Add a JSQ and JS version of this?
 // ? - Add a user parameter?
-func NotFound(w http.ResponseWriter, r *http.Request) RouteError {
-	return CustomError("The requested page doesn't exist.", 404, "Not Found", w, r, GuestUser)
+func NotFound(w http.ResponseWriter, r *http.Request, headerVars *HeaderVars) RouteError {
+	return CustomError("The requested page doesn't exist.", 404, "Not Found", w, r, headerVars, GuestUser)
 }
 
 // CustomError lets us make custom error types which aren't covered by the generic functions above
-func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User) RouteError {
+func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, headerVars *HeaderVars, user User) RouteError {
+	if headerVars == nil {
+		headerVars = DefaultHeaderVar()
+	}
 	w.WriteHeader(errcode)
-	pi := Page{errtitle, user, DefaultHeaderVar(), tList, errmsg}
+	pi := Page{errtitle, user, headerVars, tList, errmsg}
 	handleErrorTemplate(w, r, pi)
 	return HandledRouteError()
 }
 
 // CustomErrorJSQ is a version of CustomError which lets us handle both JSON and regular pages depending on how it's being accessed
-func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
+func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, headerVars *HeaderVars, user User, isJs bool) RouteError {
 	if !isJs {
-		return CustomError(errmsg, errcode, errtitle, w, r, user)
+		if headerVars == nil {
+			headerVars = DefaultHeaderVar()
+		}
+		return CustomError(errmsg, errcode, errtitle, w, r, headerVars, user)
 	}
 	return CustomErrorJS(errmsg, errcode, w, r, user)
 }
@@ -283,10 +287,8 @@ func CustomErrorJS(errmsg string, errcode int, w http.ResponseWriter, r *http.Re
 func handleErrorTemplate(w http.ResponseWriter, r *http.Request, pi Page) {
 	//LogError(errors.New("error happened"))
 	// TODO: What to do about this hook?
-	if PreRenderHooks["pre_render_error"] != nil {
-		if RunPreRenderHook("pre_render_error", w, r, &pi.CurrentUser, &pi) {
-			return
-		}
+	if RunPreRenderHook("pre_render_error", w, r, &pi.CurrentUser, &pi) {
+		return
 	}
 	err := Templates.ExecuteTemplate(w, "error.html", pi)
 	if err != nil {

@@ -63,5 +63,5 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	//log.Print("req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')]",req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/')])
-	common.NotFound(w, req)
+	common.NotFound(w, req,nil)
 }

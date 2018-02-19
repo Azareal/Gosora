@@ -31,11 +31,9 @@ func IPSearch(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	}
 
 	pi := common.IPSearchPage{common.GetTitlePhrase("ip-search"), user, headerVars, userList, ip}
-	if common.PreRenderHooks["pre_render_ip_search"] != nil {
-		if common.RunPreRenderHook("pre_render_ip_search", w, r, &user, &pi) {
+	if common.RunPreRenderHook("pre_render_ip_search", w, r, &user, &pi) {
 			return nil
 		}
-	}
 	err = common.Templates.ExecuteTemplate(w, "ip-search.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)

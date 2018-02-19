@@ -684,9 +684,7 @@ type Stmts struct {
 
 // nolint
 func _gen_mysql() (err error) {
-	if common.Dev.DebugMode {
-		log.Print("Building the generated statements")
-	}
+	common.DebugLog("Building the generated statements")
 ` + body + `
 	return nil
 }

@@ -39,11 +39,14 @@
 }
 .colstack_right {
 	margin-right: 14px;
-	margin-top: -4px;
+	/*margin-top: -4px;*/
 	margin-bottom: 14px;
 }
 .footer {
 	margin-top: 0px;
+}
+.colstack_right .colstack_head:not(:first-child) {
+    margin-top: 14px;
 }
 
 .complex_rowlist {
@@ -210,4 +213,10 @@
 
 .pageset {
 	margin-left: 16px;
+}
+
+@media(max-width: 999px) {
+	.colstack_left {
+		margin-top: -14.5px;
+	}
 }

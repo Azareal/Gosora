@@ -1123,9 +1123,7 @@ type Stmts struct {
 
 // nolint
 func _gen_mssql() (err error) {
-	if common.Dev.DebugMode {
-		log.Print("Building the generated statements")
-	}
+	common.DebugLog("Building the generated statements")
 ` + body + `
 	return nil
 }

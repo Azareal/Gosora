@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"html/template"
-	"log"
 	"strings"
 	"sync"
 
@@ -215,11 +214,9 @@ func InitWidgets() error {
 	Docks.Footer = footerWidgets
 	widgetUpdateMutex.Unlock()
 
-	if Dev.SuperDebug {
-		log.Print("Docks.LeftSidebar", Docks.LeftSidebar)
-		log.Print("Docks.RightSidebar", Docks.RightSidebar)
-		log.Print("Docks.Footer", Docks.Footer)
-	}
+	DebugLog("Docks.LeftSidebar", Docks.LeftSidebar)
+	DebugLog("Docks.RightSidebar", Docks.RightSidebar)
+	DebugLog("Docks.Footer", Docks.Footer)
 
 	return nil
 }

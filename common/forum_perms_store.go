@@ -3,7 +3,6 @@ package common
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"sync"
 
 	"../query_gen/lib"
@@ -46,15 +45,15 @@ func (fps *MemoryForumPermsStore) Init() error {
 	if err != nil {
 		return err
 	}
-	debugDetail("fids: ", fids)
+	DebugDetail("fids: ", fids)
 
 	rows, err := fps.get.Query()
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
-	debugLog("Adding the forum permissions")
-	debugDetail("forumPerms[gid][fid]")
+	DebugLog("Adding the forum permissions")
+	DebugDetail("forumPerms[gid][fid]")
 
 	forumPerms = make(map[int]map[int]*ForumPerms)
 	for rows.Next() {
@@ -74,9 +73,9 @@ func (fps *MemoryForumPermsStore) Init() error {
 			forumPerms[gid] = make(map[int]*ForumPerms)
 		}
 
-		debugDetail("gid: ", gid)
-		debugDetail("fid: ", fid)
-		debugDetailf("perms: %+v\n", pperms)
+		DebugDetail("gid: ", gid)
+		DebugDetail("fid: ", fid)
+		DebugDetailf("perms: %+v\n", pperms)
 		forumPerms[gid][fid] = pperms
 	}
 
@@ -84,7 +83,7 @@ func (fps *MemoryForumPermsStore) Init() error {
 }
 
 func (fps *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPerms, err error) {
-	debugDetail("perms: ", string(perms))
+	DebugDetail("perms: ", string(perms))
 	pperms = BlankForumPerms()
 	err = json.Unmarshal(perms, &pperms)
 	pperms.ExtData = make(map[string]bool)
@@ -96,7 +95,7 @@ func (fps *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPer
 func (fps *MemoryForumPermsStore) Reload(fid int) error {
 	fps.updateMutex.Lock()
 	defer fps.updateMutex.Unlock()
-	debugLogf("Reloading the forum permissions for forum #%d", fid)
+	DebugLogf("Reloading the forum permissions for forum #%d", fid)
 	fids, err := Forums.GetAllIDs()
 	if err != nil {
 		return err
@@ -159,22 +158,20 @@ func (fps *MemoryForumPermsStore) cascadePermSetToGroups(forumPerms map[int]map[
 	}
 
 	for _, group := range groups {
-		debugLogf("Updating the forum permissions for Group #%d", group.ID)
+		DebugLogf("Updating the forum permissions for Group #%d", group.ID)
 		group.Forums = []*ForumPerms{BlankForumPerms()}
 		group.CanSee = []int{}
 		fps.cascadePermSetToGroup(forumPerms, group, fids)
 
-		if Dev.SuperDebug {
-			log.Printf("group.CanSee (length %d): %+v \n", len(group.CanSee), group.CanSee)
-			log.Printf("group.Forums (length %d): %+v\n", len(group.Forums), group.Forums)
-		}
+		DebugDetailf("group.CanSee (length %d): %+v \n", len(group.CanSee), group.CanSee)
+		DebugDetailf("group.Forums (length %d): %+v\n", len(group.Forums), group.Forums)
 	}
 	return nil
 }
 
 func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[int]*ForumPerms, group *Group, fids []int) {
 	for _, fid := range fids {
-		debugDetailf("Forum #%+v\n", fid)
+		DebugDetailf("Forum #%+v\n", fid)
 		forumPerm, ok := forumPerms[group.ID][fid]
 		if ok {
 			//log.Printf("Overriding permissions for forum #%d",fid)
@@ -192,9 +189,9 @@ func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[i
 			group.CanSee = append(group.CanSee, fid)
 		}
 
-		debugDetail("group.ID: ", group.ID)
-		debugDetailf("forumPerm: %+v\n", forumPerm)
-		debugDetail("group.CanSee: ", group.CanSee)
+		DebugDetail("group.ID: ", group.ID)
+		DebugDetailf("forumPerm: %+v\n", forumPerm)
+		DebugDetail("group.CanSee: ", group.CanSee)
 	}
 }
 

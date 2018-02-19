@@ -65,9 +65,7 @@ func InitPhrases() error {
 
 		var ext = filepath.Ext("/langs/" + path)
 		if ext != ".json" {
-			if Dev.DebugMode {
-				log.Printf("Found a '%s' in /langs/", ext)
-			}
+			log.Printf("Found a '%s' in /langs/", ext)
 			return nil
 		}
 

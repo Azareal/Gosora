@@ -136,8 +136,8 @@ func init() {
 	}
 
 	GuestUser.Perms = GuestPerms
-	debugLogf("Guest Perms: %+v\n", GuestPerms)
-	debugLogf("All Perms: %+v\n", AllPerms)
+	DebugLogf("Guest Perms: %+v\n", GuestPerms)
+	DebugLogf("All Perms: %+v\n", AllPerms)
 }
 
 func StripInvalidGroupForumPreset(preset string) string {

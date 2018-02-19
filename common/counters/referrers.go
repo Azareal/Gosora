@@ -1,11 +1,12 @@
-package common
+package counters
 
 import (
 	"database/sql"
 	"sync"
 	"sync/atomic"
 
-	"../query_gen/lib"
+	".."
+	"../../query_gen/lib"
 )
 
 var ReferrerTracker *DefaultReferrerTracker
@@ -35,9 +36,9 @@ func NewDefaultReferrerTracker() (*DefaultReferrerTracker, error) {
 		even:   make(map[string]*ReferrerItem),
 		insert: acc.Insert("viewchunks_referrers").Columns("count, createdAt, domain").Fields("?,UTC_TIMESTAMP(),?").Prepare(), // TODO: Do something more efficient than doing a query for each referrer
 	}
-	AddScheduledFifteenMinuteTask(refTracker.Tick)
-	//AddScheduledSecondTask(refTracker.Tick)
-	AddShutdownTask(refTracker.Tick)
+	common.AddScheduledFifteenMinuteTask(refTracker.Tick)
+	//common.AddScheduledSecondTask(refTracker.Tick)
+	common.AddShutdownTask(refTracker.Tick)
 	return refTracker, acc.FirstError()
 }
 
@@ -92,7 +93,7 @@ func (ref *DefaultReferrerTracker) insertChunk(referrer string, count int64) err
 	if count == 0 {
 		return nil
 	}
-	debugDetailf("Inserting a viewchunk with a count of %d for referrer %s", count, referrer)
+	common.DebugDetailf("Inserting a viewchunk with a count of %d for referrer %s", count, referrer)
 	_, err := ref.insert.Exec(count, referrer)
 	return err
 }
