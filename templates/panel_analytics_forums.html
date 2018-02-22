@@ -2,10 +2,10 @@
 <div class="colstack panel_stack">
 {{template "panel-menu.html" . }}
 	<main id="panel_analytics_right" class="colstack_right">
-		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/systems/" method="get">
+		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/forums/" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
-					<a>Operating Systems</a>
+					<a>Forums</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
 						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
 						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>1 week</option>
@@ -17,13 +17,13 @@
 				</div>
 			</div>
 		</form>
-		<div id="panel_analytics_systems" class="colstack_item rowlist">
+		<div id="panel_analytics_routes" class="colstack_item rowlist">
 			{{range .ItemList}}
 			<div class="rowitem panel_compactrow editable_parent">
-				<a href="/panel/analytics/system/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
+				<a href="/panel/analytics/forum/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
 				<span class="panel_compacttext to_right">{{.Count}} views</span>
 			</div>
-			{{else}}<div class="rowitem passive rowmsg">No operating systems could be found in the selected time range</div>{{end}}
+			{{else}}<div class="rowitem passive rowmsg">No forum view counts could be found in the selected time range</div>{{end}}
 		</div>
 	</main>
 </div>

@@ -8,7 +8,7 @@ import (
 	"../../query_gen/lib"
 )
 
-// TODO: The forum view counter
+var ForumViewCounter *DefaultForumViewCounter
 
 // TODO: Unload forum counters without any views over the past 15 minutes, if the admin has configured the forumstore with a cap and it's been hit?
 // Forums can be reloaded from the database at any time, so we want to keep the counters separate from them
@@ -29,7 +29,7 @@ func NewDefaultForumViewCounter() (*DefaultForumViewCounter, error) {
 		insert:  acc.Insert("viewchunks_forums").Columns("count, createdAt, forum").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 	common.AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
-	//AddScheduledSecondTask(counter.Tick)
+	//common.AddScheduledSecondTask(counter.Tick)
 	common.AddShutdownTask(counter.Tick)
 	return counter, acc.FirstError()
 }
@@ -81,6 +81,38 @@ func (counter *DefaultForumViewCounter) insertChunk(count int, forum int) error 
 	common.DebugLogf("Inserting a viewchunk with a count of %d for forum %d", count, forum)
 	_, err := counter.insert.Exec(count, forum)
 	return err
+}
+
+func (counter *DefaultForumViewCounter) Bump(forumID int) {
+	// Is the ID even?
+	if forumID%2 == 0 {
+		counter.evenLock.RLock()
+		forum, ok := counter.evenMap[forumID]
+		counter.evenLock.RUnlock()
+		if ok {
+			forum.Lock()
+			forum.counter++
+			forum.Unlock()
+		} else {
+			counter.evenLock.Lock()
+			counter.evenMap[forumID] = &RWMutexCounterBucket{counter: 1}
+			counter.evenLock.Unlock()
+		}
+		return
+	}
+
+	counter.oddLock.RLock()
+	forum, ok := counter.oddMap[forumID]
+	counter.oddLock.RUnlock()
+	if ok {
+		forum.Lock()
+		forum.counter++
+		forum.Unlock()
+	} else {
+		counter.oddLock.Lock()
+		counter.oddMap[forumID] = &RWMutexCounterBucket{counter: 1}
+		counter.oddLock.Unlock()
+	}
 }
 
 // TODO: Add a forum counter backed by two maps which grow as forums are created but never shrinks

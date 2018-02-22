@@ -130,6 +130,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	counters.ForumViewCounter, err = counters.NewDefaultForumViewCounter()
+	if err != nil {
+		return err
+	}
 	counters.ReferrerTracker, err = counters.NewDefaultReferrerTracker()
 	if err != nil {
 		return err

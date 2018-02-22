@@ -1,13 +1,26 @@
 'use strict';
-var form_vars = {};
+var formVars = {};
 var alertList = [];
 var alertCount = 0;
 var conn;
 var selectedTopics = [];
 var attachItemCallback = function(){}
+var hooks = {
+	"start_init": [],
+	"end_init": [],
+};
 
 // Topic move
 var forumToMoveTo = 0;
+
+function runHook(name, ...args) {
+	if(!(name in hooks)) return;
+
+	let hook = hooks[name];
+	for (const callback in hook) {
+		callback(...args);
+	}
+}
 
 // TODO: Write a friendlier error handler which uses a .notice or something, we could have a specialised one for alerts
 function ajaxError(xhr,status,errstr) {
@@ -203,6 +216,7 @@ function runWebSockets() {
 }
 
 $(document).ready(function(){
+	runHook("start_init");
 	if(window["WebSocket"]) runWebSockets();
 	else conn = false;
 
@@ -311,7 +325,7 @@ $(document).ready(function(){
 			var fieldType = this.getAttribute("data-type");
 			if(fieldType=="list") {
 				var fieldValue = this.getAttribute("data-value");
-				if(fieldName in form_vars) var it = form_vars[fieldName];
+				if(fieldName in formVars) var it = formVars[fieldName];
 				else var it = ['No','Yes'];
 				var itLen = it.length;
 				var out = "";
@@ -624,4 +638,6 @@ $(document).ready(function(){
 			});
 		})
 	});
+
+	runHook("end_init");
 });

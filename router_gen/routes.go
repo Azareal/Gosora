@@ -6,7 +6,7 @@ func routes() {
 	addRoute(View("routes.Overview", "/overview/"))
 	addRoute(View("routes.CustomPage", "/pages/", "extraData"))
 	addRoute(View("routeForums", "/forums/" /*,"&forums"*/))
-	addRoute(View("routeForum", "/forum/", "extraData"))
+	addRoute(View("routes.ViewForum", "/forum/", "extraData"))
 	addRoute(AnonAction("routeChangeTheme", "/theme/"))
 	addRoute(
 		View("routeShowAttachment", "/attachs/", "extraData").Before("ParseForm"),
@@ -170,10 +170,12 @@ func buildPanelRoutes() {
 		View("routePanelAnalyticsReferrers", "/panel/analytics/referrers/").Before("ParseForm"),
 		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 		View("routePanelAnalyticsAgentViews", "/panel/analytics/agent/", "extraData"),
+		View("routePanelAnalyticsForumViews", "/panel/analytics/forum/", "extraData"),
 		View("routePanelAnalyticsSystemViews", "/panel/analytics/system/", "extraData"),
 		View("routePanelAnalyticsReferrerViews", "/panel/analytics/referrer/", "extraData"),
 		View("routePanelAnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
 		View("routePanelAnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
+		View("routePanelAnalyticsForums", "/panel/analytics/forums/").Before("ParseForm"),
 
 		View("routePanelGroups", "/panel/groups/"),
 		View("routePanelGroupsEdit", "/panel/groups/edit/", "extraData"),

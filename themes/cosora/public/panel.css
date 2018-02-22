@@ -196,6 +196,30 @@
 .ct-point:hover {
 	stroke: hsl(359,98%,30%) !important;
 }
+/*.ct-chart-line {
+	height: 300px !important;
+}*/
+/*.ct-label.ct-horizontal {
+    position: fixed;
+    justify-content: flex-end;
+    text-align: right;
+    transform-origin: 100% 0;
+    transform: translate(-100%) rotate(-90deg);
+    white-space: nowrap;
+	/*padding-right: 48px;/
+	top: 8px;
+}*/
+/*.ct-label.ct-horizontal {
+    white-space: nowrap;
+}*/
+/*.ct-label.ct-horizontal {
+    position: fixed;
+    justify-content: flex-end;
+    text-align: right;
+    transform-origin: 100% 0;
+    transform: translate(-100%) rotate(-45deg);
+	white-space: nowrap;
+}*/
 .timeRangeSelector {
 	margin-top: -5px;
 }

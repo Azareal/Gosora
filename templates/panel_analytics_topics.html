@@ -8,6 +8,7 @@
 					<a>Topic Counts</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
 						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
+						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>1 week</option>
 						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>2 days</option>
 						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>1 day</option>
 						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>12 hours</option>
@@ -33,30 +34,12 @@
 	</main>
 </div>
 <script>
-let labels = [];
 let rawLabels = [{{range .PrimaryGraph.Labels}}
 {{.}},{{end}}
 ];
-for(const i in rawLabels) {
-	let date = new Date(rawLabels[i]*1000);
-	console.log("date: ", date);
-	let minutes = "0" + date.getMinutes();
-	let label = date.getHours() + ":" + minutes.substr(-2);
-	console.log("label:", label);
-	labels.push(label);
-}
-labels = labels.reverse()
-
 let seriesData = [{{range .PrimaryGraph.Series}}
 {{.}},{{end}}
 ];
-seriesData = seriesData.reverse();
-
-Chartist.Line('.ct_chart', {
-  labels: labels,
-  series: [seriesData],
-}, {
-  height: '250px',
-});
+buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}");
 </script>
 {{template "footer.html" . }}

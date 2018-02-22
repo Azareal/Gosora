@@ -25,7 +25,6 @@ type Stmts struct {
 	getActivityEntry *sql.Stmt
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
-	getForumTopicsOffset *sql.Stmt
 	getAttachment *sql.Stmt
 	getForumTopics *sql.Stmt
 	getProfileReplies *sql.Stmt
@@ -148,12 +147,6 @@ func _gen_mysql() (err error) {
 		
 	log.Print("Preparing groupEntryExists statement.")
 	stmts.groupEntryExists, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = '' ORDER BY gid ASC LIMIT 0,1")
-	if err != nil {
-		return err
-	}
-		
-	log.Print("Preparing getForumTopicsOffset statement.")
-	stmts.getForumTopicsOffset, err = db.Prepare("SELECT `tid`,`title`,`content`,`createdBy`,`is_closed`,`sticky`,`createdAt`,`lastReplyAt`,`lastReplyBy`,`parentID`,`postCount`,`likeCount` FROM `topics` WHERE `parentID` = ? ORDER BY sticky DESC,lastReplyAt DESC,createdBy DESC LIMIT ?,?")
 	if err != nil {
 		return err
 	}

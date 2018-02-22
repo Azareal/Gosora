@@ -23,7 +23,6 @@ type Stmts struct {
 	getActivityEntry *sql.Stmt
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
-	getForumTopicsOffset *sql.Stmt
 	getAttachment *sql.Stmt
 	getForumTopics *sql.Stmt
 	getProfileReplies *sql.Stmt
@@ -161,13 +160,6 @@ func _gen_mssql() (err error) {
 	stmts.groupEntryExists, err = db.Prepare("SELECT [gid] FROM [users_groups] WHERE [name] = '' ORDER BY gid ASC OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY")
 	if err != nil {
 		log.Print("Bad Query: ","SELECT [gid] FROM [users_groups] WHERE [name] = '' ORDER BY gid ASC OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY")
-		return err
-	}
-		
-	log.Print("Preparing getForumTopicsOffset statement.")
-	stmts.getForumTopicsOffset, err = db.Prepare("SELECT [tid],[title],[content],[createdBy],[is_closed],[sticky],[createdAt],[lastReplyAt],[lastReplyBy],[parentID],[postCount],[likeCount] FROM [topics] WHERE [parentID] = ?1 ORDER BY sticky DESC,lastReplyAt DESC,createdBy DESC OFFSET ?2 ROWS FETCH NEXT ?3 ROWS ONLY")
-	if err != nil {
-		log.Print("Bad Query: ","SELECT [tid],[title],[content],[createdBy],[is_closed],[sticky],[createdAt],[lastReplyAt],[lastReplyBy],[parentID],[postCount],[likeCount] FROM [topics] WHERE [parentID] = ?1 ORDER BY sticky DESC,lastReplyAt DESC,createdBy DESC OFFSET ?2 ROWS FETCH NEXT ?3 ROWS ONLY")
 		return err
 	}
 		

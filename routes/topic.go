@@ -191,6 +191,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		return common.InternalError(err, w, r)
 	}
 	counters.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
+	counters.ForumViewCounter.Bump(topic.ParentID)
 	return nil
 }
 
