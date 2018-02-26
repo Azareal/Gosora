@@ -318,10 +318,8 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		var maxPollOptions = 10
 		var pollInputItems = make(map[int]string)
 		for key, values := range r.Form {
-			//if common.Dev.SuperDebug {
-			log.Print("key: ", key)
-			log.Printf("values: %+v\n", values)
-			//}
+			common.DebugDetail("key: ", key)
+			common.DebugDetailf("values: %+v\n", values)
 			for _, value := range values {
 				if strings.HasPrefix(key, "pollinputitem[") {
 					halves := strings.Split(key, "[")
@@ -548,7 +546,7 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 			return common.InternalErrorJSQ(err,w,r,isJs)
 		}*/
 
-		log.Printf("Topic #%d was deleted by common.User #%d", tid, user.ID)
+		log.Printf("Topic #%d was deleted by UserID #%d", tid, user.ID)
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil

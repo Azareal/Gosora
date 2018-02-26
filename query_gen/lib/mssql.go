@@ -1088,9 +1088,10 @@ func (adapter *MssqlAdapter) Write() error {
 		if stmt.Type != "create-table" {
 			stmts += "\t" + name + " *sql.Stmt\n"
 			body += `	
-	log.Print("Preparing ` + name + ` statement.")
+	common.DebugLog("Preparing ` + name + ` statement.")
 	stmts.` + name + `, err = db.Prepare("` + stmt.Contents + `")
 	if err != nil {
+		log.Print("Error in ` + name + ` statement.")
 		log.Print("Bad Query: ","` + stmt.Contents + `")
 		return err
 	}

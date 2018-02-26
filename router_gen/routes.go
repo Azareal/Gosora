@@ -39,7 +39,7 @@ func routes() {
 func buildUserRoutes() {
 	userGroup := newRouteGroup("/user/")
 	userGroup.Routes(
-		View("routeProfile", "/user/").LitBefore("req.URL.Path += extraData"),
+		View("routes.ViewProfile", "/user/").LitBefore("req.URL.Path += extraData"),
 		MemberView("routes.AccountEditCritical", "/user/edit/critical/"),
 		Action("routeAccountEditCriticalSubmit", "/user/edit/critical/submit/"), // TODO: Full test this
 		MemberView("routeAccountEditAvatar", "/user/edit/avatar/"),

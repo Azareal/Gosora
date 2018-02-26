@@ -34,6 +34,8 @@ func NewDefaultTopicViewCounter() (*DefaultTopicViewCounter, error) {
 }
 
 func (counter *DefaultTopicViewCounter) Tick() error {
+	// TODO: Fold multiple 1 view topics into one query
+
 	counter.oddLock.RLock()
 	oddTopics := counter.oddTopics
 	counter.oddLock.RUnlock()

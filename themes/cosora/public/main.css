@@ -1131,12 +1131,13 @@ textarea {
 	width: 100%;
 	margin-right: 12px;
 }
-#profile_right_lane .colstack_item, .colstack_right .colstack_item:not(.rowlist) {
+.colstack_right .colstack_item:not(.rowlist):not(#profile_comments),
+#profile_comments .comment {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 	background-color: var(--element-background-color);
 }
-#profile_right_lane .colstack_item, .colstack_right .colstack_item, .colstack_right .colstack_grid {
+.colstack_right .colstack_item, .colstack_right .colstack_grid {
 	margin-left: 16px;
 }
 #profile_right_lane .topic_reply_form {
@@ -1162,16 +1163,18 @@ textarea {
 #profile_comments button:hover {
 	color: var(--light-text-color);
 }
-#profile_comments button.edit_item:after {
+#profile_comments button.edit_item:after,
+#profile_comments button.delete_item:after,
+#profile_comments button.report_item:after {
 	font: normal normal normal 14px/1 FontAwesome;
+}
+#profile_comments button.edit_item:after {
 	content: "\f040";
 }
 #profile_comments button.delete_item:after {
-	font: normal normal normal 14px/1 FontAwesome;
 	content: "\f1f8";
 }
 #profile_comments button.report_item:after {
-	font: normal normal normal 14px/1 FontAwesome;
 	content: "\f024";
 }
 #profile_comments_head {
@@ -1185,6 +1188,9 @@ textarea {
 }
 #profile_comments .rowitem {
 	background-image: none !important;
+}
+#profile_comments .comment:not(:last-child) {
+	margin-bottom: 8px;
 }
 #profile_comments .comment .userbit {
 	display: flex;
@@ -1276,6 +1282,17 @@ textarea {
 }
 #login_page .formrow, #register_page .formrow {
 	padding: 16px;
+}
+
+/* TODO: Add a generic button_row class and add this to them all? */
+.login_button_row {
+	display: flex;
+}
+.dont_have_account {
+	color: var(--primary-link-color);
+	font-size: 12px;
+	margin-left: auto;
+	margin-top: 23px;
 }
 
 /* TODO: Highlight the one we're currently on? */
@@ -1705,7 +1722,10 @@ textarea {
 	}
 }
 @media(max-width: 520px) {
-	main > .rowhead, #main > .rowhead {
+	#main {
+		padding-top: 0px;
+	}
+	main > .rowhead, #main > .rowhead, main > .opthead, #main > .opthead {
 		margin-left: -3px;
 		margin-right: -3px;
 	}

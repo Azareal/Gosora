@@ -85,7 +85,7 @@ var RouteMap = map[string]interface{}{
 	"routeAccountEditUsernameSubmit": routeAccountEditUsernameSubmit,
 	"routeAccountEditEmail": routeAccountEditEmail,
 	"routeAccountEditEmailTokenSubmit": routeAccountEditEmailTokenSubmit,
-	"routeProfile": routeProfile,
+	"routes.ViewProfile": routes.ViewProfile,
 	"routes.BanUserSubmit": routes.BanUserSubmit,
 	"routes.UnbanUser": routes.UnbanUser,
 	"routes.ActivateUser": routes.ActivateUser,
@@ -190,7 +190,7 @@ var routeMapEnum = map[string]int{
 	"routeAccountEditUsernameSubmit": 65,
 	"routeAccountEditEmail": 66,
 	"routeAccountEditEmailTokenSubmit": 67,
-	"routeProfile": 68,
+	"routes.ViewProfile": 68,
 	"routes.BanUserSubmit": 69,
 	"routes.UnbanUser": 70,
 	"routes.ActivateUser": 71,
@@ -293,7 +293,7 @@ var reverseRouteMapEnum = map[int]string{
 	65: "routeAccountEditUsernameSubmit",
 	66: "routeAccountEditEmail",
 	67: "routeAccountEditEmailTokenSubmit",
-	68: "routeProfile",
+	68: "routes.ViewProfile",
 	69: "routes.BanUserSubmit",
 	70: "routes.UnbanUser",
 	71: "routes.ActivateUser",
@@ -492,19 +492,26 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
+func (router *GenRouter) StripNewlines(data string) string {
+	// TODO: Strip out all sub-32s?
+	return strings.Replace(strings.Replace(data,"\n","",-1),"\r","",-1)
+}
+
 func (router *GenRouter) DumpRequest(req *http.Request) {
-	log.Print("UA: ", req.UserAgent())
-	log.Print("Method: ", req.Method)
+	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			log.Print("Header '" + key + "': " + vvalue + "!!")
+			heads += "Header '" + router.StripNewlines(key) + "': " + router.StripNewlines(vvalue) + "!!\n"
 		}
 	}
-	log.Print("req.Host: ", req.Host)
-	log.Print("req.URL.Path: ", req.URL.Path)
-	log.Print("req.URL.RawQuery: ", req.URL.RawQuery)
-	log.Print("req.Referer(): ", req.Referer())
-	log.Print("req.RemoteAddr: ", req.RemoteAddr)
+
+	log.Print("\nUA: " + router.StripNewlines(req.UserAgent()) + "\n" +
+		"Method: " + router.StripNewlines(req.Method) + "\n" + heads + 
+		"req.Host: " + router.StripNewlines(req.Host) + "\n" + 
+		"req.URL.Path: " + router.StripNewlines(req.URL.Path) + "\n" + 
+		"req.URL.RawQuery: " + router.StripNewlines(req.URL.RawQuery) + "\n" + 
+		"req.Referer(): " + router.StripNewlines(req.Referer()) + "\n" + 
+		"req.RemoteAddr: " + req.RemoteAddr + "\n")
 }
 
 func (router *GenRouter) SuspiciousRequest(req *http.Request) {
@@ -534,11 +541,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Deflect malformed requests
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
-		//log.Print("len(req.URL.Path): ",len(req.URL.Path))
-		//log.Print("req.URL.Path[0]: ",req.URL.Path[0])
-		//log.Print("req.Host: ",req.Host)
-		//log.Print("common.Site.Host: ",common.Site.Host)
-		
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		log.Print("Malformed Request")
@@ -547,8 +549,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if common.Dev.DebugMode {
-		// TODO: Cover more suspicious strings and at a lower layer than this
+	// TODO: Cover more suspicious strings and at a lower layer than this
 		for _, char := range req.URL.Path {
 			if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
 				router.SuspiciousRequest(req)
@@ -560,7 +561,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") {
 			router.SuspiciousRequest(req)
 		}
-	}
 	
 	var prefix, extraData string
 	prefix = req.URL.Path[0:strings.IndexByte(req.URL.Path[1:],'/') + 1]
@@ -1264,7 +1264,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				default:
 					req.URL.Path += extraData
 					counters.RouteViewCounter.Bump(68)
-					err = routeProfile(w,req,user)
+					err = routes.ViewProfile(w,req,user)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)

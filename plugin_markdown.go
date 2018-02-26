@@ -63,7 +63,7 @@ func _markdownParse(msg string, n int) string {
 
 	var outbytes []byte
 	var lastElement int
-	log.Printf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
+	common.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
 
 	for index := 0; index < len(msg); index++ {
 		//log.Print("--OUTER MARKDOWN LOOP START--")
@@ -229,7 +229,6 @@ func _markdownParse(msg string, n int) string {
 
 			//log.Print("sIndex: ", sIndex)
 			//log.Print("lIndex: ", lIndex)
-
 			if lIndex <= sIndex {
 				//log.Print("unclosed markdown element @ lIndex <= sIndex")
 				outbytes = append(outbytes, msg[lastElement:startIndex]...)

@@ -357,7 +357,6 @@ li a {
 	width: 100%;
 	background-color: white;
 }
-
 /* Clearfix */
 .formrow:before, .formrow:after {
 	content: " ";
@@ -383,7 +382,6 @@ li a {
 .formitem.invisible_border {
 	border: none;
 }
-
 /* Mostly for textareas */
 .formitem:only-child { width: 100%; }
 .formitem textarea {
@@ -404,7 +402,14 @@ li a {
 	/*padding-left: 15px;*/
 }
 
-.formbutton, button {
+.dont_have_account {
+	color: #505050;
+	font-size: 12px;
+	font-weight: normal;
+	float: right;
+}
+
+.formbutton, button, input[type="submit"] {
 	background: white;
 	border: 1px solid #8e8e8e;
 }
@@ -414,7 +419,22 @@ li a {
 	margin-left: auto;
 	margin-right: auto;
 	font-size: 15px;
+}
+.formbutton .ip_search_search {
 	border-color: var(--main-border-color);
+}
+
+.ip_search_block {
+	border-bottom: none;
+}
+.ip_search_block .rowitem {
+	display: flex;
+}
+.ip_search_input {
+	width: 100%;
+}
+.ip_search_search {
+	margin-left: 10px;
 }
 
 /* TODO: Add the avatars to the forum list */

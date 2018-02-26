@@ -366,6 +366,13 @@ a {
 	padding-bottom: 12px;
 }
 
+.dont_have_account {
+	color: #505050;
+	font-size: 12px;
+	font-weight: normal;
+	float: right;
+}
+
 textarea {
 	background-color: var(--input-background-color);
 	border-color: var(--input-border-color);
@@ -693,6 +700,14 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	display: flex;
 	padding: 0px;
 	overflow: hidden;
+}
+.topic_left.topic_sticky .topic_inner_left {
+	border-top: 4px solid hsl(51, 100%, 50%);
+	padding-left: 8px;
+	padding-top: 8px;
+	margin-top: 0px;
+	margin-left: 0px;
+	width: 100%;
 }
 .topic_list .topic_right {
 	height: 59px;

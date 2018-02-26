@@ -328,7 +328,14 @@ li a {
 	border-color: #ccc;
 }
 
-button {
+.dont_have_account {
+	color: #505050;
+	font-size: 12px;
+	font-weight: normal;
+	float: right;
+}
+
+button, input[type="submit"] {
 	background: white;
 	border: 1px solid #8e8e8e;
 }

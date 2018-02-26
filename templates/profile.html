@@ -13,9 +13,12 @@
 			</div>
 		</div>
 		<div class="passiveBlock">
-			<div class="rowitem passive">
+			{{if not .CurrentUser.Loggedin}}<div class="rowitem passive">
+				<a class="profile_menu_item">Login for options</a>
+			</div>{{else}}
+			<!--<div class="rowitem passive">
 				<a class="profile_menu_item">Add Friend</a>
-			</div>
+			</div>-->
 			{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod) }}<div class="rowitem passive">
 				{{if .ProfileOwner.IsBanned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Unban</a>
 			{{else}}<a href="#ban_user" class="profile_menu_item">Ban</a>{{end}}
@@ -23,6 +26,7 @@
 			<div class="rowitem passive">
 				<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="Report User" title="Report User"></a>
 			</div>
+			{{end}}
 		</div>
 	</div>
 </div>

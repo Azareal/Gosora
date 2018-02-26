@@ -619,6 +619,34 @@ func panelAnalyticsTimeRangeToLabelList(timeRange AnalyticsTimeRange) (revLabelL
 	return revLabelList, labelList, viewMap
 }
 
+func panelAnalyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64]int64) (map[int64]int64, error) {
+	defer rows.Close()
+	for rows.Next() {
+		var count int64
+		var createdAt time.Time
+		err := rows.Scan(&count, &createdAt)
+		if err != nil {
+			return viewMap, err
+		}
+
+		var unixCreatedAt = createdAt.Unix()
+		// TODO: Bulk log this
+		if common.Dev.SuperDebug {
+			log.Print("count: ", count)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				viewMap[value] += count
+				break
+			}
+		}
+	}
+	return viewMap, rows.Err()
+}
+
 func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -634,47 +662,26 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
-	var viewList []int64
 	common.DebugLog("in routePanelAnalyticsViews")
-
 	acc := qgen.Builder.Accumulator()
 	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-		log.Print("count: ", count)
-		log.Print("createdAt: ", createdAt)
-
-		var unixCreatedAt = createdAt.Unix()
-		log.Print("unixCreatedAt: ", unixCreatedAt)
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	err = rows.Err()
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	var viewList []int64
 	var viewItems []common.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
-	log.Printf("graph: %+v\n", graph)
+	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_views", w, r, user, &pi)
@@ -695,48 +702,27 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
-	var viewList []int64
 	common.DebugLog("in routePanelAnalyticsRouteViews")
-
 	acc := qgen.Builder.Accumulator()
 	// TODO: Validate the route is valid
 	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(route)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-		log.Print("count: ", count)
-		log.Print("createdAt: ", createdAt)
-
-		var unixCreatedAt = createdAt.Unix()
-		log.Print("unixCreatedAt: ", unixCreatedAt)
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	err = rows.Err()
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	var viewList []int64
 	var viewItems []common.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
-	log.Printf("graph: %+v\n", graph)
+	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsRoutePage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", html.EscapeString(route), graph, viewItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_route_views", w, r, user, &pi)
@@ -757,50 +743,25 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
-	var viewList []int64
 	common.DebugLog("in routePanelAnalyticsAgentViews")
-
 	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
 	rows, err := acc.Select("viewchunks_agents").Columns("count, createdAt").Where("browser = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(agent)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		var unixCreatedAt = createdAt.Unix()
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("createdAt: ", createdAt)
-			log.Print("unixCreatedAt: ", unixCreatedAt)
-		}
-
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	err = rows.Err()
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
-	log.Printf("graph: %+v\n", graph)
+	common.DebugLogf("graph: %+v\n", graph)
 
 	// ? Only allow valid agents? The problem with this is that agents wind up getting renamed and it would take a migration to get them all up to snuff
 	agent = html.EscapeString(agent)
@@ -828,50 +789,25 @@ func routePanelAnalyticsForumViews(w http.ResponseWriter, r *http.Request, user 
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
-	var viewList []int64
 	common.DebugLog("in routePanelAnalyticsForumViews")
-
 	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
 	rows, err := acc.Select("viewchunks_forums").Columns("count, createdAt").Where("forum = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(sfid)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		var unixCreatedAt = createdAt.Unix()
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("createdAt: ", createdAt)
-			log.Print("unixCreatedAt: ", unixCreatedAt)
-		}
-
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	err = rows.Err()
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
-	log.Printf("graph: %+v\n", graph)
+	common.DebugLogf("graph: %+v\n", graph)
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
@@ -901,50 +837,25 @@ func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
-	var viewList []int64
 	common.DebugLog("in routePanelAnalyticsSystemViews")
-
 	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
 	rows, err := acc.Select("viewchunks_systems").Columns("count, createdAt").Where("system = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(system)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		var unixCreatedAt = createdAt.Unix()
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("createdAt: ", createdAt)
-			log.Print("unixCreatedAt: ", unixCreatedAt)
-		}
-
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	err = rows.Err()
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
-	log.Printf("graph: %+v\n", graph)
+	common.DebugLogf("graph: %+v\n", graph)
 
 	system = html.EscapeString(system)
 	friendlySystem, ok := common.GetOSPhrase(system)
@@ -971,50 +882,25 @@ func routePanelAnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, us
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
-	var viewList []int64
 	common.DebugLog("in routePanelAnalyticsReferrerViews")
-
 	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
 	rows, err := acc.Select("viewchunks_referrers").Columns("count, createdAt").Where("domain = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(domain)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		var unixCreatedAt = createdAt.Unix()
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("createdAt: ", createdAt)
-			log.Print("unixCreatedAt: ", unixCreatedAt)
-		}
-
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	err = rows.Err()
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
-	log.Printf("graph: %+v\n", graph)
+	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", html.EscapeString(domain), "", graph, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_referrer_views", w, r, user, &pi)
@@ -1035,51 +921,26 @@ func routePanelAnalyticsTopics(w http.ResponseWriter, r *http.Request, user comm
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
-	var viewList []int64
 	common.DebugLog("in routePanelAnalyticsTopics")
-
 	acc := qgen.Builder.Accumulator()
 	rows, err := acc.Select("topicchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		var unixCreatedAt = createdAt.Unix()
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("createdAt: ", createdAt)
-			log.Print("unixCreatedAt: ", unixCreatedAt)
-		}
-
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	err = rows.Err()
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	var viewList []int64
 	var viewItems []common.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
-	log.Printf("graph: %+v\n", graph)
+	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_topics", w, r, user, &pi)
@@ -1100,53 +961,50 @@ func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user commo
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
-	var viewList []int64
 	common.DebugLog("in routePanelAnalyticsPosts")
-
 	acc := qgen.Builder.Accumulator()
 	rows, err := acc.Select("postchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		var unixCreatedAt = createdAt.Unix()
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("createdAt: ", createdAt)
-			log.Print("unixCreatedAt: ", unixCreatedAt)
-		}
-
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	err = rows.Err()
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
+	var viewList []int64
 	var viewItems []common.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
-	log.Printf("graph: %+v\n", graph)
+	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", graph, viewItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_posts", w, r, user, &pi)
+}
+
+func panelAnalyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
+	nameMap := make(map[string]int)
+	defer rows.Close()
+	for rows.Next() {
+		var count int
+		var name string
+		err := rows.Scan(&count, &name)
+		if err != nil {
+			return nameMap, err
+		}
+
+		// TODO: Bulk log this
+		if common.Dev.SuperDebug {
+			log.Print("count: ", count)
+			log.Print("name: ", name)
+		}
+		nameMap[name] += count
+	}
+	return nameMap, rows.Err()
 }
 
 func routePanelAnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -1154,7 +1012,6 @@ func routePanelAnalyticsForums(w http.ResponseWriter, r *http.Request, user comm
 	if ferr != nil {
 		return ferr
 	}
-	var forumMap = make(map[string]int)
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -1166,24 +1023,8 @@ func routePanelAnalyticsForums(w http.ResponseWriter, r *http.Request, user comm
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int
-		var forum string
-		err := rows.Scan(&count, &forum)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("forum: ", forum)
-		}
-		forumMap[forum] += count
-	}
-	err = rows.Err()
+	forumMap, err := panelAnalyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -1215,8 +1056,6 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 	if ferr != nil {
 		return ferr
 	}
-	var routeMap = make(map[string]int)
-
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -1227,24 +1066,8 @@ func routePanelAnalyticsRoutes(w http.ResponseWriter, r *http.Request, user comm
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int
-		var route string
-		err := rows.Scan(&count, &route)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("route: ", route)
-		}
-		routeMap[route] += count
-	}
-	err = rows.Err()
+	routeMap, err := panelAnalyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -1267,8 +1090,6 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 	if ferr != nil {
 		return ferr
 	}
-	var agentMap = make(map[string]int)
-
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -1279,24 +1100,8 @@ func routePanelAnalyticsAgents(w http.ResponseWriter, r *http.Request, user comm
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int
-		var agent string
-		err := rows.Scan(&count, &agent)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("agent: ", agent)
-		}
-		agentMap[agent] += count
-	}
-	err = rows.Err()
+	agentMap, err := panelAnalyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -1324,8 +1129,6 @@ func routePanelAnalyticsSystems(w http.ResponseWriter, r *http.Request, user com
 	if ferr != nil {
 		return ferr
 	}
-	var osMap = make(map[string]int)
-
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -1336,24 +1139,8 @@ func routePanelAnalyticsSystems(w http.ResponseWriter, r *http.Request, user com
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int
-		var system string
-		err := rows.Scan(&count, &system)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("system: ", system)
-		}
-		osMap[system] += count
-	}
-	err = rows.Err()
+	osMap, err := panelAnalyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -1381,8 +1168,6 @@ func routePanelAnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c
 	if ferr != nil {
 		return ferr
 	}
-	var refMap = make(map[string]int)
-
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -1393,24 +1178,8 @@ func routePanelAnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var count int
-		var domain string
-		err := rows.Scan(&count, &domain)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("domain: ", domain)
-		}
-		refMap[domain] += count
-	}
-	err = rows.Err()
+	refMap, err := panelAnalyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
