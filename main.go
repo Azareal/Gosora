@@ -114,6 +114,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	counters.LangViewCounter, err = counters.NewDefaultLangViewCounter()
+	if err != nil {
+		return err
+	}
 	counters.RouteViewCounter, err = counters.NewDefaultRouteViewCounter()
 	if err != nil {
 		return err
@@ -290,9 +294,9 @@ func main() {
 
 	// Run this goroutine once every half second
 	halfSecondTicker := time.NewTicker(time.Second / 2)
-	secondTicker := time.NewTicker(1 * time.Second)
+	secondTicker := time.NewTicker(time.Second)
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
-	//hourTicker := time.NewTicker(1 * time.Hour)
+	//hourTicker := time.NewTicker(time.Hour)
 	go func() {
 		var runHook = func(name string) {
 			err := common.RunTaskHook(name)

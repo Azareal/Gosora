@@ -1,9 +1,11 @@
 {
 	"Name": "english",
+	
 	"Levels": {
 		"Level": "Level {0}",
 		"LevelMax": ""
 	},
+
 	"GlobalPerms": {
 		"BanUsers":              "Can ban users",
 		"ActivateUsers":         "Can activate users",
@@ -27,6 +29,7 @@
 
 		"UploadFiles": "Can upload files"
 	},
+
 	"LocalPerms": {
 		"ViewTopic":   "Can view topics",
 		"LikeItem":    "Can like items",
@@ -40,9 +43,11 @@
 		"CloseTopic":  "Can lock topics",
 		"MoveTopic": "Can move topics in or out"
 	},
+
 	"SettingLabels": {
 		"activation_type": "Activate All,Email Activation,Admin Approval"
 	},
+
 	"PermPresets": {
 		"all":"Public",
 		"announce":"Announcements",
@@ -53,14 +58,17 @@
 		"custom":"Custom",
 		"unknown":"Unknown"
 	},
+
 	"Accounts": {
 		"VerifyEmailSubject": "Validate Your Email @  {{name}}",
 		"VerifyEmailBody": "Dear {{username}}, following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. {{schema}}://{{url}}/user/edit/token/{{token}}\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
 	},
+
 	"Errors": {
 		"NoPerms": {
 		}
 	},
+
 	"PageTitles": {
 		"overview":"Overview",
 		"page":"Page",
@@ -68,7 +76,7 @@
 		"forums":"Forum List",
 		"login":"Login",
 		"register":"Registration",
-		"ip-search":"IP Search",
+		"ip_search":"IP Search",
 
 		"panel_dashboard":"Control Panel Dashboard",
 		"panel_forums":"Forum Manager",
@@ -114,6 +122,7 @@
 		"twitter":"Twitterbot",
 		"cloudflare":"Cloudflare Alwayson",
 		"uptimebot":"Uptimebot",
+		"slackbot":"Slackbot",
 		"discourse":"Discourse Forum Onebox",
 		"lynx":"Lynx",
 		
@@ -123,6 +132,7 @@
 		"blank":"Blank",
 		"malformed":"Malformed"
 	},
+
 	"OperatingSystems": {
 		"windows": "Microsoft Windows",
 		"linux":"Linux",
@@ -130,5 +140,110 @@
 		"android": "Android",
 		"iphone":"iPhone",
 		"unknown":"Unknown"
+	},
+
+	"HumanLanguages": {
+		"af":"Afrikaans",
+		"ar":"Arabic",
+		"az":"Azeri (Latin)",
+		"be":"Belarusian",
+		"bg":"Bulgarian",
+		"bs":"Bosnian (Bosnia and Herzegovina)",
+		"ca":"Catalan",
+		"cs":"Czech",
+		"cy":"Welsh",
+		"da":"Danish",
+		"de":"German",
+		"dv":"Divehi",
+		"el":"Greek",
+		"en":"English",
+		"eo":"Esperanto",
+		"es":"Spanish",
+		"et":"Estonian",
+		"eu":"Basque",
+		"fa":"Farsi",
+		"fi":"Finnish",
+		"fo":"Faroese",
+		"fr":"French",
+		"gl":"Galician",
+		"gu":"Gujarati",
+		"he":"Hebrew",
+		"hi":"Hindi",
+		"hr":"Croatian",
+		"hu":"Hungarian",
+		"hy":"Armenian",
+		"id":"Indonesian",
+		"is":"Icelandic",
+		"it":"Italian",
+		"ja":"Japanese",
+		"ka":"Georgian",
+		"kk":"Kazakh",
+		"kn":"Kannada",
+		"ko":"Korean",
+		"kok":"Konkani",
+		"ky":"Kyrgyz",
+		"lt":"Lithuanian",
+		"lv":"Latvian",
+		"mi":"Maori",
+		"mk":"FYRO Macedonian",
+		"mn":"Mongolian",
+		"mr":"Marathi",
+		"ms":"Malay",
+		"mt":"Maltese",
+		"nb":"Norwegian (Bokm?l)",
+		"nl":"Dutch",
+		"nn":"Norwegian (Nynorsk) (Norway)",
+		"ns":"Northern Sotho",
+		"pa":"Punjabi",
+		"pl":"Polish",
+		"ps":"Pashto",
+		"pt":"Portuguese",
+		"qu":"Quechua",
+		"ro":"Romanian",
+		"ru":"Russian",
+		"sa":"Sanskrit",
+		"se":"Sami (Northern)",
+		"sk":"Slovak",
+		"sl":"Slovenian",
+		"sq":"Albanian",
+		"sr":"Serbian (Latin)",
+		"sv":"Swedish",
+		"sw":"Swahili",
+		"syr":"Syriac",
+		"ta":"Tamil",
+		"te":"Telugu",
+		"th":"Thai",
+		"tl":"Tagalog",
+		"tn":"Tswana",
+		"tr":"Turkish",
+		"tt":"Tatar",
+		"ts":"Tsonga",
+		"uk":"Ukrainian",
+		"ur":"Urdu",
+		"uz":"Uzbek (Latin)",
+		"vi":"Vietnamese",
+		"xh":"Xhosa",
+		"zh":"Chinese",
+		"zu":"Zulu"
+	},
+
+	"TmplPhrases": {
+		"login_head":"Login",
+		"login_account_name":"Account Name",
+		"login_account_password":"Password",
+		"login_submit_button":"Login",
+		"login_no_account":"Don't have an account?",
+
+		"register_head":"Create Account",
+		"register_account_name":"Account Name",
+		"register_account_email":"Email",
+		"register_account_password":"Password",
+		"register_account_confirm_password":"Confirm Password",
+		"register_submit_button":"Create Account",
+
+		"ip_search_head":"IP Search",
+		"ip_search_no_users":"No users found.",
+
+		"error_head":"An error has occured"
 	}
 }

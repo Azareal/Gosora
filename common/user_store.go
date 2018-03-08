@@ -49,7 +49,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultUserStore{
 		cache:          cache,
-		get:            acc.SimpleSelect("users", "name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", ""),
+		get:            acc.SimpleSelect("users", "name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group", "uid = ?", "", ""),
 		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
 		register:       acc.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()"), // TODO: Implement user_count on users_groups here
 		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
@@ -64,7 +64,7 @@ func (mus *DefaultUserStore) DirtyGet(id int) *User {
 	}
 
 	user = &User{ID: id, Loggedin: true}
-	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	user.Init()
 	if err == nil {
@@ -82,7 +82,7 @@ func (mus *DefaultUserStore) Get(id int) (*User, error) {
 	}
 
 	user = &User{ID: id, Loggedin: true}
-	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	user.Init()
 	if err == nil {
@@ -126,14 +126,14 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 	qlist = qlist[0 : len(qlist)-1]
 
 	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("users").Columns("uid, name, group, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(uidList...)
+	rows, err := acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(uidList...)
 	if err != nil {
 		return list, err
 	}
 
 	for rows.Next() {
 		user := &User{Loggedin: true}
-		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 		if err != nil {
 			return list, err
 		}
@@ -174,7 +174,7 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 
 func (mus *DefaultUserStore) BypassGet(id int) (*User, error) {
 	user := &User{ID: id, Loggedin: true}
-	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 
 	user.Init()
 	return user, err
@@ -182,7 +182,7 @@ func (mus *DefaultUserStore) BypassGet(id int) (*User, error) {
 
 func (mus *DefaultUserStore) Reload(id int) error {
 	user := &User{ID: id, Loggedin: true}
-	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
+	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.LastIP, &user.TempGroup)
 	if err != nil {
 		mus.cache.Remove(id)
 		return err

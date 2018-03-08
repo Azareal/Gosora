@@ -44,12 +44,17 @@ type LanguagePack struct {
 	Accounts         map[string]string // TODO: Apply these phrases in the software proper
 	UserAgents       map[string]string
 	OperatingSystems map[string]string
+	HumanLanguages   map[string]string
 	Errors           map[string]map[string]string // map[category]map[name]value
 	PageTitles       map[string]string
+	TmplPhrases      map[string]string
+
+	TmplIndicesToPhrases [][][]byte // [tmplID][index]phrase
 }
 
 // TODO: Add the ability to edit language JSON files from the Control Panel and automatically scan the files for changes
-var langPacks sync.Map // nolint it is used
+var langPacks sync.Map                // nolint it is used
+var langTmplIndicesToNames [][]string // [tmplID][index]phraseName
 
 func InitPhrases() error {
 	log.Print("Loading the language packs")
@@ -73,6 +78,15 @@ func InitPhrases() error {
 		err = json.Unmarshal(data, &langPack)
 		if err != nil {
 			return err
+		}
+
+		langPack.TmplIndicesToPhrases = make([][][]byte, len(langTmplIndicesToNames))
+		for tmplID, phraseNames := range langTmplIndicesToNames {
+			var phraseSet = make([][]byte, len(phraseNames))
+			for index, phraseName := range phraseNames {
+				phraseSet[index] = []byte(langPack.TmplPhrases[phraseName])
+			}
+			langPack.TmplIndicesToPhrases[tmplID] = phraseSet
 		}
 
 		log.Print("Adding the '" + langPack.Name + "' language pack")
@@ -170,6 +184,14 @@ func GetOSPhrase(name string) (string, bool) {
 	return res, true
 }
 
+func GetHumanLangPhrase(name string) (string, bool) {
+	res, ok := currentLangPack.Load().(*LanguagePack).HumanLanguages[name]
+	if !ok {
+		return "", false
+	}
+	return res, true
+}
+
 // TODO: Does comma ok work with multi-dimensional maps?
 func GetErrorPhrase(category string, name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).Errors[category][name]
@@ -181,6 +203,14 @@ func GetErrorPhrase(category string, name string) string {
 
 func GetTitlePhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).PageTitles[name]
+	if !ok {
+		return getPhrasePlaceholder()
+	}
+	return res
+}
+
+func GetTmplPhrase(name string) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).TmplPhrases[name]
 	if !ok {
 		return getPhrasePlaceholder()
 	}
@@ -212,4 +242,15 @@ func ChangeLanguagePack(name string) (exists bool) {
 	}
 	currentLangPack.Store(pack)
 	return true
+}
+
+// Template Transpiler Stuff
+
+func RegisterTmplPhraseNames(phraseNames []string) (tmplID int) {
+	langTmplIndicesToNames = append(langTmplIndicesToNames, phraseNames)
+	return len(langTmplIndicesToNames) - 1
+}
+
+func GetTmplPhrasesBytes(tmplID int) [][]byte {
+	return currentLangPack.Load().(*LanguagePack).TmplIndicesToPhrases[tmplID]
 }

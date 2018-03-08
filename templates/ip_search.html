@@ -2,7 +2,7 @@
 <main id="ip_search_container">
 	<div class="rowblock rowhead">
 		<div class="rowitem">
-			<h1>IP Search</h1>
+			<h1>{{lang "ip_search_head"}}</h1>
 		</div>
 	</div>
 	<form action="/users/ips/" method="get" id="ip-search-form"></form>
@@ -18,7 +18,7 @@
 			<img src="{{.Avatar}}" class="bgsub" alt="{{.Name}}'s Avatar" />
 			<a class="rowTitle" href="{{.Link}}">{{.Name}}</a>
 		</div>
-		{{else}}<div class="rowitem">No users found.</div>{{end}}
+		{{else}}<div class="rowitem rowmsg">{{lang "ip_search_no_users"}}</div>{{end}}
 	</div>
 	{{end}}
 </main>

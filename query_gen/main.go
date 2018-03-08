@@ -241,8 +241,6 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	build.Select("getTopicBasic").Table("topics").Columns("title, content").Where("tid = ?").Parse()
 
-	build.Select("getActivityEntry").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Where("asid = ?").Parse()
-
 	build.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
 
 	build.Select("groupEntryExists").Table("users_groups").Columns("gid").Where("name = ''").Orderby("gid ASC").Limit("0,1").Parse()
@@ -259,11 +257,6 @@ func writeLeftJoins(adapter qgen.Adapter) error {
 }
 
 func writeInnerJoins(adapter qgen.Adapter) (err error) {
-	_, err = adapter.SimpleInnerJoin("getWatchers", "activity_stream", "activity_subscriptions", "activity_subscriptions.user", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", "")
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -271,10 +264,6 @@ func writeInserts(adapter qgen.Adapter) error {
 	build := adapter.Builder()
 
 	build.Insert("createReport").Table("topics").Columns("title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'").Parse()
-
-	build.Insert("addActivity").Table("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Fields("?,?,?,?,?").Parse()
-
-	build.Insert("notifyOne").Table("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Parse()
 
 	build.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
 
@@ -361,11 +350,6 @@ func writeInsertLeftJoins(adapter qgen.Adapter) error {
 }
 
 func writeInsertInnerJoins(adapter qgen.Adapter) error {
-	adapter.SimpleInsertInnerJoin("notifyWatchers",
-		qgen.DBInsert{"activity_stream_matches", "watcher, asid", ""},
-		qgen.DBJoin{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""},
-	)
-
 	return nil
 }
 

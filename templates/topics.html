@@ -1,17 +1,19 @@
 {{template "header.html" . }}
-<main itemscope itemtype="http://schema.org/ItemList">
+<main id="topicsItemList" itemscope itemtype="http://schema.org/ItemList">
 
-<div class="rowblock rowhead topic_list_title_block">
-	<div class="rowitem topic_list_title{{if ne .CurrentUser.ID 0}} has_opt{{end}}"><h1 itemprop="name">All Topics</h1></div>
+<div class="rowblock rowhead topic_list_title_block{{if ne .CurrentUser.ID 0}} has_opt{{end}}">
+	<div class="rowitem topic_list_title"><h1 itemprop="name">All Topics</h1></div>
 	{{if ne .CurrentUser.ID 0}}
+		<div class="optbox">
 		{{if .ForumList}}
-		<div class="pre_opt auto_hide"></div>
-		<div class="opt create_topic_opt" title="Create Topic" aria-label="Create a topic"><a class="create_topic_link" href="/topics/create/"></a></div>
-		{{/** TODO: Add a permissions check for this **/}}
-		<div class="opt mod_opt" title="Moderate">
-			<a class="moderate_link" href="#" aria-label="Moderate Posts"></a>
+			<div class="pre_opt auto_hide"></div>
+			<div class="opt create_topic_opt" title="Create Topic" aria-label="Create a topic"><a class="create_topic_link" href="/topics/create/"></a></div>
+			{{/** TODO: Add a permissions check for this **/}}
+			<div class="opt mod_opt" title="Moderate">
+				<a class="moderate_link" href="#" aria-label="Moderate Posts"></a>
+			</div>
+			{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic" aria-label="You don't have the permissions needed to make a topic anywhere"><a></a></div>{{end}}
 		</div>
-		{{else}}<div class="opt locked_opt" title="You don't have the permissions needed to create a topic" aria-label="You don't have the permissions needed to make a topic anywhere"><a></a></div>{{end}}
 		<div style="clear: both;"></div>
 	{{end}}
 </div>

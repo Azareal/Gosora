@@ -175,7 +175,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 			if err != nil {
 				return common.InternalErrorJS(err, w, r)
 			}
-			res, err := buildAlert(asid, event, elementType, actorID, targetUserID, elementID, user)
+			res, err := common.BuildAlert(asid, event, elementType, actorID, targetUserID, elementID, user)
 			if err != nil {
 				return common.LocalErrorJS(err.Error(), w, r)
 			}

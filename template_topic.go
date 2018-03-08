@@ -7,6 +7,8 @@ import "net/http"
 import "./common"
 import "strconv"
 
+var topic_Tmpl_Phrase_ID int
+
 // nolint
 func init() {
 	common.Template_topic_handle = Template_topic

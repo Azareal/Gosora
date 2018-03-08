@@ -132,9 +132,9 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 		common.GridElement{"dash-ram", "RAM: " + ramstr, 2, "grid_istat " + ramColour, "", "", "The global RAM usage of this server"},
 	}
 
-	if enableWebsockets {
-		uonline := wsHub.userCount()
-		gonline := wsHub.guestCount()
+	if common.EnableWebsockets {
+		uonline := common.WsHub.UserCount()
+		gonline := common.WsHub.GuestCount()
 		totonline := uonline + gonline
 		reqCount := 0
 
@@ -743,6 +743,9 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
+	// ? Only allow valid agents? The problem with this is that agents wind up getting renamed and it would take a migration to get them all up to snuff
+	agent = html.EscapeString(agent)
+
 	common.DebugLog("in routePanelAnalyticsAgentViews")
 	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
@@ -763,8 +766,6 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
-	// ? Only allow valid agents? The problem with this is that agents wind up getting renamed and it would take a migration to get them all up to snuff
-	agent = html.EscapeString(agent)
 	friendlyAgent, ok := common.GetUserAgentPhrase(agent)
 	if !ok {
 		friendlyAgent = agent
@@ -789,10 +790,15 @@ func routePanelAnalyticsForumViews(w http.ResponseWriter, r *http.Request, user 
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
 
+	fid, err := strconv.Atoi(sfid)
+	if err != nil {
+		return common.LocalError("Invalid integer", w, r, user)
+	}
+
 	common.DebugLog("in routePanelAnalyticsForumViews")
 	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
-	rows, err := acc.Select("viewchunks_forums").Columns("count, createdAt").Where("forum = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(sfid)
+	rows, err := acc.Select("viewchunks_forums").Columns("count, createdAt").Where("forum = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(fid)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -809,10 +815,6 @@ func routePanelAnalyticsForumViews(w http.ResponseWriter, r *http.Request, user 
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
-	fid, err := strconv.Atoi(sfid)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
 	forum, err := common.Forums.Get(fid)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -836,10 +838,11 @@ func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user
 		return common.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
+	system = html.EscapeString(system)
 
 	common.DebugLog("in routePanelAnalyticsSystemViews")
 	acc := qgen.Builder.Accumulator()
-	// TODO: Verify the agent is valid
+	// TODO: Verify the OS name is valid
 	rows, err := acc.Select("viewchunks_systems").Columns("count, createdAt").Where("system = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(system)
 	if err != nil && err != ErrNoRows {
 		return common.InternalError(err, w, r)
@@ -857,7 +860,6 @@ func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
-	system = html.EscapeString(system)
 	friendlySystem, ok := common.GetOSPhrase(system)
 	if !ok {
 		friendlySystem = system
@@ -865,6 +867,51 @@ func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user
 
 	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", system, friendlySystem, graph, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_system_views", w, r, user, &pi)
+}
+
+func routePanelAnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user common.User, lang string) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
+	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
+	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+	revLabelList, labelList, viewMap := panelAnalyticsTimeRangeToLabelList(timeRange)
+	lang = html.EscapeString(lang)
+
+	common.DebugLog("in routePanelAnalyticsLanguageViews")
+	acc := qgen.Builder.Accumulator()
+	// TODO: Verify the language code is valid
+	rows, err := acc.Select("viewchunks_langs").Columns("count, createdAt").Where("lang = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(lang)
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+
+	viewMap, err = panelAnalyticsRowsToViewMap(rows, labelList, viewMap)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	var viewList []int64
+	for _, value := range revLabelList {
+		viewList = append(viewList, viewMap[value])
+	}
+	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	common.DebugLogf("graph: %+v\n", graph)
+
+	friendlyLang, ok := common.GetHumanLangPhrase(lang)
+	if !ok {
+		friendlyLang = lang
+	}
+
+	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", lang, friendlyLang, graph, timeRange.Range}
+	return panelRenderTemplate("panel_analytics_lang_views", w, r, user, &pi)
 }
 
 func routePanelAnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.User, domain string) common.RouteError {
@@ -1161,6 +1208,46 @@ func routePanelAnalyticsSystems(w http.ResponseWriter, r *http.Request, user com
 
 	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", systemItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_systems", w, r, user, &pi)
+}
+
+func routePanelAnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
+	acc := qgen.Builder.Accumulator()
+	rows, err := acc.Select("viewchunks_langs").Columns("count, lang").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	if err != nil && err != ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+
+	langMap, err := panelAnalyticsRowsToNameMap(rows)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Can we de-duplicate these analytics functions further?
+	// TODO: Sort this slice
+	var langItems []common.PanelAnalyticsAgentsItem
+	for lang, count := range langMap {
+		lLang, ok := common.GetHumanLangPhrase(lang)
+		if !ok {
+			lLang = lang
+		}
+		langItems = append(langItems, common.PanelAnalyticsAgentsItem{
+			Agent:         lang,
+			FriendlyAgent: lLang,
+			Count:         count,
+		})
+	}
+
+	pi := common.PanelAnalyticsAgentsPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", langItems, timeRange.Range}
+	return panelRenderTemplate("panel_analytics_langs", w, r, user, &pi)
 }
 
 func routePanelAnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -1688,6 +1775,10 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 		groupList = append(groupList, group)
 	}
 
+	if r.FormValue("updated") == "1" {
+		headerVars.NoticeList = append(headerVars.NoticeList, "The user was successfully updated")
+	}
+
 	pi := common.PanelPage{common.GetTitlePhrase("panel_edit_user"), user, headerVars, stats, "users", groupList, targetUser}
 	if common.RunPreRenderHook("pre_render_panel_edit_user", w, r, &user, &pi) {
 		return nil
@@ -1776,7 +1867,7 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 	}
 
 	targetUser.CacheRemove()
-	http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID), http.StatusSeeOther)
+	http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID)+"?updated=1", http.StatusSeeOther)
 	return nil
 }
 

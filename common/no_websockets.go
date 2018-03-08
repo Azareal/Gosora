@@ -1,12 +1,12 @@
 // +build no_ws
 
-package main
+package common
 
 import "errors"
 import "net/http"
 
 // TODO: Disable WebSockets on high load? Add a Control Panel interface for disabling it?
-var enableWebsockets = false // Put this in caps for consistency with the other constants?
+var EnableWebsockets = false // Put this in caps for consistency with the other constants?
 
 var wsHub WSHub
 var errWsNouser = errors.New("This user isn't connected via WebSockets")
@@ -38,5 +38,5 @@ func (hub *WSHub) pushAlerts(_ []int, _ int, _ string, _ string, _ int, _ int, _
 	return errWsNouser
 }
 
-func routeWebsockets(_ http.ResponseWriter, _ *http.Request, _ User) {
+func RouteWebsockets(_ http.ResponseWriter, _ *http.Request, _ User) {
 }

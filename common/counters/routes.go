@@ -8,8 +8,8 @@ var RouteViewCounter *DefaultRouteViewCounter
 
 // TODO: Make this lockless?
 type DefaultRouteViewCounter struct {
-	routeBuckets []*RWMutexCounterBucket //[RouteID]count
-	insert       *sql.Stmt
+	buckets []*RWMutexCounterBucket //[RouteID]count
+	insert  *sql.Stmt
 }
 
 func NewDefaultRouteViewCounter() (*DefaultRouteViewCounter, error) {
@@ -19,8 +19,8 @@ func NewDefaultRouteViewCounter() (*DefaultRouteViewCounter, error) {
 		routeBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
 	}
 	counter := &DefaultRouteViewCounter{
-		routeBuckets: routeBuckets,
-		insert:       acc.Insert("viewchunks").Columns("count, createdAt, route").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
+		buckets: routeBuckets,
+		insert:  acc.Insert("viewchunks").Columns("count, createdAt, route").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 	common.AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
 	//common.AddScheduledSecondTask(counter.Tick)
@@ -29,7 +29,7 @@ func NewDefaultRouteViewCounter() (*DefaultRouteViewCounter, error) {
 }
 
 func (counter *DefaultRouteViewCounter) Tick() error {
-	for routeID, routeBucket := range counter.routeBuckets {
+	for routeID, routeBucket := range counter.buckets {
 		var count int
 		routeBucket.RLock()
 		count = routeBucket.counter
@@ -56,11 +56,11 @@ func (counter *DefaultRouteViewCounter) insertChunk(count int, route int) error 
 
 func (counter *DefaultRouteViewCounter) Bump(route int) {
 	// TODO: Test this check
-	common.DebugDetail("counter.routeBuckets[", route, "]: ", counter.routeBuckets[route])
-	if len(counter.routeBuckets) <= route || route < 0 {
+	common.DebugDetail("counter.buckets[", route, "]: ", counter.buckets[route])
+	if len(counter.buckets) <= route || route < 0 {
 		return
 	}
-	counter.routeBuckets[route].Lock()
-	counter.routeBuckets[route].counter++
-	counter.routeBuckets[route].Unlock()
+	counter.buckets[route].Lock()
+	counter.buckets[route].counter++
+	counter.buckets[route].Unlock()
 }

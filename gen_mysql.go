@@ -22,15 +22,11 @@ type Stmts struct {
 	getUserName *sql.Stmt
 	getEmailsByUser *sql.Stmt
 	getTopicBasic *sql.Stmt
-	getActivityEntry *sql.Stmt
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
 	getAttachment *sql.Stmt
 	getForumTopics *sql.Stmt
-	getWatchers *sql.Stmt
 	createReport *sql.Stmt
-	addActivity *sql.Stmt
-	notifyOne *sql.Stmt
 	addForumPermsToForum *sql.Stmt
 	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
@@ -50,7 +46,6 @@ type Stmts struct {
 	deleteActivityStreamMatch *sql.Stmt
 	deleteWordFilter *sql.Stmt
 	reportExists *sql.Stmt
-	notifyWatchers *sql.Stmt
 
 	getActivityFeedByWatcher *sql.Stmt
 	getActivityCountByWatcher *sql.Stmt
@@ -143,13 +138,6 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	common.DebugLog("Preparing getActivityEntry statement.")
-	stmts.getActivityEntry, err = db.Prepare("SELECT `actor`,`targetUser`,`event`,`elementType`,`elementID` FROM `activity_stream` WHERE `asid` = ?")
-	if err != nil {
-		log.Print("Error in getActivityEntry statement.")
-		return err
-	}
-		
 	common.DebugLog("Preparing forumEntryExists statement.")
 	stmts.forumEntryExists, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = '' ORDER BY fid ASC LIMIT 0,1")
 	if err != nil {
@@ -178,31 +166,10 @@ func _gen_mysql() (err error) {
 		return err
 	}
 		
-	common.DebugLog("Preparing getWatchers statement.")
-	stmts.getWatchers, err = db.Prepare("SELECT  `activity_subscriptions`.`user` FROM `activity_stream` INNER JOIN `activity_subscriptions` ON `activity_subscriptions`.`targetType` = `activity_stream`.`elementType` AND `activity_subscriptions`.`targetID` = `activity_stream`.`elementID` AND `activity_subscriptions`.`user` != `activity_stream`.`actor`  WHERE `asid` = ?")
-	if err != nil {
-		log.Print("Error in getWatchers statement.")
-		return err
-	}
-		
 	common.DebugLog("Preparing createReport statement.")
 	stmts.createReport, err = db.Prepare("INSERT INTO `topics`(`title`,`content`,`parsed_content`,`createdAt`,`lastReplyAt`,`createdBy`,`lastReplyBy`,`data`,`parentID`,`css_class`) VALUES (?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report')")
 	if err != nil {
 		log.Print("Error in createReport statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing addActivity statement.")
-	stmts.addActivity, err = db.Prepare("INSERT INTO `activity_stream`(`actor`,`targetUser`,`event`,`elementType`,`elementID`) VALUES (?,?,?,?,?)")
-	if err != nil {
-		log.Print("Error in addActivity statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing notifyOne statement.")
-	stmts.notifyOne, err = db.Prepare("INSERT INTO `activity_stream_matches`(`watcher`,`asid`) VALUES (?,?)")
-	if err != nil {
-		log.Print("Error in notifyOne statement.")
 		return err
 	}
 		
@@ -336,13 +303,6 @@ func _gen_mysql() (err error) {
 	stmts.reportExists, err = db.Prepare("SELECT COUNT(*) AS `count` FROM `topics` WHERE `data` = ? AND `data` != '' AND `parentID` = 1")
 	if err != nil {
 		log.Print("Error in reportExists statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing notifyWatchers statement.")
-	stmts.notifyWatchers, err = db.Prepare("INSERT INTO `activity_stream_matches`(`watcher`,`asid`) SELECT `activity_subscriptions`.`user`, `activity_stream`.`asid` FROM `activity_stream` INNER JOIN `activity_subscriptions` ON `activity_subscriptions`.`targetType` = `activity_stream`.`elementType` AND `activity_subscriptions`.`targetID` = `activity_stream`.`elementID` AND `activity_subscriptions`.`user` != `activity_stream`.`actor`  WHERE `asid` = ?")
-	if err != nil {
-		log.Print("Error in notifyWatchers statement.")
 		return err
 	}
 	

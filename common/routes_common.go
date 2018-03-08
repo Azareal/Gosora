@@ -217,6 +217,9 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 	if user.IsBanned {
 		headerVars.NoticeList = append(headerVars.NoticeList, "Your account has been suspended. Some of your permissions may have been revoked.")
 	}
+	if user.Loggedin && !user.Active {
+		headerVars.NoticeList = append(headerVars.NoticeList, "Your account hasn't been activated yet. Some features may remain unavailable until it is.")
+	}
 
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources

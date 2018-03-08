@@ -1,28 +1,28 @@
 {{template "header.html" . }}
 <main id="register_page">
 	<div class="rowblock rowhead">
-		<div class="rowitem"><h1>Create Account</h1></div>
+		<div class="rowitem"><h1>{{lang "register_head"}}</h1></div>
 	</div>
 	<div class="rowblock">
 		<form action="/accounts/create/submit/" method="post">
 			<div class="formrow">
-				<div class="formitem formlabel"><a id="username_label">Account Name</a></div>
-				<div class="formitem"><input name="username" type="text" placeholder="Account Name" aria-labelledby="username_label" required /></div>
+				<div class="formitem formlabel"><a id="username_label">{{lang "register_account_name"}}</a></div>
+				<div class="formitem"><input name="username" type="text" placeholder="{{lang "register_account_name"}}" aria-labelledby="username_label" required /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a id="email_label">Email</a></div>
+				<div class="formitem formlabel"><a id="email_label">{{lang "register_account_email"}}</a></div>
 				<div class="formitem"><input name="email" type="email" placeholder="joe.doe@example.com" aria-labelledby="email_label" required /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a id="password_label">Password</a></div>
+				<div class="formitem formlabel"><a id="password_label">{{lang "register_account_password"}}</a></div>
 				<div class="formitem"><input name="password" type="password" autocomplete="new-password" placeholder="*****" aria-labelledby="password_label" required /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a id="confirm_password_label">Confirm Password</a></div>
+				<div class="formitem formlabel"><a id="confirm_password_label">{{lang "register_account_confirm_password"}}</a></div>
 				<div class="formitem"><input name="confirm_password" type="password" placeholder="*****" aria-labelledby="confirm_password_label" required /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem"><button name="register-button" class="formbutton">Create Account</button></div>
+				<div class="formitem"><button name="register-button" class="formbutton">{{lang "register_submit_button"}}</button></div>
 			</div>
 		</form>
 	</div>

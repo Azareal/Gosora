@@ -296,17 +296,21 @@ li a {
 .opthead {
 	display: none;
 }
-
-.rowitem.has_opt {
-	float: left;
-	width: calc(100% - 50px);
+.topic_list_title_block {
+	display: flex;
+}
+.has_opt {
+	border-bottom: 1px solid hsl(0, 0%, 80%);
+}
+.has_opt .rowitem {
 	border-right: 1px solid hsl(0, 0%, 80%);
 	border-bottom: none;
 }
+.optbox {
+	margin-left: auto;
+}
 .opt {
-	float: left;
 	font-size: 32px;
-	height: 100%;
 	background-color: white;
 	width: 50px;
 	text-align: center;
@@ -324,6 +328,13 @@ li a {
 .locked_opt:before {
 	content: '🔒︎';
 }
+/*.mod_opt a.moderate_link:before {
+	content: '🔨︎';
+}
+.mod_opt, .mod_opt a {
+	color: rgb(120,120,120);
+	text-decoration: none;
+}*/
 
 .to_right {
 	margin-left: auto;

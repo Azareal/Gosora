@@ -317,6 +317,15 @@ func (theme *Theme) MapTemplates() {
 				default:
 					log.Fatal("The source and destination templates are incompatible")
 				}
+			case *func(IPSearchPage, http.ResponseWriter):
+				switch sTmplPtr := sourceTmplPtr.(type) {
+				case *func(IPSearchPage, http.ResponseWriter):
+					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
+					overridenTemplates[themeTmpl.Name] = true
+					*dTmplPtr = *sTmplPtr
+				default:
+					log.Fatal("The source and destination templates are incompatible")
+				}
 			case *func(Page, http.ResponseWriter):
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(Page, http.ResponseWriter):
@@ -395,6 +404,13 @@ func ResetTemplateOverrides() {
 			default:
 				log.Fatal("The origin and destination templates are incompatible")
 			}
+		case func(IPSearchPage, http.ResponseWriter):
+			switch dPtr := destTmplPtr.(type) {
+			case *func(IPSearchPage, http.ResponseWriter):
+				*dPtr = oPtr
+			default:
+				log.Fatal("The origin and destination templates are incompatible")
+			}
 		case func(Page, http.ResponseWriter):
 			switch dPtr := destTmplPtr.(type) {
 			case *func(Page, http.ResponseWriter):
@@ -435,6 +451,9 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w http.Resp
 	case *func(CreateTopicPage, http.ResponseWriter) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(CreateTopicPage), w)
+	case *func(IPSearchPage, http.ResponseWriter) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(IPSearchPage), w)
 	case *func(Page, http.ResponseWriter) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(Page), w)
@@ -450,6 +469,8 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w http.Resp
 		return tmplO(pi.(ProfilePage), w)
 	case func(CreateTopicPage, http.ResponseWriter) error:
 		return tmplO(pi.(CreateTopicPage), w)
+	case func(IPSearchPage, http.ResponseWriter) error:
+		return tmplO(pi.(IPSearchPage), w)
 	case func(Page, http.ResponseWriter) error:
 		return tmplO(pi.(Page), w)
 	case string:

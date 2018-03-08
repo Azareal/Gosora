@@ -319,17 +319,23 @@ li a {
 	color: hsl(0,0%,40%);
 }
 
-.opthead { display: none; }
-.rowitem.has_opt {
-	float: left;
+.opthead {
+	display: none;
+}
+.has_opt {
+	display: flex;
+}
+.has_opt .rowitem {
+	display: flex;
 	width: calc(100% - 50px);
 	border-right: 1px solid #ccc;
 	border-bottom: none;
 }
+.optbox {
+	margin-left: auto;
+}
 .opt {
-	float: left;
 	font-size: 32px;
-	height: 100%;
 	background-color: hsl(0, 0%, 99%);
 	width: 50px;
 	text-align: center;

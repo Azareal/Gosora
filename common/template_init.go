@@ -22,6 +22,7 @@ type CTmpl struct {
 	Imports    []string
 }
 
+// TODO: Stop duplicating these bits of code
 // nolint
 func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["topic"]
@@ -80,18 +81,57 @@ var Template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) erro
 	return Templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
+// nolint
+var Template_login_handle func(Page, http.ResponseWriter) error = func(pi Page, w http.ResponseWriter) error {
+	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["login"]
+	if !ok {
+		mapping = "login"
+	}
+	return Templates.ExecuteTemplate(w, mapping+".html", pi)
+}
+
+// nolint
+var Template_register_handle func(Page, http.ResponseWriter) error = func(pi Page, w http.ResponseWriter) error {
+	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["register"]
+	if !ok {
+		mapping = "register"
+	}
+	return Templates.ExecuteTemplate(w, mapping+".html", pi)
+}
+
+// nolint
+var Template_error_handle func(Page, http.ResponseWriter) error = func(pi Page, w http.ResponseWriter) error {
+	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["error"]
+	if !ok {
+		mapping = "error"
+	}
+	return Templates.ExecuteTemplate(w, mapping+".html", pi)
+}
+
+// nolint
+var Template_ip_search_handle func(IPSearchPage, http.ResponseWriter) error = func(pi IPSearchPage, w http.ResponseWriter) error {
+	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["ip_search"]
+	if !ok {
+		mapping = "ip_search"
+	}
+	return Templates.ExecuteTemplate(w, mapping+".html", pi)
+}
+
 // ? - Add template hooks?
 func compileTemplates() error {
+	var config tmpl.CTemplateConfig
+	config.Minify = Config.MinifyTemplates
+	config.SuperDebug = Dev.TemplateDebug
+
 	var c tmpl.CTemplateSet
-	c.Minify(Config.MinifyTemplates)
-	c.SuperDebug(Dev.TemplateDebug)
+	c.SetConfig(config)
 
 	// Schemas to train the template compiler on what to expect
 	// TODO: Add support for interface{}s
-	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", "", "", "", "", 0, 0, "0.0.0.0.0", 0}
+	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, BuildAvatar(62, ""), "", "", "", "", 0, 0, "0.0.0.0.0", 0}
 	// TODO: Do a more accurate level calculation for this?
-	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", "", "", "", "", 58, 1000, "127.0.0.1", 0}
-	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", "", "", "", "", 42, 900, "::1", 0}
+	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(1, ""), "", "", "", "", 58, 1000, "127.0.0.1", 0}
+	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(2, ""), "", "", "", "", 42, 900, "::1", 0}
 	headerVars := &HeaderVars{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
@@ -168,12 +208,37 @@ func compileTemplates() error {
 		return err
 	}
 
-	// Let plugins register their own templates
-	if Dev.DebugMode {
-		log.Print("Registering the templates for the plugins")
+	loginPage := Page{"Login Page", user, headerVars, tList, nil}
+	loginTmpl, err := c.Compile("login.html", "templates/", "common.Page", loginPage, varList)
+	if err != nil {
+		return err
 	}
-	c.SkipHandles(true)
 
+	registerPage := Page{"Registration Page", user, headerVars, tList, nil}
+	registerTmpl, err := c.Compile("register.html", "templates/", "common.Page", registerPage, varList)
+	if err != nil {
+		return err
+	}
+
+	errorPage := Page{"Error", user, headerVars, tList, "A problem has occurred in the system."}
+	errorTmpl, err := c.Compile("error.html", "templates/", "common.Page", errorPage, varList)
+	if err != nil {
+		return err
+	}
+
+	var ipUserList = make(map[int]*User)
+	ipUserList[1] = &user2
+	ipSearchPage := IPSearchPage{"IP Search", user2, headerVars, ipUserList, "::1"}
+	ipSearchTmpl, err := c.Compile("ip_search.html", "templates/", "common.IPSearchPage", ipSearchPage, varList)
+	if err != nil {
+		return err
+	}
+
+	// Let plugins register their own templates
+	DebugLog("Registering the templates for the plugins")
+	config = c.GetConfig()
+	config.SkipHandles = true
+	c.SetConfig(config)
 	for _, tmplfunc := range PrebuildTmplList {
 		tmplItem := tmplfunc(user, headerVars)
 		varList = make(map[string]tmpl.VarItem)
@@ -191,6 +256,10 @@ func compileTemplates() error {
 	go writeTemplate("forums", forumsTmpl)
 	go writeTemplate("topics", topicsTmpl)
 	go writeTemplate("forum", forumTmpl)
+	go writeTemplate("login", loginTmpl)
+	go writeTemplate("register", registerTmpl)
+	go writeTemplate("ip_search", ipSearchTmpl)
+	go writeTemplate("error", errorTmpl)
 	go func() {
 		err := writeFile("./template_list.go", "package main\n\n// nolint\n"+c.FragOut)
 		if err != nil {
@@ -279,10 +348,16 @@ func InitTemplates() error {
 		return template.HTML(BuildWidget(dock.(string), headerVarInt.(*HeaderVars)))
 	}
 
-	// The interpreted templates...
-	if Dev.DebugMode {
-		log.Print("Loading the template files...")
+	fmap["lang"] = func(phraseNameInt interface{}) interface{} {
+		phraseName, ok := phraseNameInt.(string)
+		if !ok {
+			panic("phraseNameInt is not a string")
+		}
+		return GetTmplPhrase(phraseName)
 	}
+
+	// The interpreted templates...
+	DebugLog("Loading the template files...")
 	Templates.Funcs(fmap)
 	template.Must(Templates.ParseGlob("templates/*"))
 	template.Must(Templates.ParseGlob("pages/*"))

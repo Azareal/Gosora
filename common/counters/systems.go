@@ -7,8 +7,8 @@ import "../../query_gen/lib"
 var OSViewCounter *DefaultOSViewCounter
 
 type DefaultOSViewCounter struct {
-	osBuckets []*RWMutexCounterBucket //[OSID]count
-	insert    *sql.Stmt
+	buckets []*RWMutexCounterBucket //[OSID]count
+	insert  *sql.Stmt
 }
 
 func NewDefaultOSViewCounter() (*DefaultOSViewCounter, error) {
@@ -18,8 +18,8 @@ func NewDefaultOSViewCounter() (*DefaultOSViewCounter, error) {
 		osBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
 	}
 	counter := &DefaultOSViewCounter{
-		osBuckets: osBuckets,
-		insert:    acc.Insert("viewchunks_systems").Columns("count, createdAt, system").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
+		buckets: osBuckets,
+		insert:  acc.Insert("viewchunks_systems").Columns("count, createdAt, system").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 	common.AddScheduledFifteenMinuteTask(counter.Tick)
 	//common.AddScheduledSecondTask(counter.Tick)
@@ -28,14 +28,14 @@ func NewDefaultOSViewCounter() (*DefaultOSViewCounter, error) {
 }
 
 func (counter *DefaultOSViewCounter) Tick() error {
-	for osID, osBucket := range counter.osBuckets {
+	for id, bucket := range counter.buckets {
 		var count int
-		osBucket.RLock()
-		count = osBucket.counter
-		osBucket.counter = 0 // TODO: Add a SetZero method to reduce the amount of duplicate code between the OS and agent counters?
-		osBucket.RUnlock()
+		bucket.RLock()
+		count = bucket.counter
+		bucket.counter = 0 // TODO: Add a SetZero method to reduce the amount of duplicate code between the OS and agent counters?
+		bucket.RUnlock()
 
-		err := counter.insertChunk(count, osID) // TODO: Bulk insert for speed?
+		err := counter.insertChunk(count, id) // TODO: Bulk insert for speed?
 		if err != nil {
 			return err
 		}
@@ -53,13 +53,13 @@ func (counter *DefaultOSViewCounter) insertChunk(count int, os int) error {
 	return err
 }
 
-func (counter *DefaultOSViewCounter) Bump(os int) {
+func (counter *DefaultOSViewCounter) Bump(id int) {
 	// TODO: Test this check
-	common.DebugDetail("counter.osBuckets[", os, "]: ", counter.osBuckets[os])
-	if len(counter.osBuckets) <= os || os < 0 {
+	common.DebugDetail("counter.buckets[", id, "]: ", counter.buckets[id])
+	if len(counter.buckets) <= id || id < 0 {
 		return
 	}
-	counter.osBuckets[os].Lock()
-	counter.osBuckets[os].counter++
-	counter.osBuckets[os].Unlock()
+	counter.buckets[id].Lock()
+	counter.buckets[id].counter++
+	counter.buckets[id].Unlock()
 }

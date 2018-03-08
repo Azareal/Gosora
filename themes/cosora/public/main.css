@@ -1132,10 +1132,21 @@ textarea {
 	margin-right: 12px;
 }
 .colstack_right .colstack_item:not(.rowlist):not(#profile_comments),
-#profile_comments .comment {
+#profile_comments .comment, .alert {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 	background-color: var(--element-background-color);
+}
+.alert {
+	padding: 12px;
+	margin-top: -3px;
+	margin-bottom: 8px;
+	margin-left: 12px;
+	margin-right: 12px;
+}
+.colstack_right .alert {
+	margin-left: 16px;
+	margin-right: 0px;
 }
 .colstack_right .colstack_item, .colstack_right .colstack_grid {
 	margin-left: 16px;
@@ -1266,6 +1277,10 @@ textarea {
 .to_right {
 	float: right;
 	margin-left: auto;
+}
+
+#account_edit_avatar .avatar_box {
+	margin-bottom: 10px;
 }
 
 #create_topic_page .close_form, #create_topic_page .formlabel, #login_page .formlabel, #register_page .formlabel {

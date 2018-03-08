@@ -1,3 +1,5 @@
+"use strict"
+
 $(document).ready(function(){
 	// Is there we way we can append instead? Maybe, an editor plugin?
 	attachItemCallback = function(attachItem) {
@@ -33,7 +35,6 @@ $(document).ready(function(){
 	// TODO: Refactor this to use `each` less
 	$('.button_menu').click(function(){
 		console.log(".button_menu");
-		
 		// The outer container
 		let buttonPane = newElement("div","button_menu_pane");
 		let postItem = $(this).parents('.post_item');
@@ -86,6 +87,14 @@ $(document).ready(function(){
 
 		document.getElementById("back").appendChild(buttonPane);
 	});
+
+	// Move the alerts under the first header
+	let colSel = $(".colstack_right .colstack_head:first");
+	if(colSel.length > 0) {
+		$('.alert').insertAfter(colSel);
+	} else {
+		$('.alert').insertAfter(".rowhead:first");
+	}
 });
 
 function newElement(etype, eclass) {

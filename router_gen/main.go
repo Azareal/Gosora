@@ -200,6 +200,7 @@ func main() {
 		"twitter",
 		"cloudflare",
 		"uptimebot",
+		"slackbot",
 		"discourse",
 		"lynx",
 		"blank",
@@ -220,6 +221,7 @@ package main
 import (
 	"log"
 	"strings"
+	"strconv"
 	"sync"
 	"errors"
 	"net/http"
@@ -275,6 +277,7 @@ var markToAgent = map[string]string{
 	"SeznamBot":"seznambot",
 	"CloudFlare":"cloudflare", // Track alwayson specifically in case there are other bots?
 	"Uptimebot":"uptimebot",
+	"Slackbot":"slackbot",
 	"Discordbot":"discord",
 	"Twitterbot":"twitter",
 	"Discourse":"discourse",
@@ -348,7 +351,7 @@ func (router *GenRouter) StripNewlines(data string) string {
 	return strings.Replace(strings.Replace(data,"\n","",-1),"\r","",-1)
 }
 
-func (router *GenRouter) DumpRequest(req *http.Request) {
+func (router *GenRouter) DumpRequest(req *http.Request, prepend string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
@@ -356,7 +359,8 @@ func (router *GenRouter) DumpRequest(req *http.Request) {
 		}
 	}
 
-	log.Print("\nUA: " + router.StripNewlines(req.UserAgent()) + "\n" +
+	log.Print(prepend + 
+		"\nUA: " + router.StripNewlines(req.UserAgent()) + "\n" +
 		"Method: " + router.StripNewlines(req.Method) + "\n" + heads + 
 		"req.Host: " + router.StripNewlines(req.Host) + "\n" + 
 		"req.URL.Path: " + router.StripNewlines(req.URL.Path) + "\n" + 
@@ -366,8 +370,7 @@ func (router *GenRouter) DumpRequest(req *http.Request) {
 }
 
 func (router *GenRouter) SuspiciousRequest(req *http.Request) {
-	log.Print("Suspicious Request")
-	router.DumpRequest(req)
+	router.DumpRequest(req,"Suspicious Request")
 	counters.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
 }
 
@@ -394,24 +397,23 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
-		log.Print("Malformed Request")
-		router.DumpRequest(req)
+		router.DumpRequest(req,"Malformed Request")
 		counters.AgentViewCounter.Bump({{.AllAgentMap.malformed}})
 		return
 	}
 
 	// TODO: Cover more suspicious strings and at a lower layer than this
-		for _, char := range req.URL.Path {
-			if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
-				router.SuspiciousRequest(req)
-				break
-			}
-		}
-		lowerPath := strings.ToLower(req.URL.Path)
-		// TODO: Flag any requests which has a dot with anything but a number after that
-		if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") {
+	for _, char := range req.URL.Path {
+		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
 			router.SuspiciousRequest(req)
+			break
 		}
+	}
+	lowerPath := strings.ToLower(req.URL.Path)
+	// TODO: Flag any requests which has a dot with anything but a number after that
+	if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") || strings.Contains(lowerPath,".action") {
+		router.SuspiciousRequest(req)
+	}
 	
 	var prefix, extraData string
 	prefix = req.URL.Path[0:strings.IndexByte(req.URL.Path[1:],'/') + 1]
@@ -421,8 +423,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	if common.Dev.SuperDebug {
-		log.Print("before routes.StaticFile")
-		router.DumpRequest(req)
+		router.DumpRequest(req,"before routes.StaticFile")
 	}
 	// Increment the request counter
 	counters.GlobalViewCounter.Bump()
@@ -444,8 +445,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if ua == "" {
 		counters.AgentViewCounter.Bump({{.AllAgentMap.blank}})
 		if common.Dev.DebugMode {
-			log.Print("Blank UA: ", req.UserAgent())
-			router.DumpRequest(req)
+			var prepend string
+			for _, char := range req.UserAgent() {
+				prepend += strconv.Itoa(int(char)) + " "
+			}
+			router.DumpRequest(req,"Blank UA: " + prepend)
 		}
 	} else {
 		var runeEquals = func(a []rune, b []rune) bool {
@@ -544,13 +548,25 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if agent == "" {
 			counters.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
 			if common.Dev.DebugMode {
-				log.Print("Unknown UA: ", req.UserAgent())
-				router.DumpRequest(req)
+				var prepend string
+				for _, char := range req.UserAgent() {
+					prepend += strconv.Itoa(int(char)) + " "
+				}
+				router.DumpRequest(req,"Blank UA: " + prepend)
 			}
 		} else {
 			counters.AgentViewCounter.Bump(agentMapEnum[agent])
 		}
 		counters.OSViewCounter.Bump(osMapEnum[os])
+	}
+
+	// TODO: Do we want to track missing language headers too? Maybe as it's own type, e.g. "noheader"?
+	lang := req.Header.Get("Accept-Language")
+	if lang != "" {
+		lang = strings.TrimSpace(lang)
+		lLang := strings.Split(lang,"-")
+		common.DebugDetail("lLang:", lLang)
+		counters.LangViewCounter.Bump(lLang[0])
 	}
 
 	referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P

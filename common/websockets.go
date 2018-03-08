@@ -6,7 +6,7 @@
 *	Copyright Azareal 2017 - 2018
 *
  */
-package main
+package common
 
 import (
 	"bytes"
@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"./common"
 	"github.com/Azareal/gopsutil/cpu"
 	"github.com/Azareal/gopsutil/mem"
 	"github.com/gorilla/websocket"
@@ -26,60 +25,60 @@ import (
 
 type WSUser struct {
 	conn *websocket.Conn
-	User *common.User
+	User *User
 }
 
 type WSHub struct {
-	onlineUsers  map[int]*WSUser
-	onlineGuests map[*WSUser]bool
-	guests       sync.RWMutex
-	users        sync.RWMutex
+	OnlineUsers  map[int]*WSUser
+	OnlineGuests map[*WSUser]bool
+	GuestLock    sync.RWMutex
+	UserLock     sync.RWMutex
 }
 
 // TODO: Disable WebSockets on high load? Add a Control Panel interface for disabling it?
-var enableWebsockets = true // Put this in caps for consistency with the other constants?
+var EnableWebsockets = true // Put this in caps for consistency with the other constants?
 
-var wsHub WSHub
+var WsHub WSHub
 var wsUpgrader = websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
 var errWsNouser = errors.New("This user isn't connected via WebSockets")
 
 func init() {
 	adminStatsWatchers = make(map[*WSUser]bool)
-	wsHub = WSHub{
-		onlineUsers:  make(map[int]*WSUser),
-		onlineGuests: make(map[*WSUser]bool),
+	WsHub = WSHub{
+		OnlineUsers:  make(map[int]*WSUser),
+		OnlineGuests: make(map[*WSUser]bool),
 	}
 }
 
-func (hub *WSHub) guestCount() int {
-	defer hub.guests.RUnlock()
-	hub.guests.RLock()
-	return len(hub.onlineGuests)
+func (hub *WSHub) GuestCount() int {
+	defer hub.GuestLock.RUnlock()
+	hub.GuestLock.RLock()
+	return len(hub.OnlineGuests)
 }
 
-func (hub *WSHub) userCount() int {
-	defer hub.users.RUnlock()
-	hub.users.RLock()
-	return len(hub.onlineUsers)
+func (hub *WSHub) UserCount() int {
+	defer hub.UserLock.RUnlock()
+	hub.UserLock.RLock()
+	return len(hub.OnlineUsers)
 }
 
 func (hub *WSHub) broadcastMessage(msg string) error {
-	hub.users.RLock()
-	for _, wsUser := range hub.onlineUsers {
+	hub.UserLock.RLock()
+	for _, wsUser := range hub.OnlineUsers {
 		w, err := wsUser.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			return err
 		}
 		_, _ = w.Write([]byte(msg))
 	}
-	hub.users.RUnlock()
+	hub.UserLock.RUnlock()
 	return nil
 }
 
 func (hub *WSHub) pushMessage(targetUser int, msg string) error {
-	hub.users.RLock()
-	wsUser, ok := hub.onlineUsers[targetUser]
-	hub.users.RUnlock()
+	hub.UserLock.RLock()
+	wsUser, ok := hub.OnlineUsers[targetUser]
+	hub.UserLock.RUnlock()
 	if !ok {
 		return errWsNouser
 	}
@@ -96,15 +95,15 @@ func (hub *WSHub) pushMessage(targetUser int, msg string) error {
 
 func (hub *WSHub) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
 	//log.Print("In pushAlert")
-	hub.users.RLock()
-	wsUser, ok := hub.onlineUsers[targetUser]
-	hub.users.RUnlock()
+	hub.UserLock.RLock()
+	wsUser, ok := hub.OnlineUsers[targetUser]
+	hub.UserLock.RUnlock()
 	if !ok {
 		return errWsNouser
 	}
 
 	//log.Print("Building alert")
-	alert, err := buildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
+	alert, err := BuildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
 	if err != nil {
 		return err
 	}
@@ -122,12 +121,12 @@ func (hub *WSHub) pushAlert(targetUser int, asid int, event string, elementType 
 
 func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
 	var wsUsers []*WSUser
-	hub.users.RLock()
+	hub.UserLock.RLock()
 	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
 	for _, uid := range users {
-		wsUsers = append(wsUsers, hub.onlineUsers[uid])
+		wsUsers = append(wsUsers, hub.OnlineUsers[uid])
 	}
-	hub.users.RUnlock()
+	hub.UserLock.RUnlock()
 	if len(wsUsers) == 0 {
 		return errWsNouser
 	}
@@ -138,7 +137,7 @@ func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType st
 			continue
 		}
 
-		alert, err := buildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
+		alert, err := BuildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -161,25 +160,26 @@ func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType st
 }
 
 // TODO: How should we handle errors for this?
-func routeWebsockets(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+// TODO: Move this out of common?
+func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil
 	}
-	userptr, err := common.Users.Get(user.ID)
-	if err != nil && err != common.ErrStoreCapacityOverflow {
+	userptr, err := Users.Get(user.ID)
+	if err != nil && err != ErrStoreCapacityOverflow {
 		return nil
 	}
 
 	wsUser := &WSUser{conn, userptr}
 	if user.ID == 0 {
-		wsHub.guests.Lock()
-		wsHub.onlineGuests[wsUser] = true
-		wsHub.guests.Unlock()
+		WsHub.GuestLock.Lock()
+		WsHub.OnlineGuests[wsUser] = true
+		WsHub.GuestLock.Unlock()
 	} else {
-		wsHub.users.Lock()
-		wsHub.onlineUsers[user.ID] = wsUser
-		wsHub.users.Unlock()
+		WsHub.UserLock.Lock()
+		WsHub.OnlineUsers[user.ID] = wsUser
+		WsHub.UserLock.Unlock()
 	}
 
 	//conn.SetReadLimit(/* put the max request size from earlier here? */)
@@ -189,13 +189,13 @@ func routeWebsockets(w http.ResponseWriter, r *http.Request, user common.User) c
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if user.ID == 0 {
-				wsHub.guests.Lock()
-				delete(wsHub.onlineGuests, wsUser)
-				wsHub.guests.Unlock()
+				WsHub.GuestLock.Lock()
+				delete(WsHub.OnlineGuests, wsUser)
+				WsHub.GuestLock.Unlock()
 			} else {
-				wsHub.users.Lock()
-				delete(wsHub.onlineUsers, user.ID)
-				wsHub.users.Unlock()
+				WsHub.UserLock.Lock()
+				delete(WsHub.OnlineUsers, user.ID)
+				WsHub.UserLock.Unlock()
 			}
 			break
 		}
@@ -239,9 +239,9 @@ func wsPageResponses(wsUser *WSUser, page []byte) {
 			return
 		}
 
-		log.Print(wsHub.online_users)
-		uonline := wsHub.userCount()
-		gonline := wsHub.guestCount()
+		log.Print(WsHub.online_users)
+		uonline := WsHub.UserCount()
+		gonline := WsHub.GuestCount()
 		totonline := uonline + gonline
 
 		w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + " online\r"))
@@ -321,8 +321,8 @@ AdminStatLoop:
 
 		cpuPerc, cpuerr = cpu.Percent(time.Second, true)
 		memres, ramerr = mem.VirtualMemory()
-		uonline := wsHub.userCount()
-		gonline := wsHub.guestCount()
+		uonline := WsHub.UserCount()
+		gonline := WsHub.GuestCount()
 		totonline := uonline + gonline
 		reqCount := 0
 
@@ -339,9 +339,9 @@ AdminStatLoop:
 			onlineGuestsColour = greaterThanSwitch(gonline, 1, 10)
 			onlineUsersColour = greaterThanSwitch(uonline, 1, 5)
 
-			totonline, totunit = common.ConvertFriendlyUnit(totonline)
-			uonline, uunit = common.ConvertFriendlyUnit(uonline)
-			gonline, gunit = common.ConvertFriendlyUnit(gonline)
+			totonline, totunit = ConvertFriendlyUnit(totonline)
+			uonline, uunit = ConvertFriendlyUnit(uonline)
+			gonline, gunit = ConvertFriendlyUnit(gonline)
 		}
 
 		if cpuerr != nil {
@@ -363,8 +363,8 @@ AdminStatLoop:
 			if ramerr != nil {
 				ramstr = "Unknown"
 			} else {
-				totalCount, totalUnit := common.ConvertByteUnit(float64(memres.Total))
-				usedCount := common.ConvertByteInUnit(float64(memres.Total-memres.Available), totalUnit)
+				totalCount, totalUnit := ConvertByteUnit(float64(memres.Total))
+				usedCount := ConvertByteInUnit(float64(memres.Total-memres.Available), totalUnit)
 
 				// Round totals with .9s up, it's how most people see it anyway. Floats are notoriously imprecise, so do it off 0.85
 				var totstr string

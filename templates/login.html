@@ -1,21 +1,21 @@
 {{template "header.html" . }}
 <main id="login_page">
 	<div class="rowblock rowhead">
-		<div class="rowitem"><h1>Login</h1></div>
+		<div class="rowitem"><h1>{{lang "login_head"}}</h1></div>
 	</div>
 	<div class="rowblock">
 		<form action="/accounts/login/submit/" method="post">
 			<div class="formrow login_name_row">
-				<div class="formitem formlabel"><a>Account Name</a></div>
-				<div class="formitem"><input name="username" type="text" placeholder="Account Name" required /></div>
+				<div class="formitem formlabel"><a>{{lang "login_account_name"}}</a></div>
+				<div class="formitem"><input name="username" type="text" placeholder="{{lang "login_account_name"}}" required /></div>
 			</div>
 			<div class="formrow login_password_row">
-				<div class="formitem formlabel"><a>Password</a></div>
+				<div class="formitem formlabel"><a>{{lang "login_account_password"}}</a></div>
 				<div class="formitem"><input name="password" type="password" autocomplete="current-password" placeholder="*****" required /></div>
 			</div>
 			<div class="formrow login_button_row">
-				<div class="formitem"><button name="login-button" class="formbutton">Login</button></div>
-				<div class="formitem dont_have_account">Don't have an account?</div>
+				<div class="formitem"><button name="login-button" class="formbutton">{{lang "login_submit_button"}}</button></div>
+				<div class="formitem dont_have_account">{{lang "login_no_account"}}</div>
 			</div>
 		</form>
 	</div>

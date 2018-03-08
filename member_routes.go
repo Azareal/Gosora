@@ -1,11 +1,8 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"html"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,188 +13,6 @@ import (
 	"./common"
 	"./common/counters"
 )
-
-func routeCreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	tid, err := strconv.Atoi(r.PostFormValue("tid"))
-	if err != nil {
-		return common.PreError("Failed to convert the Topic ID", w, r)
-	}
-
-	topic, err := common.Topics.Get(tid)
-	if err == ErrNoRows {
-		return common.PreError("Couldn't find the parent topic", w, r)
-	} else if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if ferr != nil {
-		return ferr
-	}
-	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
-		return common.NoPermissions(w, r, user)
-	}
-
-	// Handle the file attachments
-	// TODO: Stop duplicating this code
-	if user.Perms.UploadFiles {
-		files, ok := r.MultipartForm.File["upload_files"]
-		if ok {
-			if len(files) > 5 {
-				return common.LocalError("You can't attach more than five files", w, r, user)
-			}
-
-			for _, file := range files {
-				log.Print("file.Filename ", file.Filename)
-				extarr := strings.Split(file.Filename, ".")
-				if len(extarr) < 2 {
-					return common.LocalError("Bad file", w, r, user)
-				}
-				ext := extarr[len(extarr)-1]
-
-				// TODO: Can we do this without a regex?
-				reg, err := regexp.Compile("[^A-Za-z0-9]+")
-				if err != nil {
-					return common.LocalError("Bad file extension", w, r, user)
-				}
-				ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
-				if !common.AllowedFileExts.Contains(ext) {
-					return common.LocalError("You're not allowed to upload files with this extension", w, r, user)
-				}
-
-				infile, err := file.Open()
-				if err != nil {
-					return common.LocalError("Upload failed", w, r, user)
-				}
-				defer infile.Close()
-
-				hasher := sha256.New()
-				_, err = io.Copy(hasher, infile)
-				if err != nil {
-					return common.LocalError("Upload failed [Hashing Failed]", w, r, user)
-				}
-				infile.Close()
-
-				checksum := hex.EncodeToString(hasher.Sum(nil))
-				filename := checksum + "." + ext
-				outfile, err := os.Create("." + "/attachs/" + filename)
-				if err != nil {
-					return common.LocalError("Upload failed [File Creation Failed]", w, r, user)
-				}
-				defer outfile.Close()
-
-				infile, err = file.Open()
-				if err != nil {
-					return common.LocalError("Upload failed", w, r, user)
-				}
-				defer infile.Close()
-
-				_, err = io.Copy(outfile, infile)
-				if err != nil {
-					return common.LocalError("Upload failed [Copy Failed]", w, r, user)
-				}
-
-				err = common.Attachments.Add(topic.ParentID, "forums", tid, "replies", user.ID, filename)
-				if err != nil {
-					return common.InternalError(err, w, r)
-				}
-			}
-		}
-	}
-
-	content := common.PreparseMessage(r.PostFormValue("reply-content"))
-	// TODO: Fully parse the post and put that in the parsed column
-	rid, err := common.Rstore.Create(topic, content, user.LastIP, user.ID)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	reply, err := common.Rstore.Get(rid)
-	if err != nil {
-		return common.LocalError("Unable to load the reply", w, r, user)
-	}
-	if r.PostFormValue("has_poll") == "1" {
-		var maxPollOptions = 10
-		var pollInputItems = make(map[int]string)
-		for key, values := range r.Form {
-			//if common.Dev.SuperDebug {
-			log.Print("key: ", key)
-			log.Printf("values: %+v\n", values)
-			//}
-			for _, value := range values {
-				if strings.HasPrefix(key, "pollinputitem[") {
-					halves := strings.Split(key, "[")
-					if len(halves) != 2 {
-						return common.LocalError("Malformed pollinputitem", w, r, user)
-					}
-					halves[1] = strings.TrimSuffix(halves[1], "]")
-
-					index, err := strconv.Atoi(halves[1])
-					if err != nil {
-						return common.LocalError("Malformed pollinputitem", w, r, user)
-					}
-
-					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
-					_, exists := pollInputItems[index]
-					if !exists && len(html.EscapeString(value)) != 0 {
-						pollInputItems[index] = html.EscapeString(value)
-						if len(pollInputItems) >= maxPollOptions {
-							break
-						}
-					}
-				}
-			}
-		}
-
-		// Make sure the indices are sequential to avoid out of bounds issues
-		var seqPollInputItems = make(map[int]string)
-		for i := 0; i < len(pollInputItems); i++ {
-			seqPollInputItems[i] = pollInputItems[i]
-		}
-
-		pollType := 0 // Basic single choice
-		_, err := common.Polls.Create(reply, pollType, seqPollInputItems)
-		if err != nil {
-			return common.LocalError("Failed to add poll to reply", w, r, user) // TODO: Might need to be an internal error as it could leave phantom polls?
-		}
-	}
-
-	err = common.Forums.UpdateLastTopic(tid, user.ID, topic.ParentID)
-	if err != nil && err != ErrNoRows {
-		return common.InternalError(err, w, r)
-	}
-
-	res, err := stmts.addActivity.Exec(user.ID, topic.CreatedBy, "reply", "topic", tid)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	_, err = stmts.notifyWatchers.Exec(lastID)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// Alert the subscribers about this post without blocking this post from being posted
-	if enableWebsockets {
-		go notifyWatchers(lastID)
-	}
-
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
-
-	wcount := common.WordCount(content)
-	err = user.IncreasePostStats(wcount, false)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	counters.PostCounter.Bump()
-	return nil
-}
 
 // TODO: Refactor this
 func routeLikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
@@ -240,22 +55,10 @@ func routeLikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 		return common.InternalError(err, w, r)
 	}
 
-	res, err := stmts.addActivity.Exec(user.ID, topic.CreatedBy, "like", "topic", tid)
+	err = common.AddActivityAndNotifyTarget(user.ID, topic.CreatedBy, "like", "topic", tid)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	_, err = stmts.notifyOne.Exec(topic.CreatedBy, lastID)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// Live alerts, if the poster is online and WebSockets is enabled
-	_ = wsHub.pushAlert(topic.CreatedBy, int(lastID), "like", "topic", user.ID, topic.CreatedBy, tid)
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	return nil
@@ -308,22 +111,10 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 		return common.InternalError(err, w, r)
 	}
 
-	res, err := stmts.addActivity.Exec(user.ID, reply.CreatedBy, "like", "post", rid)
+	err = common.AddActivityAndNotifyTarget(user.ID, reply.CreatedBy, "like", "post", rid)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	_, err = stmts.notifyOne.Exec(reply.CreatedBy, lastID)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// Live alerts, if the poster is online and WebSockets is enabled
-	_ = wsHub.pushAlert(reply.CreatedBy, int(lastID), "like", "post", user.ID, reply.CreatedBy, rid)
 
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
 	return nil
@@ -338,13 +129,22 @@ func routeProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user 
 	if err != nil {
 		return common.LocalError("Invalid UID", w, r, user)
 	}
-	if !common.Users.Exists(uid) {
+	
+	profileOwner, err := common.Users.Get(uid)
+	if err == ErrNoRows {
 		return common.LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err,w,r)
 	}
 
 	content := common.PreparseMessage(r.PostFormValue("reply-content"))
 	// TODO: Fully parse the post and store it in the parsed column
-	_, err = common.Prstore.Create(uid, content, user.ID, user.LastIP)
+	_, err = common.Prstore.Create(profileOwner.ID, content, user.ID, user.LastIP)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	err = common.AddActivityAndNotifyTarget(user.ID, profileOwner.ID, "reply", "user", profileOwner.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

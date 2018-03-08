@@ -25,7 +25,7 @@ func AccountLogin(w http.ResponseWriter, r *http.Request, user common.User) comm
 	if common.RunPreRenderHook("pre_render_login", w, r, &user, &pi) {
 		return nil
 	}
-	err := common.Templates.ExecuteTemplate(w, "login.html", pi)
+	err := common.RunThemeTemplate(headerVars.Theme.Name, "login", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -84,7 +84,7 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 	if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
 		return nil
 	}
-	err := common.Templates.ExecuteTemplate(w, "register.html", pi)
+	err := common.RunThemeTemplate(headerVars.Theme.Name, "register", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

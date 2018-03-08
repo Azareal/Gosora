@@ -1,11 +1,11 @@
 {{template "header.html" . }}
-<div class="colstack account">
+<div id="account_edit_avatar" class="colstack account">
 	{{template "account_menu.html" . }}
 	<main class="colstack_right">
 		<div class="colstack_item colstack_head rowhead">
 			<div class="rowitem"><h1>Edit Avatar</h1></div>
 		</div>
-		<div class="colstack_item">
+		<div class="colstack_item avatar_box">
 			<div class="rowitem"><img src="{{.CurrentUser.Avatar}}" height="128px" max-width="128px" /></div>
 		</div>
 		<div class="colstack_item the_form">

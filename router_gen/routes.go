@@ -32,7 +32,7 @@ func routes() {
 	buildPollRoutes()
 	buildAccountRoutes()
 
-	addRoute(Special("routeWebsockets", "/ws/"))
+	addRoute(Special("common.RouteWebsockets", "/ws/"))
 }
 
 // TODO: Test the email token route
@@ -85,7 +85,7 @@ func buildReplyRoutes() {
 	replyGroup := newRouteGroup("/reply/")
 	replyGroup.Routes(
 		// TODO: Reduce this to 1MB for attachments for each file?
-		UploadAction("routeCreateReplySubmit", "/reply/create/").MaxSizeVar("common.Config.MaxRequestSize"), // TODO: Rename the route so it's /reply/create/submit/
+		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("common.Config.MaxRequestSize"), // TODO: Rename the route so it's /reply/create/submit/
 		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
 		Action("routes.ReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
 		Action("routeReplyLikeSubmit", "/reply/like/submit/", "extraData"),
@@ -167,11 +167,13 @@ func buildPanelRoutes() {
 		View("routePanelAnalyticsRoutes", "/panel/analytics/routes/").Before("ParseForm"),
 		View("routePanelAnalyticsAgents", "/panel/analytics/agents/").Before("ParseForm"),
 		View("routePanelAnalyticsSystems", "/panel/analytics/systems/").Before("ParseForm"),
+		View("routePanelAnalyticsLanguages", "/panel/analytics/langs/").Before("ParseForm"),
 		View("routePanelAnalyticsReferrers", "/panel/analytics/referrers/").Before("ParseForm"),
 		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
 		View("routePanelAnalyticsAgentViews", "/panel/analytics/agent/", "extraData"),
 		View("routePanelAnalyticsForumViews", "/panel/analytics/forum/", "extraData"),
 		View("routePanelAnalyticsSystemViews", "/panel/analytics/system/", "extraData"),
+		View("routePanelAnalyticsLanguageViews", "/panel/analytics/lang/", "extraData"),
 		View("routePanelAnalyticsReferrerViews", "/panel/analytics/referrer/", "extraData"),
 		View("routePanelAnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
 		View("routePanelAnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),

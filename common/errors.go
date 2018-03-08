@@ -290,7 +290,7 @@ func handleErrorTemplate(w http.ResponseWriter, r *http.Request, pi Page) {
 	if RunPreRenderHook("pre_render_error", w, r, &pi.CurrentUser, &pi) {
 		return
 	}
-	err := Templates.ExecuteTemplate(w, "error.html", pi)
+	err := RunThemeTemplate(pi.Header.Theme.Name, "error", pi, w)
 	if err != nil {
 		LogError(err)
 	}
