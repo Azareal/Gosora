@@ -3,7 +3,7 @@
 	{{template "account_menu.html" . }}
 	<main class="colstack_right">
 		<div class="colstack_item colstack_head rowhead">
-			<div class="rowitem"><h1>Edit Avatar</h1></div>
+			<div class="rowitem"><h1>{{lang "account_avatar_head"}}</h1></div>
 		</div>
 		<div class="colstack_item avatar_box">
 			<div class="rowitem"><img src="{{.CurrentUser.Avatar}}" height="128px" max-width="128px" /></div>
@@ -11,11 +11,11 @@
 		<div class="colstack_item the_form">
 			<form action="/user/edit/avatar/submit/" method="post" enctype="multipart/form-data">
 				<div class="formrow real_first_child">
-					<div class="formitem formlabel"><a>Upload Avatar</a></div>
+					<div class="formitem formlabel"><a>{{lang "account_avatar_upload_label"}}</a></div>
 					<div class="formitem"><input name="account-avatar" type="file" required /></div>
 				</div>
 				<div class="formrow">
-					<div class="formitem"><button name="account-button" class="formbutton">Update</button></div>
+					<div class="formitem"><button name="account-button" class="formbutton">{{lang "account_avatar_update_button"}}</button></div>
 				</div>
 			</form>
 		</div>

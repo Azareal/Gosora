@@ -156,28 +156,28 @@
 	margin-top: 1px;
 }
 .perm_preset_no_access:before {
-	content: "No Access";
+	content: "{{index .Phrases "panel_perms_no_access" }}";
 	color: hsl(0,100%,20%);
 }
 .perm_preset_read_only:before, .perm_preset_can_post:before {
 	color: hsl(120,100%,20%);
 }
 .perm_preset_read_only:before {
-	content: "Read Only";
+	content: "{{index .Phrases "panel_perms_read_only" }}";
 }
 .perm_preset_can_post:before {
-	content: "Can Post";
+	content: "{{index .Phrases "panel_perms_can_post" }}";
 }
 .perm_preset_can_moderate:before {
-	content: "Can Moderate";
+	content: "{{index .Phrases "panel_perms_can_moderate" }}";
 	color: hsl(240,100%,20%);
 }
 .perm_preset_custom:before {
-	content: "Custom";
+	content: "{{index .Phrases "panel_perms_custom" }}";
 	color: hsl(0,0%,20%);
 }
 .perm_preset_default:before {
-	content: "Default";
+	content: "{{index .Phrases "panel_perms_default" }}";
 }
 
 .colstack_graph_holder {

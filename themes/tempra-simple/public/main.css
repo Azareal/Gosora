@@ -54,28 +54,28 @@ li a {
 }
 
 #menu_forums a:after {
-	content: "Forums";
+	content: "{{index .Phrases "menu_forums"}}";
 }
 .menu_topics a:after {
-	content: "Topics";
+	content: "{{index .Phrases "menu_topics"}}";
 }
 .menu_account a:after {
-	content: "Account";
+	content: "{{index .Phrases "menu_account"}}";
 }
 .menu_profile a:after {
-	content: "Profile";
+	content: "{{index .Phrases "menu_profile"}}";
 }
 .menu_panel a:after {
-	content: "Panel";
+	content: "{{index .Phrases "menu_panel"}}";
 }
 .menu_logout a:after {
-	content: "Logout";
+	content: "{{index .Phrases "menu_logout"}}";
 }
 .menu_login a:after {
-	content: "Login";
+	content: "{{index .Phrases "menu_login"}}";
 }
 .menu_register a:after {
-	content: "Register";
+	content: "{{index .Phrases "menu_register"}}";
 }
 
 .alert_bell:before {
@@ -474,10 +474,10 @@ input, select {
 	white-space: nowrap;
 }
 .topic_list .lastReplyAt:before {
-	content: "Last: ";
+	content: "{{index .Phrases "topics_last"}}: ";
 }
 .topic_list .starter:before {
-	content: "Starter: ";
+	content: "{{index .Phrases "topics_starter"}}: ";
 }
 
 @supports not (display: grid) {
@@ -899,7 +899,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	font-size: 18px;
 }
 #profile_left_lane .report_item:after {
-	content: "Report";
+	content: "{{index .Phrases "topic_report_button_text"}}";
 }
 #profile_right_lane {
 	width: calc(100% - 245px);

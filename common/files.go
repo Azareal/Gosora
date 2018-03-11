@@ -30,7 +30,7 @@ type SFile struct {
 }
 
 type CSSData struct {
-	ComingSoon string
+	Phrases map[string]string
 }
 
 func (list SFileList) Init() error {

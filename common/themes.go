@@ -129,6 +129,16 @@ func (themes ThemeList) LoadActiveStatus() error {
 	return rows.Err()
 }
 
+func (themes ThemeList) LoadStaticFiles() error {
+	for _, theme := range themes {
+		err := theme.LoadStaticFiles()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func InitThemes() error {
 	themeFiles, err := ioutil.ReadDir("./themes")
 	if err != nil {
@@ -185,10 +195,6 @@ func InitThemes() error {
 			}
 		}
 
-		err = theme.LoadStaticFiles()
-		if err != nil {
-			return err
-		}
 		Themes[theme.Name] = theme
 	}
 	return nil
@@ -204,6 +210,7 @@ func (theme *Theme) LoadStaticFiles() error {
 }
 
 func (theme *Theme) AddThemeStaticFiles() error {
+	phraseMap := GetCSSPhrases()
 	// TODO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
 	return filepath.Walk("./themes/"+theme.Name+"/public", func(path string, f os.FileInfo, err error) error {
 		DebugLog("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")
@@ -225,7 +232,7 @@ func (theme *Theme) AddThemeStaticFiles() error {
 			var b bytes.Buffer
 			var pieces = strings.Split(path, "/")
 			var filename = pieces[len(pieces)-1]
-			err = theme.ResourceTemplates.ExecuteTemplate(&b, filename, CSSData{ComingSoon: "We don't have any data to pass you yet!"})
+			err = theme.ResourceTemplates.ExecuteTemplate(&b, filename, CSSData{Phrases: phraseMap})
 			if err != nil {
 				return err
 			}
@@ -245,10 +252,10 @@ func (theme *Theme) MapTemplates() {
 	if theme.Templates != nil {
 		for _, themeTmpl := range theme.Templates {
 			if themeTmpl.Name == "" {
-				log.Fatal("Invalid destination template name")
+				LogError(errors.New("Invalid destination template name"))
 			}
 			if themeTmpl.Source == "" {
-				log.Fatal("Invalid source template name")
+				LogError(errors.New("Invalid source template name"))
 			}
 
 			// `go generate` is one possibility for letting plugins inject custom page structs, but it would simply add another step of compilation. It might be simpler than the current build process from the perspective of the administrator?
@@ -259,7 +266,7 @@ func (theme *Theme) MapTemplates() {
 			}
 			sourceTmplPtr, ok := TmplPtrMap[themeTmpl.Source]
 			if !ok {
-				log.Fatal("The source template doesn't exist!")
+				LogError(errors.New("The source template doesn't exist!"))
 			}
 
 			switch dTmplPtr := destTmplPtr.(type) {
@@ -270,7 +277,7 @@ func (theme *Theme) MapTemplates() {
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
-					log.Fatal("The source and destination templates are incompatible")
+					LogError(errors.New("The source and destination templates are incompatible"))
 				}
 			case *func(TopicsPage, http.ResponseWriter):
 				switch sTmplPtr := sourceTmplPtr.(type) {
@@ -279,7 +286,7 @@ func (theme *Theme) MapTemplates() {
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
-					log.Fatal("The source and destination templates are incompatible")
+					LogError(errors.New("The source and destination templates are incompatible"))
 				}
 			case *func(ForumPage, http.ResponseWriter):
 				switch sTmplPtr := sourceTmplPtr.(type) {
@@ -288,7 +295,7 @@ func (theme *Theme) MapTemplates() {
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
-					log.Fatal("The source and destination templates are incompatible")
+					LogError(errors.New("The source and destination templates are incompatible"))
 				}
 			case *func(ForumsPage, http.ResponseWriter):
 				switch sTmplPtr := sourceTmplPtr.(type) {
@@ -297,7 +304,7 @@ func (theme *Theme) MapTemplates() {
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
-					log.Fatal("The source and destination templates are incompatible")
+					LogError(errors.New("The source and destination templates are incompatible"))
 				}
 			case *func(ProfilePage, http.ResponseWriter):
 				switch sTmplPtr := sourceTmplPtr.(type) {
@@ -306,7 +313,7 @@ func (theme *Theme) MapTemplates() {
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
-					log.Fatal("The source and destination templates are incompatible")
+					LogError(errors.New("The source and destination templates are incompatible"))
 				}
 			case *func(CreateTopicPage, http.ResponseWriter):
 				switch sTmplPtr := sourceTmplPtr.(type) {
@@ -315,7 +322,7 @@ func (theme *Theme) MapTemplates() {
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
-					log.Fatal("The source and destination templates are incompatible")
+					LogError(errors.New("The source and destination templates are incompatible"))
 				}
 			case *func(IPSearchPage, http.ResponseWriter):
 				switch sTmplPtr := sourceTmplPtr.(type) {
@@ -324,7 +331,7 @@ func (theme *Theme) MapTemplates() {
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
-					log.Fatal("The source and destination templates are incompatible")
+					LogError(errors.New("The source and destination templates are incompatible"))
 				}
 			case *func(Page, http.ResponseWriter):
 				switch sTmplPtr := sourceTmplPtr.(type) {
@@ -333,10 +340,10 @@ func (theme *Theme) MapTemplates() {
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
-					log.Fatal("The source and destination templates are incompatible")
+					LogError(errors.New("The source and destination templates are incompatible"))
 				}
 			default:
-				log.Fatal("Unknown destination template type!")
+				LogError(errors.New("Unknown destination template type!"))
 			}
 		}
 	}
@@ -367,59 +374,59 @@ func ResetTemplateOverrides() {
 			case *func(TopicPage, http.ResponseWriter):
 				*dPtr = oPtr
 			default:
-				log.Fatal("The origin and destination templates are incompatible")
+				LogError(errors.New("The source and destination templates are incompatible"))
 			}
 		case func(TopicsPage, http.ResponseWriter):
 			switch dPtr := destTmplPtr.(type) {
 			case *func(TopicsPage, http.ResponseWriter):
 				*dPtr = oPtr
 			default:
-				log.Fatal("The origin and destination templates are incompatible")
+				LogError(errors.New("The source and destination templates are incompatible"))
 			}
 		case func(ForumPage, http.ResponseWriter):
 			switch dPtr := destTmplPtr.(type) {
 			case *func(ForumPage, http.ResponseWriter):
 				*dPtr = oPtr
 			default:
-				log.Fatal("The origin and destination templates are incompatible")
+				LogError(errors.New("The source and destination templates are incompatible"))
 			}
 		case func(ForumsPage, http.ResponseWriter):
 			switch dPtr := destTmplPtr.(type) {
 			case *func(ForumsPage, http.ResponseWriter):
 				*dPtr = oPtr
 			default:
-				log.Fatal("The origin and destination templates are incompatible")
+				LogError(errors.New("The source and destination templates are incompatible"))
 			}
 		case func(ProfilePage, http.ResponseWriter):
 			switch dPtr := destTmplPtr.(type) {
 			case *func(ProfilePage, http.ResponseWriter):
 				*dPtr = oPtr
 			default:
-				log.Fatal("The origin and destination templates are incompatible")
+				LogError(errors.New("The source and destination templates are incompatible"))
 			}
 		case func(CreateTopicPage, http.ResponseWriter):
 			switch dPtr := destTmplPtr.(type) {
 			case *func(CreateTopicPage, http.ResponseWriter):
 				*dPtr = oPtr
 			default:
-				log.Fatal("The origin and destination templates are incompatible")
+				LogError(errors.New("The source and destination templates are incompatible"))
 			}
 		case func(IPSearchPage, http.ResponseWriter):
 			switch dPtr := destTmplPtr.(type) {
 			case *func(IPSearchPage, http.ResponseWriter):
 				*dPtr = oPtr
 			default:
-				log.Fatal("The origin and destination templates are incompatible")
+				LogError(errors.New("The source and destination templates are incompatible"))
 			}
 		case func(Page, http.ResponseWriter):
 			switch dPtr := destTmplPtr.(type) {
 			case *func(Page, http.ResponseWriter):
 				*dPtr = oPtr
 			default:
-				log.Fatal("The origin and destination templates are incompatible")
+				LogError(errors.New("The source and destination templates are incompatible"))
 			}
 		default:
-			log.Fatal("Unknown destination template type!")
+			LogError(errors.New("Unknown destination template type!"))
 		}
 		log.Print("The template override was reset")
 	}

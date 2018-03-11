@@ -22,38 +22,38 @@
 
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Primary Themes</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_themes_primary_themes"}}</h1></div>
 	</div>
 	<div id="panel_primary_themes" class="colstack_item panel_themes complex_rowlist">
 		{{range .PrimaryThemes}}
 		<div class="theme_row rowitem editable_parent"{{if .FullImage}} style="background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;"{{end}}>
 			<span style="float: left;">
 				<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size: 17px;">{{.FriendlyName}}</a><br />
-				<small class="panel_theme_author" style="margin-left: 2px;">Author: <a href="//{{.URL}}">{{.Creator}}</a></small>
+				<small class="panel_theme_author" style="margin-left: 2px;">{{lang "panel_themes_author_prefix"}}<a href="//{{.URL}}">{{.Creator}}</a></small>
 			</span>
 			<span class="panel_floater">
-				{{if .MobileFriendly}}<span class="panel_tag panel_theme_mobile" title="Mobile Friendly">📱</span>{{end}}
+				{{if .MobileFriendly}}<span class="panel_tag panel_theme_mobile" title="{{lang "panel_themes_mobile_friendly_tooltip"}}" aria-label="{{lang "panel_themes_mobile_friendly_aria"}}">📱</span>{{end}}
 				{{if .Tag}}<span class="panel_tag panel_theme_tag">{{.Tag}}</span>{{end}}
-				{{if .Active}}<span class="panel_tag panel_right_button">Default</span>{{else}}<a href="/panel/themes/default/{{.Name}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">Make Default</a>{{end}}
+				{{if .Active}}<span class="panel_tag panel_right_button">{{lang "panel_themes_default"}}</span>{{else}}<a href="/panel/themes/default/{{.Name}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">{{lang "panel_themes_make_default"}}</a>{{end}}
 			</span>
 		</div>
 		{{end}}
 	</div>
 	{{if .VariantThemes}}
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Variant Themes</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_themes_variant_themes"}}</h1></div>
 	</div>
 	<div id="panel_variant_themes" class="colstack_item panel_themes">
 		{{range .VariantThemes}}
 		<div class="theme_row rowitem editable_parent"{{if .FullImage}} style="background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;"{{end}}>
 			<span style="float: left;">
 				<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size: 17px;">{{.FriendlyName}}</a><br />
-				<small class="panel_theme_author" style="margin-left: 2px;">Author: <a href="//{{.URL}}">{{.Creator}}</a></small>
+				<small class="panel_theme_author" style="margin-left: 2px;">{{lang "panel_themes_author_prefix"}}<a href="//{{.URL}}">{{.Creator}}</a></small>
 			</span>
 			<span class="panel_floater">
-				{{if .MobileFriendly}}<span class="panel_tag panel_theme_mobile" title="Mobile Friendly">📱</span>{{end}}
+				{{if .MobileFriendly}}<span class="panel_tag panel_theme_mobile" title="{{lang "panel_themes_mobile_friendly_tooltip"}}" aria-label="{{lang "panel_themes_mobile_friendly_aria"}}">📱</span>{{end}}
 				{{if .Tag}}<span class="panel_tag panel_theme_tag">{{.Tag}}</span>{{end}}
-				{{if .Active}}<span class="panel_tag panel_right_button">Default</span>{{else}}<a href="/panel/themes/default/{{.Name}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">Make Default</a>{{end}}
+				{{if .Active}}<span class="panel_tag panel_right_button">{{lang "panel_themes_default"}}</span>{{else}}<a href="/panel/themes/default/{{.Name}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">{{lang "panel_themes_make_default"}}</a>{{end}}
 			</span>
 		</div>
 		{{end}}

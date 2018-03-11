@@ -54,25 +54,34 @@ func afterDBInit() (err error) {
 	}
 
 	log.Print("Loading the static files.")
+	err = common.Themes.LoadStaticFiles()
+	if err != nil {
+		return err
+	}
 	err = common.StaticFiles.Init()
 	if err != nil {
 		return err
 	}
+
 	log.Print("Initialising the widgets")
 	err = common.InitWidgets()
 	if err != nil {
 		return err
 	}
+
 	log.Print("Initialising the authentication system")
 	common.Auth, err = common.NewDefaultAuth()
 	if err != nil {
 		return err
 	}
 
+	log.Print("Loading the word filters")
 	err = common.LoadWordFilters()
 	if err != nil {
 		return err
 	}
+
+	log.Print("Initialising the stores")
 	common.ModLogs, err = common.NewModLogStore()
 	if err != nil {
 		return err

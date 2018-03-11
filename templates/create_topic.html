@@ -1,31 +1,30 @@
 {{template "header.html" . }}
 <main id="create_topic_page">
 	<div class="rowblock rowhead">
-		<div class="rowitem"><h1>Create Topic</h1></div>
+		<div class="rowitem"><h1>{{lang "create_topic_head"}}</h1></div>
 	</div>
 	<div class="rowblock">
 		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?session={{.CurrentUser.Session}}" method="post"></form>
 		<div class="formrow real_first_child">
-			<div class="formitem formlabel"><a>Board</a></div>
+			<div class="formitem formlabel"><a>{{lang "create_topic_board"}}</a></div>
 			<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="topic-board">
 				{{range .ItemList}}<option {{if eq .ID $.FID}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
 			</select></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Topic Name</a></div>
-			<div class="formitem"><input form="quick_post_form" name="topic-name" type="text" placeholder="Topic Name" required /></div>
+			<div class="formitem formlabel"><a>{{lang "create_topic_name"}}</a></div>
+			<div class="formitem"><input form="quick_post_form" name="topic-name" type="text" placeholder="{{lang "create_topic_name"}}" required /></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Content</a></div>
-			<div class="formitem"><textarea form="quick_post_form" class="large" id="topic_content" name="topic-content" placeholder="Insert content here" required></textarea></div>
+			<div class="formitem formlabel"><a>{{lang "create_topic_content"}}</a></div>
+			<div class="formitem"><textarea form="quick_post_form" class="large" id="topic_content" name="topic-content" placeholder="{{lang "create_topic_placeholder"}}" required></textarea></div>
 		</div>
 		<div class="formrow">
-			<button form="quick_post_form" name="topic-button" class="formbutton">Create Topic</button>
+			<button form="quick_post_form" name="topic-button" class="formbutton">{{lang "create_topic_create_topic_button"}}</button>
 			{{if .CurrentUser.Perms.UploadFiles}}
 			<input name="quick_topic_upload_files" form="quick_post_form" id="quick_topic_upload_files" multiple type="file" style="display: none;" />
-			<label for="quick_topic_upload_files" class="formbutton add_file_button">Add File</label>{{end}}
+			<label for="quick_topic_upload_files" class="formbutton add_file_button">{{lang "create_topic_add_file_button"}}</label>{{end}}
 			<div id="upload_file_dock"></div>
-			<button class="formbutton close_form">Cancel</button>
 		</div>
 	</div>
 </main>

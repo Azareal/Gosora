@@ -73,28 +73,28 @@ li {
 }
 
 #menu_forums a:after {
-	content: "Forums";
+	content: "{{index .Phrases "menu_forums"}}";
 }
 .menu_topics a:after {
-	content: "Topics";
+	content: "{{index .Phrases "menu_topics"}}";
 }
 .menu_account a:after {
-	content: "Account";
+	content: "{{index .Phrases "menu_account"}}";
 }
 .menu_profile a:after {
-	content: "Profile";
+	content: "{{index .Phrases "menu_profile"}}";
 }
 .menu_panel a:after {
-	content: "Panel";
+	content: "{{index .Phrases "menu_panel"}}";
 }
 .menu_logout a:after {
-	content: "Logout";
+	content: "{{index .Phrases "menu_logout"}}";
 }
 .menu_login a:after {
-	content: "Login";
+	content: "{{index .Phrases "menu_login"}}";
 }
 .menu_register a:after {
-	content: "Register";
+	content: "{{index .Phrases "menu_register"}}";
 }
 
 .alert_bell {
@@ -122,7 +122,7 @@ li {
 	font-size: 14px;
 }
 .alert_aftercounter:before {
-	content: "Alerts";
+	content: "{{index .Phrases "menu_alerts"}}";
 }
 
 .menu_alerts .alertList, .hide_on_big, .show_on_mobile {
@@ -306,38 +306,38 @@ a {
 }
 
 .like_label:before {
-	content: "+1";
+	content: "{{index .Phrases "topic_plus_one"}}";
 }
 .edit_label:before {
-	content: "Edit";
+	content: "{{index .Phrases "topic_edit_button_text"}}";
 }
 .trash_label:before {
-	content: "Delete";
+	content: "{{index .Phrases "topic_delete_button_text"}}";
 }
 .pin_label:before {
-	content: "Pin";
+	content: "{{index .Phrases "topic_pin_button_text"}}";
 }
 .lock_label:before {
-	content: "Lock";
+	content: "{{index .Phrases "topic_lock_button_text"}}";
 }
 .unlock_label:before {
-	content: "Unlock";
+	content: "{{index .Phrases "topic_unlock_button_text"}}";
 }
 .unpin_label:before {
-	content: "Unpin";
+	content: "{{index .Phrases "topic_unpin_button_text"}}";
 }
 .ip_label:before {
-	content: "IP";
+	content: "{{index .Phrases "topic_ip_button_text"}}";
 }
 .flag_label:before {
-	content: "Flag";
+	content: "{{index .Phrases "topic_flag_button_text"}}";
 }
 .level_label:before {
-	content: "Level";
+	content: "{{index .Phrases "topic_level"}}";
 }
 
 .like_count_label:before {
-	content: "likes";
+	content: "{{index .Phrases "topics_likes_suffix"}}";
 }
 .like_count_label {
 	font-size: 12px;
@@ -353,7 +353,7 @@ a {
 	margin-right: 2px;
 }
 .like_count:before {
-	content: "|";
+	content: "{{index .Phrases "pipe"}}";
 	margin-right: 5px;
 }
 
@@ -686,10 +686,10 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 }
 
 .create_topic_opt a:before {
-	content: "New Topic";
+	content: "{{index .Phrases "topics_new_topic"}}";
 }
 .locked_opt a:before {
-	content: "Locked";
+	content: "{{index .Phrases "forum_locked"}}";
 }
 
 .topic_list .topic_row {
@@ -739,10 +739,10 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	white-space: nowrap;
 }
 .topic_list .lastReplyAt:before {
-	content: "Last: ";
+	content: "{{index .Phrases "topics_last"}}: ";
 }
 .topic_list .starter:before {
-	content: "Starter: ";
+	content: "{{index .Phrases "topics_starter"}}: ";
 }
 
 .topic_name_input {
@@ -800,7 +800,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	font-weight: normal;
 }
 #profile_left_pane .report_item:after {
-	content: "Report";
+	content: "{{index .Phrases "topic_report_button_text"}}";
 }
 #profile_left_lane .profileName {
 	font-size: 18px;

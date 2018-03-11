@@ -14,17 +14,17 @@
 		</div>
 		<div class="passiveBlock">
 			{{if not .CurrentUser.Loggedin}}<div class="rowitem passive">
-				<a class="profile_menu_item">Login for options</a>
+				<a class="profile_menu_item">{{lang "profile_login_for_options"}}</a>
 			</div>{{else}}
 			<!--<div class="rowitem passive">
-				<a class="profile_menu_item">Add Friend</a>
+				<a class="profile_menu_item">{{lang "profile_add_friend"}}</a>
 			</div>-->
 			{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod) }}<div class="rowitem passive">
-				{{if .ProfileOwner.IsBanned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">Unban</a>
-			{{else}}<a href="#ban_user" class="profile_menu_item">Ban</a>{{end}}
+				{{if .ProfileOwner.IsBanned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">{{lang "profile_unban"}}</a>
+			{{else}}<a href="#ban_user" class="profile_menu_item">{{lang "profile_ban"}}</a>{{end}}
 			</div>{{end}}
 			<div class="rowitem passive">
-				<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="Report User" title="Report User"></a>
+				<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="{{lang "profile_report_user_aria"}}" title="{{lang "profile_report_user_tooltip"}}"></a>
 			</div>
 			{{end}}
 		</div>
@@ -35,43 +35,43 @@
 	{{if .CurrentUser.Perms.BanUsers}}
 	<!-- TODO: Inline the display: none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
-			<div class="rowitem"><h1><a>Ban User</a></h1></div>
+			<div class="rowitem"><h1><a>{{lang "profile_ban_user_head"}}</a></h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" method="post" style="display: none;">
 		{{/** TODO: Put a JS duration calculator here instead of this text? **/}}
-		<div class="colline">If all the fields are left blank, the ban will be permanent.</div>
+		<div class="colline">{{lang "profile_ban_user_notice"}}</div>
 		<div class="colstack_item">
 			<div class="formrow real_first_child">
-				<div class="formitem formlabel"><a>Days</a></div>
+				<div class="formitem formlabel"><a>{{lang "profile_ban_user_days"}}</a></div>
 				<div class="formitem">
 					<input name="ban-duration-days" type="number" value="0" min="0" />
 				</div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Weeks</a></div>
+				<div class="formitem formlabel"><a>{{lang "profile_ban_user_weeks"}}</a></div>
 				<div class="formitem">
 					<input name="ban-duration-weeks" type="number" value="0" min="0" />
 				</div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Months</a></div>
+				<div class="formitem formlabel"><a>{{lang "profile_ban_user_months"}}</a></div>
 				<div class="formitem">
 					<input name="ban-duration-months" type="number" value="0" min="0" />
 				</div>
 			</div>
 			<!--<div class="formrow">
-				<div class="formitem formlabel"><a>Reason</a></div>
+				<div class="formitem formlabel"><a>{{lang "profile_ban_user_reason"}}</a></div>
 				<div class="formitem"><textarea name="ban-reason" placeholder="A really horrible person" required></textarea></div>
 			</div>-->
 			<div class="formrow">
-				<div class="formitem"><button name="ban-button" class="formbutton form_middle_button">Ban User</button></div>
+				<div class="formitem"><button name="ban-button" class="formbutton form_middle_button">{{lang "profile_ban_user_button"}}</button></div>
 			</div>
 		</div>
 	</form>
 	{{end}}
 
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
-		<div class="rowitem"><h1><a>Comments</a></h1></div>
+		<div class="rowitem"><h1><a>{{lang "profile_comments_head"}}</a></h1></div>
 	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">{{template "profile_comments_row.html" . }}</div>
 
@@ -80,10 +80,10 @@
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top: none;">
 			<div class="formrow">
-				<div class="formitem"><textarea class="input_content" name="reply-content" placeholder="Insert comment here"></textarea></div>
+				<div class="formitem"><textarea class="input_content" name="reply-content" placeholder="{{lang "profile_comments_form_content"}}"></textarea></div>
 			</div>
 			<div class="formrow quick_button_row">
-				<div class="formitem"><button name="reply-button" class="formbutton">Create Reply</button></div>
+				<div class="formitem"><button name="reply-button" class="formbutton">{{lang "profile_comments_form_button"}}</button></div>
 			</div>
 		</div>
 	</form>

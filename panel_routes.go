@@ -196,6 +196,15 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) 
 			forumList = append(forumList, fadmin)
 		}
 	}
+
+	if r.FormValue("created") == "1" {
+		headerVars.NoticeList = append(headerVars.NoticeList, "The forum was successfully created")
+	} else if r.FormValue("deleted") == "1" {
+		headerVars.NoticeList = append(headerVars.NoticeList, "The forum was successfully deleted")
+	} else if r.FormValue("updated") == "1" {
+		headerVars.NoticeList = append(headerVars.NoticeList, "The forum was successfully updated")
+	}
+
 	pi := common.PanelPage{common.GetTitlePhrase("panel_forums"), user, headerVars, stats, "forums", forumList, nil}
 	return panelRenderTemplate("panel_forums", w, r, user, &pi)
 }
@@ -220,7 +229,7 @@ func routePanelForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 		return common.InternalError(err, w, r)
 	}
 
-	http.Redirect(w, r, "/panel/forums/", http.StatusSeeOther)
+	http.Redirect(w, r, "/panel/forums/?created=1", http.StatusSeeOther)
 	return nil
 }
 
@@ -282,7 +291,7 @@ func routePanelForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c
 		return common.InternalError(err, w, r)
 	}
 
-	http.Redirect(w, r, "/panel/forums/", http.StatusSeeOther)
+	http.Redirect(w, r, "/panel/forums/?deleted=1", http.StatusSeeOther)
 	return nil
 }
 
@@ -323,6 +332,10 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		}
 		// TODO: Don't access the cache on the group directly
 		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(group.Forums[fid])})
+	}
+
+	if r.FormValue("updated") == "1" {
+		headerVars.NoticeList = append(headerVars.NoticeList, "The forum was successfully updated")
 	}
 
 	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
@@ -375,6 +388,7 @@ func routePanelForumsEditSubmit(w http.ResponseWriter, r *http.Request, user com
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
+	// ? Should we redirect to the forum editor instead?
 	return panelSuccessRedirect("/panel/forums/", w, r, isJs)
 }
 
@@ -411,7 +425,7 @@ func routePanelForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, use
 		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
 	}
 
-	return panelSuccessRedirect("/panel/forums/edit/"+strconv.Itoa(fid), w, r, isJs)
+	return panelSuccessRedirect("/panel/forums/edit/"+strconv.Itoa(fid)+"?updated=1", w, r, isJs)
 }
 
 // A helper function for the Advanced portion of the Forum Perms Editor
@@ -486,6 +500,10 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 	addNameLangToggle("CloseTopic", forumPerms.CloseTopic)
 	addNameLangToggle("MoveTopic", forumPerms.MoveTopic)
 
+	if r.FormValue("updated") == "1" {
+		headerVars.NoticeList = append(headerVars.NoticeList, "The forum permissions were successfully updated")
+	}
+
 	pi := common.PanelEditForumGroupPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
 	if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 		return nil
@@ -550,7 +568,7 @@ func routePanelForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Reque
 		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
 	}
 
-	return panelSuccessRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid), w, r, isJs)
+	return panelSuccessRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid)+"?updated=1", w, r, isJs)
 }
 
 type AnalyticsTimeRange struct {

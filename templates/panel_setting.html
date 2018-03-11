@@ -4,17 +4,17 @@
 {{template "panel-menu.html" . }}
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Edit Setting</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_setting_head"}}</h1></div>
 	</div>
 	<div id="panel_setting" class="colstack_item">
 		<form action="/panel/settings/edit/submit/{{.Something.Name}}?session={{.CurrentUser.Session}}" method="post">
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Setting Name</a></div>
+				<div class="formitem formlabel"><a>{{lang "panel_setting_name"}}</a></div>
 				<div class="formitem formlabel">{{.Something.Name}}</div>
 			</div>
 			{{if eq .Something.Type "list"}}
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Setting Value</a></div>
+				<div class="formitem formlabel"><a>{{lang "panel_setting_value"}}</a></div>
 				<div class="formitem">
 					<select name="setting-value">
 					{{range .ItemList}}<option{{if .Selected}} selected{{end}} value="{{.Value}}">{{.Label}}</option>{{end}}
@@ -23,15 +23,15 @@
 			</div>
 			{{else if eq .Something.Type "bool"}}
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Setting Value</a></div>
+				<div class="formitem formlabel"><a>{{lang "panel_setting_value"}}</a></div>
 				<div class="formitem"><input name="setting-value" type="checkbox"{{if eq .Something.Content "1"}} checked{{end}} /></div>
 			</div>
 			{{else}}<div class="formrow">
-				<div class="formitem formlabel"><a>Setting Value</a></div>
+				<div class="formitem formlabel"><a>{{lang "panel_setting_value"}}</a></div>
 				<div class="formitem"><input name="setting-value" type="text" value="{{.Something.Content}}" /></div>
 			</div>{{end}}
 			<div class="formrow">
-				<div class="formitem"><button name="panel-button" class="formbutton">Update Setting</button></div>
+				<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_setting_update_button"}}</button></div>
 			</div>
 		</form>
 	</div>

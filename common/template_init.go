@@ -353,7 +353,7 @@ func InitTemplates() error {
 		if !ok {
 			panic("phraseNameInt is not a string")
 		}
-		return GetTmplPhrase(phraseName)
+		return GetTmplPhrase(phraseName) // TODO: Log non-existent phrases?
 	}
 
 	// The interpreted templates...

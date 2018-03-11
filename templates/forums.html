@@ -2,7 +2,7 @@
 <main id="forumsItemList" itemscope itemtype="http://schema.org/ItemList">
 
 <div class="rowblock opthead">
-	<div class="rowitem"><h1 itemprop="name">Forums</h1></div>
+	<div class="rowitem"><h1 itemprop="name">{{lang "forums_head"}}</h1></div>
 </div>
 <div class="rowblock forum_list">
 	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopic.Title)}}datarow {{end}}"itemprop="itemListElement" itemscope
@@ -12,20 +12,20 @@
 		{{if .Desc}}
 			<br /><span class="rowsmall" itemprop="description">{{.Desc}}</span>
 		{{else}}
-			<br /><span class="rowsmall" style="font-style: italic;">No description</span>
+			<br /><span class="rowsmall" style="font-style: italic;">{{lang "forums_no_description"}}</span>
 		{{end}}
 		</span>
 
 		<span class="forum_right shift_right">
 			{{if .LastReplyer.Avatar}}<img class="extra_little_row_avatar" src="{{.LastReplyer.Avatar}}" height=64 width=64 alt="{{.LastReplyer.Name}}'s Avatar" title="{{.LastReplyer.Name}}'s Avatar" />{{end}}
 			<span>
-				<a href="{{.LastTopic.Link}}">{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}None{{end}}</a>
+				<a href="{{.LastTopic.Link}}">{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}{{lang "forums_none"}}{{end}}</a>
 				{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}
 			</span>
 		</span>
 		<div style="clear: both;"></div>
 	</div>
-	{{else}}<div class="rowitem passive rowmsg">You don't have access to any forums.</div>{{end}}
+	{{else}}<div class="rowitem passive rowmsg">{{lang "forums_no_forums"}}</div>{{end}}
 </div>
 
 </main>

@@ -2,28 +2,28 @@
 <div class="colstack panel_stack">
 <nav class="colstack_left" aria-label="The control panel menu">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a href="/panel/groups/edit/{{.ID}}">Group Editor</a></div>
+		<div class="rowitem"><a href="/panel/groups/edit/{{.ID}}">{{lang "panel_group_menu_head"}}</a></div>
 	</div>
 	<div class="colstack_item rowmenu">
-		<div class="rowitem passive"><a href="/panel/groups/edit/{{.ID}}">General</a></div>
-		<div class="rowitem passive"><a>Promotions</a></div>
-		<div class="rowitem passive"><a href="/panel/groups/edit/perms/{{.ID}}">Permissions</a></div>
+		<div class="rowitem passive"><a href="/panel/groups/edit/{{.ID}}">{{lang "panel_group_menu_general"}}</a></div>
+		<div class="rowitem passive"><a>{{lang "panel_group_menu_promotions"}}</a></div>
+		<div class="rowitem passive"><a href="/panel/groups/edit/perms/{{.ID}}">{{lang "panel_group_menu_permissions"}}</a></div>
 	</div>
 {{template "panel-inner-menu.html" . }}
 </nav>
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>{{.Name}} Group</h1></div>
+		<div class="rowitem"><h1>{{.Name}}{{lang "panel_group_head_suffix"}}</h1></div>
 	</div>
 	<div id="panel_group" class="colstack_item">
 		<form action="/panel/groups/edit/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Name</a></div>
-			<div class="formitem"><input name="group-name" type="text" value="{{.Name}}" placeholder="Random Group" /></div>
+			<div class="formitem formlabel"><a>{{lang "panel_group_name"}}</a></div>
+			<div class="formitem"><input name="group-name" type="text" value="{{.Name}}" placeholder="{{lang "panel_group_name_placeholder"}}" /></div>
 		</div>
 		{{if .CurrentUser.Perms.EditGroup}}
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Type</a></div>
+			<div class="formitem formlabel"><a>{{lang "panel_group_type"}}</a></div>
 			<div class="formitem">
 				<select name="group-type"{{if .DisableRank}} disabled{{end}}>
 					<option{{if eq .Rank "Guest"}} selected{{end}} disabled>Guest</option>
@@ -35,11 +35,11 @@
 			</div>
 		</div>{{end}}
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Tag</a></div>
-			<div class="formitem"><input name="group-tag" type="text" value="{{.Tag}}" placeholder="VIP" /></div>
+			<div class="formitem formlabel"><a>{{lang "panel_group_tag"}}</a></div>
+			<div class="formitem"><input name="group-tag" type="text" value="{{.Tag}}" placeholder="{{lang "panel_group_tag_placeholder"}}" /></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem"><button name="panel-button" class="formbutton">Update Group</button></div>
+			<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_group_update_button"}}</button></div>
 		</div>
 		</form>
 	</div>

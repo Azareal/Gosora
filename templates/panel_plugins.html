@@ -4,20 +4,20 @@
 {{template "panel-menu.html" . }}
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Plugins</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_plugins_head"}}</h1></div>
 	</div>
 	<div id="panel_plugins" class="colstack_item complex_rowlist">
 		{{range .ItemList}}
 		<div class="rowitem editable_parent">
 			<a {{if .URL}}href="{{.URL}}" {{end}}class="editable_block" class="panel_upshift">{{.Name}}</a><br />
-			<small style="margin-left: 2px;">Author: {{.Author}}</small>
+			<small style="margin-left: 2px;">{{lang "panel_plugins_author_prefix"}}{{.Author}}</small>
 			<span style="float: right;">
-				{{if .Settings}}<a href="/panel/settings/" class="panel_tag">Settings</a>{{end}}
-				{{if .Active}}<a href="/panel/plugins/deactivate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Deactivate</a>
+				{{if .Settings}}<a href="/panel/settings/" class="panel_tag">{{lang "panel_plugins_settings"}}</a>{{end}}
+				{{if .Active}}<a href="/panel/plugins/deactivate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">{{lang "panel_plugins_deactivate"}}</a>
 				{{else if .Installable}}
 					{{/** TODO: Write a custom template interpreter to fix this nonsense **/}}
-					{{if .Installed}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Activate</a>{{else}}<a href="/panel/plugins/install/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Install</a>{{end}}
-				{{else}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">Activate</a>{{end}}
+					{{if .Installed}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">{{lang "panel_plugins_activate"}}</a>{{else}}<a href="/panel/plugins/install/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">{{lang "panel_plugins_install"}}</a>{{end}}
+				{{else}}<a href="/panel/plugins/activate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">{{lang "panel_plugins_activate"}}</a>{{end}}
 			</span>
 		</div>
 		{{end}}

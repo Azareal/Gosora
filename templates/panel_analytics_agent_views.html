@@ -5,14 +5,14 @@
 		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/agent/{{.Agent}}" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
-					<a>{{.FriendlyAgent}} Views</a>
+					<a>{{.FriendlyAgent}}{{lang "panel_statistics_views_head_suffix"}}</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
-						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
-						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>1 week</option>
-						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>2 days</option>
-						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>1 day</option>
-						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>12 hours</option>
-						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>6 hours</option>
+						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>{{lang "panel_statistics_time_range_one_month"}}</option>
+						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>{{lang "panel_statistics_time_range_one_week"}}</option>
+						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>{{lang "panel_statistics_time_range_two_days"}}</option>
+						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>{{lang "panel_statistics_time_range_one_day"}}</option>
+						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_twelve_hours"}}</option>
+						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_six_hours"}}</option>
 					</select>
 				</div>
 			</div>

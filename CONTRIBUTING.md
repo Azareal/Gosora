@@ -4,6 +4,8 @@ We're not accepting contributions right now, although you're welcome to poke me 
 
 All code must be unit tested where ever possible with the exception of JavaScript which is untestable with our current technologies, tread with caution there.
 
+Use tabs not spaces for indentation.
+
 # Golang
 
 Use the standard linter and listen to what it tells you to do.
@@ -29,3 +31,7 @@ To keep consistency with Go code, variables must be camelCase.
 # JSON
 
 To keep consistency with Go code, map keys must be camelCase.
+
+# Phrases
+
+Try to keep the name of the phrase close to the actual phrase in english to make it easier for localisers to reason about which phrase is which.

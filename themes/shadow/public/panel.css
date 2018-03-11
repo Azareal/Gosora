@@ -30,10 +30,10 @@
 }
 
 .edit_button:before {
-	content: "Edit";
+	content: "{{index .Phrases "panel_edit_button_text"}}";
 }
 .delete_button:after {
-	content: "Delete";
+	content: "{{index .Phrases "panel_delete_button_text"}}";
 }
 
 #panel_forums .rowitem {

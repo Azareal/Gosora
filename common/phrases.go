@@ -48,6 +48,7 @@ type LanguagePack struct {
 	Errors           map[string]map[string]string // map[category]map[name]value
 	PageTitles       map[string]string
 	TmplPhrases      map[string]string
+	CSSPhrases       map[string]string
 
 	TmplIndicesToPhrases [][][]byte // [tmplID][index]phrase
 }
@@ -84,7 +85,11 @@ func InitPhrases() error {
 		for tmplID, phraseNames := range langTmplIndicesToNames {
 			var phraseSet = make([][]byte, len(phraseNames))
 			for index, phraseName := range phraseNames {
-				phraseSet[index] = []byte(langPack.TmplPhrases[phraseName])
+				phrase, ok := langPack.TmplPhrases[phraseName]
+				if !ok {
+					log.Print("Couldn't find template phrase '" + phraseName + "'")
+				}
+				phraseSet[index] = []byte(phrase)
 			}
 			langPack.TmplIndicesToPhrases[tmplID] = phraseSet
 		}
@@ -131,7 +136,7 @@ func GetPhrase(name string) (string, bool) {
 func GetGlobalPermPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).GlobalPerms[name]
 	if !ok {
-		return getPhrasePlaceholder()
+		return getPhrasePlaceholder("perms", name)
 	}
 	return res
 }
@@ -139,7 +144,7 @@ func GetGlobalPermPhrase(name string) string {
 func GetLocalPermPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).LocalPerms[name]
 	if !ok {
-		return getPhrasePlaceholder()
+		return getPhrasePlaceholder("perms", name)
 	}
 	return res
 }
@@ -147,7 +152,7 @@ func GetLocalPermPhrase(name string) string {
 func GetSettingLabel(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).SettingLabels[name]
 	if !ok {
-		return getPhrasePlaceholder()
+		return getPhrasePlaceholder("settings", name)
 	}
 	return res
 }
@@ -163,7 +168,7 @@ func GetAllPermPresets() map[string]string {
 func GetAccountPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).Accounts[name]
 	if !ok {
-		return getPhrasePlaceholder()
+		return getPhrasePlaceholder("account", name)
 	}
 	return res
 }
@@ -187,7 +192,7 @@ func GetOSPhrase(name string) (string, bool) {
 func GetHumanLangPhrase(name string) (string, bool) {
 	res, ok := currentLangPack.Load().(*LanguagePack).HumanLanguages[name]
 	if !ok {
-		return "", false
+		return getPhrasePlaceholder("humanlang", name), false
 	}
 	return res, true
 }
@@ -196,7 +201,7 @@ func GetHumanLangPhrase(name string) (string, bool) {
 func GetErrorPhrase(category string, name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).Errors[category][name]
 	if !ok {
-		return getPhrasePlaceholder()
+		return getPhrasePlaceholder("error", name)
 	}
 	return res
 }
@@ -204,7 +209,7 @@ func GetErrorPhrase(category string, name string) string {
 func GetTitlePhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).PageTitles[name]
 	if !ok {
-		return getPhrasePlaceholder()
+		return getPhrasePlaceholder("title", name)
 	}
 	return res
 }
@@ -212,13 +217,17 @@ func GetTitlePhrase(name string) string {
 func GetTmplPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).TmplPhrases[name]
 	if !ok {
-		return getPhrasePlaceholder()
+		return getPhrasePlaceholder("tmpl", name)
 	}
 	return res
 }
 
-func getPhrasePlaceholder() string {
-	return "{name}"
+func GetCSSPhrases() map[string]string {
+	return currentLangPack.Load().(*LanguagePack).CSSPhrases
+}
+
+func getPhrasePlaceholder(prefix string, suffix string) string {
+	return "{lang." + prefix + "[" + suffix + "]}"
 }
 
 // ? - Use runtime reflection for updating phrases?
@@ -242,6 +251,18 @@ func ChangeLanguagePack(name string) (exists bool) {
 	}
 	currentLangPack.Store(pack)
 	return true
+}
+
+func CurrentLanguagePackName() (name string) {
+	return currentLangPack.Load().(*LanguagePack).Name
+}
+
+func GetLanguagePackByName(name string) (pack *LanguagePack, ok bool) {
+	packInt, ok := langPacks.Load(name)
+	if !ok {
+		return nil, false
+	}
+	return packInt.(*LanguagePack), true
 }
 
 // Template Transpiler Stuff

@@ -9,7 +9,7 @@
 
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Forums</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_forums_head"}}</h1></div>
 	</div>
 	<div id="panel_forums" class="colstack_item rowlist">
 		{{range .ItemList}}
@@ -20,53 +20,53 @@
 				<br /><span data-field="forum_desc" data-type="text" class="editable_block forum_desc rowsmall">{{.Desc}}</span>
 			</span>
 			<span class="panel_floater">
-				<span data-field="forum_active" data-type="list" class="panel_tag editable_block forum_active {{if .Active}}forum_active_Show" data-value="1{{else}}forum_active_Hide" data-value="0{{end}}" title="Hidden"></span>
+				<span data-field="forum_active" data-type="list" class="panel_tag editable_block forum_active {{if .Active}}forum_active_Show" data-value="1{{else}}forum_active_Hide" data-value="0{{end}}" title="{{lang "panel_forums_hidden"}}"></span>
 				<span data-field="forum_preset" data-type="list" data-value="{{.Preset}}" class="panel_tag editable_block forum_preset forum_preset_{{.Preset}}" title="{{.PresetLang}}"></span>
 			</span>
 			<span class="panel_buttons">
-				<a class="panel_tag edit_fields hide_on_edit panel_right_button edit_button" aria-label="Edit Forum"></a>
-				<a class="panel_right_button" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>Update</button></a>
-				{{if gt .ID 1}}<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button hide_on_edit delete_button" aria-label="Delete Forum"></a>{{end}}
-				<a href="/panel/forums/edit/{{.ID}}" class="panel_tag panel_right_button show_on_edit"><button>Full Edit</button></a>
+				<a class="panel_tag edit_fields hide_on_edit panel_right_button edit_button" title="{{lang "panel_forums_edit_button_tooltip"}}" aria-label="{{lang "panel_forums_edit_button_aria"}}"></a>
+				<a class="panel_right_button" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>{{lang "panel_forums_update_button"}}</button></a>
+				{{if gt .ID 1}}<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button hide_on_edit delete_button" title="{{lang "panel_forums_delete_button_tooltip"}}" aria-label="{{lang "panel_forums_delete_button_aria"}}"></a>{{end}}
+				<a href="/panel/forums/edit/{{.ID}}" class="panel_tag panel_right_button show_on_edit"><button>{{lang "panel_forums_full_edit_button"}}</button></a>
 			</span>
 		</div>
 		{{end}}
 	</div>
 
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Add Forum</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_forums_create_head"}}</h1></div>
 	</div>
 	<div class="colstack_item">
 		<form action="/panel/forums/create/?session={{.CurrentUser.Session}}" method="post">
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Name</a></div>
-				<div class="formitem"><input name="forum-name" type="text" placeholder="Super Secret Forum" /></div>
+				<div class="formitem formlabel"><a>{{lang "panel_forums_create_name_label"}}</a></div>
+				<div class="formitem"><input name="forum-name" type="text" placeholder="{{lang "panel_forums_create_name"}}" /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Description</a></div>
-				<div class="formitem"><input name="forum-desc" type="text" placeholder="Where all the super secret stuff happens" /></div>
+				<div class="formitem formlabel"><a>{{lang "panel_forums_create_description_label"}}</a></div>
+				<div class="formitem"><input name="forum-desc" type="text" placeholder="{{lang "panel_forums_create_description"}}" /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Active</a></div>
+				<div class="formitem formlabel"><a>{{lang "panel_forums_active_label"}}</a></div>
 				<div class="formitem"><select name="forum-active">
-					<option selected value="1">Yes</option>
-					<option value="0">No</option>
+					<option selected value="1">{{lang "option_yes"}}</option>
+					<option value="0">{{lang "option_no"}}</option>
 				</select></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Preset</a></div>
+				<div class="formitem formlabel"><a>{{lang "panel_forums_preset_label"}}</a></div>
 				<div class="formitem"><select name="forum-preset">
-					<option selected value="all">Everyone</option>
-					<option value="announce">Announcements</option>
-					<option value="members">Member Only</option>
-					<option value="staff">Staff Only</option>
-					<option value="admins">Admin Only</option>
-					<option value="archive">Archive</option>
-					<option value="custom">Custom</option>
+					<option selected value="all">{{lang "panel_preset_everyone"}}</option>
+					<option value="announce">{{lang "panel_preset_announcements"}}</option>
+					<option value="members">{{lang "panel_preset_member_only"}}</option>
+					<option value="staff">{{lang "panel_preset_staff_only"}}</option>
+					<option value="admins">{{lang "panel_preset_admin_only"}}</option>
+					<option value="archive">{{lang "panel_preset_archive"}}</option>
+					<option value="custom">{{lang "panel_preset_custom"}}</option>
 				</select></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem"><button name="panel-button" class="formbutton">Add Forum</button></div>
+				<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_forums_create_button"}}</button></div>
 			</div>
 		</form>
 	</div>

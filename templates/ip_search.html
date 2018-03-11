@@ -9,7 +9,7 @@
 	<div class="rowblock ip_search_block">
 		<div class="rowitem passive">
 			<input form="ip-search-form" name="ip" class="ip_search_input" type="search" placeholder="🔍︎"{{if .IP}} value="{{.IP}}"{{end}} />
-			<input form="ip-search-form" class="ip_search_search" type="submit" value="Search" />
+			<input form="ip-search-form" class="ip_search_search" type="submit" value="{{lang "ip_search_search_button"}}" />
 		</div>
 	</div>
 	{{if .IP}}

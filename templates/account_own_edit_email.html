@@ -3,7 +3,7 @@
 	{{template "account_menu.html" . }}
 	<main class="colstack_right">
 		<div class="colstack_item colstack_head rowhead">
-			<div class="rowitem"><h1>Emails</h1></div>
+			<div class="rowitem"><h1>{{lang "account_email_head"}}</h1></div>
 		</div>
 		<div class="colstack_item rowlist">
 			<!-- TODO: Do we need this inline CSS? -->
@@ -11,8 +11,8 @@
 			<div class="rowitem" style="font-weight: normal;">
 				<a style="text-transform: none;">{{.Email}}</a>
 				<span style="float: right" class="to_right">
-					<span class="username">{{if .Primary}}Primary{{else}}Secondary{{end}}</span>
-					{{if .Validated}}<span class="username" style="color: green;">Verified</span>{{else}}<a class="username" style="color: crimson;">Resend Verification Email</a>{{end}}
+					<span class="username">{{if .Primary}}{{lang "account_email_primary"}}{{else}}{{lang "account_email_secondary"}}{{end}}</span>
+					{{if .Validated}}<span class="username" style="color: green;">{{lang "account_email_verified"}}</span>{{else}}<a class="username" style="color: crimson;">{{lang "account_email_resend_email"}}</a>{{end}}
 				</span>
 			</div>
 			{{end}}

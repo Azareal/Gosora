@@ -15,10 +15,68 @@ func init() {
 	common.Ctemplates = append(common.Ctemplates,"topics")
 	common.TmplPtrMap["topics"] = &common.Template_topics_handle
 	common.TmplPtrMap["o_topics"] = Template_topics
+	topics_Tmpl_Phrase_ID = common.RegisterTmplPhraseNames([]string{
+		"menu_forums_aria",
+		"menu_forums_tooltip",
+		"menu_topics_aria",
+		"menu_topics_tooltip",
+		"menu_alert_counter_aria",
+		"menu_alert_list_aria",
+		"menu_account_aria",
+		"menu_account_tooltip",
+		"menu_profile_aria",
+		"menu_profile_tooltip",
+		"menu_panel_aria",
+		"menu_panel_tooltip",
+		"menu_logout_aria",
+		"menu_logout_tooltip",
+		"menu_register_aria",
+		"menu_register_tooltip",
+		"menu_login_aria",
+		"menu_login_tooltip",
+		"menu_hamburger_tooltip",
+		"topics_head",
+		"topic_list_create_topic_tooltip",
+		"topic_list_create_topic_aria",
+		"topic_list_moderate_tooltip",
+		"topic_list_moderate_aria",
+		"topics_locked_tooltip",
+		"topics_locked_aria",
+		"topic_list_what_to_do",
+		"topic_list_moderate_delete",
+		"topic_list_moderate_lock",
+		"topic_list_moderate_move",
+		"topic_list_moderate_run",
+		"topic_list_move_head",
+		"topic_list_move_button",
+		"quick_topic_aria",
+		"quick_topic_avatar_alt",
+		"quick_topic_avatar_tooltip",
+		"quick_topic_whatsup",
+		"quick_topic_content_placeholder",
+		"quick_topic_add_poll_option",
+		"quick_topic_create_topic_button",
+		"quick_topic_add_poll_button",
+		"quick_topic_add_file_button",
+		"quick_topic_cancel_button",
+		"topics_list_aria",
+		"status_closed_tooltip",
+		"status_pinned_tooltip",
+		"topics_no_topics",
+		"topics_start_one",
+		"paginator_prev_page_aria",
+		"paginator_prev_page",
+		"paginator_next_page_aria",
+		"paginator_next_page",
+		"footer_powered_by",
+		"footer_made_with_love",
+		"footer_theme_selector_aria",
+	})
 }
 
 // nolint
 func Template_topics(tmpl_topics_vars common.TopicsPage, w http.ResponseWriter) error {
+	var phrases = common.GetTmplPhrasesBytes(topics_Tmpl_Phrase_ID)
 w.Write(header_0)
 w.Write([]byte(tmpl_topics_vars.Title))
 w.Write(header_1)
@@ -60,16 +118,54 @@ w.Write(menu_0)
 w.Write(menu_1)
 w.Write([]byte(tmpl_topics_vars.Header.Site.ShortName))
 w.Write(menu_2)
-if tmpl_topics_vars.CurrentUser.Loggedin {
+w.Write(phrases[0])
 w.Write(menu_3)
-w.Write([]byte(tmpl_topics_vars.CurrentUser.Link))
+w.Write(phrases[1])
 w.Write(menu_4)
-w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
+w.Write(phrases[2])
 w.Write(menu_5)
-} else {
+w.Write(phrases[3])
 w.Write(menu_6)
-}
+w.Write(phrases[4])
 w.Write(menu_7)
+w.Write(phrases[5])
+w.Write(menu_8)
+if tmpl_topics_vars.CurrentUser.Loggedin {
+w.Write(menu_9)
+w.Write(phrases[6])
+w.Write(menu_10)
+w.Write(phrases[7])
+w.Write(menu_11)
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Link))
+w.Write(menu_12)
+w.Write(phrases[8])
+w.Write(menu_13)
+w.Write(phrases[9])
+w.Write(menu_14)
+w.Write(phrases[10])
+w.Write(menu_15)
+w.Write(phrases[11])
+w.Write(menu_16)
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
+w.Write(menu_17)
+w.Write(phrases[12])
+w.Write(menu_18)
+w.Write(phrases[13])
+w.Write(menu_19)
+} else {
+w.Write(menu_20)
+w.Write(phrases[14])
+w.Write(menu_21)
+w.Write(phrases[15])
+w.Write(menu_22)
+w.Write(phrases[16])
+w.Write(menu_23)
+w.Write(phrases[17])
+w.Write(menu_24)
+}
+w.Write(menu_25)
+w.Write(phrases[18])
+w.Write(menu_26)
 w.Write(header_17)
 if tmpl_topics_vars.Header.Widgets.RightSidebar != "" {
 w.Write(header_18)
@@ -82,192 +178,264 @@ w.Write([]byte(item))
 w.Write(header_21)
 }
 }
+w.Write(header_22)
 w.Write(topics_0)
 if tmpl_topics_vars.CurrentUser.ID != 0 {
 w.Write(topics_1)
 }
 w.Write(topics_2)
-if tmpl_topics_vars.CurrentUser.ID != 0 {
+w.Write(phrases[19])
 w.Write(topics_3)
-if len(tmpl_topics_vars.ForumList) != 0 {
-w.Write(topics_4)
-w.Write(topics_5)
-} else {
-w.Write(topics_6)
-}
-w.Write(topics_7)
-}
-w.Write(topics_8)
 if tmpl_topics_vars.CurrentUser.ID != 0 {
+w.Write(topics_4)
+if len(tmpl_topics_vars.ForumList) != 0 {
+w.Write(topics_5)
+w.Write(phrases[20])
+w.Write(topics_6)
+w.Write(phrases[21])
+w.Write(topics_7)
+w.Write(topics_8)
+w.Write(phrases[22])
 w.Write(topics_9)
-if len(tmpl_topics_vars.ForumList) != 0 {
+w.Write(phrases[23])
 w.Write(topics_10)
-w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
+} else {
 w.Write(topics_11)
-if len(tmpl_topics_vars.ForumList) != 0 {
-for _, item := range tmpl_topics_vars.ForumList {
+w.Write(phrases[24])
 w.Write(topics_12)
-w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(phrases[25])
 w.Write(topics_13)
-w.Write([]byte(strconv.Itoa(item.ID)))
+}
 w.Write(topics_14)
-w.Write([]byte(item.Name))
+}
 w.Write(topics_15)
-}
-}
+if tmpl_topics_vars.CurrentUser.ID != 0 {
 w.Write(topics_16)
-w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
+w.Write(phrases[26])
 w.Write(topics_17)
-w.Write([]byte(tmpl_topics_vars.CurrentUser.Avatar))
+w.Write(phrases[27])
 w.Write(topics_18)
+w.Write(phrases[28])
+w.Write(topics_19)
+w.Write(phrases[29])
+w.Write(topics_20)
+w.Write(phrases[30])
+w.Write(topics_21)
+if len(tmpl_topics_vars.ForumList) != 0 {
+w.Write(topics_22)
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
+w.Write(topics_23)
+w.Write(phrases[31])
+w.Write(topics_24)
 if len(tmpl_topics_vars.ForumList) != 0 {
 for _, item := range tmpl_topics_vars.ForumList {
-w.Write(topics_19)
-if item.ID == tmpl_topics_vars.DefaultForum {
-w.Write(topics_20)
-}
-w.Write(topics_21)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topics_22)
-w.Write([]byte(item.Name))
-w.Write(topics_23)
-}
-}
-w.Write(topics_24)
-if tmpl_topics_vars.CurrentUser.Perms.UploadFiles {
 w.Write(topics_25)
-}
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topics_26)
-}
-}
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topics_27)
+w.Write([]byte(item.Name))
+w.Write(topics_28)
+}
+}
+w.Write(topics_29)
+w.Write(phrases[32])
+w.Write(topics_30)
+w.Write(phrases[33])
+w.Write(topics_31)
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Session))
+w.Write(topics_32)
+w.Write([]byte(tmpl_topics_vars.CurrentUser.Avatar))
+w.Write(topics_33)
+w.Write(phrases[34])
+w.Write(topics_34)
+w.Write(phrases[35])
+w.Write(topics_35)
+if len(tmpl_topics_vars.ForumList) != 0 {
+for _, item := range tmpl_topics_vars.ForumList {
+w.Write(topics_36)
+if item.ID == tmpl_topics_vars.DefaultForum {
+w.Write(topics_37)
+}
+w.Write(topics_38)
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(topics_39)
+w.Write([]byte(item.Name))
+w.Write(topics_40)
+}
+}
+w.Write(topics_41)
+w.Write(phrases[36])
+w.Write(topics_42)
+w.Write(phrases[37])
+w.Write(topics_43)
+w.Write(phrases[38])
+w.Write(topics_44)
+w.Write(phrases[39])
+w.Write(topics_45)
+w.Write(phrases[40])
+w.Write(topics_46)
+if tmpl_topics_vars.CurrentUser.Perms.UploadFiles {
+w.Write(topics_47)
+w.Write(phrases[41])
+w.Write(topics_48)
+}
+w.Write(topics_49)
+w.Write(phrases[42])
+w.Write(topics_50)
+}
+}
+w.Write(topics_51)
+w.Write(phrases[43])
+w.Write(topics_52)
 if len(tmpl_topics_vars.TopicList) != 0 {
 for _, item := range tmpl_topics_vars.TopicList {
-w.Write(topics_28)
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topics_29)
-if item.Sticky {
-w.Write(topics_30)
-} else {
-if item.IsClosed {
-w.Write(topics_31)
-}
-}
-w.Write(topics_32)
-w.Write([]byte(item.Creator.Link))
-w.Write(topics_33)
-w.Write([]byte(item.Creator.Avatar))
-w.Write(topics_34)
-w.Write([]byte(item.Creator.Name))
-w.Write(topics_35)
-w.Write([]byte(item.Creator.Name))
-w.Write(topics_36)
-w.Write([]byte(item.Link))
-w.Write(topics_37)
-w.Write([]byte(item.Title))
-w.Write(topics_38)
-if item.ForumName != "" {
-w.Write(topics_39)
-w.Write([]byte(item.ForumLink))
-w.Write(topics_40)
-w.Write([]byte(item.ForumName))
-w.Write(topics_41)
-}
-w.Write(topics_42)
-w.Write([]byte(item.Creator.Link))
-w.Write(topics_43)
-w.Write([]byte(item.Creator.Name))
-w.Write(topics_44)
-if item.IsClosed {
-w.Write(topics_45)
-}
-if item.Sticky {
-w.Write(topics_46)
-}
-w.Write(topics_47)
-w.Write([]byte(strconv.Itoa(item.PostCount)))
-w.Write(topics_48)
-w.Write([]byte(strconv.Itoa(item.LikeCount)))
-w.Write(topics_49)
-if item.Sticky {
-w.Write(topics_50)
-} else {
-if item.IsClosed {
-w.Write(topics_51)
-}
-}
-w.Write(topics_52)
-w.Write([]byte(item.LastUser.Link))
 w.Write(topics_53)
-w.Write([]byte(item.LastUser.Avatar))
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topics_54)
-w.Write([]byte(item.LastUser.Name))
+if item.Sticky {
 w.Write(topics_55)
-w.Write([]byte(item.LastUser.Name))
-w.Write(topics_56)
-w.Write([]byte(item.LastUser.Link))
-w.Write(topics_57)
-w.Write([]byte(item.LastUser.Name))
-w.Write(topics_58)
-w.Write([]byte(item.RelativeLastReplyAt))
-w.Write(topics_59)
-}
 } else {
+if item.IsClosed {
+w.Write(topics_56)
+}
+}
+w.Write(topics_57)
+w.Write([]byte(item.Creator.Link))
+w.Write(topics_58)
+w.Write([]byte(item.Creator.Avatar))
+w.Write(topics_59)
+w.Write([]byte(item.Creator.Name))
 w.Write(topics_60)
-if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+w.Write([]byte(item.Creator.Name))
 w.Write(topics_61)
-}
+w.Write([]byte(item.Link))
 w.Write(topics_62)
-}
+w.Write([]byte(item.Title))
 w.Write(topics_63)
-if tmpl_topics_vars.LastPage > 1 {
+if item.ForumName != "" {
 w.Write(topics_64)
-if tmpl_topics_vars.Page > 1 {
+w.Write([]byte(item.ForumLink))
 w.Write(topics_65)
-w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page - 1)))
+w.Write([]byte(item.ForumName))
 w.Write(topics_66)
-w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page - 1)))
+}
 w.Write(topics_67)
-}
-if len(tmpl_topics_vars.PageList) != 0 {
-for _, item := range tmpl_topics_vars.PageList {
+w.Write([]byte(item.Creator.Link))
 w.Write(topics_68)
-w.Write([]byte(strconv.Itoa(item)))
+w.Write([]byte(item.Creator.Name))
 w.Write(topics_69)
-w.Write([]byte(strconv.Itoa(item)))
+if item.IsClosed {
 w.Write(topics_70)
-}
-}
-if tmpl_topics_vars.LastPage != tmpl_topics_vars.Page {
+w.Write(phrases[44])
 w.Write(topics_71)
-w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page + 1)))
+}
+if item.Sticky {
 w.Write(topics_72)
-w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page + 1)))
+w.Write(phrases[45])
 w.Write(topics_73)
 }
 w.Write(topics_74)
-}
+w.Write([]byte(strconv.Itoa(item.PostCount)))
 w.Write(topics_75)
+w.Write([]byte(strconv.Itoa(item.LikeCount)))
+w.Write(topics_76)
+if item.Sticky {
+w.Write(topics_77)
+} else {
+if item.IsClosed {
+w.Write(topics_78)
+}
+}
+w.Write(topics_79)
+w.Write([]byte(item.LastUser.Link))
+w.Write(topics_80)
+w.Write([]byte(item.LastUser.Avatar))
+w.Write(topics_81)
+w.Write([]byte(item.LastUser.Name))
+w.Write(topics_82)
+w.Write([]byte(item.LastUser.Name))
+w.Write(topics_83)
+w.Write([]byte(item.LastUser.Link))
+w.Write(topics_84)
+w.Write([]byte(item.LastUser.Name))
+w.Write(topics_85)
+w.Write([]byte(item.RelativeLastReplyAt))
+w.Write(topics_86)
+}
+} else {
+w.Write(topics_87)
+w.Write(phrases[46])
+if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+w.Write(topics_88)
+w.Write(phrases[47])
+w.Write(topics_89)
+}
+w.Write(topics_90)
+}
+w.Write(topics_91)
+if tmpl_topics_vars.LastPage > 1 {
+w.Write(paginator_0)
+if tmpl_topics_vars.Page > 1 {
+w.Write(paginator_1)
+w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page - 1)))
+w.Write(paginator_2)
+w.Write(phrases[48])
+w.Write(paginator_3)
+w.Write(phrases[49])
+w.Write(paginator_4)
+w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page - 1)))
+w.Write(paginator_5)
+}
+if len(tmpl_topics_vars.PageList) != 0 {
+for _, item := range tmpl_topics_vars.PageList {
+w.Write(paginator_6)
+w.Write([]byte(strconv.Itoa(item)))
+w.Write(paginator_7)
+w.Write([]byte(strconv.Itoa(item)))
+w.Write(paginator_8)
+}
+}
+if tmpl_topics_vars.LastPage != tmpl_topics_vars.Page {
+w.Write(paginator_9)
+w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page + 1)))
+w.Write(paginator_10)
+w.Write([]byte(strconv.Itoa(tmpl_topics_vars.Page + 1)))
+w.Write(paginator_11)
+w.Write(phrases[50])
+w.Write(paginator_12)
+w.Write(phrases[51])
+w.Write(paginator_13)
+}
+w.Write(paginator_14)
+}
+w.Write(topics_92)
 w.Write(footer_0)
 w.Write([]byte(common.BuildWidget("footer",tmpl_topics_vars.Header)))
 w.Write(footer_1)
+w.Write(phrases[52])
+w.Write(footer_2)
+w.Write(phrases[53])
+w.Write(footer_3)
+w.Write(phrases[54])
+w.Write(footer_4)
 if len(tmpl_topics_vars.Header.Themes) != 0 {
 for _, item := range tmpl_topics_vars.Header.Themes {
 if !item.HideFromThemes {
-w.Write(footer_2)
-w.Write([]byte(item.Name))
-w.Write(footer_3)
-if tmpl_topics_vars.Header.Theme.Name == item.Name {
-w.Write(footer_4)
-}
 w.Write(footer_5)
-w.Write([]byte(item.FriendlyName))
+w.Write([]byte(item.Name))
 w.Write(footer_6)
-}
-}
-}
+if tmpl_topics_vars.Header.Theme.Name == item.Name {
 w.Write(footer_7)
-w.Write([]byte(common.BuildWidget("rightSidebar",tmpl_topics_vars.Header)))
+}
 w.Write(footer_8)
+w.Write([]byte(item.FriendlyName))
+w.Write(footer_9)
+}
+}
+}
+w.Write(footer_10)
+w.Write([]byte(common.BuildWidget("rightSidebar",tmpl_topics_vars.Header)))
+w.Write(footer_11)
 	return nil
 }

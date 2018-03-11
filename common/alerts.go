@@ -9,7 +9,6 @@ package common
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"strconv"
 	"strings"
 
@@ -210,7 +209,7 @@ func NotifyWatchers(asid int64) error {
 func notifyWatchers(asid int64) {
 	rows, err := alertStmts.getWatchers.Query(asid)
 	if err != nil && err != ErrNoRows {
-		log.Fatal(err.Error())
+		LogError(err)
 		return
 	}
 	defer rows.Close()
@@ -220,14 +219,14 @@ func notifyWatchers(asid int64) {
 	for rows.Next() {
 		err := rows.Scan(&uid)
 		if err != nil {
-			log.Fatal(err.Error())
+			LogError(err)
 			return
 		}
 		uids = append(uids, uid)
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err.Error())
+		LogError(err)
 		return
 	}
 
@@ -235,7 +234,7 @@ func notifyWatchers(asid int64) {
 	var event, elementType string
 	err = alertStmts.getActivityEntry.QueryRow(asid).Scan(&actorID, &targetUserID, &event, &elementType, &elementID)
 	if err != nil && err != ErrNoRows {
-		log.Fatal(err.Error())
+		LogError(err)
 		return
 	}
 

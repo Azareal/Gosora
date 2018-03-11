@@ -4,41 +4,35 @@
 {{template "panel-menu.html" . }}
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Groups</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_groups_head"}}</h1></div>
 	</div>
 	<div id="panel_groups" class="colstack_item rowlist">
 		{{range .ItemList}}
 		<div class="rowitem panel_compactrow editable_parent">
 			<a href="/panel/groups/edit/{{.ID}}" class="panel_upshift">{{.Name}}</a>
 			<span class="panel_floater">
-				{{if .RankClass}}<a class="panel_tag panel_rank_tag panel_rank_tag_{{.RankClass}}" title="{{.Rank}}"></a>
+				{{if .RankClass}}<a class="panel_tag panel_rank_tag panel_rank_tag_{{.RankClass}}" title="{{.Rank}}" aria-label="{{lang "panel_groups_rank_prefix"}}{{.Rank}}"></a>
 				{{else}}<span class="panel_tag">{{.Rank}}</span>{{end}}
 
-				{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="Edit Group"></a>{{end}}
+				{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="{{lang "panel_groups_edit_group_button_aria"}}"></a>{{end}}
 			</span>
 		</div>
 		{{end}}
 	</div>
 	{{if gt .LastPage 1}}
-	<div class="pageset">
-		{{if gt .Page 1}}<div class="pageitem"><a href="?page={{subtract .Page 1}}">Prev</a></div>{{end}}
-		{{range .PageList}}
-		<div class="pageitem"><a href="?page={{.}}">{{.}}</a></div>
-		{{end}}
-		{{if ne .LastPage .Page}}<div class="pageitem"><a href="?page={{add .Page 1}}">Next</a></div>{{end}}
-	</div>
+	{{template "paginator.html" . }}
 	{{end}}
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Create Group</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_groups_create_head"}}</h1></div>
 	</div>
 	<div class="colstack_item the_form">
 		<form action="/panel/groups/create/?session={{.CurrentUser.Session}}" method="post">
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Name</a></div>
-				<div class="formitem"><input name="group-name" type="text" placeholder="Administrator" /></div>
+				<div class="formitem formlabel"><a>{{lang "panel_groups_create_name"}}</a></div>
+				<div class="formitem"><input name="group-name" type="text" placeholder="{{lang "panel_groups_create_name_placeholder"}}" /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Type</a></div>
+				<div class="formitem formlabel"><a>{{lang "panel_groups_create_type"}}</a></div>
 				<div class="formitem">
 					<select name="group-type"{{if not .CurrentUser.Perms.EditGroupGlobalPerms}} disabled{{end}}>
 						<option selected>Member</option>
@@ -49,11 +43,11 @@
 				</div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>Tag</a></div>
+				<div class="formitem formlabel"><a>{{lang "panel_groups_create_tag"}}</a></div>
 				<div class="formitem"><input name="group-tag" type="text" /></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem"><button name="panel-button" class="formbutton">Add Group</button></div>
+				<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_groups_create_create_group_button"}}</button></div>
 			</div>
 		</form>
 	</div>

@@ -5,29 +5,29 @@
 		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/topics/" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
-					<a>Topic Counts</a>
+					<a>{{lang "panel_statistics_topic_counts_head"}}</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
-						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
-						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>1 week</option>
-						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>2 days</option>
-						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>1 day</option>
-						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>12 hours</option>
-						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>6 hours</option>
+						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>{{lang "panel_statistics_time_range_one_month"}}</option>
+						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>{{lang "panel_statistics_time_range_one_week"}}</option>
+						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>{{lang "panel_statistics_time_range_two_days"}}</option>
+						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>{{lang "panel_statistics_time_range_one_day"}}</option>
+						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_twelve_hours"}}</option>
+						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_six_hours"}}</option>
 					</select>
 				</div>
 			</div>
 		</form>
 		<div id="panel_analytics_topics" class="colstack_graph_holder">
-			<div class="ct_chart" aria-label="Topic Chart"></div>
+			<div class="ct_chart" aria-label="{{lang "panel_statistics_topic_counts_chart_aria"}}"></div>
 		</div>
 		<div class="colstack_item colstack_head">
-			<div class="rowitem"><a>Details</a></div>
+			<div class="rowitem"><a>{{lang "panel_statistics_details_head"}}</a></div>
 		</div>
-		<div id="panel_analytics_topics_table" class="colstack_item rowlist" aria-label="Topic Table, this has the same information as the topic chart">
+		<div id="panel_analytics_topics_table" class="colstack_item rowlist" aria-label="{{lang "panel_statistics_topic_counts_table_aria"}}">
 			{{range .ViewItems}}
 			<div class="rowitem panel_compactrow editable_parent">
 				<a class="panel_upshift unix_to_24_hour_time">{{.Time}}</a>
-				<span class="panel_compacttext to_right">{{.Count}} views</span>
+				<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_topics_suffix"}}</span>
 			</div>
 			{{end}}
 		</div>

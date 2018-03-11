@@ -1,11 +1,11 @@
 {{template "header.html" . }}
 <main>
 	<div class="rowblock rowhead">
-		<div class="rowitem"><h1>Are you sure?</h1></div>
+		<div class="rowitem"><h1>{{lang "areyousure_head"}}</h1></div>
 	</div>
 	<div class="rowblock">
 		<div class="rowitem passive rowmsg">{{.Something.Message}}<br /><br />
-			<a class="username" href="{{.Something.URL}}?session={{.CurrentUser.Session}}">Continue</a>
+			<a class="username" href="{{.Something.URL}}?session={{.CurrentUser.Session}}">{{lang "areyousure_continue"}}</a>
 		</div>
 	</div>
 </main>

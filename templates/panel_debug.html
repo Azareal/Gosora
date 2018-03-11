@@ -3,12 +3,12 @@
 {{template "panel-menu.html" . }}
 	<main id="panel_dashboard_right" class="colstack_right">
 		<div class="colstack_item colstack_head">
-			<div class="rowitem"><a>Debug</a></div>
+			<div class="rowitem"><a>{{lang "panel_debug_head"}}</a></div>
 		</div>
 		<div id="panel_debug" class="colstack_grid">
-			<div class="grid_item grid_stat"><span>Uptime</span></div>
-			<div class="grid_item grid_stat"><span>Open DB Conns</span></div>
-			<div class="grid_item grid_stat"><span>Adapter</span></div>
+			<div class="grid_item grid_stat"><span>{{lang "panel_debug_uptime_label"}}</span></div>
+			<div class="grid_item grid_stat"><span>{{lang "panel_debug_open_database_connections_label"}}</span></div>
+			<div class="grid_item grid_stat"><span>{{lang "panel_debug_adapter_label"}}</span></div>
 
 			<div class="grid_item grid_stat"><span>{{.Uptime}}</span></div>
 			<div class="grid_item grid_stat"><span>{{.OpenConns}}</span></div>

@@ -1,84 +1,81 @@
 <div class="colstack_item colstack_head">
-	<div class="rowitem"><a href="/panel/">Control Panel</a></div>
+	<div class="rowitem"><a href="/panel/">{{lang "panel_menu_head"}}</a></div>
 </div>
 <div class="colstack_item rowmenu">
 	<div class="rowitem passive">
-		<a href="/panel/users/">Users</a> <a class="menu_stats" href="#">({{.Stats.Users}})</a>
+		<a href="/panel/users/">{{lang "panel_menu_users"}}</a> <a class="menu_stats" href="#">({{.Stats.Users}})</a>
 	</div>
 	<div class="rowitem passive">
-		<a href="/panel/groups/">Groups</a> <a class="menu_stats" href="#">({{.Stats.Groups}})</a>
+		<a href="/panel/groups/">{{lang "panel_menu_groups"}}</a> <a class="menu_stats" href="#">({{.Stats.Groups}})</a>
 	</div>
 	{{if .CurrentUser.Perms.ManageForums}}<div class="rowitem passive">
-		<a href="/panel/forums/">Forums</a> <a class="menu_stats" href="#">({{.Stats.Forums}})</a>
+		<a href="/panel/forums/">{{lang "panel_menu_forums"}}</a> <a class="menu_stats" href="#">({{.Stats.Forums}})</a>
 	</div>{{end}}
 	{{if .CurrentUser.Perms.EditSettings}}<div class="rowitem passive">
-		<a href="/panel/settings/">Settings</a> <a class="menu_stats" href="#">({{.Stats.Settings}})</a>
+		<a href="/panel/settings/">{{lang "panel_menu_settings"}}</a> <a class="menu_stats" href="#">({{.Stats.Settings}})</a>
 	</div>
 	<div class="rowitem passive">
-		<a href="/panel/settings/word-filters/">Word Filters</a> <a class="menu_stats" href="#">({{.Stats.WordFilters}})</a>
+		<a href="/panel/settings/word-filters/">{{lang "panel_menu_word_filters"}}</a> <a class="menu_stats" href="#">({{.Stats.WordFilters}})</a>
 	</div>{{end}}
 	{{if .CurrentUser.Perms.ManageThemes}}<div class="rowitem passive">
-		<a href="/panel/themes/">Themes</a> <a class="menu_stats" href="#">({{.Stats.Themes}})</a>
+		<a href="/panel/themes/">{{lang "panel_menu_themes"}}</a> <a class="menu_stats" href="#">({{.Stats.Themes}})</a>
 	</div>{{end}}
 </div>
 <div class="colstack_item colstack_head">
-	<div class="rowitem"><a href="#">Events</a></div>
+	<div class="rowitem"><a href="#">{{lang "panel_menu_events"}}</a></div>
 </div>
 <div class="colstack_item rowmenu">
 	<div class="rowitem passive">
-		<a href="/panel/analytics/views/">Statistics</a>
+		<a href="/panel/analytics/views/">{{lang "panel_menu_statistics"}}</a>
 	</div>
 	{{if eq .Zone "analytics"}}
 		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/posts/">Posts</a>
+			<a href="/panel/analytics/posts/">{{lang "panel_menu_statistics_posts"}}</a>
 		</div>
 		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/topics/">Topics</a>
+			<a href="/panel/analytics/topics/">{{lang "panel_menu_statistics_topics"}}</a>
 		</div>
 		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/forums/">Forums</a>
+			<a href="/panel/analytics/forums/">{{lang "panel_menu_statistics_forums"}}</a>
 		</div>
 		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/routes/">Routes</a>
+			<a href="/panel/analytics/routes/">{{lang "panel_menu_statistics_routes"}}</a>
 		</div>
 		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/agents/">Agents</a>
+			<a href="/panel/analytics/agents/">{{lang "panel_menu_statistics_agents"}}</a>
 		</div>
 		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/crawlers/">Crawlers</a>
+			<a href="/panel/analytics/systems/">{{lang "panel_menu_statistics_systems"}}</a>
 		</div>
 		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/systems/">Systems</a>
+			<a href="/panel/analytics/langs/">{{lang "panel_menu_statistics_languages"}}</a>
 		</div>
 		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/langs/">Languages</a>
-		</div>
-		<div class="rowitem passive submenu">
-			<a href="/panel/analytics/referrers/">Referrers</a>
+			<a href="/panel/analytics/referrers/">{{lang "panel_menu_statistics_referrers"}}</a>
 		</div>
 	{{end}}
 	<div class="rowitem passive">
-		<a href="/forum/1">Reports</a> <a class="menu_stats" href="#">({{.Stats.Reports}})</a>
+		<a href="/forum/1">{{lang "panel_menu_reports"}}</a> <a class="menu_stats" href="#">({{.Stats.Reports}})</a>
 	</div>
 	<div class="rowitem passive">
-		<a href="/panel/logs/mod/">Logs</a>
+		<a href="/panel/logs/mod/">{{lang "panel_menu_logs"}}</a>
 	</div>
 	{{if eq .Zone "logs"}}
-		<div class="rowitem passive submenu"><a href="/panel/logs/mod/">Moderators</a></div>
-		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive submenu"><a>Administrators</a></div>{{end}}
+		<div class="rowitem passive submenu"><a href="/panel/logs/mod/">{{lang "panel_menu_logs_moderators"}}</a></div>
+		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive submenu"><a>{{lang "panel_menu_logs_administrators"}}</a></div>{{end}}
 	{{end}}
 </div>
 <div class="colstack_item colstack_head">
-	<div class="rowitem"><a href="#">System</a></div>
+	<div class="rowitem"><a href="#">{{lang "panel_menu_system"}}</a></div>
 </div>
 <div class="colstack_item rowmenu">
 	{{if .CurrentUser.Perms.ManagePlugins}}<div class="rowitem passive">
-		<a href="/panel/plugins/">Plugins</a>
+		<a href="/panel/plugins/">{{lang "panel_menu_plugins"}}</a>
 	</div>{{end}}
 	{{if .CurrentUser.IsSuperAdmin}}<div class="rowitem passive">
-		<a href="/panel/backups/">Backups</a>
+		<a href="/panel/backups/">{{lang "panel_menu_backups"}}</a>
 	</div>{{end}}
 	{{if .CurrentUser.IsAdmin}}<div class="rowitem passive">
-		<a href="/panel/debug/">Debug</a>
+		<a href="/panel/debug/">{{lang "panel_menu_debug"}}</a>
 	</div>{{end}}
 </div>

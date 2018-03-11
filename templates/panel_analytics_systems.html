@@ -5,14 +5,14 @@
 		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/systems/" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
-					<a>Operating Systems</a>
+					<a>{{lang "panel_statistics_operating_systems_head"}}</a>
 					<select class="timeRangeSelector to_right" name="timeRange">
-						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>1 month</option>
-						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>1 week</option>
-						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>2 days</option>
-						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>1 day</option>
-						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>12 hours</option>
-						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>6 hours</option>
+						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>{{lang "panel_statistics_time_range_one_month"}}</option>
+						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>{{lang "panel_statistics_time_range_one_week"}}</option>
+						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>{{lang "panel_statistics_time_range_two_days"}}</option>
+						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>{{lang "panel_statistics_time_range_one_day"}}</option>
+						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_twelve_hours"}}</option>
+						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_six_hours"}}</option>
 					</select>
 				</div>
 			</div>
@@ -21,9 +21,9 @@
 			{{range .ItemList}}
 			<div class="rowitem panel_compactrow editable_parent">
 				<a href="/panel/analytics/system/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
-				<span class="panel_compacttext to_right">{{.Count}} views</span>
+				<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_views_suffix"}}</span>
 			</div>
-			{{else}}<div class="rowitem passive rowmsg">No operating systems could be found in the selected time range</div>{{end}}
+			{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_operating_systems_no_operating_systems"}}</div>{{end}}
 		</div>
 	</main>
 </div>

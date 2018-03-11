@@ -2,52 +2,52 @@
 
 <div class="colstack panel_stack">
 {{template "panel-menu.html" . }}
-<script>
+<script type="text/javascript">
 var formVars = {'perm_preset': ['can_moderate','can_post','read_only','no_access','default','custom']};
 </script>
 
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>{{.Name}} Forum</h1></div>
+		<div class="rowitem"><h1>{{.Name}}{{lang "panel_forum_head_suffix"}}</h1></div>
 	</div>
 	<div id="panel_forum" class="colstack_item">
 		<form action="/panel/forums/edit/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Name</a></div>
-			<div class="formitem"><input name="forum_name" type="text" value="{{.Name}}" placeholder="General Forum" /></div>
+			<div class="formitem formlabel"><a>{{lang "panel_forum_name"}}</a></div>
+			<div class="formitem"><input name="forum_name" type="text" value="{{.Name}}" placeholder="{{lang "panel_forum_name_placeholder"}}" /></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Description</a></div>
-			<div class="formitem"><input name="forum_desc" type="text" value="{{.Desc}}" placeholder="Where the general stuff happens" /></div>
+			<div class="formitem formlabel"><a>{{lang "panel_forum_description"}}</a></div>
+			<div class="formitem"><input name="forum_desc" type="text" value="{{.Desc}}" placeholder="{{lang "panel_forum_description_placeholder"}}" /></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Active</a></div>
+			<div class="formitem formlabel"><a>{{lang "panel_forum_active"}}</a></div>
 			<div class="formitem"><select name="forum_active">
-				<option{{if .Active}} selected{{end}} value="1">Yes</option>
-				<option{{if not .Active}} selected{{end}} value="0">No</option>
+				<option{{if .Active}} selected{{end}} value="1">{{lang "option_yes"}}</option>
+				<option{{if not .Active}} selected{{end}} value="0">{{lang "option_no"}}</option>
 			</select></div>
 		</div>
 		<div class="formrow">
-			<div class="formitem formlabel"><a>Preset</a></div>
+			<div class="formitem formlabel"><a>{{lang "panel_forum_preset"}}</a></div>
 			<div class="formitem">
 				<select name="forum_preset">
-					<option{{if eq .Preset "all"}} selected{{end}} value="all">Everyone</option>
-					<option{{if eq .Preset "announce"}} selected{{end}}  value="announce">Announcements</option>
-					<option{{if eq .Preset "members"}} selected{{end}} value="members">Member Only</option>
-					<option{{if eq .Preset "staff"}} selected{{end}} value="staff">Staff Only</option>
-					<option{{if eq .Preset "admins"}} selected{{end}} value="admins">Admin Only</option>
-					<option{{if eq .Preset "archive"}} selected{{end}} value="archive">Archive</option>
-					<option{{if eq .Preset "custom"}} selected{{end}} value="custom">Custom</option>
+					<option{{if eq .Preset "all"}} selected{{end}} value="all">{{lang "panel_preset_everyone"}}</option>
+					<option{{if eq .Preset "announce"}} selected{{end}}  value="announce">{{lang "panel_preset_announcements"}}</option>
+					<option{{if eq .Preset "members"}} selected{{end}} value="members">{{lang "panel_preset_member_only"}}</option>
+					<option{{if eq .Preset "staff"}} selected{{end}} value="staff">{{lang "panel_preset_staff_only"}}</option>
+					<option{{if eq .Preset "admins"}} selected{{end}} value="admins">{{lang "panel_preset_admin_only"}}</option>
+					<option{{if eq .Preset "archive"}} selected{{end}} value="archive">{{lang "panel_preset_archive"}}</option>
+					<option{{if eq .Preset "custom"}} selected{{end}} value="custom">{{lang "panel_preset_custom"}}</option>
 				</select>
 			</div>
 		</div>
 		<div class="formrow">
-			<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">Update Forum</button></div>
+			<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">{{lang "panel_forum_update_button"}}</button></div>
 		</div>
 		</form>
 	</div>
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a>Forum Permissions</a></div>
+		<div class="rowitem"><a>{{lang "panel_forum_permissions_head"}}</a></div>
 	</div>
 	<div id="forum_quick_perms" class="colstack_item rowlist formlist">
 		{{range .Groups}}
@@ -55,11 +55,11 @@ var formVars = {'perm_preset': ['can_moderate','can_post','read_only','no_access
 			<div class="formitem editable_parent">
 				<a>{{.Group.Name}}</a>
 				<input name="gid" value="{{.Group.ID}}" type="hidden" class="editable_block" data-field="gid" data-type="hidden" data-value="{{.Group.ID}}" />
-				<span class="edit_fields hide_on_edit rowsmall">Edit</span>
+				<span class="edit_fields hide_on_edit rowsmall">{{lang "panel_forum_edit_button"}}</span>
 				<div class="panel_floater">
 					<span data-field="perm_preset" data-type="list" data-value="{{.Preset}}" class="editable_block perm_preset perm_preset_{{.Preset}}"></span>
-					<a class="panel_right_button" href="/panel/forums/edit/perms/submit/{{$.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>Update</button></a>
-					<a class="panel_right_button" href="/panel/forums/edit/perms/{{$.ID}}-{{.Group.ID}}"><button class='panel_tag show_on_edit' type='submit'>Full Edit</button></a>
+					<a class="panel_right_button" href="/panel/forums/edit/perms/submit/{{$.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>{{lang "panel_forum_short_update_button"}}</button></a>
+					<a class="panel_right_button" href="/panel/forums/edit/perms/{{$.ID}}-{{.Group.ID}}"><button class='panel_tag show_on_edit' type='submit'>{{lang "panel_forum_full_edit_button"}}</button></a>
 				</div>
 			</div>
 		</div>

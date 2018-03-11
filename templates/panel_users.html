@@ -4,31 +4,25 @@
 {{template "panel-menu.html" . }}
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>Users</h1></div>
+		<div class="rowitem"><h1>{{lang "panel_users_head"}}</h1></div>
 	</div>
 	<div id="panel_users" class="colstack_item rowlist bgavatars">
 		{{range .ItemList}}
 		<div class="rowitem editable_parent" style="background-image: url('{{.Avatar}}');">
 			<img class="bgsub" src="{{.Avatar}}" alt="{{.Name}}'s Avatar" />
 			<a class="rowTitle editable_block"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}?session={{$.CurrentUser.Session}}"{{end}}>{{.Name}}</a>
-			<a href="/user/{{.ID}}" class="tag-mini profile_url">Profile</a>
+			<a href="/user/{{.ID}}" class="tag-mini profile_url">{{lang "panel_users_profile"}}</a>
 			{{if (.Tag) and (.IsSuperMod)}}<span style="float: right;"><span class="panel_tag" style="margin-left 4px;">{{.Tag}}</span></span>{{end}}
 
 			<span class="panel_floater">
-				{{if .IsBanned}}<a href="/users/unban/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button ban_button">Unban</a>{{else if not .IsSuperMod}}<a href="/user/{{.ID}}#ban_user" class="panel_tag panel_right_button ban_button">Ban</a>{{end}}
-				{{if not .Active}}<a href="/users/activate/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">Activate</a>{{end}}
+				{{if .IsBanned}}<a href="/users/unban/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button ban_button">{{lang "panel_users_unban"}}</a>{{else if not .IsSuperMod}}<a href="/user/{{.ID}}#ban_user" class="panel_tag panel_right_button ban_button">{{lang "panel_users_ban"}}</a>{{end}}
+				{{if not .Active}}<a href="/users/activate/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">{{lang "panel_users_activate"}}</a>{{end}}
 			</span>
 		</div>
 		{{end}}
 	</div>
 	{{if gt .LastPage 1}}
-	<div class="pageset">
-		{{if gt .Page 1}}<div class="pageitem"><a href="?page={{subtract .Page 1}}">Prev</a></div>{{end}}
-		{{range .PageList}}
-		<div class="pageitem"><a href="?page={{.}}">{{.}}</a></div>
-		{{end}}
-		{{if ne .LastPage .Page}}<div class="pageitem"><a href="?page={{add .Page 1}}">Next</a></div>{{end}}
-	</div>
+	{{template "paginator.html" . }}
 	{{end}}
 </main>
 
