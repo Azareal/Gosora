@@ -9,7 +9,7 @@
 	<div id="panel_groups" class="colstack_item rowlist">
 		{{range .ItemList}}
 		<div class="rowitem panel_compactrow editable_parent">
-			<a href="/panel/groups/edit/{{.ID}}" class="panel_upshift">{{.Name}}</a>
+			<a{{if .CanEdit}} href="/panel/groups/edit/{{.ID}}"{{end}} class="panel_upshift">{{.Name}}</a>
 			<span class="panel_floater">
 				{{if .RankClass}}<a class="panel_tag panel_rank_tag panel_rank_tag_{{.RankClass}}" title="{{.Rank}}" aria-label="{{lang "panel_groups_rank_prefix"}}{{.Rank}}"></a>
 				{{else}}<span class="panel_tag">{{.Rank}}</span>{{end}}
@@ -22,6 +22,7 @@
 	{{if gt .LastPage 1}}
 	{{template "paginator.html" . }}
 	{{end}}
+	{{if .CurrentUser.Perms.EditGroup}}
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{lang "panel_groups_create_head"}}</h1></div>
 	</div>
@@ -51,6 +52,7 @@
 			</div>
 		</form>
 	</div>
+	{{end}}
 </main>
 
 </div>

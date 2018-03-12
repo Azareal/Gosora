@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"./templates"
@@ -261,7 +262,12 @@ func compileTemplates() error {
 	go writeTemplate("ip_search", ipSearchTmpl)
 	go writeTemplate("error", errorTmpl)
 	go func() {
-		err := writeFile("./template_list.go", "package main\n\n// nolint\n"+c.FragOut)
+		out := "package main\n\n"
+		for templateName, count := range c.TemplateFragmentCount {
+			out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
+		}
+		out += "\n// nolint\nfunc init() {\n" + c.FragOut + "}\n"
+		err := writeFile("./template_list.go", out)
 		if err != nil {
 			log.Fatal(err)
 		}
