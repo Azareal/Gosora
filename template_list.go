@@ -1,21 +1,21 @@
 package main
 
+var ip_search_frags = make([][]byte,18)
 var header_frags = make([][]byte,24)
+var paginator_frags = make([][]byte,16)
+var footer_frags = make([][]byte,13)
+var register_frags = make([][]byte,9)
+var forums_frags = make([][]byte,26)
+var topics_frags = make([][]byte,94)
+var forum_frags = make([][]byte,87)
+var login_frags = make([][]byte,8)
+var guilds_guild_list_frags = make([][]byte,10)
 var topic_alt_frags = make([][]byte,194)
 var profile_comments_row_frags = make([][]byte,51)
 var profile_frags = make([][]byte,48)
-var forums_frags = make([][]byte,26)
-var forum_frags = make([][]byte,87)
-var register_frags = make([][]byte,9)
-var menu_frags = make([][]byte,28)
-var footer_frags = make([][]byte,13)
-var paginator_frags = make([][]byte,16)
-var topic_frags = make([][]byte,192)
-var topics_frags = make([][]byte,94)
 var error_frags = make([][]byte,4)
-var guilds_guild_list_frags = make([][]byte,10)
-var login_frags = make([][]byte,8)
-var ip_search_frags = make([][]byte,18)
+var menu_frags = make([][]byte,30)
+var topic_frags = make([][]byte,192)
 
 // nolint
 func init() {
@@ -60,61 +60,64 @@ header_frags[15] = []byte(`.supermod_only { display: none !important; }`)
 header_frags[16] = []byte(`</style>
 		<div class="container">
 `)
-menu_frags[0] = []byte(`<nav class="nav">
+menu_frags[0] = []byte(`<div class="left_of_nav">`)
+menu_frags[1] = []byte(`</div>
+<nav class="nav">
 	<div class="move_left">
 	<div class="move_right">
 	<ul>`)
-menu_frags[1] = []byte(`
+menu_frags[2] = []byte(`
 		<li id="menu_overview" class="menu_left"><a href="/" rel="home">`)
-menu_frags[2] = []byte(`</a></li>
+menu_frags[3] = []byte(`</a></li>
 		<li id="menu_forums" class="menu_left"><a href="/forums/" aria-label="`)
-menu_frags[3] = []byte(`" title="`)
-menu_frags[4] = []byte(`"></a></li>
+menu_frags[4] = []byte(`" title="`)
+menu_frags[5] = []byte(`"></a></li>
 		<li class="menu_left menu_topics"><a href="/" aria-label="`)
-menu_frags[5] = []byte(`" title="`)
-menu_frags[6] = []byte(`"></a></li>
+menu_frags[6] = []byte(`" title="`)
+menu_frags[7] = []byte(`"></a></li>
 		<li id="general_alerts" class="menu_right menu_alerts">
 			<div class="alert_bell"></div>
 			<div class="alert_counter" aria-label="`)
-menu_frags[7] = []byte(`"></div>
+menu_frags[8] = []byte(`"></div>
 			<div class="alert_aftercounter"></div>
 			<div class="alertList" aria-label="`)
-menu_frags[8] = []byte(`"></div>
+menu_frags[9] = []byte(`"></div>
 		</li>
 		`)
-menu_frags[9] = []byte(`
+menu_frags[10] = []byte(`
 		<li class="menu_left menu_account"><a href="/user/edit/critical/" aria-label="`)
-menu_frags[10] = []byte(`" title="`)
-menu_frags[11] = []byte(`"></a></li>
+menu_frags[11] = []byte(`" title="`)
+menu_frags[12] = []byte(`"></a></li>
 		<li class="menu_left menu_profile"><a href="`)
-menu_frags[12] = []byte(`" aria-label="`)
-menu_frags[13] = []byte(`" title="`)
-menu_frags[14] = []byte(`"></a></li>
+menu_frags[13] = []byte(`" aria-label="`)
+menu_frags[14] = []byte(`" title="`)
+menu_frags[15] = []byte(`"></a></li>
 		<li class="menu_left menu_panel menu_account supermod_only"><a href="/panel/" aria-label="`)
-menu_frags[15] = []byte(`" title="`)
-menu_frags[16] = []byte(`"></a></li>
+menu_frags[16] = []byte(`" title="`)
+menu_frags[17] = []byte(`"></a></li>
 		<li class="menu_left menu_logout"><a href="/accounts/logout/?session=`)
-menu_frags[17] = []byte(`" aria-label="`)
-menu_frags[18] = []byte(`" title="`)
-menu_frags[19] = []byte(`"></a></li>
+menu_frags[18] = []byte(`" aria-label="`)
+menu_frags[19] = []byte(`" title="`)
+menu_frags[20] = []byte(`"></a></li>
 		`)
-menu_frags[20] = []byte(`
+menu_frags[21] = []byte(`
 		<li class="menu_left menu_register"><a href="/accounts/create/" aria-label="`)
-menu_frags[21] = []byte(`" title="`)
-menu_frags[22] = []byte(`"></a></li>
+menu_frags[22] = []byte(`" title="`)
+menu_frags[23] = []byte(`"></a></li>
 		<li class="menu_left menu_login"><a href="/accounts/login/" aria-label="`)
-menu_frags[23] = []byte(`" title="`)
-menu_frags[24] = []byte(`"></a></li>
+menu_frags[24] = []byte(`" title="`)
+menu_frags[25] = []byte(`"></a></li>
 		`)
-menu_frags[25] = []byte(`
+menu_frags[26] = []byte(`
 		<li class="menu_left menu_hamburger" title="`)
-menu_frags[26] = []byte(`"><a></a></li>
+menu_frags[27] = []byte(`"><a></a></li>
 	</ul>
 	</div>
 	</div>
 	<div style="clear: both;"></div>
 </nav>
-`)
+<div class="right_of_nav">`)
+menu_frags[28] = []byte(`</div>`)
 header_frags[17] = []byte(`
 <div id="back"><div id="main" `)
 header_frags[18] = []byte(`class="shrink_main"`)

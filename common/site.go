@@ -69,8 +69,10 @@ type config struct {
 	MinifyTemplates bool
 	ServerCount     int
 
-	Noavatar     string // ? - Move this into the settings table?
-	ItemsPerPage int    // ? - Move this into the settings table?
+	Noavatar            string // ? - Move this into the settings table?
+	ItemsPerPage        int    // ? - Move this into the settings table?
+	MaxTopicTitleLength int
+	MaxUsernameLength   int
 }
 
 type devConfig struct {
@@ -90,6 +92,15 @@ func ProcessConfig() error {
 		Site.URL = strings.TrimSuffix(Site.URL, ":")
 		Site.URL = Site.URL + ":" + Site.Port
 	}
+
+	// ? Find a way of making these unlimited if zero? It might rule out some optimisations, waste memory, and break layouts
+	if Config.MaxTopicTitleLength == 0 {
+		Config.MaxTopicTitleLength = 100
+	}
+	if Config.MaxUsernameLength == 0 {
+		Config.MaxUsernameLength = 100
+	}
+
 	// We need this in here rather than verifyConfig as switchToTestDB() currently overwrites the values it verifies
 	if DbConfig.TestDbname == DbConfig.Dbname {
 		return errors.New("Your test database can't have the same name as your production database")
@@ -106,6 +117,12 @@ func VerifyConfig() error {
 	}
 	if Config.ServerCount < 1 {
 		return errors.New("You can't have less than one server")
+	}
+	if Config.MaxTopicTitleLength > 100 {
+		return errors.New("The max topic title length cannot be over 100 as that's unable to fit in the database row")
+	}
+	if Config.MaxUsernameLength > 100 {
+		return errors.New("The max username length cannot be over 100 as that's unable to fit in the database row")
 	}
 	return nil
 }

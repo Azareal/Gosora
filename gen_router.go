@@ -21,7 +21,7 @@ var RouteMap = map[string]interface{}{
 	"routeAPI": routeAPI,
 	"routes.Overview": routes.Overview,
 	"routes.CustomPage": routes.CustomPage,
-	"routeForums": routeForums,
+	"routes.ForumList": routes.ForumList,
 	"routes.ViewForum": routes.ViewForum,
 	"routeChangeTheme": routeChangeTheme,
 	"routeShowAttachment": routeShowAttachment,
@@ -120,6 +120,8 @@ var RouteMap = map[string]interface{}{
 	"routeDynamic": routeDynamic,
 	"routeUploads": routeUploads,
 	"routes.StaticFile": routes.StaticFile,
+	"routes.RobotsTxt": routes.RobotsTxt,
+	"routes.SitemapXml": routes.SitemapXml,
 	"BadRoute": BadRoute,
 }
 
@@ -128,7 +130,7 @@ var routeMapEnum = map[string]int{
 	"routeAPI": 0,
 	"routes.Overview": 1,
 	"routes.CustomPage": 2,
-	"routeForums": 3,
+	"routes.ForumList": 3,
 	"routes.ViewForum": 4,
 	"routeChangeTheme": 5,
 	"routeShowAttachment": 6,
@@ -227,13 +229,15 @@ var routeMapEnum = map[string]int{
 	"routeDynamic": 99,
 	"routeUploads": 100,
 	"routes.StaticFile": 101,
-	"BadRoute": 102,
+	"routes.RobotsTxt": 102,
+	"routes.SitemapXml": 103,
+	"BadRoute": 104,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
 	1: "routes.Overview",
 	2: "routes.CustomPage",
-	3: "routeForums",
+	3: "routes.ForumList",
 	4: "routes.ViewForum",
 	5: "routeChangeTheme",
 	6: "routeShowAttachment",
@@ -332,7 +336,9 @@ var reverseRouteMapEnum = map[int]string{
 	99: "routeDynamic",
 	100: "routeUploads",
 	101: "routes.StaticFile",
-	102: "BadRoute",
+	102: "routes.RobotsTxt",
+	103: "routes.SitemapXml",
+	104: "BadRoute",
 }
 var osMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -723,6 +729,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		lLang := strings.Split(lang,"-")
 		common.DebugDetail("lLang:", lLang)
 		counters.LangViewCounter.Bump(lLang[0])
+	} else {
+		counters.LangViewCounter.Bump("none")
 	}
 
 	referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P
@@ -768,7 +776,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		case "/forums":
 			counters.RouteViewCounter.Bump(3)
-			err = routeForums(w,req,user)
+			err = routes.ForumList(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
@@ -1726,13 +1734,15 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
-					err = routeRobotsTxt(w,req) // TODO: Count these views
+					counters.RouteViewCounter.Bump(102)
+					err = routes.RobotsTxt(w,req)
 					if err != nil {
 						router.handleError(err,w,req,user)
 					}
 					return
 				/*case "sitemap.xml":
-					err = routeSitemapXml(w,req) // TODO: Count these views
+					counters.RouteViewCounter.Bump(103)
+					err = routes.SitemapXml(w,req)
 					if err != nil {
 						router.handleError(err,w,req,user)
 					}
@@ -1774,7 +1784,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") || strings.Contains(lowerPath,"//") || strings.Contains(lowerPath,"\\\\") || strings.Contains(lowerPath,"wp") || strings.Contains(lowerPath,"wordpress") || strings.Contains(lowerPath,"config") || strings.Contains(lowerPath,"setup") || strings.Contains(lowerPath,"install") || strings.Contains(lowerPath,"update") || strings.Contains(lowerPath,"php") {
 				router.SuspiciousRequest(req)
 			}
-			counters.RouteViewCounter.Bump(102)
+			counters.RouteViewCounter.Bump(104)
 			common.NotFound(w,req,nil)
 	}
 }

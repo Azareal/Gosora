@@ -4,7 +4,7 @@ INSERT INTO [settings] ([name],[content],[type],[constraints]) VALUES ('activati
 INSERT INTO [settings] ([name],[content],[type]) VALUES ('bigpost_min_words','250','int');
 INSERT INTO [settings] ([name],[content],[type]) VALUES ('megapost_min_words','1000','int');
 INSERT INTO [settings] ([name],[content],[type]) VALUES ('meta_desc','','html-attribute');
-INSERT INTO [themes] ([uname],[default]) VALUES ('tempra-simple',1);
+INSERT INTO [themes] ([uname],[default]) VALUES ('cosora',1);
 INSERT INTO [emails] ([email],[uid],[validated]) VALUES ('admin@localhost',1,1);
 INSERT INTO [users_groups] ([name],[permissions],[plugin_perms],[is_mod],[is_admin],[tag]) VALUES ('Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}','{}',1,1,'Admin');
 INSERT INTO [users_groups] ([name],[permissions],[plugin_perms],[is_mod],[tag]) VALUES ('Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"UploadFiles":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}','{}',1,'Mod');

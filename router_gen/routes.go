@@ -5,7 +5,7 @@ func routes() {
 	addRoute(View("routeAPI", "/api/"))
 	addRoute(View("routes.Overview", "/overview/"))
 	addRoute(View("routes.CustomPage", "/pages/", "extraData"))
-	addRoute(View("routeForums", "/forums/" /*,"&forums"*/))
+	addRoute(View("routes.ForumList", "/forums/" /*,"&forums"*/))
 	addRoute(View("routes.ViewForum", "/forum/", "extraData"))
 	addRoute(AnonAction("routeChangeTheme", "/theme/"))
 	addRoute(

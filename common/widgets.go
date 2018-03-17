@@ -16,6 +16,8 @@ var Docks WidgetDocks
 var widgetUpdateMutex sync.RWMutex
 
 type WidgetDocks struct {
+	LeftOfNav    []*Widget
+	RightOfNav   []*Widget
 	LeftSidebar  []*Widget
 	RightSidebar []*Widget
 	//PanelLeft []Menus
@@ -120,7 +122,18 @@ func BuildWidget(dock string, headerVars *HeaderVars) (sbody string) {
 	if !headerVars.Theme.HasDock(dock) {
 		return ""
 	}
+
+	// Let themes forcibly override this slot
+	sbody = headerVars.Theme.BuildDock(dock)
+	if sbody != "" {
+		return sbody
+	}
+
 	switch dock {
+	case "leftOfNav":
+		widgets = Docks.LeftOfNav
+	case "rightOfNav":
+		widgets = Docks.RightOfNav
 	case "rightSidebar":
 		widgets = Docks.RightSidebar
 	case "footer":
@@ -178,8 +191,10 @@ func InitWidgets() error {
 	defer rows.Close()
 
 	var data string
-	var leftWidgets []*Widget
-	var rightWidgets []*Widget
+	var leftOfNavWidgets []*Widget
+	var rightOfNavWidgets []*Widget
+	var leftSidebarWidgets []*Widget
+	var rightSidebarWidgets []*Widget
 	var footerWidgets []*Widget
 
 	for rows.Next() {
@@ -195,10 +210,14 @@ func InitWidgets() error {
 		}
 
 		switch widget.Side {
+		case "leftOfNav":
+			leftOfNavWidgets = append(leftOfNavWidgets, widget)
+		case "rightOfNav":
+			rightOfNavWidgets = append(rightOfNavWidgets, widget)
 		case "left":
-			leftWidgets = append(leftWidgets, widget)
+			leftSidebarWidgets = append(leftSidebarWidgets, widget)
 		case "right":
-			rightWidgets = append(rightWidgets, widget)
+			rightSidebarWidgets = append(rightSidebarWidgets, widget)
 		case "footer":
 			footerWidgets = append(footerWidgets, widget)
 		}
@@ -208,12 +227,18 @@ func InitWidgets() error {
 		return err
 	}
 
+	// TODO: Let themes set default values for widget docks, and let them lock in particular places with their stuff, e.g. leftOfNav and rightOfNav
+
 	widgetUpdateMutex.Lock()
-	Docks.LeftSidebar = leftWidgets
-	Docks.RightSidebar = rightWidgets
+	Docks.LeftOfNav = leftOfNavWidgets
+	Docks.RightOfNav = rightOfNavWidgets
+	Docks.LeftSidebar = leftSidebarWidgets
+	Docks.RightSidebar = rightSidebarWidgets
 	Docks.Footer = footerWidgets
 	widgetUpdateMutex.Unlock()
 
+	DebugLog("Docks.LeftOfNav", Docks.LeftOfNav)
+	DebugLog("Docks.RightOfNav", Docks.RightOfNav)
 	DebugLog("Docks.LeftSidebar", Docks.LeftSidebar)
 	DebugLog("Docks.RightSidebar", Docks.RightSidebar)
 	DebugLog("Docks.Footer", Docks.Footer)

@@ -304,6 +304,8 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 			return common.LocalError("Something went wrong, perhaps the forum got deleted?", w, r, user)
 		case common.ErrNoTitle:
 			return common.LocalError("This topic doesn't have a title", w, r, user)
+		case common.ErrLongTitle:
+			return common.LocalError("The length of the title is too long, max: "+strconv.Itoa(common.Config.MaxTopicTitleLength), w, r, user)
 		case common.ErrNoBody:
 			return common.LocalError("This topic doesn't have a body", w, r, user)
 		}
@@ -469,7 +471,16 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	err = topic.Update(r.PostFormValue("topic_name"), r.PostFormValue("topic_content"))
+	// TODO: Avoid duplicating this across this route and the topic creation route
 	if err != nil {
+		switch err {
+		case common.ErrNoTitle:
+			return common.LocalErrorJSQ("This topic doesn't have a title", w, r, user, isJs)
+		case common.ErrLongTitle:
+			return common.LocalErrorJSQ("The length of the title is too long, max: "+strconv.Itoa(common.Config.MaxTopicTitleLength), w, r, user, isJs)
+		case common.ErrNoBody:
+			return common.LocalErrorJSQ("This topic doesn't have a body", w, r, user, isJs)
+		}
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 

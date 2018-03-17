@@ -14,6 +14,7 @@ import (
 // TODO: Add some sort of update method
 var Users UserStore
 var ErrAccountExists = errors.New("this username is already in use")
+var ErrLongUsername = errors.New("this username is too long")
 
 type UserStore interface {
 	DirtyGet(id int) *User
@@ -203,6 +204,13 @@ func (mus *DefaultUserStore) Exists(id int) bool {
 
 // TODO: Change active to a bool?
 func (mus *DefaultUserStore) Create(username string, password string, email string, group int, active bool) (int, error) {
+	// TODO: Strip spaces?
+
+	// ? This number might be a little screwy with Unicode, but it's the only consistent thing we have, as Unicode characters can be any number of bytes in theory?
+	if len(username) > Config.MaxUsernameLength {
+		return 0, ErrLongUsername
+	}
+
 	// Is this username already taken..?
 	err := mus.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {

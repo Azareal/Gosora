@@ -147,7 +147,7 @@ func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("topics", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"tid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"title", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"title", "varchar", 100, false, false, ""}, // TODO: Increase the max length to 200?
 			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"parsed_content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},

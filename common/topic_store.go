@@ -20,6 +20,7 @@ import (
 // ? - Should we add stick, lock, unstick, and unlock methods? These might be better on the Topics not the TopicStore
 var Topics TopicStore
 var ErrNoTitle = errors.New("This message is missing a title")
+var ErrLongTitle = errors.New("The title is too long")
 var ErrNoBody = errors.New("This message is missing a body")
 
 type TopicStore interface {
@@ -122,7 +123,11 @@ func (mts *DefaultTopicStore) Exists(id int) bool {
 func (mts *DefaultTopicStore) Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error) {
 	topicName = strings.TrimSpace(topicName)
 	if topicName == "" {
-		return 0, ErrNoBody
+		return 0, ErrNoTitle
+	}
+	// ? This number might be a little screwy with Unicode, but it's the only consistent thing we have, as Unicode characters can be any number of bytes in theory?
+	if len(topicName) > Config.MaxTopicTitleLength {
+		return 0, ErrLongTitle
 	}
 
 	content = strings.TrimSpace(content)

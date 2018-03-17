@@ -8,6 +8,7 @@ var LangViewCounter *DefaultLangViewCounter
 
 var langCodes = []string{
 	"unknown",
+	"none",
 	"af",
 	"ar",
 	"az",

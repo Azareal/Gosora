@@ -4,6 +4,7 @@ import (
 	"html"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"../common"
@@ -140,6 +141,8 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	uid, err := common.Users.Create(username, password, email, group, active)
 	if err == common.ErrAccountExists {
 		return common.LocalError("This username isn't available. Try another.", w, r, user)
+	} else if err == common.ErrLongUsername {
+		return common.LocalError("The username is too long, max: "+strconv.Itoa(common.Config.MaxUsernameLength), w, r, user)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}

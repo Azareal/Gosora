@@ -1,4 +1,4 @@
-package main
+package routes
 
 import (
 	"errors"
@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"strings"
 
-	"./common"
+	"../common"
 )
 
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?
 // TODO: Add an API so that plugins can register disallowed areas. E.g. /guilds/join for plugin_guilds
-func routeRobotsTxt(w http.ResponseWriter, r *http.Request) common.RouteError {
+func RobotsTxt(w http.ResponseWriter, r *http.Request) common.RouteError {
 	// TODO: Do we have to put * or something at the end of the paths?
 	_, _ = w.Write([]byte(`User-agent: *
 Disallow: /panel/*
@@ -31,7 +31,7 @@ func writeXMLHeader(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO: Keep track of when a sitemap was last modifed and add a lastmod element for it
-func routeSitemapXml(w http.ResponseWriter, r *http.Request) common.RouteError {
+func SitemapXml(w http.ResponseWriter, r *http.Request) common.RouteError {
 	var sslBit string
 	if common.Site.EnableSsl {
 		sslBit = "s"
@@ -61,13 +61,13 @@ type FuzzyRoute struct {
 // TODO: ^-- Make sure that the API is concurrent
 // TODO: Add a social group sitemap
 var sitemapRoutes = map[string]func(http.ResponseWriter, *http.Request) common.RouteError{
-	"forums.xml": routeSitemapForums,
-	"topics.xml": routeSitemapTopics,
+	"forums.xml": SitemapForums,
+	"topics.xml": SitemapTopics,
 }
 
 // TODO: Use a router capable of parsing this rather than hard-coding the logic in
 var fuzzySitemapRoutes = map[string]FuzzyRoute{
-	"topics_page_": FuzzyRoute{"topics_page_(%d).xml", routeSitemapTopic},
+	"topics_page_": FuzzyRoute{"topics_page_(%d).xml", SitemapTopic},
 }
 
 func sitemapSwitch(w http.ResponseWriter, r *http.Request) common.RouteError {
@@ -93,7 +93,7 @@ func sitemapSwitch(w http.ResponseWriter, r *http.Request) common.RouteError {
 	return route(w, r)
 }
 
-func routeSitemapForums(w http.ResponseWriter, r *http.Request) common.RouteError {
+func SitemapForums(w http.ResponseWriter, r *http.Request) common.RouteError {
 	var sslBit string
 	if common.Site.EnableSsl {
 		sslBit = "s"
@@ -127,7 +127,7 @@ func routeSitemapForums(w http.ResponseWriter, r *http.Request) common.RouteErro
 
 // TODO: Add a global ratelimit. 10 50MB files (smaller if compressed better) per minute?
 // ? We might have problems with banned users, if they have fewer ViewTopic permissions than guests as they'll be able to see this list. Then again, a banned user could just logout to see it
-func routeSitemapTopics(w http.ResponseWriter, r *http.Request) common.RouteError {
+func SitemapTopics(w http.ResponseWriter, r *http.Request) common.RouteError {
 	var sslBit string
 	if common.Site.EnableSsl {
 		sslBit = "s"
@@ -169,7 +169,7 @@ func routeSitemapTopics(w http.ResponseWriter, r *http.Request) common.RouteErro
 	return nil
 }
 
-func routeSitemapTopic(w http.ResponseWriter, r *http.Request, page int) common.RouteError {
+func SitemapTopic(w http.ResponseWriter, r *http.Request, page int) common.RouteError {
 	/*var sslBit string
 	if common.Site.EnableSsl {
 		sslBit = "s"
@@ -215,7 +215,7 @@ func routeSitemapTopic(w http.ResponseWriter, r *http.Request, page int) common.
 	return nil
 }
 
-func routeSitemapUsers(w http.ResponseWriter, r *http.Request) common.RouteError {
+func SitemapUsers(w http.ResponseWriter, r *http.Request) common.RouteError {
 	writeXMLHeader(w, r)
 	w.Write([]byte("<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"))
 	return nil

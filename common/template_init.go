@@ -34,11 +34,11 @@ func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) error {
 }
 
 // nolint
-var Template_topic_handle func(TopicPage, http.ResponseWriter) error = interpreted_topic_template
-var Template_topic_alt_handle func(TopicPage, http.ResponseWriter) error = interpreted_topic_template
+var Template_topic_handle = interpreted_topic_template
+var Template_topic_alt_handle = interpreted_topic_template
 
 // nolint
-var Template_topics_handle func(TopicsPage, http.ResponseWriter) error = func(pi TopicsPage, w http.ResponseWriter) error {
+var Template_topics_handle = func(pi TopicsPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["topics"]
 	if !ok {
 		mapping = "topics"
@@ -47,7 +47,7 @@ var Template_topics_handle func(TopicsPage, http.ResponseWriter) error = func(pi
 }
 
 // nolint
-var Template_forum_handle func(ForumPage, http.ResponseWriter) error = func(pi ForumPage, w http.ResponseWriter) error {
+var Template_forum_handle = func(pi ForumPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["forum"]
 	if !ok {
 		mapping = "forum"
@@ -56,7 +56,7 @@ var Template_forum_handle func(ForumPage, http.ResponseWriter) error = func(pi F
 }
 
 // nolint
-var Template_forums_handle func(ForumsPage, http.ResponseWriter) error = func(pi ForumsPage, w http.ResponseWriter) error {
+var Template_forums_handle = func(pi ForumsPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["forums"]
 	if !ok {
 		mapping = "forums"
@@ -65,7 +65,7 @@ var Template_forums_handle func(ForumsPage, http.ResponseWriter) error = func(pi
 }
 
 // nolint
-var Template_profile_handle func(ProfilePage, http.ResponseWriter) error = func(pi ProfilePage, w http.ResponseWriter) error {
+var Template_profile_handle = func(pi ProfilePage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["profile"]
 	if !ok {
 		mapping = "profile"
@@ -74,7 +74,7 @@ var Template_profile_handle func(ProfilePage, http.ResponseWriter) error = func(
 }
 
 // nolint
-var Template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) error = func(pi CreateTopicPage, w http.ResponseWriter) error {
+var Template_create_topic_handle = func(pi CreateTopicPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["create_topic"]
 	if !ok {
 		mapping = "create_topic"
@@ -83,7 +83,7 @@ var Template_create_topic_handle func(CreateTopicPage, http.ResponseWriter) erro
 }
 
 // nolint
-var Template_login_handle func(Page, http.ResponseWriter) error = func(pi Page, w http.ResponseWriter) error {
+var Template_login_handle = func(pi Page, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["login"]
 	if !ok {
 		mapping = "login"
@@ -92,7 +92,7 @@ var Template_login_handle func(Page, http.ResponseWriter) error = func(pi Page, 
 }
 
 // nolint
-var Template_register_handle func(Page, http.ResponseWriter) error = func(pi Page, w http.ResponseWriter) error {
+var Template_register_handle = func(pi Page, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["register"]
 	if !ok {
 		mapping = "register"
@@ -101,7 +101,7 @@ var Template_register_handle func(Page, http.ResponseWriter) error = func(pi Pag
 }
 
 // nolint
-var Template_error_handle func(Page, http.ResponseWriter) error = func(pi Page, w http.ResponseWriter) error {
+var Template_error_handle = func(pi Page, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["error"]
 	if !ok {
 		mapping = "error"
@@ -110,7 +110,7 @@ var Template_error_handle func(Page, http.ResponseWriter) error = func(pi Page, 
 }
 
 // nolint
-var Template_ip_search_handle func(IPSearchPage, http.ResponseWriter) error = func(pi IPSearchPage, w http.ResponseWriter) error {
+var Template_ip_search_handle = func(pi IPSearchPage, w http.ResponseWriter) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["ip_search"]
 	if !ok {
 		mapping = "ip_search"

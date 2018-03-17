@@ -158,6 +158,8 @@ func main() {
 	mapIt("routeDynamic")
 	mapIt("routeUploads")
 	mapIt("routes.StaticFile")
+	mapIt("routes.RobotsTxt")
+	mapIt("routes.SitemapXml")
 	mapIt("BadRoute")
 	tmplVars.AllRouteNames = allRouteNames
 	tmplVars.AllRouteMap = allRouteMap
@@ -567,6 +569,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		lLang := strings.Split(lang,"-")
 		common.DebugDetail("lLang:", lLang)
 		counters.LangViewCounter.Bump(lLang[0])
+	} else {
+		counters.LangViewCounter.Bump("none")
 	}
 
 	referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P
@@ -612,13 +616,15 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
-					err = routeRobotsTxt(w,req) // TODO: Count these views
+					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.RobotsTxt"}})
+					err = routes.RobotsTxt(w,req)
 					if err != nil {
 						router.handleError(err,w,req,user)
 					}
 					return
 				/*case "sitemap.xml":
-					err = routeSitemapXml(w,req) // TODO: Count these views
+					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.SitemapXml"}})
+					err = routes.SitemapXml(w,req)
 					if err != nil {
 						router.handleError(err,w,req,user)
 					}

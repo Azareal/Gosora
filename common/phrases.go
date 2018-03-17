@@ -46,6 +46,7 @@ type LanguagePack struct {
 	OperatingSystems map[string]string
 	HumanLanguages   map[string]string
 	Errors           map[string]map[string]string // map[category]map[name]value
+	NoticePhrases    map[string]string
 	PageTitles       map[string]string
 	TmplPhrases      map[string]string
 	CSSPhrases       map[string]string
@@ -202,6 +203,14 @@ func GetErrorPhrase(category string, name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).Errors[category][name]
 	if !ok {
 		return getPhrasePlaceholder("error", name)
+	}
+	return res
+}
+
+func GetNoticePhrase(name string) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).NoticePhrases[name]
+	if !ok {
+		return getPhrasePlaceholder("notices", name)
 	}
 	return res
 }

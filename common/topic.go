@@ -254,6 +254,17 @@ func (topic *Topic) Delete() error {
 // TODO: Write tests for this
 func (topic *Topic) Update(name string, content string) error {
 	name = html.EscapeString(strings.Replace(html.UnescapeString(name), "\n", "", -1))
+
+	// TODO: Stop duplicating this logic?
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ErrNoTitle
+	}
+	// ? This number might be a little screwy with Unicode, but it's the only consistent thing we have, as Unicode characters can be any number of bytes in theory?
+	if len(name) > Config.MaxTopicTitleLength {
+		return ErrLongTitle
+	}
+
 	content = PreparseMessage(html.UnescapeString(content))
 	parsedContent := ParseMessage(content, topic.ParentID, "forums")
 	_, err := topicStmts.edit.Exec(name, content, parsedContent, topic.ID)

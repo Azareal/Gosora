@@ -143,6 +143,8 @@
 	},
 
 	"HumanLanguages": {
+		"unknown":"Unknown",
+		"none":"None",
 		"af":"Afrikaans",
 		"ar":"Arabic",
 		"az":"Azeri (Latin)",
@@ -227,6 +229,11 @@
 		"zu":"Zulu"
 	},
 
+	"NoticePhrases": {
+		"account_banned":"Your account has been suspended. Some of your permissions may have been revoked.",
+		"account_inactive":"Your account hasn't been activated yet. Some features may remain unavailable until it is."
+	},
+
 	"TmplPhrases": {
 		"menu_forums_tooltip":"Forum List",
 		"menu_forums_aria":"The Forum list",
@@ -304,7 +311,7 @@
 		"quick_topic_avatar_tooltip":"Your Avatar",
 		"quick_topic_avatar_alt":"Your Avatar",
 		"quick_topic_whatsup":"What's up?",
-		"quick_topic_placeholder":"Insert post here",
+		"quick_topic_content_placeholder":"Insert post here",
 		"quick_topic_add_poll_option":"Add new poll option",
 		"quick_topic_create_topic_button":"Create Topic",
 		"quick_topic_add_poll_button":"Add Poll",
