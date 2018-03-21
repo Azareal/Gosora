@@ -28,6 +28,9 @@ go get -u github.com/bamiaux/rez
 echo "Installing fsnotify"
 go get -u github.com/fsnotify/fsnotify
 
+echo "Installing Go Git"
+go get -u gopkg.in/src-d/go-git.v4/...
+
 
 echo "Building the installer"
 cd ./install

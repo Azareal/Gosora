@@ -129,12 +129,12 @@ func routeProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user 
 	if err != nil {
 		return common.LocalError("Invalid UID", w, r, user)
 	}
-	
+
 	profileOwner, err := common.Users.Get(uid)
 	if err == ErrNoRows {
 		return common.LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
 	} else if err != nil {
-		return common.InternalError(err,w,r)
+		return common.InternalError(err, w, r)
 	}
 
 	content := common.PreparseMessage(r.PostFormValue("reply-content"))
@@ -278,7 +278,7 @@ func routeAccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user
 	// Log the user out as a safety precaution
 	common.Auth.ForceLogout(user.ID)
 
-	headerVars.NoticeList = append(headerVars.NoticeList, "Your password was successfully updated")
+	headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_password_updated"))
 	pi := common.Page{"Edit Password", user, headerVars, tList, nil}
 	if common.RunPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
 		return nil
@@ -367,7 +367,7 @@ func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c
 		return common.InternalError(err, w, r)
 	}
 	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
-	headerVars.NoticeList = append(headerVars.NoticeList, "Your avatar was successfully updated")
+	headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_avatar_updated"))
 
 	pi := common.Page{"Edit Avatar", user, headerVars, tList, nil}
 	if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
@@ -410,7 +410,7 @@ func routeAccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user
 	}
 	user.Name = newUsername
 
-	headerVars.NoticeList = append(headerVars.NoticeList, "Your username was successfully updated")
+	headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_username_updated"))
 	pi := common.Page{"Edit Username", user, headerVars, tList, nil}
 	if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
 		return nil
@@ -461,7 +461,7 @@ func routeAccountEditEmail(w http.ResponseWriter, r *http.Request, user common.U
 		emailList = append(emailList, email)
 	}
 	if !common.Site.EnableEmails {
-		headerVars.NoticeList = append(headerVars.NoticeList, "The mail system is currently disabled.")
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_mail_disabled"))
 	}
 
 	pi := common.Page{"Email Manager", user, headerVars, emailList, nil}
@@ -531,9 +531,9 @@ func routeAccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, us
 	}
 
 	if !common.Site.EnableEmails {
-		headerVars.NoticeList = append(headerVars.NoticeList, "The mail system is currently disabled.")
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_mail_disabled"))
 	}
-	headerVars.NoticeList = append(headerVars.NoticeList, "Your email was successfully verified")
+	headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_mail_verify_success"))
 	pi := common.Page{"Email Manager", user, headerVars, emailList, nil}
 	if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
 		return nil

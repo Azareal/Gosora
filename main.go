@@ -7,6 +7,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -216,6 +217,16 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	buildTemplates := flag.Bool("build-templates", false, "build the templates")
+	flag.Parse()
+	if *buildTemplates {
+		err = common.CompileTemplates()
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 
 	err = afterDBInit()
 	if err != nil {

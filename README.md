@@ -50,7 +50,7 @@ It's entirely possible that your host might already have MySQL, so you might be 
 
 cd to the directory / folder the code is in. In other words, type cd followed by the location of the code and it should jump there.
 
-Run ./install-gosora-linux
+Run ./install-linux
 
 Follow the instructions shown on the screen.
 
@@ -65,7 +65,7 @@ Follow the instructions shown on the screen.
 
 *Linux*
 
-In the same directory you installed it, you simply have to type: ./run-gosora-linux
+In the same directory you installed it, you simply have to type: ./run-linux
 
 *Windows*
 
@@ -73,13 +73,13 @@ Run run.bat
 
 *Updating Dependencies*
 
-You can update the dependencies which Gosora relies on by running update-deps.bat on Windows or ./update-deps-linux on Linux. These dependencies do not include Go or MySQL.
+You can update the dependencies which Gosora relies on by running update-deps.bat on Windows or ./update-deps-linux on Linux. These dependencies do not include Go or MySQL, those have to be updated separately.
 
 We're also looking into ways to distribute ready made executables for Windows. While this is not a complicated endeavour, the configuration settings currently get built with the rest of the program for speed, and we will likely have to change this.
 
 With the introduction of the new settings system, we will begin moving some of the less critical settings out of the configuration file, and will likely have a config.xml or config.ini in the future to store the critical settings in.
 
-You might have to run run.bat or ./run-gosora-linux twice after changing a template to make sure the templates are compiled properly. We'll be resolving this issue while rolling out the new compiled templates system to the rest of the routes.
+You'll need to restart the server every-time you change a template, e.g. with `run.bat` or `./run-linux`
 
 Several important features for saving memory in the templates system may have to be implemented before the new compiled template system is rolled out to every route. These features are coming fairly soon, but not before the higher priority items.
 
@@ -89,6 +89,8 @@ Several important features for saving memory in the templates system may have to
 An example of running the commands directly on Windows. We're looking into reducing the number of commands you need to type, for instance, you could invoke the update-deps batch or shell files to install / update all of the dependencies instead of typing each `get get -u`
 
 Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms. Additionally, Linux doesn't require `StackExchange/wmi` or ``/x/sys/windows`
+
+You also need to substitute the `gosora.exe` bits for `./Gosora` on Linux. For more info, you might want to take a gander inside the `./run-linux` and `./install-linux` shell files to see how they're implemented.
 
 ```bash
 git clone https://github.com/Azareal/Gosora
@@ -113,6 +115,8 @@ go get -u github.com/denisenkom/go-mssqldb
 
 go get -u github.com/fsnotify/fsnotify
 
+go get -u gopkg.in/src-d/go-git.v4/...
+
 
 go generate
 
@@ -129,6 +133,8 @@ go build -o gosora.exe
 go build ./install
 
 install.exe
+
+gosora.exe -build-templates
 
 gosora.exe
 ```

@@ -198,11 +198,11 @@ func routePanelForums(w http.ResponseWriter, r *http.Request, user common.User) 
 	}
 
 	if r.FormValue("created") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, "The forum was successfully created")
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("panel_forum_created"))
 	} else if r.FormValue("deleted") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, "The forum was successfully deleted")
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("panel_forum_deleted"))
 	} else if r.FormValue("updated") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, "The forum was successfully updated")
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("panel_forum_updated"))
 	}
 
 	pi := common.PanelPage{common.GetTitlePhrase("panel_forums"), user, headerVars, stats, "forums", forumList, nil}
@@ -335,7 +335,7 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 	}
 
 	if r.FormValue("updated") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, "The forum was successfully updated")
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("panel_forum_updated"))
 	}
 
 	pi := common.PanelEditForumPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
@@ -501,7 +501,7 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 	addNameLangToggle("MoveTopic", forumPerms.MoveTopic)
 
 	if r.FormValue("updated") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, "The forum permissions were successfully updated")
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("panel_forums_perms_updated"))
 	}
 
 	pi := common.PanelEditForumGroupPage{common.GetTitlePhrase("panel_edit_forum"), user, headerVars, stats, "forums", forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
@@ -1794,7 +1794,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	if r.FormValue("updated") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, "The user was successfully updated")
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("panel_user_updated"))
 	}
 
 	pi := common.PanelPage{common.GetTitlePhrase("panel_edit_user"), user, headerVars, stats, "users", groupList, targetUser}

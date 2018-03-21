@@ -1,11 +1,13 @@
 language: go
 go:
   - 1.9
+  - 1.10
   - master
 before_install:
   - cd $HOME
   - git clone https://github.com/Azareal/Gosora
   - cd Gosora
+  - mv config_default.noparse config.go
   - chmod 755 ./update-deps-linux
   - chmod 755 ./run-linux-tests
   - ./update-deps-linux

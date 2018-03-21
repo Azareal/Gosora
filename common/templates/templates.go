@@ -109,9 +109,14 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	c.expectsInt = expectsInt
 	holdreflect := reflect.ValueOf(expectsInt)
 
-	res, err := ioutil.ReadFile(fileDir + name)
+	res, err := ioutil.ReadFile(fileDir + "overrides/" + name)
 	if err != nil {
-		return "", err
+		c.detail("override path: ", fileDir+"overrides/"+name)
+		c.detail("override err: ", err)
+		res, err = ioutil.ReadFile(fileDir + name)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	content := string(res)
@@ -125,14 +130,14 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	if err != nil {
 		return "", err
 	}
-	c.log(name)
+	c.detail(name)
 
 	out = ""
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
 	c.templateList = map[string]*parse.Tree{fname: tree}
 	varholder := "tmpl_" + fname + "_vars"
 
-	c.log(c.templateList)
+	c.detail(c.templateList)
 	c.localVars = make(map[string]map[string]VarItemReflect)
 	c.localVars[fname] = make(map[string]VarItemReflect)
 	c.localVars[fname]["."] = VarItemReflect{".", varholder, holdreflect}
@@ -203,16 +208,16 @@ w.Write([]byte(`, " + ", -1)
 		}
 		fmt.Println(" ")
 	}
-	c.log("Output!")
-	c.log(fout)
+	c.detail("Output!")
+	c.detail(fout)
 	return fout, nil
 }
 
 func (c *CTemplateSet) rootIterate(tree *parse.Tree, varholder string, holdreflect reflect.Value, fname string) (out string) {
-	c.log(tree.Root)
+	c.detail(tree.Root)
 	treeLength := len(tree.Root.Nodes)
 	for index, node := range tree.Root.Nodes {
-		c.log("Node:", node.String())
+		c.detail("Node:", node.String())
 		c.previousNode = c.currentNode
 		c.currentNode = node.Type()
 		if treeLength != (index + 1) {
@@ -224,10 +229,10 @@ func (c *CTemplateSet) rootIterate(tree *parse.Tree, varholder string, holdrefle
 }
 
 func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value, templateName string, node parse.Node) (out string) {
-	c.log("in compileSwitch")
+	c.detail("in compileSwitch")
 	switch node := node.(type) {
 	case *parse.ActionNode:
-		c.log("Action Node")
+		c.detail("Action Node")
 		if node.Pipe == nil {
 			break
 		}
@@ -235,30 +240,30 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 			out += c.compileSubswitch(varholder, holdreflect, templateName, cmd)
 		}
 	case *parse.IfNode:
-		c.log("If Node:")
-		c.log("node.Pipe", node.Pipe)
+		c.detail("If Node:")
+		c.detail("node.Pipe", node.Pipe)
 		var expr string
 		for _, cmd := range node.Pipe.Cmds {
-			c.log("If Node Bit:", cmd)
-			c.log("Bit Type:", reflect.ValueOf(cmd).Type().Name())
+			c.detail("If Node Bit:", cmd)
+			c.detail("Bit Type:", reflect.ValueOf(cmd).Type().Name())
 			expr += c.compileVarswitch(varholder, holdreflect, templateName, cmd)
-			c.log("Expression Step:", c.compileVarswitch(varholder, holdreflect, templateName, cmd))
+			c.detail("Expression Step:", c.compileVarswitch(varholder, holdreflect, templateName, cmd))
 		}
 
-		c.log("Expression:", expr)
+		c.detail("Expression:", expr)
 		c.previousNode = c.currentNode
 		c.currentNode = parse.NodeList
 		c.nextNode = -1
 		out = "if " + expr + " {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.List) + "}"
 		if node.ElseList == nil {
-			c.log("Selected Branch 1")
+			c.detail("Selected Branch 1")
 			return out + "\n"
 		}
 
-		c.log("Selected Branch 2")
+		c.detail("Selected Branch 2")
 		return out + " else {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.ElseList) + "}\n"
 	case *parse.ListNode:
-		c.log("List Node")
+		c.detail("List Node")
 		for _, subnode := range node.Nodes {
 			out += c.compileSwitch(varholder, holdreflect, templateName, subnode)
 		}
@@ -291,15 +296,15 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 }
 
 func (c *CTemplateSet) compileRangeNode(varholder string, holdreflect reflect.Value, templateName string, node *parse.RangeNode) (out string) {
-	c.log("Range Node!")
-	c.log(node.Pipe)
+	c.detail("Range Node!")
+	c.detail(node.Pipe)
 	var outVal reflect.Value
 	for _, cmd := range node.Pipe.Cmds {
-		c.log("Range Bit:", cmd)
+		c.detail("Range Bit:", cmd)
 		out, outVal = c.compileReflectSwitch(varholder, holdreflect, templateName, cmd)
 	}
-	c.log("Returned:", out)
-	c.log("Range Kind Switch!")
+	c.detail("Returned:", out)
+	c.detail("Range Kind Switch!")
 
 	switch outVal.Kind() {
 	case reflect.Map:
@@ -308,7 +313,7 @@ func (c *CTemplateSet) compileRangeNode(varholder string, holdreflect reflect.Va
 			item = outVal.MapIndex(key)
 		}
 
-		c.log("Range item:", item)
+		c.detail("Range item:", item)
 		if !item.IsValid() {
 			panic("item" + "^\n" + "Invalid map. Maybe, it doesn't have any entries for the template engine to analyse?")
 		}
@@ -334,11 +339,11 @@ func (c *CTemplateSet) compileRangeNode(varholder string, holdreflect reflect.Va
 }
 
 func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
-	c.log("in compileSubswitch")
+	c.detail("in compileSubswitch")
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
-		c.log("Field Node:", n.Ident)
+		c.detail("Field Node:", n.Ident)
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Variable declarations are coming soon! */
 		cur := holdreflect
 
@@ -351,12 +356,12 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 		// ! Might not work so well for non-struct pointers
 		skipPointers := func(cur reflect.Value, id string) reflect.Value {
 			if cur.Kind() == reflect.Ptr {
-				c.log("Looping over pointer")
+				c.detail("Looping over pointer")
 				for cur.Kind() == reflect.Ptr {
 					cur = cur.Elem()
 				}
-				c.log("Data Kind:", cur.Kind().String())
-				c.log("Field Bit:", id)
+				c.detail("Data Kind:", cur.Kind().String())
+				c.detail("Field Bit:", id)
 			}
 			return cur
 		}
@@ -364,8 +369,8 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 		var assLines string
 		var multiline = false
 		for _, id := range n.Ident {
-			c.log("Data Kind:", cur.Kind().String())
-			c.log("Field Bit:", id)
+			c.detail("Data Kind:", cur.Kind().String())
+			c.detail("Field Bit:", id)
 			cur = skipPointers(cur, id)
 
 			if !cur.IsValid() {
@@ -382,7 +387,7 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 				panic(varbit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 			}
 
-			c.log("in-loop varbit: " + varbit)
+			c.detail("in-loop varbit: " + varbit)
 			if cur.Kind() == reflect.Map {
 				cur = cur.MapIndex(reflect.ValueOf(id))
 				varbit += "[\"" + id + "\"]"
@@ -427,7 +432,7 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 				}
 				varbit += cur.Type().Name() + ")"
 			}
-			c.log("End Cycle: ", varbit)
+			c.detail("End Cycle: ", varbit)
 		}
 
 		if multiline {
@@ -446,20 +451,20 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 		}
 		return out
 	case *parse.DotNode:
-		c.log("Dot Node:", node.String())
+		c.detail("Dot Node:", node.String())
 		return c.compileVarsub(varholder, holdreflect, "")
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.VariableNode:
-		c.log("Variable Node:", n.String())
-		c.log(n.Ident)
+		c.detail("Variable Node:", n.String())
+		c.detail(n.Ident)
 		varname, reflectVal := c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
 		return c.compileVarsub(varname, reflectVal, "")
 	case *parse.StringNode:
 		return n.Quoted
 	case *parse.IdentifierNode:
-		c.log("Identifier Node:", node)
-		c.log("Identifier Node Args:", node.Args)
+		c.detail("Identifier Node:", node)
+		c.detail("Identifier Node Args:", node.Args)
 		out, outval, lit := c.compileIdentSwitch(varholder, holdreflect, templateName, node)
 		if lit {
 			return out
@@ -471,7 +476,7 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 }
 
 func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
-	c.log("in compileVarswitch")
+	c.detail("in compileVarswitch")
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
@@ -485,26 +490,26 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
 		return c.compileBoolsub(n.String(), varholder, templateName, holdreflect)
 	case *parse.ChainNode:
-		c.log("Chain Node:", n.Node)
-		c.log("Node Args:", node.Args)
+		c.detail("Chain Node:", n.Node)
+		c.detail("Node Args:", node.Args)
 	case *parse.IdentifierNode:
-		c.log("Identifier Node:", node)
-		c.log("Node Args:", node.Args)
+		c.detail("Identifier Node:", node)
+		c.detail("Node Args:", node.Args)
 		return c.compileIdentSwitchN(varholder, holdreflect, templateName, node)
 	case *parse.DotNode:
 		return varholder
 	case *parse.VariableNode:
-		c.log("Variable Node:", n.String())
-		c.log("Node Identifier:", n.Ident)
+		c.detail("Variable Node:", n.String())
+		c.detail("Node Identifier:", n.Ident)
 		out, _ = c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.PipeNode:
-		c.log("Pipe Node!")
-		c.log(n)
-		c.log("Node Args:", node.Args)
+		c.detail("Pipe Node!")
+		c.detail(n)
+		c.detail("Node Args:", node.Args)
 		out += c.compileIdentSwitchN(varholder, holdreflect, templateName, node)
-		c.log("Out:", out)
+		c.detail("Out:", out)
 	default:
 		return c.unknownNode(firstWord)
 	}
@@ -518,15 +523,15 @@ func (c *CTemplateSet) unknownNode(node parse.Node) (out string) {
 }
 
 func (c *CTemplateSet) compileIdentSwitchN(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
-	c.log("in compileIdentSwitchN")
+	c.detail("in compileIdentSwitchN")
 	out, _, _ = c.compileIdentSwitch(varholder, holdreflect, templateName, node)
 	return out
 }
 
 func (c *CTemplateSet) dumpSymbol(pos int, node *parse.CommandNode, symbol string) {
-	c.log("symbol: ", symbol)
-	c.log("node.Args[pos + 1]", node.Args[pos+1])
-	c.log("node.Args[pos + 2]", node.Args[pos+2])
+	c.detail("symbol: ", symbol)
+	c.detail("node.Args[pos + 1]", node.Args[pos+1])
+	c.detail("node.Args[pos + 2]", node.Args[pos+2])
 }
 
 func (c *CTemplateSet) compareFunc(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, compare string) (out string) {
@@ -552,7 +557,7 @@ func (c *CTemplateSet) simpleMath(varholder string, holdreflect reflect.Value, t
 }
 
 func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, symbol string) (pos2 int, out string) {
-	c.logf("Building %s function", symbol)
+	c.detailf("Building %s function", symbol)
 	if pos == 0 {
 		fmt.Println("pos:", pos)
 		panic(symbol + " is missing a left operand")
@@ -572,24 +577,24 @@ func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, 
 	}
 	out = left + " " + symbol + " " + right
 
-	c.log("Left operand:", node.Args[pos-1])
-	c.log("Right operand:", node.Args[pos+1])
+	c.detail("Left operand:", node.Args[pos-1])
+	c.detail("Right operand:", node.Args[pos+1])
 	if !funcExists {
 		pos++
 	}
-	c.log("pos:", pos)
-	c.log("len(node.Args):", len(node.Args))
+	c.detail("pos:", pos)
+	c.detail("len(node.Args):", len(node.Args))
 
 	return pos, out
 }
 
 func (c *CTemplateSet) compileIdentSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, val reflect.Value, literal bool) {
-	c.log("in compileIdentSwitch")
+	c.detail("in compileIdentSwitch")
 ArgLoop:
 	for pos := 0; pos < len(node.Args); pos++ {
 		id := node.Args[pos]
-		c.log("pos:", pos)
-		c.log("ID:", id)
+		c.detail("pos:", pos)
+		c.detail("ID:", id)
 		switch id.String() {
 		case "not":
 			out += "!"
@@ -683,7 +688,7 @@ ArgLoop:
 			literal = true
 			break ArgLoop
 		default:
-			c.log("Variable!")
+			c.detail("Variable!")
 			if len(node.Args) > (pos + 1) {
 				nextNode := node.Args[pos+1].String()
 				if nextNode == "or" || nextNode == "and" {
@@ -697,7 +702,7 @@ ArgLoop:
 }
 
 func (c *CTemplateSet) compileReflectSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, outVal reflect.Value) {
-	c.log("in compileReflectSwitch")
+	c.detail("in compileReflectSwitch")
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
@@ -710,8 +715,8 @@ func (c *CTemplateSet) compileReflectSwitch(varholder string, holdreflect reflec
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
 		return c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
 	case *parse.ChainNode:
-		c.log("Chain Node:", n.Node)
-		c.log("node.Args:", node.Args)
+		c.detail("Chain Node:", n.Node)
+		c.detail("node.Args:", node.Args)
 	case *parse.DotNode:
 		return varholder, holdreflect
 	case *parse.NilNode:
@@ -723,13 +728,13 @@ func (c *CTemplateSet) compileReflectSwitch(varholder string, holdreflect reflec
 }
 
 func (c *CTemplateSet) compileIfVarsubN(varname string, varholder string, templateName string, cur reflect.Value) (out string) {
-	c.log("in compileIfVarsubN")
+	c.detail("in compileIfVarsubN")
 	out, _ = c.compileIfVarsub(varname, varholder, templateName, cur)
 	return out
 }
 
 func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templateName string, cur reflect.Value) (out string, val reflect.Value) {
-	c.log("in compileIfVarsub")
+	c.detail("in compileIfVarsub")
 	if varname[0] != '.' && varname[0] != '$' {
 		return varname, cur
 	}
@@ -757,22 +762,22 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 	}
 	bits[0] = strings.TrimPrefix(bits[0], "$")
 
-	c.log("Cur Kind:", cur.Kind())
-	c.log("Cur Type:", cur.Type().Name())
+	c.detail("Cur Kind:", cur.Kind())
+	c.detail("Cur Type:", cur.Type().Name())
 	for _, bit := range bits {
-		c.log("Variable Field:", bit)
+		c.detail("Variable Field:", bit)
 		if bit == "" {
 			continue
 		}
 
 		// TODO: Fix this up so that it works for regular pointers and not just struct pointers. Ditto for the other cur.Kind() == reflect.Ptr we have in this file
 		if cur.Kind() == reflect.Ptr {
-			c.log("Looping over pointer")
+			c.detail("Looping over pointer")
 			for cur.Kind() == reflect.Ptr {
 				cur = cur.Elem()
 			}
-			c.log("Data Kind:", cur.Kind().String())
-			c.log("Field Bit:", bit)
+			c.detail("Data Kind:", cur.Kind().String())
+			c.detail("Field Bit:", bit)
 		}
 
 		cur = cur.FieldByName(bit)
@@ -784,13 +789,13 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 		if !cur.IsValid() {
 			panic(out + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}
-		c.log("Data Kind:", cur.Kind())
-		c.log("Data Type:", cur.Type().Name())
+		c.detail("Data Kind:", cur.Kind())
+		c.detail("Data Type:", cur.Type().Name())
 	}
 
-	c.log("Out Value:", out)
-	c.log("Out Kind:", cur.Kind())
-	c.log("Out Type:", cur.Type().Name())
+	c.detail("Out Value:", out)
+	c.detail("Out Kind:", cur.Kind())
+	c.detail("Out Type:", cur.Type().Name())
 
 	for _, varItem := range c.varList {
 		if strings.HasPrefix(out, varItem.Destination) {
@@ -798,9 +803,9 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 		}
 	}
 
-	c.log("Out Value:", out)
-	c.log("Out Kind:", cur.Kind())
-	c.log("Out Type:", cur.Type().Name())
+	c.detail("Out Value:", out)
+	c.detail("Out Kind:", cur.Kind())
+	c.detail("Out Type:", cur.Type().Name())
 
 	_, ok := c.stats[out]
 	if ok {
@@ -813,7 +818,7 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 }
 
 func (c *CTemplateSet) compileBoolsub(varname string, varholder string, templateName string, val reflect.Value) string {
-	c.log("in compileBoolsub")
+	c.detail("in compileBoolsub")
 	out, val := c.compileIfVarsub(varname, varholder, templateName, val)
 	// TODO: What if it's a pointer or an interface? I *think* we've got pointers handled somewhere, but not interfaces which we don't know the types of at compile time
 	switch val.Kind() {
@@ -834,7 +839,7 @@ func (c *CTemplateSet) compileBoolsub(varname string, varholder string, template
 }
 
 func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines string) (out string) {
-	c.log("in compileVarsub")
+	c.detail("in compileVarsub")
 
 	// Is this a literal string?
 	if len(varname) != 0 && varname[0] == '"' {
@@ -858,8 +863,8 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines
 		val = val.Elem()
 	}
 
-	c.log("varname: ", varname)
-	c.log("assLines: ", assLines)
+	c.detail("varname: ", varname)
+	c.detail("assLines: ", assLines)
 	switch val.Kind() {
 	case reflect.Int:
 		c.importMap["strconv"] = "strconv"
@@ -883,13 +888,13 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines
 		fmt.Println("Unknown Type:", val.Type().Name())
 		panic("-- I don't know what this variable's type is o.o\n")
 	}
-	c.log("out: ", out)
+	c.detail("out: ", out)
 	return assLines + out
 }
 
 func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflect.Value, node *parse.TemplateNode) (out string) {
-	c.log("in compileSubtemplate")
-	c.log("Template Node: ", node.Name)
+	c.detail("in compileSubtemplate")
+	c.detail("Template Node: ", node.Name)
 
 	fname := strings.TrimSuffix(node.Name, filepath.Ext(node.Name))
 	varholder := "tmpl_" + fname + "_vars"
@@ -904,16 +909,21 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 			case *parse.NilNode:
 				panic("Nil is not a command x.x")
 			default:
-				c.log("Unknown Node: ", firstWord)
+				c.detail("Unknown Node: ", firstWord)
 				panic("")
 			}
 		}
 	}
 
 	// TODO: Cascade errors back up the tree to the caller?
-	res, err := ioutil.ReadFile(c.fileDir + node.Name)
+	res, err := ioutil.ReadFile(c.fileDir + "overrides/" + node.Name)
 	if err != nil {
-		log.Fatal(err)
+		c.detail("override path: ", c.fileDir+"overrides/"+node.Name)
+		c.detail("override err: ", err)
+		res, err = ioutil.ReadFile(c.fileDir + node.Name)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	content := string(res)
@@ -930,7 +940,7 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 
 	c.templateList[fname] = tree
 	subtree := c.templateList[fname]
-	c.log("subtree.Root", subtree.Root)
+	c.detail("subtree.Root", subtree.Root)
 
 	c.localVars[fname] = make(map[string]VarItemReflect)
 	c.localVars[fname]["."] = VarItemReflect{".", varholder, holdreflect}
@@ -943,13 +953,13 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 
 // TODO: Should we rethink the way the log methods work or their names?
 
-func (c *CTemplateSet) log(args ...interface{}) {
+func (c *CTemplateSet) detail(args ...interface{}) {
 	if c.config.SuperDebug {
 		fmt.Println(args...)
 	}
 }
 
-func (c *CTemplateSet) logf(left string, args ...interface{}) {
+func (c *CTemplateSet) detailf(left string, args ...interface{}) {
 	if c.config.SuperDebug {
 		fmt.Printf(left, args...)
 	}

@@ -27,3 +27,6 @@ go get -u github.com/bamiaux/rez
 
 echo "Updating fsnotify"
 go get -u github.com/fsnotify/fsnotify
+
+echo "Updating Go Git"
+go get -u gopkg.in/src-d/go-git.v4/...

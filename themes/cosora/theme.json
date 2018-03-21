@@ -19,11 +19,13 @@
 		},
 		{
 			"Name":"trumbowyg/trumbowyg.min.js",
-			"Location":"global"
+			"Location":"global",
+			"Loggedin": true
 		},
 		{
 			"Name":"trumbowyg/ui/trumbowyg.custom.css",
-			"Location":"global"
+			"Location":"global",
+			"Loggedin":true
 		},
 		{
 			"Name":"cosora/misc.js",

@@ -4,7 +4,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	"./templates"
@@ -119,7 +122,7 @@ var Template_ip_search_handle = func(pi IPSearchPage, w http.ResponseWriter) err
 }
 
 // ? - Add template hooks?
-func compileTemplates() error {
+func CompileTemplates() error {
 	var config tmpl.CTemplateConfig
 	config.Minify = Config.MinifyTemplates
 	config.SuperDebug = Dev.TemplateDebug
@@ -235,6 +238,23 @@ func compileTemplates() error {
 		return err
 	}
 
+	var wg sync.WaitGroup
+	var writeTemplate = func(name string, content string) {
+		log.Print("Writing template '" + name + "'")
+		if content == "" {
+			log.Fatal("No content body")
+		}
+
+		wg.Add(1)
+		go func() {
+			err := writeFile("./template_"+name+".go", content)
+			if err != nil {
+				log.Fatal(err)
+			}
+			wg.Done()
+		}()
+	}
+
 	// Let plugins register their own templates
 	DebugLog("Registering the templates for the plugins")
 	config = c.GetConfig()
@@ -247,20 +267,22 @@ func compileTemplates() error {
 		if err != nil {
 			return err
 		}
-		go writeTemplate(tmplItem.Name, compiledTmpl)
+		writeTemplate(tmplItem.Name, compiledTmpl)
 	}
 
 	log.Print("Writing the templates")
-	go writeTemplate("topic", topicIDTmpl)
-	go writeTemplate("topic_alt", topicIDAltTmpl)
-	go writeTemplate("profile", profileTmpl)
-	go writeTemplate("forums", forumsTmpl)
-	go writeTemplate("topics", topicsTmpl)
-	go writeTemplate("forum", forumTmpl)
-	go writeTemplate("login", loginTmpl)
-	go writeTemplate("register", registerTmpl)
-	go writeTemplate("ip_search", ipSearchTmpl)
-	go writeTemplate("error", errorTmpl)
+	writeTemplate("topic", topicIDTmpl)
+	writeTemplate("topic_alt", topicIDAltTmpl)
+	writeTemplate("profile", profileTmpl)
+	writeTemplate("forums", forumsTmpl)
+	writeTemplate("topics", topicsTmpl)
+	writeTemplate("forum", forumTmpl)
+	writeTemplate("login", loginTmpl)
+	writeTemplate("register", registerTmpl)
+	writeTemplate("ip_search", ipSearchTmpl)
+	writeTemplate("error", errorTmpl)
+
+	wg.Add(1)
 	go func() {
 		out := "package main\n\n"
 		for templateName, count := range c.TemplateFragmentCount {
@@ -271,26 +293,15 @@ func compileTemplates() error {
 		if err != nil {
 			log.Fatal(err)
 		}
+		wg.Done()
 	}()
 
+	wg.Wait()
 	return nil
 }
 
-func writeTemplate(name string, content string) {
-	err := writeFile("./template_"+name+".go", content)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func InitTemplates() error {
-	if Dev.DebugMode {
-		log.Print("Initialising the template system")
-	}
-	err := compileTemplates()
-	if err != nil {
-		return err
-	}
+	DebugLog("Initialising the template system")
 
 	// TODO: Add support for 64-bit integers
 	// TODO: Add support for floats
@@ -365,7 +376,34 @@ func InitTemplates() error {
 	// The interpreted templates...
 	DebugLog("Loading the template files...")
 	Templates.Funcs(fmap)
-	template.Must(Templates.ParseGlob("templates/*"))
+	templateFiles, err := filepath.Glob("templates/*.html")
+	if err != nil {
+		return err
+	}
+
+	var templateFileMap = make(map[string]int)
+	for index, path := range templateFiles {
+		path = strings.Replace(path, "\\", "/", -1)
+		log.Print("templateFile: ", path)
+		templateFileMap[path] = index
+	}
+
+	overrideFiles, err := filepath.Glob("templates/overrides/*.html")
+	if err != nil {
+		return err
+	}
+	for _, path := range overrideFiles {
+		path = strings.Replace(path, "\\", "/", -1)
+		log.Print("overrideFile: ", path)
+		index, ok := templateFileMap["templates/"+strings.TrimPrefix(path, "templates/overrides/")]
+		if !ok {
+			log.Print("not ok: templates/" + strings.TrimPrefix(path, "templates/overrides/"))
+			templateFiles = append(templateFiles, path)
+			continue
+		}
+		templateFiles[index] = path
+	}
+	template.Must(Templates.ParseFiles(templateFiles...))
 	template.Must(Templates.ParseGlob("pages/*"))
 
 	return nil

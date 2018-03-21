@@ -14,6 +14,10 @@ if %errorlevel% neq 0 (
 )
 echo Running the router generator
 router_gen.exe
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
 
 echo Building the query generator
 go build ./query_gen
@@ -23,9 +27,20 @@ if %errorlevel% neq 0 (
 )
 echo Running the query generator
 query_gen.exe
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
 
 echo Building the executable
 go build -o gosora.exe -tags no_ws
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
+echo Building the templates
+gosora.exe -build-templates
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

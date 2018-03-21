@@ -198,7 +198,8 @@ func handleDatabaseDetails() (adap install.InstallAdapter, ok bool) {
 	var dbUsername string
 	var dbPassword string
 	var dbName string
-	var dbPort string
+	// TODO: Let the admin set the database port?
+	//var dbPort string
 
 	for {
 		fmt.Println("Which database adapter do you wish to use? mysql, mssql, or mysql? Default: mysql")

@@ -82,5 +82,12 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Updating Go Git
+go get -u gopkg.in/src-d/go-git.v4/...
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo The dependencies were successfully updated
 pause

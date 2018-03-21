@@ -71,6 +71,7 @@ type TemplateMapping struct {
 type ThemeResource struct {
 	Name     string
 	Location string
+	Loggedin bool // Only serve this resource to logged in users
 }
 
 type ThemeStmts struct {

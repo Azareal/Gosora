@@ -224,6 +224,9 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
 		for _, resource := range rlist {
+			if resource.Loggedin && !user.Loggedin {
+				continue
+			}
 			if resource.Location == "global" || resource.Location == "frontend" {
 				extarr := strings.Split(resource.Name, ".")
 				ext := extarr[len(extarr)-1]
