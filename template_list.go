@@ -1,21 +1,21 @@
 package main
 
-var ip_search_frags = make([][]byte,18)
-var header_frags = make([][]byte,24)
-var paginator_frags = make([][]byte,16)
 var footer_frags = make([][]byte,13)
-var register_frags = make([][]byte,9)
-var forums_frags = make([][]byte,26)
-var topics_frags = make([][]byte,94)
-var forum_frags = make([][]byte,87)
-var login_frags = make([][]byte,8)
+var topic_alt_frags = make([][]byte,200)
+var ip_search_frags = make([][]byte,18)
 var guilds_guild_list_frags = make([][]byte,10)
-var topic_alt_frags = make([][]byte,194)
+var topics_frags = make([][]byte,98)
+var forum_frags = make([][]byte,90)
+var header_frags = make([][]byte,24)
+var topic_frags = make([][]byte,199)
 var profile_comments_row_frags = make([][]byte,51)
-var profile_frags = make([][]byte,48)
-var error_frags = make([][]byte,4)
+var profile_frags = make([][]byte,50)
+var forums_frags = make([][]byte,26)
+var login_frags = make([][]byte,8)
+var register_frags = make([][]byte,9)
 var menu_frags = make([][]byte,30)
-var topic_frags = make([][]byte,192)
+var paginator_frags = make([][]byte,16)
+var error_frags = make([][]byte,4)
 
 // nolint
 func init() {
@@ -157,255 +157,266 @@ topic_frags[17] = []byte(`
 
 <main>
 
-<div class="rowblock rowhead topic_block" aria-label="`)
-topic_frags[18] = []byte(`">
+<div  `)
+topic_frags[18] = []byte(` class="rowblock rowhead topic_block" aria-label="`)
+topic_frags[19] = []byte(`">
 	<div class="rowitem topic_item`)
-topic_frags[19] = []byte(` topic_sticky_head`)
-topic_frags[20] = []byte(` topic_closed_head`)
-topic_frags[21] = []byte(`">
-		<h1 class='topic_name hide_on_edit'>`)
-topic_frags[22] = []byte(`</h1>
+topic_frags[20] = []byte(` topic_sticky_head`)
+topic_frags[21] = []byte(` topic_closed_head`)
+topic_frags[22] = []byte(`">
+		<h1 class='topic_name hide_on_edit' title='`)
+topic_frags[23] = []byte(`'>`)
+topic_frags[24] = []byte(`</h1>
 		`)
-topic_frags[23] = []byte(`<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='`)
-topic_frags[24] = []byte(`' aria-label='`)
-topic_frags[25] = []byte(`'>&#x1F512;&#xFE0E</span>`)
-topic_frags[26] = []byte(`
+topic_frags[25] = []byte(`<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='`)
+topic_frags[26] = []byte(`' aria-label='`)
+topic_frags[27] = []byte(`'>&#x1F512;&#xFE0E</span>`)
+topic_frags[28] = []byte(`
 		<input form='edit_topic_form' class='show_on_edit topic_name_input' name="topic_name" value='`)
-topic_frags[27] = []byte(`' type="text" aria-label="`)
-topic_frags[28] = []byte(`" />
+topic_frags[29] = []byte(`' type="text" aria-label="`)
+topic_frags[30] = []byte(`" />
 		<button form='edit_topic_form' name="topic-button" class="formbutton show_on_edit submit_edit">`)
-topic_frags[29] = []byte(`</button>
+topic_frags[31] = []byte(`</button>
 		`)
-topic_frags[30] = []byte(`
+topic_frags[32] = []byte(`
 	</div>
 </div>
 `)
-topic_frags[31] = []byte(`
+topic_frags[33] = []byte(`
 <article class="rowblock post_container poll" aria-level="`)
-topic_frags[32] = []byte(`">
+topic_frags[34] = []byte(`">
 	<div class="rowitem passive editable_parent post_item poll_item `)
-topic_frags[33] = []byte(`" style="background-image: url(`)
-topic_frags[34] = []byte(`), url(/static/`)
-topic_frags[35] = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
-topic_frags[36] = []byte(`-1`)
-topic_frags[37] = []byte(`0px;background-repeat:no-repeat, repeat-y;">
+topic_frags[35] = []byte(`" style="background-image: url(`)
+topic_frags[36] = []byte(`), url(/static/`)
+topic_frags[37] = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
+topic_frags[38] = []byte(`-1`)
+topic_frags[39] = []byte(`0px;background-repeat:no-repeat, repeat-y;">
 		<div class="topic_content user_content" style="margin:0;padding:0;">
 			`)
-topic_frags[38] = []byte(`
+topic_frags[40] = []byte(`
 			<div class="poll_option">
 				<input form="poll_`)
-topic_frags[39] = []byte(`_form" id="poll_option_`)
-topic_frags[40] = []byte(`" name="poll_option_input" type="checkbox" value="`)
-topic_frags[41] = []byte(`" />
+topic_frags[41] = []byte(`_form" id="poll_option_`)
+topic_frags[42] = []byte(`" name="poll_option_input" type="checkbox" value="`)
+topic_frags[43] = []byte(`" />
 				<label class="poll_option_label" for="poll_option_`)
-topic_frags[42] = []byte(`">
+topic_frags[44] = []byte(`">
 					<div class="sel"></div>
 				</label>
 				<span id="poll_option_text_`)
-topic_frags[43] = []byte(`" class="poll_option_text">`)
-topic_frags[44] = []byte(`</span>
+topic_frags[45] = []byte(`" class="poll_option_text">`)
+topic_frags[46] = []byte(`</span>
 			</div>
 			`)
-topic_frags[45] = []byte(`
+topic_frags[47] = []byte(`
 			<div class="poll_buttons">
 				<button form="poll_`)
-topic_frags[46] = []byte(`_form" class="poll_vote_button">`)
-topic_frags[47] = []byte(`</button>
-				<button class="poll_results_button" data-poll-id="`)
-topic_frags[48] = []byte(`">`)
+topic_frags[48] = []byte(`_form" class="poll_vote_button">`)
 topic_frags[49] = []byte(`</button>
+				<button class="poll_results_button" data-poll-id="`)
+topic_frags[50] = []byte(`">`)
+topic_frags[51] = []byte(`</button>
 				<a href="#"><button class="poll_cancel_button">`)
-topic_frags[50] = []byte(`</button></a>
+topic_frags[52] = []byte(`</button></a>
 			</div>
 		</div>
 		<div id="poll_results_`)
-topic_frags[51] = []byte(`" class="poll_results auto_hide">
+topic_frags[53] = []byte(`" class="poll_results auto_hide">
 			<div class="topic_content user_content"></div>
 		</div>
 	</div>
 </article>
 `)
-topic_frags[52] = []byte(`
+topic_frags[54] = []byte(`
 
-<article itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="`)
-topic_frags[53] = []byte(`">
+<article `)
+topic_frags[55] = []byte(` itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="`)
+topic_frags[56] = []byte(`">
 	<div class="rowitem passive editable_parent post_item `)
-topic_frags[54] = []byte(`" style="background-image: url(`)
-topic_frags[55] = []byte(`), url(/static/`)
-topic_frags[56] = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
-topic_frags[57] = []byte(`-1`)
-topic_frags[58] = []byte(`0px;background-repeat:no-repeat, repeat-y;">
+topic_frags[57] = []byte(`" style="background-image: url(`)
+topic_frags[58] = []byte(`), url(/static/`)
+topic_frags[59] = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
+topic_frags[60] = []byte(`-1`)
+topic_frags[61] = []byte(`0px;background-repeat:no-repeat, repeat-y;">
 		<p class="hide_on_edit topic_content user_content" itemprop="text" style="margin:0;padding:0;">`)
-topic_frags[59] = []byte(`</p>
+topic_frags[62] = []byte(`</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">`)
-topic_frags[60] = []byte(`</textarea>
+topic_frags[63] = []byte(`</textarea>
 
-		<span class="controls" aria-label="`)
-topic_frags[61] = []byte(`">
+		<span class="controls`)
+topic_frags[64] = []byte(` has_likes`)
+topic_frags[65] = []byte(`" aria-label="`)
+topic_frags[66] = []byte(`">
 
 		<a href="`)
-topic_frags[62] = []byte(`" class="username real_username" rel="author">`)
-topic_frags[63] = []byte(`</a>&nbsp;&nbsp;
+topic_frags[67] = []byte(`" class="username real_username" rel="author">`)
+topic_frags[68] = []byte(`</a>&nbsp;&nbsp;
 		`)
-topic_frags[64] = []byte(`<a href="/topic/like/submit/`)
-topic_frags[65] = []byte(`?session=`)
-topic_frags[66] = []byte(`" class="mod_button"`)
-topic_frags[67] = []byte(` title="`)
-topic_frags[68] = []byte(`" aria-label="`)
-topic_frags[69] = []byte(`"`)
-topic_frags[70] = []byte(` title="`)
-topic_frags[71] = []byte(`" aria-label="`)
-topic_frags[72] = []byte(`"`)
-topic_frags[73] = []byte(` style="color:#202020;">
-		<button class="username like_label"`)
-topic_frags[74] = []byte(` style="background-color:#D6FFD6;"`)
-topic_frags[75] = []byte(`></button></a>`)
-topic_frags[76] = []byte(`<a href='/topic/edit/`)
-topic_frags[77] = []byte(`' class="mod_button open_edit" style="font-weight:normal;" title="`)
-topic_frags[78] = []byte(`" aria-label="`)
-topic_frags[79] = []byte(`"><button class="username edit_label"></button></a>`)
-topic_frags[80] = []byte(`<a href='/topic/delete/submit/`)
-topic_frags[81] = []byte(`?session=`)
-topic_frags[82] = []byte(`' class="mod_button" style="font-weight:normal;" title="`)
-topic_frags[83] = []byte(`" aria-label="`)
-topic_frags[84] = []byte(`"><button class="username trash_label"></button></a>`)
-topic_frags[85] = []byte(`<a class="mod_button" href='/topic/unlock/submit/`)
-topic_frags[86] = []byte(`?session=`)
-topic_frags[87] = []byte(`' style="font-weight:normal;" title="`)
-topic_frags[88] = []byte(`" aria-label="`)
-topic_frags[89] = []byte(`"><button class="username unlock_label"></button></a>`)
-topic_frags[90] = []byte(`<a href='/topic/lock/submit/`)
-topic_frags[91] = []byte(`?session=`)
-topic_frags[92] = []byte(`' class="mod_button" style="font-weight:normal;" title="`)
-topic_frags[93] = []byte(`" aria-label="`)
-topic_frags[94] = []byte(`"><button class="username lock_label"></button></a>`)
-topic_frags[95] = []byte(`<a class="mod_button" href='/topic/unstick/submit/`)
-topic_frags[96] = []byte(`?session=`)
-topic_frags[97] = []byte(`' style="font-weight:normal;" title="`)
-topic_frags[98] = []byte(`" aria-label="`)
-topic_frags[99] = []byte(`"><button class="username unpin_label"></button></a>`)
-topic_frags[100] = []byte(`<a href='/topic/stick/submit/`)
-topic_frags[101] = []byte(`?session=`)
-topic_frags[102] = []byte(`' class="mod_button" style="font-weight:normal;" title="`)
-topic_frags[103] = []byte(`" aria-label="`)
-topic_frags[104] = []byte(`"><button class="username pin_label"></button></a>`)
-topic_frags[105] = []byte(`<a class="mod_button" href='/users/ips/?ip=`)
-topic_frags[106] = []byte(`' style="font-weight:normal;" title="`)
-topic_frags[107] = []byte(`" aria-label="The poster's IP is `)
-topic_frags[108] = []byte(`"><button class="username ip_label"></button></a>`)
-topic_frags[109] = []byte(`
+topic_frags[69] = []byte(`<a href="/topic/like/submit/`)
+topic_frags[70] = []byte(`?session=`)
+topic_frags[71] = []byte(`" class="mod_button"`)
+topic_frags[72] = []byte(` title="`)
+topic_frags[73] = []byte(`" aria-label="`)
+topic_frags[74] = []byte(`"`)
+topic_frags[75] = []byte(` title="`)
+topic_frags[76] = []byte(`" aria-label="`)
+topic_frags[77] = []byte(`"`)
+topic_frags[78] = []byte(` style="color:#202020;">
+		<button class="username like_label `)
+topic_frags[79] = []byte(`remove_like`)
+topic_frags[80] = []byte(`add_like`)
+topic_frags[81] = []byte(`"></button></a>`)
+topic_frags[82] = []byte(`<a href='/topic/edit/`)
+topic_frags[83] = []byte(`' class="mod_button open_edit" style="font-weight:normal;" title="`)
+topic_frags[84] = []byte(`" aria-label="`)
+topic_frags[85] = []byte(`"><button class="username edit_label"></button></a>`)
+topic_frags[86] = []byte(`<a href='/topic/delete/submit/`)
+topic_frags[87] = []byte(`?session=`)
+topic_frags[88] = []byte(`' class="mod_button" style="font-weight:normal;" title="`)
+topic_frags[89] = []byte(`" aria-label="`)
+topic_frags[90] = []byte(`"><button class="username trash_label"></button></a>`)
+topic_frags[91] = []byte(`<a class="mod_button" href='/topic/unlock/submit/`)
+topic_frags[92] = []byte(`?session=`)
+topic_frags[93] = []byte(`' style="font-weight:normal;" title="`)
+topic_frags[94] = []byte(`" aria-label="`)
+topic_frags[95] = []byte(`"><button class="username unlock_label"></button></a>`)
+topic_frags[96] = []byte(`<a href='/topic/lock/submit/`)
+topic_frags[97] = []byte(`?session=`)
+topic_frags[98] = []byte(`' class="mod_button" style="font-weight:normal;" title="`)
+topic_frags[99] = []byte(`" aria-label="`)
+topic_frags[100] = []byte(`"><button class="username lock_label"></button></a>`)
+topic_frags[101] = []byte(`<a class="mod_button" href='/topic/unstick/submit/`)
+topic_frags[102] = []byte(`?session=`)
+topic_frags[103] = []byte(`' style="font-weight:normal;" title="`)
+topic_frags[104] = []byte(`" aria-label="`)
+topic_frags[105] = []byte(`"><button class="username unpin_label"></button></a>`)
+topic_frags[106] = []byte(`<a href='/topic/stick/submit/`)
+topic_frags[107] = []byte(`?session=`)
+topic_frags[108] = []byte(`' class="mod_button" style="font-weight:normal;" title="`)
+topic_frags[109] = []byte(`" aria-label="`)
+topic_frags[110] = []byte(`"><button class="username pin_label"></button></a>`)
+topic_frags[111] = []byte(`<a class="mod_button" href='/users/ips/?ip=`)
+topic_frags[112] = []byte(`' style="font-weight:normal;" title="`)
+topic_frags[113] = []byte(`" aria-label="The poster's IP is `)
+topic_frags[114] = []byte(`"><button class="username ip_label"></button></a>`)
+topic_frags[115] = []byte(`
 		<a href="/report/submit/`)
-topic_frags[110] = []byte(`?session=`)
-topic_frags[111] = []byte(`&type=topic" class="mod_button report_item" style="font-weight:normal;" title="`)
-topic_frags[112] = []byte(`" aria-label="`)
-topic_frags[113] = []byte(`" rel="nofollow"><button class="username flag_label"></button></a>
+topic_frags[116] = []byte(`?session=`)
+topic_frags[117] = []byte(`&type=topic" class="mod_button report_item" style="font-weight:normal;" title="`)
+topic_frags[118] = []byte(`" aria-label="`)
+topic_frags[119] = []byte(`" rel="nofollow"><button class="username flag_label"></button></a>
+
+		<a class="username hide_on_micro like_count" aria-label="`)
+topic_frags[120] = []byte(`">`)
+topic_frags[121] = []byte(`</a><a class="username hide_on_micro like_count_label" title="`)
+topic_frags[122] = []byte(`"></a>
 
 		`)
-topic_frags[114] = []byte(`<a class="username hide_on_micro like_count" aria-label="`)
-topic_frags[115] = []byte(`">`)
-topic_frags[116] = []byte(`</a><a class="username hide_on_micro like_count_label" title="`)
-topic_frags[117] = []byte(`"></a>`)
-topic_frags[118] = []byte(`<a class="username hide_on_micro user_tag">`)
-topic_frags[119] = []byte(`</a>`)
-topic_frags[120] = []byte(`<a class="username hide_on_micro level" aria-label="`)
-topic_frags[121] = []byte(`">`)
-topic_frags[122] = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="`)
-topic_frags[123] = []byte(`"></a>`)
-topic_frags[124] = []byte(`
+topic_frags[123] = []byte(`<a class="username hide_on_micro user_tag">`)
+topic_frags[124] = []byte(`</a>`)
+topic_frags[125] = []byte(`<a class="username hide_on_micro level" aria-label="`)
+topic_frags[126] = []byte(`">`)
+topic_frags[127] = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="`)
+topic_frags[128] = []byte(`"></a>`)
+topic_frags[129] = []byte(`
 
 		</span>
 	</div>
 </article>
 
 <div class="rowblock post_container" aria-label="`)
-topic_frags[125] = []byte(`" style="overflow: hidden;">`)
-topic_frags[126] = []byte(`
+topic_frags[130] = []byte(`" style="overflow: hidden;">`)
+topic_frags[131] = []byte(`
 	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item action_item">
 		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">`)
-topic_frags[127] = []byte(`</span>
+topic_frags[132] = []byte(`</span>
 		<span itemprop="text">`)
-topic_frags[128] = []byte(`</span>
+topic_frags[133] = []byte(`</span>
 	</article>
 `)
-topic_frags[129] = []byte(`
-	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item `)
-topic_frags[130] = []byte(`" style="background-image: url(`)
-topic_frags[131] = []byte(`), url(/static/`)
-topic_frags[132] = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
-topic_frags[133] = []byte(`-1`)
-topic_frags[134] = []byte(`0px;background-repeat:no-repeat, repeat-y;">
+topic_frags[134] = []byte(`
+	<article `)
+topic_frags[135] = []byte(` itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item `)
+topic_frags[136] = []byte(`" style="background-image: url(`)
+topic_frags[137] = []byte(`), url(/static/`)
+topic_frags[138] = []byte(`/post-avatar-bg.jpg);background-position: 0px `)
+topic_frags[139] = []byte(`-1`)
+topic_frags[140] = []byte(`0px;background-repeat:no-repeat, repeat-y;">
 		`)
-topic_frags[135] = []byte(`
+topic_frags[141] = []byte(`
 		<p class="editable_block user_content" itemprop="text" style="margin:0;padding:0;">`)
-topic_frags[136] = []byte(`</p>
+topic_frags[142] = []byte(`</p>
 
-		<span class="controls">
+		<span class="controls`)
+topic_frags[143] = []byte(` has_likes`)
+topic_frags[144] = []byte(`">
 
 		<a href="`)
-topic_frags[137] = []byte(`" class="username real_username" rel="author">`)
-topic_frags[138] = []byte(`</a>&nbsp;&nbsp;
+topic_frags[145] = []byte(`" class="username real_username" rel="author">`)
+topic_frags[146] = []byte(`</a>&nbsp;&nbsp;
 		`)
-topic_frags[139] = []byte(`<a href="/reply/like/submit/`)
-topic_frags[140] = []byte(`?session=`)
-topic_frags[141] = []byte(`" class="mod_button" title="`)
-topic_frags[142] = []byte(`" aria-label="`)
-topic_frags[143] = []byte(`" style="color:#202020;"><button class="username like_label" style="background-color:#D6FFD6;"></button></a>`)
-topic_frags[144] = []byte(`<a href="/reply/like/submit/`)
-topic_frags[145] = []byte(`?session=`)
-topic_frags[146] = []byte(`" class="mod_button" title="`)
-topic_frags[147] = []byte(`" aria-label="`)
-topic_frags[148] = []byte(`" style="color:#202020;"><button class="username like_label"></button></a>`)
-topic_frags[149] = []byte(`<a href="/reply/edit/submit/`)
-topic_frags[150] = []byte(`?session=`)
-topic_frags[151] = []byte(`" class="mod_button" title="`)
-topic_frags[152] = []byte(`" aria-label="`)
-topic_frags[153] = []byte(`"><button class="username edit_item edit_label"></button></a>`)
-topic_frags[154] = []byte(`<a href="/reply/delete/submit/`)
-topic_frags[155] = []byte(`?session=`)
-topic_frags[156] = []byte(`" class="mod_button" title="`)
-topic_frags[157] = []byte(`" aria-label="`)
-topic_frags[158] = []byte(`"><button class="username delete_item trash_label"></button></a>`)
-topic_frags[159] = []byte(`<a class="mod_button" href='/users/ips/?ip=`)
-topic_frags[160] = []byte(`' style="font-weight:normal;" title="`)
-topic_frags[161] = []byte(`" aria-label="The poster's IP is `)
-topic_frags[162] = []byte(`"><button class="username ip_label"></button></a>`)
-topic_frags[163] = []byte(`
+topic_frags[147] = []byte(`<a href="/reply/like/submit/`)
+topic_frags[148] = []byte(`?session=`)
+topic_frags[149] = []byte(`" class="mod_button" title="`)
+topic_frags[150] = []byte(`" aria-label="`)
+topic_frags[151] = []byte(`" style="color:#202020;"><button class="username like_label remove_like"></button></a>`)
+topic_frags[152] = []byte(`<a href="/reply/like/submit/`)
+topic_frags[153] = []byte(`?session=`)
+topic_frags[154] = []byte(`" class="mod_button" title="`)
+topic_frags[155] = []byte(`" aria-label="`)
+topic_frags[156] = []byte(`" style="color:#202020;"><button class="username like_label add_like"></button></a>`)
+topic_frags[157] = []byte(`<a href="/reply/edit/submit/`)
+topic_frags[158] = []byte(`?session=`)
+topic_frags[159] = []byte(`" class="mod_button" title="`)
+topic_frags[160] = []byte(`" aria-label="`)
+topic_frags[161] = []byte(`"><button class="username edit_item edit_label"></button></a>`)
+topic_frags[162] = []byte(`<a href="/reply/delete/submit/`)
+topic_frags[163] = []byte(`?session=`)
+topic_frags[164] = []byte(`" class="mod_button" title="`)
+topic_frags[165] = []byte(`" aria-label="`)
+topic_frags[166] = []byte(`"><button class="username delete_item trash_label"></button></a>`)
+topic_frags[167] = []byte(`<a class="mod_button" href='/users/ips/?ip=`)
+topic_frags[168] = []byte(`' style="font-weight:normal;" title="`)
+topic_frags[169] = []byte(`" aria-label="The poster's IP is `)
+topic_frags[170] = []byte(`"><button class="username ip_label"></button></a>`)
+topic_frags[171] = []byte(`
 		<a href="/report/submit/`)
-topic_frags[164] = []byte(`?session=`)
-topic_frags[165] = []byte(`&type=reply" class="mod_button report_item" title="`)
-topic_frags[166] = []byte(`" aria-label="`)
-topic_frags[167] = []byte(`" rel="nofollow"><button class="username report_item flag_label"></button></a>
+topic_frags[172] = []byte(`?session=`)
+topic_frags[173] = []byte(`&type=reply" class="mod_button report_item" title="`)
+topic_frags[174] = []byte(`" aria-label="`)
+topic_frags[175] = []byte(`" rel="nofollow"><button class="username report_item flag_label"></button></a>
+
+		<a class="username hide_on_micro like_count">`)
+topic_frags[176] = []byte(`</a><a class="username hide_on_micro like_count_label" title="`)
+topic_frags[177] = []byte(`"></a>
 
 		`)
-topic_frags[168] = []byte(`<a class="username hide_on_micro like_count">`)
-topic_frags[169] = []byte(`</a><a class="username hide_on_micro like_count_label" title="`)
-topic_frags[170] = []byte(`"></a>`)
-topic_frags[171] = []byte(`<a class="username hide_on_micro user_tag">`)
-topic_frags[172] = []byte(`</a>`)
-topic_frags[173] = []byte(`<a class="username hide_on_micro level" aria-label="`)
-topic_frags[174] = []byte(`">`)
-topic_frags[175] = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="`)
-topic_frags[176] = []byte(`"></a>`)
-topic_frags[177] = []byte(`
+topic_frags[178] = []byte(`<a class="username hide_on_micro user_tag">`)
+topic_frags[179] = []byte(`</a>`)
+topic_frags[180] = []byte(`<a class="username hide_on_micro level" aria-label="`)
+topic_frags[181] = []byte(`">`)
+topic_frags[182] = []byte(`</a><a class="username hide_on_micro level_label" style="float:right;" title="`)
+topic_frags[183] = []byte(`"></a>`)
+topic_frags[184] = []byte(`
 
 		</span>
 	</article>
 `)
-topic_frags[178] = []byte(`</div>
+topic_frags[185] = []byte(`</div>
 
 `)
-topic_frags[179] = []byte(`
+topic_frags[186] = []byte(`
 <div class="rowblock topic_reply_form quick_create_form" aria-label="`)
-topic_frags[180] = []byte(`">
+topic_frags[187] = []byte(`">
 	<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session=`)
-topic_frags[181] = []byte(`" method="post"></form>
+topic_frags[188] = []byte(`" method="post"></form>
 	<input form="quick_post_form" name="tid" value='`)
-topic_frags[182] = []byte(`' type="hidden" />
+topic_frags[189] = []byte(`' type="hidden" />
 	<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 	<div class="formrow real_first_child">
 		<div class="formitem">
 			<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="`)
-topic_frags[183] = []byte(`" required></textarea>
+topic_frags[190] = []byte(`" required></textarea>
 		</div>
 	</div>
 	<div class="formrow poll_content_row auto_hide">
@@ -414,28 +425,28 @@ topic_frags[183] = []byte(`" required></textarea>
 				<input type="checkbox" disabled />
 				<label class="pollinputlabel"></label>
 				<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="`)
-topic_frags[184] = []byte(`" />
+topic_frags[191] = []byte(`" />
 			</div>
 		</div>
 	</div>
 	<div class="formrow quick_button_row">
 		<div class="formitem">
 			<button form="quick_post_form" name="reply-button" class="formbutton">`)
-topic_frags[185] = []byte(`</button>
+topic_frags[192] = []byte(`</button>
 			<button form="quick_post_form" class="formbutton" id="add_poll_button">`)
-topic_frags[186] = []byte(`</button>
+topic_frags[193] = []byte(`</button>
 			`)
-topic_frags[187] = []byte(`
+topic_frags[194] = []byte(`
 			<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
 			<label for="upload_files" class="formbutton add_file_button">`)
-topic_frags[188] = []byte(`</label>
+topic_frags[195] = []byte(`</label>
 			<div id="upload_file_dock"></div>`)
-topic_frags[189] = []byte(`
+topic_frags[196] = []byte(`
 		</div>
 	</div>
 </div>
 `)
-topic_frags[190] = []byte(`
+topic_frags[197] = []byte(`
 
 </main>
 
@@ -494,288 +505,294 @@ topic_alt_frags[14] = []byte(`
 
 <main>
 
-<div class="rowblock rowhead topic_block" aria-label="`)
-topic_alt_frags[15] = []byte(`">
+<div `)
+topic_alt_frags[15] = []byte(` class="rowblock rowhead topic_block" aria-label="`)
+topic_alt_frags[16] = []byte(`">
 	<form action='/topic/edit/submit/`)
-topic_alt_frags[16] = []byte(`?session=`)
-topic_alt_frags[17] = []byte(`' method="post">
+topic_alt_frags[17] = []byte(`?session=`)
+topic_alt_frags[18] = []byte(`' method="post">
 		<div class="rowitem topic_item`)
-topic_alt_frags[18] = []byte(` topic_sticky_head`)
-topic_alt_frags[19] = []byte(` topic_closed_head`)
-topic_alt_frags[20] = []byte(`">
-			<h1 class='topic_name hide_on_edit'>`)
-topic_alt_frags[21] = []byte(`</h1>
+topic_alt_frags[19] = []byte(` topic_sticky_head`)
+topic_alt_frags[20] = []byte(` topic_closed_head`)
+topic_alt_frags[21] = []byte(`">
+			<h1 class='topic_name hide_on_edit' title='`)
+topic_alt_frags[22] = []byte(`'>`)
+topic_alt_frags[23] = []byte(`</h1>
 			`)
-topic_alt_frags[22] = []byte(`<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='`)
-topic_alt_frags[23] = []byte(`' aria-label='`)
-topic_alt_frags[24] = []byte(`' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>`)
-topic_alt_frags[25] = []byte(`
+topic_alt_frags[24] = []byte(`<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='`)
+topic_alt_frags[25] = []byte(`' aria-label='`)
+topic_alt_frags[26] = []byte(`' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>`)
+topic_alt_frags[27] = []byte(`
 			<input class='show_on_edit topic_name_input' name="topic_name" value='`)
-topic_alt_frags[26] = []byte(`' type="text" aria-label="`)
-topic_alt_frags[27] = []byte(`" />
+topic_alt_frags[28] = []byte(`' type="text" aria-label="`)
+topic_alt_frags[29] = []byte(`" />
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">`)
-topic_alt_frags[28] = []byte(`</button>
+topic_alt_frags[30] = []byte(`</button>
 			`)
-topic_alt_frags[29] = []byte(`
+topic_alt_frags[31] = []byte(`
 		</div>
 	</form>
 </div>
 
 <div class="rowblock post_container">
 	`)
-topic_alt_frags[30] = []byte(`
+topic_alt_frags[32] = []byte(`
 	<form id="poll_`)
-topic_alt_frags[31] = []byte(`_form" action="/poll/vote/`)
-topic_alt_frags[32] = []byte(`?session=`)
-topic_alt_frags[33] = []byte(`" method="post"></form>
+topic_alt_frags[33] = []byte(`_form" action="/poll/vote/`)
+topic_alt_frags[34] = []byte(`?session=`)
+topic_alt_frags[35] = []byte(`" method="post"></form>
 	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
 		<div class="userinfo" aria-label="`)
-topic_alt_frags[34] = []byte(`">
+topic_alt_frags[36] = []byte(`">
 			<div class="avatar_item" style="background-image: url(`)
-topic_alt_frags[35] = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+topic_alt_frags[37] = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="`)
-topic_alt_frags[36] = []byte(`" class="the_name" rel="author">`)
-topic_alt_frags[37] = []byte(`</a>
+topic_alt_frags[38] = []byte(`" class="the_name" rel="author">`)
+topic_alt_frags[39] = []byte(`</a>
 			`)
-topic_alt_frags[38] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
-topic_alt_frags[39] = []byte(`</div><div class="tag_post"></div></div>`)
-topic_alt_frags[40] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">`)
+topic_alt_frags[40] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
 topic_alt_frags[41] = []byte(`</div><div class="tag_post"></div></div>`)
-topic_alt_frags[42] = []byte(`
+topic_alt_frags[42] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">`)
+topic_alt_frags[43] = []byte(`</div><div class="tag_post"></div></div>`)
+topic_alt_frags[44] = []byte(`
 		</div>
 		<div id="poll_voter_`)
-topic_alt_frags[43] = []byte(`" class="content_container poll_voter">
+topic_alt_frags[45] = []byte(`" class="content_container poll_voter">
 			<div class="topic_content user_content">
 				`)
-topic_alt_frags[44] = []byte(`
+topic_alt_frags[46] = []byte(`
 				<div class="poll_option">
 					<input form="poll_`)
-topic_alt_frags[45] = []byte(`_form" id="poll_option_`)
-topic_alt_frags[46] = []byte(`" name="poll_option_input" type="checkbox" value="`)
-topic_alt_frags[47] = []byte(`" />
+topic_alt_frags[47] = []byte(`_form" id="poll_option_`)
+topic_alt_frags[48] = []byte(`" name="poll_option_input" type="checkbox" value="`)
+topic_alt_frags[49] = []byte(`" />
 					<label class="poll_option_label" for="poll_option_`)
-topic_alt_frags[48] = []byte(`">
+topic_alt_frags[50] = []byte(`">
 						<div class="sel"></div>
 					</label>
 					<span id="poll_option_text_`)
-topic_alt_frags[49] = []byte(`" class="poll_option_text">`)
-topic_alt_frags[50] = []byte(`</span>
+topic_alt_frags[51] = []byte(`" class="poll_option_text">`)
+topic_alt_frags[52] = []byte(`</span>
 				</div>
 				`)
-topic_alt_frags[51] = []byte(`
+topic_alt_frags[53] = []byte(`
 				<div class="poll_buttons">
 					<button form="poll_`)
-topic_alt_frags[52] = []byte(`_form" class="poll_vote_button">`)
-topic_alt_frags[53] = []byte(`</button>
-					<button class="poll_results_button" data-poll-id="`)
-topic_alt_frags[54] = []byte(`">`)
+topic_alt_frags[54] = []byte(`_form" class="poll_vote_button">`)
 topic_alt_frags[55] = []byte(`</button>
+					<button class="poll_results_button" data-poll-id="`)
+topic_alt_frags[56] = []byte(`">`)
+topic_alt_frags[57] = []byte(`</button>
 					<a href="#"><button class="poll_cancel_button">`)
-topic_alt_frags[56] = []byte(`</button></a>
+topic_alt_frags[58] = []byte(`</button></a>
 				</div>
 			</div>
 		</div>
 		<div id="poll_results_`)
-topic_alt_frags[57] = []byte(`" class="content_container poll_results auto_hide">
+topic_alt_frags[59] = []byte(`" class="content_container poll_results auto_hide">
 			<div class="topic_content user_content"></div>
 		</div>
 	</article>
 	`)
-topic_alt_frags[58] = []byte(`
-	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="`)
-topic_alt_frags[59] = []byte(`">
+topic_alt_frags[60] = []byte(`
+	<article `)
+topic_alt_frags[61] = []byte(` itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="`)
+topic_alt_frags[62] = []byte(`">
 		<div class="userinfo" aria-label="`)
-topic_alt_frags[60] = []byte(`">
+topic_alt_frags[63] = []byte(`">
 			<div class="avatar_item" style="background-image: url(`)
-topic_alt_frags[61] = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+topic_alt_frags[64] = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="`)
-topic_alt_frags[62] = []byte(`" class="the_name" rel="author">`)
-topic_alt_frags[63] = []byte(`</a>
+topic_alt_frags[65] = []byte(`" class="the_name" rel="author">`)
+topic_alt_frags[66] = []byte(`</a>
 			`)
-topic_alt_frags[64] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
-topic_alt_frags[65] = []byte(`</div><div class="tag_post"></div></div>`)
-topic_alt_frags[66] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">`)
-topic_alt_frags[67] = []byte(`</div><div class="tag_post"></div></div>`)
-topic_alt_frags[68] = []byte(`
+topic_alt_frags[67] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
+topic_alt_frags[68] = []byte(`</div><div class="tag_post"></div></div>`)
+topic_alt_frags[69] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">`)
+topic_alt_frags[70] = []byte(`</div><div class="tag_post"></div></div>`)
+topic_alt_frags[71] = []byte(`
 		</div>
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content" itemprop="text">`)
-topic_alt_frags[69] = []byte(`</div>
+topic_alt_frags[72] = []byte(`</div>
 			<textarea name="topic_content" class="show_on_edit topic_content_input">`)
-topic_alt_frags[70] = []byte(`</textarea>
-			<div class="button_container">
+topic_alt_frags[73] = []byte(`</textarea>
+			<div class="controls button_container`)
+topic_alt_frags[74] = []byte(` has_likes`)
+topic_alt_frags[75] = []byte(`">
 				`)
-topic_alt_frags[71] = []byte(`<a href="/topic/like/submit/`)
-topic_alt_frags[72] = []byte(`?session=`)
-topic_alt_frags[73] = []byte(`" class="action_button like_item add_like" aria-label="`)
-topic_alt_frags[74] = []byte(`" data-action="like"></a>`)
-topic_alt_frags[75] = []byte(`<a href="/topic/edit/`)
-topic_alt_frags[76] = []byte(`" class="action_button open_edit" aria-label="`)
-topic_alt_frags[77] = []byte(`" data-action="edit"></a>`)
-topic_alt_frags[78] = []byte(`<a href="/topic/delete/submit/`)
-topic_alt_frags[79] = []byte(`?session=`)
-topic_alt_frags[80] = []byte(`" class="action_button delete_item" aria-label="`)
-topic_alt_frags[81] = []byte(`" data-action="delete"></a>`)
-topic_alt_frags[82] = []byte(`<a href='/topic/unlock/submit/`)
-topic_alt_frags[83] = []byte(`?session=`)
-topic_alt_frags[84] = []byte(`' class="action_button unlock_item" data-action="unlock" aria-label="`)
-topic_alt_frags[85] = []byte(`"></a>`)
-topic_alt_frags[86] = []byte(`<a href='/topic/lock/submit/`)
+topic_alt_frags[76] = []byte(`<a href="/topic/like/submit/`)
+topic_alt_frags[77] = []byte(`?session=`)
+topic_alt_frags[78] = []byte(`" class="action_button like_item `)
+topic_alt_frags[79] = []byte(`remove_like`)
+topic_alt_frags[80] = []byte(`add_like`)
+topic_alt_frags[81] = []byte(`" aria-label="`)
+topic_alt_frags[82] = []byte(`" data-action="like"></a>`)
+topic_alt_frags[83] = []byte(`<a href="/topic/edit/`)
+topic_alt_frags[84] = []byte(`" class="action_button open_edit" aria-label="`)
+topic_alt_frags[85] = []byte(`" data-action="edit"></a>`)
+topic_alt_frags[86] = []byte(`<a href="/topic/delete/submit/`)
 topic_alt_frags[87] = []byte(`?session=`)
-topic_alt_frags[88] = []byte(`' class="action_button lock_item" data-action="lock" aria-label="`)
-topic_alt_frags[89] = []byte(`"></a>`)
-topic_alt_frags[90] = []byte(`<a href='/topic/unstick/submit/`)
+topic_alt_frags[88] = []byte(`" class="action_button delete_item" aria-label="`)
+topic_alt_frags[89] = []byte(`" data-action="delete"></a>`)
+topic_alt_frags[90] = []byte(`<a href='/topic/unlock/submit/`)
 topic_alt_frags[91] = []byte(`?session=`)
-topic_alt_frags[92] = []byte(`' class="action_button unpin_item" data-action="unpin" aria-label="`)
+topic_alt_frags[92] = []byte(`' class="action_button unlock_item" data-action="unlock" aria-label="`)
 topic_alt_frags[93] = []byte(`"></a>`)
-topic_alt_frags[94] = []byte(`<a href='/topic/stick/submit/`)
+topic_alt_frags[94] = []byte(`<a href='/topic/lock/submit/`)
 topic_alt_frags[95] = []byte(`?session=`)
-topic_alt_frags[96] = []byte(`' class="action_button pin_item" data-action="pin" aria-label="`)
+topic_alt_frags[96] = []byte(`' class="action_button lock_item" data-action="lock" aria-label="`)
 topic_alt_frags[97] = []byte(`"></a>`)
-topic_alt_frags[98] = []byte(`<a href="/users/ips/?ip=`)
-topic_alt_frags[99] = []byte(`" title="`)
-topic_alt_frags[100] = []byte(`" class="action_button ip_item_button hide_on_big" aria-label="`)
-topic_alt_frags[101] = []byte(`" data-action="ip"></a>`)
-topic_alt_frags[102] = []byte(`
-					<a href="/report/submit/`)
+topic_alt_frags[98] = []byte(`<a href='/topic/unstick/submit/`)
+topic_alt_frags[99] = []byte(`?session=`)
+topic_alt_frags[100] = []byte(`' class="action_button unpin_item" data-action="unpin" aria-label="`)
+topic_alt_frags[101] = []byte(`"></a>`)
+topic_alt_frags[102] = []byte(`<a href='/topic/stick/submit/`)
 topic_alt_frags[103] = []byte(`?session=`)
-topic_alt_frags[104] = []byte(`&type=topic" class="action_button report_item" aria-label="`)
-topic_alt_frags[105] = []byte(`" data-action="report"></a>
+topic_alt_frags[104] = []byte(`' class="action_button pin_item" data-action="pin" aria-label="`)
+topic_alt_frags[105] = []byte(`"></a>`)
+topic_alt_frags[106] = []byte(`<a href="/users/ips/?ip=`)
+topic_alt_frags[107] = []byte(`" title="`)
+topic_alt_frags[108] = []byte(`" class="action_button ip_item_button hide_on_big" aria-label="`)
+topic_alt_frags[109] = []byte(`" data-action="ip"></a>`)
+topic_alt_frags[110] = []byte(`
+					<a href="/report/submit/`)
+topic_alt_frags[111] = []byte(`?session=`)
+topic_alt_frags[112] = []byte(`&type=topic" class="action_button report_item" aria-label="`)
+topic_alt_frags[113] = []byte(`" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				`)
-topic_alt_frags[106] = []byte(`
-				<div class="action_button_right`)
-topic_alt_frags[107] = []byte(` has_likes`)
-topic_alt_frags[108] = []byte(`">
-					`)
-topic_alt_frags[109] = []byte(`<a class="action_button like_count hide_on_micro" aria-label="`)
-topic_alt_frags[110] = []byte(`">`)
-topic_alt_frags[111] = []byte(`</a>`)
-topic_alt_frags[112] = []byte(`
+topic_alt_frags[114] = []byte(`
+				<div class="action_button_right">
+					<a class="action_button like_count hide_on_micro" aria-label="`)
+topic_alt_frags[115] = []byte(`">`)
+topic_alt_frags[116] = []byte(`</a>
 					<a class="action_button created_at hide_on_mobile">`)
-topic_alt_frags[113] = []byte(`</a>
+topic_alt_frags[117] = []byte(`</a>
 					`)
-topic_alt_frags[114] = []byte(`<a href="/users/ips/?ip=`)
-topic_alt_frags[115] = []byte(`" title="`)
-topic_alt_frags[116] = []byte(`" class="action_button ip_item hide_on_mobile" aria-hidden="true">`)
-topic_alt_frags[117] = []byte(`</a>`)
-topic_alt_frags[118] = []byte(`
+topic_alt_frags[118] = []byte(`<a href="/users/ips/?ip=`)
+topic_alt_frags[119] = []byte(`" title="`)
+topic_alt_frags[120] = []byte(`" class="action_button ip_item hide_on_mobile" aria-hidden="true">`)
+topic_alt_frags[121] = []byte(`</a>`)
+topic_alt_frags[122] = []byte(`
 				</div>
 			</div>
 		</div><div style="clear:both;"></div>
 	</article>
 
 	`)
-topic_alt_frags[119] = []byte(`
-	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item `)
-topic_alt_frags[120] = []byte(`action_item`)
-topic_alt_frags[121] = []byte(`">
+topic_alt_frags[123] = []byte(`
+	<article `)
+topic_alt_frags[124] = []byte(` itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item `)
+topic_alt_frags[125] = []byte(`action_item`)
+topic_alt_frags[126] = []byte(`">
 		<div class="userinfo" aria-label="`)
-topic_alt_frags[122] = []byte(`">
+topic_alt_frags[127] = []byte(`">
 			<div class="avatar_item" style="background-image: url(`)
-topic_alt_frags[123] = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+topic_alt_frags[128] = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="`)
-topic_alt_frags[124] = []byte(`" class="the_name" rel="author">`)
-topic_alt_frags[125] = []byte(`</a>
+topic_alt_frags[129] = []byte(`" class="the_name" rel="author">`)
+topic_alt_frags[130] = []byte(`</a>
 			`)
-topic_alt_frags[126] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
-topic_alt_frags[127] = []byte(`</div><div class="tag_post"></div></div>`)
-topic_alt_frags[128] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">`)
-topic_alt_frags[129] = []byte(`</div><div class="tag_post"></div></div>`)
-topic_alt_frags[130] = []byte(`
+topic_alt_frags[131] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
+topic_alt_frags[132] = []byte(`</div><div class="tag_post"></div></div>`)
+topic_alt_frags[133] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">`)
+topic_alt_frags[134] = []byte(`</div><div class="tag_post"></div></div>`)
+topic_alt_frags[135] = []byte(`
 		</div>
 		<div class="content_container" `)
-topic_alt_frags[131] = []byte(`style="margin-left: 0px;"`)
-topic_alt_frags[132] = []byte(`>
+topic_alt_frags[136] = []byte(`style="margin-left: 0px;"`)
+topic_alt_frags[137] = []byte(`>
 			`)
-topic_alt_frags[133] = []byte(`
+topic_alt_frags[138] = []byte(`
 				<span class="action_icon" style="font-size: 18px;padding-right: 5px;" aria-hidden="true">`)
-topic_alt_frags[134] = []byte(`</span>
+topic_alt_frags[139] = []byte(`</span>
 				<span itemprop="text">`)
-topic_alt_frags[135] = []byte(`</span>
+topic_alt_frags[140] = []byte(`</span>
 			`)
-topic_alt_frags[136] = []byte(`
+topic_alt_frags[141] = []byte(`
 			<div class="editable_block user_content" itemprop="text">`)
-topic_alt_frags[137] = []byte(`</div>
-			<div class="button_container">
+topic_alt_frags[142] = []byte(`</div>
+			<div class="controls button_container`)
+topic_alt_frags[143] = []byte(` has_likes`)
+topic_alt_frags[144] = []byte(`">
 				`)
-topic_alt_frags[138] = []byte(`<a href="/reply/like/submit/`)
-topic_alt_frags[139] = []byte(`?session=`)
-topic_alt_frags[140] = []byte(`" class="action_button like_item add_like" aria-label="`)
-topic_alt_frags[141] = []byte(`" data-action="like"></a>`)
-topic_alt_frags[142] = []byte(`<a href="/reply/edit/submit/`)
-topic_alt_frags[143] = []byte(`?session=`)
-topic_alt_frags[144] = []byte(`" class="action_button edit_item" aria-label="`)
-topic_alt_frags[145] = []byte(`" data-action="edit"></a>`)
-topic_alt_frags[146] = []byte(`<a href="/reply/delete/submit/`)
-topic_alt_frags[147] = []byte(`?session=`)
-topic_alt_frags[148] = []byte(`" class="action_button delete_item" aria-label="`)
-topic_alt_frags[149] = []byte(`" data-action="delete"></a>`)
-topic_alt_frags[150] = []byte(`<a href="/users/ips/?ip=`)
-topic_alt_frags[151] = []byte(`" title="`)
-topic_alt_frags[152] = []byte(`" class="action_button ip_item_button hide_on_big" aria-label="`)
-topic_alt_frags[153] = []byte(`" data-action="ip"></a>`)
-topic_alt_frags[154] = []byte(`
+topic_alt_frags[145] = []byte(`<a href="/reply/like/submit/`)
+topic_alt_frags[146] = []byte(`?session=`)
+topic_alt_frags[147] = []byte(`" class="action_button like_item `)
+topic_alt_frags[148] = []byte(`remove_like`)
+topic_alt_frags[149] = []byte(`add_like`)
+topic_alt_frags[150] = []byte(`" aria-label="`)
+topic_alt_frags[151] = []byte(`" data-action="like"></a>`)
+topic_alt_frags[152] = []byte(`<a href="/reply/edit/submit/`)
+topic_alt_frags[153] = []byte(`?session=`)
+topic_alt_frags[154] = []byte(`" class="action_button edit_item" aria-label="`)
+topic_alt_frags[155] = []byte(`" data-action="edit"></a>`)
+topic_alt_frags[156] = []byte(`<a href="/reply/delete/submit/`)
+topic_alt_frags[157] = []byte(`?session=`)
+topic_alt_frags[158] = []byte(`" class="action_button delete_item" aria-label="`)
+topic_alt_frags[159] = []byte(`" data-action="delete"></a>`)
+topic_alt_frags[160] = []byte(`<a href="/users/ips/?ip=`)
+topic_alt_frags[161] = []byte(`" title="`)
+topic_alt_frags[162] = []byte(`" class="action_button ip_item_button hide_on_big" aria-label="`)
+topic_alt_frags[163] = []byte(`" data-action="ip"></a>`)
+topic_alt_frags[164] = []byte(`
 					<a href="/report/submit/`)
-topic_alt_frags[155] = []byte(`?session=`)
-topic_alt_frags[156] = []byte(`&type=reply" class="action_button report_item" aria-label="`)
-topic_alt_frags[157] = []byte(`" data-action="report"></a>
+topic_alt_frags[165] = []byte(`?session=`)
+topic_alt_frags[166] = []byte(`&type=reply" class="action_button report_item" aria-label="`)
+topic_alt_frags[167] = []byte(`" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				`)
-topic_alt_frags[158] = []byte(`
-				<div class="action_button_right`)
-topic_alt_frags[159] = []byte(` has_likes`)
-topic_alt_frags[160] = []byte(`">
-					`)
-topic_alt_frags[161] = []byte(`<a class="action_button like_count hide_on_micro" aria-label="`)
-topic_alt_frags[162] = []byte(`">`)
-topic_alt_frags[163] = []byte(`</a>`)
-topic_alt_frags[164] = []byte(`
+topic_alt_frags[168] = []byte(`
+				<div class="action_button_right">
+					<a class="action_button like_count hide_on_micro" aria-label="`)
+topic_alt_frags[169] = []byte(`">`)
+topic_alt_frags[170] = []byte(`</a>
 					<a class="action_button created_at hide_on_mobile">`)
-topic_alt_frags[165] = []byte(`</a>
+topic_alt_frags[171] = []byte(`</a>
 					`)
-topic_alt_frags[166] = []byte(`<a href="/users/ips/?ip=`)
-topic_alt_frags[167] = []byte(`" title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">`)
-topic_alt_frags[168] = []byte(`</a>`)
-topic_alt_frags[169] = []byte(`
+topic_alt_frags[172] = []byte(`<a href="/users/ips/?ip=`)
+topic_alt_frags[173] = []byte(`" title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">`)
+topic_alt_frags[174] = []byte(`</a>`)
+topic_alt_frags[175] = []byte(`
 				</div>
 			</div>
 			`)
-topic_alt_frags[170] = []byte(`
+topic_alt_frags[176] = []byte(`
 		</div>
 		<div style="clear:both;"></div>
 	</article>
 `)
-topic_alt_frags[171] = []byte(`</div>
+topic_alt_frags[177] = []byte(`</div>
 
 `)
-topic_alt_frags[172] = []byte(`
+topic_alt_frags[178] = []byte(`
 <div class="rowblock topic_reply_container">
 	<div class="userinfo" aria-label="`)
-topic_alt_frags[173] = []byte(`">
+topic_alt_frags[179] = []byte(`">
 		<div class="avatar_item" style="background-image: url(`)
-topic_alt_frags[174] = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+topic_alt_frags[180] = []byte(`), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 		<a href="`)
-topic_alt_frags[175] = []byte(`" class="the_name" rel="author">`)
-topic_alt_frags[176] = []byte(`</a>
+topic_alt_frags[181] = []byte(`" class="the_name" rel="author">`)
+topic_alt_frags[182] = []byte(`</a>
 		`)
-topic_alt_frags[177] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
-topic_alt_frags[178] = []byte(`</div><div class="tag_post"></div></div>`)
-topic_alt_frags[179] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">`)
-topic_alt_frags[180] = []byte(`</div><div class="tag_post"></div></div>`)
-topic_alt_frags[181] = []byte(`
+topic_alt_frags[183] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">`)
+topic_alt_frags[184] = []byte(`</div><div class="tag_post"></div></div>`)
+topic_alt_frags[185] = []byte(`<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">`)
+topic_alt_frags[186] = []byte(`</div><div class="tag_post"></div></div>`)
+topic_alt_frags[187] = []byte(`
 	</div>
 	<div class="rowblock topic_reply_form quick_create_form"  aria-label="`)
-topic_alt_frags[182] = []byte(`">
+topic_alt_frags[188] = []byte(`">
 		<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session=`)
-topic_alt_frags[183] = []byte(`" method="post"></form>
+topic_alt_frags[189] = []byte(`" method="post"></form>
 		<input form="quick_post_form" name="tid" value='`)
-topic_alt_frags[184] = []byte(`' type="hidden" />
+topic_alt_frags[190] = []byte(`' type="hidden" />
 		<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 		<div class="formrow real_first_child">
 			<div class="formitem">
 				<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="`)
-topic_alt_frags[185] = []byte(`" required></textarea>
+topic_alt_frags[191] = []byte(`" required></textarea>
 			</div>
 		</div>
 		<div class="formrow poll_content_row auto_hide">
@@ -784,29 +801,29 @@ topic_alt_frags[185] = []byte(`" required></textarea>
 					<input type="checkbox" disabled />
 					<label class="pollinputlabel"></label>
 					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="`)
-topic_alt_frags[186] = []byte(`" />
+topic_alt_frags[192] = []byte(`" />
 				</div>
 			</div>
 		</div>
 		<div class="formrow quick_button_row">
 			<div class="formitem">
 				<button form="quick_post_form" name="reply-button" class="formbutton">`)
-topic_alt_frags[187] = []byte(`</button>
+topic_alt_frags[193] = []byte(`</button>
 				<button form="quick_post_form" class="formbutton" id="add_poll_button">`)
-topic_alt_frags[188] = []byte(`</button>
+topic_alt_frags[194] = []byte(`</button>
 				`)
-topic_alt_frags[189] = []byte(`
+topic_alt_frags[195] = []byte(`
 				<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
 				<label for="upload_files" class="formbutton add_file_button">`)
-topic_alt_frags[190] = []byte(`</label>
+topic_alt_frags[196] = []byte(`</label>
 				<div id="upload_file_dock"></div>`)
-topic_alt_frags[191] = []byte(`
+topic_alt_frags[197] = []byte(`
 			</div>
 		</div>
 	</div>
 </div>
 `)
-topic_alt_frags[192] = []byte(`
+topic_alt_frags[198] = []byte(`
 
 </main>
 
@@ -825,104 +842,106 @@ profile_frags[2] = []byte(`'s Avatar" title="`)
 profile_frags[3] = []byte(`'s Avatar" />
 			</div>
 			<div class="rowitem nameRow">
-				<span class="profileName">`)
-profile_frags[4] = []byte(`</span>`)
-profile_frags[5] = []byte(`<span class="username">`)
-profile_frags[6] = []byte(`</span>`)
-profile_frags[7] = []byte(`
+				<span class="profileName" title="`)
+profile_frags[4] = []byte(`">`)
+profile_frags[5] = []byte(`</span>`)
+profile_frags[6] = []byte(`<span class="username" title="`)
+profile_frags[7] = []byte(`">`)
+profile_frags[8] = []byte(`</span>`)
+profile_frags[9] = []byte(`
 			</div>
 		</div>
 		<div class="passiveBlock">
 			`)
-profile_frags[8] = []byte(`<div class="rowitem passive">
-				<a class="profile_menu_item">`)
-profile_frags[9] = []byte(`</a>
-			</div>`)
-profile_frags[10] = []byte(`
-			<!--<div class="rowitem passive">
+profile_frags[10] = []byte(`<div class="rowitem passive">
 				<a class="profile_menu_item">`)
 profile_frags[11] = []byte(`</a>
+			</div>`)
+profile_frags[12] = []byte(`
+			<!--<div class="rowitem passive">
+				<a class="profile_menu_item">`)
+profile_frags[13] = []byte(`</a>
 			</div>-->
 			`)
-profile_frags[12] = []byte(`<div class="rowitem passive">
+profile_frags[14] = []byte(`<div class="rowitem passive">
 				`)
-profile_frags[13] = []byte(`<a href="/users/unban/`)
-profile_frags[14] = []byte(`?session=`)
-profile_frags[15] = []byte(`" class="profile_menu_item">`)
-profile_frags[16] = []byte(`</a>
+profile_frags[15] = []byte(`<a href="/users/unban/`)
+profile_frags[16] = []byte(`?session=`)
+profile_frags[17] = []byte(`" class="profile_menu_item">`)
+profile_frags[18] = []byte(`</a>
 			`)
-profile_frags[17] = []byte(`<a href="#ban_user" class="profile_menu_item">`)
-profile_frags[18] = []byte(`</a>`)
-profile_frags[19] = []byte(`
+profile_frags[19] = []byte(`<a href="#ban_user" class="profile_menu_item">`)
+profile_frags[20] = []byte(`</a>`)
+profile_frags[21] = []byte(`
 			</div>`)
-profile_frags[20] = []byte(`
+profile_frags[22] = []byte(`
 			<div class="rowitem passive">
 				<a href="/report/submit/`)
-profile_frags[21] = []byte(`?session=`)
-profile_frags[22] = []byte(`&type=user" class="profile_menu_item report_item" aria-label="`)
-profile_frags[23] = []byte(`" title="`)
-profile_frags[24] = []byte(`"></a>
+profile_frags[23] = []byte(`?session=`)
+profile_frags[24] = []byte(`&type=user" class="profile_menu_item report_item" aria-label="`)
+profile_frags[25] = []byte(`" title="`)
+profile_frags[26] = []byte(`"></a>
 			</div>
 			`)
-profile_frags[25] = []byte(`
+profile_frags[27] = []byte(`
 		</div>
 	</div>
 </div>
 
 <div id="profile_right_lane" class="colstack_right">
 	`)
-profile_frags[26] = []byte(`
+profile_frags[28] = []byte(`
 	<!-- TODO: Inline the display: none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
 			<div class="rowitem"><h1><a>`)
-profile_frags[27] = []byte(`</a></h1></div>
+profile_frags[29] = []byte(`</a></h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/`)
-profile_frags[28] = []byte(`?session=`)
-profile_frags[29] = []byte(`" method="post" style="display: none;">
+profile_frags[30] = []byte(`?session=`)
+profile_frags[31] = []byte(`" method="post" style="display: none;">
 		`)
-profile_frags[30] = []byte(`
+profile_frags[32] = []byte(`
 		<div class="colline">`)
-profile_frags[31] = []byte(`</div>
+profile_frags[33] = []byte(`</div>
 		<div class="colstack_item">
 			<div class="formrow real_first_child">
 				<div class="formitem formlabel"><a>`)
-profile_frags[32] = []byte(`</a></div>
+profile_frags[34] = []byte(`</a></div>
 				<div class="formitem">
 					<input name="ban-duration-days" type="number" value="0" min="0" />
 				</div>
 			</div>
 			<div class="formrow">
 				<div class="formitem formlabel"><a>`)
-profile_frags[33] = []byte(`</a></div>
+profile_frags[35] = []byte(`</a></div>
 				<div class="formitem">
 					<input name="ban-duration-weeks" type="number" value="0" min="0" />
 				</div>
 			</div>
 			<div class="formrow">
 				<div class="formitem formlabel"><a>`)
-profile_frags[34] = []byte(`</a></div>
+profile_frags[36] = []byte(`</a></div>
 				<div class="formitem">
 					<input name="ban-duration-months" type="number" value="0" min="0" />
 				</div>
 			</div>
 			<!--<div class="formrow">
 				<div class="formitem formlabel"><a>`)
-profile_frags[35] = []byte(`</a></div>
+profile_frags[37] = []byte(`</a></div>
 				<div class="formitem"><textarea name="ban-reason" placeholder="A really horrible person" required></textarea></div>
 			</div>-->
 			<div class="formrow">
 				<div class="formitem"><button name="ban-button" class="formbutton form_middle_button">`)
-profile_frags[36] = []byte(`</button></div>
+profile_frags[38] = []byte(`</button></div>
 			</div>
 		</div>
 	</form>
 	`)
-profile_frags[37] = []byte(`
+profile_frags[39] = []byte(`
 
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
 		<div class="rowitem"><h1><a>`)
-profile_frags[38] = []byte(`</a></h1></div>
+profile_frags[40] = []byte(`</a></h1></div>
 	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">`)
 profile_comments_row_frags[0] = []byte(`
@@ -1013,33 +1032,33 @@ profile_comments_row_frags[49] = []byte(`</span>
 		</div>
 		<div class="after_comment"></div>
 	`)
-profile_frags[39] = []byte(`</div>
+profile_frags[41] = []byte(`</div>
 
 `)
-profile_frags[40] = []byte(`
+profile_frags[42] = []byte(`
 	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?session=`)
-profile_frags[41] = []byte(`" method="post">
+profile_frags[43] = []byte(`" method="post">
 		<input name="uid" value='`)
-profile_frags[42] = []byte(`' type="hidden" />
+profile_frags[44] = []byte(`' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top: none;">
 			<div class="formrow">
 				<div class="formitem"><textarea class="input_content" name="reply-content" placeholder="`)
-profile_frags[43] = []byte(`"></textarea></div>
+profile_frags[45] = []byte(`"></textarea></div>
 			</div>
 			<div class="formrow quick_button_row">
 				<div class="formitem"><button name="reply-button" class="formbutton">`)
-profile_frags[44] = []byte(`</button></div>
+profile_frags[46] = []byte(`</button></div>
 			</div>
 		</div>
 	</form>
 `)
-profile_frags[45] = []byte(`
+profile_frags[47] = []byte(`
 </div>
 
 </div>
 
 `)
-profile_frags[46] = []byte(`
+profile_frags[48] = []byte(`
 <script type="text/javascript">
 function handle_profile_hashbit() {
 	var hash_class = ""
@@ -1282,52 +1301,56 @@ topics_frags[60] = []byte(`'s Avatar" title="`)
 topics_frags[61] = []byte(`'s Avatar" /></a>
 		<span class="topic_inner_left">
 			<a class="rowtopic" href="`)
-topics_frags[62] = []byte(`" itemprop="itemListElement"><span>`)
-topics_frags[63] = []byte(`</span></a> `)
-topics_frags[64] = []byte(`<a class="rowsmall parent_forum" href="`)
-topics_frags[65] = []byte(`">`)
-topics_frags[66] = []byte(`</a>`)
-topics_frags[67] = []byte(`
+topics_frags[62] = []byte(`" itemprop="itemListElement" title="`)
+topics_frags[63] = []byte(`"><span>`)
+topics_frags[64] = []byte(`</span></a> `)
+topics_frags[65] = []byte(`<a class="rowsmall parent_forum" href="`)
+topics_frags[66] = []byte(`" title="`)
+topics_frags[67] = []byte(`">`)
+topics_frags[68] = []byte(`</a>`)
+topics_frags[69] = []byte(`
 			<br /><a class="rowsmall starter" href="`)
-topics_frags[68] = []byte(`">`)
-topics_frags[69] = []byte(`</a>
+topics_frags[70] = []byte(`" title="`)
+topics_frags[71] = []byte(`">`)
+topics_frags[72] = []byte(`</a>
 			`)
-topics_frags[70] = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="`)
-topics_frags[71] = []byte(`"> | &#x1F512;&#xFE0E</span>`)
-topics_frags[72] = []byte(`<span class="rowsmall topic_status_e topic_status_sticky" title="`)
-topics_frags[73] = []byte(`"> | &#x1F4CD;&#xFE0E</span>`)
-topics_frags[74] = []byte(`
+topics_frags[73] = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="`)
+topics_frags[74] = []byte(`"> | &#x1F512;&#xFE0E</span>`)
+topics_frags[75] = []byte(`<span class="rowsmall topic_status_e topic_status_sticky" title="`)
+topics_frags[76] = []byte(`"> | &#x1F4CD;&#xFE0E</span>`)
+topics_frags[77] = []byte(`
 		</span>
 		<span class="topic_inner_right rowsmall" style="float: right;">
 			<span class="replyCount">`)
-topics_frags[75] = []byte(`</span><br />
+topics_frags[78] = []byte(`</span><br />
 			<span class="likeCount">`)
-topics_frags[76] = []byte(`</span>
+topics_frags[79] = []byte(`</span>
 		</span>
 	</div>
 	<div class="rowitem topic_right passive datarow `)
-topics_frags[77] = []byte(`topic_sticky`)
-topics_frags[78] = []byte(`topic_closed`)
-topics_frags[79] = []byte(`">
+topics_frags[80] = []byte(`topic_sticky`)
+topics_frags[81] = []byte(`topic_closed`)
+topics_frags[82] = []byte(`">
 		<a href="`)
-topics_frags[80] = []byte(`"><img src="`)
-topics_frags[81] = []byte(`" height="64" alt="`)
-topics_frags[82] = []byte(`'s Avatar" title="`)
-topics_frags[83] = []byte(`'s Avatar" /></a>
+topics_frags[83] = []byte(`"><img src="`)
+topics_frags[84] = []byte(`" height="64" alt="`)
+topics_frags[85] = []byte(`'s Avatar" title="`)
+topics_frags[86] = []byte(`'s Avatar" /></a>
 		<span>
 			<a href="`)
-topics_frags[84] = []byte(`" class="lastName" style="font-size: 14px;">`)
-topics_frags[85] = []byte(`</a><br>
+topics_frags[87] = []byte(`" class="lastName" style="font-size: 14px;" title="`)
+topics_frags[88] = []byte(`">`)
+topics_frags[89] = []byte(`</a><br>
 			<span class="rowsmall lastReplyAt">`)
-topics_frags[86] = []byte(`</span>
+topics_frags[90] = []byte(`</span>
 		</span>
 	</div>
 	</div>`)
-topics_frags[87] = []byte(`<div class="rowitem passive rowmsg">`)
-topics_frags[88] = []byte(` <a href="/topics/create/">`)
-topics_frags[89] = []byte(`</a>`)
-topics_frags[90] = []byte(`</div>`)
-topics_frags[91] = []byte(`
+topics_frags[91] = []byte(`<div class="rowitem passive rowmsg">`)
+topics_frags[92] = []byte(` <a href="/topics/create/">`)
+topics_frags[93] = []byte(`</a>`)
+topics_frags[94] = []byte(`</div>`)
+topics_frags[95] = []byte(`
 </div>
 
 `)
@@ -1353,7 +1376,7 @@ paginator_frags[12] = []byte(`">`)
 paginator_frags[13] = []byte(`</a></div>`)
 paginator_frags[14] = []byte(`
 </div>`)
-topics_frags[92] = []byte(`
+topics_frags[96] = []byte(`
 
 </main>
 `)
@@ -1495,53 +1518,56 @@ forum_frags[56] = []byte(`'s Avatar" title="`)
 forum_frags[57] = []byte(`'s Avatar" /></a>
 			<span class="topic_inner_left">
 				<a class="rowtopic" href="`)
-forum_frags[58] = []byte(`" itemprop="itemListElement"><span>`)
-forum_frags[59] = []byte(`</span></a>
+forum_frags[58] = []byte(`" itemprop="itemListElement" title="`)
+forum_frags[59] = []byte(`"><span>`)
+forum_frags[60] = []byte(`</span></a>
 				<br /><a class="rowsmall starter" href="`)
-forum_frags[60] = []byte(`">`)
-forum_frags[61] = []byte(`</a>
+forum_frags[61] = []byte(`" title="`)
+forum_frags[62] = []byte(`">`)
+forum_frags[63] = []byte(`</a>
 				`)
-forum_frags[62] = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="`)
-forum_frags[63] = []byte(`"> | &#x1F512;&#xFE0E</span>`)
-forum_frags[64] = []byte(`<span class="rowsmall topic_status_e topic_status_sticky" title="`)
-forum_frags[65] = []byte(`"> | &#x1F4CD;&#xFE0E</span>`)
-forum_frags[66] = []byte(`
+forum_frags[64] = []byte(`<span class="rowsmall topic_status_e topic_status_closed" title="`)
+forum_frags[65] = []byte(`"> | &#x1F512;&#xFE0E</span>`)
+forum_frags[66] = []byte(`<span class="rowsmall topic_status_e topic_status_sticky" title="`)
+forum_frags[67] = []byte(`"> | &#x1F4CD;&#xFE0E</span>`)
+forum_frags[68] = []byte(`
 			</span>
 			<span class="topic_inner_right rowsmall" style="float: right;">
 				<span class="replyCount">`)
-forum_frags[67] = []byte(`</span><br />
+forum_frags[69] = []byte(`</span><br />
 				<span class="likeCount">`)
-forum_frags[68] = []byte(`</span>
+forum_frags[70] = []byte(`</span>
 			</span>
 		</div>
 		<div class="rowitem topic_right passive datarow `)
-forum_frags[69] = []byte(`topic_sticky`)
-forum_frags[70] = []byte(`topic_closed`)
-forum_frags[71] = []byte(`">
+forum_frags[71] = []byte(`topic_sticky`)
+forum_frags[72] = []byte(`topic_closed`)
+forum_frags[73] = []byte(`">
 			<a href="`)
-forum_frags[72] = []byte(`"><img src="`)
-forum_frags[73] = []byte(`" height="64" alt="`)
-forum_frags[74] = []byte(`'s Avatar" title="`)
-forum_frags[75] = []byte(`'s Avatar" /></a>
+forum_frags[74] = []byte(`"><img src="`)
+forum_frags[75] = []byte(`" height="64" alt="`)
+forum_frags[76] = []byte(`'s Avatar" title="`)
+forum_frags[77] = []byte(`'s Avatar" /></a>
 			<span>
 				<a href="`)
-forum_frags[76] = []byte(`" class="lastName" style="font-size: 14px;">`)
-forum_frags[77] = []byte(`</a><br>
+forum_frags[78] = []byte(`" class="lastName" style="font-size: 14px;" title="`)
+forum_frags[79] = []byte(`">`)
+forum_frags[80] = []byte(`</a><br>
 				<span class="rowsmall lastReplyAt">`)
-forum_frags[78] = []byte(`</span>
+forum_frags[81] = []byte(`</span>
 			</span>
 		</div>
 		</div>`)
-forum_frags[79] = []byte(`<div class="rowitem passive rowmsg">`)
-forum_frags[80] = []byte(` <a href="/topics/create/`)
-forum_frags[81] = []byte(`">`)
-forum_frags[82] = []byte(`</a>`)
-forum_frags[83] = []byte(`</div>`)
-forum_frags[84] = []byte(`
+forum_frags[82] = []byte(`<div class="rowitem passive rowmsg">`)
+forum_frags[83] = []byte(` <a href="/topics/create/`)
+forum_frags[84] = []byte(`">`)
+forum_frags[85] = []byte(`</a>`)
+forum_frags[86] = []byte(`</div>`)
+forum_frags[87] = []byte(`
 	</div>
 
 `)
-forum_frags[85] = []byte(`
+forum_frags[88] = []byte(`
 
 </main>
 `)

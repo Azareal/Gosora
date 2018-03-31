@@ -20,7 +20,8 @@ import (
 )
 
 type TopicStmts struct {
-	getReplies *sql.Stmt
+	getReplies    *sql.Stmt
+	getLikedTopic *sql.Stmt
 }
 
 var topicStmts TopicStmts
@@ -29,7 +30,8 @@ var topicStmts TopicStmts
 func init() {
 	common.DbInits.Add(func(acc *qgen.Accumulator) error {
 		topicStmts = TopicStmts{
-			getReplies: acc.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?"),
+			getReplies:    acc.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?"),
+			getLikedTopic: acc.Select("likes").Columns("targetItem").Where("sentBy = ? && targetItem = ? && targetType = 'topics'").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -107,12 +109,25 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		poll = pPoll.Copy()
 	}
 
+	if topic.LikeCount > 0 && user.Liked > 0 {
+		var disp int // Discard this value
+		err = topicStmts.getLikedTopic.QueryRow(user.ID, topic.ID).Scan(&disp)
+		if err == nil {
+			topic.Liked = true
+		} else if err != nil && err != sql.ErrNoRows {
+			return common.InternalError(err, w, r)
+		}
+	}
+
 	// Calculate the offset
 	offset, page, lastPage := common.PageOffset(topic.PostCount, page, common.Config.ItemsPerPage)
 	tpage := common.TopicPage{topic.Title, user, headerVars, []common.ReplyUser{}, topic, poll, page, lastPage}
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {
+		var likedMap = make(map[int]int)
+		var likedQueryList = []int{user.ID}
+
 		rows, err := topicStmts.getReplies.Query(topic.ID, offset, common.Config.ItemsPerPage)
 		if err == sql.ErrNoRows {
 			return common.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
@@ -171,7 +186,11 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 					replyItem.ActionIcon = ""
 				}
 			}
-			replyItem.Liked = false
+
+			if replyItem.LikeCount > 0 {
+				likedMap[replyItem.ID] = len(tpage.ItemList)
+				likedQueryList = append(likedQueryList, replyItem.ID)
+			}
 
 			common.RunVhook("topic_reply_row_assign", &tpage, &replyItem)
 			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
@@ -180,6 +199,28 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		err = rows.Err()
 		if err != nil {
 			return common.InternalError(err, w, r)
+		}
+
+		// TODO: Add a config setting to disable the liked query for a burst of extra speed
+		if user.Liked > 0 && len(likedQueryList) > 1 /*&& user.LastLiked <= time.Now()*/ {
+			rows, err := qgen.Builder.Accumulator().Select("likes").Columns("targetItem").Where("sentBy = ? AND targetType = 'replies'").In("targetItem", likedQueryList[1:]).Query(user.ID)
+			if err != nil && err != sql.ErrNoRows {
+				return common.InternalError(err, w, r)
+			}
+			defer rows.Close()
+
+			for rows.Next() {
+				var likeRid int
+				err := rows.Scan(&likeRid)
+				if err != nil {
+					return common.InternalError(err, w, r)
+				}
+				tpage.ItemList[likedMap[likeRid]].Liked = true
+			}
+			err = rows.Err()
+			if err != nil {
+				return common.InternalError(err, w, r)
+			}
 		}
 	}
 

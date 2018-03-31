@@ -44,6 +44,11 @@ We recommend changing the root password (that is the password for the user 'root
 It's entirely possible that your host might already have MySQL, so you might be able to skip this step, particularly if it's a managed VPS or a shared host (contrary to popular belief, it is possible, although the ecosystem in this regard is extremely immature). Or they might have a quicker and easier method of setting up MySQL.
 
 
+# Downloading
+
+At some point, we'll have releases which you can download, but right now, you'll have to use the `git clone` command as mentioned down in the advanced setup section to download a copy of Gosora.
+
+
 # Installation Instructions
 
 *Linux*

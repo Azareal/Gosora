@@ -3,5 +3,6 @@ CREATE TABLE [likes] (
 	[targetItem] int not null,
 	[targetType] nvarchar (50) DEFAULT 'replies' not null,
 	[sentBy] int not null,
+	[createdAt] datetime not null,
 	[recalc] tinyint DEFAULT 0 not null
 );

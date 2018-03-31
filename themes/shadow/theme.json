@@ -6,6 +6,12 @@
 	"FullImage": "shadow.png",
 	"URL": "github.com/Azareal/Gosora",
 	"BgAvatars":true,
+	"Templates": [
+		{
+			"Name": "topic",
+			"Source": "topic"
+		}
+	],
 	"Resources": [
 		{
 			"Name":"shadow/misc.js",

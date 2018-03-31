@@ -107,8 +107,8 @@
 		<span class="selector"></span>
 		<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" alt="{{.Creator.Name}}'s Avatar" title="{{.Creator.Name}}'s Avatar" /></a>
 		<span class="topic_inner_left">
-			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}">{{.ForumName}}</a>{{end}}
-			<br /><a class="rowsmall starter" href="{{.Creator.Link}}">{{.Creator.Name}}</a>
+			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement" title="{{.Title}}"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}" title="{{.ForumName}}">{{.ForumName}}</a>{{end}}
+			<br /><a class="rowsmall starter" href="{{.Creator.Link}}" title="{{.Creator.Name}}">{{.Creator.Name}}</a>
 			{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
 			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="{{lang "status_closed_tooltip"}}"> | &#x1F512;&#xFE0E</span>{{end}}
 			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="{{lang "status_pinned_tooltip"}}"> | &#x1F4CD;&#xFE0E</span>{{end}}
@@ -121,7 +121,7 @@
 	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
 		<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
 		<span>
-			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;">{{.LastUser.Name}}</a><br>
+			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
 			<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
 		</span>
 	</div>

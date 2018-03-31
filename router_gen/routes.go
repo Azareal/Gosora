@@ -74,7 +74,7 @@ func buildTopicRoutes() {
 		Action("routes.LockTopicSubmit", "/topic/lock/submit/").LitBefore("req.URL.Path += extraData"),
 		Action("routes.UnlockTopicSubmit", "/topic/unlock/submit/", "extraData"),
 		Action("routes.MoveTopicSubmit", "/topic/move/submit/", "extraData"),
-		Action("routeLikeTopicSubmit", "/topic/like/submit/", "extraData"),
+		Action("routeLikeTopicSubmit", "/topic/like/submit/", "extraData").Before("ParseForm"),
 	)
 	addRouteGroup(topicGroup)
 }
@@ -88,7 +88,7 @@ func buildReplyRoutes() {
 		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("common.Config.MaxRequestSize"), // TODO: Rename the route so it's /reply/create/submit/
 		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
 		Action("routes.ReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
-		Action("routeReplyLikeSubmit", "/reply/like/submit/", "extraData"),
+		Action("routeReplyLikeSubmit", "/reply/like/submit/", "extraData").Before("ParseForm"),
 	)
 	addRouteGroup(replyGroup)
 }

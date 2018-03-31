@@ -1,9 +1,12 @@
 /* WIP Under Really Heavy Construction */
 package qgen
 
-import "strings"
-import "strconv"
-import "errors"
+import (
+	"database/sql"
+	"errors"
+	"strconv"
+	"strings"
+)
 
 func init() {
 	Registry = append(Registry,
@@ -28,6 +31,16 @@ func (adapter *PgsqlAdapter) GetStmt(name string) DBStmt {
 
 func (adapter *PgsqlAdapter) GetStmts() map[string]DBStmt {
 	return adapter.Buffer
+}
+
+// TODO: Implement this
+func (adapter *PgsqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
+	return nil, nil
+}
+
+// TODO: Implement this
+func (adapter *PgsqlAdapter) DbVersion() string {
+	return ""
 }
 
 // TODO: Implement this
@@ -167,7 +180,7 @@ func (adapter *PgsqlAdapter) SimpleUpdate(name string, table string, set string,
 					token.Contents = "LOCALTIMESTAMP()"
 				}
 				querystr += " " + token.Contents
-			case "operator", "number", "substitute":
+			case "operator", "number", "substitute", "or":
 				querystr += " " + token.Contents
 			case "column":
 				querystr += " `" + token.Contents + "`"
@@ -193,7 +206,7 @@ func (adapter *PgsqlAdapter) SimpleUpdate(name string, table string, set string,
 						token.Contents = "LOCALTIMESTAMP()"
 					}
 					querystr += " " + token.Contents
-				case "operator", "number", "substitute":
+				case "operator", "number", "substitute", "or":
 					querystr += " " + token.Contents
 				case "column":
 					querystr += " `" + token.Contents + "`"

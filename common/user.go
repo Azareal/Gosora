@@ -54,6 +54,7 @@ type User struct {
 	Tag       string
 	Level     int
 	Score     int
+	Liked     int
 	LastIP    string // ! This part of the UserCache data might fall out of date
 	TempGroup int
 }
@@ -71,6 +72,8 @@ type UserStmts struct {
 	incrementPosts     *sql.Stmt
 	incrementBigposts  *sql.Stmt
 	incrementMegaposts *sql.Stmt
+	incrementLiked     *sql.Stmt
+	decrementLiked     *sql.Stmt
 	updateLastIP       *sql.Stmt
 
 	setPassword *sql.Stmt
@@ -92,7 +95,10 @@ func init() {
 			incrementPosts:     acc.SimpleUpdate("users", "posts = posts + ?", "uid = ?"),
 			incrementBigposts:  acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?", "uid = ?"),
 			incrementMegaposts: acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?", "uid = ?"),
-			updateLastIP:       acc.SimpleUpdate("users", "last_ip = ?", "uid = ?"),
+			incrementLiked:     acc.SimpleUpdate("users", "liked = liked + ?, lastLiked = UTC_TIMESTAMP()", "uid = ?"),
+			decrementLiked:     acc.SimpleUpdate("users", "liked = liked - ?", "uid = ?"),
+			//recalcLastLiked: acc...
+			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", "uid = ?"),
 
 			setPassword: acc.SimpleUpdate("users", "password = ?, salt = ?", "uid = ?"),
 		}

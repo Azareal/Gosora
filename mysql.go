@@ -9,10 +9,7 @@
 package main
 
 import (
-	"database/sql"
 	"log"
-
-	//import "time"
 
 	"./common"
 	"./query_gen/lib"
@@ -27,28 +24,20 @@ func init() {
 }
 
 func initMySQL() (err error) {
-	var _dbpassword string
-	if common.DbConfig.Password != "" {
-		_dbpassword = ":" + common.DbConfig.Password
-	}
-
-	// TODO: Move this bit to the query gen lib
-	// Open the database connection
-	db, err = sql.Open("mysql", common.DbConfig.Username+_dbpassword+"@tcp("+common.DbConfig.Host+":"+common.DbConfig.Port+")/"+common.DbConfig.Dbname+"?collation="+dbCollation+"&parseTime=true")
+	err = qgen.Builder.Init("mysql", map[string]string{
+		"host":      common.DbConfig.Host,
+		"port":      common.DbConfig.Port,
+		"name":      common.DbConfig.Dbname,
+		"username":  common.DbConfig.Username,
+		"password":  common.DbConfig.Password,
+		"collation": dbCollation,
+	})
 	if err != nil {
 		return err
 	}
-
-	// Make sure that the connection is alive
-	err = db.Ping()
-	if err != nil {
-		return err
-	}
-
-	// Fetch the database version
-	db.QueryRow("SELECT VERSION()").Scan(&dbVersion)
 
 	// Set the number of max open connections
+	db = qgen.Builder.GetConn()
 	db.SetMaxOpenConns(64)
 	db.SetMaxIdleConns(32)
 
@@ -70,7 +59,7 @@ func initMySQL() (err error) {
 
 	// TODO: Is there a less noisy way of doing this for tests?
 	log.Print("Preparing getActivityFeedByWatcher statement.")
-	stmts.getActivityFeedByWatcher, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid ASC LIMIT 8")
+	stmts.getActivityFeedByWatcher, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid DESC LIMIT 8")
 	if err != nil {
 		return err
 	}

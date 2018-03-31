@@ -19,8 +19,23 @@ func (build *builder) Accumulator() *Accumulator {
 	return &Accumulator{build.conn, build.adapter, nil}
 }
 
+// TODO: Move this method out of builder?
+func (build *builder) Init(adapter string, config map[string]string) error {
+	err := build.SetAdapter(adapter)
+	if err != nil {
+		return err
+	}
+	conn, err := build.adapter.BuildConn(config)
+	build.conn = conn
+	return err
+}
+
 func (build *builder) SetConn(conn *sql.DB) {
 	build.conn = conn
+}
+
+func (build *builder) GetConn() *sql.DB {
+	return build.conn
 }
 
 func (build *builder) SetAdapter(name string) error {
@@ -34,6 +49,11 @@ func (build *builder) SetAdapter(name string) error {
 
 func (build *builder) GetAdapter() Adapter {
 	return build.adapter
+}
+
+func (build *builder) DbVersion() (dbVersion string) {
+	build.conn.QueryRow(build.adapter.DbVersion()).Scan(&dbVersion)
+	return dbVersion
 }
 
 func (build *builder) Begin() (*sql.Tx, error) {

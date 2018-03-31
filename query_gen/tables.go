@@ -1,4 +1,3 @@
-/* WIP Under Construction */
 package main
 
 import "./lib"
@@ -11,7 +10,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"password", "varchar", 100, false, false, ""},
 
 			qgen.DBTableColumn{"salt", "varchar", 80, false, false, "''"},
-			qgen.DBTableColumn{"group", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"group", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"active", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"is_super_admin", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
@@ -30,6 +29,12 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"bigposts", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"megaposts", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"topics", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"liked", "int", 0, false, false, "0"},
+
+			// These two are to bound liked queries with little bits of information we know about the user to reduce the server load
+			qgen.DBTableColumn{"oldestItemLikedCreatedAt", "datetime", 0, false, false, ""}, // For internal use only, semantics may change
+			qgen.DBTableColumn{"lastLiked", "datetime", 0, false, false, ""},                // For internal use only, semantics may change
+
 			//qgen.DBTableColumn{"penalty_count","int",0,false,false,"0"},
 			qgen.DBTableColumn{"temp_group", "int", 0, false, false, "0"}, // For temporary groups, set this to zero when a temporary group isn't in effect
 		},
@@ -106,7 +111,7 @@ func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("emails", "", "",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"email", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"validated", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"token", "varchar", 200, false, false, "''"},
 		},
@@ -153,7 +158,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
 			qgen.DBTableColumn{"lastReplyAt", "datetime", 0, false, false, ""},
 			qgen.DBTableColumn{"lastReplyBy", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"is_closed", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"sticky", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"parentID", "int", 0, false, false, "2"},
@@ -178,7 +183,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"parsed_content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"lastEdit", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"lastEditBy", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"lastUpdated", "datetime", 0, false, false, ""},
@@ -200,7 +205,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"sectionTable", "varchar", 200, false, false, "forums"},
 			qgen.DBTableColumn{"originID", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"originTable", "varchar", 200, false, false, "replies"},
-			qgen.DBTableColumn{"uploadedBy", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"uploadedBy", "int", 0, false, false, ""}, // TODO; Make this a foreign key
 			qgen.DBTableColumn{"path", "varchar", 200, false, false, ""},
 		},
 		[]qgen.DBTableKey{
@@ -215,6 +220,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"contentID", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"contentType", "varchar", 100, false, false, "replies"},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
+			// TODO: Add a createdBy column?
 		},
 		[]qgen.DBTableKey{
 			qgen.DBTableKey{"reviseID", "primary"},
@@ -247,7 +253,7 @@ func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("polls_votes", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"pollID", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"option", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"castAt", "createdAt", 0, false, false, ""},
 			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
@@ -258,11 +264,11 @@ func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("users_replies", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"rid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"parsed_content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"lastEdit", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"lastEditBy", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
@@ -277,7 +283,8 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"weight", "tinyint", 0, false, false, "1"},
 			qgen.DBTableColumn{"targetItem", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"targetType", "varchar", 50, false, false, "replies"},
-			qgen.DBTableColumn{"sentBy", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"sentBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
 			qgen.DBTableColumn{"recalc", "tinyint", 0, false, false, "0"},
 		},
 		[]qgen.DBTableKey{},
@@ -285,8 +292,8 @@ func createTables(adapter qgen.Adapter) error {
 
 	qgen.Install.CreateTable("activity_stream_matches", "", "",
 		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"watcher", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"asid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"watcher", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			qgen.DBTableColumn{"asid", "int", 0, false, false, ""},    // TODO: Make this a foreign key
 		},
 		[]qgen.DBTableKey{},
 	)
@@ -294,7 +301,7 @@ func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("activity_stream", "", "",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"asid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"actor", "int", 0, false, false, ""},            /* the one doing the act */
+			qgen.DBTableColumn{"actor", "int", 0, false, false, ""},            /* the one doing the act */ // TODO: Make this a foreign key
 			qgen.DBTableColumn{"targetUser", "int", 0, false, false, ""},       /* the user who created the item the actor is acting on, some items like forums may lack a targetUser field */
 			qgen.DBTableColumn{"event", "varchar", 50, false, false, ""},       /* mention, like, reply (as in the act of replying to an item, not the reply item type, you can "reply" to a forum by making a topic in it), friend_invite */
 			qgen.DBTableColumn{"elementType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
@@ -307,7 +314,7 @@ func createTables(adapter qgen.Adapter) error {
 
 	qgen.Install.CreateTable("activity_subscriptions", "", "",
 		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"user", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"user", "int", 0, false, false, ""},            // TODO: Make this a foreign key
 			qgen.DBTableColumn{"targetID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
 			qgen.DBTableColumn{"targetType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
 			qgen.DBTableColumn{"level", "int", 0, false, false, "0"},          /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
@@ -378,7 +385,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"elementID", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"elementType", "varchar", 100, false, false, ""},
 			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"actorID", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"doneAt", "datetime", 0, false, false, ""},
 		},
 		[]qgen.DBTableKey{},
@@ -390,7 +397,7 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"elementID", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"elementType", "varchar", 100, false, false, ""},
 			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"actorID", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"doneAt", "datetime", 0, false, false, ""},
 		},
 		[]qgen.DBTableKey{},

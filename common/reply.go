@@ -104,6 +104,10 @@ func (reply *Reply) Like(uid int) (err error) {
 		return err
 	}
 	_, err = replyStmts.addLikesToReply.Exec(1, reply.ID)
+	if err != nil {
+		return err
+	}
+	_, err = userStmts.incrementLiked.Exec(1, uid)
 	return err
 }
 

@@ -647,6 +647,12 @@ button.username {
 .mod_button {
 	margin-right: 4px;
 }
+.like_count_label, .like_count {
+	display: none;
+}
+.has_likes .like_count_label, .has_likes .like_count {
+	display: block;
+}
 .like_label:before, .like_count_label:before {
 	content: "😀";
 }
@@ -674,7 +680,7 @@ button.username {
 .pin_label:before, .unpin_label:before {
 	content: "📌";
 }
-.unpin_label, .unlock_label {
+.remove_like, .unpin_label, .unlock_label {
 	background-color: #D6FFD6;
 }
 .lock_label:before, .unlock_label:before {

@@ -8,6 +8,12 @@
 	"URL": "github.com/Azareal/Gosora",
 	"BgAvatars":true,
 	"Docks":["rightSidebar"],
+	"Templates": [
+		{
+			"Name": "topic",
+			"Source": "topic"
+		}
+	],
 	"Resources": [
 		{
 			"Name":"tempra-simple/misc.js",

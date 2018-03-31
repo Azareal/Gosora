@@ -21,6 +21,9 @@ CREATE TABLE [users] (
 	[bigposts] int DEFAULT 0 not null,
 	[megaposts] int DEFAULT 0 not null,
 	[topics] int DEFAULT 0 not null,
+	[liked] int DEFAULT 0 not null,
+	[oldestItemLikedCreatedAt] datetime not null,
+	[lastLiked] datetime not null,
 	[temp_group] int DEFAULT 0 not null,
 	primary key([uid]),
 	unique([name])

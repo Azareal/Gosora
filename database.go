@@ -10,7 +10,6 @@ import (
 var stmts *Stmts
 
 var db *sql.DB
-var dbVersion string
 var dbAdapter string
 
 // ErrNoRows is an alias of sql.ErrNoRows, just in case we end up with non-database/sql datastores

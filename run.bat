@@ -46,6 +46,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Building the executable... again
+go build -o gosora.exe
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo Running Gosora
 gosora.exe
 rem Or you could redirect the output to a file

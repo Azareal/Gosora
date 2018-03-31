@@ -90,6 +90,7 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 		"divide":   true,
 		"dock":     true,
 		"lang":     true,
+		"scope":    true,
 	}
 
 	c.importMap = map[string]string{
@@ -685,6 +686,9 @@ ArgLoop:
 
 			c.langIndexToName = append(c.langIndexToName, leftParam)
 			out = "w.Write(phrases[" + strconv.Itoa(len(c.langIndexToName)-1) + "])\n"
+			literal = true
+			break ArgLoop
+		case "scope":
 			literal = true
 			break ArgLoop
 		default:

@@ -141,7 +141,7 @@ func init() {
 			stick:             acc.Update("topics").Set("sticky = 1").Where("tid = ?").Prepare(),
 			unstick:           acc.Update("topics").Set("sticky = 0").Where("tid = ?").Prepare(),
 			hasLikedTopic:     acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'topics'").Prepare(),
-			createLike:        acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
+			createLike:        acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 			addLikesToTopic:   acc.Update("topics").Set("likeCount = likeCount + ?").Where("tid = ?").Prepare(),
 			delete:            acc.Delete("topics").Where("tid = ?").Prepare(),
 			edit:              acc.Update("topics").Set("title = ?, content = ?, parsed_content = ?").Where("tid = ?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
@@ -205,20 +205,24 @@ func (topic *Topic) Unstick() (err error) {
 // TODO: Test this
 // TODO: Use a transaction for this
 func (topic *Topic) Like(score int, uid int) (err error) {
-	var tid int // Unused
-	err = topicStmts.hasLikedTopic.QueryRow(uid, topic.ID).Scan(&tid)
+	var disp int // Unused
+	err = topicStmts.hasLikedTopic.QueryRow(uid, topic.ID).Scan(&disp)
 	if err != nil && err != ErrNoRows {
 		return err
 	} else if err != ErrNoRows {
 		return ErrAlreadyLiked
 	}
 
-	_, err = topicStmts.createLike.Exec(score, tid, "topics", uid)
+	_, err = topicStmts.createLike.Exec(score, topic.ID, "topics", uid)
 	if err != nil {
 		return err
 	}
 
-	_, err = topicStmts.addLikesToTopic.Exec(1, tid)
+	_, err = topicStmts.addLikesToTopic.Exec(1, topic.ID)
+	if err != nil {
+		return err
+	}
+	_, err = userStmts.incrementLiked.Exec(1, uid)
 	topic.cacheRemove()
 	return err
 }

@@ -153,7 +153,7 @@ function runWebSockets() {
 		console.log("The WebSockets connection was closed");
 	}
 	conn.onmessage = function(event) {
-		//console.log("WS_Message:", event.data);
+		//console.log("WSMessage:", event.data);
 		if(event.data[0] == "{") {
 			try {
 				var data = JSON.parse(event.data);
@@ -200,14 +200,15 @@ function runWebSockets() {
 
 		var messages = event.data.split('\r');
 		for(var i = 0; i < messages.length; i++) {
-			//console.log("Message: ",messages[i]);
-			if(messages[i].startsWith("set ")) {
-				//msgblocks = messages[i].split(' ',3);
-				let msgblocks = SplitN(messages[i]," ",3);
+			let message = messages[i];
+			//console.log("Message: ",message);
+			if(message.startsWith("set ")) {
+				//msgblocks = message.split(' ',3);
+				let msgblocks = SplitN(message," ",3);
 				if(msgblocks.length < 3) continue;
 				document.querySelector(msgblocks[1]).innerHTML = msgblocks[2];
-			} else if(messages[i].startsWith("set-class ")) {
-				let msgblocks = SplitN(messages[i]," ",3);
+			} else if(message.startsWith("set-class ")) {
+				let msgblocks = SplitN(message," ",3);
 				if(msgblocks.length < 3) continue;
 				document.querySelector(msgblocks[1]).className = msgblocks[2];
 			}
@@ -220,8 +221,45 @@ $(document).ready(function(){
 	if(window["WebSocket"]) runWebSockets();
 	else conn = false;
 
-	$(".open_edit").click(function(event){
-		//console.log("clicked on .open_edit");
+	$(".add_like").click(function(event) {
+		event.preventDefault();
+		let likeButton = this;
+		let target = this.closest("a").getAttribute("href");
+		console.log("target: ", target);
+		likeButton.classList.remove("add_like");
+		likeButton.classList.add("remove_like");
+		let controls = likeButton.closest(".controls");
+		let hadLikes = controls.classList.contains("has_likes");
+		if(!hadLikes) controls.classList.add("has_likes");
+		let likeCountNode = controls.getElementsByClassName("like_count")[0];
+		console.log("likeCountNode",likeCountNode);
+		likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) + 1;
+		
+		$.ajax({
+			url: target,
+			type: "POST",
+			dataType: "json",
+			data: { isJs: 1 },
+			error: ajaxError,
+			success: function (data, status, xhr) {
+				if("success" in data) {
+					if(data["success"] == "1") {
+						return;
+					}
+				}
+				// addNotice("Failed to add a like: {err}")
+				likeButton.classList.add("add_like");
+				likeButton.classList.remove("remove_like");
+				if(!hadLikes) controls.classList.remove("has_likes");
+				likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) - 1;
+				console.log("data", data);
+				console.log("status", status);
+				console.log("xhr", xhr);
+			}
+		});
+	});
+
+	$(".open_edit").click((event) => {
 		event.preventDefault();
 		$(".hide_on_edit").hide();
 		$(".show_on_edit").show();
@@ -229,17 +267,17 @@ $(document).ready(function(){
 
 	$(".topic_item .submit_edit").click(function(event){
 		event.preventDefault();
-		//console.log("clicked on .topic_item .submit_edit");
-		$(".topic_name").html($(".topic_name_input").val());
-		$(".topic_content").html($(".topic_content_input").val());
-		$(".topic_status_e:not(.open_edit)").html($(".topic_status_input").val());
+		let topicNameInput = $(".topic_name_input").val();
+		$(".topic_name").html(topicNameInput);
+		$(".topic_name").attr(topicNameInput);
+		let topicContentInput = $('.topic_content_input').val();
+		$(".topic_content").html(topicContentInput.replace(/(\n)+/g,"<br />"));
+		let topicStatusInput = $('.topic_status_input').val();
+		$(".topic_status_e:not(.open_edit)").html(topicStatusInput);
 
 		$(".hide_on_edit").show();
 		$(".show_on_edit").hide();
 
-		let topicNameInput = $('.topic_name_input').val();
-		let topicStatusInput = $('.topic_status_input').val();
-		let topicContentInput = $('.topic_content_input').val();
 		let formAction = this.form.getAttribute("action");
 		//console.log("New Topic Name: ", topicNameInput);
 		//console.log("New Topic Status: ", topicStatusInput);
@@ -284,8 +322,7 @@ $(document).ready(function(){
 		});
 	});
 
-	$(".edit_field").click(function(event)
-	{
+	$(".edit_field").click(function(event) {
 		event.preventDefault();
 		let blockParent = $(this).closest('.editable_parent');
 		let block = blockParent.find('.editable_block').eq(0);
@@ -395,7 +432,7 @@ $(document).ready(function(){
 		}
 	});
 
-	$(this).click(function() {
+	$(this).click(() => {
 		$(".selectedAlert").removeClass("selectedAlert");
 		$("#back").removeClass("alertActive");
 	});
@@ -421,9 +458,7 @@ $(document).ready(function(){
 		document.getElementById("back").className += " alertActive"
 	});
 
-	$("input,textarea,select,option").keyup(function(event){
-		event.stopPropagation();
-	})
+	$("input,textarea,select,option").keyup(event => event.stopPropagation())
 
 	$(".create_topic_link").click((event) => {
 		event.preventDefault();

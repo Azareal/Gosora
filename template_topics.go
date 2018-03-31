@@ -317,67 +317,75 @@ w.Write([]byte(item.Link))
 w.Write(topics_frags[62])
 w.Write([]byte(item.Title))
 w.Write(topics_frags[63])
-if item.ForumName != "" {
+w.Write([]byte(item.Title))
 w.Write(topics_frags[64])
-w.Write([]byte(item.ForumLink))
+if item.ForumName != "" {
 w.Write(topics_frags[65])
-w.Write([]byte(item.ForumName))
+w.Write([]byte(item.ForumLink))
 w.Write(topics_frags[66])
-}
+w.Write([]byte(item.ForumName))
 w.Write(topics_frags[67])
-w.Write([]byte(item.Creator.Link))
+w.Write([]byte(item.ForumName))
 w.Write(topics_frags[68])
-w.Write([]byte(item.Creator.Name))
+}
 w.Write(topics_frags[69])
-if item.IsClosed {
+w.Write([]byte(item.Creator.Link))
 w.Write(topics_frags[70])
-w.Write(phrases[44])
+w.Write([]byte(item.Creator.Name))
 w.Write(topics_frags[71])
-}
-if item.Sticky {
+w.Write([]byte(item.Creator.Name))
 w.Write(topics_frags[72])
-w.Write(phrases[45])
+if item.IsClosed {
 w.Write(topics_frags[73])
-}
+w.Write(phrases[44])
 w.Write(topics_frags[74])
-w.Write([]byte(strconv.Itoa(item.PostCount)))
-w.Write(topics_frags[75])
-w.Write([]byte(strconv.Itoa(item.LikeCount)))
-w.Write(topics_frags[76])
+}
 if item.Sticky {
+w.Write(topics_frags[75])
+w.Write(phrases[45])
+w.Write(topics_frags[76])
+}
 w.Write(topics_frags[77])
+w.Write([]byte(strconv.Itoa(item.PostCount)))
+w.Write(topics_frags[78])
+w.Write([]byte(strconv.Itoa(item.LikeCount)))
+w.Write(topics_frags[79])
+if item.Sticky {
+w.Write(topics_frags[80])
 } else {
 if item.IsClosed {
-w.Write(topics_frags[78])
-}
-}
-w.Write(topics_frags[79])
-w.Write([]byte(item.LastUser.Link))
-w.Write(topics_frags[80])
-w.Write([]byte(item.LastUser.Avatar))
 w.Write(topics_frags[81])
-w.Write([]byte(item.LastUser.Name))
+}
+}
 w.Write(topics_frags[82])
-w.Write([]byte(item.LastUser.Name))
-w.Write(topics_frags[83])
 w.Write([]byte(item.LastUser.Link))
+w.Write(topics_frags[83])
+w.Write([]byte(item.LastUser.Avatar))
 w.Write(topics_frags[84])
 w.Write([]byte(item.LastUser.Name))
 w.Write(topics_frags[85])
-w.Write([]byte(item.RelativeLastReplyAt))
+w.Write([]byte(item.LastUser.Name))
 w.Write(topics_frags[86])
-}
-} else {
+w.Write([]byte(item.LastUser.Link))
 w.Write(topics_frags[87])
-w.Write(phrases[46])
-if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+w.Write([]byte(item.LastUser.Name))
 w.Write(topics_frags[88])
-w.Write(phrases[47])
+w.Write([]byte(item.LastUser.Name))
 w.Write(topics_frags[89])
-}
+w.Write([]byte(item.RelativeLastReplyAt))
 w.Write(topics_frags[90])
 }
+} else {
 w.Write(topics_frags[91])
+w.Write(phrases[46])
+if tmpl_topics_vars.CurrentUser.Perms.CreateTopic {
+w.Write(topics_frags[92])
+w.Write(phrases[47])
+w.Write(topics_frags[93])
+}
+w.Write(topics_frags[94])
+}
+w.Write(topics_frags[95])
 if tmpl_topics_vars.LastPage > 1 {
 w.Write(paginator_frags[0])
 if tmpl_topics_vars.Page > 1 {
@@ -413,7 +421,7 @@ w.Write(paginator_frags[13])
 }
 w.Write(paginator_frags[14])
 }
-w.Write(topics_frags[92])
+w.Write(topics_frags[96])
 w.Write(footer_frags[0])
 w.Write([]byte(common.BuildWidget("footer",tmpl_topics_vars.Header)))
 w.Write(footer_frags[1])

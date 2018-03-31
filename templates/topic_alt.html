@@ -8,10 +8,10 @@
 
 <main>
 
-<div class="rowblock rowhead topic_block" aria-label="{{lang "topic_opening_post_aria"}}">
+<div {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic_opening_post_aria"}}">
 	<form action='/topic/edit/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' method="post">
 		<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
-			<h1 class='topic_name hide_on_edit'>{{.Topic.Title}}</h1>
+			<h1 class='topic_name hide_on_edit' title='{{.Topic.Title}}'>{{.Topic.Title}}</h1>
 			{{/** TODO: Inline this CSS **/}}
 			{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status_closed_tooltip"}}' aria-label='{{lang "topic_status_closed_aria"}}' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
 			{{if .CurrentUser.Perms.EditTopic}}
@@ -54,7 +54,7 @@
 		</div>
 	</article>
 	{{end}}
-	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="{{lang "topic_opening_post_aria"}}">
+	<article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="{{lang "topic_opening_post_aria"}}">
 		<div class="userinfo" aria-label="{{lang "topic_userinfo_aria"}}">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
@@ -63,9 +63,9 @@
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
 			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
-			<div class="button_container">
+			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">
 				{{if .CurrentUser.Loggedin}}
-					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button like_item add_like" aria-label="{{lang "topic_like_aria"}}" data-action="like"></a>{{end}}
+					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button like_item {{if .Topic.Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic_like_aria"}}" data-action="like"></a>{{end}}
 					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit" aria-label="{{lang "topic_edit_aria"}}" data-action="edit"></a>{{end}}
 					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic_delete_aria"}}" data-action="delete"></a>{{end}}
 					{{if .CurrentUser.Perms.CloseTopic}}
@@ -76,8 +76,8 @@
 					<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="action_button report_item" aria-label="{{lang "topic_report_aria"}}" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				{{end}}
-				<div class="action_button_right{{if .Topic.LikeCount}} has_likes{{end}}">
-					{{if .Topic.LikeCount}}<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic_like_count_aria"}}">{{.Topic.LikeCount}}</a>{{end}}
+				<div class="action_button_right">
+					<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic_like_count_aria"}}">{{.Topic.LikeCount}}</a>
 					<a class="action_button created_at hide_on_mobile">{{.Topic.RelativeCreatedAt}}</a>
 					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IPAddress}}" title="{{lang "topic_ip_full_tooltip"}}" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.Topic.IPAddress}}</a>{{end}}
 				</div>
@@ -86,7 +86,7 @@
 	</article>
 
 	{{range .ItemList}}
-	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{if .ActionType}}action_item{{end}}">
+	<article {{scope "post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{if .ActionType}}action_item{{end}}">
 		<div class="userinfo" aria-label="{{lang "topic_userinfo_aria"}}">
 			<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<a href="{{.UserLink}}" class="the_name" rel="author">{{.CreatedByName}}</a>
@@ -99,17 +99,17 @@
 			{{else}}
 			{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
 			<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
-			<div class="button_container">
+			<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
 				{{if $.CurrentUser.Loggedin}}
-					{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button like_item add_like" aria-label="{{lang "topic_post_like_aria"}}" data-action="like"></a>{{end}}
+					{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic_post_like_aria"}}" data-action="like"></a>{{end}}
 					{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic_post_edit_aria"}}" data-action="edit"></a>{{end}}
 					{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic_post_delete_aria"}}" data-action="delete"></a>{{end}}
 					{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="{{lang "topic_ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic_ip_full_aria"}}" data-action="ip"></a>{{end}}
 					<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="action_button report_item" aria-label="{{lang "topic_report_aria"}}" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				{{end}}
-				<div class="action_button_right{{if .LikeCount}} has_likes{{end}}">
-					{{if .LikeCount}}<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic_post_like_count_tooltip"}}">{{.LikeCount}}</a>{{end}}
+				<div class="action_button_right">
+					<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic_post_like_count_tooltip"}}">{{.LikeCount}}</a>
 					<a class="action_button created_at hide_on_mobile">{{.RelativeCreatedAt}}</a>
 					{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.IPAddress}}</a>{{end}}
 				</div>

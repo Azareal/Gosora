@@ -44,7 +44,10 @@ func (delete *deletePrebuilder) Table(table string) *deletePrebuilder {
 }
 
 func (delete *deletePrebuilder) Where(where string) *deletePrebuilder {
-	delete.where = where
+	if delete.where != "" {
+		delete.where += " AND "
+	}
+	delete.where += where
 	return delete
 }
 
@@ -76,7 +79,10 @@ func (update *updatePrebuilder) Set(set string) *updatePrebuilder {
 }
 
 func (update *updatePrebuilder) Where(where string) *updatePrebuilder {
-	update.where = where
+	if update.where != "" {
+		update.where += " AND "
+	}
+	update.where += where
 	return update
 }
 
@@ -113,7 +119,10 @@ func (selectItem *selectPrebuilder) Columns(columns string) *selectPrebuilder {
 }
 
 func (selectItem *selectPrebuilder) Where(where string) *selectPrebuilder {
-	selectItem.where = where
+	if selectItem.where != "" {
+		selectItem.where += " AND "
+	}
+	selectItem.where += where
 	return selectItem
 }
 
@@ -205,7 +214,10 @@ func (count *countPrebuilder) Table(table string) *countPrebuilder {
 }
 
 func (count *countPrebuilder) Where(where string) *countPrebuilder {
-	count.where = where
+	if count.where != "" {
+		count.where += " AND "
+	}
+	count.where += where
 	return count
 }
 

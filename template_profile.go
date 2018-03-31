@@ -187,73 +187,77 @@ w.Write([]byte(tmpl_profile_vars.ProfileOwner.Name))
 w.Write(profile_frags[3])
 w.Write([]byte(tmpl_profile_vars.ProfileOwner.Name))
 w.Write(profile_frags[4])
-if tmpl_profile_vars.ProfileOwner.Tag != "" {
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Name))
 w.Write(profile_frags[5])
-w.Write([]byte(tmpl_profile_vars.ProfileOwner.Tag))
+if tmpl_profile_vars.ProfileOwner.Tag != "" {
 w.Write(profile_frags[6])
-}
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Tag))
 w.Write(profile_frags[7])
-if !tmpl_profile_vars.CurrentUser.Loggedin {
+w.Write([]byte(tmpl_profile_vars.ProfileOwner.Tag))
 w.Write(profile_frags[8])
-w.Write(phrases[19])
+}
 w.Write(profile_frags[9])
-} else {
+if !tmpl_profile_vars.CurrentUser.Loggedin {
 w.Write(profile_frags[10])
-w.Write(phrases[20])
+w.Write(phrases[19])
 w.Write(profile_frags[11])
-if tmpl_profile_vars.CurrentUser.IsSuperMod && !tmpl_profile_vars.ProfileOwner.IsSuperMod {
-w.Write(profile_frags[12])
-if tmpl_profile_vars.ProfileOwner.IsBanned {
-w.Write(profile_frags[13])
-w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
-w.Write(profile_frags[14])
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(profile_frags[15])
-w.Write(phrases[21])
-w.Write(profile_frags[16])
 } else {
+w.Write(profile_frags[12])
+w.Write(phrases[20])
+w.Write(profile_frags[13])
+if tmpl_profile_vars.CurrentUser.IsSuperMod && !tmpl_profile_vars.ProfileOwner.IsSuperMod {
+w.Write(profile_frags[14])
+if tmpl_profile_vars.ProfileOwner.IsBanned {
+w.Write(profile_frags[15])
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write(profile_frags[16])
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
 w.Write(profile_frags[17])
-w.Write(phrases[22])
+w.Write(phrases[21])
 w.Write(profile_frags[18])
-}
+} else {
 w.Write(profile_frags[19])
-}
+w.Write(phrases[22])
 w.Write(profile_frags[20])
-w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+}
 w.Write(profile_frags[21])
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+}
 w.Write(profile_frags[22])
-w.Write(phrases[23])
-w.Write(profile_frags[23])
-w.Write(phrases[24])
-w.Write(profile_frags[24])
-}
-w.Write(profile_frags[25])
-if tmpl_profile_vars.CurrentUser.Perms.BanUsers {
-w.Write(profile_frags[26])
-w.Write(phrases[25])
-w.Write(profile_frags[27])
 w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
-w.Write(profile_frags[28])
+w.Write(profile_frags[23])
 w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
-w.Write(profile_frags[29])
-w.Write(profile_frags[30])
-w.Write(phrases[26])
-w.Write(profile_frags[31])
-w.Write(phrases[27])
-w.Write(profile_frags[32])
-w.Write(phrases[28])
-w.Write(profile_frags[33])
-w.Write(phrases[29])
-w.Write(profile_frags[34])
-w.Write(phrases[30])
-w.Write(profile_frags[35])
-w.Write(phrases[31])
-w.Write(profile_frags[36])
+w.Write(profile_frags[24])
+w.Write(phrases[23])
+w.Write(profile_frags[25])
+w.Write(phrases[24])
+w.Write(profile_frags[26])
 }
+w.Write(profile_frags[27])
+if tmpl_profile_vars.CurrentUser.Perms.BanUsers {
+w.Write(profile_frags[28])
+w.Write(phrases[25])
+w.Write(profile_frags[29])
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+w.Write(profile_frags[30])
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
+w.Write(profile_frags[31])
+w.Write(profile_frags[32])
+w.Write(phrases[26])
+w.Write(profile_frags[33])
+w.Write(phrases[27])
+w.Write(profile_frags[34])
+w.Write(phrases[28])
+w.Write(profile_frags[35])
+w.Write(phrases[29])
+w.Write(profile_frags[36])
+w.Write(phrases[30])
 w.Write(profile_frags[37])
-w.Write(phrases[32])
+w.Write(phrases[31])
 w.Write(profile_frags[38])
+}
+w.Write(profile_frags[39])
+w.Write(phrases[32])
+w.Write(profile_frags[40])
 if tmpl_profile_vars.Header.Theme.BgAvatars {
 if len(tmpl_profile_vars.ItemList) != 0 {
 for _, item := range tmpl_profile_vars.ItemList {
@@ -363,20 +367,20 @@ w.Write(profile_comments_row_frags[49])
 }
 }
 }
-w.Write(profile_frags[39])
-if !tmpl_profile_vars.CurrentUser.IsBanned {
-w.Write(profile_frags[40])
-w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
 w.Write(profile_frags[41])
-w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
+if !tmpl_profile_vars.CurrentUser.IsBanned {
 w.Write(profile_frags[42])
-w.Write(phrases[45])
+w.Write([]byte(tmpl_profile_vars.CurrentUser.Session))
 w.Write(profile_frags[43])
-w.Write(phrases[46])
+w.Write([]byte(strconv.Itoa(tmpl_profile_vars.ProfileOwner.ID)))
 w.Write(profile_frags[44])
-}
+w.Write(phrases[45])
 w.Write(profile_frags[45])
+w.Write(phrases[46])
 w.Write(profile_frags[46])
+}
+w.Write(profile_frags[47])
+w.Write(profile_frags[48])
 w.Write(footer_frags[0])
 w.Write([]byte(common.BuildWidget("footer",tmpl_profile_vars.Header)))
 w.Write(footer_frags[1])

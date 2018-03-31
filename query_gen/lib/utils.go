@@ -166,7 +166,12 @@ func (where *DBWhere) parseOperator(segment string, i int) int {
 
 // TODO: Make this case insensitive
 func normalizeAnd(in string) string {
-	return strings.Replace(in, " and ", " AND ", -1)
+	in = strings.Replace(in, " and ", " AND ", -1)
+	return strings.Replace(in, " && ", " AND ", -1)
+}
+func normalizeOr(in string) string {
+	in = strings.Replace(in, " or ", " OR ", -1)
+	return strings.Replace(in, " || ", " OR ", -1)
 }
 
 // TODO: Write tests for this
@@ -175,6 +180,7 @@ func processWhere(wherestr string) (where []DBWhere) {
 		return where
 	}
 	wherestr = normalizeAnd(wherestr)
+	wherestr = normalizeOr(wherestr)
 
 	for _, segment := range strings.Split(wherestr, " AND ") {
 		var tmpWhere = &DBWhere{[]DBToken{}}
@@ -184,10 +190,16 @@ func processWhere(wherestr string) (where []DBWhere) {
 			switch {
 			case '0' <= char && char <= '9':
 				i = tmpWhere.parseNumber(segment, i)
+			// TODO: Sniff the third byte offset from char or it's non-existent to avoid matching uppercase strings which start with OR
+			case char == 'O' && (i+1) < len(segment) && segment[i+1] == 'R':
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"OR", "or"})
+				i += 1
 			case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_':
 				i = tmpWhere.parseColumn(segment, i)
 			case char == '\'':
 				i = tmpWhere.parseString(segment, i)
+			case char == ')' && i < (len(segment)-1):
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{")", "operator"})
 			case isOpByte(char):
 				i = tmpWhere.parseOperator(segment, i)
 			case char == '?':
@@ -335,11 +347,11 @@ func processLimit(limitstr string) (limiter DBLimit) {
 }
 
 func isOpByte(char byte) bool {
-	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
+	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/' || char == '(' || char == ')'
 }
 
 func isOpRune(char rune) bool {
-	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/'
+	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/' || char == '(' || char == ')'
 }
 
 func processFields(fieldstr string) (fields []DBField) {

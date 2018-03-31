@@ -1,12 +1,16 @@
 /* WIP Under Construction */
 package qgen
 
-//import "fmt"
 import (
+	"database/sql"
 	"errors"
 	"strconv"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
 )
+
+var ErrNoCollation = errors.New("You didn't provide a collation")
 
 func init() {
 	Registry = append(Registry,
@@ -31,6 +35,30 @@ func (adapter *MysqlAdapter) GetStmt(name string) DBStmt {
 
 func (adapter *MysqlAdapter) GetStmts() map[string]DBStmt {
 	return adapter.Buffer
+}
+
+func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
+	dbCollation, ok := config["collation"]
+	if !ok {
+		return nil, ErrNoCollation
+	}
+	var dbpassword string
+	if config["password"] != "" {
+		dbpassword = ":" + config["password"]
+	}
+
+	// Open the database connection
+	db, err := sql.Open("mysql", config["username"]+dbpassword+"@tcp("+config["host"]+":"+config["port"]+")/"+config["name"]+"?collation="+dbCollation+"&parseTime=true")
+	if err != nil {
+		return db, err
+	}
+
+	// Make sure that the connection is alive
+	return db, db.Ping()
+}
+
+func (adapter *MysqlAdapter) DbVersion() string {
+	return "SELECT VERSION()"
 }
 
 func (adapter *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
@@ -239,7 +267,7 @@ func (adapter *MysqlAdapter) SimpleUpdate(name string, table string, set string,
 		querystr += "`" + item.Column + "` ="
 		for _, token := range item.Expr {
 			switch token.Type {
-			case "function", "operator", "number", "substitute":
+			case "function", "operator", "number", "substitute", "or":
 				querystr += " " + token.Contents
 			case "column":
 				querystr += " `" + token.Contents + "`"
@@ -278,7 +306,7 @@ func (adapter *MysqlAdapter) SimpleDelete(name string, table string, where strin
 	for _, loc := range processWhere(where) {
 		for _, token := range loc.Expr {
 			switch token.Type {
-			case "function", "operator", "number", "substitute":
+			case "function", "operator", "number", "substitute", "or":
 				querystr += " " + token.Contents
 			case "column":
 				querystr += " `" + token.Contents + "`"
@@ -316,7 +344,7 @@ func (adapter *MysqlAdapter) buildWhere(where string) (querystr string, err erro
 	for _, loc := range processWhere(where) {
 		for _, token := range loc.Expr {
 			switch token.Type {
-			case "function", "operator", "number", "substitute":
+			case "function", "operator", "number", "substitute", "or":
 				querystr += " " + token.Contents
 			case "column":
 				querystr += " `" + token.Contents + "`"
@@ -344,7 +372,7 @@ func (adapter *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutof
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function", "operator", "number", "substitute":
+				case "function", "operator", "number", "substitute", "or":
 					querystr += " " + token.Contents
 				case "column":
 					querystr += " `" + token.Contents + "`"
@@ -544,7 +572,7 @@ func (adapter *MysqlAdapter) buildJoinWhere(where string) (querystr string, err 
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function", "operator", "number", "substitute":
+				case "function", "operator", "number", "substitute", "or":
 					querystr += " " + token.Contents
 				case "column":
 					halves := strings.Split(token.Contents, ".")

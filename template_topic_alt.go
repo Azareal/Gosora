@@ -227,178 +227,173 @@ w.Write(phrases[22])
 w.Write(topic_alt_frags[13])
 }
 w.Write(topic_alt_frags[14])
-w.Write(phrases[23])
 w.Write(topic_alt_frags[15])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
+w.Write(phrases[23])
 w.Write(topic_alt_frags[16])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_frags[17])
-if tmpl_topic_alt_vars.Topic.Sticky {
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[18])
+if tmpl_topic_alt_vars.Topic.Sticky {
+w.Write(topic_alt_frags[19])
 } else {
 if tmpl_topic_alt_vars.Topic.IsClosed {
-w.Write(topic_alt_frags[19])
-}
-}
 w.Write(topic_alt_frags[20])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.Title))
+}
+}
 w.Write(topic_alt_frags[21])
-if tmpl_topic_alt_vars.Topic.IsClosed {
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Title))
 w.Write(topic_alt_frags[22])
-w.Write(phrases[24])
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Title))
 w.Write(topic_alt_frags[23])
-w.Write(phrases[25])
+if tmpl_topic_alt_vars.Topic.IsClosed {
 w.Write(topic_alt_frags[24])
+w.Write(phrases[24])
+w.Write(topic_alt_frags[25])
+w.Write(phrases[25])
+w.Write(topic_alt_frags[26])
 }
 if tmpl_topic_alt_vars.CurrentUser.Perms.EditTopic {
-w.Write(topic_alt_frags[25])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.Title))
-w.Write(topic_alt_frags[26])
-w.Write(phrases[26])
 w.Write(topic_alt_frags[27])
-w.Write(phrases[27])
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Title))
 w.Write(topic_alt_frags[28])
-}
+w.Write(phrases[26])
 w.Write(topic_alt_frags[29])
-if tmpl_topic_alt_vars.Poll.ID > 0 {
+w.Write(phrases[27])
 w.Write(topic_alt_frags[30])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
+}
 w.Write(topic_alt_frags[31])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
+if tmpl_topic_alt_vars.Poll.ID > 0 {
 w.Write(topic_alt_frags[32])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
 w.Write(topic_alt_frags[33])
-w.Write(phrases[28])
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
 w.Write(topic_alt_frags[34])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.Avatar))
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[35])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.UserLink))
+w.Write(phrases[28])
 w.Write(topic_alt_frags[36])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.CreatedByName))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Avatar))
 w.Write(topic_alt_frags[37])
-if tmpl_topic_alt_vars.Topic.Tag != "" {
+w.Write([]byte(tmpl_topic_alt_vars.Topic.UserLink))
 w.Write(topic_alt_frags[38])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.Tag))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.CreatedByName))
 w.Write(topic_alt_frags[39])
-} else {
+if tmpl_topic_alt_vars.Topic.Tag != "" {
 w.Write(topic_alt_frags[40])
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Tag))
+w.Write(topic_alt_frags[41])
+} else {
+w.Write(topic_alt_frags[42])
 w.Write(phrases[29])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.Level)))
-w.Write(topic_alt_frags[41])
-}
-w.Write(topic_alt_frags[42])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
 w.Write(topic_alt_frags[43])
-if len(tmpl_topic_alt_vars.Poll.QuickOptions) != 0 {
-for _, item := range tmpl_topic_alt_vars.Poll.QuickOptions {
+}
 w.Write(topic_alt_frags[44])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
 w.Write(topic_alt_frags[45])
-w.Write([]byte(strconv.Itoa(item.ID)))
+if len(tmpl_topic_alt_vars.Poll.QuickOptions) != 0 {
+for _, item := range tmpl_topic_alt_vars.Poll.QuickOptions {
 w.Write(topic_alt_frags[46])
-w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
 w.Write(topic_alt_frags[47])
 w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_alt_frags[48])
 w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_alt_frags[49])
-w.Write([]byte(item.Value))
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_alt_frags[50])
-}
-}
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_alt_frags[51])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
+w.Write([]byte(item.Value))
 w.Write(topic_alt_frags[52])
-w.Write(phrases[30])
+}
+}
 w.Write(topic_alt_frags[53])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
 w.Write(topic_alt_frags[54])
-w.Write(phrases[31])
+w.Write(phrases[30])
 w.Write(topic_alt_frags[55])
-w.Write(phrases[32])
-w.Write(topic_alt_frags[56])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
+w.Write(topic_alt_frags[56])
+w.Write(phrases[31])
 w.Write(topic_alt_frags[57])
-}
+w.Write(phrases[32])
 w.Write(topic_alt_frags[58])
-w.Write(phrases[33])
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Poll.ID)))
 w.Write(topic_alt_frags[59])
-w.Write(phrases[34])
+}
 w.Write(topic_alt_frags[60])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.Avatar))
 w.Write(topic_alt_frags[61])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.UserLink))
+w.Write(phrases[33])
 w.Write(topic_alt_frags[62])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.CreatedByName))
+w.Write(phrases[34])
 w.Write(topic_alt_frags[63])
-if tmpl_topic_alt_vars.Topic.Tag != "" {
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Avatar))
 w.Write(topic_alt_frags[64])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.Tag))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.UserLink))
 w.Write(topic_alt_frags[65])
-} else {
+w.Write([]byte(tmpl_topic_alt_vars.Topic.CreatedByName))
 w.Write(topic_alt_frags[66])
+if tmpl_topic_alt_vars.Topic.Tag != "" {
+w.Write(topic_alt_frags[67])
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Tag))
+w.Write(topic_alt_frags[68])
+} else {
+w.Write(topic_alt_frags[69])
 w.Write(phrases[35])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.Level)))
-w.Write(topic_alt_frags[67])
-}
-w.Write(topic_alt_frags[68])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.ContentHTML))
-w.Write(topic_alt_frags[69])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.Content))
 w.Write(topic_alt_frags[70])
-if tmpl_topic_alt_vars.CurrentUser.Loggedin {
-if tmpl_topic_alt_vars.CurrentUser.Perms.LikeItem {
+}
 w.Write(topic_alt_frags[71])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.ContentHTML))
 w.Write(topic_alt_frags[72])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+w.Write([]byte(tmpl_topic_alt_vars.Topic.Content))
 w.Write(topic_alt_frags[73])
-w.Write(phrases[36])
+if tmpl_topic_alt_vars.Topic.LikeCount > 0 {
 w.Write(topic_alt_frags[74])
 }
-if tmpl_topic_alt_vars.CurrentUser.Perms.EditTopic {
 w.Write(topic_alt_frags[75])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
+if tmpl_topic_alt_vars.CurrentUser.Loggedin {
+if tmpl_topic_alt_vars.CurrentUser.Perms.LikeItem {
 w.Write(topic_alt_frags[76])
-w.Write(phrases[37])
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_frags[77])
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+w.Write(topic_alt_frags[78])
+if tmpl_topic_alt_vars.Topic.Liked {
+w.Write(topic_alt_frags[79])
+} else {
+w.Write(topic_alt_frags[80])
+}
+w.Write(topic_alt_frags[81])
+w.Write(phrases[36])
+w.Write(topic_alt_frags[82])
+}
+if tmpl_topic_alt_vars.CurrentUser.Perms.EditTopic {
+w.Write(topic_alt_frags[83])
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
+w.Write(topic_alt_frags[84])
+w.Write(phrases[37])
+w.Write(topic_alt_frags[85])
 }
 if tmpl_topic_alt_vars.CurrentUser.Perms.DeleteTopic {
-w.Write(topic_alt_frags[78])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
-w.Write(topic_alt_frags[79])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(topic_alt_frags[80])
-w.Write(phrases[38])
-w.Write(topic_alt_frags[81])
-}
-if tmpl_topic_alt_vars.CurrentUser.Perms.CloseTopic {
-if tmpl_topic_alt_vars.Topic.IsClosed {
-w.Write(topic_alt_frags[82])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
-w.Write(topic_alt_frags[83])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(topic_alt_frags[84])
-w.Write(phrases[39])
-w.Write(topic_alt_frags[85])
-} else {
 w.Write(topic_alt_frags[86])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_frags[87])
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[88])
-w.Write(phrases[40])
+w.Write(phrases[38])
 w.Write(topic_alt_frags[89])
 }
-}
-if tmpl_topic_alt_vars.CurrentUser.Perms.PinTopic {
-if tmpl_topic_alt_vars.Topic.Sticky {
+if tmpl_topic_alt_vars.CurrentUser.Perms.CloseTopic {
+if tmpl_topic_alt_vars.Topic.IsClosed {
 w.Write(topic_alt_frags[90])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_frags[91])
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[92])
-w.Write(phrases[41])
+w.Write(phrases[39])
 w.Write(topic_alt_frags[93])
 } else {
 w.Write(topic_alt_frags[94])
@@ -406,208 +401,222 @@ w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_frags[95])
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[96])
-w.Write(phrases[42])
+w.Write(phrases[40])
 w.Write(topic_alt_frags[97])
 }
 }
-if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
+if tmpl_topic_alt_vars.CurrentUser.Perms.PinTopic {
+if tmpl_topic_alt_vars.Topic.Sticky {
 w.Write(topic_alt_frags[98])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.IPAddress))
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_frags[99])
-w.Write(phrases[43])
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[100])
-w.Write(phrases[44])
+w.Write(phrases[41])
 w.Write(topic_alt_frags[101])
-}
+} else {
 w.Write(topic_alt_frags[102])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_frags[103])
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[104])
-w.Write(phrases[45])
+w.Write(phrases[42])
 w.Write(topic_alt_frags[105])
 }
-w.Write(topic_alt_frags[106])
-if tmpl_topic_alt_vars.Topic.LikeCount > 0 {
-w.Write(topic_alt_frags[107])
 }
-w.Write(topic_alt_frags[108])
-if tmpl_topic_alt_vars.Topic.LikeCount > 0 {
-w.Write(topic_alt_frags[109])
-w.Write(phrases[46])
-w.Write(topic_alt_frags[110])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.LikeCount)))
-w.Write(topic_alt_frags[111])
-}
-w.Write(topic_alt_frags[112])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.RelativeCreatedAt))
-w.Write(topic_alt_frags[113])
 if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
-w.Write(topic_alt_frags[114])
+w.Write(topic_alt_frags[106])
 w.Write([]byte(tmpl_topic_alt_vars.Topic.IPAddress))
-w.Write(topic_alt_frags[115])
-w.Write(phrases[47])
-w.Write(topic_alt_frags[116])
-w.Write([]byte(tmpl_topic_alt_vars.Topic.IPAddress))
-w.Write(topic_alt_frags[117])
+w.Write(topic_alt_frags[107])
+w.Write(phrases[43])
+w.Write(topic_alt_frags[108])
+w.Write(phrases[44])
+w.Write(topic_alt_frags[109])
 }
+w.Write(topic_alt_frags[110])
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
+w.Write(topic_alt_frags[111])
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+w.Write(topic_alt_frags[112])
+w.Write(phrases[45])
+w.Write(topic_alt_frags[113])
+}
+w.Write(topic_alt_frags[114])
+w.Write(phrases[46])
+w.Write(topic_alt_frags[115])
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.LikeCount)))
+w.Write(topic_alt_frags[116])
+w.Write([]byte(tmpl_topic_alt_vars.Topic.RelativeCreatedAt))
+w.Write(topic_alt_frags[117])
+if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_frags[118])
+w.Write([]byte(tmpl_topic_alt_vars.Topic.IPAddress))
+w.Write(topic_alt_frags[119])
+w.Write(phrases[47])
+w.Write(topic_alt_frags[120])
+w.Write([]byte(tmpl_topic_alt_vars.Topic.IPAddress))
+w.Write(topic_alt_frags[121])
+}
+w.Write(topic_alt_frags[122])
 if len(tmpl_topic_alt_vars.ItemList) != 0 {
 for _, item := range tmpl_topic_alt_vars.ItemList {
-w.Write(topic_alt_frags[119])
-if item.ActionType != "" {
-w.Write(topic_alt_frags[120])
-}
-w.Write(topic_alt_frags[121])
-w.Write(phrases[48])
-w.Write(topic_alt_frags[122])
-w.Write([]byte(item.Avatar))
 w.Write(topic_alt_frags[123])
-w.Write([]byte(item.UserLink))
 w.Write(topic_alt_frags[124])
-w.Write([]byte(item.CreatedByName))
+if item.ActionType != "" {
 w.Write(topic_alt_frags[125])
-if item.Tag != "" {
+}
 w.Write(topic_alt_frags[126])
-w.Write([]byte(item.Tag))
+w.Write(phrases[48])
 w.Write(topic_alt_frags[127])
-} else {
+w.Write([]byte(item.Avatar))
 w.Write(topic_alt_frags[128])
+w.Write([]byte(item.UserLink))
+w.Write(topic_alt_frags[129])
+w.Write([]byte(item.CreatedByName))
+w.Write(topic_alt_frags[130])
+if item.Tag != "" {
+w.Write(topic_alt_frags[131])
+w.Write([]byte(item.Tag))
+w.Write(topic_alt_frags[132])
+} else {
+w.Write(topic_alt_frags[133])
 w.Write(phrases[49])
 w.Write([]byte(strconv.Itoa(item.Level)))
-w.Write(topic_alt_frags[129])
-}
-w.Write(topic_alt_frags[130])
-if item.ActionType != "" {
-w.Write(topic_alt_frags[131])
-}
-w.Write(topic_alt_frags[132])
-if item.ActionType != "" {
-w.Write(topic_alt_frags[133])
-w.Write([]byte(item.ActionIcon))
 w.Write(topic_alt_frags[134])
-w.Write([]byte(item.ActionType))
+}
 w.Write(topic_alt_frags[135])
-} else {
+if item.ActionType != "" {
 w.Write(topic_alt_frags[136])
-w.Write([]byte(item.ContentHtml))
+}
 w.Write(topic_alt_frags[137])
+if item.ActionType != "" {
+w.Write(topic_alt_frags[138])
+w.Write([]byte(item.ActionIcon))
+w.Write(topic_alt_frags[139])
+w.Write([]byte(item.ActionType))
+w.Write(topic_alt_frags[140])
+} else {
+w.Write(topic_alt_frags[141])
+w.Write([]byte(item.ContentHtml))
+w.Write(topic_alt_frags[142])
+if item.LikeCount > 0 {
+w.Write(topic_alt_frags[143])
+}
+w.Write(topic_alt_frags[144])
 if tmpl_topic_alt_vars.CurrentUser.Loggedin {
 if tmpl_topic_alt_vars.CurrentUser.Perms.LikeItem {
-w.Write(topic_alt_frags[138])
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_alt_frags[139])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(topic_alt_frags[140])
-w.Write(phrases[50])
-w.Write(topic_alt_frags[141])
-}
-if tmpl_topic_alt_vars.CurrentUser.Perms.EditReply {
-w.Write(topic_alt_frags[142])
-w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_alt_frags[143])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(topic_alt_frags[144])
-w.Write(phrases[51])
 w.Write(topic_alt_frags[145])
-}
-if tmpl_topic_alt_vars.CurrentUser.Perms.DeleteReply {
-w.Write(topic_alt_frags[146])
 w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_alt_frags[147])
+w.Write(topic_alt_frags[146])
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
+w.Write(topic_alt_frags[147])
+if item.Liked {
 w.Write(topic_alt_frags[148])
-w.Write(phrases[52])
+} else {
 w.Write(topic_alt_frags[149])
 }
-if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_frags[150])
-w.Write([]byte(item.IPAddress))
+w.Write(phrases[50])
 w.Write(topic_alt_frags[151])
-w.Write(phrases[53])
+}
+if tmpl_topic_alt_vars.CurrentUser.Perms.EditReply {
 w.Write(topic_alt_frags[152])
-w.Write(phrases[54])
-w.Write(topic_alt_frags[153])
-}
-w.Write(topic_alt_frags[154])
 w.Write([]byte(strconv.Itoa(item.ID)))
-w.Write(topic_alt_frags[155])
+w.Write(topic_alt_frags[153])
 w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(topic_alt_frags[156])
-w.Write(phrases[55])
-w.Write(topic_alt_frags[157])
+w.Write(topic_alt_frags[154])
+w.Write(phrases[51])
+w.Write(topic_alt_frags[155])
 }
+if tmpl_topic_alt_vars.CurrentUser.Perms.DeleteReply {
+w.Write(topic_alt_frags[156])
+w.Write([]byte(strconv.Itoa(item.ID)))
+w.Write(topic_alt_frags[157])
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[158])
-if item.LikeCount > 0 {
+w.Write(phrases[52])
 w.Write(topic_alt_frags[159])
 }
+if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_frags[160])
-if item.LikeCount > 0 {
+w.Write([]byte(item.IPAddress))
 w.Write(topic_alt_frags[161])
-w.Write(phrases[56])
+w.Write(phrases[53])
 w.Write(topic_alt_frags[162])
-w.Write([]byte(strconv.Itoa(item.LikeCount)))
+w.Write(phrases[54])
 w.Write(topic_alt_frags[163])
 }
 w.Write(topic_alt_frags[164])
-w.Write([]byte(item.RelativeCreatedAt))
+w.Write([]byte(strconv.Itoa(item.ID)))
 w.Write(topic_alt_frags[165])
-if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[166])
-w.Write([]byte(item.IPAddress))
+w.Write(phrases[55])
 w.Write(topic_alt_frags[167])
-w.Write([]byte(item.IPAddress))
+}
 w.Write(topic_alt_frags[168])
-}
+w.Write(phrases[56])
 w.Write(topic_alt_frags[169])
-}
+w.Write([]byte(strconv.Itoa(item.LikeCount)))
 w.Write(topic_alt_frags[170])
-}
-}
+w.Write([]byte(item.RelativeCreatedAt))
 w.Write(topic_alt_frags[171])
-if tmpl_topic_alt_vars.CurrentUser.Perms.CreateReply {
+if tmpl_topic_alt_vars.CurrentUser.Perms.ViewIPs {
 w.Write(topic_alt_frags[172])
-w.Write(phrases[57])
+w.Write([]byte(item.IPAddress))
 w.Write(topic_alt_frags[173])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Avatar))
+w.Write([]byte(item.IPAddress))
 w.Write(topic_alt_frags[174])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Link))
+}
 w.Write(topic_alt_frags[175])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Name))
+}
 w.Write(topic_alt_frags[176])
-if tmpl_topic_alt_vars.CurrentUser.Tag != "" {
+}
+}
 w.Write(topic_alt_frags[177])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Tag))
+if tmpl_topic_alt_vars.CurrentUser.Perms.CreateReply {
 w.Write(topic_alt_frags[178])
-} else {
+w.Write(phrases[57])
 w.Write(topic_alt_frags[179])
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Avatar))
+w.Write(topic_alt_frags[180])
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Link))
+w.Write(topic_alt_frags[181])
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Name))
+w.Write(topic_alt_frags[182])
+if tmpl_topic_alt_vars.CurrentUser.Tag != "" {
+w.Write(topic_alt_frags[183])
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Tag))
+w.Write(topic_alt_frags[184])
+} else {
+w.Write(topic_alt_frags[185])
 w.Write(phrases[58])
 w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.CurrentUser.Level)))
-w.Write(topic_alt_frags[180])
-}
-w.Write(topic_alt_frags[181])
-w.Write(phrases[59])
-w.Write(topic_alt_frags[182])
-w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
-w.Write(topic_alt_frags[183])
-w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
-w.Write(topic_alt_frags[184])
-w.Write(phrases[60])
-w.Write(topic_alt_frags[185])
-w.Write(phrases[61])
 w.Write(topic_alt_frags[186])
-w.Write(phrases[62])
+}
 w.Write(topic_alt_frags[187])
-w.Write(phrases[63])
+w.Write(phrases[59])
 w.Write(topic_alt_frags[188])
-if tmpl_topic_alt_vars.CurrentUser.Perms.UploadFiles {
+w.Write([]byte(tmpl_topic_alt_vars.CurrentUser.Session))
 w.Write(topic_alt_frags[189])
-w.Write(phrases[64])
+w.Write([]byte(strconv.Itoa(tmpl_topic_alt_vars.Topic.ID)))
 w.Write(topic_alt_frags[190])
-}
+w.Write(phrases[60])
 w.Write(topic_alt_frags[191])
-}
+w.Write(phrases[61])
 w.Write(topic_alt_frags[192])
+w.Write(phrases[62])
+w.Write(topic_alt_frags[193])
+w.Write(phrases[63])
+w.Write(topic_alt_frags[194])
+if tmpl_topic_alt_vars.CurrentUser.Perms.UploadFiles {
+w.Write(topic_alt_frags[195])
+w.Write(phrases[64])
+w.Write(topic_alt_frags[196])
+}
+w.Write(topic_alt_frags[197])
+}
+w.Write(topic_alt_frags[198])
 w.Write(footer_frags[0])
 w.Write([]byte(common.BuildWidget("footer",tmpl_topic_alt_vars.Header)))
 w.Write(footer_frags[1])

@@ -2,6 +2,7 @@
 package qgen
 
 import (
+	"database/sql"
 	"errors"
 	"log"
 	"strconv"
@@ -32,6 +33,15 @@ func (adapter *MssqlAdapter) GetStmt(name string) DBStmt {
 
 func (adapter *MssqlAdapter) GetStmts() map[string]DBStmt {
 	return adapter.Buffer
+}
+
+// TODO: Implement this
+func (adapter *MssqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
+	return nil, nil
+}
+
+func (adapter *MssqlAdapter) DbVersion() string {
+	return "SELECT CONCAT(SERVERPROPERTY('productversion'), SERVERPROPERTY ('productlevel'), SERVERPROPERTY ('edition'))"
 }
 
 // TODO: Convert any remaining stringy types to nvarchar
@@ -249,7 +259,7 @@ func (adapter *MssqlAdapter) SimpleUpsert(name string, table string, columns str
 			switch token.Type {
 			case "substitute":
 				querystr += " ?"
-			case "function", "operator", "number":
+			case "function", "operator", "number", "or":
 				// TODO: Split the function case off to speed things up
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "GETUTCDATE()"
@@ -314,7 +324,7 @@ func (adapter *MssqlAdapter) SimpleUpdate(name string, table string, set string,
 			switch token.Type {
 			case "substitute":
 				querystr += " ?"
-			case "function", "operator", "number":
+			case "function", "operator", "number", "or":
 				// TODO: Split the function case off to speed things up
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "GETUTCDATE()"
@@ -339,7 +349,7 @@ func (adapter *MssqlAdapter) SimpleUpdate(name string, table string, set string,
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function", "operator", "number", "substitute":
+				case "function", "operator", "number", "substitute", "or":
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
@@ -381,7 +391,7 @@ func (adapter *MssqlAdapter) SimpleDelete(name string, table string, where strin
 			switch token.Type {
 			case "substitute":
 				querystr += " ?"
-			case "function", "operator", "number":
+			case "function", "operator", "number", "or":
 				// TODO: Split the function case off to speed things up
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "GETUTCDATE()"
@@ -451,7 +461,7 @@ func (adapter *MssqlAdapter) SimpleSelect(name string, table string, columns str
 				case "substitute":
 					substituteCount++
 					querystr += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number":
+				case "function", "operator", "number", "or":
 					// TODO: Split the function case off to speed things up
 					// MSSQL seems to convert the formats? so we'll compare it with a regular date. Do this with the other methods too?
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
@@ -576,7 +586,7 @@ func (adapter *MssqlAdapter) SimpleLeftJoin(name string, table1 string, table2 s
 				case "substitute":
 					substituteCount++
 					querystr += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number":
+				case "function", "operator", "number", "or":
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
@@ -706,7 +716,7 @@ func (adapter *MssqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 				case "substitute":
 					substituteCount++
 					querystr += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number":
+				case "function", "operator", "number", "or":
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
@@ -827,7 +837,7 @@ func (adapter *MssqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel D
 				case "substitute":
 					substituteCount++
 					querystr += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number":
+				case "function", "operator", "number", "or":
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
@@ -951,7 +961,7 @@ func (adapter *MssqlAdapter) simpleJoin(name string, ins DBInsert, sel DBJoin, j
 				case "substitute":
 					substituteCount++
 					querystr += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number":
+				case "function", "operator", "number", "or":
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
@@ -1046,7 +1056,7 @@ func (adapter *MssqlAdapter) SimpleCount(name string, table string, where string
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function", "operator", "number", "substitute":
+				case "function", "operator", "number", "substitute", "or":
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
 					}

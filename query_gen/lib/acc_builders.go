@@ -1,6 +1,9 @@
 package qgen
 
-import "database/sql"
+import (
+	"database/sql"
+	"strconv"
+)
 
 type accDeleteBuilder struct {
 	table string
@@ -10,7 +13,10 @@ type accDeleteBuilder struct {
 }
 
 func (delete *accDeleteBuilder) Where(where string) *accDeleteBuilder {
-	delete.where = where
+	if delete.where != "" {
+		delete.where += " AND "
+	}
+	delete.where += where
 	return delete
 }
 
@@ -32,7 +38,10 @@ func (update *accUpdateBuilder) Set(set string) *accUpdateBuilder {
 }
 
 func (update *accUpdateBuilder) Where(where string) *accUpdateBuilder {
-	update.where = where
+	if update.where != "" {
+		update.where += " AND "
+	}
+	update.where += where
 	return update
 }
 
@@ -59,6 +68,28 @@ func (selectItem *accSelectBuilder) Columns(columns string) *accSelectBuilder {
 }
 
 func (selectItem *accSelectBuilder) Where(where string) *accSelectBuilder {
+	if selectItem.where != "" {
+		selectItem.where += " AND "
+	}
+	selectItem.where += where
+	return selectItem
+}
+
+// TODO: Don't implement the SQL at the accumulator level but the adapter level
+func (selectItem *accSelectBuilder) In(column string, inList []int) *accSelectBuilder {
+	if len(inList) == 0 {
+		return selectItem
+	}
+
+	var where = column + " IN("
+	for _, item := range inList {
+		where += strconv.Itoa(item) + ","
+	}
+	where = where[:len(where)-1] + ")"
+	if selectItem.where != "" {
+		where += " AND " + selectItem.where
+	}
+
 	selectItem.where = where
 	return selectItem
 }
@@ -140,7 +171,10 @@ type accCountBuilder struct {
 }
 
 func (count *accCountBuilder) Where(where string) *accCountBuilder {
-	count.where = where
+	if count.where != "" {
+		count.where += " AND "
+	}
+	count.where += where
 	return count
 }
 

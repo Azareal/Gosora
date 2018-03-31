@@ -1002,12 +1002,18 @@ textarea {
 	display: inline-flex;
 	margin-left: auto;
 }
+.like_count {
+	display: none;
+}
+.has_likes .like_count {
+	display: block;
+}
 .like_count:after {
 	content: "{{index .Phrases "topic_like_count_suffix"}}";
 	margin-right: 6px;
 }
 
-.post_item .add_like:after,
+.post_item .add_like:after, .post_item .remove_like:after,
 .created_at:before,
 .ip_item:before {
 	border-left: 1px solid var(--element-border-color);
@@ -1018,15 +1024,19 @@ textarea {
 .created_at:before, .ip_item:before {
 	margin-right: 10px;
 }
-.post_item .add_like:after {
+.post_item .add_like:after, .post_item .remove_like:after {
 	margin-left: 10px;
 	margin-right: 5px;
+}
+/* TODO: Use a less bold bold */
+.post_item .remove_like:before {
+	font-weight: bold;
 }
 .created_at {
 	margin-right: 10px;
 }
 
-.add_like:before {
+.add_like:before, .remove_like:before {
 	content: "{{index .Phrases "topic_plus_one"}}";
 }
 .button_container .open_edit:after, .edit_item:after{
@@ -1651,10 +1661,10 @@ textarea {
 		padding-top: 15px;
 		font-size: 12px;
 	}
-	.action_button:not(.add_like) {
+	.action_button:not(.add_like):not(.remove_like) {
 		font: normal normal normal 14px/1 FontAwesome;
 	}
-	.action_button_right.has_likes {
+	.has_likes .action_button_right {
 		margin-left: 0px;
 		width: 100%;
 	}
@@ -1664,7 +1674,7 @@ textarea {
 	.post_item:not(.top_post) .like_item {
 		border-bottom: 1px solid var(--element-border-color);
 	}
-	.post_item .add_like:after {
+	.post_item .add_like:after, .post_item .remove_like:after {
 		border-left: none;
 		margin: inherit;
 	}
@@ -1810,7 +1820,7 @@ textarea {
 	.button_menu_pane .action_button:nth-last-child(-n+8) {
 		border-bottom: none;
 	}
-	.button_menu_pane .action_button:after, .button_menu_pane .add_like:before {
+	.button_menu_pane .action_button:after, .button_menu_pane .add_like:before, .button_menu_pane .remove_like:before {
 		margin-left: auto;
 		margin-right: auto;
 	}

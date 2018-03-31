@@ -1,8 +1,14 @@
 echo "Generating the dynamic code"
 go generate
+
 echo "Building Gosora"
 go build -o Gosora
+
 echo "Building the templates"
 ./Gosora -build-templates
+
+echo "Building Gosora... Again"
+go build -o Gosora
+
 echo "Running Gosora"
 ./Gosora

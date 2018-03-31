@@ -336,16 +336,19 @@ a {
 	content: "{{index .Phrases "topic_level"}}";
 }
 
+.like_count_label, .like_count {
+	display: none;
+}
 .like_count_label:before {
 	content: "{{index .Phrases "topics_likes_suffix"}}";
 }
-.like_count_label {
+.has_likes .like_count_label {
 	font-size: 12px;
 	display: block;
 	float: left;
 	line-height: 19px;
 }
-.like_count {
+.has_likes .like_count {
 	font-size: 12px;
 	display: block;
 	float: left;

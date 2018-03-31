@@ -132,10 +132,10 @@ func CompileTemplates() error {
 
 	// Schemas to train the template compiler on what to expect
 	// TODO: Add support for interface{}s
-	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, BuildAvatar(62, ""), "", "", "", "", 0, 0, "0.0.0.0.0", 0}
+	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, BuildAvatar(62, ""), "", "", "", "", 0, 0, 0, "0.0.0.0.0", 0}
 	// TODO: Do a more accurate level calculation for this?
-	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(1, ""), "", "", "", "", 58, 1000, "127.0.0.1", 0}
-	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(2, ""), "", "", "", "", 42, 900, "::1", 0}
+	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(1, ""), "", "", "", "", 58, 1000, 0, "127.0.0.1", 0}
+	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(2, ""), "", "", "", "", 42, 900, 0, "::1", 0}
 	headerVars := &HeaderVars{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
@@ -371,6 +371,10 @@ func InitTemplates() error {
 			panic("phraseNameInt is not a string")
 		}
 		return GetTmplPhrase(phraseName) // TODO: Log non-existent phrases?
+	}
+
+	fmap["scope"] = func(name interface{}) interface{} {
+		return ""
 	}
 
 	// The interpreted templates...

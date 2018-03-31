@@ -98,6 +98,9 @@ type DBStmt struct {
 
 type Adapter interface {
 	GetName() string
+	BuildConn(config map[string]string) (*sql.DB, error)
+	DbVersion() string
+
 	CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
 	SimpleUpdate(name string, table string, set string, where string) (string, error)

@@ -716,6 +716,12 @@ button.username {
 	margin-right: auto;
 }
 
+.like_count {
+	display: none;
+}
+.has_likes .like_count {
+	display: block;
+}
 .like_label:before {
 	content: "😀";
 }
@@ -961,7 +967,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	margin-bottom: 6px !important;
 }
 
-.add_like:before {
+.add_like:before, .remove_like:before {
 	content: "{{index .Phrases "topic_plus_one"}}";
 }
 .button_container .open_edit:after, .edit_item:after {

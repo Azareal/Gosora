@@ -16,16 +16,17 @@ import (
 
 // TODO: Refactor this
 func routeLikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
+	isJs := (r.PostFormValue("isJs") == "1")
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreError("Topic IDs can only ever be numbers.", w, r)
+		return common.PreErrorJSQ("Topic IDs can only ever be numbers.", w, r, isJs)
 	}
 
 	topic, err := common.Topics.Get(tid)
 	if err == ErrNoRows {
-		return common.PreError("The requested topic doesn't exist.", w, r)
+		return common.PreErrorJSQ("The requested topic doesn't exist.", w, r, isJs)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	// TODO: Add hooks to make use of headerLite
@@ -34,55 +35,62 @@ func routeLikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		return common.NoPermissions(w, r, user)
+		return common.NoPermissionsJSQ(w, r, user, isJs)
 	}
 	if topic.CreatedBy == user.ID {
-		return common.LocalError("You can't like your own topics", w, r, user)
+		return common.LocalErrorJSQ("You can't like your own topics", w, r, user, isJs)
 	}
 
 	_, err = common.Users.Get(topic.CreatedBy)
 	if err != nil && err == ErrNoRows {
-		return common.LocalError("The target user doesn't exist", w, r, user)
+		return common.LocalErrorJSQ("The target user doesn't exist", w, r, user, isJs)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	score := 1
 	err = topic.Like(score, user.ID)
+	//log.Print("likeErr: ", err)
 	if err == common.ErrAlreadyLiked {
-		return common.LocalError("You already liked this", w, r, user)
+		return common.LocalErrorJSQ("You already liked this", w, r, user, isJs)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	err = common.AddActivityAndNotifyTarget(user.ID, topic.CreatedBy, "like", "topic", tid)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	if !isJs {
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
+	}
 	return nil
 }
 
 func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
+	isJs := (r.PostFormValue("isJs") == "1")
+
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return common.PreError("The provided Reply ID is not a valid number.", w, r)
+		return common.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
 	}
 
 	reply, err := common.Rstore.Get(rid)
 	if err == ErrNoRows {
-		return common.PreError("You can't like something which doesn't exist!", w, r)
+		return common.PreErrorJSQ("You can't like something which doesn't exist!", w, r, isJs)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	var fid int
 	err = stmts.getTopicFID.QueryRow(reply.ParentID).Scan(&fid)
 	if err == ErrNoRows {
-		return common.PreError("The parent topic doesn't exist.", w, r)
+		return common.PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	// TODO: Add hooks to make use of headerLite
@@ -91,32 +99,36 @@ func routeReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.Us
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		return common.NoPermissions(w, r, user)
+		return common.NoPermissionsJSQ(w, r, user, isJs)
 	}
 	if reply.CreatedBy == user.ID {
-		return common.LocalError("You can't like your own replies", w, r, user)
+		return common.LocalErrorJSQ("You can't like your own replies", w, r, user, isJs)
 	}
 
 	_, err = common.Users.Get(reply.CreatedBy)
 	if err != nil && err != ErrNoRows {
-		return common.LocalError("The target user doesn't exist", w, r, user)
+		return common.LocalErrorJSQ("The target user doesn't exist", w, r, user, isJs)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	err = reply.Like(user.ID)
 	if err == common.ErrAlreadyLiked {
-		return common.LocalError("You've already liked this!", w, r, user)
+		return common.LocalErrorJSQ("You've already liked this!", w, r, user, isJs)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
 	err = common.AddActivityAndNotifyTarget(user.ID, reply.CreatedBy, "like", "post", rid)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
+	if !isJs {
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
+	}
 	return nil
 }
 

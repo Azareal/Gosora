@@ -14,10 +14,10 @@ import (
 )
 
 // TODO: Add support for SSL for all database drivers, not just pgsql
-var db_sslmode = "disable" // verify-full
+var dbSslmode = "disable" // verify-full
 
 func init() {
-	db_adapter = "pgsql"
+	dbAdapter = "pgsql"
 	_initDatabase = initPgsql
 }
 
@@ -28,7 +28,7 @@ func initPgsql() (err error) {
 		_dbpassword = " password='" + _escape_bit(common.DbConfig.Password) + "'"
 	}
 	// TODO: Move this bit to the query gen lib
-	db, err = sql.Open("postgres", "host='"+_escape_bit(common.DbConfig.Host)+"' port='"+_escape_bit(common.DbConfig.Port)+"' user='"+_escape_bit(common.DbConfig.Username)+"' dbname='"+_escape_bit(common.Config.Dbname)+"'"+_dbpassword+" sslmode='"+db_sslmode+"'")
+	db, err = sql.Open("postgres", "host='"+_escape_bit(common.DbConfig.Host)+"' port='"+_escape_bit(common.DbConfig.Port)+"' user='"+_escape_bit(common.DbConfig.Username)+"' dbname='"+_escape_bit(common.Config.Dbname)+"'"+_dbpassword+" sslmode='"+dbSslmode+"'")
 	if err != nil {
 		return err
 	}
@@ -38,9 +38,6 @@ func initPgsql() (err error) {
 	if err != nil {
 		return err
 	}
-
-	// Fetch the database version
-	db.QueryRow("SELECT VERSION()").Scan(&db_version)
 
 	// Set the number of max open connections. How many do we need? Might need to do some tests.
 	db.SetMaxOpenConns(64)
