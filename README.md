@@ -10,7 +10,7 @@ If you dislike it, please give us some feedback on how to make it better! We're 
 
 
 # Features
-Basic Forum Functionality. All of the little things you would expect of any forum software. E.g. Common Moderation features, modlogs, theme system, avatars, bbcode parser, markdown parser, report system, per-forum permissions, group permissions and so on.
+Standard Forum Functionality. All of the little things you would expect of any forum software. E.g. Common Moderation features, modlogs, theme system, avatars, bbcode parser, markdown parser, report system, per-forum permissions, group permissions and so on.
 
 Custom Pages. Under development. The Control Panel portion is incomplete, but you can create them by hand today. They're basically html/templates templates in the /pages/ folder.
 
@@ -121,6 +121,8 @@ go get -u github.com/denisenkom/go-mssqldb
 go get -u github.com/fsnotify/fsnotify
 
 go get -u gopkg.in/src-d/go-git.v4/...
+
+go get -u github.com/gopherjs/gopherjs
 
 
 go generate

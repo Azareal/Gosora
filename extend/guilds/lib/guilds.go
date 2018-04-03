@@ -359,8 +359,8 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 	pi := MemberListPage{"Guild Member List", user, headerVars, guildMembers, guildItem, 0, 0}
 	// A plugin with plugins. Pluginception!
 	if common.RunPreRenderHook("pre_render_guilds_member_list", w, r, &user, &pi) {
-			return nil
-		}
+		return nil
+	}
 	err = common.RunThemeTemplate(headerVars.Theme.Name, "guilds_member_list", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -379,10 +379,10 @@ func UnattachForum(fid int) error {
 }
 
 func BuildGuildURL(slug string, id int) string {
-	if slug == "" {
-		return "/guild/" + slug + "." + strconv.Itoa(id)
+	if slug == "" || !common.Config.BuildSlugs {
+		return "/guild/" + strconv.Itoa(id)
 	}
-	return "/guild/" + strconv.Itoa(id)
+	return "/guild/" + slug + "." + strconv.Itoa(id)
 }
 
 /*

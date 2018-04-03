@@ -426,7 +426,7 @@ func BlankUser() *User {
 
 // TODO: Write unit tests for this
 func BuildProfileURL(slug string, uid int) string {
-	if slug == "" {
+	if slug == "" || !Config.BuildSlugs {
 		return "/user/" + strconv.Itoa(uid)
 	}
 	return "/user/" + slug + "." + strconv.Itoa(uid)

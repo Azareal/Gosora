@@ -1,11 +1,7 @@
 package main
 
 import (
-	//"log"
-	//"fmt"
 	"bytes"
-
-	//"strings"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -215,9 +211,6 @@ func bbcodeFullParse(msg string) string {
 
 	msgbytes := []byte(msg)
 	msgbytes = append(msgbytes, common.SpaceGap...)
-	//log.Print("BBCode Simple Pre:","`"+string(msgbytes)+"`")
-	//log.Print("----")
-
 	for i := 0; i < len(msgbytes); i++ {
 		if msgbytes[i] == '[' {
 			if msgbytes[i+2] != ']' {
@@ -248,12 +241,6 @@ func bbcodeFullParse(msg string) string {
 							hasC = false
 							i += 7
 						}
-						//if msglen >= (i+6) {
-						//	log.Print("boo")
-						//	log.Print(msglen)
-						//	log.Print(i+6)
-						//	log.Print(string(msgbytes[i:i+6]))
-						//}
 						complexBbc = true
 					}
 				} else {
@@ -261,9 +248,6 @@ func bbcodeFullParse(msg string) string {
 						hasC = true
 						i += 6
 					}
-					//if msglen >= (i+5) {
-					//	log.Print("boo2: ", string(msgbytes[i:i+5]))
-					//}
 					complexBbc = true
 				}
 			} else if !hasC {
@@ -314,8 +298,6 @@ func bbcodeFullParse(msg string) string {
 		i := 0
 		var start, lastTag int
 		var outbytes []byte
-		//log.Print("BBCode Pre:","`"+string(msgbytes)+"`")
-		//log.Print("----")
 		for ; i < len(msgbytes); i++ {
 			if msgbytes[i] == '[' {
 				if msgbytes[i+1] == 'u' {
@@ -330,18 +312,15 @@ func bbcodeFullParse(msg string) string {
 				}
 			}
 		}
-		//log.Print("Outbytes:",`"`+string(outbytes)+`"`)
 		if lastTag != i {
 			outbytes = append(outbytes, msgbytes[lastTag:]...)
 		}
 
 		if len(outbytes) != 0 {
-			//log.Print("BBCode Post:",`"`+string(outbytes[0:len(outbytes) - 10])+`"`)
 			msg = string(outbytes[0 : len(outbytes)-10])
 		} else {
 			msg = string(msgbytes[0 : len(msgbytes)-10])
 		}
-		//log.Print("----")
 
 		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$4</i>")
@@ -359,11 +338,7 @@ func bbcodeParseURL(i int, start int, lastTag int, msgbytes []byte, outbytes []b
 	outbytes = append(outbytes, msgbytes[lastTag:i]...)
 	i = start
 	i += common.PartialURLBytesLen(msgbytes[start:])
-	//log.Print("Partial Bytes: ", string(msgbytes[start:]))
-	//log.Print("-----")
 	if !bytes.Equal(msgbytes[i:i+6], []byte("[/url]")) {
-		//log.Print("Invalid Bytes: ", string(msgbytes[i:i+6]))
-		//log.Print("-----")
 		outbytes = append(outbytes, common.InvalidURL...)
 		return i, start, lastTag, outbytes
 	}
@@ -416,7 +391,6 @@ func bbcodeParseRand(i int, start int, lastTag int, msgbytes []byte, outbytes []
 	}
 
 	outbytes = append(outbytes, dat...)
-	//log.Print("Outputted the random number")
 	i += 7
 	lastTag = i
 	return i, start, lastTag, outbytes

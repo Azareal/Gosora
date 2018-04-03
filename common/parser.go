@@ -1,7 +1,6 @@
 package common
 
 import (
-	//"fmt"
 	"bytes"
 	"html"
 	"net/url"
@@ -295,26 +294,18 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	}
 
 	// Search for URLs, mentions and hashlinks in the messages...
-	//log.Print("Parser Loop!")
 	var msgbytes = []byte(msg)
 	var outbytes []byte
 	msgbytes = append(msgbytes, SpaceGap...)
-	//log.Printf("string(msgbytes) %+v\n", `"`+string(msgbytes)+`"`)
 	var lastItem = 0
 	var i = 0
 	for ; len(msgbytes) > (i + 1); i++ {
-		//log.Print("Index: ",i)
-		//log.Print("Index Item: ",msgbytes[i])
-		//log.Print("string(msgbytes[i]): ",string(msgbytes[i]))
-		//log.Print("End Index")
 		if (i == 0 && (msgbytes[0] > 32)) || ((msgbytes[i] < 33) && (msgbytes[i+1] > 32)) {
-			//log.Print("IN ",msgbytes[i])
 			if (i != 0) || msgbytes[i] < 33 {
 				i++
 			}
 
 			if msgbytes[i] == '#' {
-				//log.Print("IN #")
 				if bytes.Equal(msgbytes[i+1:i+5], []byte("tid-")) {
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
 					i += 5
@@ -337,13 +328,6 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					outbytes = append(outbytes, tidBit...)
 					outbytes = append(outbytes, UrlClose...)
 					lastItem = i
-
-					//log.Print("string(msgbytes): ",string(msgbytes))
-					//log.Print("msgbytes: ",msgbytes)
-					//log.Print("msgbytes[lastItem - 1]: ",msgbytes[lastItem - 1])
-					//log.Print("lastItem - 1: ",lastItem - 1)
-					//log.Print("msgbytes[lastItem]: ",msgbytes[lastItem])
-					//log.Print("lastItem: ",lastItem)
 				} else if bytes.Equal(msgbytes[i+1:i+5], []byte("rid-")) {
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
 					i += 5
@@ -391,7 +375,6 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					// TODO: Forum Shortcode Link
 				}
 			} else if msgbytes[i] == '@' {
-				//log.Print("IN @")
 				outbytes = append(outbytes, msgbytes[lastItem:i]...)
 				i++
 				start := i
@@ -415,19 +398,20 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				outbytes = append(outbytes, uidBit...)
 				outbytes = append(outbytes, UrlClose...)
 				lastItem = i
-			} else if msgbytes[i] == 'h' || msgbytes[i] == 'f' || msgbytes[i] == 'g' {
-				//log.Print("IN hfg")
+			} else if msgbytes[i] == 'h' || msgbytes[i] == 'f' || msgbytes[i] == 'g' || msgbytes[i] == '/' {
 				if msgbytes[i+1] == 't' && msgbytes[i+2] == 't' && msgbytes[i+3] == 'p' {
-					if msgbytes[i+4] == 's' && msgbytes[i+5] == ':' && msgbytes[i+6] == '/' && msgbytes[i+7] == '/' {
+					if msgbytes[i+4] == 's' && msgbytes[i+5] == ':' && msgbytes[i+6] == '/' {
 						// Do nothing
-					} else if msgbytes[i+4] == ':' && msgbytes[i+5] == '/' && msgbytes[i+6] == '/' {
+					} else if msgbytes[i+4] == ':' && msgbytes[i+5] == '/' {
 						// Do nothing
 					} else {
 						continue
 					}
-				} else if msgbytes[i+1] == 't' && msgbytes[i+2] == 'p' && msgbytes[i+3] == ':' && msgbytes[i+4] == '/' && msgbytes[i+5] == '/' {
+				} else if msgbytes[i+1] == 't' && msgbytes[i+2] == 'p' && msgbytes[i+3] == ':' && msgbytes[i+4] == '/' {
 					// Do nothing
-				} else if msgbytes[i+1] == 'i' && msgbytes[i+2] == 't' && msgbytes[i+3] == ':' && msgbytes[i+4] == '/' && msgbytes[i+5] == '/' {
+				} else if msgbytes[i+1] == 'i' && msgbytes[i+2] == 't' && msgbytes[i+3] == ':' && msgbytes[i+4] == '/' {
+					// Do nothing
+				} else if msgbytes[i+1] == '/' {
 					// Do nothing
 				} else {
 					continue
@@ -438,10 +422,6 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				urlLen := PartialURLBytesLen(msgbytes[i:])
 				if msgbytes[i+urlLen] > 32 { // space and invisibles
 					//log.Print("INVALID URL")
-					//log.Print("msgbytes[i+urlLen]: ", msgbytes[i+urlLen])
-					//log.Print("string(msgbytes[i+urlLen]): ", string(msgbytes[i+urlLen]))
-					//log.Print("msgbytes[i:i+urlLen]: ", msgbytes[i:i+urlLen])
-					//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
 					outbytes = append(outbytes, InvalidURL...)
 					i += urlLen
 					continue
@@ -454,66 +434,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
-				if media.Type == "attach" {
-					outbytes = append(outbytes, imageOpen...)
-					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
-					outbytes = append(outbytes, imageOpen2...)
-					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
-					outbytes = append(outbytes, imageClose...)
-					i += urlLen
-					lastItem = i
-					continue
-				} else if media.Type == "image" {
-					outbytes = append(outbytes, imageOpen...)
-					outbytes = append(outbytes, []byte(media.URL)...)
-					outbytes = append(outbytes, imageOpen2...)
-					outbytes = append(outbytes, []byte(media.URL)...)
-					outbytes = append(outbytes, imageClose...)
-					i += urlLen
-					lastItem = i
-					continue
-				} else if media.Type == "raw" {
-					outbytes = append(outbytes, []byte(media.Body)...)
-					i += urlLen
-					lastItem = i
-					continue
-				} else if media.Type != "" {
-					outbytes = append(outbytes, unknownMedia...)
-					i += urlLen
-					continue
-				}
-
-				outbytes = append(outbytes, UrlOpen...)
-				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, UrlOpen2...)
-				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, UrlClose...)
-				i += urlLen
-				lastItem = i
-			} else if msgbytes[i] == '/' && msgbytes[i+1] == '/' {
-				outbytes = append(outbytes, msgbytes[lastItem:i]...)
-				urlLen := PartialURLBytesLen(msgbytes[i:])
-				if msgbytes[i+urlLen] > 32 { // space and invisibles
-					//log.Print("INVALID URL")
-					//log.Print("msgbytes[i+urlLen]: ", msgbytes[i+urlLen])
-					//log.Print("string(msgbytes[i+urlLen]): ", string(msgbytes[i+urlLen]))
-					//log.Print("msgbytes[i:i+urlLen]: ", msgbytes[i:i+urlLen])
-					//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
-					outbytes = append(outbytes, InvalidURL...)
-					i += urlLen
-					continue
-				}
-
-				//log.Print("VALID URL")
-				//log.Print("msgbytes[i:i+urlLen]: ", msgbytes[i:i+urlLen])
-				//log.Print("string(msgbytes[i:i+urlLen]): ", string(msgbytes[i:i+urlLen]))
-				media, ok := parseMediaBytes(msgbytes[i : i+urlLen])
-				if !ok {
-					outbytes = append(outbytes, InvalidURL...)
-					i += urlLen
-					continue
-				}
-
+				// TODO: Reduce the amount of code duplication
 				if media.Type == "attach" {
 					outbytes = append(outbytes, imageOpen...)
 					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
@@ -555,11 +476,6 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	}
 
 	if lastItem != i && len(outbytes) != 0 {
-		//log.Print("lastItem: ", msgbytes[lastItem])
-		//log.Print("lastItem index: ", lastItem)
-		//log.Print("i: ", i)
-		//log.Print("lastItem to end: ", msgbytes[lastItem:])
-		//log.Print("-----")
 		calclen := len(msgbytes) - 10
 		if calclen <= lastItem {
 			calclen = lastItem
@@ -567,8 +483,6 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 		outbytes = append(outbytes, msgbytes[lastItem:calclen]...)
 		msg = string(outbytes)
 	}
-	//log.Print(`"`+string(outbytes)+`"`)
-	//log.Print("msg",`"`+msg+`"`)
 
 	msg = strings.Replace(msg, "\n", "<br>", -1)
 	msg = RunSshook("parse_assign", msg)
@@ -705,14 +619,10 @@ func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
 		return media, false
 	}
 
-	//log.Print("url ", url)
 	hostname := url.Hostname()
 	scheme := url.Scheme
 	port := url.Port()
-	//log.Print("hostname ", hostname)
-	//log.Print("scheme ", scheme)
 	query := url.Query()
-	//log.Printf("query %+v\n", query)
 
 	var samesite = hostname == "localhost" || hostname == Site.URL
 	if samesite {
@@ -728,14 +638,9 @@ func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
 	}
 
 	path := url.EscapedPath()
-	//log.Print("path", path)
 	pathFrags := strings.Split(path, "/")
-	//log.Printf("pathFrags %+v\n", pathFrags)
-	//log.Print("scheme ", scheme)
-	//log.Print("hostname ", hostname)
 	if len(pathFrags) >= 2 {
 		if samesite && pathFrags[1] == "attachs" && (scheme == "http" || scheme == "https") {
-			//log.Print("Attachment")
 			media.Type = "attach"
 			var sport string
 			// ? - Assumes the sysadmin hasn't mixed up the two standard ports

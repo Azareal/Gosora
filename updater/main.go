@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"runtime"
 	"runtime/debug"
+	"syscall"
 
 	"gopkg.in/src-d/go-git.v4"
 )
@@ -62,7 +64,17 @@ func updater(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	fmt.Println("Commit details:")
 	commit, err := repo.CommitObject(headRef.Hash())
+	if err != nil {
+		return err
+	}
+	fmt.Println("Commit details:", commit)
+
+	switch runtime.GOOS {
+	case "windows":
+		err = syscall.Exec("./patcher.bat", []string{}, os.Environ())
+	default: //linux, etc.
+		err = syscall.Exec("./patcher-linux", []string{}, os.Environ())
+	}
 	return err
 }

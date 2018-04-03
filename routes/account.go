@@ -105,17 +105,8 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	password := r.PostFormValue("password")
-	switch password {
-	case "":
-		return common.LocalError("You didn't put in a password.", w, r, user)
-	case username:
-		return common.LocalError("You can't use your username as your password.", w, r, user)
-	case email:
-		return common.LocalError("You can't use your email as your password.", w, r, user)
-	}
-
 	// ?  Move this into Create()? What if we want to programatically set weak passwords for tests?
-	err := common.WeakPassword(password)
+	err := common.WeakPassword(password, username, email)
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}

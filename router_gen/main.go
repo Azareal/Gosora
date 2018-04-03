@@ -226,6 +226,7 @@ import (
 	"strconv"
 	"sync"
 	"errors"
+	"os"
 	"net/http"
 
 	"./common"
@@ -331,11 +332,17 @@ func (writ *WriterIntercept) GetCode() int {
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
 	extraRoutes map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError
+	requestLogger *log.Logger
 	
 	sync.RWMutex
 }
 
-func NewGenRouter(uploads http.Handler) *GenRouter {
+func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
+	f, err := os.OpenFile("./logs/requests.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		return nil, err
+	}
+
 	return &GenRouter{
 		UploadHandler: func(w http.ResponseWriter, req *http.Request) {
 			writ := NewWriterIntercept(w)
@@ -346,7 +353,8 @@ func NewGenRouter(uploads http.Handler) *GenRouter {
 			} 
 		},
 		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError),
-	}
+		requestLogger: log.New(f, "", log.LstdFlags),
+	}, nil
 }
 
 func (router *GenRouter) handleError(err common.RouteError, w http.ResponseWriter, r *http.Request, user common.User) {
@@ -394,7 +402,7 @@ func (router *GenRouter) DumpRequest(req *http.Request, prepend string) {
 		}
 	}
 
-	log.Print(prepend + 
+	router.requestLogger.Print(prepend + 
 		"\nUA: " + router.StripNewlines(req.UserAgent()) + "\n" +
 		"Method: " + router.StripNewlines(req.Method) + "\n" + heads + 
 		"req.Host: " + router.StripNewlines(req.Host) + "\n" + 
@@ -404,8 +412,11 @@ func (router *GenRouter) DumpRequest(req *http.Request, prepend string) {
 		"req.RemoteAddr: " + req.RemoteAddr + "\n")
 }
 
-func (router *GenRouter) SuspiciousRequest(req *http.Request) {
-	router.DumpRequest(req,"Suspicious Request")
+func (router *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
+	if prepend != "" {
+		prepend += "\n"
+	}
+	router.DumpRequest(req,prepend+"Suspicious Request")
 	counters.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
 }
 
@@ -440,14 +451,14 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// TODO: Cover more suspicious strings and at a lower layer than this
 	for _, char := range req.URL.Path {
 		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
-			router.SuspiciousRequest(req)
+			router.SuspiciousRequest(req,"")
 			break
 		}
 	}
 	lowerPath := strings.ToLower(req.URL.Path)
 	// TODO: Flag any requests which has a dot with anything but a number after that
 	if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") || strings.Contains(lowerPath,".action") {
-		router.SuspiciousRequest(req)
+		router.SuspiciousRequest(req,"")
 	}
 	
 	var prefix, extraData string
@@ -470,7 +481,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if common.Dev.SuperDebug {
-		log.Print("before PreRoute")
+		router.requestLogger.Print("before PreRoute")
 	}
 
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
@@ -516,9 +527,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				// TODO: Test this
 				items = items[:0]
 				indices = indices[:0]
-				router.SuspiciousRequest(req)
-				log.Print("UA Buffer: ", buffer)
-				log.Print("UA Buffer String: ", string(buffer))
+				router.SuspiciousRequest(req,"")
+				router.requestLogger.Print("UA Buffer: ", buffer)
+				router.requestLogger.Print("UA Buffer String: ", string(buffer))
 				break
 			}
 		}
@@ -535,7 +546,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 		if common.Dev.SuperDebug {
-			log.Print("parsed agent: ", agent)
+			router.requestLogger.Print("parsed agent: ", agent)
 		}
 
 		var os string
@@ -557,8 +568,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			os = "unknown"
 		}
 		if common.Dev.SuperDebug {
-			log.Print("os: ", os)
-			log.Printf("items: %+v\n",items)
+			router.requestLogger.Print("os: ", os)
+			router.requestLogger.Printf("items: %+v\n",items)
 		}
 		
 		// Special handling
@@ -577,7 +588,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				agent = "internetexplorer"
 			}
 		case "zgrab":
-			router.SuspiciousRequest(req)
+			router.SuspiciousRequest(req,"Vulnerability Scanner")
 		}
 		
 		if agent == "" {
@@ -623,8 +634,9 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if common.Dev.SuperDebug {
-		log.Print("after PreRoute")
-		log.Print("routeMapEnum: ", routeMapEnum)
+		router.requestLogger.Print(
+			"after PreRoute\n" +
+			"routeMapEnum: ", routeMapEnum)
 	}
 	
 	var err common.RouteError
@@ -671,7 +683,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			handle, ok := RouteMap[common.Config.DefaultRoute]
 			if !ok {
 				// TODO: Make this a startup error not a runtime one
-				log.Print("Unable to find the default route")
+				router.requestLogger.Print("Unable to find the default route")
 				common.NotFound(w,req,nil)
 				return
 			}
@@ -694,10 +706,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			// TODO: Log all bad routes for the admin to figure out where users are going wrong?
 			lowerPath := strings.ToLower(req.URL.Path)
 			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") || strings.Contains(lowerPath,"//") || strings.Contains(lowerPath,"\\\\") || strings.Contains(lowerPath,"wp") || strings.Contains(lowerPath,"wordpress") || strings.Contains(lowerPath,"config") || strings.Contains(lowerPath,"setup") || strings.Contains(lowerPath,"install") || strings.Contains(lowerPath,"update") || strings.Contains(lowerPath,"php") {
-				router.SuspiciousRequest(req)
+				router.SuspiciousRequest(req,"Bad Route")
+			} else {
+				router.DumpRequest(req,"Bad Route")
 			}
 			counters.RouteViewCounter.Bump({{.AllRouteMap.BadRoute}})
 			common.NotFound(w,req,nil)

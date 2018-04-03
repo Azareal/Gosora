@@ -2,7 +2,6 @@ package main
 
 //import "fmt"
 import (
-	"log"
 	"strings"
 
 	"./common"
@@ -51,7 +50,6 @@ func markdownParse(msg string) string {
 	if msg[len(msg)-1] == ' ' {
 		msg = msg[:len(msg)-1]
 	}
-	log.Print("final msg: ", msg)
 	return msg
 }
 
@@ -66,12 +64,6 @@ func _markdownParse(msg string, n int) string {
 	common.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
 
 	for index := 0; index < len(msg); index++ {
-		//log.Print("--OUTER MARKDOWN LOOP START--")
-		//log.Print("index: ", index)
-		//log.Print("msg[index]: ", msg[index])
-		//log.Print("string(msg[index]): ", string(msg[index]))
-		//log.Printf("--OUTER MARKDOWN LOOP END--\n\n")
-
 		switch msg[index] {
 		// TODO: Do something slightly less hacky for skipping URLs
 		case '/':
@@ -131,95 +123,53 @@ func _markdownParse(msg string, n int) string {
 			lastElement = index
 			index--
 		case '*':
-			//log.Print("------")
-			//log.Print("[]byte(msg): ", []byte(msg))
-			//log.Print("len(msg): ", len(msg))
-			//log.Print("start index: ", index)
-			//log.Print("start msg[index]: ", msg[index])
-			//log.Print("start string(msg[index]): ", string(msg[index]))
-			//log.Print("start []byte(msg[:index]): ", []byte(msg[:index]))
-
 			var startIndex = index
 			var italic = true
 			var bold = false
 			if (index + 2) < len(msg) {
-				//log.Print("start index + 1: ", index + 1)
-				//log.Print("start msg[index]: ", msg[index + 1])
-				//log.Print("start string(msg[index]): ", string(msg[index + 1]))
 				if msg[index+1] == '*' {
-					//log.Print("two asterisks")
 					bold = true
 					index++
 					if msg[index+1] != '*' {
 						italic = false
 					} else {
-						//log.Print("three asterisks")
 						index++
 					}
 				}
 			}
 
-			//log.Print("lastElement: ", lastElement)
-			//log.Print("startIndex: ", startIndex)
-			//log.Print("msg[startIndex]: ", msg[startIndex])
-			//log.Print("string(msg[startIndex]): ", string(msg[startIndex]))
-
-			//log.Print("preabrupt index: ", index)
-			//log.Print("preabrupt msg[index]: ", msg[index])
-			//log.Print("preabrupt string(msg[index]): ", string(msg[index]))
-			//log.Print("preabrupt []byte(msg[:index]): ", []byte(msg[:index]))
-			//log.Print("preabrupt msg[:index]: ", msg[:index])
-
 			// Does the string terminate abruptly?
 			if (index + 1) >= len(msg) {
 				break
 			}
-
 			index++
 
-			//log.Print("preskip index: ", index)
-			//log.Print("preskip msg[index]: ", msg[index])
-			//log.Print("preskip string(msg[index]): ", string(msg[index]))
 			index = markdownSkipUntilAsterisk(msg, index)
-
 			if index >= len(msg) {
 				break
 			}
 
-			//log.Print("index: ", index)
-			//log.Print("[]byte(msg[:index]): ", []byte(msg[:index]))
-			//log.Print("msg[index]: ", msg[index])
-
 			sIndex := startIndex
 			lIndex := index
 			if bold && italic {
-				//log.Print("bold & italic final code")
 				if (index + 3) >= len(msg) {
-					//log.Print("unclosed markdown element @ exit element")
 					outbytes = append(outbytes, msg[lastElement:startIndex]...)
-					//outbytes = append(outbytes, markdownUnclosedElement...)
 					lastElement = startIndex
 					break
 				}
 				index += 3
 				sIndex += 3
 			} else if bold {
-				//log.Print("bold final code")
 				if (index + 2) >= len(msg) {
-					//log.Print("true unclosed markdown element @ exit element")
 					outbytes = append(outbytes, msg[lastElement:startIndex]...)
-					//outbytes = append(outbytes, markdownUnclosedElement...)
 					lastElement = startIndex
 					break
 				}
 				index += 2
 				sIndex += 2
 			} else {
-				//log.Print("italic final code")
 				if (index + 1) >= len(msg) {
-					//log.Print("true unclosed markdown element @ exit element")
 					outbytes = append(outbytes, msg[lastElement:startIndex]...)
-					//outbytes = append(outbytes, markdownUnclosedElement...)
 					lastElement = startIndex
 					break
 				}
@@ -227,37 +177,17 @@ func _markdownParse(msg string, n int) string {
 				sIndex++
 			}
 
-			//log.Print("sIndex: ", sIndex)
-			//log.Print("lIndex: ", lIndex)
 			if lIndex <= sIndex {
-				//log.Print("unclosed markdown element @ lIndex <= sIndex")
 				outbytes = append(outbytes, msg[lastElement:startIndex]...)
-				//outbytes = append(outbytes, markdownUnclosedElement...)
 				lastElement = startIndex
 				break
 			}
 
 			if sIndex < 0 || lIndex < 0 {
-				//log.Print("unclosed markdown element @ sIndex < 0 || lIndex < 0")
 				outbytes = append(outbytes, msg[lastElement:startIndex]...)
-				//outbytes = append(outbytes, markdownUnclosedElement...)
 				lastElement = startIndex
 				break
 			}
-
-			//log.Print("final sIndex: ", sIndex)
-			//log.Print("final lIndex: ",lIndex)
-			//log.Print("final index: ", index)
-			//log.Print("final msg[index]: ", msg[index])
-			//log.Print("final string(msg[index]): ", string(msg[index]))
-
-			//log.Print("final msg[sIndex]: ", msg[sIndex])
-			//log.Print("final string(msg[sIndex]): ", string(msg[sIndex]))
-			//log.Print("final msg[lIndex]: ", msg[lIndex])
-			//log.Print("final string(msg[lIndex]): ", string(msg[lIndex]))
-
-			//log.Print("[]byte(msg[:sIndex]): ", []byte(msg[:sIndex]))
-			//log.Print("[]byte(msg[:lIndex]): ", []byte(msg[:lIndex]))
 
 			outbytes = append(outbytes, msg[lastElement:startIndex]...)
 
@@ -292,17 +222,13 @@ func _markdownParse(msg string, n int) string {
 			//case 10: // newline
 		}
 	}
-	//log.Print("exit message loop")
 
 	if len(outbytes) == 0 {
 		return msg
-		//return msg[:len(msg)-1]
 	} else if lastElement < (len(msg) - 1) {
 		msg = string(outbytes) + msg[lastElement:]
 		return msg
-		//return msg[:len(msg)-1]
 	}
-	//return string(outbytes[:len(outbytes)-1])
 	return string(outbytes)
 }
 

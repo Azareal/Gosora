@@ -144,7 +144,7 @@ func BlankForum(fid int, link string, name string, desc string, active bool, pre
 }
 
 func BuildForumURL(slug string, fid int) string {
-	if slug == "" {
+	if slug == "" || !Config.BuildSlugs {
 		return "/forum/" + strconv.Itoa(fid)
 	}
 	return "/forum/" + slug + "." + strconv.Itoa(fid)

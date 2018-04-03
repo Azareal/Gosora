@@ -182,7 +182,7 @@ func main() {
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()
-	f, err := os.OpenFile("./ops.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile("./logs/ops.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -367,7 +367,10 @@ func main() {
 	}()
 
 	log.Print("Initialising the router")
-	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	log.Print("Initialising the plugins")
 	common.InitPlugins()

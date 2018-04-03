@@ -92,6 +92,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Installing GopherJS
+go get -u github.com/gopherjs/gopherjs
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 
 echo Building the installer
 go generate

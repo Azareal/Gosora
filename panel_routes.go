@@ -2567,10 +2567,24 @@ func routePanelDebug(w http.ResponseWriter, r *http.Request, user common.User) c
 		return ferr
 	}
 
-	uptime := "..."
+	var uptime string
+	upDuration := time.Since(startTime)
+	hours := int(upDuration.Hours())
+	minutes := int(upDuration.Minutes())
+	if hours > 24 {
+		days := hours / 24
+		hours -= days * 24
+		uptime += strconv.Itoa(days) + "d"
+		uptime += strconv.Itoa(hours) + "h"
+	} else if hours >= 1 {
+		uptime += strconv.Itoa(hours) + "h"
+	}
+	uptime += strconv.Itoa(minutes) + "m"
+
 	dbStats := db.Stats()
 	openConnCount := dbStats.OpenConnections
 	// Disk I/O?
+	// TODO: Fetch the adapter from Builder rather than getting it from a global?
 
 	pi := common.PanelDebugPage{common.GetTitlePhrase("panel_debug"), user, headerVars, stats, "debug", uptime, openConnCount, dbAdapter}
 	return panelRenderTemplate("panel_debug", w, r, user, &pi)

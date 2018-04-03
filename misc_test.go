@@ -822,6 +822,7 @@ func TestProfileReplyStore(t *testing.T) {
 func TestSlugs(t *testing.T) {
 	var res string
 	var msgList []MEPair
+	common.Config.BuildSlugs = true // Flip this switch, otherwise all the tests will fail
 
 	msgList = addMEPair(msgList, "Unknown", "unknown")
 	msgList = addMEPair(msgList, "Unknown2", "unknown2")

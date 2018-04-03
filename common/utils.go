@@ -184,6 +184,10 @@ func ConvertFriendlyUnit(num int) (int, string) {
 // TODO: Make slugs optional for certain languages across the entirety of Gosora?
 // TODO: Let plugins replace NameToSlug and the URL building logic with their own
 func NameToSlug(name string) (slug string) {
+	// TODO: Do we want this reliant on config file flags? This might complicate tests and oddball uses
+	if !Config.BuildSlugs {
+		return ""
+	}
 	name = strings.TrimSpace(name)
 	name = strings.Replace(name, "  ", " ", -1)
 
@@ -204,12 +208,25 @@ func NameToSlug(name string) (slug string) {
 }
 
 // TODO: Write a test for this
-func WeakPassword(password string) error {
-	if len(password) < 8 {
-		return errors.New("your password needs to be at-least eight characters long")
+func WeakPassword(password string, username string, email string) error {
+	lowPassword := strings.ToLower(password)
+	switch {
+	case password == "":
+		return errors.New("You didn't put in a password.")
+	case strings.Contains(lowPassword, strings.ToLower(username)) && len(username) > 3:
+		return errors.New("You can't use your username in your password.")
+	case strings.Contains(lowPassword, strings.ToLower(email)):
+		return errors.New("You can't use your email in your password.")
+	case len(password) < 8:
+		return errors.New("Your password needs to be at-least eight characters long")
 	}
+
+	if strings.Contains(lowPassword, "test") || /*strings.Contains(password,"123456") || */ strings.Contains(password, "123") || strings.Contains(lowPassword, "password") || strings.Contains(lowPassword, "qwerty") || strings.Contains(lowPassword, "fuck") || strings.Contains(lowPassword, "love") {
+		return errors.New("You may not have 'test', '123', 'password', 'qwerty', 'love' or 'fuck' in your password")
+	}
+
 	var charMap = make(map[rune]int)
-	var numbers /*letters, */, symbols, upper, lower int
+	var numbers, symbols, upper, lower int
 	for _, char := range password {
 		charItem, ok := charMap[char]
 		if ok {
@@ -220,7 +237,6 @@ func WeakPassword(password string) error {
 		charMap[char] = charItem
 
 		if unicode.IsLetter(char) {
-			//letters++
 			if unicode.IsUpper(char) {
 				upper++
 			} else {
@@ -233,25 +249,22 @@ func WeakPassword(password string) error {
 		}
 	}
 
-	// TODO: Disable the linter on these and fix up the grammar
 	if numbers == 0 {
-		return errors.New("you don't have any numbers in your password")
+		return errors.New("You don't have any numbers in your password")
 	}
-	/*if letters == 0 {
-		return errors.New("You don't have any letters in your password.")
-	}*/
 	if upper == 0 {
-		return errors.New("you don't have any uppercase characters in your password")
+		return errors.New("You don't have any uppercase characters in your password")
 	}
 	if lower == 0 {
-		return errors.New("you don't have any lowercase characters in your password")
+		return errors.New("You don't have any lowercase characters in your password")
 	}
-	if (len(password) / 2) > len(charMap) {
-		return errors.New("you don't have enough unique characters in your password")
-	}
-
-	if strings.Contains(strings.ToLower(password), "test") || /*strings.Contains(strings.ToLower(password),"123456") || */ strings.Contains(strings.ToLower(password), "123") || strings.Contains(strings.ToLower(password), "password") || strings.Contains(strings.ToLower(password), "qwerty") {
-		return errors.New("you may not have 'test', '123', 'password' or 'qwerty' in your password")
+	if len(password) < 18 {
+		if (len(password) / 2) > len(charMap) {
+			return errors.New("You don't have enough unique characters in your password")
+		}
+	} else if (len(password) / 3) > len(charMap) {
+		// Be a little lenient on the number of unique characters for long passwords
+		return errors.New("You don't have enough unique characters in your password")
 	}
 	return nil
 }
@@ -372,7 +385,7 @@ func GetLevels(maxLevel int) []float64 {
 }
 
 func BuildSlug(slug string, id int) string {
-	if slug == "" {
+	if slug == "" || !Config.BuildSlugs {
 		return strconv.Itoa(id)
 	}
 	return slug + "." + strconv.Itoa(id)

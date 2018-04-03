@@ -8,7 +8,6 @@
  */
 package main
 
-//import "time"
 import (
 	"database/sql"
 	"log"

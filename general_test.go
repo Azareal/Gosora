@@ -78,7 +78,10 @@ func gloinit() (err error) {
 		return err
 	}
 
-	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		return err
+	}
 	gloinited = true
 	return nil
 }
@@ -142,13 +145,17 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 
 func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
+	var err error
 	if !gloinited {
-		err := gloinit()
+		err = gloinit()
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
-	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -260,13 +267,17 @@ func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 
 func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
+	var err error
 	if !gloinited {
-		err := gloinit()
+		err = gloinit()
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
-	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -301,13 +312,17 @@ func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
+	var err error
 	if !gloinited {
-		err := gloinit()
+		err = gloinit()
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
-	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -330,13 +345,17 @@ func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
+	var err error
 	if !gloinited {
-		err := gloinit()
+		err = gloinit()
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
-	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -363,13 +382,17 @@ func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
+	var err error
 	if !gloinited {
-		err := gloinit()
+		err = gloinit()
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
-	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -396,13 +419,17 @@ func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
+	var err error
 	if !gloinited {
-		err := gloinit()
+		err = gloinit()
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
-	router = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false

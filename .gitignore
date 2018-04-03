@@ -10,10 +10,10 @@ attachs/*
 uploads/avatar_*
 uploads/socialgroup_*
 backups/*.sql
+logs/*.log
 node_modules/*
 bin/*
 out/*
-logs/*
 *.exe
 *.exe~
 *.prof
@@ -21,3 +21,5 @@ logs/*
 .DS_Store
 .vscode/launch.json
 config.go
+Gosora
+Install

@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+// TODO: Implement this and use it
+// TODO: Allow resources in spots other than /static/ and possibly even external domains (e.g. CDNs)
+type HeaderResource struct {
+	Path    string
+	Preload bool
+}
+
 type HeaderVars struct {
 	NoticeList  []string
 	Scripts     []string

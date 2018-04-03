@@ -56,5 +56,5 @@ if %errorlevel% neq 0 (
 echo Running Gosora
 gosora.exe
 rem Or you could redirect the output to a file
-rem gosora.exe > ops.log 2>&1
+rem gosora.exe > ./logs/ops.log 2>&1
 pause

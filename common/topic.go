@@ -388,7 +388,7 @@ func BlankTopic() *Topic {
 }
 
 func BuildTopicURL(slug string, tid int) string {
-	if slug == "" {
+	if slug == "" || !Config.BuildSlugs {
 		return "/topic/" + strconv.Itoa(tid)
 	}
 	return "/topic/" + slug + "." + strconv.Itoa(tid)
