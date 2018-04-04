@@ -79,6 +79,7 @@ func updater(scanner *bufio.Scanner) bool {
 		return logError(err)
 	}
 
+	// Get information about the commit
 	commit, err := repo.CommitObject(headRef.Hash())
 	if err != nil {
 		return logError(err)
