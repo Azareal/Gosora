@@ -68,7 +68,7 @@ func updater(scanner *bufio.Scanner) bool {
 		return logError(err)
 	}
 
-	err = workTree.Reset(&git.ResetOptions{Mode: git.MixedReset})
+	err = workTree.Reset(&git.ResetOptions{Mode: git.HardReset})
 	if err != nil {
 		return logError(err)
 	}
@@ -88,7 +88,7 @@ func updater(scanner *bufio.Scanner) bool {
 
 	switch runtime.GOOS {
 	case "windows":
-		err = syscall.Exec("./patcher.bat", []string{}, os.Environ())
+		err = syscall.Exec("./patcher.bat", []string{}, os.Environ()) // doesn't work, need something for windows
 	default: //linux, etc.
 		err = syscall.Exec("./patcher-linux", []string{}, os.Environ())
 	}
