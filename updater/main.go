@@ -25,10 +25,7 @@ func main() {
 		}
 	}()
 
-	err := updater(scanner)
-	if err != nil {
-		fmt.Println(err)
-	}
+	updater(scanner)
 }
 
 func pressAnyKey(scanner *bufio.Scanner) {
@@ -39,34 +36,44 @@ func pressAnyKey(scanner *bufio.Scanner) {
 	}
 }
 
-func updater(scanner *bufio.Scanner) error {
+// The bool return is a little trick to condense two lines onto one
+func logError(err error) bool {
+	if err == nil {
+		return true
+	}
+	fmt.Println(err)
+	debug.PrintStack()
+	return false
+}
+
+func updater(scanner *bufio.Scanner) bool {
 	fmt.Println("Welcome to Gosora's Upgrader")
 	fmt.Println("We're going to check for new updates, please wait patiently")
 
 	repo, err := git.PlainOpen(".")
 	if err != nil {
-		return err
+		return logError(err)
 	}
 
 	workTree, err := repo.Worktree()
 	if err != nil {
-		return err
+		return logError(err)
 	}
 
 	err = workTree.Pull(&git.PullOptions{RemoteName: "origin"})
 	if err != nil {
-		return err
+		return logError(err)
 	}
 
 	fmt.Println("Updated to the latest commit")
 	headRef, err := repo.Head()
 	if err != nil {
-		return err
+		return logError(err)
 	}
 
 	commit, err := repo.CommitObject(headRef.Hash())
 	if err != nil {
-		return err
+		return logError(err)
 	}
 	fmt.Println("Commit details:", commit)
 
@@ -76,5 +83,5 @@ func updater(scanner *bufio.Scanner) error {
 	default: //linux, etc.
 		err = syscall.Exec("./patcher-linux", []string{}, os.Environ())
 	}
-	return err
+	return logError(err)
 }
