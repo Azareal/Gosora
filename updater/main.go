@@ -41,9 +41,9 @@ func pressAnyKey(scanner *bufio.Scanner) {
 
 func updater(scanner *bufio.Scanner) error {
 	fmt.Println("Welcome to Gosora's Upgrader")
-	fmt.Print("We're going to check for new updates, please wait patiently")
+	fmt.Println("We're going to check for new updates, please wait patiently")
 
-	repo, err := git.PlainOpen("./.git")
+	repo, err := git.PlainOpen(".")
 	if err != nil {
 		return err
 	}
