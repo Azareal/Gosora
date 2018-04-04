@@ -122,7 +122,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 	}
 	// TODO: We should probably initialise headerVars.ExtData
 
-	headerVars.Stylesheets = append(headerVars.Stylesheets, theme.Name+"/panel.css")
+	headerVars.AddSheet(theme.Name + "/panel.css")
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
 		for _, resource := range rlist {
@@ -130,9 +130,9 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 				extarr := strings.Split(resource.Name, ".")
 				ext := extarr[len(extarr)-1]
 				if ext == "css" {
-					headerVars.Stylesheets = append(headerVars.Stylesheets, resource.Name)
+					headerVars.AddSheet(resource.Name)
 				} else if ext == "js" {
-					headerVars.Scripts = append(headerVars.Scripts, resource.Name)
+					headerVars.AddScript(resource.Name)
 				}
 			}
 		}
@@ -231,9 +231,9 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 				extarr := strings.Split(resource.Name, ".")
 				ext := extarr[len(extarr)-1]
 				if ext == "css" {
-					headerVars.Stylesheets = append(headerVars.Stylesheets, resource.Name)
+					headerVars.AddSheet(resource.Name)
 				} else if ext == "js" {
-					headerVars.Scripts = append(headerVars.Scripts, resource.Name)
+					headerVars.AddScript(resource.Name)
 				}
 			}
 		}

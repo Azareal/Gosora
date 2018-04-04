@@ -670,9 +670,9 @@ func routePanelAnalyticsViews(w http.ResponseWriter, r *http.Request, user commo
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -710,9 +710,9 @@ func routePanelAnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user 
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -751,9 +751,9 @@ func routePanelAnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user 
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -798,9 +798,9 @@ func routePanelAnalyticsForumViews(w http.ResponseWriter, r *http.Request, user 
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -847,9 +847,9 @@ func routePanelAnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -892,9 +892,9 @@ func routePanelAnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, us
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -937,9 +937,9 @@ func routePanelAnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, us
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -976,9 +976,9 @@ func routePanelAnalyticsTopics(w http.ResponseWriter, r *http.Request, user comm
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
@@ -1016,9 +1016,9 @@ func routePanelAnalyticsPosts(w http.ResponseWriter, r *http.Request, user commo
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Stylesheets = append(headerVars.Stylesheets, "chartist/chartist.min.css")
-	headerVars.Scripts = append(headerVars.Scripts, "chartist/chartist.min.js")
-	headerVars.Scripts = append(headerVars.Scripts, "analytics.js")
+	headerVars.AddSheet("chartist/chartist.min.css")
+	headerVars.AddScript("chartist/chartist.min.js")
+	headerVars.AddScript("analytics.js")
 
 	timeRange, err := panelAnalyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {

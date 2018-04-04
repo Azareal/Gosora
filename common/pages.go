@@ -7,16 +7,12 @@ import (
 	"time"
 )
 
-// TODO: Implement this and use it
 // TODO: Allow resources in spots other than /static/ and possibly even external domains (e.g. CDNs)
-type HeaderResource struct {
-	Path    string
-	Preload bool
-}
-
+// TODO: Preload Trumboyg on Cosora on the forum list
 type HeaderVars struct {
-	NoticeList  []string
-	Scripts     []string
+	NoticeList []string
+	Scripts    []string
+	//PreloadScripts []string
 	Stylesheets []string
 	Widgets     PageWidgets
 	Site        *site
@@ -28,6 +24,18 @@ type HeaderVars struct {
 	MetaDesc string
 	Writer   http.ResponseWriter
 	ExtData  ExtData
+}
+
+func (header *HeaderVars) AddScript(name string) {
+	header.Scripts = append(header.Scripts, name)
+}
+
+/*func (header *HeaderVars) PreloadScript(name string) {
+	header.PreloadScripts = append(header.PreloadScripts, name)
+}*/
+
+func (header *HeaderVars) AddSheet(name string) {
+	header.Stylesheets = append(header.Stylesheets, name)
 }
 
 // TODO: Add this to routes which don't use templates. E.g. Json APIs.
