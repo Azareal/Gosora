@@ -68,7 +68,7 @@ func updater(scanner *bufio.Scanner) bool {
 		return logError(err)
 	}
 
-	err = workTree.Reset(&git.ResetOptions{Mode: git.MergeReset})
+	err = workTree.Reset(&git.ResetOptions{Mode: git.HardReset})
 	if err != nil {
 		return logError(err)
 	}
