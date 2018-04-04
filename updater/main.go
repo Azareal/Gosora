@@ -68,6 +68,7 @@ func updater(scanner *bufio.Scanner) bool {
 		return logError(err)
 	}
 
+	// The unstaged files are particularly resistant, so blast them away at full force
 	err = workTree.Reset(&git.ResetOptions{Mode: git.HardReset})
 	if err != nil {
 		return logError(err)
