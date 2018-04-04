@@ -60,8 +60,12 @@ func updater(scanner *bufio.Scanner) bool {
 		return logError(err)
 	}
 
-	err = workTree.Pull(&git.PullOptions{RemoteName: "origin"})
-	if err != nil {
+	//err = workTree.Pull(&git.PullOptions{RemoteName: "origin"})
+	err = workTree.Pull(&git.PullOptions{Force: true})
+	if err == git.NoErrAlreadyUpToDate {
+		fmt.Println("You are already up-to-date")
+		return true
+	} else if err != nil {
 		return logError(err)
 	}
 
