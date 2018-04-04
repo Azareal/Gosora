@@ -64,7 +64,12 @@ func updater(scanner *bufio.Scanner) bool {
 	if err == git.NoErrAlreadyUpToDate {
 		fmt.Println("You are already up-to-date")
 		return true
-	} else if err != nil {
+	} else if err != nil && err != git.ErrUnstagedChanges { // fixes a bug in git where it refuses to update the files
+		return logError(err)
+	}
+
+	err = workTree.Reset(&git.ResetOptions{Mode: git.MergeReset})
+	if err != nil {
 		return logError(err)
 	}
 
