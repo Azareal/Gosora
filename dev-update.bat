@@ -101,7 +101,7 @@ if %errorlevel% neq 0 (
 
 
 echo Updating Gosora
-git pull
+git pull origin master
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
