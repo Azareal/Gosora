@@ -61,8 +61,10 @@ func patcher(scanner *bufio.Scanner) error {
 	}
 }*/
 
-func eachUser(handle func(int)) error {
-	stmt, err := qgen.Builder.Select("users").Prepare()
+func eachUser(handle func(int) error) error {
+	acc := qgen.Builder.Accumulator()
+	stmt := acc.Select("users").Prepare()
+	err := acc.FirstError()
 	if err != nil {
 		return err
 	}

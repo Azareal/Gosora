@@ -49,6 +49,11 @@ It's entirely possible that your host might already have MySQL, so you might be 
 At some point, we'll have releases which you can download, but right now, you'll have to use the `git clone` command as mentioned down in the advanced setup section to download a copy of Gosora.
 
 
+# Updating
+
+The update system is currently under development, however if you have Git installed, then you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
+
+
 # Installation Instructions
 
 *Linux*
@@ -183,7 +188,7 @@ More images in the /images/ folder. Beware though, some of them are *really* out
 
 # Dependencies (a few of these like Rez aren't currently in use, but we anticipate that we'll need some sort of search engine library in the very immediate future)
 
-* Go 1.9
+* Go 1.10+
 
 * MariaDB (or any other MySQL compatible database engine). We'll allow other database engines in the future.
 

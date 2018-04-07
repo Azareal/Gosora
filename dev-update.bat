@@ -108,5 +108,6 @@ if %errorlevel% neq 0 (
 )
 
 echo Patching Gosora
+go generate
 go build ./patcher
 patcher.exe
