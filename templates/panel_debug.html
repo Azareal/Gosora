@@ -7,12 +7,21 @@
 		</div>
 		<div id="panel_debug" class="colstack_grid">
 			<div class="grid_item grid_stat"><span>{{lang "panel_debug_uptime_label"}}</span></div>
+			<div class="grid_item grid_stat"><span>{{lang "panel_debug_go_version_label"}}</span></div>
+			<div class="grid_item grid_stat"><span>{{lang "panel_debug_database_version_label"}}</span></div>
+			
+			<div class="grid_item grid_stat"><span>{{.Uptime}}</span></div>
+			<div class="grid_item grid_stat"><span>{{.GoVersion}}</span></div>
+			<div class="grid_item grid_stat"><span>{{.DBVersion}}</span></div>
+			
+
 			<div class="grid_item grid_stat"><span>{{lang "panel_debug_open_database_connections_label"}}</span></div>
 			<div class="grid_item grid_stat"><span>{{lang "panel_debug_adapter_label"}}</span></div>
+			<div class="grid_item grid_stat"><span>???</span></div>
 
-			<div class="grid_item grid_stat"><span>{{.Uptime}}</span></div>
 			<div class="grid_item grid_stat"><span>{{.OpenConns}}</span></div>
 			<div class="grid_item grid_stat"><span>{{.DBAdapter}}</span></div>
+			<div class="grid_item grid_stat"><span>?</span></div>
 		</div>
 	</main>
 </div>

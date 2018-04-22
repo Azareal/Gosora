@@ -142,7 +142,7 @@ func (selectItem *selectPrebuilder) Limit(limit string) *selectPrebuilder {
 }
 
 // TODO: We probably want to avoid the double allocation of two builders somehow
-func (selectItem *selectPrebuilder) FromAcc(accBuilder *accSelectBuilder) *selectPrebuilder {
+func (selectItem *selectPrebuilder) FromAcc(accBuilder *AccSelectBuilder) *selectPrebuilder {
 	selectItem.table = accBuilder.table
 	selectItem.columns = accBuilder.columns
 	selectItem.where = accBuilder.where

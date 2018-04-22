@@ -49,25 +49,25 @@ func (update *accUpdateBuilder) Prepare() *sql.Stmt {
 	return update.build.SimpleUpdate(update.table, update.set, update.where)
 }
 
-type accSelectBuilder struct {
+type AccSelectBuilder struct {
 	table      string
 	columns    string
 	where      string
 	orderby    string
 	limit      string
 	dateCutoff *dateCutoff // We might want to do this in a slightly less hacky way
-	inChain    *accSelectBuilder
+	inChain    *AccSelectBuilder
 	inColumn   string
 
 	build *Accumulator
 }
 
-func (selectItem *accSelectBuilder) Columns(columns string) *accSelectBuilder {
+func (selectItem *AccSelectBuilder) Columns(columns string) *AccSelectBuilder {
 	selectItem.columns = columns
 	return selectItem
 }
 
-func (selectItem *accSelectBuilder) Where(where string) *accSelectBuilder {
+func (selectItem *AccSelectBuilder) Where(where string) *AccSelectBuilder {
 	if selectItem.where != "" {
 		selectItem.where += " AND "
 	}
@@ -76,7 +76,7 @@ func (selectItem *accSelectBuilder) Where(where string) *accSelectBuilder {
 }
 
 // TODO: Don't implement the SQL at the accumulator level but the adapter level
-func (selectItem *accSelectBuilder) In(column string, inList []int) *accSelectBuilder {
+func (selectItem *AccSelectBuilder) In(column string, inList []int) *AccSelectBuilder {
 	if len(inList) == 0 {
 		return selectItem
 	}
@@ -94,28 +94,28 @@ func (selectItem *accSelectBuilder) In(column string, inList []int) *accSelectBu
 	return selectItem
 }
 
-func (selectItem *accSelectBuilder) InQ(column string, subBuilder *accSelectBuilder) *accSelectBuilder {
+func (selectItem *AccSelectBuilder) InQ(column string, subBuilder *AccSelectBuilder) *AccSelectBuilder {
 	selectItem.inChain = subBuilder
 	selectItem.inColumn = column
 	return selectItem
 }
 
-func (selectItem *accSelectBuilder) DateCutoff(column string, quantity int, unit string) *accSelectBuilder {
+func (selectItem *AccSelectBuilder) DateCutoff(column string, quantity int, unit string) *AccSelectBuilder {
 	selectItem.dateCutoff = &dateCutoff{column, quantity, unit}
 	return selectItem
 }
 
-func (selectItem *accSelectBuilder) Orderby(orderby string) *accSelectBuilder {
+func (selectItem *AccSelectBuilder) Orderby(orderby string) *AccSelectBuilder {
 	selectItem.orderby = orderby
 	return selectItem
 }
 
-func (selectItem *accSelectBuilder) Limit(limit string) *accSelectBuilder {
+func (selectItem *AccSelectBuilder) Limit(limit string) *AccSelectBuilder {
 	selectItem.limit = limit
 	return selectItem
 }
 
-func (selectItem *accSelectBuilder) Prepare() *sql.Stmt {
+func (selectItem *AccSelectBuilder) Prepare() *sql.Stmt {
 	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
 	if selectItem.dateCutoff != nil || selectItem.inChain != nil {
 		selectBuilder := selectItem.build.GetAdapter().Builder().Select().FromAcc(selectItem)
@@ -124,12 +124,29 @@ func (selectItem *accSelectBuilder) Prepare() *sql.Stmt {
 	return selectItem.build.SimpleSelect(selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
 }
 
-func (selectItem *accSelectBuilder) Query(args ...interface{}) (*sql.Rows, error) {
+func (selectItem *AccSelectBuilder) Query(args ...interface{}) (*sql.Rows, error) {
 	stmt := selectItem.Prepare()
 	if stmt != nil {
 		return stmt.Query(args...)
 	}
 	return nil, selectItem.build.FirstError()
+}
+
+// Experimental, reduces lines
+func (selectItem *AccSelectBuilder) Each(handle func(*sql.Rows) error) error {
+	rows, err := selectItem.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err = handle(rows)
+		if err != nil {
+			return err
+		}
+	}
+	return rows.Err()
 }
 
 type accInsertBuilder struct {

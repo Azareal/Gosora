@@ -76,7 +76,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	common.DebugLog("Preparing getUsersOffset statement.")
-	stmts.getUsersOffset, err = db.Prepare("SELECT `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` FROM `users` ORDER BY uid ASC LIMIT ?,?")
+	stmts.getUsersOffset, err = db.Prepare("SELECT `uid`,`name`,`group`,`active`,`is_super_admin`,`avatar` FROM `users` ORDER BY `uid` ASC LIMIT ?,?")
 	if err != nil {
 		log.Print("Error in getUsersOffset statement.")
 		return err
@@ -97,14 +97,14 @@ func _gen_mysql() (err error) {
 	}
 		
 	common.DebugLog("Preparing getModlogsOffset statement.")
-	stmts.getModlogsOffset, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs` ORDER BY doneAt DESC LIMIT ?,?")
+	stmts.getModlogsOffset, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs` ORDER BY `doneAt` DESC LIMIT ?,?")
 	if err != nil {
 		log.Print("Error in getModlogsOffset statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing getAdminlogsOffset statement.")
-	stmts.getAdminlogsOffset, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `administration_logs` ORDER BY doneAt DESC LIMIT ?,?")
+	stmts.getAdminlogsOffset, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `administration_logs` ORDER BY `doneAt` DESC LIMIT ?,?")
 	if err != nil {
 		log.Print("Error in getAdminlogsOffset statement.")
 		return err
@@ -139,14 +139,14 @@ func _gen_mysql() (err error) {
 	}
 		
 	common.DebugLog("Preparing forumEntryExists statement.")
-	stmts.forumEntryExists, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = '' ORDER BY fid ASC LIMIT 0,1")
+	stmts.forumEntryExists, err = db.Prepare("SELECT `fid` FROM `forums` WHERE `name` = '' ORDER BY `fid` ASC LIMIT 0,1")
 	if err != nil {
 		log.Print("Error in forumEntryExists statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing groupEntryExists statement.")
-	stmts.groupEntryExists, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = '' ORDER BY gid ASC LIMIT 0,1")
+	stmts.groupEntryExists, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = '' ORDER BY `gid` ASC LIMIT 0,1")
 	if err != nil {
 		log.Print("Error in groupEntryExists statement.")
 		return err
@@ -160,7 +160,7 @@ func _gen_mysql() (err error) {
 	}
 		
 	common.DebugLog("Preparing getForumTopics statement.")
-	stmts.getForumTopics, err = db.Prepare("SELECT `topics`.`tid`, `topics`.`title`, `topics`.`content`, `topics`.`createdBy`, `topics`.`is_closed`, `topics`.`sticky`, `topics`.`createdAt`, `topics`.`lastReplyAt`, `topics`.`parentID`, `users`.`name`, `users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ? ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
+	stmts.getForumTopics, err = db.Prepare("SELECT `topics`.`tid`, `topics`.`title`, `topics`.`content`, `topics`.`createdBy`, `topics`.`is_closed`, `topics`.`sticky`, `topics`.`createdAt`, `topics`.`lastReplyAt`, `topics`.`parentID`, `users`.`name`, `users`.`avatar` FROM `topics` LEFT JOIN `users` ON `topics`.`createdBy` = `users`.`uid`  WHERE `topics`.`parentID` = ? ORDER BY `topics`.`sticky` DESC,`topics`.`lastReplyAt` DESC,`topics`.`createdBy` DESC")
 	if err != nil {
 		log.Print("Error in getForumTopics statement.")
 		return err

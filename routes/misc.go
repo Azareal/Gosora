@@ -45,13 +45,13 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func Overview(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Zone = "overview"
+	header.Zone = "overview"
 
-	pi := common.Page{common.GetTitlePhrase("overview"), user, headerVars, tList, nil}
+	pi := common.Page{common.GetTitlePhrase("overview"), user, header, tList, nil}
 	if common.RunPreRenderHook("pre_render_overview", w, r, &user, &pi) {
 		return nil
 	}
@@ -63,18 +63,18 @@ func Overview(w http.ResponseWriter, r *http.Request, user common.User) common.R
 }
 
 func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, name string) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Zone = "custom_page"
+	header.Zone = "custom_page"
 
 	// ! Is this safe?
 	if common.Templates.Lookup("page_"+name+".html") == nil {
-		return common.NotFound(w, r, headerVars)
+		return common.NotFound(w, r, header)
 	}
 
-	pi := common.Page{common.GetTitlePhrase("page"), user, headerVars, tList, nil}
+	pi := common.Page{common.GetTitlePhrase("page"), user, header, tList, nil}
 	// TODO: Pass the page name to the pre-render hook?
 	if common.RunPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
 		return nil

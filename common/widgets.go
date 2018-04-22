@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"strings"
 	"sync"
@@ -80,7 +81,6 @@ func preparseWidget(widget *Widget, wdata string) (err error) {
 		if err != nil {
 			return err
 		}
-		widget.Literal = true
 		widget.Body, err = prebuildWidget("widget_simple", tmp)
 	case "about":
 		var tmp NameTextPair
@@ -88,12 +88,11 @@ func preparseWidget(widget *Widget, wdata string) (err error) {
 		if err != nil {
 			return err
 		}
-		widget.Literal = true
 		widget.Body, err = prebuildWidget("widget_about", tmp)
 	default:
-		widget.Literal = true
 		widget.Body = wdata
 	}
+	widget.Literal = true
 
 	// TODO: Test this
 	// TODO: Should we toss this through a proper parser rather than crudely replacing it?
@@ -117,23 +116,36 @@ func preparseWidget(widget *Widget, wdata string) (err error) {
 	return err
 }
 
-func BuildWidget(dock string, headerVars *HeaderVars) (sbody string) {
+func BuildWidget(dock string, header *Header) (sbody string) {
 	var widgets []*Widget
-	if !headerVars.Theme.HasDock(dock) {
+	if !header.Theme.HasDock(dock) {
 		return ""
 	}
 
 	// Let themes forcibly override this slot
-	sbody = headerVars.Theme.BuildDock(dock)
+	sbody = header.Theme.BuildDock(dock)
 	if sbody != "" {
 		return sbody
 	}
 
+	fmt.Println("dock: ", dock)
 	switch dock {
 	case "leftOfNav":
 		widgets = Docks.LeftOfNav
 	case "rightOfNav":
 		widgets = Docks.RightOfNav
+	case "topMenu":
+		fmt.Println("topMenu")
+		// 1 = id for the default menu
+		mhold := Menus.Get(1)
+		if mhold != nil {
+			fmt.Println("header.Writer: ", header.Writer)
+			err := mhold.Build(header.Writer, &header.CurrentUser)
+			if err != nil {
+				LogError(err)
+			}
+		}
+		return ""
 	case "rightSidebar":
 		widgets = Docks.RightSidebar
 	case "footer":
@@ -144,8 +156,8 @@ func BuildWidget(dock string, headerVars *HeaderVars) (sbody string) {
 		if !widget.Enabled {
 			continue
 		}
-		if widget.Allowed(headerVars.Zone) {
-			item, err := widget.Build(headerVars)
+		if widget.Allowed(header.Zone) {
+			item, err := widget.Build(header)
 			if err != nil {
 				LogError(err)
 			}
@@ -156,7 +168,7 @@ func BuildWidget(dock string, headerVars *HeaderVars) (sbody string) {
 }
 
 // TODO: Test this
-// TODO: Add support for zone:id. Perhaps, carry a ZoneID property around in headerVars? It might allow some weirdness like frontend[5] which matches any zone with an ID of 5 but it would be a tad faster than verifying each zone, although it might be problematic if users end up relying on this behaviour for areas which don't pass IDs to the widgets system but *probably* should
+// TODO: Add support for zone:id. Perhaps, carry a ZoneID property around in *Header? It might allow some weirdness like frontend[5] which matches any zone with an ID of 5 but it would be a tad faster than verifying each zone, although it might be problematic if users end up relying on this behaviour for areas which don't pass IDs to the widgets system but *probably* should
 func (widget *Widget) Allowed(zone string) bool {
 	for _, loc := range strings.Split(widget.Location, "|") {
 		if loc == "global" || loc == zone {
@@ -177,8 +189,8 @@ func (widget *Widget) Build(hvars interface{}) (string, error) {
 		return widget.Body, nil
 	}
 
-	var headerVars = hvars.(*HeaderVars)
-	err := RunThemeTemplate(headerVars.Theme.Name, widget.Body, hvars, headerVars.Writer)
+	var header = hvars.(*Header)
+	err := RunThemeTemplate(header.Theme.Name, widget.Body, hvars, header.Writer)
 	return "", err
 }
 

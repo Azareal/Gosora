@@ -17,7 +17,7 @@ func deactivateHeythere() {
 }
 
 func heythereReply(data ...interface{}) interface{} {
-	currentUser := data[0].(*common.TopicPage).CurrentUser
+	currentUser := data[0].(*common.TopicPage).Header.CurrentUser
 	reply := data[1].(*common.ReplyUser)
 	reply.Content = "Hey there, " + currentUser.Name + "!"
 	reply.ContentHtml = "Hey there, " + currentUser.Name + "!"

@@ -115,12 +115,6 @@ func (adapter *PgsqlAdapter) SimpleInsert(name string, table string, columns str
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	if len(columns) == 0 {
-		return "", errors.New("No columns found for SimpleInsert")
-	}
-	if len(fields) == 0 {
-		return "", errors.New("No input data found for SimpleInsert")
-	}
 	return "", nil
 }
 

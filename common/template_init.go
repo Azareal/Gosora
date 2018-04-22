@@ -2,8 +2,8 @@ package common
 
 import (
 	"html/template"
+	"io"
 	"log"
-	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -15,7 +15,7 @@ import (
 
 var Ctemplates []string
 var Templates = template.New("")
-var PrebuildTmplList []func(User, *HeaderVars) CTmpl
+var PrebuildTmplList []func(User, *Header) CTmpl
 
 type CTmpl struct {
 	Name       string
@@ -28,7 +28,7 @@ type CTmpl struct {
 
 // TODO: Stop duplicating these bits of code
 // nolint
-func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) error {
+func interpretedTopicTemplate(pi TopicPage, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["topic"]
 	if !ok {
 		mapping = "topic"
@@ -37,11 +37,11 @@ func interpreted_topic_template(pi TopicPage, w http.ResponseWriter) error {
 }
 
 // nolint
-var Template_topic_handle = interpreted_topic_template
-var Template_topic_alt_handle = interpreted_topic_template
+var Template_topic_handle = interpretedTopicTemplate
+var Template_topic_alt_handle = interpretedTopicTemplate
 
 // nolint
-var Template_topics_handle = func(pi TopicsPage, w http.ResponseWriter) error {
+var Template_topics_handle = func(pi TopicListPage, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["topics"]
 	if !ok {
 		mapping = "topics"
@@ -50,7 +50,7 @@ var Template_topics_handle = func(pi TopicsPage, w http.ResponseWriter) error {
 }
 
 // nolint
-var Template_forum_handle = func(pi ForumPage, w http.ResponseWriter) error {
+var Template_forum_handle = func(pi ForumPage, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["forum"]
 	if !ok {
 		mapping = "forum"
@@ -59,7 +59,7 @@ var Template_forum_handle = func(pi ForumPage, w http.ResponseWriter) error {
 }
 
 // nolint
-var Template_forums_handle = func(pi ForumsPage, w http.ResponseWriter) error {
+var Template_forums_handle = func(pi ForumsPage, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["forums"]
 	if !ok {
 		mapping = "forums"
@@ -68,7 +68,7 @@ var Template_forums_handle = func(pi ForumsPage, w http.ResponseWriter) error {
 }
 
 // nolint
-var Template_profile_handle = func(pi ProfilePage, w http.ResponseWriter) error {
+var Template_profile_handle = func(pi ProfilePage, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["profile"]
 	if !ok {
 		mapping = "profile"
@@ -77,7 +77,7 @@ var Template_profile_handle = func(pi ProfilePage, w http.ResponseWriter) error 
 }
 
 // nolint
-var Template_create_topic_handle = func(pi CreateTopicPage, w http.ResponseWriter) error {
+var Template_create_topic_handle = func(pi CreateTopicPage, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["create_topic"]
 	if !ok {
 		mapping = "create_topic"
@@ -86,7 +86,7 @@ var Template_create_topic_handle = func(pi CreateTopicPage, w http.ResponseWrite
 }
 
 // nolint
-var Template_login_handle = func(pi Page, w http.ResponseWriter) error {
+var Template_login_handle = func(pi Page, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["login"]
 	if !ok {
 		mapping = "login"
@@ -95,7 +95,7 @@ var Template_login_handle = func(pi Page, w http.ResponseWriter) error {
 }
 
 // nolint
-var Template_register_handle = func(pi Page, w http.ResponseWriter) error {
+var Template_register_handle = func(pi Page, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["register"]
 	if !ok {
 		mapping = "register"
@@ -104,7 +104,7 @@ var Template_register_handle = func(pi Page, w http.ResponseWriter) error {
 }
 
 // nolint
-var Template_error_handle = func(pi Page, w http.ResponseWriter) error {
+var Template_error_handle = func(pi Page, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["error"]
 	if !ok {
 		mapping = "error"
@@ -113,7 +113,7 @@ var Template_error_handle = func(pi Page, w http.ResponseWriter) error {
 }
 
 // nolint
-var Template_ip_search_handle = func(pi IPSearchPage, w http.ResponseWriter) error {
+var Template_ip_search_handle = func(pi IPSearchPage, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["ip_search"]
 	if !ok {
 		mapping = "ip_search"
@@ -127,8 +127,12 @@ func CompileTemplates() error {
 	config.Minify = Config.MinifyTemplates
 	config.SuperDebug = Dev.TemplateDebug
 
-	var c tmpl.CTemplateSet
+	c := tmpl.NewCTemplateSet()
 	c.SetConfig(config)
+	c.SetBaseImportMap(map[string]string{
+		"io":       "io",
+		"./common": "./common",
+	})
 
 	// Schemas to train the template compiler on what to expect
 	// TODO: Add support for interface{}s
@@ -136,11 +140,12 @@ func CompileTemplates() error {
 	// TODO: Do a more accurate level calculation for this?
 	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(1, ""), "", "", "", "", 58, 1000, 0, "127.0.0.1", 0}
 	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(2, ""), "", "", "", "", 42, 900, 0, "::1", 0}
-	headerVars := &HeaderVars{
+	header := &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
 		Theme:       Themes[DefaultThemeBox.Load().(string)],
+		CurrentUser: user,
 		NoticeList:  []string{"test"},
 		Stylesheets: []string{"panel"},
 		Scripts:     []string{"whatever"},
@@ -161,7 +166,7 @@ func CompileTemplates() error {
 	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, RelativeTime(now), 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
 	var varList = make(map[string]tmpl.VarItem)
-	tpage := TopicPage{"Title", user, headerVars, replyList, topic, poll, 1, 1}
+	tpage := TopicPage{"Title", user, header, replyList, topic, poll, 1, 1}
 	topicIDTmpl, err := c.Compile("topic.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err
@@ -172,7 +177,7 @@ func CompileTemplates() error {
 	}
 
 	varList = make(map[string]tmpl.VarItem)
-	ppage := ProfilePage{"User 526", user, headerVars, replyList, user}
+	ppage := ProfilePage{"User 526", user, header, replyList, user}
 	profileTmpl, err := c.Compile("profile.html", "templates/", "common.ProfilePage", ppage, varList)
 	if err != nil {
 		return err
@@ -189,7 +194,7 @@ func CompileTemplates() error {
 		forumList = append(forumList, *forum)
 	}
 	varList = make(map[string]tmpl.VarItem)
-	forumsPage := ForumsPage{"Forum List", user, headerVars, forumList}
+	forumsPage := ForumsPage{"Forum List", user, header, forumList}
 	forumsTmpl, err := c.Compile("forums.html", "templates/", "common.ForumsPage", forumsPage, varList)
 	if err != nil {
 		return err
@@ -197,8 +202,9 @@ func CompileTemplates() error {
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, "Date", time.Now(), "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
-	topicsPage := TopicsPage{"Topic List", user, headerVars, topicsList, forumList, Config.DefaultForum, []int{1}, 1, 1}
-	topicsTmpl, err := c.Compile("topics.html", "templates/", "common.TopicsPage", topicsPage, varList)
+	header.Title = "Topic List"
+	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, Paginator{[]int{1}, 1, 1}}
+	topicListTmpl, err := c.Compile("topics.html", "templates/", "common.TopicListPage", topicListPage, varList)
 	if err != nil {
 		return err
 	}
@@ -206,25 +212,25 @@ func CompileTemplates() error {
 	//var topicList []TopicUser
 	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
-	forumPage := ForumPage{"General Forum", user, headerVars, topicsList, forumItem, []int{1}, 1, 1}
+	forumPage := ForumPage{"General Forum", user, header, topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
 	forumTmpl, err := c.Compile("forum.html", "templates/", "common.ForumPage", forumPage, varList)
 	if err != nil {
 		return err
 	}
 
-	loginPage := Page{"Login Page", user, headerVars, tList, nil}
+	loginPage := Page{"Login Page", user, header, tList, nil}
 	loginTmpl, err := c.Compile("login.html", "templates/", "common.Page", loginPage, varList)
 	if err != nil {
 		return err
 	}
 
-	registerPage := Page{"Registration Page", user, headerVars, tList, nil}
+	registerPage := Page{"Registration Page", user, header, tList, nil}
 	registerTmpl, err := c.Compile("register.html", "templates/", "common.Page", registerPage, varList)
 	if err != nil {
 		return err
 	}
 
-	errorPage := Page{"Error", user, headerVars, tList, "A problem has occurred in the system."}
+	errorPage := Page{"Error", user, header, tList, "A problem has occurred in the system."}
 	errorTmpl, err := c.Compile("error.html", "templates/", "common.Page", errorPage, varList)
 	if err != nil {
 		return err
@@ -232,7 +238,7 @@ func CompileTemplates() error {
 
 	var ipUserList = make(map[int]*User)
 	ipUserList[1] = &user2
-	ipSearchPage := IPSearchPage{"IP Search", user2, headerVars, ipUserList, "::1"}
+	ipSearchPage := IPSearchPage{"IP Search", user2, header, ipUserList, "::1"}
 	ipSearchTmpl, err := c.Compile("ip_search.html", "templates/", "common.IPSearchPage", ipSearchPage, varList)
 	if err != nil {
 		return err
@@ -261,7 +267,7 @@ func CompileTemplates() error {
 	config.SkipHandles = true
 	c.SetConfig(config)
 	for _, tmplfunc := range PrebuildTmplList {
-		tmplItem := tmplfunc(user, headerVars)
+		tmplItem := tmplfunc(user, header)
 		varList = make(map[string]tmpl.VarItem)
 		compiledTmpl, err := c.Compile(tmplItem.Filename, tmplItem.Path, tmplItem.StructName, tmplItem.Data, varList, tmplItem.Imports...)
 		if err != nil {
@@ -275,94 +281,132 @@ func CompileTemplates() error {
 	writeTemplate("topic_alt", topicIDAltTmpl)
 	writeTemplate("profile", profileTmpl)
 	writeTemplate("forums", forumsTmpl)
-	writeTemplate("topics", topicsTmpl)
+	writeTemplate("topics", topicListTmpl)
 	writeTemplate("forum", forumTmpl)
 	writeTemplate("login", loginTmpl)
 	writeTemplate("register", registerTmpl)
 	writeTemplate("ip_search", ipSearchTmpl)
 	writeTemplate("error", errorTmpl)
+	writeTemplateList(c, &wg, "./")
+	return nil
+}
 
+func CompileJSTemplates() error {
+	log.Print("Compiling the JS templates")
+	var config tmpl.CTemplateConfig
+	config.Minify = Config.MinifyTemplates
+	config.SuperDebug = Dev.TemplateDebug
+	config.SkipHandles = true
+	config.PackageName = "tmpl"
+
+	c := tmpl.NewCTemplateSet()
+	c.SetConfig(config)
+	c.SetBaseImportMap(map[string]string{
+		"io":           "io",
+		"../../common": "../../common",
+	})
+	var varList = make(map[string]tmpl.VarItem)
+
+	// TODO: Check what sort of path is sent exactly and use it here
+	alertItem := AlertItem{Avatar: "", ASID: 1, Path: "/", Message: "uh oh, something happened"}
+	alertTmpl, err := c.Compile("alert.html", "templates/", "common.AlertItem", alertItem, varList)
+	if err != nil {
+		return err
+	}
+
+	var dirPrefix = "./tmpl_gen/client/"
+	var wg sync.WaitGroup
+	var writeTemplate = func(name string, content string) {
+		log.Print("Writing template '" + name + "'")
+		if content == "" {
+			log.Fatal("No content body")
+		}
+
+		wg.Add(1)
+		go func() {
+			err := writeFile(dirPrefix+"template_"+name+".go", content)
+			if err != nil {
+				log.Fatal(err)
+			}
+			wg.Done()
+		}()
+	}
+	writeTemplate("alert", alertTmpl)
+	writeTemplateList(c, &wg, dirPrefix)
+	return nil
+}
+
+func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) {
+	log.Print("Writing template list")
 	wg.Add(1)
 	go func() {
-		out := "package main\n\n"
+		out := "package " + c.GetConfig().PackageName + "\n\n"
 		for templateName, count := range c.TemplateFragmentCount {
 			out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
 		}
 		out += "\n// nolint\nfunc init() {\n" + c.FragOut + "}\n"
-		err := writeFile("./template_list.go", out)
+		err := writeFile(prefix+"template_list.go", out)
 		if err != nil {
 			log.Fatal(err)
 		}
 		wg.Done()
 	}()
-
 	wg.Wait()
-	return nil
+}
+
+func arithToInt64(in interface{}) (out int64) {
+	switch in := in.(type) {
+	case int64:
+		out = in
+	case int32:
+		out = int64(in)
+	case int:
+		out = int64(in)
+	case uint32:
+		out = int64(in)
+	case uint16:
+		out = int64(in)
+	case uint8:
+		out = int64(in)
+	case uint:
+		out = int64(in)
+	}
+	return out
+}
+
+func arithDuoToInt64(left interface{}, right interface{}) (leftInt int64, rightInt int64) {
+	return arithToInt64(left), arithToInt64(right)
 }
 
 func InitTemplates() error {
 	DebugLog("Initialising the template system")
-
-	// TODO: Add support for 64-bit integers
 	// TODO: Add support for floats
 	fmap := make(map[string]interface{})
 	fmap["add"] = func(left interface{}, right interface{}) interface{} {
-		var leftInt, rightInt int
-		switch left := left.(type) {
-		case uint, uint8, uint16, int, int32:
-			leftInt = left.(int)
-		}
-		switch right := right.(type) {
-		case uint, uint8, uint16, int, int32:
-			rightInt = right.(int)
-		}
+		leftInt, rightInt := arithDuoToInt64(left, right)
 		return leftInt + rightInt
 	}
 
 	fmap["subtract"] = func(left interface{}, right interface{}) interface{} {
-		var leftInt, rightInt int
-		switch left := left.(type) {
-		case uint, uint8, uint16, int, int32:
-			leftInt = left.(int)
-		}
-		switch right := right.(type) {
-		case uint, uint8, uint16, int, int32:
-			rightInt = right.(int)
-		}
+		leftInt, rightInt := arithDuoToInt64(left, right)
 		return leftInt - rightInt
 	}
 
 	fmap["multiply"] = func(left interface{}, right interface{}) interface{} {
-		var leftInt, rightInt int
-		switch left := left.(type) {
-		case uint, uint8, uint16, int, int32:
-			leftInt = left.(int)
-		}
-		switch right := right.(type) {
-		case uint, uint8, uint16, int, int32:
-			rightInt = right.(int)
-		}
+		leftInt, rightInt := arithDuoToInt64(left, right)
 		return leftInt * rightInt
 	}
 
 	fmap["divide"] = func(left interface{}, right interface{}) interface{} {
-		var leftInt, rightInt int
-		switch left := left.(type) {
-		case uint, uint8, uint16, int, int32:
-			leftInt = left.(int)
-		}
-		switch right := right.(type) {
-		case uint, uint8, uint16, int, int32:
-			rightInt = right.(int)
-		}
+		leftInt, rightInt := arithDuoToInt64(left, right)
 		if leftInt == 0 || rightInt == 0 {
 			return 0
 		}
 		return leftInt / rightInt
 	}
 
-	fmap["dock"] = func(dock interface{}, headerVarInt interface{}) interface{} {
-		return template.HTML(BuildWidget(dock.(string), headerVarInt.(*HeaderVars)))
+	fmap["dock"] = func(dock interface{}, headerInt interface{}) interface{} {
+		return template.HTML(BuildWidget(dock.(string), headerInt.(*Header)))
 	}
 
 	fmap["lang"] = func(phraseNameInt interface{}) interface{} {

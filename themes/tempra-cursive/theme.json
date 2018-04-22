@@ -9,6 +9,7 @@
 	"HideFromThemes": true,
 	"BgAvatars":true,
 	"URL": "github.com/Azareal/Gosora",
+	"Docks":["topMenu"],
 	"Templates": [
 		{
 			"Name": "topic",

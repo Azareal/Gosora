@@ -143,31 +143,31 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	if len(columns) == 0 {
-		return "", errors.New("No columns found for SimpleInsert")
-	}
-	if len(fields) == 0 {
-		return "", errors.New("No input data found for SimpleInsert")
-	}
 
-	var querystr = "INSERT INTO `" + table + "`(" + adapter.buildColumns(columns) + ") VALUES ("
-	for _, field := range processFields(fields) {
-		nameLen := len(field.Name)
-		if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
-			field.Name = "'" + field.Name[1:nameLen-1] + "'"
+	var querystr = "INSERT INTO `" + table + "`"
+	if columns != "" {
+		querystr += "(" + adapter.buildColumns(columns) + ") VALUES ("
+		for _, field := range processFields(fields) {
+			nameLen := len(field.Name)
+			if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
+				field.Name = "'" + field.Name[1:nameLen-1] + "'"
+			}
+			if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
+				field.Name = "'" + strings.Replace(field.Name[1:nameLen-1], "'", "''", -1) + "'"
+			}
+			querystr += field.Name + ","
 		}
-		if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
-			field.Name = "'" + strings.Replace(field.Name[1:nameLen-1], "'", "''", -1) + "'"
-		}
-		querystr += field.Name + ","
+		querystr = querystr[0:len(querystr)-1] + ")"
 	}
-	querystr = querystr[0:len(querystr)-1] + ")"
 
 	adapter.pushStatement(name, "insert", querystr)
 	return querystr, nil
 }
 
 func (adapter *MysqlAdapter) buildColumns(columns string) (querystr string) {
+	if columns == "" {
+		return ""
+	}
 	// Escape the column names, just in case we've used a reserved keyword
 	for _, column := range processColumns(columns) {
 		if column.Type == "function" {
@@ -393,7 +393,7 @@ func (adapter *MysqlAdapter) buildOrderby(orderby string) (querystr string) {
 		querystr = " ORDER BY "
 		for _, column := range processOrderby(orderby) {
 			// TODO: We might want to escape this column
-			querystr += column.Column + " " + strings.ToUpper(column.Order) + ","
+			querystr += "`" + strings.Replace(column.Column, ".", "`.`", -1) + "` " + strings.ToUpper(column.Order) + ","
 		}
 		querystr = querystr[0 : len(querystr)-1]
 	}

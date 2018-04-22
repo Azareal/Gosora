@@ -7,7 +7,7 @@
 	"MobileFriendly": true,
 	"URL": "github.com/Azareal/Gosora",
 	"BgAvatars":true,
-	"Docks":["rightSidebar"],
+	"Docks":["topMenu","rightSidebar"],
 	"Templates": [
 		{
 			"Name": "topic",

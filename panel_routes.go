@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -1747,7 +1748,7 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 
 	pageList := common.Paginate(stats.Users, perPage, 5)
-	pi := common.PanelUserPage{common.GetTitlePhrase("panel_users"), user, headerVars, stats, "users", userList, pageList, page, lastPage}
+	pi := common.PanelUserPage{common.GetTitlePhrase("panel_users"), user, headerVars, stats, "users", userList, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_users", w, r, user, &pi)
 }
 
@@ -1940,7 +1941,7 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) 
 	//log.Printf("groupList: %+v\n", groupList)
 
 	pageList := common.Paginate(stats.Groups, perPage, 5)
-	pi := common.PanelGroupPage{common.GetTitlePhrase("panel_groups"), user, headerVars, stats, "groups", groupList, pageList, page, lastPage}
+	pi := common.PanelGroupPage{common.GetTitlePhrase("panel_groups"), user, headerVars, stats, "groups", groupList, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_groups", w, r, user, &pi)
 }
 
@@ -2517,7 +2518,7 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_mod_logs"), user, headerVars, stats, "logs", logs, pageList, page, lastPage}
+	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_mod_logs"), user, headerVars, stats, "logs", logs, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_modlogs", w, r, user, &pi)
 }
 
@@ -2557,7 +2558,7 @@ func routePanelLogsAdmin(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_admin_logs"), user, headerVars, stats, "logs", logs, pageList, page, lastPage}
+	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_admin_logs"), user, headerVars, stats, "logs", logs, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_adminlogs", w, r, user, &pi)
 }
 
@@ -2567,6 +2568,8 @@ func routePanelDebug(w http.ResponseWriter, r *http.Request, user common.User) c
 		return ferr
 	}
 
+	goVersion := runtime.Version()
+	dbVersion := qgen.Builder.DbVersion()
 	var uptime string
 	upDuration := time.Since(startTime)
 	hours := int(upDuration.Hours())
@@ -2586,6 +2589,6 @@ func routePanelDebug(w http.ResponseWriter, r *http.Request, user common.User) c
 	// Disk I/O?
 	// TODO: Fetch the adapter from Builder rather than getting it from a global?
 
-	pi := common.PanelDebugPage{common.GetTitlePhrase("panel_debug"), user, headerVars, stats, "debug", uptime, openConnCount, dbAdapter}
+	pi := common.PanelDebugPage{common.GetTitlePhrase("panel_debug"), user, headerVars, stats, "debug", goVersion, dbVersion, uptime, openConnCount, dbAdapter}
 	return panelRenderTemplate("panel_debug", w, r, user, &pi)
 }

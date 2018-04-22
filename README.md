@@ -49,11 +49,6 @@ It's entirely possible that your host might already have MySQL, so you might be 
 At some point, we'll have releases which you can download, but right now, you'll have to use the `git clone` command as mentioned down in the advanced setup section to download a copy of Gosora.
 
 
-# Updating
-
-The update system is currently under development, however if you have Git installed, then you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
-
-
 # Installation Instructions
 
 *Linux*
@@ -96,9 +91,9 @@ Several important features for saving memory in the templates system may have to
 
 # Advanced Installation
 
-An example of running the commands directly on Windows. We're looking into reducing the number of commands you need to type, for instance, you could invoke the update-deps batch or shell files to install / update all of the dependencies instead of typing each `get get -u`
+This section explains how to set things up without running the batch or shell files. For Windows, you will likely have to open up cmd.exe (the app called Command Prompt in Win10) to run these commands inside or something similar, while with Linux you would likely use the Terminal or console.
 
-Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms. Additionally, Linux doesn't require `StackExchange/wmi` or ``/x/sys/windows`
+Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms. Additionally, Linux doesn't require `StackExchange/wmi` or `/x/sys/windows`
 
 You also need to substitute the `gosora.exe` bits for `./Gosora` on Linux. For more info, you might want to take a gander inside the `./run-linux` and `./install-linux` shell files to see how they're implemented.
 
@@ -152,6 +147,13 @@ gosora.exe
 ```
 
 I'm looking into minimising the number of go gets for the advanced build and to maybe remove the platform and database engine specific dependencies if possible for those who don't need them.
+
+
+# Updating
+
+The update system is currently under development, however if you have Git installed, then you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
+
+In addition to this, you can update the dependencies without updating Gosora by running `update-deps.bat` or `./update-deps-linux` (.bat is for Windows, the other for Linux as the names would suggest).
 
 
 # How do I install plugins?

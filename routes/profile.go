@@ -28,7 +28,7 @@ func init() {
 }
 
 func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -59,7 +59,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 		// TODO: Add a shared function for checking for ErrNoRows and internal erroring if it's not that case?
 		puser, err = common.Users.Get(pid)
 		if err == sql.ErrNoRows {
-			return common.NotFound(w, r, headerVars)
+			return common.NotFound(w, r, header)
 		} else if err != nil {
 			return common.InternalError(err, w, r)
 		}
@@ -113,12 +113,12 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 	}
 
 	// TODO: Add a phrase for this title
-	ppage := common.ProfilePage{puser.Name + "'s Profile", user, headerVars, replyList, *puser}
+	ppage := common.ProfilePage{puser.Name + "'s Profile", user, header, replyList, *puser}
 	if common.RunPreRenderHook("pre_render_profile", w, r, &user, &ppage) {
 		return nil
 	}
 
-	err = common.RunThemeTemplate(headerVars.Theme.Name, "profile", ppage, w)
+	err = common.RunThemeTemplate(header.Theme.Name, "profile", ppage, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

@@ -40,19 +40,19 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, sfid st
 		return common.PreError("The provided ForumID is not a valid number.", w, r)
 	}
 
-	headerVars, ferr := common.ForumUserCheck(w, r, &user, fid)
+	header, ferr := common.ForumUserCheck(w, r, &user, fid)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ViewTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	headerVars.Zone = "view_forum"
+	header.Zone = "view_forum"
 
 	// TODO: Fix this double-check
 	forum, err := common.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return common.NotFound(w, r, headerVars)
+		return common.NotFound(w, r, header)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -112,11 +112,11 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, sfid st
 	}
 
 	pageList := common.Paginate(forum.TopicCount, common.Config.ItemsPerPage, 5)
-	pi := common.ForumPage{forum.Name, user, headerVars, topicList, forum, pageList, page, lastPage}
+	pi := common.ForumPage{forum.Name, user, header, topicList, forum, common.Paginator{pageList, page, lastPage}}
 	if common.RunPreRenderHook("pre_render_forum", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.RunThemeTemplate(headerVars.Theme.Name, "forum", pi, w)
+	err = common.RunThemeTemplate(header.Theme.Name, "forum", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

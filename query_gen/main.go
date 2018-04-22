@@ -209,6 +209,32 @@ func seedTables(adapter qgen.Adapter) error {
 
 	qgen.Install.SimpleInsert("replies", "tid, content, parsed_content, createdAt, createdBy, lastUpdated, lastEdit, lastEditBy, ipaddress", "1,'A reply!','A reply!',UTC_TIMESTAMP(),1,UTC_TIMESTAMP(),0,0,'::1'")
 
+	/*
+		{{range .MenuItems}}
+		<li id="menu_{{.ID}}" class="menu_{{.Position}}"><a href="{{.Path}}" aria-label="{{.Aria}}" title="{{.Tooltip}}"></a></li>
+		{{end}}
+		<li class="menu_left menu_topics"><a href="/" aria-label="{{lang "menu_topics_aria"}}" title="{{lang "menu_topics_tooltip"}}"></a></li>
+		<li id="general_alerts" class="menu_right menu_alerts">
+			<div class="alert_bell"></div>
+			<div class="alert_counter" aria-label="{{lang "menu_alert_counter_aria"}}"></div>
+			<div class="alert_aftercounter"></div>
+			<div class="alertList" aria-label="{{lang "menu_alert_list_aria"}}"></div>
+		</li>
+
+		qgen.DBTableColumn{"guestOnly", "boolean", 1, false, false, "0"},
+		qgen.DBTableColumn{"memberOnly", "boolean", 1, false, false, "0"},
+		qgen.DBTableColumn{"staffOnly", "boolean", 1, false, false, "0"},
+		qgen.DBTableColumn{"adminOnly", "boolean", 1, false, false, "0"},
+	*/
+
+	qgen.Install.SimpleInsert("menus", "", "")
+
+	qgen.Install.SimpleInsert("menu_items", "mid, htmlID, position, path, aria, tooltip, order", "1,'menu_forums','left','/forums/','{lang.menu_forums_aria}','{lang.menu_forums_tooltip}',0")
+
+	qgen.Install.SimpleInsert("menu_items", "mid, htmlID, cssClass, position, path, aria, tooltip, order", "1,'menu_topics','menu_topics','left','/topics/','{lang.menu_topics_aria}','{lang.menu_topics_tooltip}',1")
+
+	qgen.Install.SimpleInsert("menu_items", "mid, htmlID, cssClass, position, tmplName, order", "1,'general_alerts','menu_alerts','right','menu_alerts',2")
+
 	return nil
 }
 

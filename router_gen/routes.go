@@ -1,6 +1,6 @@
 package main
 
-// TODO: How should we handle headerLite and headerVar?
+// TODO: How should we handle *HeaderLite and *Header?
 func routes() {
 	addRoute(View("routeAPI", "/api/"))
 	addRoute(View("routes.Overview", "/overview/"))

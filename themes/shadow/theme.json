@@ -6,6 +6,7 @@
 	"FullImage": "shadow.png",
 	"URL": "github.com/Azareal/Gosora",
 	"BgAvatars":true,
+	"Docks":["topMenu"],
 	"Templates": [
 		{
 			"Name": "topic",

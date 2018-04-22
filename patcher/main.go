@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"database/sql"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -63,28 +64,13 @@ func patcher(scanner *bufio.Scanner) error {
 
 func eachUser(handle func(int) error) error {
 	acc := qgen.Builder.Accumulator()
-	stmt := acc.Select("users").Prepare()
-	err := acc.FirstError()
-	if err != nil {
-		return err
-	}
-
-	rows, err := stmt.Query()
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
+	err := acc.Select("users").Each(func(rows *sql.Rows) error {
 		var uid int
 		err := rows.Scan(&uid)
 		if err != nil {
 			return err
 		}
-		err = handle(uid)
-		if err != nil {
-			return err
-		}
-	}
-	return rows.Err()
+		return handle(uid)
+	})
+	return err
 }

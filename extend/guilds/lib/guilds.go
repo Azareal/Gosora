@@ -52,7 +52,7 @@ type Guild struct {
 type Page struct {
 	Title       string
 	CurrentUser common.User
-	Header      *common.HeaderVars
+	Header      *common.Header
 	ItemList    []*common.TopicsRow
 	Forum       *common.Forum
 	Guild       *Guild
@@ -64,14 +64,14 @@ type Page struct {
 type ListPage struct {
 	Title       string
 	CurrentUser common.User
-	Header      *common.HeaderVars
+	Header      *common.Header
 	GuildList   []*Guild
 }
 
 type MemberListPage struct {
 	Title       string
 	CurrentUser common.User
-	Header      *common.HeaderVars
+	Header      *common.Header
 	ItemList    []Member
 	Guild       *Guild
 	Page        int
@@ -90,7 +90,7 @@ type Member struct {
 	User common.User
 }
 
-func PrebuildTmplList(user common.User, headerVars *common.HeaderVars) common.CTmpl {
+func PrebuildTmplList(user common.User, header *common.Header) common.CTmpl {
 	var guildList = []*Guild{
 		&Guild{
 			ID:             1,
@@ -107,13 +107,13 @@ func PrebuildTmplList(user common.User, headerVars *common.HeaderVars) common.CT
 			Forums:         []*common.Forum{common.Forums.DirtyGet(1)},
 		},
 	}
-	listPage := ListPage{"Guild List", user, headerVars, guildList}
+	listPage := ListPage{"Guild List", user, header, guildList}
 	return common.CTmpl{"guilds_guild_list", "guilds_guild_list.html", "templates/", "guilds.ListPage", listPage, []string{"./extend/guilds/lib"}}
 }
 
 // TODO: Do this properly via the widget system
 // TODO: REWRITE THIS
-func CommonAreaWidgets(headerVars *common.HeaderVars) {
+func CommonAreaWidgets(header *common.Header) {
 	// TODO: Hot Groups? Featured Groups? Official Groups?
 	var b bytes.Buffer
 	var menu = common.WidgetMenu{"Guilds", []common.WidgetMenuItem{
@@ -126,16 +126,16 @@ func CommonAreaWidgets(headerVars *common.HeaderVars) {
 		return
 	}
 
-	if headerVars.Theme.HasDock("leftSidebar") {
-		headerVars.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
-	} else if headerVars.Theme.HasDock("rightSidebar") {
-		headerVars.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
+	if header.Theme.HasDock("leftSidebar") {
+		header.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
+	} else if header.Theme.HasDock("rightSidebar") {
+		header.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
 	}
 }
 
 // TODO: Do this properly via the widget system
 // TODO: Make a better more customisable group widget system
-func GuildWidgets(headerVars *common.HeaderVars, guildItem *Guild) (success bool) {
+func GuildWidgets(header *common.Header, guildItem *Guild) (success bool) {
 	return false // Disabled until the next commit
 
 	/*var b bytes.Buffer
@@ -150,10 +150,10 @@ func GuildWidgets(headerVars *common.HeaderVars, guildItem *Guild) (success bool
 		return false
 	}
 
-	if themes[headerVars.Theme.Name].Sidebars == "left" {
-		headerVars.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
-	} else if themes[headerVars.Theme.Name].Sidebars == "right" || themes[headerVars.Theme.Name].Sidebars == "both" {
-		headerVars.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
+	if themes[header.Theme.Name].Sidebars == "left" {
+		header.Widgets.LeftSidebar = template.HTML(string(b.Bytes()))
+	} else if themes[header.Theme.Name].Sidebars == "right" || themes[header.Theme.Name].Sidebars == "both" {
+		header.Widgets.RightSidebar = template.HTML(string(b.Bytes()))
 	} else {
 		return false
 	}
@@ -165,11 +165,11 @@ func GuildWidgets(headerVars *common.HeaderVars, guildItem *Guild) (success bool
 */
 
 func RouteGuildList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
-	CommonAreaWidgets(headerVars)
+	CommonAreaWidgets(header)
 
 	rows, err := ListStmt.Query()
 	if err != nil && err != common.ErrNoRows {
@@ -192,8 +192,8 @@ func RouteGuildList(w http.ResponseWriter, r *http.Request, user common.User) co
 		return common.InternalError(err, w, r)
 	}
 
-	pi := ListPage{"Guild List", user, headerVars, guildList}
-	err = common.RunThemeTemplate(headerVars.Theme.Name, "guilds_guild_list", pi, w)
+	pi := ListPage{"Guild List", user, header, guildList}
+	err = common.RunThemeTemplate(header.Theme.Name, "guilds_guild_list", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -215,7 +215,7 @@ func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user common.User) c
 	if err != nil {
 		return common.LocalError("Bad guild", w, r, user)
 	}
-	// TODO: Build and pass headerVars
+	// TODO: Build and pass header
 	if !guildItem.Active {
 		return common.NotFound(w, r, nil)
 	}
@@ -229,7 +229,7 @@ func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user common.User) c
 }
 
 func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -237,9 +237,9 @@ func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user common.User) 
 	if !user.Loggedin || !user.PluginPerms["CreateGuild"] {
 		return common.NoPermissions(w, r, user)
 	}
-	CommonAreaWidgets(headerVars)
+	CommonAreaWidgets(header)
 
-	pi := common.Page{"Create Guild", user, headerVars, tList, nil}
+	pi := common.Page{"Create Guild", user, header, tList, nil}
 	err := common.Templates.ExecuteTemplate(w, "guilds_create_guild.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -298,7 +298,7 @@ func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user common.
 }
 
 func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -319,7 +319,7 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 	guildItem.Link = BuildGuildURL(common.NameToSlug(guildItem.Name), guildItem.ID)
 
-	GuildWidgets(headerVars, guildItem)
+	GuildWidgets(header, guildItem)
 
 	rows, err := MemberListJoinStmt.Query(guildID)
 	if err != nil && err != common.ErrNoRows {
@@ -356,12 +356,12 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 	rows.Close()
 
-	pi := MemberListPage{"Guild Member List", user, headerVars, guildMembers, guildItem, 0, 0}
+	pi := MemberListPage{"Guild Member List", user, header, guildMembers, guildItem, 0, 0}
 	// A plugin with plugins. Pluginception!
 	if common.RunPreRenderHook("pre_render_guilds_member_list", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.RunThemeTemplate(headerVars.Theme.Name, "guilds_member_list", pi, w)
+	err = common.RunThemeTemplate(header.Theme.Name, "guilds_member_list", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -445,7 +445,7 @@ func ForumCheck(args ...interface{}) (skip bool, rerr common.RouteError) {
 				return true, common.InternalError(errors.New("Unable to find the parent group for a forum"), w, r)
 			}
 			if !guildItem.Active {
-				return true, common.NotFound(w, r, nil) // TODO: Can we pull headerVars out of args?
+				return true, common.NotFound(w, r, nil) // TODO: Can we pull header out of args?
 			}
 			r = r.WithContext(context.WithValue(r.Context(), "guilds_current_group", guildItem))
 		}
@@ -496,7 +496,7 @@ func ForumCheck(args ...interface{}) (skip bool, rerr common.RouteError) {
 
 func Widgets(args ...interface{}) interface{} {
 	var zone = args[0].(string)
-	var headerVars = args[2].(*common.HeaderVars)
+	var header = args[2].(*common.Header)
 	var request = args[3].(*http.Request)
 
 	if zone != "view_forum" {
@@ -512,12 +512,12 @@ func Widgets(args ...interface{}) interface{} {
 			return false
 		}
 
-		if headerVars.ExtData.Items == nil {
-			headerVars.ExtData.Items = make(map[string]interface{})
+		if header.ExtData.Items == nil {
+			header.ExtData.Items = make(map[string]interface{})
 		}
-		headerVars.ExtData.Items["guilds_current_group"] = guildItem
+		header.ExtData.Items["guilds_current_group"] = guildItem
 
-		return GuildWidgets(headerVars, guildItem)
+		return GuildWidgets(header, guildItem)
 	}
 	return false
 }

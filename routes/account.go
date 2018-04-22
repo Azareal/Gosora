@@ -15,18 +15,18 @@ import (
 var tList []interface{}
 
 func AccountLogin(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	pi := common.Page{common.GetTitlePhrase("login"), user, headerVars, tList, nil}
+	pi := common.Page{common.GetTitlePhrase("login"), user, header, tList, nil}
 	if common.RunPreRenderHook("pre_render_login", w, r, &user, &pi) {
 		return nil
 	}
-	err := common.RunThemeTemplate(headerVars.Theme.Name, "login", pi, w)
+	err := common.RunThemeTemplate(header.Theme.Name, "login", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -74,18 +74,18 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user common.User
 }
 
 func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	pi := common.Page{common.GetTitlePhrase("register"), user, headerVars, tList, nil}
+	pi := common.Page{common.GetTitlePhrase("register"), user, header, tList, nil}
 	if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
 		return nil
 	}
-	err := common.RunThemeTemplate(headerVars.Theme.Name, "register", pi, w)
+	err := common.RunThemeTemplate(header.Theme.Name, "register", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -169,12 +169,12 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 }
 
 func AccountEditCritical(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 
-	pi := common.Page{"Edit Password", user, headerVars, tList, nil}
+	pi := common.Page{"Edit Password", user, header, tList, nil}
 	if common.RunPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
 		return nil
 	}

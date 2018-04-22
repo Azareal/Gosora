@@ -62,7 +62,7 @@ type Message interface {
 // While the idea is nice, this might result in too much code duplication, as we have seventy billion page structs, what else could we do to get static typing with these in plugins?
 type PageInt interface {
 	Title() string
-	HeaderVars() *HeaderVars
+	Header() *Header
 	CurrentUser() *User
 	GetExtData(name string) interface{}
 	SetExtData(name string, contents interface{})

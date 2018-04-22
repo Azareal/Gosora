@@ -14,13 +14,13 @@ var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = preRoute
 
 // TODO: Come up with a better middleware solution
 // nolint We need these types so people can tell what they are without scrolling to the bottom of the file
-var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderVars, PanelStats, RouteError) = panelUserCheck
+var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*Header, PanelStats, RouteError) = panelUserCheck
 var SimplePanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, RouteError) = simplePanelUserCheck
 var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, err RouteError) = simpleForumUserCheck
-var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, err RouteError) = forumUserCheck
-var MemberCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, err RouteError) = memberCheck
+var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *Header, err RouteError) = forumUserCheck
+var MemberCheck func(w http.ResponseWriter, r *http.Request, user *User) (header *Header, err RouteError) = memberCheck
 var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
-var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, err RouteError) = userCheck
+var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (header *Header, err RouteError) = userCheck
 
 func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, rerr RouteError) {
 	if !Forums.Exists(fid) {
@@ -46,20 +46,20 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	return headerLite, nil
 }
 
-func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerVars *HeaderVars, rerr RouteError) {
-	headerVars, rerr = UserCheck(w, r, user)
+func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *Header, rerr RouteError) {
+	header, rerr = UserCheck(w, r, user)
 	if rerr != nil {
-		return headerVars, rerr
+		return header, rerr
 	}
 	if !Forums.Exists(fid) {
-		return headerVars, NotFound(w, r, headerVars)
+		return header, NotFound(w, r, header)
 	}
 
 	if VhookSkippable["forum_check_pre_perms"] != nil {
 		var skip bool
-		skip, rerr = RunVhookSkippable("forum_check_pre_perms", w, r, user, &fid, &headerVars)
+		skip, rerr = RunVhookSkippable("forum_check_pre_perms", w, r, user, &fid, &header)
 		if skip || rerr != nil {
-			return headerVars, rerr
+			return header, rerr
 		}
 	}
 
@@ -70,7 +70,7 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 		return nil, PreError("Something weird happened", w, r)
 	}
 	cascadeForumPerms(fperms, user)
-	return headerVars, rerr
+	return header, rerr
 }
 
 // TODO: Put this on the user instance? Do we really want forum specific logic in there? Maybe, a method which spits a new pointer with the same contents as user?
@@ -98,7 +98,7 @@ func cascadeForumPerms(fperms *ForumPerms, user *User) {
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
-func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, stats PanelStats, rerr RouteError) {
+func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, stats PanelStats, rerr RouteError) {
 	var theme = &Theme{Name: ""}
 
 	cookie, err := r.Cookie("current_theme")
@@ -112,17 +112,18 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		theme = Themes[DefaultThemeBox.Load().(string)]
 	}
 
-	headerVars = &HeaderVars{
-		Site:     Site,
-		Settings: SettingBox.Load().(SettingMap),
-		Themes:   Themes,
-		Theme:    theme,
-		Zone:     "panel",
-		Writer:   w,
+	header = &Header{
+		Site:        Site,
+		Settings:    SettingBox.Load().(SettingMap),
+		Themes:      Themes,
+		Theme:       theme,
+		CurrentUser: *user,
+		Zone:        "panel",
+		Writer:      w,
 	}
-	// TODO: We should probably initialise headerVars.ExtData
+	// TODO: We should probably initialise header.ExtData
 
-	headerVars.AddSheet(theme.Name + "/panel.css")
+	header.AddSheet(theme.Name + "/panel.css")
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
 		for _, resource := range rlist {
@@ -130,9 +131,9 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 				extarr := strings.Split(resource.Name, ".")
 				ext := extarr[len(extarr)-1]
 				if ext == "css" {
-					headerVars.AddSheet(resource.Name)
+					header.AddSheet(resource.Name)
 				} else if ext == "js" {
-					headerVars.AddScript(resource.Name)
+					header.AddScript(resource.Name)
 				}
 			}
 		}
@@ -141,7 +142,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 	stats.Users = Users.GlobalCount()
 	stats.Groups = Groups.GlobalCount()
 	stats.Forums = Forums.GlobalCount() // TODO: Stop it from showing the blanked forums
-	stats.Settings = len(headerVars.Settings)
+	stats.Settings = len(header.Settings)
 	stats.WordFilters = len(WordFilterBox.Load().(WordFilterMap))
 	stats.Themes = len(Themes)
 	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
@@ -153,16 +154,16 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerV
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
 		// TODO: Test these
-		for _, sheet := range headerVars.Stylesheets {
+		for _, sheet := range header.Stylesheets {
 			pusher.Push("/static/"+sheet, nil)
 		}
-		for _, script := range headerVars.Scripts {
+		for _, script := range header.Scripts {
 			pusher.Push("/static/"+script, nil)
 		}
 		// TODO: Push avatars?
 	}
 
-	return headerVars, stats, nil
+	return header, stats, nil
 }
 
 func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
@@ -173,12 +174,12 @@ func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h
 }
 
 // TODO: Add this to the member routes
-func memberCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, rerr RouteError) {
-	headerVars, rerr = UserCheck(w, r, user)
+func memberCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
+	header, rerr = UserCheck(w, r, user)
 	if !user.Loggedin {
-		return headerVars, NoPermissions(w, r, *user)
+		return header, NoPermissions(w, r, *user)
 	}
-	return headerVars, rerr
+	return header, rerr
 }
 
 // SimpleUserCheck is back from the grave, yay :D
@@ -191,7 +192,7 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header
 }
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
-func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *HeaderVars, rerr RouteError) {
+func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
 	var theme = &Theme{Name: ""}
 
 	cookie, err := r.Cookie("current_theme")
@@ -205,20 +206,21 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 		theme = Themes[DefaultThemeBox.Load().(string)]
 	}
 
-	headerVars = &HeaderVars{
-		Site:     Site,
-		Settings: SettingBox.Load().(SettingMap),
-		Themes:   Themes,
-		Theme:    theme,
-		Zone:     "frontend",
-		Writer:   w,
+	header = &Header{
+		Site:        Site,
+		Settings:    SettingBox.Load().(SettingMap),
+		Themes:      Themes,
+		Theme:       theme,
+		CurrentUser: *user,
+		Zone:        "frontend",
+		Writer:      w,
 	}
 
 	if user.IsBanned {
-		headerVars.NoticeList = append(headerVars.NoticeList, GetNoticePhrase("account_banned"))
+		header.NoticeList = append(header.NoticeList, GetNoticePhrase("account_banned"))
 	}
 	if user.Loggedin && !user.Active {
-		headerVars.NoticeList = append(headerVars.NoticeList, GetNoticePhrase("account_inactive"))
+		header.NoticeList = append(header.NoticeList, GetNoticePhrase("account_inactive"))
 	}
 
 	if len(theme.Resources) > 0 {
@@ -231,9 +233,9 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 				extarr := strings.Split(resource.Name, ".")
 				ext := extarr[len(extarr)-1]
 				if ext == "css" {
-					headerVars.AddSheet(resource.Name)
+					header.AddSheet(resource.Name)
 				} else if ext == "js" {
-					headerVars.AddScript(resource.Name)
+					header.AddScript(resource.Name)
 				}
 			}
 		}
@@ -245,16 +247,16 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (headerVars *
 		pusher.Push("/static/global.js", nil)
 		pusher.Push("/static/jquery-3.1.1.min.js", nil)
 		// TODO: Test these
-		for _, sheet := range headerVars.Stylesheets {
+		for _, sheet := range header.Stylesheets {
 			pusher.Push("/static/"+sheet, nil)
 		}
-		for _, script := range headerVars.Scripts {
+		for _, script := range header.Scripts {
 			pusher.Push("/static/"+script, nil)
 		}
 		// TODO: Push avatars?
 	}
 
-	return headerVars, nil
+	return header, nil
 }
 
 func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {

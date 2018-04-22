@@ -7,6 +7,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -69,6 +70,18 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+
+	log.Print("Initialising the menu item list")
+	common.Menus = common.NewDefaultMenuStore()
+	err = common.Menus.Load(1) // 1 = the default menu
+	if err != nil {
+		return err
+	}
+	menuHold := common.Menus.Get(1)
+	fmt.Println("menuHold: %+v", menuHold)
+	var b bytes.Buffer
+	menuHold.Build(&b, &common.GuestUser)
+	fmt.Println("menuHold output: ", string(b.Bytes()))
 
 	log.Print("Initialising the authentication system")
 	common.Auth, err = common.NewDefaultAuth()
@@ -222,6 +235,10 @@ func main() {
 	flag.Parse()
 	if *buildTemplates {
 		err = common.CompileTemplates()
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = common.CompileJSTemplates()
 		if err != nil {
 			log.Fatal(err)
 		}

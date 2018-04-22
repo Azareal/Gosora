@@ -379,6 +379,35 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableKey{},
 	)
 
+	qgen.Install.CreateTable("menus", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"mid", "int", 0, false, true, ""},
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"mid", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("menu_items", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"mid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"htmlID", "varchar", 200, false, false, "''"},
+			qgen.DBTableColumn{"cssClass", "varchar", 200, false, false, "''"},
+			qgen.DBTableColumn{"position", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"path", "varchar", 200, false, false, "''"},
+			qgen.DBTableColumn{"aria", "varchar", 200, false, false, "''"},
+			qgen.DBTableColumn{"tooltip", "varchar", 200, false, false, "''"},
+			qgen.DBTableColumn{"tmplName", "varchar", 200, false, false, "''"},
+			qgen.DBTableColumn{"order", "int", 0, false, false, "0"},
+
+			qgen.DBTableColumn{"guestOnly", "boolean", 0, false, false, "0"},
+			qgen.DBTableColumn{"memberOnly", "boolean", 0, false, false, "0"},
+			qgen.DBTableColumn{"staffOnly", "boolean", 0, false, false, "0"},
+			qgen.DBTableColumn{"adminOnly", "boolean", 0, false, false, "0"},
+		},
+		[]qgen.DBTableKey{},
+	)
+
 	/*
 		qgen.Install.CreateTable("registration_logs", "", "",
 			[]qgen.DBTableColumn{

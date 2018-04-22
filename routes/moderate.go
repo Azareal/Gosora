@@ -8,7 +8,7 @@ import (
 )
 
 func IPSearch(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -30,11 +30,11 @@ func IPSearch(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		return common.InternalError(err, w, r)
 	}
 
-	pi := common.IPSearchPage{common.GetTitlePhrase("ip_search"), user, headerVars, userList, ip}
+	pi := common.IPSearchPage{common.GetTitlePhrase("ip_search"), user, header, userList, ip}
 	if common.RunPreRenderHook("pre_render_ip_search", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.RunThemeTemplate(headerVars.Theme.Name, "ip_search", pi, w)
+	err = common.RunThemeTemplate(header.Theme.Name, "ip_search", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

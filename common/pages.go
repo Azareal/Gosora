@@ -9,7 +9,8 @@ import (
 
 // TODO: Allow resources in spots other than /static/ and possibly even external domains (e.g. CDNs)
 // TODO: Preload Trumboyg on Cosora on the forum list
-type HeaderVars struct {
+type Header struct {
+	Title      string
 	NoticeList []string
 	Scripts    []string
 	//PreloadScripts []string
@@ -20,21 +21,22 @@ type HeaderVars struct {
 	Themes      map[string]*Theme // TODO: Use a slice containing every theme instead of the main map for speed?
 	Theme       *Theme
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
-	Zone     string
-	MetaDesc string
-	Writer   http.ResponseWriter
-	ExtData  ExtData
+	CurrentUser User // TODO: Deprecate CurrentUser on the page structs
+	Zone        string
+	MetaDesc    string
+	Writer      http.ResponseWriter
+	ExtData     ExtData
 }
 
-func (header *HeaderVars) AddScript(name string) {
+func (header *Header) AddScript(name string) {
 	header.Scripts = append(header.Scripts, name)
 }
 
-/*func (header *HeaderVars) PreloadScript(name string) {
+/*func (header *Header) PreloadScript(name string) {
 	header.PreloadScripts = append(header.PreloadScripts, name)
 }*/
 
-func (header *HeaderVars) AddSheet(name string) {
+func (header *Header) AddSheet(name string) {
 	header.Stylesheets = append(header.Stylesheets, name)
 }
 
@@ -57,18 +59,31 @@ type ExtData struct {
 	sync.RWMutex
 }
 
+type AlertItem struct {
+	ASID    int
+	Path    string
+	Message string
+	Avatar  string
+}
+
 type Page struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	ItemList    []interface{}
 	Something   interface{}
+}
+
+type Paginator struct {
+	PageList []int
+	Page     int
+	LastPage int
 }
 
 type TopicPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	ItemList    []ReplyUser
 	Topic       TopicUser
 	Poll        Poll
@@ -76,40 +91,34 @@ type TopicPage struct {
 	LastPage    int
 }
 
-type TopicsPage struct {
-	Title        string
-	CurrentUser  User
-	Header       *HeaderVars
+type TopicListPage struct {
+	*Header
 	TopicList    []*TopicsRow
 	ForumList    []Forum
 	DefaultForum int
-	PageList     []int
-	Page         int
-	LastPage     int
+	Paginator
 }
 
 type ForumPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	ItemList    []*TopicsRow
 	Forum       *Forum
-	PageList    []int
-	Page        int
-	LastPage    int
+	Paginator
 }
 
 type ForumsPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	ItemList    []Forum
 }
 
 type ProfilePage struct {
 	Title        string
 	CurrentUser  User
-	Header       *HeaderVars
+	Header       *Header
 	ItemList     []ReplyUser
 	ProfileOwner User
 }
@@ -117,7 +126,7 @@ type ProfilePage struct {
 type CreateTopicPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	ItemList    []Forum
 	FID         int
 }
@@ -125,7 +134,7 @@ type CreateTopicPage struct {
 type IPSearchPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	ItemList    map[int]*User
 	IP          string
 }
@@ -143,7 +152,7 @@ type PanelStats struct {
 type PanelPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ItemList    []interface{}
@@ -163,7 +172,7 @@ type GridElement struct {
 type PanelDashboardPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	GridItems   []GridElement
@@ -182,7 +191,7 @@ type PanelAnalyticsItem struct {
 type PanelAnalyticsPage struct {
 	Title        string
 	CurrentUser  User
-	Header       *HeaderVars
+	Header       *Header
 	Stats        PanelStats
 	Zone         string
 	PrimaryGraph PanelTimeGraph
@@ -198,7 +207,7 @@ type PanelAnalyticsRoutesItem struct {
 type PanelAnalyticsRoutesPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ItemList    []PanelAnalyticsRoutesItem
@@ -214,7 +223,7 @@ type PanelAnalyticsAgentsItem struct {
 type PanelAnalyticsAgentsPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ItemList    []PanelAnalyticsAgentsItem
@@ -224,7 +233,7 @@ type PanelAnalyticsAgentsPage struct {
 type PanelAnalyticsRoutePage struct {
 	Title        string
 	CurrentUser  User
-	Header       *HeaderVars
+	Header       *Header
 	Stats        PanelStats
 	Zone         string
 	Route        string
@@ -236,7 +245,7 @@ type PanelAnalyticsRoutePage struct {
 type PanelAnalyticsAgentPage struct {
 	Title         string
 	CurrentUser   User
-	Header        *HeaderVars
+	Header        *Header
 	Stats         PanelStats
 	Zone          string
 	Agent         string
@@ -248,7 +257,7 @@ type PanelAnalyticsAgentPage struct {
 type PanelThemesPage struct {
 	Title         string
 	CurrentUser   User
-	Header        *HeaderVars
+	Header        *Header
 	Stats         PanelStats
 	Zone          string
 	PrimaryThemes []*Theme
@@ -258,31 +267,27 @@ type PanelThemesPage struct {
 type PanelUserPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ItemList    []User
-	PageList    []int
-	Page        int
-	LastPage    int
+	Paginator
 }
 
 type PanelGroupPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ItemList    []GroupAdmin
-	PageList    []int
-	Page        int
-	LastPage    int
+	Paginator
 }
 
 type PanelEditGroupPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ID          int
@@ -300,7 +305,7 @@ type GroupForumPermPreset struct {
 type PanelEditForumPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ID          int
@@ -320,7 +325,7 @@ type NameLangToggle struct {
 type PanelEditForumGroupPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ForumID     int
@@ -335,7 +340,7 @@ type PanelEditForumGroupPage struct {
 type PanelEditGroupPermsPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	ID          int
@@ -355,7 +360,7 @@ type BackupItem struct {
 type PanelBackupPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	Backups     []BackupItem
@@ -370,21 +375,21 @@ type LogItem struct {
 type PanelLogsPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
 	Logs        []LogItem
-	PageList    []int
-	Page        int
-	LastPage    int
+	Paginator
 }
 
 type PanelDebugPage struct {
 	Title       string
 	CurrentUser User
-	Header      *HeaderVars
+	Header      *Header
 	Stats       PanelStats
 	Zone        string
+	GoVersion   string
+	DBVersion   string
 	Uptime      string
 	OpenConns   int
 	DBAdapter   string
@@ -400,8 +405,7 @@ type AreYouSure struct {
 	Message string
 }
 
-// This is mostly for errors.go, please create *HeaderVars on the spot instead of relying on this or the atomic store underlying it, if possible
 // TODO: Write a test for this
-func DefaultHeaderVar() *HeaderVars {
-	return &HeaderVars{Site: Site, Theme: Themes[fallbackTheme]}
+func DefaultHeader(w http.ResponseWriter) *Header {
+	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: GuestUser, Writer: w}
 }

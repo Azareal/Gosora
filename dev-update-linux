@@ -35,6 +35,8 @@ echo "Updating GopherJS"
 go get -u github.com/gopherjs/gopherjs
 
 echo "Updating Gosora"
+rm ./schema/lastSchema.json
+cp ./schema/schema.json ./schema/lastSchema.json
 git pull origin master
 
 echo "Patching Gosora"

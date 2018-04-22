@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"log"
 	"mime"
@@ -271,72 +272,72 @@ func (theme *Theme) MapTemplates() {
 			}
 
 			switch dTmplPtr := destTmplPtr.(type) {
-			case *func(TopicPage, http.ResponseWriter) error:
+			case *func(TopicPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(TopicPage, http.ResponseWriter) error:
+				case *func(TopicPage, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
 					LogError(errors.New("The source and destination templates are incompatible"))
 				}
-			case *func(TopicsPage, http.ResponseWriter) error:
+			case *func(TopicListPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(TopicsPage, http.ResponseWriter) error:
+				case *func(TopicListPage, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
 					LogError(errors.New("The source and destination templates are incompatible"))
 				}
-			case *func(ForumPage, http.ResponseWriter) error:
+			case *func(ForumPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(ForumPage, http.ResponseWriter) error:
+				case *func(ForumPage, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
 					LogError(errors.New("The source and destination templates are incompatible"))
 				}
-			case *func(ForumsPage, http.ResponseWriter) error:
+			case *func(ForumsPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(ForumsPage, http.ResponseWriter) error:
+				case *func(ForumsPage, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
 					LogError(errors.New("The source and destination templates are incompatible"))
 				}
-			case *func(ProfilePage, http.ResponseWriter) error:
+			case *func(ProfilePage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(ProfilePage, http.ResponseWriter) error:
+				case *func(ProfilePage, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
 					LogError(errors.New("The source and destination templates are incompatible"))
 				}
-			case *func(CreateTopicPage, http.ResponseWriter) error:
+			case *func(CreateTopicPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(CreateTopicPage, http.ResponseWriter) error:
+				case *func(CreateTopicPage, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
 					LogError(errors.New("The source and destination templates are incompatible"))
 				}
-			case *func(IPSearchPage, http.ResponseWriter) error:
+			case *func(IPSearchPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(IPSearchPage, http.ResponseWriter) error:
+				case *func(IPSearchPage, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
 					LogError(errors.New("The source and destination templates are incompatible"))
 				}
-			case *func(Page, http.ResponseWriter) error:
+			case *func(Page, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(Page, http.ResponseWriter) error:
+				case *func(Page, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
@@ -372,58 +373,58 @@ func ResetTemplateOverrides() {
 
 		// Not really a pointer, more of a function handle, an artifact from one of the earlier versions of themes.go
 		switch oPtr := originPointer.(type) {
-		case func(TopicPage, http.ResponseWriter) error:
+		case func(TopicPage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
-			case *func(TopicPage, http.ResponseWriter) error:
+			case *func(TopicPage, io.Writer) error:
 				*dPtr = oPtr
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
-		case func(TopicsPage, http.ResponseWriter) error:
+		case func(TopicListPage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
-			case *func(TopicsPage, http.ResponseWriter) error:
+			case *func(TopicListPage, io.Writer) error:
 				*dPtr = oPtr
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
-		case func(ForumPage, http.ResponseWriter) error:
+		case func(ForumPage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
-			case *func(ForumPage, http.ResponseWriter) error:
+			case *func(ForumPage, io.Writer) error:
 				*dPtr = oPtr
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
-		case func(ForumsPage, http.ResponseWriter) error:
+		case func(ForumsPage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
-			case *func(ForumsPage, http.ResponseWriter) error:
+			case *func(ForumsPage, io.Writer) error:
 				*dPtr = oPtr
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
-		case func(ProfilePage, http.ResponseWriter) error:
+		case func(ProfilePage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
-			case *func(ProfilePage, http.ResponseWriter) error:
+			case *func(ProfilePage, io.Writer) error:
 				*dPtr = oPtr
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
-		case func(CreateTopicPage, http.ResponseWriter) error:
+		case func(CreateTopicPage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
-			case *func(CreateTopicPage, http.ResponseWriter) error:
+			case *func(CreateTopicPage, io.Writer) error:
 				*dPtr = oPtr
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
-		case func(IPSearchPage, http.ResponseWriter) error:
+		case func(IPSearchPage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
-			case *func(IPSearchPage, http.ResponseWriter) error:
+			case *func(IPSearchPage, io.Writer) error:
 				*dPtr = oPtr
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
-		case func(Page, http.ResponseWriter) error:
+		case func(Page, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
-			case *func(Page, http.ResponseWriter) error:
+			case *func(Page, io.Writer) error:
 				*dPtr = oPtr
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
@@ -441,48 +442,48 @@ func ResetTemplateOverrides() {
 // NEW method of doing theme templates to allow one user to have a different theme to another. Under construction.
 // TODO: Generate the type switch instead of writing it by hand
 // TODO: Cut the number of types in half
-func RunThemeTemplate(theme string, template string, pi interface{}, w http.ResponseWriter) error {
+func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer) error {
 	var getTmpl = GetThemeTemplate(theme, template)
 	switch tmplO := getTmpl.(type) {
-	case *func(TopicPage, http.ResponseWriter) error:
+	case *func(TopicPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(TopicPage), w)
-	case *func(TopicsPage, http.ResponseWriter) error:
+	case *func(TopicListPage, io.Writer) error:
 		var tmpl = *tmplO
-		return tmpl(pi.(TopicsPage), w)
-	case *func(ForumPage, http.ResponseWriter) error:
+		return tmpl(pi.(TopicListPage), w)
+	case *func(ForumPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(ForumPage), w)
-	case *func(ForumsPage, http.ResponseWriter) error:
+	case *func(ForumsPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(ForumsPage), w)
-	case *func(ProfilePage, http.ResponseWriter) error:
+	case *func(ProfilePage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(ProfilePage), w)
-	case *func(CreateTopicPage, http.ResponseWriter) error:
+	case *func(CreateTopicPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(CreateTopicPage), w)
-	case *func(IPSearchPage, http.ResponseWriter) error:
+	case *func(IPSearchPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(IPSearchPage), w)
-	case *func(Page, http.ResponseWriter) error:
+	case *func(Page, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(Page), w)
-	case func(TopicPage, http.ResponseWriter) error:
+	case func(TopicPage, io.Writer) error:
 		return tmplO(pi.(TopicPage), w)
-	case func(TopicsPage, http.ResponseWriter) error:
-		return tmplO(pi.(TopicsPage), w)
-	case func(ForumPage, http.ResponseWriter) error:
+	case func(TopicListPage, io.Writer) error:
+		return tmplO(pi.(TopicListPage), w)
+	case func(ForumPage, io.Writer) error:
 		return tmplO(pi.(ForumPage), w)
-	case func(ForumsPage, http.ResponseWriter) error:
+	case func(ForumsPage, io.Writer) error:
 		return tmplO(pi.(ForumsPage), w)
-	case func(ProfilePage, http.ResponseWriter) error:
+	case func(ProfilePage, io.Writer) error:
 		return tmplO(pi.(ProfilePage), w)
-	case func(CreateTopicPage, http.ResponseWriter) error:
+	case func(CreateTopicPage, io.Writer) error:
 		return tmplO(pi.(CreateTopicPage), w)
-	case func(IPSearchPage, http.ResponseWriter) error:
+	case func(IPSearchPage, io.Writer) error:
 		return tmplO(pi.(IPSearchPage), w)
-	case func(Page, http.ResponseWriter) error:
+	case func(Page, io.Writer) error:
 		return tmplO(pi.(Page), w)
 	case string:
 		mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap[template]
