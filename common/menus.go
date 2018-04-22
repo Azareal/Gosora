@@ -110,9 +110,9 @@ func (hold *MenuListHolder) Preparse() error {
 	var addVariation = func(index int, callback func(mitem MenuItem) bool) {
 		renderBuffer, variableIndices := hold.Scan(tmpls, callback)
 		hold.Variations[index] = menuTmpl{renderBuffer, variableIndices}
-		fmt.Print("renderBuffer: ")
-		menuDumpSlice(renderBuffer)
-		fmt.Printf("\nvariableIndices: %+v\n", variableIndices)
+		//fmt.Print("renderBuffer: ")
+		//menuDumpSlice(renderBuffer)
+		//fmt.Printf("\nvariableIndices: %+v\n", variableIndices)
 	}
 
 	// Guest Menu
@@ -243,12 +243,12 @@ func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTm
 		renderList = append(renderList, menuRenderItem{0, len(textBuffer) - 1})
 	}
 
-	fmt.Println("name: ", name)
-	fmt.Print("textBuffer: ")
-	menuDumpSlice(textBuffer)
-	fmt.Print("\nvariableBuffer: ")
-	menuDumpSlice(variableBuffer)
-	fmt.Printf("\nrenderList: %+v\n", renderList)
+	//fmt.Println("name: ", name)
+	//fmt.Print("textBuffer: ")
+	//menuDumpSlice(textBuffer)
+	//fmt.Print("\nvariableBuffer: ")
+	//menuDumpSlice(variableBuffer)
+	//fmt.Printf("\nrenderList: %+v\n", renderList)
 	return MenuTmpl{name, textBuffer, variableBuffer, renderList}
 }
 
@@ -263,7 +263,7 @@ func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mi
 		if !ok {
 			menuTmpl = menuTmpls["menu_item"]
 		}
-		fmt.Println("menuTmpl: ", menuTmpl)
+		//fmt.Println("menuTmpl: ", menuTmpl)
 		for _, renderItem := range menuTmpl.RenderList {
 			if renderItem.Type == 0 {
 				renderBuffer = append(renderBuffer, menuTmpl.TextBuffer[renderItem.Index])
@@ -271,15 +271,15 @@ func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mi
 			}
 
 			variable := menuTmpl.VariableBuffer[renderItem.Index]
-			fmt.Println("initial variable: ", string(variable))
+			//fmt.Println("initial variable: ", string(variable))
 			dotAt, hasDot := skipUntilIfExists(variable, 0, '.')
 			if !hasDot {
-				fmt.Println("no dot")
+				//fmt.Println("no dot")
 				continue
 			}
 
 			if bytes.Equal(variable[:dotAt], []byte("lang")) {
-				fmt.Println("lang: ", string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))
+				//fmt.Println("lang: ", string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))
 				renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))))
 			} else {
 				var renderItem []byte
@@ -300,7 +300,7 @@ func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mi
 
 				_, hasInnerVar := skipUntilIfExists(renderItem, 0, '{')
 				if hasInnerVar {
-					fmt.Println("inner var: ", string(renderItem))
+					//fmt.Println("inner var: ", string(renderItem))
 					dotAt, hasDot := skipUntilIfExists(renderItem, 0, '.')
 					endFence, hasEndFence := skipUntilIfExists(renderItem, dotAt, '}')
 					if !hasDot || !hasEndFence || (endFence-dotAt) <= 1 {
@@ -310,10 +310,10 @@ func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mi
 					}
 
 					if bytes.Equal(renderItem[1:dotAt], []byte("lang")) {
-						fmt.Println("lang var: ", string(renderItem[dotAt+1:endFence]))
+						//fmt.Println("lang var: ", string(renderItem[dotAt+1:endFence]))
 						renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(renderItem[dotAt+1:endFence]))))
 					} else {
-						fmt.Println("other var: ", string(variable[:dotAt]))
+						//fmt.Println("other var: ", string(variable[:dotAt]))
 						if len(renderItem) > 0 {
 							renderBuffer = append(renderBuffer, renderItem)
 							variableIndices = append(variableIndices, len(renderBuffer)-1)
@@ -322,7 +322,7 @@ func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mi
 					continue
 				}
 
-				fmt.Println("normal var: ", string(variable[:dotAt]))
+				//fmt.Println("normal var: ", string(variable[:dotAt]))
 				if len(renderItem) > 0 {
 					renderBuffer = append(renderBuffer, renderItem)
 				}
@@ -347,9 +347,9 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 	}
 
 	if len(mTmpl.VariableIndices) == 0 {
-		fmt.Println("no variable indices")
+		//fmt.Println("no variable indices")
 		for _, renderItem := range mTmpl.RenderBuffer {
-			fmt.Printf("renderItem: %+v\n", renderItem)
+			//fmt.Printf("renderItem: %+v\n", renderItem)
 			w.Write(renderItem)
 		}
 		return nil
@@ -358,12 +358,12 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 	var nearIndex = 0
 	for index, renderItem := range mTmpl.RenderBuffer {
 		if index != mTmpl.VariableIndices[nearIndex] {
-			fmt.Println("wrote text: ", string(renderItem))
+			//fmt.Println("wrote text: ", string(renderItem))
 			w.Write(renderItem)
 			continue
 		}
 
-		fmt.Println("variable: ", string(renderItem))
+		//fmt.Println("variable: ", string(renderItem))
 		variable := renderItem
 		// ? - I can probably remove this check now that I've kicked it upstream, or we could keep it here for safety's sake?
 		if len(variable) == 0 {
@@ -386,7 +386,7 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 				continue
 			}
 			if bytes.Equal(variable[fenceStart:dotAt], []byte("me")) {
-				fmt.Println("maybe me variable")
+				//fmt.Println("maybe me variable")
 				w.Write(variable[prevIndex:fenceStart])
 				switch string(variable[dotAt:fenceEnd]) {
 				case "Link":
@@ -397,8 +397,8 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 				prevIndex = fenceEnd
 			}
 		}
-		fmt.Println("prevIndex: ", prevIndex)
-		fmt.Println("len(variable)-1: ", len(variable)-1)
+		//fmt.Println("prevIndex: ", prevIndex)
+		//fmt.Println("len(variable)-1: ", len(variable)-1)
 		w.Write(variable[prevIndex : len(variable)-1])
 		if len(mTmpl.VariableIndices) > (nearIndex + 1) {
 			nearIndex++

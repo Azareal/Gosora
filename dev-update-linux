@@ -40,6 +40,10 @@ cp ./schema/schema.json ./schema/lastSchema.json
 git pull origin master
 
 echo "Patching Gosora"
+rm ./patcher/config.go
+cp ./config.go ./patcher/config.go
+rm ./patcher/common/site.go
+cp ./common/site.go ./patcher/common/site.go
 cd ./patcher
 go generate
 go build -o Patcher

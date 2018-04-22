@@ -114,6 +114,7 @@ func init() {
 	common.Site.Language = "english"
 
 	// Database details
+	common.DbConfig.Adapter = "` + adap.Name() + `"
 	common.DbConfig.Host = "` + adap.DBHost() + `"
 	common.DbConfig.Username = "` + adap.DBUsername() + `"
 	common.DbConfig.Password = "` + adap.DBPassword() + `"
@@ -121,10 +122,11 @@ func init() {
 	common.DbConfig.Port = "` + adap.DBPort() + `" // You probably won't need to change this
 
 	// Test Database details
-    common.DbConfig.TestHost = ""
-    common.DbConfig.TestUsername = ""
-    common.DbConfig.TestPassword = ""
-    common.DbConfig.TestDbname = "" // The name of the test database, leave blank to disable. DON'T USE YOUR PRODUCTION DATABASE FOR THIS. LEAVE BLANK IF YOU DON'T KNOW WHAT THIS MEANS.
+	common.DbConfig.TestAdapter = "` + adap.Name() + `"
+	common.DbConfig.TestHost = ""
+	common.DbConfig.TestUsername = ""
+	common.DbConfig.TestPassword = ""
+	common.DbConfig.TestDbname = "" // The name of the test database, leave blank to disable. DON'T USE YOUR PRODUCTION DATABASE FOR THIS. LEAVE BLANK IF YOU DON'T KNOW WHAT THIS MEANS.
 	common.DbConfig.TestPort = ""
 
 	// Limiters

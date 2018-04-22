@@ -3,7 +3,7 @@
 /*
 *
 *	Gosora MySQL Interface
-*	Copyright Azareal 2016 - 2018
+*	Copyright Azareal 2016 - 2019
 *
  */
 package main
@@ -51,7 +51,6 @@ func initMySQL() (err error) {
 	}
 
 	// Ready the query builder
-	qgen.Builder.SetConn(db)
 	err = qgen.Builder.SetAdapter("mysql")
 	if err != nil {
 		return err

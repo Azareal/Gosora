@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"strings"
 	"sync"
@@ -128,18 +127,15 @@ func BuildWidget(dock string, header *Header) (sbody string) {
 		return sbody
 	}
 
-	fmt.Println("dock: ", dock)
 	switch dock {
 	case "leftOfNav":
 		widgets = Docks.LeftOfNav
 	case "rightOfNav":
 		widgets = Docks.RightOfNav
 	case "topMenu":
-		fmt.Println("topMenu")
 		// 1 = id for the default menu
 		mhold := Menus.Get(1)
 		if mhold != nil {
-			fmt.Println("header.Writer: ", header.Writer)
 			err := mhold.Build(header.Writer, &header.CurrentUser)
 			if err != nil {
 				LogError(err)

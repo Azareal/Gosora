@@ -109,6 +109,9 @@ if %errorlevel% neq 0 (
 )
 
 echo Patching Gosora
+rem Temporary hack until we switch to JSON or TOML for config files
+copy ./config.go ./patcher/config.go
+copy ./common/site.go ./patcher/common/site.go
 go generate
 go build ./patcher
 patcher.exe

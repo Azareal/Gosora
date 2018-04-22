@@ -32,6 +32,7 @@ type site struct {
 
 type dbConfig struct {
 	// Production database
+	Adapter  string
 	Host     string
 	Username string
 	Password string
@@ -39,6 +40,7 @@ type dbConfig struct {
 	Port     string
 
 	// Test database. Split this into a separate variable?
+	TestAdapter  string
 	TestHost     string
 	TestUsername string
 	TestPassword string
