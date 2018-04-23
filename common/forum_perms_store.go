@@ -14,72 +14,52 @@ type ForumPermsStore interface {
 	Init() error
 	Get(fid int, gid int) (fperms *ForumPerms, err error)
 	GetCopy(fid int, gid int) (fperms ForumPerms, err error)
+	ReloadAll() error
 	Reload(id int) error
-	ReloadGroup(fid int, gid int) error
 }
 
 type ForumPermsCache interface {
 }
 
 type MemoryForumPermsStore struct {
-	get             *sql.Stmt
 	getByForum      *sql.Stmt
 	getByForumGroup *sql.Stmt
 
-	updateMutex sync.Mutex
+	evenForums map[int]map[int]*ForumPerms
+	oddForums  map[int]map[int]*ForumPerms // [fid][gid]*ForumPerms
+	evenLock   sync.RWMutex
+	oddLock    sync.RWMutex
 }
 
 func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
 	acc := qgen.Builder.Accumulator()
 	return &MemoryForumPermsStore{
-		get:             acc.Select("forums_permissions").Columns("gid, fid, permissions").Orderby("gid ASC, fid ASC").Prepare(),
 		getByForum:      acc.Select("forums_permissions").Columns("gid, permissions").Where("fid = ?").Orderby("gid ASC").Prepare(),
 		getByForumGroup: acc.Select("forums_permissions").Columns("permissions").Where("fid = ? AND gid = ?").Prepare(),
+
+		evenForums: make(map[int]map[int]*ForumPerms),
+		oddForums:  make(map[int]map[int]*ForumPerms),
 	}, acc.FirstError()
 }
 
 func (fps *MemoryForumPermsStore) Init() error {
-	fps.updateMutex.Lock()
-	defer fps.updateMutex.Unlock()
+	DebugLog("Initialising the forum perms store")
+	return fps.ReloadAll()
+}
+
+func (fps *MemoryForumPermsStore) ReloadAll() error {
+	DebugLog("Reloading the forum perms")
 	fids, err := Forums.GetAllIDs()
 	if err != nil {
 		return err
 	}
-	DebugDetail("fids: ", fids)
-
-	rows, err := fps.get.Query()
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	DebugLog("Adding the forum permissions")
-	DebugDetail("forumPerms[gid][fid]")
-
-	forumPerms = make(map[int]map[int]*ForumPerms)
-	for rows.Next() {
-		var gid, fid int
-		var perms []byte
-		err = rows.Scan(&gid, &fid, &perms)
+	for _, fid := range fids {
+		err := fps.Reload(fid)
 		if err != nil {
 			return err
 		}
-
-		pperms, err := fps.parseForumPerm(perms)
-		if err != nil {
-			return err
-		}
-		_, ok := forumPerms[gid]
-		if !ok {
-			forumPerms[gid] = make(map[int]*ForumPerms)
-		}
-
-		DebugDetail("gid: ", gid)
-		DebugDetail("fid: ", fid)
-		DebugDetailf("perms: %+v\n", pperms)
-		forumPerms[gid][fid] = pperms
 	}
-
-	return fps.cascadePermSetToGroups(forumPerms, fids)
+	return nil
 }
 
 func (fps *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPerms, err error) {
@@ -93,20 +73,14 @@ func (fps *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPer
 
 // TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?
 func (fps *MemoryForumPermsStore) Reload(fid int) error {
-	fps.updateMutex.Lock()
-	defer fps.updateMutex.Unlock()
 	DebugLogf("Reloading the forum permissions for forum #%d", fid)
-	fids, err := Forums.GetAllIDs()
-	if err != nil {
-		return err
-	}
-
 	rows, err := fps.getByForum.Query(fid)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
+	var forumPerms = make(map[int]*ForumPerms)
 	for rows.Next() {
 		var gid int
 		var perms []byte
@@ -119,99 +93,104 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 		if err != nil {
 			return err
 		}
-		_, ok := forumPerms[gid]
-		if !ok {
-			forumPerms[gid] = make(map[int]*ForumPerms)
-		}
-
-		forumPerms[gid][fid] = pperms
+		forumPerms[gid] = pperms
+	}
+	DebugLogf("forumPerms: %+v\n", forumPerms)
+	if fid%2 == 0 {
+		fps.evenLock.Lock()
+		fps.evenForums[fid] = forumPerms
+		fps.evenLock.Unlock()
+	} else {
+		fps.oddLock.Lock()
+		fps.oddForums[fid] = forumPerms
+		fps.oddLock.Unlock()
 	}
 
-	return fps.cascadePermSetToGroups(forumPerms, fids)
-}
-
-func (fps *MemoryForumPermsStore) ReloadGroup(fid int, gid int) (err error) {
-	fps.updateMutex.Lock()
-	defer fps.updateMutex.Unlock()
-	var perms []byte
-	err = fps.getByForumGroup.QueryRow(fid, gid).Scan(&perms)
-	if err != nil {
-		return err
-	}
-	fperms, err := fps.parseForumPerm(perms)
-	if err != nil {
-		return err
-	}
-	group, err := Groups.Get(gid)
-	if err != nil {
-		return err
-	}
-	// TODO: Refactor this
-	group.Forums[fid] = fperms
-	return nil
-}
-
-func (fps *MemoryForumPermsStore) cascadePermSetToGroups(forumPerms map[int]map[int]*ForumPerms, fids []int) error {
 	groups, err := Groups.GetAll()
+	if err != nil {
+		return err
+	}
+	fids, err := Forums.GetAllIDs()
 	if err != nil {
 		return err
 	}
 
 	for _, group := range groups {
 		DebugLogf("Updating the forum permissions for Group #%d", group.ID)
-		group.Forums = []*ForumPerms{BlankForumPerms()}
 		group.CanSee = []int{}
-		fps.cascadePermSetToGroup(forumPerms, group, fids)
+		for _, fid := range fids {
+			DebugDetailf("Forum #%+v\n", fid)
+			var forumPerms = make(map[int]*ForumPerms)
+			var ok bool
+			if fid%2 == 0 {
+				fps.evenLock.RLock()
+				forumPerms, ok = fps.evenForums[fid]
+				fps.evenLock.RUnlock()
+			} else {
+				fps.oddLock.RLock()
+				forumPerms, ok = fps.oddForums[fid]
+				fps.oddLock.RUnlock()
+			}
 
-		DebugDetailf("group.CanSee (length %d): %+v \n", len(group.CanSee), group.CanSee)
-		DebugDetailf("group.Forums (length %d): %+v\n", len(group.Forums), group.Forums)
-	}
-	return nil
-}
+			var forumPerm *ForumPerms
+			if !ok {
+				forumPerm = BlankForumPerms()
+			} else {
+				forumPerm, ok = forumPerms[group.ID]
+				if !ok {
+					forumPerm = BlankForumPerms()
+				}
+			}
 
-func (fps *MemoryForumPermsStore) cascadePermSetToGroup(forumPerms map[int]map[int]*ForumPerms, group *Group, fids []int) {
-	for _, fid := range fids {
-		DebugDetailf("Forum #%+v\n", fid)
-		forumPerm, ok := forumPerms[group.ID][fid]
-		if ok {
-			//log.Printf("Overriding permissions for forum #%d",fid)
-			group.Forums = append(group.Forums, forumPerm)
-		} else {
-			//log.Printf("Inheriting from group defaults for forum #%d",fid)
-			forumPerm = BlankForumPerms()
-			group.Forums = append(group.Forums, forumPerm)
-		}
-		if forumPerm.Overrides {
-			if forumPerm.ViewTopic {
+			if forumPerm.Overrides {
+				if forumPerm.ViewTopic {
+					group.CanSee = append(group.CanSee, fid)
+				}
+			} else if group.Perms.ViewTopic {
 				group.CanSee = append(group.CanSee, fid)
 			}
-		} else if group.Perms.ViewTopic {
-			group.CanSee = append(group.CanSee, fid)
-		}
 
-		DebugDetail("group.ID: ", group.ID)
-		DebugDetailf("forumPerm: %+v\n", forumPerm)
-		DebugDetail("group.CanSee: ", group.CanSee)
+			DebugDetail("group.ID: ", group.ID)
+			DebugDetailf("forumPerm: %+v\n", forumPerm)
+			DebugDetail("group.CanSee: ", group.CanSee)
+		}
+		DebugDetailf("group.CanSee (length %d): %+v \n", len(group.CanSee), group.CanSee)
 	}
+	return nil
 }
 
 // TODO: Add a hook here and have plugin_guilds use it
 // TODO: Check if the forum exists?
 // TODO: Fix the races
 func (fps *MemoryForumPermsStore) Get(fid int, gid int) (fperms *ForumPerms, err error) {
-	group, err := Groups.Get(gid)
-	if err != nil {
+	var fmap map[int]*ForumPerms
+	var ok bool
+	if fid%2 == 0 {
+		fps.evenLock.RLock()
+		fmap, ok = fps.evenForums[fid]
+		fps.evenLock.RUnlock()
+	} else {
+		fps.oddLock.RLock()
+		fmap, ok = fps.oddForums[fid]
+		fps.oddLock.RUnlock()
+	}
+	if !ok {
 		return fperms, ErrNoRows
 	}
-	return group.Forums[fid], nil
+
+	fperms, ok = fmap[gid]
+	if !ok {
+		return fperms, ErrNoRows
+	}
+	return fperms, nil
 }
 
 // TODO: Check if the forum exists?
 // TODO: Fix the races
 func (fps *MemoryForumPermsStore) GetCopy(fid int, gid int) (fperms ForumPerms, err error) {
-	group, err := Groups.Get(gid)
+	fPermsPtr, err := fps.Get(fid, gid)
 	if err != nil {
-		return fperms, ErrNoRows
+		return fperms, err
 	}
-	return *group.Forums[fid], nil
+	return *fPermsPtr, nil
 }

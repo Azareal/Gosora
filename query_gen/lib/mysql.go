@@ -144,9 +144,9 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 		return "", errors.New("You need a name for this table")
 	}
 
-	var querystr = "INSERT INTO `" + table + "`"
+	var querystr = "INSERT INTO `" + table + "`("
 	if columns != "" {
-		querystr += "(" + adapter.buildColumns(columns) + ") VALUES ("
+		querystr += adapter.buildColumns(columns) + ") VALUES ("
 		for _, field := range processFields(fields) {
 			nameLen := len(field.Name)
 			if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
@@ -157,8 +157,11 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 			}
 			querystr += field.Name + ","
 		}
-		querystr = querystr[0:len(querystr)-1] + ")"
+		querystr = querystr[0 : len(querystr)-1]
+	} else {
+		querystr += ") VALUES ("
 	}
+	querystr += ")"
 
 	adapter.pushStatement(name, "insert", querystr)
 	return querystr, nil

@@ -1,6 +1,8 @@
 package install
 
 import (
+	"fmt"
+
 	"../../query_gen/lib"
 )
 
@@ -28,6 +30,7 @@ func Lookup(name string) (InstallAdapter, bool) {
 }
 
 func createAdmin() error {
+	fmt.Println("Creating the admin user")
 	hashedPassword, salt, err := BcryptGeneratePassword("password")
 	if err != nil {
 		return err

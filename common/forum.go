@@ -117,7 +117,7 @@ func (forum *Forum) SetPerms(fperms *ForumPerms, preset string, gid int) (err er
 	if err != nil {
 		return errors.New("Unable to reload forum")
 	}
-	err = FPStore.ReloadGroup(forum.ID, gid)
+	err = FPStore.Reload(forum.ID)
 	if err != nil {
 		return errors.New("Unable to reload the forum permissions")
 	}

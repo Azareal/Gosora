@@ -13,6 +13,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+	"strings"
 
 	"./install"
 )
@@ -95,11 +96,11 @@ func main() {
 		return
 	}
 
-	configContents := []byte(`package main
+	configContents := []byte(`package config
 
-import "./common"
+import "../common"
 
-func init() {
+func Config() {
 	// Site Info
 	common.Site.ShortName = "` + siteShortName + `" // This should be less than three letters to fit in the navbar
 	common.Site.Name = "` + siteName + `"
@@ -167,7 +168,7 @@ func init() {
 `)
 
 	fmt.Println("Opening the configuration file")
-	configFile, err := os.Create("./config.go")
+	configFile, err := os.Create("./config/config.go")
 	if err != nil {
 		abortError(err)
 		return
@@ -209,7 +210,7 @@ func handleDatabaseDetails() (adap install.InstallAdapter, ok bool) {
 		if !scanner.Scan() {
 			return nil, false
 		}
-		dbAdapter := scanner.Text()
+		dbAdapter := strings.TrimSpace(scanner.Text())
 		if dbAdapter == "" {
 			dbAdapter = defaultAdapter
 		}

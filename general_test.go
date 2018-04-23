@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"./common"
+	"./config"
 	"./install/install"
 	"./query_gen/lib"
 	"./routes"
@@ -87,6 +88,7 @@ func gloinit() (err error) {
 }
 
 func init() {
+	config.Config()
 	err := gloinit()
 	if err != nil {
 		log.Print("Something bad happened")

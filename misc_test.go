@@ -537,7 +537,7 @@ func topicStoreTest(t *testing.T) {
 	recordMustExist(t, err, "Couldn't find TID #1")
 
 	if topic.ID != 1 {
-		t.Error("topic.ID does not match the requested TID. Got '%d' instead.", topic.ID)
+		t.Errorf("topic.ID does not match the requested TID. Got '%d' instead.", topic.ID)
 	}
 
 	// TODO: Add BulkGetMap() to the TopicStore
@@ -578,7 +578,7 @@ func TestForumStore(t *testing.T) {
 	recordMustExist(t, err, "Couldn't find FID #1")
 
 	if forum.ID != 1 {
-		t.Error("forum.ID doesn't not match the requested FID. Got '%d' instead.'", forum.ID)
+		t.Errorf("forum.ID doesn't not match the requested FID. Got '%d' instead.'", forum.ID)
 	}
 	// TODO: Check the preset and forum permissions
 	expect(t, forum.Name == "Reports", fmt.Sprintf("FID #0 is named '%s' and not 'Reports'", forum.Name))
@@ -618,7 +618,7 @@ func TestForumStore(t *testing.T) {
 	expect(t, forum.ID == 2, fmt.Sprintf("The FID should be 3 not %d", forum.ID))
 	expect(t, forum.Name == "Test Forum", fmt.Sprintf("The name of the forum should be 'Test Forum' not '%s'", forum.Name))
 	expect(t, forum.Active, fmt.Sprintf("The test forum should be active"))
-	expect(t, forum.Desc == "", fmt.Sprintf("The forum description should be blank not '%s'", expectDesc, forum.Desc))
+	expect(t, forum.Desc == "", fmt.Sprintf("The forum description should be blank not '%s'", forum.Desc))
 
 	// TODO: More forum creation tests
 	// TODO: Test forum deletion

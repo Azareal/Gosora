@@ -222,7 +222,7 @@ func routePanelForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	fname := r.PostFormValue("forum-name")
 	fdesc := r.PostFormValue("forum-desc")
 	fpreset := common.StripInvalidPreset(r.PostFormValue("forum-preset"))
-	factive := r.PostFormValue("forum-name")
+	factive := r.PostFormValue("forum-active")
 	active := (factive == "on" || factive == "1")
 
 	_, err := common.Forums.Create(fname, fdesc, active, fpreset)
@@ -331,8 +331,11 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 		if gid == 0 {
 			continue
 		}
-		// TODO: Don't access the cache on the group directly
-		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(group.Forums[fid])})
+		forumPerms, err := common.FPStore.Get(fid, group.ID)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(forumPerms)})
 	}
 
 	if r.FormValue("updated") == "1" {

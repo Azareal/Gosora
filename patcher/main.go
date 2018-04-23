@@ -10,8 +10,9 @@ import (
 	"os"
 	"runtime/debug"
 
+	"../common"
+	"../config"
 	"../query_gen/lib"
-	"./common"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -29,7 +30,8 @@ func main() {
 		}
 	}()
 
-	if common.DbConfig != "mysql" && common.DbConfig != "" {
+	config.Config()
+	if common.DbConfig.Adapter != "mysql" && common.DbConfig.Adapter != "" {
 		log.Fatal("Only MySQL is supported for upgrades right now, please wait for a newer build of the patcher")
 	}
 
@@ -39,15 +41,6 @@ func main() {
 	}
 
 	err = patcher(scanner)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = os.Remove("./patcher/config.go")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.Remove("./patcher/common/site.go")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,8 +66,8 @@ func prepMySQL() error {
 }
 
 type SchemaFile struct {
-	DBVersion          int // Current version of the database schema
-	DynamicFileVersion int
+	DBVersion          string // Current version of the database schema
+	DynamicFileVersion string
 	MinGoVersion       string // TODO: Minimum version of Go needed to install this version
 	MinVersion         string // TODO: Minimum version of Gosora to jump to this version, might be tricky as we don't store this in the schema file, maybe store it in the database
 }
@@ -85,7 +78,7 @@ func patcher(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	var schemaFile LanguagePack
+	var schemaFile SchemaFile
 	err = json.Unmarshal(data, &schemaFile)
 	if err != nil {
 		return err

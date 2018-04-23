@@ -136,12 +136,12 @@ func (adapter *MssqlAdapter) SimpleInsert(name string, table string, columns str
 		return "", errors.New("You need a name for this table")
 	}
 
-	var querystr = "INSERT INTO [" + table + "]"
+	var querystr = "INSERT INTO [" + table + "] ("
 	if columns == "" {
+		querystr += ") VALUES ()"
 		adapter.pushStatement(name, "insert", querystr)
 		return querystr, nil
 	}
-	querystr += " ("
 
 	// Escape the column names, just in case we've used a reserved keyword
 	for _, column := range processColumns(columns) {

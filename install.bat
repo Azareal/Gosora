@@ -85,15 +85,8 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
-echo Installing Go Git
-go get -u gopkg.in/src-d/go-git.v4/...
-if %errorlevel% neq 0 (
-	pause
-	exit /b %errorlevel%
-)
-
 echo Installing GopherJS
-go get -u github.com/gopherjs/gopherjs
+go get -u github.com/gopherjs/gopherjs/...
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

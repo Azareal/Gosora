@@ -120,9 +120,7 @@ go get -u github.com/denisenkom/go-mssqldb
 
 go get -u github.com/fsnotify/fsnotify
 
-go get -u gopkg.in/src-d/go-git.v4/...
-
-go get -u github.com/gopherjs/gopherjs
+go get -u github.com/gopherjs/gopherjs/...
 
 
 go generate

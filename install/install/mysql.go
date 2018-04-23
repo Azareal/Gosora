@@ -105,7 +105,7 @@ func (ins *MysqlInstaller) InitDatabase() (err error) {
 }
 
 func (ins *MysqlInstaller) TableDefs() (err error) {
-	//fmt.Println("Creating the tables")
+	fmt.Println("Creating the tables")
 	files, _ := ioutil.ReadDir("./schema/mysql/")
 	for _, f := range files {
 		if !strings.HasPrefix(f.Name(), "query_") {
@@ -127,7 +127,7 @@ func (ins *MysqlInstaller) TableDefs() (err error) {
 			return err
 		}
 
-		fmt.Printf("Creating table '%s'", table)
+		fmt.Printf("Creating table '%s'\n", table)
 		data, err := ioutil.ReadFile("./schema/mysql/" + f.Name())
 		if err != nil {
 			return err
@@ -148,7 +148,7 @@ func (ins *MysqlInstaller) TableDefs() (err error) {
 /*INSERT INTO settings(`name`,`content`,`type`) VALUES ('meta_desc','','html-attribute');*/
 
 func (ins *MysqlInstaller) InitialData() error {
-	//fmt.Println("Seeding the tables")
+	fmt.Println("Seeding the tables")
 	data, err := ioutil.ReadFile("./schema/mysql/inserts.sql")
 	if err != nil {
 		return err
@@ -156,13 +156,15 @@ func (ins *MysqlInstaller) InitialData() error {
 	data = bytes.TrimSpace(data)
 
 	statements := bytes.Split(data, []byte(";"))
-	for key, statement := range statements {
-		if len(statement) == 0 {
+	for key, sBytes := range statements {
+		statement := string(sBytes)
+		if statement == "" {
 			continue
 		}
+		statement += ";"
 
-		fmt.Println("Executing query #" + strconv.Itoa(key) + " " + string(statement))
-		_, err = ins.db.Exec(string(statement))
+		fmt.Println("Executing query #" + strconv.Itoa(key) + " " + statement)
+		_, err = ins.db.Exec(statement)
 		if err != nil {
 			return err
 		}

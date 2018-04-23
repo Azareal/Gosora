@@ -21,6 +21,7 @@ import (
 
 	"./common"
 	"./common/counters"
+	"./config"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -78,7 +79,7 @@ func afterDBInit() (err error) {
 		return err
 	}
 	menuHold := common.Menus.Get(1)
-	fmt.Println("menuHold: %+v", menuHold)
+	fmt.Printf("menuHold: %+v\n", menuHold)
 	var b bytes.Buffer
 	menuHold.Build(&b, &common.GuestUser)
 	fmt.Println("menuHold output: ", string(b.Bytes()))
@@ -192,6 +193,7 @@ func main() {
 	}
 	log.Printf("tagIndices: %+v\n", tagIndices)
 	log.Fatal("")*/
+	config.Config()
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()

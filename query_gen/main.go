@@ -225,36 +225,9 @@ func seedTables(adapter qgen.Adapter) error {
 
 	qgen.Install.SimpleInsert("menus", "", "")
 
+	// Go maps have a random iteration order, so we have to do this, otherwise the schema files will become unstable and harder to audit
 	var order = 0
 	var mOrder = "mid, htmlID, cssClass, position, path, aria, tooltip, guestOnly, memberOnly, staffOnly, adminOnly"
-	/*var addMenuItem = func(data map[string]interface{}) {
-		var cols, values string
-		for col, value := range data {
-			cols += col + ","
-			switch value := value.(type) {
-			case string:
-				values += "'" + strings.Replace(value, "'", "\\'", -1) + "',"
-			case int:
-				values += strconv.Itoa(value) + ","
-			case LitStr:
-				values += string(value) + ","
-			case bool:
-				if value {
-					values += "1,"
-				} else {
-					values += "0,"
-				}
-			}
-		}
-		if cols != "" {
-			cols = cols[:len(cols)-1]
-			values = values[:len(values)-1]
-		}
-		qgen.Install.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order))
-		order++
-	}*/
-
-	// Go maps have a random iteration order, so we have to do this, otherwise the schema files will become unstable and harder to audit
 	var addMenuItem = func(data map[string]interface{}) {
 		cols, values := qgen.InterfaceMapToInsertStrings(data, mOrder)
 		qgen.Install.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order))

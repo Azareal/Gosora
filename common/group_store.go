@@ -226,7 +226,6 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	gid = int(gid64)
 
 	var perms = BlankPerms
-	var blankForums []*ForumPerms
 	var blankIntList []int
 	var pluginPerms = make(map[string]bool)
 	var pluginPermsBytes = []byte("{}")
@@ -277,15 +276,13 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	}
 
 	mgs.Lock()
-	mgs.groups[gid] = &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankForums, blankIntList, 0}
+	mgs.groups[gid] = &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankIntList, 0}
 	mgs.groupCount++
 	mgs.Unlock()
 
-	for _, forum := range fdata {
-		err = FPStore.Reload(forum.ID)
-		if err != nil {
-			return gid, err
-		}
+	err = FPStore.ReloadAll()
+	if err != nil {
+		return gid, err
 	}
 
 	return gid, nil

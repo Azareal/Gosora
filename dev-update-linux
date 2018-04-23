@@ -28,11 +28,8 @@ go get -u github.com/bamiaux/rez
 echo "Updating fsnotify"
 go get -u github.com/fsnotify/fsnotify
 
-echo "Updating Go Git"
-go get -u gopkg.in/src-d/go-git.v4/...
-
 echo "Updating GopherJS"
-go get -u github.com/gopherjs/gopherjs
+go get -u github.com/gopherjs/gopherjs/...
 
 echo "Updating Gosora"
 rm ./schema/lastSchema.json
@@ -40,10 +37,6 @@ cp ./schema/schema.json ./schema/lastSchema.json
 git pull origin master
 
 echo "Patching Gosora"
-rm ./patcher/config.go
-cp ./config.go ./patcher/config.go
-rm ./patcher/common/site.go
-cp ./common/site.go ./patcher/common/site.go
 cd ./patcher
 go generate
 go build -o Patcher

@@ -82,15 +82,8 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
-echo Updating Go Git
-go get -u gopkg.in/src-d/go-git.v4/...
-if %errorlevel% neq 0 (
-	pause
-	exit /b %errorlevel%
-)
-
 echo Updating GopherJS
-go get -u github.com/gopherjs/gopherjs
+go get -u github.com/gopherjs/gopherjs/...
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

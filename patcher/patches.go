@@ -48,12 +48,12 @@ func patch0(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	var mOrder int
+	var order int
 	var mOrder = "mid, htmlID, cssClass, position, path, aria, tooltip, guestOnly, memberOnly, staffOnly, adminOnly"
 	var addMenuItem = func(data map[string]interface{}) error {
 		cols, values := qgen.InterfaceMapToInsertStrings(data, mOrder)
-		err := execStmt(qgen.Builder.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(mOrder)))
-		mOrder++
+		err := execStmt(qgen.Builder.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order)))
+		order++
 		return err
 	}
 

@@ -20,6 +20,6 @@ out/*
 *.log
 .DS_Store
 .vscode/launch.json
-config.go
+config/config.go
 Gosora
 Install
