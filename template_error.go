@@ -15,18 +15,6 @@ func init() {
 	common.TmplPtrMap["error"] = &common.Template_error_handle
 	common.TmplPtrMap["o_error"] = Template_error
 	error_tmpl_phrase_id = common.RegisterTmplPhraseNames([]string{
-		"menu_account_aria",
-		"menu_account_tooltip",
-		"menu_profile_aria",
-		"menu_profile_tooltip",
-		"menu_panel_aria",
-		"menu_panel_tooltip",
-		"menu_logout_aria",
-		"menu_logout_tooltip",
-		"menu_register_aria",
-		"menu_register_tooltip",
-		"menu_login_aria",
-		"menu_login_tooltip",
 		"menu_hamburger_tooltip",
 		"error_head",
 		"footer_powered_by",
@@ -75,76 +63,41 @@ if !tmpl_error_vars.CurrentUser.IsSuperMod {
 w.Write(header_frags[15])
 }
 w.Write(header_frags[16])
-w.Write(menu_frags[0])
 w.Write([]byte(common.BuildWidget("leftOfNav",tmpl_error_vars.Header)))
-w.Write(menu_frags[1])
-w.Write([]byte(tmpl_error_vars.Header.Site.ShortName))
-w.Write(menu_frags[2])
-w.Write([]byte(common.BuildWidget("topMenu",tmpl_error_vars.Header)))
-if tmpl_error_vars.CurrentUser.Loggedin {
-w.Write(menu_frags[3])
-w.Write(phrases[0])
-w.Write(menu_frags[4])
-w.Write(phrases[1])
-w.Write(menu_frags[5])
-w.Write([]byte(tmpl_error_vars.CurrentUser.Link))
-w.Write(menu_frags[6])
-w.Write(phrases[2])
-w.Write(menu_frags[7])
-w.Write(phrases[3])
-w.Write(menu_frags[8])
-w.Write(phrases[4])
-w.Write(menu_frags[9])
-w.Write(phrases[5])
-w.Write(menu_frags[10])
-w.Write([]byte(tmpl_error_vars.CurrentUser.Session))
-w.Write(menu_frags[11])
-w.Write(phrases[6])
-w.Write(menu_frags[12])
-w.Write(phrases[7])
-w.Write(menu_frags[13])
-} else {
-w.Write(menu_frags[14])
-w.Write(phrases[8])
-w.Write(menu_frags[15])
-w.Write(phrases[9])
-w.Write(menu_frags[16])
-w.Write(phrases[10])
-w.Write(menu_frags[17])
-w.Write(phrases[11])
-w.Write(menu_frags[18])
-}
-w.Write(menu_frags[19])
-w.Write(phrases[12])
-w.Write(menu_frags[20])
-w.Write([]byte(common.BuildWidget("rightOfNav",tmpl_error_vars.Header)))
-w.Write(menu_frags[21])
 w.Write(header_frags[17])
-if tmpl_error_vars.Header.Widgets.RightSidebar != "" {
+w.Write([]byte(tmpl_error_vars.Header.Site.ShortName))
 w.Write(header_frags[18])
-}
+w.Write([]byte(common.BuildWidget("topMenu",tmpl_error_vars.Header)))
 w.Write(header_frags[19])
+w.Write(phrases[0])
+w.Write(header_frags[20])
+w.Write([]byte(common.BuildWidget("rightOfNav",tmpl_error_vars.Header)))
+w.Write(header_frags[21])
+if tmpl_error_vars.Header.Widgets.RightSidebar != "" {
+w.Write(header_frags[22])
+}
+w.Write(header_frags[23])
 if len(tmpl_error_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_error_vars.Header.NoticeList {
-w.Write(header_frags[20])
+w.Write(header_frags[24])
 w.Write([]byte(item))
-w.Write(header_frags[21])
+w.Write(header_frags[25])
 }
 }
-w.Write(header_frags[22])
+w.Write(header_frags[26])
 w.Write(error_frags[0])
-w.Write(phrases[13])
+w.Write(phrases[1])
 w.Write(error_frags[1])
 w.Write([]byte(tmpl_error_vars.Something.(string)))
 w.Write(error_frags[2])
 w.Write(footer_frags[0])
 w.Write([]byte(common.BuildWidget("footer",tmpl_error_vars.Header)))
 w.Write(footer_frags[1])
-w.Write(phrases[14])
+w.Write(phrases[2])
 w.Write(footer_frags[2])
-w.Write(phrases[15])
+w.Write(phrases[3])
 w.Write(footer_frags[3])
-w.Write(phrases[16])
+w.Write(phrases[4])
 w.Write(footer_frags[4])
 if len(tmpl_error_vars.Header.Themes) != 0 {
 for _, item := range tmpl_error_vars.Header.Themes {

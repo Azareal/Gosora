@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"runtime/debug"
@@ -12,8 +14,6 @@ import (
 	"./common"
 	_ "github.com/go-sql-driver/mysql"
 )
-
-var db *sql.DB
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
@@ -62,7 +62,7 @@ func pressAnyKey(scanner *bufio.Scanner) {
 }
 
 func prepMySQL() error {
-	err := qgen.Builder.Init("mysql", map[string]string{
+	return qgen.Builder.Init("mysql", map[string]string{
 		"host":      common.DbConfig.Host,
 		"port":      common.DbConfig.Port,
 		"name":      common.DbConfig.Dbname,
@@ -70,13 +70,28 @@ func prepMySQL() error {
 		"password":  common.DbConfig.Password,
 		"collation": "utf8mb4_general_ci",
 	})
+}
+
+type SchemaFile struct {
+	DBVersion          int // Current version of the database schema
+	DynamicFileVersion int
+	MinGoVersion       string // TODO: Minimum version of Go needed to install this version
+	MinVersion         string // TODO: Minimum version of Gosora to jump to this version, might be tricky as we don't store this in the schema file, maybe store it in the database
+}
+
+func patcher(scanner *bufio.Scanner) error {
+	data, err := ioutil.ReadFile("./schema/lastSchema.json")
 	if err != nil {
 		return err
 	}
 
-	// Ready the query builder
-	db = qgen.Builder.GetConn()
-	return qgen.Builder.SetAdapter("mysql")
+	var schemaFile LanguagePack
+	err = json.Unmarshal(data, &schemaFile)
+	if err != nil {
+		return err
+	}
+	_ = schemaFile
+	return patch0(scanner)
 }
 
 func execStmt(stmt *sql.Stmt, err error) error {
@@ -85,65 +100,6 @@ func execStmt(stmt *sql.Stmt, err error) error {
 	}
 	_, err = stmt.Exec()
 	return err
-}
-
-func patcher(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.CreateTable("menus", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"mid", "int", 0, false, true, ""},
-		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"mid", "primary"},
-		},
-	))
-	if err != nil {
-		return err
-	}
-
-	err = execStmt(qgen.Builder.CreateTable("menu_items", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"mid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"htmlID", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"cssClass", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"position", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"path", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"aria", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"tooltip", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"tmplName", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"order", "int", 0, false, false, "0"},
-
-			qgen.DBTableColumn{"guestOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"memberOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"staffOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"adminOnly", "boolean", 0, false, false, "0"},
-		},
-		[]qgen.DBTableKey{},
-	))
-	if err != nil {
-		return err
-	}
-
-	err = execStmt(qgen.Builder.SimpleInsert("menus", "", ""))
-	if err != nil {
-		return err
-	}
-
-	err = execStmt(qgen.Builder.SimpleInsert("menu_items", "mid, htmlID, position, path, aria, tooltip, order", "1,'menu_forums','left','/forums/','{lang.menu_forums_aria}','{lang.menu_forums_tooltip}',0"))
-	if err != nil {
-		return err
-	}
-
-	err = execStmt(qgen.Builder.SimpleInsert("menu_items", "mid, htmlID, cssClass, position, path, aria, tooltip, order", "1,'menu_topics','menu_topics','left','/topics/','{lang.menu_topics_aria}','{lang.menu_topics_tooltip}',1"))
-	if err != nil {
-		return err
-	}
-
-	stmt, err = execStmt(qgen.Builder.SimpleInsert("menu_items", "mid, htmlID, cssClass, position, tmplName, order", "1,'general_alerts','menu_alerts','right','menu_alerts',2"))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 /*func eachUserQuick(handle func(int)) error {

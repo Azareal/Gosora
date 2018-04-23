@@ -4,6 +4,8 @@ package qgen
 import (
 	"database/sql"
 	"errors"
+	"strconv"
+	"strings"
 )
 
 var Registry []Adapter
@@ -149,4 +151,56 @@ func (double *MySQLUpsertCallback) Exec(args ...interface{}) (res sql.Result, er
 func PrepareMySQLUpsertCallback(db *sql.DB, query string) (*MySQLUpsertCallback, error) {
 	stmt, err := db.Prepare(query)
 	return &MySQLUpsertCallback{stmt}, err
+}
+
+type LitStr string
+
+// TODO: Test this
+func InterfaceMapToInsertStrings(data map[string]interface{}, order string) (cols string, values string) {
+	var done = make(map[string]bool)
+	var addValue = func(value interface{}) {
+		switch value := value.(type) {
+		case string:
+			values += "'" + strings.Replace(value, "'", "\\'", -1) + "',"
+		case int:
+			values += strconv.Itoa(value) + ","
+		case LitStr:
+			values += string(value) + ","
+		case bool:
+			if value {
+				values += "1,"
+			} else {
+				values += "0,"
+			}
+		}
+	}
+
+	// Add the ordered items
+	for _, col := range strings.Split(order, ",") {
+		col = strings.TrimSpace(col)
+		value, ok := data[col]
+		if ok {
+			cols += col + ","
+			addValue(value)
+			done[col] = true
+		}
+	}
+
+	// Go over any unordered items and add them at the end
+	if len(data) > len(done) {
+		for col, value := range data {
+			_, ok := done[col]
+			if ok {
+				continue
+			}
+			cols += col + ","
+			addValue(value)
+		}
+	}
+
+	if cols != "" {
+		cols = cols[:len(cols)-1]
+		values = values[:len(values)-1]
+	}
+	return cols, values
 }

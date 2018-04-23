@@ -20,10 +20,23 @@
 		{{if .Header.MetaDesc}}<meta name="description" content="{{.Header.MetaDesc}}" />{{end}}
 	</head>
 	<body>
-		<style>{{if not .CurrentUser.IsSuperMod}}.supermod_only { display: none !important; }{{end}}</style>
+		{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}
 		<div class="container">
-{{template "menu.html" .}}
-<div id="back"><div id="main" {{if .Header.Widgets.RightSidebar}}class="shrink_main"{{end}}>
-<div class="alertbox">{{range .Header.NoticeList}}
-	<div class="alert">{{.}}</div>{{end}}
-</div>
+			<div class="left_of_nav">{{dock "leftOfNav" .Header }}</div>
+			<nav class="nav">
+				<div class="move_left">
+				<div class="move_right">
+				<ul>
+					<li id="menu_overview" class="menu_left"><a href="/" rel="home">{{.Header.Site.ShortName}}</a></li>
+					{{dock "topMenu" .Header }}
+					<li class="menu_left menu_hamburger" title="{{lang "menu_hamburger_tooltip"}}"><a></a></li>
+				</ul>
+				</div>
+				</div>
+				<div style="clear: both;"></div>
+			</nav>
+			<div class="right_of_nav">{{dock "rightOfNav" .Header }}</div>
+			<div id="back"><div id="main" {{if .Header.Widgets.RightSidebar}}class="shrink_main"{{end}}>
+			<div class="alertbox">{{range .Header.NoticeList}}
+				<div class="alert">{{.}}</div>{{end}}
+			</div>

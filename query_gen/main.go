@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"runtime/debug"
+	"strconv"
 
 	"./lib"
 )
@@ -210,16 +211,11 @@ func seedTables(adapter qgen.Adapter) error {
 	qgen.Install.SimpleInsert("replies", "tid, content, parsed_content, createdAt, createdBy, lastUpdated, lastEdit, lastEditBy, ipaddress", "1,'A reply!','A reply!',UTC_TIMESTAMP(),1,UTC_TIMESTAMP(),0,0,'::1'")
 
 	/*
+		Quick Reminder of the HTML layout, so I don't need to flip back and forth between menu_item.html, etc.
+
 		{{range .MenuItems}}
 		<li id="menu_{{.ID}}" class="menu_{{.Position}}"><a href="{{.Path}}" aria-label="{{.Aria}}" title="{{.Tooltip}}"></a></li>
 		{{end}}
-		<li class="menu_left menu_topics"><a href="/" aria-label="{{lang "menu_topics_aria"}}" title="{{lang "menu_topics_tooltip"}}"></a></li>
-		<li id="general_alerts" class="menu_right menu_alerts">
-			<div class="alert_bell"></div>
-			<div class="alert_counter" aria-label="{{lang "menu_alert_counter_aria"}}"></div>
-			<div class="alert_aftercounter"></div>
-			<div class="alertList" aria-label="{{lang "menu_alert_list_aria"}}"></div>
-		</li>
 
 		qgen.DBTableColumn{"guestOnly", "boolean", 1, false, false, "0"},
 		qgen.DBTableColumn{"memberOnly", "boolean", 1, false, false, "0"},
@@ -229,14 +225,72 @@ func seedTables(adapter qgen.Adapter) error {
 
 	qgen.Install.SimpleInsert("menus", "", "")
 
-	qgen.Install.SimpleInsert("menu_items", "mid, htmlID, position, path, aria, tooltip, order", "1,'menu_forums','left','/forums/','{lang.menu_forums_aria}','{lang.menu_forums_tooltip}',0")
+	var order = 0
+	var mOrder = "mid, htmlID, cssClass, position, path, aria, tooltip, guestOnly, memberOnly, staffOnly, adminOnly"
+	/*var addMenuItem = func(data map[string]interface{}) {
+		var cols, values string
+		for col, value := range data {
+			cols += col + ","
+			switch value := value.(type) {
+			case string:
+				values += "'" + strings.Replace(value, "'", "\\'", -1) + "',"
+			case int:
+				values += strconv.Itoa(value) + ","
+			case LitStr:
+				values += string(value) + ","
+			case bool:
+				if value {
+					values += "1,"
+				} else {
+					values += "0,"
+				}
+			}
+		}
+		if cols != "" {
+			cols = cols[:len(cols)-1]
+			values = values[:len(values)-1]
+		}
+		qgen.Install.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order))
+		order++
+	}*/
 
-	qgen.Install.SimpleInsert("menu_items", "mid, htmlID, cssClass, position, path, aria, tooltip, order", "1,'menu_topics','menu_topics','left','/topics/','{lang.menu_topics_aria}','{lang.menu_topics_tooltip}',1")
+	// Go maps have a random iteration order, so we have to do this, otherwise the schema files will become unstable and harder to audit
+	var addMenuItem = func(data map[string]interface{}) {
+		cols, values := qgen.InterfaceMapToInsertStrings(data, mOrder)
+		qgen.Install.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order))
+		order++
+	}
 
-	qgen.Install.SimpleInsert("menu_items", "mid, htmlID, cssClass, position, tmplName, order", "1,'general_alerts','menu_alerts','right','menu_alerts',2")
+	addMenuItem(map[string]interface{}{"mid": 1, "htmlID": "menu_forums", "position": "left", "path": "/forums/", "aria": "{lang.menu_forums_aria}", "tooltip": "{lang.menu_forums_tooltip}"})
+
+	addMenuItem(map[string]interface{}{"mid": 1, "htmlID": "menu_topics", "cssClass": "menu_topics", "position": "left", "path": "/topics/", "aria": "{lang.menu_topics_aria}", "tooltip": "{lang.menu_topics_tooltip}"})
+
+	addMenuItem(map[string]interface{}{"mid": 1, "htmlID": "general_alerts", "cssClass": "menu_alerts", "position": "right", "tmplName": "menu_alerts"})
+
+	addMenuItem(map[string]interface{}{"mid": 1, "cssClass": "menu_account", "position": "left", "path": "/user/edit/critical/", "aria": "{lang.menu_account_aria}", "tooltip": "{lang.menu_account_tooltip}", "memberOnly": true})
+
+	addMenuItem(map[string]interface{}{"mid": 1, "cssClass": "menu_profile", "position": "left", "path": "{me.Link}", "aria": "{lang.menu_profile_aria}", "tooltip": "{lang.menu_profile_tooltip}", "memberOnly": true})
+
+	addMenuItem(map[string]interface{}{"mid": 1, "cssClass": "menu_panel menu_account", "position": "left", "path": "/panel/", "aria": "{lang.menu_panel_aria}", "tooltip": "{lang.menu_panel_tooltip}", "memberOnly": true, "staffOnly": true})
+
+	addMenuItem(map[string]interface{}{"mid": 1, "cssClass": "menu_logout", "position": "left", "path": "/accounts/logout/?session={me.Session}", "aria": "{lang.menu_logout_aria}", "tooltip": "{lang.menu_logout_tooltip}", "memberOnly": true})
+
+	addMenuItem(map[string]interface{}{"mid": 1, "cssClass": "menu_register", "position": "left", "path": "/accounts/create/", "aria": "{lang.menu_register_aria}", "tooltip": "{lang.menu_register_tooltip}", "guestOnly": true})
+
+	addMenuItem(map[string]interface{}{"mid": 1, "cssClass": "menu_login", "position": "left", "path": "/accounts/login/", "aria": "{lang.menu_login_aria}", "tooltip": "{lang.menu_login_tooltip}", "guestOnly": true})
 
 	return nil
 }
+
+func copyInsertMap(in map[string]interface{}) (out map[string]interface{}) {
+	out = make(map[string]interface{})
+	for col, value := range in {
+		out[col] = value
+	}
+	return out
+}
+
+type LitStr string
 
 func writeSelects(adapter qgen.Adapter) error {
 	build := adapter.Builder()

@@ -371,7 +371,7 @@ func processFields(fieldstr string) (fields []DBField) {
 			fields = append(fields, DBField{Name: buffer, Type: getIdentifierType(buffer)})
 			buffer = ""
 			lastItem = i + 1
-		} else if (fieldstr[i] > 32) && fieldstr[i] != ',' && fieldstr[i] != ')' {
+		} else if (fieldstr[i] >= 32) && fieldstr[i] != ',' && fieldstr[i] != ')' {
 			buffer += string(fieldstr[i])
 		}
 	}

@@ -1,0 +1,11 @@
+echo "Building the patcher"
+cp ./schema/schema.json ./schema/lastSchema.json
+rm ./patcher/config.go
+cp ./config.go ./patcher/config.go
+rm ./patcher/common/site.go
+cp ./common/site.go ./patcher/common/site.go
+cd ./patcher
+go generate
+go build -o Patcher
+mv ./Patcher ..
+cd ..

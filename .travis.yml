@@ -8,8 +8,10 @@ before_install:
   - cd Gosora
   - mv config_default.noparse config.go
   - chmod 755 ./update-deps-linux
+  - chmod 755 ./dev-update-travis
   - chmod 755 ./run-linux-tests
   - ./update-deps-linux
+  - ./dev-update-travis
 install: true
 script: ./run-linux-tests
 addons:

@@ -15,18 +15,6 @@ func init() {
 	common.TmplPtrMap["login"] = &common.Template_login_handle
 	common.TmplPtrMap["o_login"] = Template_login
 	login_tmpl_phrase_id = common.RegisterTmplPhraseNames([]string{
-		"menu_account_aria",
-		"menu_account_tooltip",
-		"menu_profile_aria",
-		"menu_profile_tooltip",
-		"menu_panel_aria",
-		"menu_panel_tooltip",
-		"menu_logout_aria",
-		"menu_logout_tooltip",
-		"menu_register_aria",
-		"menu_register_tooltip",
-		"menu_login_aria",
-		"menu_login_tooltip",
 		"menu_hamburger_tooltip",
 		"login_head",
 		"login_account_name",
@@ -80,84 +68,49 @@ if !tmpl_login_vars.CurrentUser.IsSuperMod {
 w.Write(header_frags[15])
 }
 w.Write(header_frags[16])
-w.Write(menu_frags[0])
 w.Write([]byte(common.BuildWidget("leftOfNav",tmpl_login_vars.Header)))
-w.Write(menu_frags[1])
-w.Write([]byte(tmpl_login_vars.Header.Site.ShortName))
-w.Write(menu_frags[2])
-w.Write([]byte(common.BuildWidget("topMenu",tmpl_login_vars.Header)))
-if tmpl_login_vars.CurrentUser.Loggedin {
-w.Write(menu_frags[3])
-w.Write(phrases[0])
-w.Write(menu_frags[4])
-w.Write(phrases[1])
-w.Write(menu_frags[5])
-w.Write([]byte(tmpl_login_vars.CurrentUser.Link))
-w.Write(menu_frags[6])
-w.Write(phrases[2])
-w.Write(menu_frags[7])
-w.Write(phrases[3])
-w.Write(menu_frags[8])
-w.Write(phrases[4])
-w.Write(menu_frags[9])
-w.Write(phrases[5])
-w.Write(menu_frags[10])
-w.Write([]byte(tmpl_login_vars.CurrentUser.Session))
-w.Write(menu_frags[11])
-w.Write(phrases[6])
-w.Write(menu_frags[12])
-w.Write(phrases[7])
-w.Write(menu_frags[13])
-} else {
-w.Write(menu_frags[14])
-w.Write(phrases[8])
-w.Write(menu_frags[15])
-w.Write(phrases[9])
-w.Write(menu_frags[16])
-w.Write(phrases[10])
-w.Write(menu_frags[17])
-w.Write(phrases[11])
-w.Write(menu_frags[18])
-}
-w.Write(menu_frags[19])
-w.Write(phrases[12])
-w.Write(menu_frags[20])
-w.Write([]byte(common.BuildWidget("rightOfNav",tmpl_login_vars.Header)))
-w.Write(menu_frags[21])
 w.Write(header_frags[17])
-if tmpl_login_vars.Header.Widgets.RightSidebar != "" {
+w.Write([]byte(tmpl_login_vars.Header.Site.ShortName))
 w.Write(header_frags[18])
-}
+w.Write([]byte(common.BuildWidget("topMenu",tmpl_login_vars.Header)))
 w.Write(header_frags[19])
+w.Write(phrases[0])
+w.Write(header_frags[20])
+w.Write([]byte(common.BuildWidget("rightOfNav",tmpl_login_vars.Header)))
+w.Write(header_frags[21])
+if tmpl_login_vars.Header.Widgets.RightSidebar != "" {
+w.Write(header_frags[22])
+}
+w.Write(header_frags[23])
 if len(tmpl_login_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_login_vars.Header.NoticeList {
-w.Write(header_frags[20])
+w.Write(header_frags[24])
 w.Write([]byte(item))
-w.Write(header_frags[21])
+w.Write(header_frags[25])
 }
 }
-w.Write(header_frags[22])
+w.Write(header_frags[26])
 w.Write(login_frags[0])
-w.Write(phrases[13])
+w.Write(phrases[1])
 w.Write(login_frags[1])
-w.Write(phrases[14])
+w.Write(phrases[2])
 w.Write(login_frags[2])
-w.Write(phrases[15])
+w.Write(phrases[3])
 w.Write(login_frags[3])
-w.Write(phrases[16])
+w.Write(phrases[4])
 w.Write(login_frags[4])
-w.Write(phrases[17])
+w.Write(phrases[5])
 w.Write(login_frags[5])
-w.Write(phrases[18])
+w.Write(phrases[6])
 w.Write(login_frags[6])
 w.Write(footer_frags[0])
 w.Write([]byte(common.BuildWidget("footer",tmpl_login_vars.Header)))
 w.Write(footer_frags[1])
-w.Write(phrases[19])
+w.Write(phrases[7])
 w.Write(footer_frags[2])
-w.Write(phrases[20])
+w.Write(phrases[8])
 w.Write(footer_frags[3])
-w.Write(phrases[21])
+w.Write(phrases[9])
 w.Write(footer_frags[4])
 if len(tmpl_login_vars.Header.Themes) != 0 {
 for _, item := range tmpl_login_vars.Header.Themes {

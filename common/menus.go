@@ -385,10 +385,11 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 			if !hasDot {
 				continue
 			}
-			if bytes.Equal(variable[fenceStart:dotAt], []byte("me")) {
+			//fmt.Println("checking me: ", string(variable[fenceStart+1:dotAt]))
+			if bytes.Equal(variable[fenceStart+1:dotAt], []byte("me")) {
 				//fmt.Println("maybe me variable")
 				w.Write(variable[prevIndex:fenceStart])
-				switch string(variable[dotAt:fenceEnd]) {
+				switch string(variable[dotAt+1 : fenceEnd]) {
 				case "Link":
 					w.Write([]byte(user.Link))
 				case "Session":
