@@ -36,7 +36,9 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	}
 
 	fperms, err := FPStore.Get(fid, user.Group)
-	if err != nil && err != ErrNoRows {
+	if err == ErrNoRows {
+		fperms = BlankForumPerms()
+	} else if err != nil {
 		return headerLite, InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, user)
@@ -61,7 +63,9 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 	}
 
 	fperms, err := FPStore.Get(fid, user.Group)
-	if err != nil && err != ErrNoRows {
+	if err == ErrNoRows {
+		fperms = BlankForumPerms()
+	} else if err != nil {
 		return header, InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, user)
