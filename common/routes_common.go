@@ -2,7 +2,6 @@ package common
 
 import (
 	"html"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -37,10 +36,8 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	}
 
 	fperms, err := FPStore.Get(fid, user.Group)
-	if err != nil {
-		// TODO: Refactor this
-		log.Printf("Unable to get the forum perms for Group #%d for User #%d", user.Group, user.ID)
-		return nil, PreError("Something weird happened", w, r)
+	if err != nil && err != ErrNoRows {
+		return headerLite, InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, user)
 	return headerLite, nil
@@ -64,10 +61,8 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 	}
 
 	fperms, err := FPStore.Get(fid, user.Group)
-	if err != nil {
-		// TODO: Refactor this
-		log.Printf("Unable to get the forum perms for Group #%d for User #%d", user.Group, user.ID)
-		return nil, PreError("Something weird happened", w, r)
+	if err != nil && err != ErrNoRows {
+		return header, InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, user)
 	return header, rerr

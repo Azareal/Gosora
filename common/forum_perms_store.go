@@ -12,6 +12,7 @@ var FPStore ForumPermsStore
 
 type ForumPermsStore interface {
 	Init() error
+	GetAllMap() (bigMap map[int]map[int]*ForumPerms)
 	Get(fid int, gid int) (fperms *ForumPerms, err error)
 	GetCopy(fid int, gid int) (fperms ForumPerms, err error)
 	ReloadAll() error
@@ -134,12 +135,11 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 
 			var forumPerm *ForumPerms
 			if !ok {
-				forumPerm = BlankForumPerms()
-			} else {
-				forumPerm, ok = forumPerms[group.ID]
-				if !ok {
-					forumPerm = BlankForumPerms()
-				}
+				continue
+			}
+			forumPerm, ok = forumPerms[group.ID]
+			if !ok {
+				continue
 			}
 
 			if forumPerm.Overrides {
@@ -149,7 +149,6 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 			} else if group.Perms.ViewTopic {
 				group.CanSee = append(group.CanSee, fid)
 			}
-
 			DebugDetail("group.ID: ", group.ID)
 			DebugDetailf("forumPerm: %+v\n", forumPerm)
 			DebugDetail("group.CanSee: ", group.CanSee)
@@ -157,6 +156,22 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 		DebugDetailf("group.CanSee (length %d): %+v \n", len(group.CanSee), group.CanSee)
 	}
 	return nil
+}
+
+// ! Throughput on this might be bad due to the excessive locking
+func (fps *MemoryForumPermsStore) GetAllMap() (bigMap map[int]map[int]*ForumPerms) {
+	bigMap = make(map[int]map[int]*ForumPerms)
+	fps.evenLock.RLock()
+	for fid, subMap := range fps.evenForums {
+		bigMap[fid] = subMap
+	}
+	fps.evenLock.RUnlock()
+	fps.oddLock.RLock()
+	for fid, subMap := range fps.oddForums {
+		bigMap[fid] = subMap
+	}
+	fps.oddLock.RUnlock()
+	return bigMap
 }
 
 // TODO: Add a hook here and have plugin_guilds use it

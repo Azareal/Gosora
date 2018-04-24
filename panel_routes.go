@@ -332,7 +332,9 @@ func routePanelForumsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 			continue
 		}
 		forumPerms, err := common.FPStore.Get(fid, group.ID)
-		if err != nil {
+		if err == ErrNoRows {
+			forumPerms = common.BlankForumPerms()
+		} else if err != nil {
 			return common.InternalError(err, w, r)
 		}
 		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(forumPerms)})
@@ -479,7 +481,7 @@ func routePanelForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, us
 
 	forumPerms, err := common.FPStore.Get(fid, gid)
 	if err == ErrNoRows {
-		return common.LocalError("The requested group doesn't exist.", w, r, user)
+		forumPerms = common.BlankForumPerms()
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -544,7 +546,7 @@ func routePanelForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Reque
 
 	forumPerms, err := common.FPStore.GetCopy(fid, gid)
 	if err == ErrNoRows {
-		return common.LocalError("The requested group doesn't exist.", w, r, user)
+		forumPerms = *common.BlankForumPerms()
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
