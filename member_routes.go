@@ -259,7 +259,7 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 }
 
 func routeAccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	_, ferr := common.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -289,16 +289,7 @@ func routeAccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user
 
 	// Log the user out as a safety precaution
 	common.Auth.ForceLogout(user.ID)
-
-	headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_password_updated"))
-	pi := common.Page{"Edit Password", user, headerVars, tList, nil}
-	if common.RunPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "account_own_edit.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
 }
 

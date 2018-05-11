@@ -234,7 +234,6 @@
 	"NoticePhrases": {
 		"account_banned":"Your account has been suspended. Some of your permissions may have been revoked.",
 		"account_inactive":"Your account hasn't been activated yet. Some features may remain unavailable until it is.",
-		"account_password_updated":"Your password was successfully updated",
 		"account_avatar_updated":"Your avatar was successfully updated",
 		"account_username_updated":"Your username was successfully updated",
 		"account_mail_disabled":"The mail system is currently disabled.",
