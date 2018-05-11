@@ -1890,9 +1890,14 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 		// Log the user out as a safety precaution
 		common.Auth.ForceLogout(targetUser.ID)
 	}
-
 	targetUser.CacheRemove()
-	http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID)+"?updated=1", http.StatusSeeOther)
+
+	// If we're changing our own password, redirect to the index rather than to a noperms error due to the force logout
+	if targetUser.ID == user.ID {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID)+"?updated=1", http.StatusSeeOther)
+	}
 	return nil
 }
 
