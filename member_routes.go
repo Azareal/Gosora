@@ -319,6 +319,9 @@ func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c
 	var filename, ext string
 	for _, fheaders := range r.MultipartForm.File {
 		for _, hdr := range fheaders {
+			if hdr.Filename == "" {
+				continue
+			}
 			infile, err := hdr.Open()
 			if err != nil {
 				return common.LocalError("Upload failed", w, r, user)
@@ -363,6 +366,9 @@ func routeAccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c
 				return common.LocalError("Upload failed [Copy Failed]", w, r, user)
 			}
 		}
+	}
+	if ext == "" {
+		return common.LocalError("No file", w, r, user)
 	}
 
 	err := user.ChangeAvatar("." + ext)

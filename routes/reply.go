@@ -50,6 +50,9 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 			}
 
 			for _, file := range files {
+				if file.Filename == "" {
+					continue
+				}
 				log.Print("file.Filename ", file.Filename)
 				extarr := strings.Split(file.Filename, ".")
 				if len(extarr) < 2 {
