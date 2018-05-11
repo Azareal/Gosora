@@ -170,12 +170,10 @@ type GridElement struct {
 }
 
 type PanelDashboardPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	GridItems   []GridElement
+	*Header
+	Stats     PanelStats
+	Zone      string
+	GridItems []GridElement
 }
 
 type PanelTimeGraph struct {
@@ -255,13 +253,38 @@ type PanelAnalyticsAgentPage struct {
 }
 
 type PanelThemesPage struct {
-	Title         string
-	CurrentUser   User
-	Header        *Header
+	*Header
 	Stats         PanelStats
 	Zone          string
 	PrimaryThemes []*Theme
 	VariantThemes []*Theme
+}
+
+type PanelMenuListItem struct {
+	ID        int
+	ItemCount int
+}
+
+type PanelMenuListPage struct {
+	*Header
+	Stats    PanelStats
+	Zone     string
+	ItemList []PanelMenuListItem
+}
+
+type PanelMenuPage struct {
+	*Header
+	Stats    PanelStats
+	Zone     string
+	ID       int
+	ItemList []MenuItem
+}
+
+type PanelMenuItemPage struct {
+	*Header
+	Stats PanelStats
+	Zone  string
+	Item  MenuItem
 }
 
 type PanelUserPage struct {

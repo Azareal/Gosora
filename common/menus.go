@@ -7,30 +7,11 @@ import (
 	"io"
 	"io/ioutil"
 	"strconv"
-	"sync/atomic"
 
 	"../query_gen/lib"
 )
 
-var Menus *DefaultMenuStore
-
 type MenuItemList []MenuItem
-
-type DefaultMenuStore struct {
-	menus map[int]*atomic.Value
-}
-
-func NewDefaultMenuStore() *DefaultMenuStore {
-	return &DefaultMenuStore{make(map[int]*atomic.Value)}
-}
-
-func (store *DefaultMenuStore) Get(mid int) *MenuListHolder {
-	aStore, ok := store.menus[mid]
-	if ok {
-		return aStore.Load().(*MenuListHolder)
-	}
-	return nil
-}
 
 type MenuListHolder struct {
 	List       MenuItemList
@@ -43,7 +24,10 @@ type menuTmpl struct {
 }
 
 type MenuItem struct {
-	ID       int
+	ID     int
+	MenuID int
+
+	Name     string
 	HTMLID   string
 	CSSClass string
 	Position string
@@ -59,50 +43,56 @@ type MenuItem struct {
 	AdminOnly    bool
 }
 
-func (store *DefaultMenuStore) Load(mid int) error {
-	var mlist MenuItemList
-	acc := qgen.Builder.Accumulator()
-	err := acc.Select("menu_items").Columns("htmlID, cssClass, position, path, aria, tooltip, order, tmplName, guestOnly, memberOnly, staffOnly, adminOnly").Where("mid = " + strconv.Itoa(mid)).Orderby("order ASC").Each(func(rows *sql.Rows) error {
-		var mitem = MenuItem{ID: 1}
-		err := rows.Scan(&mitem.HTMLID, &mitem.CSSClass, &mitem.Position, &mitem.Path, &mitem.Aria, &mitem.Tooltip, &mitem.Order, &mitem.TmplName, &mitem.GuestOnly, &mitem.MemberOnly, &mitem.SuperModOnly, &mitem.AdminOnly)
+type MenuItemStmts struct {
+	update *sql.Stmt
+}
+
+var menuItemStmts MenuItemStmts
+
+func init() {
+	DbInits.Add(func(acc *qgen.Accumulator) error {
+		menuItemStmts = MenuItemStmts{
+			update: acc.Update("menu_items").Set("name = ?, htmlID = ?, cssClass = ?, position = ?, path = ?, aria = ?, tooltip = ?, tmplName = ?, guestOnly = ?, memberOnly = ?, staffOnly = ?, adminOnly = ?").Where("miid = ?").Prepare(),
+		}
+		return acc.FirstError()
+	})
+}
+
+func (item MenuItem) Commit() error {
+	_, err := menuItemStmts.update.Exec(item.Name, item.HTMLID, item.CSSClass, item.Position, item.Path, item.Aria, item.Tooltip, item.TmplName, item.GuestOnly, item.MemberOnly, item.SuperModOnly, item.AdminOnly, item.ID)
+	Menus.Load(item.MenuID)
+	return err
+}
+
+func (hold *MenuListHolder) LoadTmpl(name string) (menuTmpl MenuTmpl, err error) {
+	data, err := ioutil.ReadFile("./templates/" + name + ".html")
+	if err != nil {
+		return menuTmpl, err
+	}
+	return hold.Parse(name, data), nil
+}
+
+func (hold *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, err error) {
+	tmpls = make(map[string]MenuTmpl)
+	var loadTmpl = func(name string) error {
+		menuTmpl, err := hold.LoadTmpl(name)
 		if err != nil {
 			return err
 		}
-		mlist = append(mlist, mitem)
+		tmpls[name] = menuTmpl
 		return nil
-	})
-	if err != nil {
-		return err
 	}
-
-	hold := &MenuListHolder{mlist, make(map[int]menuTmpl)}
-	err = hold.Preparse()
+	err = loadTmpl("menu_item")
 	if err != nil {
-		return err
+		return tmpls, err
 	}
-
-	var aStore = &atomic.Value{}
-	aStore.Store(hold)
-	store.menus[mid] = aStore
-	return nil
+	err = loadTmpl("menu_alerts")
+	return tmpls, err
 }
 
 // TODO: Run this in main, sync ticks, when the phrase file changes (need to implement the sync for that first), and when the settings are changed
 func (hold *MenuListHolder) Preparse() error {
-	var tmpls = make(map[string]MenuTmpl)
-	var loadTmpl = func(name string) error {
-		data, err := ioutil.ReadFile("./templates/" + name + ".html")
-		if err != nil {
-			return err
-		}
-		tmpls[name] = hold.Parse(name, data)
-		return nil
-	}
-	err := loadTmpl("menu_item")
-	if err != nil {
-		return err
-	}
-	err = loadTmpl("menu_alerts")
+	tmpls, err := hold.LoadTmpls()
 	if err != nil {
 		return err
 	}
@@ -194,6 +184,7 @@ func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTm
 	// ? We only support simple properties on MenuItem right now
 	var addVariable = func(name []byte) {
 		//fmt.Println("appending subBuffer: ", string(subBuffer))
+		// TODO: Check if the subBuffer has any items or is empty
 		textBuffer = append(textBuffer, subBuffer)
 		subBuffer = nil
 
@@ -203,13 +194,17 @@ func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTm
 		renderList = append(renderList, menuRenderItem{1, len(variableBuffer) - 1})
 	}
 
+	tmplData = bytes.Replace(tmplData, []byte("{{"), []byte("{"), -1)
+	tmplData = bytes.Replace(tmplData, []byte("}}"), []byte("}}"), -1)
 	for i := 0; i < len(tmplData); i++ {
 		char := tmplData[i]
-		if char == '{' && nextCharIs(tmplData, i, '{') {
+		if char == '{' {
+			//fmt.Println("found open fence")
 			dotIndex, hasDot := skipUntilIfExists(tmplData, i, '.')
 			if !hasDot {
+				//fmt.Println("no dot, assumed template function style")
 				// Template function style
-				langIndex, hasChars := skipUntilCharsExist(tmplData, i+2, []byte("lang"))
+				langIndex, hasChars := skipUntilCharsExist(tmplData, i+1, []byte("lang"))
 				if hasChars {
 					startIndex, hasStart := skipUntilIfExists(tmplData, langIndex, '"')
 					endIndex, hasEnd := skipUntilIfExists(tmplData, startIndex+1, '"')
@@ -228,7 +223,8 @@ func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTm
 				break
 			}
 			fenceIndex, hasFence := skipUntilIfExists(tmplData, dotIndex, '}')
-			if !hasFence || !nextCharIs(tmplData, fenceIndex, '}') {
+			if !hasFence {
+				//fmt.Println("no end fence")
 				break
 			}
 			addVariable(tmplData[dotIndex:fenceIndex])
@@ -258,78 +254,88 @@ func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mi
 		if !showItem(mitem) {
 			continue
 		}
+		renderBuffer, variableIndices = hold.ScanItem(menuTmpls, mitem, renderBuffer, variableIndices)
+	}
+	// TODO: Need more coalescing in the renderBuffer
+	return renderBuffer, variableIndices
+}
 
-		menuTmpl, ok := menuTmpls[mitem.TmplName]
-		if !ok {
-			menuTmpl = menuTmpls["menu_item"]
+// Note: This doesn't do a visibility check like hold.Scan() does
+func (hold *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuItem, renderBuffer [][]byte, variableIndices []int) ([][]byte, []int) {
+	menuTmpl, ok := menuTmpls[mitem.TmplName]
+	if !ok {
+		menuTmpl = menuTmpls["menu_item"]
+	}
+
+	//fmt.Println("menuTmpl: ", menuTmpl)
+	for _, renderItem := range menuTmpl.RenderList {
+		if renderItem.Type == 0 {
+			renderBuffer = append(renderBuffer, menuTmpl.TextBuffer[renderItem.Index])
+			continue
 		}
-		//fmt.Println("menuTmpl: ", menuTmpl)
-		for _, renderItem := range menuTmpl.RenderList {
-			if renderItem.Type == 0 {
-				renderBuffer = append(renderBuffer, menuTmpl.TextBuffer[renderItem.Index])
-				continue
+
+		variable := menuTmpl.VariableBuffer[renderItem.Index]
+		//fmt.Println("initial variable: ", string(variable))
+		dotAt, hasDot := skipUntilIfExists(variable, 0, '.')
+		if !hasDot {
+			//fmt.Println("no dot")
+			continue
+		}
+
+		if bytes.Equal(variable[:dotAt], []byte("lang")) {
+			//fmt.Println("lang: ", string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))
+			renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))))
+		} else {
+			var renderItem []byte
+			switch string(variable) {
+			case ".ID":
+				renderItem = []byte(strconv.Itoa(mitem.ID))
+			case ".Name":
+				renderItem = []byte(mitem.Name)
+			case ".HTMLID":
+				renderItem = []byte(mitem.HTMLID)
+			case ".CSSClass":
+				renderItem = []byte(mitem.CSSClass)
+			case ".Position":
+				renderItem = []byte(mitem.Position)
+			case ".Path":
+				renderItem = []byte(mitem.Path)
+			case ".Aria":
+				renderItem = []byte(mitem.Aria)
+			case ".Tooltip":
+				renderItem = []byte(mitem.Tooltip)
 			}
 
-			variable := menuTmpl.VariableBuffer[renderItem.Index]
-			//fmt.Println("initial variable: ", string(variable))
-			dotAt, hasDot := skipUntilIfExists(variable, 0, '.')
-			if !hasDot {
-				//fmt.Println("no dot")
-				continue
-			}
-
-			if bytes.Equal(variable[:dotAt], []byte("lang")) {
-				//fmt.Println("lang: ", string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))
-				renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))))
-			} else {
-				var renderItem []byte
-				switch string(variable) {
-				case ".HTMLID":
-					renderItem = []byte(mitem.HTMLID)
-				case ".CSSClass":
-					renderItem = []byte(mitem.CSSClass)
-				case ".Position":
-					renderItem = []byte(mitem.Position)
-				case ".Path":
-					renderItem = []byte(mitem.Path)
-				case ".Aria":
-					renderItem = []byte(mitem.Aria)
-				case ".Tooltip":
-					renderItem = []byte(mitem.Tooltip)
-				}
-
-				_, hasInnerVar := skipUntilIfExists(renderItem, 0, '{')
-				if hasInnerVar {
-					//fmt.Println("inner var: ", string(renderItem))
-					dotAt, hasDot := skipUntilIfExists(renderItem, 0, '.')
-					endFence, hasEndFence := skipUntilIfExists(renderItem, dotAt, '}')
-					if !hasDot || !hasEndFence || (endFence-dotAt) <= 1 {
-						renderBuffer = append(renderBuffer, renderItem)
-						variableIndices = append(variableIndices, len(renderBuffer)-1)
-						continue
-					}
-
-					if bytes.Equal(renderItem[1:dotAt], []byte("lang")) {
-						//fmt.Println("lang var: ", string(renderItem[dotAt+1:endFence]))
-						renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(renderItem[dotAt+1:endFence]))))
-					} else {
-						//fmt.Println("other var: ", string(variable[:dotAt]))
-						if len(renderItem) > 0 {
-							renderBuffer = append(renderBuffer, renderItem)
-							variableIndices = append(variableIndices, len(renderBuffer)-1)
-						}
-					}
+			_, hasInnerVar := skipUntilIfExists(renderItem, 0, '{')
+			if hasInnerVar {
+				//fmt.Println("inner var: ", string(renderItem))
+				dotAt, hasDot := skipUntilIfExists(renderItem, 0, '.')
+				endFence, hasEndFence := skipUntilIfExists(renderItem, dotAt, '}')
+				if !hasDot || !hasEndFence || (endFence-dotAt) <= 1 {
+					renderBuffer = append(renderBuffer, renderItem)
+					variableIndices = append(variableIndices, len(renderBuffer)-1)
 					continue
 				}
 
-				//fmt.Println("normal var: ", string(variable[:dotAt]))
-				if len(renderItem) > 0 {
-					renderBuffer = append(renderBuffer, renderItem)
+				if bytes.Equal(renderItem[1:dotAt], []byte("lang")) {
+					//fmt.Println("lang var: ", string(renderItem[dotAt+1:endFence]))
+					renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(renderItem[dotAt+1:endFence]))))
+				} else {
+					//fmt.Println("other var: ", string(variable[:dotAt]))
+					if len(renderItem) > 0 {
+						renderBuffer = append(renderBuffer, renderItem)
+						variableIndices = append(variableIndices, len(renderBuffer)-1)
+					}
 				}
+				continue
+			}
+
+			//fmt.Println("normal var: ", string(variable[:dotAt]))
+			if len(renderItem) > 0 {
+				renderBuffer = append(renderBuffer, renderItem)
 			}
 		}
 	}
-	// TODO: Need more coalescing in the renderBuffer
 	return renderBuffer, variableIndices
 }
 

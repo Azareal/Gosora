@@ -47,6 +47,7 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 	if ferr != nil {
 		return ferr
 	}
+	headerVars.Title = common.GetTitlePhrase("panel_dashboard")
 
 	// We won't calculate this on the spot anymore, as the system doesn't seem to like it if we do multiple fetches simultaneously. Should we constantly calculate this on a background thread? Perhaps, the watchdog to scale back heavy features under load? One plus side is that we'd get immediate CPU percentages here instead of waiting it to kick in with WebSockets
 	var cpustr = "Unknown"
@@ -167,7 +168,7 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 		gridElements = append(gridElements, common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
 	}
 
-	pi := common.PanelDashboardPage{common.GetTitlePhrase("panel_dashboard"), user, headerVars, stats, "dashboard", gridElements}
+	pi := common.PanelDashboardPage{headerVars, stats, "dashboard", gridElements}
 	return panelRenderTemplate("panel_dashboard", w, r, user, &pi)
 }
 
@@ -2288,13 +2289,14 @@ func routePanelGroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 }
 
 func routePanelThemes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ManageThemes {
 		return common.NoPermissions(w, r, user)
 	}
+	header.Title = common.GetTitlePhrase("panel_themes")
 
 	var pThemeList, vThemeList []*common.Theme
 	for _, theme := range common.Themes {
@@ -2309,7 +2311,7 @@ func routePanelThemes(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	}
 
-	pi := common.PanelThemesPage{common.GetTitlePhrase("panel_themes"), user, headerVars, stats, "themes", pThemeList, vThemeList}
+	pi := common.PanelThemesPage{header, stats, "themes", pThemeList, vThemeList}
 	return panelRenderTemplate("panel_themes", w, r, user, &pi)
 }
 
@@ -2376,6 +2378,176 @@ func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user com
 
 	http.Redirect(w, r, "/panel/themes/", http.StatusSeeOther)
 	return nil
+}
+
+func routePanelThemesMenus(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ManageThemes {
+		return common.NoPermissions(w, r, user)
+	}
+	header.Title = common.GetTitlePhrase("panel_themes_menus")
+
+	var menuList []common.PanelMenuListItem
+	for mid, list := range common.Menus.GetAllMap() {
+		menuList = append(menuList, common.PanelMenuListItem{
+			ID:        mid,
+			ItemCount: len(list.List),
+		})
+	}
+
+	pi := common.PanelMenuListPage{header, stats, "themes", menuList}
+	return panelRenderTemplate("panel_themes_menus", w, r, user, &pi)
+}
+
+func routePanelThemesMenusEdit(w http.ResponseWriter, r *http.Request, user common.User, smid string) common.RouteError {
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ManageThemes {
+		return common.NoPermissions(w, r, user)
+	}
+	// TODO: Something like Menu #1 for the title?
+	header.Title = common.GetTitlePhrase("panel_themes_menus_edit")
+
+	mid, err := strconv.Atoi(smid)
+	if err != nil {
+		return common.LocalError("Invalid integer", w, r, user)
+	}
+
+	menuHold, err := common.Menus.Get(mid)
+	if err == ErrNoRows {
+		return common.NotFound(w, r, header)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	var menuList []common.MenuItem
+	for _, item := range menuHold.List {
+		var menuTmpls = map[string]common.MenuTmpl{
+			item.TmplName: menuHold.Parse(item.Name, []byte("{{.Name}}")),
+		}
+		var renderBuffer [][]byte
+		var variableIndices []int
+		renderBuffer, _ = menuHold.ScanItem(menuTmpls, item, renderBuffer, variableIndices)
+
+		var out string
+		for _, renderItem := range renderBuffer {
+			out += string(renderItem)
+		}
+		item.Name = out
+		if item.Name == "" {
+			item.Name = "???"
+		}
+		menuList = append(menuList, item)
+	}
+
+	pi := common.PanelMenuPage{header, stats, "themes", mid, menuList}
+	return panelRenderTemplate("panel_themes_menus_items", w, r, user, &pi)
+}
+
+func routePanelThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ManageThemes {
+		return common.NoPermissions(w, r, user)
+	}
+	// TODO: Something like Menu #1 for the title?
+	header.Title = common.GetTitlePhrase("panel_themes_menus_edit")
+
+	itemID, err := strconv.Atoi(sitemID)
+	if err != nil {
+		return common.LocalError("Invalid integer", w, r, user)
+	}
+
+	menuItem, err := common.Menus.ItemStore().Get(itemID)
+	if err == ErrNoRows {
+		return common.NotFound(w, r, header)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	pi := common.PanelMenuItemPage{header, stats, "themes", menuItem}
+	return panelRenderTemplate("panel_themes_menus_item_edit", w, r, user, &pi)
+}
+
+func routePanelThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	isJs := (r.PostFormValue("js") == "1")
+	if !user.Perms.ManageThemes {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+
+	itemID, err := strconv.Atoi(sitemID)
+	if err != nil {
+		return common.LocalErrorJSQ("Invalid integer", w, r, user, isJs)
+	}
+
+	menuItem, err := common.Menus.ItemStore().Get(itemID)
+	if err == ErrNoRows {
+		return common.LocalErrorJSQ("This item doesn't exist.", w, r, user, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+	//menuItem = menuItem.Copy() // If we switch this for a pointer, we might need this as a scratchpad
+
+	var getItem = func(name string) string {
+		return html.EscapeString(strings.Replace(r.PostFormValue("item-"+name), "\n", "", -1))
+	}
+	menuItem.Name = getItem("name")
+	menuItem.HTMLID = getItem("htmlid")
+	menuItem.CSSClass = getItem("cssclass")
+	menuItem.Position = getItem("position")
+	if menuItem.Position != "left" && menuItem.Position != "right" {
+		menuItem.Position = "left"
+	}
+	menuItem.Path = getItem("path")
+	menuItem.Aria = getItem("aria")
+	menuItem.Tooltip = getItem("tooltip")
+	menuItem.TmplName = getItem("tmplname")
+
+	var perms = getItem("permissions")
+	switch perms {
+	case "everyone":
+		menuItem.GuestOnly = false
+		menuItem.MemberOnly = false
+		menuItem.SuperModOnly = false
+		menuItem.AdminOnly = false
+	case "guest-only":
+		menuItem.GuestOnly = true
+		menuItem.MemberOnly = false
+		menuItem.SuperModOnly = false
+		menuItem.AdminOnly = false
+	case "member-only":
+		menuItem.GuestOnly = false
+		menuItem.MemberOnly = true
+		menuItem.SuperModOnly = false
+		menuItem.AdminOnly = false
+	case "supermod-only":
+		menuItem.GuestOnly = false
+		menuItem.MemberOnly = true
+		menuItem.SuperModOnly = true
+		menuItem.AdminOnly = false
+	case "admin-only":
+		menuItem.GuestOnly = false
+		menuItem.MemberOnly = true
+		menuItem.SuperModOnly = true
+		menuItem.AdminOnly = true
+	}
+
+	err = menuItem.Commit()
+	if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+	return panelSuccessRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
 }
 
 func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User, backupURL string) common.RouteError {

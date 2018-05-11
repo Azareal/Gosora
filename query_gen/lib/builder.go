@@ -96,6 +96,10 @@ func (build *builder) SimpleInnerJoin(table1 string, table2 string, columns stri
 	return build.prepare(build.adapter.SimpleInnerJoin("_builder", table1, table2, columns, joiners, where, orderby, limit))
 }
 
+func (build *builder) DropTable(table string) (stmt *sql.Stmt, err error) {
+	return build.prepare(build.adapter.DropTable("_builder", table))
+}
+
 func (build *builder) CreateTable(table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (stmt *sql.Stmt, err error) {
 	return build.prepare(build.adapter.CreateTable("_builder", table, charset, collation, columns, keys))
 }

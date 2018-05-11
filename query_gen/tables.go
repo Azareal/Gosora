@@ -390,6 +390,7 @@ func createTables(adapter qgen.Adapter) error {
 
 	qgen.Install.CreateTable("menu_items", "", "",
 		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"miid", "int", 0, false, true, ""},
 			qgen.DBTableColumn{"mid", "int", 0, false, false, ""},
 			qgen.DBTableColumn{"htmlID", "varchar", 200, false, false, "''"},
 			qgen.DBTableColumn{"cssClass", "varchar", 200, false, false, "''"},
@@ -405,7 +406,9 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"staffOnly", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"adminOnly", "boolean", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"miid", "primary"},
+		},
 	)
 
 	/*

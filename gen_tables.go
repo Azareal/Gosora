@@ -2,17 +2,18 @@
 package main
 
 var dbTablePrimaryKeys = map[string]string{
-	"users":"uid",
-	"topics":"tid",
-	"revisions":"reviseID",
-	"polls":"pollID",
-	"users_replies":"rid",
-	"activity_stream":"asid",
-	"word_filters":"wfid",
 	"users_groups":"gid",
 	"users_groups_scheduler":"uid",
-	"forums":"fid",
+	"users_replies":"rid",
+	"topics":"tid",
 	"replies":"rid",
-	"attachments":"attachID",
+	"revisions":"reviseID",
+	"activity_stream":"asid",
+	"word_filters":"wfid",
 	"menus":"mid",
+	"users":"uid",
+	"menu_items":"miid",
+	"forums":"fid",
+	"attachments":"attachID",
+	"polls":"pollID",
 }

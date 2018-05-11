@@ -61,31 +61,6 @@ li a {
 	padding-right: 10px;
 }
 
-#menu_forums a:after {
-	content: "{{index .Phrases "menu_forums"}}";
-}
-.menu_topics a:after {
-	content: "{{index .Phrases "menu_topics"}}";
-}
-.menu_account a:after {
-	content: "{{index .Phrases "menu_account"}}";
-}
-.menu_profile a:after {
-	content: "{{index .Phrases "menu_profile"}}";
-}
-.menu_panel a:after {
-	content: "{{index .Phrases "menu_panel"}}";
-}
-.menu_logout a:after {
-	content: "{{index .Phrases "menu_logout"}}";
-}
-.menu_login a:after {
-	content: "{{index .Phrases "menu_login"}}";
-}
-.menu_register a:after {
-	content: "{{index .Phrases "menu_register"}}";
-}
-
 .alert_bell:before {
 	content: '🔔︎';
 }

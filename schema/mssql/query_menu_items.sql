@@ -1,4 +1,5 @@
 CREATE TABLE [menu_items] (
+	[miid] int not null IDENTITY,
 	[mid] int not null,
 	[htmlID] nvarchar (200) DEFAULT '' not null,
 	[cssClass] nvarchar (200) DEFAULT '' not null,
@@ -11,5 +12,6 @@ CREATE TABLE [menu_items] (
 	[guestOnly] bit DEFAULT 0 not null,
 	[memberOnly] bit DEFAULT 0 not null,
 	[staffOnly] bit DEFAULT 0 not null,
-	[adminOnly] bit DEFAULT 0 not null
+	[adminOnly] bit DEFAULT 0 not null,
+	primary key([miid])
 );

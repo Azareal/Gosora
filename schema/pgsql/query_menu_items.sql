@@ -1,4 +1,5 @@
 CREATE TABLE `menu_items` (
+	`miid` serial not null,
 	`mid` int not null,
 	`htmlID` varchar (200) DEFAULT '' not null,
 	`cssClass` varchar (200) DEFAULT '' not null,
@@ -11,5 +12,6 @@ CREATE TABLE `menu_items` (
 	`guestOnly` boolean DEFAULT 0 not null,
 	`memberOnly` boolean DEFAULT 0 not null,
 	`staffOnly` boolean DEFAULT 0 not null,
-	`adminOnly` boolean DEFAULT 0 not null
+	`adminOnly` boolean DEFAULT 0 not null,
+	primary key(`miid`)
 );

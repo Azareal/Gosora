@@ -1,4 +1,8 @@
-We're not accepting contributions right now, although you're welcome to poke me about things. I'd like to put a process together at some point.
+If you want to add a contribution, you'll have to open a pull request and to sign the CLA (contributor level agreement).
+
+It's mainly there to deal with any legal issues which come our way and to switch licenses without having to chase down contributors who have long stopped using the internet or are deceased or incapacitated.
+
+Other uses may arise in the future, e.g. commercial licensing, although that's currently uncertain.
 
 # Coding Standards
 

@@ -153,6 +153,10 @@ func buildPanelRoutes() {
 
 		View("routePanelThemes", "/panel/themes/"),
 		Action("routePanelThemesSetDefault", "/panel/themes/default/", "extraData"),
+		View("routePanelThemesMenus", "/panel/themes/menus/"),
+		View("routePanelThemesMenusEdit", "/panel/themes/menus/edit/", "extraData"),
+		View("routePanelThemesMenuItemEdit", "/panel/themes/menus/item/edit/", "extraData"),
+		Action("routePanelThemesMenuItemEditSubmit", "/panel/themes/menus/item/edit/submit/", "extraData"),
 
 		View("routePanelPlugins", "/panel/plugins/"),
 		Action("routePanelPluginsActivate", "/panel/plugins/activate/", "extraData"),

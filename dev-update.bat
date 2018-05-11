@@ -94,7 +94,10 @@ if %errorlevel% neq 0 (
 
 
 echo Updating Gosora
-copy ./schema/schema.json ./schema/lastSchema.json
+cd schema
+del /Q lastSchema.json
+copy schema.json lastSchema.json
+cd ..
 git pull origin master
 if %errorlevel% neq 0 (
 	pause

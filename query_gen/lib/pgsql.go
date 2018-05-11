@@ -38,9 +38,20 @@ func (adapter *PgsqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 	return nil, nil
 }
 
-// TODO: Implement this
 func (adapter *PgsqlAdapter) DbVersion() string {
-	return ""
+	return "SELECT version()"
+}
+
+func (adapter *PgsqlAdapter) DropTable(name string, table string) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	querystr := "DROP TABLE IF EXISTS \"" + table + "\";"
+	adapter.pushStatement(name, "drop-table", querystr)
+	return querystr, nil
 }
 
 // TODO: Implement this

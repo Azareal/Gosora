@@ -49,7 +49,6 @@ type LanguagePack struct {
 	NoticePhrases    map[string]string
 	PageTitles       map[string]string
 	TmplPhrases      map[string]string
-	CSSPhrases       map[string]string
 
 	TmplIndicesToPhrases [][][]byte // [tmplID][index]phrase
 }
@@ -231,8 +230,8 @@ func GetTmplPhrase(name string) string {
 	return res
 }
 
-func GetCSSPhrases() map[string]string {
-	return currentLangPack.Load().(*LanguagePack).CSSPhrases
+func GetTmplPhrases() map[string]string {
+	return currentLangPack.Load().(*LanguagePack).TmplPhrases
 }
 
 func getPhrasePlaceholder(prefix string, suffix string) string {

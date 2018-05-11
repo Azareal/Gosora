@@ -26,6 +26,7 @@ func main() {
 			fmt.Println(r)
 			debug.PrintStack()
 			pressAnyKey(scanner)
+			log.Fatal("")
 			return
 		}
 	}()
@@ -73,6 +74,7 @@ type SchemaFile struct {
 }
 
 func patcher(scanner *bufio.Scanner) error {
+	fmt.Println("Loading the schema file")
 	data, err := ioutil.ReadFile("./schema/lastSchema.json")
 	if err != nil {
 		return err
@@ -84,6 +86,8 @@ func patcher(scanner *bufio.Scanner) error {
 		return err
 	}
 	_ = schemaFile
+
+	fmt.Println("Applying the patches")
 	return patch0(scanner)
 }
 

@@ -61,6 +61,18 @@ func (adapter *MysqlAdapter) DbVersion() string {
 	return "SELECT VERSION()"
 }
 
+func (adapter *MysqlAdapter) DropTable(name string, table string) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	querystr := "DROP TABLE IF EXISTS `" + table + "`;"
+	adapter.pushStatement(name, "drop-table", querystr)
+	return querystr, nil
+}
+
 func (adapter *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if name == "" {
 		return "", errors.New("You need a name for this statement")

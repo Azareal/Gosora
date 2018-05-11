@@ -104,17 +104,11 @@ li {
     content: "\f03a";
     margin-right: 6px;
 }
-#menu_forums a:after {
-	content: "{{index .Phrases "menu_forums"}}";
-}
 .menu_topics a:before {
     margin-right: 4px;
     content: "\f27b";
     position: relative;
     top: -2px;
-}
-.menu_topics a:after {
-	content: "{{index .Phrases "menu_topics"}}";
 }
 .menu_alerts {
 	color: var(--primary-link-color);
@@ -146,9 +140,6 @@ li {
     content: "\f2c3";
     margin-right: 6px;
 }
-.menu_account a:after {
-	content: "{{index .Phrases "menu_account"}}";
-}
 .menu_profile a:before {
     content: "\f2c0";
     margin-right: 5px;
@@ -156,28 +147,13 @@ li {
     top: -1px;
     font-size: 14px;
 }
-.menu_profile a:after {
-	content: "{{index .Phrases "menu_profile"}}";
-}
 .menu_panel a:before {
     margin-right: 6px;
     content: "\f108";
 }
-.menu_panel a:after {
-	content: "{{index .Phrases "menu_panel"}}";
-}
 .menu_logout a:before {
     content: "\f08b";
     margin-right: 3px;
-}
-.menu_logout a:after {
-	content: "{{index .Phrases "menu_logout"}}";
-}
-.menu_login a:after {
-	content: "{{index .Phrases "menu_login"}}";
-}
-.menu_register a:after {
-	content: "{{index .Phrases "menu_register"}}";
 }
 
 ul {

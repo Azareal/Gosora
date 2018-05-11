@@ -1,0 +1,80 @@
+{{template "header.html" . }}
+<div class="colstack panel_stack">
+
+{{/** TODO: Set the order based on the order here **/}}
+{{/** TODO: Write the backend code and JS code for saving this menu **/}}
+	<nav class="colstack_left" aria-label="Theme manager menu">
+		<div class="colstack_item colstack_head">
+			<div class="rowitem"><a href="/panel/themes/">Theme Manager</a></div>
+		</div>
+		<div class="colstack_item rowmenu">
+			<div class="rowitem passive"><a href="/panel/themes/menus/">Menus</a></div>
+		</div>
+		<div class="colstack_item rowmenu">
+			<div class="rowitem passive"><a href="#">Widgets</a></div>
+		</div>
+{{template "panel-inner-menu.html" . }}
+	</nav>
+<main class="colstack_right">
+	<div class="colstack_item colstack_head">
+		<div class="rowitem"><h1>{{lang "panel_themes_menus_edit_head"}}</h1></div>
+	</div>
+	<form action="/panel/themes/menus/item/edit/submit/{{.Item.ID}}?session={{.CurrentUser.Session}}" method="post">
+		<div id="panel_themes_menu_item_edit" class="colstack_item">
+			{{/** TODO: Let an admin move a menu item from one menu to another? **/}}
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_name"}}</a></div>
+				<div class="formitem"><input name="item-name" type="text" value="{{.Item.Name}}" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_htmlid"}}</a></div>
+				<div class="formitem"><input name="item-htmlid" type="text" value="{{.Item.HTMLID}}" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_cssclass"}}</a></div>
+				<div class="formitem"><input name="item-cssclass" type="text" value="{{.Item.CSSClass}}" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_position"}}</a></div>
+				<div class="formitem">
+					<select name="item-position">
+						<option{{if eq .Item.Position "left"}} selected{{end}} value="left">left</option>
+						<option{{if eq .Item.Position "right"}} selected{{end}} value="right">right</option>
+					</select>
+				</div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_path"}}</a></div>
+				<div class="formitem"><input name="item-path" type="text" value="{{.Item.Path}}" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_aria"}}</a></div>
+				<div class="formitem"><input name="item-aria" type="text" value="{{.Item.Aria}}" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_tooltip"}}</a></div>
+				<div class="formitem"><input name="item-tooltip" type="text" value="{{.Item.Tooltip}}" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_tmplname"}}</a></div>
+				<div class="formitem"><input name="item-tmplname" type="text" value="{{.Item.TmplName}}" /></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_permissions"}}</a></div>
+				<div class="formitem"><select name="item-permissions">
+					<option value="everyone">{{lang "panel_themes_menus_everyone" }}</option>
+					<option{{if .Item.GuestOnly}} selected{{end}} value="guest-only">{{lang "panel_themes_menus_guestonly"}}</option>
+					<option{{if .Item.MemberOnly}} selected{{end}} value="member-only">{{lang "panel_themes_menus_memberonly"}}</option>
+					<option{{if .Item.SuperModOnly}} selected{{end}} value="supermod-only">{{lang "panel_themes_menus_supermodonly"}}</option>
+					<option{{if .Item.AdminOnly}} selected{{end}} value="admin-only">{{lang "panel_themes_menus_adminonly"}}</option>
+				</select></div>
+			</div>
+			<div class="formrow">
+				<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_themes_menus_edit_update_button"}}</button></div>
+			</div>
+		</div>
+	</form>
+</main>
+
+</div>
+{{template "footer.html" . }}

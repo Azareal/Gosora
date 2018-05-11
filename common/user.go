@@ -83,24 +83,25 @@ var userStmts UserStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		var where = "uid = ?"
 		userStmts = UserStmts{
-			activate:           acc.SimpleUpdate("users", "active = 1", "uid = ?"),
-			changeGroup:        acc.SimpleUpdate("users", "group = ?", "uid = ?"), // TODO: Implement user_count for users_groups here
-			delete:             acc.SimpleDelete("users", "uid = ?"),
-			setAvatar:          acc.SimpleUpdate("users", "avatar = ?", "uid = ?"),
-			setUsername:        acc.SimpleUpdate("users", "name = ?", "uid = ?"),
-			incrementTopics:    acc.SimpleUpdate("users", "topics =  topics + ?", "uid = ?"),
-			updateLevel:        acc.SimpleUpdate("users", "level = ?", "uid = ?"),
-			incrementScore:     acc.SimpleUpdate("users", "score = score + ?", "uid = ?"),
-			incrementPosts:     acc.SimpleUpdate("users", "posts = posts + ?", "uid = ?"),
-			incrementBigposts:  acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?", "uid = ?"),
-			incrementMegaposts: acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?", "uid = ?"),
-			incrementLiked:     acc.SimpleUpdate("users", "liked = liked + ?, lastLiked = UTC_TIMESTAMP()", "uid = ?"),
-			decrementLiked:     acc.SimpleUpdate("users", "liked = liked - ?", "uid = ?"),
+			activate:           acc.SimpleUpdate("users", "active = 1", where),
+			changeGroup:        acc.SimpleUpdate("users", "group = ?", where), // TODO: Implement user_count for users_groups here
+			delete:             acc.SimpleDelete("users", where),
+			setAvatar:          acc.SimpleUpdate("users", "avatar = ?", where),
+			setUsername:        acc.Update("users").Set("name = ?").Where(where).Prepare(),
+			incrementTopics:    acc.SimpleUpdate("users", "topics =  topics + ?", where),
+			updateLevel:        acc.SimpleUpdate("users", "level = ?", where),
+			incrementScore:     acc.SimpleUpdate("users", "score = score + ?", where),
+			incrementPosts:     acc.SimpleUpdate("users", "posts = posts + ?", where),
+			incrementBigposts:  acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?", where),
+			incrementMegaposts: acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?", where),
+			incrementLiked:     acc.SimpleUpdate("users", "liked = liked + ?, lastLiked = UTC_TIMESTAMP()", where),
+			decrementLiked:     acc.SimpleUpdate("users", "liked = liked - ?", where),
 			//recalcLastLiked: acc...
-			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", "uid = ?"),
+			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", where),
 
-			setPassword: acc.SimpleUpdate("users", "password = ?, salt = ?", "uid = ?"),
+			setPassword: acc.SimpleUpdate("users", "password = ?, salt = ?", where),
 		}
 		return acc.FirstError()
 	})
@@ -231,10 +232,15 @@ func (user *User) Delete() error {
 	return err
 }
 
-func (user *User) ChangeName(username string) (err error) {
-	_, err = userStmts.setUsername.Exec(username, user.ID)
+func (user *User) bindStmt(stmt *sql.Stmt, params ...interface{}) (err error) {
+	params = append(params, user.ID)
+	_, err = stmt.Exec(params...)
 	user.CacheRemove()
 	return err
+}
+
+func (user *User) ChangeName(username string) (err error) {
+	return user.bindStmt(userStmts.setUsername, username)
 }
 
 func (user *User) ChangeAvatar(avatar string) (err error) {

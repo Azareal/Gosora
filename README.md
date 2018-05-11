@@ -31,7 +31,7 @@ Other modern features like alerts, likes, advanced dashboard with live stats (CP
 
 # Dependencies
 
-Go 1.9 - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
+Go 1.10 - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
 MySQL Database - You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL. You could use something like WNMP / XAMPP which have a little PHP script called PhpMyAdmin for managing MySQL databases or you could install MariaDB directly.
 
@@ -48,6 +48,8 @@ It's entirely possible that your host might already have MySQL, so you might be 
 
 At some point, we'll have releases which you can download, but right now, you'll have to use the `git clone` command as mentioned down in the advanced setup section to download a copy of Gosora.
 
+On Windows, you might also want to try the [GosoraBootstrapper](https://github.com/Azareal/GosoraBootstrapper), if you can't find the command prompt. It's just a matter of double-clicking on the bat file there and it'll download the rest of the files for you.
+
 
 # Installation Instructions
 
@@ -61,7 +63,7 @@ Follow the instructions shown on the screen.
 
 *Windows*
 
-Run install.bat
+Run install.bat, e.g. double-click on it. You will also have to start-up MySQL, which if you're using Wnmp or friends is just a matter of opening that program and starting the MySQL process via it.
 
 Follow the instructions shown on the screen.
 
@@ -74,7 +76,7 @@ In the same directory you installed it, you simply have to type: ./run-linux
 
 *Windows*
 
-Run run.bat
+Run run.bat, e.g. double-clicking on it.
 
 *Updating Dependencies*
 
@@ -96,6 +98,8 @@ This section explains how to set things up without running the batch or shell fi
 Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms. Additionally, Linux doesn't require `StackExchange/wmi` or `/x/sys/windows`
 
 You also need to substitute the `gosora.exe` bits for `./Gosora` on Linux. For more info, you might want to take a gander inside the `./run-linux` and `./install-linux` shell files to see how they're implemented.
+
+If you want to skip typing all the `go get`s, you can run `./update-deps.bat` (Windows) or `./update-deps-linux` to do that for you.
 
 ```bash
 git clone https://github.com/Azareal/Gosora
@@ -152,6 +156,17 @@ I'm looking into minimising the number of go gets for the advanced build and to 
 The update system is currently under development, however if you have Git installed, then you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
 
 In addition to this, you can update the dependencies without updating Gosora by running `update-deps.bat` or `./update-deps-linux` (.bat is for Windows, the other for Linux as the names would suggest).
+
+If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first have to create a copy of `./schema/schema.json` named `./schema/lastSchema.json`, and then, you'll overwrite the files with the new ones.
+
+After that, you'll need to run `go build ./patcher` on Windows or the following code block on Linux:
+```
+cd ./patcher
+go build -o Patcher
+mv ./Patcher ..
+```
+
+Once you've done that, you just need to run `patcher.exe` (Windows) or `./Patcher` to apply the latest patches to the database, etc.
 
 
 # How do I install plugins?

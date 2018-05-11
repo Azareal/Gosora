@@ -78,7 +78,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
-	menuHold := common.Menus.Get(1)
+	menuHold, err := common.Menus.Get(1)
+	if err != nil {
+		return err
+	}
 	fmt.Printf("menuHold: %+v\n", menuHold)
 	var b bytes.Buffer
 	menuHold.Build(&b, &common.GuestUser)

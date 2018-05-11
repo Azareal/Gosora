@@ -212,7 +212,7 @@ func (theme *Theme) LoadStaticFiles() error {
 }
 
 func (theme *Theme) AddThemeStaticFiles() error {
-	phraseMap := GetCSSPhrases()
+	phraseMap := GetTmplPhrases()
 	// TODO: Use a function instead of a closure to make this more testable? What about a function call inside the closure to take the theme variable into account?
 	return filepath.Walk("./themes/"+theme.Name+"/public", func(path string, f os.FileInfo, err error) error {
 		DebugLog("Attempting to add static file '" + path + "' for default theme '" + theme.Name + "'")

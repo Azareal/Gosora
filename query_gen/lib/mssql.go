@@ -44,6 +44,18 @@ func (adapter *MssqlAdapter) DbVersion() string {
 	return "SELECT CONCAT(SERVERPROPERTY('productversion'), SERVERPROPERTY ('productlevel'), SERVERPROPERTY ('edition'))"
 }
 
+func (adapter *MssqlAdapter) DropTable(name string, table string) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	querystr := "DROP TABLE IF EXISTS [" + table + "];"
+	adapter.pushStatement(name, "drop-table", querystr)
+	return querystr, nil
+}
+
 // TODO: Convert any remaining stringy types to nvarchar
 // We may need to change the CreateTable API to better suit Mssql and the other database drivers which are coming up
 func (adapter *MssqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
