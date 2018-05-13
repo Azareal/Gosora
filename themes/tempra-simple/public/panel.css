@@ -118,9 +118,8 @@
 	display: none;
 }
 
-/* TODO: Figure out how to handle this on the Control Panel */
-.footer {
-	display: none;
+.colstack_item + .panel_submitrow {
+	margin-bottom: 0px;
 }
 
 #panel_word_filters .itemSeparator:before {

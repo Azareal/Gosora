@@ -180,6 +180,19 @@
 	content: "{{index .Phrases "panel_perms_default" }}";
 }
 
+.panel_submitrow .rowitem {
+	display: flex;
+}
+.panel_submitrow .rowitem *:first-child {
+	margin-left: auto;
+}
+.panel_submitrow .rowitem *:last-child {
+	margin-right: auto;
+}
+.panel_submitrow .rowitem button {
+	margin-top: 0px;
+}
+
 .colstack_graph_holder {
 	background-color: var(--element-background-color);
 	border: 1px solid var(--element-border-color);

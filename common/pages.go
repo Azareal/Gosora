@@ -276,7 +276,7 @@ type PanelMenuPage struct {
 	*Header
 	Stats    PanelStats
 	Zone     string
-	ID       int
+	MenuID   int
 	ItemList []MenuItem
 }
 

@@ -1,8 +1,8 @@
 package main
 
-import "./common"
+import "../common"
 
-func init() {
+func Config() {
 	// Site Info
 	common.Site.ShortName = "Ts" // This should be less than three letters to fit in the navbar
 	common.Site.Name = "Test Site"

@@ -59,7 +59,7 @@ func (store *DefaultMenuStore) Load(mid int) error {
 	if err != nil {
 		return err
 	}
-	hold := &MenuListHolder{mlist, make(map[int]menuTmpl)}
+	hold := &MenuListHolder{mid, mlist, make(map[int]menuTmpl)}
 	err = hold.Preparse()
 	if err != nil {
 		return err

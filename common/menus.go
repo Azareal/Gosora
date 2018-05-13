@@ -14,6 +14,7 @@ import (
 type MenuItemList []MenuItem
 
 type MenuListHolder struct {
+	MenuID     int
 	List       MenuItemList
 	Variations map[int]menuTmpl // 0 = Guest Menu, 1 = Member Menu, 2 = Super Mod Menu, 3 = Admin Menu
 }
@@ -43,8 +44,12 @@ type MenuItem struct {
 	AdminOnly    bool
 }
 
+// TODO: Move the menu item stuff to it's own file
 type MenuItemStmts struct {
-	update *sql.Stmt
+	update      *sql.Stmt
+	insert      *sql.Stmt
+	delete      *sql.Stmt
+	updateOrder *sql.Stmt
 }
 
 var menuItemStmts MenuItemStmts
@@ -52,7 +57,10 @@ var menuItemStmts MenuItemStmts
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		menuItemStmts = MenuItemStmts{
-			update: acc.Update("menu_items").Set("name = ?, htmlID = ?, cssClass = ?, position = ?, path = ?, aria = ?, tooltip = ?, tmplName = ?, guestOnly = ?, memberOnly = ?, staffOnly = ?, adminOnly = ?").Where("miid = ?").Prepare(),
+			update:      acc.Update("menu_items").Set("name = ?, htmlID = ?, cssClass = ?, position = ?, path = ?, aria = ?, tooltip = ?, tmplName = ?, guestOnly = ?, memberOnly = ?, staffOnly = ?, adminOnly = ?").Where("miid = ?").Prepare(),
+			insert:      acc.Insert("menu_items").Columns("mid, name, htmlID, cssClass, position, path, aria, tooltip, tmplName, guestOnly, memberOnly, staffOnly, adminOnly").Fields("?,?,?,?,?,?,?,?,?,?,?,?,?").Prepare(),
+			delete:      acc.Delete("menu_items").Where("miid = ?").Prepare(),
+			updateOrder: acc.Update("menu_items").Set("order = ?").Where("miid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -64,12 +72,41 @@ func (item MenuItem) Commit() error {
 	return err
 }
 
+func (item MenuItem) Create() (int, error) {
+	res, err := menuItemStmts.insert.Exec(item.MenuID, item.Name, item.HTMLID, item.CSSClass, item.Position, item.Path, item.Aria, item.Tooltip, item.TmplName, item.GuestOnly, item.MemberOnly, item.SuperModOnly, item.AdminOnly)
+	if err != nil {
+		return 0, err
+	}
+	Menus.Load(item.MenuID)
+
+	miid64, err := res.LastInsertId()
+	return int(miid64), err
+}
+
+func (item MenuItem) Delete() error {
+	_, err := menuItemStmts.delete.Exec(item.ID)
+	Menus.Load(item.MenuID)
+	return err
+}
+
 func (hold *MenuListHolder) LoadTmpl(name string) (menuTmpl MenuTmpl, err error) {
 	data, err := ioutil.ReadFile("./templates/" + name + ".html")
 	if err != nil {
 		return menuTmpl, err
 	}
 	return hold.Parse(name, data), nil
+}
+
+// TODO: Make this atomic, maybe with a transaction or store the order on the menu itself?
+func (hold *MenuListHolder) UpdateOrder(updateMap map[int]int) error {
+	for miid, order := range updateMap {
+		_, err := menuItemStmts.updateOrder.Exec(order, miid)
+		if err != nil {
+			return err
+		}
+	}
+	Menus.Load(hold.MenuID)
+	return nil
 }
 
 func (hold *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, err error) {

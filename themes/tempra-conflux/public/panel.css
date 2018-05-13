@@ -102,6 +102,9 @@
 	padding-left: 2px;
 	padding-right: 2px;
 }
+.colstack_item + .panel_submitrow {
+	margin-bottom: 0px;
+}
 
 .ct_chart {
 	padding-left: 10px;

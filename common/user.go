@@ -1,7 +1,7 @@
 /*
 *
 *	Gosora User File
-*	Copyright Azareal 2017 - 2018
+*	Copyright Azareal 2017 - 2019
 *
  */
 package common
@@ -88,7 +88,7 @@ func init() {
 			activate:           acc.SimpleUpdate("users", "active = 1", where),
 			changeGroup:        acc.SimpleUpdate("users", "group = ?", where), // TODO: Implement user_count for users_groups here
 			delete:             acc.SimpleDelete("users", where),
-			setAvatar:          acc.SimpleUpdate("users", "avatar = ?", where),
+			setAvatar:          acc.Update("users").Set("avatar = ?").Where(where).Prepare(),
 			setUsername:        acc.Update("users").Set("name = ?").Where(where).Prepare(),
 			incrementTopics:    acc.SimpleUpdate("users", "topics =  topics + ?", where),
 			updateLevel:        acc.SimpleUpdate("users", "level = ?", where),
@@ -101,7 +101,7 @@ func init() {
 			//recalcLastLiked: acc...
 			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", where),
 
-			setPassword: acc.SimpleUpdate("users", "password = ?, salt = ?", where),
+			setPassword: acc.Update("users").Set("password = ?, salt = ?").Where(where).Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -244,9 +244,7 @@ func (user *User) ChangeName(username string) (err error) {
 }
 
 func (user *User) ChangeAvatar(avatar string) (err error) {
-	_, err = userStmts.setAvatar.Exec(avatar, user.ID)
-	user.CacheRemove()
-	return err
+	return user.bindStmt(userStmts.setAvatar, avatar)
 }
 
 func (user *User) ChangeGroup(group int) (err error) {

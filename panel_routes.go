@@ -2417,6 +2417,7 @@ func routePanelThemesMenusEdit(w http.ResponseWriter, r *http.Request, user comm
 	}
 	// TODO: Something like Menu #1 for the title?
 	header.Title = common.GetTitlePhrase("panel_themes_menus_edit")
+	header.AddScript("Sortable-1.4.0/Sortable.min.js")
 
 	mid, err := strconv.Atoi(smid)
 	if err != nil {
@@ -2481,29 +2482,7 @@ func routePanelThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c
 	return panelRenderTemplate("panel_themes_menus_item_edit", w, r, user, &pi)
 }
 
-func routePanelThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
-	_, ferr := common.SimplePanelUserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
-	isJs := (r.PostFormValue("js") == "1")
-	if !user.Perms.ManageThemes {
-		return common.NoPermissionsJSQ(w, r, user, isJs)
-	}
-
-	itemID, err := strconv.Atoi(sitemID)
-	if err != nil {
-		return common.LocalErrorJSQ("Invalid integer", w, r, user, isJs)
-	}
-
-	menuItem, err := common.Menus.ItemStore().Get(itemID)
-	if err == ErrNoRows {
-		return common.LocalErrorJSQ("This item doesn't exist.", w, r, user, isJs)
-	} else if err != nil {
-		return common.InternalErrorJSQ(err, w, r, isJs)
-	}
-	//menuItem = menuItem.Copy() // If we switch this for a pointer, we might need this as a scratchpad
-
+func routePanelThemesMenuItemSetters(r *http.Request, menuItem common.MenuItem) common.MenuItem {
 	var getItem = func(name string) string {
 		return html.EscapeString(strings.Replace(r.PostFormValue("item-"+name), "\n", "", -1))
 	}
@@ -2519,8 +2498,7 @@ func routePanelThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, 
 	menuItem.Tooltip = getItem("tooltip")
 	menuItem.TmplName = getItem("tmplname")
 
-	var perms = getItem("permissions")
-	switch perms {
+	switch getItem("permissions") {
 	case "everyone":
 		menuItem.GuestOnly = false
 		menuItem.MemberOnly = false
@@ -2547,12 +2525,132 @@ func routePanelThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, 
 		menuItem.SuperModOnly = true
 		menuItem.AdminOnly = true
 	}
+	return menuItem
+}
+
+func routePanelThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	isJs := (r.PostFormValue("js") == "1")
+	if !user.Perms.ManageThemes {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+
+	itemID, err := strconv.Atoi(sitemID)
+	if err != nil {
+		return common.LocalErrorJSQ("Invalid integer", w, r, user, isJs)
+	}
+
+	menuItem, err := common.Menus.ItemStore().Get(itemID)
+	if err == ErrNoRows {
+		return common.LocalErrorJSQ("This item doesn't exist.", w, r, user, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+	//menuItem = menuItem.Copy() // If we switch this for a pointer, we might need this as a scratchpad
+	menuItem = routePanelThemesMenuItemSetters(r, menuItem)
 
 	err = menuItem.Commit()
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 	return panelSuccessRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
+}
+
+func routePanelThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	isJs := (r.PostFormValue("js") == "1")
+	if !user.Perms.ManageThemes {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+	smenuID := r.PostFormValue("mid")
+	if smenuID == "" {
+		return common.LocalErrorJSQ("No menuID provided", w, r, user, isJs)
+	}
+	menuID, err := strconv.Atoi(smenuID)
+	if err != nil {
+		return common.LocalErrorJSQ("Invalid integer", w, r, user, isJs)
+	}
+
+	menuItem := common.MenuItem{MenuID: menuID}
+	menuItem = routePanelThemesMenuItemSetters(r, menuItem)
+	itemID, err := menuItem.Create()
+	if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+	return panelSuccessRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
+}
+
+func routePanelThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	isJs := (r.PostFormValue("js") == "1")
+	if !user.Perms.ManageThemes {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+
+	itemID, err := strconv.Atoi(sitemID)
+	if err != nil {
+		return common.LocalErrorJSQ("Invalid integer", w, r, user, isJs)
+	}
+	menuItem, err := common.Menus.ItemStore().Get(itemID)
+	if err == ErrNoRows {
+		return common.LocalErrorJSQ("This item doesn't exist.", w, r, user, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+	//menuItem = menuItem.Copy() // If we switch this for a pointer, we might need this as a scratchpad
+
+	err = menuItem.Delete()
+	if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+	return panelSuccessRedirect("/panel/themes/menus/", w, r, isJs)
+}
+
+func routePanelThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user common.User, smid string) common.RouteError {
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	isJs := (r.PostFormValue("js") == "1")
+	if !user.Perms.ManageThemes {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+
+	mid, err := strconv.Atoi(smid)
+	if err != nil {
+		return common.LocalErrorJSQ("Invalid integer", w, r, user, isJs)
+	}
+	menuHold, err := common.Menus.Get(mid)
+	if err == ErrNoRows {
+		return common.LocalErrorJSQ("Can't find menu", w, r, user, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	sitems := strings.TrimSuffix(strings.TrimPrefix(r.PostFormValue("items"), "{"), "}")
+	fmt.Printf("sitems: %+v\n", sitems)
+
+	var updateMap = make(map[int]int)
+	for index, smiid := range strings.Split(sitems, ",") {
+		miid, err := strconv.Atoi(smiid)
+		if err != nil {
+			return common.LocalErrorJSQ("Invalid integer in menu item list", w, r, user, isJs)
+		}
+		updateMap[miid] = index
+	}
+	menuHold.UpdateOrder(updateMap)
+
+	return panelSuccessRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, isJs)
 }
 
 func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User, backupURL string) common.RouteError {

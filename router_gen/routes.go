@@ -157,6 +157,9 @@ func buildPanelRoutes() {
 		View("routePanelThemesMenusEdit", "/panel/themes/menus/edit/", "extraData"),
 		View("routePanelThemesMenuItemEdit", "/panel/themes/menus/item/edit/", "extraData"),
 		Action("routePanelThemesMenuItemEditSubmit", "/panel/themes/menus/item/edit/submit/", "extraData"),
+		Action("routePanelThemesMenuItemCreateSubmit", "/panel/themes/menus/item/create/submit/"),
+		Action("routePanelThemesMenuItemDeleteSubmit", "/panel/themes/menus/item/delete/submit/", "extraData"),
+		Action("routePanelThemesMenuItemOrderSubmit", "/panel/themes/menus/item/order/edit/submit/", "extraData"),
 
 		View("routePanelPlugins", "/panel/plugins/"),
 		Action("routePanelPluginsActivate", "/panel/plugins/activate/", "extraData"),

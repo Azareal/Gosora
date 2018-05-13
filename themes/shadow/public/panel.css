@@ -68,6 +68,20 @@
 	padding-right: 2px;
 }
 
+.panel_submitrow {
+	display: flex;
+}
+.panel_submitrow *:first-child {
+	margin-left: auto;
+}
+.panel_submitrow *:last-child {
+	margin-right: auto;
+}
+.panel_submitrow button {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
 .colstack_graph_holder {
 	background-color: var(--main-block-color);
 	padding: 10px;
