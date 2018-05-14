@@ -107,7 +107,6 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	if c.config.Debug {
 		fmt.Println("Compiling template '" + name + "'")
 	}
-
 	c.importMap = map[string]string{}
 	for index, item := range c.baseImportMap {
 		c.importMap[index] = item
@@ -135,7 +134,6 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 			return "", err
 		}
 	}
-
 	content := string(res)
 	if c.config.Minify {
 		content = minify(content)
@@ -149,7 +147,6 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	}
 	c.detail(name)
 
-	out = ""
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
 	c.templateList = map[string]*parse.Tree{fname: tree}
 	varholder := "tmpl_" + fname + "_vars"
@@ -212,7 +209,7 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	if len(c.langIndexToName) > 0 {
 		fout += "var phrases = common.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
 	}
-	fout += varString + out + "\treturn nil\n}\n"
+	fout += varString + out + "return nil\n}\n"
 
 	fout = strings.Replace(fout, `))
 w.Write([]byte(`, " + ", -1)
@@ -278,7 +275,6 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 			c.detail("Selected Branch 1")
 			return out + "\n"
 		}
-
 		c.detail("Selected Branch 2")
 		return out + " else {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.ElseList) + "}\n"
 	case *parse.ListNode:
@@ -947,7 +943,6 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 			log.Fatal(err)
 		}
 	}
-
 	content := string(res)
 	if c.config.Minify {
 		content = minify(content)

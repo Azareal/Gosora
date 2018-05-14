@@ -11,7 +11,7 @@ import (
 	"../common"
 )
 
-var cacheControlMaxAge = "max-age=" + strconv.Itoa(common.Day) // TODO: Make this a common.Config value
+var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(common.Day)) // TODO: Make this a common.Config value
 
 // GET functions
 func StaticFile(w http.ResponseWriter, r *http.Request) {

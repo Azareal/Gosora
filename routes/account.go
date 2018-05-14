@@ -1,9 +1,13 @@
 package routes
 
 import (
+	"database/sql"
 	"html"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -182,5 +186,174 @@ func AccountEditCritical(w http.ResponseWriter, r *http.Request, user common.Use
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	return nil
+}
+
+func AccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	_, ferr := common.SimpleUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	var realPassword, salt string
+	currentPassword := r.PostFormValue("account-current-password")
+	newPassword := r.PostFormValue("account-new-password")
+	confirmPassword := r.PostFormValue("account-confirm-password")
+
+	// TODO: Use a reusable statement
+	acc := qgen.Builder.Accumulator()
+	err := acc.Select("users").Columns("password, salt").Where("uid = ?").QueryRow(user.ID).Scan(&realPassword, &salt)
+	if err == sql.ErrNoRows {
+		return common.LocalError("Your account no longer exists.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	err = common.CheckPassword(realPassword, currentPassword, salt)
+	if err == common.ErrMismatchedHashAndPassword {
+		return common.LocalError("That's not the correct password.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	if newPassword != confirmPassword {
+		return common.LocalError("The two passwords don't match.", w, r, user)
+	}
+	common.SetPassword(user.ID, newPassword)
+
+	// Log the user out as a safety precaution
+	common.Auth.ForceLogout(user.ID)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
+}
+
+func AccountEditAvatar(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, ferr := common.UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	pi := common.Page{"Edit Avatar", user, headerVars, tList, nil}
+	if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
+		return nil
+	}
+	err := common.Templates.ExecuteTemplate(w, "account_own_edit_avatar.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, ferr := common.UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	var filename, ext string
+	for _, fheaders := range r.MultipartForm.File {
+		for _, hdr := range fheaders {
+			if hdr.Filename == "" {
+				continue
+			}
+			infile, err := hdr.Open()
+			if err != nil {
+				return common.LocalError("Upload failed", w, r, user)
+			}
+			defer infile.Close()
+
+			// We don't want multiple files
+			// TODO: Check the length of r.MultipartForm.File and error rather than doing this x.x
+			if filename != "" {
+				if filename != hdr.Filename {
+					os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
+					return common.LocalError("You may only upload one avatar", w, r, user)
+				}
+			} else {
+				filename = hdr.Filename
+			}
+
+			if ext == "" {
+				extarr := strings.Split(hdr.Filename, ".")
+				if len(extarr) < 2 {
+					return common.LocalError("Bad file", w, r, user)
+				}
+				ext = extarr[len(extarr)-1]
+
+				// TODO: Can we do this without a regex?
+				reg, err := regexp.Compile("[^A-Za-z0-9]+")
+				if err != nil {
+					return common.LocalError("Bad file extension", w, r, user)
+				}
+				ext = reg.ReplaceAllString(ext, "")
+				ext = strings.ToLower(ext)
+			}
+
+			outfile, err := os.Create("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
+			if err != nil {
+				return common.LocalError("Upload failed [File Creation Failed]", w, r, user)
+			}
+			defer outfile.Close()
+
+			_, err = io.Copy(outfile, infile)
+			if err != nil {
+				return common.LocalError("Upload failed [Copy Failed]", w, r, user)
+			}
+		}
+	}
+	if ext == "" {
+		return common.LocalError("No file", w, r, user)
+	}
+
+	err := user.ChangeAvatar("." + ext)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
+	headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_avatar_updated"))
+
+	pi := common.Page{"Edit Avatar", user, headerVars, tList, nil}
+	if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
+		return nil
+	}
+	err = common.Templates.ExecuteTemplate(w, "account_own_edit_avatar.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func AccountEditUsername(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, ferr := common.UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if r.FormValue("updated") == "1" {
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_username_updated"))
+	}
+
+	pi := common.Page{"Edit Username", user, headerVars, tList, user.Name}
+	if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
+		return nil
+	}
+	err := common.Templates.ExecuteTemplate(w, "account_own_edit_username.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func AccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	_, ferr := common.SimpleUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	newUsername := html.EscapeString(strings.Replace(r.PostFormValue("account-new-username"), "\n", "", -1))
+	err := user.ChangeName(newUsername)
+	if err != nil {
+		return common.LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)
+	}
+
+	http.Redirect(w, r, "/user/edit/username/?updated=1", http.StatusSeeOther)
 	return nil
 }

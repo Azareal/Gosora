@@ -168,6 +168,13 @@ func nextCharIs(tmplData []byte, i int, expects byte) bool {
 	return tmplData[i+1] == expects
 }
 
+func peekNextChar(tmplData []byte, i int) byte {
+	if len(tmplData) <= (i + 1) {
+		return 0
+	}
+	return tmplData[i+1]
+}
+
 func skipUntilIfExists(tmplData []byte, i int, expects byte) (newI int, hasIt bool) {
 	j := i
 	for ; j < len(tmplData); j++ {
@@ -182,12 +189,45 @@ func skipUntilCharsExist(tmplData []byte, i int, expects []byte) (newI int, hasI
 	j := i
 	expectIndex := 0
 	for ; j < len(tmplData) && expectIndex < len(expects); j++ {
+		//fmt.Println("tmplData[j]: ", string(tmplData[j]))
 		if tmplData[j] != expects[expectIndex] {
 			return j, false
 		}
+		//fmt.Printf("found %+v at %d\n", string(expects[expectIndex]), expectIndex)
 		expectIndex++
 	}
 	return j, true
+}
+
+func skipAllUntilCharsExist(tmplData []byte, i int, expects []byte) (newI int, hasIt bool) {
+	j := i
+	expectIndex := 0
+	//fmt.Printf("tmplData: %+v\n", string(tmplData))
+	for ; j < len(tmplData) && expectIndex < len(expects); j++ {
+		//fmt.Println("tmplData[j]: ", string(tmplData[j]) + " ")
+		if tmplData[j] == expects[expectIndex] {
+			//fmt.Printf("expects[expectIndex]: %+v - %d\n", string(expects[expectIndex]), expectIndex)
+			expectIndex++
+			if len(expects) <= expectIndex {
+				//fmt.Println("breaking")
+				break
+			}
+		} else {
+			/*if expectIndex != 0 {
+				fmt.Println("broke expectations")
+				fmt.Println("expected: ", string(expects[expectIndex]))
+				fmt.Println("got: ", string(tmplData[j]))
+				fmt.Println("next: ", string(peekNextChar(tmplData, j)))
+				fmt.Println("next: ", string(peekNextChar(tmplData, j+1)))
+				fmt.Println("next: ", string(peekNextChar(tmplData, j+2)))
+				fmt.Println("next: ", string(peekNextChar(tmplData, j+3)))
+			}*/
+			expectIndex = 0
+		}
+	}
+	//fmt.Println("len(expects): ", len(expects))
+	//fmt.Println("expectIndex: ", expectIndex)
+	return j, len(expects) == expectIndex
 }
 
 type menuRenderItem struct {

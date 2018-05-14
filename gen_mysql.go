@@ -11,7 +11,6 @@ import "./common"
 
 // nolint
 type Stmts struct {
-	getPassword *sql.Stmt
 	isPluginActive *sql.Stmt
 	getUsersOffset *sql.Stmt
 	isThemeDefault *sql.Stmt
@@ -61,13 +60,6 @@ type Stmts struct {
 func _gen_mysql() (err error) {
 	common.DebugLog("Building the generated statements")
 	
-	common.DebugLog("Preparing getPassword statement.")
-	stmts.getPassword, err = db.Prepare("SELECT `password`,`salt` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		log.Print("Error in getPassword statement.")
-		return err
-	}
-		
 	common.DebugLog("Preparing isPluginActive statement.")
 	stmts.isPluginActive, err = db.Prepare("SELECT `active` FROM `plugins` WHERE `uname` = ?")
 	if err != nil {

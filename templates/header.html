@@ -38,5 +38,5 @@
 			<div class="right_of_nav">{{dock "rightOfNav" .Header }}</div>
 			<div id="back"><div id="main" {{if .Header.Widgets.RightSidebar}}class="shrink_main"{{end}}>
 			<div class="alertbox">{{range .Header.NoticeList}}
-				<div class="alert">{{.}}</div>{{end}}
+				{{template "notice.html" . }}{{end}}
 			</div>

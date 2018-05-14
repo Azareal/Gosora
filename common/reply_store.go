@@ -15,8 +15,7 @@ type SQLReplyStore struct {
 	create *sql.Stmt
 }
 
-func NewSQLReplyStore() (*SQLReplyStore, error) {
-	acc := qgen.Builder.Accumulator()
+func NewSQLReplyStore(acc *qgen.Accumulator) (*SQLReplyStore, error) {
 	return &SQLReplyStore{
 		get:    acc.Select("replies").Columns("tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount").Where("rid = ?").Prepare(),
 		create: acc.Insert("replies").Columns("tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?").Prepare(),

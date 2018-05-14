@@ -49,9 +49,12 @@ function bindToAlerts() {
 	});
 }
 
+var alertsInitted = false;
 // TODO: Add the ability for users to dismiss alerts
 function loadAlerts(menuAlerts)
 {
+	if(!alertsInitted) return;
+
 	var alertListNode = menuAlerts.getElementsByClassName("alertList")[0];
 	var alertCounterNode = menuAlerts.getElementsByClassName("alert_counter")[0];
 	alertCounterNode.textContent = "0";
@@ -59,7 +62,7 @@ function loadAlerts(menuAlerts)
 		type: 'get',
 		dataType: 'json',
 		url:'/api/?action=get&module=alerts',
-		success: function(data) {
+		success: (data) => {
 			if("errmsg" in data) {
 				alertListNode.innerHTML = "<div class='alertItem'>"+data.errmsg+"</div>";
 				return;
@@ -76,14 +79,12 @@ function loadAlerts(menuAlerts)
 						//console.log("Sub #" + i + ":",msg.sub[i]);
 					}
 				}
-
-				if("avatar" in msg) {
-					alist += "<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><img src='"+msg.avatar+"' class='bgsub' /><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>";
-					alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+msg.avatar+"\");'><img src='"+msg.avatar+"' class='bgsub' /><a class='text' data-asid='"+msg.asid+"' href=\""+msg.path+"\">"+mmsg+"</a></div>");
-				} else {
-					alist += "<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>";
-					alertList.push("<div class='alertItem'><a href=\""+msg.path+"\" class='text'>"+mmsg+"</a></div>");
-				}
+				alist += Template_alert({
+					ASID: msg.asid || 0,
+					Path: msg.path,
+					Avatar: msg.avatar || "",
+					Message: mmsg
+				})
 				//console.log(msg);
 				//console.log(mmsg);
 			}
@@ -101,7 +102,7 @@ function loadAlerts(menuAlerts)
 
 			bindToAlerts();
 		},
-		error: function(magic,theStatus,error) {
+		error: (magic,theStatus,error) => {
 			let errtxt
 			try {
 				var data = JSON.parse(magic.responseText);
@@ -218,6 +219,14 @@ function runWebSockets() {
 
 $(document).ready(function(){
 	runHook("start_init");
+	$.getScript( "./static/template_alert.js", () => {
+		console.log("Loaded template_alert.js");
+		alertsInitted = true;
+		var alertMenuList = document.getElementsByClassName("menu_alerts");
+		for(var i = 0; i < alertMenuList.length; i++) {
+			loadAlerts(alertMenuList[i]);
+		}
+	});
 	if(window["WebSocket"]) runWebSockets();
 	else conn = false;
 
@@ -444,11 +453,6 @@ $(document).ready(function(){
 			$("#back").removeClass("alertActive");
 		}
 	});
-
-	var alertMenuList = document.getElementsByClassName("menu_alerts");
-	for(var i = 0; i < alertMenuList.length; i++) {
-		loadAlerts(alertMenuList[i]);
-	}
 
 	$(".menu_alerts").click(function(event) {
 		event.stopPropagation();

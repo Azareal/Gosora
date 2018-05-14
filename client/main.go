@@ -4,7 +4,8 @@ import (
 	"bytes"
 
 	"../common"
-	"../tmpl_gen/client"
+	"../common/alerts"
+	"../tmpl_gen"
 	"github.com/gopherjs/gopherjs/js"
 )
 
@@ -19,7 +20,7 @@ func main() {
 
 	js.Global.Set("renderAlert", func(asid int, path string, msg string, avatar string) string {
 		var buf bytes.Buffer
-		alertItem := common.AlertItem{asid, path, msg, avatar}
+		alertItem := alerts.AlertItem{asid, path, msg, avatar}
 		err := tmpl.Template_alert(alertItem, &buf)
 		if err != nil {
 			println(err.Error())

@@ -59,13 +59,6 @@ type ExtData struct {
 	sync.RWMutex
 }
 
-type AlertItem struct {
-	ASID    int
-	Path    string
-	Message string
-	Avatar  string
-}
-
 type Page struct {
 	Title       string
 	CurrentUser User

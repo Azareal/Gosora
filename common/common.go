@@ -8,16 +8,16 @@ import (
 )
 
 // nolint I don't want to write comments for each of these o.o
-const Hour int = 60 * 60
-const Day int = Hour * 24
-const Week int = Day * 7
-const Month int = Day * 30
-const Year int = Day * 365
-const Kilobyte int = 1024
-const Megabyte int = Kilobyte * 1024
-const Gigabyte int = Megabyte * 1024
-const Terabyte int = Gigabyte * 1024
-const Petabyte int = Terabyte * 1024
+const Hour int64 = 60 * 60
+const Day int64 = Hour * 24
+const Week int64 = Day * 7
+const Month int64 = Day * 30
+const Year int64 = Day * 365
+const Kilobyte int64 = 1024
+const Megabyte int64 = Kilobyte * 1024
+const Gigabyte int64 = Megabyte * 1024
+const Terabyte int64 = Gigabyte * 1024
+const Petabyte int64 = Terabyte * 1024
 
 const SaltLength int = 32
 const SessionLength int = 80

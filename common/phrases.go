@@ -100,7 +100,6 @@ func InitPhrases() error {
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}

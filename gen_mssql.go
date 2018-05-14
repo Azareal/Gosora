@@ -9,7 +9,6 @@ import "./common"
 
 // nolint
 type Stmts struct {
-	getPassword *sql.Stmt
 	isPluginActive *sql.Stmt
 	getUsersOffset *sql.Stmt
 	isThemeDefault *sql.Stmt
@@ -59,14 +58,6 @@ type Stmts struct {
 func _gen_mssql() (err error) {
 	common.DebugLog("Building the generated statements")
 	
-	common.DebugLog("Preparing getPassword statement.")
-	stmts.getPassword, err = db.Prepare("SELECT [password],[salt] FROM [users] WHERE [uid] = ?1")
-	if err != nil {
-		log.Print("Error in getPassword statement.")
-		log.Print("Bad Query: ","SELECT [password],[salt] FROM [users] WHERE [uid] = ?1")
-		return err
-	}
-		
 	common.DebugLog("Preparing isPluginActive statement.")
 	stmts.isPluginActive, err = db.Prepare("SELECT [active] FROM [plugins] WHERE [uname] = ?1")
 	if err != nil {

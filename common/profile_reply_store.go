@@ -20,8 +20,7 @@ type SQLProfileReplyStore struct {
 	create *sql.Stmt
 }
 
-func NewSQLProfileReplyStore() (*SQLProfileReplyStore, error) {
-	acc := qgen.Builder.Accumulator()
+func NewSQLProfileReplyStore(acc *qgen.Accumulator) (*SQLProfileReplyStore, error) {
 	return &SQLProfileReplyStore{
 		get:    acc.Select("users_replies").Columns("uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress").Where("rid = ?").Prepare(),
 		create: acc.Insert("users_replies").Columns("uid, content, parsed_content, createdAt, createdBy, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?,?").Prepare(),

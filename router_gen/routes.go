@@ -41,11 +41,11 @@ func buildUserRoutes() {
 	userGroup.Routes(
 		View("routes.ViewProfile", "/user/").LitBefore("req.URL.Path += extraData"),
 		MemberView("routes.AccountEditCritical", "/user/edit/critical/"),
-		Action("routeAccountEditCriticalSubmit", "/user/edit/critical/submit/"), // TODO: Full test this
-		MemberView("routeAccountEditAvatar", "/user/edit/avatar/"),
-		UploadAction("routeAccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("common.Config.MaxRequestSize"),
-		MemberView("routeAccountEditUsername", "/user/edit/username/"),
-		Action("routeAccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
+		Action("routes.AccountEditCriticalSubmit", "/user/edit/critical/submit/"), // TODO: Full test this
+		MemberView("routes.AccountEditAvatar", "/user/edit/avatar/"),
+		UploadAction("routes.AccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("int(common.Config.MaxRequestSize)"),
+		MemberView("routes.AccountEditUsername", "/user/edit/username/"),
+		Action("routes.AccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
 		MemberView("routeAccountEditEmail", "/user/edit/email/"),
 		Action("routeAccountEditEmailTokenSubmit", "/user/edit/token/", "extraData"),
 	)
@@ -66,7 +66,7 @@ func buildTopicRoutes() {
 	topicGroup := newRouteGroup("/topic/")
 	topicGroup.Routes(
 		View("routes.ViewTopic", "/topic/", "extraData"),
-		UploadAction("routes.CreateTopicSubmit", "/topic/create/submit/").MaxSizeVar("common.Config.MaxRequestSize"),
+		UploadAction("routes.CreateTopicSubmit", "/topic/create/submit/").MaxSizeVar("int(common.Config.MaxRequestSize)"),
 		Action("routes.EditTopicSubmit", "/topic/edit/submit/", "extraData"),
 		Action("routes.DeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
 		Action("routes.StickTopicSubmit", "/topic/stick/submit/", "extraData"),
@@ -85,7 +85,7 @@ func buildReplyRoutes() {
 	replyGroup := newRouteGroup("/reply/")
 	replyGroup.Routes(
 		// TODO: Reduce this to 1MB for attachments for each file?
-		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("common.Config.MaxRequestSize"), // TODO: Rename the route so it's /reply/create/submit/
+		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("int(common.Config.MaxRequestSize)"), // TODO: Rename the route so it's /reply/create/submit/
 		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
 		Action("routes.ReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
 		Action("routeReplyLikeSubmit", "/reply/like/submit/", "extraData").Before("ParseForm"),

@@ -132,6 +132,27 @@ func (selectItem *AccSelectBuilder) Query(args ...interface{}) (*sql.Rows, error
 	return nil, selectItem.build.FirstError()
 }
 
+type AccRowWrap struct {
+	row *sql.Row
+	err error
+}
+
+func (wrap *AccRowWrap) Scan(dest ...interface{}) error {
+	if wrap.err != nil {
+		return wrap.err
+	}
+	return wrap.row.Scan(dest...)
+}
+
+// TODO: Test to make sure the errors are passed up properly
+func (selectItem *AccSelectBuilder) QueryRow(args ...interface{}) *AccRowWrap {
+	stmt := selectItem.Prepare()
+	if stmt != nil {
+		return &AccRowWrap{stmt.QueryRow(args...), nil}
+	}
+	return &AccRowWrap{nil, selectItem.build.FirstError()}
+}
+
 // Experimental, reduces lines
 func (selectItem *AccSelectBuilder) Each(handle func(*sql.Rows) error) error {
 	rows, err := selectItem.Query()

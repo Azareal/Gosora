@@ -60,9 +60,9 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user common.User, sui
 		duration, _ = time.ParseDuration("0")
 	} else {
 		var seconds int
-		seconds += durationDays * common.Day
-		seconds += durationWeeks * common.Week
-		seconds += durationMonths * common.Month
+		seconds += durationDays * int(common.Day)
+		seconds += durationWeeks * int(common.Week)
+		seconds += durationMonths * int(common.Month)
 		duration, _ = time.ParseDuration(strconv.Itoa(seconds) + "s")
 	}
 

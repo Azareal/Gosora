@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"./alerts"
 	"./templates"
 )
 
@@ -297,24 +298,25 @@ func CompileJSTemplates() error {
 	config.Minify = Config.MinifyTemplates
 	config.SuperDebug = Dev.TemplateDebug
 	config.SkipHandles = true
+	config.SkipInitBlock = true
 	config.PackageName = "tmpl"
 
 	c := tmpl.NewCTemplateSet()
 	c.SetConfig(config)
 	c.SetBaseImportMap(map[string]string{
-		"io":           "io",
-		"../../common": "../../common",
+		"io":               "io",
+		"../common/alerts": "../common/alerts",
 	})
 	var varList = make(map[string]tmpl.VarItem)
 
 	// TODO: Check what sort of path is sent exactly and use it here
-	alertItem := AlertItem{Avatar: "", ASID: 1, Path: "/", Message: "uh oh, something happened"}
-	alertTmpl, err := c.Compile("alert.html", "templates/", "common.AlertItem", alertItem, varList)
+	alertItem := alerts.AlertItem{Avatar: "", ASID: 1, Path: "/", Message: "uh oh, something happened"}
+	alertTmpl, err := c.Compile("alert.html", "templates/", "alerts.AlertItem", alertItem, varList)
 	if err != nil {
 		return err
 	}
 
-	var dirPrefix = "./tmpl_gen/client/"
+	var dirPrefix = "./tmpl_gen/"
 	var wg sync.WaitGroup
 	var writeTemplate = func(name string, content string) {
 		log.Print("Writing template '" + name + "'")
@@ -343,6 +345,7 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 		out := "package " + c.GetConfig().PackageName + "\n\n"
 		for templateName, count := range c.TemplateFragmentCount {
 			out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
+			out += "\n// nolint\nfunc Get_" + templateName + "_frags() [][]byte {\nreturn " + templateName + "_frags\n}\n"
 		}
 		out += "\n// nolint\nfunc init() {\n" + c.FragOut + "}\n"
 		err := writeFile(prefix+"template_list.go", out)

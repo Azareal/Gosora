@@ -89,11 +89,11 @@ var RouteMap = map[string]interface{}{
 	"routePanelDebug": routePanelDebug,
 	"routePanelDashboard": routePanelDashboard,
 	"routes.AccountEditCritical": routes.AccountEditCritical,
-	"routeAccountEditCriticalSubmit": routeAccountEditCriticalSubmit,
-	"routeAccountEditAvatar": routeAccountEditAvatar,
-	"routeAccountEditAvatarSubmit": routeAccountEditAvatarSubmit,
-	"routeAccountEditUsername": routeAccountEditUsername,
-	"routeAccountEditUsernameSubmit": routeAccountEditUsernameSubmit,
+	"routes.AccountEditCriticalSubmit": routes.AccountEditCriticalSubmit,
+	"routes.AccountEditAvatar": routes.AccountEditAvatar,
+	"routes.AccountEditAvatarSubmit": routes.AccountEditAvatarSubmit,
+	"routes.AccountEditUsername": routes.AccountEditUsername,
+	"routes.AccountEditUsernameSubmit": routes.AccountEditUsernameSubmit,
 	"routeAccountEditEmail": routeAccountEditEmail,
 	"routeAccountEditEmailTokenSubmit": routeAccountEditEmailTokenSubmit,
 	"routes.ViewProfile": routes.ViewProfile,
@@ -205,11 +205,11 @@ var routeMapEnum = map[string]int{
 	"routePanelDebug": 67,
 	"routePanelDashboard": 68,
 	"routes.AccountEditCritical": 69,
-	"routeAccountEditCriticalSubmit": 70,
-	"routeAccountEditAvatar": 71,
-	"routeAccountEditAvatarSubmit": 72,
-	"routeAccountEditUsername": 73,
-	"routeAccountEditUsernameSubmit": 74,
+	"routes.AccountEditCriticalSubmit": 70,
+	"routes.AccountEditAvatar": 71,
+	"routes.AccountEditAvatarSubmit": 72,
+	"routes.AccountEditUsername": 73,
+	"routes.AccountEditUsernameSubmit": 74,
 	"routeAccountEditEmail": 75,
 	"routeAccountEditEmailTokenSubmit": 76,
 	"routes.ViewProfile": 77,
@@ -319,11 +319,11 @@ var reverseRouteMapEnum = map[int]string{
 	67: "routePanelDebug",
 	68: "routePanelDashboard",
 	69: "routes.AccountEditCritical",
-	70: "routeAccountEditCriticalSubmit",
-	71: "routeAccountEditAvatar",
-	72: "routeAccountEditAvatarSubmit",
-	73: "routeAccountEditUsername",
-	74: "routeAccountEditUsernameSubmit",
+	70: "routes.AccountEditCriticalSubmit",
+	71: "routes.AccountEditAvatar",
+	72: "routes.AccountEditAvatarSubmit",
+	73: "routes.AccountEditUsername",
+	74: "routes.AccountEditUsernameSubmit",
 	75: "routeAccountEditEmail",
 	76: "routeAccountEditEmailTokenSubmit",
 	77: "routes.ViewProfile",
@@ -529,7 +529,7 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 			writ := NewWriterIntercept(w)
 			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,req)
 			if writ.GetCode() == 200 {
-				w.Header().Set("Cache-Control", "max-age=" + strconv.Itoa(common.Day))
+				w.Header().Set("Cache-Control", "max-age=" + strconv.Itoa(int(common.Day)))
 				w.Header().Set("Vary", "Accept-Encoding")
 			} 
 		},
@@ -1337,7 +1337,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(70)
-					err = routeAccountEditCriticalSubmit(w,req,user)
+					err = routes.AccountEditCriticalSubmit(w,req,user)
 				case "/user/edit/avatar/":
 					err = common.MemberOnly(w,req,user)
 					if err != nil {
@@ -1346,7 +1346,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(71)
-					err = routeAccountEditAvatar(w,req,user)
+					err = routes.AccountEditAvatar(w,req,user)
 				case "/user/edit/avatar/submit/":
 					err = common.MemberOnly(w,req,user)
 					if err != nil {
@@ -1354,7 +1354,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = common.HandleUploadRoute(w,req,user,common.Config.MaxRequestSize)
+					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
 			if err != nil {
 				router.handleError(err,w,req,user)
 				return
@@ -1366,7 +1366,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(72)
-					err = routeAccountEditAvatarSubmit(w,req,user)
+					err = routes.AccountEditAvatarSubmit(w,req,user)
 				case "/user/edit/username/":
 					err = common.MemberOnly(w,req,user)
 					if err != nil {
@@ -1375,7 +1375,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(73)
-					err = routeAccountEditUsername(w,req,user)
+					err = routes.AccountEditUsername(w,req,user)
 				case "/user/edit/username/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1390,7 +1390,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(74)
-					err = routeAccountEditUsernameSubmit(w,req,user)
+					err = routes.AccountEditUsernameSubmit(w,req,user)
 				case "/user/edit/email/":
 					err = common.MemberOnly(w,req,user)
 					if err != nil {
@@ -1492,7 +1492,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = common.HandleUploadRoute(w,req,user,common.Config.MaxRequestSize)
+					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
 			if err != nil {
 				router.handleError(err,w,req,user)
 				return
@@ -1649,7 +1649,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						return
 					}
 					
-					err = common.HandleUploadRoute(w,req,user,common.Config.MaxRequestSize)
+					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
 			if err != nil {
 				router.handleError(err,w,req,user)
 				return

@@ -257,8 +257,6 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	// Looking for getTopic? Your statement is in another castle
 
-	build.Select("getPassword").Table("users").Columns("password, salt").Where("uid = ?").Parse()
-
 	build.Select("isPluginActive").Table("plugins").Columns("active").Where("uname = ?").Parse()
 
 	//build.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()

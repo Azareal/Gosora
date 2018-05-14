@@ -22,6 +22,7 @@ import (
 	"./common"
 	"./common/counters"
 	"./config"
+	"./query_gen/lib"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -38,11 +39,12 @@ type Globs struct {
 }
 
 func afterDBInit() (err error) {
-	common.Rstore, err = common.NewSQLReplyStore()
+	acc := qgen.Builder.Accumulator()
+	common.Rstore, err = common.NewSQLReplyStore(acc)
 	if err != nil {
 		return err
 	}
-	common.Prstore, err = common.NewSQLProfileReplyStore()
+	common.Prstore, err = common.NewSQLProfileReplyStore(acc)
 	if err != nil {
 		return err
 	}
@@ -62,6 +64,10 @@ func afterDBInit() (err error) {
 		return err
 	}
 	err = common.StaticFiles.Init()
+	if err != nil {
+		return err
+	}
+	err = common.StaticFiles.JSTmplInit()
 	if err != nil {
 		return err
 	}

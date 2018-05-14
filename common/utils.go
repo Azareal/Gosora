@@ -148,10 +148,11 @@ func ConvertByteInUnit(bytes float64, unit string) (count float64) {
 }
 
 // TODO: Write a test for this
+// TODO: Re-add T as int64
 func ConvertUnit(num int) (int, string) {
 	switch {
-	case num >= 1000000000000:
-		return num / 1000000000000, "T"
+	//case num >= 1000000000000:
+	//	return num / 1000000000000, "T"
 	case num >= 1000000000:
 		return num / 1000000000, "B"
 	case num >= 1000000:
@@ -164,12 +165,14 @@ func ConvertUnit(num int) (int, string) {
 }
 
 // TODO: Write a test for this
+// TODO: Re-add quadrillion as int64
+// TODO: Re-add trillion as int64
 func ConvertFriendlyUnit(num int) (int, string) {
 	switch {
-	case num >= 1000000000000000:
-		return 0, " quadrillion"
-	case num >= 1000000000000:
-		return 0, " trillion"
+	//case num >= 1000000000000000:
+	//	return 0, " quadrillion"
+	//case num >= 1000000000000:
+	//	return 0, " trillion"
 	case num >= 1000000000:
 		return num / 1000000000, " billion"
 	case num >= 1000000:

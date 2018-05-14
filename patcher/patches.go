@@ -120,5 +120,35 @@ func patch0(scanner *bufio.Scanner) (err error) {
 }
 
 func patch1(scanner *bufio.Scanner) error {
+	// ! Don't reuse this function blindly, it doesn't escape apostrophes
+	var replaceTextWhere = func(replaceThis string, withThis string) error {
+		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	}
+
+	err := replaceTextWhere("routeAccountEditCriticalSubmit", "routes.AccountEditCriticalSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeAccountEditAvatar", "routes.AccountEditAvatar")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeAccountEditAvatarSubmit", "routes.AccountEditAvatarSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeAccountEditUsername", "routes.AccountEditUsername")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeAccountEditUsernameSubmit", "routes.AccountEditUsernameSubmit")
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

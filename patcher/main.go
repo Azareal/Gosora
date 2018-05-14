@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"runtime/debug"
+	"strconv"
 
 	"../common"
 	"../config"
@@ -85,10 +86,19 @@ func patcher(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	_ = schemaFile
+	dbVersion, err := strconv.Atoi(schemaFile.DBVersion)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println("Applying the patches")
-	return patch0(scanner)
+	if dbVersion < 1 {
+		err := patch0(scanner)
+		if err != nil {
+			return err
+		}
+	}
+	return patch1(scanner)
 }
 
 func execStmt(stmt *sql.Stmt, err error) error {

@@ -348,7 +348,7 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 			writ := NewWriterIntercept(w)
 			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,req)
 			if writ.GetCode() == 200 {
-				w.Header().Set("Cache-Control", "max-age=" + strconv.Itoa(common.Day))
+				w.Header().Set("Cache-Control", "max-age=" + strconv.Itoa(int(common.Day)))
 				w.Header().Set("Vary", "Accept-Encoding")
 			} 
 		},

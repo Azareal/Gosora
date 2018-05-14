@@ -85,12 +85,12 @@ w.Write(header_frags[22])
 w.Write(header_frags[23])
 if len(tmpl_register_vars.Header.NoticeList) != 0 {
 for _, item := range tmpl_register_vars.Header.NoticeList {
-w.Write(header_frags[24])
+w.Write(notice_frags[0])
 w.Write([]byte(item))
-w.Write(header_frags[25])
+w.Write(notice_frags[1])
 }
 }
-w.Write(header_frags[26])
+w.Write(header_frags[24])
 w.Write(register_frags[0])
 w.Write(phrases[1])
 w.Write(register_frags[1])
@@ -133,5 +133,5 @@ w.Write(footer_frags[9])
 w.Write(footer_frags[10])
 w.Write([]byte(common.BuildWidget("rightSidebar",tmpl_register_vars.Header)))
 w.Write(footer_frags[11])
-	return nil
+return nil
 }

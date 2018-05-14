@@ -1,20 +1,101 @@
 package main
 
-var guilds_guild_list_frags = make([][]byte,10)
-var forums_frags = make([][]byte,26)
-var topics_frags = make([][]byte,98)
-var register_frags = make([][]byte,9)
-var header_frags = make([][]byte,28)
-var topic_frags = make([][]byte,199)
-var topic_alt_frags = make([][]byte,200)
-var login_frags = make([][]byte,8)
 var error_frags = make([][]byte,4)
-var footer_frags = make([][]byte,13)
+
+// nolint
+func Get_error_frags() [][]byte {
+return error_frags
+}
 var profile_comments_row_frags = make([][]byte,51)
-var paginator_frags = make([][]byte,16)
+
+// nolint
+func Get_profile_comments_row_frags() [][]byte {
+return profile_comments_row_frags
+}
+var topic_alt_frags = make([][]byte,200)
+
+// nolint
+func Get_topic_alt_frags() [][]byte {
+return topic_alt_frags
+}
 var profile_frags = make([][]byte,50)
-var forum_frags = make([][]byte,90)
+
+// nolint
+func Get_profile_frags() [][]byte {
+return profile_frags
+}
 var ip_search_frags = make([][]byte,18)
+
+// nolint
+func Get_ip_search_frags() [][]byte {
+return ip_search_frags
+}
+var header_frags = make([][]byte,26)
+
+// nolint
+func Get_header_frags() [][]byte {
+return header_frags
+}
+var forums_frags = make([][]byte,26)
+
+// nolint
+func Get_forums_frags() [][]byte {
+return forums_frags
+}
+var login_frags = make([][]byte,8)
+
+// nolint
+func Get_login_frags() [][]byte {
+return login_frags
+}
+var register_frags = make([][]byte,9)
+
+// nolint
+func Get_register_frags() [][]byte {
+return register_frags
+}
+var footer_frags = make([][]byte,13)
+
+// nolint
+func Get_footer_frags() [][]byte {
+return footer_frags
+}
+var topic_frags = make([][]byte,199)
+
+// nolint
+func Get_topic_frags() [][]byte {
+return topic_frags
+}
+var paginator_frags = make([][]byte,16)
+
+// nolint
+func Get_paginator_frags() [][]byte {
+return paginator_frags
+}
+var topics_frags = make([][]byte,98)
+
+// nolint
+func Get_topics_frags() [][]byte {
+return topics_frags
+}
+var forum_frags = make([][]byte,90)
+
+// nolint
+func Get_forum_frags() [][]byte {
+return forum_frags
+}
+var guilds_guild_list_frags = make([][]byte,10)
+
+// nolint
+func Get_guilds_guild_list_frags() [][]byte {
+return guilds_guild_list_frags
+}
+var notice_frags = make([][]byte,3)
+
+// nolint
+func Get_notice_frags() [][]byte {
+return notice_frags
+}
 
 // nolint
 func init() {
@@ -81,10 +162,9 @@ header_frags[21] = []byte(`</div>
 header_frags[22] = []byte(`class="shrink_main"`)
 header_frags[23] = []byte(`>
 			<div class="alertbox">`)
+notice_frags[0] = []byte(`<div class="alert">`)
+notice_frags[1] = []byte(`</div>`)
 header_frags[24] = []byte(`
-				<div class="alert">`)
-header_frags[25] = []byte(`</div>`)
-header_frags[26] = []byte(`
 			</div>
 `)
 topic_frags[0] = []byte(`

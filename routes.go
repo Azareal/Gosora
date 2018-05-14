@@ -53,7 +53,7 @@ func routeChangeTheme(w http.ResponseWriter, r *http.Request, user common.User) 
 		return common.LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
 	}
 
-	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: common.Year}
+	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: int(common.Year)}
 	http.SetCookie(w, &cookie)
 
 	if !isJs {
