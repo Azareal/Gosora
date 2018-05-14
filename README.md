@@ -124,8 +124,6 @@ go get -u github.com/denisenkom/go-mssqldb
 
 go get -u github.com/fsnotify/fsnotify
 
-go get -u github.com/gopherjs/gopherjs/...
-
 
 go generate
 

@@ -28,9 +28,6 @@ go get -u github.com/bamiaux/rez
 echo "Updating fsnotify"
 go get -u github.com/fsnotify/fsnotify
 
-echo "Updating GopherJS"
-go get -u github.com/gopherjs/gopherjs/...
-
 echo "Updating Gosora"
 rm ./schema/lastSchema.json
 cp ./schema/schema.json ./schema/lastSchema.json

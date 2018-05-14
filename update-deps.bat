@@ -82,12 +82,5 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
-echo Updating GopherJS
-go get -u github.com/gopherjs/gopherjs/...
-if %errorlevel% neq 0 (
-	pause
-	exit /b %errorlevel%
-)
-
 echo The dependencies were successfully updated
 pause
