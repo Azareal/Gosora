@@ -39,13 +39,13 @@ type CSSData struct {
 
 func (list SFileList) JSTmplInit() error {
 	var fragMap = make(map[string][][]byte)
-	fragMap["alert"] = tmpl.Get_alert_frags() // TODO: Add a generic fetch function, so we don't rely on the presence of the template files for this
+	fragMap["alert"] = tmpl.GetFrag("alert")
 	fmt.Println("fragMap: ", fragMap)
 	return filepath.Walk("./tmpl_client", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
 			return nil
 		}
-		if strings.HasSuffix(path, "template_list.go") {
+		if strings.HasSuffix(path, "template_list.go") || strings.HasSuffix(path, "stub.go") {
 			return nil
 		}
 

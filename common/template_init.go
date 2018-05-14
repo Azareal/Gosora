@@ -343,11 +343,14 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 	wg.Add(1)
 	go func() {
 		out := "package " + c.GetConfig().PackageName + "\n\n"
+		var getterstr = "\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n"
 		for templateName, count := range c.TemplateFragmentCount {
 			out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
-			out += "\n// nolint\nfunc Get_" + templateName + "_frags() [][]byte {\nreturn " + templateName + "_frags\n}\n"
+			getterstr += "\tcase \"" + templateName + "\":\n"
+			getterstr += "\treturn " + templateName + "_frags\n"
 		}
-		out += "\n// nolint\nfunc init() {\n" + c.FragOut + "}\n"
+		getterstr += "}\nreturn nil\n}\n"
+		out += "\n// nolint\nfunc init() {\n" + c.FragOut + "\n" + getterstr + "}\n"
 		err := writeFile(prefix+"template_list.go", out)
 		if err != nil {
 			log.Fatal(err)
