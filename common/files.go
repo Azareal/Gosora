@@ -14,7 +14,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"../tmpl_gen"
+	"../tmpl_client"
 )
 
 type SFileList map[string]SFile
@@ -41,7 +41,7 @@ func (list SFileList) JSTmplInit() error {
 	var fragMap = make(map[string][][]byte)
 	fragMap["alert"] = tmpl.Get_alert_frags() // TODO: Add a generic fetch function, so we don't rely on the presence of the template files for this
 	fmt.Println("fragMap: ", fragMap)
-	return filepath.Walk("./tmpl_gen", func(path string, f os.FileInfo, err error) error {
+	return filepath.Walk("./tmpl_client", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
 			return nil
 		}
@@ -157,7 +157,7 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, "};", "}")
 		data = replace(data, ";;", ";")
 
-		path = strings.TrimPrefix(path, "tmpl_gen/")
+		path = strings.TrimPrefix(path, "tmpl_client/")
 		tmplName := strings.TrimSuffix(path, ".go")
 		fragset, ok := fragMap[strings.TrimPrefix(tmplName, "template_")]
 		if !ok {
@@ -174,7 +174,7 @@ func (list SFileList) JSTmplInit() error {
 
 		path = tmplName + ".js"
 		DebugLog("js path: ", path)
-		var ext = filepath.Ext("/tmpl_gen/" + path)
+		var ext = filepath.Ext("/tmpl_client/" + path)
 		gzipData := compressBytesGzip(data)
 
 		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})

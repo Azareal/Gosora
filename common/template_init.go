@@ -316,7 +316,7 @@ func CompileJSTemplates() error {
 		return err
 	}
 
-	var dirPrefix = "./tmpl_gen/"
+	var dirPrefix = "./tmpl_client/"
 	var wg sync.WaitGroup
 	var writeTemplate = func(name string, content string) {
 		log.Print("Writing template '" + name + "'")

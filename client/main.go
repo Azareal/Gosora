@@ -5,7 +5,7 @@ import (
 
 	"../common"
 	"../common/alerts"
-	"../tmpl_gen"
+	"../tmpl_client"
 	"github.com/gopherjs/gopherjs/js"
 )
 
