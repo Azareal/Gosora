@@ -35,7 +35,7 @@ body {
 	font-size: 16px;
 	font-family: arial;
 	margin: 0px;
-	color: var(--primary-text-color);
+	color: var(--lightened-primary-text-color);
 }
 a {
 	text-decoration: none;
@@ -228,9 +228,9 @@ ul {
 	margin-top: 8px;
 }
 .rowhead h1, .opthead h1, .colstack_head h1 {
-	font-size: 20px;
+	font-size: 19px;
 	font-weight: normal;
-	color: var(--primary-text-color);
+	color: var(--lightened-primary-text-color);
 	display: inline-block;
 }
 .colstack_head a h1 {
@@ -905,6 +905,7 @@ textarea {
 
 .postImage {
 	width: 100%;
+	max-width: 150px;
 }
 .post_item {
 	display: flex;

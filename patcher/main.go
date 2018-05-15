@@ -92,13 +92,16 @@ func patcher(scanner *bufio.Scanner) error {
 	}
 
 	fmt.Println("Applying the patches")
-	if dbVersion < 1 {
-		err := patch0(scanner)
-		if err != nil {
-			return err
+	if dbVersion < 2 {
+		if dbVersion < 1 {
+			err := patch0(scanner)
+			if err != nil {
+				return err
+			}
 		}
+		return patch1(scanner)
 	}
-	return patch1(scanner)
+	return patch2(scanner)
 }
 
 func execStmt(stmt *sql.Stmt, err error) error {

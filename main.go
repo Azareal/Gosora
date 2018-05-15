@@ -23,6 +23,7 @@ import (
 	"./common/counters"
 	"./config"
 	"./query_gen/lib"
+	"./routes"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -445,7 +446,7 @@ func main() {
 			// TODO: Redirect to port 443
 			go func() {
 				log.Print("Listening on port 80")
-				err = newServer(":80", &HTTPSRedirect{}).ListenAndServe()
+				err = newServer(":80", &routes.HTTPSRedirect{}).ListenAndServe()
 				if err != nil {
 					log.Fatal(err)
 				}

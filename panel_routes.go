@@ -2397,7 +2397,12 @@ func routePanelThemesMenus(w http.ResponseWriter, r *http.Request, user common.U
 
 	var menuList []common.PanelMenuListItem
 	for mid, list := range common.Menus.GetAllMap() {
+		var name = ""
+		if mid == 1 {
+			name = common.GetTmplPhrase("panel_themes_menus_main")
+		}
 		menuList = append(menuList, common.PanelMenuListItem{
+			Name:      name,
 			ID:        mid,
 			ItemCount: len(list.List),
 		})

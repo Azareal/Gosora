@@ -1,3 +1,9 @@
+.sidebar {
+	display: none;
+}
+.submenu:before {
+	content: "-";
+}
 .submenu a {
 	margin-left: 8px;
 }
@@ -118,8 +124,13 @@
 	display: none;
 }
 
-.colstack_item + .panel_submitrow {
-	margin-bottom: 0px;
+.panel_submitrow {
+	margin-top: -12px;
+	border-top: none;
+}
+.panel_submitrow button {
+	padding-top: 3px;
+	padding-bottom: 3px;
 }
 
 #panel_word_filters .itemSeparator:before {

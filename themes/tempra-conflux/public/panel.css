@@ -1,3 +1,6 @@
+.sidebar {
+	display: none;
+}
 /*.submenu {
 	padding-left: 18px;
 }*/
@@ -102,8 +105,13 @@
 	padding-left: 2px;
 	padding-right: 2px;
 }
-.colstack_item + .panel_submitrow {
-	margin-bottom: 0px;
+.panel_submitrow {
+	margin-top: -12px;
+	border-top: none;
+}
+.panel_submitrow button {
+	padding-top: 3px;
+	padding-bottom: 3px;
 }
 
 .ct_chart {

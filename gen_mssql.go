@@ -21,7 +21,6 @@ type Stmts struct {
 	getTopicBasic *sql.Stmt
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
-	getAttachment *sql.Stmt
 	getForumTopics *sql.Stmt
 	createReport *sql.Stmt
 	addForumPermsToForum *sql.Stmt
@@ -151,14 +150,6 @@ func _gen_mssql() (err error) {
 	if err != nil {
 		log.Print("Error in groupEntryExists statement.")
 		log.Print("Bad Query: ","SELECT [gid] FROM [users_groups] WHERE [name] = '' ORDER BY gid ASC OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY")
-		return err
-	}
-		
-	common.DebugLog("Preparing getAttachment statement.")
-	stmts.getAttachment, err = db.Prepare("SELECT [sectionID],[sectionTable],[originID],[originTable],[uploadedBy],[path] FROM [attachments] WHERE [path] = ?1 AND [sectionID] = ?2 AND [sectionTable] = ?3")
-	if err != nil {
-		log.Print("Error in getAttachment statement.")
-		log.Print("Bad Query: ","SELECT [sectionID],[sectionTable],[originID],[originTable],[uploadedBy],[path] FROM [attachments] WHERE [path] = ?1 AND [sectionID] = ?2 AND [sectionTable] = ?3")
 		return err
 	}
 		

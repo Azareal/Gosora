@@ -842,3 +842,59 @@ func addTopicAction(action string, topic *common.Topic, user common.User) error 
 	}
 	return topic.CreateActionReply(action, user.LastIP, user)
 }
+
+// TODO: Refactor this
+func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
+	isJs := (r.PostFormValue("isJs") == "1")
+	tid, err := strconv.Atoi(stid)
+	if err != nil {
+		return common.PreErrorJSQ("Topic IDs can only ever be numbers.", w, r, isJs)
+	}
+
+	topic, err := common.Topics.Get(tid)
+	if err == sql.ErrNoRows {
+		return common.PreErrorJSQ("The requested topic doesn't exist.", w, r, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	// TODO: Add hooks to make use of headerLite
+	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+	if topic.CreatedBy == user.ID {
+		return common.LocalErrorJSQ("You can't like your own topics", w, r, user, isJs)
+	}
+
+	_, err = common.Users.Get(topic.CreatedBy)
+	if err != nil && err == sql.ErrNoRows {
+		return common.LocalErrorJSQ("The target user doesn't exist", w, r, user, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	score := 1
+	err = topic.Like(score, user.ID)
+	//log.Print("likeErr: ", err)
+	if err == common.ErrAlreadyLiked {
+		return common.LocalErrorJSQ("You already liked this", w, r, user, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	err = common.AddActivityAndNotifyTarget(user.ID, topic.CreatedBy, "like", "topic", tid)
+	if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	if !isJs {
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
+	}
+	return nil
+}

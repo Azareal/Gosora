@@ -1,5 +1,6 @@
-.submenu a {
-	margin-left: 4px;
+.submenu:before {
+	content: "-";
+	margin-right: 6px;
 }
 .colstack_head .rowitem {
 	display: flex;
@@ -68,16 +69,16 @@
 	padding-right: 2px;
 }
 
-.panel_submitrow {
+.panel_submitrow .rowitem {
 	display: flex;
 }
-.panel_submitrow *:first-child {
+.panel_submitrow .rowitem *:first-child {
 	margin-left: auto;
 }
-.panel_submitrow *:last-child {
+.panel_submitrow .rowitem *:last-child {
 	margin-right: auto;
 }
-.panel_submitrow button {
+.panel_submitrow .rowitem button {
     padding-top: 5px;
     padding-bottom: 5px;
 }

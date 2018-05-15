@@ -3,7 +3,6 @@ package common
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"mime"
 	"strings"
 	"sync"
@@ -38,9 +37,10 @@ type CSSData struct {
 }
 
 func (list SFileList) JSTmplInit() error {
+	DebugLog("Initialising the client side templates")
 	var fragMap = make(map[string][][]byte)
 	fragMap["alert"] = tmpl.GetFrag("alert")
-	fmt.Println("fragMap: ", fragMap)
+	DebugLog("fragMap: ", fragMap)
 	return filepath.Walk("./tmpl_client", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
 			return nil
@@ -75,15 +75,15 @@ func (list SFileList) JSTmplInit() error {
 		if !hasBrace {
 			return errors.New("no right brace found after the template function name")
 		}
-		fmt.Println("spaceIndex: ", spaceIndex)
-		fmt.Println("endBrace: ", endBrace)
-		fmt.Println("string(data[spaceIndex:endBrace]): ", string(data[spaceIndex:endBrace]))
+		//fmt.Println("spaceIndex: ", spaceIndex)
+		//fmt.Println("endBrace: ", endBrace)
+		//fmt.Println("string(data[spaceIndex:endBrace]): ", string(data[spaceIndex:endBrace]))
 		preLen := len(data)
 		data = replace(data, string(data[spaceIndex:endBrace]), "")
 		data = replace(data, "))\n", "\n")
 		endBrace -= preLen - len(data) // Offset it as we've deleted portions
 
-		var showPos = func(data []byte, index int) (out string) {
+		/*var showPos = func(data []byte, index int) (out string) {
 			out = "["
 			for j, char := range data {
 				if index == j {
@@ -93,16 +93,16 @@ func (list SFileList) JSTmplInit() error {
 				}
 			}
 			return out + "]"
-		}
+		}*/
 
 		// ? Can we just use a regex? I'm thinking of going more efficient, or just outright rolling wasm, this is a temp hack in a place where performance doesn't particularly matter
 		var each = func(phrase string, handle func(index int)) {
-			fmt.Println("find each '" + phrase + "'")
+			//fmt.Println("find each '" + phrase + "'")
 			var index = endBrace
 			var foundIt bool
 			for {
-				fmt.Println("in index: ", index)
-				fmt.Println("pos: ", showPos(data, index))
+				//fmt.Println("in index: ", index)
+				//fmt.Println("pos: ", showPos(data, index))
 				index, foundIt = skipAllUntilCharsExist(data, index, []byte(phrase))
 				if !foundIt {
 					break
@@ -136,7 +136,7 @@ func (list SFileList) JSTmplInit() error {
 			}
 		})
 		each("if ", func(index int) {
-			fmt.Println("if index: ", index)
+			//fmt.Println("if index: ", index)
 			braceAt, hasBrace := skipUntilIfExists(data, index, '{')
 			if hasBrace {
 				if data[braceAt-1] != ' ' {
@@ -161,7 +161,7 @@ func (list SFileList) JSTmplInit() error {
 		tmplName := strings.TrimSuffix(path, ".go")
 		fragset, ok := fragMap[strings.TrimPrefix(tmplName, "template_")]
 		if !ok {
-			fmt.Println("tmplName: ", tmplName)
+			DebugLog("tmplName: ", tmplName)
 			return errors.New("couldn't find template in fragmap")
 		}
 

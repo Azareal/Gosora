@@ -145,7 +145,7 @@
 #panel_users .rowitem .rowTitle {
 	border-bottom: 1px solid var(--lighter-text-color);
 	padding-bottom: 4px;
-	margin-bottom: 4px;
+	margin-bottom: 6px;
 }
 
 #forum_quick_perms .formitem {

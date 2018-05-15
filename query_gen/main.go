@@ -283,8 +283,6 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	build.Select("groupEntryExists").Table("users_groups").Columns("gid").Where("name = ''").Orderby("gid ASC").Limit("0,1").Parse()
 
-	build.Select("getAttachment").Table("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path = ? AND sectionID = ? AND sectionTable = ?").Parse()
-
 	return nil
 }
 

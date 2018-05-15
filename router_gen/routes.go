@@ -7,9 +7,9 @@ func routes() {
 	addRoute(View("routes.CustomPage", "/pages/", "extraData"))
 	addRoute(View("routes.ForumList", "/forums/" /*,"&forums"*/))
 	addRoute(View("routes.ViewForum", "/forum/", "extraData"))
-	addRoute(AnonAction("routeChangeTheme", "/theme/"))
+	addRoute(AnonAction("routes.ChangeTheme", "/theme/"))
 	addRoute(
-		View("routeShowAttachment", "/attachs/", "extraData").Before("ParseForm"),
+		View("routes.ShowAttachment", "/attachs/", "extraData").Before("ParseForm"),
 	)
 
 	// TODO: Reduce the number of Befores. With a new method, perhaps?
@@ -74,7 +74,7 @@ func buildTopicRoutes() {
 		Action("routes.LockTopicSubmit", "/topic/lock/submit/").LitBefore("req.URL.Path += extraData"),
 		Action("routes.UnlockTopicSubmit", "/topic/unlock/submit/", "extraData"),
 		Action("routes.MoveTopicSubmit", "/topic/move/submit/", "extraData"),
-		Action("routeLikeTopicSubmit", "/topic/like/submit/", "extraData").Before("ParseForm"),
+		Action("routes.LikeTopicSubmit", "/topic/like/submit/", "extraData").Before("ParseForm"),
 	)
 	addRouteGroup(topicGroup)
 }
@@ -88,7 +88,7 @@ func buildReplyRoutes() {
 		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("int(common.Config.MaxRequestSize)"), // TODO: Rename the route so it's /reply/create/submit/
 		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
 		Action("routes.ReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
-		Action("routeReplyLikeSubmit", "/reply/like/submit/", "extraData").Before("ParseForm"),
+		Action("routes.ReplyLikeSubmit", "/reply/like/submit/", "extraData").Before("ParseForm"),
 	)
 	addRouteGroup(replyGroup)
 }
@@ -98,7 +98,7 @@ func buildProfileReplyRoutes() {
 	//router.HandleFunc("/user/edit/submit/", routeLogout) // routeLogout? what on earth? o.o
 	pReplyGroup := newRouteGroup("/profile/")
 	pReplyGroup.Routes(
-		Action("routeProfileReplyCreateSubmit", "/profile/reply/create/"), // TODO: Add /submit/ to the end
+		Action("routes.ProfileReplyCreateSubmit", "/profile/reply/create/"), // TODO: Add /submit/ to the end
 		Action("routes.ProfileReplyEditSubmit", "/profile/reply/edit/submit/", "extraData"),
 		Action("routes.ProfileReplyDeleteSubmit", "/profile/reply/delete/submit/", "extraData"),
 	)
@@ -120,7 +120,7 @@ func buildAccountRoutes() {
 	accReplyGroup.Routes(
 		View("routes.AccountLogin", "/accounts/login/"),
 		View("routes.AccountRegister", "/accounts/create/"),
-		Action("routeLogout", "/accounts/logout/"),
+		Action("routes.AccountLogout", "/accounts/logout/"),
 		AnonAction("routes.AccountLoginSubmit", "/accounts/login/submit/"), // TODO: Guard this with a token, maybe the IP hashed with a rotated key?
 		AnonAction("routes.AccountRegisterSubmit", "/accounts/create/submit/"),
 	)

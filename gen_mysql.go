@@ -23,7 +23,6 @@ type Stmts struct {
 	getTopicBasic *sql.Stmt
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
-	getAttachment *sql.Stmt
 	getForumTopics *sql.Stmt
 	createReport *sql.Stmt
 	addForumPermsToForum *sql.Stmt
@@ -141,13 +140,6 @@ func _gen_mysql() (err error) {
 	stmts.groupEntryExists, err = db.Prepare("SELECT `gid` FROM `users_groups` WHERE `name` = '' ORDER BY `gid` ASC LIMIT 0,1")
 	if err != nil {
 		log.Print("Error in groupEntryExists statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing getAttachment statement.")
-	stmts.getAttachment, err = db.Prepare("SELECT `sectionID`,`sectionTable`,`originID`,`originTable`,`uploadedBy`,`path` FROM `attachments` WHERE `path` = ? AND `sectionID` = ? AND `sectionTable` = ?")
-	if err != nil {
-		log.Print("Error in getAttachment statement.")
 		return err
 	}
 		

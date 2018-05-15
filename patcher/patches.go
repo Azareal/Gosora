@@ -152,3 +152,57 @@ func patch1(scanner *bufio.Scanner) error {
 
 	return nil
 }
+
+func patch2(scanner *bufio.Scanner) error {
+	// ! Don't reuse this function blindly, it doesn't escape apostrophes
+	var replaceTextWhere = func(replaceThis string, withThis string) error {
+		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	}
+
+	err := replaceTextWhere("routeLogout", "routes.AccountLogout")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeShowAttachment", "routes.ShowAttachment")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeChangeTheme", "routes.ChangeTheme")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeProfileReplyCreateSubmit", "routes.ProfileReplyCreateSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeLikeTopicSubmit", "routes.LikeTopicSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeReplyLikeSubmit", "routes.ReplyLikeSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeDynamic", "routes.DynamicRoute")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeUploads", "routes.UploadedFile")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("BadRoute", "routes.BadRoute")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

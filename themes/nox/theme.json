@@ -1,0 +1,32 @@
+{
+	"Name": "nox",
+	"FriendlyName": "Nox",
+	"Version": "0.0.1",
+	"Creator": "Azareal",
+	"URL": "github.com/Azareal/Gosora",
+	"Tag": "WIP",
+	"HideFromThemes":true,
+	"Docks":["topMenu","rightSidebar","footer"],
+	"Templates": [
+		{
+			"Name": "topic",
+			"Source": "topic_alt"
+		}
+	],
+	"Resources": [
+		{
+			"Name":"EQCSS.js",
+			"Location":"global"
+		},
+		{
+			"Name":"trumbowyg/trumbowyg.min.js",
+			"Location":"global",
+			"Loggedin": true
+		},
+		{
+			"Name":"trumbowyg/ui/trumbowyg.custom.css",
+			"Location":"global",
+			"Loggedin":true
+		}
+	]
+}

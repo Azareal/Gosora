@@ -77,6 +77,15 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user common.User
 	return nil
 }
 
+func AccountLogout(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	if !user.Loggedin {
+		return common.LocalError("You can't logout without logging in first.", w, r, user)
+	}
+	common.Auth.Logout(w, user.ID)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
+}
+
 func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {

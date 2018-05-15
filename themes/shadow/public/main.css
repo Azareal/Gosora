@@ -510,7 +510,7 @@ input, select, textarea {
 }
 .topic_create_form input, .topic_create_form select {
 	padding: 7px;
-	font-family: monospace;
+	font-size: 13px;
 }
 .topic_create_form select {
 	padding: 6px;
@@ -519,8 +519,11 @@ input, select, textarea {
 	width: calc(100% - 14px);
 }
 .topic_create_form textarea, .topic_reply_form textarea {
-	width: calc(100% - 5px);
+	width: calc(100% - 26px);
 	min-height: 80px;
+	font-family: arial;
+	font-size: 14px;
+	padding: 12px;
 }
 .topic_create_form textarea {
 	padding: 7px;
@@ -690,8 +693,8 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 }
 .topic_left.topic_sticky .topic_inner_left {
 	border-top: 4px solid hsl(41, 100%, 50%);
-	padding-left: 8px;
-	padding-top: 8px;
+	padding-left: 10px;
+	padding-top: 10px;
 	margin-top: 0px;
 	margin-left: 0px;
 	width: 100%;

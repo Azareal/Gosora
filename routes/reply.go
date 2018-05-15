@@ -297,6 +297,41 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 	return nil
 }
 
+// TODO: Move the profile reply routes to their own file?
+func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
+		return common.NoPermissions(w, r, user)
+	}
+
+	uid, err := strconv.Atoi(r.PostFormValue("uid"))
+	if err != nil {
+		return common.LocalError("Invalid UID", w, r, user)
+	}
+
+	profileOwner, err := common.Users.Get(uid)
+	if err == sql.ErrNoRows {
+		return common.LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	content := common.PreparseMessage(r.PostFormValue("reply-content"))
+	// TODO: Fully parse the post and store it in the parsed column
+	_, err = common.Prstore.Create(profileOwner.ID, content, user.ID, user.LastIP)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	err = common.AddActivityAndNotifyTarget(user.ID, profileOwner.ID, "reply", "user", profileOwner.ID)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	counters.PostCounter.Bump()
+	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
+	return nil
+}
+
 func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
 	isJs := (r.PostFormValue("js") == "1")
 
@@ -369,6 +404,67 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user commo
 		//http.Redirect(w,r, "/user/" + strconv.Itoa(creator.ID), http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)
+	}
+	return nil
+}
+
+func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
+	isJs := (r.PostFormValue("isJs") == "1")
+
+	rid, err := strconv.Atoi(srid)
+	if err != nil {
+		return common.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
+	}
+
+	reply, err := common.Rstore.Get(rid)
+	if err == sql.ErrNoRows {
+		return common.PreErrorJSQ("You can't like something which doesn't exist!", w, r, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	topic, err := common.Topics.Get(reply.ParentID)
+	if err == sql.ErrNoRows {
+		return common.PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	// TODO: Add hooks to make use of headerLite
+	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+	if reply.CreatedBy == user.ID {
+		return common.LocalErrorJSQ("You can't like your own replies", w, r, user, isJs)
+	}
+
+	_, err = common.Users.Get(reply.CreatedBy)
+	if err != nil && err != sql.ErrNoRows {
+		return common.LocalErrorJSQ("The target user doesn't exist", w, r, user, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	err = reply.Like(user.ID)
+	if err == common.ErrAlreadyLiked {
+		return common.LocalErrorJSQ("You've already liked this!", w, r, user, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	err = common.AddActivityAndNotifyTarget(user.ID, reply.CreatedBy, "like", "post", rid)
+	if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	if !isJs {
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
 	}
 	return nil
 }

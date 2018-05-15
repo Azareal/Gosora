@@ -2,13 +2,17 @@ package routes
 
 import (
 	"bytes"
+	"database/sql"
+	"html"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"../common"
+	"../query_gen/lib"
 )
 
 var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(common.Day)) // TODO: Make this a common.Config value
@@ -83,6 +87,90 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, name s
 	err := common.Templates.ExecuteTemplate(w, "page_"+name+".html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+type AttachmentStmts struct {
+	get *sql.Stmt
+}
+
+var attachmentStmts AttachmentStmts
+
+// TODO: Move these DbInits into a TopicList abstraction
+func init() {
+	common.DbInits.Add(func(acc *qgen.Accumulator) error {
+		attachmentStmts = AttachmentStmts{
+			get: acc.Select("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path = ? AND sectionID = ? AND sectionTable = ?").Prepare(),
+		}
+		return acc.FirstError()
+	})
+}
+
+func ShowAttachment(w http.ResponseWriter, r *http.Request, user common.User, filename string) common.RouteError {
+	filename = common.Stripslashes(filename)
+	var ext = filepath.Ext("./attachs/" + filename)
+	//log.Print("ext ", ext)
+	//log.Print("filename ", filename)
+	if !common.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
+		return common.LocalError("Bad extension", w, r, user)
+	}
+
+	sectionID, err := strconv.Atoi(r.FormValue("sectionID"))
+	if err != nil {
+		return common.LocalError("The sectionID is not an integer", w, r, user)
+	}
+	var sectionTable = r.FormValue("sectionType")
+
+	var originTable string
+	var originID, uploadedBy int
+	err = attachmentStmts.get.QueryRow(filename, sectionID, sectionTable).Scan(&sectionID, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
+	if err == sql.ErrNoRows {
+		return common.NotFound(w, r, nil)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	if sectionTable == "forums" {
+		_, ferr := common.SimpleForumUserCheck(w, r, &user, sectionID)
+		if ferr != nil {
+			return ferr
+		}
+		if !user.Perms.ViewTopic {
+			return common.NoPermissions(w, r, user)
+		}
+	} else {
+		return common.LocalError("Unknown section", w, r, user)
+	}
+
+	if originTable != "topics" && originTable != "replies" {
+		return common.LocalError("Unknown origin", w, r, user)
+	}
+
+	// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
+	http.ServeFile(w, r, "./attachs/"+filename)
+	return nil
+}
+
+// TODO: Set the cookie domain
+func ChangeTheme(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	//headerLite, _ := SimpleUserCheck(w, r, &user)
+	// TODO: Rename isJs to something else, just in case we rewrite the JS side in WebAssembly?
+	isJs := (r.PostFormValue("isJs") == "1")
+	newTheme := html.EscapeString(r.PostFormValue("newTheme"))
+
+	theme, ok := common.Themes[newTheme]
+	if !ok || theme.HideFromThemes {
+		return common.LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
+	}
+
+	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: int(common.Year)}
+	http.SetCookie(w, &cookie)
+
+	if !isJs {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
 	}
 	return nil
 }

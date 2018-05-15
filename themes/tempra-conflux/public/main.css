@@ -769,7 +769,9 @@ button.username {
 	margin-top: 20px;
 }
 #profile_right_lane .topic_reply_form {
-	border-bottom: 1.5px inset var(--main-border-color);
+	border-bottom: 2px inset var(--main-border-color);
+	border-left: 1px solid var(--main-border-color);
+	border-right: 1px solid var(--main-border-color);
 }
 
 /* TODO: Show the avatar next to the reply form */
@@ -924,7 +926,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	border-bottom: none;
 }
 .topic_reply_form {
-	border-top: 1px solid var(--main-border-color);
+	border: none;
 }
 .post_container .post_item {
 	background-color: #eaeaea;

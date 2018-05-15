@@ -24,8 +24,8 @@ var RouteMap = map[string]interface{}{
 	"routes.CustomPage": routes.CustomPage,
 	"routes.ForumList": routes.ForumList,
 	"routes.ViewForum": routes.ViewForum,
-	"routeChangeTheme": routeChangeTheme,
-	"routeShowAttachment": routeShowAttachment,
+	"routes.ChangeTheme": routes.ChangeTheme,
+	"routes.ShowAttachment": routes.ShowAttachment,
 	"common.RouteWebsockets": common.RouteWebsockets,
 	"routeReportSubmit": routeReportSubmit,
 	"routes.CreateTopic": routes.CreateTopic,
@@ -109,28 +109,28 @@ var RouteMap = map[string]interface{}{
 	"routes.LockTopicSubmit": routes.LockTopicSubmit,
 	"routes.UnlockTopicSubmit": routes.UnlockTopicSubmit,
 	"routes.MoveTopicSubmit": routes.MoveTopicSubmit,
-	"routeLikeTopicSubmit": routeLikeTopicSubmit,
+	"routes.LikeTopicSubmit": routes.LikeTopicSubmit,
 	"routes.ViewTopic": routes.ViewTopic,
 	"routes.CreateReplySubmit": routes.CreateReplySubmit,
 	"routes.ReplyEditSubmit": routes.ReplyEditSubmit,
 	"routes.ReplyDeleteSubmit": routes.ReplyDeleteSubmit,
-	"routeReplyLikeSubmit": routeReplyLikeSubmit,
-	"routeProfileReplyCreateSubmit": routeProfileReplyCreateSubmit,
+	"routes.ReplyLikeSubmit": routes.ReplyLikeSubmit,
+	"routes.ProfileReplyCreateSubmit": routes.ProfileReplyCreateSubmit,
 	"routes.ProfileReplyEditSubmit": routes.ProfileReplyEditSubmit,
 	"routes.ProfileReplyDeleteSubmit": routes.ProfileReplyDeleteSubmit,
 	"routes.PollVote": routes.PollVote,
 	"routes.PollResults": routes.PollResults,
 	"routes.AccountLogin": routes.AccountLogin,
 	"routes.AccountRegister": routes.AccountRegister,
-	"routeLogout": routeLogout,
+	"routes.AccountLogout": routes.AccountLogout,
 	"routes.AccountLoginSubmit": routes.AccountLoginSubmit,
 	"routes.AccountRegisterSubmit": routes.AccountRegisterSubmit,
-	"routeDynamic": routeDynamic,
-	"routeUploads": routeUploads,
+	"routes.DynamicRoute": routes.DynamicRoute,
+	"routes.UploadedFile": routes.UploadedFile,
 	"routes.StaticFile": routes.StaticFile,
 	"routes.RobotsTxt": routes.RobotsTxt,
 	"routes.SitemapXml": routes.SitemapXml,
-	"BadRoute": BadRoute,
+	"routes.BadRoute": routes.BadRoute,
 }
 
 // ! NEVER RELY ON THESE REMAINING THE SAME BETWEEN COMMITS
@@ -140,8 +140,8 @@ var routeMapEnum = map[string]int{
 	"routes.CustomPage": 2,
 	"routes.ForumList": 3,
 	"routes.ViewForum": 4,
-	"routeChangeTheme": 5,
-	"routeShowAttachment": 6,
+	"routes.ChangeTheme": 5,
+	"routes.ShowAttachment": 6,
 	"common.RouteWebsockets": 7,
 	"routeReportSubmit": 8,
 	"routes.CreateTopic": 9,
@@ -225,28 +225,28 @@ var routeMapEnum = map[string]int{
 	"routes.LockTopicSubmit": 87,
 	"routes.UnlockTopicSubmit": 88,
 	"routes.MoveTopicSubmit": 89,
-	"routeLikeTopicSubmit": 90,
+	"routes.LikeTopicSubmit": 90,
 	"routes.ViewTopic": 91,
 	"routes.CreateReplySubmit": 92,
 	"routes.ReplyEditSubmit": 93,
 	"routes.ReplyDeleteSubmit": 94,
-	"routeReplyLikeSubmit": 95,
-	"routeProfileReplyCreateSubmit": 96,
+	"routes.ReplyLikeSubmit": 95,
+	"routes.ProfileReplyCreateSubmit": 96,
 	"routes.ProfileReplyEditSubmit": 97,
 	"routes.ProfileReplyDeleteSubmit": 98,
 	"routes.PollVote": 99,
 	"routes.PollResults": 100,
 	"routes.AccountLogin": 101,
 	"routes.AccountRegister": 102,
-	"routeLogout": 103,
+	"routes.AccountLogout": 103,
 	"routes.AccountLoginSubmit": 104,
 	"routes.AccountRegisterSubmit": 105,
-	"routeDynamic": 106,
-	"routeUploads": 107,
+	"routes.DynamicRoute": 106,
+	"routes.UploadedFile": 107,
 	"routes.StaticFile": 108,
 	"routes.RobotsTxt": 109,
 	"routes.SitemapXml": 110,
-	"BadRoute": 111,
+	"routes.BadRoute": 111,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routeAPI",
@@ -254,8 +254,8 @@ var reverseRouteMapEnum = map[int]string{
 	2: "routes.CustomPage",
 	3: "routes.ForumList",
 	4: "routes.ViewForum",
-	5: "routeChangeTheme",
-	6: "routeShowAttachment",
+	5: "routes.ChangeTheme",
+	6: "routes.ShowAttachment",
 	7: "common.RouteWebsockets",
 	8: "routeReportSubmit",
 	9: "routes.CreateTopic",
@@ -339,28 +339,28 @@ var reverseRouteMapEnum = map[int]string{
 	87: "routes.LockTopicSubmit",
 	88: "routes.UnlockTopicSubmit",
 	89: "routes.MoveTopicSubmit",
-	90: "routeLikeTopicSubmit",
+	90: "routes.LikeTopicSubmit",
 	91: "routes.ViewTopic",
 	92: "routes.CreateReplySubmit",
 	93: "routes.ReplyEditSubmit",
 	94: "routes.ReplyDeleteSubmit",
-	95: "routeReplyLikeSubmit",
-	96: "routeProfileReplyCreateSubmit",
+	95: "routes.ReplyLikeSubmit",
+	96: "routes.ProfileReplyCreateSubmit",
 	97: "routes.ProfileReplyEditSubmit",
 	98: "routes.ProfileReplyDeleteSubmit",
 	99: "routes.PollVote",
 	100: "routes.PollResults",
 	101: "routes.AccountLogin",
 	102: "routes.AccountRegister",
-	103: "routeLogout",
+	103: "routes.AccountLogout",
 	104: "routes.AccountLoginSubmit",
 	105: "routes.AccountRegisterSubmit",
-	106: "routeDynamic",
-	107: "routeUploads",
+	106: "routes.DynamicRoute",
+	107: "routes.UploadedFile",
 	108: "routes.StaticFile",
 	109: "routes.RobotsTxt",
 	110: "routes.SitemapXml",
-	111: "BadRoute",
+	111: "routes.BadRoute",
 }
 var osMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -860,7 +860,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 				
 			counters.RouteViewCounter.Bump(5)
-			err = routeChangeTheme(w,req,user)
+			err = routes.ChangeTheme(w,req,user)
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
@@ -872,7 +872,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 				
 			counters.RouteViewCounter.Bump(6)
-			err = routeShowAttachment(w,req,user,extraData)
+			err = routes.ShowAttachment(w,req,user,extraData)
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}
@@ -1632,7 +1632,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(90)
-					err = routeLikeTopicSubmit(w,req,user,extraData)
+					err = routes.LikeTopicSubmit(w,req,user,extraData)
 				default:
 					counters.RouteViewCounter.Bump(91)
 					err = routes.ViewTopic(w,req,user, extraData)
@@ -1712,7 +1712,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(95)
-					err = routeReplyLikeSubmit(w,req,user,extraData)
+					err = routes.ReplyLikeSubmit(w,req,user,extraData)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -1733,7 +1733,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(96)
-					err = routeProfileReplyCreateSubmit(w,req,user)
+					err = routes.ProfileReplyCreateSubmit(w,req,user)
 				case "/profile/reply/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1814,7 +1814,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(103)
-					err = routeLogout(w,req,user)
+					err = routes.AccountLogout(w,req,user)
 				case "/accounts/login/submit/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {

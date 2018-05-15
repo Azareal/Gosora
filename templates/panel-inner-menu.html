@@ -17,9 +17,15 @@
 	<div class="rowitem passive">
 		<a href="/panel/settings/word-filters/">{{lang "panel_menu_word_filters"}}</a> <a class="menu_stats" href="#">({{.Stats.WordFilters}})</a>
 	</div>{{end}}
-	{{if .CurrentUser.Perms.ManageThemes}}<div class="rowitem passive">
+	{{if .CurrentUser.Perms.ManageThemes}}
+	<div class="rowitem passive">
 		<a href="/panel/themes/">{{lang "panel_menu_themes"}}</a> <a class="menu_stats" href="#">({{.Stats.Themes}})</a>
-	</div>{{end}}
+	</div>
+	{{if eq .Zone "themes"}}
+		<div class="rowitem passive submenu"><a href="/panel/themes/menus/">Menus</a></div>
+		<div class="rowitem passive submenu"><a href="#">Widgets</a></div>
+	{{end}}
+	{{end}}
 </div>
 <div class="colstack_item colstack_head">
 	<div class="rowitem"><a href="#">{{lang "panel_menu_events"}}</a></div>

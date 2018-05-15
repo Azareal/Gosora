@@ -1,17 +1,6 @@
 {{template "header.html" . }}
 <div class="colstack panel_stack">
-	<nav class="colstack_left" aria-label="Control panel menu">
-		<div class="colstack_item colstack_head">
-			<div class="rowitem"><a href="/panel/themes/">Theme Manager</a></div>
-		</div>
-		<div class="colstack_item rowmenu">
-			<div class="rowitem passive"><a href="/panel/themes/menus/">Menus</a></div>
-		</div>
-		<div class="colstack_item rowmenu">
-			<div class="rowitem passive"><a href="#">Widgets</a></div>
-		</div>
-{{template "panel-inner-menu.html" . }}
-	</nav>
+{{template "panel-menu.html" . }}
 	<main class="colstack_right">
 		<div class="colstack_item colstack_head">
 			<div class="rowitem"><h1>{{lang "panel_themes_menus_head"}}</h1></div>

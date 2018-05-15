@@ -217,16 +217,30 @@ function runWebSockets() {
 	}
 }
 
+function loadScript(name, callback) {
+	let url = "//" +siteURL+"/static/"+name
+	$.getScript(url)
+		.done(callback)
+		.fail((e,xhr,settings,ex) => {
+			console.log("Unable to get script '"+url+"'");
+			console.log("e: ", e);
+			console.log("xhr: ", xhr);
+			console.log("settings: ", settings);
+			console.log("ex: ",ex);
+			console.trace();
+		});
+}
+
 $(document).ready(function(){
 	runHook("start_init");
-	$.getScript( "./static/template_alert.js", () => {
+	loadScript("template_alert.js",() => {
 		console.log("Loaded template_alert.js");
 		alertsInitted = true;
 		var alertMenuList = document.getElementsByClassName("menu_alerts");
 		for(var i = 0; i < alertMenuList.length; i++) {
 			loadAlerts(alertMenuList[i]);
 		}
-	});
+	})
 	if(window["WebSocket"]) runWebSockets();
 	else conn = false;
 

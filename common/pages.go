@@ -254,6 +254,7 @@ type PanelThemesPage struct {
 }
 
 type PanelMenuListItem struct {
+	Name      string
 	ID        int
 	ItemCount int
 }

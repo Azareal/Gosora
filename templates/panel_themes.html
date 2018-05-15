@@ -1,19 +1,6 @@
 {{template "header.html" . }}
 <div class="colstack panel_stack">
-
-<nav class="colstack_left" aria-label="Theme manager menu">
-	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a href="/panel/themes/">Theme Manager</a></div>
-	</div>
-	<div class="colstack_item rowmenu">
-		<div class="rowitem passive"><a href="/panel/themes/menus/">Menus</a></div>
-	</div>
-	<div class="colstack_item rowmenu">
-		<div class="rowitem passive"><a href="#">Widgets</a></div>
-	</div>
-{{template "panel-inner-menu.html" . }}
-</nav>
-
+{{template "panel-menu.html" . }}
 {{/** Stop inlining this x.x **/}}
 <style type="text/css">
 .rowitem::after {
