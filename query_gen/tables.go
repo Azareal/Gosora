@@ -392,6 +392,7 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"miid", "int", 0, false, true, ""},
 			qgen.DBTableColumn{"mid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"name", "varchar", 200, false, false, ""},
 			qgen.DBTableColumn{"htmlID", "varchar", 200, false, false, "''"},
 			qgen.DBTableColumn{"cssClass", "varchar", 200, false, false, "''"},
 			qgen.DBTableColumn{"position", "varchar", 100, false, false, ""},
