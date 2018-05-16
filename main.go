@@ -107,11 +107,15 @@ func afterDBInit() (err error) {
 	}
 
 	log.Print("Initialising the stores")
-	common.ModLogs, err = common.NewModLogStore()
+	common.RegLogs, err = common.NewRegLogStore(acc)
 	if err != nil {
 		return err
 	}
-	common.AdminLogs, err = common.NewAdminLogStore()
+	common.ModLogs, err = common.NewModLogStore(acc)
+	if err != nil {
+		return err
+	}
+	common.AdminLogs, err = common.NewAdminLogStore(acc)
 	if err != nil {
 		return err
 	}

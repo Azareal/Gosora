@@ -14,11 +14,6 @@ type Stmts struct {
 	isPluginActive *sql.Stmt
 	getUsersOffset *sql.Stmt
 	isThemeDefault *sql.Stmt
-	getModlogs *sql.Stmt
-	getModlogsOffset *sql.Stmt
-	getAdminlogsOffset *sql.Stmt
-	getTopicFID *sql.Stmt
-	getUserName *sql.Stmt
 	getEmailsByUser *sql.Stmt
 	getTopicBasic *sql.Stmt
 	forumEntryExists *sql.Stmt
@@ -29,7 +24,6 @@ type Stmts struct {
 	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
 	createWordFilter *sql.Stmt
-	editReply *sql.Stmt
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
@@ -77,41 +71,6 @@ func _gen_mysql() (err error) {
 	stmts.isThemeDefault, err = db.Prepare("SELECT `default` FROM `themes` WHERE `uname` = ?")
 	if err != nil {
 		log.Print("Error in isThemeDefault statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing getModlogs statement.")
-	stmts.getModlogs, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs`")
-	if err != nil {
-		log.Print("Error in getModlogs statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing getModlogsOffset statement.")
-	stmts.getModlogsOffset, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `moderation_logs` ORDER BY `doneAt` DESC LIMIT ?,?")
-	if err != nil {
-		log.Print("Error in getModlogsOffset statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing getAdminlogsOffset statement.")
-	stmts.getAdminlogsOffset, err = db.Prepare("SELECT `action`,`elementID`,`elementType`,`ipaddress`,`actorID`,`doneAt` FROM `administration_logs` ORDER BY `doneAt` DESC LIMIT ?,?")
-	if err != nil {
-		log.Print("Error in getAdminlogsOffset statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing getTopicFID statement.")
-	stmts.getTopicFID, err = db.Prepare("SELECT `parentID` FROM `topics` WHERE `tid` = ?")
-	if err != nil {
-		log.Print("Error in getTopicFID statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing getUserName statement.")
-	stmts.getUserName, err = db.Prepare("SELECT `name` FROM `users` WHERE `uid` = ?")
-	if err != nil {
-		log.Print("Error in getUserName statement.")
 		return err
 	}
 		
@@ -182,13 +141,6 @@ func _gen_mysql() (err error) {
 	stmts.createWordFilter, err = db.Prepare("INSERT INTO `word_filters`(`find`,`replacement`) VALUES (?,?)")
 	if err != nil {
 		log.Print("Error in createWordFilter statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing editReply statement.")
-	stmts.editReply, err = db.Prepare("UPDATE `replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ?")
-	if err != nil {
-		log.Print("Error in editReply statement.")
 		return err
 	}
 		

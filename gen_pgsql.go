@@ -9,7 +9,6 @@ import "./common"
 
 // nolint
 type Stmts struct {
-	editReply *sql.Stmt
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
@@ -36,13 +35,6 @@ type Stmts struct {
 func _gen_pgsql() (err error) {
 	common.DebugLog("Building the generated statements")
 	
-	common.DebugLog("Preparing editReply statement.")
-	stmts.editReply, err = db.Prepare("UPDATE `replies` SET `content` = ?,`parsed_content` = ? WHERE `rid` = ?")
-	if err != nil {
-		log.Print("Error in editReply statement.")
-		return err
-	}
-		
 	common.DebugLog("Preparing updatePlugin statement.")
 	stmts.updatePlugin, err = db.Prepare("UPDATE `plugins` SET `active` = ? WHERE `uname` = ?")
 	if err != nil {

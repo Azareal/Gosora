@@ -411,18 +411,20 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	/*
-		qgen.Install.CreateTable("registration_logs", "", "",
-			[]qgen.DBTableColumn{
-				qgen.DBTableColumn{"username", "varchar", 100, false, false, ""},
-				qgen.DBTableColumn{"email", "varchar", 100, false, false, ""},
-				qgen.DBTableColumn{"failureReason", "varchar", 100, false, false, ""},
-				qgen.DBTableColumn{"success", "int", 0, false, false, "0"}, // Did this attempt succeed?
-				qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
-			},
-			[]qgen.DBTableKey{},
-		)
-	*/
+	qgen.Install.CreateTable("registration_logs", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"rlid", "int", 0, false, true, ""},
+			qgen.DBTableColumn{"username", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"email", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"failureReason", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"rlid", "primary"},
+		},
+	)
 
 	qgen.Install.CreateTable("moderation_logs", "", "",
 		[]qgen.DBTableColumn{

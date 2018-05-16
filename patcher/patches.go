@@ -7,6 +7,13 @@ import (
 	"../query_gen/lib"
 )
 
+func init() {
+	addPatch(0, patch0)
+	addPatch(1, patch1)
+	addPatch(2, patch2)
+	addPatch(3, patch3)
+}
+
 func patch0(scanner *bufio.Scanner) (err error) {
 	err = execStmt(qgen.Builder.DropTable("menus"))
 	if err != nil {
@@ -200,6 +207,28 @@ func patch2(scanner *bufio.Scanner) error {
 	}
 
 	err = replaceTextWhere("BadRoute", "routes.BadRoute")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func patch3(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.CreateTable("registration_logs", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"rlid", "int", 0, false, true, ""},
+			qgen.DBTableColumn{"username", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"email", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"failureReason", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"rlid", "primary"},
+		},
+	))
 	if err != nil {
 		return err
 	}

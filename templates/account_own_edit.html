@@ -9,15 +9,15 @@
 			<form action="/user/edit/critical/submit/?session={{.CurrentUser.Session}}" method="post">
 				<div class="formrow real_first_child">
 					<div class="formitem formlabel"><a>{{lang "account_password_current_password"}}</a></div>
-					<div class="formitem"><input name="account-current-password" type="password" placeholder="*****" required /></div>
+					<div class="formitem"><input name="account-current-password" type="password" placeholder="*****" autocomplete="current-password" required /></div>
 				</div>
 				<div class="formrow">
 					<div class="formitem formlabel"><a>{{lang "account_password_new_password"}}</a></div>
-					<div class="formitem"><input name="account-new-password" type="password" placeholder="*****" required /></div>
+					<div class="formitem"><input name="account-new-password" type="password" placeholder="*****" autocomplete="new-password" required /></div>
 				</div>
 				<div class="formrow">
 					<div class="formitem formlabel"><a>{{lang "account_password_confirm_password"}}</a></div>
-					<div class="formitem"><input name="account-confirm-password" type="password" placeholder="*****" required /></div>
+					<div class="formitem"><input name="account-confirm-password" type="password" placeholder="*****" autocomplete="new-password" required /></div>
 				</div>
 				<div class="formrow">
 					<div class="formitem"><button name="account-button" class="formbutton form_middle_button">{{lang "account_password_update_button"}}</button></div>

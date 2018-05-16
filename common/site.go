@@ -52,7 +52,7 @@ type config struct {
 	SslPrivkey   string
 	SslFullchain string
 
-	MaxRequestSize     int64
+	MaxRequestSize     int
 	CacheTopicUser     int
 	UserCacheCapacity  int
 	TopicCacheCapacity int

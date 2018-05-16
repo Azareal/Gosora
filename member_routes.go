@@ -42,13 +42,13 @@ func routeReportSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 			return common.InternalError(err, w, r)
 		}
 
-		err = stmts.getUserName.QueryRow(userReply.ParentID).Scan(&title)
+		profileOwner, err := common.Users.Get(userReply.ParentID)
 		if err == ErrNoRows {
 			return common.LocalError("We weren't able to find the profile the reported post is supposed to be on", w, r, user)
 		} else if err != nil {
 			return common.InternalError(err, w, r)
 		}
-		title = "Profile: " + title
+		title = "Profile: " + profileOwner.Name
 		content = userReply.Content + "\n\nOriginal Post: @" + strconv.Itoa(userReply.ParentID)
 	} else if itemType == "topic" {
 		err = stmts.getTopicBasic.QueryRow(itemID).Scan(&title, &content)

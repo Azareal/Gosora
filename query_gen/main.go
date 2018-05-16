@@ -265,19 +265,9 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	build.Select("isThemeDefault").Table("themes").Columns("default").Where("uname = ?").Parse()
 
-	build.Select("getModlogs").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Parse()
-
-	build.Select("getModlogsOffset").Table("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Parse()
-
-	build.Select("getAdminlogsOffset").Table("administration_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Parse()
-
-	build.Select("getTopicFID").Table("topics").Columns("parentID").Where("tid = ?").Parse()
-
-	build.Select("getUserName").Table("users").Columns("name").Where("uid = ?").Parse()
-
 	build.Select("getEmailsByUser").Table("emails").Columns("email, validated, token").Where("uid = ?").Parse()
 
-	build.Select("getTopicBasic").Table("topics").Columns("title, content").Where("tid = ?").Parse()
+	build.Select("getTopicBasic").Table("topics").Columns("title, content").Where("tid = ?").Parse() // TODO: Comment this out and see if anything breaks
 
 	build.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
 
@@ -314,8 +304,6 @@ func writeInserts(adapter qgen.Adapter) error {
 
 func writeUpdates(adapter qgen.Adapter) error {
 	build := adapter.Builder()
-
-	build.Update("editReply").Table("replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Parse()
 
 	build.Update("updatePlugin").Table("plugins").Set("active = ?").Where("uname = ?").Parse()
 

@@ -2701,6 +2701,31 @@ func routePanelBackups(w http.ResponseWriter, r *http.Request, user common.User,
 	return panelRenderTemplate("panel_backups", w, r, user, &pi)
 }
 
+func routePanelLogsRegs(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	logCount := common.RegLogs.GlobalCount()
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	perPage := 10
+	offset, page, lastPage := common.PageOffset(logCount, page, perPage)
+
+	logs, err := common.RegLogs.GetOffset(offset, perPage)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	var llist = make([]common.PageRegLogItem, len(logs))
+	for index, log := range logs {
+		llist[index] = common.PageRegLogItem{log, strings.Replace(strings.TrimSuffix(log.FailureReason,"|"), "|", " | ", -1)}
+	}
+
+	pageList := common.Paginate(logCount, perPage, 5)
+	pi := common.PanelRegLogsPage{common.GetTitlePhrase("panel_registration_logs"), user, headerVars, stats, "logs", llist, common.Paginator{pageList, page, lastPage}}
+	return panelRenderTemplate("panel_reglogs", w, r, user, &pi)
+}
+
 // TODO: Log errors when something really screwy is going on?
 func handleUnknownUser(user *common.User, err error) *common.User {
 	if err != nil {
@@ -2720,7 +2745,6 @@ func topicElementTypeAction(action string, elementType string, elementID int, ac
 	if action == "delete" {
 		return fmt.Sprintf("Topic #%d was deleted by <a href='%s'>%s</a>", elementID, actor.Link, actor.Name)
 	}
-
 	switch action {
 	case "lock":
 		out = "<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>"
@@ -2778,32 +2802,19 @@ func routePanelLogsMod(w http.ResponseWriter, r *http.Request, user common.User)
 	perPage := 10
 	offset, page, lastPage := common.PageOffset(logCount, page, perPage)
 
-	rows, err := stmts.getModlogsOffset.Query(offset, perPage)
+	logs, err := common.ModLogs.GetOffset(offset, perPage)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
-
-	var logs []common.LogItem
-	var action, elementType, ipaddress, doneAt string
-	var elementID, actorID int
-	for rows.Next() {
-		err := rows.Scan(&action, &elementID, &elementType, &ipaddress, &actorID, &doneAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		actor := handleUnknownUser(common.Users.Get(actorID))
-		action = modlogsElementType(action, elementType, elementID, actor)
-		logs = append(logs, common.LogItem{Action: template.HTML(action), IPAddress: ipaddress, DoneAt: doneAt})
-	}
-	err = rows.Err()
-	if err != nil {
-		return common.InternalError(err, w, r)
+	var llist = make([]common.PageLogItem, len(logs))
+	for index, log := range logs {
+		actor := handleUnknownUser(common.Users.Get(log.ActorID))
+		action := modlogsElementType(log.Action, log.ElementType, log.ElementID, actor)
+		llist[index] = common.PageLogItem{Action: template.HTML(action), IPAddress: log.IPAddress, DoneAt: log.DoneAt}
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_mod_logs"), user, headerVars, stats, "logs", logs, common.Paginator{pageList, page, lastPage}}
+	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_mod_logs"), user, headerVars, stats, "logs", llist, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_modlogs", w, r, user, &pi)
 }
 
@@ -2818,32 +2829,19 @@ func routePanelLogsAdmin(w http.ResponseWriter, r *http.Request, user common.Use
 	perPage := 10
 	offset, page, lastPage := common.PageOffset(logCount, page, perPage)
 
-	rows, err := stmts.getAdminlogsOffset.Query(offset, perPage)
+	logs, err := common.AdminLogs.GetOffset(offset, perPage)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	defer rows.Close()
-
-	var logs []common.LogItem
-	var action, elementType, ipaddress, doneAt string
-	var elementID, actorID int
-	for rows.Next() {
-		err := rows.Scan(&action, &elementID, &elementType, &ipaddress, &actorID, &doneAt)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-
-		actor := handleUnknownUser(common.Users.Get(actorID))
-		action = modlogsElementType(action, elementType, elementID, actor)
-		logs = append(logs, common.LogItem{Action: template.HTML(action), IPAddress: ipaddress, DoneAt: doneAt})
-	}
-	err = rows.Err()
-	if err != nil {
-		return common.InternalError(err, w, r)
+	var llist = make([]common.PageLogItem, len(logs))
+	for index, log := range logs {
+		actor := handleUnknownUser(common.Users.Get(log.ActorID))
+		action := modlogsElementType(log.Action, log.ElementType, log.ElementID, actor)
+		llist[index] = common.PageLogItem{Action: template.HTML(action), IPAddress: log.IPAddress, DoneAt: log.DoneAt}
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_admin_logs"), user, headerVars, stats, "logs", logs, common.Paginator{pageList, page, lastPage}}
+	pi := common.PanelLogsPage{common.GetTitlePhrase("panel_admin_logs"), user, headerVars, stats, "logs", llist, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_adminlogs", w, r, user, &pi)
 }
 

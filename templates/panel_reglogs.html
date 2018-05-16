@@ -1,0 +1,27 @@
+{{template "header.html" . }}
+<div class="colstack panel_stack">
+{{template "panel-menu.html" . }}
+	<main class="colstack_right">
+		<div class="colstack_item colstack_head">
+			<div class="rowitem"><h1>{{lang "panel_logs_registration_head"}}</h1></div>
+		</div>
+		<div id="panel_modlogs" class="colstack_item rowlist">
+			{{range .Logs}}
+			<div class="rowitem panel_compactrow">
+				<span class="{{if not .Success}}panel_registration_attempt{{end}}" style="float: left;">
+					<span>{{if not .Success}}{{lang "panel_logs_registration_attempt"}}: {{end}}{{.Username}} ({{lang "panel_logs_registration_email"}}: {{.Email}}){{if .ParsedReason}} ({{lang "panel_logs_registration_reason"}}: {{.ParsedReason}}){{end}}</span>
+					{{if $.CurrentUser.Perms.ViewIPs}}<br /><small style="margin-left: 2px;font-size: 12px;">{{.IPAddress}}</small>{{end}}
+				</span>
+				<span class="to_right">
+					<span style="font-size: 14px;">{{.DoneAt}}</span>
+				</span>
+				<div style="clear: both;"></div>
+			</div>
+			{{end}}
+		</div>
+		{{if gt .LastPage 1}}
+		{{template "paginator.html" . }}
+		{{end}}
+	</main>
+</div>
+{{template "footer.html" . }}

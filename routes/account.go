@@ -108,28 +108,47 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerLite, _ := common.SimpleUserCheck(w, r, &user)
 
-	username := html.EscapeString(strings.Replace(r.PostFormValue("username"), "\n", "", -1))
-	if username == "" {
-		return common.LocalError("You didn't put in a username.", w, r, user)
+	// TODO: Should we push multiple validation errors to the user instead of just one?
+	var regSuccess = true
+	var regErrMsg = ""
+	var regErrReason = ""
+	var regError = func(userMsg string, reason string) {
+		regSuccess = false
+		if regErrMsg == "" {
+			regErrMsg = userMsg
+		}
+		regErrReason += reason + "|"
 	}
+
+	username := html.EscapeString(strings.Replace(r.PostFormValue("username"), "\n", "", -1))
 	email := html.EscapeString(strings.Replace(r.PostFormValue("email"), "\n", "", -1))
+	if username == "" {
+		regError("You didn't put in a username.", "no-username")
+	}
 	if email == "" {
-		return common.LocalError("You didn't put in an email.", w, r, user)
+		regError("You didn't put in an email.", "no-email")
 	}
 
 	password := r.PostFormValue("password")
 	// ?  Move this into Create()? What if we want to programatically set weak passwords for tests?
 	err := common.WeakPassword(password, username, email)
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		regError(err.Error(), "weak-password")
+	} else {
+		// Do the two inputted passwords match..?
+		confirmPassword := r.PostFormValue("confirm_password")
+		if password != confirmPassword {
+			regError("The two passwords don't match.", "password-mismatch")
+		}
 	}
 
-	confirmPassword := r.PostFormValue("confirm_password")
-	common.DebugLog("Registration Attempt! Username: " + username) // TODO: Add more controls over what is logged when?
-
-	// Do the two inputted passwords match..?
-	if password != confirmPassword {
-		return common.LocalError("The two passwords don't match.", w, r, user)
+	regLog := common.RegLogItem{Username: username, Email: email, FailureReason: regErrReason, Success: regSuccess, IPAddress: user.LastIP}
+	_, err = regLog.Create()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	if !regSuccess {
+		return common.LocalError(regErrMsg, w, r, user)
 	}
 
 	var active bool
@@ -142,12 +161,30 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		group = common.Config.ActivationGroup
 	}
 
+	// TODO: Do the registration attempt logging a little less messily (without having to amend the result after the insert)
 	uid, err := common.Users.Create(username, password, email, group, active)
-	if err == common.ErrAccountExists {
-		return common.LocalError("This username isn't available. Try another.", w, r, user)
-	} else if err == common.ErrLongUsername {
-		return common.LocalError("The username is too long, max: "+strconv.Itoa(common.Config.MaxUsernameLength), w, r, user)
-	} else if err != nil {
+	if err != nil {
+		regLog.Success = false
+		if err == common.ErrAccountExists {
+			regLog.FailureReason += "username-exists"
+			err = regLog.Commit()
+			if err != nil {
+				return common.InternalError(err, w, r)
+			}
+			return common.LocalError("This username isn't available. Try another.", w, r, user)
+		} else if err == common.ErrLongUsername {
+			regLog.FailureReason += "username-too-long"
+			err = regLog.Commit()
+			if err != nil {
+				return common.InternalError(err, w, r)
+			}
+			return common.LocalError("The username is too long, max: "+strconv.Itoa(common.Config.MaxUsernameLength), w, r, user)
+		}
+		regLog.FailureReason += "internal-error"
+		err2 := regLog.Commit()
+		if err2 != nil {
+			return common.InternalError(err2, w, r)
+		}
 		return common.InternalError(err, w, r)
 	}
 
@@ -161,7 +198,6 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		// TODO: Add an EmailStore and move this there
 		acc := qgen.Builder.Accumulator()
 		_, err = acc.Insert("emails").Columns("email, uid, validated, token").Fields("?,?,?,?").Exec(email, uid, 0, token)
-		//_, err = stmts.addEmail.Exec(email, uid, 0, token)
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}

@@ -14,7 +14,7 @@
 		</div>
 		{{if .CurrentUser.Perms.EditUserPassword}}<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_user_password"}}</a></div>
-			<div class="formitem"><input name="user-password" type="password" placeholder="*****" /></div>
+			<div class="formitem"><input name="user-password" type="password" placeholder="*****" autocomplete="off" /></div>
 		</div>{{end}}
 		{{if .CurrentUser.Perms.EditUserEmail}}<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_user_email"}}</a></div>

@@ -383,7 +383,7 @@ type PanelBackupPage struct {
 	Backups     []BackupItem
 }
 
-type LogItem struct {
+type PageLogItem struct {
 	Action    template.HTML
 	IPAddress string
 	DoneAt    string
@@ -395,7 +395,22 @@ type PanelLogsPage struct {
 	Header      *Header
 	Stats       PanelStats
 	Zone        string
-	Logs        []LogItem
+	Logs        []PageLogItem
+	Paginator
+}
+
+type PageRegLogItem struct {
+	RegLogItem
+	ParsedReason string
+}
+
+type PanelRegLogsPage struct {
+	Title       string
+	CurrentUser User
+	Header      *Header
+	Stats       PanelStats
+	Zone        string
+	Logs        []PageRegLogItem
 	Paginator
 }
 

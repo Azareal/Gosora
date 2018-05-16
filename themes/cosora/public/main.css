@@ -234,8 +234,13 @@ ul {
 	display: inline-block;
 }
 .colstack_head a h1 {
-	font-size: 16px;
 	color: var(--primary-link-color);
+}
+.colstack_head.menuhead a h1 {
+	font-size: 16px;
+}
+.colstack_head h1 {
+	font-size: 18px;
 }
 h1, h3 {
 	-webkit-margin-before: 0;

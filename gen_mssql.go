@@ -12,11 +12,6 @@ type Stmts struct {
 	isPluginActive *sql.Stmt
 	getUsersOffset *sql.Stmt
 	isThemeDefault *sql.Stmt
-	getModlogs *sql.Stmt
-	getModlogsOffset *sql.Stmt
-	getAdminlogsOffset *sql.Stmt
-	getTopicFID *sql.Stmt
-	getUserName *sql.Stmt
 	getEmailsByUser *sql.Stmt
 	getTopicBasic *sql.Stmt
 	forumEntryExists *sql.Stmt
@@ -27,7 +22,6 @@ type Stmts struct {
 	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
 	createWordFilter *sql.Stmt
-	editReply *sql.Stmt
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
@@ -78,46 +72,6 @@ func _gen_mssql() (err error) {
 	if err != nil {
 		log.Print("Error in isThemeDefault statement.")
 		log.Print("Bad Query: ","SELECT [default] FROM [themes] WHERE [uname] = ?1")
-		return err
-	}
-		
-	common.DebugLog("Preparing getModlogs statement.")
-	stmts.getModlogs, err = db.Prepare("SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs]")
-	if err != nil {
-		log.Print("Error in getModlogs statement.")
-		log.Print("Bad Query: ","SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs]")
-		return err
-	}
-		
-	common.DebugLog("Preparing getModlogsOffset statement.")
-	stmts.getModlogsOffset, err = db.Prepare("SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
-	if err != nil {
-		log.Print("Error in getModlogsOffset statement.")
-		log.Print("Bad Query: ","SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [moderation_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
-		return err
-	}
-		
-	common.DebugLog("Preparing getAdminlogsOffset statement.")
-	stmts.getAdminlogsOffset, err = db.Prepare("SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [administration_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
-	if err != nil {
-		log.Print("Error in getAdminlogsOffset statement.")
-		log.Print("Bad Query: ","SELECT [action],[elementID],[elementType],[ipaddress],[actorID],[doneAt] FROM [administration_logs] ORDER BY doneAt DESC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
-		return err
-	}
-		
-	common.DebugLog("Preparing getTopicFID statement.")
-	stmts.getTopicFID, err = db.Prepare("SELECT [parentID] FROM [topics] WHERE [tid] = ?1")
-	if err != nil {
-		log.Print("Error in getTopicFID statement.")
-		log.Print("Bad Query: ","SELECT [parentID] FROM [topics] WHERE [tid] = ?1")
-		return err
-	}
-		
-	common.DebugLog("Preparing getUserName statement.")
-	stmts.getUserName, err = db.Prepare("SELECT [name] FROM [users] WHERE [uid] = ?1")
-	if err != nil {
-		log.Print("Error in getUserName statement.")
-		log.Print("Bad Query: ","SELECT [name] FROM [users] WHERE [uid] = ?1")
 		return err
 	}
 		
@@ -198,14 +152,6 @@ func _gen_mssql() (err error) {
 	if err != nil {
 		log.Print("Error in createWordFilter statement.")
 		log.Print("Bad Query: ","INSERT INTO [word_filters] ([find],[replacement]) VALUES (?,?)")
-		return err
-	}
-		
-	common.DebugLog("Preparing editReply statement.")
-	stmts.editReply, err = db.Prepare("UPDATE [replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
-	if err != nil {
-		log.Print("Error in editReply statement.")
-		log.Print("Bad Query: ","UPDATE [replies] SET [content] = ?,[parsed_content] = ? WHERE [rid] = ?")
 		return err
 	}
 		

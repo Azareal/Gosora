@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +15,12 @@ import (
 	"../query_gen/lib"
 	_ "github.com/go-sql-driver/mysql"
 )
+
+var patches = make(map[int]func(*bufio.Scanner) error)
+
+func addPatch(index int, handle func(*bufio.Scanner) error) {
+	patches[index] = handle
+}
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
@@ -92,55 +97,21 @@ func patcher(scanner *bufio.Scanner) error {
 	}
 
 	fmt.Println("Applying the patches")
-	if dbVersion < 2 {
-		if dbVersion < 1 {
-			err := patch0(scanner)
-			if err != nil {
-				return err
-			}
+	var pslice = make([]func(*bufio.Scanner) error, len(patches))
+	for i := 0; i < len(patches); i++ {
+		pslice[i] = patches[i]
+	}
+
+	// Run the queued up patches
+	for index, patch := range pslice {
+		if dbVersion > index {
+			continue
 		}
-		return patch1(scanner)
-	}
-	return patch2(scanner)
-}
-
-func execStmt(stmt *sql.Stmt, err error) error {
-	if err != nil {
-		return err
-	}
-	_, err = stmt.Exec()
-	return err
-}
-
-/*func eachUserQuick(handle func(int)) error {
-	stmt, err := qgen.Builder.Select("users").Orderby("uid desc").Limit(1).Prepare()
-	if err != nil {
-		return err
-	}
-
-	var topID int
-	err := stmt.QueryRow(topID)
-	if err != nil {
-		return err
-	}
-
-	for i := 1; i <= topID; i++ {
-		err = handle(i)
+		err := patch(scanner)
 		if err != nil {
 			return err
 		}
 	}
-}*/
 
-func eachUser(handle func(int) error) error {
-	acc := qgen.Builder.Accumulator()
-	err := acc.Select("users").Each(func(rows *sql.Rows) error {
-		var uid int
-		err := rows.Scan(&uid)
-		if err != nil {
-			return err
-		}
-		return handle(uid)
-	})
-	return err
+	return nil
 }

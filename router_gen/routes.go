@@ -194,6 +194,7 @@ func buildPanelRoutes() {
 		Action("routePanelGroupsCreateSubmit", "/panel/groups/create/"),
 
 		View("routePanelBackups", "/panel/backups/", "extraData").Before("SuperAdminOnly"), // TODO: Test
+		View("routePanelLogsRegs", "/panel/logs/regs/"),
 		View("routePanelLogsMod", "/panel/logs/mod/"),
 		View("routePanelDebug", "/panel/debug/").Before("AdminOnly"),
 	)

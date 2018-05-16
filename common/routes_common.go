@@ -263,10 +263,6 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	if halt {
 		return *user, false
 	}
-	if user == &GuestUser {
-		return *user, true
-	}
-
 	var usercpy *User = BlankUser()
 	*usercpy = *user
 
@@ -276,6 +272,11 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		PreError("Bad IP", w, r)
 		return *usercpy, false
 	}
+	if user == &GuestUser {
+		usercpy.LastIP = host
+		return *usercpy, true
+	}
+
 	if host != usercpy.LastIP {
 		err = usercpy.UpdateIP(host)
 		if err != nil {
