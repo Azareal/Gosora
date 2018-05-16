@@ -1,6 +1,7 @@
 CREATE TABLE [menu_items] (
 	[miid] int not null IDENTITY,
 	[mid] int not null,
+	[name] nvarchar (200) not null,
 	[htmlID] nvarchar (200) DEFAULT '' not null,
 	[cssClass] nvarchar (200) DEFAULT '' not null,
 	[position] nvarchar (100) not null,

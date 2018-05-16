@@ -1,6 +1,7 @@
 CREATE TABLE `menu_items` (
 	`miid` serial not null,
 	`mid` int not null,
+	`name` varchar (200) not null,
 	`htmlID` varchar (200) DEFAULT '' not null,
 	`cssClass` varchar (200) DEFAULT '' not null,
 	`position` varchar (100) not null,
