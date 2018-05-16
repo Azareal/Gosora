@@ -12,8 +12,6 @@ before_install:
   - chmod 755 ./run-linux-tests
   - ./update-deps-linux
   - ./dev-update-travis
-  - go build -o Gosora
-  - ./Gosora -build-templates
 install: true
 script: ./run-linux-tests
 addons:

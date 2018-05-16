@@ -1,3 +1,5 @@
 package tmpl
 
-var GetFrag func(name string) [][]byte
+var GetFrag = func(name string) [][]byte {
+	return nil
+}
