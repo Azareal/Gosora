@@ -155,6 +155,14 @@ func CompileTemplates() error {
 		},
 	}
 
+	var header2 = &Header{Site: Site}
+	*header2 = *header
+	header2.CurrentUser = user2
+
+	var header3 = &Header{Site: Site}
+	*header3 = *header
+	header3.CurrentUser = user3
+
 	log.Print("Compiling the templates")
 
 	var now = time.Now()
@@ -167,7 +175,8 @@ func CompileTemplates() error {
 	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, RelativeTime(now), 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
 	var varList = make(map[string]tmpl.VarItem)
-	tpage := TopicPage{"Title", user, header, replyList, topic, poll, 1, 1}
+	header.Title = "Topic Name"
+	tpage := TopicPage{header, replyList, topic, poll, 1, 1}
 	topicIDTmpl, err := c.Compile("topic.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err
@@ -203,17 +212,16 @@ func CompileTemplates() error {
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, "Date", time.Now(), "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
-	header.Title = "Topic List"
+	header2.Title = "Topic List"
 	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, Paginator{[]int{1}, 1, 1}}
 	topicListTmpl, err := c.Compile("topics.html", "templates/", "common.TopicListPage", topicListPage, varList)
 	if err != nil {
 		return err
 	}
 
-	//var topicList []TopicUser
-	//topicList = append(topicList,TopicUser{1,"topic-title","Topic Title","The topic content.",1,false,false,"Date","Date",1,"","127.0.0.1",0,1,"classname","","admin-fred","Admin Fred",config.DefaultGroup,"",0,"","","","",58,false})
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
-	forumPage := ForumPage{"General Forum", user, header, topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
+	header.Title = "General Forum"
+	forumPage := ForumPage{header, topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
 	forumTmpl, err := c.Compile("forum.html", "templates/", "common.ForumPage", forumPage, varList)
 	if err != nil {
 		return err

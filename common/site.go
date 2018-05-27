@@ -51,6 +51,7 @@ type dbConfig struct {
 type config struct {
 	SslPrivkey   string
 	SslFullchain string
+	HashAlgo     string // Defaults to bcrypt, and in the future, possibly something stronger
 
 	MaxRequestSize     int
 	CacheTopicUser     int
@@ -102,6 +103,11 @@ func ProcessConfig() error {
 	}
 	if Config.MaxUsernameLength == 0 {
 		Config.MaxUsernameLength = 100
+	}
+	GuestUser.Avatar = BuildAvatar(0, "")
+
+	if Config.HashAlgo != "" {
+		// TODO: Set the alternate hash algo, e.g. argon2
 	}
 
 	// We need this in here rather than verifyConfig as switchToTestDB() currently overwrites the values it verifies

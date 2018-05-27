@@ -21,7 +21,7 @@ body {
 	background-color: var(--main-background-color);
 	margin: 0;
 }
-p::selection, span::selection, a::selection {
+*::selection {
 	background-color: hsl(0,0%,75%);
 	color: hsl(0,0%,20%);
 	font-weight: 100;
@@ -226,6 +226,9 @@ a {
 }
 
 /* TODO: Add the avatars to the forum list */
+.forum_list .forum_nodesc {
+	font-style: italic;
+}
 .extra_little_row_avatar {
 	display: none;
 }
@@ -377,13 +380,22 @@ textarea.large {
 	display: block;
 }
 
-.formitem button, .formbutton {
+.formitem button, .formbutton, .mod_floater_submit, .pane_buttons button {
 	background-color: var(--input-background-color);
 	border: 1px solid var(--input-border-color);
 	color: var(--input-text-color);
 	padding: 7px;
 	padding-bottom: 6px;
 	font-size: 13px;
+}
+.mod_floater_submit {
+	padding: 5px;
+	padding-bottom: 4px;
+	margin-left: 2px;
+}
+.pane_buttons button {
+	padding: 5px;
+	padding-bottom: 4px;
 }
 
 .formrow {
@@ -666,15 +678,96 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	font-size: 11px;
 }
 
+.topic_list_title_block .pre_opt:before {
+	content: "{{index .Phrases "topics_click_topics_to_select"}}";
+	font-size: 14px;
+}
 .create_topic_opt a:before {
 	content: "{{index .Phrases "topics_new_topic"}}";
+	margin-left: 3px;
 }
 .locked_opt a:before {
 	content: "{{index .Phrases "forum_locked"}}";
 }
+.mod_opt a {
+	margin-left: 4px;
+}
+.mod_opt a:after {
+	content: "{{index .Phrases "topics_moderate"}}";
+	padding-left: 1px;
+}
+.create_topic_opt {
+	order: 1;
+}
+.mod_opt {
+	order: 2;
+}
+.pre_opt {
+	order: 3;
+	margin-left: auto;
+	margin-right: 12px;
+}
+
+@keyframes fadein {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+.mod_floater {
+	position: fixed;
+	bottom: 15px;
+	right: 15px;
+	width: 150px;
+	height: 65px;
+	font-size: 14px;
+	padding: 14px;
+	z-index: 9999;
+	animation: fadein 0.8s;
+	background-color: var(--main-block-color);
+}
+.mod_floater_head {
+	margin-bottom: 8px;
+}
+.modal_pane {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	background-color: var(--main-block-color);
+	border: 2px solid #333333;
+	padding-left: 24px;
+	padding-right: 24px;
+	z-index: 9999;
+	animation: fadein 0.8s;
+}
+.pane_header {
+	font-size: 15px;
+}
+.pane_header h3 {
+	-webkit-margin-before: 0;
+	-webkit-margin-after: 0;
+	margin-block-start: 0;
+	margin-block-end: 0;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	font-weight: normal;
+}
+.pane_row {
+	font-size: 14px;
+	margin-bottom: 1px;
+}
+.pane_selected {
+	font-weight: bold;
+}
+.pane_buttons {
+	margin-top: 7px;
+	margin-bottom: 8px;
+}
 
 .topic_list .topic_row {
 	display: flex;
+}
+.topic_selected .rowitem {
+    background-color: hsla(0, 0%, 29%, 1);
 }
 /* Temporary hack, so that I don't break the topic lists of the other themes */
 .topic_list .topic_inner_right {
@@ -706,10 +799,13 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	width: 284px;
 	padding: 0px;
 }
+.topic_right_inside {
+	display: flex;
+}
 .topic_list .topic_left img, .topic_list .topic_right img {
 	width: 64px;
 }
-.topic_list .topic_inner_left, .topic_right > span {
+.topic_list .topic_inner_left, .topic_right_inside > span {
 	margin-left: 8px;
 	margin-top: 12px;
 }
@@ -724,6 +820,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 }
 .topic_list .starter:before {
 	content: "{{index .Phrases "topics_starter"}}: ";
+}
+.topic_middle {
+	display: none;
 }
 
 .topic_name_input {

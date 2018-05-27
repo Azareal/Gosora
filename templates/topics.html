@@ -113,17 +113,26 @@
 			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="{{lang "status_closed_tooltip"}}"> | &#x1F512;&#xFE0E</span>{{end}}
 			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="{{lang "status_pinned_tooltip"}}"> | &#x1F4CD;&#xFE0E</span>{{end}}
 		</span>
-		<span class="topic_inner_right rowsmall" style="float: right;">
+		{{/** TODO: Phase this out of Cosora and remove it **/}}
+		<div class="topic_inner_right rowsmall">
 			<span class="replyCount">{{.PostCount}}</span><br />
 			<span class="likeCount">{{.LikeCount}}</span>
-		</span>
+		</div>
 	</div>
-	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
-		<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
-		<span>
-			<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
-			<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
-		</span>
+	<div class="topic_middle">
+		<div class="topic_middle_inside rowsmall">
+			<span class="replyCount">{{.PostCount}}</span><br />
+			<span class="likeCount">{{.LikeCount}}</span>
+		</div>
+	</div>
+	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}} topic_closed{{end}}">
+		<div class="topic_right_inside">
+			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
+			<span>
+				<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
+				<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
+			</span>
+		</div>
 	</div>
 	</div>{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}</div>{{end}}
 </div>

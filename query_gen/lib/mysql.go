@@ -86,39 +86,7 @@ func (adapter *MysqlAdapter) CreateTable(name string, table string, charset stri
 
 	var querystr = "CREATE TABLE `" + table + "` ("
 	for _, column := range columns {
-		// Make it easier to support Cassandra in the future
-		if column.Type == "createdAt" {
-			column.Type = "datetime"
-		} else if column.Type == "json" {
-			column.Type = "text"
-		}
-
-		var size string
-		if column.Size > 0 {
-			size = "(" + strconv.Itoa(column.Size) + ")"
-		}
-
-		var end string
-		// TODO: Exclude the other variants of text like mediumtext and longtext too
-		if column.Default != "" && column.Type != "text" {
-			end = " DEFAULT "
-			if adapter.stringyType(column.Type) && column.Default != "''" {
-				end += "'" + column.Default + "'"
-			} else {
-				end += column.Default
-			}
-		}
-
-		if column.Null {
-			end += " null"
-		} else {
-			end += " not null"
-		}
-
-		if column.AutoIncrement {
-			end += " AUTO_INCREMENT"
-		}
-
+		column, size, end := adapter.parseColumn(column)
 		querystr += "\n\t`" + column.Name + "` " + column.Type + size + end + ","
 	}
 
@@ -146,6 +114,54 @@ func (adapter *MysqlAdapter) CreateTable(name string, table string, charset stri
 
 	adapter.pushStatement(name, "create-table", querystr+";")
 	return querystr + ";", nil
+}
+
+func (adapter *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColumn, size string, end string) {
+	// Make it easier to support Cassandra in the future
+	if column.Type == "createdAt" {
+		column.Type = "datetime"
+	} else if column.Type == "json" {
+		column.Type = "text"
+	}
+	if column.Size > 0 {
+		size = "(" + strconv.Itoa(column.Size) + ")"
+	}
+
+	// TODO: Exclude the other variants of text like mediumtext and longtext too
+	if column.Default != "" && column.Type != "text" {
+		end = " DEFAULT "
+		if adapter.stringyType(column.Type) && column.Default != "''" {
+			end += "'" + column.Default + "'"
+		} else {
+			end += column.Default
+		}
+	}
+
+	if column.Null {
+		end += " null"
+	} else {
+		end += " not null"
+	}
+	if column.AutoIncrement {
+		end += " AUTO_INCREMENT"
+	}
+	return column, size, end
+}
+
+// TODO: Support AFTER column
+// TODO: Test to make sure everything works here
+func (adapter *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+
+	column, size, end := adapter.parseColumn(column)
+	querystr := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + column.Name + "` " + column.Type + size + end + ";"
+	adapter.pushStatement(name, "add-column", querystr)
+	return querystr, nil
 }
 
 func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {

@@ -14,6 +14,7 @@ import (
 	"./common"
 	"./common/counters"
 	"./routes"
+	"./routes/panel"
 )
 
 var ErrNoRoute = errors.New("That route doesn't exist.")
@@ -27,21 +28,21 @@ var RouteMap = map[string]interface{}{
 	"routes.ChangeTheme": routes.ChangeTheme,
 	"routes.ShowAttachment": routes.ShowAttachment,
 	"common.RouteWebsockets": common.RouteWebsockets,
-	"routeReportSubmit": routeReportSubmit,
+	"routes.ReportSubmit": routes.ReportSubmit,
 	"routes.CreateTopic": routes.CreateTopic,
 	"routes.TopicList": routes.TopicList,
-	"routePanelForums": routePanelForums,
-	"routePanelForumsCreateSubmit": routePanelForumsCreateSubmit,
-	"routePanelForumsDelete": routePanelForumsDelete,
-	"routePanelForumsDeleteSubmit": routePanelForumsDeleteSubmit,
-	"routePanelForumsEdit": routePanelForumsEdit,
-	"routePanelForumsEditSubmit": routePanelForumsEditSubmit,
-	"routePanelForumsEditPermsSubmit": routePanelForumsEditPermsSubmit,
-	"routePanelForumsEditPermsAdvance": routePanelForumsEditPermsAdvance,
-	"routePanelForumsEditPermsAdvanceSubmit": routePanelForumsEditPermsAdvanceSubmit,
-	"routePanelSettings": routePanelSettings,
-	"routePanelSettingEdit": routePanelSettingEdit,
-	"routePanelSettingEditSubmit": routePanelSettingEditSubmit,
+	"panel.Forums": panel.Forums,
+	"panel.ForumsCreateSubmit": panel.ForumsCreateSubmit,
+	"panel.ForumsDelete": panel.ForumsDelete,
+	"panel.ForumsDeleteSubmit": panel.ForumsDeleteSubmit,
+	"panel.ForumsEdit": panel.ForumsEdit,
+	"panel.ForumsEditSubmit": panel.ForumsEditSubmit,
+	"panel.ForumsEditPermsSubmit": panel.ForumsEditPermsSubmit,
+	"panel.ForumsEditPermsAdvance": panel.ForumsEditPermsAdvance,
+	"panel.ForumsEditPermsAdvanceSubmit": panel.ForumsEditPermsAdvanceSubmit,
+	"panel.Settings": panel.Settings,
+	"panel.SettingEdit": panel.SettingEdit,
+	"panel.SettingEditSubmit": panel.SettingEditSubmit,
 	"routePanelWordFilters": routePanelWordFilters,
 	"routePanelWordFiltersCreateSubmit": routePanelWordFiltersCreateSubmit,
 	"routePanelWordFiltersEdit": routePanelWordFiltersEdit,
@@ -63,31 +64,31 @@ var RouteMap = map[string]interface{}{
 	"routePanelUsers": routePanelUsers,
 	"routePanelUsersEdit": routePanelUsersEdit,
 	"routePanelUsersEditSubmit": routePanelUsersEditSubmit,
-	"routePanelAnalyticsViews": routePanelAnalyticsViews,
-	"routePanelAnalyticsRoutes": routePanelAnalyticsRoutes,
-	"routePanelAnalyticsAgents": routePanelAnalyticsAgents,
-	"routePanelAnalyticsSystems": routePanelAnalyticsSystems,
-	"routePanelAnalyticsLanguages": routePanelAnalyticsLanguages,
-	"routePanelAnalyticsReferrers": routePanelAnalyticsReferrers,
-	"routePanelAnalyticsRouteViews": routePanelAnalyticsRouteViews,
-	"routePanelAnalyticsAgentViews": routePanelAnalyticsAgentViews,
-	"routePanelAnalyticsForumViews": routePanelAnalyticsForumViews,
-	"routePanelAnalyticsSystemViews": routePanelAnalyticsSystemViews,
-	"routePanelAnalyticsLanguageViews": routePanelAnalyticsLanguageViews,
-	"routePanelAnalyticsReferrerViews": routePanelAnalyticsReferrerViews,
-	"routePanelAnalyticsPosts": routePanelAnalyticsPosts,
-	"routePanelAnalyticsTopics": routePanelAnalyticsTopics,
-	"routePanelAnalyticsForums": routePanelAnalyticsForums,
+	"panel.AnalyticsViews": panel.AnalyticsViews,
+	"panel.AnalyticsRoutes": panel.AnalyticsRoutes,
+	"panel.AnalyticsAgents": panel.AnalyticsAgents,
+	"panel.AnalyticsSystems": panel.AnalyticsSystems,
+	"panel.AnalyticsLanguages": panel.AnalyticsLanguages,
+	"panel.AnalyticsReferrers": panel.AnalyticsReferrers,
+	"panel.AnalyticsRouteViews": panel.AnalyticsRouteViews,
+	"panel.AnalyticsAgentViews": panel.AnalyticsAgentViews,
+	"panel.AnalyticsForumViews": panel.AnalyticsForumViews,
+	"panel.AnalyticsSystemViews": panel.AnalyticsSystemViews,
+	"panel.AnalyticsLanguageViews": panel.AnalyticsLanguageViews,
+	"panel.AnalyticsReferrerViews": panel.AnalyticsReferrerViews,
+	"panel.AnalyticsPosts": panel.AnalyticsPosts,
+	"panel.AnalyticsTopics": panel.AnalyticsTopics,
+	"panel.AnalyticsForums": panel.AnalyticsForums,
 	"routePanelGroups": routePanelGroups,
 	"routePanelGroupsEdit": routePanelGroupsEdit,
 	"routePanelGroupsEditPerms": routePanelGroupsEditPerms,
 	"routePanelGroupsEditSubmit": routePanelGroupsEditSubmit,
 	"routePanelGroupsEditPermsSubmit": routePanelGroupsEditPermsSubmit,
 	"routePanelGroupsCreateSubmit": routePanelGroupsCreateSubmit,
-	"routePanelBackups": routePanelBackups,
-	"routePanelLogsRegs": routePanelLogsRegs,
-	"routePanelLogsMod": routePanelLogsMod,
-	"routePanelDebug": routePanelDebug,
+	"panel.Backups": panel.Backups,
+	"panel.LogsRegs": panel.LogsRegs,
+	"panel.LogsMod": panel.LogsMod,
+	"panel.Debug": panel.Debug,
 	"routePanelDashboard": routePanelDashboard,
 	"routes.AccountEditCritical": routes.AccountEditCritical,
 	"routes.AccountEditCriticalSubmit": routes.AccountEditCriticalSubmit,
@@ -95,8 +96,8 @@ var RouteMap = map[string]interface{}{
 	"routes.AccountEditAvatarSubmit": routes.AccountEditAvatarSubmit,
 	"routes.AccountEditUsername": routes.AccountEditUsername,
 	"routes.AccountEditUsernameSubmit": routes.AccountEditUsernameSubmit,
-	"routeAccountEditEmail": routeAccountEditEmail,
-	"routeAccountEditEmailTokenSubmit": routeAccountEditEmailTokenSubmit,
+	"routes.AccountEditEmail": routes.AccountEditEmail,
+	"routes.AccountEditEmailTokenSubmit": routes.AccountEditEmailTokenSubmit,
 	"routes.ViewProfile": routes.ViewProfile,
 	"routes.BanUserSubmit": routes.BanUserSubmit,
 	"routes.UnbanUser": routes.UnbanUser,
@@ -144,21 +145,21 @@ var routeMapEnum = map[string]int{
 	"routes.ChangeTheme": 5,
 	"routes.ShowAttachment": 6,
 	"common.RouteWebsockets": 7,
-	"routeReportSubmit": 8,
+	"routes.ReportSubmit": 8,
 	"routes.CreateTopic": 9,
 	"routes.TopicList": 10,
-	"routePanelForums": 11,
-	"routePanelForumsCreateSubmit": 12,
-	"routePanelForumsDelete": 13,
-	"routePanelForumsDeleteSubmit": 14,
-	"routePanelForumsEdit": 15,
-	"routePanelForumsEditSubmit": 16,
-	"routePanelForumsEditPermsSubmit": 17,
-	"routePanelForumsEditPermsAdvance": 18,
-	"routePanelForumsEditPermsAdvanceSubmit": 19,
-	"routePanelSettings": 20,
-	"routePanelSettingEdit": 21,
-	"routePanelSettingEditSubmit": 22,
+	"panel.Forums": 11,
+	"panel.ForumsCreateSubmit": 12,
+	"panel.ForumsDelete": 13,
+	"panel.ForumsDeleteSubmit": 14,
+	"panel.ForumsEdit": 15,
+	"panel.ForumsEditSubmit": 16,
+	"panel.ForumsEditPermsSubmit": 17,
+	"panel.ForumsEditPermsAdvance": 18,
+	"panel.ForumsEditPermsAdvanceSubmit": 19,
+	"panel.Settings": 20,
+	"panel.SettingEdit": 21,
+	"panel.SettingEditSubmit": 22,
 	"routePanelWordFilters": 23,
 	"routePanelWordFiltersCreateSubmit": 24,
 	"routePanelWordFiltersEdit": 25,
@@ -180,31 +181,31 @@ var routeMapEnum = map[string]int{
 	"routePanelUsers": 41,
 	"routePanelUsersEdit": 42,
 	"routePanelUsersEditSubmit": 43,
-	"routePanelAnalyticsViews": 44,
-	"routePanelAnalyticsRoutes": 45,
-	"routePanelAnalyticsAgents": 46,
-	"routePanelAnalyticsSystems": 47,
-	"routePanelAnalyticsLanguages": 48,
-	"routePanelAnalyticsReferrers": 49,
-	"routePanelAnalyticsRouteViews": 50,
-	"routePanelAnalyticsAgentViews": 51,
-	"routePanelAnalyticsForumViews": 52,
-	"routePanelAnalyticsSystemViews": 53,
-	"routePanelAnalyticsLanguageViews": 54,
-	"routePanelAnalyticsReferrerViews": 55,
-	"routePanelAnalyticsPosts": 56,
-	"routePanelAnalyticsTopics": 57,
-	"routePanelAnalyticsForums": 58,
+	"panel.AnalyticsViews": 44,
+	"panel.AnalyticsRoutes": 45,
+	"panel.AnalyticsAgents": 46,
+	"panel.AnalyticsSystems": 47,
+	"panel.AnalyticsLanguages": 48,
+	"panel.AnalyticsReferrers": 49,
+	"panel.AnalyticsRouteViews": 50,
+	"panel.AnalyticsAgentViews": 51,
+	"panel.AnalyticsForumViews": 52,
+	"panel.AnalyticsSystemViews": 53,
+	"panel.AnalyticsLanguageViews": 54,
+	"panel.AnalyticsReferrerViews": 55,
+	"panel.AnalyticsPosts": 56,
+	"panel.AnalyticsTopics": 57,
+	"panel.AnalyticsForums": 58,
 	"routePanelGroups": 59,
 	"routePanelGroupsEdit": 60,
 	"routePanelGroupsEditPerms": 61,
 	"routePanelGroupsEditSubmit": 62,
 	"routePanelGroupsEditPermsSubmit": 63,
 	"routePanelGroupsCreateSubmit": 64,
-	"routePanelBackups": 65,
-	"routePanelLogsRegs": 66,
-	"routePanelLogsMod": 67,
-	"routePanelDebug": 68,
+	"panel.Backups": 65,
+	"panel.LogsRegs": 66,
+	"panel.LogsMod": 67,
+	"panel.Debug": 68,
 	"routePanelDashboard": 69,
 	"routes.AccountEditCritical": 70,
 	"routes.AccountEditCriticalSubmit": 71,
@@ -212,8 +213,8 @@ var routeMapEnum = map[string]int{
 	"routes.AccountEditAvatarSubmit": 73,
 	"routes.AccountEditUsername": 74,
 	"routes.AccountEditUsernameSubmit": 75,
-	"routeAccountEditEmail": 76,
-	"routeAccountEditEmailTokenSubmit": 77,
+	"routes.AccountEditEmail": 76,
+	"routes.AccountEditEmailTokenSubmit": 77,
 	"routes.ViewProfile": 78,
 	"routes.BanUserSubmit": 79,
 	"routes.UnbanUser": 80,
@@ -259,21 +260,21 @@ var reverseRouteMapEnum = map[int]string{
 	5: "routes.ChangeTheme",
 	6: "routes.ShowAttachment",
 	7: "common.RouteWebsockets",
-	8: "routeReportSubmit",
+	8: "routes.ReportSubmit",
 	9: "routes.CreateTopic",
 	10: "routes.TopicList",
-	11: "routePanelForums",
-	12: "routePanelForumsCreateSubmit",
-	13: "routePanelForumsDelete",
-	14: "routePanelForumsDeleteSubmit",
-	15: "routePanelForumsEdit",
-	16: "routePanelForumsEditSubmit",
-	17: "routePanelForumsEditPermsSubmit",
-	18: "routePanelForumsEditPermsAdvance",
-	19: "routePanelForumsEditPermsAdvanceSubmit",
-	20: "routePanelSettings",
-	21: "routePanelSettingEdit",
-	22: "routePanelSettingEditSubmit",
+	11: "panel.Forums",
+	12: "panel.ForumsCreateSubmit",
+	13: "panel.ForumsDelete",
+	14: "panel.ForumsDeleteSubmit",
+	15: "panel.ForumsEdit",
+	16: "panel.ForumsEditSubmit",
+	17: "panel.ForumsEditPermsSubmit",
+	18: "panel.ForumsEditPermsAdvance",
+	19: "panel.ForumsEditPermsAdvanceSubmit",
+	20: "panel.Settings",
+	21: "panel.SettingEdit",
+	22: "panel.SettingEditSubmit",
 	23: "routePanelWordFilters",
 	24: "routePanelWordFiltersCreateSubmit",
 	25: "routePanelWordFiltersEdit",
@@ -295,31 +296,31 @@ var reverseRouteMapEnum = map[int]string{
 	41: "routePanelUsers",
 	42: "routePanelUsersEdit",
 	43: "routePanelUsersEditSubmit",
-	44: "routePanelAnalyticsViews",
-	45: "routePanelAnalyticsRoutes",
-	46: "routePanelAnalyticsAgents",
-	47: "routePanelAnalyticsSystems",
-	48: "routePanelAnalyticsLanguages",
-	49: "routePanelAnalyticsReferrers",
-	50: "routePanelAnalyticsRouteViews",
-	51: "routePanelAnalyticsAgentViews",
-	52: "routePanelAnalyticsForumViews",
-	53: "routePanelAnalyticsSystemViews",
-	54: "routePanelAnalyticsLanguageViews",
-	55: "routePanelAnalyticsReferrerViews",
-	56: "routePanelAnalyticsPosts",
-	57: "routePanelAnalyticsTopics",
-	58: "routePanelAnalyticsForums",
+	44: "panel.AnalyticsViews",
+	45: "panel.AnalyticsRoutes",
+	46: "panel.AnalyticsAgents",
+	47: "panel.AnalyticsSystems",
+	48: "panel.AnalyticsLanguages",
+	49: "panel.AnalyticsReferrers",
+	50: "panel.AnalyticsRouteViews",
+	51: "panel.AnalyticsAgentViews",
+	52: "panel.AnalyticsForumViews",
+	53: "panel.AnalyticsSystemViews",
+	54: "panel.AnalyticsLanguageViews",
+	55: "panel.AnalyticsReferrerViews",
+	56: "panel.AnalyticsPosts",
+	57: "panel.AnalyticsTopics",
+	58: "panel.AnalyticsForums",
 	59: "routePanelGroups",
 	60: "routePanelGroupsEdit",
 	61: "routePanelGroupsEditPerms",
 	62: "routePanelGroupsEditSubmit",
 	63: "routePanelGroupsEditPermsSubmit",
 	64: "routePanelGroupsCreateSubmit",
-	65: "routePanelBackups",
-	66: "routePanelLogsRegs",
-	67: "routePanelLogsMod",
-	68: "routePanelDebug",
+	65: "panel.Backups",
+	66: "panel.LogsRegs",
+	67: "panel.LogsMod",
+	68: "panel.Debug",
 	69: "routePanelDashboard",
 	70: "routes.AccountEditCritical",
 	71: "routes.AccountEditCriticalSubmit",
@@ -327,8 +328,8 @@ var reverseRouteMapEnum = map[int]string{
 	73: "routes.AccountEditAvatarSubmit",
 	74: "routes.AccountEditUsername",
 	75: "routes.AccountEditUsernameSubmit",
-	76: "routeAccountEditEmail",
-	77: "routeAccountEditEmailTokenSubmit",
+	76: "routes.AccountEditEmail",
+	77: "routes.AccountEditEmailTokenSubmit",
 	78: "routes.ViewProfile",
 	79: "routes.BanUserSubmit",
 	80: "routes.UnbanUser",
@@ -908,7 +909,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(8)
-					err = routeReportSubmit(w,req,user,extraData)
+					err = routes.ReportSubmit(w,req,user,extraData)
 			}
 			if err != nil {
 				router.handleError(err,w,req,user)
@@ -941,7 +942,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			switch(req.URL.Path) {
 				case "/panel/forums/":
 					counters.RouteViewCounter.Bump(11)
-					err = routePanelForums(w,req,user)
+					err = panel.Forums(w,req,user)
 				case "/panel/forums/create/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -950,7 +951,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(12)
-					err = routePanelForumsCreateSubmit(w,req,user)
+					err = panel.ForumsCreateSubmit(w,req,user)
 				case "/panel/forums/delete/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -959,7 +960,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(13)
-					err = routePanelForumsDelete(w,req,user,extraData)
+					err = panel.ForumsDelete(w,req,user,extraData)
 				case "/panel/forums/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -968,10 +969,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(14)
-					err = routePanelForumsDeleteSubmit(w,req,user,extraData)
+					err = panel.ForumsDeleteSubmit(w,req,user,extraData)
 				case "/panel/forums/edit/":
 					counters.RouteViewCounter.Bump(15)
-					err = routePanelForumsEdit(w,req,user,extraData)
+					err = panel.ForumsEdit(w,req,user,extraData)
 				case "/panel/forums/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -980,7 +981,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(16)
-					err = routePanelForumsEditSubmit(w,req,user,extraData)
+					err = panel.ForumsEditSubmit(w,req,user,extraData)
 				case "/panel/forums/edit/perms/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -989,10 +990,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(17)
-					err = routePanelForumsEditPermsSubmit(w,req,user,extraData)
+					err = panel.ForumsEditPermsSubmit(w,req,user,extraData)
 				case "/panel/forums/edit/perms/":
 					counters.RouteViewCounter.Bump(18)
-					err = routePanelForumsEditPermsAdvance(w,req,user,extraData)
+					err = panel.ForumsEditPermsAdvance(w,req,user,extraData)
 				case "/panel/forums/edit/perms/adv/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1001,13 +1002,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(19)
-					err = routePanelForumsEditPermsAdvanceSubmit(w,req,user,extraData)
+					err = panel.ForumsEditPermsAdvanceSubmit(w,req,user,extraData)
 				case "/panel/settings/":
 					counters.RouteViewCounter.Bump(20)
-					err = routePanelSettings(w,req,user)
+					err = panel.Settings(w,req,user)
 				case "/panel/settings/edit/":
 					counters.RouteViewCounter.Bump(21)
-					err = routePanelSettingEdit(w,req,user,extraData)
+					err = panel.SettingEdit(w,req,user,extraData)
 				case "/panel/settings/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1016,7 +1017,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(22)
-					err = routePanelSettingEditSubmit(w,req,user,extraData)
+					err = panel.SettingEditSubmit(w,req,user,extraData)
 				case "/panel/settings/word-filters/":
 					counters.RouteViewCounter.Bump(23)
 					err = routePanelWordFilters(w,req,user)
@@ -1160,7 +1161,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(44)
-					err = routePanelAnalyticsViews(w,req,user)
+					err = panel.AnalyticsViews(w,req,user)
 				case "/panel/analytics/routes/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1169,7 +1170,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(45)
-					err = routePanelAnalyticsRoutes(w,req,user)
+					err = panel.AnalyticsRoutes(w,req,user)
 				case "/panel/analytics/agents/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1178,7 +1179,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(46)
-					err = routePanelAnalyticsAgents(w,req,user)
+					err = panel.AnalyticsAgents(w,req,user)
 				case "/panel/analytics/systems/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1187,7 +1188,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(47)
-					err = routePanelAnalyticsSystems(w,req,user)
+					err = panel.AnalyticsSystems(w,req,user)
 				case "/panel/analytics/langs/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1196,7 +1197,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(48)
-					err = routePanelAnalyticsLanguages(w,req,user)
+					err = panel.AnalyticsLanguages(w,req,user)
 				case "/panel/analytics/referrers/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1205,25 +1206,25 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(49)
-					err = routePanelAnalyticsReferrers(w,req,user)
+					err = panel.AnalyticsReferrers(w,req,user)
 				case "/panel/analytics/route/":
 					counters.RouteViewCounter.Bump(50)
-					err = routePanelAnalyticsRouteViews(w,req,user,extraData)
+					err = panel.AnalyticsRouteViews(w,req,user,extraData)
 				case "/panel/analytics/agent/":
 					counters.RouteViewCounter.Bump(51)
-					err = routePanelAnalyticsAgentViews(w,req,user,extraData)
+					err = panel.AnalyticsAgentViews(w,req,user,extraData)
 				case "/panel/analytics/forum/":
 					counters.RouteViewCounter.Bump(52)
-					err = routePanelAnalyticsForumViews(w,req,user,extraData)
+					err = panel.AnalyticsForumViews(w,req,user,extraData)
 				case "/panel/analytics/system/":
 					counters.RouteViewCounter.Bump(53)
-					err = routePanelAnalyticsSystemViews(w,req,user,extraData)
+					err = panel.AnalyticsSystemViews(w,req,user,extraData)
 				case "/panel/analytics/lang/":
 					counters.RouteViewCounter.Bump(54)
-					err = routePanelAnalyticsLanguageViews(w,req,user,extraData)
+					err = panel.AnalyticsLanguageViews(w,req,user,extraData)
 				case "/panel/analytics/referrer/":
 					counters.RouteViewCounter.Bump(55)
-					err = routePanelAnalyticsReferrerViews(w,req,user,extraData)
+					err = panel.AnalyticsReferrerViews(w,req,user,extraData)
 				case "/panel/analytics/posts/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1232,7 +1233,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(56)
-					err = routePanelAnalyticsPosts(w,req,user)
+					err = panel.AnalyticsPosts(w,req,user)
 				case "/panel/analytics/topics/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1241,7 +1242,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(57)
-					err = routePanelAnalyticsTopics(w,req,user)
+					err = panel.AnalyticsTopics(w,req,user)
 				case "/panel/analytics/forums/":
 					err = common.ParseForm(w,req,user)
 					if err != nil {
@@ -1250,7 +1251,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(58)
-					err = routePanelAnalyticsForums(w,req,user)
+					err = panel.AnalyticsForums(w,req,user)
 				case "/panel/groups/":
 					counters.RouteViewCounter.Bump(59)
 					err = routePanelGroups(w,req,user)
@@ -1295,13 +1296,13 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(65)
-					err = routePanelBackups(w,req,user,extraData)
+					err = panel.Backups(w,req,user,extraData)
 				case "/panel/logs/regs/":
 					counters.RouteViewCounter.Bump(66)
-					err = routePanelLogsRegs(w,req,user)
+					err = panel.LogsRegs(w,req,user)
 				case "/panel/logs/mod/":
 					counters.RouteViewCounter.Bump(67)
-					err = routePanelLogsMod(w,req,user)
+					err = panel.LogsMod(w,req,user)
 				case "/panel/debug/":
 					err = common.AdminOnly(w,req,user)
 					if err != nil {
@@ -1310,7 +1311,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(68)
-					err = routePanelDebug(w,req,user)
+					err = panel.Debug(w,req,user)
 				default:
 					counters.RouteViewCounter.Bump(69)
 					err = routePanelDashboard(w,req,user)
@@ -1405,7 +1406,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(76)
-					err = routeAccountEditEmail(w,req,user)
+					err = routes.AccountEditEmail(w,req,user)
 				case "/user/edit/token/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1420,7 +1421,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(77)
-					err = routeAccountEditEmailTokenSubmit(w,req,user,extraData)
+					err = routes.AccountEditEmailTokenSubmit(w,req,user,extraData)
 				default:
 					req.URL.Path += extraData
 					counters.RouteViewCounter.Bump(78)

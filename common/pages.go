@@ -74,14 +74,12 @@ type Paginator struct {
 }
 
 type TopicPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	ItemList    []ReplyUser
-	Topic       TopicUser
-	Poll        Poll
-	Page        int
-	LastPage    int
+	*Header
+	ItemList []ReplyUser
+	Topic    TopicUser
+	Poll     Poll
+	Page     int
+	LastPage int
 }
 
 type TopicListPage struct {
@@ -93,11 +91,9 @@ type TopicListPage struct {
 }
 
 type ForumPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	ItemList    []*TopicsRow
-	Forum       *Forum
+	*Header
+	ItemList []*TopicsRow
+	Forum    *Forum
 	Paginator
 }
 
@@ -130,6 +126,14 @@ type IPSearchPage struct {
 	Header      *Header
 	ItemList    map[int]*User
 	IP          string
+}
+
+type EmailListPage struct {
+	Title       string
+	CurrentUser User
+	Header      *Header
+	ItemList    []Email
+	Something   interface{}
 }
 
 type PanelStats struct {
@@ -167,6 +171,19 @@ type PanelDashboardPage struct {
 	Stats     PanelStats
 	Zone      string
 	GridItems []GridElement
+}
+
+type PanelSetting struct {
+	*Setting
+	FriendlyName string
+}
+
+type PanelSettingPage struct {
+	*Header
+	Stats    PanelStats
+	Zone     string
+	ItemList []OptionLabel
+	Setting  *PanelSetting
 }
 
 type PanelTimeGraph struct {
@@ -282,12 +299,10 @@ type PanelMenuItemPage struct {
 }
 
 type PanelUserPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	ItemList    []User
+	*Header
+	Stats    PanelStats
+	Zone     string
+	ItemList []*User
 	Paginator
 }
 

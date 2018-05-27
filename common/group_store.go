@@ -314,6 +314,7 @@ func (mgs *MemoryGroupStore) GetRange(lower int, higher int) (groups []*Group, e
 		return mgs.GetAll()
 	}
 
+	// TODO: Simplify these four conditionals into two
 	if lower == 0 {
 		if higher < 0 {
 			return nil, errors.New("higher may not be lower than 0")

@@ -1,30 +1,58 @@
 /*
 *
 * Gosora Authentication Interface
-* Copyright Azareal 2017 - 2018
+* Copyright Azareal 2017 - 2019
 *
  */
 package common
 
-import "errors"
-import "strconv"
-import "net/http"
-import "database/sql"
+import (
+	"database/sql"
+	"errors"
+	"net/http"
+	"strconv"
+	"strings"
 
-import "golang.org/x/crypto/bcrypt"
-import "../query_gen/lib"
+	"../query_gen/lib"
+	//"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/bcrypt"
+)
 
 var Auth AuthInt
+
+const SaltLength int = 32
+const SessionLength int = 80
 
 // ErrMismatchedHashAndPassword is thrown whenever a hash doesn't match it's unhashed password
 var ErrMismatchedHashAndPassword = bcrypt.ErrMismatchedHashAndPassword
 
 // nolint
+var ErrHashNotExist = errors.New("We don't recognise that hashing algorithm")
+var ErrTooFewHashParams = errors.New("You haven't provided enough hash parameters")
+
 // ErrPasswordTooLong is silly, but we don't want bcrypt to bork on us
 var ErrPasswordTooLong = errors.New("The password you selected is too long")
 var ErrWrongPassword = errors.New("That's not the correct password.")
 var ErrSecretError = errors.New("There was a glitch in the system. Please contact your local administrator.")
 var ErrNoUserByName = errors.New("We couldn't find an account with that username.")
+var DefaultHashAlgo = "bcrypt" // Override this in the configuration file, not here
+
+//func(realPassword string, password string, salt string) (err error)
+var CheckPasswordFuncs = map[string]func(string, string, string) error{
+	"bcrypt": BcryptCheckPassword,
+	//"argon2": Argon2CheckPassword,
+}
+
+//func(password string) (hashedPassword string, salt string, err error)
+var GeneratePasswordFuncs = map[string]func(string) (string, string, error){
+	"bcrypt": BcryptGeneratePassword,
+	//"argon2": Argon2GeneratePassword,
+}
+
+var HashPrefixes = map[string]string{
+	"$2a$": "bcrypt",
+	//"argon2$": "argon2",
+}
 
 // AuthInt is the main authentication interface.
 type AuthInt interface {
@@ -176,3 +204,75 @@ func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 	}
 	return session, nil
 }
+
+func CheckPassword(realPassword string, password string, salt string) (err error) {
+	blasted := strings.Split(realPassword, "$")
+	prefix := blasted[0]
+	if len(blasted) > 1 {
+		prefix += blasted[1]
+	}
+	algo, ok := HashPrefixes[prefix]
+	if !ok {
+		return ErrHashNotExist
+	}
+	checker := CheckPasswordFuncs[algo]
+	return checker(realPassword, password, salt)
+}
+
+func GeneratePassword(password string) (hash string, salt string, err error) {
+	gen, ok := GeneratePasswordFuncs[DefaultHashAlgo]
+	if !ok {
+		return "", "", ErrHashNotExist
+	}
+	return gen(password)
+}
+
+func BcryptCheckPassword(realPassword string, password string, salt string) (err error) {
+	return bcrypt.CompareHashAndPassword([]byte(realPassword), []byte(password+salt))
+}
+
+// Note: The salt is in the hash, therefore the salt parameter is blank
+func BcryptGeneratePassword(password string) (hash string, salt string, err error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", "", err
+	}
+	return string(hashedPassword), salt, nil
+}
+
+/*const (
+	argon2Time    uint32 = 3
+	argon2Memory  uint32 = 32 * 1024
+	argon2Threads uint8  = 4
+	argon2KeyLen  uint32 = 32
+)
+
+func Argon2CheckPassword(realPassword string, password string, salt string) (err error) {
+	split := strings.Split(realPassword, "$")
+	// TODO: Better validation
+	if len(split) < 5 {
+		return ErrTooFewHashParams
+	}
+	realKey, _ := base64.StdEncoding.DecodeString(split[len(split)-1])
+	time, _ := strconv.Atoi(split[1])
+	memory, _ := strconv.Atoi(split[2])
+	threads, _ := strconv.Atoi(split[3])
+	keyLen, _ := strconv.Atoi(split[4])
+	key := argon2.Key([]byte(password), []byte(salt), uint32(time), uint32(memory), uint8(threads), uint32(keyLen))
+	if subtle.ConstantTimeCompare(realKey, key) != 1 {
+		return ErrMismatchedHashAndPassword
+	}
+	return nil
+}
+
+func Argon2GeneratePassword(password string) (hash string, salt string, err error) {
+	sbytes := make([]byte, SaltLength)
+	_, err = rand.Read(sbytes)
+	if err != nil {
+		return "", "", err
+	}
+	key := argon2.Key([]byte(password), sbytes, argon2Time, argon2Memory, argon2Threads, argon2KeyLen)
+	hash = base64.StdEncoding.EncodeToString(key)
+	return fmt.Sprintf("argon2$%d%d%d%d%s%s", argon2Time, argon2Memory, argon2Threads, argon2KeyLen, salt, hash), string(sbytes), nil
+}
+*/

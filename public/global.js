@@ -547,9 +547,10 @@ $(document).ready(function(){
 		uploadFiles.addEventListener("change", uploadFileHandler, false);
 	}
 	
-	$(".moderate_link").click(function(event) {
+	$(".moderate_link").click((event) => {
 		event.preventDefault();
 		$(".pre_opt").removeClass("auto_hide");
+		$(".moderate_link").addClass("moderate_open");
 		$(".topic_row").each(function(){
 			$(this).click(function(){
 				selectedTopics.push(parseInt($(this).attr("data-tid"),10));

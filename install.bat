@@ -29,6 +29,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Installing the Argon2 library
+go get -u golang.org/x/crypto/argon2
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo Installing /x/sys/windows (dependency for gopsutil)
 go get -u golang.org/x/sys/windows
 if %errorlevel% neq 0 (

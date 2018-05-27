@@ -26,6 +26,13 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Updating Argon2
+go get -u golang.org/x/crypto/argon2
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo Updating /x/system/windows (dependency for gopsutil)
 go get -u golang.org/x/sys/windows
 if %errorlevel% neq 0 (

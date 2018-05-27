@@ -402,3 +402,88 @@ func AccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user comm
 	http.Redirect(w, r, "/user/edit/username/?updated=1", http.StatusSeeOther)
 	return nil
 }
+
+func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	headerVars, ferr := common.UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	emails, err := common.Emails.GetEmailsByUser(&user)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// Was this site migrated from another forum software? Most of them don't have multiple emails for a single user.
+	// This also applies when the admin switches site.EnableEmails on after having it off for a while.
+	if len(emails) == 0 {
+		email := common.Email{UserID: user.ID}
+		email.Email = user.Email
+		email.Validated = false
+		email.Primary = true
+		emails = append(emails, email)
+	}
+
+	if !common.Site.EnableEmails {
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_mail_disabled"))
+	}
+	if r.FormValue("verified") == "1" {
+		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_mail_verify_success"))
+	}
+
+	pi := common.EmailListPage{"Email Manager", user, headerVars, emails, nil}
+	if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
+		return nil
+	}
+	err = common.Templates.ExecuteTemplate(w, "account_own_edit_email.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	return nil
+}
+
+// TODO: Do a session check on this?
+func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user common.User, token string) common.RouteError {
+	headerVars, ferr := common.UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !common.Site.EnableEmails {
+		http.Redirect(w, r, "/user/edit/email/", http.StatusSeeOther)
+		return nil
+	}
+
+	targetEmail := common.Email{UserID: user.ID}
+	emails, err := common.Emails.GetEmailsByUser(&user)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	for _, email := range emails {
+		if email.Token == token {
+			targetEmail = email
+		}
+	}
+
+	if len(emails) == 0 {
+		return common.LocalError("A verification email was never sent for you!", w, r, user)
+	}
+	if targetEmail.Token == "" {
+		return common.LocalError("That's not a valid token!", w, r, user)
+	}
+
+	err = common.Emails.VerifyEmail(user.Email)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// If Email Activation is on, then activate the account while we're here
+	if headerVars.Settings["activation_type"] == 2 {
+		err = user.Activate()
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+	}
+	http.Redirect(w, r, "/user/edit/email/?verified=1", http.StatusSeeOther)
+
+	return nil
+}

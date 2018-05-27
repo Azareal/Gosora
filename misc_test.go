@@ -866,7 +866,7 @@ func TestAuth(t *testing.T) {
 	realPassword = "Madame Cassandra's Mystic Orb"
 	t.Logf("Set realPassword to '%s'", realPassword)
 	t.Log("Hashing the real password")
-	hashedPassword, err = common.BcryptGeneratePasswordNoSalt(realPassword)
+	hashedPassword, err = common.BcryptGeneratePassword(realPassword)
 	if err != nil {
 		t.Error(err)
 	}

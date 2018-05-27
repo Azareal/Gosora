@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	"../query_gen/lib"
 )
@@ -19,9 +20,7 @@ const Gigabyte int = Megabyte * 1024
 const Terabyte int = Gigabyte * 1024
 const Petabyte int = Terabyte * 1024
 
-const SaltLength int = 32
-const SessionLength int = 80
-
+var StartTime time.Time
 var TmplPtrMap = make(map[string]interface{})
 
 // ErrNoRows is an alias of sql.ErrNoRows, just in case we end up with non-database/sql datastores

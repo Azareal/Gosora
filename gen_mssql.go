@@ -10,14 +10,10 @@ import "./common"
 // nolint
 type Stmts struct {
 	isPluginActive *sql.Stmt
-	getUsersOffset *sql.Stmt
 	isThemeDefault *sql.Stmt
-	getEmailsByUser *sql.Stmt
-	getTopicBasic *sql.Stmt
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
 	getForumTopics *sql.Stmt
-	createReport *sql.Stmt
 	addForumPermsToForum *sql.Stmt
 	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
@@ -29,13 +25,11 @@ type Stmts struct {
 	updateGroupPerms *sql.Stmt
 	updateGroup *sql.Stmt
 	updateEmail *sql.Stmt
-	verifyEmail *sql.Stmt
 	setTempGroup *sql.Stmt
 	updateWordFilter *sql.Stmt
 	bumpSync *sql.Stmt
 	deleteActivityStreamMatch *sql.Stmt
 	deleteWordFilter *sql.Stmt
-	reportExists *sql.Stmt
 
 	getActivityFeedByWatcher *sql.Stmt
 	getActivityCountByWatcher *sql.Stmt
@@ -59,35 +53,11 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	common.DebugLog("Preparing getUsersOffset statement.")
-	stmts.getUsersOffset, err = db.Prepare("SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users] ORDER BY uid ASC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
-	if err != nil {
-		log.Print("Error in getUsersOffset statement.")
-		log.Print("Bad Query: ","SELECT [uid],[name],[group],[active],[is_super_admin],[avatar] FROM [users] ORDER BY uid ASC OFFSET ?1 ROWS FETCH NEXT ?2 ROWS ONLY")
-		return err
-	}
-		
 	common.DebugLog("Preparing isThemeDefault statement.")
 	stmts.isThemeDefault, err = db.Prepare("SELECT [default] FROM [themes] WHERE [uname] = ?1")
 	if err != nil {
 		log.Print("Error in isThemeDefault statement.")
 		log.Print("Bad Query: ","SELECT [default] FROM [themes] WHERE [uname] = ?1")
-		return err
-	}
-		
-	common.DebugLog("Preparing getEmailsByUser statement.")
-	stmts.getEmailsByUser, err = db.Prepare("SELECT [email],[validated],[token] FROM [emails] WHERE [uid] = ?1")
-	if err != nil {
-		log.Print("Error in getEmailsByUser statement.")
-		log.Print("Bad Query: ","SELECT [email],[validated],[token] FROM [emails] WHERE [uid] = ?1")
-		return err
-	}
-		
-	common.DebugLog("Preparing getTopicBasic statement.")
-	stmts.getTopicBasic, err = db.Prepare("SELECT [title],[content] FROM [topics] WHERE [tid] = ?1")
-	if err != nil {
-		log.Print("Error in getTopicBasic statement.")
-		log.Print("Bad Query: ","SELECT [title],[content] FROM [topics] WHERE [tid] = ?1")
 		return err
 	}
 		
@@ -112,14 +82,6 @@ func _gen_mssql() (err error) {
 	if err != nil {
 		log.Print("Error in getForumTopics statement.")
 		log.Print("Bad Query: ","SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[lastReplyAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  WHERE [topics].[parentID] = ?1 ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
-		return err
-	}
-		
-	common.DebugLog("Preparing createReport statement.")
-	stmts.createReport, err = db.Prepare("INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[createdBy],[lastReplyBy],[data],[parentID],[css_class]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?,1,'report')")
-	if err != nil {
-		log.Print("Error in createReport statement.")
-		log.Print("Bad Query: ","INSERT INTO [topics] ([title],[content],[parsed_content],[createdAt],[lastReplyAt],[createdBy],[lastReplyBy],[data],[parentID],[css_class]) VALUES (?,?,?,GETUTCDATE(),GETUTCDATE(),?,?,?,1,'report')")
 		return err
 	}
 		
@@ -211,14 +173,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	common.DebugLog("Preparing verifyEmail statement.")
-	stmts.verifyEmail, err = db.Prepare("UPDATE [emails] SET [validated] = 1,[token] = '' WHERE [email] = ?")
-	if err != nil {
-		log.Print("Error in verifyEmail statement.")
-		log.Print("Bad Query: ","UPDATE [emails] SET [validated] = 1,[token] = '' WHERE [email] = ?")
-		return err
-	}
-		
 	common.DebugLog("Preparing setTempGroup statement.")
 	stmts.setTempGroup, err = db.Prepare("UPDATE [users] SET [temp_group] = ? WHERE [uid] = ?")
 	if err != nil {
@@ -256,14 +210,6 @@ func _gen_mssql() (err error) {
 	if err != nil {
 		log.Print("Error in deleteWordFilter statement.")
 		log.Print("Bad Query: ","DELETE FROM [word_filters] WHERE [wfid] = ?")
-		return err
-	}
-		
-	common.DebugLog("Preparing reportExists statement.")
-	stmts.reportExists, err = db.Prepare("SELECT COUNT(*) AS [count] FROM [topics] WHERE [data] = ? AND [data] != '' AND [parentID] = 1")
-	if err != nil {
-		log.Print("Error in reportExists statement.")
-		log.Print("Bad Query: ","SELECT COUNT(*) AS [count] FROM [topics] WHERE [data] = ? AND [data] != '' AND [parentID] = 1")
 		return err
 	}
 	
