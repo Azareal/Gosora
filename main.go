@@ -29,7 +29,6 @@ import (
 
 var version = common.Version{Major: 0, Minor: 1, Patch: 0, Tag: "dev"}
 var router *GenRouter
-var startTime time.Time
 var logWriter = io.MultiWriter(os.Stderr)
 
 // TODO: Wrap the globals in here so we can pass pointers to them to subpackages
@@ -107,6 +106,14 @@ func afterDBInit() (err error) {
 	}
 
 	log.Print("Initialising the stores")
+	common.Reports, err = common.NewDefaultReportStore(acc)
+	if err != nil {
+		return err
+	}
+	common.Emails, err = common.NewDefaultEmailStore(acc)
+	if err != nil {
+		return err
+	}
 	common.RegLogs, err = common.NewRegLogStore(acc)
 	if err != nil {
 		return err
@@ -140,7 +147,8 @@ func afterDBInit() (err error) {
 		return err
 	}
 
-	counters.GlobalViewCounter, err = counters.NewGlobalViewCounter()
+	log.Print("Initialising the view counters")
+	counters.GlobalViewCounter, err = counters.NewGlobalViewCounter(acc)
 	if err != nil {
 		return err
 	}
@@ -195,18 +203,6 @@ func main() {
 			return
 		}
 	}()*/
-
-	// WIP: Mango Test
-	/*res, err := ioutil.ReadFile("./templates/topic.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	tagIndices, err := mangoParse(string(res))
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("tagIndices: %+v\n", tagIndices)
-	log.Fatal("")*/
 	config.Config()
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
@@ -217,18 +213,9 @@ func main() {
 	}
 	logWriter = io.MultiWriter(os.Stderr, f)
 	log.SetOutput(logWriter)
-
-	//if profiling {
-	//	f, err := os.Create("startup_cpu.prof")
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//	pprof.StartCPUProfile(f)
-	//}
-
 	log.Print("Running Gosora v" + version.String())
 	fmt.Println("")
-	startTime = time.Now()
+	common.StartTime = time.Now()
 
 	log.Print("Processing configuration data")
 	err = common.ProcessConfig()
@@ -236,7 +223,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = common.InitThemes()
+	common.Themes, err = common.NewThemeList()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -271,6 +258,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Print("Initialising the file watcher")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -337,6 +325,7 @@ func main() {
 		}
 	}
 
+	log.Print("Initialising the task system")
 	var runTasks = func(tasks []func() error) {
 		for _, task := range tasks {
 			if task() != nil {

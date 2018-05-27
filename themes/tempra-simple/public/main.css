@@ -149,6 +149,12 @@ li a {
 	margin-left: auto;
 	margin-right: auto;
 }
+#back {
+	display: flex;
+}
+#main {
+	width: 100%;
+}
 
 .rowblock {
 	border: 1px solid hsl(0, 0%, 80%);
@@ -420,6 +426,9 @@ input, select {
 }
 
 /* TODO: Add the avatars to the forum list */
+.forum_list .forum_nodesc {
+	font-style: italic;
+}
 .extra_little_row_avatar {
 	display: none;
 }
@@ -474,13 +483,19 @@ input, select {
 	height: 58px;
 	overflow: hidden;
 }
-.topic_left img, .topic_right img {
+.topic_right_inside {
+	display: flex;
+}
+.topic_left img, .topic_right_inside img {
 	width: 64px;
 	height: auto;
 }
-.topic_left .topic_inner_left, .topic_right > span {
+.topic_left .topic_inner_left, .topic_right_inside > span {
 	margin-top: 10px;
 	margin-left: 8px;
+}
+.topic_middle {
+	display: none;
 }
 
 .postImage {

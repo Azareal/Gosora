@@ -53,6 +53,10 @@ body, #main {
 	padding-right: 0px;
 	padding-bottom: 0px;
 }
+.footBlock {
+	padding-left: 8px;
+	padding-right: 8px;
+}
 .container {
 	background-color: var(--element-background-color);
 }
@@ -62,6 +66,7 @@ body, #main {
 	padding-top: 14px;
 	padding-left: 8px;
 	padding-right: 8px;
+	padding-bottom: 14px;
 }
 .sidebar {
 	width: 200px;
@@ -386,10 +391,10 @@ h1, h3 {
 }
 .topic_list_title_block .pre_opt {
 	border-left: 1px solid var(--element-border-color);
-	padding-left: 12px;
+	padding-left: 11px;
 	height: 20px;
 	color: var(--light-text-color);
-    margin-right: 10px;
+    margin-right: 9px;
 }
 .topic_list_title_block .pre_opt:before {
 	content: "{{index .Phrases "topics_click_topics_to_select"}}";
@@ -412,6 +417,9 @@ h1, h3 {
 	content: "\f0e3";
 	font: normal normal normal 14px/1 FontAwesome;
 	font-size: 18px;
+}
+.mod_opt .moderate_open {
+	display: none;
 }
 
 .topic_create_form {
@@ -686,6 +694,9 @@ textarea {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 }
+.topic_middle {
+	display: none;
+}
 .rowlist .rowitem {
 	background-color: var(--element-background-color);
 	padding: 12px;
@@ -816,6 +827,9 @@ textarea {
 	flex: 1 1 0px;
 	border-left: none;
 }
+.topic_right_inside {
+	display: flex;
+}
 
 .topic_left img {
 	border-radius: 30px;
@@ -824,7 +838,7 @@ textarea {
 	margin-top: 8px;
 	margin-left: 4px;
 }
-.topic_right img {
+.topic_right_inside img {
 	border-radius: 30px;
 	height: 42px;
 	width: 42px;
@@ -837,7 +851,7 @@ textarea {
 	margin-bottom: 14px;
 	width: 220px;
 }
-.topic_right > span {
+.topic_right_inside > span {
 	margin-top: 12px;
 	margin-left: 8px;
 }
@@ -884,6 +898,9 @@ textarea {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 	padding: 14px;
+}
+.forum_list .forum_nodesc {
+	font-style: italic;
 }
 .forum_right {
 	display: flex;
@@ -1325,9 +1342,6 @@ textarea {
 }
 
 /* TODO: Make widget_about's CSS less footer centric */
-.footer {
-	margin-top: 14px;
-}
 .footerBit, .footer .widget {
 	border-top: 1px solid var(--element-border-color);
 	padding: 12px;
@@ -1456,14 +1470,28 @@ textarea {
 		max-width: 1000px;
 		margin-left: auto;
 		margin-right: auto;
+	}
+	.footer {
+		max-width: 1000px;
+		margin-left: auto;
+		margin-right: auto;
+	}
+	#main {
 		padding-top: 18px;
 		padding-left: 16px;
 		padding-right: 16px;
 		border-left: 1px solid hsl(20,0%,95%);
 		border-right: 1px solid hsl(20,0%,95%);
 	}
-	#back {
+	.footer {
+		padding-left: 8px;
+		padding-right: 8px;
+	}
+	#back, .footer, .footBlock {
 		background-color: hsl(0,0%,95%);
+	}
+	#back:not(.zone_panel) .footBlock {
+		display: flex;
 	}
 }
 
@@ -1591,12 +1619,17 @@ textarea {
 		font-size: 18px;
 	}
 	main > .rowhead, #main > .rowhead {
-		margin-left: 0px;
-		margin-right: 0px;
 		border: none;
 		border-bottom: 2px solid var(--header-border-color);
 	}
-	
+	#main {
+		padding-top: 0px;
+	}
+	main > .rowhead, #main > .rowhead, main > .opthead, #main > .opthead {
+		margin-left: -3px;
+		margin-right: -3px;
+	}
+
 	.topic_list {
 		display: flex;
 		flex-wrap: wrap;
@@ -1622,13 +1655,13 @@ textarea {
 		border-left: 1px solid var(--element-border-color);
 		background-color: hsl(0,0%,95%);
 	}
-	.topic_right br, .topic_right img {
+	.topic_right_inside br, .topic_right_inside img {
 		display: none;
 	}
 	.topic_right.topic_sticky {
 		border-bottom: 2px solid var(--element-border-color);
 	}
-	.topic_right > span {
+	.topic_right_inside > span {
 		margin-top: 6px;
 		margin-bottom: 6px;
 	}
@@ -1729,13 +1762,6 @@ textarea {
 	}
 }
 @media(max-width: 520px) {
-	#main {
-		padding-top: 0px;
-	}
-	main > .rowhead, #main > .rowhead, main > .opthead, #main > .opthead {
-		margin-left: -3px;
-		margin-right: -3px;
-	}
 	.edit_item, .button_container .open_edit, .delete_item, .pin_item, .unpin_item, .lock_item, .unlock_item, .ip_item_button, .report_item:not(.profile_menu_item) {
 		display: none;
 	}

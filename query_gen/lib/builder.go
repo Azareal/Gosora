@@ -104,6 +104,10 @@ func (build *builder) CreateTable(table string, charset string, collation string
 	return build.prepare(build.adapter.CreateTable("_builder", table, charset, collation, columns, keys))
 }
 
+func (build *builder) AddColumn(table string, column DBTableColumn) (stmt *sql.Stmt, err error) {
+	return build.prepare(build.adapter.AddColumn("_builder", table, column))
+}
+
 func (build *builder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
 	return build.prepare(build.adapter.SimpleInsert("_builder", table, columns, fields))
 }

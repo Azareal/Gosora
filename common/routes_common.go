@@ -17,7 +17,6 @@ var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*Header, Pan
 var SimplePanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, RouteError) = simplePanelUserCheck
 var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, err RouteError) = simpleForumUserCheck
 var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *Header, err RouteError) = forumUserCheck
-var MemberCheck func(w http.ResponseWriter, r *http.Request, user *User) (header *Header, err RouteError) = memberCheck
 var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
 var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (header *Header, err RouteError) = userCheck
 
@@ -166,28 +165,15 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 }
 
 func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
-	return &HeaderLite{
-		Site:     Site,
-		Settings: SettingBox.Load().(SettingMap),
-	}, nil
-}
-
-// TODO: Add this to the member routes
-func memberCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
-	header, rerr = UserCheck(w, r, user)
-	if !user.Loggedin {
-		return header, NoPermissions(w, r, *user)
-	}
-	return header, rerr
+	return simpleUserCheck(w, r, user)
 }
 
 // SimpleUserCheck is back from the grave, yay :D
 func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
-	headerLite = &HeaderLite{
+	return &HeaderLite{
 		Site:     Site,
 		Settings: SettingBox.Load().(SettingMap),
-	}
-	return headerLite, nil
+	}, nil
 }
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?

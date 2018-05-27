@@ -19,8 +19,7 @@ type DefaultViewCounter struct {
 	insert *sql.Stmt
 }
 
-func NewGlobalViewCounter() (*DefaultViewCounter, error) {
-	acc := qgen.Builder.Accumulator()
+func NewGlobalViewCounter(acc *qgen.Accumulator) (*DefaultViewCounter, error) {
 	counter := &DefaultViewCounter{
 		currentBucket: 0,
 		insert:        acc.Insert("viewchunks").Columns("count, createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),

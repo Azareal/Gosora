@@ -53,7 +53,7 @@ func gloinit() (err error) {
 	if err != nil {
 		return err
 	}
-	err = common.InitThemes()
+	common.Themes, err = common.NewThemeList()
 	if err != nil {
 		return err
 	}

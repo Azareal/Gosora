@@ -44,8 +44,12 @@
 		"MoveTopic": "Can move topics in or out"
 	},
 
-	"SettingLabels": {
-		"activation_type": "Activate All,Email Activation,Admin Approval"
+	"SettingPhrases": {
+		"activation_type":"Activation Type",
+		"activation_type_label": "Activate All,Email Activation,Admin Approval",
+		"bigpost_min_words":"Big Post Minimum Words",
+		"megapost_min_words":"Mega Post Minimum Words",
+		"meta_desc":"Meta Description"
 	},
 
 	"PermPresets": {
@@ -263,6 +267,7 @@
 		"topics_click_topics_to_select":"Click the topics to select them",
 		"topics_new_topic":"New Topic",
 		"forum_locked":"Locked",
+		"topics_moderate":"Moderate",
 		"topics_replies_suffix":" replies",
 		"forums_topics_suffix":" topics",
 		"topics_gap_likes_suffix":" likes",

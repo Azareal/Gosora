@@ -20,6 +20,7 @@ type UserStore interface {
 	DirtyGet(id int) *User
 	Get(id int) (*User, error)
 	Exists(id int) bool
+	GetOffset(offset int, perPage int) (users []*User, err error)
 	//BulkGet(ids []int) ([]*User, error)
 	BulkGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
@@ -35,6 +36,7 @@ type DefaultUserStore struct {
 	cache UserCache
 
 	get            *sql.Stmt
+	getOffset      *sql.Stmt
 	exists         *sql.Stmt
 	register       *sql.Stmt
 	usernameExists *sql.Stmt
@@ -51,6 +53,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 	return &DefaultUserStore{
 		cache:          cache,
 		get:            acc.SimpleSelect("users", "name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group", "uid = ?", "", ""),
+		getOffset:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Orderby("uid ASC").Limit("?,?").Prepare(),
 		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
 		register:       acc.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()"), // TODO: Implement user_count on users_groups here
 		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
@@ -90,6 +93,29 @@ func (mus *DefaultUserStore) Get(id int) (*User, error) {
 		mus.cache.Set(user)
 	}
 	return user, err
+}
+
+// TODO: Optimise this, so we don't wind up hitting the database every-time for small gaps
+// TODO: Make this a little more consistent with DefaultGroupStore's GetRange method
+func (store *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User, err error) {
+	rows, err := store.getOffset.Query(offset, perPage)
+	if err != nil {
+		return users, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		user := &User{Loggedin: true}
+		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.Avatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
+		if err != nil {
+			return nil, err
+		}
+
+		user.Init()
+		store.cache.Set(user)
+		users = append(users, user)
+	}
+	return users, rows.Err()
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?

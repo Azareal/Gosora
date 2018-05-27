@@ -232,6 +232,7 @@ import (
 	"./common"
 	"./common/counters"
 	"./routes"
+	"./routes/panel"
 )
 
 var ErrNoRoute = errors.New("That route doesn't exist.")

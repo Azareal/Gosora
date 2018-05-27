@@ -106,6 +106,9 @@ type Adapter interface {
 
 	DropTable(name string, table string) (string, error)
 	CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error)
+	// TODO: Some way to add indices and keys
+	// TODO: Test this
+	AddColumn(name string, table string, column DBTableColumn) (string, error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
 	SimpleUpdate(name string, table string, set string, where string) (string, error)
 	SimpleDelete(name string, table string, where string) (string, error)

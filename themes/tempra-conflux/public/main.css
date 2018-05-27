@@ -158,6 +158,10 @@ li a {
 #back {
 	padding: 12px;
     padding-top: 0px;
+	display: flex;
+}
+#main {
+	width: 100%;
 }
 
 /* Explict declaring each border direction to fix a bug in Chrome where an override to .rowhead was also applying to .rowblock in some cases */
@@ -419,6 +423,9 @@ li a {
 }
 
 /* TODO: Add the avatars to the forum list */
+.forum_list .forum_nodesc {
+	font-style: italic;
+}
 .extra_little_row_avatar {
 	display: none;
 }
@@ -434,6 +441,7 @@ li a {
 .topic_list .topic_row {
 	display: grid;
 	grid-template-columns: calc(100% - 204px) 204px;
+	overflow: hidden;
 }
 .topic_list .topic_inner_right {
 	display: none;
@@ -466,13 +474,19 @@ li a {
 	padding: 0px;
 	height: 58px;
 }
-.topic_left img, .topic_right img {
+.topic_right_inside {
+	display: flex;
+}
+.topic_left img, .topic_right_inside img {
 	width: 64px;
 	height: auto;
 }
-.topic_left .topic_inner_left, .topic_right > span {
+.topic_left .topic_inner_left, .topic_right_inside > span {
 	margin-top: 10px;
 	margin-left: 8px;
+}
+.topic_middle {
+	display: none;
 }
 
 .postImage {
@@ -969,9 +983,13 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	content: "{{index .Phrases "topic_report_button_text"}}";
 }
 
+.footer {
+	margin-left: 12px;
+	margin-right: 12px;
+	margin-bottom: 12px;
+}
 #poweredByHolder {
 	border: 1px solid var(--main-border-color);
-	margin-top: 12px;
 	clear: both;
 	height: 40px;
 	padding: 6px;

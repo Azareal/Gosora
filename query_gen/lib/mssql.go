@@ -71,53 +71,7 @@ func (adapter *MssqlAdapter) CreateTable(name string, table string, charset stri
 
 	var querystr = "CREATE TABLE [" + table + "] ("
 	for _, column := range columns {
-		var max bool
-		var createdAt bool
-		switch column.Type {
-		case "createdAt":
-			column.Type = "datetime"
-			createdAt = true
-		case "varchar":
-			column.Type = "nvarchar"
-		case "text":
-			column.Type = "nvarchar"
-			max = true
-		case "json":
-			column.Type = "nvarchar"
-			max = true
-		case "boolean":
-			column.Type = "bit"
-		}
-
-		var size string
-		if column.Size > 0 {
-			size = " (" + strconv.Itoa(column.Size) + ")"
-		}
-		if max {
-			size = " (MAX)"
-		}
-
-		var end string
-		if column.Default != "" {
-			end = " DEFAULT "
-			if createdAt {
-				end += "GETUTCDATE()" // TODO: Use GETUTCDATE() in updates instead of the neutral format
-			} else if adapter.stringyType(column.Type) && column.Default != "''" {
-				end += "'" + column.Default + "'"
-			} else {
-				end += column.Default
-			}
-		}
-
-		if !column.Null {
-			end += " not null"
-		}
-
-		// ! Not exactly the meaning of auto increment...
-		if column.AutoIncrement {
-			end += " IDENTITY"
-		}
-
+		column, size, end := adapter.parseColumn(column)
 		querystr += "\n\t[" + column.Name + "] " + column.Type + size + end + ","
 	}
 
@@ -137,6 +91,67 @@ func (adapter *MssqlAdapter) CreateTable(name string, table string, charset stri
 
 	querystr = querystr[0:len(querystr)-1] + "\n);"
 	adapter.pushStatement(name, "create-table", querystr)
+	return querystr, nil
+}
+
+func (adapter *MssqlAdapter) parseColumn(column DBTableColumn) (col DBTableColumn, size string, end string) {
+	var max, createdAt bool
+	switch column.Type {
+	case "createdAt":
+		column.Type = "datetime"
+		createdAt = true
+	case "varchar":
+		column.Type = "nvarchar"
+	case "text":
+		column.Type = "nvarchar"
+		max = true
+	case "json":
+		column.Type = "nvarchar"
+		max = true
+	case "boolean":
+		column.Type = "bit"
+	}
+
+	if column.Size > 0 {
+		size = " (" + strconv.Itoa(column.Size) + ")"
+	}
+	if max {
+		size = " (MAX)"
+	}
+
+	if column.Default != "" {
+		end = " DEFAULT "
+		if createdAt {
+			end += "GETUTCDATE()" // TODO: Use GETUTCDATE() in updates instead of the neutral format
+		} else if adapter.stringyType(column.Type) && column.Default != "''" {
+			end += "'" + column.Default + "'"
+		} else {
+			end += column.Default
+		}
+	}
+	if !column.Null {
+		end += " not null"
+	}
+
+	// ! Not exactly the meaning of auto increment...
+	if column.AutoIncrement {
+		end += " IDENTITY"
+	}
+	return column, size, end
+}
+
+// TODO: Test this, not sure if some things work
+func (adapter *MssqlAdapter) AddColumn(name string, table string, column DBTableColumn) (string, error) {
+	if name == "" {
+		return "", errors.New("You need a name for this statement")
+	}
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+
+	column, size, end := adapter.parseColumn(column)
+	querystr := "ALTER TABLE [" + table + "] ADD [" + column.Name + "] " + column.Type + size + end + ";"
+	adapter.pushStatement(name, "add-column", querystr)
 	return querystr, nil
 }
 

@@ -9,6 +9,10 @@ import "./common"
 
 // nolint
 type Stmts struct {
+	addForumPermsToForum *sql.Stmt
+	addPlugin *sql.Stmt
+	addTheme *sql.Stmt
+	createWordFilter *sql.Stmt
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
@@ -16,7 +20,6 @@ type Stmts struct {
 	updateGroupPerms *sql.Stmt
 	updateGroup *sql.Stmt
 	updateEmail *sql.Stmt
-	verifyEmail *sql.Stmt
 	setTempGroup *sql.Stmt
 	updateWordFilter *sql.Stmt
 	bumpSync *sql.Stmt
@@ -35,6 +38,34 @@ type Stmts struct {
 func _gen_pgsql() (err error) {
 	common.DebugLog("Building the generated statements")
 	
+	common.DebugLog("Preparing addForumPermsToForum statement.")
+	stmts.addForumPermsToForum, err = db.Prepare("INSERT INTO "forums_permissions"("gid","fid","preset","permissions") VALUES (?,?,?,?)")
+	if err != nil {
+		log.Print("Error in addForumPermsToForum statement.")
+		return err
+	}
+		
+	common.DebugLog("Preparing addPlugin statement.")
+	stmts.addPlugin, err = db.Prepare("INSERT INTO "plugins"("uname","active","installed") VALUES (?,?,?)")
+	if err != nil {
+		log.Print("Error in addPlugin statement.")
+		return err
+	}
+		
+	common.DebugLog("Preparing addTheme statement.")
+	stmts.addTheme, err = db.Prepare("INSERT INTO "themes"("uname","default") VALUES (?,?)")
+	if err != nil {
+		log.Print("Error in addTheme statement.")
+		return err
+	}
+		
+	common.DebugLog("Preparing createWordFilter statement.")
+	stmts.createWordFilter, err = db.Prepare("INSERT INTO "word_filters"("find","replacement") VALUES (?,?)")
+	if err != nil {
+		log.Print("Error in createWordFilter statement.")
+		return err
+	}
+		
 	common.DebugLog("Preparing updatePlugin statement.")
 	stmts.updatePlugin, err = db.Prepare("UPDATE `plugins` SET `active` = ? WHERE `uname` = ?")
 	if err != nil {
@@ -81,13 +112,6 @@ func _gen_pgsql() (err error) {
 	stmts.updateEmail, err = db.Prepare("UPDATE `emails` SET `email` = ?,`uid` = ?,`validated` = ?,`token` = ? WHERE `email` = ?")
 	if err != nil {
 		log.Print("Error in updateEmail statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing verifyEmail statement.")
-	stmts.verifyEmail, err = db.Prepare("UPDATE `emails` SET `validated` = 1,`token` = '' WHERE `email` = ?")
-	if err != nil {
-		log.Print("Error in verifyEmail statement.")
 		return err
 	}
 		

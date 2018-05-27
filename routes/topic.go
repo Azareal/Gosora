@@ -37,8 +37,6 @@ func init() {
 	})
 }
 
-var successJSONBytes = []byte(`{"success":"1"}`)
-
 func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit string) common.RouteError {
 	page, _ := strconv.Atoi(r.FormValue("page"))
 
@@ -64,7 +62,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	topic.ClassName = ""
 	//log.Printf("topic: %+v\n", topic)
 
-	headerVars, ferr := common.ForumUserCheck(w, r, &user, topic.ParentID)
+	header, ferr := common.ForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -72,10 +70,11 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		//log.Printf("user.Perms: %+v\n", user.Perms)
 		return common.NoPermissions(w, r, user)
 	}
-	headerVars.Zone = "view_topic"
+	header.Title = topic.Title
+	header.Zone = "view_topic"
 	// TODO: Only include these on pages with polls
-	headerVars.AddSheet("chartist/chartist.min.css")
-	headerVars.AddScript("chartist/chartist.min.js")
+	header.AddSheet("chartist/chartist.min.css")
+	header.AddScript("chartist/chartist.min.js")
 
 	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")
@@ -121,7 +120,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 
 	// Calculate the offset
 	offset, page, lastPage := common.PageOffset(topic.PostCount, page, common.Config.ItemsPerPage)
-	tpage := common.TopicPage{topic.Title, user, headerVars, []common.ReplyUser{}, topic, poll, page, lastPage}
+	tpage := common.TopicPage{header, []common.ReplyUser{}, topic, poll, page, lastPage}
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {
@@ -227,7 +226,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	if common.RunPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
 		return nil
 	}
-	err = common.RunThemeTemplate(headerVars.Theme.Name, "topic", tpage, w)
+	err = common.RunThemeTemplate(header.Theme.Name, "topic", tpage, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

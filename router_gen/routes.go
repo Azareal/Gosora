@@ -14,7 +14,7 @@ func routes() {
 
 	// TODO: Reduce the number of Befores. With a new method, perhaps?
 	reportGroup := newRouteGroup("/report/",
-		Action("routeReportSubmit", "/report/submit/", "extraData"),
+		Action("routes.ReportSubmit", "/report/submit/", "extraData"),
 	).Before("NoBanned")
 	addRouteGroup(reportGroup)
 
@@ -46,8 +46,8 @@ func buildUserRoutes() {
 		UploadAction("routes.AccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("int(common.Config.MaxRequestSize)"),
 		MemberView("routes.AccountEditUsername", "/user/edit/username/"),
 		Action("routes.AccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
-		MemberView("routeAccountEditEmail", "/user/edit/email/"),
-		Action("routeAccountEditEmailTokenSubmit", "/user/edit/token/", "extraData"),
+		MemberView("routes.AccountEditEmail", "/user/edit/email/"),
+		Action("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData"),
 	)
 	addRouteGroup(userGroup)
 
@@ -131,19 +131,19 @@ func buildPanelRoutes() {
 	panelGroup := newRouteGroup("/panel/").Before("SuperModOnly")
 	panelGroup.Routes(
 		View("routePanelDashboard", "/panel/"),
-		View("routePanelForums", "/panel/forums/"),
-		Action("routePanelForumsCreateSubmit", "/panel/forums/create/"),
-		Action("routePanelForumsDelete", "/panel/forums/delete/", "extraData"),
-		Action("routePanelForumsDeleteSubmit", "/panel/forums/delete/submit/", "extraData"),
-		View("routePanelForumsEdit", "/panel/forums/edit/", "extraData"),
-		Action("routePanelForumsEditSubmit", "/panel/forums/edit/submit/", "extraData"),
-		Action("routePanelForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "extraData"),
-		View("routePanelForumsEditPermsAdvance", "/panel/forums/edit/perms/", "extraData"),
-		Action("routePanelForumsEditPermsAdvanceSubmit", "/panel/forums/edit/perms/adv/submit/", "extraData"),
+		View("panel.Forums", "/panel/forums/"),
+		Action("panel.ForumsCreateSubmit", "/panel/forums/create/"),
+		Action("panel.ForumsDelete", "/panel/forums/delete/", "extraData"),
+		Action("panel.ForumsDeleteSubmit", "/panel/forums/delete/submit/", "extraData"),
+		View("panel.ForumsEdit", "/panel/forums/edit/", "extraData"),
+		Action("panel.ForumsEditSubmit", "/panel/forums/edit/submit/", "extraData"),
+		Action("panel.ForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "extraData"),
+		View("panel.ForumsEditPermsAdvance", "/panel/forums/edit/perms/", "extraData"),
+		Action("panel.ForumsEditPermsAdvanceSubmit", "/panel/forums/edit/perms/adv/submit/", "extraData"),
 
-		View("routePanelSettings", "/panel/settings/"),
-		View("routePanelSettingEdit", "/panel/settings/edit/", "extraData"),
-		Action("routePanelSettingEditSubmit", "/panel/settings/edit/submit/", "extraData"),
+		View("panel.Settings", "/panel/settings/"),
+		View("panel.SettingEdit", "/panel/settings/edit/", "extraData"),
+		Action("panel.SettingEditSubmit", "/panel/settings/edit/submit/", "extraData"),
 
 		View("routePanelWordFilters", "/panel/settings/word-filters/"),
 		Action("routePanelWordFiltersCreateSubmit", "/panel/settings/word-filters/create/"),
@@ -170,21 +170,21 @@ func buildPanelRoutes() {
 		View("routePanelUsersEdit", "/panel/users/edit/", "extraData"),
 		Action("routePanelUsersEditSubmit", "/panel/users/edit/submit/", "extraData"),
 
-		View("routePanelAnalyticsViews", "/panel/analytics/views/").Before("ParseForm"),
-		View("routePanelAnalyticsRoutes", "/panel/analytics/routes/").Before("ParseForm"),
-		View("routePanelAnalyticsAgents", "/panel/analytics/agents/").Before("ParseForm"),
-		View("routePanelAnalyticsSystems", "/panel/analytics/systems/").Before("ParseForm"),
-		View("routePanelAnalyticsLanguages", "/panel/analytics/langs/").Before("ParseForm"),
-		View("routePanelAnalyticsReferrers", "/panel/analytics/referrers/").Before("ParseForm"),
-		View("routePanelAnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
-		View("routePanelAnalyticsAgentViews", "/panel/analytics/agent/", "extraData"),
-		View("routePanelAnalyticsForumViews", "/panel/analytics/forum/", "extraData"),
-		View("routePanelAnalyticsSystemViews", "/panel/analytics/system/", "extraData"),
-		View("routePanelAnalyticsLanguageViews", "/panel/analytics/lang/", "extraData"),
-		View("routePanelAnalyticsReferrerViews", "/panel/analytics/referrer/", "extraData"),
-		View("routePanelAnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
-		View("routePanelAnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
-		View("routePanelAnalyticsForums", "/panel/analytics/forums/").Before("ParseForm"),
+		View("panel.AnalyticsViews", "/panel/analytics/views/").Before("ParseForm"),
+		View("panel.AnalyticsRoutes", "/panel/analytics/routes/").Before("ParseForm"),
+		View("panel.AnalyticsAgents", "/panel/analytics/agents/").Before("ParseForm"),
+		View("panel.AnalyticsSystems", "/panel/analytics/systems/").Before("ParseForm"),
+		View("panel.AnalyticsLanguages", "/panel/analytics/langs/").Before("ParseForm"),
+		View("panel.AnalyticsReferrers", "/panel/analytics/referrers/").Before("ParseForm"),
+		View("panel.AnalyticsRouteViews", "/panel/analytics/route/", "extraData"),
+		View("panel.AnalyticsAgentViews", "/panel/analytics/agent/", "extraData"),
+		View("panel.AnalyticsForumViews", "/panel/analytics/forum/", "extraData"),
+		View("panel.AnalyticsSystemViews", "/panel/analytics/system/", "extraData"),
+		View("panel.AnalyticsLanguageViews", "/panel/analytics/lang/", "extraData"),
+		View("panel.AnalyticsReferrerViews", "/panel/analytics/referrer/", "extraData"),
+		View("panel.AnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
+		View("panel.AnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
+		View("panel.AnalyticsForums", "/panel/analytics/forums/").Before("ParseForm"),
 
 		View("routePanelGroups", "/panel/groups/"),
 		View("routePanelGroupsEdit", "/panel/groups/edit/", "extraData"),
@@ -193,10 +193,10 @@ func buildPanelRoutes() {
 		Action("routePanelGroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "extraData"),
 		Action("routePanelGroupsCreateSubmit", "/panel/groups/create/"),
 
-		View("routePanelBackups", "/panel/backups/", "extraData").Before("SuperAdminOnly"), // TODO: Test
-		View("routePanelLogsRegs", "/panel/logs/regs/"),
-		View("routePanelLogsMod", "/panel/logs/mod/"),
-		View("routePanelDebug", "/panel/debug/").Before("AdminOnly"),
+		View("panel.Backups", "/panel/backups/", "extraData").Before("SuperAdminOnly"), // TODO: Tests for this
+		View("panel.LogsRegs", "/panel/logs/regs/"),
+		View("panel.LogsMod", "/panel/logs/mod/"),
+		View("panel.Debug", "/panel/debug/").Before("AdminOnly"),
 	)
 	addRouteGroup(panelGroup)
 }

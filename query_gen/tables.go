@@ -412,6 +412,22 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
+	qgen.Install.CreateTable("pages", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"pid", "int", 0, false, true, ""},
+			//qgen.DBTableColumn{"path", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"name", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"title", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"body", "text", 0, false, false, ""},
+			// TODO: Make this a table?
+			qgen.DBTableColumn{"allowedGroups", "text", 0, false, false, ""},
+			qgen.DBTableColumn{"menuID", "int", 0, false, false, "-1"}, // simple sidebar menu
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"pid", "primary"},
+		},
+	)
+
 	qgen.Install.CreateTable("registration_logs", "", "",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"rlid", "int", 0, false, true, ""},

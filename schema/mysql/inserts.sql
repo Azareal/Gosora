@@ -1,5 +1,4 @@
 INSERT INTO `sync`(`last_update`) VALUES (UTC_TIMESTAMP());
-INSERT INTO `settings`(`name`,`content`,`type`) VALUES ('url_tags','1','bool');
 INSERT INTO `settings`(`name`,`content`,`type`,`constraints`) VALUES ('activation_type','1','list','1-3');
 INSERT INTO `settings`(`name`,`content`,`type`) VALUES ('bigpost_min_words','250','int');
 INSERT INTO `settings`(`name`,`content`,`type`) VALUES ('megapost_min_words','1000','int');

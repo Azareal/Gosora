@@ -12,6 +12,7 @@ func init() {
 	addPatch(1, patch1)
 	addPatch(2, patch2)
 	addPatch(3, patch3)
+	addPatch(4, patch4)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -227,6 +228,217 @@ func patch3(scanner *bufio.Scanner) error {
 		},
 		[]qgen.DBTableKey{
 			qgen.DBTableKey{"rlid", "primary"},
+		},
+	))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func patch4(scanner *bufio.Scanner) error {
+	// ! Don't reuse this function blindly, it doesn't escape apostrophes
+	var replaceTextWhere = func(replaceThis string, withThis string) error {
+		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	}
+
+	err := replaceTextWhere("routeReportSubmit", "routes.ReportSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeAccountEditEmail", "routes.AccountEditEmail")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routeAccountEditEmailTokenSubmit", "routes.AccountEditEmailTokenSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelLogsRegs", "panel.LogsRegs")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelLogsMod", "panel.LogsMod")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelLogsAdmin", "panel.LogsAdmin")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelDebug", "panel.Debug")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsViews", "panel.AnalyticsViews")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsRouteViews", "panel.AnalyticsRouteViews")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsRouteViews", "panel.AnalyticsRouteViews")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsAgentViews", "panel.AnalyticsAgentViews")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsForumViews", "panel.AnalyticsForumViews")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsSystemViews", "panel.AnalyticsSystemViews")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsLanguageViews", "panel.AnalyticsLanguageViews")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsReferrerViews", "panel.AnalyticsReferrerViews")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsTopics", "panel.AnalyticsTopics")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsPosts", "panel.AnalyticsPosts")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsForums", "panel.AnalyticsForums")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsRoutes", "panel.AnalyticsRoutes")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsAgents", "panel.AnalyticsAgents")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsSystems", "panel.AnalyticsSystems")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsLanguages", "panel.AnalyticsLanguages")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelAnalyticsReferrers", "panel.AnalyticsReferrers")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelSettings", "panel.Settings")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelSettingEdit", "panel.SettingEdit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelSettingEditSubmit", "panel.SettingEditSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForums", "panel.Forums")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForumsCreateSubmit", "panel.ForumsCreateSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForumsDelete", "panel.ForumsDelete")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForumsDeleteSubmit", "panel.ForumsDeleteSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForumsEdit", "panel.ForumsEdit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForumsEditSubmit", "panel.ForumsEditSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForumsEditPermsSubmit", "panel.ForumsEditPermsSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForumsEditPermsAdvance", "panel.ForumsEditPermsAdvance")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelForumsEditPermsAdvanceSubmit", "panel.ForumsEditPermsAdvanceSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelBackups", "panel.Backups")
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.SimpleDelete("settings", "name='url_tags'"))
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.CreateTable("pages", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"pid", "int", 0, false, true, ""},
+			qgen.DBTableColumn{"name", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"title", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"body", "text", 0, false, false, ""},
+			qgen.DBTableColumn{"allowedGroups", "text", 0, false, false, ""},
+			qgen.DBTableColumn{"menuID", "int", 0, false, false, "-1"},
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"pid", "primary"},
 		},
 	))
 	if err != nil {

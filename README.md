@@ -108,6 +108,8 @@ go get -u github.com/go-sql-driver/mysql
 
 go get -u golang.org/x/crypto/bcrypt
 
+go get -u golang.org/x/crypto/argon2
+
 go get -u github.com/StackExchange/wmi
 
 go get -u github.com/Azareal/gopsutil
@@ -189,8 +191,6 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 ![Tempra Simple Mobile](https://github.com/Azareal/Gosora/blob/master/images/tempra-simple-mobile-375px.png)
 
-![Tempra Cursive Theme](https://github.com/Azareal/Gosora/blob/master/images/tempra-cursive.png)
-
 ![Tempra Conflux Theme](https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux.png)
 
 ![Tempra Conflux Mobile](https://github.com/Azareal/Gosora/blob/master/images/tempra-conflux-mobile-320px.png)
@@ -207,7 +207,7 @@ More images in the /images/ folder. Beware though, some of them are *really* out
 
 * github.com/go-sql-driver/mysql For interfacing with MariaDB.
 
-* golang.org/x/crypto/bcrypt For hashing passwords.
+* golang.org/x/crypto/bcrypt and go get -u golang.org/x/crypto/argon2 For hashing passwords.
 
 * github.com/Azareal/gopsutil For pulling information on CPU and memory usage. I've temporarily forked this, as we were having stability issues with the latest build.
 
@@ -229,6 +229,8 @@ More images in the /images/ folder. Beware though, some of them are *really* out
 
 * github.com/fsnotify/fsnotify A library for watching events on the file system.
 
+* More items to come here, our dependencies are going through a lot of changes, and I'll be documenting those soon ;)
+
 # Bundled Plugins
 
 There are several plugins which are bundled with the software by default. These cover various common tasks which aren't common enough to clutter the core with or which have competing implementation methods (E.g. plugin_markdown vs plugin_bbcode for post mark-up).
@@ -239,7 +241,7 @@ There are several plugins which are bundled with the software by default. These 
 
 * Markdown - An extremely simple plugin for converting Markdown into HTML.
 
-* Social Groups - A WIP plugin which lets users create their own little discussion areas which they can administrate / moderate on their own.
+* Social Groups - An extremely unstable WIP plugin which lets users create their own little discussion areas which they can administrate / moderate on their own.
 
 # Developers
 

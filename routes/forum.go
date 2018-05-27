@@ -56,6 +56,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, sfid st
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	header.Title = forum.Name
 
 	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
 	offset, page, lastPage := common.PageOffset(forum.TopicCount, page, common.Config.ItemsPerPage)
@@ -112,7 +113,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, sfid st
 	}
 
 	pageList := common.Paginate(forum.TopicCount, common.Config.ItemsPerPage, 5)
-	pi := common.ForumPage{forum.Name, user, header, topicList, forum, common.Paginator{pageList, page, lastPage}}
+	pi := common.ForumPage{header, topicList, forum, common.Paginator{pageList, page, lastPage}}
 	if common.RunPreRenderHook("pre_render_forum", w, r, &user, &pi) {
 		return nil
 	}

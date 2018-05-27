@@ -10,6 +10,9 @@ go get -u github.com/denisenkom/go-mssqldb
 echo "Installing bcrypt"
 go get -u golang.org/x/crypto/bcrypt
 
+echo "Installing Argon2"
+go get -u golang.org/x/crypto/argon2
+
 echo "Installing gopsutil"
 go get -u github.com/Azareal/gopsutil
 

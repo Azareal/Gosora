@@ -39,7 +39,7 @@ type LanguagePack struct {
 	Levels           LevelPhrases
 	GlobalPerms      map[string]string
 	LocalPerms       map[string]string
-	SettingLabels    map[string]string
+	SettingPhrases   map[string]string
 	PermPresets      map[string]string
 	Accounts         map[string]string // TODO: Apply these phrases in the software proper
 	UserAgents       map[string]string
@@ -148,16 +148,16 @@ func GetLocalPermPhrase(name string) string {
 	return res
 }
 
-func GetSettingLabel(name string) string {
-	res, ok := currentLangPack.Load().(*LanguagePack).SettingLabels[name]
+func GetSettingPhrase(name string) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).SettingPhrases[name]
 	if !ok {
 		return getPhrasePlaceholder("settings", name)
 	}
 	return res
 }
 
-func GetAllSettingLabels() map[string]string {
-	return currentLangPack.Load().(*LanguagePack).SettingLabels
+func GetAllSettingPhrases() map[string]string {
+	return currentLangPack.Load().(*LanguagePack).SettingPhrases
 }
 
 func GetAllPermPresets() map[string]string {

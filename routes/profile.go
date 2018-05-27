@@ -32,6 +32,8 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 	if ferr != nil {
 		return ferr
 	}
+	// TODO: Preload this?
+	header.AddScript("profile.css")
 
 	var err error
 	var replyCreatedAt time.Time

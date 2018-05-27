@@ -54,6 +54,12 @@ func init() {
 	})
 }
 
+func (setting *Setting) Copy() (out *Setting) {
+	out = &Setting{Name: ""}
+	*out = *setting
+	return out
+}
+
 func LoadSettings() error {
 	var sBox = SettingMap(make(map[string]interface{}))
 	settings, err := sBox.BypassGetAll()

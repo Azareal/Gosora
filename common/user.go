@@ -14,20 +14,14 @@ import (
 	"time"
 
 	"../query_gen/lib"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // TODO: Replace any literals with this
 var BanGroup = 4
 
+// TODO: Use something else as the guest avatar, maybe a question mark of some sort?
 // GuestUser is an instance of user which holds guest data to avoid having to initialise a guest every time
-var GuestUser = User{ID: 0, Link: "#", Group: 6, Perms: GuestPerms}
-
-//func(real_password string, password string, salt string) (err error)
-var CheckPassword = BcryptCheckPassword
-
-//func(password string) (hashed_password string, salt string, err error)
-var GeneratePassword = BcryptGeneratePassword
+var GuestUser = User{ID: 0, Name: "Guest", Link: "#", Group: 6, Perms: GuestPerms} // BuildAvatar is done in site.go to make sure it's done after init
 var ErrNoTempGroup = errors.New("We couldn't find a temporary group for this user")
 
 type User struct {
@@ -367,33 +361,6 @@ func BuildAvatar(uid int, avatar string) string {
 		return avatar
 	}
 	return strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1)
-}
-
-func BcryptCheckPassword(realPassword string, password string, salt string) (err error) {
-	return bcrypt.CompareHashAndPassword([]byte(realPassword), []byte(password+salt))
-}
-
-// Investigate. Do we need the extra salt?
-func BcryptGeneratePassword(password string) (hashedPassword string, salt string, err error) {
-	salt, err = GenerateSafeString(SaltLength)
-	if err != nil {
-		return "", "", err
-	}
-
-	password = password + salt
-	hashedPassword, err = BcryptGeneratePasswordNoSalt(password)
-	if err != nil {
-		return "", "", err
-	}
-	return hashedPassword, salt, nil
-}
-
-func BcryptGeneratePasswordNoSalt(password string) (hash string, err error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashedPassword), nil
 }
 
 // TODO: Move this to *User

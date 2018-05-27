@@ -111,8 +111,6 @@ func writeStatements(adapter qgen.Adapter) error {
 
 func seedTables(adapter qgen.Adapter) error {
 	qgen.Install.SimpleInsert("sync", "last_update", "UTC_TIMESTAMP()")
-
-	qgen.Install.SimpleInsert("settings", "name, content, type", "'url_tags','1','bool'")
 	qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
 	qgen.Install.SimpleInsert("settings", "name, content, type", "'bigpost_min_words','250','int'")
 	qgen.Install.SimpleInsert("settings", "name, content, type", "'megapost_min_words','1000','int'")
@@ -261,13 +259,7 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	//build.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()
 
-	build.Select("getUsersOffset").Table("users").Columns("uid, name, group, active, is_super_admin, avatar").Orderby("uid ASC").Limit("?,?").Parse()
-
 	build.Select("isThemeDefault").Table("themes").Columns("default").Where("uname = ?").Parse()
-
-	build.Select("getEmailsByUser").Table("emails").Columns("email, validated, token").Where("uid = ?").Parse()
-
-	build.Select("getTopicBasic").Table("topics").Columns("title, content").Where("tid = ?").Parse() // TODO: Comment this out and see if anything breaks
 
 	build.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
 
@@ -288,8 +280,6 @@ func writeInnerJoins(adapter qgen.Adapter) (err error) {
 
 func writeInserts(adapter qgen.Adapter) error {
 	build := adapter.Builder()
-
-	build.Insert("createReport").Table("topics").Columns("title, content, parsed_content, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'").Parse()
 
 	build.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
 
@@ -319,8 +309,6 @@ func writeUpdates(adapter qgen.Adapter) error {
 
 	build.Update("updateEmail").Table("emails").Set("email = ?, uid = ?, validated = ?, token = ?").Where("email = ?").Parse()
 
-	build.Update("verifyEmail").Table("emails").Set("validated = 1, token = ''").Where("email = ?").Parse() // Need to fix this: Empty string isn't working, it gets set to 1 instead x.x -- Has this been fixed?
-
 	build.Update("setTempGroup").Table("users").Set("temp_group = ?").Where("uid = ?").Parse()
 
 	build.Update("updateWordFilter").Table("word_filters").Set("find = ?, replacement = ?").Where("wfid = ?").Parse()
@@ -344,8 +332,6 @@ func writeDeletes(adapter qgen.Adapter) error {
 }
 
 func writeSimpleCounts(adapter qgen.Adapter) error {
-	adapter.SimpleCount("reportExists", "topics", "data = ? AND data != '' AND parentID = 1", "")
-
 	return nil
 }
 
