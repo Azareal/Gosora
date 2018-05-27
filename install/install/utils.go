@@ -18,7 +18,7 @@ func GenerateSafeString(length int) (string, error) {
 
 // Generate a bcrypt hash
 // Note: The salt is in the hash, therefore the salt value is blank
-func bcryptGeneratePassword(password string) (hash string, salt string, err error) {
+func BcryptGeneratePassword(password string) (hash string, salt string, err error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", "", err

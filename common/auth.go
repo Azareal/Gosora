@@ -93,12 +93,6 @@ func (auth *DefaultAuth) Authenticate(username string, password string) (uid int
 		return 0, ErrSecretError
 	}
 
-	if salt == "" {
-		// Send an email to admin for this?
-		LogError(errors.New("Missing salt for user #" + strconv.Itoa(uid) + ". Potential security breach."))
-		return 0, ErrSecretError
-	}
-
 	err = CheckPassword(realPassword, password, salt)
 	if err == ErrMismatchedHashAndPassword {
 		return 0, ErrWrongPassword
@@ -209,7 +203,7 @@ func CheckPassword(realPassword string, password string, salt string) (err error
 	blasted := strings.Split(realPassword, "$")
 	prefix := blasted[0]
 	if len(blasted) > 1 {
-		prefix += blasted[1]
+		prefix += "$" + blasted[1] + "$"
 	}
 	algo, ok := HashPrefixes[prefix]
 	if !ok {
