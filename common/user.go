@@ -54,21 +54,23 @@ type User struct {
 }
 
 type UserStmts struct {
-	activate           *sql.Stmt
-	changeGroup        *sql.Stmt
-	delete             *sql.Stmt
-	setAvatar          *sql.Stmt
-	setUsername        *sql.Stmt
-	updateGroup        *sql.Stmt
-	incrementTopics    *sql.Stmt
-	updateLevel        *sql.Stmt
+	activate        *sql.Stmt
+	changeGroup     *sql.Stmt
+	delete          *sql.Stmt
+	setAvatar       *sql.Stmt
+	setUsername     *sql.Stmt
+	incrementTopics *sql.Stmt
+	updateLevel     *sql.Stmt
+
+	// TODO: Split these into a sub-struct
 	incrementScore     *sql.Stmt
 	incrementPosts     *sql.Stmt
 	incrementBigposts  *sql.Stmt
 	incrementMegaposts *sql.Stmt
 	incrementLiked     *sql.Stmt
-	decrementLiked     *sql.Stmt
-	updateLastIP       *sql.Stmt
+
+	decrementLiked *sql.Stmt
+	updateLastIP   *sql.Stmt
 
 	setPassword *sql.Stmt
 }
@@ -242,9 +244,7 @@ func (user *User) ChangeAvatar(avatar string) (err error) {
 }
 
 func (user *User) ChangeGroup(group int) (err error) {
-	_, err = userStmts.updateGroup.Exec(group, user.ID)
-	user.CacheRemove()
-	return err
+	return user.bindStmt(userStmts.changeGroup, group)
 }
 
 // ! Only updates the database not the *User for safety reasons

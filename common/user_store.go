@@ -229,6 +229,7 @@ func (mus *DefaultUserStore) Exists(id int) bool {
 }
 
 // TODO: Change active to a bool?
+// TODO: Use unique keys for the usernames
 func (mus *DefaultUserStore) Create(username string, password string, email string, group int, active bool) (int, error) {
 	// TODO: Strip spaces?
 

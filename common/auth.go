@@ -18,6 +18,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TODO: Write more authentication tests
 var Auth AuthInt
 
 const SaltLength int = 32
@@ -83,6 +84,7 @@ func NewDefaultAuth() (*DefaultAuth, error) {
 }
 
 // Authenticate checks if a specific username and password is valid and returns the UID for the corresponding user, if so. Otherwise, a user safe error.
+// TODO: Find a better way of handling errors we don't want to reach the user
 func (auth *DefaultAuth) Authenticate(username string, password string) (uid int, err error) {
 	var realPassword, salt string
 	err = auth.login.QueryRow(username).Scan(&uid, &realPassword, &salt)

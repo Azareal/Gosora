@@ -13,16 +13,20 @@ import (
 
 func recordMustExist(t *testing.T, err error, errmsg string, args ...interface{}) {
 	if err == ErrNoRows {
+		debug.PrintStack()
 		t.Errorf(errmsg, args...)
 	} else if err != nil {
+		debug.PrintStack()
 		t.Fatal(err)
 	}
 }
 
 func recordMustNotExist(t *testing.T, err error, errmsg string, args ...interface{}) {
 	if err == nil {
+		debug.PrintStack()
 		t.Errorf(errmsg, args...)
 	} else if err != ErrNoRows {
+		debug.PrintStack()
 		t.Fatal(err)
 	}
 }
@@ -801,6 +805,11 @@ func TestProfileReplyStore(t *testing.T) {
 	_, err = common.Prstore.Get(1)
 	recordMustNotExist(t, err, "PRID #1 shouldn't exist")
 
+	// ? - Commented this one out as strong constraints like this put an unreasonable load on the database, we only want errors if a delete which should succeed fails
+	//profileReply := common.BlankProfileReply(1)
+	//err = profileReply.Delete()
+	//expect(t,err != nil,"You shouldn't be able to delete profile replies which don't exist")
+
 	var profileID = 1
 	prid, err := common.Prstore.Create(profileID, "Haha", 1, "::1")
 	expect(t, err == nil, "Unable to create a profile reply")
@@ -814,9 +823,12 @@ func TestProfileReplyStore(t *testing.T) {
 	expect(t, profileReply.CreatedBy == 1, fmt.Sprintf("The profile reply's creator should be 1 not %d", profileReply.CreatedBy))
 	expect(t, profileReply.IPAddress == "::1", fmt.Sprintf("The profile reply's IP Address should be '::1' not '%s'", profileReply.IPAddress))
 
-	//Get(id int) (*Reply, error)
-	//Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error)
+	err = profileReply.Delete()
+	expectNilErr(t, err)
+	_, err = common.Prstore.Get(1)
+	expect(t, err != nil, "PRID #1 shouldn't exist after being deleted")
 
+	// TODO: Test profileReply.SetBody() and profileReply.Creator()
 }
 
 func TestSlugs(t *testing.T) {
@@ -856,25 +868,71 @@ func TestSlugs(t *testing.T) {
 
 func TestAuth(t *testing.T) {
 	// bcrypt likes doing stupid things, so this test will probably fail
-	var realPassword string
-	var hashedPassword string
-	var password string
-	var salt string
-	var err error
-
-	/* No extra salt tests, we might not need this extra salt, as bcrypt has it's own? */
-	realPassword = "Madame Cassandra's Mystic Orb"
+	realPassword := "Madame Cassandra's Mystic Orb"
 	t.Logf("Set realPassword to '%s'", realPassword)
-	t.Log("Hashing the real password")
-	hashedPassword, err = common.BcryptGeneratePassword(realPassword)
+	t.Log("Hashing the real password with bcrypt")
+	hashedPassword, _, err := common.BcryptGeneratePassword(realPassword)
 	if err != nil {
 		t.Error(err)
 	}
+	passwordTest(t, realPassword, hashedPassword)
+	// TODO: Peek at the prefix to verify this is a bcrypt hash
 
-	password = realPassword
+	t.Log("Hashing the real password")
+	hashedPassword2, _, err := common.GeneratePassword(realPassword)
+	if err != nil {
+		t.Error(err)
+	}
+	passwordTest(t, realPassword, hashedPassword2)
+	// TODO: Peek at the prefix to verify this is a bcrypt hash
+
+	_, err = common.Auth.Authenticate("None", "password")
+	errmsg := "Username None shouldn't exist"
+	if err != nil {
+		errmsg += "\n" + err.Error()
+	}
+	expect(t, err == common.ErrNoUserByName, errmsg)
+
+	uid, err := common.Auth.Authenticate("Admin", "password")
+	expectNilErr(t, err)
+	expect(t, uid == 1, fmt.Sprintf("Default admin uid should be 1 not %d", uid))
+
+	_, err = common.Auth.Authenticate("Sam", "ReallyBadPassword")
+	errmsg = "Username Sam shouldn't exist"
+	if err != nil {
+		errmsg += "\n" + err.Error()
+	}
+	expect(t, err == common.ErrNoUserByName, errmsg)
+
+	admin, err := common.Users.Get(1)
+	expectNilErr(t, err)
+	// TODO: Move this into the user store tests to provide better coverage? E.g. To see if the installer and the user creator initialise the field differently
+	expect(t, admin.Session == "", "Admin session should be blank")
+
+	session, err := common.Auth.CreateSession(1)
+	expectNilErr(t, err)
+	expect(t, session != "", "Admin session shouldn't be blank")
+	// TODO: Test the actual length set in the setting in addition to this "too short" test
+	// TODO: We might be able to push up this minimum requirement
+	expect(t, len(session) > 10, "Admin session shouldn't be too short")
+	expect(t, admin.Session != session, "Old session should not match new one")
+	admin, err = common.Users.Get(1)
+	expectNilErr(t, err)
+	expect(t, admin.Session == session, "Sessions should match")
+
+	// TODO: Tests for SessionCheck, GetCookies, and ForceLogout
+}
+
+// TODO: Vary the salts? Keep in mind that some algorithms store the salt in the hash therefore the salt string may be blank
+func passwordTest(t *testing.T, realPassword string, hashedPassword string) {
+	if len(hashedPassword) < 10 {
+		t.Error("Hash too short")
+	}
+	salt := ""
+	password := realPassword
 	t.Logf("Testing password '%s'", password)
 	t.Logf("Testing salt '%s'", salt)
-	err = common.CheckPassword(hashedPassword, password, salt)
+	err := common.CheckPassword(hashedPassword, password, salt)
 	if err == common.ErrMismatchedHashAndPassword {
 		t.Error("The two don't match")
 	} else if err == common.ErrPasswordTooLong {

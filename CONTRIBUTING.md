@@ -4,6 +4,8 @@ It's mainly there to deal with any legal issues which come our way and to switch
 
 Other uses may arise in the future, e.g. commercial licensing, although that's currently uncertain.
 
+Try to prefix commits which introduce a lot of bugs or otherwise has a large impact on the usability of Gosora with UNSTABLE.
+
 # Coding Standards
 
 All code must be unit tested where ever possible with the exception of JavaScript which is untestable with our current technologies, tread with caution there.

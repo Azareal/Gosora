@@ -39,6 +39,11 @@ func init() {
 	})
 }
 
+// Mostly for tests, so we don't wind up with out-of-date profile reply initialisation logic there
+func BlankProfileReply(id int) *ProfileReply {
+	return &ProfileReply{ID: id}
+}
+
 // TODO: Write tests for this
 func (reply *ProfileReply) Delete() error {
 	_, err := profileReplyStmts.delete.Exec(reply.ID)

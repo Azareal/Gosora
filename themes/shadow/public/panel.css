@@ -96,3 +96,11 @@
 .ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
     stroke: hsl(359,98%,43%) !important;
 }
+
+.pageset {
+	margin-left: 0px;
+	margin-bottom: 0px;
+}
+.pageitem {
+	padding: 8px;
+}

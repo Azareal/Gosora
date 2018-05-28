@@ -35,6 +35,9 @@ body {
 	position: relative;
 	top: -2px;
 }
+#main {
+	padding-bottom: 5px;
+}
 
 ul {
 	list-style-type: none;
@@ -191,6 +194,9 @@ a {
 	font-size: 12px;
 }
 
+.colstack {
+	display: flex;
+}
 .colstack_left, .colstack_right {
 	margin-left: 8px;
 }
@@ -455,6 +461,8 @@ textarea.large {
 	margin-top: 4px;
 	display: flex;
 	flex-direction: row;
+	margin-left: 8px;
+	margin-bottom: 8px;
 }
 .pageitem {
 	background-color: var(--main-block-color);
@@ -559,9 +567,17 @@ input, select, textarea {
 	padding-left: 30px;
 }
 
+.footBlock {
+	margin-top: -2px;
+	display: flex;
+}
+.footer {
+	width: 70%;
+	margin-left: auto;
+	margin-right: auto;
+}
 #poweredByHolder {
     background-color: var(--main-block-color);
-    margin-top: 5px;
     padding: 10px;
     font-size: 14px;
     padding-left: 13px;
@@ -1040,12 +1056,12 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 		text-overflow: ellipsis;
 	}
 
-	#back {
+	#back, .footer {
 		width: calc(100% - 20px);
 	}
 	.opthead, .rowhead, .colstack_head {
 		padding-top: 0px !important;
-		font-size 15px;
+		font-size: 15px;
 	}
 	.rowblock:not(.opthead):not(.colstack_head):not(.rowhead) .rowitem {
 		font-size: 14px;

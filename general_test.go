@@ -47,7 +47,7 @@ func ResetTables() (err error) {
 func gloinit() (err error) {
 	common.Dev.DebugMode = false
 	//nogrouplog = true
-	startTime = time.Now()
+	common.StartTime = time.Now()
 
 	err = common.ProcessConfig()
 	if err != nil {
