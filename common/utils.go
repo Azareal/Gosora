@@ -48,7 +48,7 @@ func GenerateSafeString(length int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return base64.StdEncoding.EncodeToString(rb), nil
+	return base64.URLEncoding.EncodeToString(rb), nil
 }
 
 // TODO: Write a test for this
