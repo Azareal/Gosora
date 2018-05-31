@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"html"
 	"math"
 	"os"
 	"strconv"
@@ -119,9 +120,8 @@ func ConvertByteUnit(bytes float64) (float64, string) {
 		return bytes / float64(Megabyte), "MB"
 	case bytes >= float64(Kilobyte):
 		return bytes / float64(Kilobyte), "KB"
-	default:
-		return bytes, " bytes"
 	}
+	return bytes, " bytes"
 }
 
 // TODO: Write a test for this
@@ -385,6 +385,24 @@ func GetLevels(maxLevel int) []float64 {
 		out = append(out, current)
 	}
 	return out
+}
+
+// TODO: Write a test for this
+// SanitiseSingleLine is a generic function for escaping html entities and removing silly characters from usernames and topic titles. It also strips newline characters
+func SanitiseSingleLine(in string) string {
+	in = strings.Replace(in, "\n", "", -1)
+	in = strings.Replace(in, "\r", "", -1)
+	return SanitiseBody(in)
+}
+
+// TODO: Write a test for this
+// TODO: Add more strange characters
+// TODO: Strip all sub-32s minus \r and \n?
+// SanitiseBody is the same as SanitiseSingleLine, but it doesn't strip newline characters
+func SanitiseBody(in string) string {
+	in = strings.Replace(in, "​", "", -1) // Strip Zero length space
+	in = html.EscapeString(in)
+	return strings.TrimSpace(in)
 }
 
 func BuildSlug(slug string, id int) string {

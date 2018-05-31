@@ -7,10 +7,16 @@ import (
 	"sync"
 )
 
-// TODO: Use the error_buffer variable to construct the system log in the Control Panel. Should we log errors caused by users too? Or just collect statistics on those or do nothing? Intercept recover()? Could we intercept the logger instead here? We might get too much information, if we intercept the logger, maybe make it part of the Debug page?
+type ErrorItem struct {
+	error
+	Stack []byte
+}
+
+// ! The errorBuffer uses o(n) memory, we should probably do something about that
+// TODO: Use the errorBuffer variable to construct the system log in the Control Panel. Should we log errors caused by users too? Or just collect statistics on those or do nothing? Intercept recover()? Could we intercept the logger instead here? We might get too much information, if we intercept the logger, maybe make it part of the Debug page?
 // ? - Should we pass Header / HeaderLite rather than forcing the errors to pull the global Header instance?
 var errorBufferMutex sync.RWMutex
-var errorBuffer []error
+var errorBuffer []ErrorItem
 
 //var notfoundCountPerSecond int
 //var nopermsCountPerSecond int
@@ -66,11 +72,11 @@ func LogError(err error) {
 }
 
 func LogWarning(err error) {
-	log.Print(err)
-	debug.PrintStack()
+	stack := debug.Stack()
+	log.Print(err.Error()+"\n", string(stack))
 	errorBufferMutex.Lock()
 	defer errorBufferMutex.Unlock()
-	errorBuffer = append(errorBuffer, err)
+	errorBuffer = append(errorBuffer, ErrorItem{err, stack})
 }
 
 // TODO: Dump the request?

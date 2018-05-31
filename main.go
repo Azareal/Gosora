@@ -217,6 +217,12 @@ func main() {
 	fmt.Println("")
 	common.StartTime = time.Now()
 
+	jsToken, err := common.GenerateSafeString(80)
+	if err != nil {
+		log.Fatal(err)
+	}
+	common.JSTokenBox.Store(jsToken)
+
 	log.Print("Processing configuration data")
 	err = common.ProcessConfig()
 	if err != nil {
@@ -338,7 +344,7 @@ func main() {
 	halfSecondTicker := time.NewTicker(time.Second / 2)
 	secondTicker := time.NewTicker(time.Second)
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
-	//hourTicker := time.NewTicker(time.Hour)
+	hourTicker := time.NewTicker(time.Hour)
 	go func() {
 		var runHook = func(name string) {
 			err := common.RunTaskHook(name)
@@ -382,6 +388,15 @@ func main() {
 				// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 				// TODO: Publish scheduled posts.
 				runHook("after_fifteen_minute_tick")
+			case <-hourTicker.C:
+				runHook("before_hour_tick")
+				jsToken, err := common.GenerateSafeString(80)
+				if err != nil {
+					common.LogError(err)
+				}
+				common.JSTokenBox.Store(jsToken)
+				runTasks(common.ScheduledHourTasks)
+				runHook("after_hour_tick")
 			}
 
 			// TODO: Handle the daily clean-up.

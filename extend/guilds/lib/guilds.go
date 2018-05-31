@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"html"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -254,9 +253,9 @@ func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	var guildActive = true
-	var guildName = html.EscapeString(r.PostFormValue("group_name"))
+	var guildName = common.SanitiseSingleLine(r.PostFormValue("group_name"))
 	// TODO: Allow Markdown / BBCode / Limited HTML in the description?
-	var guildDesc = html.EscapeString(r.PostFormValue("group_desc"))
+	var guildDesc = common.SanitiseBody(r.PostFormValue("group_desc"))
 	var gprivacy = r.PostFormValue("group_privacy")
 
 	var guildPrivacy int

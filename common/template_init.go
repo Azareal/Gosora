@@ -233,7 +233,7 @@ func CompileTemplates() error {
 		return err
 	}
 
-	registerPage := Page{"Registration Page", user, header, tList, nil}
+	registerPage := Page{"Registration Page", user, header, tList, "nananana"}
 	registerTmpl, err := c.Compile("register.html", "templates/", "common.Page", registerPage, varList)
 	if err != nil {
 		return err

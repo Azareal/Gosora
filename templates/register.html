@@ -21,10 +21,21 @@
 				<div class="formitem formlabel"><a id="confirm_password_label">{{lang "register_account_confirm_password"}}</a></div>
 				<div class="formitem"><input name="confirm_password" type="password" placeholder="*****" autocomplete="new-password" aria-labelledby="confirm_password_label" required /></div>
 			</div>
-			<div class="formrow">
+			<div class="formrow">{{/** This is not a TOS, that text is there to fool the spambots **/}}
+				<div class="formitem formlabel"><a id="accept_tos_label">{{lang "register_account_anti_spam"}}</a></div>
+				<div class="formitem"><select name="tos" aria-labelledby="accept_tos_label" required>
+					<option value="1" selected>{{lang "option_yes"}}</option>
+					<option value="0">{{lang "option_no"}}</option>
+				</select></div>
+			</div>
+			<div class="formrow register_button_row">
 				<div class="formitem"><button name="register-button" class="formbutton">{{lang "register_submit_button"}}</button></div>
 			</div>
+			<input id="js-antispam" name="antispam" value="nananana" type="hidden" />
 		</form>
 	</div>
 </main>
+<script>{{/** TODO: Are we sure we want to do this by ID, just in case we reuse this and have multiple antispams on the page? **/}}
+document.getElementById("js-antispam").value = "{{.Something}}";
+</script>
 {{template "footer.html" . }}

@@ -22,6 +22,7 @@ type TaskStmts struct {
 var ScheduledHalfSecondTasks []func() error
 var ScheduledSecondTasks []func() error
 var ScheduledFifteenMinuteTasks []func() error
+var ScheduledHourTasks []func() error
 var ShutdownTasks []func() error
 var taskStmts TaskStmts
 var lastSync time.Time
@@ -51,6 +52,11 @@ func AddScheduledSecondTask(task func() error) {
 // AddScheduledFifteenMinuteTask is not concurrency safe
 func AddScheduledFifteenMinuteTask(task func() error) {
 	ScheduledFifteenMinuteTasks = append(ScheduledFifteenMinuteTasks, task)
+}
+
+// AddScheduledHourTask is not concurrency safe
+func AddScheduledHourTask(task func() error) {
+	ScheduledHourTasks = append(ScheduledHourTasks, task)
 }
 
 // AddShutdownTask is not concurrency safe
@@ -86,6 +92,7 @@ func HandleExpiredScheduledGroups() error {
 
 // TODO: Use AddScheduledSecondTask
 // TODO: Be a little more granular with the synchronisation
+// TODO: Synchronise more things
 func HandleServerSync() error {
 	// We don't want to run any unnecessary queries when there is nothing to synchronise
 	/*if Config.ServerCount > 1 {

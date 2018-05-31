@@ -344,6 +344,7 @@
 		"register_account_email":"Email",
 		"register_account_password":"Password",
 		"register_account_confirm_password":"Confirm Password",
+		"register_account_anti_spam":"Are you a spambot?",
 		"register_submit_button":"Create Account",
 
 		"account_menu_head":"My Account",

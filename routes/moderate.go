@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"html"
 	"net/http"
 
 	"../common"
@@ -18,7 +17,7 @@ func IPSearch(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	}
 
 	// TODO: Reject IP Addresses with illegal characters
-	var ip = html.EscapeString(r.FormValue("ip"))
+	var ip = common.SanitiseSingleLine(r.FormValue("ip"))
 	uids, err := common.IPSearch.Lookup(ip)
 	if err != nil {
 		return common.InternalError(err, w, r)

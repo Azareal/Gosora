@@ -2,7 +2,6 @@ package common
 
 import (
 	"bytes"
-	"html"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -171,9 +170,9 @@ func PreparseMessage(msg string) string {
 	msg = strings.Replace(msg, "<p>", "\n\n", -1)
 	msg = strings.Replace(msg, "</p>", "", -1)
 	msg = strings.Replace(msg, "<br>", "\n\n", -1)
-	msg = strings.TrimSpace(msg) // There are a few useful cases for having spaces, but I'd like to stop the WYSIWYG from inserting random lines here and there
 	msg = RunSshook("preparse_preassign", msg)
-	msg = html.EscapeString(msg)
+	// There are a few useful cases for having spaces, but I'd like to stop the WYSIWYG from inserting random lines here and there
+	msg = SanitiseBody(msg)
 	msg = strings.Replace(msg, "&nbsp;", "", -1)
 
 	var runes = []rune(msg)

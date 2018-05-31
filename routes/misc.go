@@ -3,7 +3,6 @@ package routes
 import (
 	"bytes"
 	"database/sql"
-	"html"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -157,7 +156,7 @@ func ChangeTheme(w http.ResponseWriter, r *http.Request, user common.User) commo
 	//headerLite, _ := SimpleUserCheck(w, r, &user)
 	// TODO: Rename isJs to something else, just in case we rewrite the JS side in WebAssembly?
 	isJs := (r.PostFormValue("isJs") == "1")
-	newTheme := html.EscapeString(r.PostFormValue("newTheme"))
+	newTheme := common.SanitiseSingleLine(r.PostFormValue("newTheme"))
 
 	theme, ok := common.Themes[newTheme]
 	if !ok || theme.HideFromThemes {

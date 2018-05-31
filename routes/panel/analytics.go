@@ -3,7 +3,6 @@ package panel
 import (
 	"database/sql"
 	"errors"
-	"html"
 	"log"
 	"net/http"
 	"strconv"
@@ -185,7 +184,7 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.Use
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsRoutePage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", html.EscapeString(route), graph, viewItems, timeRange.Range}
+	pi := common.PanelAnalyticsRoutePage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", common.SanitiseSingleLine(route), graph, viewItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_route_views", w, r, user, &pi)
 }
 
@@ -205,7 +204,7 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.Use
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	// ? Only allow valid agents? The problem with this is that agents wind up getting renamed and it would take a migration to get them all up to snuff
-	agent = html.EscapeString(agent)
+	agent = common.SanitiseSingleLine(agent)
 
 	common.DebugLog("in panel.AnalyticsAgentViews")
 	acc := qgen.Builder.Accumulator()
@@ -299,7 +298,7 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.Us
 		return common.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
-	system = html.EscapeString(system)
+	system = common.SanitiseSingleLine(system)
 
 	common.DebugLog("in panel.AnalyticsSystemViews")
 	acc := qgen.Builder.Accumulator()
@@ -344,7 +343,7 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user common.
 		return common.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
-	lang = html.EscapeString(lang)
+	lang = common.SanitiseSingleLine(lang)
 
 	common.DebugLog("in panel.AnalyticsLanguageViews")
 	acc := qgen.Builder.Accumulator()
@@ -410,7 +409,7 @@ func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", html.EscapeString(domain), "", graph, timeRange.Range}
+	pi := common.PanelAnalyticsAgentPage{common.GetTitlePhrase("panel_analytics"), user, headerVars, stats, "analytics", common.SanitiseSingleLine(domain), "", graph, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_referrer_views", w, r, user, &pi)
 }
 
@@ -736,7 +735,7 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User
 	var refItems []common.PanelAnalyticsAgentsItem
 	for domain, count := range refMap {
 		refItems = append(refItems, common.PanelAnalyticsAgentsItem{
-			Agent: html.EscapeString(domain),
+			Agent: common.SanitiseSingleLine(domain),
 			Count: count,
 		})
 	}

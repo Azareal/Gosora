@@ -11,7 +11,6 @@ import (
 	"html"
 	"html/template"
 	"strconv"
-	"strings"
 	"time"
 
 	"../query_gen/lib"
@@ -257,10 +256,7 @@ func (topic *Topic) Delete() error {
 
 // TODO: Write tests for this
 func (topic *Topic) Update(name string, content string) error {
-	name = html.EscapeString(strings.Replace(html.UnescapeString(name), "\n", "", -1))
-
-	// TODO: Stop duplicating this logic?
-	name = strings.TrimSpace(name)
+	name = SanitiseSingleLine(html.UnescapeString(name))
 	if name == "" {
 		return ErrNoTitle
 	}

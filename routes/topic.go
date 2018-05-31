@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
-	"html"
 	"io"
 	"log"
 	"net/http"
@@ -334,7 +333,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		return common.NoPermissions(w, r, user)
 	}
 
-	topicName := html.EscapeString(strings.Replace(r.PostFormValue("topic-name"), "\n", "", -1))
+	topicName := common.SanitiseSingleLine(r.PostFormValue("topic-name"))
 	content := common.PreparseMessage(r.PostFormValue("topic-content"))
 	// TODO: Fully parse the post and store it in the parsed column
 	tid, err := common.Topics.Create(fid, topicName, content, user.ID, user.LastIP)
@@ -377,9 +376,9 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 
 					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
 					_, exists := pollInputItems[index]
-					if !exists && len(html.EscapeString(value)) != 0 {
-						pollInputItems[index] = html.EscapeString(value)
-
+					// TODO: Should we use SanitiseBody instead to keep the newlines?
+					if !exists && len(common.SanitiseSingleLine(value)) != 0 {
+						pollInputItems[index] = common.SanitiseSingleLine(value)
 						if len(pollInputItems) >= maxPollOptions {
 							break
 						}

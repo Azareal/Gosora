@@ -1,8 +1,9 @@
 package routes
 
 import (
+	"crypto/sha256"
 	"database/sql"
-	"html"
+	"encoding/hex"
 	"io"
 	"log"
 	"net/http"
@@ -45,7 +46,7 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user common.User
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
 
-	username := html.EscapeString(strings.Replace(r.PostFormValue("username"), "\n", "", -1))
+	username := common.SanitiseSingleLine(r.PostFormValue("username"))
 	uid, err := common.Auth.Authenticate(username, r.PostFormValue("password"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -91,7 +92,11 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	pi := common.Page{common.GetTitlePhrase("register"), user, header, tList, nil}
+	h := sha256.New()
+	h.Write([]byte(common.JSTokenBox.Load().(string)))
+	h.Write([]byte(user.LastIP))
+	jsToken := hex.EncodeToString(h.Sum(nil))
+	pi := common.Page{common.GetTitlePhrase("register"), user, header, tList, jsToken}
 	if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
 		return nil
 	}
@@ -117,8 +122,19 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		regErrReason += reason + "|"
 	}
 
-	username := html.EscapeString(strings.Replace(r.PostFormValue("username"), "\n", "", -1))
-	email := html.EscapeString(strings.Replace(r.PostFormValue("email"), "\n", "", -1))
+	if r.PostFormValue("tos") != "0" {
+		regError("You might be a machine", "trap-question")
+	}
+	h := sha256.New()
+	h.Write([]byte(common.JSTokenBox.Load().(string)))
+	h.Write([]byte(user.LastIP))
+	if r.PostFormValue("antispam") != hex.EncodeToString(h.Sum(nil)) {
+		regError("You might be a machine", "js-antispam")
+	}
+
+	username := common.SanitiseSingleLine(r.PostFormValue("username"))
+	// TODO: Add a dedicated function for validating emails
+	email := common.SanitiseSingleLine(r.PostFormValue("email"))
 	if username == "" {
 		regError("You didn't put in a username.", "no-username")
 	}
@@ -390,7 +406,7 @@ func AccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user comm
 		return ferr
 	}
 
-	newUsername := html.EscapeString(strings.Replace(r.PostFormValue("account-new-username"), "\n", "", -1))
+	newUsername := common.SanitiseSingleLine(r.PostFormValue("account-new-username"))
 	err := user.ChangeName(newUsername)
 	if err != nil {
 		return common.LocalError("Unable to change the username. Does someone else already have this name?", w, r, user)

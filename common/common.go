@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"log"
+	"sync/atomic"
 	"time"
 
 	"../query_gen/lib"
@@ -22,6 +23,9 @@ const Petabyte int = Terabyte * 1024
 
 var StartTime time.Time
 var TmplPtrMap = make(map[string]interface{})
+
+// Anti-spam token with rotated key
+var JSTokenBox atomic.Value // TODO: Move this and some of these other globals somewhere else
 
 // ErrNoRows is an alias of sql.ErrNoRows, just in case we end up with non-database/sql datastores
 var ErrNoRows = sql.ErrNoRows
@@ -52,6 +56,10 @@ var ArchiveFileExts = StringList{
 }
 var ExecutableFileExts = StringList{
 	"exe", "jar", "phar", "shar", "iso",
+}
+
+func init() {
+	JSTokenBox.Store("")
 }
 
 // TODO: Write a test for this

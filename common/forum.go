@@ -76,6 +76,7 @@ func (forum *Forum) Update(name string, desc string, active bool, preset string)
 	if name == "" {
 		name = forum.Name
 	}
+	// TODO: Do a line sanitise? Does it matter?
 	preset = strings.TrimSpace(preset)
 	_, err := forumStmts.update.Exec(name, desc, active, preset, forum.ID)
 	if err != nil {

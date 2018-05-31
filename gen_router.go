@@ -574,26 +574,21 @@ func (router *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
-func (router *GenRouter) StripNewlines(data string) string {
-	// TODO: Strip out all sub-32s?
-	return strings.Replace(strings.Replace(data,"\n","",-1),"\r","",-1)
-}
-
 func (router *GenRouter) DumpRequest(req *http.Request, prepend string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Header '" + router.StripNewlines(key) + "': " + router.StripNewlines(vvalue) + "!!\n"
+			heads += "Header '" + common.SanitiseSingleLine(key) + "': " + common.SanitiseSingleLine(vvalue) + "!!\n"
 		}
 	}
 
 	router.requestLogger.Print(prepend + 
-		"\nUA: " + router.StripNewlines(req.UserAgent()) + "\n" +
-		"Method: " + router.StripNewlines(req.Method) + "\n" + heads + 
-		"req.Host: " + router.StripNewlines(req.Host) + "\n" + 
-		"req.URL.Path: " + router.StripNewlines(req.URL.Path) + "\n" + 
-		"req.URL.RawQuery: " + router.StripNewlines(req.URL.RawQuery) + "\n" + 
-		"req.Referer(): " + router.StripNewlines(req.Referer()) + "\n" + 
+		"\nUA: " + common.SanitiseSingleLine(req.UserAgent()) + "\n" +
+		"Method: " + common.SanitiseSingleLine(req.Method) + "\n" + heads + 
+		"req.Host: " + common.SanitiseSingleLine(req.Host) + "\n" + 
+		"req.URL.Path: " + common.SanitiseSingleLine(req.URL.Path) + "\n" + 
+		"req.URL.RawQuery: " + common.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
+		"req.Referer(): " + common.SanitiseSingleLine(req.Referer()) + "\n" + 
 		"req.RemoteAddr: " + req.RemoteAddr + "\n")
 }
 

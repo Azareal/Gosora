@@ -3,7 +3,6 @@ package panel
 import (
 	"database/sql"
 	"fmt"
-	"html"
 	"net/http"
 	"strconv"
 	"strings"
@@ -104,7 +103,7 @@ func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 		return common.NoPermissions(w, r, user)
 	}
 
-	scontent := html.EscapeString(r.PostFormValue("setting-value"))
+	scontent := common.SanitiseBody(r.PostFormValue("setting-value"))
 	err := headerLite.Settings.Update(sname, scontent)
 	if err != nil {
 		if common.SafeSettingError(err) {

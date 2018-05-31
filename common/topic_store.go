@@ -121,7 +121,6 @@ func (mts *DefaultTopicStore) Exists(id int) bool {
 }
 
 func (mts *DefaultTopicStore) Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error) {
-	topicName = strings.TrimSpace(topicName)
 	if topicName == "" {
 		return 0, ErrNoTitle
 	}
@@ -130,9 +129,8 @@ func (mts *DefaultTopicStore) Create(fid int, topicName string, content string, 
 		return 0, ErrLongTitle
 	}
 
-	content = strings.TrimSpace(content)
-	parsedContent := ParseMessage(content, fid, "forums")
-	if strings.TrimSpace(parsedContent) == "" {
+	parsedContent := strings.TrimSpace(ParseMessage(content, fid, "forums"))
+	if parsedContent == "" {
 		return 0, ErrNoBody
 	}
 

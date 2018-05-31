@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html"
 	"log"
 	"net/http"
 	"strconv"
@@ -189,6 +188,7 @@ func routePanelWordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, u
 	}
 	isJs := (r.PostFormValue("js") == "1")
 
+	// ? - We're not doing a full sanitise here, as it would be useful if admins were able to put down rules for replacing things with HTML, etc.
 	find := strings.TrimSpace(r.PostFormValue("find"))
 	if find == "" {
 		return common.LocalErrorJSQ("You need to specify what word you want to match", w, r, user, isJs)
@@ -573,14 +573,14 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 		return common.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
 	}
 
-	newname := html.EscapeString(strings.Replace(r.PostFormValue("user-name"), "\n", "", -1))
+	newname := common.SanitiseSingleLine(r.PostFormValue("user-name"))
 	if newname == "" {
 		return common.LocalError("You didn't put in a username.", w, r, user)
 	}
 
 	// TODO: How should activation factor into admin set emails?
 	// TODO: How should we handle secondary emails? Do we even have secondary emails implemented?
-	newemail := html.EscapeString(strings.Replace(r.PostFormValue("user-email"), "\n", "", -1))
+	newemail := common.SanitiseSingleLine(r.PostFormValue("user-email"))
 	if newemail == "" {
 		return common.LocalError("You didn't put in an email address.", w, r, user)
 	}
@@ -1222,7 +1222,7 @@ func routePanelThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c
 
 func routePanelThemesMenuItemSetters(r *http.Request, menuItem common.MenuItem) common.MenuItem {
 	var getItem = func(name string) string {
-		return html.EscapeString(strings.Replace(r.PostFormValue("item-"+name), "\n", "", -1))
+		return common.SanitiseSingleLine(r.PostFormValue("item-" + name))
 	}
 	menuItem.Name = getItem("name")
 	menuItem.HTMLID = getItem("htmlid")

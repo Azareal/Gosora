@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
-	"html"
 	"io"
 	"log"
 	"net/http"
@@ -142,8 +141,9 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 
 					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
 					_, exists := pollInputItems[index]
-					if !exists && len(html.EscapeString(value)) != 0 {
-						pollInputItems[index] = html.EscapeString(value)
+					// TODO: Should we use SanitiseBody instead to keep the newlines?
+					if !exists && len(common.SanitiseSingleLine(value)) != 0 {
+						pollInputItems[index] = common.SanitiseSingleLine(value)
 						if len(pollInputItems) >= maxPollOptions {
 							break
 						}
