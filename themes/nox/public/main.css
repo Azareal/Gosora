@@ -222,8 +222,9 @@ h1, h3 {
 }
 
 .pageitem {
-    background-color: #444444;
-    padding: 6px;
+	font-size: 17px;
+	background-color: #444444;
+    padding: 7px;
     margin-right: 6px;
 }
 

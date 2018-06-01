@@ -14,9 +14,12 @@
 			<h1 class='topic_name hide_on_edit' title='{{.Topic.Title}}'>{{.Topic.Title}}</h1>
 			{{/** TODO: Inline this CSS **/}}
 			{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status_closed_tooltip"}}' aria-label='{{lang "topic_status_closed_aria"}}' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
+			{{/** TODO: Does this need to be guarded by a permission? It's only visible in edit mode anyway, which can't be triggered, if they don't have the permission **/}}
+			{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 			{{if .CurrentUser.Perms.EditTopic}}
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic_title_input_aria"}}" />
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic_update_button"}}</button>
+			{{end}}
 			{{end}}
 		</div>
 	</form>
@@ -66,7 +69,9 @@
 			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">
 				{{if .CurrentUser.Loggedin}}
 					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button like_item {{if .Topic.Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic_like_aria"}}" data-action="like"></a>{{end}}
+					{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit" aria-label="{{lang "topic_edit_aria"}}" data-action="edit"></a>{{end}}
+					{{end}}
 					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic_delete_aria"}}" data-action="delete"></a>{{end}}
 					{{if .CurrentUser.Perms.CloseTopic}}
 					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="action_button unlock_item" data-action="unlock" aria-label="{{lang "topic_unlock_aria"}}"></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="action_button lock_item" data-action="lock" aria-label="{{lang "topic_lock_aria"}}"></a>{{end}}{{end}}
@@ -102,7 +107,9 @@
 			<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
 				{{if $.CurrentUser.Loggedin}}
 					{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic_post_like_aria"}}" data-action="like"></a>{{end}}
+					{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
 					{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic_post_edit_aria"}}" data-action="edit"></a>{{end}}
+					{{end}}
 					{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic_post_delete_aria"}}" data-action="delete"></a>{{end}}
 					{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="{{lang "topic_ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic_ip_full_aria"}}" data-action="ip"></a>{{end}}
 					<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="action_button report_item" aria-label="{{lang "topic_report_aria"}}" data-action="report"></a>
@@ -121,6 +128,7 @@
 {{end}}</div>
 
 {{if .CurrentUser.Perms.CreateReply}}
+{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 <div class="rowblock topic_reply_container">
 	<div class="userinfo" aria-label="{{lang "topic_your_information"}}">
 		<div class="avatar_item" style="background-image: url({{.CurrentUser.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
@@ -157,6 +165,7 @@
 		</div>
 	</div>
 </div>
+{{end}}
 {{end}}
 
 </main>

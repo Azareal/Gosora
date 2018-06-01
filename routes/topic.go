@@ -78,11 +78,6 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")
 
-	// We don't want users posting in locked topics...
-	if topic.IsClosed && !user.IsMod {
-		user.Perms.CreateReply = false
-	}
-
 	postGroup, err := common.Groups.Get(topic.Group)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -238,6 +233,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 // ? - Should we allow banned users to make reports? How should we handle report abuse?
 // TODO: Add a permission to stop certain users from using custom avatars
 // ? - Log username changes and put restrictions on this?
+// TODO: Test this
 func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
 	var fid int
 	var err error
@@ -251,19 +247,21 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 		fid = common.Config.DefaultForum
 	}
 
-	headerVars, ferr := common.ForumUserCheck(w, r, &user, fid)
+	header, ferr := common.ForumUserCheck(w, r, &user, fid)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	headerVars.Zone = "create_topic"
+	// TODO: Add a phrase for this
+	header.Title = "Create Topic"
+	header.Zone = "create_topic"
 
 	// Lock this to the forum being linked?
 	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
 	var strictmode bool
-	common.RunVhook("topic_create_pre_loop", w, r, fid, &headerVars, &user, &strictmode)
+	common.RunVhook("topic_create_pre_loop", w, r, fid, &header, &user, &strictmode)
 
 	// TODO: Re-add support for plugin_guilds
 	var forumList []common.Forum
@@ -306,12 +304,12 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 		}
 	}
 
-	ctpage := common.CreateTopicPage{"Create Topic", user, headerVars, forumList, fid}
+	ctpage := common.CreateTopicPage{header, forumList, fid}
 	if common.RunPreRenderHook("pre_render_create_topic", w, r, &user, &ctpage) {
 		return nil
 	}
 
-	err = common.RunThemeTemplate(headerVars.Theme.Name, "create_topic", ctpage, w)
+	err = common.RunThemeTemplate(header.Theme.Name, "create_topic", ctpage, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -509,6 +507,9 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.EditTopic {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+	if topic.IsClosed && !user.Perms.CloseTopic {
 		return common.NoPermissionsJSQ(w, r, user, isJs)
 	}
 

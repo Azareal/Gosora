@@ -187,7 +187,8 @@ func CompileTemplates() error {
 	}
 
 	varList = make(map[string]tmpl.VarItem)
-	ppage := ProfilePage{"User 526", user, header, replyList, user}
+	header.Title = "User 526"
+	ppage := ProfilePage{header, replyList, user}
 	profileTmpl, err := c.Compile("profile.html", "templates/", "common.ProfilePage", ppage, varList)
 	if err != nil {
 		return err
@@ -204,7 +205,8 @@ func CompileTemplates() error {
 		forumList = append(forumList, *forum)
 	}
 	varList = make(map[string]tmpl.VarItem)
-	forumsPage := ForumsPage{"Forum List", user, header, forumList}
+	header.Title = "Forum List"
+	forumsPage := ForumsPage{header, forumList}
 	forumsTmpl, err := c.Compile("forums.html", "templates/", "common.ForumsPage", forumsPage, varList)
 	if err != nil {
 		return err
@@ -247,7 +249,8 @@ func CompileTemplates() error {
 
 	var ipUserList = make(map[int]*User)
 	ipUserList[1] = &user2
-	ipSearchPage := IPSearchPage{"IP Search", user2, header, ipUserList, "::1"}
+	header.Title = "IP Search"
+	ipSearchPage := IPSearchPage{header2, ipUserList, "::1"}
 	ipSearchTmpl, err := c.Compile("ip_search.html", "templates/", "common.IPSearchPage", ipSearchPage, varList)
 	if err != nil {
 		return err

@@ -417,10 +417,12 @@ func AccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user comm
 }
 
 func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	// TODO: Add a phrase for this
+	header.Title = "Email Manager"
 
 	emails, err := common.Emails.GetEmailsByUser(&user)
 	if err != nil {
@@ -438,13 +440,13 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User) 
 	}
 
 	if !common.Site.EnableEmails {
-		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_mail_disabled"))
+		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("account_mail_disabled"))
 	}
 	if r.FormValue("verified") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_mail_verify_success"))
+		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("account_mail_verify_success"))
 	}
 
-	pi := common.EmailListPage{"Email Manager", user, headerVars, emails, nil}
+	pi := common.EmailListPage{header, emails, nil}
 	if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
 		return nil
 	}

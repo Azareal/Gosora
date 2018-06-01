@@ -68,6 +68,7 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 		return header, InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, user)
+	header.CurrentUser = *user // TODO: Use a pointer instead for CurrentUser, so we don't have to do this
 	return header, rerr
 }
 
@@ -196,7 +197,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
 		Theme:       theme,
-		CurrentUser: *user,
+		CurrentUser: *user, // ! Some things rely on this being a pointer downstream from this function
 		Zone:        "frontend",
 		Writer:      w,
 	}

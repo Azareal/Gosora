@@ -38,6 +38,9 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
 		return common.NoPermissions(w, r, user)
 	}
+	if topic.IsClosed && !user.Perms.CloseTopic {
+		return common.NoPermissions(w, r, user)
+	}
 
 	// Handle the file attachments
 	// TODO: Stop duplicating this code
@@ -216,6 +219,9 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.EditReply {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+	if topic.IsClosed && !user.Perms.CloseTopic {
 		return common.NoPermissionsJSQ(w, r, user, isJs)
 	}
 

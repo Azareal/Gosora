@@ -66,6 +66,8 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 			return common.InternalError(err, w, r)
 		}
 	}
+	// TODO: Add a phrase for this title
+	header.Title = puser.Name + "'s Profile"
 
 	// Get the replies..
 	rows, err := profileStmts.getReplies.Query(puser.ID)
@@ -114,8 +116,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 		return common.InternalError(err, w, r)
 	}
 
-	// TODO: Add a phrase for this title
-	ppage := common.ProfilePage{puser.Name + "'s Profile", user, header, replyList, *puser}
+	ppage := common.ProfilePage{header, replyList, *puser}
 	if common.RunPreRenderHook("pre_render_profile", w, r, &user, &ppage) {
 		return nil
 	}

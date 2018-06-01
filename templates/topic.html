@@ -15,9 +15,12 @@
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 		<h1 class='topic_name hide_on_edit' title='{{.Topic.Title}}'>{{.Topic.Title}}</h1>
 		{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status_closed_tooltip"}}' aria-label='{{lang "topic_status_closed_aria"}}'>&#x1F512;&#xFE0E</span>{{end}}
+		{{/** TODO: Does this need to be guarded by a permission? It's only visible in edit mode anyway, which can't be triggered, if they don't have the permission **/}}
+		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 		{{if .CurrentUser.Perms.EditTopic}}
 		<input form='edit_topic_form' class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic_title_input_aria"}}" />
 		<button form='edit_topic_form' name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic_update_button"}}</button>
+		{{end}}
 		{{end}}
 	</div>
 </div>
@@ -58,7 +61,9 @@
 		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="mod_button"{{if .Topic.Liked}} title="{{lang "topic_unlike_tooltip"}}" aria-label="{{lang "topic_unlike_aria"}}"{{else}} title="{{lang "topic_like_tooltip"}}" aria-label="{{lang "topic_like_aria"}}"{{end}} style="color:#202020;">
 		<button class="username like_label {{if .Topic.Liked}}remove_like{{else}}add_like{{end}}"></button></a>{{end}}
 
+		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" style="font-weight:normal;" title="{{lang "topic_edit_tooltip"}}" aria-label="{{lang "topic_edit_aria"}}"><button class="username edit_label"></button></a>{{end}}
+		{{end}}
 
 		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="{{lang "topic_delete_tooltip"}}" aria-label="{{lang "topic_delete_aria"}}"><button class="username trash_label"></button></a>{{end}}
 
@@ -91,7 +96,9 @@
 		<a href="{{.UserLink}}" class="username real_username" rel="author">{{.CreatedByName}}</a>&nbsp;&nbsp;
 		{{if $.CurrentUser.Perms.LikeItem}}{{if .Liked}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic_post_like_tooltip"}}" aria-label="{{lang "topic_post_like_aria"}}" style="color:#202020;"><button class="username like_label remove_like"></button></a>{{else}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic_post_unlike_tooltip"}}" aria-label="{{lang "topic_post_unlike_aria"}}" style="color:#202020;"><button class="username like_label add_like"></button></a>{{end}}{{end}}
 
+		{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic_post_edit_tooltip"}}" aria-label="{{lang "topic_post_edit_aria"}}"><button class="username edit_item edit_label"></button></a>{{end}}
+		{{end}}
 
 		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic_post_delete_tooltip"}}" aria-label="{{lang "topic_post_delete_aria"}}"><button class="username delete_item trash_label"></button></a>{{end}}
 		{{if $.CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.IPAddress}}' style="font-weight:normal;" title="{{lang "topic_post_ip_tooltip"}}" aria-label="The poster's IP is {{.IPAddress}}"><button class="username ip_label"></button></a>{{end}}
@@ -106,6 +113,7 @@
 {{end}}{{end}}</div>
 
 {{if .CurrentUser.Perms.CreateReply}}
+{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 <div class="rowblock topic_reply_form quick_create_form" aria-label="{{lang "topic_reply_aria"}}">
 	<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>
 	<input form="quick_post_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
@@ -135,6 +143,7 @@
 		</div>
 	</div>
 </div>
+{{end}}
 {{end}}
 
 </main>

@@ -12,6 +12,7 @@ func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	if ferr != nil {
 		return ferr
 	}
+	header.Title = common.GetTitlePhrase("forums")
 	header.Zone = "forums"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
 
@@ -50,7 +51,7 @@ func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.
 		}
 	}
 
-	pi := common.ForumsPage{common.GetTitlePhrase("forums"), user, header, forumList}
+	pi := common.ForumsPage{header, forumList}
 	if common.RunPreRenderHook("pre_render_forum_list", w, r, &user, &pi) {
 		return nil
 	}

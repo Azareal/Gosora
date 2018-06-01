@@ -21,6 +21,7 @@ type Header struct {
 	Themes      map[string]*Theme // TODO: Use a slice containing every theme instead of the main map for speed?
 	Theme       *Theme
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
+	// TODO: Use a pointer here
 	CurrentUser User // TODO: Deprecate CurrentUser on the page structs
 	Zone        string
 	MetaDesc    string
@@ -98,42 +99,32 @@ type ForumPage struct {
 }
 
 type ForumsPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	ItemList    []Forum
+	*Header
+	ItemList []Forum
 }
 
 type ProfilePage struct {
-	Title        string
-	CurrentUser  User
-	Header       *Header
+	*Header
 	ItemList     []ReplyUser
 	ProfileOwner User
 }
 
 type CreateTopicPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	ItemList    []Forum
-	FID         int
+	*Header
+	ItemList []Forum
+	FID      int
 }
 
 type IPSearchPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	ItemList    map[int]*User
-	IP          string
+	*Header
+	ItemList map[int]*User
+	IP       string
 }
 
 type EmailListPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	ItemList    []Email
-	Something   interface{}
+	*Header
+	ItemList  []Email
+	Something interface{}
 }
 
 type PanelStats struct {
