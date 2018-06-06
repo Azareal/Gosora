@@ -298,7 +298,7 @@ func AccountEditAvatar(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 	header.Title = common.GetTitlePhrase("account_avatar")
 	if r.FormValue("updated") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("account_avatar_updated"))
+		header.AddNotice("account_avatar_updated")
 	}
 
 	pi := common.Page{header, tList, nil}
@@ -388,7 +388,7 @@ func AccountEditUsername(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 	header.Title = common.GetTitlePhrase("account_username")
 	if r.FormValue("updated") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("account_username_updated"))
+		header.AddNotice("account_username_updated")
 	}
 
 	pi := common.Page{header, tList, user.Name}
@@ -441,10 +441,10 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User) 
 	}
 
 	if !common.Site.EnableEmails {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("account_mail_disabled"))
+		header.AddNotice("account_mail_disabled")
 	}
 	if r.FormValue("verified") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("account_mail_verify_success"))
+		header.AddNotice("account_mail_verify_success")
 	}
 
 	pi := common.EmailListPage{header, emails, nil}

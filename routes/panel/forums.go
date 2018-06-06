@@ -39,11 +39,11 @@ func Forums(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	}
 
 	if r.FormValue("created") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("panel_forum_created"))
+		header.AddNotice("panel_forum_created")
 	} else if r.FormValue("deleted") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("panel_forum_deleted"))
+		header.AddNotice("panel_forum_deleted")
 	} else if r.FormValue("updated") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("panel_forum_updated"))
+		header.AddNotice("panel_forum_updated")
 	}
 
 	pi := common.PanelPage{&common.BasePanelPage{header, stats, "forums", common.ReportForumID}, forumList, nil}
@@ -183,7 +183,7 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	}
 
 	if r.FormValue("updated") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("panel_forum_updated"))
+		header.AddNotice("panel_forum_updated")
 	}
 
 	pi := common.PanelEditForumPage{&common.BasePanelPage{header, stats, "forums", common.ReportForumID}, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
@@ -350,7 +350,7 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user common.
 	addNameLangToggle("MoveTopic", forumPerms.MoveTopic)
 
 	if r.FormValue("updated") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("panel_forums_perms_updated"))
+		header.AddNotice("panel_forums_perms_updated")
 	}
 
 	pi := common.PanelEditForumGroupPage{&common.BasePanelPage{header, stats, "forums", common.ReportForumID}, forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}

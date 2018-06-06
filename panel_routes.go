@@ -541,7 +541,7 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	if r.FormValue("updated") == "1" {
-		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("panel_user_updated"))
+		header.AddNotice("panel_user_updated")
 	}
 
 	pi := common.PanelPage{&common.BasePanelPage{header, stats, "users", common.ReportForumID}, groupList, targetUser}

@@ -206,10 +206,10 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	}
 
 	if user.IsBanned {
-		header.NoticeList = append(header.NoticeList, GetNoticePhrase("account_banned"))
+		header.AddNotice("account_banned")
 	}
 	if user.Loggedin && !user.Active {
-		header.NoticeList = append(header.NoticeList, GetNoticePhrase("account_inactive"))
+		header.AddNotice("account_inactive")
 	}
 
 	if len(theme.Resources) > 0 {
