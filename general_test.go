@@ -45,7 +45,11 @@ func ResetTables() (err error) {
 }
 
 func gloinit() (err error) {
+	// TODO: Make these configurable via flags to the go test command
 	common.Dev.DebugMode = false
+	common.Dev.SuperDebug = false
+	common.Dev.TemplateDebug = false
+	qgen.LogPrepares = false
 	//nogrouplog = true
 	common.StartTime = time.Now()
 

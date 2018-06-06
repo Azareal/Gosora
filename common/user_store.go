@@ -129,14 +129,16 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 
 	var stillHere []int
 	sliceList := mus.cache.BulkGet(ids)
-	for i, sliceItem := range sliceList {
-		if sliceItem != nil {
-			list[sliceItem.ID] = sliceItem
-		} else {
-			stillHere = append(stillHere, ids[i])
+	if len(sliceList) > 0 {
+		for i, sliceItem := range sliceList {
+			if sliceItem != nil {
+				list[sliceItem.ID] = sliceItem
+			} else {
+				stillHere = append(stillHere, ids[i])
+			}
 		}
+		ids = stillHere
 	}
-	ids = stillHere
 
 	// If every user is in the cache, then return immediately
 	if len(ids) == 0 {

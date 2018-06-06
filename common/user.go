@@ -392,7 +392,7 @@ func wordsToScore(wcount int, topic bool) (score int) {
 
 // For use in tests and to help generate dummy users for forums which don't have last posters
 func BlankUser() *User {
-	return &User{ID: 0, Name: ""}
+	return new(User)
 }
 
 // TODO: Write unit tests for this

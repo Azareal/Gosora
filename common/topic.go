@@ -380,7 +380,7 @@ func copyTopicToTopicUser(topic *Topic, user *User) (tu TopicUser) {
 
 // For use in tests and for generating blank topics for forums which don't have a last poster
 func BlankTopic() *Topic {
-	return &Topic{ID: 0, Title: ""}
+	return new(Topic)
 }
 
 func BuildTopicURL(slug string, tid int) string {

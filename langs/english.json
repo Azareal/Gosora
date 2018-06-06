@@ -662,7 +662,7 @@
 		"panel_pages_head":"Page Manager",
 		"panel_pages_edit_button_aria":"Edit Page",
 		"panel_pages_delete_button_aria":"Delete Page",
-		"panel_pages_no_pages":"There aren't any pages.",
+		"panel_pages_no_pages":"You don't have any pages yet.",
 		"panel_pages_create_head":"Create Page",
 		"panel_pages_create_name":"Name",
 		"panel_pages_create_name_placeholder":"faq",

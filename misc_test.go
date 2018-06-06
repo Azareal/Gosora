@@ -124,11 +124,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
 
 	userList, _ = common.Users.BulkGetMap([]int{1})
-	if len(userList) == 0 {
-		t.Error("The returned map is empty for UID #1")
-	} else if len(userList) > 1 {
-		t.Error("Too many results were returned for UID #1")
-	}
+	expect(t, len(userList) == 1, fmt.Sprintf("Returned map should have one result (UID #1), not %d", len(userList)))
 
 	user, ok := userList[1]
 	if !ok {
@@ -620,7 +616,7 @@ func TestForumStore(t *testing.T) {
 	forum, err = common.Forums.Get(3)
 	recordMustExist(t, err, "Couldn't find FID #3")
 
-	expect(t, forum.ID == 2, fmt.Sprintf("The FID should be 3 not %d", forum.ID))
+	expect(t, forum.ID == 3, fmt.Sprintf("The FID should be 3 not %d", forum.ID))
 	expect(t, forum.Name == "Test Forum", fmt.Sprintf("The name of the forum should be 'Test Forum' not '%s'", forum.Name))
 	expect(t, forum.Active, fmt.Sprintf("The test forum should be active"))
 	expect(t, forum.Desc == "", fmt.Sprintf("The forum description should be blank not '%s'", forum.Desc))

@@ -1,4 +1,10 @@
 @echo off
+rem TODO: Make these deletes a little less noisy
+del "template_*.go"
+del "gen_*.go"
+del "tmpl_client/template_*.go"
+del "gosora.exe"
+
 echo Generating the dynamic code
 go generate
 if %errorlevel% neq 0 (

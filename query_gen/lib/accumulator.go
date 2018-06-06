@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+var LogPrepares = true
+
 type Accumulator struct {
 	conn     *sql.DB
 	adapter  Adapter
@@ -43,7 +45,9 @@ func (build *Accumulator) recordError(err error) {
 }
 
 func (build *Accumulator) prepare(res string, err error) *sql.Stmt {
-	log.Print("res: ", res)
+	if LogPrepares {
+		log.Print("res: ", res)
+	}
 	if err != nil {
 		build.recordError(err)
 		return nil

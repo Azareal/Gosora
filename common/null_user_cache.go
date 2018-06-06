@@ -12,8 +12,8 @@ func (mus *NullUserCache) Get(id int) (*User, error) {
 	return nil, ErrNoRows
 }
 
-func (mus *NullUserCache) BulkGet(ids []int) (list []*User) {
-	return list
+func (mus *NullUserCache) BulkGet(_ []int) (list []*User) {
+	return nil
 }
 
 func (mus *NullUserCache) GetUnsafe(id int) (*User, error) {
