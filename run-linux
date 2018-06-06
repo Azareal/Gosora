@@ -8,14 +8,20 @@ echo "Generating the dynamic code"
 go generate
 
 echo "Building the router generator"
-go build ./router_gen
+cd ./router_gen
+go build -o RouterGen
+mv ./RouterGen ..
+cd ..
 echo "Running the router generator"
-router_gen.exe
+./RouterGen
 
 echo "Building the query generator"
-go build ./query_gen
+cd ./query_gen
+go build -o QueryGen
+mv ./QueryGen ..
+cd ..
 echo "Running the query generator"
-query_gen.exe
+./QueryGen
 
 echo "Building Gosora"
 go build -o Gosora
