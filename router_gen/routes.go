@@ -151,6 +151,12 @@ func buildPanelRoutes() {
 		Action("routePanelWordFiltersEditSubmit", "/panel/settings/word-filters/edit/submit/", "extraData"),
 		Action("routePanelWordFiltersDeleteSubmit", "/panel/settings/word-filters/delete/submit/", "extraData"),
 
+		View("panel.Pages", "/panel/pages/").Before("AdminOnly"),
+		Action("panel.PagesCreateSubmit", "/panel/pages/create/submit/").Before("AdminOnly"),
+		View("panel.PagesEdit", "/panel/pages/edit/", "extraData").Before("AdminOnly"),
+		Action("panel.PagesEditSubmit", "/panel/pages/edit/submit/", "extraData").Before("AdminOnly"),
+		Action("panel.PagesDeleteSubmit", "/panel/pages/delete/submit/", "extraData").Before("AdminOnly"),
+
 		View("routePanelThemes", "/panel/themes/"),
 		Action("routePanelThemesSetDefault", "/panel/themes/default/", "extraData"),
 		View("routePanelThemesMenus", "/panel/themes/menus/"),

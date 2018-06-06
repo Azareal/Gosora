@@ -21,8 +21,7 @@ type Header struct {
 	Themes      map[string]*Theme // TODO: Use a slice containing every theme instead of the main map for speed?
 	Theme       *Theme
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
-	// TODO: Use a pointer here
-	CurrentUser User // TODO: Deprecate CurrentUser on the page structs
+	CurrentUser User // TODO: Deprecate CurrentUser on the page structs and use a pointer here
 	Zone        string
 	MetaDesc    string
 	Writer      http.ResponseWriter
@@ -39,6 +38,10 @@ func (header *Header) AddScript(name string) {
 
 func (header *Header) AddSheet(name string) {
 	header.Stylesheets = append(header.Stylesheets, name)
+}
+
+func (header *Header) AddNotice(name string) {
+	header.NoticeList = append(header.NoticeList, GetNoticePhrase(name))
 }
 
 // TODO: Add this to routes which don't use templates. E.g. Json APIs.
@@ -61,17 +64,29 @@ type ExtData struct {
 }
 
 type Page struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	ItemList    []interface{}
-	Something   interface{}
+	*Header
+	ItemList  []interface{}
+	Something interface{}
+}
+
+type SimplePage struct {
+	*Header
+}
+
+type ErrorPage struct {
+	*Header
+	Message string
 }
 
 type Paginator struct {
 	PageList []int
 	Page     int
 	LastPage int
+}
+
+type CustomPagePage struct {
+	*Header
+	Page *CustomPage
 }
 
 type TopicPage struct {
@@ -131,20 +146,24 @@ type PanelStats struct {
 	Users       int
 	Groups      int
 	Forums      int
+	Pages       int
 	Settings    int
 	WordFilters int
 	Themes      int
 	Reports     int
 }
 
+type BasePanelPage struct {
+	*Header
+	Stats         PanelStats
+	Zone          string
+	ReportForumID int
+}
+
 type PanelPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	ItemList    []interface{}
-	Something   interface{}
+	*BasePanelPage
+	ItemList  []interface{}
+	Something interface{}
 }
 
 type GridElement struct {
@@ -158,9 +177,7 @@ type GridElement struct {
 }
 
 type PanelDashboardPage struct {
-	*Header
-	Stats     PanelStats
-	Zone      string
+	*BasePanelPage
 	GridItems []GridElement
 }
 
@@ -170,11 +187,20 @@ type PanelSetting struct {
 }
 
 type PanelSettingPage struct {
-	*Header
-	Stats    PanelStats
-	Zone     string
+	*BasePanelPage
 	ItemList []OptionLabel
 	Setting  *PanelSetting
+}
+
+type PanelCustomPagesPage struct {
+	*BasePanelPage
+	ItemList []*CustomPage
+	Paginator
+}
+
+type PanelCustomPageEditPage struct {
+	*BasePanelPage
+	Page *CustomPage
 }
 
 type PanelTimeGraph struct {
@@ -188,11 +214,7 @@ type PanelAnalyticsItem struct {
 }
 
 type PanelAnalyticsPage struct {
-	Title        string
-	CurrentUser  User
-	Header       *Header
-	Stats        PanelStats
-	Zone         string
+	*BasePanelPage
 	PrimaryGraph PanelTimeGraph
 	ViewItems    []PanelAnalyticsItem
 	TimeRange    string
@@ -204,13 +226,9 @@ type PanelAnalyticsRoutesItem struct {
 }
 
 type PanelAnalyticsRoutesPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	ItemList    []PanelAnalyticsRoutesItem
-	TimeRange   string
+	*BasePanelPage
+	ItemList  []PanelAnalyticsRoutesItem
+	TimeRange string
 }
 
 type PanelAnalyticsAgentsItem struct {
@@ -220,21 +238,13 @@ type PanelAnalyticsAgentsItem struct {
 }
 
 type PanelAnalyticsAgentsPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	ItemList    []PanelAnalyticsAgentsItem
-	TimeRange   string
+	*BasePanelPage
+	ItemList  []PanelAnalyticsAgentsItem
+	TimeRange string
 }
 
 type PanelAnalyticsRoutePage struct {
-	Title        string
-	CurrentUser  User
-	Header       *Header
-	Stats        PanelStats
-	Zone         string
+	*BasePanelPage
 	Route        string
 	PrimaryGraph PanelTimeGraph
 	ViewItems    []PanelAnalyticsItem
@@ -242,11 +252,7 @@ type PanelAnalyticsRoutePage struct {
 }
 
 type PanelAnalyticsAgentPage struct {
-	Title         string
-	CurrentUser   User
-	Header        *Header
-	Stats         PanelStats
-	Zone          string
+	*BasePanelPage
 	Agent         string
 	FriendlyAgent string
 	PrimaryGraph  PanelTimeGraph
@@ -254,9 +260,7 @@ type PanelAnalyticsAgentPage struct {
 }
 
 type PanelThemesPage struct {
-	*Header
-	Stats         PanelStats
-	Zone          string
+	*BasePanelPage
 	PrimaryThemes []*Theme
 	VariantThemes []*Theme
 }
@@ -268,51 +272,35 @@ type PanelMenuListItem struct {
 }
 
 type PanelMenuListPage struct {
-	*Header
-	Stats    PanelStats
-	Zone     string
+	*BasePanelPage
 	ItemList []PanelMenuListItem
 }
 
 type PanelMenuPage struct {
-	*Header
-	Stats    PanelStats
-	Zone     string
+	*BasePanelPage
 	MenuID   int
 	ItemList []MenuItem
 }
 
 type PanelMenuItemPage struct {
-	*Header
-	Stats PanelStats
-	Zone  string
-	Item  MenuItem
+	*BasePanelPage
+	Item MenuItem
 }
 
 type PanelUserPage struct {
-	*Header
-	Stats    PanelStats
-	Zone     string
+	*BasePanelPage
 	ItemList []*User
 	Paginator
 }
 
 type PanelGroupPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	ItemList    []GroupAdmin
+	*BasePanelPage
+	ItemList []GroupAdmin
 	Paginator
 }
 
 type PanelEditGroupPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
+	*BasePanelPage
 	ID          int
 	Name        string
 	Tag         string
@@ -326,17 +314,13 @@ type GroupForumPermPreset struct {
 }
 
 type PanelEditForumPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	ID          int
-	Name        string
-	Desc        string
-	Active      bool
-	Preset      string
-	Groups      []GroupForumPermPreset
+	*BasePanelPage
+	ID     int
+	Name   string
+	Desc   string
+	Active bool
+	Preset string
+	Groups []GroupForumPermPreset
 }
 
 type NameLangToggle struct {
@@ -346,26 +330,18 @@ type NameLangToggle struct {
 }
 
 type PanelEditForumGroupPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	ForumID     int
-	GroupID     int
-	Name        string
-	Desc        string
-	Active      bool
-	Preset      string
-	Perms       []NameLangToggle
+	*BasePanelPage
+	ForumID int
+	GroupID int
+	Name    string
+	Desc    string
+	Active  bool
+	Preset  string
+	Perms   []NameLangToggle
 }
 
 type PanelEditGroupPermsPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
+	*BasePanelPage
 	ID          int
 	Name        string
 	LocalPerms  []NameLangToggle
@@ -381,12 +357,8 @@ type BackupItem struct {
 }
 
 type PanelBackupPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	Backups     []BackupItem
+	*BasePanelPage
+	Backups []BackupItem
 }
 
 type PageLogItem struct {
@@ -396,12 +368,8 @@ type PageLogItem struct {
 }
 
 type PanelLogsPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	Logs        []PageLogItem
+	*BasePanelPage
+	Logs []PageLogItem
 	Paginator
 }
 
@@ -411,26 +379,18 @@ type PageRegLogItem struct {
 }
 
 type PanelRegLogsPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	Logs        []PageRegLogItem
+	*BasePanelPage
+	Logs []PageRegLogItem
 	Paginator
 }
 
 type PanelDebugPage struct {
-	Title       string
-	CurrentUser User
-	Header      *Header
-	Stats       PanelStats
-	Zone        string
-	GoVersion   string
-	DBVersion   string
-	Uptime      string
-	OpenConns   int
-	DBAdapter   string
+	*BasePanelPage
+	GoVersion string
+	DBVersion string
+	Uptime    string
+	OpenConns int
+	DBAdapter string
 }
 
 type PageSimple struct {
@@ -444,6 +404,6 @@ type AreYouSure struct {
 }
 
 // TODO: Write a test for this
-func DefaultHeader(w http.ResponseWriter) *Header {
-	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: GuestUser, Writer: w}
+func DefaultHeader(w http.ResponseWriter, user User) *Header {
+	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: user, Writer: w}
 }

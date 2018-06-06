@@ -11,6 +11,9 @@
 	{{if .CurrentUser.Perms.ManageForums}}<div class="rowitem passive">
 		<a href="/panel/forums/">{{lang "panel_menu_forums"}}</a> <a class="menu_stats" href="#">({{.Stats.Forums}})</a>
 	</div>{{end}}
+	<div class="rowitem passive">
+		<a href="/panel/pages/">{{lang "panel_menu_pages"}}</a> <a class="menu_stats" href="#">({{.Stats.Pages}})</a>
+	</div>
 	{{if .CurrentUser.Perms.EditSettings}}<div class="rowitem passive">
 		<a href="/panel/settings/">{{lang "panel_menu_settings"}}</a> <a class="menu_stats" href="#">({{.Stats.Settings}})</a>
 	</div>
@@ -61,7 +64,7 @@
 		</div>
 	{{end}}
 	<div class="rowitem passive">
-		<a href="/forum/1">{{lang "panel_menu_reports"}}</a> <a class="menu_stats" href="#">({{.Stats.Reports}})</a>
+		<a href="/forum/{{.ReportForumID}}">{{lang "panel_menu_reports"}}</a> <a class="menu_stats" href="#">({{.Stats.Reports}})</a>
 	</div>
 	<div class="rowitem passive">
 		<a href="/panel/logs/mod/">{{lang "panel_menu_logs"}}</a>

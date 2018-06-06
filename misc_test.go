@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"runtime/debug"
+	"strconv"
 	"testing"
 	"time"
 
@@ -252,12 +253,12 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	expectIntToBeX(t, user.Group, common.Config.DefaultGroup, "Sam should be back in group %d")
 
-	var reportsForumID = 1
+	var reportsForumID = 1 // TODO: Use the constant in common?
 	var generalForumID = 2
 	dummyResponseRecorder := httptest.NewRecorder()
 	bytesBuffer := bytes.NewBuffer([]byte(""))
-	dummyRequest1 := httptest.NewRequest("", "/forum/1", bytesBuffer)
-	dummyRequest2 := httptest.NewRequest("", "/forum/2", bytesBuffer)
+	dummyRequest1 := httptest.NewRequest("", "/forum/"+strconv.Itoa(reportsForumID), bytesBuffer)
+	dummyRequest2 := httptest.NewRequest("", "/forum/"+strconv.Itoa(generalForumID), bytesBuffer)
 
 	err = user.ChangeGroup(1)
 	expectNilErr(t, err)

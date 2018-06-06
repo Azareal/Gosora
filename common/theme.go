@@ -140,6 +140,15 @@ func (theme *Theme) MapTemplates() {
 			}
 
 			switch dTmplPtr := destTmplPtr.(type) {
+			case *func(CustomPagePage, io.Writer) error:
+				switch sTmplPtr := sourceTmplPtr.(type) {
+				case *func(CustomPagePage, io.Writer) error:
+					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
+					overridenTemplates[themeTmpl.Name] = true
+					*dTmplPtr = *sTmplPtr
+				default:
+					LogError(errors.New("The source and destination templates are incompatible"))
+				}
 			case *func(TopicPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(TopicPage, io.Writer) error:
@@ -197,6 +206,15 @@ func (theme *Theme) MapTemplates() {
 			case *func(IPSearchPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(IPSearchPage, io.Writer) error:
+					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
+					overridenTemplates[themeTmpl.Name] = true
+					*dTmplPtr = *sTmplPtr
+				default:
+					LogError(errors.New("The source and destination templates are incompatible"))
+				}
+			case *func(ErrorPage, io.Writer) error:
+				switch sTmplPtr := sourceTmplPtr.(type) {
+				case *func(ErrorPage, io.Writer) error:
 					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr

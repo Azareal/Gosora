@@ -96,8 +96,9 @@ func initMSSQL() (err error) {
 		return err
 	}
 
-	log.Print("Preparing todaysReportCount statement.")
-	todaysReportCountStmt, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE()) and parentID = 1")
+	log.Print("Preparing todaysTopicCountByForum statement.")
+	// TODO: Stop hard-coding this query
+	todaysTopicCountByForum, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE()) and parentID = ?")
 	if err != nil {
 		return err
 	}

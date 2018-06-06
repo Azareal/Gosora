@@ -9,6 +9,7 @@ body {
 	margin: 0px;
 	padding: 0px;
 	color: #AAAAAA;
+	background-color: var(--darkest-background);
 	font-family: "Segoe UI";
 }
 a {
@@ -18,7 +19,6 @@ a {
 
 nav.nav {
 	background: var(--darkest-background);
-	border-bottom: 1px solid #444444;
 	width: calc(100% - 200px);
 	float: left;
 }
@@ -60,7 +60,6 @@ li a {
 	float: left;
 	width: 200px;
 	background-color: var(--darkest-background);
-	border-bottom: 1px solid #444444;
 	padding-top: 12px;
 	padding-bottom: 12px;
 	padding-right: 12px;
@@ -69,10 +68,9 @@ li a {
 	display: flex;
 	flex-direction: row;
 	background-color: #333333;
-	border: 1px solid #444444;
-	padding-top: 10px;
-	padding-bottom: 10px;
-	padding-left: 10px;
+	padding-top: 11px;
+	padding-bottom: 11px;
+	padding-left: 12px;
 }
 .user_box img {
 	display: block;
@@ -110,7 +108,6 @@ li a {
 }
 .rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem {
 	background-color: #444444;
-	border-color: #555555;
 	display: flex;
 	padding: 12px;
 	margin-left: 12px;
@@ -150,7 +147,6 @@ h1, h3 {
 }
 .topic_row {
 	background-color: #444444;
-	border-color: #555555;
 	display: flex;
 }
 .topic_left, .topic_right, .topic_middle {
@@ -261,8 +257,13 @@ h1, h3 {
 	width: 36px;
 }
 
+.colstack {
+	display: flex;
+}
+
 .footer .widget {
 	padding: 12px;
+	border-bottom: 1px solid #555555;
 }
 #poweredByHolder {
 	display: flex;
@@ -275,7 +276,6 @@ h1, h3 {
 }
 .footer .widget, #poweredByHolder {
 	background-color: #444444;
-	border-top: 1px solid #555555;
 }
 
 @media(min-width: 1010px) {
@@ -286,8 +286,6 @@ h1, h3 {
 		width: 1000px;
 		margin-left: auto;
 		margin-right: auto;
-		border-left: 1px solid #444444;
-		border-right: 1px solid #444444;
 	}
 	.footBlock {
 		display: flex;
@@ -298,10 +296,6 @@ h1, h3 {
 		width: 1000px;
 		display: flex;
 		flex-direction: column;
-	}
-	.footer .widget, #poweredByHolder {
-		border-left: 1px solid #555555;
-		border-right: 1px solid #555555;
 	}
 }
 

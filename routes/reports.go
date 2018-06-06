@@ -22,6 +22,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user common.User, site
 	}
 	itemType := r.FormValue("type")
 
+	// TODO: Localise these titles and bodies
 	var title, content string
 	if itemType == "reply" {
 		reply, err := common.Rstore.Get(itemID)

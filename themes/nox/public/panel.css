@@ -1,0 +1,40 @@
+#back {
+	padding: 0px;
+}
+#back, .footer .widget, #poweredByHolder {
+	border: none;
+}
+.left_of_nav, .nav, .right_of_nav, .sidebar {
+	display: none;
+}
+.footer .widget, #poweredByHolder {
+	background-color: #393939;
+}
+
+.colstack_left {
+	width: 25%;
+	padding-top: 12px;
+	padding-right: 24px;
+	padding-bottom: 24px;
+	padding-left: 24px;
+}
+.colstack_left .colstack_head {
+	font-size: 19px;
+	margin-bottom: 4px;
+}
+.colstack_left .colstack_head:not(:first-child) {
+	margin-top: 8px;
+}
+.rowmenu {
+	margin-bottom: 2px;
+	font-size: 17px;
+}
+
+.colstack_right {
+	background-color: #444444;
+	width: 75%;
+	padding-top: 12px;
+	padding-right: 24px;
+	padding-bottom: 24px;
+	padding-left: 24px;
+}

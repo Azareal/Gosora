@@ -52,9 +52,10 @@ func Overview(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	if ferr != nil {
 		return ferr
 	}
+	header.Title = common.GetTitlePhrase("overview")
 	header.Zone = "overview"
 
-	pi := common.Page{common.GetTitlePhrase("overview"), user, header, tList, nil}
+	pi := common.Page{header, tList, nil}
 	if common.RunPreRenderHook("pre_render_overview", w, r, &user, &pi) {
 		return nil
 	}
@@ -70,20 +71,38 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, name s
 	if ferr != nil {
 		return ferr
 	}
+	header.Title = common.GetTitlePhrase("page")
 	header.Zone = "custom_page"
+
+	name = common.SanitiseSingleLine(name)
+	page, err := common.Pages.GetByName(name)
+	if err == nil {
+		header.Title = page.Title
+		pi := common.CustomPagePage{header, page}
+		if common.RunPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
+			return nil
+		}
+		err := common.RunThemeTemplate(header.Theme.Name, "custom_page", pi, w)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		return nil
+	} else if err != sql.ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
 
 	// ! Is this safe?
 	if common.Templates.Lookup("page_"+name+".html") == nil {
 		return common.NotFound(w, r, header)
 	}
 
-	pi := common.Page{common.GetTitlePhrase("page"), user, header, tList, nil}
+	pi := common.Page{header, tList, nil}
 	// TODO: Pass the page name to the pre-render hook?
-	if common.RunPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
+	if common.RunPreRenderHook("pre_render_tmpl_page", w, r, &user, &pi) {
 		return nil
 	}
 
-	err := common.Templates.ExecuteTemplate(w, "page_"+name+".html", pi)
+	err = common.Templates.ExecuteTemplate(w, "page_"+name+".html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -96,7 +115,7 @@ type AttachmentStmts struct {
 
 var attachmentStmts AttachmentStmts
 
-// TODO: Move these DbInits into a TopicList abstraction
+// TODO: Abstract this with an attachment store
 func init() {
 	common.DbInits.Add(func(acc *qgen.Accumulator) error {
 		attachmentStmts = AttachmentStmts{

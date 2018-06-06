@@ -89,10 +89,11 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_view_topic":   nil,
 	"pre_render_profile":      nil,
 	"pre_render_custom_page":  nil,
+	"pre_render_tmpl_page":    nil,
 	"pre_render_overview":     nil,
 	"pre_render_create_topic": nil,
 
-	"pre_render_account_own_edit_critical": nil,
+	"pre_render_account_own_edit_password": nil,
 	"pre_render_account_own_edit_avatar":   nil,
 	"pre_render_account_own_edit_username": nil,
 	"pre_render_account_own_edit_email":    nil,

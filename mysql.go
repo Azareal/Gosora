@@ -75,8 +75,9 @@ func initMySQL() (err error) {
 		return err
 	}
 
-	log.Print("Preparing todaysReportCount statement.")
-	stmts.todaysReportCount, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() and parentID = 1")
+	log.Print("Preparing todaysTopicCountByForum statement.")
+	// TODO: Stop hard-coding this query
+	stmts.todaysTopicCountByForum, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() and parentID = ?")
 	if err != nil {
 		return err
 	}

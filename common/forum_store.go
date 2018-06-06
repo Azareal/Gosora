@@ -278,7 +278,7 @@ func (mfs *MemoryForumStore) CacheDelete(id int) {
 
 // TODO: Add a hook to allow plugin_guilds to detect when one of it's forums has just been deleted?
 func (mfs *MemoryForumStore) Delete(id int) error {
-	if id == 1 {
+	if id == ReportForumID {
 		return errors.New("You cannot delete the Reports forum")
 	}
 	_, err := mfs.delete.Exec(id)

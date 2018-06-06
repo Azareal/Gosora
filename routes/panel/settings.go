@@ -18,6 +18,7 @@ func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
 	}
+	header.Title = common.GetTitlePhrase("panel_settings")
 
 	settings, err := header.Settings.BypassGetAll()
 	if err != nil {
@@ -48,7 +49,7 @@ func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		settingList = append(settingList, &common.PanelSetting{setting, common.GetSettingPhrase(setting.Name)})
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel_settings"), user, header, stats, "settings", tList, settingList}
+	pi := common.PanelPage{&common.BasePanelPage{header, stats, "settings", common.ReportForumID}, tList, settingList}
 	return panelRenderTemplate("panel_settings", w, r, user, &pi)
 }
 
@@ -90,7 +91,7 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname
 	}
 
 	pSetting := &common.PanelSetting{setting, common.GetSettingPhrase(setting.Name)}
-	pi := common.PanelSettingPage{header, stats, "settings", itemList, pSetting}
+	pi := common.PanelSettingPage{&common.BasePanelPage{header, stats, "settings", common.ReportForumID}, itemList, pSetting}
 	return panelRenderTemplate("panel_setting", w, r, user, &pi)
 }
 

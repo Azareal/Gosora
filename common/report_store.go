@@ -8,6 +8,10 @@ import (
 	"../query_gen/lib"
 )
 
+// TODO: Make the default report forum ID configurable
+// TODO: Make sure this constant is used everywhere for the report forum ID
+const ReportForumID = 1
+
 var Reports ReportStore
 var ErrAlreadyReported = errors.New("This item has already been reported")
 
@@ -23,8 +27,8 @@ type DefaultReportStore struct {
 
 func NewDefaultReportStore(acc *qgen.Accumulator) (*DefaultReportStore, error) {
 	return &DefaultReportStore{
-		create: acc.Insert("topics").Columns("title, content, parsed_content, ipaddress, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,1,'report'").Prepare(),
-		exists: acc.Count("topics").Where("data = ? AND data != '' AND parentID = 1").Prepare(),
+		create: acc.Insert("topics").Columns("title, content, parsed_content, ipaddress, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?,'report'").Prepare(),
+		exists: acc.Count("topics").Where("data = ? AND data != '' AND parentID = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -39,7 +43,7 @@ func (store *DefaultReportStore) Create(title string, content string, user *User
 		return 0, ErrAlreadyReported
 	}
 
-	res, err := store.create.Exec(title, content, ParseMessage(content, 0, ""), user.LastIP, user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID))
+	res, err := store.create.Exec(title, content, ParseMessage(content, 0, ""), user.LastIP, user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
 	if err != nil {
 		return 0, err
 	}
@@ -49,5 +53,5 @@ func (store *DefaultReportStore) Create(title string, content string, user *User
 		return 0, err
 	}
 
-	return int(lastID), Forums.AddTopic(int(lastID), user.ID, 1)
+	return int(lastID), Forums.AddTopic(int(lastID), user.ID, ReportForumID)
 }

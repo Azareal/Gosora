@@ -194,6 +194,13 @@ func ResetTemplateOverrides() {
 
 		// Not really a pointer, more of a function handle, an artifact from one of the earlier versions of themes.go
 		switch oPtr := originPointer.(type) {
+		case func(CustomPagePage, io.Writer) error:
+			switch dPtr := destTmplPtr.(type) {
+			case *func(CustomPagePage, io.Writer) error:
+				*dPtr = oPtr
+			default:
+				LogError(errors.New("The source and destination templates are incompatible"))
+			}
 		case func(TopicPage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
 			case *func(TopicPage, io.Writer) error:
@@ -243,6 +250,13 @@ func ResetTemplateOverrides() {
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
+		case func(ErrorPage, io.Writer) error:
+			switch dPtr := destTmplPtr.(type) {
+			case *func(ErrorPage, io.Writer) error:
+				*dPtr = oPtr
+			default:
+				LogError(errors.New("The source and destination templates are incompatible"))
+			}
 		case func(Page, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
 			case *func(Page, io.Writer) error:
@@ -266,6 +280,9 @@ func ResetTemplateOverrides() {
 func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer) error {
 	var getTmpl = GetThemeTemplate(theme, template)
 	switch tmplO := getTmpl.(type) {
+	case *func(CustomPagePage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(CustomPagePage), w)
 	case *func(TopicPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(TopicPage), w)
@@ -287,9 +304,14 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer
 	case *func(IPSearchPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(IPSearchPage), w)
+	case *func(ErrorPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(ErrorPage), w)
 	case *func(Page, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(Page), w)
+	case func(CustomPagePage, io.Writer) error:
+		return tmplO(pi.(CustomPagePage), w)
 	case func(TopicPage, io.Writer) error:
 		return tmplO(pi.(TopicPage), w)
 	case func(TopicListPage, io.Writer) error:
@@ -304,6 +326,8 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer
 		return tmplO(pi.(CreateTopicPage), w)
 	case func(IPSearchPage, io.Writer) error:
 		return tmplO(pi.(IPSearchPage), w)
+	case func(ErrorPage, io.Writer) error:
+		return tmplO(pi.(ErrorPage), w)
 	case func(Page, io.Writer) error:
 		return tmplO(pi.(Page), w)
 	case string:

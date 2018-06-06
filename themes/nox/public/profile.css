@@ -1,0 +1,7 @@
+.avatar, .userbit img {
+	width: 40px;
+}
+
+.footer .widget, .sidebar {
+	display: none;
+}

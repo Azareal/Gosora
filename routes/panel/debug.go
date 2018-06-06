@@ -11,10 +11,11 @@ import (
 )
 
 func Debug(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	header.Title = common.GetTitlePhrase("panel_debug")
 
 	goVersion := runtime.Version()
 	dbVersion := qgen.Builder.DbVersion()
@@ -37,6 +38,6 @@ func Debug(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	// Disk I/O?
 	// TODO: Fetch the adapter from Builder rather than getting it from a global?
 
-	pi := common.PanelDebugPage{common.GetTitlePhrase("panel_debug"), user, headerVars, stats, "debug", goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName()}
+	pi := common.PanelDebugPage{&common.BasePanelPage{header, stats, "debug", common.ReportForumID}, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName()}
 	return panelRenderTemplate("panel_debug", w, r, user, &pi)
 }

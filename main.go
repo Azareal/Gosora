@@ -106,6 +106,10 @@ func afterDBInit() (err error) {
 	}
 
 	log.Print("Initialising the stores")
+	common.Pages, err = common.NewDefaultPageStore(acc)
+	if err != nil {
+		return err
+	}
 	common.Reports, err = common.NewDefaultReportStore(acc)
 	if err != nil {
 		return err

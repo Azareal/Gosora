@@ -35,7 +35,7 @@ type Stmts struct {
 	getActivityCountByWatcher *sql.Stmt
 	todaysPostCount *sql.Stmt
 	todaysTopicCount *sql.Stmt
-	todaysReportCount *sql.Stmt
+	todaysTopicCountByForum *sql.Stmt
 	todaysNewUserCount *sql.Stmt
 
 	Mocks bool

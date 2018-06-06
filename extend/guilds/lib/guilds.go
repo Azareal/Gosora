@@ -232,13 +232,14 @@ func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user common.User) 
 	if ferr != nil {
 		return ferr
 	}
+	header.Title = "Create Guild"
 	// TODO: Add an approval queue mode for group creation
 	if !user.Loggedin || !user.PluginPerms["CreateGuild"] {
 		return common.NoPermissions(w, r, user)
 	}
 	CommonAreaWidgets(header)
 
-	pi := common.Page{"Create Guild", user, header, tList, nil}
+	pi := common.Page{header, tList, nil}
 	err := common.Templates.ExecuteTemplate(w, "guilds_create_guild.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)

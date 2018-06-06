@@ -1,10 +1,10 @@
 {{template "header.html" . }}
 <main>
 	<div class="rowblock rowhead">
-		<div class="rowitem"><h1>{{lang "error_head"}}</h1></div>
+		<div class="rowitem"><h1>{{.Page.Title}}</h1></div>
 	</div>
 	<div class="rowblock">
-		<div class="rowitem passive rowmsg">{{.Message}}</div>
+		<div class="rowitem passive rowmsg">{{.Page.Body}}</div>
 	</div>
 </main>
 {{template "footer.html" . }}

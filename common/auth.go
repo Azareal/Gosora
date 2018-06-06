@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"../query_gen/lib"
+	"./gauth"
 	//"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -272,3 +273,12 @@ func Argon2GeneratePassword(password string) (hash string, salt string, err erro
 	return fmt.Sprintf("argon2$%d%d%d%d%s%s", argon2Time, argon2Memory, argon2Threads, argon2KeyLen, salt, hash), string(sbytes), nil
 }
 */
+
+// TODO: Not sure if these work, test them with Google Authenticator
+func GenerateGAuthSecret() (string, error) {
+	return GenerateSafeString(24)
+}
+func VerifyGAuthToken(secret string, token string) (bool, error) {
+	trueToken, err := gauth.GetTOTPToken(secret)
+	return trueToken == token, err
+}

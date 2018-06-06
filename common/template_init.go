@@ -105,7 +105,7 @@ var Template_register_handle = func(pi Page, w io.Writer) error {
 }
 
 // nolint
-var Template_error_handle = func(pi Page, w io.Writer) error {
+var Template_error_handle = func(pi ErrorPage, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["error"]
 	if !ok {
 		mapping = "error"
@@ -229,20 +229,23 @@ func CompileTemplates() error {
 		return err
 	}
 
-	loginPage := Page{"Login Page", user, header, tList, nil}
+	header.Title = "Login Page"
+	loginPage := Page{header, tList, nil}
 	loginTmpl, err := c.Compile("login.html", "templates/", "common.Page", loginPage, varList)
 	if err != nil {
 		return err
 	}
 
-	registerPage := Page{"Registration Page", user, header, tList, "nananana"}
+	header.Title = "Registration Page"
+	registerPage := Page{header, tList, "nananana"}
 	registerTmpl, err := c.Compile("register.html", "templates/", "common.Page", registerPage, varList)
 	if err != nil {
 		return err
 	}
 
-	errorPage := Page{"Error", user, header, tList, "A problem has occurred in the system."}
-	errorTmpl, err := c.Compile("error.html", "templates/", "common.Page", errorPage, varList)
+	header.Title = "Error"
+	errorPage := ErrorPage{header, "A problem has occurred in the system."}
+	errorTmpl, err := c.Compile("error.html", "templates/", "common.ErrorPage", errorPage, varList)
 	if err != nil {
 		return err
 	}

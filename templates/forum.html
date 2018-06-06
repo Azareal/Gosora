@@ -101,11 +101,13 @@
 			</div>
 		</div>
 		<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
-			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
-			<span>
-				<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
-				<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
-			</span>
+			<div class="topic_right_inside">
+				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
+				<span>
+					<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
+					<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
+				</span>
+			</div>
 		</div>
 		</div>{{else}}<div class="rowitem passive rowmsg">{{lang "forum_no_topics"}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">{{lang "forum_start_one"}}</a>{{end}}</div>{{end}}
 	</div>

@@ -81,6 +81,9 @@
 		"login":"Login",
 		"register":"Registration",
 		"ip_search":"IP Search",
+		"account_username":"Edit Username",
+		"account_avatar":"Edit Avatar",
+		"account_email":"Email Manager",
 
 		"panel_dashboard":"Control Panel Dashboard",
 		"panel_forums":"Forum Manager",
@@ -91,6 +94,8 @@
 		"panel_edit_setting":"Edit Setting",
 		"panel_word_filters":"Word Filter Manager",
 		"panel_edit_word_filter":"Edit Word Filter",
+		"panel_pages":"Page Manager",
+		"panel_pages_edit":"Page Editor",
 		"panel_plugins":"Plugin Manager",
 		"panel_users":"User Manager",
 		"panel_edit_user":"User Editor",
@@ -248,7 +253,10 @@
 		"panel_forum_deleted":"The forum was successfully deleted",
 		"panel_forum_updated":"The forum was successfully updated",
 		"panel_forum_perms_updated":"The forum permissions were successfully updated",
-		"panel_user_updated":"The user was successfully updated"
+		"panel_user_updated":"The user was successfully updated",
+		"panel_page_created":"The page was successfully created",
+		"panel_page_updated":"The page was successfully updated",
+		"panel_page_deleted":"The page was successfully deleted"
 	},
 
 	"TmplPhrases": {
@@ -352,6 +360,7 @@
 		"account_menu_username":"Username",
 		"account_menu_password":"Password",
 		"account_menu_email":"Email",
+		"account_menu_security":"Security",
 		"account_menu_notifications":"Notifications",
 
 		"account_avatar_head":"Edit Avatar",
@@ -539,6 +548,7 @@
 		"panel_menu_users":"Users",
 		"panel_menu_groups":"Groups",
 		"panel_menu_forums":"Forums",
+		"panel_menu_pages":"Pages",
 		"panel_menu_settings":"Settings",
 		"panel_menu_word_filters":"Word Filters",
 		"panel_menu_themes":"Themes",
@@ -648,6 +658,23 @@
 		"panel_word_filters_create_replacement":"Replacement",
 		"panel_word_filters_create_replacement_placeholder":"fudge",
 		"panel_word_filters_create_create_word_filter_button":"Add Filter",
+
+		"panel_pages_head":"Page Manager",
+		"panel_pages_edit_button_aria":"Edit Page",
+		"panel_pages_delete_button_aria":"Delete Page",
+		"panel_pages_no_pages":"There aren't any pages.",
+		"panel_pages_create_head":"Create Page",
+		"panel_pages_create_name":"Name",
+		"panel_pages_create_name_placeholder":"faq",
+		"panel_pages_create_title":"Title",
+		"panel_pages_create_title_placeholder":"Frequently Asked Questions",
+		"panel_pages_create_body_placeholder":"We understand you have a lot of questions.",
+		"panel_pages_create_submit_button":"Create Page",
+
+		"panel_pages_edit_head":"Page Editor",
+		"panel_pages_name":"Name",
+		"panel_pages_title":"Title",
+		"panel_pages_edit_update_button":"Update Page",
 
 		"panel_statistics_views_head_suffix":" Views",
 		"panel_statistics_user_agents_head":"User Agents",

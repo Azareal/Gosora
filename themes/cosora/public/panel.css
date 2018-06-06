@@ -148,9 +148,12 @@
 	padding-bottom: 4px;
 	margin-bottom: 6px;
 }
-#panel_setting textarea {
+#panel_setting textarea, #panel_page_list textarea, #panel_page_edit textarea {
 	width: 100%;
 	height: 80px;
+}
+#panel_page_list textarea, #panel_page_edit textarea {
+	margin-top: 8px;
 }
 
 #forum_quick_perms .formitem {

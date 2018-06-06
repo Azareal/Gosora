@@ -27,7 +27,8 @@ func AccountLogin(w http.ResponseWriter, r *http.Request, user common.User) comm
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	pi := common.Page{common.GetTitlePhrase("login"), user, header, tList, nil}
+	header.Title = common.GetTitlePhrase("login")
+	pi := common.Page{header, tList, nil}
 	if common.RunPreRenderHook("pre_render_login", w, r, &user, &pi) {
 		return nil
 	}
@@ -92,11 +93,13 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
+	header.Title = common.GetTitlePhrase("register")
+
 	h := sha256.New()
 	h.Write([]byte(common.JSTokenBox.Load().(string)))
 	h.Write([]byte(user.LastIP))
 	jsToken := hex.EncodeToString(h.Sum(nil))
-	pi := common.Page{common.GetTitlePhrase("register"), user, header, tList, jsToken}
+	pi := common.Page{header, tList, jsToken}
 	if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
 		return nil
 	}
@@ -230,23 +233,27 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	return nil
 }
 
+// TODO: Rename this
 func AccountEditCritical(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	// TODO: Add a phrase for this
+	header.Title = "Edit Password"
 
-	pi := common.Page{"Edit Password", user, header, tList, nil}
-	if common.RunPreRenderHook("pre_render_account_own_edit_critical", w, r, &user, &pi) {
+	pi := common.Page{header, tList, nil}
+	if common.RunPreRenderHook("pre_render_account_own_edit_password", w, r, &user, &pi) {
 		return nil
 	}
-	err := common.Templates.ExecuteTemplate(w, "account_own_edit.html", pi)
+	err := common.Templates.ExecuteTemplate(w, "account_own_edit_password.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
 	return nil
 }
 
+// TODO: Rename this
 func AccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	_, ferr := common.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
@@ -285,12 +292,16 @@ func AccountEditCriticalSubmit(w http.ResponseWriter, r *http.Request, user comm
 }
 
 func AccountEditAvatar(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	header.Title = common.GetTitlePhrase("account_avatar")
+	if r.FormValue("updated") == "1" {
+		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("account_avatar_updated"))
+	}
 
-	pi := common.Page{"Edit Avatar", user, headerVars, tList, nil}
+	pi := common.Page{header, tList, nil}
 	if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
 		return nil
 	}
@@ -302,7 +313,7 @@ func AccountEditAvatar(w http.ResponseWriter, r *http.Request, user common.User)
 }
 
 func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	_, ferr := common.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -366,30 +377,21 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	user.Avatar = "/uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext
-	headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_avatar_updated"))
-
-	pi := common.Page{"Edit Avatar", user, headerVars, tList, nil}
-	if common.RunPreRenderHook("pre_render_account_own_edit_avatar", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "account_own_edit_avatar.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
+	http.Redirect(w, r, "/user/edit/avatar/?updated=1", http.StatusSeeOther)
 	return nil
 }
 
 func AccountEditUsername(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	header.Title = common.GetTitlePhrase("account_username")
 	if r.FormValue("updated") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("account_username_updated"))
+		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("account_username_updated"))
 	}
 
-	pi := common.Page{"Edit Username", user, headerVars, tList, user.Name}
+	pi := common.Page{header, tList, user.Name}
 	if common.RunPreRenderHook("pre_render_account_own_edit_username", w, r, &user, &pi) {
 		return nil
 	}
@@ -421,8 +423,7 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User) 
 	if ferr != nil {
 		return ferr
 	}
-	// TODO: Add a phrase for this
-	header.Title = "Email Manager"
+	header.Title = common.GetTitlePhrase("account_email")
 
 	emails, err := common.Emails.GetEmailsByUser(&user)
 	if err != nil {
@@ -457,9 +458,9 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User) 
 	return nil
 }
 
-// TODO: Do a session check on this?
+// TODO: Should we make this an AnonAction so someone can do this without being logged in?
 func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user common.User, token string) common.RouteError {
-	headerVars, ferr := common.UserCheck(w, r, &user)
+	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -492,7 +493,7 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user co
 	}
 
 	// If Email Activation is on, then activate the account while we're here
-	if headerVars.Settings["activation_type"] == 2 {
+	if header.Settings["activation_type"] == 2 {
 		err = user.Activate()
 		if err != nil {
 			return common.InternalError(err, w, r)

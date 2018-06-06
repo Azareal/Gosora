@@ -35,11 +35,11 @@ func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request
 }
 
 func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
-	headerVars.Title = common.GetTitlePhrase("panel_dashboard")
+	header.Title = common.GetTitlePhrase("panel_dashboard")
 
 	// We won't calculate this on the spot anymore, as the system doesn't seem to like it if we do multiple fetches simultaneously. Should we constantly calculate this on a background thread? Perhaps, the watchdog to scale back heavy features under load? One plus side is that we'd get immediate CPU percentages here instead of waiting it to kick in with WebSockets
 	var cpustr = "Unknown"
@@ -93,8 +93,8 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 
 	// TODO: Add a stat store for this?
 	var intErr error
-	var extractStat = func(stmt *sql.Stmt) (stat int) {
-		err := stmt.QueryRow().Scan(&stat)
+	var extractStat = func(stmt *sql.Stmt, args ...interface{}) (stat int) {
+		err := stmt.QueryRow(args...).Scan(&stat)
 		if err != nil && err != ErrNoRows {
 			intErr = err
 		}
@@ -109,7 +109,7 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 	var topicInterval = "day"
 	var topicColour = greaterThanSwitch(topicCount, 0, 8)
 
-	var reportCount = extractStat(stmts.todaysReportCount)
+	var reportCount = extractStat(stmts.todaysTopicCountByForum, common.ReportForumID)
 	var reportInterval = "week"
 
 	var newUserCount = extractStat(stmts.todaysNewUserCount)
@@ -120,10 +120,14 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 		return common.InternalError(intErr, w, r)
 	}
 
+	// TODO: Localise these
 	var gridElements = []common.GridElement{
 		common.GridElement{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
 		common.GridElement{"dash-cpu", "CPU: " + cpustr, 1, "grid_istat " + cpuColour, "", "", "The global CPU usage of this server"},
 		common.GridElement{"dash-ram", "RAM: " + ramstr, 2, "grid_istat " + ramColour, "", "", "The global RAM usage of this server"},
+	}
+	var addElement = func(element common.GridElement) {
+		gridElements = append(gridElements, element)
 	}
 
 	if common.EnableWebsockets {
@@ -140,41 +144,42 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 		uonline, uunit := common.ConvertFriendlyUnit(uonline)
 		gonline, gunit := common.ConvertFriendlyUnit(gonline)
 
-		gridElements = append(gridElements, common.GridElement{"dash-totonline", strconv.Itoa(totonline) + totunit + " online", 3, "grid_stat " + onlineColour, "", "", "The number of people who are currently online"})
-		gridElements = append(gridElements, common.GridElement{"dash-gonline", strconv.Itoa(gonline) + gunit + " guests online", 4, "grid_stat " + onlineGuestsColour, "", "", "The number of guests who are currently online"})
-		gridElements = append(gridElements, common.GridElement{"dash-uonline", strconv.Itoa(uonline) + uunit + " users online", 5, "grid_stat " + onlineUsersColour, "", "", "The number of logged-in users who are currently online"})
-		gridElements = append(gridElements, common.GridElement{"dash-reqs", strconv.Itoa(reqCount) + " reqs / second", 7, "grid_stat grid_end_group " + topicColour, "", "", "The number of requests over the last 24 hours"})
+		addElement(common.GridElement{"dash-totonline", strconv.Itoa(totonline) + totunit + " online", 3, "grid_stat " + onlineColour, "", "", "The number of people who are currently online"})
+		addElement(common.GridElement{"dash-gonline", strconv.Itoa(gonline) + gunit + " guests online", 4, "grid_stat " + onlineGuestsColour, "", "", "The number of guests who are currently online"})
+		addElement(common.GridElement{"dash-uonline", strconv.Itoa(uonline) + uunit + " users online", 5, "grid_stat " + onlineUsersColour, "", "", "The number of logged-in users who are currently online"})
+		addElement(common.GridElement{"dash-reqs", strconv.Itoa(reqCount) + " reqs / second", 7, "grid_stat grid_end_group " + topicColour, "", "", "The number of requests over the last 24 hours"})
 	}
 
-	gridElements = append(gridElements, common.GridElement{"dash-postsperday", strconv.Itoa(postCount) + " posts / " + postInterval, 6, "grid_stat " + postColour, "", "", "The number of new posts over the last 24 hours"})
-	gridElements = append(gridElements, common.GridElement{"dash-topicsperday", strconv.Itoa(topicCount) + " topics / " + topicInterval, 7, "grid_stat " + topicColour, "", "", "The number of new topics over the last 24 hours"})
-	gridElements = append(gridElements, common.GridElement{"dash-totonlineperday", "20 online / day", 8, "grid_stat stat_disabled", "", "", "Coming Soon!" /*, "The people online over the last 24 hours"*/})
+	addElement(common.GridElement{"dash-postsperday", strconv.Itoa(postCount) + " posts / " + postInterval, 6, "grid_stat " + postColour, "", "", "The number of new posts over the last 24 hours"})
+	addElement(common.GridElement{"dash-topicsperday", strconv.Itoa(topicCount) + " topics / " + topicInterval, 7, "grid_stat " + topicColour, "", "", "The number of new topics over the last 24 hours"})
+	addElement(common.GridElement{"dash-totonlineperday", "20 online / day", 8, "grid_stat stat_disabled", "", "", "Coming Soon!" /*, "The people online over the last 24 hours"*/})
 
-	gridElements = append(gridElements, common.GridElement{"dash-searches", "8 searches / week", 9, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of searches over the last 7 days"*/})
-	gridElements = append(gridElements, common.GridElement{"dash-newusers", strconv.Itoa(newUserCount) + " new users / " + newUserInterval, 10, "grid_stat", "", "", "The number of new users over the last 7 days"})
-	gridElements = append(gridElements, common.GridElement{"dash-reports", strconv.Itoa(reportCount) + " reports / " + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days"})
+	addElement(common.GridElement{"dash-searches", "8 searches / week", 9, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of searches over the last 7 days"*/})
+	addElement(common.GridElement{"dash-newusers", strconv.Itoa(newUserCount) + " new users / " + newUserInterval, 10, "grid_stat", "", "", "The number of new users over the last 7 days"})
+	addElement(common.GridElement{"dash-reports", strconv.Itoa(reportCount) + " reports / " + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days"})
 
 	if false {
-		gridElements = append(gridElements, common.GridElement{"dash-minperuser", "2 minutes / user / week", 12, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
-		gridElements = append(gridElements, common.GridElement{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of unique visitors we've had over the last 7 days"*/})
-		gridElements = append(gridElements, common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
+		addElement(common.GridElement{"dash-minperuser", "2 minutes / user / week", 12, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
+		addElement(common.GridElement{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of unique visitors we've had over the last 7 days"*/})
+		addElement(common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
 	}
 
-	pi := common.PanelDashboardPage{headerVars, stats, "dashboard", gridElements}
+	pi := common.PanelDashboardPage{&common.BasePanelPage{header, stats, "dashboard", common.ReportForumID}, gridElements}
 	return panelRenderTemplate("panel_dashboard", w, r, user, &pi)
 }
 
 func routePanelWordFilters(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
 	}
+	header.Title = common.GetTitlePhrase("panel_word_filters")
 
 	var filterList = common.WordFilterBox.Load().(common.WordFilterMap)
-	pi := common.PanelPage{common.GetTitlePhrase("panel_word_filters"), user, headerVars, stats, "word-filters", tList, filterList}
+	pi := common.PanelPage{&common.BasePanelPage{header, stats, "word-filters", common.ReportForumID}, tList, filterList}
 	return panelRenderTemplate("panel_word_filters", w, r, user, &pi)
 }
 
@@ -212,17 +217,17 @@ func routePanelWordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, u
 
 // TODO: Implement this as a non-JS fallback
 func routePanelWordFiltersEdit(w http.ResponseWriter, r *http.Request, user common.User, wfid string) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
 	}
-
+	header.Title = common.GetTitlePhrase("panel_edit_word_filter")
 	_ = wfid
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel_edit_word_filter"), user, headerVars, stats, "word-filters", tList, nil}
+	pi := common.PanelPage{&common.BasePanelPage{header, stats, "word-filters", common.ReportForumID}, tList, nil}
 	return panelRenderTemplate("panel_word_filters_edit", w, r, user, &pi)
 }
 
@@ -293,20 +298,21 @@ func routePanelWordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, u
 }
 
 func routePanelPlugins(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ManagePlugins {
 		return common.NoPermissions(w, r, user)
 	}
+	header.Title = common.GetTitlePhrase("panel_plugins")
 
 	var pluginList []interface{}
 	for _, plugin := range common.Plugins {
 		pluginList = append(pluginList, plugin)
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel_plugins"), user, headerVars, stats, "plugins", pluginList, nil}
+	pi := common.PanelPage{&common.BasePanelPage{header, stats, "plugins", common.ReportForumID}, pluginList, nil}
 	return panelRenderTemplate("panel_plugins", w, r, user, &pi)
 }
 
@@ -487,18 +493,19 @@ func routePanelUsers(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 
 	pageList := common.Paginate(stats.Users, perPage, 5)
-	pi := common.PanelUserPage{header, stats, "users", users, common.Paginator{pageList, page, lastPage}}
+	pi := common.PanelUserPage{&common.BasePanelPage{header, stats, "users", common.ReportForumID}, users, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_users", w, r, user, &pi)
 }
 
 func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditUser {
 		return common.NoPermissions(w, r, user)
 	}
+	header.Title = common.GetTitlePhrase("panel_edit_user")
 
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
@@ -534,10 +541,10 @@ func routePanelUsersEdit(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	if r.FormValue("updated") == "1" {
-		headerVars.NoticeList = append(headerVars.NoticeList, common.GetNoticePhrase("panel_user_updated"))
+		header.NoticeList = append(header.NoticeList, common.GetNoticePhrase("panel_user_updated"))
 	}
 
-	pi := common.PanelPage{common.GetTitlePhrase("panel_edit_user"), user, headerVars, stats, "users", groupList, targetUser}
+	pi := common.PanelPage{&common.BasePanelPage{header, stats, "users", common.ReportForumID}, groupList, targetUser}
 	if common.RunPreRenderHook("pre_render_panel_edit_user", w, r, &user, &pi) {
 		return nil
 	}
@@ -635,10 +642,11 @@ func routePanelUsersEditSubmit(w http.ResponseWriter, r *http.Request, user comm
 }
 
 func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	header.Title = common.GetTitlePhrase("panel_groups")
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 9
@@ -661,6 +669,7 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) 
 		var canDelete = false
 
 		// TODO: Use a switch for this
+		// TODO: Localise this
 		if group.IsAdmin {
 			rank = "Admin"
 			rankClass = "admin"
@@ -685,18 +694,19 @@ func routePanelGroups(w http.ResponseWriter, r *http.Request, user common.User) 
 	//log.Printf("groupList: %+v\n", groupList)
 
 	pageList := common.Paginate(stats.Groups, perPage, 5)
-	pi := common.PanelGroupPage{common.GetTitlePhrase("panel_groups"), user, headerVars, stats, "groups", groupList, common.Paginator{pageList, page, lastPage}}
+	pi := common.PanelGroupPage{&common.BasePanelPage{header, stats, "groups", common.ReportForumID}, groupList, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_groups", w, r, user, &pi)
 }
 
 func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditGroup {
 		return common.NoPermissions(w, r, user)
 	}
+	header.Title = common.GetTitlePhrase("panel_edit_group")
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
@@ -706,7 +716,7 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
-		return common.NotFound(w, r, headerVars)
+		return common.NotFound(w, r, header)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -734,7 +744,7 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 
 	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
-	pi := common.PanelEditGroupPage{common.GetTitlePhrase("panel_edit_group"), user, headerVars, stats, "groups", group.ID, group.Name, group.Tag, rank, disableRank}
+	pi := common.PanelEditGroupPage{&common.BasePanelPage{header, stats, "groups", common.ReportForumID}, group.ID, group.Name, group.Tag, rank, disableRank}
 	if common.RunPreRenderHook("pre_render_panel_edit_group", w, r, &user, &pi) {
 		return nil
 	}
@@ -746,13 +756,14 @@ func routePanelGroupsEdit(w http.ResponseWriter, r *http.Request, user common.Us
 }
 
 func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
-	headerVars, stats, ferr := common.PanelUserCheck(w, r, &user)
+	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditGroup {
 		return common.NoPermissions(w, r, user)
 	}
+	header.Title = common.GetTitlePhrase("panel_edit_group")
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
@@ -762,7 +773,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 	group, err := common.Groups.Get(gid)
 	if err == ErrNoRows {
 		//log.Print("aaaaa monsters")
-		return common.NotFound(w, r, headerVars)
+		return common.NotFound(w, r, header)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -820,7 +831,7 @@ func routePanelGroupsEditPerms(w http.ResponseWriter, r *http.Request, user comm
 	addGlobalPerm("ViewIPs", group.Perms.ViewIPs)
 	addGlobalPerm("UploadFiles", group.Perms.UploadFiles)
 
-	pi := common.PanelEditGroupPermsPage{common.GetTitlePhrase("panel_edit_group"), user, headerVars, stats, "groups", group.ID, group.Name, localPerms, globalPerms}
+	pi := common.PanelEditGroupPermsPage{&common.BasePanelPage{header, stats, "groups", common.ReportForumID}, group.ID, group.Name, localPerms, globalPerms}
 	if common.RunPreRenderHook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
 		return nil
 	}
@@ -1049,7 +1060,7 @@ func routePanelThemes(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	}
 
-	pi := common.PanelThemesPage{header, stats, "themes", pThemeList, vThemeList}
+	pi := common.PanelThemesPage{&common.BasePanelPage{header, stats, "themes", common.ReportForumID}, pThemeList, vThemeList}
 	return panelRenderTemplate("panel_themes", w, r, user, &pi)
 }
 
@@ -1141,7 +1152,7 @@ func routePanelThemesMenus(w http.ResponseWriter, r *http.Request, user common.U
 		})
 	}
 
-	pi := common.PanelMenuListPage{header, stats, "themes", menuList}
+	pi := common.PanelMenuListPage{&common.BasePanelPage{header, stats, "themes", common.ReportForumID}, menuList}
 	return panelRenderTemplate("panel_themes_menus", w, r, user, &pi)
 }
 
@@ -1189,7 +1200,7 @@ func routePanelThemesMenusEdit(w http.ResponseWriter, r *http.Request, user comm
 		menuList = append(menuList, item)
 	}
 
-	pi := common.PanelMenuPage{header, stats, "themes", mid, menuList}
+	pi := common.PanelMenuPage{&common.BasePanelPage{header, stats, "themes", common.ReportForumID}, mid, menuList}
 	return panelRenderTemplate("panel_themes_menus_items", w, r, user, &pi)
 }
 
@@ -1216,7 +1227,7 @@ func routePanelThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c
 		return common.InternalError(err, w, r)
 	}
 
-	pi := common.PanelMenuItemPage{header, stats, "themes", menuItem}
+	pi := common.PanelMenuItemPage{&common.BasePanelPage{header, stats, "themes", common.ReportForumID}, menuItem}
 	return panelRenderTemplate("panel_themes_menus_item_edit", w, r, user, &pi)
 }
 

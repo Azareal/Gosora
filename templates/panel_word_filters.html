@@ -1,7 +1,7 @@
 {{template "header.html" . }}
 <div class="colstack panel_stack">
 
-{{template "panel-menu.html" . }}
+{{template "panel_menu.html" . }}
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{lang "panel_word_filters_head"}}</h1></div>
@@ -19,7 +19,7 @@
 			</span>
 		</div>
 		{{else}}
-		<div class="rowitem editable_parent rowmsg">
+		<div class="rowitem rowmsg">
 			<a>{{lang "panel_word_filters_no_filters"}}</a>
 		</div>
 		{{end}}
