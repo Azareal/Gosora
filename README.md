@@ -126,6 +126,11 @@ go get -u github.com/denisenkom/go-mssqldb
 
 go get -u github.com/fsnotify/fsnotify
 
+rm template_*.go
+
+rm gen_*.go
+
+rm tmpl_client/template_*.go
 
 go generate
 

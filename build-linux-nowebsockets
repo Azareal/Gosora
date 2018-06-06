@@ -1,6 +1,12 @@
+echo "Deleting artifacts from previous builds"
+rm template_*.go
+rm gen_*.go
+rm tmpl_client/template_*.go
+
 echo "Building Gosora"
 go generate
 go build -o Gosora -tags no_ws
+
 echo "Building the installer"
 cd ./install
 go build -o Install

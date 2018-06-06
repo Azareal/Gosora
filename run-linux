@@ -1,3 +1,8 @@
+echo "Deleting artifacts from previous builds"
+rm template_*.go
+rm gen_*.go
+rm tmpl_client/template_*.go
+
 echo "Generating the dynamic code"
 go generate
 
