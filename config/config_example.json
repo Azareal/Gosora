@@ -44,7 +44,7 @@
 		"TestAdapter": "mysql",
 		"TestHost": "localhost",
 		"TestUsername": "root",
-		"TestPassword": "password",
+		"TestPassword": "",
 		"TestDbname": "gosora_test",
 		"TestPort": "3306"
 	},
