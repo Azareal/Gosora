@@ -1,0 +1,88 @@
+.sidebar, .footer .widget {
+	display: none;
+}
+#account_dashboard .colstack_right .coldyn_block {
+	display: flex;
+}
+#account_dashboard .coldyn_item {
+	margin-left: 16px;
+}
+#dash_left {
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+	background-color: var(--element-background-color);
+	padding: 18px;
+	height: 184px;
+	position: relative;
+}
+#dash_saved {
+	text-transform: uppercase;
+	font-size: 11px;
+	color: green;
+	position: absolute;
+	right: 8px;
+	top: 8px;
+	display: none;
+}
+.dash_security, .account_soon {
+	text-transform: uppercase;
+	font-size: 11px;
+	color: maroon;
+}
+#dash_username {
+	display: flex;
+	font-size: 18px;
+	text-align: center;
+	margin-bottom: 6px;
+}
+#dash_username input {
+	font-size: 16px;
+	width: 130px;
+	width: 80px;
+	padding-left: 8px;
+	margin-top: -4px;
+	margin-bottom: 6px;
+	margin-left: auto;
+	margin-right: auto;
+	color: hsl(0,0%,45%); /* TODO: Use this colour elsewhere? */
+	text-align: center;
+}
+#dash_username button {
+	display: none;
+	margin-left: 4px;
+	padding: 6px;
+	margin-top: 0px;
+	margin-bottom: 6px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+#dash_left img {
+	display: block;
+	border-radius: 48px;
+	height: 72px;
+	width: 72px;
+	margin-left: auto;
+	margin-right: auto;
+}
+#dash_left label {
+	display: inline-block;
+	margin-right: 8px;
+}
+#dash_avatar_buttons {
+	display: flex;
+	margin-bottom: 3px;
+}
+#dash_right {
+	width: 100%;
+	background: none !important;
+	border: none !important;
+}
+#dash_right .rowitem {
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+	background-color: var(--element-background-color);
+	padding: 16px;
+}
+#dash_right .rowitem:not(:last-child) {
+	margin-bottom: 8px;
+}

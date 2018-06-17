@@ -16,7 +16,6 @@ type Stmts struct {
 	updatePlugin *sql.Stmt
 	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
-	updateUser *sql.Stmt
 	updateGroupPerms *sql.Stmt
 	updateGroup *sql.Stmt
 	updateEmail *sql.Stmt
@@ -84,13 +83,6 @@ func _gen_pgsql() (err error) {
 	stmts.updateTheme, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ?")
 	if err != nil {
 		log.Print("Error in updateTheme statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing updateUser statement.")
-	stmts.updateUser, err = db.Prepare("UPDATE `users` SET `name` = ?,`email` = ?,`group` = ? WHERE `uid` = ?")
-	if err != nil {
-		log.Print("Error in updateUser statement.")
 		return err
 	}
 		

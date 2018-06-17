@@ -81,8 +81,10 @@
 		"login":"Login",
 		"register":"Registration",
 		"ip_search":"IP Search",
-		"account_username":"Edit Username",
-		"account_avatar":"Edit Avatar",
+		"account":"My Account",
+		"account_password":"Edit Password",
+		"account_mfa":"Manage 2FA",
+		"account_mfa_setup":"Setup 2FA",
 		"account_email":"Email Manager",
 
 		"panel_dashboard":"Control Panel Dashboard",
@@ -244,19 +246,20 @@
 	"NoticePhrases": {
 		"account_banned":"Your account has been suspended. Some of your permissions may have been revoked.",
 		"account_inactive":"Your account hasn't been activated yet. Some features may remain unavailable until it is.",
-		"account_avatar_updated":"Your avatar was successfully updated",
-		"account_username_updated":"Your username was successfully updated",
+		"account_avatar_updated":"Your avatar was successfully updated.",
+		"account_username_updated":"Your username was successfully updated.",
 		"account_mail_disabled":"The mail system is currently disabled.",
-		"account_mail_verify_success":"Your email was successfully verified",
+		"account_mail_verify_success":"Your email was successfully verified.",
+		"account_mfa_setup_success":"Two-factor authentication was successfully setup for your account.",
 
-		"panel_forum_created":"The forum was successfully created",
-		"panel_forum_deleted":"The forum was successfully deleted",
-		"panel_forum_updated":"The forum was successfully updated",
-		"panel_forum_perms_updated":"The forum permissions were successfully updated",
-		"panel_user_updated":"The user was successfully updated",
-		"panel_page_created":"The page was successfully created",
-		"panel_page_updated":"The page was successfully updated",
-		"panel_page_deleted":"The page was successfully deleted"
+		"panel_forum_created":"The forum was successfully created.",
+		"panel_forum_deleted":"The forum was successfully deleted.",
+		"panel_forum_updated":"The forum was successfully updated.",
+		"panel_forum_perms_updated":"The forum permissions were successfully updated.",
+		"panel_user_updated":"The user was successfully updated.",
+		"panel_page_created":"The page was successfully created.",
+		"panel_page_updated":"The page was successfully updated.",
+		"panel_page_deleted":"The page was successfully deleted."
 	},
 
 	"TmplPhrases": {
@@ -303,11 +306,13 @@
 		"panel_rank_guests":"Guests",
 		"panel_rank_members":"Members",
 
+		"panel_preset_everyone":"Everyone",
 		"panel_preset_announcements":"Announcements",
 		"panel_preset_member_only":"Member Only",
 		"panel_preset_staff_only":"Staff Only",
 		"panel_preset_admin_only":"Admin Only",
 		"panel_preset_archive":"Archive",
+		"panel_preset_custom":"Custom",
 		"panel_preset_public":"Public",
 		"panel_active_hidden":"Hidden",
 
@@ -347,6 +352,10 @@
 		"login_submit_button":"Login",
 		"login_no_account":"Don't have an account?",
 
+		"login_mfa_verify_head":"2FA Verify",
+		"login_mfa_verify_explanation":"Please input the code from the authenticator app below.",
+		"login_mfa_verify_button":"Confirm",
+
 		"register_head":"Create Account",
 		"register_account_name":"Account Name",
 		"register_account_email":"Email",
@@ -356,16 +365,19 @@
 		"register_submit_button":"Create Account",
 
 		"account_menu_head":"My Account",
-		"account_menu_avatar":"Avatar",
-		"account_menu_username":"Username",
 		"account_menu_password":"Password",
 		"account_menu_email":"Email",
 		"account_menu_security":"Security",
 		"account_menu_notifications":"Notifications",
 
-		"account_avatar_head":"Edit Avatar",
-		"account_avatar_upload_label":"Upload Avatar",
-		"account_avatar_update_button":"Update",
+		"account_coming_soon":"Coming Soon",
+
+		"account_dash_2fa_setup":"Setup your two-factor authentication.",
+		"account_dash_2fa_manage":"Remove or manage your two-factor authentication.",
+		"account_dash_next_level":"Progress to next level.",
+		"account_dash_security_notice":"Security",
+		"account_avatar_select":"Select",
+		"account_avatar_update_button":"Upload",
 
 		"account_email_head":"Emails",
 		"account_email_primary":"Primary",
@@ -373,16 +385,22 @@
 		"account_email_verified":"Verified",
 		"account_email_resend_email":"Resend Verification Email",
 
-		"account_username_head":"Edit Username",
-		"account_username_current_username":"Current Username",
-		"account_username_new_username":"New Username",
-		"account_username_update_button":"Update",
-
 		"account_password_head":"Edit Password",
 		"account_password_current_password":"Current Password",
 		"account_password_new_password":"New Password",
 		"account_password_confirm_password":"Confirm Password",
 		"account_password_update_button":"Update",
+
+		"account_mfa_head":"Manage 2FA",
+		"account_mfa_disable_explanation":"You can disable two-factor authentication on your account and go back to logging in normal with just your password by clicking on the following button.",
+		"account_mfa_disable_button":"Disable 2FA",
+		"account_mfa_scratch_head":"One Time Codes",
+		"account_mfa_scratch_explanation":"You can use the following codes to login without having an authenticator app generate codes for you.\n\nEach code can only be used once, a new one will replace it when it's used. These are intended as a backup, if your app fails or device (e.g. your phone) dies, be sure to keep them somewhere safe.",
+
+		"account_mfa_setup_head":"Setup 2FA",
+		"account_mfa_setup_explanation":"Type this secret into your Google Authenticator and type the code it gives you below. You will have to input codes provided by it for all future logins.",
+		"account_mfa_setup_verify":"Verify",
+		"account_mfa_setup_button":"Setup",
 
 		"areyousure_head":"Are you sure?",
 		"areyousure_continue":"Continue",
@@ -603,13 +621,6 @@
 		"panel_forums_create_description":"Where all the super secret stuff happens",
 		"panel_forums_active_label":"Active",
 		"panel_forums_preset_label":"Preset",
-		"panel_preset_everyone":"Everyone",
-		"panel_preset_announcements":"Announcements",
-		"panel_preset_member_only":"Member Only",
-		"panel_preset_staff_only":"Staff Only",
-		"panel_preset_admin_only":"Admin Only",
-		"panel_preset_archive":"Archive",
-		"panel_preset_custom":"Custom",
 		"panel_forums_create_button":"Add Forum",
 
 		"panel_forum_head_suffix":" Forum",

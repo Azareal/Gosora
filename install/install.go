@@ -96,79 +96,65 @@ func main() {
 		return
 	}
 
-	configContents := []byte(`package config
+	configContents := []byte(`{
+	"Site": {
+		"ShortName":"` + siteShortName + `",
+		"Name":"` + siteName + `",
+		"URL":"` + siteURL + `",
+		"Port":"` + serverPort + `",
+		"EnableSsl":false,
+		"EnableEmails":false,
+		"HasProxy":false,
+		"Language": "english"
+	},
+	"Config": {
+		"SslPrivkey": "",
+		"SslFullchain": "",
+		"SMTPServer": "",
+		"SMTPUsername": "",
+		"SMTPPassword": "",
+		"SMTPPort": "25",
 
-import "../common"
+		"MaxRequestSizeStr":"5MB",
+		"UserCache":"static",
+		"TopicCache":"static",
+		"UserCacheCapacity":120,
+		"TopicCacheCapacity":200,
+		"DefaultPath":"/topics/",
+		"DefaultGroup":3,
+		"ActivationGroup":5,
+		"StaffCSS":"staff_post",
+		"DefaultForum":2,
+		"MinifyTemplates":true,
+		"BuildSlugs":true,
+		"ServerCount":1,
+		"Noavatar":"https://api.adorable.io/avatars/285/{id}@{site_url}.png",
+		"ItemsPerPage":25
+	},
+	"Database": {
+		"Adapter": "` + adap.Name() + `",
+		"Host": "` + adap.DBHost() + `",
+		"Username": "` + adap.DBUsername() + `",
+		"Password": "` + adap.DBPassword() + `",
+		"Dbname": "` + adap.DBName() + `",
+		"Port": "` + adap.DBPort() + `",
 
-func Config() {
-	// Site Info
-	common.Site.ShortName = "` + siteShortName + `" // This should be less than three letters to fit in the navbar
-	common.Site.Name = "` + siteName + `"
-	common.Site.Email = ""
-	common.Site.URL = "` + siteURL + `"
-	common.Site.Port = "` + serverPort + `"
-	common.Site.EnableSsl = false
-	common.Site.EnableEmails = false
-	common.Site.HasProxy = false // Cloudflare counts as this, if it's sitting in the middle
-	common.Config.SslPrivkey = ""
-	common.Config.SslFullchain = ""
-	common.Site.Language = "english"
+		"TestAdapter": "` + adap.Name() + `",
+		"TestHost": "",
+		"TestUsername": "",
+		"TestPassword": "",
+		"TestDbname": "",
+		"TestPort": ""
+	},
+	"Dev": {
+		"DebugMode":true,
+		"SuperDebug":false
+	}
+}`)
 
-	// Database details
-	common.DbConfig.Adapter = "` + adap.Name() + `"
-	common.DbConfig.Host = "` + adap.DBHost() + `"
-	common.DbConfig.Username = "` + adap.DBUsername() + `"
-	common.DbConfig.Password = "` + adap.DBPassword() + `"
-	common.DbConfig.Dbname = "` + adap.DBName() + `"
-	common.DbConfig.Port = "` + adap.DBPort() + `" // You probably won't need to change this
-
-	// Test Database details
-	common.DbConfig.TestAdapter = "` + adap.Name() + `"
-	common.DbConfig.TestHost = ""
-	common.DbConfig.TestUsername = ""
-	common.DbConfig.TestPassword = ""
-	common.DbConfig.TestDbname = "" // The name of the test database, leave blank to disable. DON'T USE YOUR PRODUCTION DATABASE FOR THIS. LEAVE BLANK IF YOU DON'T KNOW WHAT THIS MEANS.
-	common.DbConfig.TestPort = ""
-
-	// Limiters
-	common.Config.MaxRequestSize = 5 * common.Megabyte
-
-	// Caching
-	common.Config.CacheTopicUser = common.CACHE_STATIC
-	common.Config.UserCacheCapacity = 120 // The max number of users held in memory
-	common.Config.TopicCacheCapacity = 200 // The max number of topics held in memory
-
-	// Email
-	common.Config.SMTPServer = ""
-	common.Config.SMTPUsername = ""
-	common.Config.SMTPPassword = ""
-	common.Config.SMTPPort = "25"
-
-	// Misc
-	common.Config.DefaultRoute = "routes.TopicList"
-	common.Config.DefaultGroup = 3 // Should be a setting in the database
-	common.Config.ActivationGroup = 5 // Should be a setting in the database
-	common.Config.StaffCSS = "staff_post"
-	common.Config.DefaultForum = 2
-	common.Config.MinifyTemplates = true
-	common.Config.BuildSlugs = true
-	common.Config.ServerCount = 1 // Experimental: Enable Cross-Server Synchronisation and several other features
-
-	//common.Config.Noavatar = "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png"
-	common.Config.Noavatar = "https://api.adorable.io/avatars/285/{id}@{site_url}.png"
-	common.Config.ItemsPerPage = 25
-
-	// Developer flags
-	common.Dev.DebugMode = true
-	//common.Dev.SuperDebug = true
-	//common.Dev.TemplateDebug = true
-	//common.Dev.Profiling = true
-	//common.Dev.TestDB = true
-}
-`)
-
+	//"Noavatar": "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png" Maybe allow this sort of syntax?
 	fmt.Println("Opening the configuration file")
-	configFile, err := os.Create("./config/config.go")
+	configFile, err := os.Create("./config/config.json")
 	if err != nil {
 		abortError(err)
 		return

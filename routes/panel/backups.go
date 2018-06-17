@@ -11,11 +11,10 @@ import (
 )
 
 func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL string) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "backups", "backups")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_backups")
 
 	if backupURL != "" {
 		// We don't want them trying to break out of this directory, it shouldn't hurt since it's a super admin, but it's always good to practice good security hygiene, especially if this is one of many instances on a managed server not controlled by the superadmin/s
@@ -25,7 +24,7 @@ func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL
 		if ext == ".sql" {
 			info, err := os.Stat("./backups/" + backupURL)
 			if err != nil {
-				return common.NotFound(w, r, header)
+				return common.NotFound(w, r, basePage.Header)
 			}
 			// TODO: Change the served filename to gosora_backup_%timestamp%.sql, the time the file was generated, not when it was modified aka what the name of it should be
 			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.sql")
@@ -34,7 +33,7 @@ func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL
 			http.ServeFile(w, r, "./backups/"+backupURL)
 			return nil
 		}
-		return common.NotFound(w, r, header)
+		return common.NotFound(w, r, basePage.Header)
 	}
 
 	var backupList []common.BackupItem
@@ -50,6 +49,6 @@ func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL
 		backupList = append(backupList, common.BackupItem{backupFile.Name(), backupFile.ModTime()})
 	}
 
-	pi := common.PanelBackupPage{&common.BasePanelPage{header, stats, "backups", common.ReportForumID}, backupList}
+	pi := common.PanelBackupPage{basePage, backupList}
 	return panelRenderTemplate("panel_backups", w, r, user, &pi)
 }

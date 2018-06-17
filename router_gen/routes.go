@@ -40,12 +40,15 @@ func buildUserRoutes() {
 	userGroup := newRouteGroup("/user/")
 	userGroup.Routes(
 		View("routes.ViewProfile", "/user/").LitBefore("req.URL.Path += extraData"),
-		MemberView("routes.AccountEditCritical", "/user/edit/critical/"),
-		Action("routes.AccountEditCriticalSubmit", "/user/edit/critical/submit/"), // TODO: Full test this
-		MemberView("routes.AccountEditAvatar", "/user/edit/avatar/"),
+		MemberView("routes.AccountEdit", "/user/edit/"),
+		MemberView("routes.AccountEditPassword", "/user/edit/password/"),
+		Action("routes.AccountEditPasswordSubmit", "/user/edit/password/submit/"), // TODO: Full test this
 		UploadAction("routes.AccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("int(common.Config.MaxRequestSize)"),
-		MemberView("routes.AccountEditUsername", "/user/edit/username/"),
 		Action("routes.AccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
+		MemberView("routes.AccountEditMFA", "/user/edit/mfa/"),
+		MemberView("routes.AccountEditMFASetup", "/user/edit/mfa/setup/"),
+		Action("routes.AccountEditMFASetupSubmit", "/user/edit/mfa/setup/submit/"),
+		Action("routes.AccountEditMFADisableSubmit", "/user/edit/mfa/disable/submit/"),
 		MemberView("routes.AccountEditEmail", "/user/edit/email/"),
 		Action("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData"),
 	)
@@ -95,7 +98,6 @@ func buildReplyRoutes() {
 
 // TODO: Move these into /user/?
 func buildProfileReplyRoutes() {
-	//router.HandleFunc("/user/edit/submit/", routeLogout) // routeLogout? what on earth? o.o
 	pReplyGroup := newRouteGroup("/profile/")
 	pReplyGroup.Routes(
 		Action("routes.ProfileReplyCreateSubmit", "/profile/reply/create/"), // TODO: Add /submit/ to the end
@@ -122,6 +124,8 @@ func buildAccountRoutes() {
 		View("routes.AccountRegister", "/accounts/create/"),
 		Action("routes.AccountLogout", "/accounts/logout/"),
 		AnonAction("routes.AccountLoginSubmit", "/accounts/login/submit/"), // TODO: Guard this with a token, maybe the IP hashed with a rotated key?
+		View("routes.AccountLoginMFAVerify", "/accounts/mfa_verify/"),
+		AnonAction("routes.AccountLoginMFAVerifySubmit", "/accounts/mfa_verify/submit/"), // We have logic in here which filters out regular guests
 		AnonAction("routes.AccountRegisterSubmit", "/accounts/create/submit/"),
 	)
 	addRouteGroup(accReplyGroup)
@@ -172,9 +176,9 @@ func buildPanelRoutes() {
 		Action("routePanelPluginsDeactivate", "/panel/plugins/deactivate/", "extraData"),
 		Action("routePanelPluginsInstall", "/panel/plugins/install/", "extraData"),
 
-		View("routePanelUsers", "/panel/users/"),
-		View("routePanelUsersEdit", "/panel/users/edit/", "extraData"),
-		Action("routePanelUsersEditSubmit", "/panel/users/edit/submit/", "extraData"),
+		View("panel.Users", "/panel/users/"),
+		View("panel.UsersEdit", "/panel/users/edit/", "extraData"),
+		Action("panel.UsersEditSubmit", "/panel/users/edit/submit/", "extraData"),
 
 		View("panel.AnalyticsViews", "/panel/analytics/views/").Before("ParseForm"),
 		View("panel.AnalyticsRoutes", "/panel/analytics/routes/").Before("ParseForm"),

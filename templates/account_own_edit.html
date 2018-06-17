@@ -1,0 +1,31 @@
+{{template "header.html" . }}
+<div id="account_dashboard" class="colstack account">
+	{{template "account_menu.html" . }}
+	<main class="colstack_right">
+		<form id="avatar_form" action="/user/edit/avatar/submit/?session={{.CurrentUser.Session}}" method="post" enctype="multipart/form-data"></form>
+		<div class="coldyn_block">
+		<div id="dash_left" class="coldyn_item">
+			<div class="rowitem">
+				<span id="dash_saved">Saved</span>
+				<!--<span id="dash_username">{{.CurrentUser.Name}}</span>-->
+				<span id="dash_username">
+					<form id="dash_username_form" action="/user/edit/username/submit/?session={{.CurrentUser.Session}}" method="post"></form>
+					<input form="dash_username_form" name="account-new-username" value="{{.CurrentUser.Name}}" />
+					<button form="dash_username_form" class="formbutton">Save</button>
+				</span>
+				<img src="{{.CurrentUser.Avatar}}" height="128px" />
+				<span id="dash_avatar_buttons">
+					<input form="avatar_form" id="select_avatar" name="account-avatar" type="file" required style="display: none;" />
+					<label for="select_avatar" class="formbutton">Select</label>
+					<button form="avatar_form" name="account-button" class="formbutton">{{lang "account_avatar_update_button"}}</button>
+				</span>
+			</div>
+		</div>
+		<div id="dash_right" class="coldyn_item">
+			<div class="rowitem">{{if not .MFASetup}}<a href="/user/edit/mfa/setup/">{{lang "account_dash_2fa_setup"}}</a>{{else}}<a href="/user/edit/mfa/">{{lang "account_dash_2fa_manage"}}</a>{{end}} <span class="dash_security">{{lang "account_dash_security_notice"}}</span></div>
+			<div class="rowitem">{{lang "account_dash_next_level"}} <span class="account_soon">{{lang "account_coming_soon"}}</span></div>
+		</div>
+		</div>
+	</main>
+</div>
+{{template "footer.html" . }}

@@ -416,9 +416,9 @@ func (router *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 	counters.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
 }
 
-// TODO: Pass the default route or config struct to the router rather than accessing it via a package global
-// TODO: SetDefaultRoute
-// TODO: GetDefaultRoute
+// TODO: Pass the default path or config struct to the router rather than accessing it via a package global
+// TODO: SetDefaultPath
+// TODO: GetDefaultPath
 func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Redirect www. requests to the right place
 	if req.Host == "www." + common.Site.Host {
@@ -455,6 +455,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// TODO: Flag any requests which has a dot with anything but a number after that
 	if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") || strings.Contains(lowerPath,".action") {
 		router.SuspiciousRequest(req,"")
+	}
+
+	// Indirect the default route onto a different one
+	if req.URL.Path == "/" {
+		req.URL.Path = common.Config.DefaultPath
 	}
 	
 	var prefix, extraData string
@@ -671,21 +676,8 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					return*/
 			}
-			if extraData != "" {
-				common.NotFound(w,req,nil)
-				return
-			}
-
-			handle, ok := RouteMap[common.Config.DefaultRoute]
-			if !ok {
-				// TODO: Make this a startup error not a runtime one
-				router.requestLogger.Print("Unable to find the default route")
-				common.NotFound(w,req,nil)
-				return
-			}
-			counters.RouteViewCounter.Bump(routeMapEnum[common.Config.DefaultRoute])
-
-			handle.(func(http.ResponseWriter, *http.Request, common.User) common.RouteError)(w,req,user)
+			common.NotFound(w,req,nil)
+			return
 		default:
 			// A fallback for the routes which haven't been converted to the new router yet or plugins
 			router.RLock()

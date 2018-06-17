@@ -121,7 +121,7 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 		group.CanSee = []int{}
 		for _, fid := range fids {
 			DebugDetailf("Forum #%+v\n", fid)
-			var forumPerms = make(map[int]*ForumPerms)
+			var forumPerms map[int]*ForumPerms
 			var ok bool
 			if fid%2 == 0 {
 				fps.evenLock.RLock()

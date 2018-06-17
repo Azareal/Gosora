@@ -1,0 +1,30 @@
+.sidebar, #dash_saved {
+	display: none;
+}
+#account_dashboard .colstack_right .coldyn_block {
+	display: flex;
+}
+#dash_left .rowitem {
+	border: 1px solid hsl(0,0%,85%);
+}
+#dash_username {
+	display: flex;
+}
+#dash_avatar_buttons {
+	display: flex;
+}
+#dash_right {
+	width: 100%;
+	margin-right: 6px;
+}
+#dash_right .rowitem {
+	margin-left: 10px;
+	border: 1px solid hsl(0,0%,85%);
+}
+#dash_right .rowitem:not(last-child) {
+	margin-bottom: 8px;
+}
+.account_soon, .dash_security {
+	font-size: 14px;
+	color: maroon;
+}

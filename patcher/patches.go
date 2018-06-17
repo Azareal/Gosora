@@ -13,6 +13,7 @@ func init() {
 	addPatch(2, patch2)
 	addPatch(3, patch3)
 	addPatch(4, patch4)
+	addPatch(5, patch5)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -439,6 +440,67 @@ func patch4(scanner *bufio.Scanner) error {
 		},
 		[]qgen.DBTableKey{
 			qgen.DBTableKey{"pid", "primary"},
+		},
+	))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func patch5(scanner *bufio.Scanner) error {
+	// ! Don't reuse this function blindly, it doesn't escape apostrophes
+	var replaceTextWhere = func(replaceThis string, withThis string) error {
+		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	}
+
+	err := replaceTextWhere("routePanelUsers", "panel.Users")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelUsersEdit", "panel.UsersEdit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routePanelUsersEditSubmit", "panel.UsersEditSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routes.AccountEditCritical", "routes.AccountEditPassword")
+	if err != nil {
+		return err
+	}
+
+	err = replaceTextWhere("routes.AccountEditCriticalSubmit", "routes.AccountEditPasswordSubmit")
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.SimpleUpdate("menu_items", "path = '/user/edit/'", "path = '/user/edit/critical/'"))
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.CreateTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"secret", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"scratch1", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch2", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch3", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch4", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch5", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch6", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch7", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch8", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"uid", "primary"},
 		},
 	))
 	if err != nil {

@@ -11,11 +11,10 @@ import (
 )
 
 func LogsRegs(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "registration_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_registration_logs")
 
 	logCount := common.RegLogs.GlobalCount()
 	page, _ := strconv.Atoi(r.FormValue("page"))
@@ -32,7 +31,7 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelRegLogsPage{&common.BasePanelPage{header, stats, "logs", common.ReportForumID}, llist, common.Paginator{pageList, page, lastPage}}
+	pi := common.PanelRegLogsPage{basePage, llist, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_reglogs", w, r, user, &pi)
 }
 
@@ -102,11 +101,10 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 }
 
 func LogsMod(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "mod_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_mod_logs")
 
 	logCount := common.ModLogs.GlobalCount()
 	page, _ := strconv.Atoi(r.FormValue("page"))
@@ -125,16 +123,15 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user common.User) common.Ro
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{&common.BasePanelPage{header, stats, "logs", common.ReportForumID}, llist, common.Paginator{pageList, page, lastPage}}
+	pi := common.PanelLogsPage{basePage, llist, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_modlogs", w, r, user, &pi)
 }
 
 func LogsAdmin(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "admin_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_admin_logs")
 
 	logCount := common.ModLogs.GlobalCount()
 	page, _ := strconv.Atoi(r.FormValue("page"))
@@ -153,6 +150,6 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user common.User) common.
 	}
 
 	pageList := common.Paginate(logCount, perPage, 5)
-	pi := common.PanelLogsPage{&common.BasePanelPage{header, stats, "logs", common.ReportForumID}, llist, common.Paginator{pageList, page, lastPage}}
+	pi := common.PanelLogsPage{basePage, llist, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_adminlogs", w, r, user, &pi)
 }

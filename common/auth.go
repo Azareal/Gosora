@@ -7,7 +7,10 @@
 package common
 
 import (
+	"crypto/sha256"
+	"crypto/subtle"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"strconv"
@@ -35,6 +38,8 @@ var ErrTooFewHashParams = errors.New("You haven't provided enough hash parameter
 // ErrPasswordTooLong is silly, but we don't want bcrypt to bork on us
 var ErrPasswordTooLong = errors.New("The password you selected is too long")
 var ErrWrongPassword = errors.New("That's not the correct password.")
+var ErrBadMFAToken = errors.New("I'm not sure where you got that from, but that's not a valid 2FA token")
+var ErrWrongMFAToken = errors.New("That 2FA token isn't correct")
 var ErrSecretError = errors.New("There was a glitch in the system. Please contact your local administrator.")
 var ErrNoUserByName = errors.New("We couldn't find an account with that username.")
 var DefaultHashAlgo = "bcrypt" // Override this in the configuration file, not here
@@ -58,13 +63,16 @@ var HashPrefixes = map[string]string{
 
 // AuthInt is the main authentication interface.
 type AuthInt interface {
-	Authenticate(username string, password string) (uid int, err error)
+	Authenticate(username string, password string) (uid int, err error, requiresExtraAuth bool)
+	ValidateMFAToken(mfaToken string, uid int) error
 	Logout(w http.ResponseWriter, uid int)
 	ForceLogout(uid int) error
 	SetCookies(w http.ResponseWriter, uid int, session string)
+	SetProvisionalCookies(w http.ResponseWriter, uid int, session string, signedSession string) // To avoid logging someone in until they've passed the MFA check
 	GetCookies(r *http.Request) (uid int, session string, err error)
 	SessionCheck(w http.ResponseWriter, r *http.Request) (user *User, halt bool)
 	CreateSession(uid int) (session string, err error)
+	CreateProvisionalSession(uid int) (provSession string, signedSession string, err error) // To avoid logging someone in until they've passed the MFA check
 }
 
 // DefaultAuth is the default authenticator used by Gosora, may be swapped with an alternate authenticator in some situations. E.g. To support LDAP.
@@ -85,26 +93,64 @@ func NewDefaultAuth() (*DefaultAuth, error) {
 }
 
 // Authenticate checks if a specific username and password is valid and returns the UID for the corresponding user, if so. Otherwise, a user safe error.
+// IF MFA is enabled, then pass it back a flag telling the caller that authentication isn't complete yet
 // TODO: Find a better way of handling errors we don't want to reach the user
-func (auth *DefaultAuth) Authenticate(username string, password string) (uid int, err error) {
+func (auth *DefaultAuth) Authenticate(username string, password string) (uid int, err error, requiresExtraAuth bool) {
 	var realPassword, salt string
 	err = auth.login.QueryRow(username).Scan(&uid, &realPassword, &salt)
 	if err == ErrNoRows {
-		return 0, ErrNoUserByName
+		return 0, ErrNoUserByName, false
 	} else if err != nil {
 		LogError(err)
-		return 0, ErrSecretError
+		return 0, ErrSecretError, false
 	}
 
 	err = CheckPassword(realPassword, password, salt)
 	if err == ErrMismatchedHashAndPassword {
-		return 0, ErrWrongPassword
+		return 0, ErrWrongPassword, false
 	} else if err != nil {
 		LogError(err)
-		return 0, ErrSecretError
+		return 0, ErrSecretError, false
 	}
 
-	return uid, nil
+	_, err = MFAstore.Get(uid)
+	if err != sql.ErrNoRows && err != nil {
+		LogError(err)
+		return 0, ErrSecretError, false
+	}
+	if err != ErrNoRows {
+		return uid, nil, true
+	}
+
+	return uid, nil, false
+}
+
+func (auth *DefaultAuth) ValidateMFAToken(mfaToken string, uid int) error {
+	mfaItem, err := MFAstore.Get(uid)
+	if err != sql.ErrNoRows && err != nil {
+		LogError(err)
+		return ErrSecretError
+	}
+	if err != ErrNoRows {
+		ok, err := VerifyGAuthToken(mfaItem.Secret, mfaToken)
+		if err != nil {
+			return ErrBadMFAToken
+		}
+		if ok {
+			return nil
+		}
+		for i, scratch := range mfaItem.Scratch {
+			if subtle.ConstantTimeCompare([]byte(scratch), []byte(mfaToken)) == 1 {
+				err = mfaItem.BurnScratch(i)
+				if err != nil {
+					LogError(err)
+					return ErrSecretError
+				}
+				return nil
+			}
+		}
+	}
+	return ErrWrongMFAToken
 }
 
 // ForceLogout logs the user out of every computer, not just the one they logged out of
@@ -138,6 +184,17 @@ func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session stri
 	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: int(Year)}
 	http.SetCookie(w, &cookie)
 	cookie = http.Cookie{Name: "session", Value: session, Path: "/", MaxAge: int(Year)}
+	http.SetCookie(w, &cookie)
+}
+
+// TODO: Set the cookie domain
+// SetProvisionalCookies sets the two cookies required for guests to be recognised as having passed the initial login but not having passed the additional checks (e.g. multi-factor authentication)
+func (auth *DefaultAuth) SetProvisionalCookies(w http.ResponseWriter, uid int, provSession string, signedSession string) {
+	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: int(Year)}
+	http.SetCookie(w, &cookie)
+	cookie = http.Cookie{Name: "provSession", Value: provSession, Path: "/", MaxAge: int(Year)}
+	http.SetCookie(w, &cookie)
+	cookie = http.Cookie{Name: "signedSession", Value: signedSession, Path: "/", MaxAge: int(Year)}
 	http.SetCookie(w, &cookie)
 }
 
@@ -200,6 +257,19 @@ func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 		ucache.Remove(uid)
 	}
 	return session, nil
+}
+
+func (auth *DefaultAuth) CreateProvisionalSession(uid int) (provSession string, signedSession string, err error) {
+	provSession, err = GenerateSafeString(SessionLength)
+	if err != nil {
+		return "", "", err
+	}
+
+	h := sha256.New()
+	h.Write([]byte(SessionSigningKeyBox.Load().(string)))
+	h.Write([]byte(provSession))
+	h.Write([]byte(strconv.Itoa(uid)))
+	return provSession, hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func CheckPassword(realPassword string, password string, salt string) (err error) {
@@ -274,11 +344,20 @@ func Argon2GeneratePassword(password string) (hash string, salt string, err erro
 }
 */
 
-// TODO: Not sure if these work, test them with Google Authenticator
+// TODO: Test this with Google Authenticator proper
+func FriendlyGAuthSecret(secret string) (out string) {
+	for i, char := range secret {
+		out += string(char)
+		if (i+1)%4 == 0 {
+			out += " "
+		}
+	}
+	return strings.TrimSpace(out)
+}
 func GenerateGAuthSecret() (string, error) {
-	return GenerateSafeString(24)
+	return GenerateStd32SafeString(14)
 }
 func VerifyGAuthToken(secret string, token string) (bool, error) {
 	trueToken, err := gauth.GetTOTPToken(secret)
-	return trueToken == token, err
+	return subtle.ConstantTimeCompare([]byte(trueToken), []byte(token)) == 1, err
 }

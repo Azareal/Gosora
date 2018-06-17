@@ -8,6 +8,7 @@ package common
 
 import (
 	"crypto/rand"
+	"encoding/base32"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -41,7 +42,7 @@ func (version *Version) String() (out string) {
 	return
 }
 
-// GenerateSafeString is for generating a cryptographically secure set of random bytes...
+// GenerateSafeString is for generating a cryptographically secure set of random bytes which is base64 encoded and safe for URLs
 // TODO: Write a test for this
 func GenerateSafeString(length int) (string, error) {
 	rb := make([]byte, length)
@@ -50,6 +51,17 @@ func GenerateSafeString(length int) (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(rb), nil
+}
+
+// GenerateStd32SafeString is for generating a cryptographically secure set of random bytes which is base32 encoded
+// ? - Safe for URLs? Mostly likely due to the small range of characters
+func GenerateStd32SafeString(length int) (string, error) {
+	rb := make([]byte, length)
+	_, err := rand.Read(rb)
+	if err != nil {
+		return "", err
+	}
+	return base32.StdEncoding.EncodeToString(rb), nil
 }
 
 // TODO: Write a test for this
@@ -145,6 +157,27 @@ func ConvertByteInUnit(bytes float64, unit string) (count float64) {
 		count = 0.1
 	}
 	return
+}
+
+// TODO: Write a test for this
+func FriendlyUnitToBytes(quantity int, unit string) (bytes int, err error) {
+	switch unit {
+	case "PB":
+		bytes = quantity * Petabyte
+	case "TB":
+		bytes = quantity * Terabyte
+	case "GB":
+		bytes = quantity * Gigabyte
+	case "MB":
+		bytes = quantity * Megabyte
+	case "KB":
+		bytes = quantity * Kilobyte
+	case "":
+		// Do nothing
+	default:
+		return bytes, errors.New("Unknown unit")
+	}
+	return bytes, nil
 }
 
 // TODO: Write a test for this

@@ -62,25 +62,24 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	/*
-		qgen.Install.CreateTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
-			[]qgen.DBTableColumn{
-				qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
-				qgen.DBTableColumn{"secret", "varchar", 100, false, false, ""},
-				qgen.DBTableColumn{"scratch1", "varchar", 50, false, false, ""},
-				qgen.DBTableColumn{"scratch2", "varchar", 50, false, false, ""},
-				qgen.DBTableColumn{"scratch3", "varchar", 50, false, false, ""},
-				qgen.DBTableColumn{"scratch4", "varchar", 50, false, false, ""},
-				qgen.DBTableColumn{"scratch5", "varchar", 50, false, false, ""},
-				qgen.DBTableColumn{"scratch6", "varchar", 50, false, false, ""},
-				qgen.DBTableColumn{"scratch7", "varchar", 50, false, false, ""},
-				qgen.DBTableColumn{"scratch8", "varchar", 50, false, false, ""},
-			},
-			[]qgen.DBTableKey{
-				qgen.DBTableKey{"uid", "primary"},
-			},
-		)
-	*/
+	qgen.Install.CreateTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"secret", "varchar", 100, false, false, ""},
+			qgen.DBTableColumn{"scratch1", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch2", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch3", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch4", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch5", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch6", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch7", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"scratch8", "varchar", 50, false, false, ""},
+			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"uid", "primary"},
+		},
+	)
 
 	// What should we do about global penalties? Put them on the users table for speed? Or keep them here?
 	// Should we add IP Penalties? No, that's a stupid idea, just implement IP Bans properly. What about shadowbans?

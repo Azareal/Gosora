@@ -90,8 +90,14 @@ $(document).ready(function(){
 
 	// Move the alerts under the first header
 	let colSel = $(".colstack_right .colstack_head:first");
+	let colSelAlt = $(".colstack_right .colstack_item:first");
+	let colSelAltAlt = $(".colstack_right .coldyn_block:first");
 	if(colSel.length > 0) {
 		$('.alert').insertAfter(colSel);
+	} else if (colSelAlt.length > 0) {
+		$('.alert').insertBefore(colSelAlt);
+	} else if (colSelAltAlt.length > 0) {
+		$('.alert').insertBefore(colSelAltAlt);
 	} else {
 		$('.alert').insertAfter(".rowhead:first");
 	}

@@ -1,7 +1,11 @@
 package common
 
 import (
+	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"log"
+	"strconv"
 	"strings"
 )
 
@@ -9,13 +13,13 @@ import (
 var Site = &site{Name: "Magical Fairy Land", Language: "english"}
 
 // DbConfig holds the database configuration
-var DbConfig = dbConfig{Host: "localhost"}
+var DbConfig = &dbConfig{Host: "localhost"}
 
 // Config holds the more technical settings
-var Config config
+var Config = new(config)
 
 // Dev holds build flags and other things which should only be modified during developers or to gather additional test data
-var Dev devConfig
+var Dev = new(devConfig)
 
 type site struct {
 	ShortName    string
@@ -28,6 +32,8 @@ type site struct {
 	EnableEmails bool
 	HasProxy     bool
 	Language     string
+
+	MaxRequestSize int // Alias, do not modify, will be overwritten
 }
 
 type dbConfig struct {
@@ -53,9 +59,11 @@ type config struct {
 	SslFullchain string
 	HashAlgo     string // Defaults to bcrypt, and in the future, possibly something stronger
 
+	MaxRequestSizeStr  string
 	MaxRequestSize     int
-	CacheTopicUser     int
+	UserCache          string
 	UserCacheCapacity  int
+	TopicCache         string
 	TopicCacheCapacity int
 
 	SMTPServer   string
@@ -64,9 +72,9 @@ type config struct {
 	SMTPPort     string
 	//SMTPEnableTLS bool
 
-	DefaultRoute    string
-	DefaultGroup    int
-	ActivationGroup int
+	DefaultPath     string
+	DefaultGroup    int    // Should be a setting in the database
+	ActivationGroup int    // Should be a setting in the database
 	StaffCSS        string // ? - Move this into the settings table? Might be better to implement this as Group CSS
 	DefaultForum    int    // The forum posts go in by default, this used to be covered by the Uncategorised Forum, but we want to replace it with a more robust solution. Make this a setting?
 	MinifyTemplates bool
@@ -87,7 +95,35 @@ type devConfig struct {
 	TestDB        bool
 }
 
-func ProcessConfig() error {
+// configHolder is purely for having a big struct to unmarshal data into
+type configHolder struct {
+	Site     *site
+	Config   *config
+	Database *dbConfig
+	Dev      *devConfig
+}
+
+func LoadConfig() error {
+	data, err := ioutil.ReadFile("./config/config.json")
+	if err != nil {
+		return err
+	}
+
+	var config configHolder
+	err = json.Unmarshal(data, &config)
+	if err != nil {
+		return err
+	}
+
+	Site = config.Site
+	Config = config.Config
+	DbConfig = config.Database
+	Dev = config.Dev
+
+	return nil
+}
+
+func ProcessConfig() (err error) {
 	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
 	Site.Host = Site.URL
 	if Site.Port != "80" && Site.Port != "443" {
@@ -96,6 +132,37 @@ func ProcessConfig() error {
 		Site.URL = strings.TrimSuffix(Site.URL, ":")
 		Site.URL = Site.URL + ":" + Site.Port
 	}
+	if Config.DefaultPath == "" {
+		Config.DefaultPath = "/topics/"
+	}
+
+	// TODO: Bump the size of max request size up, if it's too low
+	Config.MaxRequestSize, err = strconv.Atoi(Config.MaxRequestSizeStr)
+	if err != nil {
+		reqSizeStr := Config.MaxRequestSizeStr
+		if len(reqSizeStr) < 3 {
+			return errors.New("Invalid unit for MaxRequestSizeStr")
+		}
+
+		quantity, err := strconv.Atoi(reqSizeStr[:len(reqSizeStr)-2])
+		if err != nil {
+			return errors.New("Unable to convert quantity to integer in MaxRequestSizeStr, found " + reqSizeStr[:len(reqSizeStr)-2])
+		}
+		unit := reqSizeStr[len(reqSizeStr)-2:]
+
+		// TODO: Make it a named error just in case new errors are added in here in the future
+		Config.MaxRequestSize, err = FriendlyUnitToBytes(quantity, unit)
+		if err != nil {
+			return errors.New("Unable to recognise unit for MaxRequestSizeStr, found " + unit)
+		}
+	}
+	if Dev.DebugMode {
+		log.Print("Set MaxRequestSize to ", Config.MaxRequestSize)
+	}
+	if Config.MaxRequestSize <= 0 {
+		log.Fatal("MaxRequestSize should not be zero or below")
+	}
+	Site.MaxRequestSize = Config.MaxRequestSize
 
 	// ? Find a way of making these unlimited if zero? It might rule out some optimisations, waste memory, and break layouts
 	if Config.MaxTopicTitleLength == 0 {

@@ -1,5 +1,23 @@
 :root {
 	--darkest-background: #222222;
+	--second-dark-background: #292929;
+	--third-dark-background: #333333;
+}
+
+@font-face {
+  font-family: 'Font Awesome 5 Free';
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fontawesome-5.0.13/webfonts/fa-regular-400.eot");
+  src: url("../fontawesome-5.0.13/webfonts/fa-regular-400.eot?#iefix") format("embedded-opentype"), url("../fontawesome-5.0.13/webfonts/fa-regular-400.woff2") format("woff2"), url("../fontawesome-5.0.13/webfonts/fa-regular-400.woff") format("woff"), url("../fontawesome-5.0.13/webfonts/fa-regular-400.ttf") format("truetype"), url("../fontawesome-5.0.13/webfonts/fa-regular-400.svg#fontawesome") format("svg");
+}
+
+@font-face {
+  font-family: 'Font Awesome 5 Free';
+  font-style: normal;
+  font-weight: 900;
+  src: url("../fontawesome-5.0.13/webfonts/fa-solid-900.eot");
+  src: url("../fontawesome-5.0.13/webfonts/fa-solid-900.eot?#iefix") format("embedded-opentype"), url("../fontawesome-5.0.13/webfonts/fa-solid-900.woff2") format("woff2"), url("../fontawesome-5.0.13/webfonts/fa-solid-900.woff") format("woff"), url("../fontawesome-5.0.13/webfonts/fa-solid-900.ttf") format("truetype"), url("../fontawesome-5.0.13/webfonts/fa-solid-900.svg#fontawesome") format("svg");
 }
 
 * {
@@ -67,7 +85,8 @@ li a {
 .user_box {
 	display: flex;
 	flex-direction: row;
-	background-color: #333333;
+	border-radius: 3px;
+	background-color: var(--third-dark-background);
 	padding-top: 11px;
 	padding-bottom: 11px;
 	padding-left: 12px;
@@ -93,7 +112,7 @@ li a {
 	clear: both;
 }
 #back {
-	background: #333333;
+	background: var(--third-dark-background);
 	padding: 24px;
 	padding-top: 12px;
 	clear: both;
@@ -107,10 +126,30 @@ li a {
 	width: 320px;
 }
 .rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem {
+	border-radius: 3px;
 	background-color: #444444;
 	display: flex;
 	padding: 12px;
 	margin-left: 12px;
+}
+.colstack_right .colstack_item.the_form {
+	border-radius: 3px;
+	background-color: #444444;
+	padding: 16px;
+}
+.colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem {
+	border-radius: 3px;
+	background-color: #444444;
+	padding: 16px;
+}
+.colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem:not(:last-child) {
+	margin-bottom: 8px;
+}
+.colstack_right .colstack_head:not(:first-child) {
+	margin-top: 16px;
+}
+.rowmsg {
+	margin-bottom: 8px;
 }
 
 h1, h3 {
@@ -146,6 +185,7 @@ h1, h3 {
 	margin-bottom: 8px;
 }
 .topic_row {
+	border-radius: 3px;
 	background-color: #444444;
 	display: flex;
 }
@@ -212,6 +252,35 @@ h1, h3 {
 	display: none;
 }
 
+input, select, button, .formbutton, textarea {
+	border-radius: 3px;
+	background: rgb(90,90,90);
+	color: rgb(200,200,200);
+	border: none;
+	padding: 4px;
+}
+input:focus, select:focus, textarea:focus {
+	outline: 1px solid rgb(120,120,120);
+}
+input {
+	background-image: url(./fa-svg/pencil-alt.svg);
+	background-size: 12px;
+	background-repeat: no-repeat;
+	background-position: right 10px bottom 9px;
+	background-position-x: right 10px;
+	padding: 5px;
+	padding-bottom: 3px;
+	font-size: 16px;
+}
+button, .formbutton {
+	background: rgb(110,110,210);
+	color: rgb(250,250,250);
+	font-family: "Segoe UI";
+	font-size: 15px;
+	text-align: center;
+	padding: 6px;
+}
+
 .pageset {
     display: flex;
     margin-top: 8px;
@@ -219,9 +288,10 @@ h1, h3 {
 
 .pageitem {
 	font-size: 17px;
+	border-radius: 3px;
 	background-color: #444444;
-    padding: 7px;
-    margin-right: 6px;
+	padding: 7px;
+	margin-right: 6px;
 }
 
 #prevFloat, #nextFloat {
@@ -280,7 +350,7 @@ h1, h3 {
 
 @media(min-width: 1010px) {
 	.container {
-		background-color: #292929;
+		background-color: var(--second-dark-background);
 	}
 	#back {
 		width: 1000px;

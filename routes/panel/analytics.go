@@ -108,17 +108,15 @@ func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64
 }
 
 func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *common.User) (*common.BasePanelPage, common.RouteError) {
-	header, stats, ferr := common.PanelUserCheck(w, r, user)
+	basePage, ferr := buildBasePage(w, r, user, "analytics", "analytics")
 	if ferr != nil {
 		return nil, ferr
 	}
 
-	header.Title = common.GetTitlePhrase("panel_analytics")
-	header.AddSheet("chartist/chartist.min.css")
-	header.AddScript("chartist/chartist.min.js")
-	header.AddScript("analytics.js")
-
-	return &common.BasePanelPage{header, stats, "analytics", common.ReportForumID}, nil
+	basePage.AddSheet("chartist/chartist.min.css")
+	basePage.AddScript("chartist/chartist.min.js")
+	basePage.AddScript("analytics.js")
+	return basePage, nil
 }
 
 func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -497,12 +495,10 @@ func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
 }
 
 func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_analytics")
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -537,17 +533,15 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) c
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{&common.BasePanelPage{header, stats, "analytics", common.ReportForumID}, forumItems, timeRange.Range}
+	pi := common.PanelAnalyticsAgentsPage{basePage, forumItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_forums", w, r, user, &pi)
 }
 
 func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_analytics")
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -573,17 +567,15 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) c
 		})
 	}
 
-	pi := common.PanelAnalyticsRoutesPage{&common.BasePanelPage{header, stats, "analytics", common.ReportForumID}, routeItems, timeRange.Range}
+	pi := common.PanelAnalyticsRoutesPage{basePage, routeItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_routes", w, r, user, &pi)
 }
 
 func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_analytics")
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -614,17 +606,15 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{&common.BasePanelPage{header, stats, "analytics", common.ReportForumID}, agentItems, timeRange.Range}
+	pi := common.PanelAnalyticsAgentsPage{basePage, agentItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_agents", w, r, user, &pi)
 }
 
 func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_analytics")
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -655,17 +645,15 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) 
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{&common.BasePanelPage{header, stats, "analytics", common.ReportForumID}, systemItems, timeRange.Range}
+	pi := common.PanelAnalyticsAgentsPage{basePage, systemItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_systems", w, r, user, &pi)
 }
 
 func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_analytics")
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -697,17 +685,15 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{&common.BasePanelPage{header, stats, "analytics", common.ReportForumID}, langItems, timeRange.Range}
+	pi := common.PanelAnalyticsAgentsPage{basePage, langItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_langs", w, r, user, &pi)
 }
 
 func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_analytics")
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -733,6 +719,6 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{&common.BasePanelPage{header, stats, "analytics", common.ReportForumID}, refItems, timeRange.Range}
+	pi := common.PanelAnalyticsAgentsPage{basePage, refItems, timeRange.Range}
 	return panelRenderTemplate("panel_analytics_referrers", w, r, user, &pi)
 }

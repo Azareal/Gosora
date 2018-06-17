@@ -21,7 +21,6 @@ import (
 
 	"./common"
 	"./common/counters"
-	"./config"
 	"./query_gen/lib"
 	"./routes"
 	"github.com/fsnotify/fsnotify"
@@ -106,6 +105,10 @@ func afterDBInit() (err error) {
 	}
 
 	log.Print("Initialising the stores")
+	common.MFAstore, err = common.NewSQLMFAStore(acc)
+	if err != nil {
+		return err
+	}
 	common.Pages, err = common.NewDefaultPageStore(acc)
 	if err != nil {
 		return err
@@ -207,7 +210,6 @@ func main() {
 			return
 		}
 	}()*/
-	config.Config()
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()
@@ -227,6 +229,11 @@ func main() {
 	}
 	common.JSTokenBox.Store(jsToken)
 
+	log.Print("Loading the configuration data")
+	err = common.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Print("Processing configuration data")
 	err = common.ProcessConfig()
 	if err != nil {
@@ -344,6 +351,7 @@ func main() {
 		}
 	}
 
+	// TODO: Write tests for these
 	// Run this goroutine once every half second
 	halfSecondTicker := time.NewTicker(time.Second / 2)
 	secondTicker := time.NewTicker(time.Second)
@@ -394,11 +402,20 @@ func main() {
 				runHook("after_fifteen_minute_tick")
 			case <-hourTicker.C:
 				runHook("before_hour_tick")
+
 				jsToken, err := common.GenerateSafeString(80)
 				if err != nil {
 					common.LogError(err)
 				}
 				common.JSTokenBox.Store(jsToken)
+
+				common.OldSessionSigningKeyBox.Store(common.SessionSigningKeyBox.Load().(string)) // TODO: We probably don't need this type conversion
+				sessionSigningKey, err := common.GenerateSafeString(80)
+				if err != nil {
+					common.LogError(err)
+				}
+				common.SessionSigningKeyBox.Store(sessionSigningKey)
+
 				runTasks(common.ScheduledHourTasks)
 				runHook("after_hour_tick")
 			}

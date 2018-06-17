@@ -11,7 +11,6 @@ import (
 	"strconv"
 
 	"../common"
-	"../config"
 	"../query_gen/lib"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -37,12 +36,23 @@ func main() {
 		}
 	}()
 
-	config.Config()
+	log.Print("Loading the configuration data")
+	err := common.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print("Processing configuration data")
+	err = common.ProcessConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if common.DbConfig.Adapter != "mysql" && common.DbConfig.Adapter != "" {
 		log.Fatal("Only MySQL is supported for upgrades right now, please wait for a newer build of the patcher")
 	}
 
-	err := prepMySQL()
+	err = prepMySQL()
 	if err != nil {
 		log.Fatal(err)
 	}

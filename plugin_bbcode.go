@@ -343,11 +343,11 @@ func bbcodeParseURL(i int, start int, lastTag int, msgbytes []byte, outbytes []b
 		return i, start, lastTag, outbytes
 	}
 
-	outbytes = append(outbytes, common.UrlOpen...)
+	outbytes = append(outbytes, common.URLOpen...)
 	outbytes = append(outbytes, msgbytes[start:i]...)
-	outbytes = append(outbytes, common.UrlOpen2...)
+	outbytes = append(outbytes, common.URLOpen2...)
 	outbytes = append(outbytes, msgbytes[start:i]...)
-	outbytes = append(outbytes, common.UrlClose...)
+	outbytes = append(outbytes, common.URLClose...)
 	i += 6
 	lastTag = i
 

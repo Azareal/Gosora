@@ -1,5 +1,6 @@
 package common
 
+// NullUserCache is a user cache to be used when you don't want a cache and just want queries to passthrough to the database
 type NullUserCache struct {
 }
 
@@ -8,50 +9,38 @@ func NewNullUserCache() *NullUserCache {
 	return &NullUserCache{}
 }
 
+// nolint
 func (mus *NullUserCache) Get(id int) (*User, error) {
 	return nil, ErrNoRows
 }
-
 func (mus *NullUserCache) BulkGet(_ []int) (list []*User) {
 	return nil
 }
-
 func (mus *NullUserCache) GetUnsafe(id int) (*User, error) {
 	return nil, ErrNoRows
 }
-
 func (mus *NullUserCache) Set(_ *User) error {
 	return nil
 }
-
-func (mus *NullUserCache) Add(item *User) error {
-	_ = item
+func (mus *NullUserCache) Add(_ *User) error {
 	return nil
 }
-
-func (mus *NullUserCache) AddUnsafe(item *User) error {
-	_ = item
+func (mus *NullUserCache) AddUnsafe(_ *User) error {
 	return nil
 }
-
 func (mus *NullUserCache) Remove(id int) error {
 	return nil
 }
-
 func (mus *NullUserCache) RemoveUnsafe(id int) error {
 	return nil
 }
-
 func (mus *NullUserCache) Flush() {
 }
-
 func (mus *NullUserCache) Length() int {
 	return 0
 }
-
 func (mus *NullUserCache) SetCapacity(_ int) {
 }
-
 func (mus *NullUserCache) GetCapacity() int {
 	return 0
 }

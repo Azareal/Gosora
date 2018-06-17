@@ -250,6 +250,13 @@ func ResetTemplateOverrides() {
 			default:
 				LogError(errors.New("The source and destination templates are incompatible"))
 			}
+		case func(AccountDashPage, io.Writer) error:
+			switch dPtr := destTmplPtr.(type) {
+			case *func(AccountDashPage, io.Writer) error:
+				*dPtr = oPtr
+			default:
+				LogError(errors.New("The source and destination templates are incompatible"))
+			}
 		case func(ErrorPage, io.Writer) error:
 			switch dPtr := destTmplPtr.(type) {
 			case *func(ErrorPage, io.Writer) error:
@@ -304,6 +311,9 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer
 	case *func(IPSearchPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(IPSearchPage), w)
+	case *func(AccountDashPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(AccountDashPage), w)
 	case *func(ErrorPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(ErrorPage), w)
@@ -326,6 +336,8 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer
 		return tmplO(pi.(CreateTopicPage), w)
 	case func(IPSearchPage, io.Writer) error:
 		return tmplO(pi.(IPSearchPage), w)
+	case func(AccountDashPage, io.Writer) error:
+		return tmplO(pi.(AccountDashPage), w)
 	case func(ErrorPage, io.Writer) error:
 		return tmplO(pi.(ErrorPage), w)
 	case func(Page, io.Writer) error:

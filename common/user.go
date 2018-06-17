@@ -61,6 +61,7 @@ type UserStmts struct {
 	setUsername     *sql.Stmt
 	incrementTopics *sql.Stmt
 	updateLevel     *sql.Stmt
+	update          *sql.Stmt
 
 	// TODO: Split these into a sub-struct
 	incrementScore     *sql.Stmt
@@ -81,13 +82,15 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		var where = "uid = ?"
 		userStmts = UserStmts{
-			activate:           acc.SimpleUpdate("users", "active = 1", where),
-			changeGroup:        acc.SimpleUpdate("users", "group = ?", where), // TODO: Implement user_count for users_groups here
-			delete:             acc.SimpleDelete("users", where),
-			setAvatar:          acc.Update("users").Set("avatar = ?").Where(where).Prepare(),
-			setUsername:        acc.Update("users").Set("name = ?").Where(where).Prepare(),
-			incrementTopics:    acc.SimpleUpdate("users", "topics =  topics + ?", where),
-			updateLevel:        acc.SimpleUpdate("users", "level = ?", where),
+			activate:        acc.SimpleUpdate("users", "active = 1", where),
+			changeGroup:     acc.SimpleUpdate("users", "group = ?", where), // TODO: Implement user_count for users_groups here
+			delete:          acc.SimpleDelete("users", where),
+			setAvatar:       acc.Update("users").Set("avatar = ?").Where(where).Prepare(),
+			setUsername:     acc.Update("users").Set("name = ?").Where(where).Prepare(),
+			incrementTopics: acc.SimpleUpdate("users", "topics =  topics + ?", where),
+			updateLevel:     acc.SimpleUpdate("users", "level = ?", where),
+			update:          acc.Update("users").Set("name = ?, email = ?, group = ?").Where("uid = ?").Prepare(), // TODO: Implement user_count for users_groups on things which use this
+
 			incrementScore:     acc.SimpleUpdate("users", "score = score + ?", where),
 			incrementPosts:     acc.SimpleUpdate("users", "posts = posts + ?", where),
 			incrementBigposts:  acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?", where),
@@ -251,6 +254,10 @@ func (user *User) ChangeGroup(group int) (err error) {
 func (user *User) UpdateIP(host string) error {
 	_, err := userStmts.updateLastIP.Exec(host, user.ID)
 	return err
+}
+
+func (user *User) Update(newname string, newemail string, newgroup int) (err error) {
+	return user.bindStmt(userStmts.update, newname, newemail, newgroup)
 }
 
 func (user *User) IncreasePostStats(wcount int, topic bool) (err error) {

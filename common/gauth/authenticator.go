@@ -26,6 +26,8 @@ func prefix0(otp string) string {
 }
 
 func GetHOTPToken(secret string, interval int64) (string, error) {
+	secret = strings.Replace(secret, " ", "", -1)
+
 	// Converts secret to base32 Encoding. Base32 encoding desires a 32-character subset of the twenty-six letters A–Z and ten digits 0–9
 	key, err := base32.StdEncoding.DecodeString(strings.ToUpper(secret))
 	if err != nil {

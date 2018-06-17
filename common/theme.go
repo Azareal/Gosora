@@ -212,6 +212,15 @@ func (theme *Theme) MapTemplates() {
 				default:
 					LogError(errors.New("The source and destination templates are incompatible"))
 				}
+			case *func(AccountDashPage, io.Writer) error:
+				switch sTmplPtr := sourceTmplPtr.(type) {
+				case *func(AccountDashPage, io.Writer) error:
+					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
+					overridenTemplates[themeTmpl.Name] = true
+					*dTmplPtr = *sTmplPtr
+				default:
+					LogError(errors.New("The source and destination templates are incompatible"))
+				}
 			case *func(ErrorPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(ErrorPage, io.Writer) error:

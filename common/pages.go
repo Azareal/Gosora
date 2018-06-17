@@ -142,6 +142,11 @@ type EmailListPage struct {
 	Something interface{}
 }
 
+type AccountDashPage struct {
+	*Header
+	MFASetup bool
+}
+
 type PanelStats struct {
 	Users       int
 	Groups      int

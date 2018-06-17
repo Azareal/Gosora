@@ -15,12 +15,12 @@ var InvalidTopic = []byte("<span style='color: red;'>[Invalid Topic]</span>")
 var InvalidProfile = []byte("<span style='color: red;'>[Invalid Profile]</span>")
 var InvalidForum = []byte("<span style='color: red;'>[Invalid Forum]</span>")
 var unknownMedia = []byte("<span style='color: red;'>[Unknown Media]</span>")
-var UrlOpen = []byte("<a href='")
-var UrlOpen2 = []byte("'>")
+var URLOpen = []byte("<a href='")
+var URLOpen2 = []byte("'>")
 var bytesSinglequote = []byte("'")
 var bytesGreaterthan = []byte(">")
 var urlMention = []byte(" class='mention'")
-var UrlClose = []byte("</a>")
+var URLClose = []byte("</a>")
 var imageOpen = []byte("<a href=\"")
 var imageOpen2 = []byte("\"><img src='")
 var imageClose = []byte("' class='postImage' /></a>")
@@ -319,13 +319,13 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 						continue
 					}
 
-					outbytes = append(outbytes, UrlOpen...)
+					outbytes = append(outbytes, URLOpen...)
 					var urlBit = []byte(BuildTopicURL("", tid))
 					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, UrlOpen2...)
+					outbytes = append(outbytes, URLOpen2...)
 					var tidBit = []byte("#tid-" + strconv.Itoa(tid))
 					outbytes = append(outbytes, tidBit...)
-					outbytes = append(outbytes, UrlClose...)
+					outbytes = append(outbytes, URLClose...)
 					lastItem = i
 				} else if bytes.Equal(msgbytes[i+1:i+5], []byte("rid-")) {
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
@@ -341,13 +341,13 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 						continue
 					}
 
-					outbytes = append(outbytes, UrlOpen...)
+					outbytes = append(outbytes, URLOpen...)
 					var urlBit = []byte(BuildTopicURL("", topic.ID))
 					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, UrlOpen2...)
+					outbytes = append(outbytes, URLOpen2...)
 					var ridBit = []byte("#rid-" + strconv.Itoa(rid))
 					outbytes = append(outbytes, ridBit...)
-					outbytes = append(outbytes, UrlClose...)
+					outbytes = append(outbytes, URLClose...)
 					lastItem = i
 				} else if bytes.Equal(msgbytes[i+1:i+5], []byte("fid-")) {
 					outbytes = append(outbytes, msgbytes[lastItem:i]...)
@@ -362,13 +362,13 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 						continue
 					}
 
-					outbytes = append(outbytes, UrlOpen...)
+					outbytes = append(outbytes, URLOpen...)
 					var urlBit = []byte(BuildForumURL("", fid))
 					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, UrlOpen2...)
+					outbytes = append(outbytes, URLOpen2...)
 					var fidBit = []byte("#fid-" + strconv.Itoa(fid))
 					outbytes = append(outbytes, fidBit...)
-					outbytes = append(outbytes, UrlClose...)
+					outbytes = append(outbytes, URLClose...)
 					lastItem = i
 				} else {
 					// TODO: Forum Shortcode Link
@@ -387,7 +387,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
-				outbytes = append(outbytes, UrlOpen...)
+				outbytes = append(outbytes, URLOpen...)
 				var urlBit = []byte(menUser.Link)
 				outbytes = append(outbytes, urlBit...)
 				outbytes = append(outbytes, bytesSinglequote...)
@@ -395,7 +395,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				outbytes = append(outbytes, bytesGreaterthan...)
 				var uidBit = []byte("@" + menUser.Name)
 				outbytes = append(outbytes, uidBit...)
-				outbytes = append(outbytes, UrlClose...)
+				outbytes = append(outbytes, URLClose...)
 				lastItem = i
 			} else if msgbytes[i] == 'h' || msgbytes[i] == 'f' || msgbytes[i] == 'g' || msgbytes[i] == '/' {
 				if msgbytes[i+1] == 't' && msgbytes[i+2] == 't' && msgbytes[i+3] == 'p' {
@@ -463,11 +463,11 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
-				outbytes = append(outbytes, UrlOpen...)
+				outbytes = append(outbytes, URLOpen...)
 				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, UrlOpen2...)
+				outbytes = append(outbytes, URLOpen2...)
 				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, UrlClose...)
+				outbytes = append(outbytes, URLClose...)
 				i += urlLen
 				lastItem = i
 			}

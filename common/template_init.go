@@ -434,7 +434,8 @@ func InitTemplates() error {
 		if !ok {
 			panic("phraseNameInt is not a string")
 		}
-		return GetTmplPhrase(phraseName) // TODO: Log non-existent phrases?
+		// TODO: Log non-existent phrases?
+		return GetTmplPhrase(phraseName)
 	}
 
 	fmap["scope"] = func(name interface{}) interface{} {

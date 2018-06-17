@@ -1245,7 +1245,7 @@ textarea {
 	border-top: 1px solid var(--element-border-color) !important;
 }
 
-.colstack_item .formrow {
+/*.colstack_item .formrow {
 	display: flex;
 }
 .colstack_right .formrow {
@@ -1267,7 +1267,7 @@ textarea {
 	width: 40%;
 	margin-right: 12px;
 	white-space: nowrap;
-}
+}*/
 .formitem:only-child {
 	width: 100%;
 	display: flex;
@@ -1295,24 +1295,27 @@ textarea {
 #create_topic_page .close_form, #create_topic_page .formlabel, #login_page .formlabel {
 	display: none;
 }
-#login_page .formrow:not(:first-child):not(:last-child), #register_page .formrow:not(:first-child):not(:last-child) {
+.formrow:not(:first-child):not(:last-child) {
 	margin-top: 4px;
 }
-#login_page .formrow:not(:first-child), #register_page .formrow:not(:first-child) {
+.formrow:not(:first-child) {
 	padding-top: 3px;
+}
+.formrow {
+	padding: 16px;
+}
+.formrow:not(:last-child) {
+	padding-bottom: 4px;
 }
 #login_page .formrow:not(:last-child) {
 	padding-bottom: 0px;
 }
-#login_page .formrow, #register_page .formrow {
-	padding: 16px;
-}
-#register_page .formrow:not(:last-child) {
-	padding-bottom: 4px;
-}
-#register_page .formlabel {
+.formlabel {
 	display: block;
 	font-size: 15px;
+}
+.quick_create_form .formrow {
+	padding: 0px;
 }
 #register_page .register_button_row {
 	padding: 12px !important;

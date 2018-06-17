@@ -495,8 +495,11 @@ $(document).ready(function(){
 			files[i] = fileList[i];
 
 		// Iterate over the files
+		let totalSize = 0;
 		for(let i = 0; i < files.length; i++) {
 			console.log("files[" + i + "]",files[i]);
+			totalSize += files[i]["size"];
+
 			let reader = new FileReader();
 			reader.onload = function(e) {
 				var fileDock = document.getElementById("upload_file_dock");
@@ -539,6 +542,9 @@ $(document).ready(function(){
 				reader.readAsArrayBuffer(files[i]);
 			}
 			reader.readAsDataURL(files[i]);
+		}
+		if(totalSize>maxRequestSize) {
+			alert("You can't upload this much data at once, max: " + maxRequestSize);
 		}
 	}
 

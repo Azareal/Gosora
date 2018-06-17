@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"strings"
 	"sync"
 )
 
@@ -114,7 +115,7 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, isJs bo
 // ? - Add a user parameter?
 func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
-	_, _ = w.Write([]byte(`{"errmsg":"A problem has occurred in the system."}`))
+	writeJsonError("A problem has occurred in the system.", w)
 	LogError(err)
 	return HandledRouteError()
 }
@@ -148,7 +149,7 @@ func PreError(errmsg string, w http.ResponseWriter, r *http.Request) RouteError 
 
 func PreErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
-	_, _ = w.Write([]byte(`{"errmsg":"` + errmsg + `"}`))
+	writeJsonError(errmsg, w)
 	return HandledRouteError()
 }
 
@@ -177,7 +178,7 @@ func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user U
 
 func LocalErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
-	_, _ = w.Write([]byte(`{"errmsg": "` + errmsg + `"}`))
+	writeJsonError(errmsg, w)
 	return HandledRouteError()
 }
 
@@ -199,7 +200,7 @@ func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bo
 
 func NoPermissionsJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
-	_, _ = w.Write([]byte(`{"errmsg":"You don't have permission to do that."}`))
+	writeJsonError("You don't have permission to do that.", w)
 	return HandledRouteError()
 }
 
@@ -222,7 +223,7 @@ func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) Rou
 
 func BannedJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
-	_, _ = w.Write([]byte(`{"errmsg":"You have been banned from this site."}`))
+	writeJsonError("You have been banned from this site.", w)
 	return HandledRouteError()
 }
 
@@ -246,7 +247,7 @@ func LoginRequired(w http.ResponseWriter, r *http.Request, user User) RouteError
 // nolint
 func LoginRequiredJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(401)
-	_, _ = w.Write([]byte(`{"errmsg":"You need to login to do that."}`))
+	writeJsonError("You need to login to do that.", w)
 	return HandledRouteError()
 }
 
@@ -297,8 +298,13 @@ func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.Response
 // CustomErrorJS is the pure JSON version of CustomError
 func CustomErrorJS(errmsg string, errcode int, w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(errcode)
-	_, _ = w.Write([]byte(`{"errmsg":"` + errmsg + `"}`))
+	writeJsonError(errmsg, w)
 	return HandledRouteError()
+}
+
+// TODO: Should we optimise this by caching these json strings?
+func writeJsonError(errmsg string, w http.ResponseWriter) {
+	_, _ = w.Write([]byte(`{"errmsg":"` + strings.Replace(errmsg, "\"", "", -1) + `"}`))
 }
 
 func handleErrorTemplate(w http.ResponseWriter, r *http.Request, pi ErrorPage) {

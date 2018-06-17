@@ -29,3 +29,13 @@ func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request
 	}
 	return nil
 }
+
+func buildBasePage(w http.ResponseWriter, r *http.Request, user *common.User, titlePhrase string, zone string) (*common.BasePanelPage, common.RouteError) {
+	header, stats, ferr := common.PanelUserCheck(w, r, user)
+	if ferr != nil {
+		return nil, ferr
+	}
+	header.Title = common.GetTitlePhrase("panel_" + titlePhrase)
+
+	return &common.BasePanelPage{header, stats, zone, common.ReportForumID}, nil
+}

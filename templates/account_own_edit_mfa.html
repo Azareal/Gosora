@@ -1,0 +1,29 @@
+{{template "header.html" . }}
+<div id="account_edit_mfa" class="colstack account">
+	{{template "account_menu.html" . }}
+	<main class="colstack_right">
+		<div class="colstack_item colstack_head rowhead">
+			<div class="rowitem"><h1>{{lang "account_mfa_head"}}</h1></div>
+		</div>
+		<div class="colstack_item the_form">
+			<form action="/user/edit/mfa/disable/submit/?session={{.CurrentUser.Session}}" method="post">
+				<div class="formrow real_first_child">
+					<div class="formitem formlabel"><a>{{lang "account_mfa_disable_explanation"}}</a></div>
+					<div class="formitem"><button class="formbutton">{{lang "account_mfa_disable_button"}}</button></div>
+				</div>
+			</form>
+		</div>
+		<div class="colstack_item colstack_head rowhead">
+			<div class="rowitem"><h1>{{lang "account_mfa_scratch_head"}}</h1></div>
+		</div>
+		<div class="colstack_item">{{/** TODO: Don't inline this, figure a way of implementing it properly in the template system **/}}
+			<div class="rowitem rowmsg" style="white-space: pre-wrap;">{{lang "account_mfa_scratch_explanation"}}</div>
+		</div>
+		<div id="panel_mfa_scratches" class="colstack_item rowlist">
+			{{range .Something}}
+			<div class="rowitem">{{.}}</div>
+			{{end}}
+		</div>
+	</main>
+</div>
+{{template "footer.html" . }}

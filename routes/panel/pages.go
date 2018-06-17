@@ -9,16 +9,15 @@ import (
 )
 
 func Pages(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "pages", "pages")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_pages")
 
 	if r.FormValue("created") == "1" {
-		header.AddNotice("panel_page_created")
+		basePage.AddNotice("panel_page_created")
 	} else if r.FormValue("deleted") == "1" {
-		header.AddNotice("panel_page_deleted")
+		basePage.AddNotice("panel_page_deleted")
 	}
 
 	pageCount := common.Pages.GlobalCount()
@@ -32,7 +31,7 @@ func Pages(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	}
 
 	pageList := common.Paginate(pageCount, perPage, 5)
-	pi := common.PanelCustomPagesPage{&common.BasePanelPage{header, stats, "pages", common.ReportForumID}, cPages, common.Paginator{pageList, page, lastPage}}
+	pi := common.PanelCustomPagesPage{basePage, cPages, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_pages", w, r, user, &pi)
 }
 
@@ -69,14 +68,12 @@ func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 }
 
 func PagesEdit(w http.ResponseWriter, r *http.Request, user common.User, spid string) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "pages_edit", "pages")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_pages_edit")
-
 	if r.FormValue("updated") == "1" {
-		header.AddNotice("panel_page_updated")
+		basePage.AddNotice("panel_page_updated")
 	}
 
 	pid, err := strconv.Atoi(spid)
@@ -86,12 +83,12 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, user common.User, spid st
 
 	page, err := common.Pages.Get(pid)
 	if err == sql.ErrNoRows {
-		return common.NotFound(w, r, header)
+		return common.NotFound(w, r, basePage.Header)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
 
-	pi := common.PanelCustomPageEditPage{&common.BasePanelPage{header, stats, "pages", common.ReportForumID}, page}
+	pi := common.PanelCustomPageEditPage{basePage, page}
 	return panelRenderTemplate("panel_pages_edit", w, r, user, &pi)
 }
 

@@ -11,14 +11,13 @@ import (
 )
 
 func Forums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "forums", "forums")
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ManageForums {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("panel_forums")
 
 	// TODO: Paginate this?
 	var forumList []interface{}
@@ -39,14 +38,14 @@ func Forums(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	}
 
 	if r.FormValue("created") == "1" {
-		header.AddNotice("panel_forum_created")
+		basePage.AddNotice("panel_forum_created")
 	} else if r.FormValue("deleted") == "1" {
-		header.AddNotice("panel_forum_deleted")
+		basePage.AddNotice("panel_forum_deleted")
 	} else if r.FormValue("updated") == "1" {
-		header.AddNotice("panel_forum_updated")
+		basePage.AddNotice("panel_forum_updated")
 	}
 
-	pi := common.PanelPage{&common.BasePanelPage{header, stats, "forums", common.ReportForumID}, forumList, nil}
+	pi := common.PanelPage{basePage, forumList, nil}
 	return panelRenderTemplate("panel_forums", w, r, user, &pi)
 }
 
@@ -76,14 +75,13 @@ func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User
 
 // TODO: Revamp this
 func ForumsDelete(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "delete_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ManageForums {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("panel_delete_forum")
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
@@ -101,7 +99,7 @@ func ForumsDelete(w http.ResponseWriter, r *http.Request, user common.User, sfid
 	confirmMsg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
 	yousure := common.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
-	pi := common.PanelPage{&common.BasePanelPage{header, stats, "forums", common.ReportForumID}, tList, yousure}
+	pi := common.PanelPage{basePage, tList, yousure}
 	if common.RunPreRenderHook("pre_render_panel_delete_forum", w, r, &user, &pi) {
 		return nil
 	}
@@ -138,14 +136,13 @@ func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User
 }
 
 func ForumsEdit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "edit_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ManageForums {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("panel_edit_forum")
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
@@ -158,7 +155,6 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
-
 	if forum.Preset == "" {
 		forum.Preset = "custom"
 	}
@@ -183,14 +179,14 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	}
 
 	if r.FormValue("updated") == "1" {
-		header.AddNotice("panel_forum_updated")
+		basePage.AddNotice("panel_forum_updated")
 	}
 
-	pi := common.PanelEditForumPage{&common.BasePanelPage{header, stats, "forums", common.ReportForumID}, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
+	pi := common.PanelEditForumPage{basePage, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
 	if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.Templates.ExecuteTemplate(w, "panel-forum-edit.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "panel_forum_edit.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -297,14 +293,13 @@ func forumPermsExtractDash(paramList string) (fid int, gid int, err error) {
 }
 
 func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user common.User, paramList string) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "edit_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ManageForums {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("panel_edit_forum")
 
 	fid, gid, err := forumPermsExtractDash(paramList)
 	if err != nil {
@@ -350,14 +345,14 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user common.
 	addNameLangToggle("MoveTopic", forumPerms.MoveTopic)
 
 	if r.FormValue("updated") == "1" {
-		header.AddNotice("panel_forums_perms_updated")
+		basePage.AddNotice("panel_forums_perms_updated")
 	}
 
-	pi := common.PanelEditForumGroupPage{&common.BasePanelPage{header, stats, "forums", common.ReportForumID}, forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
+	pi := common.PanelEditForumGroupPage{basePage, forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
 	if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.Templates.ExecuteTemplate(w, "panel-forum-edit-perms.html", pi)
+	err = common.Templates.ExecuteTemplate(w, "panel_forum_edit_perms.html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

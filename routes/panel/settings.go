@@ -11,16 +11,15 @@ import (
 )
 
 func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "settings", "settings")
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("panel_settings")
 
-	settings, err := header.Settings.BypassGetAll()
+	settings, err := basePage.Settings.BypassGetAll()
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -49,21 +48,20 @@ func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		settingList = append(settingList, &common.PanelSetting{setting, common.GetSettingPhrase(setting.Name)})
 	}
 
-	pi := common.PanelPage{&common.BasePanelPage{header, stats, "settings", common.ReportForumID}, tList, settingList}
+	pi := common.PanelPage{basePage, tList, settingList}
 	return panelRenderTemplate("panel_settings", w, r, user, &pi)
 }
 
 func SettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "edit_setting", "settings")
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditSettings {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("panel_edit_setting")
 
-	setting, err := header.Settings.BypassGet(sname)
+	setting, err := basePage.Settings.BypassGet(sname)
 	if err == sql.ErrNoRows {
 		return common.LocalError("The setting you want to edit doesn't exist.", w, r, user)
 	} else if err != nil {
@@ -91,7 +89,7 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname
 	}
 
 	pSetting := &common.PanelSetting{setting, common.GetSettingPhrase(setting.Name)}
-	pi := common.PanelSettingPage{&common.BasePanelPage{header, stats, "settings", common.ReportForumID}, itemList, pSetting}
+	pi := common.PanelSettingPage{basePage, itemList, pSetting}
 	return panelRenderTemplate("panel_setting", w, r, user, &pi)
 }
 

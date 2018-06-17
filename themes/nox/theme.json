@@ -15,10 +15,6 @@
 	],
 	"Resources": [
 		{
-			"Name":"EQCSS.js",
-			"Location":"global"
-		},
-		{
 			"Name":"trumbowyg/trumbowyg.min.js",
 			"Location":"global",
 			"Loggedin": true

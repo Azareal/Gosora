@@ -2,12 +2,6 @@ package common
 
 import "errors"
 
-// Go away, linter. We need to differentiate constants from variables somehow ;)
-// nolint
-const CACHE_STATIC int = 0
-const CACHE_DYNAMIC int = 1
-const CACHE_SQL int = 2
-
 // nolint
 // ErrCacheDesync is thrown whenever a piece of data, for instance, a user is out of sync with the database. Currently unused.
 var ErrCacheDesync = errors.New("The cache is out of sync with the database.") // TODO: A cross-server synchronisation mechanism

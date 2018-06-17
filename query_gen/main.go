@@ -225,7 +225,7 @@ func seedTables(adapter qgen.Adapter) error {
 
 	addMenuItem(map[string]interface{}{"mid": 1, "htmlID": "general_alerts", "cssClass": "menu_alerts", "position": "right", "tmplName": "menu_alerts"})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_account}", "cssClass": "menu_account", "position": "left", "path": "/user/edit/critical/", "aria": "{lang.menu_account_aria}", "tooltip": "{lang.menu_account_tooltip}", "memberOnly": true})
+	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_account}", "cssClass": "menu_account", "position": "left", "path": "/user/edit/", "aria": "{lang.menu_account_aria}", "tooltip": "{lang.menu_account_tooltip}", "memberOnly": true})
 
 	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_profile}", "cssClass": "menu_profile", "position": "left", "path": "{me.Link}", "aria": "{lang.menu_profile_aria}", "tooltip": "{lang.menu_profile_tooltip}", "memberOnly": true})
 
@@ -300,8 +300,6 @@ func writeUpdates(adapter qgen.Adapter) error {
 	build.Update("updatePluginInstall").Table("plugins").Set("installed = ?").Where("uname = ?").Parse()
 
 	build.Update("updateTheme").Table("themes").Set("default = ?").Where("uname = ?").Parse()
-
-	build.Update("updateUser").Table("users").Set("name = ?, email = ?, group = ?").Where("uid = ?").Parse() // TODO: Implement user_count for users_groups on things which use this
 
 	build.Update("updateGroupPerms").Table("users_groups").Set("permissions = ?").Where("gid = ?").Parse()
 

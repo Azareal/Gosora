@@ -25,7 +25,9 @@ var StartTime time.Time
 var TmplPtrMap = make(map[string]interface{})
 
 // Anti-spam token with rotated key
-var JSTokenBox atomic.Value // TODO: Move this and some of these other globals somewhere else
+var JSTokenBox atomic.Value              // TODO: Move this and some of these other globals somewhere else
+var SessionSigningKeyBox atomic.Value    // For MFA to avoid hitting the database unneccesarily
+var OldSessionSigningKeyBox atomic.Value // Just in case we've signed with a key that's about to go stale so we don't annoy the user too much
 
 // ErrNoRows is an alias of sql.ErrNoRows, just in case we end up with non-database/sql datastores
 var ErrNoRows = sql.ErrNoRows
@@ -60,6 +62,8 @@ var ExecutableFileExts = StringList{
 
 func init() {
 	JSTokenBox.Store("")
+	SessionSigningKeyBox.Store("")
+	OldSessionSigningKeyBox.Store("")
 }
 
 // TODO: Write a test for this

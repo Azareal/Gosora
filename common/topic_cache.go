@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 )
 
+// TopicCache is an interface which spits out topics from a fast cache rather than the database, whether from memory or from an application like Redis. Topics may not be present in the cache but may be in the database
 type TopicCache interface {
 	Get(id int) (*Topic, error)
 	GetUnsafe(id int) (*Topic, error)
@@ -19,6 +20,7 @@ type TopicCache interface {
 	GetCapacity() int
 }
 
+// MemoryTopicCache stores and pulls topics out of the current process' memory
 type MemoryTopicCache struct {
 	items    map[int]*Topic
 	length   int64 // sync/atomic only lets us operate on int32s and int64s
@@ -35,6 +37,7 @@ func NewMemoryTopicCache(capacity int) *MemoryTopicCache {
 	}
 }
 
+// Get fetches a topic by ID. Returns ErrNoRows if not present.
 func (mts *MemoryTopicCache) Get(id int) (*Topic, error) {
 	mts.RLock()
 	item, ok := mts.items[id]
@@ -45,6 +48,7 @@ func (mts *MemoryTopicCache) Get(id int) (*Topic, error) {
 	return item, ErrNoRows
 }
 
+// GetUnsafe fetches a topic by ID. Returns ErrNoRows if not present. THIS METHOD IS NOT THREAD-SAFE.
 func (mts *MemoryTopicCache) GetUnsafe(id int) (*Topic, error) {
 	item, ok := mts.items[id]
 	if ok {
@@ -53,6 +57,7 @@ func (mts *MemoryTopicCache) GetUnsafe(id int) (*Topic, error) {
 	return item, ErrNoRows
 }
 
+// Set overwrites the value of a topic in the cache, whether it's present or not. May return a capacity overflow error.
 func (mts *MemoryTopicCache) Set(item *Topic) error {
 	mts.Lock()
 	_, ok := mts.items[item.ID]
@@ -69,42 +74,56 @@ func (mts *MemoryTopicCache) Set(item *Topic) error {
 	return nil
 }
 
+// Add adds a topic to the cache, similar to Set, but it's only intended for new items. This method might be deprecated in the near future, use Set. May return a capacity overflow error.
+// ? Is this redundant if we have Set? Are the efficiency wins worth this? Is this even used?
 func (mts *MemoryTopicCache) Add(item *Topic) error {
+	mts.Lock()
 	if int(mts.length) >= mts.capacity {
+		mts.Unlock()
 		return ErrStoreCapacityOverflow
 	}
-	mts.Lock()
 	mts.items[item.ID] = item
 	mts.Unlock()
 	atomic.AddInt64(&mts.length, 1)
 	return nil
 }
 
-// TODO: Make these length increments thread-safe. Ditto for the other DataStores
+// AddUnsafe is the unsafe version of Add. May return a capacity overflow error. THIS METHOD IS NOT THREAD-SAFE.
 func (mts *MemoryTopicCache) AddUnsafe(item *Topic) error {
 	if int(mts.length) >= mts.capacity {
 		return ErrStoreCapacityOverflow
 	}
 	mts.items[item.ID] = item
-	atomic.AddInt64(&mts.length, 1)
+	mts.length = int64(len(mts.items))
 	return nil
 }
 
-// TODO: Make these length decrements thread-safe. Ditto for the other DataStores
+// Remove removes a topic from the cache by ID, if they exist. Returns ErrNoRows if no items exist.
 func (mts *MemoryTopicCache) Remove(id int) error {
 	mts.Lock()
+	_, ok := mts.items[id]
+	if !ok {
+		mts.Unlock()
+		return ErrNoRows
+	}
 	delete(mts.items, id)
 	mts.Unlock()
 	atomic.AddInt64(&mts.length, -1)
 	return nil
 }
 
+// RemoveUnsafe is the unsafe version of Remove. THIS METHOD IS NOT THREAD-SAFE.
 func (mts *MemoryTopicCache) RemoveUnsafe(id int) error {
+	_, ok := mts.items[id]
+	if !ok {
+		return ErrNoRows
+	}
 	delete(mts.items, id)
 	atomic.AddInt64(&mts.length, -1)
 	return nil
 }
 
+// Flush removes all the topics from the cache, useful for tests.
 func (mts *MemoryTopicCache) Flush() {
 	mts.Lock()
 	mts.items = make(map[int]*Topic)
@@ -118,10 +137,13 @@ func (mts *MemoryTopicCache) Length() int {
 	return int(mts.length)
 }
 
+// SetCapacity sets the maximum number of topics which this cache can hold
 func (mts *MemoryTopicCache) SetCapacity(capacity int) {
+	// Ints are moved in a single instruction, so this should be thread-safe
 	mts.capacity = capacity
 }
 
+// GetCapacity returns the maximum number of topics this cache can hold
 func (mts *MemoryTopicCache) GetCapacity() int {
 	return mts.capacity
 }

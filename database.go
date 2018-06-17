@@ -47,9 +47,12 @@ func InitDatabase() (err error) {
 	log.Print("Initialising the user and topic stores")
 
 	var ucache common.UserCache
-	var tcache common.TopicCache
-	if common.Config.CacheTopicUser == common.CACHE_STATIC {
+	if common.Config.UserCache == "static" {
 		ucache = common.NewMemoryUserCache(common.Config.UserCacheCapacity)
+	}
+
+	var tcache common.TopicCache
+	if common.Config.TopicCache == "static" {
 		tcache = common.NewMemoryTopicCache(common.Config.TopicCacheCapacity)
 	}
 
