@@ -883,18 +883,18 @@ func TestAuth(t *testing.T) {
 	passwordTest(t, realPassword, hashedPassword2)
 	// TODO: Peek at the prefix to verify this is a bcrypt hash
 
-	_, err = common.Auth.Authenticate("None", "password")
+	_, err, _ = common.Auth.Authenticate("None", "password")
 	errmsg := "Username None shouldn't exist"
 	if err != nil {
 		errmsg += "\n" + err.Error()
 	}
 	expect(t, err == common.ErrNoUserByName, errmsg)
 
-	uid, err := common.Auth.Authenticate("Admin", "password")
+	uid, err, _ := common.Auth.Authenticate("Admin", "password")
 	expectNilErr(t, err)
 	expect(t, uid == 1, fmt.Sprintf("Default admin uid should be 1 not %d", uid))
 
-	_, err = common.Auth.Authenticate("Sam", "ReallyBadPassword")
+	_, err, _ = common.Auth.Authenticate("Sam", "ReallyBadPassword")
 	errmsg = "Username Sam shouldn't exist"
 	if err != nil {
 		errmsg += "\n" + err.Error()

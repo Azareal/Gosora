@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"./common"
-	"./config"
 	"./install/install"
 	"./query_gen/lib"
 	"./routes"
@@ -53,10 +52,15 @@ func gloinit() (err error) {
 	//nogrouplog = true
 	common.StartTime = time.Now()
 
+	err = common.LoadConfig()
+	if err != nil {
+		return err
+	}
 	err = common.ProcessConfig()
 	if err != nil {
 		return err
 	}
+
 	common.Themes, err = common.NewThemeList()
 	if err != nil {
 		return err
@@ -92,7 +96,6 @@ func gloinit() (err error) {
 }
 
 func init() {
-	config.Config()
 	err := gloinit()
 	if err != nil {
 		log.Print("Something bad happened")
