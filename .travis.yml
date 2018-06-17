@@ -6,7 +6,7 @@ before_install:
   - cd $HOME
   - git clone https://github.com/Azareal/Gosora
   - cd Gosora
-  - mv ./config/config_default.json ./config/config.json
+  - mv ./config/config_example.json ./config/config.json
   - chmod 755 ./update-deps-linux
   - chmod 755 ./dev-update-travis
   - chmod 755 ./run-linux-tests
