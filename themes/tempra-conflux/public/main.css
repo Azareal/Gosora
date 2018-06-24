@@ -715,7 +715,7 @@ button.username {
 	content: "😀";
 }
 .like_count:after {
-	content: "{{index .Phrases "topic_gap_up"}}";
+	content: "{{index .Phrases "topic.gap_up"}}";
 }
 .edit_label:before {
 	content: "🖊️";
@@ -763,7 +763,7 @@ button.username {
 	font-weight: normal;
 }
 #profile_left_pane .report_item:after {
-	content: "{{index .Phrases "topic_report_button_text"}}";
+	content: "{{index .Phrases "topic.report_button_text"}}";
 }
 #profile_right_lane {
 	width: calc(100% - 230px);
@@ -959,28 +959,28 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 }
 
 .add_like:before, .remove_like:before {
-	content: "{{index .Phrases "topic_plus_one"}}";
+	content: "{{index .Phrases "topic.plus_one"}}";
 }
 .button_container .open_edit:after, .edit_item:after {
-	content: "{{index .Phrases "topic_edit_button_text"}}";
+	content: "{{index .Phrases "topic.edit_button_text"}}";
 }
 .delete_item:after {
-	content: "{{index .Phrases "topic_delete_button_text"}}";
+	content: "{{index .Phrases "topic.delete_button_text"}}";
 }
 .lock_item:after {
-	content: "{{index .Phrases "topic_lock_button_text"}}";
+	content: "{{index .Phrases "topic.lock_button_text"}}";
 }
 .unlock_item:after {
-	content: "{{index .Phrases "topic_unlock_button_text"}}";
+	content: "{{index .Phrases "topic.unlock_button_text"}}";
 }
 .pin_item:after {
-	content: "{{index .Phrases "topic_pin_button_text"}}";
+	content: "{{index .Phrases "topic.pin_button_text"}}";
 }
 .unpin_item:after {
-	content: "{{index .Phrases "topic_unpin_button_text"}}";
+	content: "{{index .Phrases "topic.unpin_button_text"}}";
 }
 .report_item:after {
-	content: "{{index .Phrases "topic_report_button_text"}}";
+	content: "{{index .Phrases "topic.report_button_text"}}";
 }
 
 .footer {

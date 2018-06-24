@@ -149,7 +149,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
 
 	// TODO: Remove this as it might be counter-productive
-	pusher, ok := w.(http.Pusher)
+	/*pusher, ok := w.(http.Pusher)
 	if ok {
 		pusher.Push("/static/"+theme.Name+"/main.css", nil)
 		pusher.Push("/static/"+theme.Name+"/panel.css", nil)
@@ -163,7 +163,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 			pusher.Push("/static/"+script, nil)
 		}
 		// TODO: Push avatars?
-	}
+	}*/
 
 	return header, stats, nil
 }
@@ -230,7 +230,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		}
 	}
 
-	pusher, ok := w.(http.Pusher)
+	/*pusher, ok := w.(http.Pusher)
 	if ok {
 		pusher.Push("/static/"+theme.Name+"/main.css", nil)
 		pusher.Push("/static/global.js", nil)
@@ -243,7 +243,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 			pusher.Push("/static/"+script, nil)
 		}
 		// TODO: Push avatars?
-	}
+	}*/
 
 	return header, nil
 }

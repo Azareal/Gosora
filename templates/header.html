@@ -13,6 +13,7 @@
 		{{end}}
 		<script type="text/javascript">
 		var session = "{{.CurrentUser.Session}}";
+		var loggedIn = {{.CurrentUser.Loggedin}};
 		var siteURL = "{{.Header.Site.URL}}";
 		var maxRequestSize = "{{.Header.Site.MaxRequestSize}}";
 		</script>

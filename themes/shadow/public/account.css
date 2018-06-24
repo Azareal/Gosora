@@ -1,9 +1,6 @@
 #account_dashboard .colstack_right .coldyn_block {
 	display: flex;
 }
-#dash_saved {
-	display: none;
-}
 #dash_left {
 	padding: 18px;
 	padding-right: 0px;

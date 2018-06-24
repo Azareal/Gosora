@@ -290,34 +290,34 @@ a {
 }
 
 .like_label:before {
-	content: "{{index .Phrases "topic_plus_one"}}";
+	content: "{{index .Phrases "topic.plus_one"}}";
 }
 .edit_label:before {
-	content: "{{index .Phrases "topic_edit_button_text"}}";
+	content: "{{index .Phrases "topic.edit_button_text"}}";
 }
 .trash_label:before {
-	content: "{{index .Phrases "topic_delete_button_text"}}";
+	content: "{{index .Phrases "topic.delete_button_text"}}";
 }
 .pin_label:before {
-	content: "{{index .Phrases "topic_pin_button_text"}}";
+	content: "{{index .Phrases "topic.pin_button_text"}}";
 }
 .lock_label:before {
-	content: "{{index .Phrases "topic_lock_button_text"}}";
+	content: "{{index .Phrases "topic.lock_button_text"}}";
 }
 .unlock_label:before {
-	content: "{{index .Phrases "topic_unlock_button_text"}}";
+	content: "{{index .Phrases "topic.unlock_button_text"}}";
 }
 .unpin_label:before {
-	content: "{{index .Phrases "topic_unpin_button_text"}}";
+	content: "{{index .Phrases "topic.unpin_button_text"}}";
 }
 .ip_label:before {
-	content: "{{index .Phrases "topic_ip_button_text"}}";
+	content: "{{index .Phrases "topic.ip_button_text"}}";
 }
 .flag_label:before {
-	content: "{{index .Phrases "topic_flag_button_text"}}";
+	content: "{{index .Phrases "topic.flag_button_text"}}";
 }
 .level_label:before {
-	content: "{{index .Phrases "topic_level"}}";
+	content: "{{index .Phrases "topic.level"}}";
 }
 
 .like_count_label, .like_count {
@@ -896,7 +896,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	font-weight: normal;
 }
 #profile_left_pane .report_item:after {
-	content: "{{index .Phrases "topic_report_button_text"}}";
+	content: "{{index .Phrases "topic.report_button_text"}}";
 }
 #profile_left_lane .profileName {
 	font-size: 18px;

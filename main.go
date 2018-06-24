@@ -442,6 +442,9 @@ func main() {
 		log.Fatal("Received a signal to shutdown: ", sig)
 	}()
 
+	// Start up the WebSocket ticks
+	common.WsHub.Start()
+
 	//if profiling {
 	//	pprof.StopCPUProfile()
 	//}

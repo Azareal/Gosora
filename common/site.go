@@ -81,6 +81,8 @@ type config struct {
 	BuildSlugs      bool // TODO: Make this a setting?
 	ServerCount     int
 
+	DisableLiveTopicList bool
+
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?
 	MaxTopicTitleLength int

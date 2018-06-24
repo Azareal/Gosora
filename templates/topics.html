@@ -55,10 +55,10 @@
 		</div>
 	</form>
 </div>
-<div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="{{lang "quick_topic_aria"}}">
+<div class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="{{lang "quick_topic.aria"}}">
 	<form name="topic_create_form_form" id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?session={{.CurrentUser.Session}}" method="post"></form>
 	<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
-	<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" alt="{{lang "quick_topic_avatar_alt"}}" title="{{lang "quick_topic_avatar_tooltip"}}" />
+	<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}" />
 	<div class="main_form">
 		<div class="topic_meta">
 			<div class="formrow topic_board_row real_first_child">
@@ -68,13 +68,13 @@
 			</div>
 			<div class="formrow topic_name_row">
 				<div class="formitem">
-					<input form="quick_post_form" name="topic-name" placeholder="{{lang "quick_topic_whatsup"}}" required>
+					<input form="quick_post_form" name="topic-name" placeholder="{{lang "quick_topic.whatsup"}}" required>
 				</div>
 			</div>
 		</div>
 		<div class="formrow topic_content_row">
 			<div class="formitem">
-				<textarea form="quick_post_form" id="input_content" name="topic-content" placeholder="{{lang "quick_topic_content_placeholder"}}" required></textarea>
+				<textarea form="quick_post_form" id="input_content" name="topic-content" placeholder="{{lang "quick_topic.content_placeholder"}}" required></textarea>
 			</div>
 		</div>
 		<div class="formrow poll_content_row auto_hide">
@@ -82,19 +82,19 @@
 				<div class="pollinput" data-pollinput="0">
 					<input type="checkbox" disabled />
 					<label class="pollinputlabel"></label>
-					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "quick_topic_add_poll_option"}}" />
+					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "quick_topic.add_poll_option"}}" />
 				</div>
 			</div>
 		</div>
 		<div class="formrow quick_button_row">
 			<div class="formitem">
-				<button form="quick_post_form" class="formbutton">{{lang "quick_topic_create_topic_button"}}</button>
-				<button form="quick_post_form" class="formbutton" id="add_poll_button">{{lang "quick_topic_add_poll_button"}}</button>
+				<button form="quick_post_form" class="formbutton">{{lang "quick_topic.create_topic_button"}}</button>
+				<button form="quick_post_form" class="formbutton" id="add_poll_button">{{lang "quick_topic.add_poll_button"}}</button>
 				{{if .CurrentUser.Perms.UploadFiles}}
 				<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
-				<label for="upload_files" class="formbutton add_file_button">{{lang "quick_topic_add_file_button"}}</label>
+				<label for="upload_files" class="formbutton add_file_button">{{lang "quick_topic.add_file_button"}}</label>
 				<div id="upload_file_dock"></div>{{end}}
-				<button class="formbutton close_form">{{lang "quick_topic_cancel_button"}}</button>
+				<button class="formbutton close_form">{{lang "quick_topic.cancel_button"}}</button>
 			</div>
 		</div>
 	</div>
@@ -102,39 +102,7 @@
 	{{end}}
 {{end}}
 <div id="topic_list" class="rowblock topic_list" aria-label="{{lang "topics_list_aria"}}">
-	{{range .TopicList}}<div class="topic_row" data-tid="{{.ID}}">
-	<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
-		<span class="selector"></span>
-		<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" alt="{{.Creator.Name}}'s Avatar" title="{{.Creator.Name}}'s Avatar" /></a>
-		<span class="topic_inner_left">
-			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement" title="{{.Title}}"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}" title="{{.ForumName}}">{{.ForumName}}</a>{{end}}
-			<br /><a class="rowsmall starter" href="{{.Creator.Link}}" title="{{.Creator.Name}}">{{.Creator.Name}}</a>
-			{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
-			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="{{lang "status_closed_tooltip"}}"> | &#x1F512;&#xFE0E</span>{{end}}
-			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="{{lang "status_pinned_tooltip"}}"> | &#x1F4CD;&#xFE0E</span>{{end}}
-		</span>
-		{{/** TODO: Phase this out of Cosora and remove it **/}}
-		<div class="topic_inner_right rowsmall">
-			<span class="replyCount">{{.PostCount}}</span><br />
-			<span class="likeCount">{{.LikeCount}}</span>
-		</div>
-	</div>
-	<div class="topic_middle">
-		<div class="topic_middle_inside rowsmall">
-			<span class="replyCount">{{.PostCount}}</span><br />
-			<span class="likeCount">{{.LikeCount}}</span>
-		</div>
-	</div>
-	<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}} topic_closed{{end}}">
-		<div class="topic_right_inside">
-			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
-			<span>
-				<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
-				<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
-			</span>
-		</div>
-	</div>
-	</div>{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}</div>{{end}}
+	{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}</div>{{end}}
 </div>
 
 {{if gt .LastPage 1}}

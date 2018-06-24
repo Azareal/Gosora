@@ -11,21 +11,21 @@
 
 <main>
 
-<div  {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic_opening_post_aria"}}">
+<div  {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic.opening_post_aria"}}">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 		<h1 class='topic_name hide_on_edit' title='{{.Topic.Title}}'>{{.Topic.Title}}</h1>
-		{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status_closed_tooltip"}}' aria-label='{{lang "topic_status_closed_aria"}}'>&#x1F512;&#xFE0E</span>{{end}}
+		{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status.closed_tooltip"}}' aria-label='{{lang "topic.status_closed_aria"}}'>&#x1F512;&#xFE0E</span>{{end}}
 		{{/** TODO: Does this need to be guarded by a permission? It's only visible in edit mode anyway, which can't be triggered, if they don't have the permission **/}}
 		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 		{{if .CurrentUser.Perms.EditTopic}}
-		<input form='edit_topic_form' class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic_title_input_aria"}}" />
-		<button form='edit_topic_form' name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic_update_button"}}</button>
+		<input form='edit_topic_form' class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic.title_input_aria"}}" />
+		<button form='edit_topic_form' name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic.update_button"}}</button>
 		{{end}}
 		{{end}}
 	</div>
 </div>
 {{if .Poll.ID}}
-<article class="rowblock post_container poll" aria-level="{{lang "topic_poll_aria"}}">
+<article class="rowblock post_container poll" aria-level="{{lang "topic.poll_aria"}}">
 	<div class="rowitem passive editable_parent post_item poll_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
 		<div class="topic_content user_content" style="margin:0;padding:0;">
 			{{range .Poll.QuickOptions}}
@@ -38,9 +38,9 @@
 			</div>
 			{{end}}
 			<div class="poll_buttons">
-				<button form="poll_{{.Poll.ID}}_form" class="poll_vote_button">{{lang "topic_poll_vote"}}</button>
-				<button class="poll_results_button" data-poll-id="{{.Poll.ID}}">{{lang "topic_poll_results"}}</button>
-				<a href="#"><button class="poll_cancel_button">{{lang "topic_poll_cancel"}}</button></a>
+				<button form="poll_{{.Poll.ID}}_form" class="poll_vote_button">{{lang "topic.poll_vote"}}</button>
+				<button class="poll_results_button" data-poll-id="{{.Poll.ID}}">{{lang "topic.poll_results"}}</button>
+				<a href="#"><button class="poll_cancel_button">{{lang "topic.poll_cancel"}}</button></a>
 			</div>
 		</div>
 		<div id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide">
@@ -50,77 +50,48 @@
 </article>
 {{end}}
 
-<article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="{{lang "topic_opening_post_aria"}}">
+<article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="{{lang "topic.opening_post_aria"}}">
 	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
 		<p class="hide_on_edit topic_content user_content" itemprop="text" style="margin:0;padding:0;">{{.Topic.ContentHTML}}</p>
 		<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 
-		<span class="controls{{if .Topic.LikeCount}} has_likes{{end}}" aria-label="{{lang "topic_post_controls_aria"}}">
+		<span class="controls{{if .Topic.LikeCount}} has_likes{{end}}" aria-label="{{lang "topic.post_controls_aria"}}">
 
 		<a href="{{.Topic.UserLink}}" class="username real_username" rel="author">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
-		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="mod_button"{{if .Topic.Liked}} title="{{lang "topic_unlike_tooltip"}}" aria-label="{{lang "topic_unlike_aria"}}"{{else}} title="{{lang "topic_like_tooltip"}}" aria-label="{{lang "topic_like_aria"}}"{{end}} style="color:#202020;">
+		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="mod_button"{{if .Topic.Liked}} title="{{lang "topic.unlike_tooltip"}}" aria-label="{{lang "topic.unlike_aria"}}"{{else}} title="{{lang "topic.like_tooltip"}}" aria-label="{{lang "topic.like_aria"}}"{{end}} style="color:#202020;">
 		<button class="username like_label {{if .Topic.Liked}}remove_like{{else}}add_like{{end}}"></button></a>{{end}}
 
 		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
-		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" style="font-weight:normal;" title="{{lang "topic_edit_tooltip"}}" aria-label="{{lang "topic_edit_aria"}}"><button class="username edit_label"></button></a>{{end}}
+		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" style="font-weight:normal;" title="{{lang "topic.edit_tooltip"}}" aria-label="{{lang "topic.edit_aria"}}"><button class="username edit_label"></button></a>{{end}}
 		{{end}}
 
-		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="{{lang "topic_delete_tooltip"}}" aria-label="{{lang "topic_delete_aria"}}"><button class="username trash_label"></button></a>{{end}}
+		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="{{lang "topic.delete_tooltip"}}" aria-label="{{lang "topic.delete_aria"}}"><button class="username trash_label"></button></a>{{end}}
 
-		{{if .CurrentUser.Perms.CloseTopic}}{{if .Topic.IsClosed}}<a class="mod_button" href='/topic/unlock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' style="font-weight:normal;" title="{{lang "topic_unlock_tooltip"}}" aria-label="{{lang "topic_unlock_aria"}}"><button class="username unlock_label"></button></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="{{lang "topic_lock_tooltip"}}" aria-label="{{lang "topic_lock_aria"}}"><button class="username lock_label"></button></a>{{end}}{{end}}
+		{{if .CurrentUser.Perms.CloseTopic}}{{if .Topic.IsClosed}}<a class="mod_button" href='/topic/unlock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' style="font-weight:normal;" title="{{lang "topic.unlock_tooltip"}}" aria-label="{{lang "topic.unlock_aria"}}"><button class="username unlock_label"></button></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="{{lang "topic.lock_tooltip"}}" aria-label="{{lang "topic.lock_aria"}}"><button class="username lock_label"></button></a>{{end}}{{end}}
 
-		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' style="font-weight:normal;" title="{{lang "topic_unpin_tooltip"}}" aria-label="{{lang "topic_unpin_aria"}}"><button class="username unpin_label"></button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="{{lang "topic_pin_tooltip"}}" aria-label="{{lang "topic_pin_aria"}}"><button class="username pin_label"></button></a>{{end}}{{end}}
-		{{if .CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.Topic.IPAddress}}' style="font-weight:normal;" title="{{lang "topic_ip_tooltip"}}" aria-label="The poster's IP is {{.Topic.IPAddress}}"><button class="username ip_label"></button></a>{{end}}
-		<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="mod_button report_item" style="font-weight:normal;" title="{{lang "topic_flag_tooltip"}}" aria-label="{{lang "topic_flag_aria"}}" rel="nofollow"><button class="username flag_label"></button></a>
+		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' style="font-weight:normal;" title="{{lang "topic.unpin_tooltip"}}" aria-label="{{lang "topic.unpin_aria"}}"><button class="username unpin_label"></button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="mod_button" style="font-weight:normal;" title="{{lang "topic.pin_tooltip"}}" aria-label="{{lang "topic.pin_aria"}}"><button class="username pin_label"></button></a>{{end}}{{end}}
+		{{if .CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.Topic.IPAddress}}' style="font-weight:normal;" title="{{lang "topic.ip_tooltip"}}" aria-label="The poster's IP is {{.Topic.IPAddress}}"><button class="username ip_label"></button></a>{{end}}
+		<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="mod_button report_item" style="font-weight:normal;" title="{{lang "topic.flag_tooltip"}}" aria-label="{{lang "topic.flag_aria"}}" rel="nofollow"><button class="username flag_label"></button></a>
 
-		<a class="username hide_on_micro like_count" aria-label="{{lang "topic_like_count_aria"}}">{{.Topic.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="{{lang "topic_like_count_tooltip"}}"></a>
+		<a class="username hide_on_micro like_count" aria-label="{{lang "topic.like_count_aria"}}">{{.Topic.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="{{lang "topic.like_count_tooltip"}}"></a>
 
-		{{if .Topic.Tag}}<a class="username hide_on_micro user_tag">{{.Topic.Tag}}</a>{{else}}<a class="username hide_on_micro level" aria-label="{{lang "topic_level_aria"}}">{{.Topic.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="{{lang "topic_level_tooltip"}}"></a>{{end}}
+		{{if .Topic.Tag}}<a class="username hide_on_micro user_tag">{{.Topic.Tag}}</a>{{else}}<a class="username hide_on_micro level" aria-label="{{lang "topic.level_aria"}}">{{.Topic.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="{{lang "topic.level_tooltip"}}"></a>{{end}}
 
 		</span>
 	</div>
 </article>
 
-<div class="rowblock post_container" aria-label="{{lang "topic_current_page_aria"}}" style="overflow: hidden;">{{range .ItemList}}{{if .ActionType}}
-	<article itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item action_item">
-		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>
-		<span itemprop="text">{{.ActionType}}</span>
-	</article>
-{{else}}
-	<article {{scope "post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="background-image: url({{.Avatar}}), url(/static/{{$.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
-		{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
-		<p class="editable_block user_content" itemprop="text" style="margin:0;padding:0;">{{.ContentHtml}}</p>
-
-		<span class="controls{{if .LikeCount}} has_likes{{end}}">
-
-		<a href="{{.UserLink}}" class="username real_username" rel="author">{{.CreatedByName}}</a>&nbsp;&nbsp;
-		{{if $.CurrentUser.Perms.LikeItem}}{{if .Liked}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic_post_like_tooltip"}}" aria-label="{{lang "topic_post_like_aria"}}" style="color:#202020;"><button class="username like_label remove_like"></button></a>{{else}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic_post_unlike_tooltip"}}" aria-label="{{lang "topic_post_unlike_aria"}}" style="color:#202020;"><button class="username like_label add_like"></button></a>{{end}}{{end}}
-
-		{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
-		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic_post_edit_tooltip"}}" aria-label="{{lang "topic_post_edit_aria"}}"><button class="username edit_item edit_label"></button></a>{{end}}
-		{{end}}
-
-		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic_post_delete_tooltip"}}" aria-label="{{lang "topic_post_delete_aria"}}"><button class="username delete_item trash_label"></button></a>{{end}}
-		{{if $.CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.IPAddress}}' style="font-weight:normal;" title="{{lang "topic_post_ip_tooltip"}}" aria-label="The poster's IP is {{.IPAddress}}"><button class="username ip_label"></button></a>{{end}}
-		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button report_item" title="{{lang "topic_post_flag_tooltip"}}" aria-label="{{lang "topic_post_flag_aria"}}" rel="nofollow"><button class="username report_item flag_label"></button></a>
-
-		<a class="username hide_on_micro like_count">{{.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="{{lang "topic_post_like_count_tooltip"}}"></a>
-
-		{{if .Tag}}<a class="username hide_on_micro user_tag">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level" aria-label="{{lang "topic_post_level_aria"}}">{{.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="{{lang "topic_post_level_tooltip"}}"></a>{{end}}
-
-		</span>
-	</article>
-{{end}}{{end}}</div>
+{{template "topic_posts.html" . }}
 
 {{if .CurrentUser.Perms.CreateReply}}
 {{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
-<div class="rowblock topic_reply_form quick_create_form" aria-label="{{lang "topic_reply_aria"}}">
+<div class="rowblock topic_reply_form quick_create_form" aria-label="{{lang "topic.reply_aria"}}">
 	<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>
 	<input form="quick_post_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
 	<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
 	<div class="formrow real_first_child">
 		<div class="formitem">
-			<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="{{lang "topic_reply_content"}}" required></textarea>
+			<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="{{lang "topic.reply_content"}}" required></textarea>
 		</div>
 	</div>
 	<div class="formrow poll_content_row auto_hide">
@@ -128,17 +99,17 @@
 			<div class="pollinput" data-pollinput="0">
 				<input type="checkbox" disabled />
 				<label class="pollinputlabel"></label>
-				<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "topic_reply_add_poll_option"}}" />
+				<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "topic.reply_add_poll_option"}}" />
 			</div>
 		</div>
 	</div>
 	<div class="formrow quick_button_row">
 		<div class="formitem">
-			<button form="quick_post_form" name="reply-button" class="formbutton">{{lang "topic_reply_button"}}</button>
-			<button form="quick_post_form" class="formbutton" id="add_poll_button">{{lang "topic_reply_add_poll_button"}}</button>
+			<button form="quick_post_form" name="reply-button" class="formbutton">{{lang "topic.reply_button"}}</button>
+			<button form="quick_post_form" class="formbutton" id="add_poll_button">{{lang "topic.reply_add_poll_button"}}</button>
 			{{if .CurrentUser.Perms.UploadFiles}}
 			<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
-			<label for="upload_files" class="formbutton add_file_button">{{lang "topic_reply_add_file_button"}}</label>
+			<label for="upload_files" class="formbutton add_file_button">{{lang "topic.reply_add_file_button"}}</label>
 			<div id="upload_file_dock"></div>{{end}}
 		</div>
 	</div>

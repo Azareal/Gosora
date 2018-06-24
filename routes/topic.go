@@ -84,7 +84,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	}
 
 	topic.Tag = postGroup.Tag
-	if postGroup.IsMod || postGroup.IsAdmin {
+	if postGroup.IsMod {
 		topic.ClassName = common.Config.StaffCSS
 	}
 	topic.RelativeCreatedAt = common.RelativeTime(topic.CreatedAt)
@@ -146,7 +146,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 				return common.InternalError(err, w, r)
 			}
 
-			if postGroup.IsMod || postGroup.IsAdmin {
+			if postGroup.IsMod {
 				replyItem.ClassName = common.Config.StaffCSS
 			} else {
 				replyItem.ClassName = ""
@@ -185,7 +185,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 				likedQueryList = append(likedQueryList, replyItem.ID)
 			}
 
-			common.RunVhook("topic_reply_row_assign", &tpage, &replyItem)
+			common.RunVhookNoreturn("topic_reply_row_assign", &tpage, &replyItem)
 			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
 			tpage.ItemList = append(tpage.ItemList, replyItem)
 		}
@@ -261,7 +261,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 	// Lock this to the forum being linked?
 	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
 	var strictmode bool
-	common.RunVhook("topic_create_pre_loop", w, r, fid, &header, &user, &strictmode)
+	common.RunVhookNoreturn("topic_create_pre_loop", w, r, fid, &header, &user, &strictmode)
 
 	// TODO: Re-add support for plugin_guilds
 	var forumList []common.Forum

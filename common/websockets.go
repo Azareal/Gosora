@@ -10,6 +10,7 @@ package common
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -28,54 +29,218 @@ type WSUser struct {
 	User *User
 }
 
-type WSHub struct {
+// TODO: Make this an interface?
+type WsHubImpl struct {
+	// TODO: Shard this map
 	OnlineUsers  map[int]*WSUser
 	OnlineGuests map[*WSUser]bool
 	GuestLock    sync.RWMutex
 	UserLock     sync.RWMutex
+
+	lastTick      time.Time
+	lastTopicList []*TopicsRow
 }
 
 // TODO: Disable WebSockets on high load? Add a Control Panel interface for disabling it?
 var EnableWebsockets = true // Put this in caps for consistency with the other constants?
 
-var WsHub WSHub
+// TODO: Rename this to WebSockets?
+var WsHub WsHubImpl
 var wsUpgrader = websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
 var errWsNouser = errors.New("This user isn't connected via WebSockets")
 
 func init() {
 	adminStatsWatchers = make(map[*WSUser]bool)
-	WsHub = WSHub{
+	topicListWatchers = make(map[*WSUser]bool)
+	// TODO: Do we really want to initialise this here instead of in main.go / general_test.go like the other things?
+	WsHub = WsHubImpl{
 		OnlineUsers:  make(map[int]*WSUser),
 		OnlineGuests: make(map[*WSUser]bool),
 	}
 }
 
-func (hub *WSHub) GuestCount() int {
+func (hub *WsHubImpl) Start() {
+	//fmt.Println("running hub.Start")
+	if Config.DisableLiveTopicList {
+		return
+	}
+	hub.lastTick = time.Now()
+	AddScheduledSecondTask(hub.Tick)
+}
+
+type WsTopicList struct {
+	Topics []*WsTopicsRow
+}
+
+// This Tick is seperate from the admin one, as we want to process that in parallel with this due to the blocking calls to gopsutil
+func (hub *WsHubImpl) Tick() error {
+	//fmt.Println("running hub.Tick")
+
+	// Don't waste CPU time if nothing has happened
+	// TODO: Get a topic list method which strips stickies?
+	tList, _, _, err := TopicList.GetList(1)
+	if err != nil {
+		hub.lastTick = time.Now()
+		return err // TODO: Do we get ErrNoRows here?
+	}
+	defer func() {
+		hub.lastTick = time.Now()
+		hub.lastTopicList = tList
+	}()
+	if len(tList) == 0 {
+		return nil
+	}
+
+	//fmt.Println("checking for changes")
+	// TODO: Optimise this by only sniffing the top non-sticky
+	if len(tList) == len(hub.lastTopicList) {
+		var hasItem = false
+		for j, tItem := range tList {
+			if !tItem.Sticky {
+				if tItem.ID != hub.lastTopicList[j].ID {
+					hasItem = true
+				}
+			}
+		}
+		if !hasItem {
+			return nil
+		}
+	}
+
+	// TODO: Implement this for guests too? Should be able to optimise it far better there due to them sharing the same permission set
+	// TODO: Be less aggressive with the locking, maybe use an array of sorts instead of hitting the main map every-time
+	topicListMutex.RLock()
+	if len(topicListWatchers) == 0 {
+		//fmt.Println("no watchers")
+		topicListMutex.RUnlock()
+		return nil
+	}
+	//fmt.Println("found changes")
+
+	// Copy these over so we close this loop as fast as possible so we can release the read lock, especially if the group gets are backed by calls to the database
+	var groupIDs = make(map[int]bool)
+	var currentWatchers = make([]*WSUser, len(topicListWatchers))
+	var i = 0
+	for wsUser, _ := range topicListWatchers {
+		currentWatchers[i] = wsUser
+		groupIDs[wsUser.User.Group] = true
+		i++
+	}
+	topicListMutex.RUnlock()
+
+	var groups = make(map[int]*Group)
+	var canSeeMap = make(map[string][]int)
+	for groupID, _ := range groupIDs {
+		group, err := Groups.Get(groupID)
+		if err != nil {
+			// TODO: Do we really want to halt all pushes for what is possibly just one user?
+			return err
+		}
+		groups[group.ID] = group
+
+		var canSee = make([]byte, len(group.CanSee))
+		for i, item := range group.CanSee {
+			canSee[i] = byte(item)
+		}
+		canSeeMap[string(canSee)] = group.CanSee
+	}
+
+	var canSeeRenders = make(map[string][]byte)
+	for name, canSee := range canSeeMap {
+		topicList, forumList, _, err := TopicList.GetListByCanSee(canSee, 1)
+		if err != nil {
+			return err // TODO: Do we get ErrNoRows here?
+		}
+		if len(topicList) == 0 {
+			continue
+		}
+		_ = forumList // Might use this later after we get the base feature working
+
+		//fmt.Println("canSeeItem")
+		if topicList[0].Sticky {
+			var lastSticky = 0
+			for i, row := range topicList {
+				if !row.Sticky {
+					lastSticky = i
+					break
+				}
+			}
+			if lastSticky == 0 {
+				continue
+			}
+			//fmt.Println("lastSticky: ", lastSticky)
+			//fmt.Println("before topicList: ", topicList)
+			topicList = topicList[lastSticky:]
+			//fmt.Println("after topicList: ", topicList)
+		}
+
+		// TODO: Compare to previous tick to eliminate unnecessary work and data
+		var wsTopicList = make([]*WsTopicsRow, len(topicList))
+		for i, topicRow := range topicList {
+			wsTopicList[i] = topicRow.WebSockets()
+		}
+
+		outBytes, err := json.Marshal(&WsTopicList{wsTopicList})
+		if err != nil {
+			return err
+		}
+		canSeeRenders[name] = outBytes
+	}
+
+	// TODO: Use MessagePack for additional speed?
+	//fmt.Println("writing to the clients")
+	for _, wsUser := range currentWatchers {
+		group := groups[wsUser.User.Group]
+		var canSee = make([]byte, len(group.CanSee))
+		for i, item := range group.CanSee {
+			canSee[i] = byte(item)
+		}
+
+		w, err := wsUser.conn.NextWriter(websocket.TextMessage)
+		if err != nil {
+			//fmt.Printf("werr for #%d: %s\n", wsUser.User.ID, err)
+			topicListMutex.Lock()
+			delete(topicListWatchers, wsUser)
+			topicListMutex.Unlock()
+			continue
+		}
+
+		//fmt.Println("writing to user #", wsUser.User.ID)
+		outBytes := canSeeRenders[string(canSee)]
+		//fmt.Println("outBytes: ", string(outBytes))
+		w.Write(outBytes)
+		w.Close()
+	}
+	return nil
+}
+
+func (hub *WsHubImpl) GuestCount() int {
 	defer hub.GuestLock.RUnlock()
 	hub.GuestLock.RLock()
 	return len(hub.OnlineGuests)
 }
 
-func (hub *WSHub) UserCount() int {
+func (hub *WsHubImpl) UserCount() int {
 	defer hub.UserLock.RUnlock()
 	hub.UserLock.RLock()
 	return len(hub.OnlineUsers)
 }
 
-func (hub *WSHub) broadcastMessage(msg string) error {
+func (hub *WsHubImpl) broadcastMessage(msg string) error {
 	hub.UserLock.RLock()
+	defer hub.UserLock.RUnlock()
 	for _, wsUser := range hub.OnlineUsers {
 		w, err := wsUser.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			return err
 		}
 		_, _ = w.Write([]byte(msg))
+		w.Close()
 	}
-	hub.UserLock.RUnlock()
 	return nil
 }
 
-func (hub *WSHub) pushMessage(targetUser int, msg string) error {
+func (hub *WsHubImpl) pushMessage(targetUser int, msg string) error {
 	hub.UserLock.RLock()
 	wsUser, ok := hub.OnlineUsers[targetUser]
 	hub.UserLock.RUnlock()
@@ -93,7 +258,7 @@ func (hub *WSHub) pushMessage(targetUser int, msg string) error {
 	return nil
 }
 
-func (hub *WSHub) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
+func (hub *WsHubImpl) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
 	//log.Print("In pushAlert")
 	hub.UserLock.RLock()
 	wsUser, ok := hub.OnlineUsers[targetUser]
@@ -119,7 +284,7 @@ func (hub *WSHub) pushAlert(targetUser int, asid int, event string, elementType 
 	return nil
 }
 
-func (hub *WSHub) pushAlerts(users []int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
+func (hub *WsHubImpl) pushAlerts(users []int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
 	var wsUsers []*WSUser
 	hub.UserLock.RLock()
 	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
@@ -193,6 +358,7 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 				delete(WsHub.OnlineGuests, wsUser)
 				WsHub.GuestLock.Unlock()
 			} else {
+				// TODO: Make sure the admin is removed from the admin stats list in the case that an error happens
 				WsHub.UserLock.Lock()
 				delete(WsHub.OnlineUsers, user.ID)
 				WsHub.UserLock.Unlock()
@@ -229,26 +395,17 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 	return nil
 }
 
+// TODO: Use a map instead of a switch to make this more modular?
 func wsPageResponses(wsUser *WSUser, page []byte) {
+	//fmt.Println("entering page: ", string(page))
 	switch string(page) {
+	// Live Topic List is an experimental feature
+	// TODO: Optimise this to reduce the amount of contention
+	case "/topics/":
+		topicListMutex.Lock()
+		topicListWatchers[wsUser] = true
+		topicListMutex.Unlock()
 	case "/panel/":
-		//log.Print("/panel/ WS Route")
-		/*w, err := wsUser.conn.NextWriter(websocket.TextMessage)
-		if err != nil {
-			//log.Print(err.Error())
-			return
-		}
-
-		log.Print(WsHub.online_users)
-		uonline := WsHub.UserCount()
-		gonline := WsHub.GuestCount()
-		totonline := uonline + gonline
-
-		w.Write([]byte("set #dash-totonline " + strconv.Itoa(totonline) + " online\r"))
-		w.Write([]byte("set #dash-gonline " + strconv.Itoa(gonline) + " guests online\r"))
-		w.Write([]byte("set #dash-uonline " + strconv.Itoa(uonline) + " users online\r"))
-		w.Close()*/
-
 		// Listen for changes and inform the admins...
 		adminStatsMutex.Lock()
 		watchers := len(adminStatsWatchers)
@@ -260,8 +417,15 @@ func wsPageResponses(wsUser *WSUser, page []byte) {
 	}
 }
 
+// TODO: Use a map instead of a switch to make this more modular?
 func wsLeavePage(wsUser *WSUser, page []byte) {
+	//fmt.Println("leaving page: ", string(page))
 	switch string(page) {
+	// Live Topic List is an experimental feature
+	case "/topics/":
+		topicListMutex.Lock()
+		delete(topicListWatchers, wsUser)
+		topicListMutex.Unlock()
 	case "/panel/":
 		adminStatsMutex.Lock()
 		delete(adminStatsWatchers, wsUser)
@@ -269,6 +433,10 @@ func wsLeavePage(wsUser *WSUser, page []byte) {
 	}
 }
 
+// TODO: Abstract this
+// TODO: Use odd-even sharding
+var topicListWatchers map[*WSUser]bool
+var topicListMutex sync.RWMutex
 var adminStatsWatchers map[*WSUser]bool
 var adminStatsMutex sync.RWMutex
 
@@ -385,20 +553,18 @@ AdminStatLoop:
 			}
 		}
 
-		adminStatsMutex.RLock()
-		watchers := adminStatsWatchers
-		adminStatsMutex.RUnlock()
-
-		for watcher := range watchers {
+		// Acquire a write lock for now, so we can handle the delete() case below and the read one simultaneously
+		// TODO: Stop taking a write lock here if it isn't necessary
+		adminStatsMutex.Lock()
+		for watcher := range adminStatsWatchers {
 			w, err := watcher.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				adminStatsMutex.Lock()
 				delete(adminStatsWatchers, watcher)
-				adminStatsMutex.Unlock()
 				continue
 			}
 
 			// nolint
+			// TODO: Use JSON for this to make things more portable and easier to convert to MessagePack, if need be?
 			if !noStatUpdates {
 				w.Write([]byte("set #dash-totonline <span>" + strconv.Itoa(totonline) + totunit + " online</span>\r"))
 				w.Write([]byte("set #dash-gonline <span>" + strconv.Itoa(gonline) + gunit + " guests online</span>\r"))
@@ -421,6 +587,7 @@ AdminStatLoop:
 
 			w.Close()
 		}
+		adminStatsMutex.Unlock()
 
 		lastUonline = uonline
 		lastGonline = gonline

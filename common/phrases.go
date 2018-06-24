@@ -1,7 +1,7 @@
 /*
 *
 * Gosora Phrase System
-* Copyright Azareal 2017 - 2018
+* Copyright Azareal 2017 - 2019
 *
  */
 package common
@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -34,21 +35,22 @@ type LevelPhrases struct {
 
 // ! For the sake of thread safety, you must never modify a *LanguagePack directly, but to create a copy of it and overwrite the entry in the sync.Map
 type LanguagePack struct {
-	Name             string
-	Phrases          map[string]string // Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
-	Levels           LevelPhrases
-	GlobalPerms      map[string]string
-	LocalPerms       map[string]string
-	SettingPhrases   map[string]string
-	PermPresets      map[string]string
-	Accounts         map[string]string // TODO: Apply these phrases in the software proper
-	UserAgents       map[string]string
-	OperatingSystems map[string]string
-	HumanLanguages   map[string]string
-	Errors           map[string]map[string]string // map[category]map[name]value
-	NoticePhrases    map[string]string
-	PageTitles       map[string]string
-	TmplPhrases      map[string]string
+	Name                string
+	Phrases             map[string]string // Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
+	Levels              LevelPhrases
+	GlobalPerms         map[string]string
+	LocalPerms          map[string]string
+	SettingPhrases      map[string]string
+	PermPresets         map[string]string
+	Accounts            map[string]string // TODO: Apply these phrases in the software proper
+	UserAgents          map[string]string
+	OperatingSystems    map[string]string
+	HumanLanguages      map[string]string
+	Errors              map[string]map[string]string // map[category]map[name]value
+	NoticePhrases       map[string]string
+	PageTitles          map[string]string
+	TmplPhrases         map[string]string
+	TmplPhrasesPrefixes map[string]map[string]string // [prefix][name]phrase
 
 	TmplIndicesToPhrases [][][]byte // [tmplID][index]phrase
 }
@@ -79,6 +81,17 @@ func InitPhrases() error {
 		err = json.Unmarshal(data, &langPack)
 		if err != nil {
 			return err
+		}
+
+		// [prefix][name]phrase
+		langPack.TmplPhrasesPrefixes = make(map[string]map[string]string)
+		for name, phrase := range langPack.TmplPhrases {
+			prefix := strings.Split(name, ".")[0]
+			_, ok := langPack.TmplPhrasesPrefixes[prefix]
+			if !ok {
+				langPack.TmplPhrasesPrefixes[prefix] = make(map[string]string)
+			}
+			langPack.TmplPhrasesPrefixes[prefix][name] = phrase
 		}
 
 		langPack.TmplIndicesToPhrases = make([][][]byte, len(langTmplIndicesToNames))
@@ -231,6 +244,11 @@ func GetTmplPhrase(name string) string {
 
 func GetTmplPhrases() map[string]string {
 	return currentLangPack.Load().(*LanguagePack).TmplPhrases
+}
+
+func GetTmplPhrasesByPrefix(prefix string) (phrases map[string]string, ok bool) {
+	res, ok := currentLangPack.Load().(*LanguagePack).TmplPhrasesPrefixes[prefix]
+	return res, ok
 }
 
 func getPhrasePlaceholder(prefix string, suffix string) string {

@@ -13,9 +13,6 @@
 	width: 240px;
 	position: relative;
 }
-#dash_saved {
-	display: none;
-}
 #dash_username {
 	display: flex;
 }

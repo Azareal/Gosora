@@ -13,7 +13,7 @@ type Header struct {
 	Title      string
 	NoticeList []string
 	Scripts    []string
-	//PreloadScripts []string
+	//Preload []string
 	Stylesheets []string
 	Widgets     PageWidgets
 	Site        *site
@@ -32,8 +32,8 @@ func (header *Header) AddScript(name string) {
 	header.Scripts = append(header.Scripts, name)
 }
 
-/*func (header *Header) PreloadScript(name string) {
-	header.PreloadScripts = append(header.PreloadScripts, name)
+/*func (header *Header) Preload(name string) {
+	header.Preload = append(header.Preload, name)
 }*/
 
 func (header *Header) AddSheet(name string) {

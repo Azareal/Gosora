@@ -81,14 +81,15 @@ type TopicUser struct {
 }
 
 type TopicsRow struct {
-	ID                  int
-	Link                string
-	Title               string
-	Content             string
-	CreatedBy           int
-	IsClosed            bool
-	Sticky              bool
-	CreatedAt           string
+	ID        int
+	Link      string
+	Title     string
+	Content   string
+	CreatedBy int
+	IsClosed  bool
+	Sticky    bool
+	CreatedAt time.Time
+	//RelativeCreatedAt   string
 	LastReplyAt         time.Time
 	RelativeLastReplyAt string
 	LastReplyBy         int
@@ -107,6 +108,31 @@ type TopicsRow struct {
 
 	ForumName string //TopicsRow
 	ForumLink string
+}
+
+type WsTopicsRow struct {
+	ID                  int
+	Link                string
+	Title               string
+	CreatedBy           int
+	IsClosed            bool
+	Sticky              bool
+	CreatedAt           time.Time
+	LastReplyAt         time.Time
+	RelativeLastReplyAt string
+	LastReplyBy         int
+	ParentID            int
+	PostCount           int
+	LikeCount           int
+	ClassName           string
+	Creator             *WsJSONUser
+	LastUser            *WsJSONUser
+	ForumName           string
+	ForumLink           string
+}
+
+func (row *TopicsRow) WebSockets() *WsTopicsRow {
+	return &WsTopicsRow{row.ID, row.Link, row.Title, row.CreatedBy, row.IsClosed, row.Sticky, row.CreatedAt, row.LastReplyAt, row.RelativeLastReplyAt, row.LastReplyBy, row.ParentID, row.PostCount, row.LikeCount, row.ClassName, row.Creator.WebSockets(), row.LastUser.WebSockets(), row.ForumName, row.ForumLink}
 }
 
 type TopicStmts struct {
@@ -302,6 +328,7 @@ func (topic *Topic) Copy() Topic {
 	return *topic
 }
 
+// TODO: Load LastReplyAt?
 func TopicByReplyID(rid int) (*Topic, error) {
 	topic := Topic{ID: 0}
 	err := topicStmts.getByReplyID.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Poll, &topic.Data)
@@ -310,6 +337,7 @@ func TopicByReplyID(rid int) (*Topic, error) {
 }
 
 // TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser
+// TODO: Load LastReplyAt everywhere in here?
 func GetTopicUser(tid int) (TopicUser, error) {
 	tcache := Topics.GetCache()
 	ucache := Users.GetCache()

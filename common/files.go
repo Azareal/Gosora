@@ -3,7 +3,9 @@ package common
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"mime"
+	"strconv"
 	"strings"
 	"sync"
 	//"errors"
@@ -40,6 +42,9 @@ func (list SFileList) JSTmplInit() error {
 	DebugLog("Initialising the client side templates")
 	var fragMap = make(map[string][][]byte)
 	fragMap["alert"] = tmpl.GetFrag("alert")
+	fragMap["topics_topic"] = tmpl.GetFrag("topics_topic")
+	fragMap["topic_posts"] = tmpl.GetFrag("topic_posts")
+	fragMap["topic_alt_posts"] = tmpl.GetFrag("topic_alt_posts")
 	DebugLog("fragMap: ", fragMap)
 	return filepath.Walk("./tmpl_client", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
@@ -56,18 +61,27 @@ func (list SFileList) JSTmplInit() error {
 			return err
 		}
 
+		path = strings.TrimPrefix(path, "tmpl_client/")
+		tmplName := strings.TrimSuffix(path, ".go")
+		shortName := strings.TrimPrefix(tmplName, "template_")
+
 		var replace = func(data []byte, replaceThis string, withThis string) []byte {
 			return bytes.Replace(data, []byte(replaceThis), []byte(withThis), -1)
 		}
 
-		startIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("func Template"))
+		startIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("func init() {"))
+		if !hasFunc {
+			return errors.New("no init function found")
+		}
+		data = data[startIndex-len([]byte("func init() {")):]
+		data = replace(data, "func ", "function ")
+		data = replace(data, "function init() {", "tmplInits[\""+tmplName+"\"] = ")
+		data = replace(data, " error {\n", " {\nlet out = \"\"\n")
+		funcIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("function Template_"))
 		if !hasFunc {
 			return errors.New("no template function found")
 		}
-		data = data[startIndex-len([]byte("func Template")):]
-		data = replace(data, "func ", "function ")
-		data = replace(data, " error {\n", " {\nlet out = \"\"\n")
-		spaceIndex, hasSpace := skipUntilIfExists(data, 10, ' ')
+		spaceIndex, hasSpace := skipUntilIfExists(data, funcIndex, ' ')
 		if !hasSpace {
 			return errors.New("no spaces found after the template function name")
 		}
@@ -75,13 +89,16 @@ func (list SFileList) JSTmplInit() error {
 		if !hasBrace {
 			return errors.New("no right brace found after the template function name")
 		}
-		//fmt.Println("spaceIndex: ", spaceIndex)
-		//fmt.Println("endBrace: ", endBrace)
-		//fmt.Println("string(data[spaceIndex:endBrace]): ", string(data[spaceIndex:endBrace]))
+		fmt.Println("spaceIndex: ", spaceIndex)
+		fmt.Println("endBrace: ", endBrace)
+		fmt.Println("string(data[spaceIndex:endBrace]): ", string(data[spaceIndex:endBrace]))
+
 		preLen := len(data)
 		data = replace(data, string(data[spaceIndex:endBrace]), "")
 		data = replace(data, "))\n", "\n")
 		endBrace -= preLen - len(data) // Offset it as we've deleted portions
+		fmt.Println("new endBrace: ", endBrace)
+		fmt.Println("data: ", string(data))
 
 		/*var showPos = func(data []byte, index int) (out string) {
 			out = "["
@@ -99,6 +116,9 @@ func (list SFileList) JSTmplInit() error {
 		var each = func(phrase string, handle func(index int)) {
 			//fmt.Println("find each '" + phrase + "'")
 			var index = endBrace
+			if index < 0 {
+				panic("index under zero: " + strconv.Itoa(index))
+			}
 			var foundIt bool
 			for {
 				//fmt.Println("in index: ", index)
@@ -145,9 +165,24 @@ func (list SFileList) JSTmplInit() error {
 				data[braceAt-1] = ')' // Drop a brace here to satisfy JS
 			}
 		})
+		each("for _, item := range ", func(index int) {
+			//fmt.Println("for index: ", index)
+			braceAt, hasBrace := skipUntilIfExists(data, index, '{')
+			if hasBrace {
+				if data[braceAt-1] != ' ' {
+					panic("couldn't find space before brace, found ' " + string(data[braceAt-1]) + "' instead")
+				}
+				data[braceAt-1] = ')' // Drop a brace here to satisfy JS
+			}
+		})
+		data = replace(data, "for _, item := range ", "for(item of ")
 		data = replace(data, "w.Write([]byte(", "out += ")
 		data = replace(data, "w.Write(", "out += ")
 		data = replace(data, "strconv.Itoa(", "")
+		data = replace(data, "common.", "")
+		data = replace(data, shortName+"_tmpl_phrase_id = RegisterTmplPhraseNames([]string{", "[")
+		data = replace(data, "var phrases = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let phrases = tmplPhrases[\""+tmplName+"\"];")
+		//data = replace(data, "var phrases = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let phrases = tmplPhrases[\""+tmplName+"\"];\nconsole.log('tmplName:','"+tmplName+"')\nconsole.log('phrases:', phrases);")
 		data = replace(data, "if ", "if(")
 		data = replace(data, "return nil", "return out")
 		data = replace(data, " )", ")")
@@ -155,19 +190,25 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, "\n", ";\n")
 		data = replace(data, "{;", "{")
 		data = replace(data, "};", "}")
+		data = replace(data, "[;", "[")
 		data = replace(data, ";;", ";")
+		data = replace(data, ",;", ",")
+		data = replace(data, "=;", "=")
+		data = replace(data, `,
+	});
+}`, "\n\t];")
+		data = replace(data, `=
+}`, "= []")
 
-		path = strings.TrimPrefix(path, "tmpl_client/")
-		tmplName := strings.TrimSuffix(path, ".go")
-		fragset, ok := fragMap[strings.TrimPrefix(tmplName, "template_")]
+		fragset, ok := fragMap[shortName]
 		if !ok {
 			DebugLog("tmplName: ", tmplName)
 			return errors.New("couldn't find template in fragmap")
 		}
 
-		var sfrags = []byte("let alert_frags = [];\n")
+		var sfrags = []byte("let " + shortName + "_frags = [];\n")
 		for _, frags := range fragset {
-			sfrags = append(sfrags, []byte("alert_frags.push(`"+string(frags)+"`);\n")...)
+			sfrags = append(sfrags, []byte(shortName+"_frags.push(`"+string(frags)+"`);\n")...)
 		}
 		data = append(sfrags, data...)
 		data = replace(data, "\n;", "\n")

@@ -342,7 +342,7 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer
 		return tmplO(pi.(ErrorPage), w)
 	case func(Page, io.Writer) error:
 		return tmplO(pi.(Page), w)
-	case string:
+	case nil, string:
 		mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap[template]
 		if !ok {
 			mapping = template
@@ -370,14 +370,21 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer
 
 // GetThemeTemplate attempts to get the template for a specific theme, otherwise it falls back on the default template pointer, which if absent will fallback onto the template interpreter
 func GetThemeTemplate(theme string, template string) interface{} {
+	// TODO: Figure out why we're getting a nil pointer here when transpiled templates are disabled, I would have assumed that we would just fall back to !ok on this
+	// Might have something to do with it being the theme's TmplPtr map, investigate.
 	tmpl, ok := Themes[theme].TmplPtr[template]
 	if ok {
+		//fmt.Println("tmpl: ", tmpl)
+		//fmt.Println("exiting at Themes[theme].TmplPtr[template]")
 		return tmpl
 	}
+
 	tmpl, ok = TmplPtrMap[template]
 	if ok {
+		//fmt.Println("exiting at TmplPtrMap[template]")
 		return tmpl
 	}
+	//fmt.Println("just passing back the template name")
 	return template
 }
 

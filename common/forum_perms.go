@@ -174,20 +174,30 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	return FPStore.Reload(fid)
+	err = FPStore.Reload(fid)
+	if err != nil {
+		return err
+	}
+	return TopicList.RebuildPermTree()
 }
 
+// TODO: FPStore.Reload?
 func ReplaceForumPermsForGroup(gid int, presetSet map[int]string, permSets map[int]*ForumPerms) error {
 	tx, err := qgen.Builder.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
+
 	err = ReplaceForumPermsForGroupTx(tx, gid, presetSet, permSets)
 	if err != nil {
 		return err
 	}
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return TopicList.RebuildPermTree()
 }
 
 func ReplaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string, permSets map[int]*ForumPerms) error {

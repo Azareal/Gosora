@@ -2,7 +2,6 @@ package main
 
 // TODO: How should we handle *HeaderLite and *Header?
 func routes() {
-	addRoute(View("routeAPI", "/api/"))
 	addRoute(View("routes.Overview", "/overview/"))
 	addRoute(View("routes.CustomPage", "/pages/", "extraData"))
 	addRoute(View("routes.ForumList", "/forums/" /*,"&forums"*/))
@@ -11,6 +10,12 @@ func routes() {
 	addRoute(
 		View("routes.ShowAttachment", "/attachs/", "extraData").Before("ParseForm"),
 	)
+
+	apiGroup := newRouteGroup("/api/",
+		View("routeAPI", "/api/"),
+		View("routeAPIPhrases", "/api/phrases/"), // TODO: Be careful with exposing the panel phrases here
+	)
+	addRouteGroup(apiGroup)
 
 	// TODO: Reduce the number of Befores. With a new method, perhaps?
 	reportGroup := newRouteGroup("/report/",

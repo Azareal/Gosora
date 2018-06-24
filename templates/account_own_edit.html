@@ -6,8 +6,6 @@
 		<div class="coldyn_block">
 		<div id="dash_left" class="coldyn_item">
 			<div class="rowitem">
-				<span id="dash_saved">Saved</span>
-				<!--<span id="dash_username">{{.CurrentUser.Name}}</span>-->
 				<span id="dash_username">
 					<form id="dash_username_form" action="/user/edit/username/submit/?session={{.CurrentUser.Session}}" method="post"></form>
 					<input form="dash_username_form" name="account-new-username" value="{{.CurrentUser.Name}}" />

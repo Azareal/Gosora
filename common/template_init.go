@@ -122,25 +122,15 @@ var Template_ip_search_handle = func(pi IPSearchPage, w io.Writer) error {
 	return Templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
-// ? - Add template hooks?
-func CompileTemplates() error {
-	var config tmpl.CTemplateConfig
-	config.Minify = Config.MinifyTemplates
-	config.SuperDebug = Dev.TemplateDebug
-
-	c := tmpl.NewCTemplateSet()
-	c.SetConfig(config)
-	c.SetBaseImportMap(map[string]string{
-		"io":       "io",
-		"./common": "./common",
-	})
-
-	// Schemas to train the template compiler on what to expect
-	// TODO: Add support for interface{}s
+func tmplInitUsers() (User, User, User) {
 	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, BuildAvatar(62, ""), "", "", "", "", 0, 0, 0, "0.0.0.0.0", 0}
 	// TODO: Do a more accurate level calculation for this?
 	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(1, ""), "", "", "", "", 58, 1000, 0, "127.0.0.1", 0}
 	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, BuildAvatar(2, ""), "", "", "", "", 42, 900, 0, "::1", 0}
+	return user, user2, user3
+}
+
+func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Header) {
 	header := &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
@@ -163,9 +153,32 @@ func CompileTemplates() error {
 	*header3 = *header
 	header3.CurrentUser = user3
 
+	return header, header2, header3
+}
+
+// ? - Add template hooks?
+func CompileTemplates() error {
+	var config tmpl.CTemplateConfig
+	config.Minify = Config.MinifyTemplates
+	config.Debug = Dev.DebugMode
+	config.SuperDebug = Dev.TemplateDebug
+
+	c := tmpl.NewCTemplateSet()
+	c.SetConfig(config)
+	c.SetBaseImportMap(map[string]string{
+		"io":       "io",
+		"./common": "./common",
+	})
+	c.SetBuildTags("!no_templategen")
+
+	// Schemas to train the template compiler on what to expect
+	// TODO: Add support for interface{}s
+	user, user2, user3 := tmplInitUsers()
+	header, header2, _ := tmplInitHeaders(user, user2, user3)
+	now := time.Now()
+
 	log.Print("Compiling the templates")
 
-	var now = time.Now()
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
 		PollOption{0, "Nothing"},
 		PollOption{1, "Something"},
@@ -213,7 +226,7 @@ func CompileTemplates() error {
 	}
 
 	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, "Date", time.Now(), "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
 	header2.Title = "Topic List"
 	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, Paginator{[]int{1}, 1, 1}}
 	topicListTmpl, err := c.Compile("topics.html", "templates/", "common.TopicListPage", topicListPage, varList)
@@ -310,9 +323,11 @@ func CompileJSTemplates() error {
 	log.Print("Compiling the JS templates")
 	var config tmpl.CTemplateConfig
 	config.Minify = Config.MinifyTemplates
+	config.Debug = Dev.DebugMode
 	config.SuperDebug = Dev.TemplateDebug
 	config.SkipHandles = true
-	config.SkipInitBlock = true
+	config.SkipTmplPtrMap = true
+	config.SkipInitBlock = false
 	config.PackageName = "tmpl"
 
 	c := tmpl.NewCTemplateSet()
@@ -321,11 +336,49 @@ func CompileJSTemplates() error {
 		"io":               "io",
 		"../common/alerts": "../common/alerts",
 	})
+	c.SetBuildTags("!no_templategen")
+
+	user, user2, user3 := tmplInitUsers()
+	header, _, _ := tmplInitHeaders(user, user2, user3)
+	now := time.Now()
 	var varList = make(map[string]tmpl.VarItem)
 
 	// TODO: Check what sort of path is sent exactly and use it here
 	alertItem := alerts.AlertItem{Avatar: "", ASID: 1, Path: "/", Message: "uh oh, something happened"}
 	alertTmpl, err := c.Compile("alert.html", "templates/", "alerts.AlertItem", alertItem, varList)
+	if err != nil {
+		return err
+	}
+
+	c.SetBaseImportMap(map[string]string{
+		"io":        "io",
+		"../common": "../common",
+	})
+	// TODO: Fix the import loop so we don't have to use this hack anymore
+	c.SetBuildTags("!no_templategen,tmplgentopic")
+
+	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
+	topicListItemTmpl, err := c.Compile("topics_topic.html", "templates/", "*common.TopicsRow", topicsRow, varList)
+	if err != nil {
+		return err
+	}
+
+	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
+		PollOption{0, "Nothing"},
+		PollOption{1, "Something"},
+	}, VoteCount: 7}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 0, 1, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, "", 0, "", "", "", "", "", 58, false}
+	var replyList []ReplyUser
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, RelativeTime(now), 0, 0, "", "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
+
+	varList = make(map[string]tmpl.VarItem)
+	header.Title = "Topic Name"
+	tpage := TopicPage{header, replyList, topic, poll, 1, 1}
+	topicIDTmpl, err := c.Compile("topic_posts.html", "templates/", "common.TopicPage", tpage, varList)
+	if err != nil {
+		return err
+	}
+	topicIDAltTmpl, err := c.Compile("topic_alt_posts.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err
 	}
@@ -348,6 +401,9 @@ func CompileJSTemplates() error {
 		}()
 	}
 	writeTemplate("alert", alertTmpl)
+	writeTemplate("topics_topic", topicListItemTmpl)
+	writeTemplate("topic_posts", topicIDTmpl)
+	writeTemplate("topic_alt_posts", topicIDAltTmpl)
 	writeTemplateList(c, &wg, dirPrefix)
 	return nil
 }

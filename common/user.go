@@ -53,6 +53,28 @@ type User struct {
 	TempGroup int
 }
 
+func (user *User) WebSockets() *WsJSONUser {
+	var groupID = user.Group
+	if user.TempGroup != 0 {
+		groupID = user.TempGroup
+	}
+	// TODO: Do we want to leak the user's permissions? Users will probably be able to see their status from the group tags, but still
+	return &WsJSONUser{user.ID, user.Link, user.Name, groupID, user.IsMod, user.Avatar, user.Level, user.Score, user.Liked}
+}
+
+// Use struct tags to avoid having to define this? It really depends on the circumstances, sometimes we want the whole thing, sometimes... not.
+type WsJSONUser struct {
+	ID     int
+	Link   string
+	Name   string
+	Group  int // Be sure to mask with TempGroup
+	IsMod  bool
+	Avatar string
+	Level  int
+	Score  int
+	Liked  int
+}
+
 type UserStmts struct {
 	activate        *sql.Stmt
 	changeGroup     *sql.Stmt

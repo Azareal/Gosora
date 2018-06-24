@@ -1,0 +1,32 @@
+<div class="rowblock post_container" aria-label="{{lang "topic.current_page_aria"}}" style="overflow: hidden;">{{range .ItemList}}
+{{if .ActionType}}
+	<article {{scope "post_action"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item action_item">
+		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>
+		<span itemprop="text">{{.ActionType}}</span>
+	</article>
+{{else}}
+	<article {{scope "post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="background-image: url({{.Avatar}}), url(/static/{{$.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
+		{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
+		<p class="editable_block user_content" itemprop="text" style="margin:0;padding:0;">{{.ContentHtml}}</p>
+
+		<span class="controls{{if .LikeCount}} has_likes{{end}}">
+
+		<a href="{{.UserLink}}" class="username real_username" rel="author">{{.CreatedByName}}</a>&nbsp;&nbsp;
+		{{if $.CurrentUser.Perms.LikeItem}}{{if .Liked}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_like_tooltip"}}" aria-label="{{lang "topic.post_like_aria"}}" style="color:#202020;"><button class="username like_label remove_like"></button></a>{{else}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_unlike_tooltip"}}" aria-label="{{lang "topic.post_unlike_aria"}}" style="color:#202020;"><button class="username like_label add_like"></button></a>{{end}}{{end}}
+
+		{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
+		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_edit_tooltip"}}" aria-label="{{lang "topic.post_edit_aria"}}"><button class="username edit_item edit_label"></button></a>{{end}}
+		{{end}}
+
+		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_delete_tooltip"}}" aria-label="{{lang "topic.post_delete_aria"}}"><button class="username delete_item trash_label"></button></a>{{end}}
+		{{if $.CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.IPAddress}}' style="font-weight:normal;" title="{{lang "topic.post_ip_tooltip"}}" aria-label="The poster's IP is {{.IPAddress}}"><button class="username ip_label"></button></a>{{end}}
+		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button report_item" title="{{lang "topic.post_flag_tooltip"}}" aria-label="{{lang "topic.post_flag_aria"}}" rel="nofollow"><button class="username report_item flag_label"></button></a>
+
+		<a class="username hide_on_micro like_count">{{.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="{{lang "topic.post_like_count_tooltip"}}"></a>
+
+		{{if .Tag}}<a class="username hide_on_micro user_tag">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level" aria-label="{{lang "topic.post_level_aria"}}">{{.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="{{lang "topic.post_level_tooltip"}}"></a>{{end}}
+
+		</span>
+	</article>
+{{end}}
+{{end}}</div>

@@ -371,6 +371,7 @@ func RunHookNoreturn(name string, data interface{}) {
 	}
 }
 
+// TODO: Use RunHook semantics to allow multiple lined up plugins / modules their turn?
 func RunVhook(name string, data ...interface{}) interface{} {
 	hook := Vhooks[name]
 	if hook != nil {

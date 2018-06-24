@@ -204,7 +204,8 @@ func skipAllUntilCharsExist(tmplData []byte, i int, expects []byte) (newI int, h
 	expectIndex := 0
 	//fmt.Printf("tmplData: %+v\n", string(tmplData))
 	for ; j < len(tmplData) && expectIndex < len(expects); j++ {
-		//fmt.Println("tmplData[j]: ", string(tmplData[j]) + " ")
+		//fmt.Println("j: ", j)
+		//fmt.Println("tmplData[j]: ", string(tmplData[j])+" ")
 		if tmplData[j] == expects[expectIndex] {
 			//fmt.Printf("expects[expectIndex]: %+v - %d\n", string(expects[expectIndex]), expectIndex)
 			expectIndex++

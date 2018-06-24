@@ -8,10 +8,7 @@ type HTTPSRedirect struct {
 
 func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Connection", "close")
-	dest := "https://" + req.Host + req.URL.Path
-	if len(req.URL.RawQuery) > 0 {
-		dest += "?" + req.URL.RawQuery
-	}
+	dest := "https://" + req.Host + req.URL.String()
 	http.Redirect(w, req, dest, http.StatusTemporaryRedirect)
 }
 

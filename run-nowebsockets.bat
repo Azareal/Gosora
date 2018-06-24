@@ -2,7 +2,9 @@
 rem TODO: Make these deletes a little less noisy
 del "template_*.go"
 del "gen_*.go"
-del "tmpl_client/template_*.go"
+cd tmpl_client
+del "template_*.go"
+cd ..
 del "gosora.exe"
 
 echo Generating the dynamic code

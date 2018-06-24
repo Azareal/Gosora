@@ -284,6 +284,10 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	if err != nil {
 		return gid, err
 	}
+	err = TopicList.RebuildPermTree()
+	if err != nil {
+		return gid, err
+	}
 
 	return gid, nil
 }

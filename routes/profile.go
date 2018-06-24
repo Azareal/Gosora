@@ -88,7 +88,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 		}
 
 		replyLines = strings.Count(replyContent, "\n")
-		if group.IsMod || group.IsAdmin {
+		if group.IsMod {
 			replyClassName = common.Config.StaffCSS
 		} else {
 			replyClassName = ""

@@ -694,6 +694,13 @@ textarea {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
 }
+.topic_row.new_item .topic_left, .topic_row.new_item .topic_right {
+	background-color: rgb(239, 255, 255);
+	border: 1px solid rgb(187, 217, 217);
+	border-bottom: 2px solid rgb(187, 217, 217);
+	border-left: none;
+	border-right: none;
+}
 .topic_middle {
 	display: none;
 }
@@ -1008,7 +1015,7 @@ textarea {
 	display: block;
 }
 .like_count:after {
-	content: "{{index .Phrases "topic_like_count_suffix"}}";
+	content: "{{index .Phrases "topic.like_count_suffix"}}";
 	margin-right: 6px;
 }
 
@@ -1036,31 +1043,31 @@ textarea {
 }
 
 .add_like:before, .remove_like:before {
-	content: "{{index .Phrases "topic_plus_one"}}";
+	content: "{{index .Phrases "topic.plus_one"}}";
 }
 .button_container .open_edit:after, .edit_item:after{
-	content: "{{index .Phrases "topic_edit_button_text"}}";
+	content: "{{index .Phrases "topic.edit_button_text"}}";
 }
 .delete_item:after {
-	content: "{{index .Phrases "topic_delete_button_text"}}";
+	content: "{{index .Phrases "topic.delete_button_text"}}";
 }
 .ip_item_button:after {
-	content: "{{index .Phrases "topic_ip_button_text"}}";
+	content: "{{index .Phrases "topic.ip_button_text"}}";
 }
 .lock_item:after {
-	content: "{{index .Phrases "topic_lock_button_text"}}";
+	content: "{{index .Phrases "topic.lock_button_text"}}";
 }
 .unlock_item:after {
-	content: "{{index .Phrases "topic_unlock_button_text"}}";
+	content: "{{index .Phrases "topic.unlock_button_text"}}";
 }
 .pin_item:after {
-	content: "{{index .Phrases "topic_pin_button_text"}}";
+	content: "{{index .Phrases "topic.pin_button_text"}}";
 }
 .unpin_item:after {
-	content: "{{index .Phrases "topic_unpin_button_text"}}";
+	content: "{{index .Phrases "topic.unpin_button_text"}}";
 }
 .report_item:after {
-	content: "{{index .Phrases "topic_report_button_text"}}";
+	content: "{{index .Phrases "topic.report_button_text"}}";
 }
 
 #ip_search_container .rowlist .rowitem {
@@ -1245,29 +1252,6 @@ textarea {
 	border-top: 1px solid var(--element-border-color) !important;
 }
 
-/*.colstack_item .formrow {
-	display: flex;
-}
-.colstack_right .formrow {
-	padding-left: 16px;
-	padding-right: 16px;
-	padding-bottom: 4px;
-	border-right: 1px solid var(--element-border-color);
-}
-.colstack_right .formrow:first-child {
-	padding-top: 16px;
-}
-.colstack_right .formrow .formlabel {
-	padding-top: 5px;
-}
-.colstack_right .formrow:last-child {
-	padding-bottom: 16px;
-}
-.colstack_item:not(#profile_right_lane) .formrow .formlabel {
-	width: 40%;
-	margin-right: 12px;
-	white-space: nowrap;
-}*/
 .formitem:only-child {
 	width: 100%;
 	display: flex;
@@ -1748,7 +1732,7 @@ textarea {
 		content: "";
 	}
 	.like_count:before {
-		content: "{{index .Phrases "topic_plus"}}";
+		content: "{{index .Phrases "topic.plus"}}";
 		font-weight: normal;
 	}
 	.created_at {

@@ -447,14 +447,14 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// TODO: Cover more suspicious strings and at a lower layer than this
 	for _, char := range req.URL.Path {
 		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
-			router.SuspiciousRequest(req,"")
+			router.SuspiciousRequest(req,"Bad char in path")
 			break
 		}
 	}
 	lowerPath := strings.ToLower(req.URL.Path)
 	// TODO: Flag any requests which has a dot with anything but a number after that
 	if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") || strings.Contains(lowerPath,".action") {
-		router.SuspiciousRequest(req,"")
+		router.SuspiciousRequest(req,"Bad snippet in path")
 	}
 
 	// Indirect the default route onto a different one
@@ -528,7 +528,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				// TODO: Test this
 				items = items[:0]
 				indices = indices[:0]
-				router.SuspiciousRequest(req,"")
+				router.SuspiciousRequest(req,"Illegal char in UA")
 				router.requestLogger.Print("UA Buffer: ", buffer)
 				router.requestLogger.Print("UA Buffer String: ", string(buffer))
 				break

@@ -1,5 +1,7 @@
 'use strict';
 var formVars = {};
+var tmplInits = {};
+var tmplPhrases = [];
 var alertList = [];
 var alertCount = 0;
 var conn;
@@ -72,19 +74,21 @@ function loadAlerts(menuAlerts)
 			for(var i in data.msgs) {
 				var msg = data.msgs[i];
 				var mmsg = msg.msg;
-
 				if("sub" in msg) {
 					for(var i = 0; i < msg.sub.length; i++) {
 						mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
 						//console.log("Sub #" + i + ":",msg.sub[i]);
 					}
 				}
-				alist += Template_alert({
+
+				let aItem = Template_alert({
 					ASID: msg.asid || 0,
 					Path: msg.path,
 					Avatar: msg.avatar || "",
 					Message: mmsg
 				})
+				alist += aItem;
+				alertList.push(aItem);
 				//console.log(msg);
 				//console.log(mmsg);
 			}
@@ -138,64 +142,97 @@ function SplitN(data,ch,n) {
 	return out;
 }
 
-function runWebSockets() {
-	if(window.location.protocol == "https:")
-		conn = new WebSocket("wss://" + document.location.host + "/ws/");
-	else conn = new WebSocket("ws://" + document.location.host + "/ws/");
+function wsAlertEvent(data) {
+	var msg = data.msg;
+	if("sub" in data) {
+		for(var i = 0; i < data.sub.length; i++) {
+			msg = msg.replace("\{"+i+"\}", data.sub[i]);
+		}
+	}
 
-	conn.onopen = function() {
+	let aItem = Template_alert({
+		ASID: data.asid || 0,
+		Path: data.path,
+		Avatar: data.avatar || "",
+		Message: msg
+	})
+	alertList.push(aItem);
+	if(alertList.length > 8) alertList.shift();
+	//console.log("post alertList",alertList);
+	alertCount++;
+
+	var alist = "";
+	for (var i = 0; i < alertList.length; i++) alist += alertList[i];
+
+	//console.log(alist);
+	// TODO: Add support for other alert feeds like PM Alerts
+	var generalAlerts = document.getElementById("general_alerts");
+	var alertListNode = generalAlerts.getElementsByClassName("alertList")[0];
+	var alertCounterNode = generalAlerts.getElementsByClassName("alert_counter")[0];
+	alertListNode.innerHTML = alist;
+	alertCounterNode.textContent = alertCount;
+
+	// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
+	// TODO: Use the site name instead of "Something Happened"
+	if(Notification.permission === "granted") {
+		var n = new Notification("Something Happened",{
+			body: msg,
+			icon: data.avatar,
+		});
+		setTimeout(n.close.bind(n), 8000);
+	}
+
+	bindToAlerts();
+}
+
+function runWebSockets() {
+	if(window.location.protocol == "https:") {
+		conn = new WebSocket("wss://" + document.location.host + "/ws/");
+	} else conn = new WebSocket("ws://" + document.location.host + "/ws/");
+
+	conn.onopen = () => {
 		console.log("The WebSockets connection was opened");
 		conn.send("page " + document.location.pathname + '\r');
 		// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
-		Notification.requestPermission();
+		if(loggedIn) {
+			Notification.requestPermission();
+		}
 	}
-	conn.onclose = function() {
+	conn.onclose = () => {
 		conn = false;
 		console.log("The WebSockets connection was closed");
 	}
-	conn.onmessage = function(event) {
+	conn.onmessage = (event) => {
 		//console.log("WSMessage:", event.data);
 		if(event.data[0] == "{") {
+			console.log("json message");
+			let data = "";
 			try {
-				var data = JSON.parse(event.data);
+				data = JSON.parse(event.data);
 			} catch(err) {
 				console.log(err);
+				return;
 			}
 
+			// TODO: Fix the data races in this code
 			if ("msg" in data) {
-				var msg = data.msg
-				if("sub" in data)
-					for(var i = 0; i < data.sub.length; i++)
-						msg = msg.replace("\{"+i+"\}", data.sub[i]);
-
-				if("avatar" in data) alertList.push("<div class='alertItem withAvatar' style='background-image:url(\""+data.avatar+"\");'><a class='text' data-asid='"+data.asid+"' href=\""+data.path+"\">"+msg+"</a></div>");
-				else alertList.push("<div class='alertItem'><a href=\""+data.path+"\" class='text'>"+msg+"</a></div>");
-				if(alertList.length > 8) alertList.shift();
-				//console.log("post alertList",alertList);
-				alertCount++;
-
-				var alist = ""
-				for (var i = 0; i < alertList.length; i++) alist += alertList[i];
-
-				//console.log(alist);
-				// TODO: Add support for other alert feeds like PM Alerts
-				var generalAlerts = document.getElementById("general_alerts");
-				var alertListNode = generalAlerts.getElementsByClassName("alertList")[0];
-				var alertCounterNode = generalAlerts.getElementsByClassName("alert_counter")[0];
-				alertListNode.innerHTML = alist;
-				alertCounterNode.textContent = alertCount;
-
-				// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
-				// TODO: Use the site name instead of "Something Happened"
-				if(Notification.permission === "granted") {
-					var n = new Notification("Something Happened",{
-						body: msg,
-						icon: data.avatar,
-					});
-					setTimeout(n.close.bind(n), 8000);
+				wsAlertEvent(data);
+			} else if("Topics" in data) {
+				console.log("topic in data");
+				console.log("data:", data);
+				let topic = data.Topics[0];
+				if(topic === undefined){
+					console.log("empty topic list");
+					return;
 				}
-
-				bindToAlerts();
+				let renTopic = Template_topics_topic(topic);
+				let node = $(renTopic);
+				node.addClass("new_item");
+				console.log("Prepending to topic list");
+				$(".topic_list").prepend(node);
+			} else {
+				console.log("unknown message");
+				console.log(data);
 			}
 		}
 
@@ -217,6 +254,11 @@ function runWebSockets() {
 	}
 }
 
+// Temporary hack for templates
+function len(item) {
+	return item.length;
+}
+
 function loadScript(name, callback) {
 	let url = "//" +siteURL+"/static/"+name
 	$.getScript(url)
@@ -231,16 +273,49 @@ function loadScript(name, callback) {
 		});
 }
 
+function DoNothingButPassBack(item) {
+	return item;
+}
+
+function fetchPhrases() {
+	fetch("//" +siteURL+"/api/phrases/?query=status")
+		.then((resp) => resp.json())
+		.then((data) => {
+			Object.keys(tmplInits).forEach((key) => {
+				let phrases = [];
+				let tmplInit = tmplInits[key];
+				for(let phraseName of tmplInit) {
+					phrases.push(data[phraseName]);
+				}
+				console.log("Adding phrases");
+				console.log("key:",key);
+				console.log("phrases:",phrases);
+				tmplPhrases[key] = phrases;
+			})
+		});
+}
+
 $(document).ready(function(){
 	runHook("start_init");
-	loadScript("template_alert.js",() => {
+	if(loggedIn) {
+		let toLoad = 1;
+		loadScript("template_topics_topic.js", () => {
+			console.log("Loaded template_topics_topic.js");
+			toLoad--;
+			if(toLoad===0) fetchPhrases();
+		});
+	}
+
+	// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
+	loadScript("template_alert.js", () => {
 		console.log("Loaded template_alert.js");
 		alertsInitted = true;
 		var alertMenuList = document.getElementsByClassName("menu_alerts");
 		for(var i = 0; i < alertMenuList.length; i++) {
 			loadAlerts(alertMenuList[i]);
 		}
-	})
+	});
+
 	if(window["WebSocket"]) runWebSockets();
 	else conn = false;
 

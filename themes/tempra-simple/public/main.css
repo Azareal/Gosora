@@ -895,7 +895,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	font-size: 18px;
 }
 #profile_left_lane .report_item:after {
-	content: "{{index .Phrases "topic_report_button_text"}}";
+	content: "{{index .Phrases "topic.report_button_text"}}";
 }
 #profile_right_lane {
 	width: calc(100% - 245px);
