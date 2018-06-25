@@ -163,6 +163,13 @@ func shortcodeToUnicode(msg string) string {
 	return msg
 }
 
+type TagToAction struct {
+	Suffix      string
+	Do          func(*TagToAction, bool, int, []rune) (int, string) // func(tagToAction,open,i,runes) (newI, output)
+	Depth       int                                                 // For use by Do
+	PartialMode bool
+}
+
 // TODO: Write tests for this
 // TODO: Preparse Markdown and normalize it into HTML?
 func PreparseMessage(msg string) string {
@@ -175,12 +182,9 @@ func PreparseMessage(msg string) string {
 	msg = SanitiseBody(msg)
 	msg = strings.Replace(msg, "&nbsp;", "", -1)
 
+	//fmt.Println("before msg: ", msg)
 	var runes = []rune(msg)
 	msg = ""
-	var inBold = false
-	var inItalic = false
-	var inStrike = false
-	var inUnderline = false
 	var stepForward = func(i int, step int, runes []rune) int {
 		i += step
 		if i < len(runes) {
@@ -188,65 +192,144 @@ func PreparseMessage(msg string) string {
 		}
 		return i - step
 	}
+
+	// TODO: We can maybe reduce the size of this by using an offset?
+	// TODO: Move some of these closures out of this function to make things a little more efficient
+	var allowedTags = [][]string{
+		'e': []string{"m"},
+		's': []string{"", "trong", "pan"},
+		'd': []string{"el"},
+		'u': []string{""},
+		'b': []string{""},
+	}
+	var buildLitMatch = func(tag string) func(*TagToAction, bool, int, []rune) (int, string) {
+		return func(action *TagToAction, open bool, _ int, _ []rune) (int, string) {
+			if open {
+				action.Depth++
+				return -1, "<" + tag + ">"
+			}
+			if action.Depth <= 0 {
+				return -1, ""
+			}
+			action.Depth--
+			return -1, "</" + tag + ">"
+		}
+	}
+	var tagToAction = [][]*TagToAction{
+		'e': []*TagToAction{&TagToAction{"m", buildLitMatch("em"), 0, false}},
+		's': []*TagToAction{
+			&TagToAction{"", buildLitMatch("del"), 0, false},
+			&TagToAction{"trong", buildLitMatch("strong"), 0, false},
+			// Hides the span tags Trumbowyg loves blasting out randomly
+			&TagToAction{"pan", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {
+				if open {
+					act.Depth++
+					//fmt.Println("skipping attributes")
+					for ; i < len(runes); i++ {
+						if runes[i] == '&' && peekMatch(i, "gt;", runes) {
+							//fmt.Println("found tag exit")
+							return i + 3, " "
+						}
+					}
+					return -1, " "
+				}
+				if act.Depth <= 0 {
+					return -1, " "
+				}
+				act.Depth--
+				return -1, " "
+			}, 0, true},
+		},
+		'd': []*TagToAction{&TagToAction{"el", buildLitMatch("del"), 0, false}},
+		'u': []*TagToAction{&TagToAction{"", buildLitMatch("u"), 0, false}},
+		'b': []*TagToAction{&TagToAction{"", buildLitMatch("b"), 0, false}},
+	}
+	// TODO: Implement a less literal parser
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
-		if char == '&' && peek(i, 1, runes) == 'l' && peek(i, 2, runes) == 't' && peek(i, 3, runes) == ';' {
+		if char == '&' && peekMatch(i, "lt;", runes) {
+			//fmt.Println("found less than")
 			i = stepForward(i, 4, runes)
 			char := runes[i]
+			//fmt.Println("char: ", char)
+			//fmt.Println("string(char): ", string(char))
+			if int(char) >= len(allowedTags) {
+				//fmt.Println("sentinel char out of bounds")
+				i -= 4
+				continue
+			}
+
+			var closeTag bool
 			if char == '/' {
+				//fmt.Println("found close tag")
 				i = stepForward(i, 1, runes)
-				char := runes[i]
-				if inItalic && char == 'e' && peekMatch(i, "m&gt;", runes) {
-					i += 5
-					inItalic = false
-					msg += "</em>"
-				} else if inBold && char == 's' && peekMatch(i, "trong&gt;", runes) {
-					i += 9
-					inBold = false
-					msg += "</strong>"
-				} else if inStrike && char == 'd' && peekMatch(i, "el&gt;", runes) {
-					i += 6
-					inStrike = false
-					msg += "</del>"
-				} else if inUnderline && char == 'u' && peekMatch(i, "&gt;", runes) {
-					i += 4
-					inUnderline = false
-					msg += "</u>"
+				char = runes[i]
+				closeTag = true
+			}
+
+			tags := allowedTags[char]
+			if len(tags) == 0 {
+				//fmt.Println("couldn't find char in allowedTags")
+				if closeTag {
+					i -= 5
+				} else {
+					i -= 4
 				}
-			} else if !inItalic && char == 'e' && peekMatch(i, "m&gt;", runes) {
-				i += 5
-				inItalic = true
-				msg += "<em>"
-			} else if !inBold && char == 's' && peekMatch(i, "trong&gt;", runes) {
-				i += 9
-				inBold = true
-				msg += "<strong>"
-			} else if !inStrike && char == 'd' && peekMatch(i, "el&gt;", runes) {
-				i += 6
-				inStrike = true
-				msg += "<del>"
-			} else if !inUnderline && char == 'u' && peekMatch(i, "&gt;", runes) {
-				i += 4
-				inUnderline = true
-				msg += "<u>"
+				continue
+			}
+			// TODO: Scan through tags and make sure the suffix is present to reduce the number of false positives which hit the loop below
+			//fmt.Printf("tags: %+v\n", tags)
+
+			var newI = -1
+			var out string
+			toActionList := tagToAction[char]
+			//fmt.Println("toActionList: ", toActionList)
+			for _, toAction := range toActionList {
+				//fmt.Printf("toAction: %+v\n", toAction)
+				// TODO: Optimise this, maybe with goto or a function call to avoid scanning the text twice?
+				if (toAction.PartialMode && !closeTag && peekMatch(i, toAction.Suffix, runes)) || peekMatch(i, toAction.Suffix+"&gt;", runes) {
+					//fmt.Println("peekMatched")
+					newI, out = toAction.Do(toAction, !closeTag, i, runes)
+					//fmt.Println("newI: ", newI)
+					//fmt.Println("i: ", i)
+					if newI != -1 {
+						i = newI
+					} else {
+						i += len(toAction.Suffix + "&gt;")
+					}
+					//fmt.Println("i: ", i)
+					//fmt.Println("out: ", out)
+					break
+				}
+			}
+			if out == "" {
+				//fmt.Println("no out")
+				if closeTag {
+					i -= 5
+				} else {
+					i -= 4
+				}
+			} else if out != " " {
+				msg += out
 			}
 		} else {
 			msg += string(char)
 		}
 	}
 
-	if inItalic {
-		msg += "</em>"
+	for _, actionList := range tagToAction {
+		for _, toAction := range actionList {
+			if toAction.Depth > 1 {
+				for ; toAction.Depth > 0; toAction.Depth-- {
+					_, out := toAction.Do(toAction, false, len(runes), runes)
+					if out != "" {
+						msg += out
+					}
+				}
+			}
+		}
 	}
-	if inBold {
-		msg += "</strong>"
-	}
-	if inStrike {
-		msg += "</del>"
-	}
-	if inUnderline {
-		msg += "</u>"
-	}
+	//fmt.Println("msg: ", msg)
 
 	return shortcodeToUnicode(msg)
 }
