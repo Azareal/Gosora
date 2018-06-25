@@ -2,13 +2,11 @@
 
 A super fast forum software written in Go. You can talk to us on our Discord chat!
 
-The initial code-base was forked from one of my side projects, but has now gone far beyond that. We've moved along in a development and the software should be stable for general use, although we're always making improvements.
-
-File an issue or open a topic on the forum, if there's something you want and you very well might find it landing in the software fairly quickly.
+The initial code-base was forked from one of my side projects, but has now gone far beyond that. We've moved along in a development and the software should be somewhat stable for general use.
 
 Features may break from time to time, however I will generally try to warn of the biggest offenders in advance, so that you can tread with caution around certain commits, the upcoming v0.1 will undergo even more rigorous testing.
 
-Even when features break however, the updater should be able to handle everything which is thrown your way, so that you can sail through with ease.
+File an issue or open a topic on the forum, if there's something you want and you very well might find it landing in the software fairly quickly.
 
 For plugin and theme developers, things are a little dicier, as the internal APIs and ways of writing themes are in constant flux, however some stability in that area should be coming fairly soon.
 
