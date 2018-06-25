@@ -12,7 +12,7 @@ For plugin and theme developers, things are a little dicier, as the internal API
 
 If you like this software, please give it a star and give us some feedback :)
 
-If you dislike it, please give us some feedback on how to make it better! We're always looking for feedback. We love hearing your opinions. If there's something missing or something doesn't look quite right, don't worry! We plan to add many, many things in the coming months!
+If you dislike it, please give us some feedback on how to make it better! We're always looking for feedback. We love hearing your opinions. If there's something missing or something doesn't look quite right, don't worry! We plan to add many, many things in the run up to v0.1!
 
 
 # Features
@@ -26,18 +26,20 @@ In-memory static file, forum and group caches. We have a slightly more dynamic c
 
 A profile system, including profile comments and moderation tools for the profile owner.
 
-A template engine which compiles templates down to machine code. Over forty times faster than the standard template library `html/templates`, although it does remove some of the hand holding to achieve this. Compatible with templates written for html/templates, so you don't need to learn any new templating language.
+A template engine which compiles templates down to machine code. Over forty times faster than the standard template library `html/templates`, although it does remove some of the hand holding to achieve this. Compatible with templates written for `html/templates`, so you don't need to learn any new templating language.
 
-A plugin system. More on this to come.
+A plugin system. We have a number of APIs and hooks for plugins, however they're currently subject to change and don't cover as much of the software as we'd like yet.
 
 A responsive design. Looks great on mobile phones, tablets, laptops, desktops and more!
 
 Other modern features like alerts, likes, advanced dashboard with live stats (CPU, RAM, online user count, and so on), etc.
 
 
-# Dependencies
+# Requirements
 
-Go 1.10 - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
+Go 1.10 or newer - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
+
+Git - You may need this for downloading updates via the updater. More to come on this here. https://git-scm.com/downloads
 
 MySQL Database - You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL. You could use something like WNMP / XAMPP which have a little PHP script called PhpMyAdmin for managing MySQL databases or you could install MariaDB directly.
 
@@ -50,14 +52,14 @@ We recommend changing the root password (that is the password for the user 'root
 It's entirely possible that your host might already have MySQL, so you might be able to skip this step, particularly if it's a managed VPS or a shared host (contrary to popular belief, it is possible, although the ecosystem in this regard is extremely immature). Or they might have a quicker and easier method of setting up MySQL.
 
 
-# Downloading
+# How to download
 
 At some point, we'll have releases which you can download, but right now, you'll have to use the `git clone` command as mentioned down in the advanced setup section to download a copy of Gosora.
 
-On Windows, you might also want to try the [GosoraBootstrapper](https://github.com/Azareal/GosoraBootstrapper), if you can't find the command prompt. It's just a matter of double-clicking on the bat file there and it'll download the rest of the files for you.
+On Windows, you might also want to try the [GosoraBootstrapper](https://github.com/Azareal/GosoraBootstrapper), if you can't find the command prompt or otherwise can't follow those instructions. It's just a matter of double-clicking on the bat file there and it'll download the rest of the files for you.
 
 
-# Installation Instructions
+# How to install
 
 *Linux*
 
@@ -74,7 +76,7 @@ Run install.bat, e.g. double-click on it. You will also have to start-up MySQL, 
 Follow the instructions shown on the screen.
 
 
-# Run the program
+# Running the program
 
 *Linux*
 
@@ -164,7 +166,7 @@ gosora.exe
 I'm looking into minimising the number of go gets for the advanced build and to maybe remove the platform and database engine specific dependencies if possible for those who don't need them.
 
 
-# Updating
+# Updating the software
 
 The update system is currently under development, however if you have Git installed, then you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
 
@@ -210,9 +212,13 @@ We're looking for ways to clean-up the plugin system so that all of them (except
 
 ![Cosora Prototype WIP](https://github.com/Azareal/Gosora/blob/master/images/cosora-wip.png)
 
-More images in the /images/ folder. Beware though, some of them are *really* outdated.
+More images in the /images/ folder. Beware though, some of them are *really* outdated. Also, keep in mind that a new theme is in the works.
 
-# Dependencies (a few of these like Rez aren't currently in use, but we anticipate that we'll need some sort of search engine library in the very immediate future)
+# Dependencies 
+
+These are the libraries and pieces of software which Gosora relies on to function, an "ingredients" list so to speak.
+
+A few of these like Rez aren't currently in use, but are things we think we'll need in the very near future and want to have those things ready, so that we can quickly slot them in.
 
 * Go 1.10+
 
@@ -220,7 +226,8 @@ More images in the /images/ folder. Beware though, some of them are *really* out
 
 * github.com/go-sql-driver/mysql For interfacing with MariaDB.
 
-* golang.org/x/crypto/bcrypt and go get -u golang.org/x/crypto/argon2 For hashing passwords.
+* golang.org/x/crypto/bcrypt For hashing passwords.
+* golang.org/x/crypto/argon2 For hashing passwords.
 
 * github.com/Azareal/gopsutil For pulling information on CPU and memory usage. I've temporarily forked this, as we were having stability issues with the latest build.
 
