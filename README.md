@@ -2,17 +2,25 @@
 
 A super fast forum software written in Go. You can talk to us on our Discord chat!
 
-The initial code-base was forked from one of my side projects, but has now gone far beyond that. We're still fairly early in development, so the code-base might change at an incredible rate. We plan to stop making as many breaking changes once we release the first alpha.
+The initial code-base was forked from one of my side projects, but has now gone far beyond that. We've moved along in a development and the software should be stable for general use, although we're always making improvements.
+
+File an issue or open a topic on the forum, if there's something you want and you very well might find it landing in the software fairly quickly.
+
+Features may break from time to time, however I will generally try to warn of the biggest offenders in advance, so that you can tread with caution around certain commits, the upcoming v0.1 will undergo even more rigorous testing.
+
+Even when features break however, the updater should be able to handle everything which is thrown your way, so that you can sail through with ease.
+
+For plugin and theme developers, things are a little dicier, as the internal APIs and ways of writing themes are in constant flux, however some stability in that area should be coming fairly soon.
 
 If you like this software, please give it a star and give us some feedback :)
 
-If you dislike it, please give us some feedback on how to make it better! We're always looking for feedback. We love hearing your opinions. If there's something missing or something doesn't look quite right, don't worry! We plan to change many things before the alpha!
+If you dislike it, please give us some feedback on how to make it better! We're always looking for feedback. We love hearing your opinions. If there's something missing or something doesn't look quite right, don't worry! We plan to add many, many things in the coming months!
 
 
 # Features
 Standard Forum Functionality. All of the little things you would expect of any forum software. E.g. Common Moderation features, modlogs, theme system, avatars, bbcode parser, markdown parser, report system, per-forum permissions, group permissions and so on.
 
-Custom Pages. Under development. The Control Panel portion is incomplete, but you can create them by hand today. They're basically html/templates templates in the /pages/ folder.
+Custom Pages. There are some rough edges
 
 Emojis. Allow your users to express themselves without resorting to serving tons upon tons of image files.
 
@@ -20,7 +28,7 @@ In-memory static file, forum and group caches. We have a slightly more dynamic c
 
 A profile system, including profile comments and moderation tools for the profile owner.
 
-A template engine which compiles templates down to machine code. Over thirty times faster than html/templates, although it does remove some of the hand holding to achieve this. Compatible with templates written for html/templates, you don't need to learn any new templating language.
+A template engine which compiles templates down to machine code. Over forty times faster than the standard template library `html/templates`, although it does remove some of the hand holding to achieve this. Compatible with templates written for html/templates, so you don't need to learn any new templating language.
 
 A plugin system. More on this to come.
 

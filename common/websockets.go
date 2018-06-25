@@ -397,6 +397,11 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 
 // TODO: Use a map instead of a switch to make this more modular?
 func wsPageResponses(wsUser *WSUser, page []byte) {
+	// TODO: Could do this more efficiently?
+	if string(page) == "/" {
+		page = []byte(Config.DefaultPath)
+	}
+
 	//fmt.Println("entering page: ", string(page))
 	switch string(page) {
 	// Live Topic List is an experimental feature
@@ -419,6 +424,11 @@ func wsPageResponses(wsUser *WSUser, page []byte) {
 
 // TODO: Use a map instead of a switch to make this more modular?
 func wsLeavePage(wsUser *WSUser, page []byte) {
+	// TODO: Could do this more efficiently?
+	if string(page) == "/" {
+		page = []byte(Config.DefaultPath)
+	}
+
 	//fmt.Println("leaving page: ", string(page))
 	switch string(page) {
 	// Live Topic List is an experimental feature
