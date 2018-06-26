@@ -955,3 +955,54 @@ func passwordTest(t *testing.T, realPassword string, hashedPassword string) {
 	expect(t, err != common.ErrPasswordTooLong, "CheckPassword thinks the password is too long")
 	expect(t, err != nil, "The two shouldn't match!")
 }
+
+func TestPreparser(t *testing.T) {
+	var res string
+	var msgList []MEPair
+
+	// Note: The open tag is evaluated without knowledge of the close tag for efficiency and simplicity, so the parser autofills the associated close tag when it finds an open tag without a partner
+	msgList = addMEPair(msgList, "", "")
+	msgList = addMEPair(msgList, "hi", "hi")
+	msgList = addMEPair(msgList, "<b></b>", "<strong></strong>")
+	msgList = addMEPair(msgList, "<b>hi</b>", "<strong>hi</strong>")
+	msgList = addMEPair(msgList, "<s>hi</s>", "<del>hi</del>")
+	msgList = addMEPair(msgList, "<del>hi</del>", "<del>hi</del>")
+	msgList = addMEPair(msgList, "<u>hi</u>", "<u>hi</u>")
+	msgList = addMEPair(msgList, "<em>hi</em>", "<em>hi</em>")
+	msgList = addMEPair(msgList, "<i>hi</i>", "<em>hi</em>")
+	msgList = addMEPair(msgList, "<strong>hi</strong>", "<strong>hi</strong>")
+	msgList = addMEPair(msgList, "<b><i>hi</i></b>", "<strong><em>hi</em></strong>")
+	msgList = addMEPair(msgList, "<strong><em>hi</em></strong>", "<strong><em>hi</em></strong>")
+	msgList = addMEPair(msgList, "<b><i><b>hi</b></i></b>", "<strong><em><strong>hi</strong></em></strong>")
+	msgList = addMEPair(msgList, "<strong><em><strong>hi</strong></em></strong>", "<strong><em><strong>hi</strong></em></strong>")
+	msgList = addMEPair(msgList, "<div>hi</div>", "&lt;div&gt;hi&lt;/div&gt;")
+	msgList = addMEPair(msgList, "<span>hi</span>", "hi") // This is stripped since the editor (Trumbowyg) likes blasting useless spans
+	msgList = addMEPair(msgList, "<span   >hi</span>", "hi")
+	msgList = addMEPair(msgList, "<span style='background-color: yellow;'>hi</span>", "hi")
+	msgList = addMEPair(msgList, "<span style='background-color: yellow;'>>hi</span>", "&gt;hi")
+	msgList = addMEPair(msgList, "<b>hi", "<strong>hi</strong>")
+	msgList = addMEPair(msgList, "hi</b>", "hi&lt;/b&gt;")
+	msgList = addMEPair(msgList, "</b>", "&lt;/b&gt;")
+	msgList = addMEPair(msgList, "</del>", "&lt;/del&gt;")
+	msgList = addMEPair(msgList, "</strong>", "&lt;/strong&gt;")
+	msgList = addMEPair(msgList, "<b>", "<strong></strong>")
+	msgList = addMEPair(msgList, "<span style='background-color: yellow;'>hi", "hi")
+	msgList = addMEPair(msgList, "hi</span>", "hi")
+	msgList = addMEPair(msgList, "</span>", "")
+	msgList = addMEPair(msgList, "<span></span>", "")
+	msgList = addMEPair(msgList, "<span   ></span>", "")
+	msgList = addMEPair(msgList, "<></>", "&lt;&gt;&lt;/&gt;")
+	msgList = addMEPair(msgList, "</><>", "&lt;/&gt;&lt;&gt;")
+	msgList = addMEPair(msgList, "<>", "&lt;&gt;")
+	msgList = addMEPair(msgList, "</>", "&lt;/&gt;")
+
+	for _, item := range msgList {
+		res = common.PreparseMessage(item.Msg)
+		if res != item.Expects {
+			t.Error("Testing string '" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			//t.Error("Ouput in bytes:", []byte(res))
+			t.Error("Expected:", "'"+item.Expects+"'")
+		}
+	}
+}

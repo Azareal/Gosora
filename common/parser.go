@@ -201,6 +201,7 @@ func PreparseMessage(msg string) string {
 		'd': []string{"el"},
 		'u': []string{""},
 		'b': []string{""},
+		'i': []string{""},
 	}
 	var buildLitMatch = func(tag string) func(*TagToAction, bool, int, []rune) (int, string) {
 		return func(action *TagToAction, open bool, _ int, _ []rune) (int, string) {
@@ -242,7 +243,8 @@ func PreparseMessage(msg string) string {
 		},
 		'd': []*TagToAction{&TagToAction{"el", buildLitMatch("del"), 0, false}},
 		'u': []*TagToAction{&TagToAction{"", buildLitMatch("u"), 0, false}},
-		'b': []*TagToAction{&TagToAction{"", buildLitMatch("b"), 0, false}},
+		'b': []*TagToAction{&TagToAction{"", buildLitMatch("strong"), 0, false}},
+		'i': []*TagToAction{&TagToAction{"", buildLitMatch("em"), 0, false}},
 	}
 	// TODO: Implement a less literal parser
 	for i := 0; i < len(runes); i++ {
@@ -255,6 +257,7 @@ func PreparseMessage(msg string) string {
 			//fmt.Println("string(char): ", string(char))
 			if int(char) >= len(allowedTags) {
 				//fmt.Println("sentinel char out of bounds")
+				msg += "&"
 				i -= 4
 				continue
 			}
@@ -271,8 +274,11 @@ func PreparseMessage(msg string) string {
 			if len(tags) == 0 {
 				//fmt.Println("couldn't find char in allowedTags")
 				if closeTag {
+					//msg += "&lt;/"
+					msg += "&"
 					i -= 5
 				} else {
+					msg += "&"
 					i -= 4
 				}
 				continue
@@ -292,18 +298,21 @@ func PreparseMessage(msg string) string {
 					newI, out = toAction.Do(toAction, !closeTag, i, runes)
 					//fmt.Println("newI: ", newI)
 					//fmt.Println("i: ", i)
+					//fmt.Println("string(runes[i]): ", string(runes[i]))
 					if newI != -1 {
 						i = newI
-					} else {
+					} else if out != "" {
 						i += len(toAction.Suffix + "&gt;")
 					}
 					//fmt.Println("i: ", i)
+					//fmt.Println("string(runes[i]): ", string(runes[i]))
 					//fmt.Println("out: ", out)
 					break
 				}
 			}
 			if out == "" {
 				//fmt.Println("no out")
+				msg += "&"
 				if closeTag {
 					i -= 5
 				} else {
@@ -317,11 +326,19 @@ func PreparseMessage(msg string) string {
 		}
 	}
 
+	//fmt.Println("running autoclosers")
+	//fmt.Println("msg: ", msg)
 	for _, actionList := range tagToAction {
+		//if len(actionList) > 0 {
+		//	fmt.Println("actionList: ", actionList)
+		//}
 		for _, toAction := range actionList {
-			if toAction.Depth > 1 {
+			//fmt.Printf("toAction: %+v\n", toAction)
+			if toAction.Depth > 0 {
+				//fmt.Println("autoclosing")
 				for ; toAction.Depth > 0; toAction.Depth-- {
 					_, out := toAction.Do(toAction, false, len(runes), runes)
+					//fmt.Println("out: ", out)
 					if out != "" {
 						msg += out
 					}
