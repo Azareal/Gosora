@@ -122,7 +122,10 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 
 	// TODO: Localise these
 	var gridElements = []common.GridElement{
-		common.GridElement{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
+		// TODO: Implement a check for new versions of Gosora
+		//common.GridElement{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
+		common.GridElement{"dash-version", "v" + version.String(), 0, "grid_istat", "", "", ""},
+
 		common.GridElement{"dash-cpu", "CPU: " + cpustr, 1, "grid_istat " + cpuColour, "", "", "The global CPU usage of this server"},
 		common.GridElement{"dash-ram", "RAM: " + ramstr, 2, "grid_istat " + ramColour, "", "", "The global RAM usage of this server"},
 	}

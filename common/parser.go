@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 var SpaceGap = []byte("          ")
@@ -170,19 +171,29 @@ type TagToAction struct {
 	PartialMode bool
 }
 
-// TODO: Write tests for this
 // TODO: Preparse Markdown and normalize it into HTML?
 func PreparseMessage(msg string) string {
+	//fmt.Println("initial msg: ", msg)
+	//fmt.Println("initial []byte(msg): ", []byte(msg))
+	// TODO: Kick this check down a level into SanitiseBody?
+	if !utf8.ValidString(msg) {
+		return ""
+	}
 	msg = strings.Replace(msg, "<p><br>", "\n\n", -1)
 	msg = strings.Replace(msg, "<p>", "\n\n", -1)
 	msg = strings.Replace(msg, "</p>", "", -1)
+	// TODO: Make this looser by moving it to the reverse HTML parser?
 	msg = strings.Replace(msg, "<br>", "\n\n", -1)
+	msg = strings.Replace(msg, "<br />", "\n\n", -1) // XHTML style
+	msg = strings.Replace(msg, "&nbsp;", "", -1)
+	msg = strings.Replace(msg, "\r", "", -1) // Windows artifact
+	//msg = strings.Replace(msg, "\n\n\n\n", "\n\n\n", -1)
 	msg = RunSshook("preparse_preassign", msg)
 	// There are a few useful cases for having spaces, but I'd like to stop the WYSIWYG from inserting random lines here and there
 	msg = SanitiseBody(msg)
-	msg = strings.Replace(msg, "&nbsp;", "", -1)
 
 	//fmt.Println("before msg: ", msg)
+	//fmt.Println("before []byte(msg): ", []byte(msg))
 	var runes = []rune(msg)
 	msg = ""
 	var stepForward = func(i int, step int, runes []rune) int {
@@ -348,7 +359,7 @@ func PreparseMessage(msg string) string {
 	}
 	//fmt.Println("msg: ", msg)
 
-	return shortcodeToUnicode(msg)
+	return strings.TrimSpace(shortcodeToUnicode(msg))
 }
 
 // TODO: Test this

@@ -956,49 +956,100 @@ func passwordTest(t *testing.T, realPassword string, hashedPassword string) {
 	expect(t, err != nil, "The two shouldn't match!")
 }
 
+type METri struct {
+	Name    string // Optional, this is here for tests involving invisible characters so we know what's going in
+	Msg     string
+	Expects string
+}
+
+func addMETri(msgList []METri, args ...string) []METri {
+	if len(args) < 2 {
+		panic("need 2 or more args")
+	}
+	if len(args) > 2 {
+		return append(msgList, METri{args[0], args[1], args[2]})
+	}
+	return append(msgList, METri{"", args[0], args[1]})
+}
+
 func TestPreparser(t *testing.T) {
 	var res string
-	var msgList []MEPair
+	var msgList []METri
 
 	// Note: The open tag is evaluated without knowledge of the close tag for efficiency and simplicity, so the parser autofills the associated close tag when it finds an open tag without a partner
-	msgList = addMEPair(msgList, "", "")
-	msgList = addMEPair(msgList, "hi", "hi")
-	msgList = addMEPair(msgList, "<b></b>", "<strong></strong>")
-	msgList = addMEPair(msgList, "<b>hi</b>", "<strong>hi</strong>")
-	msgList = addMEPair(msgList, "<s>hi</s>", "<del>hi</del>")
-	msgList = addMEPair(msgList, "<del>hi</del>", "<del>hi</del>")
-	msgList = addMEPair(msgList, "<u>hi</u>", "<u>hi</u>")
-	msgList = addMEPair(msgList, "<em>hi</em>", "<em>hi</em>")
-	msgList = addMEPair(msgList, "<i>hi</i>", "<em>hi</em>")
-	msgList = addMEPair(msgList, "<strong>hi</strong>", "<strong>hi</strong>")
-	msgList = addMEPair(msgList, "<b><i>hi</i></b>", "<strong><em>hi</em></strong>")
-	msgList = addMEPair(msgList, "<strong><em>hi</em></strong>", "<strong><em>hi</em></strong>")
-	msgList = addMEPair(msgList, "<b><i><b>hi</b></i></b>", "<strong><em><strong>hi</strong></em></strong>")
-	msgList = addMEPair(msgList, "<strong><em><strong>hi</strong></em></strong>", "<strong><em><strong>hi</strong></em></strong>")
-	msgList = addMEPair(msgList, "<div>hi</div>", "&lt;div&gt;hi&lt;/div&gt;")
-	msgList = addMEPair(msgList, "<span>hi</span>", "hi") // This is stripped since the editor (Trumbowyg) likes blasting useless spans
-	msgList = addMEPair(msgList, "<span   >hi</span>", "hi")
-	msgList = addMEPair(msgList, "<span style='background-color: yellow;'>hi</span>", "hi")
-	msgList = addMEPair(msgList, "<span style='background-color: yellow;'>>hi</span>", "&gt;hi")
-	msgList = addMEPair(msgList, "<b>hi", "<strong>hi</strong>")
-	msgList = addMEPair(msgList, "hi</b>", "hi&lt;/b&gt;")
-	msgList = addMEPair(msgList, "</b>", "&lt;/b&gt;")
-	msgList = addMEPair(msgList, "</del>", "&lt;/del&gt;")
-	msgList = addMEPair(msgList, "</strong>", "&lt;/strong&gt;")
-	msgList = addMEPair(msgList, "<b>", "<strong></strong>")
-	msgList = addMEPair(msgList, "<span style='background-color: yellow;'>hi", "hi")
-	msgList = addMEPair(msgList, "hi</span>", "hi")
-	msgList = addMEPair(msgList, "</span>", "")
-	msgList = addMEPair(msgList, "<span></span>", "")
-	msgList = addMEPair(msgList, "<span   ></span>", "")
-	msgList = addMEPair(msgList, "<></>", "&lt;&gt;&lt;/&gt;")
-	msgList = addMEPair(msgList, "</><>", "&lt;/&gt;&lt;&gt;")
-	msgList = addMEPair(msgList, "<>", "&lt;&gt;")
-	msgList = addMEPair(msgList, "</>", "&lt;/&gt;")
+	msgList = addMETri(msgList, "", "")
+	msgList = addMETri(msgList, " ", "")
+	msgList = addMETri(msgList, " hi", "hi")
+	msgList = addMETri(msgList, "hi ", "hi")
+	msgList = addMETri(msgList, "hi", "hi")
+	msgList = addMETri(msgList, ":grinning:", "😀")
+	msgList = addMETri(msgList, "😀", "😀")
+	msgList = addMETri(msgList, "&nbsp;", "")
+	msgList = addMETri(msgList, "<p>", "")
+	msgList = addMETri(msgList, "</p>", "")
+	msgList = addMETri(msgList, "<p></p>", "")
+
+	// Note: strings.TrimSpace strips newlines, if there's nothing before or after them
+	msgList = addMETri(msgList, "<br>", "")
+	msgList = addMETri(msgList, "<br />", "")
+	msgList = addMETri(msgList, "\\n", "\n", "")
+	msgList = addMETri(msgList, "\\n\\n", "\n\n", "")
+	msgList = addMETri(msgList, "\\n\\n\\n", "\n\n\n", "")
+	msgList = addMETri(msgList, "\\r\\n", "\r\n", "") // Windows style line ending
+	msgList = addMETri(msgList, "\\n\\r", "\n\r", "")
+
+	msgList = addMETri(msgList, "ho<br>ho", "ho\n\nho")
+	msgList = addMETri(msgList, "ho<br />ho", "ho\n\nho")
+	msgList = addMETri(msgList, "ho\\nho", "ho\nho", "ho\nho")
+	msgList = addMETri(msgList, "ho\\n\\nho", "ho\n\nho", "ho\n\nho")
+	//msgList = addMETri(msgList, "ho\\n\\n\\n\\nho", "ho\n\n\n\nho", "ho\n\n\nho")
+	msgList = addMETri(msgList, "ho\\r\\nho", "ho\r\nho", "ho\nho") // Windows style line ending
+	msgList = addMETri(msgList, "ho\\n\\rho", "ho\n\rho", "ho\nho")
+
+	msgList = addMETri(msgList, "<b></b>", "<strong></strong>")
+	msgList = addMETri(msgList, "<b>hi</b>", "<strong>hi</strong>")
+	msgList = addMETri(msgList, "<s>hi</s>", "<del>hi</del>")
+	msgList = addMETri(msgList, "<del>hi</del>", "<del>hi</del>")
+	msgList = addMETri(msgList, "<u>hi</u>", "<u>hi</u>")
+	msgList = addMETri(msgList, "<em>hi</em>", "<em>hi</em>")
+	msgList = addMETri(msgList, "<i>hi</i>", "<em>hi</em>")
+	msgList = addMETri(msgList, "<strong>hi</strong>", "<strong>hi</strong>")
+	msgList = addMETri(msgList, "<b><i>hi</i></b>", "<strong><em>hi</em></strong>")
+	msgList = addMETri(msgList, "<strong><em>hi</em></strong>", "<strong><em>hi</em></strong>")
+	msgList = addMETri(msgList, "<b><i><b>hi</b></i></b>", "<strong><em><strong>hi</strong></em></strong>")
+	msgList = addMETri(msgList, "<strong><em><strong>hi</strong></em></strong>", "<strong><em><strong>hi</strong></em></strong>")
+	msgList = addMETri(msgList, "<div>hi</div>", "&lt;div&gt;hi&lt;/div&gt;")
+	msgList = addMETri(msgList, "<span>hi</span>", "hi") // This is stripped since the editor (Trumbowyg) likes blasting useless spans
+	msgList = addMETri(msgList, "<span   >hi</span>", "hi")
+	msgList = addMETri(msgList, "<span style='background-color: yellow;'>hi</span>", "hi")
+	msgList = addMETri(msgList, "<span style='background-color: yellow;'>>hi</span>", "&gt;hi")
+	msgList = addMETri(msgList, "<b>hi", "<strong>hi</strong>")
+	msgList = addMETri(msgList, "hi</b>", "hi&lt;/b&gt;")
+	msgList = addMETri(msgList, "</b>", "&lt;/b&gt;")
+	msgList = addMETri(msgList, "</del>", "&lt;/del&gt;")
+	msgList = addMETri(msgList, "</strong>", "&lt;/strong&gt;")
+	msgList = addMETri(msgList, "<b>", "<strong></strong>")
+	msgList = addMETri(msgList, "<span style='background-color: yellow;'>hi", "hi")
+	msgList = addMETri(msgList, "hi</span>", "hi")
+	msgList = addMETri(msgList, "</span>", "")
+	msgList = addMETri(msgList, "<span></span>", "")
+	msgList = addMETri(msgList, "<span   ></span>", "")
+	msgList = addMETri(msgList, "<></>", "&lt;&gt;&lt;/&gt;")
+	msgList = addMETri(msgList, "</><>", "&lt;/&gt;&lt;&gt;")
+	msgList = addMETri(msgList, "<>", "&lt;&gt;")
+	msgList = addMETri(msgList, "</>", "&lt;/&gt;")
+	//msgList = addMETri(msgList, "byte 0", string([]byte{0}), "")
+	msgList = addMETri(msgList, "byte 'a'", string([]byte{'a'}), "a")
+	//msgList = addMETri(msgList, "byte 255", string([]byte{255}), "")
+	//msgList = addMETri(msgList, "rune 0", string([]rune{0}), "")
+	// TODO: Do a test with invalid UTF-8 input
 
 	for _, item := range msgList {
 		res = common.PreparseMessage(item.Msg)
 		if res != item.Expects {
+			if item.Name != "" {
+				t.Error("Name: ", item.Name)
+			}
 			t.Error("Testing string '" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))
