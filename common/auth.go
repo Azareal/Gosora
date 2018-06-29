@@ -170,32 +170,45 @@ func (auth *DefaultAuth) ForceLogout(uid int) error {
 	return nil
 }
 
+func setCookie(w http.ResponseWriter, cookie *http.Cookie, sameSite string) {
+	if v := cookie.String(); v != "" {
+		switch sameSite {
+		case "lax":
+			v = v + "; SameSite=lax"
+		case "strict":
+			v = v + "; SameSite"
+		}
+		w.Header().Add("Set-Cookie", v)
+	}
+}
+
 // Logout logs you out of the computer you requested the logout for, but not the other computers you're logged in with
 func (auth *DefaultAuth) Logout(w http.ResponseWriter, _ int) {
 	cookie := http.Cookie{Name: "uid", Value: "", Path: "/", MaxAge: int(Year)}
+	setCookie(w, &cookie, "lax")
 	http.SetCookie(w, &cookie)
 	cookie = http.Cookie{Name: "session", Value: "", Path: "/", MaxAge: int(Year)}
-	http.SetCookie(w, &cookie)
+	setCookie(w, &cookie, "lax")
 }
 
 // TODO: Set the cookie domain
 // SetCookies sets the two cookies required for the current user to be recognised as a specific user in future requests
 func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session string) {
 	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: int(Year)}
-	http.SetCookie(w, &cookie)
+	setCookie(w, &cookie, "lax")
 	cookie = http.Cookie{Name: "session", Value: session, Path: "/", MaxAge: int(Year)}
-	http.SetCookie(w, &cookie)
+	setCookie(w, &cookie, "lax")
 }
 
 // TODO: Set the cookie domain
 // SetProvisionalCookies sets the two cookies required for guests to be recognised as having passed the initial login but not having passed the additional checks (e.g. multi-factor authentication)
 func (auth *DefaultAuth) SetProvisionalCookies(w http.ResponseWriter, uid int, provSession string, signedSession string) {
 	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: int(Year)}
-	http.SetCookie(w, &cookie)
+	setCookie(w, &cookie, "lax")
 	cookie = http.Cookie{Name: "provSession", Value: provSession, Path: "/", MaxAge: int(Year)}
-	http.SetCookie(w, &cookie)
+	setCookie(w, &cookie, "lax")
 	cookie = http.Cookie{Name: "signedSession", Value: signedSession, Path: "/", MaxAge: int(Year)}
-	http.SetCookie(w, &cookie)
+	setCookie(w, &cookie, "lax")
 }
 
 // GetCookies fetches the current user's session cookies
