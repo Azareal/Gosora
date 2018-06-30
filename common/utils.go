@@ -244,6 +244,32 @@ func NameToSlug(name string) (slug string) {
 }
 
 // TODO: Write a test for this
+func HasSuspiciousEmail(email string) bool {
+	lowEmail := strings.ToLower(email)
+	// TODO: Use a more flexible blacklist, perhaps with a similar mechanism to the HTML tag registration system in PreparseMessage()
+	if strings.Contains(lowEmail, "casino") || strings.Contains(lowEmail, "viagra") {
+		return true
+	}
+
+	var dotCount int
+	var shortBits int
+	var currentSegmentLength int
+	for _, char := range lowEmail {
+		if char == '.' {
+			dotCount++
+			if currentSegmentLength < 3 {
+				shortBits++
+			}
+			currentSegmentLength = 0
+		} else {
+			currentSegmentLength++
+		}
+	}
+
+	return dotCount > 7 || shortBits > 2
+}
+
+// TODO: Write a test for this
 func WeakPassword(password string, username string, email string) error {
 	lowPassword := strings.ToLower(password)
 	switch {

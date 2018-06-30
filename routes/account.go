@@ -251,6 +251,11 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		regError("You didn't put in an email.", "no-email")
 	}
 
+	ok := common.HasSuspiciousEmail(email)
+	if ok {
+		regError("Your email address is suspicious.", "suspicious-email")
+	}
+
 	password := r.PostFormValue("password")
 	// ?  Move this into Create()? What if we want to programatically set weak passwords for tests?
 	err := common.WeakPassword(password, username, email)
