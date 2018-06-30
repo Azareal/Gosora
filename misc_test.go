@@ -993,6 +993,7 @@ func TestPreparser(t *testing.T) {
 	msgList = addMETri(msgList, ">", "&gt;")
 	msgList = addMETri(msgList, "<meow>", "&lt;meow&gt;")
 	msgList = addMETri(msgList, "&lt;", "&amp;lt;")
+	msgList = addMETri(msgList, "&", "&amp;")
 
 	// Note: strings.TrimSpace strips newlines, if there's nothing before or after them
 	msgList = addMETri(msgList, "<br>", "")

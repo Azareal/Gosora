@@ -171,6 +171,14 @@ type TagToAction struct {
 	PartialMode bool
 }
 
+func tryStepForward(i int, step int, runes []rune) (int, bool) {
+	i += step
+	if i < len(runes) {
+		return i, true
+	}
+	return i - step, false
+}
+
 // TODO: Preparse Markdown and normalize it into HTML?
 func PreparseMessage(msg string) string {
 	//fmt.Println("initial msg: ", msg)
@@ -196,13 +204,6 @@ func PreparseMessage(msg string) string {
 	//fmt.Println("before []byte(msg): ", []byte(msg))
 	var runes = []rune(msg)
 	msg = ""
-	var stepForward = func(i int, step int, runes []rune) int {
-		i += step
-		if i < len(runes) {
-			return i
-		}
-		return i - step
-	}
 
 	// TODO: We can maybe reduce the size of this by using an offset?
 	// TODO: Move some of these closures out of this function to make things a little more efficient
@@ -262,7 +263,12 @@ func PreparseMessage(msg string) string {
 		char := runes[i]
 		if char == '&' && peekMatch(i, "lt;", runes) {
 			//fmt.Println("found less than")
-			i = stepForward(i, 4, runes)
+			var ok bool
+			i, ok = tryStepForward(i, 4, runes)
+			if !ok {
+				msg += "&lt;"
+				break
+			}
 			char := runes[i]
 			//fmt.Println("char: ", char)
 			//fmt.Println("string(char): ", string(char))
@@ -276,7 +282,11 @@ func PreparseMessage(msg string) string {
 			var closeTag bool
 			if char == '/' {
 				//fmt.Println("found close tag")
-				i = stepForward(i, 1, runes)
+				i, ok = tryStepForward(i, 1, runes)
+				if !ok {
+					msg += "&lt;/"
+					break
+				}
 				char = runes[i]
 				closeTag = true
 			}
