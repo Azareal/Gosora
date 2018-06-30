@@ -93,11 +93,13 @@ func (hub *WsHubImpl) Tick() error {
 
 	//fmt.Println("checking for changes")
 	// TODO: Optimise this by only sniffing the top non-sticky
+	// TODO: Optimise this by getting back an unsorted list so we don't have to hop around the stickies
+	// TODO: Add support for new stickies / replies to them
 	if len(tList) == len(hub.lastTopicList) {
 		var hasItem = false
 		for j, tItem := range tList {
 			if !tItem.Sticky {
-				if tItem.ID != hub.lastTopicList[j].ID {
+				if tItem.ID != hub.lastTopicList[j].ID || !tItem.LastReplyAt.Equal(hub.lastTopicList[j].LastReplyAt) {
 					hasItem = true
 				}
 			}

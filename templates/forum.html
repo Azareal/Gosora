@@ -12,10 +12,10 @@
 			<div class="optbox">
 				{{if .CurrentUser.Perms.CreateTopic}}
 				<div class="pre_opt auto_hide"></div>
-				<div class="opt create_topic_opt" title="{{lang "topic_list_create_topic_tooltip"}}" aria-label="{{lang "topic_list_create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/{{.Forum.ID}}"></a></div>
+				<div class="opt create_topic_opt" title="{{lang "topic_list.create_topic_tooltip"}}" aria-label="{{lang "topic_list.create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/{{.Forum.ID}}"></a></div>
 				{{/** TODO: Add a permissions check for this **/}}
-				<div class="opt mod_opt" title="{{lang "topic_list_moderate_tooltip"}}">
-					<a class="moderate_link" href="#" aria-label="{{lang "topic_list_moderate_aria"}}"></a>
+				<div class="opt mod_opt" title="{{lang "topic_list.moderate_tooltip"}}">
+					<a class="moderate_link" href="#" aria-label="{{lang "topic_list.moderate_aria"}}"></a>
 				</div>
 				{{else}}<div class="opt locked_opt" title="{{lang "forum_locked_tooltip"}}" aria-label="{{lang "forum_locked_aria"}}"><a></a></div>{{end}}
 			</div>
@@ -26,15 +26,15 @@
 	<div class="mod_floater auto_hide">
 		<form method="post">
 			<div class="mod_floater_head">
-				<span>{{lang "topic_list_what_to_do"}}</span>
+				<span>{{lang "topic_list.what_to_do"}}</span>
 			</div>
 			<div class="mod_floater_body">
 				<select class="mod_floater_options">
-					<option val="delete">{{lang "topic_list_moderate_delete"}}</option>
-					<option val="lock">{{lang "topic_list_moderate_lock"}}</option>
-					<option val="move">{{lang "topic_list_moderate_move"}}</option>
+					<option val="delete">{{lang "topic_list.moderate_delete"}}</option>
+					<option val="lock">{{lang "topic_list.moderate_lock"}}</option>
+					<option val="move">{{lang "topic_list.moderate_move"}}</option>
 				</select>
-				<button>{{lang "topic_list_moderate_run"}}</button>
+				<button>{{lang "topic_list.moderate_run"}}</button>
 			</div>
 		</form>
 	</div>

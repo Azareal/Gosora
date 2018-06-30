@@ -489,6 +489,13 @@ li a {
 	display: none;
 }
 
+.more_topic_block_initial {
+	display: none;
+}
+.more_topic_block_active {
+	display: block;
+}
+
 .postImage {
 	max-width: 100%;
 	max-height: 200px;

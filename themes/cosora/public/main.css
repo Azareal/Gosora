@@ -698,8 +698,15 @@ textarea {
 	background-color: rgb(239, 255, 255);
 	border: 1px solid rgb(187, 217, 217);
 	border-bottom: 2px solid rgb(187, 217, 217);
-	border-left: none;
+}
+.topic_row.new_item .topic_left {
 	border-right: none;
+}
+.topic_row.new_item .topic_right {
+	border-left: none;
+}
+.hide_ajax_topic {
+	display: none !important;
 }
 .topic_middle {
 	display: none;
@@ -894,6 +901,13 @@ textarea {
 	.topic_left .topic_inner_left {
 		width: calc(240px + 10%);
 	}
+}
+
+.more_topic_block_initial {
+	display: none;
+}
+.more_topic_block_active {
+	display: block;
 }
 
 .forum_list, .post_container {

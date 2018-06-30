@@ -841,6 +841,13 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	display: none;
 }
 
+.more_topic_block_initial {
+	display: none;
+}
+.more_topic_block_active {
+	display: block;
+}
+
 .topic_name_input {
 	width: 100%;
 	margin-right: 10px;

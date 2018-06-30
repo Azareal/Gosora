@@ -1,9 +1,11 @@
 'use strict';
 var formVars = {};
 var tmplInits = {};
-var tmplPhrases = [];
+var tmplPhrases = []; // [key] array of phrases indexed by order of use
+var phraseBox = {};
 var alertList = [];
 var alertCount = 0;
+var moreTopicCount = 0;
 var conn;
 var selectedTopics = [];
 var attachItemCallback = function(){}
@@ -214,8 +216,8 @@ function runWebSockets() {
 				return;
 			}
 
-			// TODO: Fix the data races in this code
 			if ("msg" in data) {
+				// TODO: Fix the data race where the alert template hasn't been loaded yet
 				wsAlertEvent(data);
 			} else if("Topics" in data) {
 				console.log("topic in data");
@@ -225,11 +227,27 @@ function runWebSockets() {
 					console.log("empty topic list");
 					return;
 				}
+
+				// TODO: Fix the data race where the function hasn't been loaded yet
 				let renTopic = Template_topics_topic(topic);
+				$(".topic_row[data-tid='"+topic.ID+"']").addClass("ajax_topic_dupe");
+
 				let node = $(renTopic);
-				node.addClass("new_item");
+				node.addClass("new_item hide_ajax_topic");
 				console.log("Prepending to topic list");
 				$(".topic_list").prepend(node);
+				moreTopicCount++;
+
+				let moreTopicBlocks = document.getElementsByClassName("more_topic_block_initial");
+				for(let i = 0; i < moreTopicBlocks.length; i++) {
+					let moreTopicBlock = moreTopicBlocks[i];
+					moreTopicBlock.classList.remove("more_topic_block_initial");
+					moreTopicBlock.classList.add("more_topic_block_active");
+
+					console.log("phraseBox:",phraseBox);
+					let msgBox = moreTopicBlock.getElementsByClassName("more_topics")[0];
+					msgBox.innerText = phraseBox["topic_list"]["topic_list.changed_topics"].replace("%d",moreTopicCount);
+				}
 			} else {
 				console.log("unknown message");
 				console.log(data);
@@ -278,9 +296,11 @@ function DoNothingButPassBack(item) {
 }
 
 function fetchPhrases() {
-	fetch("//" +siteURL+"/api/phrases/?query=status")
+	fetch("//" +siteURL+"/api/phrases/?query=status,topic_list")
 		.then((resp) => resp.json())
 		.then((data) => {
+			console.log("loaded phrase endpoint data");
+			console.log("data:",data);
 			Object.keys(tmplInits).forEach((key) => {
 				let phrases = [];
 				let tmplInit = tmplInits[key];
@@ -291,7 +311,20 @@ function fetchPhrases() {
 				console.log("key:",key);
 				console.log("phrases:",phrases);
 				tmplPhrases[key] = phrases;
-			})
+			});
+
+			let prefixes = {};
+			Object.keys(data).forEach((key) => {
+				let prefix = key.split(".")[0];
+				if(prefixes[prefix]===undefined) {
+					prefixes[prefix] = {};
+				}
+				prefixes[prefix][key] = data[key];
+			});
+			Object.keys(prefixes).forEach((prefix) => {
+				console.log("adding phrase prefix '"+prefix+"' to box");
+				phraseBox[prefix] = prefixes[prefix];
+			});
 		});
 }
 
@@ -318,6 +351,21 @@ $(document).ready(function(){
 
 	if(window["WebSocket"]) runWebSockets();
 	else conn = false;
+
+	$(".more_topics").click((event) => {
+		event.preventDefault();
+		let moreTopicBlocks = document.getElementsByClassName("more_topic_block_active");
+		for(let i = 0; i < moreTopicBlocks.length; i++) {
+			let moreTopicBlock = moreTopicBlocks[i];
+			moreTopicBlock.classList.remove("more_topic_block_active");
+			moreTopicBlock.classList.add("more_topic_block_initial");
+		}
+		$(".ajax_topic_dupe").fadeOut("slow", function(){
+			$(this).remove();
+		});
+		$(".hide_ajax_topic").removeClass("hide_ajax_topic"); // TODO: Do Fade
+		moreTopicCount = 0;
+	})
 
 	$(".add_like").click(function(event) {
 		event.preventDefault();
@@ -596,29 +644,31 @@ $(document).ready(function(){
 
 				let reader = new FileReader();
 				reader.onload = function(e) {
-					crypto.subtle.digest('SHA-256',e.target.result).then(function(hash) {
-						const hashArray = Array.from(new Uint8Array(hash))
-						return hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('')
-					}).then(function(hash) {
-						console.log("hash",hash);
-						let content = document.getElementById("input_content")
-						console.log("content.value", content.value);
+					crypto.subtle.digest('SHA-256',e.target.result)
+						.then(function(hash) {
+							const hashArray = Array.from(new Uint8Array(hash))
+							return hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('')
+						}).then(function(hash) {
+							console.log("hash",hash);
+							let content = document.getElementById("input_content")
+							console.log("content.value", content.value);
+							
+							let attachItem;
+							if(content.value == "") attachItem = "//" + siteURL + "/attachs/" + hash + "." + ext;
+							else attachItem = "\r\n//" + siteURL + "/attachs/" + hash + "." + ext;
+							content.value = content.value + attachItem;
+							console.log("content.value", content.value);
 						
-						let attachItem;
-						if(content.value == "") attachItem = "//" + siteURL + "/attachs/" + hash + "." + ext;
-						else attachItem = "\r\n//" + siteURL + "/attachs/" + hash + "." + ext;
-						content.value = content.value + attachItem;
-						console.log("content.value", content.value);
-						
-						// For custom / third party text editors
-						attachItemCallback(attachItem);
-					});
+							// For custom / third party text editors
+							attachItemCallback(attachItem);
+						});
 				}
 				reader.readAsArrayBuffer(files[i]);
 			}
 			reader.readAsDataURL(files[i]);
 		}
 		if(totalSize>maxRequestSize) {
+			// TODO: Use a notice instead
 			alert("You can't upload this much data at once, max: " + maxRequestSize);
 		}
 	}

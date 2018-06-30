@@ -989,6 +989,11 @@ func TestPreparser(t *testing.T) {
 	msgList = addMETri(msgList, "</p>", "")
 	msgList = addMETri(msgList, "<p></p>", "")
 
+	msgList = addMETri(msgList, "<", "&lt;")
+	msgList = addMETri(msgList, ">", "&gt;")
+	msgList = addMETri(msgList, "<meow>", "&lt;meow&gt;")
+	msgList = addMETri(msgList, "&lt;", "&amp;lt;")
+
 	// Note: strings.TrimSpace strips newlines, if there's nothing before or after them
 	msgList = addMETri(msgList, "<br>", "")
 	msgList = addMETri(msgList, "<br />", "")

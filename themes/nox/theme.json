@@ -1,12 +1,16 @@
 {
 	"Name": "nox",
-	"FriendlyName": "Nox",
+	"FriendlyName": "Nox (Incomplete)",
 	"Version": "0.0.1",
 	"Creator": "Azareal",
 	"URL": "github.com/Azareal/Gosora",
 	"Tag": "WIP",
-	"HideFromThemes":true,
 	"Docks":["topMenu","rightSidebar","footer"],
+	"MapTmplToDock": {
+		"rightOfNav": {
+			"File": "./templates/userDock.html"
+		}
+	},
 	"Templates": [
 		{
 			"Name": "topic",

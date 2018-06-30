@@ -182,13 +182,17 @@ func setCookie(w http.ResponseWriter, cookie *http.Cookie, sameSite string) {
 	}
 }
 
+func deleteCookie(w http.ResponseWriter, cookie *http.Cookie) {
+	cookie.MaxAge = -1
+	http.SetCookie(w, cookie)
+}
+
 // Logout logs you out of the computer you requested the logout for, but not the other computers you're logged in with
 func (auth *DefaultAuth) Logout(w http.ResponseWriter, _ int) {
-	cookie := http.Cookie{Name: "uid", Value: "", Path: "/", MaxAge: int(Year)}
-	setCookie(w, &cookie, "lax")
-	http.SetCookie(w, &cookie)
-	cookie = http.Cookie{Name: "session", Value: "", Path: "/", MaxAge: int(Year)}
-	setCookie(w, &cookie, "lax")
+	cookie := http.Cookie{Name: "uid", Value: "", Path: "/"}
+	deleteCookie(w, &cookie)
+	cookie = http.Cookie{Name: "session", Value: "", Path: "/"}
+	deleteCookie(w, &cookie)
 }
 
 // TODO: Set the cookie domain

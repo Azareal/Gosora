@@ -7,10 +7,10 @@
 		<div class="optbox">
 		{{if .ForumList}}
 			<div class="pre_opt auto_hide"></div>
-			<div class="opt create_topic_opt" title="{{lang "topic_list_create_topic_tooltip"}}" aria-label="{{lang "topic_list_create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/"></a></div>
+			<div class="opt create_topic_opt" title="{{lang "topic_list.create_topic_tooltip"}}" aria-label="{{lang "topic_list.create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/"></a></div>
 			{{/** TODO: Add a permissions check for this **/}}
-			<div class="opt mod_opt" title="{{lang "topic_list_moderate_tooltip"}}">
-				<a class="moderate_link" href="#" aria-label="{{lang "topic_list_moderate_aria"}}"></a>
+			<div class="opt mod_opt" title="{{lang "topic_list.moderate_tooltip"}}">
+				<a class="moderate_link" href="#" aria-label="{{lang "topic_list.moderate_aria"}}"></a>
 			</div>
 			{{else}}<div class="opt locked_opt" title="{{lang "topics_locked_tooltip"}}" aria-label="{{lang "topics_locked_aria"}}"><a></a></div>{{end}}
 		</div>
@@ -23,15 +23,15 @@
 <div class="mod_floater auto_hide">
 	<form method="post">
 	<div class="mod_floater_head">
-		<span>{{lang "topic_list_what_to_do"}}</span>
+		<span>{{lang "topic_list.what_to_do"}}</span>
 	</div>
 	<div class="mod_floater_body">
 		<select class="mod_floater_options">
-			<option val="delete">{{lang "topic_list_moderate_delete"}}</option>
-			<option val="lock">{{lang "topic_list_moderate_lock"}}</option>
-			<option val="move">{{lang "topic_list_moderate_move"}}</option>
+			<option val="delete">{{lang "topic_list.moderate_delete"}}</option>
+			<option val="lock">{{lang "topic_list.moderate_lock"}}</option>
+			<option val="move">{{lang "topic_list.moderate_move"}}</option>
 		</select>
-		<button class="mod_floater_submit">{{lang "topic_list_moderate_run"}}</button>
+		<button class="mod_floater_submit">{{lang "topic_list.moderate_run"}}</button>
 	</div>
 	</form>
 </div>
@@ -43,7 +43,7 @@
 	<form action="/topic/move/submit/?session={{.CurrentUser.Session}}" method="post">
 		<input id="mover_fid" name="fid" value="0" type="hidden" />
 		<div class="pane_header">
-			<h3>{{lang "topic_list_move_head"}}</h3>
+			<h3>{{lang "topic_list.move_head"}}</h3>
 		</div>
 		<div class="pane_body">
 			<div class="pane_table">
@@ -51,7 +51,7 @@
 			</div>
 		</div>
 		<div class="pane_buttons">
-			<button id="mover_submit">{{lang "topic_list_move_button"}}</button>
+			<button id="mover_submit">{{lang "topic_list.move_button"}}</button>
 		</div>
 	</form>
 </div>
@@ -101,6 +101,9 @@
 </div>
 	{{end}}
 {{end}}
+<div class="rowblock more_topic_block more_topic_block_initial">
+	<div class="rowitem rowmsg"><a href="" class="more_topics"></a></div>
+</div>
 <div id="topic_list" class="rowblock topic_list" aria-label="{{lang "topics_list_aria"}}">
 	{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}</div>{{end}}
 </div>

@@ -236,6 +236,14 @@ h1, h3 {
 	display: none;
 }
 
+/* TODO: Make a generic version of this so that we can have more blocks which are initially hidden but flip over to visible under certain conditions */
+.more_topic_block_initial {
+	display: none;
+}
+.more_topic_block_active {
+	display: block;
+}
+
 input, select, button, .formbutton, textarea {
 	border-radius: 3px;
 	background: rgb(90,90,90);
