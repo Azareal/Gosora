@@ -971,6 +971,10 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 #panel_dashboard_right .colstack_head .rowitem {
 	padding: 10px;
 }
+#panel_dashboard_right .colstack_head .rowitem h1 {
+	font-size: 15px;
+	margin-left: auto;
+}
 
 #panel_dashboard_right .colstack_head a {
 	text-align: center;

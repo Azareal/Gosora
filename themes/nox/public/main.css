@@ -114,6 +114,8 @@ li a {
 	background-color: #444444;
 	display: flex;
 	padding: 12px;
+}
+.sidebar .rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem {
 	margin-left: 12px;
 }
 .colstack_right .colstack_item.the_form {
@@ -136,7 +138,7 @@ li a {
 	margin-bottom: 8px;
 }
 
-h1, h3 {
+h1, h2, h3, h4, h5 {
 	-webkit-margin-before: 0;
 	-webkit-margin-after: 0;
 	margin-block-start: 0;
@@ -150,19 +152,37 @@ h1, h3 {
 	display: none;
 }
 
-.rowhead, .opthead {
-	margin-left: 18px;
+.rowhead, .opthead, .colstack_head {
+	margin-left: 8px;
 	margin-bottom: 8px;
 }
-.rowhead h1, .opthead h1 {
+.rowhead h1, .opthead h1, .colstack_head h1 {
 	font-size: 23px;
 }
 .sidebar .rowhead {
+	margin-left: 18px;
 	margin-top: 4px;
 	margin-bottom: 8px;
 }
 .sidebar .rowhead h1 {
 	font-size: 20px;
+}
+
+h2 {
+	font-size: 18px;
+	margin-top: 12px;
+	margin-bottom: 8px;
+	margin-left: 8px;
+}
+
+.more_topic_block_initial {
+	display: none;
+}
+.more_topic_block_active {
+	display: block;
+}
+.hide_ajax_topic {
+	display: none !important;
 }
 
 .topic_row:not(:last-child) {
@@ -176,14 +196,23 @@ h1, h3 {
 .topic_left, .topic_right, .topic_middle {
 	padding: 16px;
 	padding-bottom: 12px;
+	padding-top: 15px;
 	display: flex;
 	width: 33%;
 }
 .topic_middle {
-	padding-top: 15px;
+	line-height: 20px;
 }
 .topic_left {
 	margin-right: auto;
+}
+.topic_left.topic_sticky {
+	border-left: 3px solid gold;
+	border-radius: 3px;
+}
+.new_item .topic_left {
+	border-left: 3px solid rgb(215, 215, 215);
+	border-radius: 3px;
 }
 .topic_left img, .topic_right img {
 	border-radius: 24px;
@@ -195,6 +224,12 @@ h1, h3 {
 .topic_inner_left {
 	display: flex;
 	flex-direction: column;
+	width: 92%;
+}
+.topic_inner_left .rowtopic {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+    overflow: hidden;
 }
 .topic_inner_left .parent_forum {
 	display: none; /* Comment this until we figure out how to make it work */

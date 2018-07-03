@@ -257,11 +257,24 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	*usercpy = *user
 
 	// TODO: WIP. Refactor this to eliminate the unnecessary query
+	// TODO: Better take proxies into consideration
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		PreError("Bad IP", w, r)
 		return *usercpy, false
 	}
+
+	// TODO: Prefer Cf-Connecting-Ip header, fewer shenanigans
+	if Site.HasProxy {
+		// TODO: Check the right-most IP, might get tricky with multiple proxies, maybe have a setting for the number of hops we jump through
+		xForwardedFor := r.Header.Get("X-Forwarded-For")
+		if xForwardedFor != "" {
+			forwardedFor := strings.Split(xForwardedFor, ",")
+			// TODO: Check if this is a valid IP Address, reject if not
+			host = forwardedFor[len(forwardedFor)-1]
+		}
+	}
+
 	if user == &GuestUser {
 		usercpy.LastIP = host
 		return *usercpy, true

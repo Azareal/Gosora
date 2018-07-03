@@ -9,6 +9,10 @@
 	margin-right: 8px;
 }
 
+#panel_dashboard_right .colstack_head {
+	display: none;
+}
+
 .edit_button:before {
 	content: "{{index .Phrases "panel_edit_button_text"}}";
 }
