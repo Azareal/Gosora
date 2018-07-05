@@ -6,6 +6,8 @@ Other uses may arise in the future, e.g. commercial licensing, although that's c
 
 Try to prefix commits which introduce a lot of bugs or otherwise has a large impact on the usability of Gosora with UNSTABLE.
 
+If anything seems suspect, then feel free to bring up an alternative, although I'd rather not get hung up on the little details, if it's something which is purely a matter of opinion.
+
 # Coding Standards
 
 All code must be unit tested where ever possible with the exception of JavaScript which is untestable with our current technologies, tread with caution there.
@@ -31,6 +33,8 @@ Use semicolons at the end of statements. If you don't, you might wind up breakin
 Always use strict mode.
 
 Don't worry about ES5, we're targetting modern browsers. If we decide to backport code to older browsers, then we'll transpile the files.
+
+Please don't use await. It incurs too much of a cognitive overhead as to where and when you can use it.
 
 To keep consistency with Go code, variables must be camelCase.
 

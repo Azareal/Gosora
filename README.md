@@ -39,7 +39,7 @@ Other modern features like alerts, likes, advanced dashboard with live stats (CP
 
 Go 1.10 or newer - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
-Git - You may need this for downloading updates via the updater. More to come on this here. https://git-scm.com/downloads
+Git - You may need this for downloading updates via the updater. You might already have this installed on your server. More to come on this here. https://git-scm.com/downloads
 
 MySQL Database - You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL. You could use something like WNMP / XAMPP which have a little PHP script called PhpMyAdmin for managing MySQL databases or you could install MariaDB directly.
 

@@ -7,6 +7,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -183,6 +185,22 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.InternalError(err, w, r)
 	}
 	w.Write(jsonBytes)
+
+	return nil
+}
+
+// A dedicated function so we can shake things up every now and then to make the token harder to parse
+// TODO: Are we sure we want to do this by ID, just in case we reuse this and have multiple antispams on the page?
+func routeJSAntispam(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	h := sha256.New()
+	h.Write([]byte(common.JSTokenBox.Load().(string)))
+	h.Write([]byte(user.LastIP))
+	jsToken := hex.EncodeToString(h.Sum(nil))
+
+	var innerCode = "`document.getElementByld('golden-watch').value = '" + jsToken + "';`"
+	w.Write([]byte(`let hihi = ` + innerCode + `;
+hihi = hihi.replace('ld','Id');
+eval(hihi);`))
 
 	return nil
 }

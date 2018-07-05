@@ -3,7 +3,7 @@
 	<div class="rowblock rowhead">
 		<div class="rowitem"><h1>{{lang "register_head"}}</h1></div>
 	</div>
-	<div class="rowblock">
+	<div class="rowblock the_form">
 		<form action="/accounts/create/submit/" method="post">
 			<div class="formrow">
 				<div class="formitem formlabel"><a id="username_label">{{lang "register_account_name"}}</a></div>
@@ -31,11 +31,20 @@
 			<div class="formrow register_button_row">
 				<div class="formitem"><button name="register-button" class="formbutton">{{lang "register_submit_button"}}</button></div>
 			</div>
-			<input id="js-antispam" name="antispam" value="nananana" type="hidden" />
+			<input id="golden-watch" name="golden-watch" value="$500" type="hidden" />
 		</form>
 	</div>
 </main>
-<script>{{/** TODO: Are we sure we want to do this by ID, just in case we reuse this and have multiple antispams on the page? **/}}
-document.getElementById("js-antispam").value = "{{.Something}}";
+<script>
+fetch("/api/watches/")
+	.then(response => {
+		if(response.status!==200) {
+			console.log("error");
+			console.log("response:", response);
+			return;
+		}
+		response.text().then(data => eval(data));
+	})
+	.catch(err => console.log("err:", err));
 </script>
 {{template "footer.html" . }}

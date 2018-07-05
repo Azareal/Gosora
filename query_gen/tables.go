@@ -137,6 +137,19 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableKey{},
 	)
 
+	// TODO: Allow for patterns in domains, if the bots try to shake things up there?
+	/*
+		qgen.Install.CreateTable("email_domain_blacklist", "", "",
+			[]qgen.DBTableColumn{
+				qgen.DBTableColumn{"domain", "varchar", 200, false, false, ""},
+				qgen.DBTableColumn{"gtld", "boolean", 0, false, false, "0"},
+			},
+			[]qgen.DBTableKey{
+				qgen.DBTableKey{"domain", "primary"},
+			},
+		)
+	*/
+
 	qgen.Install.CreateTable("forums", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"fid", "int", 0, false, true, ""},

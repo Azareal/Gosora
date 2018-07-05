@@ -14,6 +14,7 @@ func routes() {
 	apiGroup := newRouteGroup("/api/",
 		View("routeAPI", "/api/"),
 		View("routeAPIPhrases", "/api/phrases/"), // TODO: Be careful with exposing the panel phrases here
+		View("routeJSAntispam", "/api/watches/"),
 	)
 	addRouteGroup(apiGroup)
 

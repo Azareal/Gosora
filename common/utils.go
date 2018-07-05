@@ -247,7 +247,7 @@ func NameToSlug(name string) (slug string) {
 func HasSuspiciousEmail(email string) bool {
 	lowEmail := strings.ToLower(email)
 	// TODO: Use a more flexible blacklist, perhaps with a similar mechanism to the HTML tag registration system in PreparseMessage()
-	if strings.Contains(lowEmail, "casino") || strings.Contains(lowEmail, "viagra") {
+	if strings.Contains(lowEmail, "casino") || strings.Contains(lowEmail, "viagra") || strings.Contains(lowEmail, "pharma") || strings.Contains(lowEmail, "pill") {
 		return true
 	}
 

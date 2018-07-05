@@ -50,6 +50,11 @@
     margin-top: 14px;
 }
 
+#panel_dashboard_right .colstack_head h1 {
+	font-size: 17px;
+	color: hsl(0,0%,40%);
+}
+
 .complex_rowlist {
 	background-color: inherit !important;
 	border: none !important;

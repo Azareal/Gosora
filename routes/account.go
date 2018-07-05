@@ -201,11 +201,7 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 	header.Title = common.GetTitlePhrase("register")
 
-	h := sha256.New()
-	h.Write([]byte(common.JSTokenBox.Load().(string)))
-	h.Write([]byte(user.LastIP))
-	jsToken := hex.EncodeToString(h.Sum(nil))
-	pi := common.Page{header, tList, jsToken}
+	pi := common.Page{header, tList, nil}
 	if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
 		return nil
 	}
@@ -237,7 +233,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	h := sha256.New()
 	h.Write([]byte(common.JSTokenBox.Load().(string)))
 	h.Write([]byte(user.LastIP))
-	if r.PostFormValue("antispam") != hex.EncodeToString(h.Sum(nil)) {
+	if r.PostFormValue("golden-watch") != hex.EncodeToString(h.Sum(nil)) {
 		regError("You might be a machine", "js-antispam")
 	}
 
