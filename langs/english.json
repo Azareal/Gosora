@@ -46,10 +46,11 @@
 
 	"SettingPhrases": {
 		"activation_type":"Activation Type",
-		"activation_type_label": "Activate All,Email Activation,Admin Approval",
+		"activation_type_label": "Activate All,Email Activation,Staff Approval",
 		"bigpost_min_words":"Big Post Minimum Words",
 		"megapost_min_words":"Mega Post Minimum Words",
-		"meta_desc":"Meta Description"
+		"meta_desc":"Meta Description",
+		"rapid_loading":"Rapid Loaded?"
 	},
 
 	"PermPresets": {
@@ -571,6 +572,8 @@
 		"panel_menu_settings":"Settings",
 		"panel_menu_word_filters":"Word Filters",
 		"panel_menu_themes":"Themes",
+		"panel_menu_menus":"Menus",
+		"panel_menu_widgets":"Widgets",
 		"panel_menu_events":"Events",
 		"panel_menu_statistics":"Statistics",
 		"panel_menu_statistics_posts":"Posts",
@@ -658,6 +661,7 @@
 		"panel_group_tag":"Tag",
 		"panel_group_tag_placeholder":"VIP",
 		"panel_group_update_button":"Update Group",
+		"panel_group_extended_permissions":"Extended Permissions",
 
 		"panel_word_filters_head":"Word Filters",
 		"panel_word_filters_edit_button_aria":"Edit Word Filter",

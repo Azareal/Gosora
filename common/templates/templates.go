@@ -718,6 +718,9 @@ ArgLoop:
 		case "scope":
 			literal = true
 			break ArgLoop
+		case "dyntmpl":
+			literal = true
+			break ArgLoop
 		default:
 			c.detail("Variable!")
 			if len(node.Args) > (pos + 1) {

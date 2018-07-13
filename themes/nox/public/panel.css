@@ -10,6 +10,13 @@
 .footer .widget, #poweredByHolder {
 	background-color: #393939;
 }
+.rowmenu {
+	margin-left: 12px;
+}
+.submenu a:before {
+	content: "-";
+	margin-right: 8px;
+}
 
 .colstack_left {
 	width: 25%;
@@ -35,6 +42,9 @@
 .rowmenu a {
 	color: rgb(170, 170, 170);
 }
+.menu_stats {
+	margin-left: 4px;
+}
 
 .colstack_right {
 	background-color: #444444;
@@ -57,6 +67,9 @@
 .colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem {
 	background-color: #555555;
 }
+.rowitem {
+	display: flex;
+}
 
 .colstack_grid {
 	display: grid;
@@ -70,6 +83,10 @@
 	padding: 12px;
 }
 
+.to_right {
+	margin-left: auto;
+}
+
 .rowlist.bgavatars .rowitem {
 	background-image: none !important;
 }
@@ -78,7 +95,7 @@
 	height: 48px;
 }
 
-input, select, button, .formbutton, textarea {
+input, select, textarea {
 	background: rgb(107,107,107);
 	color: rgb(217,217,217);
 }
@@ -100,6 +117,9 @@ input::placeholder, textarea::placeholder {
 button, .formbutton {
 	/*background: rgb(110,110,210);
 	color: rgb(250,250,250);*/
+}
+button, .formbutton {
+	background: rgb(100,100,200);
 }
 #themeSelector select {
 	background: rgb(90,90,90);
@@ -123,4 +143,12 @@ button, .formbutton {
 }
 .colstack_graph_holder .ct-grid {
 	stroke: rgb(125,125,125);
+}
+
+#panel_setting .formlabel {
+	display: none;
+}
+#panel_setting textarea {
+	width: 100%;
+	height: 80px;
 }

@@ -56,6 +56,7 @@ var GeneratePasswordFuncs = map[string]func(string) (string, string, error){
 	//"argon2": Argon2GeneratePassword,
 }
 
+// TODO: Redirect 2b to bcrypt too?
 var HashPrefixes = map[string]string{
 	"$2a$": "bcrypt",
 	//"argon2$": "argon2",

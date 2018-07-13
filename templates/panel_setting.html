@@ -6,7 +6,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{.Setting.FriendlyName}}</h1></div>
 	</div>
-	<div id="panel_setting" class="colstack_item">
+	<div id="panel_setting" class="colstack_item the_form">
 		<form action="/panel/settings/edit/submit/{{.Setting.Name}}?session={{.CurrentUser.Session}}" method="post">
 			{{if eq .Setting.Type "list"}}
 			<div class="formrow">
@@ -35,7 +35,7 @@
 				<div class="formitem formlabel"><a>{{lang "panel_setting_value"}}</a></div>
 				<div class="formitem"><input name="setting-value" type="text" value="{{.Setting.Content}}" /></div>
 			</div>{{end}}
-			<div class="formrow">
+			<div class="formrow form_button_row">
 				<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_setting_update_button"}}</button></div>
 			</div>
 		</form>

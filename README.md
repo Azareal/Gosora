@@ -128,11 +128,15 @@ go get -u gopkg.in/sourcemap.v1
 
 go get -u github.com/robertkrimen/otto
 
+go get -u github.com/esimov/caire
+
 go get -u github.com/lib/pq
 
 go get -u github.com/denisenkom/go-mssqldb
 
 go get -u github.com/fsnotify/fsnotify
+
+go get -u github.com/pkg/errors
 
 rm -f template_*.go
 
@@ -247,7 +251,11 @@ A few of these like Rez aren't currently in use, but are things we think we'll n
 
 * github.com/bamiaux/rez An image resizer (e.g. for spitting out thumbnails)
 
+  * github.com/esimov/caire The other image resizer, slower but may be useful for covering cases Rez does not. A third faster one we might point to at some point is probably Discord's Lilliput, however it requires a C Compiler and we don't want to add that as a dependency at this time.
+
 * github.com/fsnotify/fsnotify A library for watching events on the file system.
+
+* github.com/pkg/errors Some helpers to make it easier for us to track down bugs.
 
 * More items to come here, our dependencies are going through a lot of changes, and I'll be documenting those soon ;)
 

@@ -1,0 +1,8 @@
+{{template "header.html" . }}
+<div id="account_{{.Name}}" class="colstack account">
+	{{template "account_menu.html" . }}
+	<main class="colstack_right">
+		{{dyntmpl .Name }}
+	</main>
+</div>
+{{template "footer.html" . }}

@@ -2,12 +2,105 @@
 	display: none;
 }
 
+/* start panel css copy, try to de-dupe this */
+#back {
+	padding: 0px;
+}
+
+.rowmenu {
+	margin-left: 12px;
+}
+.colstack_left {
+	width: 25%;
+	padding-top: 12px;
+	padding-right: 24px;
+	padding-bottom: 24px;
+	padding-left: 24px;
+}
+.colstack_left .colstack_head {
+	font-size: 19px;
+	margin-bottom: 4px;
+}
+.colstack_left .colstack_head:not(:first-child) {
+	margin-top: 8px;
+}
+.colstack_left .colstack_head a {
+	color: rgb(231, 231, 231);
+}
+.rowmenu {
+	margin-bottom: 2px;
+	font-size: 17px;
+}
+.rowmenu a {
+	color: rgb(170, 170, 170);
+}
+
+.colstack_right {
+	background-color: #444444;
+	width: 75%;
+	padding-top: 12px;
+	padding-right: 24px;
+	padding-bottom: 24px;
+	padding-left: 24px;
+}
+.colstack_right .colstack_head {
+	margin-bottom: 4px;
+}
+.colstack_right .colstack_head h1 {
+	font-size: 21px;
+	color: #BBBBBB;
+}
+.colstack_right .colstack_item.the_form {
+	background-color: #555555;
+}
+.colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem {
+	background-color: #555555;
+}
+
+input, select, textarea {
+	background: rgb(107,107,107);
+	color: rgb(217,217,217);
+}
+input:focus, select:focus, textarea:focus {
+	outline: 1px solid rgb(137,137,137);
+}
+
+/* ? - The background properties need to be redeclared for the new image or it won't work properly */
+input {
+	background-image: url(./fa-svg/pencil-alt-light.svg);
+	background-size: 12px;
+	background-repeat: no-repeat;
+	background-position: right 10px bottom 9px;
+    background-position-x: right 10px;
+}
+input::placeholder, textarea::placeholder {
+	color: rgb(167,167,167);
+	opacity: 1; /* Firefox fix */
+}
+button, .formbutton {
+	background: rgb(100,100,200);
+}
+
+#themeSelector select {
+	background: rgb(90,90,90);
+    color: rgb(200,200,200);
+}
+.footer .widget, #poweredByHolder {
+	background-color: #393939;
+}
+
+/* end panel css copy */
+
+.account_soon, .dash_security {
+	font-size: 14px;
+}
+
 #account_dashboard .colstack_right .coldyn_block {
 	display: flex;
 }
 #dash_left {
 	border-radius: 3px;
-	background-color: #444444;
+	background-color: #555555;
 	padding: 12px;
 	height: 180px;
 	width: 240px;
@@ -58,7 +151,7 @@
 }
 #dash_right .rowitem {
 	border-radius: 3px;
-	background-color: #444444;
+	background-color: #555555;
 	padding: 16px;
 }
 #dash_right .rowitem:not(:last-child) {

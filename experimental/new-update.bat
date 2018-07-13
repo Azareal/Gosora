@@ -85,6 +85,20 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Updating Caire
+go get -u github.com/esimov/caire
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
+echo Updating some error helpers
+go get -u github.com/pkg/errors
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 echo Updating fsnotify
 go get -u github.com/fsnotify/fsnotify
 if %errorlevel% neq 0 (

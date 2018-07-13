@@ -28,6 +28,12 @@ go get -u github.com/robertkrimen/otto
 echo "Installing the Rez Image Resizer"
 go get -u github.com/bamiaux/rez
 
+echo "Installing Caire"
+go get -u github.com/esimov/caire
+
+echo "Installing some error helpers"
+go get -u github.com/pkg/errors
+
 echo "Installing fsnotify"
 go get -u github.com/fsnotify/fsnotify
 

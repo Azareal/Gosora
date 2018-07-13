@@ -67,17 +67,21 @@ func HandledRouteError() RouteError {
 }
 
 // LogError logs internal handler errors which can't be handled with InternalError() as a wrapper for log.Fatal(), we might do more with it in the future.
-func LogError(err error) {
-	LogWarning(err)
+// TODO: Clean-up extra as a way of passing additional context
+func LogError(err error, extra ...string) {
+	LogWarning(err, extra...)
 	log.Fatal("")
 }
 
-func LogWarning(err error) {
+func LogWarning(err error, extra ...string) {
 	var errmsg string
+	for _, extraBit := range extra {
+		errmsg += extraBit + "\n"
+	}
 	if err == nil {
-		errmsg = "Unknown error"
+		errmsg += "Unknown error"
 	} else {
-		errmsg = err.Error()
+		errmsg += err.Error()
 	}
 	stack := debug.Stack()
 	log.Print(errmsg+"\n", string(stack))

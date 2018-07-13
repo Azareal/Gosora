@@ -15,7 +15,7 @@ body {
 	font-family: "Segoe UI";
 }
 a {
-	color: white;
+	color: #eeeeee;
 	text-decoration: none;
 }
 
@@ -157,7 +157,7 @@ h1, h2, h3, h4, h5 {
 	margin-bottom: 8px;
 }
 .rowhead h1, .opthead h1, .colstack_head h1 {
-	font-size: 23px;
+	font-size: 22px;
 }
 .sidebar .rowhead {
 	margin-left: 18px;
@@ -176,7 +176,7 @@ h2 {
 }
 
 .topic_create_form {
-	display: flex !important;
+	display: flex;
 }
 .quick_reply_form, .topic_reply_form, .topic_create_form {
 	background-color: #444444;
@@ -232,6 +232,32 @@ h2 {
 	display: none;
 }
 
+.topic_list_title_block {
+	display: flex;
+	margin-left: 8px;
+}
+.topic_list_title {
+	margin-left: 2px;
+}
+.topic_list_title_block .optbox {
+	display: flex;
+	margin-left: auto;
+	font-size: 17px;
+	margin-top: 3.5px;
+	margin-right: 16px;
+	margin-right: 18px;
+}
+.topic_list_title_block .opt a {
+	color: #afafaf;
+	margin-left: 8px;
+}
+.topic_list_title_block .create_topic_opt a:before {
+	content: "Create Topic";
+}
+.topic_list_title_block .mod_opt a:before {
+	content: "Moderate";
+}
+
 .topic_row:not(:last-child) {
 	margin-bottom: 8px;
 }
@@ -242,8 +268,8 @@ h2 {
 }
 .topic_left, .topic_right, .topic_middle {
 	padding: 16px;
-	padding-bottom: 12px;
-	padding-top: 15px;
+	padding-bottom: 10px;
+	padding-top: 16px;
 	display: flex;
 	width: 33%;
 }
@@ -254,7 +280,11 @@ h2 {
 	margin-right: auto;
 }
 .topic_left.topic_sticky {
-	border-left: 3px solid gold;
+	border-left: 3px solid rgb(215, 155, 0);
+	border-radius: 3px;
+}
+.topic_left.topic_closed {
+	border-left: 3px solid grey;
 	border-radius: 3px;
 }
 .new_item .topic_left {
@@ -265,8 +295,7 @@ h2 {
 	border-radius: 24px;
 	height: 38px;
 	width: 38px;
-	margin-right: 8px;
-	margin-top: 1px;
+	margin-right: 10px;
 }
 .topic_inner_left {
 	display: flex;
@@ -289,6 +318,7 @@ h2 {
 .topic_right_inside .lastName, .topic_left .rowtopic {
 	font-size: 15px !important;
 	line-height: 22px;
+	margin-top: -2px;
 }
 .topic_right_inside .lastReplyAt, .topic_left .starter {
 	font-size: 14px;
@@ -312,6 +342,7 @@ h2 {
 .topic_middle_inside {
 	margin-left: auto;
 	margin-right: auto;
+	margin-top: -3px;
 	width: 80px;
 }
 .topic_status_e {
@@ -353,6 +384,18 @@ button, .formbutton {
 	font-size: 15px;
 	text-align: center;
 	padding: 6px;
+}
+.formlabel {
+	margin-bottom: 4px;
+}
+/*.formlabel + .formitem {
+	margin-left: 4px;
+}*/
+.formrow {
+	margin-bottom: 6px;
+}
+.form_button_row {
+	margin-top: 10px;
 }
 
 .pageset {
@@ -405,24 +448,29 @@ button, .formbutton {
 	display: flex;
 }
 
+.postImage {
+	width: 100%;
+	max-width: 320px;
+}
 .post_item {
 	display: flex;
 	margin-bottom: 12px;
 }
 .userinfo {
 	margin-right: 12px;
-	padding: 16px;
+	padding: 24px;
+	padding-bottom: 16px;
 	background-color: #444444;
 	border-radius: 3px;
-	width: 120px;
+	width: 150px;
 	display: flex;
 	flex-direction: column;
 }
 .avatar_item {
-	border-radius: 24px;
-	height: 48px;
-	width: 48px;
-	background-size: 56px;
+	border-radius: 36px;
+	height: 58px;
+	width: 58px;
+	background-size: 78px;
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -431,7 +479,7 @@ button, .formbutton {
 	margin-right: auto;
 	white-space: nowrap;
 	display: block;
-	font-size: 17px;
+	font-size: 18px;
     margin-top: 8px;
     line-height: 16px;
 }
@@ -449,6 +497,50 @@ button, .formbutton {
 	background-color: #444444;
 	border-radius: 3px;
 	width: 100%;
+	display: flex;
+	flex-direction: column;
+	color: #bbbbbb;
+}
+.post_item .button_container {
+	display: flex;
+	margin-top: auto;
+}
+.post_item .action_button {
+	margin-right: 5px;
+	font-size: 15px;
+	color: #dddddd;
+}
+.post_item .action_button_right {
+	margin-left: auto;
+	display: flex;
+}
+
+.add_like:before, .remove_like:before {
+	content: "{{index .Phrases "topic.plus_one"}}";
+}
+.button_container .open_edit:after, .edit_item:after{
+	content: "{{index .Phrases "topic.edit_button_text"}}";
+}
+.delete_item:after {
+	content: "{{index .Phrases "topic.delete_button_text"}}";
+}
+.ip_item_button:after {
+	content: "{{index .Phrases "topic.ip_button_text"}}";
+}
+.lock_item:after {
+	content: "{{index .Phrases "topic.lock_button_text"}}";
+}
+.unlock_item:after {
+	content: "{{index .Phrases "topic.unlock_button_text"}}";
+}
+.pin_item:after {
+	content: "{{index .Phrases "topic.pin_button_text"}}";
+}
+.unpin_item:after {
+	content: "{{index .Phrases "topic.unpin_button_text"}}";
+}
+.report_item:after {
+	content: "{{index .Phrases "topic.report_button_text"}}";
 }
 
 .topic_reply_container {

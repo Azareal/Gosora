@@ -14,6 +14,7 @@ func init() {
 	addPatch(3, patch3)
 	addPatch(4, patch4)
 	addPatch(5, patch5)
+	addPatch(6, patch6)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -503,6 +504,15 @@ func patch5(scanner *bufio.Scanner) error {
 			qgen.DBTableKey{"uid", "primary"},
 		},
 	))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func patch6(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.SimpleInsert("settings", "name, content, type", "'rapid_loading','1','bool'"))
 	if err != nil {
 		return err
 	}

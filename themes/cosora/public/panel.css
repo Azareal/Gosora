@@ -157,6 +157,9 @@
 	width: 100%;
 	height: 80px;
 }
+#panel_setting .formlabel {
+	display: none;
+}
 #panel_page_list textarea, #panel_page_edit textarea {
 	margin-top: 8px;
 }

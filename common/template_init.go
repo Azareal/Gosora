@@ -498,6 +498,15 @@ func InitTemplates() error {
 		return ""
 	}
 
+	fmap["dyntmpl"] = func(nameInt interface{}, pageInt interface{}, headerInt interface{}) interface{} {
+		header := headerInt.(*Header)
+		err := RunThemeTemplate(header.Theme.Name, nameInt.(string), pageInt, header.Writer)
+		if err != nil {
+			return err
+		}
+		return ""
+	}
+
 	// The interpreted templates...
 	DebugLog("Loading the template files...")
 	Templates.Funcs(fmap)

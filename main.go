@@ -24,6 +24,7 @@ import (
 	"./query_gen/lib"
 	"./routes"
 	"github.com/fsnotify/fsnotify"
+	"github.com/pkg/errors"
 )
 
 var version = common.Version{Major: 0, Minor: 1, Patch: 0, Tag: "dev"}
@@ -37,55 +38,57 @@ type Globs struct {
 	stmts *Stmts
 }
 
+// Experimenting with a new error package here to try to reduce the amount of debugging we have to do
+// TODO: Dynamically register these items to avoid maintaining as much code here?
 func afterDBInit() (err error) {
 	acc := qgen.Builder.Accumulator()
 	common.Rstore, err = common.NewSQLReplyStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.Prstore, err = common.NewSQLProfileReplyStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	err = common.InitTemplates()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	err = common.InitPhrases()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the static files.")
 	err = common.Themes.LoadStaticFiles()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	err = common.StaticFiles.Init()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	err = common.StaticFiles.JSTmplInit()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the widgets")
 	err = common.InitWidgets()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the menu item list")
 	common.Menus = common.NewDefaultMenuStore()
 	err = common.Menus.Load(1) // 1 = the default menu
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	menuHold, err := common.Menus.Get(1)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	fmt.Printf("menuHold: %+v\n", menuHold)
 	var b bytes.Buffer
@@ -95,105 +98,105 @@ func afterDBInit() (err error) {
 	log.Print("Initialising the authentication system")
 	common.Auth, err = common.NewDefaultAuth()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the word filters")
 	err = common.LoadWordFilters()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the stores")
 	common.MFAstore, err = common.NewSQLMFAStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.Pages, err = common.NewDefaultPageStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.Reports, err = common.NewDefaultReportStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.Emails, err = common.NewDefaultEmailStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.RegLogs, err = common.NewRegLogStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.ModLogs, err = common.NewModLogStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.AdminLogs, err = common.NewAdminLogStore(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.IPSearch, err = common.NewDefaultIPSearcher()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.Subscriptions, err = common.NewDefaultSubscriptionStore()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.Attachments, err = common.NewDefaultAttachmentStore()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.Polls, err = common.NewDefaultPollStore(common.NewMemoryPollCache(100)) // TODO: Max number of polls held in cache, make this a config item
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.TopicList, err = common.NewDefaultTopicList()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the view counters")
 	counters.GlobalViewCounter, err = counters.NewGlobalViewCounter(acc)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.AgentViewCounter, err = counters.NewDefaultAgentViewCounter()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.OSViewCounter, err = counters.NewDefaultOSViewCounter()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.LangViewCounter, err = counters.NewDefaultLangViewCounter()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.RouteViewCounter, err = counters.NewDefaultRouteViewCounter()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.PostCounter, err = counters.NewPostCounter()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.TopicCounter, err = counters.NewTopicCounter()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.TopicViewCounter, err = counters.NewDefaultTopicViewCounter()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.ForumViewCounter, err = counters.NewDefaultForumViewCounter()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	counters.ReferrerTracker, err = counters.NewDefaultReferrerTracker()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	return nil
@@ -267,7 +270,7 @@ func main() {
 
 	err = afterDBInit()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 
 	err = common.VerifyConfig()
@@ -361,7 +364,7 @@ func main() {
 		var runHook = func(name string) {
 			err := common.RunTaskHook(name)
 			if err != nil {
-				common.LogError(err)
+				common.LogError(err, "Failed at task '"+name+"'")
 			}
 		}
 		for {
