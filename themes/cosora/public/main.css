@@ -870,7 +870,7 @@ textarea {
 	margin-left: 8px;
 }
 
-.topic_sticky {
+.topic_sticky .topic_left, .topic_sticky .topic_right {
 	border-bottom: 2px solid hsl(51, 60%, 70%);
 }
 .topic_selected .topic_left, .topic_selected .topic_right {
@@ -1674,7 +1674,7 @@ textarea {
 	.topic_right_inside br, .topic_right_inside img {
 		display: none;
 	}
-	.topic_right.topic_sticky {
+	.topic_sticky .topic_right {
 		border-bottom: 2px solid var(--element-border-color);
 	}
 	.topic_right_inside > span {

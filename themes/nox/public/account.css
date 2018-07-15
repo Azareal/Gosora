@@ -38,7 +38,6 @@
 .colstack_right {
 	background-color: #444444;
 	width: 75%;
-	padding-top: 12px;
 	padding-right: 24px;
 	padding-bottom: 24px;
 	padding-left: 24px;
@@ -91,12 +90,17 @@ button, .formbutton {
 
 /* end panel css copy */
 
+.colstack_right {
+	padding-top: 16px;
+}
+
 .account_soon, .dash_security {
 	font-size: 14px;
 }
 
 #account_dashboard .colstack_right .coldyn_block {
 	display: flex;
+	margin-top: 2px;
 }
 #dash_left {
 	border-radius: 3px;

@@ -26,7 +26,7 @@
 	<div class="mod_floater auto_hide">
 		<form method="post">
 			<div class="mod_floater_head">
-				<span>{{lang "topic_list.what_to_do"}}</span>
+				<span></span>
 			</div>
 			<div class="mod_floater_body">
 				<select class="mod_floater_options">
@@ -77,8 +77,8 @@
 	{{end}}
 	{{end}}
 	<div id="forum_topic_list" class="rowblock topic_list" aria-label="{{lang "forum_list_aria"}}">
-		{{range .ItemList}}<div class="topic_row" data-tid="{{.ID}}">
-		<div class="rowitem topic_left passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
+		{{range .ItemList}}<div class="topic_row{{if .Sticky}} topic_sticky{{else if .IsClosed}} topic_closed{{end}}" data-tid="{{.ID}}">
+		<div class="rowitem topic_left passive datarow">
 			<span class="selector"></span>
 			<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" alt="{{.Creator.Name}}'s Avatar" title="{{.Creator.Name}}'s Avatar" /></a>
 			<span class="topic_inner_left">
@@ -100,7 +100,7 @@
 				<span class="likeCount">{{.LikeCount}}</span>
 			</div>
 		</div>
-		<div class="rowitem topic_right passive datarow {{if .Sticky}}topic_sticky{{else if .IsClosed}}topic_closed{{end}}">
+		<div class="rowitem topic_right passive datarow">
 			<div class="topic_right_inside">
 				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
 				<span>

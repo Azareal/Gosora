@@ -247,6 +247,10 @@ h2 {
 	margin-right: 16px;
 	margin-right: 18px;
 }
+.topic_list_title_block .pre_opt:before {
+	content: "{{index .Phrases "topics_click_topics_to_select"}}";
+	font-size: 14px;
+}
 .topic_list_title_block .opt a {
 	color: #afafaf;
 	margin-left: 8px;
@@ -279,13 +283,16 @@ h2 {
 .topic_left {
 	margin-right: auto;
 }
-.topic_left.topic_sticky {
+.topic_sticky .topic_left {
 	border-left: 3px solid rgb(215, 155, 0);
 	border-radius: 3px;
 }
-.topic_left.topic_closed {
+.topic_closed .topic_left {
 	border-left: 3px solid grey;
 	border-radius: 3px;
+}
+.topic_closed {
+	background-color: #4b4b4b;
 }
 .new_item .topic_left {
 	border-left: 3px solid rgb(215, 215, 215);

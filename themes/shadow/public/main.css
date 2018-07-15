@@ -800,7 +800,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	padding: 0px;
 	overflow: hidden;
 }
-.topic_left.topic_sticky .topic_inner_left {
+.topic_sticky .topic_left .topic_inner_left {
 	border-top: 4px solid hsl(41, 100%, 50%);
 	padding-left: 10px;
 	padding-top: 10px;
