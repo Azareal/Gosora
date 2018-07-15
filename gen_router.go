@@ -7,6 +7,7 @@ import (
 	"strings"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"errors"
 	"os"
 	"net/http"
@@ -699,6 +700,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		counters.RouteViewCounter.Bump(121)
 		req.URL.Path += extraData
 		routes.StaticFile(w, req)
+		return
+	}
+	if atomic.LoadInt32(&common.IsDBDown) == 1 {
+		common.DatabaseError(w, req)
 		return
 	}
 	if common.Dev.SuperDebug {

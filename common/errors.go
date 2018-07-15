@@ -124,6 +124,13 @@ func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) RouteErr
 	return HandledRouteError()
 }
 
+// When the task system detects if the database is down, some database errors might lip by this
+func DatabaseError(w http.ResponseWriter, r *http.Request) RouteError {
+	pi := ErrorPage{errorHeader(w, GuestUser, "Internal Server Error"), "A problem has occurred in the system."}
+	handleErrorTemplate(w, r, pi)
+	return HandledRouteError()
+}
+
 var xmlInternalError = []byte(`<?xml version="1.0" encoding="UTF-8"?>
 <error>A problem has occured</error>`)
 

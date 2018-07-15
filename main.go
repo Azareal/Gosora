@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -346,6 +347,7 @@ func main() {
 	}
 
 	log.Print("Initialising the task system")
+	// TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?
 	var runTasks = func(tasks []func() error) {
 		for _, task := range tasks {
 			if task() != nil {
@@ -361,6 +363,24 @@ func main() {
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
 	hourTicker := time.NewTicker(time.Hour)
 	go func() {
+		var startTick = func() (abort bool) {
+			var isDBDown = atomic.LoadInt32(&common.IsDBDown)
+			err := db.Ping()
+			if err != nil {
+				// TODO: There's a bit of a race here, but it doesn't matter if this error appears multiple times in the logs as it's capped at three times, we just want to cut it down 99% of the time
+				if isDBDown == 0 {
+					common.LogWarning(err)
+					common.LogWarning(errors.New("The database is down"))
+				}
+				atomic.StoreInt32(&common.IsDBDown, 1)
+				return true
+			}
+			if isDBDown == 1 {
+				log.Print("The database is back")
+			}
+			atomic.StoreInt32(&common.IsDBDown, 0)
+			return false
+		}
 		var runHook = func(name string) {
 			err := common.RunTaskHook(name)
 			if err != nil {
@@ -370,10 +390,16 @@ func main() {
 		for {
 			select {
 			case <-halfSecondTicker.C:
+				if startTick() {
+					continue
+				}
 				runHook("before_half_second_tick")
 				runTasks(common.ScheduledHalfSecondTasks)
 				runHook("after_half_second_tick")
 			case <-secondTicker.C:
+				if startTick() {
+					continue
+				}
 				runHook("before_second_tick")
 				runTasks(common.ScheduledSecondTasks)
 
@@ -397,6 +423,9 @@ func main() {
 				// TODO: Rescan the static files for changes
 				runHook("after_second_tick")
 			case <-fifteenMinuteTicker.C:
+				if startTick() {
+					continue
+				}
 				runHook("before_fifteen_minute_tick")
 				runTasks(common.ScheduledFifteenMinuteTasks)
 
@@ -404,6 +433,9 @@ func main() {
 				// TODO: Publish scheduled posts.
 				runHook("after_fifteen_minute_tick")
 			case <-hourTicker.C:
+				if startTick() {
+					continue
+				}
 				runHook("before_hour_tick")
 
 				jsToken, err := common.GenerateSafeString(80)
