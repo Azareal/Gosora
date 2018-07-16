@@ -7,21 +7,24 @@ rm -f ./Gosora
 echo "Generating the dynamic code"
 go generate
 
-echo "Building the router generator"
-cd ./router_gen
-go build -o RouterGen
-mv ./RouterGen ..
-cd ..
-echo "Running the router generator"
-./RouterGen
+runBuilder()
+{
+	PATH=$1
+	BINNAME=$2
+	shift;shift;
+	WHATIS=$@
 
-echo "Building the query generator"
-cd ./query_gen
-go build -o QueryGen
-mv ./QueryGen ..
-cd ..
-echo "Running the query generator"
-./QueryGen
+	echo "Building the $WHATIS generator"
+	cd $PATH
+	go build -o $BINNAME
+	mv "./$BINNAME" ..
+	cd ..
+	echo "Running the $WHATIS generator"
+	./$BINNAME
+}
+
+runBuilder ./router_gen RouterGen router
+runBuilder ./query_gen QueryGen query
 
 echo "Building Gosora"
 go build -o Gosora
