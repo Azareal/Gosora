@@ -171,6 +171,7 @@ type TagToAction struct {
 	PartialMode bool
 }
 
+// TODO: Write a test for this
 func tryStepForward(i int, step int, runes []rune) (int, bool) {
 	i += step
 	if i < len(runes) {
@@ -387,6 +388,9 @@ func peekMatch(cur int, phrase string, runes []rune) bool {
 		return false
 	}
 	for i, char := range phrase {
+		if cur+i+1 >= len(runes) {
+			return false
+		}
 		if runes[cur+i+1] != char {
 			return false
 		}
@@ -396,6 +400,7 @@ func peekMatch(cur int, phrase string, runes []rune) bool {
 
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
+// TODO: Use templates to reduce the amount of boilerplate?
 func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/) string {
 	msg = strings.Replace(msg, ":)", "😀", -1)
 	msg = strings.Replace(msg, ":(", "😞", -1)
