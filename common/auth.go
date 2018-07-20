@@ -250,7 +250,7 @@ func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (u
 		return &GuestUser, true
 	}
 
-	if user.Session == "" || session != user.Session {
+	if user.Session == "" || subtle.ConstantTimeCompare([]byte(session), []byte(user.Session)) != 1 {
 		return &GuestUser, false
 	}
 
