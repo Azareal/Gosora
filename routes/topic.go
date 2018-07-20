@@ -161,19 +161,19 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 			if replyItem.ActionType != "" {
 				switch replyItem.ActionType {
 				case "lock":
-					replyItem.ActionType = "This topic has been locked by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic was locked by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
 				case "unlock":
-					replyItem.ActionType = "This topic has been reopened by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic was reopened by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
 				case "stick":
-					replyItem.ActionType = "This topic has been pinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic was pinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "unstick":
-					replyItem.ActionType = "This topic has been unpinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic was unpinned by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "move":
-					replyItem.ActionType = "This topic has been moved by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
+					replyItem.ActionType = "This topic was moved by <a href='" + replyItem.UserLink + "'>" + replyItem.CreatedByName + "</a>"
 				default:
 					replyItem.ActionType = replyItem.ActionType + " has happened"
 					replyItem.ActionIcon = ""
