@@ -1,0 +1,17 @@
+# An example systemd service file
+[Unit]
+Description=A service for the Gosora Forum Software
+
+[Service]
+Type=simple
+# You might want to create a user / group for Gosora and set these to further harden your system
+#User=gosoraservice
+#Group=gosoraservice
+
+Restart=on-failure
+RestartSec=10
+# Set this to the location of Gosora
+ExecStart=/home/gosora/gosora
+
+[Install]
+WantedBy=multi-user.target
