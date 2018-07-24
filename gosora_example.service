@@ -1,6 +1,6 @@
 # An example systemd service file
 [Unit]
-Description=A service for the Gosora Forum Software
+Description=Gosora
 
 [Service]
 Type=simple
@@ -10,8 +10,10 @@ Type=simple
 
 Restart=on-failure
 RestartSec=10
-# Set this to the location of Gosora
-ExecStart=/home/gosora/gosora
+# Set these to the location of Gosora
+WorkingDirectory=/home/gosora
+# Make sure you manually run pre-run-linux before you start the service
+ExecStart=/home/gosora/Gosora
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,33 @@
+echo "Deleting artifacts from previous builds"
+rm -f template_*.go
+rm -f gen_*.go
+rm -f tmpl_client/template_*.go
+rm -f ./Gosora
+
+echo "Generating the dynamic code"
+go generate
+
+echo "Building the router generator"
+cd ./router_gen
+go build -o RouterGen
+mv ./RouterGen ..
+cd ..
+echo "Running the router generator"
+./RouterGen
+
+echo "Building the query generator"
+cd ./query_gen
+go build -o QueryGen
+mv ./QueryGen ..
+cd ..
+echo "Running the query generator"
+./QueryGen
+
+echo "Building Gosora"
+go build -o Gosora
+
+echo "Building the templates"
+./Gosora -build-templates
+
+echo "Building Gosora... Again"
+go build -o Gosora
