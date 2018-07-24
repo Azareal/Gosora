@@ -80,6 +80,7 @@
 		"topics":"All Topics",
 		"forums":"Forum List",
 		"login":"Login",
+		"login_mfa_verify":"2FA Verify",
 		"register":"Registration",
 		"ip_search":"IP Search",
 		"account":"My Account",
@@ -355,6 +356,7 @@
 
 		"login_mfa_verify_head":"2FA Verify",
 		"login_mfa_verify_explanation":"Please input the code from the authenticator app below.",
+		"login_mfa_token":"Token",
 		"login_mfa_verify_button":"Confirm",
 
 		"register_head":"Create Account",
@@ -429,7 +431,7 @@
 		"topic_list.create_topic_aria":"Create a topic",
 		"topic_list.moderate_tooltip":"Moderate",
 		"topic_list.moderate_aria":"Moderate Posts",
-		"topic_list.what_to_do":"What do you want to do with these 18 topics?",
+		"topic_list.what_to_do":"What do you want to do with these {0} topics?",
 		"topic_list.moderate_delete":"Delete them",
 		"topic_list.moderate_lock":"Lock them",
 		"topic_list.moderate_move":"Move them",

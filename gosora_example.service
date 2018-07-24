@@ -4,7 +4,7 @@ Description=A service for the Gosora Forum Software
 
 [Service]
 Type=simple
-# You might want to create a user / group for Gosora and set these to further harden your system
+# You might want to create a user / group for Gosora and set these to further harden your system, although this this might not work right now, if we're listening directly on port 80 / 443
 #User=gosoraservice
 #Group=gosoraservice
 
