@@ -65,7 +65,7 @@ On Windows, you might want to try the [GosoraBootstrapper](https://github.com/Az
 
 First, you will need to jump to the place where you want to put the code, we will use `/home/gosora` here, but if you want to use something else, then you'll have to modify the service file with your own path.
 
-You can navigate to it by typing the following five commands into the console and hitting enter:
+You can navigate to it by typing the following six commands into the console and hitting enter:
 
 cd /home/
 
@@ -87,6 +87,8 @@ chmod 755 ./pre-run-linux
 
 mv ./gosora_example.service /lib/systemd/system/gosora.service
 
+systemctl daemon-reload
+
 *Windows*
 
 Run install.bat, e.g. double-click on it. You will also have to start-up MySQL, which if you're using Wnmp or friends is just a matter of opening that program and starting the MySQL process via it.
@@ -101,8 +103,6 @@ Follow the instructions shown on the screen.
 If you have setup a service, you can run:
 
 ./pre-run-linux
-
-systemctl daemon-reload
 
 service gosora start
 
