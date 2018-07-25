@@ -54,20 +54,38 @@ It's entirely possible that your host might already have MySQL, so you might be 
 
 # How to download
 
-At some point, we'll have releases which you can download, but right now, you'll have to use the `git clone` command as mentioned down in the advanced setup section to download a copy of Gosora.
+For Linux, you can skip down to the How to install section.
 
-On Windows, you might also want to try the [GosoraBootstrapper](https://github.com/Azareal/GosoraBootstrapper), if you can't find the command prompt or otherwise can't follow those instructions. It's just a matter of double-clicking on the bat file there and it'll download the rest of the files for you.
+On Windows, you might want to try the [GosoraBootstrapper](https://github.com/Azareal/GosoraBootstrapper), if you can't find the command prompt or otherwise can't follow those instructions. It's just a matter of double-clicking on the bat file there and it'll download the rest of the files for you.
 
 
 # How to install
 
 *Linux*
 
-cd to the directory / folder the code is in. In other words, type cd followed by the location of the code and it should jump there.
+First, you will need to jump to the place where you want to put the code, we will use `/home/gosora` here, but if you want to use something else, then you'll have to modify the service file with your own path.
 
-Run ./install-linux
+You can navigate to it by typing the following five commands into the console and hitting enter:
+
+cd /home/
+
+git clone https://github.com/Azareal/Gosora
+
+mv Gosora gosora
+
+cd gosora
+
+chmod 755 ./install-linux
+
+./install-linux
 
 Follow the instructions shown on the screen.
+
+You will also want to setup a service to manage Gosora more easily, although this will require administrator priviledges on the machine:
+
+chmod 755 ./pre-run-linux
+
+mv ./gosora_example.service /lib/systemd/system/gosora.service
 
 *Windows*
 
@@ -80,7 +98,23 @@ Follow the instructions shown on the screen.
 
 *Linux*
 
-In the same directory you installed it, you simply have to type: ./run-linux
+If you have setup a service, you can run:
+
+./pre-run-linux
+
+systemctl daemon-reload
+
+service gosora start
+
+You can then, check Gosora's current status (to see if it started up properly) with:
+
+service gosora status
+
+And you can stop it with:
+
+service gosora stop
+
+If you haven't setup a service, you can run `./run-linux`, although you will be responsible for finding a way to run it in the background, so that it doesn't close when the terminal does.
 
 *Windows*
 
@@ -94,7 +128,7 @@ We're also looking into ways to distribute ready made executables for Windows. W
 
 With the introduction of the new settings system, we will begin moving some of the less critical settings out of the configuration file, and will likely have a config.xml or config.ini in the future to store the critical settings in.
 
-You'll need to restart the server every-time you change a template, e.g. with `run.bat` or `./run-linux`
+You'll need to restart the server every-time you change a template, e.g. with `run.bat` or killing the process and running `./run-linux` or via `./pre-run-linux` followed by `service gosora restart`
 
 Several important features for saving memory in the templates system may have to be implemented before the new compiled template system is rolled out to every route. These features are coming fairly soon, but not before the higher priority items.
 
