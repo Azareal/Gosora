@@ -8,6 +8,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"io"
@@ -493,6 +494,14 @@ func main() {
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  120 * time.Second,
+
+			TLSConfig: &tls.Config{
+				PreferServerCipherSuites: true,
+				CurvePreferences: []tls.CurveID{
+					tls.CurveP256,
+					tls.X25519,
+				},
+			},
 		}
 	}
 
