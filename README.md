@@ -49,7 +49,9 @@ Instructions on how to set MariaDB up on Linux: https://downloads.mariadb.org/ma
 
 We recommend changing the root password (that is the password for the user 'root'). Remember that password, you will need it for the installation process. Of course, we would advise using a user other than root for maximum security, although that adds additional steps to the process of getting everything setup.
 
-It's entirely possible that your host might already have MySQL, so you might be able to skip this step, particularly if it's a managed VPS or a shared host (contrary to popular belief, it is possible, although the ecosystem in this regard is extremely immature). Or they might have a quicker and easier method of setting up MySQL.
+You might also want to run `mysql_secure_installation` to further harden (aka make it more secure) MySQL / MariaDB.
+
+It's entirely possible that your host already has MySQL installed and ready to go, so you might be able to skip this step, particularly if it's a managed VPS or a shared host (contrary to popular belief, it is possible, although the ecosystem in this regard is extremely immature). Or they might have a quicker and easier method of setting up MySQL.
 
 
 # How to download
