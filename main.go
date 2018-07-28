@@ -392,11 +392,11 @@ func main() {
 				/*if user.RawAvatar == ".gif" {
 					return nil
 				}*/
-				if user.RawAvatar != ".png" && user.RawAvatar != "jpg" && user.RawAvatar != "jpeg" && user.RawAvatar != "gif" {
+				if user.RawAvatar != ".png" && user.RawAvatar != ".jpg" && user.RawAvatar != ".jpeg" && user.RawAvatar != ".gif" {
 					return nil
 				}
 
-				err = common.Thumbnailer.Resize("./uploads/avatar_"+strconv.Itoa(user.ID)+user.RawAvatar, "./uploads/avatar_"+strconv.Itoa(user.ID)+"_tmp"+user.RawAvatar, "./uploads/avatar_"+strconv.Itoa(user.ID)+"_w48"+user.RawAvatar, 48)
+				err = common.Thumbnailer.Resize(user.RawAvatar[1:], "./uploads/avatar_"+strconv.Itoa(user.ID)+user.RawAvatar, "./uploads/avatar_"+strconv.Itoa(user.ID)+"_tmp"+user.RawAvatar, "./uploads/avatar_"+strconv.Itoa(user.ID)+"_w48"+user.RawAvatar, 48)
 				if err != nil {
 					return errors.WithStack(err)
 				}

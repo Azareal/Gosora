@@ -2,7 +2,7 @@ package common
 
 import (
 	"image"
-	_ "image/gif"
+	"image/gif"
 	"image/jpeg"
 	_ "image/png"
 	"os"
@@ -11,18 +11,18 @@ import (
 var Thumbnailer ThumbnailerInt
 
 type ThumbnailerInt interface {
-	Resize(inPath string, tmpPath string, outPath string, width int) error
+	Resize(format string, inPath string, tmpPath string, outPath string, width int) error
 }
 
 type RezThumbnailer struct {
 }
 
-func (thumb *RezThumbnailer) Resize(inPath string, tmpPath string, outPath string, width int) error {
+func (thumb *RezThumbnailer) Resize(format string, inPath string, tmpPath string, outPath string, width int) error {
 	// TODO: Sniff the aspect ratio of the image and calculate the dest height accordingly, bug make sure it isn't excessively high
 	return nil
 }
 
-func (thumb *RezThumbnailer) resize(inPath string, outPath string, width int, height int) error {
+func (thumb *RezThumbnailer) resize(format string, inPath string, outPath string, width int, height int) error {
 	return nil
 }
 
@@ -34,7 +34,7 @@ func NewCaireThumbnailer() *CaireThumbnailer {
 	return &CaireThumbnailer{}
 }
 
-func precodeImage(inPath string, tmpPath string) error {
+func precodeImage(format string, inPath string, tmpPath string) error {
 	imageFile, err := os.Open(inPath)
 	if err != nil {
 		return err
@@ -52,11 +52,15 @@ func precodeImage(inPath string, tmpPath string) error {
 	}
 	defer outFile.Close()
 
+	// TODO: Make sure animated gifs work after being encoded
+	if format == "gif" {
+		return gif.Encode(outFile, img, nil)
+	}
 	return jpeg.Encode(outFile, img, nil)
 }
 
-func (thumb *CaireThumbnailer) Resize(inPath string, tmpPath string, outPath string, width int) error {
-	err := precodeImage(inPath, tmpPath)
+func (thumb *CaireThumbnailer) Resize(format string, inPath string, tmpPath string, outPath string, width int) error {
+	err := precodeImage(format, inPath, tmpPath)
 	if err != nil {
 		return err
 	}
