@@ -173,7 +173,7 @@ func ProcessConfig() (err error) {
 	if Config.MaxUsernameLength == 0 {
 		Config.MaxUsernameLength = 100
 	}
-	GuestUser.Avatar = BuildAvatar(0, "")
+	GuestUser.Avatar, GuestUser.MicroAvatar = BuildAvatar(0, "")
 
 	if Config.HashAlgo != "" {
 		// TODO: Set the alternate hash algo, e.g. argon2

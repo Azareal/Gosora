@@ -89,9 +89,6 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	}
 	topic.RelativeCreatedAt = common.RelativeTime(topic.CreatedAt)
 
-	// TODO: Make a function for this? Build a more sophisticated noavatar handling system?
-	topic.Avatar = common.BuildAvatar(topic.CreatedBy, topic.Avatar)
-
 	var poll common.Poll
 	if topic.Poll != 0 {
 		pPoll, err := common.Polls.Get(topic.Poll)
@@ -129,6 +126,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		}
 		defer rows.Close()
 
+		// TODO: Factor the user fields out and embed a user struct instead
 		replyItem := common.ReplyUser{ClassName: ""}
 		for rows.Next() {
 			err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.ActionType)
@@ -153,7 +151,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 			}
 
 			// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the common.UserStore initialise this?
-			replyItem.Avatar = common.BuildAvatar(replyItem.CreatedBy, replyItem.Avatar)
+			replyItem.Avatar, replyItem.MicroAvatar = common.BuildAvatar(replyItem.CreatedBy, replyItem.Avatar)
 			replyItem.Tag = postGroup.Tag
 			replyItem.RelativeCreatedAt = common.RelativeTime(replyItem.CreatedAt)
 

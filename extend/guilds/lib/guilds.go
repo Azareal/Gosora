@@ -329,12 +329,12 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 	var guildMembers []Member
 	for rows.Next() {
 		guildMember := Member{PostCount: 0}
-		err := rows.Scan(&guildMember.User.ID, &guildMember.Rank, &guildMember.PostCount, &guildMember.JoinedAt, &guildMember.User.Name, &guildMember.User.Avatar)
+		err := rows.Scan(&guildMember.User.ID, &guildMember.Rank, &guildMember.PostCount, &guildMember.JoinedAt, &guildMember.User.Name, &guildMember.User.RawAvatar)
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
 		guildMember.Link = common.BuildProfileURL(common.NameToSlug(guildMember.User.Name), guildMember.User.ID)
-		guildMember.User.Avatar = common.BuildAvatar(guildMember.User.ID, guildMember.User.Avatar)
+		guildMember.User.Avatar, guildMember.User.MicroAvatar = common.BuildAvatar(guildMember.User.ID, guildMember.User.RawAvatar)
 		guildMember.JoinedAt, _ = common.RelativeTimeFromString(guildMember.JoinedAt)
 		if guildItem.Owner == guildMember.User.ID {
 			guildMember.RankString = "Owner"

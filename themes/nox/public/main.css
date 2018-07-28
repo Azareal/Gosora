@@ -696,6 +696,12 @@ button, .formbutton {
 	.topic_list .topic_middle {
 		display: none;
 	}
+	.topic_left, .topic_right, .topic_middle {
+		width: 50%;
+	}
+	.topic_right_inside .lastName, .topic_left .rowtopic {
+		margin-top: -4px;
+	}
 	.topic_left img, .topic_right img {
 		height: 32px;
 		width: 32px;

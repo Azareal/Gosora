@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"../query_gen/lib"
+	"github.com/go-sql-driver/mysql"
 )
 
 // TODO: Replace any literals with this
@@ -40,17 +41,19 @@ type User struct {
 	PluginPerms  map[string]bool
 	Session      string
 	//AuthToken    string
-	Loggedin  bool
-	Avatar    string
-	Message   string
-	URLPrefix string // Move this to another table? Create a user lite?
-	URLName   string
-	Tag       string
-	Level     int
-	Score     int
-	Liked     int
-	LastIP    string // ! This part of the UserCache data might fall out of date
-	TempGroup int
+	Loggedin    bool
+	RawAvatar   string
+	Avatar      string
+	MicroAvatar string
+	Message     string
+	URLPrefix   string // Move this to another table? Create a user lite?
+	URLName     string
+	Tag         string
+	Level       int
+	Score       int
+	Liked       int
+	LastIP      string // ! This part of the UserCache data might fall out of date
+	TempGroup   int
 }
 
 func (user *User) WebSockets() *WsJSONUser {
@@ -96,6 +99,8 @@ type UserStmts struct {
 	updateLastIP   *sql.Stmt
 
 	setPassword *sql.Stmt
+
+	scheduleAvatarResize *sql.Stmt
 }
 
 var userStmts UserStmts
@@ -123,13 +128,15 @@ func init() {
 			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", where),
 
 			setPassword: acc.Update("users").Set("password = ?, salt = ?").Where(where).Prepare(),
+
+			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
 		}
 		return acc.FirstError()
 	})
 }
 
 func (user *User) Init() {
-	user.Avatar = BuildAvatar(user.ID, user.Avatar)
+	user.Avatar, user.MicroAvatar = BuildAvatar(user.ID, user.RawAvatar)
 	user.Link = BuildProfileURL(NameToSlug(user.Name), user.ID)
 	user.Tag = Groups.DirtyGet(user.Group).Tag
 	user.InitPerms()
@@ -268,6 +275,23 @@ func (user *User) ChangeAvatar(avatar string) (err error) {
 	return user.bindStmt(userStmts.setAvatar, avatar)
 }
 
+// TODO: Abstract this with an interface so we can scale this with an actual dedicated queue in a real cluster
+func (user *User) ScheduleAvatarResize() (err error) {
+	_, err = userStmts.scheduleAvatarResize.Exec(user.ID)
+	if err != nil {
+		// TODO: Do a more generic check so that we're not as tied to MySQL
+		me, ok := err.(*mysql.MySQLError)
+		if !ok {
+			return err
+		}
+		// If it's just telling us that the item already exists in the database, then we can ignore it, as it doesn't matter if it's this call or another which schedules the item in the queue
+		if me.Number != 1062 {
+			return err
+		}
+	}
+	return nil
+}
+
 func (user *User) ChangeGroup(group int) (err error) {
 	return user.bindStmt(userStmts.changeGroup, group)
 }
@@ -381,15 +405,25 @@ func (user *User) InitPerms() {
 	}
 }
 
+func buildNoavatar(uid int, width int) string {
+	return strings.Replace(strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1), "{width}", strconv.Itoa(width), 1)
+}
+
 // ? Make this part of *User?
-func BuildAvatar(uid int, avatar string) string {
+// TODO: Write tests for this
+func BuildAvatar(uid int, avatar string) (normalAvatar string, microAvatar string) {
 	if avatar != "" {
 		if avatar[0] == '.' {
-			return "/uploads/avatar_" + strconv.Itoa(uid) + avatar
+			if avatar[1] == '.' {
+				normalAvatar = "/uploads/avatar_" + strconv.Itoa(uid) + "_tmp" + avatar[1:]
+				return normalAvatar, normalAvatar
+			}
+			normalAvatar = "/uploads/avatar_" + strconv.Itoa(uid) + avatar
+			return normalAvatar, normalAvatar
 		}
-		return avatar
+		return avatar, avatar
 	}
-	return strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1)
+	return buildNoavatar(uid, 200), buildNoavatar(uid, 48)
 }
 
 // TODO: Move this to *User

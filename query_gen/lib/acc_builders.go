@@ -12,16 +12,31 @@ type accDeleteBuilder struct {
 	build *Accumulator
 }
 
-func (delete *accDeleteBuilder) Where(where string) *accDeleteBuilder {
-	if delete.where != "" {
-		delete.where += " AND "
+func (builder *accDeleteBuilder) Where(where string) *accDeleteBuilder {
+	if builder.where != "" {
+		builder.where += " AND "
 	}
-	delete.where += where
-	return delete
+	builder.where += where
+	return builder
 }
 
-func (delete *accDeleteBuilder) Prepare() *sql.Stmt {
-	return delete.build.SimpleDelete(delete.table, delete.where)
+func (builder *accDeleteBuilder) Prepare() *sql.Stmt {
+	return builder.build.SimpleDelete(builder.table, builder.where)
+}
+
+func (builder *accDeleteBuilder) Run(args ...interface{}) (int, error) {
+	stmt := builder.Prepare()
+	if stmt == nil {
+		return 0, builder.build.FirstError()
+	}
+
+	res, err := stmt.Exec(args...)
+	if err != nil {
+		return 0, err
+	}
+
+	lastID, err := res.LastInsertId()
+	return int(lastID), err
 }
 
 type accUpdateBuilder struct {
@@ -169,6 +184,26 @@ func (selectItem *AccSelectBuilder) Each(handle func(*sql.Rows) error) error {
 	}
 	return rows.Err()
 }
+func (selectItem *AccSelectBuilder) EachInt(handle func(int) error) error {
+	rows, err := selectItem.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var theInt int
+		err = rows.Scan(&theInt)
+		if err != nil {
+			return err
+		}
+		err = handle(theInt)
+		if err != nil {
+			return err
+		}
+	}
+	return rows.Err()
+}
 
 type accInsertBuilder struct {
 	table   string
@@ -198,6 +233,21 @@ func (insert *accInsertBuilder) Exec(args ...interface{}) (res sql.Result, err e
 		return stmt.Exec(args...)
 	}
 	return res, insert.build.FirstError()
+}
+
+func (builder *accInsertBuilder) Run(args ...interface{}) (int, error) {
+	stmt := builder.Prepare()
+	if stmt == nil {
+		return 0, builder.build.FirstError()
+	}
+
+	res, err := stmt.Exec(args...)
+	if err != nil {
+		return 0, err
+	}
+
+	lastID, err := res.LastInsertId()
+	return int(lastID), err
 }
 
 type accCountBuilder struct {

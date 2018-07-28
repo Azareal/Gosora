@@ -29,6 +29,7 @@ type ReplyUser struct {
 	LastEdit          int
 	LastEditBy        int
 	Avatar            string
+	MicroAvatar       string
 	ClassName         string
 	ContentLines      int
 	Tag               string

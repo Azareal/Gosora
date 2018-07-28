@@ -45,6 +45,7 @@ func (build *Accumulator) recordError(err error) {
 }
 
 func (build *Accumulator) prepare(res string, err error) *sql.Stmt {
+	// TODO: Can we make this less noisy on debug mode?
 	if LogPrepares {
 		log.Print("res: ", res)
 	}

@@ -70,6 +70,7 @@ type TopicUser struct {
 	CreatedByName string
 	Group         int
 	Avatar        string
+	MicroAvatar   string
 	ContentLines  int
 	ContentHTML   string
 	Tag           string
@@ -366,6 +367,7 @@ func GetTopicUser(tid int) (TopicUser, error) {
 
 	tu := TopicUser{ID: tid}
 	err := topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+	tu.Avatar, tu.MicroAvatar = BuildAvatar(tu.CreatedBy, tu.Avatar)
 	tu.Link = BuildTopicURL(NameToSlug(tu.Title), tu.ID)
 	tu.UserLink = BuildProfileURL(NameToSlug(tu.CreatedByName), tu.CreatedBy)
 	tu.Tag = Groups.DirtyGet(tu.Group).Tag
@@ -383,6 +385,7 @@ func copyTopicToTopicUser(topic *Topic, user *User) (tu TopicUser) {
 	tu.CreatedByName = user.Name
 	tu.Group = user.Group
 	tu.Avatar = user.Avatar
+	tu.MicroAvatar = user.MicroAvatar
 	tu.URLPrefix = user.URLPrefix
 	tu.URLName = user.URLName
 	tu.Level = user.Level

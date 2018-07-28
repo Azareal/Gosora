@@ -250,6 +250,7 @@ func (auth *DefaultAuth) SessionCheck(w http.ResponseWriter, r *http.Request) (u
 		return &GuestUser, true
 	}
 
+	// We need to do a constant time compare, otherwise someone might be able to deduce the session character by character based on how long it takes to do the comparison. Change this at your own peril.
 	if user.Session == "" || subtle.ConstantTimeCompare([]byte(session), []byte(user.Session)) != 1 {
 		return &GuestUser, false
 	}

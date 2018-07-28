@@ -447,7 +447,22 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common
 		return ferr
 	}
 
-	var filename, ext string
+	// We don't want multiple files
+	// TODO: Are we doing this correctly?
+	filenameMap := make(map[string]bool)
+	for _, fheaders := range r.MultipartForm.File {
+		for _, hdr := range fheaders {
+			if hdr.Filename == "" {
+				continue
+			}
+			filenameMap[hdr.Filename] = true
+		}
+	}
+	if len(filenameMap) > 1 {
+		return common.LocalError("You may only upload one avatar", w, r, user)
+	}
+
+	var ext string
 	for _, fheaders := range r.MultipartForm.File {
 		for _, hdr := range fheaders {
 			if hdr.Filename == "" {
@@ -458,17 +473,6 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common
 				return common.LocalError("Upload failed", w, r, user)
 			}
 			defer infile.Close()
-
-			// We don't want multiple files
-			// TODO: Check the length of r.MultipartForm.File and error rather than doing this x.x
-			if filename != "" {
-				if filename != hdr.Filename {
-					os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
-					return common.LocalError("You may only upload one avatar", w, r, user)
-				}
-			} else {
-				filename = hdr.Filename
-			}
 
 			if ext == "" {
 				extarr := strings.Split(hdr.Filename, ".")
@@ -484,8 +488,13 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common
 				}
 				ext = reg.ReplaceAllString(ext, "")
 				ext = strings.ToLower(ext)
+
+				if !common.ImageFileExts.Contains(ext) {
+					return common.LocalError("You can only use an image for your avatar", w, r, user)
+				}
 			}
 
+			// TODO: Centralise this string, so we don't have to change it in two different places when it changes
 			outfile, err := os.Create("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
 			if err != nil {
 				return common.LocalError("Upload failed [File Creation Failed]", w, r, user)
@@ -503,6 +512,11 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common
 	}
 
 	err := user.ChangeAvatar("." + ext)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	// TODO: Only schedule a resize if the avatar isn't tiny
+	err = user.ScheduleAvatarResize()
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

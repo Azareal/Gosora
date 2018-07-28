@@ -65,7 +65,9 @@ On Windows, you might want to try the [GosoraBootstrapper](https://github.com/Az
 
 *Linux*
 
-First, you will need to jump to the place where you want to put the code, we will use `/home/gosora` here, but if you want to use something else, then you'll have to modify the service file with your own path.
+First, you will need to jump to the place where you want to put the code, we will use `/home/gosora` here, but if you want to use something else, then you'll have to modify the service file with your own path (but *never* in a folder where the files are automatically served by a webserver).
+
+If you place it in `/www/`, `/public_html/` or any similar folder, then there's a chance that your server might be compromised.
 
 You can navigate to it by typing the following six commands into the console and hitting enter:
 

@@ -127,6 +127,17 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
+	// TODO: Can we use a piece of software dedicated to persistent queues for this rather than relying on the database for it?
+	qgen.Install.CreateTable("users_avatar_queue", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"uid", "primary"},
+		},
+	)
+
+	// TODO: Should we add a users prefix to this table to fit the "unofficial convention"?
 	qgen.Install.CreateTable("emails", "", "",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"email", "varchar", 200, false, false, ""},

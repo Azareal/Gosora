@@ -128,7 +128,7 @@ func main() {
 		"MinifyTemplates":true,
 		"BuildSlugs":true,
 		"ServerCount":1,
-		"Noavatar":"https://api.adorable.io/avatars/285/{id}@{site_url}.png",
+		"Noavatar":"https://api.adorable.io/avatars/{width}/{id}@{site_url}.png",
 		"ItemsPerPage":25
 	},
 	"Database": {
@@ -152,7 +152,6 @@ func main() {
 	}
 }`)
 
-	//"Noavatar": "https://api.adorable.io/avatars/{width}/{id}@{site_url}.png" Maybe allow this sort of syntax?
 	fmt.Println("Opening the configuration file")
 	configFile, err := os.Create("./config/config.json")
 	if err != nil {
