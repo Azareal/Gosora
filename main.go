@@ -532,7 +532,7 @@ func main() {
 		sig := <-sigs
 		// TODO: Gracefully shutdown the HTTP server
 		runTasks(common.ShutdownTasks)
-		log.Fatal("Received a signal to shutdown: ", sig)
+		stoppedServer("Received a signal to shutdown: ", sig)
 	}()
 
 	// Start up the WebSocket ticks
@@ -541,7 +541,21 @@ func main() {
 	//if profiling {
 	//	pprof.StopCPUProfile()
 	//}
+	startServer()
+	args := <-stopServerChan
+	// Why did the server stop?
+	log.Fatal(args...)
+}
 
+// TODO: Add a graceful shutdown function
+func stoppedServer(msg ...interface{}) {
+	log.Print("stopped server")
+	stopServerChan <- msg
+}
+
+var stopServerChan = make(chan []interface{})
+
+func startServer() {
 	// We might not need the timeouts, if we're behind a reverse-proxy like Nginx
 	var newServer = func(addr string, handler http.Handler) *http.Server {
 		return &http.Server{
@@ -569,28 +583,25 @@ func main() {
 			common.Site.Port = "80"
 		}
 		log.Print("Listening on port " + common.Site.Port)
-		err = newServer(":"+common.Site.Port, router).ListenAndServe()
-	} else {
-		if common.Site.Port == "" {
-			common.Site.Port = "443"
-		}
-		if common.Site.Port == "80" || common.Site.Port == "443" {
-			// We should also run the server on port 80
-			// TODO: Redirect to port 443
-			go func() {
-				log.Print("Listening on port 80")
-				err = newServer(":80", &routes.HTTPSRedirect{}).ListenAndServe()
-				if err != nil {
-					log.Fatal(err)
-				}
-			}()
-		}
-		log.Printf("Listening on port %s", common.Site.Port)
-		err = newServer(":"+common.Site.Port, router).ListenAndServeTLS(common.Config.SslFullchain, common.Config.SslPrivkey)
+		go func() {
+			stoppedServer(newServer(":"+common.Site.Port, router).ListenAndServe())
+		}()
+		return
 	}
 
-	// Why did the server stop?
-	if err != nil {
-		log.Fatal(err)
+	if common.Site.Port == "" {
+		common.Site.Port = "443"
 	}
+	if common.Site.Port == "80" || common.Site.Port == "443" {
+		// We should also run the server on port 80
+		// TODO: Redirect to port 443
+		go func() {
+			log.Print("Listening on port 80")
+			stoppedServer(newServer(":80", &routes.HTTPSRedirect{}).ListenAndServe())
+		}()
+	}
+	log.Printf("Listening on port %s", common.Site.Port)
+	go func() {
+		stoppedServer(newServer(":"+common.Site.Port, router).ListenAndServeTLS(common.Config.SslFullchain, common.Config.SslPrivkey))
+	}()
 }
