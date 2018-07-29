@@ -934,6 +934,29 @@ func TestPluginManager(t *testing.T) {
 	hasPlugin, err = plugin.InDatabase()
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+
+	// Bugs sometimes arise when we try to delete a hook when there are multiple, so test for that
+	// TODO: Do a finer grained test for that case...? A bigger test might catch more odd cases with multiple plugins
+	plugin2, ok := common.Plugins["markdown"]
+	expect(t, ok, "Plugin markdown should exist")
+	expect(t, !plugin2.Installable, "Plugin markdown shouldn't be installable")
+	expect(t, !plugin2.Installed, "Plugin markdown shouldn't be 'installed'")
+	expect(t, !plugin2.Active, "Plugin markdown shouldn't be active")
+	active, err = plugin2.BypassActive()
+	expectNilErr(t, err)
+	expect(t, !active, "Plugin markdown shouldn't be active in the database either")
+	hasPlugin, err = plugin2.InDatabase()
+	expectNilErr(t, err)
+	expect(t, !hasPlugin, "Plugin markdown shouldn't exist in the database")
+
+	expectNilErr(t, plugin2.AddToDatabase(true, false))
+	expectNilErr(t, plugin2.Init())
+	expectNilErr(t, plugin.SetActive(true))
+	expectNilErr(t, plugin.Init())
+	plugin2.Deactivate()
+	expectNilErr(t, plugin2.SetActive(false))
+	plugin.Deactivate()
+	expectNilErr(t, plugin.SetActive(false))
 }
 
 func TestSlugs(t *testing.T) {

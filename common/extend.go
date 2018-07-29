@@ -309,7 +309,7 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 		} else {
 			Hooks[name] = append(Hooks[name], h)
 		}
-		plugin.Hooks[name] = len(Hooks[name])
+		plugin.Hooks[name] = len(Hooks[name]) - 1
 	case func(string) string:
 		if len(Sshooks[name]) == 0 {
 			var hookSlice []func(string) string
@@ -318,7 +318,7 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 		} else {
 			Sshooks[name] = append(Sshooks[name], h)
 		}
-		plugin.Hooks[name] = len(Sshooks[name])
+		plugin.Hooks[name] = len(Sshooks[name]) - 1
 	case func(http.ResponseWriter, *http.Request, *User, interface{}) bool:
 		if len(PreRenderHooks[name]) == 0 {
 			var hookSlice []func(http.ResponseWriter, *http.Request, *User, interface{}) bool
@@ -327,7 +327,7 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 		} else {
 			PreRenderHooks[name] = append(PreRenderHooks[name], h)
 		}
-		plugin.Hooks[name] = len(PreRenderHooks[name])
+		plugin.Hooks[name] = len(PreRenderHooks[name]) - 1
 	case func() error: // ! We might want a more generic name, as we might use this signature for things other than tasks hooks
 		if len(taskHooks[name]) == 0 {
 			var hookSlice []func() error
@@ -336,7 +336,7 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 		} else {
 			taskHooks[name] = append(taskHooks[name], h)
 		}
-		plugin.Hooks[name] = len(taskHooks[name])
+		plugin.Hooks[name] = len(taskHooks[name]) - 1
 	case func(...interface{}) interface{}:
 		Vhooks[name] = h
 		plugin.Hooks[name] = 0
@@ -353,7 +353,10 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 	switch handler.(type) {
 	case func(interface{}) interface{}:
-		key := plugin.Hooks[name]
+		key, ok := plugin.Hooks[name]
+		if !ok {
+			panic("handler not registered as hook")
+		}
 		hook := Hooks[name]
 		if len(hook) == 1 {
 			hook = []func(interface{}) interface{}{}
@@ -362,7 +365,10 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 		}
 		Hooks[name] = hook
 	case func(string) string:
-		key := plugin.Hooks[name]
+		key, ok := plugin.Hooks[name]
+		if !ok {
+			panic("handler not registered as hook")
+		}
 		hook := Sshooks[name]
 		if len(hook) == 1 {
 			hook = []func(string) string{}
@@ -371,7 +377,10 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 		}
 		Sshooks[name] = hook
 	case func(http.ResponseWriter, *http.Request, *User, interface{}) bool:
-		key := plugin.Hooks[name]
+		key, ok := plugin.Hooks[name]
+		if !ok {
+			panic("handler not registered as hook")
+		}
 		hook := PreRenderHooks[name]
 		if len(hook) == 1 {
 			hook = []func(http.ResponseWriter, *http.Request, *User, interface{}) bool{}
@@ -380,7 +389,10 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 		}
 		PreRenderHooks[name] = hook
 	case func() error:
-		key := plugin.Hooks[name]
+		key, ok := plugin.Hooks[name]
+		if !ok {
+			panic("handler not registered as hook")
+		}
 		hook := taskHooks[name]
 		if len(hook) == 1 {
 			hook = []func() error{}

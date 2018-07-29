@@ -29,7 +29,6 @@ func init() {
 }
 
 func initBbcode() error {
-	//plugins["bbcode"].AddHook("parse_assign", bbcode_parse_without_code)
 	common.Plugins["bbcode"].AddHook("parse_assign", bbcodeFullParse)
 
 	bbcodeInvalidNumber = []byte("<span style='color: red;'>[Invalid Number]</span>")

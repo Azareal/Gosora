@@ -95,19 +95,22 @@ func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user common.User,
 	if !ok {
 		return common.LocalError("The plugin isn't registered in the system", w, r, user)
 	}
+	log.Printf("plugin: %+v\n", plugin)
 
 	active, err := plugin.BypassActive()
-	if !active {
-		return common.LocalError("The plugin you're trying to deactivate isn't active", w, r, user)
-	} else if err != nil {
+	if err != nil {
 		return common.InternalError(err, w, r)
+	} else if !active {
+		return common.LocalError("The plugin you're trying to deactivate isn't active", w, r, user)
 	}
 
 	err = plugin.SetActive(false)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	plugin.Deactivate()
+	if plugin.Deactivate != nil {
+		plugin.Deactivate()
+	}
 
 	http.Redirect(w, r, "/panel/plugins/", http.StatusSeeOther)
 	return nil
