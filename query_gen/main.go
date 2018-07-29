@@ -256,8 +256,6 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	// Looking for getTopic? Your statement is in another castle
 
-	build.Select("isPluginActive").Table("plugins").Columns("active").Where("uname = ?").Parse()
-
 	//build.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()
 
 	build.Select("isThemeDefault").Table("themes").Columns("default").Where("uname = ?").Parse()
@@ -284,8 +282,6 @@ func writeInserts(adapter qgen.Adapter) error {
 
 	build.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
 
-	build.Insert("addPlugin").Table("plugins").Columns("uname, active, installed").Fields("?,?,?").Parse()
-
 	build.Insert("addTheme").Table("themes").Columns("uname, default").Fields("?,?").Parse()
 
 	build.Insert("createWordFilter").Table("word_filters").Columns("find, replacement").Fields("?,?").Parse()
@@ -295,10 +291,6 @@ func writeInserts(adapter qgen.Adapter) error {
 
 func writeUpdates(adapter qgen.Adapter) error {
 	build := adapter.Builder()
-
-	build.Update("updatePlugin").Table("plugins").Set("active = ?").Where("uname = ?").Parse()
-
-	build.Update("updatePluginInstall").Table("plugins").Set("installed = ?").Where("uname = ?").Parse()
 
 	build.Update("updateTheme").Table("themes").Set("default = ?").Where("uname = ?").Parse()
 

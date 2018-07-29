@@ -58,6 +58,22 @@ func (build *Accumulator) prepare(res string, err error) *sql.Stmt {
 	return stmt
 }
 
+func (build *Accumulator) query(query string, args ...interface{}) (rows *sql.Rows, err error) {
+	err = build.FirstError()
+	if err != nil {
+		return rows, err
+	}
+	return build.conn.Query(query, args...)
+}
+
+func (build *Accumulator) exec(query string, args ...interface{}) (res sql.Result, err error) {
+	err = build.FirstError()
+	if err != nil {
+		return res, err
+	}
+	return build.conn.Exec(query, args...)
+}
+
 func (build *Accumulator) Tx(handler func(*TransactionBuilder) error) {
 	tx, err := build.conn.Begin()
 	if err != nil {

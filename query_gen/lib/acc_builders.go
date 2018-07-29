@@ -139,6 +139,15 @@ func (selectItem *AccSelectBuilder) Prepare() *sql.Stmt {
 	return selectItem.build.SimpleSelect(selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
 }
 
+func (builder *AccSelectBuilder) query() (string, error) {
+	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
+	if builder.dateCutoff != nil || builder.inChain != nil {
+		selectBuilder := builder.build.GetAdapter().Builder().Select().FromAcc(builder)
+		return builder.build.GetAdapter().ComplexSelect(selectBuilder)
+	}
+	return builder.build.adapter.SimpleSelect("_builder", builder.table, builder.columns, builder.where, builder.orderby, builder.limit)
+}
+
 func (selectItem *AccSelectBuilder) Query(args ...interface{}) (*sql.Rows, error) {
 	stmt := selectItem.Prepare()
 	if stmt != nil {
@@ -160,17 +169,21 @@ func (wrap *AccRowWrap) Scan(dest ...interface{}) error {
 }
 
 // TODO: Test to make sure the errors are passed up properly
-func (selectItem *AccSelectBuilder) QueryRow(args ...interface{}) *AccRowWrap {
-	stmt := selectItem.Prepare()
+func (builder *AccSelectBuilder) QueryRow(args ...interface{}) *AccRowWrap {
+	stmt := builder.Prepare()
 	if stmt != nil {
 		return &AccRowWrap{stmt.QueryRow(args...), nil}
 	}
-	return &AccRowWrap{nil, selectItem.build.FirstError()}
+	return &AccRowWrap{nil, builder.build.FirstError()}
 }
 
 // Experimental, reduces lines
-func (selectItem *AccSelectBuilder) Each(handle func(*sql.Rows) error) error {
-	rows, err := selectItem.Query()
+func (builder *AccSelectBuilder) Each(handle func(*sql.Rows) error) error {
+	query, err := builder.query()
+	if err != nil {
+		return err
+	}
+	rows, err := builder.build.query(query)
 	if err != nil {
 		return err
 	}
@@ -184,8 +197,12 @@ func (selectItem *AccSelectBuilder) Each(handle func(*sql.Rows) error) error {
 	}
 	return rows.Err()
 }
-func (selectItem *AccSelectBuilder) EachInt(handle func(int) error) error {
-	rows, err := selectItem.Query()
+func (builder *AccSelectBuilder) EachInt(handle func(int) error) error {
+	query, err := builder.query()
+	if err != nil {
+		return err
+	}
+	rows, err := builder.build.query(query)
 	if err != nil {
 		return err
 	}
@@ -227,21 +244,20 @@ func (insert *accInsertBuilder) Prepare() *sql.Stmt {
 	return insert.build.SimpleInsert(insert.table, insert.columns, insert.fields)
 }
 
-func (insert *accInsertBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
-	stmt := insert.Prepare()
-	if stmt != nil {
-		return stmt.Exec(args...)
+func (builder *accInsertBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
+	query, err := builder.build.adapter.SimpleInsert("_builder", builder.table, builder.columns, builder.fields)
+	if err != nil {
+		return res, err
 	}
-	return res, insert.build.FirstError()
+	return builder.build.exec(query, args...)
 }
 
 func (builder *accInsertBuilder) Run(args ...interface{}) (int, error) {
-	stmt := builder.Prepare()
-	if stmt == nil {
-		return 0, builder.build.FirstError()
+	query, err := builder.build.adapter.SimpleInsert("_builder", builder.table, builder.columns, builder.fields)
+	if err != nil {
+		return 0, err
 	}
-
-	res, err := stmt.Exec(args...)
+	res, err := builder.build.exec(query, args...)
 	if err != nil {
 		return 0, err
 	}

@@ -177,10 +177,10 @@ func buildPanelRoutes() {
 		Action("routePanelThemesMenuItemDeleteSubmit", "/panel/themes/menus/item/delete/submit/", "extraData"),
 		Action("routePanelThemesMenuItemOrderSubmit", "/panel/themes/menus/item/order/edit/submit/", "extraData"),
 
-		View("routePanelPlugins", "/panel/plugins/"),
-		Action("routePanelPluginsActivate", "/panel/plugins/activate/", "extraData"),
-		Action("routePanelPluginsDeactivate", "/panel/plugins/deactivate/", "extraData"),
-		Action("routePanelPluginsInstall", "/panel/plugins/install/", "extraData"),
+		View("panel.Plugins", "/panel/plugins/"),
+		Action("panel.PluginsActivate", "/panel/plugins/activate/", "extraData"),
+		Action("panel.PluginsDeactivate", "/panel/plugins/deactivate/", "extraData"),
+		Action("panel.PluginsInstall", "/panel/plugins/install/", "extraData"),
 
 		View("panel.Users", "/panel/users/"),
 		View("panel.UsersEdit", "/panel/users/edit/", "extraData"),

@@ -65,10 +65,10 @@ var RouteMap = map[string]interface{}{
 	"routePanelThemesMenuItemCreateSubmit": routePanelThemesMenuItemCreateSubmit,
 	"routePanelThemesMenuItemDeleteSubmit": routePanelThemesMenuItemDeleteSubmit,
 	"routePanelThemesMenuItemOrderSubmit": routePanelThemesMenuItemOrderSubmit,
-	"routePanelPlugins": routePanelPlugins,
-	"routePanelPluginsActivate": routePanelPluginsActivate,
-	"routePanelPluginsDeactivate": routePanelPluginsDeactivate,
-	"routePanelPluginsInstall": routePanelPluginsInstall,
+	"panel.Plugins": panel.Plugins,
+	"panel.PluginsActivate": panel.PluginsActivate,
+	"panel.PluginsDeactivate": panel.PluginsDeactivate,
+	"panel.PluginsInstall": panel.PluginsInstall,
 	"panel.Users": panel.Users,
 	"panel.UsersEdit": panel.UsersEdit,
 	"panel.UsersEditSubmit": panel.UsersEditSubmit,
@@ -194,10 +194,10 @@ var routeMapEnum = map[string]int{
 	"routePanelThemesMenuItemCreateSubmit": 41,
 	"routePanelThemesMenuItemDeleteSubmit": 42,
 	"routePanelThemesMenuItemOrderSubmit": 43,
-	"routePanelPlugins": 44,
-	"routePanelPluginsActivate": 45,
-	"routePanelPluginsDeactivate": 46,
-	"routePanelPluginsInstall": 47,
+	"panel.Plugins": 44,
+	"panel.PluginsActivate": 45,
+	"panel.PluginsDeactivate": 46,
+	"panel.PluginsInstall": 47,
 	"panel.Users": 48,
 	"panel.UsersEdit": 49,
 	"panel.UsersEditSubmit": 50,
@@ -321,10 +321,10 @@ var reverseRouteMapEnum = map[int]string{
 	41: "routePanelThemesMenuItemCreateSubmit",
 	42: "routePanelThemesMenuItemDeleteSubmit",
 	43: "routePanelThemesMenuItemOrderSubmit",
-	44: "routePanelPlugins",
-	45: "routePanelPluginsActivate",
-	46: "routePanelPluginsDeactivate",
-	47: "routePanelPluginsInstall",
+	44: "panel.Plugins",
+	45: "panel.PluginsActivate",
+	46: "panel.PluginsDeactivate",
+	47: "panel.PluginsInstall",
 	48: "panel.Users",
 	49: "panel.UsersEdit",
 	50: "panel.UsersEditSubmit",
@@ -1223,7 +1223,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					err = routePanelThemesMenuItemOrderSubmit(w,req,user,extraData)
 				case "/panel/plugins/":
 					counters.RouteViewCounter.Bump(44)
-					err = routePanelPlugins(w,req,user)
+					err = panel.Plugins(w,req,user)
 				case "/panel/plugins/activate/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1232,7 +1232,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(45)
-					err = routePanelPluginsActivate(w,req,user,extraData)
+					err = panel.PluginsActivate(w,req,user,extraData)
 				case "/panel/plugins/deactivate/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1241,7 +1241,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(46)
-					err = routePanelPluginsDeactivate(w,req,user,extraData)
+					err = panel.PluginsDeactivate(w,req,user,extraData)
 				case "/panel/plugins/install/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1250,7 +1250,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(47)
-					err = routePanelPluginsInstall(w,req,user,extraData)
+					err = panel.PluginsInstall(w,req,user,extraData)
 				case "/panel/users/":
 					counters.RouteViewCounter.Bump(48)
 					err = panel.Users(w,req,user)

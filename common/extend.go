@@ -8,14 +8,18 @@ package common
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 
 	"../query_gen/lib"
 )
 
+var ErrPluginNotInstallable = errors.New("This plugin is not installable")
+
 type PluginList map[string]*Plugin
 
+// TODO: Have a proper store rather than a map?
 var Plugins PluginList = make(map[string]*Plugin)
 
 // Hooks with a single argument. Is this redundant? Might be useful for inlining, as variadics aren't inlined? Are closures even inlined to begin with?
@@ -152,7 +156,7 @@ type Plugin struct {
 
 	Init       func() error
 	Activate   func() error
-	Deactivate func()
+	Deactivate func() // TODO: We might want to let this return an error?
 	Install    func() error
 	Uninstall  func() error
 
@@ -160,8 +164,60 @@ type Plugin struct {
 	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins
 }
 
+func (plugin *Plugin) BypassActive() (active bool, err error) {
+	err = extendStmts.isActive.QueryRow(plugin.UName).Scan(&active)
+	if err != nil && err != sql.ErrNoRows {
+		return false, err
+	}
+	return active, nil
+}
+
+func (plugin *Plugin) InDatabase() (exists bool, err error) {
+	var sink bool
+	err = extendStmts.isActive.QueryRow(plugin.UName).Scan(&sink)
+	if err != nil && err != sql.ErrNoRows {
+		return false, err
+	}
+	return err == nil, nil
+}
+
+// TODO: Silently add to the database, if it doesn't exist there rather than forcing users to call AddToDatabase instead?
+func (plugin *Plugin) SetActive(active bool) (err error) {
+	_, err = extendStmts.setActive.Exec(active, plugin.UName)
+	if err == nil {
+		plugin.Active = active
+	}
+	return err
+}
+
+// TODO: Silently add to the database, if it doesn't exist there rather than forcing users to call AddToDatabase instead?
+func (plugin *Plugin) SetInstalled(installed bool) (err error) {
+	if !plugin.Installable {
+		return ErrPluginNotInstallable
+	}
+	_, err = extendStmts.setInstalled.Exec(installed, plugin.UName)
+	if err == nil {
+		plugin.Installed = installed
+	}
+	return err
+}
+
+func (plugin *Plugin) AddToDatabase(active bool, installed bool) (err error) {
+	_, err = extendStmts.add.Exec(plugin.UName, active, installed)
+	if err == nil {
+		plugin.Active = active
+		plugin.Installed = installed
+	}
+	return err
+}
+
 type ExtendStmts struct {
 	getPlugins *sql.Stmt
+
+	isActive     *sql.Stmt
+	setActive    *sql.Stmt
+	setInstalled *sql.Stmt
+	add          *sql.Stmt
 }
 
 var extendStmts ExtendStmts
@@ -170,6 +226,11 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		extendStmts = ExtendStmts{
 			getPlugins: acc.Select("plugins").Columns("uname, active, installed").Prepare(),
+
+			isActive:     acc.Select("plugins").Columns("active").Where("uname = ?").Prepare(),
+			setActive:    acc.Update("plugins").Set("active = ?").Where("uname = ?").Prepare(),
+			setInstalled: acc.Update("plugins").Set("installed = ?").Where("uname = ?").Prepare(),
+			add:          acc.Insert("plugins").Columns("uname, active, installed").Fields("?,?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})

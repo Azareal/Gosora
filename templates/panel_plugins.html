@@ -11,7 +11,7 @@
 		<div class="rowitem editable_parent">
 			<a {{if .URL}}href="{{.URL}}" {{end}}class="editable_block" class="panel_upshift">{{.Name}}</a><br />
 			<small style="margin-left: 2px;">{{lang "panel_plugins_author_prefix"}}{{.Author}}</small>
-			<span style="float: right;">
+			<span class="to_right">
 				{{if .Settings}}<a href="/panel/settings/" class="panel_tag">{{lang "panel_plugins_settings"}}</a>{{end}}
 				{{if .Active}}<a href="/panel/plugins/deactivate/{{.UName}}?session={{$.CurrentUser.Session}}" class="panel_tag">{{lang "panel_plugins_deactivate"}}</a>
 				{{else if .Installable}}

@@ -9,17 +9,13 @@ import "./common"
 
 // nolint
 type Stmts struct {
-	isPluginActive *sql.Stmt
 	isThemeDefault *sql.Stmt
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
 	getForumTopics *sql.Stmt
 	addForumPermsToForum *sql.Stmt
-	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
 	createWordFilter *sql.Stmt
-	updatePlugin *sql.Stmt
-	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
 	updateGroupPerms *sql.Stmt
 	updateGroup *sql.Stmt
@@ -44,14 +40,6 @@ type Stmts struct {
 func _gen_mssql() (err error) {
 	common.DebugLog("Building the generated statements")
 	
-	common.DebugLog("Preparing isPluginActive statement.")
-	stmts.isPluginActive, err = db.Prepare("SELECT [active] FROM [plugins] WHERE [uname] = ?1")
-	if err != nil {
-		log.Print("Error in isPluginActive statement.")
-		log.Print("Bad Query: ","SELECT [active] FROM [plugins] WHERE [uname] = ?1")
-		return err
-	}
-		
 	common.DebugLog("Preparing isThemeDefault statement.")
 	stmts.isThemeDefault, err = db.Prepare("SELECT [default] FROM [themes] WHERE [uname] = ?1")
 	if err != nil {
@@ -92,14 +80,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	common.DebugLog("Preparing addPlugin statement.")
-	stmts.addPlugin, err = db.Prepare("INSERT INTO [plugins] ([uname],[active],[installed]) VALUES (?,?,?)")
-	if err != nil {
-		log.Print("Error in addPlugin statement.")
-		log.Print("Bad Query: ","INSERT INTO [plugins] ([uname],[active],[installed]) VALUES (?,?,?)")
-		return err
-	}
-		
 	common.DebugLog("Preparing addTheme statement.")
 	stmts.addTheme, err = db.Prepare("INSERT INTO [themes] ([uname],[default]) VALUES (?,?)")
 	if err != nil {
@@ -113,22 +93,6 @@ func _gen_mssql() (err error) {
 	if err != nil {
 		log.Print("Error in createWordFilter statement.")
 		log.Print("Bad Query: ","INSERT INTO [word_filters] ([find],[replacement]) VALUES (?,?)")
-		return err
-	}
-		
-	common.DebugLog("Preparing updatePlugin statement.")
-	stmts.updatePlugin, err = db.Prepare("UPDATE [plugins] SET [active] = ? WHERE [uname] = ?")
-	if err != nil {
-		log.Print("Error in updatePlugin statement.")
-		log.Print("Bad Query: ","UPDATE [plugins] SET [active] = ? WHERE [uname] = ?")
-		return err
-	}
-		
-	common.DebugLog("Preparing updatePluginInstall statement.")
-	stmts.updatePluginInstall, err = db.Prepare("UPDATE [plugins] SET [installed] = ? WHERE [uname] = ?")
-	if err != nil {
-		log.Print("Error in updatePluginInstall statement.")
-		log.Print("Bad Query: ","UPDATE [plugins] SET [installed] = ? WHERE [uname] = ?")
 		return err
 	}
 		

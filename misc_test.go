@@ -828,6 +828,114 @@ func TestProfileReplyStore(t *testing.T) {
 	// TODO: Test profileReply.SetBody() and profileReply.Creator()
 }
 
+func TestPluginManager(t *testing.T) {
+	if !gloinited {
+		gloinit()
+	}
+	if !common.PluginsInited {
+		common.InitPlugins()
+	}
+
+	_, ok := common.Plugins["fairy-dust"]
+	expect(t, !ok, "Plugin fairy-dust shouldn't exist")
+	plugin, ok := common.Plugins["bbcode"]
+	expect(t, ok, "Plugin bbcode should exist")
+	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
+	active, err := plugin.BypassActive()
+	expectNilErr(t, err)
+	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	hasPlugin, err := plugin.InDatabase()
+	expectNilErr(t, err)
+	expect(t, !hasPlugin, "Plugin bbcode shouldn't exist in the database")
+	// TODO: Add some test cases for SetActive and SetInstalled before calling AddToDatabase
+
+	expectNilErr(t, plugin.AddToDatabase(true, false))
+	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, plugin.Active, "Plugin bbcode should be active")
+	active, err = plugin.BypassActive()
+	expectNilErr(t, err)
+	expect(t, active, "Plugin bbcode should be active in the database too")
+	hasPlugin, err = plugin.InDatabase()
+	expectNilErr(t, err)
+	expect(t, hasPlugin, "Plugin bbcode should exist in the database")
+	expect(t, plugin.Init != nil, "Plugin bbcode should have an init function")
+	expectNilErr(t, plugin.Init())
+
+	expectNilErr(t, plugin.SetActive(true))
+	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, plugin.Active, "Plugin bbcode should still be active")
+	active, err = plugin.BypassActive()
+	expectNilErr(t, err)
+	expect(t, active, "Plugin bbcode should still be active in the database too")
+	hasPlugin, err = plugin.InDatabase()
+	expectNilErr(t, err)
+	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+
+	expectNilErr(t, plugin.SetActive(false))
+	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
+	active, err = plugin.BypassActive()
+	expectNilErr(t, err)
+	expect(t, !active, "Plugin bbcode shouldn't be active in the database")
+	hasPlugin, err = plugin.InDatabase()
+	expectNilErr(t, err)
+	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+	expect(t, plugin.Deactivate != nil, "Plugin bbcode should have an init function")
+	plugin.Deactivate() // Returns nothing
+
+	// Not installable, should not be mutated
+	expect(t, plugin.SetInstalled(true) == common.ErrPluginNotInstallable, "Plugin was set as installed despite not being installable")
+	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
+	active, err = plugin.BypassActive()
+	expectNilErr(t, err)
+	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	hasPlugin, err = plugin.InDatabase()
+	expectNilErr(t, err)
+	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+
+	expect(t, plugin.SetInstalled(false) == common.ErrPluginNotInstallable, "Plugin was set as not installed despite not being installable")
+	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
+	active, err = plugin.BypassActive()
+	expectNilErr(t, err)
+	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	hasPlugin, err = plugin.InDatabase()
+	expectNilErr(t, err)
+	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+
+	// This isn't really installable, but we want to get a few tests done before getting plugins which are stateful
+	plugin.Installable = true
+	expectNilErr(t, plugin.SetInstalled(true))
+	expect(t, plugin.Installable, "Plugin bbcode should be installable")
+	expect(t, plugin.Installed, "Plugin bbcode should be 'installed'")
+	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
+	active, err = plugin.BypassActive()
+	expectNilErr(t, err)
+	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	hasPlugin, err = plugin.InDatabase()
+	expectNilErr(t, err)
+	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+
+	expectNilErr(t, plugin.SetInstalled(false))
+	expect(t, plugin.Installable, "Plugin bbcode should be installable")
+	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
+	active, err = plugin.BypassActive()
+	expectNilErr(t, err)
+	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	hasPlugin, err = plugin.InDatabase()
+	expectNilErr(t, err)
+	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+}
+
 func TestSlugs(t *testing.T) {
 	var res string
 	var msgList []MEPair

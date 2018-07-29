@@ -10,11 +10,8 @@ import "./common"
 // nolint
 type Stmts struct {
 	addForumPermsToForum *sql.Stmt
-	addPlugin *sql.Stmt
 	addTheme *sql.Stmt
 	createWordFilter *sql.Stmt
-	updatePlugin *sql.Stmt
-	updatePluginInstall *sql.Stmt
 	updateTheme *sql.Stmt
 	updateGroupPerms *sql.Stmt
 	updateGroup *sql.Stmt
@@ -44,13 +41,6 @@ func _gen_pgsql() (err error) {
 		return err
 	}
 		
-	common.DebugLog("Preparing addPlugin statement.")
-	stmts.addPlugin, err = db.Prepare("INSERT INTO "plugins"("uname","active","installed") VALUES (?,?,?)")
-	if err != nil {
-		log.Print("Error in addPlugin statement.")
-		return err
-	}
-		
 	common.DebugLog("Preparing addTheme statement.")
 	stmts.addTheme, err = db.Prepare("INSERT INTO "themes"("uname","default") VALUES (?,?)")
 	if err != nil {
@@ -62,20 +52,6 @@ func _gen_pgsql() (err error) {
 	stmts.createWordFilter, err = db.Prepare("INSERT INTO "word_filters"("find","replacement") VALUES (?,?)")
 	if err != nil {
 		log.Print("Error in createWordFilter statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing updatePlugin statement.")
-	stmts.updatePlugin, err = db.Prepare("UPDATE `plugins` SET `active` = ? WHERE `uname` = ?")
-	if err != nil {
-		log.Print("Error in updatePlugin statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing updatePluginInstall statement.")
-	stmts.updatePluginInstall, err = db.Prepare("UPDATE `plugins` SET `installed` = ? WHERE `uname` = ?")
-	if err != nil {
-		log.Print("Error in updatePluginInstall statement.")
 		return err
 	}
 		
