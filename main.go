@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -355,55 +354,7 @@ func main() {
 	// Thumbnailer goroutine, we only want one image being thumbnailed at a time, otherwise they might wind up consuming all the CPU time and leave no resources left to service the actual requests
 	// TODO: Could we expand this to attachments and other things too?
 	thumbChan := make(chan bool)
-	go func() {
-		acc := qgen.Builder.Accumulator()
-		for {
-			// Put this goroutine to sleep until we have work to do
-			<-thumbChan
-
-			// TODO: Use a real queue
-			err := acc.Select("users_avatar_queue").Columns("uid").Limit("0,5").EachInt(func(uid int) error {
-				//log.Print("uid: ", uid)
-				// TODO: Do a bulk user fetch instead?
-				user, err := common.Users.Get(uid)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				//log.Print("user.RawAvatar: ", user.RawAvatar)
-
-				// Has the avatar been removed or already been processed by the thumbnailer?
-				if len(user.RawAvatar) < 2 || user.RawAvatar[1] == '.' {
-					_, _ = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
-					return nil
-				}
-				// This means it's an external image, they aren't currently implemented, but this is here for when they are
-				if user.RawAvatar[0] != '.' {
-					return nil
-				}
-				/*if user.RawAvatar == ".gif" {
-					return nil
-				}*/
-				if user.RawAvatar != ".png" && user.RawAvatar != ".jpg" && user.RawAvatar != ".jpeg" && user.RawAvatar != ".gif" {
-					return nil
-				}
-
-				err = common.Thumbnailer.Resize(user.RawAvatar[1:], "./uploads/avatar_"+strconv.Itoa(user.ID)+user.RawAvatar, "./uploads/avatar_"+strconv.Itoa(user.ID)+"_tmp"+user.RawAvatar, "./uploads/avatar_"+strconv.Itoa(user.ID)+"_w48"+user.RawAvatar, 48)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-
-				err = user.ChangeAvatar("." + user.RawAvatar)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				_, err = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
-				return errors.WithStack(err)
-			})
-			if err != nil {
-				common.LogError(err)
-			}
-		}
-	}()
+	go common.ThumbTask(thumbChan)
 
 	// TODO: Write tests for these
 	// Run this goroutine once every half second
