@@ -1,4 +1,4 @@
 echo "Generating the dynamic code"
 go generate
 echo "Running tests"
-go test -coverprofile c.out ./...
+go test -coverprofile c.out

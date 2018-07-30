@@ -24,6 +24,8 @@ Try to use the single responsibility principle where ever possible, with the exc
 
 Avoid hand-rolling queries. Use the builders, a ready built statement or a datastore structure instead. Preferably a datastore.
 
+Commits which require the patcher / update script to be run should be prefixed with "Database Changes: "
+
 More coming up.
 
 # JavaScript
