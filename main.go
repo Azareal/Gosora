@@ -323,7 +323,7 @@ func main() {
 				} else if event.Op&fsnotify.Create == fsnotify.Create {
 					log.Println("new file:", event.Name)
 					err = modifiedFileEvent(event.Name)
-				}
+				} // Travis is being stupid, does this fix it
 				if err != nil {
 					common.LogError(err)
 				}
