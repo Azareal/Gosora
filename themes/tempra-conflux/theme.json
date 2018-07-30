@@ -4,6 +4,7 @@
 	"Version": "0.1.0-dev",
 	"Creator": "Azareal",
 	"FullImage": "tempra-conflux.png",
+	"HideFromThemes": true,
 	"MobileFriendly": true,
 	"BgAvatars":true,
 	"URL": "github.com/Azareal/Gosora",
