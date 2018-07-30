@@ -8,8 +8,29 @@
 #dash_left .rowitem {
 	border: 1px solid hsl(0,0%,85%);
 }
+#dash_left img {
+	display: block;
+	height: 82px;
+	width: 82px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
 #dash_username {
 	display: flex;
+	height: 26px;
+}
+#dash_username input {
+	margin-right: 8px;
+	width: 100px;
+	padding-left: 8px;
+	padding-top: 4px;
+}
+#dash_username .formbutton {
+	padding: 5px;
+	padding-top: 4px;
+	font-size: 14px;
 }
 #dash_avatar_buttons {
 	display: flex;
