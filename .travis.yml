@@ -20,6 +20,7 @@ before_script:
   - ./cc-test-reporter before-build
 script: ./run-linux-tests
 after_script:
+  - ls
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 addons:
   mariadb: '10.0'
