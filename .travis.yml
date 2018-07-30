@@ -9,8 +9,10 @@ before_install:
   - cd $HOME
   - git clone https://github.com/Azareal/Gosora
   - cd Gosora
-  - chmod -R 0755 .
   - mv ./config/config_example.json ./config/config.json
+  - chmod 755 ./update-deps-linux
+  - chmod 755 ./dev-update-travis
+  - chmod 755 ./run-linux-tests
   - ./update-deps-linux
   - ./dev-update-travis
 install: true
@@ -20,7 +22,6 @@ before_script:
   - ./cc-test-reporter before-build
 script: ./run-linux-tests
 after_script:
-  - ./cc-test-reporter format-coverage --input-type gocov cover.out 
-  - ./cc-test-reporter upload-coverage
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 addons:
   mariadb: '10.0'
