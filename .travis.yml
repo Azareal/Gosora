@@ -19,6 +19,7 @@ install: true
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
+  - go get github.com/axw/gocov/gocov
   - ./cc-test-reporter before-build
 script: ./run-linux-tests
 after_script:
