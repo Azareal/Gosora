@@ -1,4 +1,4 @@
-# Gosora [![Azareal's Discord Chat](https://img.shields.io/badge/style-Invite-7289DA.svg?style=flat&label=Discord)](https://discord.gg/eyYvtTf)
+# Gosora ![Build Status](https://travis-ci.org/Azareal/Gosora.svg?branch=master) [![Azareal's Discord Chat](https://img.shields.io/badge/style-Invite-7289DA.svg?style=flat&label=Discord)](https://discord.gg/eyYvtTf)
 
 A super fast forum software written in Go. You can talk to us on our Discord chat!
 
