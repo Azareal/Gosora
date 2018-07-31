@@ -957,6 +957,27 @@ func TestPluginManager(t *testing.T) {
 	expectNilErr(t, plugin2.SetActive(false))
 	plugin.Deactivate()
 	expectNilErr(t, plugin.SetActive(false))
+
+	// Hook tests
+	expect(t, common.RunSshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it yet")
+	var handle = func(in string) (out string) {
+		return in + "hi"
+	}
+	plugin.AddHook("haha", handle)
+	expect(t, common.RunSshook("haha", "ho") == "hohi", "Sshook didn't give hohi")
+	plugin.RemoveHook("haha", handle)
+	expect(t, common.RunSshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
+
+	// TODO: Add tests for more hook types
+}
+
+func TestPhrases(t *testing.T) {
+	expect(t, common.GetGlobalPermPhrase("BanUsers") == "Can ban users", "Not the expected phrase")
+	expect(t, common.GetGlobalPermPhrase("NoSuchPerm") == "{lang.perms[NoSuchPerm]}", "Not the expected phrase")
+	expect(t, common.GetLocalPermPhrase("ViewTopic") == "Can view topics", "Not the expected phrase")
+	expect(t, common.GetLocalPermPhrase("NoSuchPerm") == "{lang.perms[NoSuchPerm]}", "Not the expected phrase")
+
+	// TODO: Cover the other phrase types, also try switching between languages to see if anything strange happens
 }
 
 func TestSlugs(t *testing.T) {

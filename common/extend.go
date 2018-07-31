@@ -1,7 +1,7 @@
 /*
 *
 * Gosora Plugin System
-* Copyright Azareal 2016 - 2018
+* Copyright Azareal 2016 - 2019
 *
  */
 package common
@@ -409,6 +409,8 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 	}
 	delete(plugin.Hooks, name)
 }
+
+// TODO: Add a HasHook method to complete the AddHook, RemoveHook, etc. set?
 
 var PluginsInited = false
 

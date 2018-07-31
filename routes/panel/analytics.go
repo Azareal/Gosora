@@ -132,6 +132,7 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) co
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	common.DebugLog("in panel.AnalyticsViews")
+	// TODO: Add some sort of analytics store / iterator?
 	acc := qgen.Builder.Accumulator()
 	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {

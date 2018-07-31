@@ -35,8 +35,8 @@ type LevelPhrases struct {
 
 // ! For the sake of thread safety, you must never modify a *LanguagePack directly, but to create a copy of it and overwrite the entry in the sync.Map
 type LanguagePack struct {
-	Name                string
-	Phrases             map[string]string // Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
+	Name string
+	// Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
 	Levels              LevelPhrases
 	GlobalPerms         map[string]string
 	LocalPerms          map[string]string
@@ -140,11 +140,7 @@ func SaveLangPack(langPack *LanguagePack) error {
 	return nil
 }
 
-func GetPhrase(name string) (string, bool) {
-	res, ok := currentLangPack.Load().(*LanguagePack).Phrases[name]
-	return res, ok
-}
-
+// TODO: Merge these two maps?
 func GetGlobalPermPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).GlobalPerms[name]
 	if !ok {
@@ -152,7 +148,6 @@ func GetGlobalPermPhrase(name string) string {
 	}
 	return res
 }
-
 func GetLocalPermPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).LocalPerms[name]
 	if !ok {

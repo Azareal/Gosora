@@ -2,11 +2,6 @@ package counters
 
 import "sync"
 
-type RWMutexCounterBucket struct {
-	counter int
-	sync.RWMutex
-}
-
 // TODO: Make a neater API for this
 var routeMapEnum map[string]int
 var reverseRouteMapEnum map[int]string
@@ -39,4 +34,9 @@ func SetOSMapEnum(osme map[string]int) {
 
 func SetReverseOSMapEnum(rosme map[int]string) {
 	reverseOSMapEnum = rosme
+}
+
+type RWMutexCounterBucket struct {
+	counter int
+	sync.RWMutex
 }
