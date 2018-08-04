@@ -8,6 +8,11 @@ import (
 
 var LogPrepares = true
 
+// So we don't have to do the qgen.Builder.Accumulator() boilerplate all the time
+func NewAcc() *Accumulator {
+	return Builder.Accumulator()
+}
+
 type Accumulator struct {
 	conn     *sql.DB
 	adapter  Adapter
@@ -35,7 +40,7 @@ func (build *Accumulator) FirstError() error {
 	return build.firstErr
 }
 
-func (build *Accumulator) recordError(err error) {
+func (build *Accumulator) RecordError(err error) {
 	if err == nil {
 		return
 	}
@@ -50,11 +55,11 @@ func (build *Accumulator) prepare(res string, err error) *sql.Stmt {
 		log.Print("res: ", res)
 	}
 	if err != nil {
-		build.recordError(err)
+		build.RecordError(err)
 		return nil
 	}
 	stmt, err := build.conn.Prepare(res)
-	build.recordError(err)
+	build.RecordError(err)
 	return stmt
 }
 
@@ -77,16 +82,16 @@ func (build *Accumulator) exec(query string, args ...interface{}) (res sql.Resul
 func (build *Accumulator) Tx(handler func(*TransactionBuilder) error) {
 	tx, err := build.conn.Begin()
 	if err != nil {
-		build.recordError(err)
+		build.RecordError(err)
 		return
 	}
 	err = handler(&TransactionBuilder{tx, build.adapter, nil})
 	if err != nil {
 		tx.Rollback()
-		build.recordError(err)
+		build.RecordError(err)
 		return
 	}
-	build.recordError(tx.Commit())
+	build.RecordError(tx.Commit())
 }
 
 func (build *Accumulator) SimpleSelect(table string, columns string, where string, orderby string, limit string) *sql.Stmt {
@@ -140,11 +145,11 @@ func (build *Accumulator) Purge(table string) *sql.Stmt {
 
 func (build *Accumulator) prepareTx(tx *sql.Tx, res string, err error) (stmt *sql.Stmt) {
 	if err != nil {
-		build.recordError(err)
+		build.RecordError(err)
 		return nil
 	}
 	stmt, err = tx.Prepare(res)
-	build.recordError(err)
+	build.RecordError(err)
 	return stmt
 }
 

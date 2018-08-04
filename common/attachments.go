@@ -17,7 +17,7 @@ type DefaultAttachmentStore struct {
 }
 
 func NewDefaultAttachmentStore() (*DefaultAttachmentStore, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	return &DefaultAttachmentStore{
 		add: acc.Insert("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Fields("?,?,?,?,?,?").Prepare(),
 	}, acc.FirstError()

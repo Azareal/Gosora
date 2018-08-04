@@ -6,6 +6,7 @@
  */
 package common
 
+// TODO: Break this file up into multiple files to make it easier to maintain
 import (
 	"database/sql"
 	"errors"
@@ -21,6 +22,22 @@ type PluginList map[string]*Plugin
 
 // TODO: Have a proper store rather than a map?
 var Plugins PluginList = make(map[string]*Plugin)
+
+func (list PluginList) Add(plugin *Plugin) {
+	buildPlugin(plugin)
+	list[plugin.UName] = plugin
+}
+
+func buildPlugin(plugin *Plugin) {
+	plugin.Installable = (plugin.Install != nil)
+	/*
+		The Active field should never be altered by a plugin. It's used internally by the software to determine whether an admin has enabled a plugin or not and whether to run it. This will be overwritten by the user's preference.
+	*/
+	plugin.Active = false
+	plugin.Installed = false
+	plugin.Hooks = make(map[string]int)
+	plugin.Data = nil
+}
 
 // Hooks with a single argument. Is this redundant? Might be useful for inlining, as variadics aren't inlined? Are closures even inlined to begin with?
 var Hooks = map[string][]func(interface{}) interface{}{
@@ -158,7 +175,7 @@ type Plugin struct {
 	Activate   func() error
 	Deactivate func() // TODO: We might want to let this return an error?
 	Install    func() error
-	Uninstall  func() error
+	Uninstall  func() error // TODO: I'm not sure uninstall is implemented
 
 	Hooks map[string]int
 	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins
@@ -270,31 +287,6 @@ func (plugins PluginList) Load() error {
 		plugins[uname] = plugin
 	}
 	return rows.Err()
-}
-
-func NewPlugin(uname string, name string, author string, url string, settings string, tag string, ptype string, init func() error, activate func() error, deactivate func(), install func() error, uninstall func() error) *Plugin {
-	return &Plugin{
-		UName:       uname,
-		Name:        name,
-		Author:      author,
-		URL:         url,
-		Settings:    settings,
-		Tag:         tag,
-		Type:        ptype,
-		Installable: (install != nil),
-		Init:        init,
-		Activate:    activate,
-		Deactivate:  deactivate,
-		Install:     install,
-		//Uninstall: uninstall,
-
-		/*
-			The Active field should never be altered by a plugin. It's used internally by the software to determine whether an admin has enabled a plugin or not and whether to run it. This will be overwritten by the user's preference.
-		*/
-		Active:    false,
-		Installed: false,
-		Hooks:     make(map[string]int),
-	}
 }
 
 // ? - Is this racey?

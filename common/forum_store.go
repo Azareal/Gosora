@@ -70,7 +70,7 @@ type MemoryForumStore struct {
 
 // NewMemoryForumStore gives you a new instance of MemoryForumStore
 func NewMemoryForumStore() (*MemoryForumStore, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	// TODO: Do a proper delete
 	return &MemoryForumStore{
 		get:          acc.Select("forums").Columns("name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
@@ -354,7 +354,7 @@ func (mfs *MemoryForumStore) Length() (length int) {
 	return length
 }
 
-// TODO: Get the total count of forums in the forum store minus the blanked forums rather than doing a heavy query for this?
+// TODO: Get the total count of forums in the forum store rather than doing a heavy query for this?
 // GlobalCount returns the total number of forums
 func (mfs *MemoryForumStore) GlobalCount() (fcount int) {
 	err := mfs.count.QueryRow().Scan(&fcount)

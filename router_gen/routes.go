@@ -155,11 +155,11 @@ func buildPanelRoutes() {
 		View("panel.SettingEdit", "/panel/settings/edit/", "extraData"),
 		Action("panel.SettingEditSubmit", "/panel/settings/edit/submit/", "extraData"),
 
-		View("routePanelWordFilters", "/panel/settings/word-filters/"),
-		Action("routePanelWordFiltersCreateSubmit", "/panel/settings/word-filters/create/"),
-		View("routePanelWordFiltersEdit", "/panel/settings/word-filters/edit/", "extraData"),
-		Action("routePanelWordFiltersEditSubmit", "/panel/settings/word-filters/edit/submit/", "extraData"),
-		Action("routePanelWordFiltersDeleteSubmit", "/panel/settings/word-filters/delete/submit/", "extraData"),
+		View("panel.WordFilters", "/panel/settings/word-filters/"),
+		Action("panel.WordFiltersCreateSubmit", "/panel/settings/word-filters/create/"),
+		View("panel.WordFiltersEdit", "/panel/settings/word-filters/edit/", "extraData"),
+		Action("panel.WordFiltersEditSubmit", "/panel/settings/word-filters/edit/submit/", "extraData"),
+		Action("panel.WordFiltersDeleteSubmit", "/panel/settings/word-filters/delete/submit/", "extraData"),
 
 		View("panel.Pages", "/panel/pages/").Before("AdminOnly"),
 		Action("panel.PagesCreateSubmit", "/panel/pages/create/submit/").Before("AdminOnly"),

@@ -42,7 +42,7 @@ type Globs struct {
 // Experimenting with a new error package here to try to reduce the amount of debugging we have to do
 // TODO: Dynamically register these items to avoid maintaining as much code here?
 func afterDBInit() (err error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	common.Rstore, err = common.NewSQLReplyStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
@@ -102,13 +102,11 @@ func afterDBInit() (err error) {
 		return errors.WithStack(err)
 	}
 
-	log.Print("Loading the word filters")
-	err = common.LoadWordFilters()
+	log.Print("Initialising the stores")
+	common.WordFilters, err = common.NewDefaultWordFilterStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
-	log.Print("Initialising the stores")
 	common.MFAstore, err = common.NewSQLMFAStore(acc)
 	if err != nil {
 		return errors.WithStack(err)

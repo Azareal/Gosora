@@ -22,7 +22,7 @@ type DefaultForumViewCounter struct {
 }
 
 func NewDefaultForumViewCounter() (*DefaultForumViewCounter, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	counter := &DefaultForumViewCounter{
 		oddMap:  make(map[int]*RWMutexCounterBucket),
 		evenMap: make(map[int]*RWMutexCounterBucket),

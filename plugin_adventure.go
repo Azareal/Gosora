@@ -4,7 +4,16 @@ package main
 import "./common"
 
 func init() {
-	common.Plugins["adventure"] = common.NewPlugin("adventure", "WIP", "Azareal", "http://github.com/Azareal", "", "", "", initAdventure, nil, deactivateAdventure, installAdventure, nil)
+	common.Plugins.Add(&common.Plugin{
+		UName:      "adventure",
+		Name:       "Adventure",
+		Tag:        "WIP",
+		Author:     "Azareal",
+		URL:        "https://github.com/Azareal",
+		Init:       initAdventure,
+		Deactivate: deactivateAdventure,
+		Install:    installAdventure,
+	})
 }
 
 func initAdventure() error {

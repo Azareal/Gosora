@@ -30,7 +30,7 @@ type DefaultReferrerTracker struct {
 }
 
 func NewDefaultReferrerTracker() (*DefaultReferrerTracker, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	refTracker := &DefaultReferrerTracker{
 		odd:    make(map[string]*ReferrerItem),
 		even:   make(map[string]*ReferrerItem),

@@ -83,8 +83,7 @@ var DbInits dbInits
 
 func (inits dbInits) Run() error {
 	for _, init := range inits {
-		acc := qgen.Builder.Accumulator()
-		err := init(acc)
+		err := init(qgen.NewAcc())
 		if err != nil {
 			return err
 		}

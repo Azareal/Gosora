@@ -32,8 +32,7 @@ func execStmt(stmt *sql.Stmt, err error) error {
 }*/
 
 func eachUser(handle func(int) error) error {
-	acc := qgen.Builder.Accumulator()
-	err := acc.Select("users").Each(func(rows *sql.Rows) error {
+	err := qgen.NewAcc().Select("users").Each(func(rows *sql.Rows) error {
 		var uid int
 		err := rows.Scan(&uid)
 		if err != nil {

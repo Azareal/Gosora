@@ -21,7 +21,7 @@ type DefaultIPSearcher struct {
 
 // NewDefaultIPSearcher gives you a new instance of DefaultIPSearcher
 func NewDefaultIPSearcher() (*DefaultIPSearcher, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	return &DefaultIPSearcher{
 		searchUsers:        acc.Select("users").Columns("uid").Where("last_ip = ?").Prepare(),
 		searchTopics:       acc.Select("users").Columns("uid").InQ("uid", acc.Select("topics").Columns("createdBy").Where("ipaddress = ?")).Prepare(),

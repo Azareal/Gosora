@@ -18,7 +18,7 @@ type DefaultTopicCounter struct {
 }
 
 func NewTopicCounter() (*DefaultTopicCounter, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	counter := &DefaultTopicCounter{
 		currentBucket: 0,
 		insert:        acc.Insert("topicchunks").Columns("count, createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),

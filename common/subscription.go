@@ -15,7 +15,7 @@ type DefaultSubscriptionStore struct {
 }
 
 func NewDefaultSubscriptionStore() (*DefaultSubscriptionStore, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	return &DefaultSubscriptionStore{
 		add: acc.Insert("activity_subscriptions").Columns("user, targetID, targetType, level").Fields("?,?,?,2").Prepare(),
 	}, acc.FirstError()

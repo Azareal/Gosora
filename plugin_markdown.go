@@ -20,7 +20,7 @@ var markdownStrikeTagOpen []byte
 var markdownStrikeTagClose []byte
 
 func init() {
-	common.Plugins["markdown"] = common.NewPlugin("markdown", "Markdown", "Azareal", "http://github.com/Azareal", "", "", "", initMarkdown, nil, deactivateMarkdown, nil, nil)
+	common.Plugins.Add(&common.Plugin{UName: "markdown", Name: "Markdown", Author: "Azareal", URL: "https://github.com/Azareal", Init: initMarkdown, Deactivate: deactivateMarkdown})
 }
 
 func initMarkdown() error {

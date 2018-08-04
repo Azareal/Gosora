@@ -194,7 +194,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 
 		// TODO: Add a config setting to disable the liked query for a burst of extra speed
 		if user.Liked > 0 && len(likedQueryList) > 1 /*&& user.LastLiked <= time.Now()*/ {
-			rows, err := qgen.Builder.Accumulator().Select("likes").Columns("targetItem").Where("sentBy = ? AND targetType = 'replies'").In("targetItem", likedQueryList[1:]).Query(user.ID)
+			rows, err := qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy = ? AND targetType = 'replies'").In("targetItem", likedQueryList[1:]).Query(user.ID)
 			if err != nil && err != sql.ErrNoRows {
 				return common.InternalError(err, w, r)
 			}

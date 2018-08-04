@@ -15,16 +15,13 @@ type Stmts struct {
 	getForumTopics *sql.Stmt
 	addForumPermsToForum *sql.Stmt
 	addTheme *sql.Stmt
-	createWordFilter *sql.Stmt
 	updateTheme *sql.Stmt
 	updateGroupPerms *sql.Stmt
 	updateGroup *sql.Stmt
 	updateEmail *sql.Stmt
 	setTempGroup *sql.Stmt
-	updateWordFilter *sql.Stmt
 	bumpSync *sql.Stmt
 	deleteActivityStreamMatch *sql.Stmt
-	deleteWordFilter *sql.Stmt
 
 	getActivityFeedByWatcher *sql.Stmt
 	getActivityCountByWatcher *sql.Stmt
@@ -88,14 +85,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	common.DebugLog("Preparing createWordFilter statement.")
-	stmts.createWordFilter, err = db.Prepare("INSERT INTO [word_filters] ([find],[replacement]) VALUES (?,?)")
-	if err != nil {
-		log.Print("Error in createWordFilter statement.")
-		log.Print("Bad Query: ","INSERT INTO [word_filters] ([find],[replacement]) VALUES (?,?)")
-		return err
-	}
-		
 	common.DebugLog("Preparing updateTheme statement.")
 	stmts.updateTheme, err = db.Prepare("UPDATE [themes] SET [default] = ? WHERE [uname] = ?")
 	if err != nil {
@@ -136,14 +125,6 @@ func _gen_mssql() (err error) {
 		return err
 	}
 		
-	common.DebugLog("Preparing updateWordFilter statement.")
-	stmts.updateWordFilter, err = db.Prepare("UPDATE [word_filters] SET [find] = ?,[replacement] = ? WHERE [wfid] = ?")
-	if err != nil {
-		log.Print("Error in updateWordFilter statement.")
-		log.Print("Bad Query: ","UPDATE [word_filters] SET [find] = ?,[replacement] = ? WHERE [wfid] = ?")
-		return err
-	}
-		
 	common.DebugLog("Preparing bumpSync statement.")
 	stmts.bumpSync, err = db.Prepare("UPDATE [sync] SET [last_update] = GETUTCDATE()")
 	if err != nil {
@@ -157,14 +138,6 @@ func _gen_mssql() (err error) {
 	if err != nil {
 		log.Print("Error in deleteActivityStreamMatch statement.")
 		log.Print("Bad Query: ","DELETE FROM [activity_stream_matches] WHERE [watcher] = ? AND [asid] = ?")
-		return err
-	}
-		
-	common.DebugLog("Preparing deleteWordFilter statement.")
-	stmts.deleteWordFilter, err = db.Prepare("DELETE FROM [word_filters] WHERE [wfid] = ?")
-	if err != nil {
-		log.Print("Error in deleteWordFilter statement.")
-		log.Print("Bad Query: ","DELETE FROM [word_filters] WHERE [wfid] = ?")
 		return err
 	}
 	

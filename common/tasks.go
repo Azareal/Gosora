@@ -93,6 +93,7 @@ func HandleExpiredScheduledGroups() error {
 // TODO: Use AddScheduledSecondTask
 // TODO: Be a little more granular with the synchronisation
 // TODO: Synchronise more things
+// TODO: Does this even work?
 func HandleServerSync() error {
 	// We don't want to run any unnecessary queries when there is nothing to synchronise
 	/*if Config.ServerCount > 1 {
@@ -118,7 +119,7 @@ func HandleServerSync() error {
 			log.Print("Unable to reload the settings")
 			return err
 		}
-		err = LoadWordFilters()
+		err = WordFilters.ReloadAll()
 		if err != nil {
 			log.Print("Unable to reload the word filters")
 			return err

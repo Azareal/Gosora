@@ -16,7 +16,7 @@ type SQLGuildStore struct {
 }
 
 func NewSQLGuildStore() (*SQLGuildStore, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	return &SQLGuildStore{
 		get:    acc.Select("guilds").Columns("name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime").Where("guildID = ?").Prepare(),
 		create: acc.Insert("guilds").Columns("name, desc, active, privacy, joinable, owner, memberCount, mainForum, backdrop, createdAt, lastUpdateTime").Fields("?,?,?,?,1,?,1,?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(),

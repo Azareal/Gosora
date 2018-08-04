@@ -72,7 +72,7 @@ type DefaultPollStore struct {
 }
 
 func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	if cache == nil {
 		cache = NewNullPollCache()
 	}
@@ -153,8 +153,7 @@ func (store *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err er
 	}
 	qlist = qlist[0 : len(qlist)-1]
 
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("polls").Columns("pollID, parentID, parentTable, type, options, votes").Where("pollID IN(" + qlist + ")").Query(pollIDList...)
+	rows, err := qgen.NewAcc().Select("polls").Columns("pollID, parentID, parentTable, type, options, votes").Where("pollID IN(" + qlist + ")").Query(pollIDList...)
 	if err != nil {
 		return list, err
 	}

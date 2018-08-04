@@ -326,6 +326,7 @@
 		"panel_perms_default":"Default",
 
 		"panel_edit_button_text":"Edit",
+		"panel_update_button_text":"Update",
 		"panel_delete_button_text":"Delete",
 		
 		"menu_forums_tooltip":"Forum List",

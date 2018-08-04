@@ -980,6 +980,33 @@ func TestPhrases(t *testing.T) {
 	// TODO: Cover the other phrase types, also try switching between languages to see if anything strange happens
 }
 
+func TestWordFilters(t *testing.T) {
+	// TODO: Test the word filters and their store
+	expect(t, common.WordFilters.Length() == 0, "Word filter list should be empty")
+	expect(t, common.WordFilters.EstCount() == 0, "Word filter list should be empty")
+	expect(t, common.WordFilters.GlobalCount() == 0, "Word filter list should be empty")
+	filters, err := common.WordFilters.GetAll()
+	expectNilErr(t, err) // TODO: Slightly confusing that we don't get ErrNoRow here
+	expect(t, len(filters) == 0, "Word filter map should be empty")
+	// TODO: Add a test for ParseMessage relating to word filters
+
+	err = common.WordFilters.Create("imbecile", "lovely")
+	expectNilErr(t, err)
+	expect(t, common.WordFilters.Length() == 1, "Word filter list should not be empty")
+	expect(t, common.WordFilters.EstCount() == 1, "Word filter list should not be empty")
+	expect(t, common.WordFilters.GlobalCount() == 1, "Word filter list should not be empty")
+	filters, err = common.WordFilters.GetAll()
+	expectNilErr(t, err)
+	expect(t, len(filters) == 1, "Word filter map should not be empty")
+	filter := filters[1]
+	expect(t, filter.ID == 1, "Word filter ID should be 1")
+	expect(t, filter.Find == "imbecile", "Word filter needle should be imbecile")
+	expect(t, filter.Replacement == "lovely", "Word filter replacement should be lovely")
+	// TODO: Add a test for ParseMessage relating to word filters
+
+	// TODO: Add deletion tests
+}
+
 func TestSlugs(t *testing.T) {
 	var res string
 	var msgList []MEPair

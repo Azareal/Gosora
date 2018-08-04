@@ -13,7 +13,7 @@ type DefaultRouteViewCounter struct {
 }
 
 func NewDefaultRouteViewCounter() (*DefaultRouteViewCounter, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	var routeBuckets = make([]*RWMutexCounterBucket, len(routeMapEnum))
 	for bucketID, _ := range routeBuckets {
 		routeBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}

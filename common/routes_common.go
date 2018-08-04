@@ -141,10 +141,10 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 	// TODO: GDPR. Add a global control panel notice warning the admins of staff members who don't have 2FA enabled
 	stats.Users = Users.GlobalCount()
 	stats.Groups = Groups.GlobalCount()
-	stats.Forums = Forums.GlobalCount() // TODO: Stop it from showing the blanked forums, do we still have those? I think we removed that
+	stats.Forums = Forums.GlobalCount()
 	stats.Pages = Pages.GlobalCount()
 	stats.Settings = len(header.Settings)
-	stats.WordFilters = len(WordFilterBox.Load().(WordFilterMap))
+	stats.WordFilters = WordFilters.EstCount()
 	stats.Themes = len(Themes)
 	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
 

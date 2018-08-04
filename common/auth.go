@@ -85,7 +85,7 @@ type DefaultAuth struct {
 
 // NewDefaultAuth is a factory for spitting out DefaultAuths
 func NewDefaultAuth() (*DefaultAuth, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	return &DefaultAuth{
 		login:         acc.Select("users").Columns("uid, password, salt").Where("name = ?").Prepare(),
 		logout:        acc.Update("users").Set("session = ''").Where("uid = ?").Prepare(),

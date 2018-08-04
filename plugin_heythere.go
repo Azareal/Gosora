@@ -3,7 +3,7 @@ package main
 import "./common"
 
 func init() {
-	common.Plugins["heythere"] = common.NewPlugin("heythere", "Hey There", "Azareal", "http://github.com/Azareal", "", "", "", initHeythere, nil, deactivateHeythere, nil, nil)
+	common.Plugins.Add(&common.Plugin{UName: "heythere", Name: "Hey There", Author: "Azareal", URL: "https://github.com/Azareal", Init: initHeythere, Deactivate: deactivateHeythere})
 }
 
 // init_heythere is separate from init() as we don't want the plugin to run if the plugin is disabled

@@ -28,7 +28,7 @@ func init() {
 
 		That Uninstallation field which is currently unused is for not only deactivating this plugin, but for purging any data associated with it such a new tables or data produced by the end-user.
 	*/
-	common.Plugins["skeleton"] = common.NewPlugin("skeleton", "Skeleton", "Azareal", "", "", "", "", initSkeleton, activateSkeleton, deactivateSkeleton, nil, nil)
+	common.Plugins.Add(&common.Plugin{UName: "skeleton", Name: "Skeleton", Author: "Azareal", Init: initSkeleton, Activate: activateSkeleton, Deactivate: deactivateSkeleton})
 }
 
 func initSkeleton() error { return nil }

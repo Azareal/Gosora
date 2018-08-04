@@ -1,8 +1,6 @@
 package main
 
 import (
-	//"fmt"
-
 	"./common"
 	"./extend/guilds/lib"
 	"./query_gen/lib"
@@ -12,7 +10,7 @@ import (
 
 // TODO: Add a plugin interface instead of having a bunch of argument to AddPlugin?
 func init() {
-	common.Plugins["guilds"] = common.NewPlugin("guilds", "Guilds", "Azareal", "http://github.com/Azareal", "", "", "", initGuilds, nil, deactivateGuilds, installGuilds, nil)
+	common.Plugins.Add(&common.Plugin{UName: "guilds", Name: "Guilds", Author: "Azareal", URL: "https://github.com/Azareal", Init: initGuilds, Deactivate: deactivateGuilds, Install: installGuilds})
 
 	// TODO: Is it possible to avoid doing this when the plugin isn't activated?
 	common.PrebuildTmplList = append(common.PrebuildTmplList, guilds.PrebuildTmplList)
@@ -38,7 +36,7 @@ func initGuilds() (err error) {
 		return err
 	}
 
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 
 	guilds.ListStmt = acc.Select("guilds").Columns("guildID, name, desc, active, privacy, joinable, owner, memberCount, createdAt, lastUpdateTime").Prepare()
 

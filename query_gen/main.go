@@ -284,8 +284,6 @@ func writeInserts(adapter qgen.Adapter) error {
 
 	build.Insert("addTheme").Table("themes").Columns("uname, default").Fields("?,?").Parse()
 
-	build.Insert("createWordFilter").Table("word_filters").Columns("find, replacement").Fields("?,?").Parse()
-
 	return nil
 }
 
@@ -302,8 +300,6 @@ func writeUpdates(adapter qgen.Adapter) error {
 
 	build.Update("setTempGroup").Table("users").Set("temp_group = ?").Where("uid = ?").Parse()
 
-	build.Update("updateWordFilter").Table("word_filters").Set("find = ?, replacement = ?").Where("wfid = ?").Parse()
-
 	build.Update("bumpSync").Table("sync").Set("last_update = UTC_TIMESTAMP()").Parse()
 
 	return nil
@@ -316,8 +312,6 @@ func writeDeletes(adapter qgen.Adapter) error {
 
 	build.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher = ? AND asid = ?").Parse()
 	//build.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher = ?").Parse()
-
-	build.Delete("deleteWordFilter").Table("word_filters").Where("wfid = ?").Parse()
 
 	return nil
 }

@@ -319,8 +319,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		}
 
 		// TODO: Add an EmailStore and move this there
-		acc := qgen.Builder.Accumulator()
-		_, err = acc.Insert("emails").Columns("email, uid, validated, token").Fields("?,?,?,?").Exec(email, uid, 0, token)
+		_, err = qgen.NewAcc().Insert("emails").Columns("email, uid, validated, token").Fields("?,?,?,?").Exec(email, uid, 0, token)
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
@@ -416,8 +415,7 @@ func AccountEditPasswordSubmit(w http.ResponseWriter, r *http.Request, user comm
 	confirmPassword := r.PostFormValue("account-confirm-password")
 
 	// TODO: Use a reusable statement
-	acc := qgen.Builder.Accumulator()
-	err := acc.Select("users").Columns("password, salt").Where("uid = ?").QueryRow(user.ID).Scan(&realPassword, &salt)
+	err := qgen.NewAcc().Select("users").Columns("password, salt").Where("uid = ?").QueryRow(user.ID).Scan(&realPassword, &salt)
 	if err == sql.ErrNoRows {
 		return common.LocalError("Your account no longer exists.", w, r, user)
 	} else if err != nil {

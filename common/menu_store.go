@@ -40,8 +40,7 @@ func (store *DefaultMenuStore) Get(mid int) (*MenuListHolder, error) {
 }
 
 func (store *DefaultMenuStore) Items(mid int) (mlist MenuItemList, err error) {
-	acc := qgen.Builder.Accumulator()
-	err = acc.Select("menu_items").Columns("miid, name, htmlID, cssClass, position, path, aria, tooltip, order, tmplName, guestOnly, memberOnly, staffOnly, adminOnly").Where("mid = " + strconv.Itoa(mid)).Orderby("order ASC").Each(func(rows *sql.Rows) error {
+	err = qgen.NewAcc().Select("menu_items").Columns("miid, name, htmlID, cssClass, position, path, aria, tooltip, order, tmplName, guestOnly, memberOnly, staffOnly, adminOnly").Where("mid = " + strconv.Itoa(mid)).Orderby("order ASC").Each(func(rows *sql.Rows) error {
 		var mitem = MenuItem{MenuID: mid}
 		err := rows.Scan(&mitem.ID, &mitem.Name, &mitem.HTMLID, &mitem.CSSClass, &mitem.Position, &mitem.Path, &mitem.Aria, &mitem.Tooltip, &mitem.Order, &mitem.TmplName, &mitem.GuestOnly, &mitem.MemberOnly, &mitem.SuperModOnly, &mitem.AdminOnly)
 		if err != nil {

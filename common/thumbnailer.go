@@ -13,20 +13,18 @@ import (
 )
 
 func ThumbTask(thumbChan chan bool) {
-	acc := qgen.Builder.Accumulator()
 	for {
 		// Put this goroutine to sleep until we have work to do
 		<-thumbChan
 
 		// TODO: Use a real queue
+		acc := qgen.NewAcc()
 		err := acc.Select("users_avatar_queue").Columns("uid").Limit("0,5").EachInt(func(uid int) error {
-			//log.Print("uid: ", uid)
 			// TODO: Do a bulk user fetch instead?
 			user, err := Users.Get(uid)
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			//log.Print("user.RawAvatar: ", user.RawAvatar)
 
 			// Has the avatar been removed or already been processed by the thumbnailer?
 			if len(user.RawAvatar) < 2 || user.RawAvatar[1] == '.' {
@@ -57,6 +55,9 @@ func ThumbTask(thumbChan chan bool) {
 			return errors.WithStack(err)
 		})
 		if err != nil {
+			LogError(err)
+		}
+		if err = acc.FirstError(); err != nil {
 			LogError(err)
 		}
 	}

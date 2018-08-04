@@ -18,7 +18,7 @@ type DefaultPostCounter struct {
 }
 
 func NewPostCounter() (*DefaultPostCounter, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	counter := &DefaultPostCounter{
 		currentBucket: 0,
 		insert:        acc.Insert("postchunks").Columns("count, createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),

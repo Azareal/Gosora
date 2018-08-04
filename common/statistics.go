@@ -27,8 +27,7 @@ func (store *DefaultStatStore) LookupInt(name string, duration int, unit string)
 }
 
 func (store *DefaultStatStore) countTable(table string, duration int, unit string) (stat int, err error) {
-	/*acc := qgen.Builder.Accumulator()
-	counter := acc.Count("replies").DateCutoff("createdAt", 1, "day").Prepare()
+	/*counter := qgen.NewAcc().Count("replies").DateCutoff("createdAt", 1, "day").Prepare()
 	if acc.FirstError() != nil {
 		return 0, acc.FirstError()
 	}

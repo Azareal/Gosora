@@ -133,8 +133,7 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) co
 
 	common.DebugLog("in panel.AnalyticsViews")
 	// TODO: Add some sort of analytics store / iterator?
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -170,9 +169,8 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.Use
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	common.DebugLog("in panel.AnalyticsRouteViews")
-	acc := qgen.Builder.Accumulator()
 	// TODO: Validate the route is valid
-	rows, err := acc.Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(route)
+	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(route)
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -211,9 +209,8 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.Use
 	agent = common.SanitiseSingleLine(agent)
 
 	common.DebugLog("in panel.AnalyticsAgentViews")
-	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
-	rows, err := acc.Select("viewchunks_agents").Columns("count, createdAt").Where("browser = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(agent)
+	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count, createdAt").Where("browser = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(agent)
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -256,9 +253,8 @@ func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	common.DebugLog("in panel.AnalyticsForumViews")
-	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
-	rows, err := acc.Select("viewchunks_forums").Columns("count, createdAt").Where("forum = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(fid)
+	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count, createdAt").Where("forum = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(fid)
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -298,9 +294,8 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.Us
 	system = common.SanitiseSingleLine(system)
 
 	common.DebugLog("in panel.AnalyticsSystemViews")
-	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the OS name is valid
-	rows, err := acc.Select("viewchunks_systems").Columns("count, createdAt").Where("system = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(system)
+	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count, createdAt").Where("system = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(system)
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -339,9 +334,8 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user common.
 	lang = common.SanitiseSingleLine(lang)
 
 	common.DebugLog("in panel.AnalyticsLanguageViews")
-	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the language code is valid
-	rows, err := acc.Select("viewchunks_langs").Columns("count, createdAt").Where("lang = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(lang)
+	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count, createdAt").Where("lang = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(lang)
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -379,9 +373,8 @@ func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	common.DebugLog("in panel.AnalyticsReferrerViews")
-	acc := qgen.Builder.Accumulator()
 	// TODO: Verify the agent is valid
-	rows, err := acc.Select("viewchunks_referrers").Columns("count, createdAt").Where("domain = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(domain)
+	rows, err := qgen.NewAcc().Select("viewchunks_referrers").Columns("count, createdAt").Where("domain = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(domain)
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -414,8 +407,7 @@ func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) c
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	common.DebugLog("in panel.AnalyticsTopics")
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("topicchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("topicchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -450,8 +442,7 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user common.User) co
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	common.DebugLog("in panel.AnalyticsPosts")
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("postchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("postchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -505,8 +496,7 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.LocalError(err.Error(), w, r, user)
 	}
 
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks_forums").Columns("count, forum").Where("forum != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count, forum").Where("forum != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -548,8 +538,7 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.LocalError(err.Error(), w, r, user)
 	}
 
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks").Columns("count, route").Where("route != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, route").Where("route != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -582,8 +571,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.LocalError(err.Error(), w, r, user)
 	}
 
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks_agents").Columns("count, browser").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count, browser").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -621,8 +609,7 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) 
 		return common.LocalError(err.Error(), w, r, user)
 	}
 
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks_systems").Columns("count, system").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count, system").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -660,8 +647,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User
 		return common.LocalError(err.Error(), w, r, user)
 	}
 
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks_langs").Columns("count, lang").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count, lang").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -700,8 +686,7 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User
 		return common.LocalError(err.Error(), w, r, user)
 	}
 
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("viewchunks_referrers").Columns("count, domain").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_referrers").Columns("count, domain").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}

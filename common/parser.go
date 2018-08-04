@@ -413,7 +413,11 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 
 	// Word filter list. E.g. Swear words and other things the admins don't like
-	wordFilters := WordFilterBox.Load().(WordFilterMap)
+	wordFilters, err := WordFilters.GetAll()
+	if err != nil {
+		LogError(err)
+		return ""
+	}
 	for _, filter := range wordFilters {
 		msg = strings.Replace(msg, filter.Find, filter.Replacement, -1)
 	}

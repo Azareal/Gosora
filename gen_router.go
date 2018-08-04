@@ -46,11 +46,11 @@ var RouteMap = map[string]interface{}{
 	"panel.Settings": panel.Settings,
 	"panel.SettingEdit": panel.SettingEdit,
 	"panel.SettingEditSubmit": panel.SettingEditSubmit,
-	"routePanelWordFilters": routePanelWordFilters,
-	"routePanelWordFiltersCreateSubmit": routePanelWordFiltersCreateSubmit,
-	"routePanelWordFiltersEdit": routePanelWordFiltersEdit,
-	"routePanelWordFiltersEditSubmit": routePanelWordFiltersEditSubmit,
-	"routePanelWordFiltersDeleteSubmit": routePanelWordFiltersDeleteSubmit,
+	"panel.WordFilters": panel.WordFilters,
+	"panel.WordFiltersCreateSubmit": panel.WordFiltersCreateSubmit,
+	"panel.WordFiltersEdit": panel.WordFiltersEdit,
+	"panel.WordFiltersEditSubmit": panel.WordFiltersEditSubmit,
+	"panel.WordFiltersDeleteSubmit": panel.WordFiltersDeleteSubmit,
 	"panel.Pages": panel.Pages,
 	"panel.PagesCreateSubmit": panel.PagesCreateSubmit,
 	"panel.PagesEdit": panel.PagesEdit,
@@ -175,11 +175,11 @@ var routeMapEnum = map[string]int{
 	"panel.Settings": 22,
 	"panel.SettingEdit": 23,
 	"panel.SettingEditSubmit": 24,
-	"routePanelWordFilters": 25,
-	"routePanelWordFiltersCreateSubmit": 26,
-	"routePanelWordFiltersEdit": 27,
-	"routePanelWordFiltersEditSubmit": 28,
-	"routePanelWordFiltersDeleteSubmit": 29,
+	"panel.WordFilters": 25,
+	"panel.WordFiltersCreateSubmit": 26,
+	"panel.WordFiltersEdit": 27,
+	"panel.WordFiltersEditSubmit": 28,
+	"panel.WordFiltersDeleteSubmit": 29,
 	"panel.Pages": 30,
 	"panel.PagesCreateSubmit": 31,
 	"panel.PagesEdit": 32,
@@ -302,11 +302,11 @@ var reverseRouteMapEnum = map[int]string{
 	22: "panel.Settings",
 	23: "panel.SettingEdit",
 	24: "panel.SettingEditSubmit",
-	25: "routePanelWordFilters",
-	26: "routePanelWordFiltersCreateSubmit",
-	27: "routePanelWordFiltersEdit",
-	28: "routePanelWordFiltersEditSubmit",
-	29: "routePanelWordFiltersDeleteSubmit",
+	25: "panel.WordFilters",
+	26: "panel.WordFiltersCreateSubmit",
+	27: "panel.WordFiltersEdit",
+	28: "panel.WordFiltersEditSubmit",
+	29: "panel.WordFiltersDeleteSubmit",
 	30: "panel.Pages",
 	31: "panel.PagesCreateSubmit",
 	32: "panel.PagesEdit",
@@ -1070,7 +1070,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					err = panel.SettingEditSubmit(w,req,user,extraData)
 				case "/panel/settings/word-filters/":
 					counters.RouteViewCounter.Bump(25)
-					err = routePanelWordFilters(w,req,user)
+					err = panel.WordFilters(w,req,user)
 				case "/panel/settings/word-filters/create/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1079,10 +1079,10 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(26)
-					err = routePanelWordFiltersCreateSubmit(w,req,user)
+					err = panel.WordFiltersCreateSubmit(w,req,user)
 				case "/panel/settings/word-filters/edit/":
 					counters.RouteViewCounter.Bump(27)
-					err = routePanelWordFiltersEdit(w,req,user,extraData)
+					err = panel.WordFiltersEdit(w,req,user,extraData)
 				case "/panel/settings/word-filters/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1091,7 +1091,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(28)
-					err = routePanelWordFiltersEditSubmit(w,req,user,extraData)
+					err = panel.WordFiltersEditSubmit(w,req,user,extraData)
 				case "/panel/settings/word-filters/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1100,7 +1100,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					}
 					
 					counters.RouteViewCounter.Bump(29)
-					err = routePanelWordFiltersDeleteSubmit(w,req,user,extraData)
+					err = panel.WordFiltersDeleteSubmit(w,req,user,extraData)
 				case "/panel/pages/":
 					err = common.AdminOnly(w,req,user)
 					if err != nil {

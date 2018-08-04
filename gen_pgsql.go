@@ -11,13 +11,11 @@ import "./common"
 type Stmts struct {
 	addForumPermsToForum *sql.Stmt
 	addTheme *sql.Stmt
-	createWordFilter *sql.Stmt
 	updateTheme *sql.Stmt
 	updateGroupPerms *sql.Stmt
 	updateGroup *sql.Stmt
 	updateEmail *sql.Stmt
 	setTempGroup *sql.Stmt
-	updateWordFilter *sql.Stmt
 	bumpSync *sql.Stmt
 
 	getActivityFeedByWatcher *sql.Stmt
@@ -45,13 +43,6 @@ func _gen_pgsql() (err error) {
 	stmts.addTheme, err = db.Prepare("INSERT INTO "themes"("uname","default") VALUES (?,?)")
 	if err != nil {
 		log.Print("Error in addTheme statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing createWordFilter statement.")
-	stmts.createWordFilter, err = db.Prepare("INSERT INTO "word_filters"("find","replacement") VALUES (?,?)")
-	if err != nil {
-		log.Print("Error in createWordFilter statement.")
 		return err
 	}
 		
@@ -87,13 +78,6 @@ func _gen_pgsql() (err error) {
 	stmts.setTempGroup, err = db.Prepare("UPDATE `users` SET `temp_group` = ? WHERE `uid` = ?")
 	if err != nil {
 		log.Print("Error in setTempGroup statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing updateWordFilter statement.")
-	stmts.updateWordFilter, err = db.Prepare("UPDATE `word_filters` SET `find` = ?,`replacement` = ? WHERE `wfid` = ?")
-	if err != nil {
-		log.Print("Error in updateWordFilter statement.")
 		return err
 	}
 		

@@ -45,7 +45,7 @@ type DefaultUserStore struct {
 
 // NewDefaultUserStore gives you a new instance of DefaultUserStore
 func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	if cache == nil {
 		cache = NewNullUserCache()
 	}
@@ -154,8 +154,7 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 	}
 	qlist = qlist[0 : len(qlist)-1]
 
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(uidList...)
+	rows, err := qgen.NewAcc().Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(uidList...)
 	if err != nil {
 		return list, err
 	}

@@ -45,7 +45,7 @@ type MemoryGroupStore struct {
 }
 
 func NewMemoryGroupStore() (*MemoryGroupStore, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	return &MemoryGroupStore{
 		groups:     make(map[int]*Group),
 		groupCount: 0,

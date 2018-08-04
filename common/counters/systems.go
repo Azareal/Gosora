@@ -12,7 +12,7 @@ type DefaultOSViewCounter struct {
 }
 
 func NewDefaultOSViewCounter() (*DefaultOSViewCounter, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	var osBuckets = make([]*RWMutexCounterBucket, len(osMapEnum))
 	for bucketID, _ := range osBuckets {
 		osBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}

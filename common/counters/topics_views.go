@@ -21,7 +21,7 @@ type DefaultTopicViewCounter struct {
 }
 
 func NewDefaultTopicViewCounter() (*DefaultTopicViewCounter, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	counter := &DefaultTopicViewCounter{
 		oddTopics:  make(map[int]*RWMutexCounterBucket),
 		evenTopics: make(map[int]*RWMutexCounterBucket),

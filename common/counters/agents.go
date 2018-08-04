@@ -15,7 +15,7 @@ type DefaultAgentViewCounter struct {
 }
 
 func NewDefaultAgentViewCounter() (*DefaultAgentViewCounter, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	var agentBuckets = make([]*RWMutexCounterBucket, len(agentMapEnum))
 	for bucketID, _ := range agentBuckets {
 		agentBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}

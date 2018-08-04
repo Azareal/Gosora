@@ -100,7 +100,7 @@ type DefaultLangViewCounter struct {
 }
 
 func NewDefaultLangViewCounter() (*DefaultLangViewCounter, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 
 	var langBuckets = make([]*RWMutexCounterBucket, len(langCodes))
 	for bucketID, _ := range langBuckets {

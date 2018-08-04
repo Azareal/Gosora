@@ -83,8 +83,7 @@ func PollResults(w http.ResponseWriter, r *http.Request, user common.User, sPoll
 	}
 
 	// TODO: Abstract this
-	acc := qgen.Builder.Accumulator()
-	rows, err := acc.Select("polls_options").Columns("votes").Where("pollID = ?").Orderby("option ASC").Query(poll.ID)
+	rows, err := qgen.NewAcc().Select("polls_options").Columns("votes").Where("pollID = ?").Orderby("option ASC").Query(poll.ID)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

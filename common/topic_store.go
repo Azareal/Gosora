@@ -51,7 +51,7 @@ type DefaultTopicStore struct {
 
 // NewDefaultTopicStore gives you a new instance of DefaultTopicStore
 func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
-	acc := qgen.Builder.Accumulator()
+	acc := qgen.NewAcc()
 	if cache == nil {
 		cache = NewNullTopicCache()
 	}

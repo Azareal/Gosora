@@ -25,7 +25,7 @@ var bbcodeQuotes *regexp.Regexp
 var bbcodeCode *regexp.Regexp
 
 func init() {
-	common.Plugins["bbcode"] = common.NewPlugin("bbcode", "BBCode", "Azareal", "http://github.com/Azareal", "", "", "", initBbcode, nil, deactivateBbcode, nil, nil)
+	common.Plugins.Add(&common.Plugin{UName: "bbcode", Name: "BBCode", Author: "Azareal", URL: "https://github.com/Azareal", Init: initBbcode, Deactivate: deactivateBbcode})
 }
 
 func initBbcode() error {

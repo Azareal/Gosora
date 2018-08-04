@@ -61,12 +61,20 @@ func (js *OttoPluginLang) AddPlugin(meta PluginMeta) (plugin *Plugin, err error)
 		}
 		return nil
 	}
-	var pluginActivate func() error
-	var pluginDeactivate func()
-	var pluginInstall func() error
-	var pluginUninstall func() error
 
-	plugin = NewPlugin(meta.UName, meta.Name, meta.Author, meta.URL, meta.Settings, meta.Tag, "ottojs", pluginInit, pluginActivate, pluginDeactivate, pluginInstall, pluginUninstall)
+	plugin = new(Plugin)
+	plugin.UName = meta.UName
+	plugin.Name = meta.Name
+	plugin.Author = meta.Author
+	plugin.URL = meta.URL
+	plugin.Settings = meta.Settings
+	plugin.Tag = meta.Tag
+	plugin.Type = "ottojs"
+	plugin.Init = pluginInit
+
+	// TODO: Implement plugin life cycle events
+
+	buildPlugin(plugin)
 
 	plugin.Data = script
 	return plugin, nil
