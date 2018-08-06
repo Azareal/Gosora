@@ -293,6 +293,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	h.Set("X-Frame-Options", "deny")
 	h.Set("X-XSS-Protection", "1; mode=block") // TODO: Remove when we add a CSP? CSP's are horrendously glitchy things, tread with caution before removing
 	// TODO: Set the content policy header
+	h.Set("X-Content-Type-Options", "nosniff")
 
 	return *usercpy, true
 }
