@@ -42,17 +42,18 @@ type StringList []string
 
 // ? - Should we allow users to upload .php or .go files? It could cause security issues. We could store them with a mangled extension to render them inert
 // TODO: Let admins manage this from the Control Panel
+// apng is commented out for now, as we have no way of re-encoding it into a smaller file
 var AllowedFileExts = StringList{
 	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", /*"apng",*/ // images
 
-	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", // text
+	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/ // text
 
 	"mp3", "mp4", "avi", "wmv", "webm", // video
 
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
 }
 var ImageFileExts = StringList{
-	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", "apng",
+	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", /* "apng",*/
 }
 var ArchiveFileExts = StringList{
 	"bz2", "zip", "gz", "7z", "tar", "cab",

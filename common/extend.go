@@ -12,6 +12,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"sync/atomic"
 
 	"../query_gen/lib"
 )
@@ -37,6 +38,28 @@ func buildPlugin(plugin *Plugin) {
 	plugin.Installed = false
 	plugin.Hooks = make(map[string]int)
 	plugin.Data = nil
+}
+
+var hookTableBox atomic.Value
+
+// ! HookTable is a work in progress, do not use it yet
+// TODO: Test how fast it is to indirect hooks off the hook table as opposed to using them normally or using an interface{} for the hooks
+// TODO: Can we filter the HookTable for each request down to only hooks the request actually uses?
+// TODO: Make the RunXHook functions methods on HookTable
+// TODO: Have plugins update hooks on a mutex guarded map and create a copy of that map in a serial global goroutine which gets thrown in the atomic.Value
+type HookTable struct {
+	Hooks          map[string][]func(interface{}) interface{}
+	Vhooks         map[string]func(...interface{}) interface{}
+	VhookSkippable map[string]func(...interface{}) (bool, RouteError)
+	Sshooks        map[string][]func(string) string
+	PreRenderHooks map[string][]func(http.ResponseWriter, *http.Request, *User, interface{}) bool
+
+	// For future use:
+	messageHooks map[string][]func(Message, PageInt, ...interface{}) interface{}
+}
+
+func init() {
+	hookTableBox.Store(new(HookTable))
 }
 
 // Hooks with a single argument. Is this redundant? Might be useful for inlining, as variadics aren't inlined? Are closures even inlined to begin with?
@@ -153,7 +176,8 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_panel_themes":            nil,
 	"pre_render_panel_modlogs":           nil,
 
-	"pre_render_error":          nil, // Note: This hook isn't run for a few errors whose templates are computed at startup and reused, such as InternalError. This hook is also not available in JS mode.
+	"pre_render_error": nil, // Note: This hook isn't run for a few errors whose templates are computed at startup and reused, such as InternalError. This hook is also not available in JS mode.
+	// ^-- I don't know if it's run for InternalError, but it isn't computed at startup anymore
 	"pre_render_security_error": nil,
 }
 
@@ -426,14 +450,21 @@ func InitPlugins() {
 
 // ? - Are the following functions racey?
 func RunHook(name string, data interface{}) interface{} {
-	for _, hook := range Hooks[name] {
-		data = hook(data)
+	hooks, ok := Hooks[name]
+	if ok {
+		for _, hook := range hooks {
+			data = hook(data)
+		}
 	}
 	return data
 }
 
 func RunHookNoreturn(name string, data interface{}) {
-	for _, hook := range Hooks[name] {
+	hooks, ok := Hooks[name]
+	if !ok {
+		return
+	}
+	for _, hook := range hooks {
 		_ = hook(data)
 	}
 }
@@ -479,24 +510,33 @@ func RunTaskHook(name string) error {
 
 // Trying to get a teeny bit of type-safety where-ever possible, especially for such a critical set of hooks
 func RunSshook(name string, data string) string {
-	for _, hook := range Sshooks[name] {
-		data = hook(data)
+	ssHooks, ok := Sshooks[name]
+	if ok {
+		for _, hook := range ssHooks {
+			data = hook(data)
+		}
 	}
 	return data
 }
 
 func RunPreRenderHook(name string, w http.ResponseWriter, r *http.Request, user *User, data interface{}) (halt bool) {
 	// This hook runs on ALL PreRender hooks
-	for _, hook := range PreRenderHooks["pre_render"] {
-		if hook(w, r, user, data) {
-			return true
+	preRenderHooks, ok := PreRenderHooks["pre_render"]
+	if ok {
+		for _, hook := range preRenderHooks {
+			if hook(w, r, user, data) {
+				return true
+			}
 		}
 	}
 
 	// The actual PreRender hook
-	for _, hook := range PreRenderHooks[name] {
-		if hook(w, r, user, data) {
-			return true
+	preRenderHooks, ok = PreRenderHooks[name]
+	if ok {
+		for _, hook := range preRenderHooks {
+			if hook(w, r, user, data) {
+				return true
+			}
 		}
 	}
 	return false
