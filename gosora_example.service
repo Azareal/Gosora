@@ -15,8 +15,10 @@ WorkingDirectory=/home/gosora
 # Make sure you manually run pre-run-linux before you start the service
 ExecStart=/home/gosora/Gosora
 
-# Let's hope this doesn't blow up on me
+# Let's hope these don't blow up on me
 ProtectSystem=full
+PrivateDevices=true
+PrivateUsers=true
 
 [Install]
 WantedBy=multi-user.target
