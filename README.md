@@ -67,9 +67,9 @@ On Windows, you might want to try the [GosoraBootstrapper](https://github.com/Az
 
 First, you will need to jump to the place where you want to put the code, we will use `/home/gosora` here, but if you want to use something else, then you'll have to modify the service file with your own path (but *never* in a folder where the files are automatically served by a webserver).
 
-If you place it in `/www/`, `/public_html/` or any similar folder, then there's a chance that your server might be compromised. Also, if you do modify the service file and things don't work, then you might want to try putting # in-front of the lines starting with PrivateUsers, PrivateDevices, and ProtectSystem.
+If you place it in `/www/`, `/public_html/` or any similar folder, then there's a chance that your server might be compromised.
 
-You can navigate to it by typing the following six commands into the console and hitting enter:
+You can navigate to your installation of Gosora by typing the following six commands into the console and hitting enter:
 
 cd /home/
 
@@ -206,6 +206,10 @@ gosora.exe
 ```
 
 I'm looking into minimising the number of go gets for the advanced build and to maybe remove the platform and database engine specific dependencies if possible for those who don't need them.
+
+Also, if you modify the service file for anything but changing the path and things don't work, then you might want to try putting # in-front of the lines starting with PrivateUsers, PrivateDevices, and ProtectSystem to see if that works.
+
+If it does, then please open a bug report, so I can look into why they're not working and procure a fix or disable the more problematic ones by default.
 
 
 # Updating the software
