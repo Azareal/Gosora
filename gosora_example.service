@@ -15,7 +15,7 @@ WorkingDirectory=/home/gosora
 # Make sure you manually run pre-run-linux before you start the service
 ExecStart=/home/gosora/Gosora
 
-# Let's hope these don't blow up on me
+# If things don't work for some reason, try putting # in-front of the following three lines until it does and open an issue on the bug tracker
 ProtectSystem=full
 PrivateDevices=true
 PrivateUsers=true
