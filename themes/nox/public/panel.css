@@ -55,7 +55,7 @@
 	padding-left: 24px;
 }
 .colstack_right .colstack_head {
-	margin-bottom: 4px;
+	margin-bottom: 5px;
 }
 .colstack_right .colstack_head h1 {
 	font-size: 21px;
@@ -123,6 +123,9 @@ button, .formbutton, .panel_right_button {
 }
 .panel_right_button {
 	margin-left: 2px;
+	padding: 5px;
+	padding-left: 6px;
+	padding-right: 6px;
 }
 .edit_button:after {
 	content: "{{index .Phrases "panel_edit_button_text"}}";
@@ -154,10 +157,64 @@ button, .formbutton, .panel_right_button {
 	stroke: rgb(125,125,125);
 }
 
+.rowlist.bgavatars {
+	display: grid;
+	grid-gap: 16px;
+	grid-row-gap: 0px;
+	grid-template-columns: repeat(3, 1fr);
+}
+.rowlist.bgavatars .rowitem {
+	display: flex;
+	flex-direction: column;
+	width: 180px;
+}
+.rowlist.bgavatars .bgsub, .rowlist.bgavatars .rowTitle {
+	margin-left: auto;
+	margin-right: auto;
+}
+.rowlist.bgavatars .bgsub {
+	border-radius: 32px;
+	height: 64px;
+	width: 64px;
+}
+.rowlist.bgavatars .rowTitle {
+	font-size: 18px;
+	margin-top: 4px;
+}
+
 #panel_setting .formlabel {
 	display: none;
 }
 #panel_setting textarea {
 	width: 100%;
 	height: 80px;
+}
+
+.panel_submitrow {
+	margin-top: 8px;
+}
+
+.panel_plugin_meta {
+	display: flex;
+	flex-direction: column;
+}
+.panel_plugin_meta br {
+	display: none;
+}
+.panel_plugin_meta small {
+	margin-left: 0px !important;
+	margin-top: 1px;
+}
+/* TODO: Switch out this hack for vertically aligning the buttons */
+/* margin-top: 10px; */
+#panel_plugins .to_right {
+	display: flex;
+}
+#panel_plugins .to_right .panel_right_button {
+	margin-top: auto;
+	margin-bottom: auto;
+}
+
+#panel_debug .grid_stat:not(.grid_stat_head) {
+	margin-bottom: 5px;
 }

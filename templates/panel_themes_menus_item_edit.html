@@ -8,7 +8,7 @@
 		<div class="rowitem"><h1>{{lang "panel_themes_menus_edit_head"}}</h1></div>
 	</div>
 	<form action="/panel/themes/menus/item/edit/submit/{{.Item.ID}}?session={{.CurrentUser.Session}}" method="post">
-		<div id="panel_themes_menu_item_edit" class="colstack_item">
+		<div id="panel_themes_menu_item_edit" class="colstack_item the_form">
 			{{/** TODO: Let an admin move a menu item from one menu to another? **/}}
 			<div class="formrow">
 				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_name"}}</a></div>
