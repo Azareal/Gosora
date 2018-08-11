@@ -41,6 +41,9 @@
 	display: flex;
 }
 
+#panel_users .panel_tag {
+	float: right;
+}
 #panel_users .ban_button {
 	font-size: 10px;
 	float: none;

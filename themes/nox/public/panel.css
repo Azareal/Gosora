@@ -97,18 +97,30 @@
 
 input, select, textarea {
 	background: rgb(107,107,107);
-	color: rgb(217,217,217);
+	color: rgb(197,197,197);
 }
+.colstack_right input, .colstack_right select, .colstack_right textarea {
+	padding: 4px;
+	padding-bottom: 3px;
+	padding-left: 6px;
+	padding-right: 6px;
+}
+.colstack_right input {
+	padding-left: 6px;
+	padding-right: 6px;
+}
+
 input:focus, select:focus, textarea:focus {
 	outline: 1px solid rgb(137,137,137);
+	color: rgb(207,207,207);
 }
 /* ? - The background properties need to be redeclared for the new image or it won't work properly */
 input {
 	background-image: url(./fa-svg/pencil-alt-light.svg);
 	background-size: 12px;
 	background-repeat: no-repeat;
-	background-position: right 10px bottom 9px;
-    background-position-x: right 10px;
+	background-position: right 9px bottom 7px;
+    background-position-x: right 9px;
 }
 input::placeholder, textarea::placeholder {
 	color: rgb(167,167,167);
@@ -121,6 +133,9 @@ button, .formbutton {
 button, .formbutton, .panel_right_button {
 	background: rgb(100,100,200);
 }
+/*.formlabel {
+	font-size: 17px;
+}*/
 .panel_right_button {
 	margin-left: 2px;
 	padding: 5px;
@@ -190,8 +205,28 @@ button, .formbutton, .panel_right_button {
 	height: 80px;
 }
 
+#panel_users .rowitem .to_right {
+	order: 0;
+	margin-right: auto;
+}
+#panel_users .rowitem .profile_url {
+	order: 1;
+}
+#panel_users .rowitem .panel_floater {
+	order: 2;
+}
+
 .panel_submitrow {
 	margin-top: 8px;
+}
+.colstack_right .colstack_item:not(.colstack_head):not(.rowhead).panel_submitrow .rowitem {
+	padding-bottom: 14px;
+}
+.panel_submitrow .rowitem button:first-child {
+	margin-left: auto;
+}
+.panel_submitrow .rowitem button:last-child {
+	margin-right: auto;
 }
 
 .panel_plugin_meta {

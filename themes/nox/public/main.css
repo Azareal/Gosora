@@ -195,6 +195,8 @@ h1, h2, h3, h4, h5 {
 .mod_floater_options {
 	width: 100%;
 	margin-right: 10px;
+	padding: 4px;
+	margin-bottom: 0px;
 }
 
 .rowhead, .opthead, .colstack_head {
@@ -433,6 +435,11 @@ input {
 	padding: 5px;
 	padding-bottom: 3px;
 	font-size: 16px;
+}
+input, select {
+	/*margin-left: 4px;*/
+	margin-left: 3px;
+	margin-bottom: 4px;
 }
 button, .formbutton, .panel_right_button {
 	background: rgb(110,110,210);
