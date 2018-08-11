@@ -138,6 +138,9 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 		}
 	}
 
+	//h := w.Header()
+	//h.Set("Content-Security-Policy", "default-src 'self'")
+
 	// TODO: GDPR. Add a global control panel notice warning the admins of staff members who don't have 2FA enabled
 	stats.Users = Users.GlobalCount()
 	stats.Groups = Groups.GlobalCount()

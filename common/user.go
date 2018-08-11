@@ -78,6 +78,39 @@ type WsJSONUser struct {
 	Liked  int
 }
 
+func (user *User) Me() *MeUser {
+	var groupID = user.Group
+	if user.TempGroup != 0 {
+		groupID = user.TempGroup
+	}
+	return &MeUser{user.ID, user.Link, user.Name, groupID, user.Active, user.IsMod, user.IsSuperMod, user.IsAdmin, user.IsBanned, user.Session, user.Avatar, user.MicroAvatar, user.Tag, user.Level, user.Score, user.Liked}
+}
+
+// For when users need to see their own data, I've omitted some redundancies and less useful items, so we don't wind up sending them on every request
+type MeUser struct {
+	ID         int
+	Link       string
+	Name       string
+	Group      int
+	Active     bool
+	IsMod      bool
+	IsSuperMod bool
+	IsAdmin    bool
+	IsBanned   bool
+
+	// TODO: Implement these as copies (might already be the case for Perms, but we'll want to look at it's definition anyway)
+	//Perms       Perms
+	//PluginPerms map[string]bool
+
+	Session     string
+	Avatar      string
+	MicroAvatar string
+	Tag         string
+	Level       int
+	Score       int
+	Liked       int
+}
+
 type UserStmts struct {
 	activate        *sql.Stmt
 	changeGroup     *sql.Stmt

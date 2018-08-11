@@ -644,7 +644,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			"after PreRoute\n" +
 			"routeMapEnum: ", routeMapEnum)
 	}
+
+	router.routeSwitch(w, req, user, prefix, extraData)
+}
 	
+func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user common.User, prefix string, extraData string) {
 	var err common.RouteError
 	switch(prefix) {` + out + `
 		/*case "/sitemaps": // TODO: Count these views

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -218,5 +219,37 @@ func SitemapTopic(w http.ResponseWriter, r *http.Request, page int) common.Route
 func SitemapUsers(w http.ResponseWriter, r *http.Request) common.RouteError {
 	writeXMLHeader(w, r)
 	w.Write([]byte("<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"))
+	return nil
+}
+
+type JsonMe struct {
+	User *common.MeUser
+	Site MeSite
+}
+
+// We don't want to expose too much information about the site, so we'll make this a small subset of common.site
+type MeSite struct {
+	URL            string
+	MaxRequestSize int
+}
+
+// APIMe returns information about the current logged-in user
+// TODO: Find some way to stop intermediaries from doing compression to avoid the BREACH attack
+// TODO: Decouple site settings into a different API? I'd like to avoid having too many requests, if possible, maybe we can use a different name for this?
+func APIMe(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
+	w.Header().Set("Content-Type", "application/json")
+	// We don't want an intermediary accidentally caching this
+	// TODO: Use this header anywhere with a user check?
+	w.Header().Set("Cache-Control", "private")
+
+	me := JsonMe{(&user).Me(), MeSite{common.Site.URL, common.Site.MaxRequestSize}}
+
+	jsonBytes, err := json.Marshal(me)
+	if err != nil {
+		return common.InternalErrorJS(err, w, r)
+	}
+	w.Write(jsonBytes)
+
 	return nil
 }

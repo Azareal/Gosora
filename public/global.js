@@ -7,6 +7,7 @@ var alertList = [];
 var alertCount = 0;
 var moreTopicCount = 0;
 var conn;
+var me = {};
 var selectedTopics = [];
 var attachItemCallback = function(){}
 var hooks = {
@@ -196,7 +197,7 @@ function runWebSockets() {
 		console.log("The WebSockets connection was opened");
 		conn.send("page " + document.location.pathname + '\r');
 		// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
-		if(loggedIn) {
+		if(me.User.ID > 0) {
 			Notification.requestPermission();
 		}
 	}
@@ -258,14 +259,11 @@ function runWebSockets() {
 		for(var i = 0; i < messages.length; i++) {
 			let message = messages[i];
 			//console.log("Message: ",message);
+			let msgblocks = SplitN(message," ",3);
+			if(msgblocks.length < 3) continue;
 			if(message.startsWith("set ")) {
-				//msgblocks = message.split(' ',3);
-				let msgblocks = SplitN(message," ",3);
-				if(msgblocks.length < 3) continue;
 				document.querySelector(msgblocks[1]).innerHTML = msgblocks[2];
 			} else if(message.startsWith("set-class ")) {
-				let msgblocks = SplitN(message," ",3);
-				if(msgblocks.length < 3) continue;
 				document.querySelector(msgblocks[1]).className = msgblocks[2];
 			}
 		}
@@ -278,7 +276,7 @@ function len(item) {
 }
 
 function loadScript(name, callback) {
-	let url = "//" +siteURL+"/static/"+name
+	let url = "//" +me.Site.URL+"/static/"+name
 	$.getScript(url)
 		.done(callback)
 		.fail((e,xhr,settings,ex) => {
@@ -296,7 +294,7 @@ function DoNothingButPassBack(item) {
 }
 
 function fetchPhrases() {
-	fetch("//" +siteURL+"/api/phrases/?query=status,topic_list")
+	fetch("//" +me.Site.URL+"/api/phrases/?query=status,topic_list")
 		.then((resp) => resp.json())
 		.then((data) => {
 			console.log("loaded phrase endpoint data");
@@ -328,29 +326,44 @@ function fetchPhrases() {
 		});
 }
 
-$(document).ready(function(){
-	runHook("start_init");
-	if(loggedIn) {
-		let toLoad = 1;
-		loadScript("template_topics_topic.js", () => {
-			console.log("Loaded template_topics_topic.js");
-			toLoad--;
-			if(toLoad===0) fetchPhrases();
+(() => {
+	runHook("pre_me");
+	fetch("/api/me/")
+		.then((resp) => resp.json())
+		.then((data) => {
+			console.log("loaded me endpoint data");
+			console.log("data:",data);
+			me = data;
+			runHook("pre_init");
+
+			if(me.User.ID > 0) {
+				let toLoad = 1;
+				loadScript("template_topics_topic.js", () => {
+					console.log("Loaded template_topics_topic.js");
+					toLoad--;
+					if(toLoad===0) fetchPhrases();
+				});
+			}
+
+			// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
+			loadScript("template_alert.js", () => {
+				console.log("Loaded template_alert.js");
+				alertsInitted = true;
+				var alertMenuList = document.getElementsByClassName("menu_alerts");
+				for(var i = 0; i < alertMenuList.length; i++) {
+					loadAlerts(alertMenuList[i]);
+				}
+			});
+
+			if(window["WebSocket"]) runWebSockets();
+			else conn = false;
+
+			$(document).ready(mainInit);
 		});
-	}
+})();
 
-	// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
-	loadScript("template_alert.js", () => {
-		console.log("Loaded template_alert.js");
-		alertsInitted = true;
-		var alertMenuList = document.getElementsByClassName("menu_alerts");
-		for(var i = 0; i < alertMenuList.length; i++) {
-			loadAlerts(alertMenuList[i]);
-		}
-	});
-
-	if(window["WebSocket"]) runWebSockets();
-	else conn = false;
+function mainInit(){
+	runHook("start_init");
 
 	$(".more_topics").click((event) => {
 		event.preventDefault();
@@ -484,7 +497,7 @@ $(document).ready(function(){
 			let formAction = $(this).closest('a').attr("href");
 			//console.log("Form Action:", formAction);
 			$.ajax({
-				url: formAction + "?session=" + session,
+				url: formAction + "?session=" + me.User.Session,
 				type: "POST",
 				dataType: "json",
 				error: ajaxError,
@@ -559,7 +572,7 @@ $(document).ready(function(){
 			var formAction = $(this).closest('a').attr("href");
 			//console.log("Form Action:", formAction);
 			//console.log(outData);
-			$.ajax({ url: formAction + "?session=" + session, type:"POST", dataType:"json", data: outData, error: ajaxError });
+			$.ajax({ url: formAction + "?session=" + me.User.Session, type:"POST", dataType:"json", data: outData, error: ajaxError });
 			blockParent.find('.hide_on_edit').show();
 			blockParent.find('.show_on_edit').hide();
 		});
@@ -654,8 +667,8 @@ $(document).ready(function(){
 							console.log("content.value", content.value);
 							
 							let attachItem;
-							if(content.value == "") attachItem = "//" + siteURL + "/attachs/" + hash + "." + ext;
-							else attachItem = "\r\n//" + siteURL + "/attachs/" + hash + "." + ext;
+							if(content.value == "") attachItem = "//" + me.Site.URL + "/attachs/" + hash + "." + ext;
+							else attachItem = "\r\n//" + me.Site.URL + "/attachs/" + hash + "." + ext;
 							content.value = content.value + attachItem;
 							console.log("content.value", content.value);
 						
@@ -667,9 +680,9 @@ $(document).ready(function(){
 			}
 			reader.readAsDataURL(files[i]);
 		}
-		if(totalSize>maxRequestSize) {
+		if(totalSize > me.Site.MaxRequestSize) {
 			// TODO: Use a notice instead
-			alert("You can't upload this much data at once, max: " + maxRequestSize);
+			alert("You can't upload this much data at once, max: " + me.Site.MaxRequestSize);
 		}
 	}
 
@@ -696,7 +709,7 @@ $(document).ready(function(){
 		});
 
 		let bulkActionSender = function(action, selectedTopics, fragBit) {
-			let url = "/topic/"+action+"/submit/"+fragBit+"?session=" + session;
+			let url = "/topic/"+action+"/submit/"+fragBit+"?session=" + me.User.Session;
 			$.ajax({
 				url: url,
 				type: "POST",
@@ -746,7 +759,7 @@ $(document).ready(function(){
 	$("#themeSelectorSelect").change(function(){
 		console.log("Changing the theme to " + this.options[this.selectedIndex].getAttribute("val"));
 		$.ajax({
-			url: this.form.getAttribute("action") + "?session=" + session,
+			url: this.form.getAttribute("action") + "?session=" + me.User.Session,
 			type: "POST",
 			dataType: "json",
 			data: { "newTheme": this.options[this.selectedIndex].getAttribute("val"), isJs: "1" },
@@ -825,4 +838,4 @@ $(document).ready(function(){
 	});
 
 	runHook("end_init");
-});
+};
