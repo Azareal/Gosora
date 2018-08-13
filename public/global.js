@@ -276,7 +276,7 @@ function len(item) {
 }
 
 function loadScript(name, callback) {
-	let url = "//" +me.Site.URL+"/static/"+name
+	let url = "/static/"+name
 	$.getScript(url)
 		.done(callback)
 		.fail((e,xhr,settings,ex) => {
@@ -294,7 +294,7 @@ function DoNothingButPassBack(item) {
 }
 
 function fetchPhrases() {
-	fetch("//" +me.Site.URL+"/api/phrases/?query=status,topic_list")
+	fetch("/api/phrases/?query=status,topic_list")
 		.then((resp) => resp.json())
 		.then((data) => {
 			console.log("loaded phrase endpoint data");
@@ -327,7 +327,9 @@ function fetchPhrases() {
 }
 
 (() => {
-	runHook("pre_me");
+	runHook("pre_iife");
+	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
+	
 	fetch("/api/me/")
 		.then((resp) => resp.json())
 		.then((data) => {
@@ -335,15 +337,6 @@ function fetchPhrases() {
 			console.log("data:",data);
 			me = data;
 			runHook("pre_init");
-
-			if(me.User.ID > 0) {
-				let toLoad = 1;
-				loadScript("template_topics_topic.js", () => {
-					console.log("Loaded template_topics_topic.js");
-					toLoad--;
-					if(toLoad===0) fetchPhrases();
-				});
-			}
 
 			// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
 			loadScript("template_alert.js", () => {
@@ -360,6 +353,15 @@ function fetchPhrases() {
 
 			$(document).ready(mainInit);
 		});
+	
+	if(loggedIn) {
+		let toLoad = 1;
+		loadScript("template_topics_topic.js", () => {
+			console.log("Loaded template_topics_topic.js");
+			toLoad--;
+			if(toLoad===0) fetchPhrases();
+		});
+	}
 })();
 
 function mainInit(){
@@ -667,8 +669,8 @@ function mainInit(){
 							console.log("content.value", content.value);
 							
 							let attachItem;
-							if(content.value == "") attachItem = "//" + me.Site.URL + "/attachs/" + hash + "." + ext;
-							else attachItem = "\r\n//" + me.Site.URL + "/attachs/" + hash + "." + ext;
+							if(content.value == "") attachItem = "//" + window.location.host + "/attachs/" + hash + "." + ext;
+							else attachItem = "\r\n//" + window.location.host + "/attachs/" + hash + "." + ext;
 							content.value = content.value + attachItem;
 							console.log("content.value", content.value);
 						

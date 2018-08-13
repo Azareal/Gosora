@@ -11,6 +11,7 @@
 		{{range .Header.Scripts}}
 		<script type="text/javascript" src="/static/{{.}}"></script>
 		{{end}}
+		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}" />
 		<script type="text/javascript" src="/static/global.js"></script>
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
 		{{if .Header.MetaDesc}}<meta name="description" content="{{.Header.MetaDesc}}" />{{end}}

@@ -229,7 +229,6 @@ type JsonMe struct {
 
 // We don't want to expose too much information about the site, so we'll make this a small subset of common.site
 type MeSite struct {
-	URL            string
 	MaxRequestSize int
 }
 
@@ -243,7 +242,7 @@ func APIMe(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	// TODO: Use this header anywhere with a user check?
 	w.Header().Set("Cache-Control", "private")
 
-	me := JsonMe{(&user).Me(), MeSite{common.Site.URL, common.Site.MaxRequestSize}}
+	me := JsonMe{(&user).Me(), MeSite{common.Site.MaxRequestSize}}
 
 	jsonBytes, err := json.Marshal(me)
 	if err != nil {
