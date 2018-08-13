@@ -27,7 +27,7 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	h := w.Header()
 
 	// Surely, there's a more efficient way of doing this?
-	t, err := time.Parse(http.TimeFormat, h.Get("If-Modified-Since"))
+	t, err := time.Parse(http.TimeFormat, r.Header.Get("If-Modified-Since"))
 	if err == nil && file.Info.ModTime().Before(t.Add(1*time.Second)) {
 		w.WriteHeader(http.StatusNotModified)
 		return
@@ -36,7 +36,8 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	h.Set("Content-Type", file.Mimetype)
 	h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
 	h.Set("Vary", "Accept-Encoding")
-	if strings.Contains(h.Get("Accept-Encoding"), "gzip") {
+
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		h.Set("Content-Encoding", "gzip")
 		h.Set("Content-Length", strconv.FormatInt(file.GzipLength, 10))
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?

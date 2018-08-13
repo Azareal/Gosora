@@ -125,8 +125,8 @@ function fetchPhrases() {
 (() => {
 	runInitHook("pre_iife");
 	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
-	
-	fetch("/api/me/")
+	if(loggedIn) {
+		fetch("/api/me/")
 		.then((resp) => resp.json())
 		.then((data) => {
 			console.log("loaded me endpoint data");
@@ -134,13 +134,15 @@ function fetchPhrases() {
 			me = data;
 			runInitHook("pre_init");
 		});
-	
-	if(loggedIn) {
+		
 		let toLoad = 1;
 		loadScript("template_topics_topic.js", () => {
 			console.log("Loaded template_topics_topic.js");
 			toLoad--;
 			if(toLoad===0) fetchPhrases();
 		});
+	} else {
+		me = {User:{ID:0,Session:""},Site:{"MaxRequestSize":0}};
+		runInitHook("pre_init");
 	}
 })();
