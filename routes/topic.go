@@ -71,9 +71,6 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	}
 	header.Title = topic.Title
 	header.Zone = "view_topic"
-	// TODO: Only include these on pages with polls
-	header.AddSheet("chartist/chartist.min.css")
-	header.AddScript("chartist/chartist.min.js")
 
 	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")
@@ -97,6 +94,8 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 			return common.InternalError(err, w, r)
 		}
 		poll = pPoll.Copy()
+		header.AddSheet("chartist/chartist.min.css")
+		header.AddScript("chartist/chartist.min.js")
 	}
 
 	if topic.LikeCount > 0 && user.Liked > 0 {
