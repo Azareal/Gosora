@@ -101,10 +101,17 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	return nil
 }
 
+// TODO: Remove this line after we move routeAPIPhrases to the routes package
+var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(common.Day))
+
 // TODO: Be careful with exposing the panel phrases here, maybe move them into a different namespace? We also need to educate the admin that phrases aren't necessarily secret
+// TODO: Move to the routes package
 func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
-	w.Header().Set("Content-Type", "application/json")
+	h := w.Header()
+	h.Set("Content-Type", "application/json")
+	h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
+
 	err := r.ParseForm()
 	if err != nil {
 		return common.PreErrorJS("Bad Form", w, r)

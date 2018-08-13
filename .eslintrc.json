@@ -22,7 +22,10 @@
     },
 	"globals": {
 		"$": true,
-		"session": true,
-		"siteURL": true
+        "addHook": true,
+        "runHook": true,
+        "addInitHook": true,
+        "runInitHook": true,
+        "loadScript": true
 	}
 }

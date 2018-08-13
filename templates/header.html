@@ -6,12 +6,13 @@
 		{{range .Header.Stylesheets}}
 		<link href="/static/{{.}}" rel="stylesheet" type="text/css">
 		{{end}}
+		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}" />
+		<script type="text/javascript" src="/static/init.js"></script>
 		<script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
 		<script type="text/javascript" src="/static/chartist/chartist.min.js"></script>
 		{{range .Header.Scripts}}
 		<script type="text/javascript" src="/static/{{.}}"></script>
 		{{end}}
-		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}" />
 		<script type="text/javascript" src="/static/global.js"></script>
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
 		{{if .Header.MetaDesc}}<meta name="description" content="{{.Header.MetaDesc}}" />{{end}}

@@ -758,7 +758,7 @@ func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
 		hostname = strings.Split(Site.URL, ":")[0]
 		// ?- Test this as I'm not sure it'll do what it should. If someone's running SSL on port 80 or non-SSL on port 443 then... Well... They're in far worse trouble than this...
 		port = Site.Port
-		if scheme == "" && Site.EnableSsl {
+		if Site.EnableSsl {
 			scheme = "https"
 		}
 	}

@@ -1,31 +1,14 @@
 'use strict';
 var formVars = {};
-var tmplInits = {};
-var tmplPhrases = []; // [key] array of phrases indexed by order of use
-var phraseBox = {};
 var alertList = [];
 var alertCount = 0;
 var moreTopicCount = 0;
 var conn;
-var me = {};
 var selectedTopics = [];
 var attachItemCallback = function(){}
-var hooks = {
-	"start_init": [],
-	"end_init": [],
-};
 
 // Topic move
 var forumToMoveTo = 0;
-
-function runHook(name, ...args) {
-	if(!(name in hooks)) return;
-
-	let hook = hooks[name];
-	for (const callback in hook) {
-		callback(...args);
-	}
-}
 
 // TODO: Write a friendlier error handler which uses a .notice or something, we could have a specialised one for alerts
 function ajaxError(xhr,status,errstr) {
@@ -193,6 +176,10 @@ function runWebSockets() {
 		conn = new WebSocket("wss://" + document.location.host + "/ws/");
 	} else conn = new WebSocket("ws://" + document.location.host + "/ws/");
 
+	conn.onerror = (err) => {
+		console.log(err);
+	}
+
 	conn.onopen = () => {
 		console.log("The WebSockets connection was opened");
 		conn.send("page " + document.location.pathname + '\r');
@@ -201,10 +188,12 @@ function runWebSockets() {
 			Notification.requestPermission();
 		}
 	}
+
 	conn.onclose = () => {
 		conn = false;
 		console.log("The WebSockets connection was closed");
 	}
+
 	conn.onmessage = (event) => {
 		//console.log("WSMessage:", event.data);
 		if(event.data[0] == "{") {
@@ -270,102 +259,29 @@ function runWebSockets() {
 	}
 }
 
-// Temporary hack for templates
-function len(item) {
-	return item.length;
-}
-
-function loadScript(name, callback) {
-	let url = "/static/"+name
-	$.getScript(url)
-		.done(callback)
-		.fail((e,xhr,settings,ex) => {
-			console.log("Unable to get script '"+url+"'");
-			console.log("e: ", e);
-			console.log("xhr: ", xhr);
-			console.log("settings: ", settings);
-			console.log("ex: ",ex);
-			console.trace();
-		});
-}
-
-function DoNothingButPassBack(item) {
-	return item;
-}
-
-function fetchPhrases() {
-	fetch("/api/phrases/?query=status,topic_list")
-		.then((resp) => resp.json())
-		.then((data) => {
-			console.log("loaded phrase endpoint data");
-			console.log("data:",data);
-			Object.keys(tmplInits).forEach((key) => {
-				let phrases = [];
-				let tmplInit = tmplInits[key];
-				for(let phraseName of tmplInit) {
-					phrases.push(data[phraseName]);
-				}
-				console.log("Adding phrases");
-				console.log("key:",key);
-				console.log("phrases:",phrases);
-				tmplPhrases[key] = phrases;
-			});
-
-			let prefixes = {};
-			Object.keys(data).forEach((key) => {
-				let prefix = key.split(".")[0];
-				if(prefixes[prefix]===undefined) {
-					prefixes[prefix] = {};
-				}
-				prefixes[prefix][key] = data[key];
-			});
-			Object.keys(prefixes).forEach((prefix) => {
-				console.log("adding phrase prefix '"+prefix+"' to box");
-				phraseBox[prefix] = prefixes[prefix];
-			});
-		});
-}
-
 (() => {
-	runHook("pre_iife");
-	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
-	
-	fetch("/api/me/")
-		.then((resp) => resp.json())
-		.then((data) => {
-			console.log("loaded me endpoint data");
-			console.log("data:",data);
-			me = data;
-			runHook("pre_init");
-
-			// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
-			loadScript("template_alert.js", () => {
-				console.log("Loaded template_alert.js");
+	addInitHook("pre_init", () => {
+		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
+		loadScript("template_alert.js", () => {
+			console.log("Loaded template_alert.js");
+			$(document).ready(() => {
 				alertsInitted = true;
 				var alertMenuList = document.getElementsByClassName("menu_alerts");
 				for(var i = 0; i < alertMenuList.length; i++) {
 					loadAlerts(alertMenuList[i]);
 				}
 			});
-
-			if(window["WebSocket"]) runWebSockets();
-			else conn = false;
-
-			$(document).ready(mainInit);
 		});
-	
-	if(loggedIn) {
-		let toLoad = 1;
-		loadScript("template_topics_topic.js", () => {
-			console.log("Loaded template_topics_topic.js");
-			toLoad--;
-			if(toLoad===0) fetchPhrases();
-		});
-	}
+
+		if(window["WebSocket"]) runWebSockets();
+		else conn = false;
+
+		$(document).ready(mainInit);
+	});
 })();
 
 function mainInit(){
-	runHook("start_init");
+	runInitHook("start_init");
 
 	$(".more_topics").click((event) => {
 		event.preventDefault();
@@ -839,5 +755,5 @@ function mainInit(){
 		})
 	});
 
-	runHook("end_init");
+	runInitHook("end_init");
 };
