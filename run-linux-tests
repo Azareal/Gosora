@@ -1,4 +1,5 @@
 echo "Generating the dynamic code"
 go generate
 echo "Running tests"
+go build -o mssqlBuild -tags mssql
 go test -coverprofile c.out
