@@ -1,4 +1,4 @@
-CREATE TABLE `moderation_logs` (
+CREATE TABLE "moderation_logs" (
 	`action` varchar (100) not null,
 	`elementID` int not null,
 	`elementType` varchar (100) not null,

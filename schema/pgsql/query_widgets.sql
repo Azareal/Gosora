@@ -1,4 +1,4 @@
-CREATE TABLE `widgets` (
+CREATE TABLE "widgets" (
 	`position` int not null,
 	`side` varchar (100) not null,
 	`type` varchar (100) not null,

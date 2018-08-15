@@ -33,56 +33,56 @@ func _gen_pgsql() (err error) {
 	common.DebugLog("Building the generated statements")
 	
 	common.DebugLog("Preparing addForumPermsToForum statement.")
-	stmts.addForumPermsToForum, err = db.Prepare("INSERT INTO "forums_permissions"("gid","fid","preset","permissions") VALUES (?,?,?,?)")
+	stmts.addForumPermsToForum, err = db.Prepare("INSERT INTO \"forums_permissions\"(\"gid\",\"fid\",\"preset\",\"permissions\") VALUES (?,?,?,?)")
 	if err != nil {
 		log.Print("Error in addForumPermsToForum statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing addTheme statement.")
-	stmts.addTheme, err = db.Prepare("INSERT INTO "themes"("uname","default") VALUES (?,?)")
+	stmts.addTheme, err = db.Prepare("INSERT INTO \"themes\"(\"uname\",\"default\") VALUES (?,?)")
 	if err != nil {
 		log.Print("Error in addTheme statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing updateTheme statement.")
-	stmts.updateTheme, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ?")
+	stmts.updateTheme, err = db.Prepare("UPDATE \"themes\" SET `default` = ? WHERE `uname` = ?")
 	if err != nil {
 		log.Print("Error in updateTheme statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing updateGroupPerms statement.")
-	stmts.updateGroupPerms, err = db.Prepare("UPDATE `users_groups` SET `permissions` = ? WHERE `gid` = ?")
+	stmts.updateGroupPerms, err = db.Prepare("UPDATE \"users_groups\" SET `permissions` = ? WHERE `gid` = ?")
 	if err != nil {
 		log.Print("Error in updateGroupPerms statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing updateGroup statement.")
-	stmts.updateGroup, err = db.Prepare("UPDATE `users_groups` SET `name` = ?,`tag` = ? WHERE `gid` = ?")
+	stmts.updateGroup, err = db.Prepare("UPDATE \"users_groups\" SET `name` = ?,`tag` = ? WHERE `gid` = ?")
 	if err != nil {
 		log.Print("Error in updateGroup statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing updateEmail statement.")
-	stmts.updateEmail, err = db.Prepare("UPDATE `emails` SET `email` = ?,`uid` = ?,`validated` = ?,`token` = ? WHERE `email` = ?")
+	stmts.updateEmail, err = db.Prepare("UPDATE \"emails\" SET `email` = ?,`uid` = ?,`validated` = ?,`token` = ? WHERE `email` = ?")
 	if err != nil {
 		log.Print("Error in updateEmail statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing setTempGroup statement.")
-	stmts.setTempGroup, err = db.Prepare("UPDATE `users` SET `temp_group` = ? WHERE `uid` = ?")
+	stmts.setTempGroup, err = db.Prepare("UPDATE \"users\" SET `temp_group` = ? WHERE `uid` = ?")
 	if err != nil {
 		log.Print("Error in setTempGroup statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing bumpSync statement.")
-	stmts.bumpSync, err = db.Prepare("UPDATE `sync` SET `last_update` = LOCALTIMESTAMP()")
+	stmts.bumpSync, err = db.Prepare("UPDATE \"sync\" SET `last_update` = LOCALTIMESTAMP()")
 	if err != nil {
 		log.Print("Error in bumpSync statement.")
 		return err

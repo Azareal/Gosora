@@ -1,36 +1,39 @@
 "use strict"
 
 $(document).ready(function(){
-	// Is there we way we can append instead? Maybe, an editor plugin?
-	attachItemCallback = function(attachItem) {
-		let currentContent = $('#input_content').trumbowyg('html');
-		$('#input_content').trumbowyg('html', currentContent);
-	}
+	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
+	if(loggedIn) {
+		// Is there we way we can append instead? Maybe, an editor plugin?
+		attachItemCallback = function(attachItem) {
+			let currentContent = $('#input_content').trumbowyg('html');
+			$('#input_content').trumbowyg('html', currentContent);
+		}
 	
-	$(".topic_name_row").click(function(){
-		$(".topic_create_form").addClass("selectedInput");
-	});
-	//$.trumbowyg.svgPath = false;
+		$(".topic_name_row").click(function(){
+			$(".topic_create_form").addClass("selectedInput");
+		});
+		//$.trumbowyg.svgPath = false;
 
-	// TODO: Bind this to the viewport resize event
-	var btnlist = [];
-	if(document.documentElement.clientWidth > 550) {
-		btnlist = [['viewHTML'],['undo','redo'],['formatting'],['strong','em','del'],['link'],['insertImage'],['unorderedList','orderedList'],['removeformat']];
-	} else {
-		btnlist = [['viewHTML'],['strong','em','del'],['link'],['insertImage'],['unorderedList','orderedList'],['removeformat']];
-	}
+		// TODO: Bind this to the viewport resize event
+		var btnlist = [];
+		if(document.documentElement.clientWidth > 550) {
+			btnlist = [['viewHTML'],['undo','redo'],['formatting'],['strong','em','del'],['link'],['insertImage'],['unorderedList','orderedList'],['removeformat']];
+		} else {
+			btnlist = [['viewHTML'],['strong','em','del'],['link'],['insertImage'],['unorderedList','orderedList'],['removeformat']];
+		}
 	
-	$('.topic_create_form #input_content').trumbowyg({
-		btns: btnlist,
-	});
-	$('.topic_reply_form #input_content').trumbowyg({
-		btns: btnlist,
-		autogrow: true,
-	});
-	$('#profile_comments_form .topic_reply_form .input_content').trumbowyg({
-		btns: [['viewHTML'],['strong','em','del'],['link'],['insertImage'],['removeformat']],
-		autogrow: true,
-	});
+		$('.topic_create_form #input_content').trumbowyg({
+			btns: btnlist,
+		});
+		$('.topic_reply_form #input_content').trumbowyg({
+			btns: btnlist,
+			autogrow: true,
+		});
+		$('#profile_comments_form .topic_reply_form .input_content').trumbowyg({
+			btns: [['viewHTML'],['strong','em','del'],['link'],['insertImage'],['removeformat']],
+			autogrow: true,
+		});
+	}
 
 	// TODO: Refactor this to use `each` less
 	$('.button_menu').click(function(){

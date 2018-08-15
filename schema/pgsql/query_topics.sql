@@ -1,4 +1,4 @@
-CREATE TABLE `topics` (
+CREATE TABLE "topics" (
 	`tid` serial not null,
 	`title` varchar (100) not null,
 	`content` text not null,

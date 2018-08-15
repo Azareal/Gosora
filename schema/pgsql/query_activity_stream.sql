@@ -1,4 +1,4 @@
-CREATE TABLE `activity_stream` (
+CREATE TABLE "activity_stream" (
 	`asid` serial not null,
 	`actor` int not null,
 	`targetUser` int not null,

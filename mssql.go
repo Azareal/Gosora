@@ -3,7 +3,7 @@
 /*
 *
 *	Gosora MSSQL Interface
-*	Copyright Azareal 2016 - 2018
+*	Copyright Azareal 2016 - 2019
 *
  */
 package main
@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/url"
 
+	"./common"
 	"./query_gen/lib"
 	_ "github.com/denisenkom/go-mssqldb"
 )
@@ -27,11 +28,11 @@ func init() {
 func initMSSQL() (err error) {
 	// TODO: Move this bit to the query gen lib
 	query := url.Values{}
-	query.Add("database", dbConfig.Dbname)
+	query.Add("database", common.DbConfig.Dbname)
 	u := &url.URL{
 		Scheme:   "sqlserver",
-		User:     url.UserPassword(dbConfig.Username, dbConfig.Password),
-		Host:     dbConfig.Host + ":" + dbConfig.Port,
+		User:     url.UserPassword(common.DbConfig.Username, common.DbConfig.Password),
+		Host:     common.DbConfig.Host + ":" + common.DbConfig.Port,
 		Path:     dbInstance,
 		RawQuery: query.Encode(),
 	}
@@ -72,42 +73,42 @@ func initMSSQL() (err error) {
 	}
 
 	// TODO: Is there a less noisy way of doing this for tests?
-	log.Print("Preparing getActivityFeedByWatcher statement.")
-	getActivityFeedByWatcherStmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM [activity_stream_matches] INNER JOIN [activity_stream] ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE [watcher] = ? ORDER BY activity_stream.asid DESC OFFSET 0 ROWS FETCH NEXT 8 ROWS ONLY")
+	/*log.Print("Preparing getActivityFeedByWatcher statement.")
+	stmts.getActivityFeedByWatcherStmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM [activity_stream_matches] INNER JOIN [activity_stream] ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE [watcher] = ? ORDER BY activity_stream.asid DESC OFFSET 0 ROWS FETCH NEXT 8 ROWS ONLY")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing getActivityCountByWatcher statement.")
-	getActivityCountByWatcherStmt, err = db.Prepare("SELECT count(*) FROM [activity_stream_matches] INNER JOIN [activity_stream] ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE [watcher] = ?")
+	stmts.getActivityCountByWatcherStmt, err = db.Prepare("SELECT count(*) FROM [activity_stream_matches] INNER JOIN [activity_stream] ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE [watcher] = ?")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todaysPostCount statement.")
-	todaysPostCountStmt, err = db.Prepare("select count(*) from replies where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
+	stmts.todaysPostCountStmt, err = db.Prepare("select count(*) from replies where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
 	if err != nil {
 		return err
 	}
 
 	log.Print("Preparing todaysTopicCount statement.")
-	todaysTopicCountStmt, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
+	stmts.todaysTopicCountStmt, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
 	if err != nil {
 		return err
-	}
+	}*/
 
 	log.Print("Preparing todaysTopicCountByForum statement.")
 	// TODO: Stop hard-coding this query
-	todaysTopicCountByForum, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE()) and parentID = ?")
+	stmts.todaysTopicCountByForum, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE()) and parentID = ?")
 	if err != nil {
 		return err
 	}
 
-	log.Print("Preparing todaysNewUserCount statement.")
-	todaysNewUserCountStmt, err = db.Prepare("select count(*) from users where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
+	/*log.Print("Preparing todaysNewUserCount statement.")
+	stmts.todaysNewUserCountStmt, err = db.Prepare("select count(*) from users where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
 	if err != nil {
 		return err
-	}
+	}*/
 
 	return nil
 }

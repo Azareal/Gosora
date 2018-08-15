@@ -1,4 +1,4 @@
-CREATE TABLE `polls` (
+CREATE TABLE "polls" (
 	`pollID` serial not null,
 	`parentID` int DEFAULT 0 not null,
 	`parentTable` varchar (100) DEFAULT 'topics' not null,

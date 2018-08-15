@@ -1,4 +1,4 @@
-// +build !pgsql, !sqlite, !mssql
+// +build !pgsql,!mssql
 
 /*
 *

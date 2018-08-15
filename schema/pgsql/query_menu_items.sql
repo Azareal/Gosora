@@ -1,4 +1,4 @@
-CREATE TABLE `menu_items` (
+CREATE TABLE "menu_items" (
 	`miid` serial not null,
 	`mid` int not null,
 	`name` varchar (200) not null,

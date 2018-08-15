@@ -1,4 +1,4 @@
-CREATE TABLE `users_2fa_keys` (
+CREATE TABLE "users_2fa_keys" (
 	`uid` int not null,
 	`secret` varchar (100) not null,
 	`scratch1` varchar (50) not null,

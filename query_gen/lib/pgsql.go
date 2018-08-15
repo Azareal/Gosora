@@ -67,7 +67,7 @@ func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset stri
 		return "", errors.New("You can't have a table with no columns")
 	}
 
-	var querystr = "CREATE TABLE `" + table + "` ("
+	var querystr = "CREATE TABLE \"" + table + "\" ("
 	for _, column := range columns {
 		if column.AutoIncrement {
 			column.Type = "serial"
@@ -222,7 +222,8 @@ func (adapter *PgsqlAdapter) SimpleUpdate(name string, table string, set string,
 	if set == "" {
 		return "", errors.New("You need to set data in this update statement")
 	}
-	var querystr = "UPDATE `" + table + "` SET "
+
+	var querystr = "UPDATE \"" + table + "\" SET "
 	for _, item := range processSet(set) {
 		querystr += "`" + item.Column + "` ="
 		for _, token := range item.Expr {
@@ -243,7 +244,6 @@ func (adapter *PgsqlAdapter) SimpleUpdate(name string, table string, set string,
 		}
 		querystr += ","
 	}
-
 	// Remove the trailing comma
 	querystr = querystr[0 : len(querystr)-1]
 
@@ -414,7 +414,7 @@ func (adapter *PgsqlAdapter) Write() error {
 			stmts += "\t" + name + " *sql.Stmt\n"
 			body += `	
 	common.DebugLog("Preparing ` + name + ` statement.")
-	stmts.` + name + `, err = db.Prepare("` + stmt.Contents + `")
+	stmts.` + name + `, err = db.Prepare("` + strings.Replace(stmt.Contents, "\"", "\\\"", -1) + `")
 	if err != nil {
 		log.Print("Error in ` + name + ` statement.")
 		return err

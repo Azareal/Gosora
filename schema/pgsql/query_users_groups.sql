@@ -1,4 +1,4 @@
-CREATE TABLE `users_groups` (
+CREATE TABLE "users_groups" (
 	`gid` serial not null,
 	`name` varchar (100) not null,
 	`permissions` text not null,

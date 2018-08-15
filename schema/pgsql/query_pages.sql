@@ -1,4 +1,4 @@
-CREATE TABLE `pages` (
+CREATE TABLE "pages" (
 	`pid` serial not null,
 	`name` varchar (200) not null,
 	`title` varchar (200) not null,

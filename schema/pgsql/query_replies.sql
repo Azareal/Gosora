@@ -1,4 +1,4 @@
-CREATE TABLE `replies` (
+CREATE TABLE "replies" (
 	`rid` serial not null,
 	`tid` int not null,
 	`content` text not null,

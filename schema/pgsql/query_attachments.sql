@@ -1,4 +1,4 @@
-CREATE TABLE `attachments` (
+CREATE TABLE "attachments" (
 	`attachID` serial not null,
 	`sectionID` int DEFAULT 0 not null,
 	`sectionTable` varchar (200) DEFAULT 'forums' not null,

@@ -1,4 +1,4 @@
-CREATE TABLE `revisions` (
+CREATE TABLE "revisions" (
 	`reviseID` serial not null,
 	`content` text not null,
 	`contentID` int not null,
