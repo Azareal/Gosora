@@ -445,6 +445,12 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	h := w.Header()
+	h.Set("X-Frame-Options", "deny")
+	h.Set("X-XSS-Protection", "1; mode=block") // TODO: Remove when we add a CSP? CSP's are horrendously glitchy things, tread with caution before removing
+	// TODO: Set the content policy header
+	h.Set("X-Content-Type-Options", "nosniff")
+
 	// TODO: Cover more suspicious strings and at a lower layer than this
 	for _, char := range req.URL.Path {
 		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
