@@ -67,6 +67,14 @@
 #panel_forums .panel_buttons {
 	margin-left: 3px;
 }
+#panel_users .panel_floater {
+	margin-left: 2px;
+	float: none;
+}
+#panel_users .panel_tag {
+	float: right;
+	margin-top: -3px;
+}
 
 .panel_rank_tag_admin:before  { content: "👑"; }
 .panel_rank_tag_mod:before    { content: "👮"; }

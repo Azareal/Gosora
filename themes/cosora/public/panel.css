@@ -82,6 +82,13 @@
 	margin-bottom: 0px;
 	margin-right: 0px;
 }
+#panel_users .panel_floater:before {
+	display: none;
+}
+#panel_users .panel_floater {
+	text-align: center;
+	flex-direction: column;
+}
 .edit_button:after, .delete_button:after {
 	font: normal normal normal 14px/1 FontAwesome;
     padding-left: 12px;
