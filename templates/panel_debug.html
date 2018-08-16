@@ -17,11 +17,36 @@
 
 			<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_open_database_connections_label"}}</span></div>
 			<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_adapter_label"}}</span></div>
+			{{/** TODO: Use this for active database connections when Go 1.11 lands **/}}
 			<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
 
 			<div class="grid_item grid_stat"><span>{{.OpenConns}}</span></div>
 			<div class="grid_item grid_stat"><span>{{.DBAdapter}}</span></div>
 			<div class="grid_item grid_stat"><span>?</span></div>
+
+			<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_goroutine_count_label"}}</span></div>
+			<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_cpu_count_label"}}</span></div>
+			<div class="grid_item grid_stat grid_stat_head"><span>HeapAlloc</span></div>
+
+			<div class="grid_item grid_stat"><span>{{.Goroutines}}</span></div>
+			<div class="grid_item grid_stat"><span>{{.CPUs}}</span></div>
+			<div class="grid_item grid_stat"><span>{{.MemStats.HeapAlloc}}</span></div>
+
+			<div class="grid_item grid_stat grid_stat_head"><span>HeapSys</span></div>
+			<div class="grid_item grid_stat grid_stat_head"><span>HeapIdle</span></div>
+			<div class="grid_item grid_stat grid_stat_head"><span>HeapObjects</span></div>
+
+			<div class="grid_item grid_stat"><span>{{.MemStats.HeapSys}}</span></div>
+			<div class="grid_item grid_stat"><span>{{.MemStats.HeapIdle}}</span></div>
+			<div class="grid_item grid_stat"><span>{{.MemStats.HeapObjects}}</span></div>
+
+			<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+			<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+			<div class="grid_item grid_stat grid_stat_head"><span>StackInuse</span></div>
+
+			<div class="grid_item grid_stat"><span>?</span></div>
+			<div class="grid_item grid_stat"><span>?</span></div>
+			<div class="grid_item grid_stat"><span>{{.MemStats.StackInuse}}</span></div>
 		</div>
 	</main>
 </div>

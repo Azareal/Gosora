@@ -3,6 +3,7 @@ package common
 import (
 	"html/template"
 	"net/http"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -394,8 +395,13 @@ type PanelDebugPage struct {
 	GoVersion string
 	DBVersion string
 	Uptime    string
+
 	OpenConns int
 	DBAdapter string
+
+	Goroutines int
+	CPUs       int
+	MemStats   runtime.MemStats
 }
 
 type PageSimple struct {

@@ -793,11 +793,16 @@
 		"panel_backups_head":"Backups",
 		"panel_backups_download":"Download",
 		"panel_backups_no_backups":"There aren't any backups available at this time.",
+
 		"panel_debug_head":"Debug",
 		"panel_debug_go_version_label":"Go Version",
 		"panel_debug_database_version_label":"DB Version",
 		"panel_debug_uptime_label":"Uptime",
+
 		"panel_debug_open_database_connections_label":"Open DB Conns",
-		"panel_debug_adapter_label":"Adapter"
+		"panel_debug_adapter_label":"Adapter",
+
+		"panel_debug_goroutine_count_label":"Goroutines",
+		"panel_debug_cpu_count_label":"CPUs"
 	}
 }

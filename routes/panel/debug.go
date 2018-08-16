@@ -36,7 +36,11 @@ func Debug(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	openConnCount := dbStats.OpenConnections
 	// Disk I/O?
 	// TODO: Fetch the adapter from Builder rather than getting it from a global?
+	goroutines := runtime.NumGoroutine()
+	cpus := runtime.NumCPU()
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
 
-	pi := common.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName()}
+	pi := common.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats}
 	return panelRenderTemplate("panel_debug", w, r, user, &pi)
 }
