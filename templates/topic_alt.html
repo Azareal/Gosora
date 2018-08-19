@@ -29,10 +29,13 @@
 	{{if .Poll.ID}}
 	<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
 	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
+		{{/** TODO: De-dupe userinfo with a common template **/}}
 		<div class="userinfo" aria-label="{{lang "topic.userinfo_aria"}}">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-			<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
-			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
+			<div class="user_meta">
+				<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
+				{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
+			</div>
 		</div>
 		<div id="poll_voter_{{.Poll.ID}}" class="content_container poll_voter">
 			<div class="topic_content user_content">
@@ -60,8 +63,10 @@
 	<article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="{{lang "topic.opening_post_aria"}}">
 		<div class="userinfo" aria-label="{{lang "topic.userinfo_aria"}}">
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-			<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
-			{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
+			<div class="user_meta">
+				<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
+				{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
+			</div>
 		</div>
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
@@ -97,8 +102,10 @@
 <div class="rowblock topic_reply_container">
 	<div class="userinfo" aria-label="{{lang "topic.your_information"}}">
 		<div class="avatar_item" style="background-image: url({{.CurrentUser.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-		<a href="{{.CurrentUser.Link}}" class="the_name" rel="author">{{.CurrentUser.Name}}</a>
-		{{if .CurrentUser.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.CurrentUser.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.CurrentUser.Level}}</div><div class="tag_post"></div></div>{{end}}
+		<div class="user_meta">
+			<a href="{{.CurrentUser.Link}}" class="the_name" rel="author">{{.CurrentUser.Name}}</a>
+			{{if .CurrentUser.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.CurrentUser.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.CurrentUser.Level}}</div><div class="tag_post"></div></div>{{end}}
+		</div>
 	</div>
 	<div class="rowblock topic_reply_form quick_create_form"  aria-label="{{lang "topic.reply_aria"}}">
 		<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>

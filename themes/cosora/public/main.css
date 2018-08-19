@@ -971,6 +971,10 @@ textarea {
 	/*overflow: hidden;
 	text-overflow: ellipsis;*/
 }
+.user_meta {
+	display: flex;
+	flex-direction: column;
+}
 .content_container {
 	width: 100%;
 	padding: 17px;

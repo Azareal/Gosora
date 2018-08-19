@@ -265,6 +265,10 @@ h2 {
 .quick_create_form .quick_button_row button, .quick_create_form .quick_button_row label {
 	margin-right: 8px;
 }
+.quick_create_form #input_content {
+	width: 100%;
+	height: 100px;
+}
 
 .more_topic_block_initial {
 	display: none;
@@ -534,6 +538,10 @@ button, .formbutton, .panel_right_button {
 	display: flex;
 	flex-direction: column;
 }
+.user_meta {
+	display: flex;
+	flex-direction: column;
+}
 .avatar_item {
 	border-radius: 36px;
 	height: 58px;
@@ -598,7 +606,7 @@ button, .formbutton, .panel_right_button {
 .add_like:before, .remove_like:before {
 	content: "{{index .Phrases "topic.plus_one"}}";
 }
-.button_container .open_edit:after, .edit_item:after{
+.button_container .open_edit:after, .edit_item:after {
 	content: "{{index .Phrases "topic.edit_button_text"}}";
 }
 .delete_item:after {
@@ -642,6 +650,34 @@ button, .formbutton, .panel_right_button {
 }
 .footer .widget, #poweredByHolder {
 	background-color: #444444;
+}
+
+@media(max-width: 500px) {
+	.sidebar {
+		display: none;
+	}
+	
+	.post_item, .topic_reply_container {
+		flex-direction: column;
+	}
+	.userinfo {
+		margin-right: 0px;
+		width: auto;
+		flex-direction: row;
+		margin-bottom: 12px;
+		padding: 18px;
+		padding-bottom: 14px;
+	}
+	.avatar_item {
+		height: 46px;
+		width: 46px;
+		margin-left: 0px;
+		margin-right: 0px;
+	}
+	.user_meta {
+		margin-left: 10px;
+		margin-top: -4px;
+	}
 }
 
 @media(max-width: 600px) {

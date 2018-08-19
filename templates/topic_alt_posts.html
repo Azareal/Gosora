@@ -1,10 +1,12 @@
-{{range .ItemList}}<article {{scope "post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{if .ActionType}}action_item{{end}}">
+{{range .ItemList}}<article {{scope "post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item{{if .ActionType}} action_item{{end}}">
 	<div class="userinfo" aria-label="{{lang "topic.userinfo_aria"}}">
 		<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-		<a href="{{.UserLink}}" class="the_name" rel="author">{{.CreatedByName}}</a>
-		{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Level}}</div><div class="tag_post"></div></div>{{end}}
+		<div class="user_meta">
+			<a href="{{.UserLink}}" class="the_name" rel="author">{{.CreatedByName}}</a>
+			{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Level}}</div><div class="tag_post"></div></div>{{end}}
+		</div>
 	</div>
-	<div class="content_container" {{if .ActionType}}style="margin-left: 0px;"{{end}}>
+	<div class="content_container"{{if .ActionType}} style="margin-left: 0px;"{{end}}>
 		{{if .ActionType}}
 			<span class="action_icon" style="font-size: 18px;padding-right: 5px;" aria-hidden="true">{{.ActionIcon}}</span>
 			<span itemprop="text">{{.ActionType}}</span>
