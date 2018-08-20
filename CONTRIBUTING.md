@@ -8,6 +8,8 @@ Try to prefix commits which introduce a lot of bugs or otherwise has a large imp
 
 If anything seems suspect, then feel free to bring up an alternative, although I'd rather not get hung up on the little details, if it's something which is purely a matter of opinion.
 
+Also, please don't push new features, particularly ones which will require a great effort from other maintainers, especially if it has fairly minor benefits, unless you are willing to maintain it. That includes the documentation for it.
+
 # Coding Standards
 
 All code must be unit tested where ever possible with the exception of JavaScript which is untestable with our current technologies, tread with caution there.
