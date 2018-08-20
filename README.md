@@ -39,7 +39,9 @@ Other modern features like alerts, likes, advanced dashboard with live stats (CP
 
 Go 1.10 or newer - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
-Git - You may need this for downloading updates via the updater. You might already have this installed on your server. More to come on this here. https://git-scm.com/downloads
+For Ubuntu, you can consult: https://tecadmin.net/install-go-on-ubuntu/
+
+Git - You may need this for downloading updates via the updater. You might already have this installed on your server, if the `git` commands don't work, then install this. https://git-scm.com/downloads
 
 MySQL Database - You will need to setup a MySQL Database somewhere. A MariaDB Database works equally well and is much faster than MySQL. You could use something like WNMP / XAMPP which have a little PHP script called PhpMyAdmin for managing MySQL databases or you could install MariaDB directly.
 
@@ -51,7 +53,9 @@ We recommend changing the root password (that is the password for the user 'root
 
 You might also want to run `mysql_secure_installation` to further harden (aka make it more secure) MySQL / MariaDB.
 
-It's entirely possible that your host already has MySQL installed and ready to go, so you might be able to skip this step, particularly if it's a managed VPS or a shared host (contrary to popular belief, it is possible, although the ecosystem in this regard is extremely immature). Or they might have a quicker and easier method of setting up MySQL.
+If you're using Ubuntu, you might want to look at: https://www.itzgeek.com/how-tos/linux/ubuntu-how-tos/install-mariadb-on-ubuntu-16-04.html
+
+It's entirely possible that your host already has MySQL installed and ready to go, so you might be able to skip this step, particularly if it's a managed VPS or a shared host. Or they might have a quicker and easier method of setting up MySQL.
 
 
 # How to download
@@ -65,19 +69,23 @@ On Windows, you might want to try the [GosoraBootstrapper](https://github.com/Az
 
 *Linux*
 
-First, you will need to jump to the place where you want to put the code, we will use `/home/gosora` here, but if you want to use something else, then you'll have to modify the service file with your own path (but *never* in a folder where the files are automatically served by a webserver).
+First, you will need to jump to the place where you want to put the code, we will use `/home/gosora/src/` here, but if you want to use something else, then you'll have to modify the service file with your own path (but *never* in a folder where the files are automatically served by a webserver).
 
 If you place it in `/www/`, `/public_html/` or any similar folder, then there's a chance that your server might be compromised.
 
-You can navigate to your installation of Gosora by typing the following six commands into the console and hitting enter:
+You can navigate to your installation of Gosora by typing the following commands into the console and hitting enter:
 
 cd /home/
 
-git clone https://github.com/Azareal/Gosora
-
-mv Gosora gosora
+mkdir gosora
 
 cd gosora
+
+git clone https://github.com/Azareal/Gosora
+
+mv Gosora src
+
+cd src
 
 chmod 755 ./install-linux
 
@@ -98,6 +106,8 @@ systemctl daemon-reload
 Run install.bat, e.g. double-click on it. You will also have to start-up MySQL, which if you're using Wnmp or friends is just a matter of opening that program and starting the MySQL process via it.
 
 Follow the instructions shown on the screen.
+
+To navigate to the folder the software is in at any time in the future, you can just type `cd` followed by the folder's name, e.g. `cd /home/gosora/src/` and then you can run your commands. cd stands for change directory.
 
 
 # Running the program
@@ -214,7 +224,7 @@ If it does, then please open a bug report, so I can look into why they're not wo
 
 # Updating the software
 
-The update system is currently under development, however if you have Git installed, then you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
+The update system is currently under development, but you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
 
 In addition to this, you can update the dependencies without updating Gosora by running `update-deps.bat` or `./update-deps-linux` (.bat is for Windows, the other for Linux as the names would suggest).
 

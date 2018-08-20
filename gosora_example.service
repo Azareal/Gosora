@@ -11,9 +11,9 @@ Type=simple
 Restart=on-failure
 RestartSec=10
 # Set these to the location of Gosora
-WorkingDirectory=/home/gosora
+WorkingDirectory=/home/gosora/src
 # Make sure you manually run pre-run-linux before you start the service
-ExecStart=/home/gosora/Gosora
+ExecStart=/home/gosora/src/Gosora
 
 # If things don't work for some reason, try putting # in-front of the following three lines until it does and open an issue on the bug tracker
 ProtectSystem=full
