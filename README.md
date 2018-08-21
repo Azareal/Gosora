@@ -97,7 +97,7 @@ You will also want to setup a service to manage Gosora more easily, although thi
 
 chmod 755 ./pre-run-linux
 
-mv ./gosora_example.service /lib/systemd/system/gosora.service
+cp ./gosora_example.service /lib/systemd/system/gosora.service
 
 systemctl daemon-reload
 
