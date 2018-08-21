@@ -14,6 +14,7 @@
 		{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
 		<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
 		<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
+			<div class="action_button_left">
 			{{if $.CurrentUser.Loggedin}}
 				{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
 				{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
@@ -24,6 +25,7 @@
 				<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
 				<a href="#" class="action_button button_menu"></a>
 			{{end}}
+			</div>
 			<div class="action_button_right">
 				<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.post_like_count_tooltip"}}">{{.LikeCount}}</a>
 				<a class="action_button created_at hide_on_mobile">{{.RelativeCreatedAt}}</a>

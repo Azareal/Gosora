@@ -586,6 +586,9 @@ button, .formbutton, .panel_right_button {
 	font-size: 15px;
 	color: #dddddd;
 }
+.post_item .action_button_left {
+	display: flex;
+}
 .post_item .action_button_right {
 	margin-left: auto;
 	display: flex;
@@ -657,6 +660,26 @@ button, .formbutton, .panel_right_button {
 		display: none;
 	}
 	
+	.post_item .content_container {
+		background-color: transparent;
+		padding: 0px;
+	}
+	.post_item .user_content {
+		background-color: #444444;
+		padding: 16px;
+	}
+	.post_item .button_container {
+		display: block;
+		margin-top: 8px;
+	}
+	.post_item .action_button_left {
+		display: block;
+		background-color: #444444;
+		padding: 10px;
+	}
+	.ip_item.hide_on_mobile {
+		display: none;
+	}
 	.post_item, .topic_reply_container {
 		flex-direction: column;
 	}

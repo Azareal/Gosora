@@ -110,7 +110,11 @@ func (theme *Theme) AddThemeStaticFiles() error {
 		}
 
 		path = strings.TrimPrefix(path, "themes/"+theme.Name+"/public")
-		gzipData := compressBytesGzip(data)
+		gzipData, err := compressBytesGzip(data)
+		if err != nil {
+			return err
+		}
+
 		StaticFiles.Set("/static/"+theme.Name+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLog("Added the '/" + theme.Name + path + "' static file for theme " + theme.Name + ".")

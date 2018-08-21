@@ -216,7 +216,10 @@ func (list SFileList) JSTmplInit() error {
 		path = tmplName + ".js"
 		DebugLog("js path: ", path)
 		var ext = filepath.Ext("/tmpl_client/" + path)
-		gzipData := compressBytesGzip(data)
+		gzipData, err := compressBytesGzip(data)
+		if err != nil {
+			return err
+		}
 
 		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
@@ -239,7 +242,10 @@ func (list SFileList) Init() error {
 
 		path = strings.TrimPrefix(path, "public/")
 		var ext = filepath.Ext("/public/" + path)
-		gzipData := compressBytesGzip(data)
+		gzipData, err := compressBytesGzip(data)
+		if err != nil {
+			return err
+		}
 
 		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
@@ -264,7 +270,10 @@ func (list SFileList) Add(path string, prefix string) error {
 
 	var ext = filepath.Ext(path)
 	path = strings.TrimPrefix(path, prefix)
-	gzipData := compressBytesGzip(data)
+	gzipData, err := compressBytesGzip(data)
+	if err != nil {
+		return err
+	}
 
 	list.Set("/static"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
@@ -285,10 +294,19 @@ func (list SFileList) Set(name string, data SFile) {
 	list[name] = data
 }
 
-func compressBytesGzip(in []byte) []byte {
+func compressBytesGzip(in []byte) ([]byte, error) {
 	var buff bytes.Buffer
-	gz := gzip.NewWriter(&buff)
-	_, _ = gz.Write(in) // TODO: What if this errors? What circumstances could it error under? Should we add a second return value?
-	_ = gz.Close()
-	return buff.Bytes()
+	gz, err := gzip.NewWriterLevel(&buff, gzip.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+	_, err = gz.Write(in)
+	if err != nil {
+		return nil, err
+	}
+	err = gz.Close()
+	if err != nil {
+		return nil, err
+	}
+	return buff.Bytes(), nil
 }

@@ -224,9 +224,11 @@ import (
 	"log"
 	"strings"
 	"strconv"
+	"compress/gzip"
 	"sync"
 	"sync/atomic"
 	"errors"
+	"io"
 	"os"
 	"net/http"
 
@@ -303,6 +305,15 @@ func init() {
 	counters.SetReverseAgentMapEnum(reverseAgentMapEnum)
 	counters.SetOSMapEnum(osMapEnum)
 	counters.SetReverseOSMapEnum(reverseOSMapEnum)
+}
+
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
 }
 
 type WriterIntercept struct {
@@ -445,12 +456,6 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	h := w.Header()
-	h.Set("X-Frame-Options", "deny")
-	h.Set("X-XSS-Protection", "1; mode=block") // TODO: Remove when we add a CSP? CSP's are horrendously glitchy things, tread with caution before removing
-	// TODO: Set the content policy header
-	h.Set("X-Content-Type-Options", "nosniff")
-
 	// TODO: Cover more suspicious strings and at a lower layer than this
 	for _, char := range req.URL.Path {
 		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
@@ -474,6 +479,14 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
 		extraData = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
 		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
+	}
+
+	if prefix != "/ws" {
+		h := w.Header()
+		h.Set("X-Frame-Options", "deny")
+		h.Set("X-XSS-Protection", "1; mode=block") // TODO: Remove when we add a CSP? CSP's are horrendously glitchy things, tread with caution before removing
+		// TODO: Set the content policy header
+		h.Set("X-Content-Type-Options", "nosniff")
 	}
 	
 	if common.Dev.SuperDebug {
@@ -651,6 +664,14 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			"routeMapEnum: ", routeMapEnum)
 	}
 
+	// Disable Gzip when SSL is disabled for security reasons?
+	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Set("Content-Type", "text/html")
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+		w = gzipResponseWriter{Writer: gz, ResponseWriter: w}
+	}
 	router.routeSwitch(w, req, user, prefix, extraData)
 }
 	
@@ -666,8 +687,9 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 		case "/uploads":
 			if extraData == "" {
 				common.NotFound(w,req,nil)
-				return
+				return		
 			}
+			w.Header().Del("Content-Type")
 			counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile" }})
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?

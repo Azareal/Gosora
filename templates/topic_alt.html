@@ -72,6 +72,7 @@
 			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
 			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">
+				<div class="action_button_left">
 				{{if .CurrentUser.Loggedin}}
 					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button like_item {{if .Topic.Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic.like_aria"}}" data-action="like"></a>{{end}}
 					{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
@@ -86,6 +87,7 @@
 					<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				{{end}}
+				</div>
 				<div class="action_button_right">
 					<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.like_count_aria"}}">{{.Topic.LikeCount}}</a>
 					<a class="action_button created_at hide_on_mobile">{{.Topic.RelativeCreatedAt}}</a>

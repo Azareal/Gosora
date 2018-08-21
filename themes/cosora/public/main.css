@@ -1022,6 +1022,9 @@ textarea {
 	font-size: 14px;
 	display: inline-block;
 }
+.action_button_left {
+	display: flex;
+}
 .action_button_right {
 	display: inline-flex;
 	margin-left: auto;
