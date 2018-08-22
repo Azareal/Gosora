@@ -8,7 +8,7 @@ func routes() {
 	addRoute(View("routes.ViewForum", "/forum/", "extraData"))
 	addRoute(AnonAction("routes.ChangeTheme", "/theme/"))
 	addRoute(
-		View("routes.ShowAttachment", "/attachs/", "extraData").Before("ParseForm"),
+		View("routes.ShowAttachment", "/attachs/", "extraData").Before("ParseForm").NoGzip(),
 	)
 
 	apiGroup := newRouteGroup("/api/",

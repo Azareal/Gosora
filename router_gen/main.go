@@ -665,19 +665,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Disable Gzip when SSL is disabled for security reasons?
-	// We don't want to double-compress things which are already compressed, so we're moving /uploads here
-	// TODO: Find a better way of doing this
-	if prefix == "/uploads" {
-		if extraData == "" {
-			common.NotFound(w,req,nil)
-			return		
-		}
-		counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile" }})
-		req.URL.Path += extraData
-		// TODO: Find a way to propagate errors up from this?
-		router.UploadHandler(w,req) // TODO: Count these views
-		return
-	} else if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
+	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Set("Content-Type", "text/html")
 		gz := gzip.NewWriter(w)
@@ -696,6 +684,21 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 			if err != nil {
 				router.handleError(err,w,req,user)
 			}*/
+		case "/uploads":
+			if extraData == "" {
+				common.NotFound(w,req,nil)
+				return		
+			}
+			gzw, ok := w.(gzipResponseWriter)
+			if ok {
+				w = gzw.ResponseWriter
+				w.Header().Del("Content-Type")
+				w.Header().Del("Content-Encoding")
+			}
+			counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile" }})
+			req.URL.Path += extraData
+			// TODO: Find a way to propagate errors up from this?
+			router.UploadHandler(w,req) // TODO: Count these views
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
 			// TODO: Add support for favicons and robots.txt files

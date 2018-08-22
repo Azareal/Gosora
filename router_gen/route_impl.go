@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 type RouteImpl struct {
 	Name      string
 	Path      string
@@ -32,6 +34,15 @@ func (route *RouteImpl) LitBefore(items ...string) *RouteImpl {
 	return route
 }
 
+func (route *RouteImpl) LitBeforeMultiline(items ...string) *RouteImpl {
+	for _, item := range items {
+		for _, line := range strings.Split(item, "\n") {
+			route.LitBefore(strings.TrimSpace(line))
+		}
+	}
+	return route
+}
+
 func (route *RouteImpl) hasBefore(items ...string) bool {
 	for _, item := range items {
 		if route.hasBeforeItem(item) {
@@ -48,6 +59,15 @@ func (route *RouteImpl) hasBeforeItem(item string) bool {
 		}
 	}
 	return false
+}
+
+func (route *RouteImpl) NoGzip() *RouteImpl {
+	return route.LitBeforeMultiline(`gzw, ok := w.(gzipResponseWriter)
+	if ok {
+		w = gzw.ResponseWriter
+		w.Header().Del("Content-Type")
+		w.Header().Del("Content-Encoding")
+	}`)
 }
 
 func addRouteGroup(routeGroup *RouteGroup) {
@@ -113,7 +133,7 @@ func UploadAction(fname string, path string, args ...string) *uploadAction {
 }
 
 func (action *uploadAction) MaxSizeVar(varName string) *RouteImpl {
-	action.Route.LitBefore(`err = common.HandleUploadRoute(w,req,user,` + varName + `)
+	action.Route.LitBeforeMultiline(`err = common.HandleUploadRoute(w,req,user,` + varName + `)
 			if err != nil {
 				router.handleError(err,w,req,user)
 				return
