@@ -661,7 +661,7 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Disable Gzip when SSL is disabled for security reasons?
 	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
 		w.Header().Set("Content-Encoding", "gzip")
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		gz := gzip.NewWriter(w)
 		defer func() {
 			if w.Header().Get("Content-Encoding") == "gzip" {
