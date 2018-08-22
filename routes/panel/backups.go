@@ -29,6 +29,7 @@ func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL
 			// TODO: Change the served filename to gosora_backup_%timestamp%.sql, the time the file was generated, not when it was modified aka what the name of it should be
 			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.sql")
 			w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
+			w.Header().Set("Content-Type", "application/sql")
 			// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
 			http.ServeFile(w, r, "./backups/"+backupURL)
 			return nil
