@@ -79,6 +79,12 @@ Please type these into the console and hit enter:
 
 cd /home/
 
+useradd gosora
+
+passwd gosora
+
+Type in a strong password for the `gosora` user, please don't use password.
+
 mkdir gosora
 
 cd gosora
@@ -87,11 +93,9 @@ git clone https://github.com/Azareal/Gosora
 
 mv Gosora src
 
-useradd gosora
+chown -R gosora ../gosora
 
-chown -R gosora src
-
-chgrp -R www-data src
+chgrp -R www-data ../gosora
 
 cd src
 
@@ -227,14 +231,20 @@ gosora.exe
 
 I'm looking into minimising the number of go gets for the advanced build and to maybe remove the platform and database engine specific dependencies if possible for those who don't need them.
 
-Also, if you modify the service file for anything but changing the path and things don't work, then you might want to try putting # in-front of the lines starting with PrivateUsers, PrivateDevices, and ProtectSystem to see if that works.
-
-If it does, then please open a bug report, so I can look into why they're not working and procure a fix or disable the more problematic ones by default.
+If systemd gives you no permission errors, then make sure you `chown`, `chgrp` and `chmod` the files and folders appropriately.
 
 
 # Updating the software
 
 The update system is currently under development, but you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
+
+If you're logged in as `root`, then you might want to switch to the `gosora` user with `su gosora`, you can switch back by typing `exit`.
+If this is the first time you've done an update as the `gosora` user, then you might have to configure Git, simply do:
+
+git config --global user.name "Lalala"
+git config --global user.email "lalala@example.com"
+
+Replace that name and email with whatever you like. This name and email only applies to the `gosora` user. If you see a zillion modified files pop-up, then that is due to you changing their permissions, don't worry about it.
 
 In addition to this, you can update the dependencies without updating Gosora by running `update-deps.bat` or `./update-deps-linux` (.bat is for Windows, the other for Linux as the names would suggest).
 
