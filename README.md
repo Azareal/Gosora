@@ -95,6 +95,8 @@ chgrp -R www-data src
 
 cd src
 
+chmod 2775 logs
+
 chmod 755 ./install-linux
 
 ./install-linux
