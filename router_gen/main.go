@@ -75,10 +75,7 @@ func main() {
 		for _, item := range route.Vars {
 			out += "," + item
 		}
-		out += `)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}`
+		out += `)`
 	}
 
 	for _, group := range routeGroups {
@@ -148,9 +145,6 @@ func main() {
 			out += ")"
 		}
 		out += `
-			}
-			if err != nil {
-				router.handleError(err,w,req,user)
 			}`
 	}
 
@@ -680,10 +674,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 	switch(prefix) {` + out + `
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData
-			err = sitemapSwitch(w,req)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}*/
+			err = sitemapSwitch(w,req)*/
 		case "/uploads":
 			if extraData == "" {
 				common.NotFound(w,req,nil)
@@ -699,6 +690,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
+			return
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
 			// TODO: Add support for favicons and robots.txt files
@@ -744,6 +736,10 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 			}
 			counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.BadRoute" }})
 			common.NotFound(w,req,nil)
+			return
+	}
+	if err != nil {
+		router.handleError(err,w,req,user)
 	}
 }
 `

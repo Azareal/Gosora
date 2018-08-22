@@ -904,27 +904,15 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 		case "/overview":
 			counters.RouteViewCounter.Bump(0)
 			err = routes.Overview(w,req,user)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/pages":
 			counters.RouteViewCounter.Bump(1)
 			err = routes.CustomPage(w,req,user,extraData)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/forums":
 			counters.RouteViewCounter.Bump(2)
 			err = routes.ForumList(w,req,user)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/forum":
 			counters.RouteViewCounter.Bump(3)
 			err = routes.ViewForum(w,req,user,extraData)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/theme":
 				err = common.ParseForm(w,req,user)
 				if err != nil {
@@ -934,9 +922,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 				
 			counters.RouteViewCounter.Bump(4)
 			err = routes.ChangeTheme(w,req,user)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/attachs":
 				err = common.ParseForm(w,req,user)
 				if err != nil {
@@ -952,16 +937,10 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 			counters.RouteViewCounter.Bump(5)
 			err = routes.ShowAttachment(w,req,user,extraData)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/ws":
 					req.URL.Path += extraData
 			counters.RouteViewCounter.Bump(6)
 			err = common.RouteWebsockets(w,req,user)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/api":
 			switch(req.URL.Path) {
 				case "/api/phrases/":
@@ -976,9 +955,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 				default:
 					counters.RouteViewCounter.Bump(10)
 					err = routeAPI(w,req,user)
-			}
-			if err != nil {
-				router.handleError(err,w,req,user)
 			}
 		case "/report":
 			err = common.NoBanned(w,req,user)
@@ -1004,9 +980,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					counters.RouteViewCounter.Bump(11)
 					err = routes.ReportSubmit(w,req,user,extraData)
 			}
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/create/":
@@ -1021,9 +994,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 				default:
 					counters.RouteViewCounter.Bump(13)
 					err = routes.TopicList(w,req,user)
-			}
-			if err != nil {
-				router.handleError(err,w,req,user)
 			}
 		case "/panel":
 			err = common.SuperModOnly(w,req,user)
@@ -1472,9 +1442,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					counters.RouteViewCounter.Bump(77)
 					err = routePanelDashboard(w,req,user)
 			}
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/user":
 			switch(req.URL.Path) {
 				case "/user/edit/":
@@ -1622,9 +1589,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					counters.RouteViewCounter.Bump(89)
 					err = routes.ViewProfile(w,req,user)
 			}
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/users":
 			switch(req.URL.Path) {
 				case "/users/ban/submit/":
@@ -1681,9 +1645,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					
 					counters.RouteViewCounter.Bump(93)
 					err = routes.IPSearch(w,req,user)
-			}
-			if err != nil {
-				router.handleError(err,w,req,user)
 			}
 		case "/topic":
 			switch(req.URL.Path) {
@@ -1839,9 +1800,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					counters.RouteViewCounter.Bump(103)
 					err = routes.ViewTopic(w,req,user, extraData)
 			}
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/reply":
 			switch(req.URL.Path) {
 				case "/reply/create/":
@@ -1916,9 +1874,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					counters.RouteViewCounter.Bump(107)
 					err = routes.ReplyLikeSubmit(w,req,user,extraData)
 			}
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/profile":
 			switch(req.URL.Path) {
 				case "/profile/reply/create/":
@@ -1967,9 +1922,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					counters.RouteViewCounter.Bump(110)
 					err = routes.ProfileReplyDeleteSubmit(w,req,user,extraData)
 			}
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		case "/poll":
 			switch(req.URL.Path) {
 				case "/poll/vote/":
@@ -1990,9 +1942,6 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 				case "/poll/results/":
 					counters.RouteViewCounter.Bump(112)
 					err = routes.PollResults(w,req,user,extraData)
-			}
-			if err != nil {
-				router.handleError(err,w,req,user)
 			}
 		case "/accounts":
 			switch(req.URL.Path) {
@@ -2048,15 +1997,9 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					counters.RouteViewCounter.Bump(119)
 					err = routes.AccountRegisterSubmit(w,req,user)
 			}
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData
-			err = sitemapSwitch(w,req)
-			if err != nil {
-				router.handleError(err,w,req,user)
-			}*/
+			err = sitemapSwitch(w,req)*/
 		case "/uploads":
 			if extraData == "" {
 				common.NotFound(w,req,nil)
@@ -2072,6 +2015,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
+			return
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
 			// TODO: Add support for favicons and robots.txt files
@@ -2117,5 +2061,9 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 			}
 			counters.RouteViewCounter.Bump(125)
 			common.NotFound(w,req,nil)
+			return
+	}
+	if err != nil {
+		router.handleError(err,w,req,user)
 	}
 }
