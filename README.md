@@ -75,7 +75,9 @@ If you place it in `/www/`, `/public_html/` or any similar folder, then there's 
 
 The following commands will pull the latest copy of Gosora off the Git repository, will create a user account to run Gosora as, will set it as the owner of the files and will start the installation process.
 
-Please type these into the console and hit enter:
+If you're just casually setting up an installation on your own machine which isn't exposed to the internet just to try out Gosora, then you might not need to setup a seperate account for it or do `chmod 2775 logs`.
+
+Please type the following commands into the console and hit enter:
 
 cd /home/
 
@@ -150,15 +152,11 @@ Run run.bat, e.g. double-clicking on it.
 
 *Updating Dependencies*
 
-You can update the dependencies which Gosora relies on by running update-deps.bat on Windows or ./update-deps-linux on Linux. These dependencies do not include Go or MySQL, those have to be updated separately.
+Dependencies are little libraries Gosora relies on to function.
 
-We're also looking into ways to distribute ready made executables for Windows. While this is not a complicated endeavour, the configuration settings currently get built with the rest of the program for speed, and we will likely have to change this.
+You can update themn by running `update-deps.bat` on Windows or `./update-deps-linux` on Linux. These dependencies do not include Go or MySQL, those have to be updated separately.
 
-With the introduction of the new settings system, we will begin moving some of the less critical settings out of the configuration file, and will likely have a config.xml or config.ini in the future to store the critical settings in.
-
-You'll need to restart the server every-time you change a template, e.g. with `run.bat` or killing the process and running `./run-linux` or via `./pre-run-linux` followed by `service gosora restart`
-
-Several important features for saving memory in the templates system may have to be implemented before the new compiled template system is rolled out to every route. These features are coming fairly soon, but not before the higher priority items.
+You'll need to restart the server after you change a template or update Gosora, e.g. with `run.bat` or killing the process and running `./run-linux` or via `./pre-run-linux` followed by `service gosora restart`.
 
 
 # Advanced Installation
@@ -236,7 +234,10 @@ If systemd gives you no permission errors, then make sure you `chown`, `chgrp` a
 
 # Updating the software
 
-The update system is currently under development, but you can run `dev-update.bat` or `dev-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
+You will first want to follow the instructions in the section for updating dependencies.
+
+The update system is currently under development, but you can run `dev-update.bat` or `quick-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
+
 
 If you're logged in as `root`, then you might want to switch to the `gosora` user with `su gosora`, you can switch back by typing `exit`.
 If this is the first time you've done an update as the `gosora` user, then you might have to configure Git, simply do:
@@ -245,6 +246,8 @@ git config --global user.name "Lalala"
 git config --global user.email "lalala@example.com"
 
 Replace that name and email with whatever you like. This name and email only applies to the `gosora` user. If you see a zillion modified files pop-up, then that is due to you changing their permissions, don't worry about it.
+
+If you get an access denied error, then you might need to run `chown -R gosora /home/gosora` and `chgrp -R www-data /home/gosora` to fix the ownership of the files.
 
 In addition to this, you can update the dependencies without updating Gosora by running `update-deps.bat` or `./update-deps-linux` (.bat is for Windows, the other for Linux as the names would suggest).
 
