@@ -73,7 +73,9 @@ First, you will need to jump to the place where you want to put the code, we wil
 
 If you place it in `/www/`, `/public_html/` or any similar folder, then there's a chance that your server might be compromised.
 
-You can navigate to your installation of Gosora by typing the following commands into the console and hitting enter:
+The following commands will pull the latest copy of Gosora off the Git repository, will create a user account to run Gosora as, will set it as the owner of the files and will start the installation process.
+
+Please type these into the console and hit enter:
 
 cd /home/
 
@@ -84,6 +86,12 @@ cd gosora
 git clone https://github.com/Azareal/Gosora
 
 mv Gosora src
+
+useradd gosora
+
+chown -R gosora src
+
+chgrp -R www-data src
 
 cd src
 

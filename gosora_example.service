@@ -3,22 +3,19 @@
 Description=Gosora
 
 [Service]
-Type=simple
-# You might want to create a user / group for Gosora and set these to further harden your system, although this this might not work right now, if we're listening directly on port 80 / 443
-#User=gosoraservice
-#Group=gosoraservice
+User=gosora
+Group=www-data
 
 Restart=on-failure
 RestartSec=10
 # Set these to the location of Gosora
 WorkingDirectory=/home/gosora/src
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 # Make sure you manually run pre-run-linux before you start the service
 ExecStart=/home/gosora/src/Gosora
 
-# If things don't work for some reason, try putting # in-front of the following three lines until it does and open an issue on the bug tracker
 ProtectSystem=full
 PrivateDevices=true
-PrivateUsers=true
 
 [Install]
 WantedBy=multi-user.target
