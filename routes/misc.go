@@ -37,7 +37,7 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
 	h.Set("Vary", "Accept-Encoding")
 
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && file.GzipLength > 0 {
 		h.Set("Content-Encoding", "gzip")
 		h.Set("Content-Length", strconv.FormatInt(file.GzipLength, 10))
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?

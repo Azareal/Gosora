@@ -96,6 +96,14 @@ func (inits dbInits) Add(init ...func(acc *qgen.Accumulator) error) {
 	DbInits = dbInits(append(DbInits, init...))
 }
 
+// TODO: Add a graceful shutdown function
+func StoppedServer(msg ...interface{}) {
+	//log.Print("stopped server")
+	StopServerChan <- msg
+}
+
+var StopServerChan = make(chan []interface{})
+
 func DebugDetail(args ...interface{}) {
 	if Dev.SuperDebug {
 		log.Print(args...)

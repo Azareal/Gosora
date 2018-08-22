@@ -437,6 +437,7 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 		//log.Print("string(Message)", string(message))
 		messages := bytes.Split(message, []byte("\r"))
 		for _, msg := range messages {
+			//StoppedServer("Profile end") // A bit of code for me to profile the software
 			//log.Print("Submessage", msg)
 			//log.Print("Submessage", string(msg))
 			if bytes.HasPrefix(msg, []byte("page ")) {

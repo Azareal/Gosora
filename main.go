@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"strings"
 	"syscall"
 	"time"
@@ -227,6 +228,15 @@ func main() {
 	fmt.Println("")
 	common.StartTime = time.Now()
 
+	// TODO: Add a flag for enabling the profiler
+	if false {
+		f, err := os.Create("./logs/cpuprof.prof")
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+	}
+
 	jsToken, err := common.GenerateSafeString(80)
 	if err != nil {
 		log.Fatal(err)
@@ -377,7 +387,7 @@ func main() {
 		sig := <-sigs
 		// TODO: Gracefully shutdown the HTTP server
 		runTasks(common.ShutdownTasks)
-		stoppedServer("Received a signal to shutdown: ", sig)
+		common.StoppedServer("Received a signal to shutdown: ", sig)
 	}()
 
 	// Start up the WebSocket ticks
@@ -387,18 +397,13 @@ func main() {
 	//	pprof.StopCPUProfile()
 	//}
 	startServer()
-	args := <-stopServerChan
+	args := <-common.StopServerChan
+	if false {
+		pprof.StopCPUProfile()
+	}
 	// Why did the server stop?
 	log.Fatal(args...)
 }
-
-// TODO: Add a graceful shutdown function
-func stoppedServer(msg ...interface{}) {
-	//log.Print("stopped server")
-	stopServerChan <- msg
-}
-
-var stopServerChan = make(chan []interface{})
 
 func startServer() {
 	// We might not need the timeouts, if we're behind a reverse-proxy like Nginx
@@ -429,7 +434,7 @@ func startServer() {
 		}
 		log.Print("Listening on port " + common.Site.Port)
 		go func() {
-			stoppedServer(newServer(":"+common.Site.Port, router).ListenAndServe())
+			common.StoppedServer(newServer(":"+common.Site.Port, router).ListenAndServe())
 		}()
 		return
 	}
@@ -442,11 +447,11 @@ func startServer() {
 		// TODO: Redirect to port 443
 		go func() {
 			log.Print("Listening on port 80")
-			stoppedServer(newServer(":80", &routes.HTTPSRedirect{}).ListenAndServe())
+			common.StoppedServer(newServer(":80", &routes.HTTPSRedirect{}).ListenAndServe())
 		}()
 	}
 	log.Printf("Listening on port %s", common.Site.Port)
 	go func() {
-		stoppedServer(newServer(":"+common.Site.Port, router).ListenAndServeTLS(common.Config.SslFullchain, common.Config.SslPrivkey))
+		common.StoppedServer(newServer(":"+common.Site.Port, router).ListenAndServeTLS(common.Config.SslFullchain, common.Config.SslPrivkey))
 	}()
 }

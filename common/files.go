@@ -242,12 +242,27 @@ func (list SFileList) Init() error {
 
 		path = strings.TrimPrefix(path, "public/")
 		var ext = filepath.Ext("/public/" + path)
-		gzipData, err := compressBytesGzip(data)
-		if err != nil {
-			return err
+		mimetype := mime.TypeByExtension(ext)
+
+		// Avoid double-compressing images
+		var gzipData []byte
+		if mimetype != "image/jpeg" && mimetype != "image/png" && mimetype != "image/gif" {
+			gzipData, err = compressBytesGzip(data)
+			if err != nil {
+				return err
+			}
+			// Don't use Gzip if we get meagre gains from it as it takes longer to process the responses
+			if len(gzipData) >= (len(data) + 100) {
+				gzipData = nil
+			} else {
+				diff := len(data) - len(gzipData)
+				if diff <= len(data)/100 {
+					gzipData = nil
+				}
+			}
 		}
 
-		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
