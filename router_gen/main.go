@@ -663,7 +663,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Set("Content-Type", "text/html")
 		gz := gzip.NewWriter(w)
-		defer gz.Close()
+		defer func() {
+			if w.Header().Get("Content-Encoding") == "gzip" {
+				gz.Close()
+			}
+		}()
 		w = gzipResponseWriter{Writer: gz, ResponseWriter: w}
 	}
 	router.routeSwitch(w, req, user, prefix, extraData)

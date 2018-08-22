@@ -210,7 +210,7 @@ func buildPanelRoutes() {
 		Action("routePanelGroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "extraData"),
 		Action("routePanelGroupsCreateSubmit", "/panel/groups/create/"),
 
-		View("panel.Backups", "/panel/backups/", "extraData").Before("SuperAdminOnly"), // TODO: Tests for this
+		View("panel.Backups", "/panel/backups/", "extraData").Before("SuperAdminOnly").NoGzip(), // TODO: Tests for this
 		View("panel.LogsRegs", "/panel/logs/regs/"),
 		View("panel.LogsMod", "/panel/logs/mod/"),
 		View("panel.Debug", "/panel/debug/").Before("AdminOnly"),

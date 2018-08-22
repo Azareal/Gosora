@@ -892,7 +892,11 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Set("Content-Type", "text/html")
 		gz := gzip.NewWriter(w)
-		defer gz.Close()
+		defer func() {
+			if w.Header().Get("Content-Encoding") == "gzip" {
+				gz.Close()
+			}
+		}()
 		w = gzipResponseWriter{Writer: gz, ResponseWriter: w}
 	}
 	router.routeSwitch(w, req, user, prefix, extraData)
@@ -1421,6 +1425,12 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 						return
 					}
 					
+					gzw, ok := w.(gzipResponseWriter)
+					if ok {
+					w = gzw.ResponseWriter
+					w.Header().Del("Content-Type")
+					w.Header().Del("Content-Encoding")
+					}
 					counters.RouteViewCounter.Bump(73)
 					err = panel.Backups(w,req,user,extraData)
 				case "/panel/logs/regs/":
