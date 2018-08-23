@@ -236,7 +236,7 @@ If systemd gives you no permission errors, then make sure you `chown`, `chgrp` a
 
 You will first want to follow the instructions in the section for updating dependencies.
 
-The update system is currently under development, but you can run `dev-update.bat` or `quick-update-linux` to update your instance to the latest commit and to update the associated database schema, etc.
+The update system is currently under development, but you can run `dev-update.bat` or `quick-update-linux` in `/home/gosora/src`to update your instance to the latest commit and to update the associated database schema, etc.
 
 
 If you're logged in as `root`, then you might want to switch to the `gosora` user with `su gosora`, you can switch back by typing `exit`.
@@ -248,8 +248,6 @@ git config --global user.email "lalala@example.com"
 Replace that name and email with whatever you like. This name and email only applies to the `gosora` user. If you see a zillion modified files pop-up, then that is due to you changing their permissions, don't worry about it.
 
 If you get an access denied error, then you might need to run `chown -R gosora /home/gosora` and `chgrp -R www-data /home/gosora` to fix the ownership of the files.
-
-In addition to this, you can update the dependencies without updating Gosora by running `update-deps.bat` or `./update-deps-linux` (.bat is for Windows, the other for Linux as the names would suggest).
 
 If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first have to create a copy of `./schema/schema.json` named `./schema/lastSchema.json`, and then, you'll overwrite the files with the new ones.
 
