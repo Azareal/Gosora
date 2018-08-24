@@ -540,29 +540,19 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 }
 
 type WriterIntercept struct {
-	w http.ResponseWriter
-	code int
+	http.ResponseWriter
 }
 
 func NewWriterIntercept(w http.ResponseWriter) *WriterIntercept {
-	return &WriterIntercept{w:w,code:200}
-}
-
-func (writ *WriterIntercept) Header() http.Header {
-	return writ.w.Header()
-}
-
-func (writ *WriterIntercept) Write(pieces []byte) (int, error) {
-	return writ.w.Write(pieces)
+	return &WriterIntercept{w}
 }
 
 func (writ *WriterIntercept) WriteHeader(code int) {
-	writ.w.WriteHeader(code)
-	writ.code = code
-}
-
-func (writ *WriterIntercept) GetCode() int {
-	return writ.code
+	if code == 200 {
+		writ.ResponseWriter.Header().Set("Cache-Control", "max-age=" + strconv.Itoa(int(common.Day)))
+		writ.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
+	}
+	writ.ResponseWriter.WriteHeader(code)
 }
 
 type GenRouter struct {
@@ -583,10 +573,6 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 		UploadHandler: func(w http.ResponseWriter, req *http.Request) {
 			writ := NewWriterIntercept(w)
 			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,req)
-			if writ.GetCode() == 200 {
-				w.Header().Set("Cache-Control", "max-age=" + strconv.Itoa(int(common.Day)))
-				w.Header().Set("Vary", "Accept-Encoding")
-			} 
 		},
 		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError),
 		requestLogger: log.New(f, "", log.LstdFlags),
