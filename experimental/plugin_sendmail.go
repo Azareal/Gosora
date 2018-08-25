@@ -59,9 +59,5 @@ func send_sendmail(data ...interface{}) interface{} {
 		return false
 	}
 	
-	err = sendmail.Wait()
-	if err != nil {
-		return false
-	}
-	return true
+	return sendmail.Wait() == nil
 }

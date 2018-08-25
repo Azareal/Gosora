@@ -593,6 +593,9 @@ button, .formbutton, .panel_right_button {
 	margin-left: auto;
 	display: flex;
 }
+.post_item .controls:not(.has_likes) .like_count {
+	display: none;
+}
 
 .action_item .userinfo, .action_item .action_icon {
 	display: none;
@@ -632,6 +635,9 @@ button, .formbutton, .panel_right_button {
 }
 .report_item:after {
 	content: "{{index .Phrases "topic.report_button_text"}}";
+}
+.like_count:after {
+	content: " likes";
 }
 
 .topic_reply_container {
@@ -676,6 +682,19 @@ button, .formbutton, .panel_right_button {
 		display: block;
 		background-color: #444444;
 		padding: 10px;
+	}
+	.post_item .action_button_right {
+		background-color: #444444;
+		padding: 10px;
+		padding-left: 14px;
+		/*padding-right: 12px;*/
+		margin-top: 8px;
+	}
+	.post_item .controls:not(.has_likes) .like_count {
+		display: inline;
+	}
+	.post_item .created_at {
+		margin-left: auto;
 	}
 	.ip_item.hide_on_mobile {
 		display: none;
