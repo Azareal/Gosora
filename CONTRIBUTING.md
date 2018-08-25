@@ -2,13 +2,13 @@ If you want to add a contribution, you'll have to open a pull request and to sig
 
 It's mainly there to deal with any legal issues which come our way and to switch licenses without having to chase down contributors who have long stopped using the internet or are deceased or incapacitated.
 
-Other uses may arise in the future, e.g. commercial licensing, although that's currently uncertain.
+Other uses may arise in the future, e.g. commercial licensing for companies which might not be authorised to use open source licensing and what-not, although that's currently uncertain as I'm not knowledgable about the ins and outs of the law.
 
 Try to prefix commits which introduce a lot of bugs or otherwise has a large impact on the usability of Gosora with UNSTABLE.
 
 If anything seems suspect, then feel free to bring up an alternative, although I'd rather not get hung up on the little details, if it's something which is purely a matter of opinion.
 
-Also, please don't push new features, particularly ones which will require a great effort from other maintainers, especially if it has fairly minor benefits, unless you are willing to maintain it. That includes the documentation for it.
+Also, please don't push new features, particularly ones which will require a great effort from other maintainers in the long term, particularly if it has fairly minor benefits to the ecosystem as a whole, unless you are willing to maintain it.
 
 # Coding Standards
 
