@@ -1,6 +1,6 @@
 # Windows Installation
 
-Run install.bat, e.g. double-click on it. You will also have to start-up MySQL, which if you're using Wnmp or friends is just a matter of opening that program and starting the MySQL process via it.
+Run `install.bat`, e.g. double-click on it. You will also have to start-up MySQL, which if you're using Wnmp or friends is just a matter of opening that program and starting the MySQL process via it.
 
 Follow the instructions shown on the screen.
 
@@ -11,7 +11,7 @@ To navigate to the folder the software is in at any time in the future, you can 
 
 Simple installations are usually recommended for trying out the software rather than for deploying it in production as they are less hardened and have fewer service facilities.
 
-This might also be fine, if you're using something else as a reverse-proxy (e.g. Nginx).
+This might also be fine, if you're using something else as a reverse-proxy (e.g. Nginx or Apache).
 
 First, we need somewhere for the software to live, if you're familiar with Linux, then you might have some ideas of your own, otherwise we may just go for `~/gosora`.
 
@@ -23,20 +23,22 @@ And now, we're going to rename the downloaded folder from Gosora to gosora becau
 
 We can now hop into that folder with the same command we used for getting to the home folder:
 
-cd gosora
+`cd gosora`
 
 And now, we'll change the permissions on the installer script, otherwise we'll get an access denied error:
 
-chmod 755 ./install-linux
+`chmod 755 ./install-linux`
 
 Just run this to run the installer:
 
-./install-linux
+`./install-linux`
 
 Follow the instructions shown on the screen.
 
 
 # Linux Installation with Systemd Service
+
+You will need administrator privileges on the machine (aka root) to add a service.
 
 First, you will need to jump to the place where you want to put the code, we will use `/home/gosora/src/` here, but if you want to use something else, then you'll have to modify the service file with your own path (but *never* in a folder where the files are automatically served by a webserver).
 
@@ -48,43 +50,43 @@ If you're just casually setting up an installation on your own machine which isn
 
 Please type the following commands into the console and hit enter:
 
-cd /home/
+`cd /home/`
 
-useradd gosora
+`useradd gosora`
 
-passwd gosora
+`passwd gosora`
 
-Type in a strong password for the `gosora` user, please oh please... Don't use "password", just... don't, okay?
+Type in a strong password for the `gosora` user, please oh please... Don't use "password", just... don't, okay? Also, you might want to note this down somewhere.
 
-mkdir gosora
+`mkdir gosora`
 
-cd gosora
+`cd gosora`
 
-git clone https://github.com/Azareal/Gosora
+`git clone https://github.com/Azareal/Gosora`
 
-mv Gosora src
+`mv Gosora src`
 
-chown -R gosora ../gosora
+`chown -R gosora ../gosora`
 
-chgrp -R www-data ../gosora
+`chgrp -R www-data ../gosora`
 
-cd src
+`cd src`
 
-chmod 2775 logs
+`chmod 2775 logs`
 
-chmod 755 ./install-linux
+`chmod 755 ./install-linux`
 
-./install-linux
+`./install-linux`
 
 Follow the instructions shown on the screen.
 
-You will also want to setup a service to manage Gosora more easily, although this will require administrator priviledges on the machine:
+We will also want to setup a service:
 
-chmod 755 ./pre-run-linux
+`chmod 755 ./pre-run-linux`
 
-cp ./gosora_example.service /lib/systemd/system/gosora.service
+`cp ./gosora_example.service /lib/systemd/system/gosora.service`
 
-systemctl daemon-reload
+`systemctl daemon-reload`
 
 
 # Advanced Installation

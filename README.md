@@ -71,6 +71,10 @@ On Windows, you might want to try the [GosoraBootstrapper](https://github.com/Az
 
 Consult [installation](https://github.com/Azareal/Gosora/blob/master/docs/installation.md) for instructions on how to install Gosora.
 
+# Updating
+
+Consult [updating](https://github.com/Azareal/Gosora/blob/master/docs/updating.md) for instructions on how to update Gosora.
+
 
 # Running the program
 
@@ -78,17 +82,17 @@ Consult [installation](https://github.com/Azareal/Gosora/blob/master/docs/instal
 
 If you have setup a service, you can run:
 
-./pre-run-linux
+`./pre-run-linux`
 
-service gosora start
+`service gosora start`
 
 You can then, check Gosora's current status (to see if it started up properly) with:
 
-service gosora status
+`service gosora status`
 
 And you can stop it with:
 
-service gosora stop
+`service gosora stop`
 
 If you haven't setup a service, you can run `./run-linux`, although you will be responsible for finding a way to run it in the background, so that it doesn't close when the terminal does.
 
@@ -96,44 +100,7 @@ One method might be to use: https://serverfault.com/questions/34750/is-it-possib
 
 *Windows*
 
-Run run.bat, e.g. double-clicking on it.
-
-*Updating Dependencies*
-
-Dependencies are little libraries Gosora relies on to function.
-
-You can update themn by running `update-deps.bat` on Windows or `./update-deps-linux` on Linux. These dependencies do not include Go or MySQL, those have to be updated separately.
-
-You'll need to restart the server after you change a template or update Gosora, e.g. with `run.bat` or killing the process and running `./run-linux` or via `./pre-run-linux` followed by `service gosora restart`.
-
-
-# Updating the software
-
-You will first want to follow the instructions in the section for updating dependencies.
-
-The update system is currently under development, but you can run `dev-update.bat` or `quick-update-linux` in `/home/gosora/src`to update your instance to the latest commit and to update the associated database schema, etc.
-
-
-If you're logged in as `root`, then you might want to switch to the `gosora` user with `su gosora`, you can switch back by typing `exit`.
-If this is the first time you've done an update as the `gosora` user, then you might have to configure Git, simply do:
-
-git config --global user.name "Lalala"
-git config --global user.email "lalala@example.com"
-
-Replace that name and email with whatever you like. This name and email only applies to the `gosora` user. If you see a zillion modified files pop-up, then that is due to you changing their permissions, don't worry about it.
-
-If you get an access denied error, then you might need to run `chown -R gosora /home/gosora` and `chgrp -R www-data /home/gosora` to fix the ownership of the files.
-
-If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first have to create a copy of `./schema/schema.json` named `./schema/lastSchema.json`, and then, you'll overwrite the files with the new ones.
-
-After that, you'll need to run `go build ./patcher` on Windows or the following code block on Linux:
-```
-cd ./patcher
-go build -o Patcher
-mv ./Patcher ..
-```
-
-Once you've done that, you just need to run `patcher.exe` (Windows) or `./Patcher` to apply the latest patches to the database, etc.
+Run `run.bat`, e.g. double-clicking on it.
 
 
 # How do I install plugins?
