@@ -69,7 +69,7 @@ On Windows, you might want to try the [GosoraBootstrapper](https://github.com/Az
 
 # Installation
 
-Consult [installation](https://github.com/Azareal/blob/master/docs/installation.md) for instructions on how to install Gosora.
+Consult [installation](https://github.com/Azareal/Gosora/blob/master/docs/installation.md) for instructions on how to install Gosora.
 
 
 # Running the program
