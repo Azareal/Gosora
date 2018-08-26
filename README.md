@@ -40,6 +40,9 @@ Other modern features like alerts, likes, advanced dashboard with live stats (CP
 Go 1.10 or newer - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
 For Ubuntu, you can consult: https://tecadmin.net/install-go-on-ubuntu/
+You will also want to run `ln -s /usr/local/go/bin/go` (replace /usr/local with where ever you put Go), so that go becomes visible to other users.
+
+If you followed the instructions above, you can update to the latest version of Go simply by deleting the `/go/` folder and replacing it with a `/go/` folder for the latest version of Go.
 
 Git - You may need this for downloading updates via the updater. You might already have this installed on your server, if the `git` commands don't work, then install this. https://git-scm.com/downloads
 
@@ -60,70 +63,13 @@ It's entirely possible that your host already has MySQL installed and ready to g
 
 # How to download
 
-For Linux, you can skip down to the How to install section.
+For Linux, you can skip down to the Installation section as it covers this.
 
 On Windows, you might want to try the [GosoraBootstrapper](https://github.com/Azareal/GosoraBootstrapper), if you can't find the command prompt or otherwise can't follow those instructions. It's just a matter of double-clicking on the bat file there and it'll download the rest of the files for you.
 
+# Installation
 
-# How to install
-
-*Linux*
-
-First, you will need to jump to the place where you want to put the code, we will use `/home/gosora/src/` here, but if you want to use something else, then you'll have to modify the service file with your own path (but *never* in a folder where the files are automatically served by a webserver).
-
-If you place it in `/www/`, `/public_html/` or any similar folder, then there's a chance that your server might be compromised.
-
-The following commands will pull the latest copy of Gosora off the Git repository, will create a user account to run Gosora as, will set it as the owner of the files and will start the installation process.
-
-If you're just casually setting up an installation on your own machine which isn't exposed to the internet just to try out Gosora, then you might not need to setup a seperate account for it or do `chmod 2775 logs`.
-
-Please type the following commands into the console and hit enter:
-
-cd /home/
-
-useradd gosora
-
-passwd gosora
-
-Type in a strong password for the `gosora` user, please don't use password.
-
-mkdir gosora
-
-cd gosora
-
-git clone https://github.com/Azareal/Gosora
-
-mv Gosora src
-
-chown -R gosora ../gosora
-
-chgrp -R www-data ../gosora
-
-cd src
-
-chmod 2775 logs
-
-chmod 755 ./install-linux
-
-./install-linux
-
-Follow the instructions shown on the screen.
-
-You will also want to setup a service to manage Gosora more easily, although this will require administrator priviledges on the machine:
-
-chmod 755 ./pre-run-linux
-
-cp ./gosora_example.service /lib/systemd/system/gosora.service
-
-systemctl daemon-reload
-
-*Windows*
-
-Run install.bat, e.g. double-click on it. You will also have to start-up MySQL, which if you're using Wnmp or friends is just a matter of opening that program and starting the MySQL process via it.
-
-Follow the instructions shown on the screen.
-
-To navigate to the folder the software is in at any time in the future, you can just type `cd` followed by the folder's name, e.g. `cd /home/gosora/src/` and then you can run your commands. cd stands for change directory.
+Consult [installation](https://github.com/Azareal/blob/master/docs/installation.md) for instructions on how to install Gosora.
 
 
 # Running the program
@@ -146,6 +92,8 @@ service gosora stop
 
 If you haven't setup a service, you can run `./run-linux`, although you will be responsible for finding a way to run it in the background, so that it doesn't close when the terminal does.
 
+One method might be to use: https://serverfault.com/questions/34750/is-it-possible-to-detach-a-process-from-its-terminal-or-i-should-have-used-s
+
 *Windows*
 
 Run run.bat, e.g. double-clicking on it.
@@ -157,79 +105,6 @@ Dependencies are little libraries Gosora relies on to function.
 You can update themn by running `update-deps.bat` on Windows or `./update-deps-linux` on Linux. These dependencies do not include Go or MySQL, those have to be updated separately.
 
 You'll need to restart the server after you change a template or update Gosora, e.g. with `run.bat` or killing the process and running `./run-linux` or via `./pre-run-linux` followed by `service gosora restart`.
-
-
-# Advanced Installation
-
-This section explains how to set things up without running the batch or shell files. For Windows, you will likely have to open up cmd.exe (the app called Command Prompt in Win10) to run these commands inside or something similar, while with Linux you would likely use the Terminal or console.
-
-Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms. Additionally, Linux doesn't require `StackExchange/wmi` or `/x/sys/windows`
-
-You also need to substitute the `gosora.exe` bits for `./Gosora` on Linux. For more info, you might want to take a gander inside the `./run-linux` and `./install-linux` shell files to see how they're implemented.
-
-If you want to skip typing all the `go get`s, you can run `./update-deps.bat` (Windows) or `./update-deps-linux` to do that for you.
-
-```bash
-git clone https://github.com/Azareal/Gosora
-
-go get -u github.com/go-sql-driver/mysql
-
-go get -u golang.org/x/crypto/bcrypt
-
-go get -u golang.org/x/crypto/argon2
-
-go get -u github.com/StackExchange/wmi
-
-go get -u github.com/Azareal/gopsutil
-
-go get -u github.com/gorilla/websocket
-
-go get -u gopkg.in/sourcemap.v1
-
-go get -u github.com/robertkrimen/otto
-
-go get -u github.com/esimov/caire
-
-go get -u github.com/lib/pq
-
-go get -u github.com/denisenkom/go-mssqldb
-
-go get -u github.com/fsnotify/fsnotify
-
-go get -u github.com/pkg/errors
-
-rm -f template_*.go
-
-rm -f gen_*.go
-
-rm -f tmpl_client/template_*.go
-
-rm -f ./Gosora
-
-go generate
-
-go build ./router_gen
-
-router_gen.exe
-
-go build ./query_gen
-
-query_gen.exe
-
-go build -o gosora.exe
-
-go build ./install
-
-install.exe
-
-gosora.exe -build-templates
-
-gosora.exe
-```
-
-I'm looking into minimising the number of go gets for the advanced build and to maybe remove the platform and database engine specific dependencies if possible for those who don't need them.
-
-If systemd gives you no permission errors, then make sure you `chown`, `chgrp` and `chmod` the files and folders appropriately.
 
 
 # Updating the software
