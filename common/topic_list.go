@@ -129,6 +129,9 @@ func (tList *DefaultTopicList) RebuildPermTree() error {
 }
 
 func (tList *DefaultTopicList) GetListByGroup(group *Group, page int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+	if page == 0 {
+		page = 1
+	}
 	// TODO: Cache the first three pages not just the first along with all the topics on this beaten track
 	if page == 1 {
 		var holder *TopicListHolder
@@ -148,6 +151,7 @@ func (tList *DefaultTopicList) GetListByGroup(group *Group, page int) (topicList
 	}
 
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
+	//log.Printf("deoptimising for %d on page %d\n", group.ID, page)
 	return tList.GetListByCanSee(group.CanSee, page)
 }
 
