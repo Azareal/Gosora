@@ -3,15 +3,15 @@ package main
 import (
 	"bytes"
 	"database/sql"
-	"errors"
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"./common"
 	"./install/install"
@@ -28,17 +28,17 @@ var installAdapter install.InstallAdapter
 func ResetTables() (err error) {
 	err = installAdapter.InitDatabase()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	err = installAdapter.TableDefs()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	err = installAdapter.CreateAdmin()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	return installAdapter.InitialData()
@@ -59,23 +59,23 @@ func gloinit() (err error) {
 
 	err = common.LoadConfig()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	err = common.ProcessConfig()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	common.Themes, err = common.NewThemeList()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.SwitchToTestDB()
 
 	var ok bool
 	installAdapter, ok = install.Lookup(dbAdapter)
 	if !ok {
-		return errors.New("We couldn't find the adapter '" + dbAdapter + "'")
+		return errors.WithStack(errors.New("We couldn't find the adapter '" + dbAdapter + "'"))
 	}
 	installAdapter.SetConfig(common.DbConfig.Host, common.DbConfig.Username, common.DbConfig.Password, common.DbConfig.Dbname, common.DbConfig.Port)
 
@@ -85,16 +85,16 @@ func gloinit() (err error) {
 	}
 	err = InitDatabase()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	err = afterDBInit()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	gloinited = true
 	return nil
@@ -104,7 +104,7 @@ func init() {
 	err := gloinit()
 	if err != nil {
 		log.Print("Something bad happened")
-		debug.PrintStack()
+		//debug.PrintStack()
 		log.Fatal(err)
 	}
 }
