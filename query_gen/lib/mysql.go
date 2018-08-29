@@ -4,6 +4,7 @@ package qgen
 import (
 	"database/sql"
 	"errors"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -37,6 +38,7 @@ func (adapter *MysqlAdapter) GetStmts() map[string]DBStmt {
 	return adapter.Buffer
 }
 
+// TODO: Add an option to disable unix pipes
 func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
 	dbCollation, ok := config["collation"]
 	if !ok {
@@ -45,6 +47,22 @@ func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 	var dbpassword string
 	if config["password"] != "" {
 		dbpassword = ":" + config["password"]
+	}
+
+	// First try opening a pipe as those are faster
+	if runtime.GOOS == "linux" {
+		var dbsocket = "/tmp/mysql.sock"
+		if config["socket"] != "" {
+			dbsocket = config["socket"]
+		}
+
+		db, err := sql.Open("mysql", config["username"]+dbpassword+"@unix("+dbsocket+")/"+config["name"]+"?collation="+dbCollation+"&parseTime=true")
+		if err != nil {
+			return db, err
+		}
+
+		// Make sure that the connection is alive
+		return db, db.Ping()
 	}
 
 	// Open the database connection
