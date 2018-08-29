@@ -41,6 +41,13 @@ func (adapter *MysqlAdapter) GetStmts() map[string]DBStmt {
 
 // TODO: Add an option to disable unix pipes
 func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
+	// The adapter seems to be panicking when encountering a recoverable error x.x
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
+
 	dbCollation, ok := config["collation"]
 	if !ok {
 		return nil, ErrNoCollation
@@ -52,13 +59,6 @@ func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 
 	// First try opening a pipe as those are faster
 	if runtime.GOOS == "linux" {
-		// The adapter seems to be panicking when encountering a recoverable error x.x
-		defer func() {
-			if r := recover(); r != nil {
-				fmt.Println("Recovered in f", r)
-			}
-		}()
-
 		var dbsocket = "/tmp/mysql.sock"
 		if config["socket"] != "" {
 			dbsocket = config["socket"]
@@ -68,6 +68,8 @@ func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 		if err == nil {
 			// Make sure that the connection is alive
 			return db, db.Ping()
+		} else {
+			fmt.Println(err)
 		}
 	}
 
