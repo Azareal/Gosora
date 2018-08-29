@@ -85,7 +85,7 @@ func gloinit() (err error) {
 	}
 	err = InitDatabase()
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	err = afterDBInit()
 	if err != nil {

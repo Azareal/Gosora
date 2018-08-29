@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"./common"
+	"github.com/pkg/errors"
 )
 
 var stmts *Stmts
@@ -30,17 +31,17 @@ func InitDatabase() (err error) {
 	log.Print("Running the db handlers.")
 	err = common.DbInits.Run()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the usergroups.")
 	common.Groups, err = common.NewMemoryGroupStore()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	err2 := common.Groups.LoadGroups()
 	if err2 != nil {
-		return err2
+		return errors.WithStack(err2)
 	}
 
 	// We have to put this here, otherwise LoadForums() won't be able to get the last poster data when building it's forums
@@ -58,45 +59,48 @@ func InitDatabase() (err error) {
 
 	common.Users, err = common.NewDefaultUserStore(ucache)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	common.Topics, err = common.NewDefaultTopicStore(tcache)
 	if err != nil {
-		return err2
+		return errors.WithStack(err2)
 	}
 
 	log.Print("Loading the forums.")
 	common.Forums, err = common.NewMemoryForumStore()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	err = common.Forums.LoadForums()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the forum permissions.")
 	common.FPStore, err = common.NewMemoryForumPermsStore()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	err = common.FPStore.Init()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the settings.")
 	err = common.LoadSettings()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the plugins.")
 	err = common.InitExtend()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the themes.")
-	return common.Themes.LoadActiveStatus()
+	if err != nil {
+		return errors.WithStack(common.Themes.LoadActiveStatus())
+	}
+	return nil
 }
