@@ -105,7 +105,7 @@ func init() {
 	if err != nil {
 		log.Print("Something bad happened")
 		//debug.PrintStack()
-		log.Fatalf(err)
+		log.Fatalf("%+v\n", err)
 	}
 }
 
