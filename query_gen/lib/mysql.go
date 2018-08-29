@@ -4,6 +4,7 @@ package qgen
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"runtime"
 	"strconv"
 	"strings"
@@ -51,6 +52,13 @@ func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 
 	// First try opening a pipe as those are faster
 	if runtime.GOOS == "linux" {
+		// The adapter seems to be panicking when encountering a recoverable error x.x
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("Recovered in f", r)
+			}
+		}()
+
 		var dbsocket = "/tmp/mysql.sock"
 		if config["socket"] != "" {
 			dbsocket = config["socket"]
