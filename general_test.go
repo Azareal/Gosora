@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"testing"
@@ -44,6 +45,10 @@ func ResetTables() (err error) {
 }
 
 func gloinit() (err error) {
+	if gloinited {
+		return nil
+	}
+
 	// TODO: Make these configurable via flags to the go test command
 	common.Dev.DebugMode = false
 	common.Dev.SuperDebug = false
@@ -99,6 +104,7 @@ func init() {
 	err := gloinit()
 	if err != nil {
 		log.Print("Something bad happened")
+		debug.PrintStack()
 		log.Fatal(err)
 	}
 }
@@ -106,12 +112,11 @@ func init() {
 // TODO: Swap out LocalError for a panic for this?
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -154,13 +159,11 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 
 func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
-	var err error
-	if !gloinited {
-		err = gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
@@ -216,12 +219,11 @@ func BenchmarkTopicAdminRouteParallelAltAlt(b *testing.B) {
 
 func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -246,12 +248,11 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 
 func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = true
@@ -276,13 +277,11 @@ func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 
 func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
-	var err error
-	if !gloinited {
-		err = gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
@@ -321,13 +320,11 @@ func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
-	var err error
-	if !gloinited {
-		err = gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
@@ -354,13 +351,11 @@ func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
-	var err error
-	if !gloinited {
-		err = gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
@@ -391,13 +386,11 @@ func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
-	var err error
-	if !gloinited {
-		err = gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
@@ -428,13 +421,11 @@ func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
 	b.ReportAllocs()
-	var err error
-	if !gloinited {
-		err = gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
+
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
@@ -467,9 +458,7 @@ func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
 /*
 func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 
 	b.RunParallel(func(pb *testing.PB) {
 		admin, err := users.Get(1)
@@ -498,9 +487,7 @@ func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 
 func BenchmarkForumsAdminRouteParallelProf(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 
 	b.RunParallel(func(pb *testing.PB) {
 		admin, err := users.Get(1)
@@ -580,9 +567,7 @@ func BenchmarkRoutesSerial(b *testing.B) {
 	forums_req_admin.AddCookie(&admin_session_cookie)
 	forums_handler := http.HandlerFunc(route_forums)
 
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 
 	//f, err := os.Create("routes_bench_cpu.prof")
 	//if err != nil {
@@ -769,11 +754,9 @@ func BenchmarkRoutesSerial(b *testing.B) {
 
 func BenchmarkQueryTopicParallel(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -793,11 +776,9 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 
 func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -824,11 +805,9 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 
 func BenchmarkUserGet(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -845,11 +824,9 @@ func BenchmarkUserGet(b *testing.B) {
 
 func BenchmarkUserBypassGet(b *testing.B) {
 	b.ReportAllocs()
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			b.Fatal(err)
-		}
+	err := gloinit()
+	if err != nil {
+		b.Fatal(err)
 	}
 
 	// Bypass the cache and always hit the database
@@ -1120,9 +1097,7 @@ func TestLevels(t *testing.T) {
 // TODO: Make this compatible with the changes to the router
 /*
 func TestStaticRoute(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 	if !plugins_inited {
 		init_plugins()
 	}
@@ -1139,9 +1114,7 @@ func TestStaticRoute(t *testing.T) {
 */
 
 /*func TestTopicAdminRoute(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 	if !plugins_inited {
 		init_plugins()
 	}
@@ -1173,9 +1146,7 @@ func TestStaticRoute(t *testing.T) {
 }*/
 
 /*func TestTopicGuestRoute(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 	if !plugins_inited {
 		init_plugins()
 	}
@@ -1195,9 +1166,7 @@ func TestStaticRoute(t *testing.T) {
 // TODO: Make these routes compatible with the changes to the router
 /*
 func TestForumsAdminRoute(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 	if !plugins_inited {
 		init_plugins()
 	}
@@ -1226,9 +1195,7 @@ func TestForumsAdminRoute(t *testing.T) {
 }
 
 func TestForumsGuestRoute(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 	if !plugins_inited {
 		init_plugins()
 	}
@@ -1245,9 +1212,7 @@ func TestForumsGuestRoute(t *testing.T) {
 */
 
 /*func TestForumAdminRoute(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 	if !plugins_inited {
 		init_plugins()
 	}
@@ -1277,9 +1242,7 @@ func TestForumsGuestRoute(t *testing.T) {
 }*/
 
 /*func TestForumGuestRoute(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 	if !plugins_inited {
 		init_plugins()
 	}
@@ -1296,9 +1259,7 @@ func TestForumsGuestRoute(t *testing.T) {
 }*/
 
 /*func TestAlerts(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	gloinit()
 	if !plugins_inited {
 		init_plugins()
 	}
