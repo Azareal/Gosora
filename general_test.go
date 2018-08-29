@@ -85,11 +85,12 @@ func gloinit() (err error) {
 	}
 	err = InitDatabase()
 	if err != nil {
+		log.Print("err2: ", err)
 		return err
 	}
 	err = afterDBInit()
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))

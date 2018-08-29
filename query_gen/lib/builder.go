@@ -1,7 +1,10 @@
 /* WIP Under Construction */
 package qgen
 
-import "database/sql"
+import (
+	"database/sql"
+	"log"
+)
 
 var Builder *builder
 
@@ -27,6 +30,7 @@ func (build *builder) Init(adapter string, config map[string]string) error {
 	}
 	conn, err := build.adapter.BuildConn(config)
 	build.conn = conn
+	log.Print("err: ", err) // Is the problem here somehow?
 	return err
 }
 
