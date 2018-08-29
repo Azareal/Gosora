@@ -4,7 +4,7 @@ package qgen
 import (
 	"database/sql"
 	"errors"
-	"fmt"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -41,13 +41,6 @@ func (adapter *MysqlAdapter) GetStmts() map[string]DBStmt {
 
 // TODO: Add an option to disable unix pipes
 func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
-	// The adapter seems to be panicking when encountering a recoverable error x.x
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered in f", r)
-		}
-	}()
-
 	dbCollation, ok := config["collation"]
 	if !ok {
 		return nil, ErrNoCollation
@@ -64,14 +57,15 @@ func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 			dbsocket = config["socket"]
 		}
 
-		db, err := sql.Open("mysql", config["username"]+dbpassword+"@unix("+dbsocket+")/"+config["name"]+"?collation="+dbCollation+"&parseTime=true")
+		// The MySQL adapter refuses to open any other connections, if the unix socket doesn't exist, so check for it first
+		_, err := os.Stat(dbsocket)
 		if err == nil {
-			// Make sure that the connection is alive
-			return db, db.Ping()
+			db, err := sql.Open("mysql", config["username"]+dbpassword+"@unix("+dbsocket+")/"+config["name"]+"?collation="+dbCollation+"&parseTime=true")
+			if err == nil {
+				// Make sure that the connection is alive
+				return db, db.Ping()
+			}
 		}
-
-		// Am I supposed to do this? o.O
-		db, err = nil, nil
 	}
 
 	// Open the database connection

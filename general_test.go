@@ -85,7 +85,6 @@ func gloinit() (err error) {
 	}
 	err = InitDatabase()
 	if err != nil {
-		log.Print("err2: ", err)
 		return err
 	}
 	err = afterDBInit()
