@@ -4,6 +4,7 @@ env:
 language: go
 go:
   - "1.10"
+  - "1.11"
   - master
 before_install:
   - cd $HOME
