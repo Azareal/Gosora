@@ -57,12 +57,10 @@ func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 		}
 
 		db, err := sql.Open("mysql", config["username"]+dbpassword+"@unix("+dbsocket+")/"+config["name"]+"?collation="+dbCollation+"&parseTime=true")
-		if err != nil {
-			return db, err
+		if err == nil {
+			// Make sure that the connection is alive
+			return db, db.Ping()
 		}
-
-		// Make sure that the connection is alive
-		return db, db.Ping()
 	}
 
 	// Open the database connection
