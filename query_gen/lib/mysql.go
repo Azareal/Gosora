@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"runtime"
 	"strconv"
 	"strings"
@@ -66,11 +65,13 @@ func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 		}
 
 		db, err := sql.Open("mysql", config["username"]+dbpassword+"@unix("+dbsocket+")/"+config["name"]+"?collation="+dbCollation+"&parseTime=true")
-		log.Print("err: ", err)
 		if err == nil {
 			// Make sure that the connection is alive
 			return db, db.Ping()
 		}
+
+		// Am I supposed to do this? o.O
+		db, err = nil, nil
 	}
 
 	// Open the database connection
