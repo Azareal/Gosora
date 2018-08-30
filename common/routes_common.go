@@ -278,6 +278,10 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		}
 	}
 
+	// TODO: Add a config setting to disable this header
+	// TODO: Have this header cover more things
+	w.Header().Set("Content-Security-Policy", "upgrade-insecure-requests")
+
 	if user == &GuestUser {
 		usercpy.LastIP = host
 		return *usercpy, true
