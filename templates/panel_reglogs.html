@@ -8,7 +8,7 @@
 		<div id="panel_modlogs" class="colstack_item rowlist">
 			{{range .Logs}}
 			<div class="rowitem panel_compactrow">
-				<span class="{{if not .Success}}panel_registration_attempt{{end}}" style="float: left;">
+				<span{{if not .Success}} class="panel_registration_attempt"{{end}} style="float: left;">
 					<span>{{if not .Success}}{{lang "panel_logs_registration_attempt"}}: {{end}}{{.Username}} ({{lang "panel_logs_registration_email"}}: {{.Email}}){{if .ParsedReason}} ({{lang "panel_logs_registration_reason"}}: {{.ParsedReason}}){{end}}</span>
 					{{if $.CurrentUser.Perms.ViewIPs}}<br /><small style="margin-left: 2px;font-size: 12px;">{{.IPAddress}}</small>{{end}}
 				</span>

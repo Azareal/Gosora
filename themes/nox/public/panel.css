@@ -264,3 +264,7 @@ button, .formbutton, .panel_right_button, #panel_users .profile_url {
 #panel_debug .grid_stat:not(.grid_stat_head) {
 	margin-bottom: 5px;
 }
+
+.pageitem {
+	background-color: #555555;
+}

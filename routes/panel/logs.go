@@ -10,6 +10,7 @@ import (
 	"../../common"
 )
 
+// TODO: Link the usernames for successful registrations to the profiles
 func LogsRegs(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "registration_logs", "logs")
 	if ferr != nil {

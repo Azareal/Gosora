@@ -5,7 +5,7 @@
 		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/views/" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
-					<a>{{lang "panel_statistics_requests_head"}}</a>
+					<h1>{{lang "panel_statistics_requests_head"}}</h1>
 					<select class="timeRangeSelector to_right" name="timeRange">
 						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>{{lang "panel_statistics_time_range_one_month"}}</option>
 						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>{{lang "panel_statistics_time_range_one_week"}}</option>
