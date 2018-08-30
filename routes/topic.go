@@ -86,6 +86,11 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	}
 	topic.RelativeCreatedAt = common.RelativeTime(topic.CreatedAt)
 
+	forum, err := common.Forums.Get(topic.ParentID)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
 	var poll common.Poll
 	if topic.Poll != 0 {
 		pPoll, err := common.Polls.Get(topic.Poll)
@@ -110,7 +115,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 
 	// Calculate the offset
 	offset, page, lastPage := common.PageOffset(topic.PostCount, page, common.Config.ItemsPerPage)
-	tpage := common.TopicPage{header, []common.ReplyUser{}, topic, poll, page, lastPage}
+	tpage := common.TopicPage{header, []common.ReplyUser{}, topic, forum, poll, page, lastPage}
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {

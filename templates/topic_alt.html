@@ -12,8 +12,8 @@
 	<form action='/topic/edit/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' method="post">
 		<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 			<h1 class='topic_name hide_on_edit' title='{{.Topic.Title}}'>{{.Topic.Title}}</h1>
-			{{/** TODO: Inline this CSS **/}}
-			{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status.closed_tooltip"}}' aria-label='{{lang "topic.status_closed_aria"}}' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
+			<span class="topic_name_forum_sep hide_on_edit"> / </span>
+			<a href="{{.Forum.Link}}" class="topic_forum hide_on_edit">{{.Forum.Name}}</a>
 			{{/** TODO: Does this need to be guarded by a permission? It's only visible in edit mode anyway, which can't be triggered, if they don't have the permission **/}}
 			{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 			{{if .CurrentUser.Perms.EditTopic}}
@@ -21,6 +21,9 @@
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic.update_button"}}</button>
 			{{end}}
 			{{end}}
+			<span class="topic_view_count hide_on_edit">{{.Topic.ViewCount}}</span>
+			{{/** TODO: Inline this CSS **/}}
+			{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status.closed_tooltip"}}' aria-label='{{lang "topic.status_closed_aria"}}' style="font-weight:normal;float: right;position:relative;top:-5px;">&#x1F512;&#xFE0E</span>{{end}}
 		</div>
 	</form>
 </div>

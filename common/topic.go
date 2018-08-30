@@ -37,6 +37,7 @@ type Topic struct {
 	ParentID  int
 	Status    string // Deprecated. Marked for removal.
 	IPAddress string
+	ViewCount int
 	PostCount int
 	LikeCount int
 	ClassName string // CSS Class Name
@@ -60,6 +61,7 @@ type TopicUser struct {
 	ParentID  int
 	Status    string // Deprecated. Marked for removal.
 	IPAddress string
+	ViewCount int
 	PostCount int
 	LikeCount int
 	ClassName string
@@ -97,6 +99,7 @@ type TopicsRow struct {
 	ParentID            int
 	Status              string // Deprecated. Marked for removal. -Is there anything we could use it for?
 	IPAddress           string
+	ViewCount           int
 	PostCount           int
 	LikeCount           int
 	ClassName           string
@@ -123,6 +126,7 @@ type WsTopicsRow struct {
 	RelativeLastReplyAt string
 	LastReplyBy         int
 	ParentID            int
+	ViewCount           int
 	PostCount           int
 	LikeCount           int
 	ClassName           string
@@ -133,7 +137,7 @@ type WsTopicsRow struct {
 }
 
 func (row *TopicsRow) WebSockets() *WsTopicsRow {
-	return &WsTopicsRow{row.ID, row.Link, row.Title, row.CreatedBy, row.IsClosed, row.Sticky, row.CreatedAt, row.LastReplyAt, row.RelativeLastReplyAt, row.LastReplyBy, row.ParentID, row.PostCount, row.LikeCount, row.ClassName, row.Creator.WebSockets(), row.LastUser.WebSockets(), row.ForumName, row.ForumLink}
+	return &WsTopicsRow{row.ID, row.Link, row.Title, row.CreatedBy, row.IsClosed, row.Sticky, row.CreatedAt, row.LastReplyAt, row.RelativeLastReplyAt, row.LastReplyBy, row.ParentID, row.ViewCount, row.PostCount, row.LikeCount, row.ClassName, row.Creator.WebSockets(), row.LastUser.WebSockets(), row.ForumName, row.ForumLink}
 }
 
 type TopicStmts struct {
@@ -174,8 +178,8 @@ func init() {
 			setPoll:           acc.Update("topics").Set("content = '', parsed_content = '', poll = ?").Where("tid = ? AND poll = 0").Prepare(),
 			createActionReply: acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
-			getTopicUser: acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.poll, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
-			getByReplyID: acc.SimpleLeftJoin("replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, topics.poll, topics.data", "replies.tid = topics.tid", "rid = ?", "", ""),
+			getTopicUser: acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, topics.poll, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
+			getByReplyID: acc.SimpleLeftJoin("replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, topics.poll, topics.data", "replies.tid = topics.tid", "rid = ?", "", ""),
 		}
 		return acc.FirstError()
 	})
@@ -332,7 +336,7 @@ func (topic *Topic) Copy() Topic {
 // TODO: Load LastReplyAt?
 func TopicByReplyID(rid int) (*Topic, error) {
 	topic := Topic{ID: 0}
-	err := topicStmts.getByReplyID.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.PostCount, &topic.LikeCount, &topic.Poll, &topic.Data)
+	err := topicStmts.getByReplyID.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.Poll, &topic.Data)
 	topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
 	return &topic, err
 }
@@ -366,14 +370,14 @@ func GetTopicUser(tid int) (TopicUser, error) {
 	}
 
 	tu := TopicUser{ID: tid}
-	err := topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+	err := topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 	tu.Avatar, tu.MicroAvatar = BuildAvatar(tu.CreatedBy, tu.Avatar)
 	tu.Link = BuildTopicURL(NameToSlug(tu.Title), tu.ID)
 	tu.UserLink = BuildProfileURL(NameToSlug(tu.CreatedByName), tu.CreatedBy)
 	tu.Tag = Groups.DirtyGet(tu.Group).Tag
 
 	if tcache != nil {
-		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, ParentID: tu.ParentID, IPAddress: tu.IPAddress, PostCount: tu.PostCount, LikeCount: tu.LikeCount, Poll: tu.Poll}
+		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, ParentID: tu.ParentID, IPAddress: tu.IPAddress, ViewCount: tu.ViewCount, PostCount: tu.PostCount, LikeCount: tu.LikeCount, Poll: tu.Poll}
 		//log.Printf("theTopic: %+v\n", theTopic)
 		_ = tcache.Add(&theTopic)
 	}
@@ -401,6 +405,7 @@ func copyTopicToTopicUser(topic *Topic, user *User) (tu TopicUser) {
 	tu.LastReplyAt = topic.LastReplyAt
 	tu.ParentID = topic.ParentID
 	tu.IPAddress = topic.IPAddress
+	tu.ViewCount = topic.ViewCount
 	tu.PostCount = topic.PostCount
 	tu.LikeCount = topic.LikeCount
 	tu.Poll = topic.Poll

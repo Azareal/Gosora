@@ -516,10 +516,37 @@ button, .formbutton, .panel_right_button {
 	width: 36px;
 }
 
-.colstack {
+.colstack, .topic_item {
 	display: flex;
 }
 
+.topic_item .topic_name_forum_sep {
+	font-size: 20px;
+	line-height: 30px;
+	margin-left: 7px;
+	margin-right: 7px;
+}
+.topic_item .topic_forum {
+	font-size: 19px;
+	line-height: 31px;
+	color: #dddddd;
+}
+.topic_view_count {
+	font-size: 17px;
+	margin-left: auto;
+	margin-right: 20px;
+	margin-top: 6px;
+}
+.topic_view_count:after {
+	content: " views";
+}
+.topic_name_input {
+	width: 100%;
+	margin-right: 12px;
+}
+.topic_item .submit_edit {
+	margin-right: 16px;
+}
 .postImage {
 	width: 100%;
 	max-width: 320px;
@@ -608,6 +635,44 @@ button, .formbutton, .panel_right_button {
 .action_item .content_container span {
 	margin-left: auto;
 	margin-right: auto;
+}
+
+input[type=checkbox] {
+	display: none;
+}
+input[type=checkbox] + label {
+	display: inline-flex;
+	width: 18px;
+	height: 18px;
+	margin-bottom: -2px;
+	margin-right: 8px;
+	border: 1px solid rgb(120,120,120);
+	background-color: rgb(90,90,90);
+	padding-top: 1px;
+	border-radius: 2px;
+}
+input[type=checkbox]:checked + label .sel {
+	width: 8px;
+	height: 8px;
+	background: rgb(160,160,160);
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: auto;
+	margin-bottom: auto;
+	border-radius: 2px;
+}
+.poll_option {
+	display: flex;
+	margin-bottom: 10px;
+}
+.poll_option_text {
+	line-height: 14px;
+}
+.poll_buttons {
+	padding-top: 4px;
+}
+.poll_buttons button {
+	margin-right: 8px;
 }
 
 .add_like:before, .remove_like:before {

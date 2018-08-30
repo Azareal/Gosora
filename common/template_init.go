@@ -189,7 +189,7 @@ func CompileTemplates() error {
 		PollOption{1, "Something"},
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 0, 1, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 1, 0, 1, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false}
 	var replyList []ReplyUser
 	// TODO: Do we want the UID on this to be 0?
 	avatar, microAvatar = BuildAvatar(0, "")
@@ -197,7 +197,8 @@ func CompileTemplates() error {
 
 	var varList = make(map[string]tmpl.VarItem)
 	header.Title = "Topic Name"
-	tpage := TopicPage{header, replyList, topic, poll, 1, 1}
+	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, 1, 1}
+	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	topicIDTmpl, err := c.Compile("topic.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err
@@ -234,7 +235,7 @@ func CompileTemplates() error {
 	}
 
 	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
 	header2.Title = "Topic List"
 	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, Paginator{[]int{1}, 1, 1}}
 	topicListTmpl, err := c.Compile("topics.html", "templates/", "common.TopicListPage", topicListPage, varList)
@@ -365,7 +366,7 @@ func CompileJSTemplates() error {
 	// TODO: Fix the import loop so we don't have to use this hack anymore
 	c.SetBuildTags("!no_templategen,tmplgentopic")
 
-	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
+	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
 	topicListItemTmpl, err := c.Compile("topics_topic.html", "templates/", "*common.TopicsRow", topicsRow, varList)
 	if err != nil {
 		return err
@@ -376,7 +377,7 @@ func CompileJSTemplates() error {
 		PollOption{1, "Something"},
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 0, 1, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 1, 0, 1, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false}
 	var replyList []ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")
@@ -384,7 +385,8 @@ func CompileJSTemplates() error {
 
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "Topic Name"
-	tpage := TopicPage{header, replyList, topic, poll, 1, 1}
+	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, 1, 1}
+	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	topicIDTmpl, err := c.Compile("topic_posts.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err

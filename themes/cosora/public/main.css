@@ -946,6 +946,21 @@ textarea {
 	margin-top: 0px;
 }
 
+.topic_block {
+	padding-bottom: 10px;
+}
+.topic_name_forum_sep {
+	margin-left: 6px;
+	margin-right: 6px;
+	line-height: 26px;
+	font-size: 18px;
+}
+.topic_forum {
+	line-height: 23px;
+}
+.topic_view_count {
+	display: none;
+}
 .postImage {
 	width: 100%;
 	max-width: 240px;

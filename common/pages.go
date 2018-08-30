@@ -94,6 +94,7 @@ type TopicPage struct {
 	*Header
 	ItemList []ReplyUser
 	Topic    TopicUser
+	Forum    *Forum
 	Poll     Poll
 	Page     int
 	LastPage int
