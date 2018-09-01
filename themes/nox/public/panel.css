@@ -87,14 +87,6 @@
 	margin-left: auto;
 }
 
-.rowlist.bgavatars .rowitem {
-	background-image: none !important;
-}
-.rowlist.bgavatars .bgsub {
-	width: 48px;
-	height: 48px;
-}
-
 input, select, textarea {
 	background: rgb(107,107,107);
 	color: rgb(197,197,197);
@@ -179,31 +171,6 @@ button, .formbutton, .panel_right_button, #panel_users .profile_url {
 }
 .colstack_graph_holder .ct-grid {
 	stroke: rgb(125,125,125);
-}
-
-.rowlist.bgavatars {
-	display: grid;
-	grid-gap: 16px;
-	grid-row-gap: 0px;
-	grid-template-columns: repeat(3, 1fr);
-}
-.rowlist.bgavatars .rowitem {
-	display: flex;
-	flex-direction: column;
-	width: 180px;
-}
-.rowlist.bgavatars .bgsub, .rowlist.bgavatars .rowTitle {
-	margin-left: auto;
-	margin-right: auto;
-}
-.rowlist.bgavatars .bgsub {
-	border-radius: 32px;
-	height: 64px;
-	width: 64px;
-}
-.rowlist.bgavatars .rowTitle {
-	font-size: 18px;
-	margin-top: 4px;
 }
 
 #panel_setting .formlabel {

@@ -430,12 +430,14 @@ input, select, button, .formbutton, .panel_right_button, textarea {
 input:focus, select:focus, textarea:focus {
 	outline: 1px solid rgb(120,120,120);
 }
-input {
+input:not(input[type=search]):not(input[type=submit]) {
 	background-image: url(./fa-svg/pencil-alt.svg);
 	background-size: 12px;
 	background-repeat: no-repeat;
 	background-position: right 10px bottom 9px;
 	background-position-x: right 10px;
+}
+input {
 	padding: 5px;
 	padding-bottom: 3px;
 	font-size: 16px;
@@ -724,6 +726,42 @@ input[type=checkbox]:checked + label .sel {
 
 .topic_reply_container {
 	display: flex;
+}
+
+.rowlist.bgavatars {
+	display: grid;
+	grid-gap: 16px;
+	grid-row-gap: 0px;
+	grid-template-columns: repeat(3, 1fr);
+}
+.rowlist.bgavatars .rowitem {
+	display: flex;
+	flex-direction: column;
+	width: 180px;
+	background-image: none !important;
+	margin-bottom: 10px;
+	padding: 16px;
+}
+.rowlist.bgavatars .bgsub {
+	margin-left: auto;
+	margin-right: auto;
+	border-radius: 32px;
+	height: 64px;
+	width: 64px;
+}
+.rowlist.bgavatars .rowTitle {
+	margin-left: auto;
+	margin-right: auto;
+	font-size: 18px;
+	margin-top: 4px;
+}
+
+.ip_search_block {
+	margin-bottom: 12px;
+}
+.ip_search_input {
+	width: 100%;
+	margin-right: 8px;
 }
 
 .footer .widget {

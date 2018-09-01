@@ -1,5 +1,75 @@
-.avatar, .userbit img {
+#profile_left_lane {
+	margin-right: 24px;
+}
+.avatarRow {
+	display: flex;
+	width: 100%;
+}
+.avatar, .nameRow span, .passiveBlock .passive {
+	margin-left: auto;
+	margin-right: auto;
+}
+.avatar {
+	width: 64px;
+	height: 64px;
+	border-radius: 32px;
+	margin-left: auto;
+	margin-right: auto;
+}
+.nameRow {
+	display: flex;
+	flex-direction: column;
+}
+.profileName {
+	font-size: 21px;
+}
+.topBlock, .passiveBlock {
+	background-color: #444444;
+	border-radius: 3px;
+	width: 180px;
+	padding: 16px;
+}
+.passiveBlock {
+	margin-top: 12px;
+	padding: 12px;
+}
+
+#profile_right_lane {
+	width: 100%;
+}
+#profile_comments .rowitem .topRow {
+	display: flex;
+	width: 100%;
+}
+#profile_comments .rowitem .userbit {
+	display: flex;
+}
+#profile_comments .rowitem .topRow .nameAndTitle {
+	display: flex;
+	flex-direction: column;
+	margin-left: 8px;
+}
+.nameAndTitle .real_username {
+	font-size: 17px;
+	line-height: 16px;
+}
+.userbit img {
 	width: 40px;
+	height: 40px;
+	border-radius: 24px;
+}
+.controls {
+	margin-left: auto;
+}
+.controls a {
+	margin-right: 8px;
+}
+.content_column {
+	margin-top: 5px;
+}
+.topic_reply_form {
+	margin-top: 8px;
+	padding: 12px;
 }
 
 .footer .widget, .sidebar {
