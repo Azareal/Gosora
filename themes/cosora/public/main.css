@@ -1704,6 +1704,14 @@ textarea {
 		margin-bottom: 6px;
 	}
 
+	.topic_name_forum_sep {
+		line-height: 22px;
+		font-size: 18px;
+	}
+	.topic_forum {
+		line-height: 20px;
+	}
+
 	.button_container {
 		border-top: 1px solid var(--element-border-color);
 	}
@@ -1734,8 +1742,9 @@ textarea {
 	.content_container {
 		padding: 0px;
 	}
-	.user_content {
+	.post_item .user_content {
 		padding: 12px;
+		margin-bottom: 0px;
 	}
 	.button_container .open_edit:after, .edit_item:after{
 		content: "\f040";

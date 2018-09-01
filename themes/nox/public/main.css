@@ -529,7 +529,7 @@ button, .formbutton, .panel_right_button {
 .topic_item .topic_forum {
 	font-size: 19px;
 	line-height: 31px;
-	color: #dddddd;
+	color: #cccccc;
 }
 .topic_view_count {
 	font-size: 17px;
@@ -595,18 +595,30 @@ button, .formbutton, .panel_right_button {
 	margin-right: auto;
 	display: block;
 }
-.post_item .content_container {
+.post_item .topic_content_input {
+	resize: vertical;
+	height: 150px;
 	padding: 16px;
-	background-color: #444444;
+}
+.post_item .content_container {
 	border-radius: 3px;
 	width: 100%;
 	display: flex;
 	flex-direction: column;
 	color: #bbbbbb;
 }
+.post_item .user_content {
+	background-color: #444444;
+	border-radius: 3px;
+	padding: 16px;
+}
 .post_item .button_container {
 	display: flex;
-	margin-top: auto;
+	margin-top: 8px;
+	margin-bottom: auto;
+	padding: 14px;
+	background-color: #444444;
+	border-radius: 3px;
 }
 .post_item .action_button {
 	margin-right: 5px;
@@ -673,6 +685,10 @@ input[type=checkbox]:checked + label .sel {
 }
 .poll_buttons button {
 	margin-right: 8px;
+}
+
+.ip_item {
+	display: none;
 }
 
 .add_like:before, .remove_like:before {
@@ -755,10 +771,6 @@ input[type=checkbox]:checked + label .sel {
 		white-space: nowrap;
 	}
 
-	.topic_item .topic_name_forum_sep, .topic_item .topic_forum, .topic_view_count {
-		display: none;
-	}
-
 	.userinfo {
 		padding: 18px;
 		width: 140px;
@@ -771,35 +783,31 @@ input[type=checkbox]:checked + label .sel {
 	.the_name {
 		font-size: 17px;
 	}
-	.ip_item.hide_on_mobile {
-		display: none;
-	}
 }
 
 @media(max-width: 500px) {
 	.sidebar {
 		display: none;
 	}
+	.topic_view_count {
+		display: none;
+	}
 	
-	.post_item .content_container {
-		background-color: transparent;
-		padding: 0px;
-	}
-	.post_item .user_content {
-		background-color: #444444;
-		padding: 16px;
-	}
 	.post_item .button_container {
 		display: block;
 		margin-top: 8px;
+		background: transparent;
+		padding: 0px;
 	}
 	.post_item .action_button_left {
 		display: block;
 		background-color: #444444;
+		border-radius: 3px;
 		padding: 10px;
 	}
 	.post_item .action_button_right {
 		background-color: #444444;
+		border-radius: 3px;
 		padding: 10px;
 		padding-left: 14px;
 		/*padding-right: 12px;*/
@@ -913,6 +921,17 @@ input[type=checkbox]:checked + label .sel {
 
 	#back {
 		flex-direction: column;
+	}
+
+	.topic_item .topic_name_forum_sep {
+		font-size: 17px;
+		line-height: 28px;
+		margin-left: 5px;
+		margin-right: 5px;
+	}
+	.topic_item .topic_forum {
+		font-size: 17px;
+		line-height: 28px;
 	}
 }
 
