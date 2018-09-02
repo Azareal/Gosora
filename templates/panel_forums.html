@@ -25,9 +25,9 @@
 			</span>
 			<span class="panel_buttons">
 				<a class="panel_tag edit_fields hide_on_edit panel_right_button edit_button" title="{{lang "panel_forums_edit_button_tooltip"}}" aria-label="{{lang "panel_forums_edit_button_aria"}}"></a>
-				<a class="panel_right_button" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>{{lang "panel_forums_update_button"}}</button></a>
+				<a class="panel_right_button has_inner_button show_on_edit" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit' type='submit'>{{lang "panel_forums_update_button"}}</button></a>
 				{{if gt .ID 1}}<a href="/panel/forums/delete/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button hide_on_edit delete_button" title="{{lang "panel_forums_delete_button_tooltip"}}" aria-label="{{lang "panel_forums_delete_button_aria"}}"></a>{{end}}
-				<a href="/panel/forums/edit/{{.ID}}" class="panel_tag panel_right_button show_on_edit"><button>{{lang "panel_forums_full_edit_button"}}</button></a>
+				<a href="/panel/forums/edit/{{.ID}}" class="panel_tag panel_right_button has_inner_button show_on_edit"><button>{{lang "panel_forums_full_edit_button"}}</button></a>
 			</span>
 		</div>
 		{{end}}
@@ -36,7 +36,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{lang "panel_forums_create_head"}}</h1></div>
 	</div>
-	<div class="colstack_item">
+	<div class="colstack_item the_form">
 		<form action="/panel/forums/create/?session={{.CurrentUser.Session}}" method="post">
 			<div class="formrow">
 				<div class="formitem formlabel"><a>{{lang "panel_forums_create_name_label"}}</a></div>

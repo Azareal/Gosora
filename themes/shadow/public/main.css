@@ -208,7 +208,7 @@ a {
 	float: left;
 	width: calc(70% - 24px);
 }
-.colstack_left:empty, .colstack_right:empty, .show_on_edit {
+.colstack_left:empty, .colstack_right:empty, .show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened {
 	display: none;
 }
 

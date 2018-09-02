@@ -10,7 +10,7 @@ var formVars = {'perm_preset': ['can_moderate','can_post','read_only','no_access
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{.Name}}{{lang "panel_forum_head_suffix"}}</h1></div>
 	</div>
-	<div id="panel_forum" class="colstack_item">
+	<div id="panel_forum" class="colstack_item the_form">
 		<form action="/panel/forums/edit/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_forum_name"}}</a></div>
@@ -49,7 +49,7 @@ var formVars = {'perm_preset': ['can_moderate','can_post','read_only','no_access
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><a>{{lang "panel_forum_permissions_head"}}</a></div>
 	</div>
-	<div id="forum_quick_perms" class="colstack_item rowlist formlist">
+	<div id="forum_quick_perms" class="colstack_item rowlist formlist the_form">
 		{{range .Groups}}
 		<div class="formrow">
 			<div class="formitem editable_parent">
@@ -58,8 +58,8 @@ var formVars = {'perm_preset': ['can_moderate','can_post','read_only','no_access
 				<span class="edit_fields hide_on_edit rowsmall">{{lang "panel_forum_edit_button"}}</span>
 				<div class="panel_floater">
 					<span data-field="perm_preset" data-type="list" data-value="{{.Preset}}" class="editable_block perm_preset perm_preset_{{.Preset}}"></span>
-					<a class="panel_right_button" href="/panel/forums/edit/perms/submit/{{$.ID}}"><button class='panel_tag submit_edit show_on_edit' type='submit'>{{lang "panel_forum_short_update_button"}}</button></a>
-					<a class="panel_right_button" href="/panel/forums/edit/perms/{{$.ID}}-{{.Group.ID}}"><button class='panel_tag show_on_edit' type='submit'>{{lang "panel_forum_full_edit_button"}}</button></a>
+					<a class="panel_right_button has_inner_button show_on_edit" href="/panel/forums/edit/perms/submit/{{$.ID}}"><button class='panel_tag submit_edit' type='submit'>{{lang "panel_forum_short_update_button"}}</button></a>
+					<a class="panel_right_button has_inner_button show_on_edit" href="/panel/forums/edit/perms/{{$.ID}}-{{.Group.ID}}"><button class='panel_tag' type='submit'>{{lang "panel_forum_full_edit_button"}}</button></a>
 				</div>
 			</div>
 		</div>

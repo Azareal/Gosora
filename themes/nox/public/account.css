@@ -8,7 +8,7 @@
 }
 
 .rowmenu {
-	margin-left: 12px;
+	margin-left: 16px;
 }
 .colstack_left {
 	width: 25%;
@@ -25,14 +25,14 @@
 	margin-top: 8px;
 }
 .colstack_left .colstack_head a {
-	color: rgb(231, 231, 231);
+	color: rgb(210, 210, 210);
 }
 .rowmenu {
 	margin-bottom: 2px;
 	font-size: 17px;
 }
 .rowmenu a {
-	color: rgb(170, 170, 170);
+	color: rgb(180, 180, 180);
 }
 
 .colstack_right {
@@ -96,6 +96,7 @@ button, .formbutton {
 
 .account_soon, .dash_security {
 	font-size: 14px;
+	color: rgb(270, 170, 170);
 }
 
 #account_dashboard .colstack_right .coldyn_block {

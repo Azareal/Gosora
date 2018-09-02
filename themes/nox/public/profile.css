@@ -71,6 +71,11 @@
 	margin-top: 8px;
 	padding: 12px;
 }
+.input_content {
+	width: 100%;
+	height: 100px;
+	resize: vertical;
+}
 
 .footer .widget, .sidebar {
 	display: none;

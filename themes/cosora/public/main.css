@@ -206,6 +206,9 @@ ul {
     padding-top: 0px;
 }
 
+.rowblock, .rowitem, .colstack_head, .colstack_item {
+	position: sticky;
+}
 .rowblock, .colstack_head {
 	margin-bottom: 12px;
 	border: 1px solid var(--header-border-color);
@@ -527,7 +530,7 @@ input[type=checkbox]:checked + label .sel {
 .pollinput:not(:only-child):not(:first-child) {
 	margin-bottom: 5px;
 }
-.auto_hide, .show_on_edit {
+.auto_hide, .show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened {
 	display: none;
 }
 

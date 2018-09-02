@@ -13,24 +13,43 @@
 }
 
 .colstack_left {
-	background-color: hsl(0,0%,90%);
+	width: 250px !important;
+	background-color: white;
 	margin-top: -18.5px;
 	margin-left: -0.5px;
+	border-top: 1px solid var(--element-border-color);
 	border-right: 1px solid var(--element-border-color);
 }
 .colstack_left .colstack_head {
-	margin-top: -1px;
-	margin-bottom: 0px;
-	margin-left: 0px;
+	margin-top: 6px;
+	margin-bottom: 8px;
+	margin-left: 16px;
 	padding-bottom: 12px;
     padding-top: 12px;
-    border-bottom: 1.5px solid var(--element-border-color);
+	padding-left: 8px;
+    border-bottom: 1px solid var(--element-border-color);
+	border-left: none;
+	border-right: none;
+	border-top: none;
+	width: fit-content;
+}
+.colstack_left .rowmenu {
+	padding-left: 18px !important;
+}
+.colstack_left .rowmenu .passive {
+	border: none;
+	font-size: 15px;
+	padding: 8px;
+	padding-top: 6px;
+	padding-bottom: 8px;
 }
 .colstack_left .rowmenu .passive:first-child {
     border-top: none;
 }
 .colstack_left .rowmenu .passive:last-child {
-    border-bottom: 0.5px solid var(--element-border-color) !important;
+	border-bottom: 1px solid var(--element-border-color) !important;
+	width: 150px;
+	padding-bottom: 16px;
 }
 .submenu {
 	margin-left: 12px;
@@ -177,6 +196,9 @@
 #forum_quick_perms .formitem .edit_fields {
 	margin-left: 3px;
 	margin-top: 1px;
+}
+#forum_quick_perms .perm_preset {
+	margin-right: 6px;
 }
 .perm_preset_no_access:before {
 	content: "{{index .Phrases "panel_perms_no_access" }}";

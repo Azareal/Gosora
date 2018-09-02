@@ -17,7 +17,7 @@
 	</div>
 	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
 	{{if .CurrentUser.Perms.EditGroupLocalPerms}}
-	<div class="colstack_item rowlist formlist panel_group_perms">
+	<div class="colstack_item rowlist formlist the_form panel_group_perms">
 		{{range .LocalPerms}}
 		<div class="formrow">
 			<div class="formitem">
@@ -40,7 +40,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{lang "panel_group_extended_permissions"}}</h1></div>
 	</div>
-	<div class="colstack_item rowlist formlist panel_group_perms">
+	<div class="colstack_item rowlist formlist the_form panel_group_perms">
 		{{range .GlobalPerms}}
 		<div class="formrow">
 			<div class="formitem">

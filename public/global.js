@@ -431,8 +431,8 @@ function mainInit(){
 		//console.log("clicked .edit_fields");
 		var blockParent = $(this).closest('.editable_parent');
 		//console.log(blockParent);
-		blockParent.find('.hide_on_edit').hide();
-		blockParent.find('.show_on_edit').show();
+		blockParent.find('.hide_on_edit').addClass("edit_opened");
+		blockParent.find('.show_on_edit').addClass("edit_opened");
 		blockParent.find('.editable_block').show();
 		blockParent.find('.editable_block').each(function(){
 			var fieldName = this.getAttribute("data-field");
@@ -491,8 +491,8 @@ function mainInit(){
 			//console.log("Form Action:", formAction);
 			//console.log(outData);
 			$.ajax({ url: formAction + "?session=" + me.User.Session, type:"POST", dataType:"json", data: outData, error: ajaxError });
-			blockParent.find('.hide_on_edit').show();
-			blockParent.find('.show_on_edit').hide();
+			blockParent.find('.hide_on_edit').removeClass("edit_opened");
+			blockParent.find('.show_on_edit').removeClass("edit_opened");
 		});
 	});
 
