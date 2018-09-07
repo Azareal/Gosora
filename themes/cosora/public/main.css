@@ -176,6 +176,7 @@ ul {
 	position: fixed;
 	top: 54px;
 	left: 0px;
+	z-index: 50;
 	background: var(--element-background-color);
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
