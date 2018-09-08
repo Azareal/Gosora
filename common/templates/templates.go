@@ -913,7 +913,7 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines
 		out = "w.Write([]byte(" + varname + "))\n"
 	case reflect.Int64:
 		c.importMap["strconv"] = "strconv"
-		out = "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))"
+		out = "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))\n"
 	default:
 		if !val.IsValid() {
 			panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")

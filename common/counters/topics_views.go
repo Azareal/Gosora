@@ -3,6 +3,7 @@ package counters
 import (
 	"database/sql"
 	"sync"
+	"sync/atomic"
 
 	".."
 	"../../query_gen/lib"
@@ -82,7 +83,16 @@ func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) erro
 	}
 	common.DebugLogf("Inserting %d views into topic %d", count, topicID)
 	_, err := counter.update.Exec(count, topicID)
-	return err
+	if err != nil {
+		return err
+	}
+	// TODO: Add a way to disable this for extra speed ;)
+	topic, err := common.Topics.Get(topicID)
+	if err != nil {
+		return err
+	}
+	atomic.AddInt64(&topic.ViewCount, int64(count))
+	return nil
 }
 
 func (counter *DefaultTopicViewCounter) Bump(topicID int) {

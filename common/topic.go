@@ -37,7 +37,7 @@ type Topic struct {
 	ParentID  int
 	Status    string // Deprecated. Marked for removal.
 	IPAddress string
-	ViewCount int
+	ViewCount int64
 	PostCount int
 	LikeCount int
 	ClassName string // CSS Class Name
@@ -61,7 +61,7 @@ type TopicUser struct {
 	ParentID  int
 	Status    string // Deprecated. Marked for removal.
 	IPAddress string
-	ViewCount int
+	ViewCount int64
 	PostCount int
 	LikeCount int
 	ClassName string
@@ -99,7 +99,7 @@ type TopicsRow struct {
 	ParentID            int
 	Status              string // Deprecated. Marked for removal. -Is there anything we could use it for?
 	IPAddress           string
-	ViewCount           int
+	ViewCount           int64
 	PostCount           int
 	LikeCount           int
 	ClassName           string
@@ -126,7 +126,7 @@ type WsTopicsRow struct {
 	RelativeLastReplyAt string
 	LastReplyBy         int
 	ParentID            int
-	ViewCount           int
+	ViewCount           int64
 	PostCount           int
 	LikeCount           int
 	ClassName           string
