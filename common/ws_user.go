@@ -110,22 +110,22 @@ func (wsUser *WSUser) SetPageForSocket(conn *websocket.Conn, page string) {
 
 func (wsUser *WSUser) InPage(page string) bool {
 	wsUser.Lock()
+	defer wsUser.Unlock()
 	for _, socket := range wsUser.Sockets {
 		if socket.Page == page {
 			return true
 		}
 	}
-	wsUser.Unlock()
 	return false
 }
 
 func (wsUser *WSUser) FinalizePage(page string, handle func()) {
 	wsUser.Lock()
+	defer wsUser.Unlock()
 	for _, socket := range wsUser.Sockets {
 		if socket.Page == page {
 			return
 		}
 	}
 	handle()
-	wsUser.Unlock()
 }
