@@ -51,10 +51,8 @@ function addAlert(msg, notice = false) {
 		Avatar: msg.avatar || "",
 		Message: mmsg
 	})
-
 	alertMapping[msg.asid] = aItem;
 	alertList.push(msg.asid);
-	if(alertList.length > 8) alertList.shift();
 
 	if(notice) {
 		// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
@@ -206,15 +204,32 @@ function runWebSockets() {
 				wsAlertEvent(data);
 			} else if("event" in data) {
 				if(data.event == "dismiss-alert"){
-					Object.keys(alertBuffer).forEach((key) => {
+					Object.keys(alertMapping).forEach((key) => {
 						if(key==data.asid) {
 							alertCount--;
-							for(var i = 0; i < alertList.length;i++) {
+							let index = -1;
+							for(var i = 0; i < alertList.length; i++) {
 								if(alertList[i]==key) {
-									alertList.splice(i);
+									alertList[i] = 0;
+									index = i;
 								}
 							}
+
+							for(var i = index; (i+1) < alertList.length; i++) {
+								alertList[i] = alertList[i+1];
+							}
+							alertList.splice(alertList.length-1,1);
 							delete alertMapping[key];
+
+							
+
+							// TODO: Add support for other alert feeds like PM Alerts
+							var generalAlerts = document.getElementById("general_alerts");
+							if(alertList.length < 8) {
+								loadAlerts(generalAlerts);
+							} else {
+								updateAlertList(generalAlerts);
+							}
 						}
 					});
 				}

@@ -48,9 +48,17 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		if err != nil {
 			return common.PreErrorJS("Invalid asid", w, r)
 		}
-		_, err = stmts.deleteActivityStreamMatch.Exec(user.ID, asid)
+		res, err := stmts.deleteActivityStreamMatch.Exec(user.ID, asid)
 		if err != nil {
 			return common.InternalError(err, w, r)
+		}
+		count, err := res.RowsAffected()
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		// Don't want to throw an internal error due to a socket closing
+		if common.EnableWebsockets && count > 0 {
+			_ = common.WsHub.PushMessage(user.ID, `{"event":"dismiss-alert","asid":`+strconv.Itoa(asid)+`}`)
 		}
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {
