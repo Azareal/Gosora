@@ -322,7 +322,7 @@ func (hub *WsHubImpl) RemoveConn(wsUser *WSUser, conn *websocket.Conn) {
 	wsUser.Unlock()
 }
 
-func (hub *WsHubImpl) pushMessage(targetUser int, msg string) error {
+func (hub *WsHubImpl) PushMessage(targetUser int, msg string) error {
 	wsUser, err := hub.getUser(targetUser)
 	if err != nil {
 		return err

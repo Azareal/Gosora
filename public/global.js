@@ -1,5 +1,6 @@
 'use strict';
 var formVars = {};
+var alertMapping = {};
 var alertList = [];
 var alertCount = 0;
 var moreTopicCount = 0;
@@ -26,7 +27,6 @@ function postLink(event)
 {
 	event.preventDefault();
 	let formAction = $(event.target).closest('a').attr("href");
-	//console.log("Form Action: " + formAction);
 	$.ajax({ url: formAction, type: "POST", dataType: "json", error: ajaxError, data: {js: "1"} });
 }
 
@@ -37,60 +37,88 @@ function bindToAlerts() {
 	});
 }
 
-var alertsInitted = false;
-// TODO: Add the ability for users to dismiss alerts
-function loadAlerts(menuAlerts)
-{
-	if(!alertsInitted) return;
+function addAlert(msg, notice = false) {
+	var mmsg = msg.msg;
+	if("sub" in msg) {
+		for(var i = 0; i < msg.sub.length; i++) {
+			mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
+		}
+	}
 
-	var alertListNode = menuAlerts.getElementsByClassName("alertList")[0];
-	var alertCounterNode = menuAlerts.getElementsByClassName("alert_counter")[0];
+	let aItem = Template_alert({
+		ASID: msg.asid,
+		Path: msg.path,
+		Avatar: msg.avatar || "",
+		Message: mmsg
+	})
+
+	alertMapping[msg.asid] = aItem;
+	alertList.push(msg.asid);
+	if(alertList.length > 8) alertList.shift();
+
+	if(notice) {
+		// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
+		// TODO: Use the site name instead of "Something Happened"
+		if(Notification.permission === "granted") {
+			var n = new Notification("Something Happened",{
+				body: mmsg,
+				icon: msg.avatar,
+			});
+			setTimeout(n.close.bind(n), 8000);
+		}
+	}
+
+	runInitHook("after_add_alert");
+}
+
+function updateAlertList(menuAlerts) {
+	let alertListNode = menuAlerts.getElementsByClassName("alertList")[0];
+	let alertCounterNode = menuAlerts.getElementsByClassName("alert_counter")[0];
 	alertCounterNode.textContent = "0";
+	
+	let outList = "";
+	let j = 0;
+	for(var i = 0; i < alertList.length && j < 8; i++) {
+		outList += alertMapping[alertList[i]];
+		j++;
+	}
+
+	if(outList == "") outList = "<div class='alertItem'>You don't have any alerts</div>";
+	alertListNode.innerHTML = outList;
+
+	if(alertCount != 0) {
+		alertCounterNode.textContent = alertCount;
+		menuAlerts.classList.add("has_alerts");
+	} else {
+		menuAlerts.classList.remove("has_alerts");
+	}
+
+	bindToAlerts();
+	runInitHook("after_update_alert_list");
+}
+
+function setAlertError(menuAlerts,msg) {
+	let alertListNode = menuAlerts.getElementsByClassName("alertList")[0];
+	alertListNode.innerHTML = "<div class='alertItem'>"+msg+"</div>";
+}
+
+var alertsInitted = false;
+function loadAlerts(menuAlerts) {
+	if(!alertsInitted) return;
 	$.ajax({
 		type: 'get',
 		dataType: 'json',
 		url:'/api/?action=get&module=alerts',
 		success: (data) => {
 			if("errmsg" in data) {
-				alertListNode.innerHTML = "<div class='alertItem'>"+data.errmsg+"</div>";
+				setAlertError(menuAlerts,data.errmsg)
 				return;
 			}
-
-			var alist = "";
 			for(var i in data.msgs) {
-				var msg = data.msgs[i];
-				var mmsg = msg.msg;
-				if("sub" in msg) {
-					for(var i = 0; i < msg.sub.length; i++) {
-						mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
-						//console.log("Sub #" + i + ":",msg.sub[i]);
-					}
-				}
-
-				let aItem = Template_alert({
-					ASID: msg.asid || 0,
-					Path: msg.path,
-					Avatar: msg.avatar || "",
-					Message: mmsg
-				})
-				alist += aItem;
-				alertList.push(aItem);
-				//console.log(msg);
-				//console.log(mmsg);
-			}
-
-			if(alist == "") alist = "<div class='alertItem'>You don't have any alerts</div>";
-			alertListNode.innerHTML = alist;
-
-			if(data.msgCount != 0 && data.msgCount != undefined) {
-				alertCounterNode.textContent = data.msgCount;
-				menuAlerts.classList.add("has_alerts");
-			} else {
-				menuAlerts.classList.remove("has_alerts");
+				addAlert(data.msgs[i]);
 			}
 			alertCount = data.msgCount;
-
-			bindToAlerts();
+			updateAlertList(menuAlerts)
 		},
 		error: (magic,theStatus,error) => {
 			let errtxt
@@ -104,7 +132,7 @@ function loadAlerts(menuAlerts)
 				console.log(err);
 			}
 			console.log("error", error);
-			alertListNode.innerHTML = "<div class='alertItem'>"+errtxt+"</div>";
+			setAlertError(menuAlerts,errtxt);
 		}
 	});
 }
@@ -129,46 +157,13 @@ function SplitN(data,ch,n) {
 }
 
 function wsAlertEvent(data) {
-	var msg = data.msg;
-	if("sub" in data) {
-		for(var i = 0; i < data.sub.length; i++) {
-			msg = msg.replace("\{"+i+"\}", data.sub[i]);
-		}
-	}
-
-	let aItem = Template_alert({
-		ASID: data.asid || 0,
-		Path: data.path,
-		Avatar: data.avatar || "",
-		Message: msg
-	})
-	alertList.push(aItem);
-	if(alertList.length > 8) alertList.shift();
-	//console.log("post alertList",alertList);
-	alertCount++;
+	addAlert(data, true);
 
 	var alist = "";
-	for (var i = 0; i < alertList.length; i++) alist += alertList[i];
-
-	//console.log(alist);
+	for (var i = 0; i < alertList.length; i++) alist += alertMapping[alertList[i]];
 	// TODO: Add support for other alert feeds like PM Alerts
 	var generalAlerts = document.getElementById("general_alerts");
-	var alertListNode = generalAlerts.getElementsByClassName("alertList")[0];
-	var alertCounterNode = generalAlerts.getElementsByClassName("alert_counter")[0];
-	alertListNode.innerHTML = alist;
-	alertCounterNode.textContent = alertCount;
-
-	// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
-	// TODO: Use the site name instead of "Something Happened"
-	if(Notification.permission === "granted") {
-		var n = new Notification("Something Happened",{
-			body: msg,
-			icon: data.avatar,
-		});
-		setTimeout(n.close.bind(n), 8000);
-	}
-
-	bindToAlerts();
+	updateAlertList(generalAlerts, alist);
 }
 
 function runWebSockets() {
@@ -209,6 +204,20 @@ function runWebSockets() {
 			if ("msg" in data) {
 				// TODO: Fix the data race where the alert template hasn't been loaded yet
 				wsAlertEvent(data);
+			} else if("event" in data) {
+				if(data.event == "dismiss-alert"){
+					Object.keys(alertBuffer).forEach((key) => {
+						if(key==data.asid) {
+							alertCount--;
+							for(var i = 0; i < alertList.length;i++) {
+								if(alertList[i]==key) {
+									alertList.splice(i);
+								}
+							}
+							delete alertMapping[key];
+						}
+					});
+				}
 			} else if("Topics" in data) {
 				console.log("topic in data");
 				console.log("data:", data);
@@ -300,17 +309,17 @@ function mainInit(){
 
 	$(".add_like").click(function(event) {
 		event.preventDefault();
-		let likeButton = this;
 		let target = this.closest("a").getAttribute("href");
 		console.log("target: ", target);
-		likeButton.classList.remove("add_like");
-		likeButton.classList.add("remove_like");
-		let controls = likeButton.closest(".controls");
+		this.classList.remove("add_like");
+		this.classList.add("remove_like");
+		let controls = this.closest(".controls");
 		let hadLikes = controls.classList.contains("has_likes");
 		if(!hadLikes) controls.classList.add("has_likes");
 		let likeCountNode = controls.getElementsByClassName("like_count")[0];
 		console.log("likeCountNode",likeCountNode);
 		likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) + 1;
+		let likeButton = this;
 		
 		$.ajax({
 			url: target,
@@ -356,10 +365,6 @@ function mainInit(){
 		$(".show_on_edit").hide();
 
 		let formAction = this.form.getAttribute("action");
-		//console.log("New Topic Name: ", topicNameInput);
-		//console.log("New Topic Status: ", topicStatusInput);
-		//console.log("New Topic Content: ", topicContentInput);
-		//console.log("Form Action: ", formAction);
 		$.ajax({
 			url: formAction,
 			type: "POST",
@@ -393,7 +398,6 @@ function mainInit(){
 			block.html(newContent);
 
 			var formAction = $(this).closest('a').attr("href");
-			//console.log("Form Action:",formAction);
 			$.ajax({ url: formAction, type: "POST", error: ajaxError, dataType: "json", data: { isJs: "1", edit_item: newContent }
 			});
 		});
@@ -413,7 +417,6 @@ function mainInit(){
 			block.html(newContent);
 
 			let formAction = $(this).closest('a').attr("href");
-			//console.log("Form Action:", formAction);
 			$.ajax({
 				url: formAction + "?session=" + me.User.Session,
 				type: "POST",
@@ -430,7 +433,6 @@ function mainInit(){
 		if($(this).find("input").length !== 0) return;
 		//console.log("clicked .edit_fields");
 		var blockParent = $(this).closest('.editable_parent');
-		//console.log(blockParent);
 		blockParent.find('.hide_on_edit').addClass("edit_opened");
 		blockParent.find('.show_on_edit').addClass("edit_opened");
 		blockParent.find('.editable_block').show();
@@ -443,9 +445,6 @@ function mainInit(){
 				else var it = ['No','Yes'];
 				var itLen = it.length;
 				var out = "";
-				//console.log("Field Name:",fieldName);
-				//console.log("Field Type:",fieldType);
-				//console.log("Field Value:",fieldValue);
 				for (var i = 0; i < itLen; i++) {
 					var sel = "";
 					if(fieldValue == i || fieldValue == it[i]) {

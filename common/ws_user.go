@@ -23,6 +23,9 @@ type WSUserSocket struct {
 func (wsUser *WSUser) WriteAll(msg string) error {
 	msgbytes := []byte(msg)
 	for _, socket := range wsUser.Sockets {
+		if socket == nil {
+			continue
+		}
 		w, err := socket.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			return err
@@ -41,6 +44,9 @@ func (wsUser *WSUser) WriteToPage(msg string, page string) error {
 func (wsUser *WSUser) WriteToPageBytes(msg []byte, page string) error {
 	var success bool
 	for _, socket := range wsUser.Sockets {
+		if socket == nil {
+			continue
+		}
 		if socket.Page != page {
 			continue
 		}
