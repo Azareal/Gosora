@@ -112,6 +112,8 @@ function loadAlerts(menuAlerts) {
 				setAlertError(menuAlerts,data.errmsg)
 				return;
 			}
+			alertList = [];
+			alertMapping = {};
 			for(var i in data.msgs) {
 				addAlert(data.msgs[i]);
 			}
@@ -214,6 +216,7 @@ function runWebSockets() {
 									index = i;
 								}
 							}
+							if(index==-1) return;
 
 							for(var i = index; (i+1) < alertList.length; i++) {
 								alertList[i] = alertList[i+1];
