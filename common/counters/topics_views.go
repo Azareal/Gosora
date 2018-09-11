@@ -81,17 +81,23 @@ func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) erro
 	if count == 0 {
 		return nil
 	}
+
 	common.DebugLogf("Inserting %d views into topic %d", count, topicID)
 	_, err := counter.update.Exec(count, topicID)
 	if err != nil {
 		return err
 	}
+
 	// TODO: Add a way to disable this for extra speed ;)
-	topic, err := common.Topics.Get(topicID)
-	if err != nil {
-		return err
+	tcache := common.Topics.GetCache()
+	if tcache != nil {
+		topic, err := tcache.Get(topicID)
+		if err != nil {
+			return err
+		}
+		atomic.AddInt64(&topic.ViewCount, int64(count))
 	}
-	atomic.AddInt64(&topic.ViewCount, int64(count))
+
 	return nil
 }
 
