@@ -8,6 +8,7 @@ import (
 )
 
 var ErrNoneOnPage = errors.New("This user isn't on that page")
+var ErrInvalidSocket = errors.New("That's not a valid WebSocket Connection")
 
 type WSUser struct {
 	User    *User
@@ -84,6 +85,9 @@ func (wsUser *WSUser) RemoveSocket(conn *websocket.Conn) {
 	wsUser.Lock()
 	if len(wsUser.Sockets) < 6 {
 		for i, socket := range wsUser.Sockets {
+			if socket == nil {
+				continue
+			}
 			if socket.conn == conn {
 				wsUser.Sockets[i] = nil
 				wsUser.Unlock()
@@ -104,20 +108,32 @@ func (wsUser *WSUser) RemoveSocket(conn *websocket.Conn) {
 	wsUser.Unlock()
 }
 
-func (wsUser *WSUser) SetPageForSocket(conn *websocket.Conn, page string) {
+func (wsUser *WSUser) SetPageForSocket(conn *websocket.Conn, page string) error {
+	if conn == nil {
+		return ErrInvalidSocket
+	}
+
 	wsUser.Lock()
 	for _, socket := range wsUser.Sockets {
+		if socket == nil {
+			continue
+		}
 		if socket.conn == conn {
 			socket.Page = page
 		}
 	}
 	wsUser.Unlock()
+
+	return nil
 }
 
 func (wsUser *WSUser) InPage(page string) bool {
 	wsUser.Lock()
 	defer wsUser.Unlock()
 	for _, socket := range wsUser.Sockets {
+		if socket == nil {
+			continue
+		}
 		if socket.Page == page {
 			return true
 		}
@@ -129,6 +145,9 @@ func (wsUser *WSUser) FinalizePage(page string, handle func()) {
 	wsUser.Lock()
 	defer wsUser.Unlock()
 	for _, socket := range wsUser.Sockets {
+		if socket == nil {
+			continue
+		}
 		if socket.Page == page {
 			return
 		}

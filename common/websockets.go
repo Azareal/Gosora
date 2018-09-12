@@ -67,6 +67,9 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 			}
 			break
 		}
+		if conn == nil {
+			panic("conn must not be nil")
+		}
 
 		messages := bytes.Split(message, []byte("\r"))
 		for _, msg := range messages {
@@ -89,6 +92,7 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 		}
 	}
 	conn.Close()
+	DebugLog("Closing connection for user " + strconv.Itoa(user.ID))
 	return nil
 }
 
@@ -98,6 +102,7 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		page = Config.DefaultPath
 	}
 
+	DebugLog("Entering page " + page)
 	switch page {
 	// Live Topic List is an experimental feature
 	// TODO: Optimise this to reduce the amount of contention
@@ -120,7 +125,10 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 	default:
 		return
 	}
-	wsUser.SetPageForSocket(conn, page)
+	err := wsUser.SetPageForSocket(conn, page)
+	if err != nil {
+		LogError(err)
+	}
 }
 
 // TODO: Use a map instead of a switch to make this more modular?
@@ -129,6 +137,7 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 		page = Config.DefaultPath
 	}
 
+	DebugLog("Leaving page " + page)
 	switch page {
 	case "/topics/":
 		wsUser.FinalizePage("/topics/", func() {
@@ -141,7 +150,10 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 		delete(adminStatsWatchers, conn)
 		adminStatsMutex.Unlock()
 	}
-	wsUser.SetPageForSocket(conn, "")
+	err := wsUser.SetPageForSocket(conn, "")
+	if err != nil {
+		LogError(err)
+	}
 }
 
 // TODO: Abstract this
