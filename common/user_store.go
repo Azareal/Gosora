@@ -66,6 +66,9 @@ func (mus *DefaultUserStore) DirtyGet(id int) *User {
 	if err == nil {
 		return user
 	}
+	/*if mus.OutOfBounds(id) {
+		return BlankUser()
+	}*/
 
 	user = &User{ID: id, Loggedin: true}
 	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
@@ -142,6 +145,13 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 
 	// If every user is in the cache, then return immediately
 	if len(ids) == 0 {
+		return list, nil
+	} else if len(ids) == 1 {
+		topic, err := mus.Get(ids[0])
+		if err != nil {
+			return list, err
+		}
+		list[topic.ID] = topic
 		return list, nil
 	}
 

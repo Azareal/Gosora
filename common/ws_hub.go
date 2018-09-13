@@ -12,6 +12,7 @@ import (
 var WsHub WsHubImpl
 
 // TODO: Make this an interface?
+// TODO: Write tests for this
 type WsHubImpl struct {
 	// TODO: Implement some form of generics so we don't write as much odd-even sharding code
 	evenOnlineUsers map[int]*WSUser
@@ -196,6 +197,19 @@ func (hub *WsHubImpl) UserCount() (count int) {
 	count += len(hub.oddOnlineUsers)
 	hub.oddUserLock.RUnlock()
 	return count
+}
+
+func (hub *WsHubImpl) HasUser(uid int) (exists bool) {
+	hub.evenUserLock.RLock()
+	_, exists = hub.evenOnlineUsers[uid]
+	hub.evenUserLock.RUnlock()
+	if exists {
+		return exists
+	}
+	hub.oddUserLock.RLock()
+	_, exists = hub.oddOnlineUsers[uid]
+	hub.oddUserLock.RUnlock()
+	return exists
 }
 
 func (hub *WsHubImpl) broadcastMessage(msg string) error {

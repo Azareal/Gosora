@@ -10,6 +10,7 @@ func NewNullUserCache() *NullUserCache {
 }
 
 // nolint
+func (mus *NullUserCache) DeallocOverflow() {}
 func (mus *NullUserCache) Get(id int) (*User, error) {
 	return nil, ErrNoRows
 }
@@ -34,6 +35,7 @@ func (mus *NullUserCache) Remove(id int) error {
 func (mus *NullUserCache) RemoveUnsafe(id int) error {
 	return nil
 }
+func (mus *NullUserCache) BulkRemove(ids []int) {}
 func (mus *NullUserCache) Flush() {
 }
 func (mus *NullUserCache) Length() int {

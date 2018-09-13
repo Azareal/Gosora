@@ -216,6 +216,7 @@ func (tList *DefaultTopicList) getList(page int, argList []interface{}, qlist st
 	}
 	offset, page, lastPage := PageOffset(topicCount, page, Config.ItemsPerPage)
 
+	// TODO: Prepare common qlist lengths to speed this up in common cases, prepared statements are prepared lazily anyway, so it probably doesn't matter if we do ten or so
 	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, views, postCount, likeCount", "parentID IN("+qlist+")", "sticky DESC, lastReplyAt DESC, createdBy DESC", "?,?")
 	if err != nil {
 		return nil, Paginator{nil, 1, 1}, err
@@ -233,6 +234,7 @@ func (tList *DefaultTopicList) getList(page int, argList []interface{}, qlist st
 
 	var reqUserList = make(map[int]bool)
 	for rows.Next() {
+		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
 		topicItem := TopicsRow{ID: 0}
 		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.IsClosed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.ParentID, &topicItem.ViewCount, &topicItem.PostCount, &topicItem.LikeCount)
 		if err != nil {

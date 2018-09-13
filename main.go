@@ -372,6 +372,29 @@ func main() {
 	hourTicker := time.NewTicker(time.Hour)
 	go tickLoop(thumbChan, halfSecondTicker, secondTicker, fifteenMinuteTicker, hourTicker)
 
+	// Resource Management Goroutine
+	go func() {
+		ucache := common.Users.GetCache()
+		tcache := common.Topics.GetCache()
+		if ucache == nil && tcache == nil {
+			return
+		}
+
+		for {
+			select {
+			case <-secondTicker.C:
+				// TODO: Add a LastRequested field to cached User structs to avoid evicting the same things which wind up getting loaded again anyway?
+				if ucache != nil {
+					ucap := ucache.GetCapacity()
+					if ucache.Length() <= ucap || common.Users.GlobalCount() <= ucap {
+						continue
+					}
+					//ucache.DeallocOverflow()
+				}
+			}
+		}
+	}()
+
 	log.Print("Initialising the router")
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {

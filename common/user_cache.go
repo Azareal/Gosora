@@ -7,6 +7,7 @@ import (
 
 // UserCache is an interface which spits out users from a fast cache rather than the database, whether from memory or from an application like Redis. Users may not be present in the cache but may be in the database
 type UserCache interface {
+	DeallocOverflow() // May cause thread contention, looks for items to evict
 	Get(id int) (*User, error)
 	GetUnsafe(id int) (*User, error)
 	BulkGet(ids []int) (list []*User)
@@ -23,7 +24,7 @@ type UserCache interface {
 
 // MemoryUserCache stores and pulls users out of the current process' memory
 type MemoryUserCache struct {
-	items    map[int]*User
+	items    map[int]*User // TODO: Shard this into two?
 	length   int64
 	capacity int
 
@@ -36,6 +37,39 @@ func NewMemoryUserCache(capacity int) *MemoryUserCache {
 		items:    make(map[int]*User),
 		capacity: capacity,
 	}
+}
+
+// TODO: Avoid deallocating topic list users
+func (mus *MemoryUserCache) DeallocOverflow() {
+	var toEvict = make([]int, 10)
+	var evIndex = 0
+	mus.RLock()
+	for _, user := range mus.items {
+		if /*user.LastActiveAt < lastActiveCutoff && */ user.Score == 0 && !user.IsMod {
+			if EnableWebsockets && WsHub.HasUser(user.ID) {
+				continue
+			}
+			toEvict[evIndex] = user.ID
+			evIndex++
+			if evIndex == 10 {
+				break
+			}
+		}
+	}
+	mus.RUnlock()
+
+	// Remove zero IDs from the evictable list, so we don't waste precious cycles locked for those
+	var lastZero = -1
+	for i, uid := range toEvict {
+		if uid == 0 {
+			lastZero = i
+		}
+	}
+	if lastZero != -1 {
+		toEvict = toEvict[:lastZero]
+	}
+
+	mus.BulkRemove(toEvict)
 }
 
 // Get fetches a user by ID. Returns ErrNoRows if not present.
@@ -134,6 +168,20 @@ func (mus *MemoryUserCache) RemoveUnsafe(id int) error {
 	delete(mus.items, id)
 	atomic.AddInt64(&mus.length, -1)
 	return nil
+}
+
+func (mus *MemoryUserCache) BulkRemove(ids []int) {
+	var rCount int64
+	mus.Lock()
+	for _, id := range ids {
+		_, ok := mus.items[id]
+		if ok {
+			delete(mus.items, id)
+			rCount++
+		}
+	}
+	mus.Unlock()
+	atomic.AddInt64(&mus.length, -rCount)
 }
 
 // Flush removes all the users from the cache, useful for tests.
