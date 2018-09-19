@@ -428,6 +428,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	msgbytes = append(msgbytes, SpaceGap...)
 	var lastItem = 0
 	var i = 0
+	// TODO: Use a bytes buffer or a string builder here
 	for ; len(msgbytes) > (i + 1); i++ {
 		if (i == 0 && (msgbytes[0] > 32)) || ((msgbytes[i] < 33) && (msgbytes[i+1] > 32)) {
 			if (i != 0) || msgbytes[i] < 33 {
@@ -563,24 +564,22 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
+				var addImage = func(url string) {
+					outbytes = append(outbytes, imageOpen...)
+					outbytes = append(outbytes, []byte(url)...)
+					outbytes = append(outbytes, imageOpen2...)
+					outbytes = append(outbytes, []byte(url)...)
+					outbytes = append(outbytes, imageClose...)
+					i += urlLen
+					lastItem = i
+				}
+
 				// TODO: Reduce the amount of code duplication
 				if media.Type == "attach" {
-					outbytes = append(outbytes, imageOpen...)
-					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
-					outbytes = append(outbytes, imageOpen2...)
-					outbytes = append(outbytes, []byte(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)...)
-					outbytes = append(outbytes, imageClose...)
-					i += urlLen
-					lastItem = i
+					addImage(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)
 					continue
 				} else if media.Type == "image" {
-					outbytes = append(outbytes, imageOpen...)
-					outbytes = append(outbytes, []byte(media.URL)...)
-					outbytes = append(outbytes, imageOpen2...)
-					outbytes = append(outbytes, []byte(media.URL)...)
-					outbytes = append(outbytes, imageClose...)
-					i += urlLen
-					lastItem = i
+					addImage(media.URL)
 					continue
 				} else if media.Type == "raw" {
 					outbytes = append(outbytes, []byte(media.Body)...)
