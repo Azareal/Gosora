@@ -7,7 +7,7 @@ import (
 
 // UserCache is an interface which spits out users from a fast cache rather than the database, whether from memory or from an application like Redis. Users may not be present in the cache but may be in the database
 type UserCache interface {
-	DeallocOverflow() // May cause thread contention, looks for items to evict
+	DeallocOverflow(evictPriority bool) (evicted int) // May cause thread contention, looks for items to evict
 	Get(id int) (*User, error)
 	GetUnsafe(id int) (*User, error)
 	BulkGet(ids []int) (list []*User)
@@ -40,7 +40,7 @@ func NewMemoryUserCache(capacity int) *MemoryUserCache {
 }
 
 // TODO: Avoid deallocating topic list users
-func (mus *MemoryUserCache) DeallocOverflow() {
+func (mus *MemoryUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
 	var toEvict = make([]int, 10)
 	var evIndex = 0
 	mus.RLock()
@@ -58,6 +58,25 @@ func (mus *MemoryUserCache) DeallocOverflow() {
 	}
 	mus.RUnlock()
 
+	// Clear some of the less active users now with a bit more aggressiveness
+	if evIndex == 0 && evictPriority {
+		toEvict = make([]int, 20)
+		mus.RLock()
+		for _, user := range mus.items {
+			if user.Score < 100 && !user.IsMod {
+				if EnableWebsockets && WsHub.HasUser(user.ID) {
+					continue
+				}
+				toEvict[evIndex] = user.ID
+				evIndex++
+				if evIndex == 20 {
+					break
+				}
+			}
+		}
+		mus.RUnlock()
+	}
+
 	// Remove zero IDs from the evictable list, so we don't waste precious cycles locked for those
 	var lastZero = -1
 	for i, uid := range toEvict {
@@ -70,6 +89,7 @@ func (mus *MemoryUserCache) DeallocOverflow() {
 	}
 
 	mus.BulkRemove(toEvict)
+	return len(toEvict)
 }
 
 // Get fetches a user by ID. Returns ErrNoRows if not present.

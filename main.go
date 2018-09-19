@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var version = common.Version{Major: 0, Minor: 1, Patch: 0, Tag: "dev"}
+var version = common.Version{Major: 0, Minor: 1, Patch: 0}
 var router *GenRouter
 var logWriter = io.MultiWriter(os.Stderr)
 
@@ -373,13 +373,15 @@ func main() {
 	go tickLoop(thumbChan, halfSecondTicker, secondTicker, fifteenMinuteTicker, hourTicker)
 
 	// Resource Management Goroutine
-	go func() {
+	/*go func() {
 		ucache := common.Users.GetCache()
 		tcache := common.Topics.GetCache()
 		if ucache == nil && tcache == nil {
 			return
 		}
 
+		var lastEvictedCount int
+		var couldNotDealloc bool
 		for {
 			select {
 			case <-secondTicker.C:
@@ -387,13 +389,17 @@ func main() {
 				if ucache != nil {
 					ucap := ucache.GetCapacity()
 					if ucache.Length() <= ucap || common.Users.GlobalCount() <= ucap {
+						countNotDealloc = false
 						continue
 					}
-					//ucache.DeallocOverflow()
+					lastEvictedCount = ucache.DeallocOverflow(countNotDealloc)
+					countNotDealloc = (lastEvictedCount == 0)
+				} else {
+					countNotDealloc = false
 				}
 			}
 		}
-	}()
+	}()*/
 
 	log.Print("Initialising the router")
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))

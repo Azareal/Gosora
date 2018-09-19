@@ -10,7 +10,9 @@ func NewNullUserCache() *NullUserCache {
 }
 
 // nolint
-func (mus *NullUserCache) DeallocOverflow() {}
+func (mus *NullUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
+	return 0
+}
 func (mus *NullUserCache) Get(id int) (*User, error) {
 	return nil, ErrNoRows
 }

@@ -121,13 +121,11 @@ function loadAlerts(menuAlerts) {
 			updateAlertList(menuAlerts)
 		},
 		error: (magic,theStatus,error) => {
-			let errtxt
+			let errtxt = "Unable to get the alerts";
 			try {
 				var data = JSON.parse(magic.responseText);
 				if("errmsg" in data) errtxt = data.errmsg;
-				else errtxt = "Unable to get the alerts";
 			} catch(err) {
-				errtxt = "Unable to get the alerts";
 				console.log(magic.responseText);
 				console.log(err);
 			}
