@@ -402,6 +402,7 @@ func peekMatch(cur int, phrase string, runes []rune) bool {
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
 // TODO: Use templates to reduce the amount of boilerplate?
 func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/) string {
+	// TODO: Word boundary detection for these to avoid mangling code
 	msg = strings.Replace(msg, ":)", "😀", -1)
 	msg = strings.Replace(msg, ":(", "😞", -1)
 	msg = strings.Replace(msg, ":D", "😃", -1)
@@ -410,7 +411,6 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	msg = strings.Replace(msg, ":p", "😛", -1)
 	msg = strings.Replace(msg, ":o", "😲", -1)
 	msg = strings.Replace(msg, ";)", "😉", -1)
-	//msg = url_reg.ReplaceAllString(msg,"<a href=\"$2$3//$4\" rel=\"nofollow\">$2$3//$4</a>")
 
 	// Word filter list. E.g. Swear words and other things the admins don't like
 	wordFilters, err := WordFilters.GetAll()

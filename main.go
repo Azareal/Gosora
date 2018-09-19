@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var version = common.Version{Major: 0, Minor: 1, Patch: 0}
+var version = common.Version{Major: 0, Minor: 2, Patch: 0, Tag: "dev"}
 var router *GenRouter
 var logWriter = io.MultiWriter(os.Stderr)
 
