@@ -180,10 +180,16 @@ func tryStepForward(i int, step int, runes []rune) (int, bool) {
 	return i - step, false
 }
 
+// TODO: Write a test for this
+func tryStepBackward(i int, step int, runes []rune) (int, bool) {
+	if i == 0 {
+		return i, false
+	}
+	return i - 1, true
+}
+
 // TODO: Preparse Markdown and normalize it into HTML?
 func PreparseMessage(msg string) string {
-	//fmt.Println("initial msg: ", msg)
-	//fmt.Println("initial []byte(msg): ", []byte(msg))
 	// TODO: Kick this check down a level into SanitiseBody?
 	if !utf8.ValidString(msg) {
 		return ""
@@ -201,8 +207,6 @@ func PreparseMessage(msg string) string {
 	// There are a few useful cases for having spaces, but I'd like to stop the WYSIWYG from inserting random lines here and there
 	msg = SanitiseBody(msg)
 
-	//fmt.Println("before msg: ", msg)
-	//fmt.Println("before []byte(msg): ", []byte(msg))
 	var runes = []rune(msg)
 	msg = ""
 
@@ -263,7 +267,6 @@ func PreparseMessage(msg string) string {
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
 		if char == '&' && peekMatch(i, "lt;", runes) {
-			//fmt.Println("found less than")
 			var ok bool
 			i, ok = tryStepForward(i, 4, runes)
 			if !ok {
@@ -271,8 +274,6 @@ func PreparseMessage(msg string) string {
 				break
 			}
 			char := runes[i]
-			//fmt.Println("char: ", char)
-			//fmt.Println("string(char): ", string(char))
 			if int(char) >= len(allowedTags) {
 				//fmt.Println("sentinel char out of bounds")
 				msg += "&"
@@ -311,29 +312,19 @@ func PreparseMessage(msg string) string {
 			var newI = -1
 			var out string
 			toActionList := tagToAction[char]
-			//fmt.Println("toActionList: ", toActionList)
 			for _, toAction := range toActionList {
-				//fmt.Printf("toAction: %+v\n", toAction)
 				// TODO: Optimise this, maybe with goto or a function call to avoid scanning the text twice?
 				if (toAction.PartialMode && !closeTag && peekMatch(i, toAction.Suffix, runes)) || peekMatch(i, toAction.Suffix+"&gt;", runes) {
-					//fmt.Println("peekMatched")
 					newI, out = toAction.Do(toAction, !closeTag, i, runes)
-					//fmt.Println("newI: ", newI)
-					//fmt.Println("i: ", i)
-					//fmt.Println("string(runes[i]): ", string(runes[i]))
 					if newI != -1 {
 						i = newI
 					} else if out != "" {
 						i += len(toAction.Suffix + "&gt;")
 					}
-					//fmt.Println("i: ", i)
-					//fmt.Println("string(runes[i]): ", string(runes[i]))
-					//fmt.Println("out: ", out)
 					break
 				}
 			}
 			if out == "" {
-				//fmt.Println("no out")
 				msg += "&"
 				if closeTag {
 					i -= 5
@@ -343,24 +334,54 @@ func PreparseMessage(msg string) string {
 			} else if out != " " {
 				msg += out
 			}
+		} else if char == '@' && (i == 0 || runes[i-1] < 33) {
+			// TODO: Handle usernames containing spaces, maybe in the front-end with AJAX
+			// Do not mention-ify ridiculously long things
+			var ok bool
+			i, ok = tryStepForward(i, 1, runes)
+			if !ok {
+				msg += "@"
+				continue
+			}
+			start := i
+
+			for j := 0; i < len(runes) && j < Config.MaxUsernameLength; j++ {
+				cchar := runes[i]
+				if cchar < 33 {
+					break
+				}
+				i++
+			}
+
+			username := string(runes[start:i])
+			if username == "" {
+				msg += "@"
+				i = start - 1
+				continue
+			}
+
+			//fmt.Printf("username: %+v\n", username)
+			user, err := Users.GetByName(username)
+			if err != nil {
+				if err != ErrNoRows {
+					LogError(err)
+				}
+				msg += "@"
+				i = start - 1
+				continue
+			}
+			msg += "@" + strconv.Itoa(user.ID)
+			i--
 		} else {
 			msg += string(char)
 		}
 	}
 
-	//fmt.Println("running autoclosers")
-	//fmt.Println("msg: ", msg)
 	for _, actionList := range tagToAction {
-		//if len(actionList) > 0 {
-		//	fmt.Println("actionList: ", actionList)
-		//}
 		for _, toAction := range actionList {
-			//fmt.Printf("toAction: %+v\n", toAction)
 			if toAction.Depth > 0 {
-				//fmt.Println("autoclosing")
 				for ; toAction.Depth > 0; toAction.Depth-- {
 					_, out := toAction.Do(toAction, false, len(runes), runes)
-					//fmt.Println("out: ", out)
 					if out != "" {
 						msg += out
 					}
@@ -368,8 +389,6 @@ func PreparseMessage(msg string) string {
 			}
 		}
 	}
-	//fmt.Println("msg: ", msg)
-
 	return strings.TrimSpace(shortcodeToUnicode(msg))
 }
 

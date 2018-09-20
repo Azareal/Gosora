@@ -19,6 +19,7 @@ var ErrLongUsername = errors.New("this username is too long")
 type UserStore interface {
 	DirtyGet(id int) *User
 	Get(id int) (*User, error)
+	GetByName(name string) (*User, error)
 	Exists(id int) bool
 	GetOffset(offset int, perPage int) (users []*User, err error)
 	//BulkGet(ids []int) ([]*User, error)
@@ -36,6 +37,7 @@ type DefaultUserStore struct {
 	cache UserCache
 
 	get            *sql.Stmt
+	getByName      *sql.Stmt
 	getOffset      *sql.Stmt
 	exists         *sql.Stmt
 	register       *sql.Stmt
@@ -53,6 +55,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 	return &DefaultUserStore{
 		cache:          cache,
 		get:            acc.SimpleSelect("users", "name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group", "uid = ?", "", ""),
+		getByName:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Where("name = ?").Prepare(),
 		getOffset:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Orderby("uid ASC").Limit("?,?").Prepare(),
 		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
 		register:       acc.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()"), // TODO: Implement user_count on users_groups here
@@ -90,6 +93,19 @@ func (mus *DefaultUserStore) Get(id int) (*User, error) {
 
 	user = &User{ID: id, Loggedin: true}
 	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
+
+	user.Init()
+	if err == nil {
+		mus.cache.Set(user)
+	}
+	return user, err
+}
+
+// TODO: Log weird cache errors? Not just here but in every *Cache?
+// ! This bypasses the cache, use frugally
+func (mus *DefaultUserStore) GetByName(name string) (*User, error) {
+	user := &User{Loggedin: true}
+	err := mus.getByName.QueryRow(name).Scan(&user.ID, &user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
 
 	user.Init()
 	if err == nil {
