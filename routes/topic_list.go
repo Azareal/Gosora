@@ -44,7 +44,7 @@ func TopicList(w http.ResponseWriter, r *http.Request, user common.User) common.
 		return common.NotFound(w, r, header)
 	}
 
-	pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, paginator}
+	pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, common.TopicListSort{"lastupdated", false}, paginator}
 	if common.RunPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
 		return nil
 	}

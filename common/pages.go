@@ -100,11 +100,17 @@ type TopicPage struct {
 	LastPage int
 }
 
+type TopicListSort struct {
+	SortBy    string // lastupdate, mostviewed, mostviewedtoday, mostviewedthisweek, mostviewedthismonth
+	Ascending bool
+}
+
 type TopicListPage struct {
 	*Header
 	TopicList    []*TopicsRow
 	ForumList    []Forum
 	DefaultForum int
+	Sort         TopicListSort
 	Paginator
 }
 

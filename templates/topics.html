@@ -12,7 +12,8 @@
 			<div class="opt mod_opt" title="{{lang "topic_list.moderate_tooltip"}}">
 				<a class="moderate_link" href="#" aria-label="{{lang "topic_list.moderate_aria"}}"></a>
 			</div>
-			{{else}}<div class="opt locked_opt" title="{{lang "topics_locked_tooltip"}}" aria-label="{{lang "topics_locked_aria"}}"><a></a></div>{{end}}
+			<div class="opt"><select><option selected>Last Updated</option><option>Most Viewed</option></select></div>
+		{{else}}<div class="opt locked_opt" title="{{lang "topics_locked_tooltip"}}" aria-label="{{lang "topics_locked_aria"}}"><a></a></div>{{end}}
 		</div>
 		<div style="clear: both;"></div>
 	{{end}}
