@@ -1254,8 +1254,10 @@ func TestParser(t *testing.T) {
 	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora", "<br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
 	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora\n", "<br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br>")
 	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br><br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
 	msgList = addMETri(msgList, "//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
 	msgList = addMETri(msgList, "//"+common.Site.URL+"\n", "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br>")
+	msgList = addMETri(msgList, "//"+common.Site.URL+"\n//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br><a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
 
 	for _, item := range msgList {
 		res = common.ParseMessage(item.Msg, 1, "forums")
