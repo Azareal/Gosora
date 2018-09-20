@@ -9,6 +9,8 @@ var hooks = {
 	"pre_init": [],
 	"start_init": [],
 	"end_init": [],
+	"after_add_alert":[],
+	"after_update_alert_list":[],
 };
 var ranInitHooks = {}
 

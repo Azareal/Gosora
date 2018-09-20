@@ -44,8 +44,8 @@
 <div class="user_box">
 	<img src="{{.CurrentUser.Avatar}}" />
 	<div class="option_box">
-		<span class="username">{{.CurrentUser.Name}}</span>
-		<span class="alerts">21 new alerts</span>
+		<a href="{{.CurrentUser.Link}}" class="username">{{.CurrentUser.Name}}</a>
+		<span class="alerts">No new alerts</span>
 	</div>
 </div>
 {{end}}

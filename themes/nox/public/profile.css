@@ -34,6 +34,9 @@
 	padding: 12px;
 }
 
+.colstack_right .colstack_head:not(:first-child) {
+	margin-top: 0px;
+}
 #profile_right_lane {
 	width: 100%;
 }
