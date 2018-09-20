@@ -398,6 +398,62 @@ func peekMatch(cur int, phrase string, runes []rune) bool {
 	return true
 }
 
+// ! Not concurrency safe
+func AddHashLinkType(prefix string, handler func(*strings.Builder, string, *int)) {
+	// There can only be one hash link type starting with a specific character at the moment
+	hashType := hashLinkTypes[prefix[0]]
+	if hashType != "" {
+		return
+	}
+	hashLinkMap[prefix] = handler
+	hashLinkTypes[prefix[0]] = prefix
+}
+
+func writeURL(sb *strings.Builder, url string, label string) {
+	sb.Write(URLOpen)
+	sb.WriteString(url)
+	sb.Write(URLOpen2)
+	sb.WriteString(label)
+	sb.Write(URLClose)
+}
+
+var hashLinkTypes = []string{'t': "tid-", 'r': "rid-", 'f': "fid-"}
+var hashLinkMap = map[string]func(*strings.Builder, string, *int){
+	"tid-": func(sb *strings.Builder, msg string, i *int) {
+		tid, intLen := CoerceIntString(msg[*i:])
+		*i += intLen
+
+		topic, err := Topics.Get(tid)
+		if err != nil || !Forums.Exists(topic.ParentID) {
+			sb.Write(InvalidTopic)
+			return
+		}
+		writeURL(sb, BuildTopicURL("", tid), "#tid-"+strconv.Itoa(tid))
+	},
+	"rid-": func(sb *strings.Builder, msg string, i *int) {
+		rid, intLen := CoerceIntString(msg[*i:])
+		*i += intLen
+
+		topic, err := TopicByReplyID(rid)
+		if err != nil || !Forums.Exists(topic.ParentID) {
+			sb.Write(InvalidTopic)
+			return
+		}
+		writeURL(sb, BuildTopicURL("", topic.ID), "#rid-"+strconv.Itoa(rid))
+	},
+	"fid-": func(sb *strings.Builder, msg string, i *int) {
+		fid, intLen := CoerceIntString(msg[*i:])
+		*i += intLen
+
+		if !Forums.Exists(fid) {
+			sb.Write(InvalidForum)
+			return
+		}
+		writeURL(sb, BuildForumURL("", fid), "#fid-"+strconv.Itoa(fid))
+	},
+	// TODO: Forum Shortcode Link
+}
+
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
 // TODO: Use templates to reduce the amount of boilerplate?
@@ -427,51 +483,6 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	var sb strings.Builder
 	var lastItem = 0
 	var i = 0
-
-	var writeURL = func(url string, label string) {
-		sb.Write(URLOpen)
-		sb.WriteString(url)
-		sb.Write(URLOpen2)
-		sb.WriteString(label)
-		sb.Write(URLClose)
-	}
-	var hashLinkTypes = []string{'t': "tid-", 'r': "rid-", 'f': "fid-"}
-	var hashLinkMap = map[string]func(){
-		"tid-": func() {
-			tid, intLen := CoerceIntString(msg[i:])
-			i += intLen
-
-			topic, err := Topics.Get(tid)
-			if err != nil || !Forums.Exists(topic.ParentID) {
-				sb.Write(InvalidTopic)
-				return
-			}
-			writeURL(BuildTopicURL("", tid), "#tid-"+strconv.Itoa(tid))
-		},
-		"rid-": func() {
-			rid, intLen := CoerceIntString(msg[i:])
-			i += intLen
-
-			topic, err := TopicByReplyID(rid)
-			if err != nil || !Forums.Exists(topic.ParentID) {
-				sb.Write(InvalidTopic)
-				return
-			}
-			writeURL(BuildTopicURL("", topic.ID), "#rid-"+strconv.Itoa(rid))
-		},
-		"fid-": func() {
-			fid, intLen := CoerceIntString(msg[i:])
-			i += intLen
-
-			if !Forums.Exists(fid) {
-				sb.Write(InvalidForum)
-				return
-			}
-			writeURL(BuildForumURL("", fid), "#fid-"+strconv.Itoa(fid))
-		},
-		// TODO: Forum Shortcode Link
-	}
-
 	for ; len(msg) > (i + 1); i++ {
 		if (i == 0 && (msg[0] > 32)) || ((msg[i] < 33) && (msg[i+1] > 32)) {
 			if (i != 0) || msg[i] < 33 {
@@ -485,7 +496,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				if msg[i+1:len(hashType)+1] == hashType {
 					sb.WriteString(msg[lastItem:i])
 					i += len(hashType) + 1
-					hashLinkMap[hashType]()
+					hashLinkMap[hashType](&sb, msg, &i)
 					lastItem = i
 				}
 			} else if msg[i] == '@' {

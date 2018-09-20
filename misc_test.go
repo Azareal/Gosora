@@ -1262,6 +1262,9 @@ func TestParser(t *testing.T) {
 	msgList = addMETri(msgList, "#tid-1", "<a href='/topic/1'>#tid-1</a>")
 	msgList = addMETri(msgList, "https://github.com/Azareal/Gosora/#tid-1", "<a href='https://github.com/Azareal/Gosora/#tid-1'>https://github.com/Azareal/Gosora/#tid-1</a>")
 	msgList = addMETri(msgList, "#fid-1", "<a href='/forum/1'>#fid-1</a>")
+	msgList = addMETri(msgList, "@1", "<a href='/user/admin.1' class='mention'>@Admin</a>")
+	msgList = addMETri(msgList, "@0", "<span style='color: red;'>[Invalid Profile]</span>")
+	msgList = addMETri(msgList, "@-1", "<span style='color: red;'>[Invalid Profile]</span>1")
 
 	for _, item := range msgList {
 		res = common.ParseMessage(item.Msg, 1, "forums")

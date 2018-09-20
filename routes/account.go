@@ -212,6 +212,15 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 	return nil
 }
 
+func isNumeric(data string) (numeric bool) {
+	for _, char := range data {
+		if char < 48 || char > 57 {
+			return false
+		}
+	}
+	return true
+}
+
 func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	headerLite, _ := common.SimpleUserCheck(w, r, &user)
 
@@ -245,6 +254,12 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 	if email == "" {
 		regError("You didn't put in an email.", "no-email")
+	}
+
+	// This is so a numeric name won't interfere with mentioning a user by ID, there might be a better way of doing this like perhaps !@ to mean IDs and @ to mean usernames in the pre-parser
+	usernameBits := strings.Split(username, " ")
+	if isNumeric(usernameBits[0]) {
+		regError("The first word of your name may not be purely numeric", "numeric-name")
 	}
 
 	ok := common.HasSuspiciousEmail(email)
