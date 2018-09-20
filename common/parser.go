@@ -424,79 +424,69 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	msg += "          "
 
 	// Search for URLs, mentions and hashlinks in the messages...
-	//var msgbytes = []byte(msg)
-	//var outbytes []byte
-	//msgbytes = append(msgbytes, SpaceGap...)
 	var sb strings.Builder
 	var lastItem = 0
 	var i = 0
+
+	var writeURL = func(url string, label string) {
+		sb.Write(URLOpen)
+		sb.WriteString(url)
+		sb.Write(URLOpen2)
+		sb.WriteString(label)
+		sb.Write(URLClose)
+	}
+	var hashLinkTypes = []string{'t': "tid-", 'r': "rid-", 'f': "fid-"}
+	var hashLinkMap = map[string]func(){
+		"tid-": func() {
+			tid, intLen := CoerceIntString(msg[i:])
+			i += intLen
+
+			topic, err := Topics.Get(tid)
+			if err != nil || !Forums.Exists(topic.ParentID) {
+				sb.Write(InvalidTopic)
+				return
+			}
+			writeURL(BuildTopicURL("", tid), "#tid-"+strconv.Itoa(tid))
+		},
+		"rid-": func() {
+			rid, intLen := CoerceIntString(msg[i:])
+			i += intLen
+
+			topic, err := TopicByReplyID(rid)
+			if err != nil || !Forums.Exists(topic.ParentID) {
+				sb.Write(InvalidTopic)
+				return
+			}
+			writeURL(BuildTopicURL("", topic.ID), "#rid-"+strconv.Itoa(rid))
+		},
+		"fid-": func() {
+			fid, intLen := CoerceIntString(msg[i:])
+			i += intLen
+
+			if !Forums.Exists(fid) {
+				sb.Write(InvalidForum)
+				return
+			}
+			writeURL(BuildForumURL("", fid), "#fid-"+strconv.Itoa(fid))
+		},
+		// TODO: Forum Shortcode Link
+	}
+
 	for ; len(msg) > (i + 1); i++ {
 		if (i == 0 && (msg[0] > 32)) || ((msg[i] < 33) && (msg[i+1] > 32)) {
 			if (i != 0) || msg[i] < 33 {
 				i++
 			}
 			if msg[i] == '#' {
-				if msg[i+1:i+5] == "tid-" {
+				hashType := hashLinkTypes[msg[i+1]]
+				if hashType == "" {
+					continue
+				}
+				if msg[i+1:len(hashType)+1] == hashType {
 					sb.WriteString(msg[lastItem:i])
-					i += 5
-					start := i
-					tid, intLen := CoerceIntString(msg[start:])
-					i += intLen
-
-					topic, err := Topics.Get(tid)
-					if err != nil || !Forums.Exists(topic.ParentID) {
-						sb.Write(InvalidTopic)
-						lastItem = i
-						continue
-					}
-
-					sb.Write(URLOpen)
-					sb.WriteString(BuildTopicURL("", tid))
-					sb.Write(URLOpen2)
-					sb.WriteString("#tid-" + strconv.Itoa(tid))
-					sb.Write(URLClose)
+					i += len(hashType) + 1
+					hashLinkMap[hashType]()
 					lastItem = i
-				} else if msg[i+1:i+5] == "rid-" {
-					sb.WriteString(msg[lastItem:i])
-					i += 5
-					start := i
-					rid, intLen := CoerceIntString(msg[start:])
-					i += intLen
-
-					topic, err := TopicByReplyID(rid)
-					if err != nil || !Forums.Exists(topic.ParentID) {
-						sb.Write(InvalidTopic)
-						lastItem = i
-						continue
-					}
-
-					sb.Write(URLOpen)
-					sb.WriteString(BuildTopicURL("", topic.ID))
-					sb.Write(URLOpen2)
-					sb.WriteString("#rid-" + strconv.Itoa(rid))
-					sb.Write(URLClose)
-					lastItem = i
-				} else if msg[i+1:i+5] == "fid-" {
-					sb.WriteString(msg[lastItem:i])
-					i += 5
-					start := i
-					fid, intLen := CoerceIntString(msg[start:])
-					i += intLen
-
-					if !Forums.Exists(fid) {
-						sb.Write(InvalidForum)
-						lastItem = i
-						continue
-					}
-
-					sb.Write(URLOpen)
-					sb.WriteString(BuildForumURL("", fid))
-					sb.Write(URLOpen2)
-					sb.WriteString("#fid-" + strconv.Itoa(fid))
-					sb.Write(URLClose)
-					lastItem = i
-				} else {
-					// TODO: Forum Shortcode Link
 				}
 			} else if msg[i] == '@' {
 				sb.WriteString(msg[lastItem:i])
