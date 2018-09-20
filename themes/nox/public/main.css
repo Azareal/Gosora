@@ -55,9 +55,44 @@ li a {
 	padding-bottom: 21px;
 	color: #dddddd;
 }
-.menu_alerts {
+.menu_alerts .alert_bell, .menu_alerts .alert_counter, .menu_alerts:not(.selectedAlert) .alertList {
 	display: none;
 }
+.alertList {
+	display: flex;
+	flex-direction: column;
+	background-color: #444444;
+	position: absolute;
+	border: 1px solid #333333;
+	top: 82px;
+	border-top: none;
+	right: 0px;
+	padding-left: 16px;
+	padding-right: 16px;
+}
+.alertItem.withAvatar {
+	background: none !important;
+	height: 66px;
+	padding-top: 4px;
+	display: flex;
+	padding: 16px;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+.alertItem.withAvatar:not(:last-child) {
+	border-bottom: 1px solid #555555;
+}
+.alertItem.withAvatar .bgsub {
+	height: 36px;
+	width: 36px;
+	border-radius: 32px;
+}
+.alertItem.withAvatar .text {
+	margin-left: 12px;
+	padding-top: 5px;
+	font-size: 16px;
+}
+
 .right_of_nav {
 	float: left;
 	width: 200px;

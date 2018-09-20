@@ -27,6 +27,11 @@
 			"Name":"trumbowyg/ui/trumbowyg.custom.css",
 			"Location":"global",
 			"Loggedin":true
+		},
+		{
+			"Name":"nox/misc.js",
+			"Location":"global",
+			"Loggedin":true
 		}
 	]
 }

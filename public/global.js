@@ -188,7 +188,6 @@ function runWebSockets() {
 	}
 
 	conn.onmessage = (event) => {
-		//console.log("WSMessage:", event.data);
 		if(event.data[0] == "{") {
 			console.log("json message");
 			let data = "";
