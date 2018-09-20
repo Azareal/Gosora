@@ -421,195 +421,184 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	for _, filter := range wordFilters {
 		msg = strings.Replace(msg, filter.Find, filter.Replacement, -1)
 	}
+	msg += "          "
 
 	// Search for URLs, mentions and hashlinks in the messages...
-	var msgbytes = []byte(msg)
-	var outbytes []byte
-	msgbytes = append(msgbytes, SpaceGap...)
+	//var msgbytes = []byte(msg)
+	//var outbytes []byte
+	//msgbytes = append(msgbytes, SpaceGap...)
+	var sb strings.Builder
 	var lastItem = 0
 	var i = 0
-	// TODO: Use a bytes buffer or a string builder here
-	for ; len(msgbytes) > (i + 1); i++ {
-		if (i == 0 && (msgbytes[0] > 32)) || ((msgbytes[i] < 33) && (msgbytes[i+1] > 32)) {
-			if (i != 0) || msgbytes[i] < 33 {
+	for ; len(msg) > (i + 1); i++ {
+		if (i == 0 && (msg[0] > 32)) || ((msg[i] < 33) && (msg[i+1] > 32)) {
+			if (i != 0) || msg[i] < 33 {
 				i++
 			}
-
-			if msgbytes[i] == '#' {
-				if bytes.Equal(msgbytes[i+1:i+5], []byte("tid-")) {
-					outbytes = append(outbytes, msgbytes[lastItem:i]...)
+			if msg[i] == '#' {
+				if msg[i+1:i+5] == "tid-" {
+					sb.WriteString(msg[lastItem:i])
 					i += 5
 					start := i
-					tid, intLen := CoerceIntBytes(msgbytes[start:])
+					tid, intLen := CoerceIntString(msg[start:])
 					i += intLen
 
 					topic, err := Topics.Get(tid)
 					if err != nil || !Forums.Exists(topic.ParentID) {
-						outbytes = append(outbytes, InvalidTopic...)
+						sb.Write(InvalidTopic)
 						lastItem = i
 						continue
 					}
 
-					outbytes = append(outbytes, URLOpen...)
-					var urlBit = []byte(BuildTopicURL("", tid))
-					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, URLOpen2...)
-					var tidBit = []byte("#tid-" + strconv.Itoa(tid))
-					outbytes = append(outbytes, tidBit...)
-					outbytes = append(outbytes, URLClose...)
+					sb.Write(URLOpen)
+					sb.WriteString(BuildTopicURL("", tid))
+					sb.Write(URLOpen2)
+					sb.WriteString("#tid-" + strconv.Itoa(tid))
+					sb.Write(URLClose)
 					lastItem = i
-				} else if bytes.Equal(msgbytes[i+1:i+5], []byte("rid-")) {
-					outbytes = append(outbytes, msgbytes[lastItem:i]...)
+				} else if msg[i+1:i+5] == "rid-" {
+					sb.WriteString(msg[lastItem:i])
 					i += 5
 					start := i
-					rid, intLen := CoerceIntBytes(msgbytes[start:])
+					rid, intLen := CoerceIntString(msg[start:])
 					i += intLen
 
 					topic, err := TopicByReplyID(rid)
 					if err != nil || !Forums.Exists(topic.ParentID) {
-						outbytes = append(outbytes, InvalidTopic...)
+						sb.Write(InvalidTopic)
 						lastItem = i
 						continue
 					}
 
-					outbytes = append(outbytes, URLOpen...)
-					var urlBit = []byte(BuildTopicURL("", topic.ID))
-					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, URLOpen2...)
-					var ridBit = []byte("#rid-" + strconv.Itoa(rid))
-					outbytes = append(outbytes, ridBit...)
-					outbytes = append(outbytes, URLClose...)
+					sb.Write(URLOpen)
+					sb.WriteString(BuildTopicURL("", topic.ID))
+					sb.Write(URLOpen2)
+					sb.WriteString("#rid-" + strconv.Itoa(rid))
+					sb.Write(URLClose)
 					lastItem = i
-				} else if bytes.Equal(msgbytes[i+1:i+5], []byte("fid-")) {
-					outbytes = append(outbytes, msgbytes[lastItem:i]...)
+				} else if msg[i+1:i+5] == "fid-" {
+					sb.WriteString(msg[lastItem:i])
 					i += 5
 					start := i
-					fid, intLen := CoerceIntBytes(msgbytes[start:])
+					fid, intLen := CoerceIntString(msg[start:])
 					i += intLen
 
 					if !Forums.Exists(fid) {
-						outbytes = append(outbytes, InvalidForum...)
+						sb.Write(InvalidForum)
 						lastItem = i
 						continue
 					}
 
-					outbytes = append(outbytes, URLOpen...)
-					var urlBit = []byte(BuildForumURL("", fid))
-					outbytes = append(outbytes, urlBit...)
-					outbytes = append(outbytes, URLOpen2...)
-					var fidBit = []byte("#fid-" + strconv.Itoa(fid))
-					outbytes = append(outbytes, fidBit...)
-					outbytes = append(outbytes, URLClose...)
+					sb.Write(URLOpen)
+					sb.WriteString(BuildForumURL("", fid))
+					sb.Write(URLOpen2)
+					sb.WriteString("#fid-" + strconv.Itoa(fid))
+					sb.Write(URLClose)
 					lastItem = i
 				} else {
 					// TODO: Forum Shortcode Link
 				}
-			} else if msgbytes[i] == '@' {
-				outbytes = append(outbytes, msgbytes[lastItem:i]...)
+			} else if msg[i] == '@' {
+				sb.WriteString(msg[lastItem:i])
 				i++
 				start := i
-				uid, intLen := CoerceIntBytes(msgbytes[start:])
+				uid, intLen := CoerceIntString(msg[start:])
 				i += intLen
 
 				menUser, err := Users.Get(uid)
 				if err != nil {
-					outbytes = append(outbytes, InvalidProfile...)
+					sb.Write(InvalidProfile)
 					lastItem = i
 					continue
 				}
 
-				outbytes = append(outbytes, URLOpen...)
-				var urlBit = []byte(menUser.Link)
-				outbytes = append(outbytes, urlBit...)
-				outbytes = append(outbytes, bytesSinglequote...)
-				outbytes = append(outbytes, urlMention...)
-				outbytes = append(outbytes, bytesGreaterthan...)
-				var uidBit = []byte("@" + menUser.Name)
-				outbytes = append(outbytes, uidBit...)
-				outbytes = append(outbytes, URLClose...)
+				sb.Write(URLOpen)
+				sb.WriteString(menUser.Link)
+				sb.Write(bytesSinglequote)
+				sb.Write(urlMention)
+				sb.Write(bytesGreaterthan)
+				sb.WriteString("@" + menUser.Name)
+				sb.Write(URLClose)
 				lastItem = i
-			} else if msgbytes[i] == 'h' || msgbytes[i] == 'f' || msgbytes[i] == 'g' || msgbytes[i] == '/' {
-				if msgbytes[i+1] == 't' && msgbytes[i+2] == 't' && msgbytes[i+3] == 'p' {
-					if msgbytes[i+4] == 's' && msgbytes[i+5] == ':' && msgbytes[i+6] == '/' {
+			} else if msg[i] == 'h' || msg[i] == 'f' || msg[i] == 'g' || msg[i] == '/' {
+				if msg[i+1] == 't' && msg[i+2] == 't' && msg[i+3] == 'p' {
+					if msg[i+4] == 's' && msg[i+5] == ':' && msg[i+6] == '/' {
 						// Do nothing
-					} else if msgbytes[i+4] == ':' && msgbytes[i+5] == '/' {
+					} else if msg[i+4] == ':' && msg[i+5] == '/' {
 						// Do nothing
 					} else {
 						continue
 					}
-				} else if msgbytes[i+1] == 't' && msgbytes[i+2] == 'p' && msgbytes[i+3] == ':' && msgbytes[i+4] == '/' {
+				} else if msg[i+1] == 't' && msg[i+2] == 'p' && msg[i+3] == ':' && msg[i+4] == '/' {
 					// Do nothing
-				} else if msgbytes[i+1] == 'i' && msgbytes[i+2] == 't' && msgbytes[i+3] == ':' && msgbytes[i+4] == '/' {
+				} else if msg[i+1] == 'i' && msg[i+2] == 't' && msg[i+3] == ':' && msg[i+4] == '/' {
 					// Do nothing
-				} else if msgbytes[i+1] == '/' {
+				} else if msg[i+1] == '/' {
 					// Do nothing
 				} else {
 					continue
 				}
 
-				//log.Print("Normal URL")
-				outbytes = append(outbytes, msgbytes[lastItem:i]...)
-				urlLen := PartialURLBytesLen(msgbytes[i:])
-				if msgbytes[i+urlLen] > 32 { // space and invisibles
-					//log.Print("INVALID URL")
-					outbytes = append(outbytes, InvalidURL...)
+				sb.WriteString(msg[lastItem:i])
+				urlLen := PartialURLStringLen(msg[i:])
+				if msg[i+urlLen] > 32 { // space and invisibles
+					sb.Write(InvalidURL)
 					i += urlLen
 					continue
 				}
 
-				media, ok := parseMediaBytes(msgbytes[i : i+urlLen])
+				media, ok := parseMediaString(msg[i : i+urlLen])
 				if !ok {
-					outbytes = append(outbytes, InvalidURL...)
+					sb.Write(InvalidURL)
 					i += urlLen
 					continue
 				}
 
 				var addImage = func(url string) {
-					outbytes = append(outbytes, imageOpen...)
-					outbytes = append(outbytes, []byte(url)...)
-					outbytes = append(outbytes, imageOpen2...)
-					outbytes = append(outbytes, []byte(url)...)
-					outbytes = append(outbytes, imageClose...)
+					sb.Write(imageOpen)
+					sb.WriteString(url)
+					sb.Write(imageOpen2)
+					sb.WriteString(url)
+					sb.Write(imageClose)
 					i += urlLen
 					lastItem = i
 				}
 
 				// TODO: Reduce the amount of code duplication
 				if media.Type == "attach" {
-					addImage(media.URL+"?sectionID="+strconv.Itoa(sectionID)+"&sectionType="+sectionType)
+					addImage(media.URL + "?sectionID=" + strconv.Itoa(sectionID) + "&sectionType=" + sectionType)
 					continue
 				} else if media.Type == "image" {
 					addImage(media.URL)
 					continue
 				} else if media.Type == "raw" {
-					outbytes = append(outbytes, []byte(media.Body)...)
+					sb.WriteString(media.Body)
 					i += urlLen
 					lastItem = i
 					continue
 				} else if media.Type != "" {
-					outbytes = append(outbytes, unknownMedia...)
+					sb.Write(unknownMedia)
 					i += urlLen
 					continue
 				}
 
-				outbytes = append(outbytes, URLOpen...)
-				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, URLOpen2...)
-				outbytes = append(outbytes, msgbytes[i:i+urlLen]...)
-				outbytes = append(outbytes, URLClose...)
+				sb.Write(URLOpen)
+				sb.WriteString(msg[i : i+urlLen])
+				sb.Write(URLOpen2)
+				sb.WriteString(msg[i : i+urlLen])
+				sb.Write(URLClose)
 				i += urlLen
 				lastItem = i
 			}
 		}
 	}
-
-	if lastItem != i && len(outbytes) != 0 {
-		calclen := len(msgbytes) - 10
+	if lastItem != i && sb.Len() != 0 {
+		calclen := len(msg) - 10
 		if calclen <= lastItem {
 			calclen = lastItem
 		}
-		outbytes = append(outbytes, msgbytes[lastItem:calclen]...)
-		msg = string(outbytes)
+		sb.WriteString(msg[lastItem:calclen])
+		msg = sb.String()
 	}
 
 	msg = strings.Replace(msg, "\n", "<br>", -1)
@@ -620,16 +609,16 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 // 6, 7, 8, 6, 2, 7
 // ftp://, http://, https:// git://, //, mailto: (not a URL, just here for length comparison purposes)
 // TODO: Write a test for this
-func validateURLBytes(data []byte) bool {
+func validateURLString(data string) bool {
 	datalen := len(data)
 	i := 0
 
 	if datalen >= 6 {
-		if bytes.Equal(data[0:6], []byte("ftp://")) || bytes.Equal(data[0:6], []byte("git://")) {
+		if data[0:6] == "ftp://" || data[0:6] == "git://" {
 			i = 6
-		} else if datalen >= 7 && bytes.Equal(data[0:7], httpProtBytes) {
+		} else if datalen >= 7 && data[0:7] == "http://" {
 			i = 7
-		} else if datalen >= 8 && bytes.Equal(data[0:8], []byte("https://")) {
+		} else if datalen >= 8 && data[0:8] == "https://" {
 			i = 8
 		}
 	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
@@ -674,17 +663,17 @@ func validatedURLBytes(data []byte) (url []byte) {
 }
 
 // TODO: Write a test for this
-func PartialURLBytes(data []byte) (url []byte) {
+func PartialURLString(data string) (url []byte) {
 	datalen := len(data)
 	i := 0
 	end := datalen - 1
 
 	if datalen >= 6 {
-		if bytes.Equal(data[0:6], []byte("ftp://")) || bytes.Equal(data[0:6], []byte("git://")) {
+		if data[0:6] == "ftp://" || data[0:6] == "git://" {
 			i = 6
-		} else if datalen >= 7 && bytes.Equal(data[0:7], httpProtBytes) {
+		} else if datalen >= 7 && data[0:7] == "http://" {
 			i = 7
-		} else if datalen >= 8 && bytes.Equal(data[0:8], []byte("https://")) {
+		} else if datalen >= 8 && data[0:8] == "https://" {
 			i = 8
 		}
 	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
@@ -698,22 +687,22 @@ func PartialURLBytes(data []byte) (url []byte) {
 		}
 	}
 
-	url = append(url, data[0:end]...)
+	url = append(url, []byte(data[0:end])...)
 	return url
 }
 
 // TODO: Write a test for this
-func PartialURLBytesLen(data []byte) int {
+func PartialURLStringLen(data string) int {
 	datalen := len(data)
 	i := 0
 
 	if datalen >= 6 {
 		//log.Print(string(data[0:5]))
-		if bytes.Equal(data[0:6], []byte("ftp://")) || bytes.Equal(data[0:6], []byte("git://")) {
+		if data[0:6] == "ftp://" || data[0:6] == "git://" {
 			i = 6
-		} else if datalen >= 7 && bytes.Equal(data[0:7], httpProtBytes) {
+		} else if datalen >= 7 && data[0:7] == "http://" {
 			i = 7
-		} else if datalen >= 8 && bytes.Equal(data[0:8], []byte("https://")) {
+		} else if datalen >= 8 && data[0:8] == "https://" {
 			i = 8
 		}
 	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
@@ -738,11 +727,11 @@ type MediaEmbed struct {
 }
 
 // TODO: Write a test for this
-func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
-	if !validateURLBytes(data) {
+func parseMediaString(data string) (media MediaEmbed, ok bool) {
+	if !validateURLString(data) {
 		return media, false
 	}
-	url, err := parseURL(data)
+	url, err := url.Parse(data)
 	if err != nil {
 		return media, false
 	}
@@ -813,12 +802,8 @@ func parseMediaBytes(data []byte) (media MediaEmbed, ok bool) {
 	return media, true
 }
 
-func parseURL(data []byte) (*url.URL, error) {
-	return url.Parse(string(data))
-}
-
 // TODO: Write a test for this
-func CoerceIntBytes(data []byte) (res int, length int) {
+func CoerceIntString(data string) (res int, length int) {
 	if !(data[0] > 47 && data[0] < 58) {
 		return 0, 1
 	}
@@ -826,7 +811,7 @@ func CoerceIntBytes(data []byte) (res int, length int) {
 	i := 0
 	for ; len(data) > i; i++ {
 		if !(data[i] > 47 && data[i] < 58) {
-			conv, err := strconv.Atoi(string(data[0:i]))
+			conv, err := strconv.Atoi(data[0:i])
 			if err != nil {
 				return 0, i
 			}
@@ -834,7 +819,7 @@ func CoerceIntBytes(data []byte) (res int, length int) {
 		}
 	}
 
-	conv, err := strconv.Atoi(string(data))
+	conv, err := strconv.Atoi(data)
 	if err != nil {
 		return 0, i
 	}

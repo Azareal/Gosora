@@ -332,11 +332,12 @@ func bbcodeFullParse(msg string) string {
 	return msg
 }
 
+// TODO: Strip the containing [url] so the media parser can work it's magic instead? Or do we want to allow something like [url=]label[/url] here?
 func bbcodeParseURL(i int, start int, lastTag int, msgbytes []byte, outbytes []byte) (int, int, int, []byte) {
 	start = i + 5
 	outbytes = append(outbytes, msgbytes[lastTag:i]...)
 	i = start
-	i += common.PartialURLBytesLen(msgbytes[start:])
+	i += common.PartialURLStringLen(string(msgbytes[start:]))
 	if !bytes.Equal(msgbytes[i:i+6], []byte("[/url]")) {
 		outbytes = append(outbytes, common.InvalidURL...)
 		return i, start, lastTag, outbytes

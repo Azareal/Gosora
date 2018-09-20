@@ -222,8 +222,6 @@ function runWebSockets() {
 							alertList.splice(alertList.length-1,1);
 							delete alertMapping[key];
 
-							
-
 							// TODO: Add support for other alert feeds like PM Alerts
 							var generalAlerts = document.getElementById("general_alerts");
 							if(alertList.length < 8) {
