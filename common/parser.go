@@ -518,6 +518,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					hashLinkMap[hashType](&sb, msg, &i)
 					lastItem = i
 				}
+				i--
 			} else if msg[i] == '@' {
 				sb.WriteString(msg[lastItem:i])
 				i++
@@ -540,6 +541,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				sb.WriteString("@" + menUser.Name)
 				sb.Write(URLClose)
 				lastItem = i
+				i--
 			} else if msg[i] == 'h' || msg[i] == 'f' || msg[i] == 'g' || msg[i] == '/' {
 				if msg[i+1] == 't' && msg[i+2] == 't' && msg[i+3] == 'p' {
 					if msg[i+4] == 's' && msg[i+5] == ':' && msg[i+6] == '/' {
@@ -609,6 +611,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				sb.Write(URLClose)
 				i += urlLen
 				lastItem = i
+				i--
 			}
 		}
 	}
