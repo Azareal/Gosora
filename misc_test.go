@@ -1259,6 +1259,10 @@ func TestParser(t *testing.T) {
 	msgList = addMETri(msgList, "//"+common.Site.URL+"\n", "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br>")
 	msgList = addMETri(msgList, "//"+common.Site.URL+"\n//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br><a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
 
+	msgList = addMETri(msgList, "#tid-1", "<a href='/topic/1'>#tid-1</a>")
+	msgList = addMETri(msgList, "https://github.com/Azareal/Gosora/#tid-1", "<a href='https://github.com/Azareal/Gosora/#tid-1'>https://github.com/Azareal/Gosora/#tid-1</a>")
+	msgList = addMETri(msgList, "#fid-1", "<a href='/forum/1'>#fid-1</a>")
+
 	for _, item := range msgList {
 		res = common.ParseMessage(item.Msg, 1, "forums")
 		if res != item.Expects {
@@ -1267,7 +1271,6 @@ func TestParser(t *testing.T) {
 			}
 			t.Error("Testing string '" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
-			//t.Error("Ouput in bytes:", []byte(res))
 			t.Error("Expected:", "'"+item.Expects+"'")
 		}
 	}
