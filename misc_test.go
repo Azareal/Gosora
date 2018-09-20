@@ -1215,13 +1215,6 @@ func TestPreparser(t *testing.T) {
 	msgList = addMETri(msgList, "</strong>", "&lt;/strong&gt;")
 	msgList = addMETri(msgList, "<b>", "<strong></strong>")
 	msgList = addMETri(msgList, "<span style='background-color: yellow;'>hi", "hi")
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "https://github.com/Azareal/Gosora", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "http://github.com/Azareal/Gosora", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>\n<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
 	msgList = addMETri(msgList, "hi</span>", "hi")
 	msgList = addMETri(msgList, "</span>", "")
 	msgList = addMETri(msgList, "<span></span>", "")
@@ -1238,6 +1231,34 @@ func TestPreparser(t *testing.T) {
 
 	for _, item := range msgList {
 		res = common.PreparseMessage(item.Msg)
+		if res != item.Expects {
+			if item.Name != "" {
+				t.Error("Name: ", item.Name)
+			}
+			t.Error("Testing string '" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			//t.Error("Ouput in bytes:", []byte(res))
+			t.Error("Expected:", "'"+item.Expects+"'")
+		}
+	}
+}
+
+func TestParser(t *testing.T) {
+	var res string
+	var msgList []METri
+
+	msgList = addMETri(msgList, "//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "https://github.com/Azareal/Gosora", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "http://github.com/Azareal/Gosora", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>\n<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
+	msgList = addMETri(msgList, "//"+common.Site.URL+"\n", "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
+
+	for _, item := range msgList {
+		res = common.ParseMessage(item.Msg, 1, "forums")
 		if res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)
