@@ -995,7 +995,6 @@ input[type=checkbox]:checked + label .sel {
 	.user_box {
 		display: none;
 	}
-
 	#back {
 		flex-direction: column;
 	}
@@ -1009,6 +1008,12 @@ input[type=checkbox]:checked + label .sel {
 	.topic_item .topic_forum {
 		font-size: 17px;
 		line-height: 28px;
+	}
+}
+
+@media(min-width: 751px) {
+	.menu_profile {
+		display: none;
 	}
 }
 
