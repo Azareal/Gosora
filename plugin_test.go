@@ -54,6 +54,10 @@ func TestBBCodeRender(t *testing.T) {
 	msgList = addMEPair(msgList, "[quote][b]hi[/b][/quote]", "<span class='postQuote'><b>hi</b></span>")
 	msgList = addMEPair(msgList, "[quote][b]h[/b][/quote]", "<span class='postQuote'><b>h</b></span>")
 	msgList = addMEPair(msgList, "[quote][b][/b][/quote]", "<span class='postQuote'><b></b></span>")
+	msgList = addMEPair(msgList, "[url][/url]", "<a href=''></a>")
+	msgList = addMEPair(msgList, "[url]https://github.com/Azareal/Gosora[/url]", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
+	msgList = addMEPair(msgList, "[url]http://github.com/Azareal/Gosora[/url]", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
+	msgList = addMEPair(msgList, "[url]//github.com/Azareal/Gosora[/url]", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
 	msgList = addMEPair(msgList, "-你好-", "-你好-")
 	msgList = addMEPair(msgList, "[i]-你好-[/i]", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
