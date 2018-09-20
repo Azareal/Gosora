@@ -1250,12 +1250,12 @@ func TestParser(t *testing.T) {
 	msgList = addMETri(msgList, "//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
 	msgList = addMETri(msgList, "https://github.com/Azareal/Gosora", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
 	msgList = addMETri(msgList, "http://github.com/Azareal/Gosora", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>\n<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br>")
+	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora", "<br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora\n", "<br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br>")
+	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
 	msgList = addMETri(msgList, "//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
-	msgList = addMETri(msgList, "//"+common.Site.URL+"\n", "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
+	msgList = addMETri(msgList, "//"+common.Site.URL+"\n", "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br>")
 
 	for _, item := range msgList {
 		res = common.ParseMessage(item.Msg, 1, "forums")
