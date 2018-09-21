@@ -6,13 +6,13 @@
 	{{if ne .CurrentUser.ID 0}}
 		<div class="optbox">
 		{{if .ForumList}}
+			<div class="opt" style="margin-right: auto;margin-top: 2px;"><a href="#"> / Most Recent</a></div>
 			<div class="pre_opt auto_hide"></div>
 			<div class="opt create_topic_opt" title="{{lang "topic_list.create_topic_tooltip"}}" aria-label="{{lang "topic_list.create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/"></a></div>
 			{{/** TODO: Add a permissions check for this **/}}
 			<div class="opt mod_opt" title="{{lang "topic_list.moderate_tooltip"}}">
 				<a class="moderate_link" href="#" aria-label="{{lang "topic_list.moderate_aria"}}"></a>
 			</div>
-			<div class="opt"><select><option selected>Last Updated</option><option>Most Viewed</option></select></div>
 		{{else}}<div class="opt locked_opt" title="{{lang "topics_locked_tooltip"}}" aria-label="{{lang "topics_locked_aria"}}"><a></a></div>{{end}}
 		</div>
 		<div style="clear: both;"></div>
