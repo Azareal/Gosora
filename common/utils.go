@@ -371,7 +371,7 @@ func WordCount(input string) (count int) {
 	}
 	var inSpace bool
 	for _, value := range input {
-		if unicode.IsSpace(value) {
+		if unicode.IsSpace(value) || unicode.IsPunct(value) {
 			if !inSpace {
 				inSpace = true
 			}
