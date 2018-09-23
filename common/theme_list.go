@@ -374,17 +374,12 @@ func GetThemeTemplate(theme string, template string) interface{} {
 	// Might have something to do with it being the theme's TmplPtr map, investigate.
 	tmpl, ok := Themes[theme].TmplPtr[template]
 	if ok {
-		//fmt.Println("tmpl: ", tmpl)
-		//fmt.Println("exiting at Themes[theme].TmplPtr[template]")
 		return tmpl
 	}
-
 	tmpl, ok = TmplPtrMap[template]
 	if ok {
-		//fmt.Println("exiting at TmplPtrMap[template]")
 		return tmpl
 	}
-	//fmt.Println("just passing back the template name")
 	return template
 }
 

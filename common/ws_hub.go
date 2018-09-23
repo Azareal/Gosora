@@ -126,7 +126,6 @@ func (hub *WsHubImpl) Tick() error {
 		}
 		_ = forumList // Might use this later after we get the base feature working
 
-		//fmt.Println("canSeeItem")
 		if topicList[0].Sticky {
 			var lastSticky = 0
 			for i, row := range topicList {
@@ -138,10 +137,7 @@ func (hub *WsHubImpl) Tick() error {
 			if lastSticky == 0 {
 				continue
 			}
-			//fmt.Println("lastSticky: ", lastSticky)
-			//fmt.Println("before topicList: ", topicList)
 			topicList = topicList[lastSticky:]
-			//fmt.Println("after topicList: ", topicList)
 		}
 
 		// TODO: Compare to previous tick to eliminate unnecessary work and data

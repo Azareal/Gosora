@@ -2,7 +2,6 @@ package panel
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -75,7 +74,7 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname
 		if err != nil {
 			return common.LocalError("The value of this setting couldn't be converted to an integer", w, r, user)
 		}
-		fmt.Println("llist: ", llist)
+		//fmt.Println("llist: ", llist)
 
 		for index, label := range strings.Split(llist, ",") {
 			itemList = append(itemList, common.OptionLabel{

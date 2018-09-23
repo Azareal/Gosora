@@ -360,7 +360,6 @@ func PreparseMessage(msg string) string {
 				continue
 			}
 
-			//fmt.Printf("username: %+v\n", username)
 			user, err := Users.GetByName(username)
 			if err != nil {
 				if err != ErrNoRows {

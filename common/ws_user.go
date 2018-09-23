@@ -73,11 +73,13 @@ func (wsUser *WSUser) AddSocket(conn *websocket.Conn, page string) {
 			if socket == nil {
 				wsUser.Sockets[i] = &WSUserSocket{conn, page}
 				wsUser.Unlock()
+				//fmt.Printf("%+v\n", wsUser.Sockets)
 				return
 			}
 		}
 	}
 	wsUser.Sockets = append(wsUser.Sockets, &WSUserSocket{conn, page})
+	//fmt.Printf("%+v\n", wsUser.Sockets)
 	wsUser.Unlock()
 }
 
@@ -91,6 +93,7 @@ func (wsUser *WSUser) RemoveSocket(conn *websocket.Conn) {
 			if socket.conn == conn {
 				wsUser.Sockets[i] = nil
 				wsUser.Unlock()
+				//fmt.Printf("%+v\n", wsUser.Sockets)
 				return
 			}
 		}
@@ -104,6 +107,7 @@ func (wsUser *WSUser) RemoveSocket(conn *websocket.Conn) {
 		}
 	}
 	wsUser.Sockets = append(wsUser.Sockets[:key], wsUser.Sockets[key+1:]...)
+	//fmt.Printf("%+v\n", wsUser.Sockets)
 
 	wsUser.Unlock()
 }
