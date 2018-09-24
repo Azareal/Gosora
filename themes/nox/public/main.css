@@ -239,7 +239,7 @@ h1, h2, h3, h4, h5 {
 	margin-bottom: 8px;
 }
 .rowhead h1, .opthead h1, .colstack_head h1 {
-	font-size: 22px;
+	font-size: 21px;
 }
 .sidebar .rowhead {
 	margin-left: 18px;
@@ -332,11 +332,12 @@ h2 {
 .topic_list_title_block .optbox {
 	display: flex;
 	/*margin-left: auto;*/
+	margin-left: auto;
 	font-size: 17px;
 	margin-top: 3.5px;
 	margin-right: 16px;
 	margin-right: 18px;
-	width: 100%;
+	/*width: 100%;*/
 }
 .topic_list_title_block .pre_opt:before {
 	content: "{{index .Phrases "topics_click_topics_to_select"}}";

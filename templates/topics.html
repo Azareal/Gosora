@@ -6,7 +6,13 @@
 	{{if ne .CurrentUser.ID 0}}
 		<div class="optbox">
 		{{if .ForumList}}
-			<div class="opt" style="margin-right: auto;margin-top: 2px;"><a href="#"> / Most Recent</a></div>
+			<!--<div class="opt" style="margin-right: auto;">
+				<a href="#" style="font-size: 18px;margin-left: 5px;"> / Most Recent <span style="margin-left: -5px;">▾</span></a>
+				<div class="link_select">
+					<div class="link_option link_selected">Most Recent</div>
+					<div class="link_option">Most Viewed</div>
+				</div>
+			</div>-->
 			<div class="pre_opt auto_hide"></div>
 			<div class="opt create_topic_opt" title="{{lang "topic_list.create_topic_tooltip"}}" aria-label="{{lang "topic_list.create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/"></a></div>
 			{{/** TODO: Add a permissions check for this **/}}
