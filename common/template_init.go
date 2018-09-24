@@ -196,14 +196,18 @@ func CompileTemplates() error {
 	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, RelativeTime(now), 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
 	var varList = make(map[string]tmpl.VarItem)
+	var compile = func(name string, expects string, expectsInt interface{}) (tmpl string, err error) {
+		return c.Compile(name+".html", "templates/", expects, expectsInt, varList)
+	}
+
 	header.Title = "Topic Name"
 	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, 1, 1}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
-	topicIDTmpl, err := c.Compile("topic.html", "templates/", "common.TopicPage", tpage, varList)
+	topicIDTmpl, err := compile("topic", "common.TopicPage", tpage)
 	if err != nil {
 		return err
 	}
-	topicIDAltTmpl, err := c.Compile("topic_alt.html", "templates/", "common.TopicPage", tpage, varList)
+	topicIDAltTmpl, err := compile("topic_alt", "common.TopicPage", tpage)
 	if err != nil {
 		return err
 	}
@@ -211,7 +215,7 @@ func CompileTemplates() error {
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "User 526"
 	ppage := ProfilePage{header, replyList, user}
-	profileTmpl, err := c.Compile("profile.html", "templates/", "common.ProfilePage", ppage, varList)
+	profileTmpl, err := compile("profile", "common.ProfilePage", ppage)
 	if err != nil {
 		return err
 	}
@@ -222,14 +226,14 @@ func CompileTemplates() error {
 	if err != nil {
 		return err
 	}
-
 	for _, forum := range forums {
 		forumList = append(forumList, *forum)
 	}
+
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "Forum List"
 	forumsPage := ForumsPage{header, forumList}
-	forumsTmpl, err := c.Compile("forums.html", "templates/", "common.ForumsPage", forumsPage, varList)
+	forumsTmpl, err := compile("forums", "common.ForumsPage", forumsPage)
 	if err != nil {
 		return err
 	}
@@ -238,7 +242,7 @@ func CompileTemplates() error {
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
 	header2.Title = "Topic List"
 	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
-	topicListTmpl, err := c.Compile("topics.html", "templates/", "common.TopicListPage", topicListPage, varList)
+	topicListTmpl, err := compile("topics", "common.TopicListPage", topicListPage)
 	if err != nil {
 		return err
 	}
@@ -246,28 +250,28 @@ func CompileTemplates() error {
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	header.Title = "General Forum"
 	forumPage := ForumPage{header, topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
-	forumTmpl, err := c.Compile("forum.html", "templates/", "common.ForumPage", forumPage, varList)
+	forumTmpl, err := compile("forum", "common.ForumPage", forumPage)
 	if err != nil {
 		return err
 	}
 
 	header.Title = "Login Page"
 	loginPage := Page{header, tList, nil}
-	loginTmpl, err := c.Compile("login.html", "templates/", "common.Page", loginPage, varList)
+	loginTmpl, err := compile("login", "common.Page", loginPage)
 	if err != nil {
 		return err
 	}
 
 	header.Title = "Registration Page"
 	registerPage := Page{header, tList, "nananana"}
-	registerTmpl, err := c.Compile("register.html", "templates/", "common.Page", registerPage, varList)
+	registerTmpl, err := compile("register", "common.Page", registerPage)
 	if err != nil {
 		return err
 	}
 
 	header.Title = "Error"
 	errorPage := ErrorPage{header, "A problem has occurred in the system."}
-	errorTmpl, err := c.Compile("error.html", "templates/", "common.ErrorPage", errorPage, varList)
+	errorTmpl, err := compile("error", "common.ErrorPage", errorPage)
 	if err != nil {
 		return err
 	}
@@ -276,7 +280,7 @@ func CompileTemplates() error {
 	ipUserList[1] = &user2
 	header.Title = "IP Search"
 	ipSearchPage := IPSearchPage{header2, ipUserList, "::1"}
-	ipSearchTmpl, err := c.Compile("ip_search.html", "templates/", "common.IPSearchPage", ipSearchPage, varList)
+	ipSearchTmpl, err := compile("ip_search", "common.IPSearchPage", ipSearchPage)
 	if err != nil {
 		return err
 	}
