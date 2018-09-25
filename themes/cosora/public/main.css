@@ -425,6 +425,9 @@ h1, h3 {
 .mod_opt .moderate_open {
 	display: none;
 }
+.filter_opt {
+	display: none;
+}
 
 .topic_create_form {
 	display: flex !important;

@@ -723,6 +723,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	margin-left: auto;
 	margin-right: 12px;
 }
+.filter_opt {
+	display: none;
+}
 
 @keyframes fadein {
 	from { opacity: 0; }

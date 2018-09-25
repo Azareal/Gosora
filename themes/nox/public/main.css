@@ -332,12 +332,11 @@ h2 {
 .topic_list_title_block .optbox {
 	display: flex;
 	/*margin-left: auto;*/
-	margin-left: auto;
 	font-size: 17px;
 	margin-top: 3.5px;
 	margin-right: 16px;
 	margin-right: 18px;
-	/*width: 100%;*/
+	width: 100%;
 }
 .topic_list_title_block .pre_opt:before {
 	content: "{{index .Phrases "topics_click_topics_to_select"}}";
@@ -354,6 +353,20 @@ h2 {
 }
 .topic_list_title_block .mod_opt a:before {
 	content: "Moderate";
+}
+
+.link_select {
+	background: #333333;
+	background-color: #444444;
+	position: absolute;
+	border: 1px solid #333333;
+	padding: 16px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-top: 2px;
+}
+.link_select .link_option a {
+	margin-left: 0px;
 }
 
 .topic_row:not(:last-child) {

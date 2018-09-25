@@ -324,6 +324,9 @@ li a {
 	color: rgb(120,120,120);
 	text-decoration: none;
 }*/
+.filter_opt {
+	display: none;
+}
 
 .to_right {
 	margin-left: auto;
