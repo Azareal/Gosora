@@ -585,7 +585,7 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 	margin-top: 6px;
 }
 .topic_view_count:after {
-	content: " views";
+	content: "{{index .Phrases "topic.view_count_suffix"}}";
 }
 .topic_name_input {
 	width: 100%;

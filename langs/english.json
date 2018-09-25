@@ -288,6 +288,7 @@
 		"topics_last":"Last",
 		"topics_starter":"Starter",
 		"topic.like_count_suffix":" likes",
+		"topic.view_count_suffix":" views",
 		"topic.plus":"+",
 		"topic.plus_one":"+1",
 		"topic.gap_up":" up",

@@ -963,7 +963,15 @@ textarea {
 	line-height: 23px;
 }
 .topic_view_count {
-	display: none;
+	margin-left: 6px;
+	font-size: 13px;
+	margin-top: 4px;
+}
+.topic_view_count:before {
+	content: "("
+}
+.topic_view_count:after {
+	content: "{{index .Phrases "topic.view_count_suffix"}})";
 }
 .postImage {
 	width: 100%;
