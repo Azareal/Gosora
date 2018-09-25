@@ -355,6 +355,16 @@ h2 {
 	content: "Moderate";
 }
 
+.filter_opt {
+	margin-right: auto;
+}
+.filter_opt_label {
+	font-size: 18px;
+	margin-left: 5px;
+}
+.filter_opt_pointy {
+	margin-left: -5px;
+}
 .link_select {
 	background: #333333;
 	background-color: #444444;
