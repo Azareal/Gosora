@@ -360,8 +360,8 @@ function mainInit(){
 
 	$(".open_edit").click((event) => {
 		event.preventDefault();
-		$(".hide_on_edit").hide();
-		$(".show_on_edit").show();
+		$('.hide_on_edit').addClass("edit_opened");
+		$('.show_on_edit').addClass("edit_opened");
 	});
 
 	$(".topic_item .submit_edit").click(function(event){
@@ -374,8 +374,8 @@ function mainInit(){
 		let topicStatusInput = $('.topic_status_input').val();
 		$(".topic_status_e:not(.open_edit)").html(topicStatusInput);
 
-		$(".hide_on_edit").show();
-		$(".show_on_edit").hide();
+		$('.hide_on_edit').removeClass("edit_opened");
+		$('.show_on_edit').removeClass("edit_opened");
 
 		let formAction = this.form.getAttribute("action");
 		$.ajax({
