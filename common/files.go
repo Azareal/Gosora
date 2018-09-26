@@ -2,18 +2,17 @@ package common
 
 import (
 	"bytes"
+	"compress/gzip"
 	"errors"
 	"fmt"
-	"mime"
-	"strconv"
-	"strings"
-	"sync"
-	//"errors"
-	"compress/gzip"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
 
 	"../tmpl_client"
 )
@@ -179,7 +178,9 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, "w.Write([]byte(", "out += ")
 		data = replace(data, "w.Write(", "out += ")
 		data = replace(data, "strconv.Itoa(", "")
+		data = replace(data, "strconv.FormatInt(", "")
 		data = replace(data, "common.", "")
+		data = replace(data, ", 10;", "")
 		data = replace(data, shortName+"_tmpl_phrase_id = RegisterTmplPhraseNames([]string{", "[")
 		data = replace(data, "var phrases = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let phrases = tmplPhrases[\""+tmplName+"\"];")
 		//data = replace(data, "var phrases = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let phrases = tmplPhrases[\""+tmplName+"\"];\nconsole.log('tmplName:','"+tmplName+"')\nconsole.log('phrases:', phrases);")
