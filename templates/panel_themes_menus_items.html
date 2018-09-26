@@ -76,12 +76,11 @@
 	</main>
 </div>
 <script type="text/javascript">
+// TODO: Move this into a JS file to reduce the number of possible problems
 var menuItems = {};
 let items = document.getElementsByClassName("panel_menu_item");
-//console.log("items: ", items);
 for(let i = 0; item = items[i];i++) {
 	let miid = item.getAttribute("data-miid");
-	//console.log("miid: ", miid);
 	menuItems[i] = miid;
 }
 Sortable.create(document.getElementById("panel_menu_item_holder"), {
@@ -124,7 +123,7 @@ document.getElementById("panel_menu_items_order_button").addEventListener("click
 		console.trace();
 	}
 	// ? - Is encodeURIComponent the right function for this?
-	req.open("POST","/panel/themes/menus/item/order/edit/submit/{{.MenuID}}?session=" + encodeURIComponent(session));
+	req.open("POST","/panel/themes/menus/item/order/edit/submit/{{.MenuID}}?session=" + encodeURIComponent(me.User.Session));
 	req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 	let items = "";
 	for(let i = 0; item = menuItems[i];i++) {
