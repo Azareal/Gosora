@@ -441,6 +441,9 @@
 		"topic_list.move_head":"Move these topics to?",
 		"topic_list.move_button":"Move Topics",
 		"topic_list.changed_topics":"Click to see %d new or changed topics",
+		"topic_list.replies_suffix":"replies",
+		"topic_list.likes_suffix":"likes",
+		"topic_list.views_suffix":"views",
 		"status.closed_tooltip":"Status: Closed",
 		"status.pinned_tooltip":"Status: Pinned",
 

@@ -7,8 +7,8 @@
 		<div class="optbox">
 		{{if .ForumList}}
 			<div class="opt filter_opt">
-				<a href="#" class="filter_opt_label"> / Most Recent <span class="filter_opt_pointy">▾</span></a>
-				<div class="link_select">
+				<a href="#" class="filter_opt_label link_label" data-for="topic_list_filter_select"> / Most Recent <span class="filter_opt_pointy">▾</span></a>
+				<div id="topic_list_filter_select" class="link_select">
 					<div class="link_option link_selected">
 						<a href="/topics/">Most Recent</a>
 					</div>
@@ -115,7 +115,7 @@
 <div class="rowblock more_topic_block more_topic_block_initial">
 	<div class="rowitem rowmsg"><a href="" class="more_topics"></a></div>
 </div>
-<div id="topic_list" class="rowblock topic_list" aria-label="{{lang "topics_list_aria"}}">
+<div id="topic_list" class="rowblock topic_list topic_list_{{.Sort.SortBy}}" aria-label="{{lang "topics_list_aria"}}">
 	{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}</div>{{end}}
 </div>
 

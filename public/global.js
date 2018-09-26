@@ -358,6 +358,12 @@ function mainInit(){
 		});
 	});
 
+	$(".link_label").click(function(event) {
+		event.preventDefault();
+		let forSelect = $(this).attr("data-for");
+		$('#'+forSelect).addClass("link_opened");
+	});
+
 	$(".open_edit").click((event) => {
 		event.preventDefault();
 		$('.hide_on_edit').addClass("edit_opened");

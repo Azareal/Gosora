@@ -27,6 +27,7 @@ func routes() {
 
 	topicGroup := newRouteGroup("/topics/",
 		View("routes.TopicList", "/topics/"),
+		View("routes.TopicListMostViewed", "/topics/most-viewed/"),
 		MemberView("routes.CreateTopic", "/topics/create/", "extraData"),
 	)
 	addRouteGroup(topicGroup)

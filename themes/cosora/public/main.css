@@ -534,7 +534,7 @@ input[type=checkbox]:checked + label .sel {
 .pollinput:not(:only-child):not(:first-child) {
 	margin-bottom: 5px;
 }
-.auto_hide, .show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened {
+.auto_hide, .show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened, .link_select:not(.link_opened) {
 	display: none;
 }
 
@@ -963,11 +963,11 @@ textarea {
 	font-size: 18px;
 }
 .topic_forum {
-	line-height: 23px;
+	line-height: 24px;
 }
 .topic_view_count {
 	margin-left: 6px;
-	font-size: 13px;
+	font-size: 14px;
 	margin-top: 4px;
 }
 .topic_view_count:before {

@@ -739,7 +739,7 @@ button.username {
 .mention {
 	font-weight: bold;
 }
-.show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened, .auto_hide, .hide_on_big, .show_on_mobile {
+.show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened, .auto_hide, .hide_on_big, .show_on_mobile, .link_select:not(.link_opened) {
 	display: none;
 }
 

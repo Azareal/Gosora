@@ -318,7 +318,7 @@ h2 {
 .more_topic_block_active {
 	display: block;
 }
-.hide_ajax_topic, .auto_hide, .show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened {
+.hide_ajax_topic, .auto_hide, .show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened, .link_select:not(.link_opened) {
 	display: none !important;
 }
 
@@ -458,15 +458,13 @@ h2 {
 .topic_inner_left br, .topic_right_inside br, .topic_inner_right {
 	display: none;
 }
-.topic_middle .replyCount:after {
-	content: "replies";
-	margin-left: 3px;
-}
-.topic_middle .likeCount:after {
-	content: "likes";
-	margin-left: 3px;
+.topic_list:not(.topic_list_mostviewed) .topic_middle .viewCount,
+.topic_list_mostviewed .topic_middle .likeCount {
+	display: none;
 }
 .topic_middle_inside {
+	display: flex;
+	flex-direction: column;
 	margin-left: auto;
 	margin-right: auto;
 	margin-top: -3px;

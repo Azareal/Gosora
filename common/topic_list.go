@@ -17,9 +17,9 @@ type TopicListHolder struct {
 }
 
 type TopicListInt interface {
-	GetListByCanSee(canSee []int, page int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-	GetListByGroup(group *Group, page int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-	GetList(page int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByCanSee(canSee []int, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByGroup(group *Group, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetList(page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
 
 	RebuildPermTree() error
 }
@@ -72,7 +72,7 @@ func (tList *DefaultTopicList) Tick() error {
 
 	var canSeeHolders = make(map[string]*TopicListHolder)
 	for name, canSee := range tList.permTree.Load().(map[string][]int) {
-		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1)
+		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, "")
 		if err != nil {
 			return err
 		}
@@ -128,12 +128,12 @@ func (tList *DefaultTopicList) RebuildPermTree() error {
 	return nil
 }
 
-func (tList *DefaultTopicList) GetListByGroup(group *Group, page int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
 	if page == 0 {
 		page = 1
 	}
 	// TODO: Cache the first three pages not just the first along with all the topics on this beaten track
-	if page == 1 {
+	if page == 1 && orderby == "" {
 		var holder *TopicListHolder
 		var ok bool
 		if group.ID%2 == 0 {
@@ -152,10 +152,10 @@ func (tList *DefaultTopicList) GetListByGroup(group *Group, page int) (topicList
 
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
 	//log.Printf("deoptimising for %d on page %d\n", group.ID, page)
-	return tList.GetListByCanSee(group.CanSee, page)
+	return tList.GetListByCanSee(group.CanSee, page, orderby)
 }
 
-func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
 	// We need a list of the visible forums for Quick Topic
 	// ? - Would it be useful, if we could post in social groups from /topics/?
 	for _, fid := range canSee {
@@ -174,12 +174,12 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int) (topicLis
 		return topicList, forumList, Paginator{[]int{}, 1, 1}, nil
 	}
 
-	topicList, paginator, err = tList.getList(page, argList, qlist)
+	topicList, paginator, err = tList.getList(page, orderby, argList, qlist)
 	return topicList, forumList, paginator, err
 }
 
 // TODO: Reduce the number of returns
-func (tList *DefaultTopicList) GetList(page int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetList(page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
 	canSee, err := Forums.GetAllVisibleIDs()
 	if err != nil {
@@ -204,20 +204,27 @@ func (tList *DefaultTopicList) GetList(page int) (topicList []*TopicsRow, forumL
 		return topicList, forumList, Paginator{[]int{}, 1, 1}, err
 	}
 
-	topicList, paginator, err = tList.getList(page, argList, qlist)
+	topicList, paginator, err = tList.getList(page, orderby, argList, qlist)
 	return topicList, forumList, paginator, err
 }
 
 // TODO: Rename this to TopicListStore and pass back a TopicList instance holding the pagination data and topic list rather than passing them back one argument at a time
-func (tList *DefaultTopicList) getList(page int, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
+func (tList *DefaultTopicList) getList(page int, orderby string, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
 	topicCount, err := ArgQToTopicCount(argList, qlist)
 	if err != nil {
 		return nil, Paginator{nil, 1, 1}, err
 	}
 	offset, page, lastPage := PageOffset(topicCount, page, Config.ItemsPerPage)
 
+	var orderq string
+	if orderby == "most-viewed" {
+		orderq = "views DESC, lastReplyAt DESC, createdBy DESC"
+	} else {
+		orderq = "sticky DESC, lastReplyAt DESC, createdBy DESC"
+	}
+
 	// TODO: Prepare common qlist lengths to speed this up in common cases, prepared statements are prepared lazily anyway, so it probably doesn't matter if we do ten or so
-	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, views, postCount, likeCount", "parentID IN("+qlist+")", "sticky DESC, lastReplyAt DESC, createdBy DESC", "?,?")
+	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, views, postCount, likeCount", "parentID IN("+qlist+")", orderq, "?,?")
 	if err != nil {
 		return nil, Paginator{nil, 1, 1}, err
 	}
