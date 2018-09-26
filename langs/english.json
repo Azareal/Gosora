@@ -441,6 +441,8 @@
 		"topic_list.move_head":"Move these topics to?",
 		"topic_list.move_button":"Move Topics",
 		"topic_list.changed_topics":"Click to see %d new or changed topics",
+		"topic_list.most_recent_filter":"Most Recent",
+		"topic_list.most_viewed_filter":"Most Viewed",
 		"topic_list.replies_suffix":"replies",
 		"topic_list.likes_suffix":"likes",
 		"topic_list.views_suffix":"views",
