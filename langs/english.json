@@ -70,6 +70,7 @@
 	},
 
 	"Errors": {
+		"not_found":"The requested page doesn't exist."
 	},
 
 	"PageTitles": {

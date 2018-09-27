@@ -205,12 +205,12 @@ func GetHumanLangPhrase(name string) (string, bool) {
 }
 
 // TODO: Does comma ok work with multi-dimensional maps?
-func GetErrorPhrase(name string) (string, bool) {
+func GetErrorPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).Errors[name]
 	if !ok {
-		return getPhrasePlaceholder("error", name), false
+		return getPhrasePlaceholder("error", name)
 	}
-	return res, true
+	return res
 }
 
 func GetNoticePhrase(name string) string {

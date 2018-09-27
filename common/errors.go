@@ -281,7 +281,7 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError
 // ? - Add a JSQ and JS version of this?
 // ? - Add a user parameter?
 func NotFound(w http.ResponseWriter, r *http.Request, header *Header) RouteError {
-	return CustomError("The requested page doesn't exist.", 404, "Not Found", w, r, header, GuestUser)
+	return CustomError(GetErrorPhrase("not_found"), 404, "Not Found", w, r, header, GuestUser)
 }
 
 // CustomError lets us make custom error types which aren't covered by the generic functions above
