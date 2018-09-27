@@ -46,7 +46,7 @@ type LanguagePack struct {
 	UserAgents          map[string]string
 	OperatingSystems    map[string]string
 	HumanLanguages      map[string]string
-	Errors              map[string]map[string]string // map[category]map[name]value
+	Errors              map[string]string
 	NoticePhrases       map[string]string
 	PageTitles          map[string]string
 	TmplPhrases         map[string]string
@@ -205,12 +205,12 @@ func GetHumanLangPhrase(name string) (string, bool) {
 }
 
 // TODO: Does comma ok work with multi-dimensional maps?
-func GetErrorPhrase(category string, name string) string {
-	res, ok := currentLangPack.Load().(*LanguagePack).Errors[category][name]
+func GetErrorPhrase(name string) (string, bool) {
+	res, ok := currentLangPack.Load().(*LanguagePack).Errors[name]
 	if !ok {
-		return getPhrasePlaceholder("error", name)
+		return getPhrasePlaceholder("error", name), false
 	}
-	return res
+	return res, true
 }
 
 func GetNoticePhrase(name string) string {
