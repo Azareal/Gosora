@@ -361,7 +361,11 @@ function mainInit(){
 	$(".link_label").click(function(event) {
 		event.preventDefault();
 		let forSelect = $(this).attr("data-for");
-		$('#'+forSelect).addClass("link_opened");
+		let linkSelect = $('#'+forSelect);
+		if(!linkSelect.hasClass("link_opened")) {
+			event.stopPropagation();
+			linkSelect.addClass("link_opened");
+		}
 	});
 
 	$(".open_edit").click((event) => {
@@ -530,7 +534,9 @@ function mainInit(){
 	$(this).click(() => {
 		$(".selectedAlert").removeClass("selectedAlert");
 		$("#back").removeClass("alertActive");
+		$(".link_select").removeClass("link_opened");
 	});
+
 	$(".alert_bell").click(function(){
 		var menuAlerts = $(this).parent();
 		if(menuAlerts.hasClass("selectedAlert")) {
@@ -539,7 +545,6 @@ function mainInit(){
 			$("#back").removeClass("alertActive");
 		}
 	});
-
 	$(".menu_alerts").click(function(event) {
 		event.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
@@ -547,6 +552,7 @@ function mainInit(){
 		this.className += " selectedAlert";
 		document.getElementById("back").className += " alertActive"
 	});
+	$(".link_select").click(event => event.stopPropagation());
 
 	$("input,textarea,select,option").keyup(event => event.stopPropagation())
 
