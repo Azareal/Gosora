@@ -70,7 +70,20 @@
 	},
 
 	"Errors": {
-		"not_found":"The requested page doesn't exist."
+		"error_title":"Error",
+		"local_error_title":"Local Error",
+		
+		"not_found_title":"Page Not Found",
+		"not_found_body":"The requested page doesn't exist.",
+		"login_required_body":"You need to login to do that.",
+		"no_permissions_title":"Access Denied",
+		"no_permissions_body":"You don't have permission to do that.",
+		"internal_error_title":"Internal Server Error",
+		"internal_error_body":"A problem has occurred in the system.",
+		"security_error_title":"Security Error",
+		"security_error_body":"There was a security issue with your request.",
+		"banned_title":"Banned",
+		"banned_body":"You have been banned from this site."
 	},
 
 	"PageTitles": {

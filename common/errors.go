@@ -100,7 +100,8 @@ func errorHeader(w http.ResponseWriter, user User, title string) *Header {
 // InternalError is the main function for handling internal errors, while simultaneously printing out a page for the end-user to let them know that *something* has gone wrong
 // ? - Add a user parameter?
 func InternalError(err error, w http.ResponseWriter, r *http.Request) RouteError {
-	pi := ErrorPage{errorHeader(w, GuestUser, "Internal Server Error"), "A problem has occurred in the system."}
+	w.WriteHeader(500)
+	pi := ErrorPage{errorHeader(w, GuestUser, GetErrorPhrase("internal_error_title")), GetErrorPhrase("internal_error_body")}
 	handleErrorTemplate(w, r, pi)
 	LogError(err)
 	return HandledRouteError()
@@ -119,25 +120,24 @@ func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, isJs bo
 // ? - Add a user parameter?
 func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
-	writeJsonError("A problem has occurred in the system.", w)
+	writeJsonError(GetErrorPhrase("internal_error_body"), w)
 	LogError(err)
 	return HandledRouteError()
 }
 
 // When the task system detects if the database is down, some database errors might lip by this
 func DatabaseError(w http.ResponseWriter, r *http.Request) RouteError {
-	pi := ErrorPage{errorHeader(w, GuestUser, "Internal Server Error"), "A problem has occurred in the system."}
+	w.WriteHeader(500)
+	pi := ErrorPage{errorHeader(w, GuestUser, GetErrorPhrase("internal_error_title")), GetErrorPhrase("internal_error_body")}
 	handleErrorTemplate(w, r, pi)
 	return HandledRouteError()
 }
 
-var xmlInternalError = []byte(`<?xml version="1.0" encoding="UTF-8"?>
-<error>A problem has occured</error>`)
-
 func InternalErrorXML(err error, w http.ResponseWriter, r *http.Request) RouteError {
 	w.Header().Set("Content-Type", "application/xml")
 	w.WriteHeader(500)
-	w.Write(xmlInternalError)
+	w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
+<error>` + GetErrorPhrase("internal_error_body") + `</error>`))
 	LogError(err)
 	return HandledRouteError()
 }
@@ -146,14 +146,15 @@ func InternalErrorXML(err error, w http.ResponseWriter, r *http.Request) RouteEr
 func SilentInternalErrorXML(err error, w http.ResponseWriter, r *http.Request) RouteError {
 	w.Header().Set("Content-Type", "application/xml")
 	w.WriteHeader(500)
-	w.Write(xmlInternalError)
+	w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
+<error>` + GetErrorPhrase("internal_error_body") + `</error>`))
 	log.Print("InternalError: ", err)
 	return HandledRouteError()
 }
 
 func PreError(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
-	pi := ErrorPage{errorHeader(w, GuestUser, "Error"), errmsg}
+	pi := ErrorPage{errorHeader(w, GuestUser, GetErrorPhrase("error_title")), errmsg}
 	handleErrorTemplate(w, r, pi)
 	return HandledRouteError()
 }
@@ -175,7 +176,7 @@ func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, isJs boo
 // TODO: Pass header in for this and similar errors instead of having to pass in both user and w? Would also allow for more stateful things, although this could be a problem
 func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(500)
-	pi := ErrorPage{errorHeader(w, user, "Local Error"), errmsg}
+	pi := ErrorPage{errorHeader(w, user, GetErrorPhrase("local_error_title")), errmsg}
 	handleErrorTemplate(w, r, pi)
 	return HandledRouteError()
 }
@@ -197,7 +198,7 @@ func LocalErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) RouteEr
 // NoPermissions is an error shown to the end-user when they try to access an area which they aren't authorised to access
 func NoPermissions(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
-	pi := ErrorPage{errorHeader(w, user, "Local Error"), "You don't have permission to do that."}
+	pi := ErrorPage{errorHeader(w, user, GetErrorPhrase("no_permissions_title")), GetErrorPhrase("no_permissions_body")}
 	handleErrorTemplate(w, r, pi)
 	return HandledRouteError()
 }
@@ -211,14 +212,14 @@ func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bo
 
 func NoPermissionsJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
-	writeJsonError("You don't have permission to do that.", w)
+	writeJsonError(GetErrorPhrase("no_permissions_body"), w)
 	return HandledRouteError()
 }
 
 // ? - Is this actually used? Should it be used? A ban in Gosora should be more of a permission revocation to stop them posting rather than something which spits up an error page, right?
 func Banned(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
-	pi := ErrorPage{errorHeader(w, user, "Banned"), "You have been banned from this site."}
+	pi := ErrorPage{errorHeader(w, user, GetErrorPhrase("banned_title")), GetErrorPhrase("banned_body")}
 	handleErrorTemplate(w, r, pi)
 	return HandledRouteError()
 }
@@ -234,7 +235,7 @@ func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) Rou
 
 func BannedJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
-	writeJsonError("You have been banned from this site.", w)
+	writeJsonError(GetErrorPhrase("banned_body"), w)
 	return HandledRouteError()
 }
 
@@ -250,7 +251,7 @@ func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bo
 // LoginRequired is an error shown to the end-user when they try to access an area which requires them to login
 func LoginRequired(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(401)
-	pi := ErrorPage{errorHeader(w, user, "Local Error"), "You need to login to do that."}
+	pi := ErrorPage{errorHeader(w, user, GetErrorPhrase("no_permissions_title")), GetErrorPhrase("login_required_body")}
 	handleErrorTemplate(w, r, pi)
 	return HandledRouteError()
 }
@@ -258,7 +259,7 @@ func LoginRequired(w http.ResponseWriter, r *http.Request, user User) RouteError
 // nolint
 func LoginRequiredJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(401)
-	writeJsonError("You need to login to do that.", w)
+	writeJsonError(GetErrorPhrase("login_required_body"), w)
 	return HandledRouteError()
 }
 
@@ -266,7 +267,7 @@ func LoginRequiredJS(w http.ResponseWriter, r *http.Request, user User) RouteErr
 // ? - Should we add JS and JSQ versions of this?
 func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
-	pi := ErrorPage{errorHeader(w, user, "Security Error"), "There was a security issue with your request."}
+	pi := ErrorPage{errorHeader(w, user, GetErrorPhrase("security_error_title")), GetErrorPhrase("security_error_body")}
 	if RunPreRenderHook("pre_render_security_error", w, r, &user, &pi) {
 		return nil
 	}
@@ -281,7 +282,7 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError
 // ? - Add a JSQ and JS version of this?
 // ? - Add a user parameter?
 func NotFound(w http.ResponseWriter, r *http.Request, header *Header) RouteError {
-	return CustomError(GetErrorPhrase("not_found"), 404, "Not Found", w, r, header, GuestUser)
+	return CustomError(GetErrorPhrase("not_found_body"), 404, GetErrorPhrase("not_found_title"), w, r, header, GuestUser)
 }
 
 // CustomError lets us make custom error types which aren't covered by the generic functions above
@@ -289,6 +290,7 @@ func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWri
 	if header == nil {
 		header = DefaultHeader(w, user)
 	}
+	header.Title = errtitle
 	w.WriteHeader(errcode)
 	pi := ErrorPage{header, errmsg}
 	handleErrorTemplate(w, r, pi)
@@ -298,9 +300,6 @@ func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWri
 // CustomErrorJSQ is a version of CustomError which lets us handle both JSON and regular pages depending on how it's being accessed
 func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, header *Header, user User, isJs bool) RouteError {
 	if !isJs {
-		if header == nil {
-			header = DefaultHeader(w, user)
-		}
 		return CustomError(errmsg, errcode, errtitle, w, r, header, user)
 	}
 	return CustomErrorJS(errmsg, errcode, w, r, user)
