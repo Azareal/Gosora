@@ -10,15 +10,14 @@ import (
 
 // routePanelGroups
 func Groups(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "groups", "groups")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_groups")
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 9
-	offset, page, lastPage := common.PageOffset(stats.Groups, page, perPage)
+	offset, page, lastPage := common.PageOffset(basePage.Stats.Groups, page, perPage)
 
 	// Skip the 'Unknown' group
 	offset++
@@ -33,7 +32,6 @@ func Groups(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 
 		var rank string
 		var rankClass string
-		var canEdit bool
 		var canDelete = false
 
 		// TODO: Use a switch for this
@@ -55,37 +53,35 @@ func Groups(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 			rankClass = "member"
 		}
 
-		canEdit = user.Perms.EditGroup && (!group.IsAdmin || user.Perms.EditGroupAdmin) && (!group.IsMod || user.Perms.EditGroupSuperMod)
+		canEdit := user.Perms.EditGroup && (!group.IsAdmin || user.Perms.EditGroupAdmin) && (!group.IsMod || user.Perms.EditGroupSuperMod)
 		groupList = append(groupList, common.GroupAdmin{group.ID, group.Name, rank, rankClass, canEdit, canDelete})
 		count++
 	}
-	//log.Printf("groupList: %+v\n", groupList)
 
-	pageList := common.Paginate(stats.Groups, perPage, 5)
-	pi := common.PanelGroupPage{&common.BasePanelPage{header, stats, "groups", common.ReportForumID}, groupList, common.Paginator{pageList, page, lastPage}}
+	pageList := common.Paginate(basePage.Stats.Groups, perPage, 5)
+	pi := common.PanelGroupPage{basePage, groupList, common.Paginator{pageList, page, lastPage}}
 	return panelRenderTemplate("panel_groups", w, r, user, &pi)
 }
 
 //routePanelGroupsEdit
 func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "edit_group", "groups")
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditGroup {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("panel_edit_group")
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return common.LocalError("You need to provide a whole number for the group ID", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
 	group, err := common.Groups.Get(gid)
 	if err == sql.ErrNoRows {
 		//log.Print("aaaaa monsters")
-		return common.NotFound(w, r, header)
+		return common.NotFound(w, r, basePage.Header)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -110,10 +106,9 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid s
 	default:
 		rank = "Member"
 	}
-
 	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
-	pi := common.PanelEditGroupPage{&common.BasePanelPage{header, stats, "groups", common.ReportForumID}, group.ID, group.Name, group.Tag, rank, disableRank}
+	pi := common.PanelEditGroupPage{basePage, group.ID, group.Name, group.Tag, rank, disableRank}
 	if common.RunPreRenderHook("pre_render_panel_edit_group", w, r, &user, &pi) {
 		return nil
 	}
@@ -126,24 +121,23 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid s
 
 //routePanelGroupsEditPerms
 func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "edit_group", "groups")
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.EditGroup {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("panel_edit_group")
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return common.LocalError("The Group ID is not a valid integer.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
 	group, err := common.Groups.Get(gid)
 	if err == sql.ErrNoRows {
 		//log.Print("aaaaa monsters")
-		return common.NotFound(w, r, header)
+		return common.NotFound(w, r, basePage.Header)
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -201,7 +195,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, s
 	addGlobalPerm("ViewIPs", group.Perms.ViewIPs)
 	addGlobalPerm("UploadFiles", group.Perms.UploadFiles)
 
-	pi := common.PanelEditGroupPermsPage{&common.BasePanelPage{header, stats, "groups", common.ReportForumID}, group.ID, group.Name, localPerms, globalPerms}
+	pi := common.PanelEditGroupPermsPage{basePage, group.ID, group.Name, localPerms, globalPerms}
 	if common.RunPreRenderHook("pre_render_panel_edit_group_perms", w, r, &user, &pi) {
 		return nil
 	}
@@ -224,7 +218,7 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return common.LocalError("You need to provide a whole number for the group ID", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
 
 	group, err := common.Groups.Get(gid)
@@ -314,7 +308,7 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.U
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return common.LocalError("The Group ID is not a valid integer.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
 
 	group, err := common.Groups.Get(gid)

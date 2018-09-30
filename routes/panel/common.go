@@ -19,6 +19,7 @@ func panelSuccessRedirect(dest string, w http.ResponseWriter, r *http.Request, i
 	}
 	return nil
 }
+
 func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, user common.User, pi interface{}) common.RouteError {
 	if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, pi) {
 		return nil

@@ -48,7 +48,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 
 	tid, err := strconv.Atoi(halves[1])
 	if err != nil {
-		return common.PreError("The provided TopicID is not a valid number.", w, r)
+		return common.PreError(common.GetErrorPhrase("url_id_must_be_integer"), w, r)
 	}
 
 	// Get the topic...
@@ -242,7 +242,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 	if sfid != "" {
 		fid, err = strconv.Atoi(sfid)
 		if err != nil {
-			return common.LocalError("You didn't provide a valid number for the forum ID.", w, r, user)
+			return common.LocalError(common.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 		}
 	}
 	if fid == 0 {
@@ -493,7 +493,7 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreErrorJSQ("The provided TopicID is not a valid number.", w, r, isJs)
+		return common.PreErrorJSQ(common.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
 	}
 
 	topic, err := common.Topics.Get(tid)
@@ -611,7 +611,7 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreError("The provided TopicID is not a valid number.", w, r)
+		return common.PreError(common.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	topic, err := common.Topics.Get(tid)
@@ -646,7 +646,7 @@ func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreError("The provided TopicID is not a valid number.", w, r)
+		return common.PreError(common.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	topic, err := common.Topics.Get(tid)
@@ -740,7 +740,7 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) c
 func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreError("The provided TopicID is not a valid number.", w, r)
+		return common.PreError(common.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	topic, err := common.Topics.Get(tid)
@@ -778,7 +778,7 @@ func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return common.PreErrorJS("The provided Forum ID is not a valid number.", w, r)
+		return common.PreErrorJS(common.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	// TODO: Move this to some sort of middleware
@@ -849,7 +849,7 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	isJs := (r.PostFormValue("isJs") == "1")
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreErrorJSQ("Topic IDs can only ever be numbers.", w, r, isJs)
+		return common.PreErrorJSQ(common.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
 	}
 
 	topic, err := common.Topics.Get(tid)

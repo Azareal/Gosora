@@ -237,13 +237,13 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	if r.PostFormValue("tos") != "0" {
-		regError("You might be a machine", "trap-question")
+		regError("You might be a machine.", "trap-question")
 	}
 	h := sha256.New()
 	h.Write([]byte(common.JSTokenBox.Load().(string)))
 	h.Write([]byte(user.LastIP))
 	if r.PostFormValue("golden-watch") != hex.EncodeToString(h.Sum(nil)) {
-		regError("You might be a machine", "js-antispam")
+		regError("You might be a machine.", "js-antispam")
 	}
 
 	username := common.SanitiseSingleLine(r.PostFormValue("username"))

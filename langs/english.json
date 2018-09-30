@@ -83,7 +83,10 @@
 		"security_error_title":"Security Error",
 		"security_error_body":"There was a security issue with your request.",
 		"banned_title":"Banned",
-		"banned_body":"You have been banned from this site."
+		"banned_body":"You have been banned from this site.",
+
+		"id_must_be_integer": "The ID must be an integer.",
+		"url_id_must_be_integer": "The ID in the URL needs to be a valid integer."
 	},
 
 	"PageTitles": {
