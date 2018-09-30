@@ -60,15 +60,15 @@ var RouteMap = map[string]interface{}{
 	"panel.PagesEdit": panel.PagesEdit,
 	"panel.PagesEditSubmit": panel.PagesEditSubmit,
 	"panel.PagesDeleteSubmit": panel.PagesDeleteSubmit,
-	"routePanelThemes": routePanelThemes,
+	"panel.Themes": panel.Themes,
 	"routePanelThemesSetDefault": routePanelThemesSetDefault,
-	"routePanelThemesMenus": routePanelThemesMenus,
-	"routePanelThemesMenusEdit": routePanelThemesMenusEdit,
-	"routePanelThemesMenuItemEdit": routePanelThemesMenuItemEdit,
-	"routePanelThemesMenuItemEditSubmit": routePanelThemesMenuItemEditSubmit,
-	"routePanelThemesMenuItemCreateSubmit": routePanelThemesMenuItemCreateSubmit,
-	"routePanelThemesMenuItemDeleteSubmit": routePanelThemesMenuItemDeleteSubmit,
-	"routePanelThemesMenuItemOrderSubmit": routePanelThemesMenuItemOrderSubmit,
+	"panel.ThemesMenus": panel.ThemesMenus,
+	"panel.ThemesMenusEdit": panel.ThemesMenusEdit,
+	"panel.ThemesMenuItemEdit": panel.ThemesMenuItemEdit,
+	"panel.ThemesMenuItemEditSubmit": panel.ThemesMenuItemEditSubmit,
+	"panel.ThemesMenuItemCreateSubmit": panel.ThemesMenuItemCreateSubmit,
+	"panel.ThemesMenuItemDeleteSubmit": panel.ThemesMenuItemDeleteSubmit,
+	"panel.ThemesMenuItemOrderSubmit": panel.ThemesMenuItemOrderSubmit,
 	"panel.Plugins": panel.Plugins,
 	"panel.PluginsActivate": panel.PluginsActivate,
 	"panel.PluginsDeactivate": panel.PluginsDeactivate,
@@ -191,15 +191,15 @@ var routeMapEnum = map[string]int{
 	"panel.PagesEdit": 34,
 	"panel.PagesEditSubmit": 35,
 	"panel.PagesDeleteSubmit": 36,
-	"routePanelThemes": 37,
+	"panel.Themes": 37,
 	"routePanelThemesSetDefault": 38,
-	"routePanelThemesMenus": 39,
-	"routePanelThemesMenusEdit": 40,
-	"routePanelThemesMenuItemEdit": 41,
-	"routePanelThemesMenuItemEditSubmit": 42,
-	"routePanelThemesMenuItemCreateSubmit": 43,
-	"routePanelThemesMenuItemDeleteSubmit": 44,
-	"routePanelThemesMenuItemOrderSubmit": 45,
+	"panel.ThemesMenus": 39,
+	"panel.ThemesMenusEdit": 40,
+	"panel.ThemesMenuItemEdit": 41,
+	"panel.ThemesMenuItemEditSubmit": 42,
+	"panel.ThemesMenuItemCreateSubmit": 43,
+	"panel.ThemesMenuItemDeleteSubmit": 44,
+	"panel.ThemesMenuItemOrderSubmit": 45,
 	"panel.Plugins": 46,
 	"panel.PluginsActivate": 47,
 	"panel.PluginsDeactivate": 48,
@@ -320,15 +320,15 @@ var reverseRouteMapEnum = map[int]string{
 	34: "panel.PagesEdit",
 	35: "panel.PagesEditSubmit",
 	36: "panel.PagesDeleteSubmit",
-	37: "routePanelThemes",
+	37: "panel.Themes",
 	38: "routePanelThemesSetDefault",
-	39: "routePanelThemesMenus",
-	40: "routePanelThemesMenusEdit",
-	41: "routePanelThemesMenuItemEdit",
-	42: "routePanelThemesMenuItemEditSubmit",
-	43: "routePanelThemesMenuItemCreateSubmit",
-	44: "routePanelThemesMenuItemDeleteSubmit",
-	45: "routePanelThemesMenuItemOrderSubmit",
+	39: "panel.ThemesMenus",
+	40: "panel.ThemesMenusEdit",
+	41: "panel.ThemesMenuItemEdit",
+	42: "panel.ThemesMenuItemEditSubmit",
+	43: "panel.ThemesMenuItemCreateSubmit",
+	44: "panel.ThemesMenuItemDeleteSubmit",
+	45: "panel.ThemesMenuItemOrderSubmit",
 	46: "panel.Plugins",
 	47: "panel.PluginsActivate",
 	48: "panel.PluginsDeactivate",
@@ -1175,7 +1175,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					err = panel.PagesDeleteSubmit(w,req,user,extraData)
 				case "/panel/themes/":
 					counters.RouteViewCounter.Bump(37)
-					err = routePanelThemes(w,req,user)
+					err = panel.Themes(w,req,user)
 				case "/panel/themes/default/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1187,13 +1187,13 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					err = routePanelThemesSetDefault(w,req,user,extraData)
 				case "/panel/themes/menus/":
 					counters.RouteViewCounter.Bump(39)
-					err = routePanelThemesMenus(w,req,user)
+					err = panel.ThemesMenus(w,req,user)
 				case "/panel/themes/menus/edit/":
 					counters.RouteViewCounter.Bump(40)
-					err = routePanelThemesMenusEdit(w,req,user,extraData)
+					err = panel.ThemesMenusEdit(w,req,user,extraData)
 				case "/panel/themes/menus/item/edit/":
 					counters.RouteViewCounter.Bump(41)
-					err = routePanelThemesMenuItemEdit(w,req,user,extraData)
+					err = panel.ThemesMenuItemEdit(w,req,user,extraData)
 				case "/panel/themes/menus/item/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1202,7 +1202,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 					
 					counters.RouteViewCounter.Bump(42)
-					err = routePanelThemesMenuItemEditSubmit(w,req,user,extraData)
+					err = panel.ThemesMenuItemEditSubmit(w,req,user,extraData)
 				case "/panel/themes/menus/item/create/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1211,7 +1211,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 					
 					counters.RouteViewCounter.Bump(43)
-					err = routePanelThemesMenuItemCreateSubmit(w,req,user)
+					err = panel.ThemesMenuItemCreateSubmit(w,req,user)
 				case "/panel/themes/menus/item/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1220,7 +1220,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 					
 					counters.RouteViewCounter.Bump(44)
-					err = routePanelThemesMenuItemDeleteSubmit(w,req,user,extraData)
+					err = panel.ThemesMenuItemDeleteSubmit(w,req,user,extraData)
 				case "/panel/themes/menus/item/order/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1229,7 +1229,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 					
 					counters.RouteViewCounter.Bump(45)
-					err = routePanelThemesMenuItemOrderSubmit(w,req,user,extraData)
+					err = panel.ThemesMenuItemOrderSubmit(w,req,user,extraData)
 				case "/panel/plugins/":
 					counters.RouteViewCounter.Bump(46)
 					err = panel.Plugins(w,req,user)
