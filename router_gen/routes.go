@@ -204,12 +204,12 @@ func buildPanelRoutes() {
 		View("panel.AnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
 		View("panel.AnalyticsForums", "/panel/analytics/forums/").Before("ParseForm"),
 
-		View("routePanelGroups", "/panel/groups/"),
-		View("routePanelGroupsEdit", "/panel/groups/edit/", "extraData"),
-		View("routePanelGroupsEditPerms", "/panel/groups/edit/perms/", "extraData"),
-		Action("routePanelGroupsEditSubmit", "/panel/groups/edit/submit/", "extraData"),
-		Action("routePanelGroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "extraData"),
-		Action("routePanelGroupsCreateSubmit", "/panel/groups/create/"),
+		View("panel.Groups", "/panel/groups/"),
+		View("panel.GroupsEdit", "/panel/groups/edit/", "extraData"),
+		View("panel.GroupsEditPerms", "/panel/groups/edit/perms/", "extraData"),
+		Action("panel.GroupsEditSubmit", "/panel/groups/edit/submit/", "extraData"),
+		Action("panel.GroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "extraData"),
+		Action("panel.GroupsCreateSubmit", "/panel/groups/create/"),
 
 		View("panel.Backups", "/panel/backups/", "extraData").Before("SuperAdminOnly").NoGzip(), // TODO: Tests for this
 		View("panel.LogsRegs", "/panel/logs/regs/"),

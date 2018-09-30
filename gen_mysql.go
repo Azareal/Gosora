@@ -18,8 +18,6 @@ type Stmts struct {
 	addForumPermsToForum *sql.Stmt
 	addTheme *sql.Stmt
 	updateTheme *sql.Stmt
-	updateGroupPerms *sql.Stmt
-	updateGroup *sql.Stmt
 	updateEmail *sql.Stmt
 	setTempGroup *sql.Stmt
 	bumpSync *sql.Stmt
@@ -85,20 +83,6 @@ func _gen_mysql() (err error) {
 	stmts.updateTheme, err = db.Prepare("UPDATE `themes` SET `default` = ? WHERE `uname` = ?")
 	if err != nil {
 		log.Print("Error in updateTheme statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing updateGroupPerms statement.")
-	stmts.updateGroupPerms, err = db.Prepare("UPDATE `users_groups` SET `permissions` = ? WHERE `gid` = ?")
-	if err != nil {
-		log.Print("Error in updateGroupPerms statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing updateGroup statement.")
-	stmts.updateGroup, err = db.Prepare("UPDATE `users_groups` SET `name` = ?,`tag` = ? WHERE `gid` = ?")
-	if err != nil {
-		log.Print("Error in updateGroup statement.")
 		return err
 	}
 		

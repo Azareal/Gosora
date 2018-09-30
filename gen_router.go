@@ -91,12 +91,12 @@ var RouteMap = map[string]interface{}{
 	"panel.AnalyticsPosts": panel.AnalyticsPosts,
 	"panel.AnalyticsTopics": panel.AnalyticsTopics,
 	"panel.AnalyticsForums": panel.AnalyticsForums,
-	"routePanelGroups": routePanelGroups,
-	"routePanelGroupsEdit": routePanelGroupsEdit,
-	"routePanelGroupsEditPerms": routePanelGroupsEditPerms,
-	"routePanelGroupsEditSubmit": routePanelGroupsEditSubmit,
-	"routePanelGroupsEditPermsSubmit": routePanelGroupsEditPermsSubmit,
-	"routePanelGroupsCreateSubmit": routePanelGroupsCreateSubmit,
+	"panel.Groups": panel.Groups,
+	"panel.GroupsEdit": panel.GroupsEdit,
+	"panel.GroupsEditPerms": panel.GroupsEditPerms,
+	"panel.GroupsEditSubmit": panel.GroupsEditSubmit,
+	"panel.GroupsEditPermsSubmit": panel.GroupsEditPermsSubmit,
+	"panel.GroupsCreateSubmit": panel.GroupsCreateSubmit,
 	"panel.Backups": panel.Backups,
 	"panel.LogsRegs": panel.LogsRegs,
 	"panel.LogsMod": panel.LogsMod,
@@ -222,12 +222,12 @@ var routeMapEnum = map[string]int{
 	"panel.AnalyticsPosts": 65,
 	"panel.AnalyticsTopics": 66,
 	"panel.AnalyticsForums": 67,
-	"routePanelGroups": 68,
-	"routePanelGroupsEdit": 69,
-	"routePanelGroupsEditPerms": 70,
-	"routePanelGroupsEditSubmit": 71,
-	"routePanelGroupsEditPermsSubmit": 72,
-	"routePanelGroupsCreateSubmit": 73,
+	"panel.Groups": 68,
+	"panel.GroupsEdit": 69,
+	"panel.GroupsEditPerms": 70,
+	"panel.GroupsEditSubmit": 71,
+	"panel.GroupsEditPermsSubmit": 72,
+	"panel.GroupsCreateSubmit": 73,
 	"panel.Backups": 74,
 	"panel.LogsRegs": 75,
 	"panel.LogsMod": 76,
@@ -351,12 +351,12 @@ var reverseRouteMapEnum = map[int]string{
 	65: "panel.AnalyticsPosts",
 	66: "panel.AnalyticsTopics",
 	67: "panel.AnalyticsForums",
-	68: "routePanelGroups",
-	69: "routePanelGroupsEdit",
-	70: "routePanelGroupsEditPerms",
-	71: "routePanelGroupsEditSubmit",
-	72: "routePanelGroupsEditPermsSubmit",
-	73: "routePanelGroupsCreateSubmit",
+	68: "panel.Groups",
+	69: "panel.GroupsEdit",
+	70: "panel.GroupsEditPerms",
+	71: "panel.GroupsEditSubmit",
+	72: "panel.GroupsEditPermsSubmit",
+	73: "panel.GroupsCreateSubmit",
 	74: "panel.Backups",
 	75: "panel.LogsRegs",
 	76: "panel.LogsMod",
@@ -1376,13 +1376,13 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					err = panel.AnalyticsForums(w,req,user)
 				case "/panel/groups/":
 					counters.RouteViewCounter.Bump(68)
-					err = routePanelGroups(w,req,user)
+					err = panel.Groups(w,req,user)
 				case "/panel/groups/edit/":
 					counters.RouteViewCounter.Bump(69)
-					err = routePanelGroupsEdit(w,req,user,extraData)
+					err = panel.GroupsEdit(w,req,user,extraData)
 				case "/panel/groups/edit/perms/":
 					counters.RouteViewCounter.Bump(70)
-					err = routePanelGroupsEditPerms(w,req,user,extraData)
+					err = panel.GroupsEditPerms(w,req,user,extraData)
 				case "/panel/groups/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1391,7 +1391,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 					
 					counters.RouteViewCounter.Bump(71)
-					err = routePanelGroupsEditSubmit(w,req,user,extraData)
+					err = panel.GroupsEditSubmit(w,req,user,extraData)
 				case "/panel/groups/edit/perms/submit/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1400,7 +1400,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 					
 					counters.RouteViewCounter.Bump(72)
-					err = routePanelGroupsEditPermsSubmit(w,req,user,extraData)
+					err = panel.GroupsEditPermsSubmit(w,req,user,extraData)
 				case "/panel/groups/create/":
 					err = common.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1409,7 +1409,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 					
 					counters.RouteViewCounter.Bump(73)
-					err = routePanelGroupsCreateSubmit(w,req,user)
+					err = panel.GroupsCreateSubmit(w,req,user)
 				case "/panel/backups/":
 					err = common.SuperAdminOnly(w,req,user)
 					if err != nil {
