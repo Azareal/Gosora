@@ -86,7 +86,17 @@
 		"banned_body":"You have been banned from this site.",
 
 		"id_must_be_integer": "The ID must be an integer.",
-		"url_id_must_be_integer": "The ID in the URL needs to be a valid integer."
+		"url_id_must_be_integer": "The ID in the URL needs to be a valid integer.",
+
+		"register_might_be_machine":"You might be a machine.",
+		"register_need_username":"You didn't put in a username.",
+		"register_need_email":"You didn't put in an email.",
+		"register_first_word_numeric":"The first word of your name must not be purely numeric",
+		"register_suspicious_email":"Your email address is suspicious.",
+		"register_password_mismatch":"The two passwords don't match.",
+		"register_username_unavailable":"This username isn't available. Try another.",
+		"register_username_too_long_prefix":"The username is too long, max: ",
+		"register_email_fail":"We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance."
 	},
 
 	"PageTitles": {

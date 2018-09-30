@@ -237,34 +237,34 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	if r.PostFormValue("tos") != "0" {
-		regError("You might be a machine.", "trap-question")
+		regError(common.GetErrorPhrase("register_might_be_machine"), "trap-question")
 	}
 	h := sha256.New()
 	h.Write([]byte(common.JSTokenBox.Load().(string)))
 	h.Write([]byte(user.LastIP))
 	if r.PostFormValue("golden-watch") != hex.EncodeToString(h.Sum(nil)) {
-		regError("You might be a machine.", "js-antispam")
+		regError(common.GetErrorPhrase("register_might_be_machine"), "js-antispam")
 	}
 
 	username := common.SanitiseSingleLine(r.PostFormValue("username"))
 	// TODO: Add a dedicated function for validating emails
 	email := common.SanitiseSingleLine(r.PostFormValue("email"))
 	if username == "" {
-		regError("You didn't put in a username.", "no-username")
+		regError(common.GetErrorPhrase("register_need_username"), "no-username")
 	}
 	if email == "" {
-		regError("You didn't put in an email.", "no-email")
+		regError(common.GetErrorPhrase("register_need_email"), "no-email")
 	}
 
 	// This is so a numeric name won't interfere with mentioning a user by ID, there might be a better way of doing this like perhaps !@ to mean IDs and @ to mean usernames in the pre-parser
 	usernameBits := strings.Split(username, " ")
 	if isNumeric(usernameBits[0]) {
-		regError("The first word of your name may not be purely numeric", "numeric-name")
+		regError(common.GetErrorPhrase("register_first_word_numeric"), "numeric-name")
 	}
 
 	ok := common.HasSuspiciousEmail(email)
 	if ok {
-		regError("Your email address is suspicious.", "suspicious-email")
+		regError(common.GetErrorPhrase("register_suspicious_email"), "suspicious-email")
 	}
 
 	password := r.PostFormValue("password")
@@ -276,7 +276,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		// Do the two inputted passwords match..?
 		confirmPassword := r.PostFormValue("confirm_password")
 		if password != confirmPassword {
-			regError("The two passwords don't match.", "password-mismatch")
+			regError(common.GetErrorPhrase("register_password_mismatch"), "password-mismatch")
 		}
 	}
 
@@ -309,14 +309,14 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 			if err != nil {
 				return common.InternalError(err, w, r)
 			}
-			return common.LocalError("This username isn't available. Try another.", w, r, user)
+			return common.LocalError(common.GetErrorPhrase("register_username_unavailable"), w, r, user)
 		} else if err == common.ErrLongUsername {
 			regLog.FailureReason += "username-too-long"
 			err = regLog.Commit()
 			if err != nil {
 				return common.InternalError(err, w, r)
 			}
-			return common.LocalError("The username is too long, max: "+strconv.Itoa(common.Config.MaxUsernameLength), w, r, user)
+			return common.LocalError(common.GetErrorPhrase("register_username_too_long_prefix")+strconv.Itoa(common.Config.MaxUsernameLength), w, r, user)
 		}
 		regLog.FailureReason += "internal-error"
 		err2 := regLog.Commit()
@@ -340,7 +340,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		}
 
 		if !common.SendValidationEmail(username, email, token) {
-			return common.LocalError("We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.", w, r, user)
+			return common.LocalError(common.GetErrorPhrase("register_email_fail"), w, r, user)
 		}
 	}
 
