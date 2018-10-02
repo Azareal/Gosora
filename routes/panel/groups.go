@@ -86,10 +86,10 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid s
 	}
 
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return common.LocalError("You need the EditGroupAdmin permission to edit an admin group.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
 	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return common.LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 
 	var rank string
@@ -108,7 +108,7 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid s
 	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
 	pi := common.PanelEditGroupPage{basePage, group.ID, group.Name, group.Tag, rank, disableRank}
-	return renderTemplate("group_edit", w, r, user, pi)
+	return renderTemplate("panel_group_edit", w, r, user, pi)
 }
 
 //routePanelGroupsEditPerms
@@ -135,10 +135,10 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return common.LocalError("You need the EditGroupAdmin permission to edit an admin group.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
 	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return common.LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 
 	// TODO: Load the phrases in bulk for efficiency?
@@ -188,7 +188,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, s
 	addGlobalPerm("UploadFiles", group.Perms.UploadFiles)
 
 	pi := common.PanelEditGroupPermsPage{basePage, group.ID, group.Name, localPerms, globalPerms}
-	return renderTemplate("group_edit_perms", w, r, user, pi)
+	return renderTemplate("panel_group_edit_perms", w, r, user, pi)
 }
 
 //routePanelGroupsEditSubmit
@@ -215,10 +215,10 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 	}
 
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return common.LocalError("You need the EditGroupAdmin permission to edit an admin group.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
 	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return common.LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 
 	gname := r.FormValue("group-name")
@@ -305,10 +305,10 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return common.LocalError("You need the EditGroupAdmin permission to edit an admin group.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
 	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return common.LocalError("You need the EditGroupSuperMod permission to edit a super-mod group.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 
 	var pmap = make(map[string]bool)

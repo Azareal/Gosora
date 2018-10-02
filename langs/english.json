@@ -96,7 +96,10 @@
 		"register_password_mismatch":"The two passwords don't match.",
 		"register_username_unavailable":"This username isn't available. Try another.",
 		"register_username_too_long_prefix":"The username is too long, max: ",
-		"register_email_fail":"We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance."
+		"register_email_fail":"We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.",
+
+		"panel_groups_cannot_edit_admin":"You need the EditGroupAdmin permission to edit an admin group.",
+		"panel_groups_cannot_edit_supermod":"You need the EditGroupSuperMod permission to edit a super-mod group."
 	},
 
 	"PageTitles": {

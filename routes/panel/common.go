@@ -24,6 +24,7 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, use
 	if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, pi) {
 		return nil
 	}
+	// TODO: Prepend this with panel_?
 	err := common.Templates.ExecuteTemplate(w, tmplName+".html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
