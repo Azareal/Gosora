@@ -629,6 +629,11 @@
 		"panel_menu_debug":"Debug",
 
 		"panel_dashboard_head":"Dashboard",
+		"panel_dashboard_online": "%d%s online",
+		"panel_dashboard_guests_online":"%d%s guests online",
+		"panel_dashboard_users_online":"%d%s users online",
+		"panel_dashboard_day_suffix":" / day",
+		"panel_dashboard_week_suffix":" / week",
 
 		"panel_users_head":"Users",
 		"panel_users_profile":"Profile",

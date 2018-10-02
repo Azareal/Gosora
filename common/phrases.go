@@ -9,6 +9,7 @@ package common
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -235,6 +236,14 @@ func GetTmplPhrase(name string) string {
 		return getPhrasePlaceholder("tmpl", name)
 	}
 	return res
+}
+
+func GetTmplPhrasef(name string, params ...interface{}) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).TmplPhrases[name]
+	if !ok {
+		return getPhrasePlaceholder("tmpl", name)
+	}
+	return fmt.Sprintf(res, params...)
 }
 
 func GetTmplPhrases() map[string]string {

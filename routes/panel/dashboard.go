@@ -63,11 +63,10 @@ func dashMSSQLStmts() (stmts dashStmts, err error) {
 
 //routePanelDashboard
 func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, stats, ferr := common.PanelUserCheck(w, r, &user)
+	basePage, ferr := buildBasePage(w, r, &user, "dashboard", "dashboard")
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_dashboard")
 
 	// We won't calculate this on the spot anymore, as the system doesn't seem to like it if we do multiple fetches simultaneously. Should we constantly calculate this on a background thread? Perhaps, the watchdog to scale back heavy features under load? One plus side is that we'd get immediate CPU percentages here instead of waiting it to kick in with WebSockets
 	var cpustr = "Unknown"
@@ -142,19 +141,20 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.
 		return common.InternalError(err, w, r)
 	}
 
+	// TODO: Allow for more complex phrase structures than just suffixes
 	var postCount = extractStat(stmts.todaysPostCount)
-	var postInterval = "day"
+	var postInterval = common.GetTmplPhrase("panel_dashboard_day_suffix")
 	var postColour = greaterThanSwitch(postCount, 5, 25)
 
 	var topicCount = extractStat(stmts.todaysTopicCount)
-	var topicInterval = "day"
+	var topicInterval = common.GetTmplPhrase("panel_dashboard_day_suffix")
 	var topicColour = greaterThanSwitch(topicCount, 0, 8)
 
 	var reportCount = extractStat(stmts.todaysTopicCountByForum, common.ReportForumID)
-	var reportInterval = "week"
+	var reportInterval = common.GetTmplPhrase("panel_dashboard_week_suffix")
 
 	var newUserCount = extractStat(stmts.todaysNewUserCount)
-	var newUserInterval = "week"
+	var newUserInterval = common.GetTmplPhrase("panel_dashboard_week_suffix")
 
 	// Did any of the extractStats fail?
 	if intErr != nil {
@@ -188,19 +188,19 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.
 		uonline, uunit := common.ConvertFriendlyUnit(uonline)
 		gonline, gunit := common.ConvertFriendlyUnit(gonline)
 
-		addElement(common.GridElement{"dash-totonline", strconv.Itoa(totonline) + totunit + " online", 3, "grid_stat " + onlineColour, "", "", "The number of people who are currently online"})
-		addElement(common.GridElement{"dash-gonline", strconv.Itoa(gonline) + gunit + " guests online", 4, "grid_stat " + onlineGuestsColour, "", "", "The number of guests who are currently online"})
-		addElement(common.GridElement{"dash-uonline", strconv.Itoa(uonline) + uunit + " users online", 5, "grid_stat " + onlineUsersColour, "", "", "The number of logged-in users who are currently online"})
+		addElement(common.GridElement{"dash-totonline", common.GetTmplPhrasef("panel_dashboard_online", totonline, totunit), 3, "grid_stat " + onlineColour, "", "", "The number of people who are currently online"})
+		addElement(common.GridElement{"dash-gonline", common.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit), 4, "grid_stat " + onlineGuestsColour, "", "", "The number of guests who are currently online"})
+		addElement(common.GridElement{"dash-uonline", common.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit), 5, "grid_stat " + onlineUsersColour, "", "", "The number of logged-in users who are currently online"})
 		addElement(common.GridElement{"dash-reqs", strconv.Itoa(reqCount) + " reqs / second", 7, "grid_stat grid_end_group " + topicColour, "", "", "The number of requests over the last 24 hours"})
 	}
 
-	addElement(common.GridElement{"dash-postsperday", strconv.Itoa(postCount) + " posts / " + postInterval, 6, "grid_stat " + postColour, "", "", "The number of new posts over the last 24 hours"})
-	addElement(common.GridElement{"dash-topicsperday", strconv.Itoa(topicCount) + " topics / " + topicInterval, 7, "grid_stat " + topicColour, "", "", "The number of new topics over the last 24 hours"})
+	addElement(common.GridElement{"dash-postsperday", strconv.Itoa(postCount) + " posts" + postInterval, 6, "grid_stat " + postColour, "", "", "The number of new posts over the last 24 hours"})
+	addElement(common.GridElement{"dash-topicsperday", strconv.Itoa(topicCount) + " topics" + topicInterval, 7, "grid_stat " + topicColour, "", "", "The number of new topics over the last 24 hours"})
 	addElement(common.GridElement{"dash-totonlineperday", "20 online / day", 8, "grid_stat stat_disabled", "", "", "Coming Soon!" /*, "The people online over the last 24 hours"*/})
 
 	addElement(common.GridElement{"dash-searches", "8 searches / week", 9, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of searches over the last 7 days"*/})
-	addElement(common.GridElement{"dash-newusers", strconv.Itoa(newUserCount) + " new users / " + newUserInterval, 10, "grid_stat", "", "", "The number of new users over the last 7 days"})
-	addElement(common.GridElement{"dash-reports", strconv.Itoa(reportCount) + " reports / " + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days"})
+	addElement(common.GridElement{"dash-newusers", strconv.Itoa(newUserCount) + " new users" + newUserInterval, 10, "grid_stat", "", "", "The number of new users over the last 7 days"})
+	addElement(common.GridElement{"dash-reports", strconv.Itoa(reportCount) + " reports" + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days"})
 
 	if false {
 		addElement(common.GridElement{"dash-minperuser", "2 minutes / user / week", 12, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
@@ -208,6 +208,6 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.
 		addElement(common.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
 	}
 
-	pi := common.PanelDashboardPage{&common.BasePanelPage{header, stats, "dashboard", common.ReportForumID}, gridElements}
+	pi := common.PanelDashboardPage{basePage, gridElements}
 	return renderTemplate("panel_dashboard", w, r, user, &pi)
 }

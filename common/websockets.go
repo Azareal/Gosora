@@ -288,9 +288,9 @@ AdminStatLoop:
 			// nolint
 			// TODO: Use JSON for this to make things more portable and easier to convert to MessagePack, if need be?
 			if !noStatUpdates {
-				w.Write([]byte("set #dash-totonline <span>" + strconv.Itoa(totonline) + totunit + " online</span>\r"))
-				w.Write([]byte("set #dash-gonline <span>" + strconv.Itoa(gonline) + gunit + " guests online</span>\r"))
-				w.Write([]byte("set #dash-uonline <span>" + strconv.Itoa(uonline) + uunit + " users online</span>\r"))
+				w.Write([]byte("set #dash-totonline <span>" + GetTmplPhrasef("panel_dashboard_online", totonline, totunit) + "</span>\r"))
+				w.Write([]byte("set #dash-gonline <span>" + GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit) + "</span>\r"))
+				w.Write([]byte("set #dash-uonline <span>" + GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit) + "</span>\r"))
 				w.Write([]byte("set #dash-reqs <span>" + strconv.Itoa(reqCount) + " reqs / second</span>\r"))
 
 				w.Write([]byte("set-class #dash-totonline grid_item grid_stat " + onlineColour + "\r"))
