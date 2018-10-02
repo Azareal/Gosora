@@ -684,6 +684,11 @@
 
 		"panel_groups_head":"Groups",
 		"panel_groups_rank_prefix":"Rank ",
+		"panel_groups_rank_guest":"Guest",
+		"panel_groups_rank_member":"Member",
+		"panel_groups_rank_mod":"Mod",
+		"panel_groups_rank_admin":"Admin",
+		"panel_groups_rank_banned":"Banned",
 		"panel_groups_edit_group_button_aria":"Edit Group",
 		"panel_groups_create_head":"Create Group",
 		"panel_groups_create_name":"Name",

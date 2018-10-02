@@ -26,11 +26,11 @@
 			<div class="formitem formlabel"><a>{{lang "panel_group_type"}}</a></div>
 			<div class="formitem">
 				<select name="group-type"{{if .DisableRank}} disabled{{end}}>
-					<option{{if eq .Rank "Guest"}} selected{{end}} disabled>Guest</option>
-					<option{{if eq .Rank "Member"}} selected{{end}}>Member</option>
-					<option{{if eq .Rank "Mod"}} selected{{end}}{{if not .CurrentUser.Perms.EditGroupSuperMod}} disabled{{end}}>Mod</option>
-					<option{{if eq .Rank "Admin"}} selected{{end}}{{if not .CurrentUser.Perms.EditGroupAdmin}} disabled{{end}}>Admin</option>
-					<option{{if eq .Rank "Banned"}} selected{{end}}>Banned</option>
+					<option value="Guest"{{if eq .Rank "Guest"}} selected{{end}} disabled>{{lang "panel_groups_rank_guest"}}</option>
+					<option value="Member"{{if eq .Rank "Member"}} selected{{end}}>{{lang "panel_groups_rank_member"}}</option>
+					<option value="Mod"{{if eq .Rank "Mod"}} selected{{end}}{{if not .CurrentUser.Perms.EditGroupSuperMod}} disabled{{end}}>{{lang "panel_groups_rank_mod"}}</option>
+					<option value="Admin"{{if eq .Rank "Admin"}} selected{{end}}{{if not .CurrentUser.Perms.EditGroupAdmin}} disabled{{end}}>{{lang "panel_groups_rank_admin"}}</option>
+					<option value="Banned"{{if eq .Rank "Banned"}} selected{{end}}>{{lang "panel_groups_rank_banned"}}</option>
 				</select>
 			</div>
 		</div>{{end}}
