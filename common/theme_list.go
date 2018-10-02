@@ -16,6 +16,7 @@ import (
 	"../query_gen/lib"
 )
 
+// TODO: Something more thread-safe
 type ThemeList map[string]*Theme
 
 var Themes ThemeList = make(map[string]*Theme) // ? Refactor this into a store?
@@ -27,7 +28,10 @@ var fallbackTheme = "cosora"
 var overridenTemplates = make(map[string]bool) // ? What is this used for?
 
 type ThemeStmts struct {
-	getThemes *sql.Stmt
+	getThemes      *sql.Stmt
+	isThemeDefault *sql.Stmt
+	updateTheme    *sql.Stmt
+	addTheme       *sql.Stmt
 }
 
 var themeStmts ThemeStmts
@@ -36,7 +40,10 @@ func init() {
 	DefaultThemeBox.Store(fallbackTheme)
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		themeStmts = ThemeStmts{
-			getThemes: acc.Select("themes").Columns("uname, default").Prepare(),
+			getThemes:      acc.Select("themes").Columns("uname, default").Prepare(),
+			isThemeDefault: acc.Select("themes").Columns("default").Where("uname = ?").Prepare(),
+			updateTheme:    acc.Update("themes").Set("default = ?").Where("uname = ?").Prepare(),
+			addTheme:       acc.Insert("themes").Columns("uname, default").Fields("?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -129,6 +136,8 @@ func NewThemeList() (themes ThemeList, err error) {
 // ? - Delete themes which no longer exist in the themes folder from the database?
 func (themes ThemeList) LoadActiveStatus() error {
 	ChangeDefaultThemeMutex.Lock()
+	defer ChangeDefaultThemeMutex.Unlock()
+
 	rows, err := themeStmts.getThemes.Query()
 	if err != nil {
 		return err
@@ -150,18 +159,17 @@ func (themes ThemeList) LoadActiveStatus() error {
 		}
 
 		if defaultThemeSwitch {
-			log.Printf("Loading the default theme '%s'", theme.Name)
+			DebugLogf("Loading the default theme '%s'", theme.Name)
 			theme.Active = true
 			DefaultThemeBox.Store(theme.Name)
 			theme.MapTemplates()
 		} else {
-			log.Printf("Loading the theme '%s'", theme.Name)
+			DebugLogf("Loading the theme '%s'", theme.Name)
 			theme.Active = false
 		}
 
 		themes[uname] = theme
 	}
-	ChangeDefaultThemeMutex.Unlock()
 	return rows.Err()
 }
 

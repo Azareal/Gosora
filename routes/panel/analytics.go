@@ -153,7 +153,7 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) co
 	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_views", w, r, user, &pi)
+	return renderTemplate("panel_analytics_views", w, r, user, &pi)
 }
 
 func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.User, route string) common.RouteError {
@@ -190,7 +190,7 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.Use
 	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsRoutePage{basePage, common.SanitiseSingleLine(route), graph, viewItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_route_views", w, r, user, &pi)
+	return renderTemplate("panel_analytics_route_views", w, r, user, &pi)
 }
 
 func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.User, agent string) common.RouteError {
@@ -233,7 +233,7 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pi := common.PanelAnalyticsAgentPage{basePage, agent, friendlyAgent, graph, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_agent_views", w, r, user, &pi)
+	return renderTemplate("panel_analytics_agent_views", w, r, user, &pi)
 }
 
 func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
@@ -277,7 +277,7 @@ func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pi := common.PanelAnalyticsAgentPage{basePage, sfid, forum.Name, graph, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_forum_views", w, r, user, &pi)
+	return renderTemplate("panel_analytics_forum_views", w, r, user, &pi)
 }
 
 func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.User, system string) common.RouteError {
@@ -318,7 +318,7 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.Us
 	}
 
 	pi := common.PanelAnalyticsAgentPage{basePage, system, friendlySystem, graph, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_system_views", w, r, user, &pi)
+	return renderTemplate("panel_analytics_system_views", w, r, user, &pi)
 }
 
 func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user common.User, lang string) common.RouteError {
@@ -358,7 +358,7 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	pi := common.PanelAnalyticsAgentPage{basePage, lang, friendlyLang, graph, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_lang_views", w, r, user, &pi)
+	return renderTemplate("panel_analytics_lang_views", w, r, user, &pi)
 }
 
 func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.User, domain string) common.RouteError {
@@ -392,7 +392,7 @@ func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.
 	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsAgentPage{basePage, common.SanitiseSingleLine(domain), "", graph, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_referrer_views", w, r, user, &pi)
+	return renderTemplate("panel_analytics_referrer_views", w, r, user, &pi)
 }
 
 func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -427,7 +427,7 @@ func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) c
 	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_topics", w, r, user, &pi)
+	return renderTemplate("panel_analytics_topics", w, r, user, &pi)
 }
 
 func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -462,7 +462,7 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user common.User) co
 	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_posts", w, r, user, &pi)
+	return renderTemplate("panel_analytics_posts", w, r, user, &pi)
 }
 
 func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
@@ -525,7 +525,7 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 
 	pi := common.PanelAnalyticsAgentsPage{basePage, forumItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_forums", w, r, user, &pi)
+	return renderTemplate("panel_analytics_forums", w, r, user, &pi)
 }
 
 func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -558,7 +558,7 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 
 	pi := common.PanelAnalyticsRoutesPage{basePage, routeItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_routes", w, r, user, &pi)
+	return renderTemplate("panel_analytics_routes", w, r, user, &pi)
 }
 
 func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -596,7 +596,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 
 	pi := common.PanelAnalyticsAgentsPage{basePage, agentItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_agents", w, r, user, &pi)
+	return renderTemplate("panel_analytics_agents", w, r, user, &pi)
 }
 
 func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -634,7 +634,7 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) 
 	}
 
 	pi := common.PanelAnalyticsAgentsPage{basePage, systemItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_systems", w, r, user, &pi)
+	return renderTemplate("panel_analytics_systems", w, r, user, &pi)
 }
 
 func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -673,7 +673,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User
 	}
 
 	pi := common.PanelAnalyticsAgentsPage{basePage, langItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_langs", w, r, user, &pi)
+	return renderTemplate("panel_analytics_langs", w, r, user, &pi)
 }
 
 func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -706,5 +706,5 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User
 	}
 
 	pi := common.PanelAnalyticsAgentsPage{basePage, refItems, timeRange.Range}
-	return panelRenderTemplate("panel_analytics_referrers", w, r, user, &pi)
+	return renderTemplate("panel_analytics_referrers", w, r, user, &pi)
 }

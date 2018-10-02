@@ -1,14 +1,14 @@
-If you want to add a contribution, you'll have to open a pull request and to sign the CLA (contributor level agreement).
+# Contributing
 
-It's mainly there to deal with any legal issues which come our way and to switch licenses without having to chase down contributors who have long stopped using the internet or are deceased or incapacitated.
+First and foremost, if you want to add a contribution, you'll have to open a pull request and to sign the CLA (contributor level agreement).
 
-Other uses may arise in the future, e.g. commercial licensing for companies which might not be authorised to use open source licensing and what-not, although that's currently uncertain as I'm not knowledgable about the ins and outs of the law.
+It's mainly there to deal with any legal issues which may come our way and to switch licenses without having to track down every contributor who has ever contributed.
+
+Some things we could do is commercial licensing for companies which are not authorised to use open source licenses or moving to a more permissive license, although I'm not too experianced in these matters, if anyone has any ideas, then feel free to put them forward.
 
 Try to prefix commits which introduce a lot of bugs or otherwise has a large impact on the usability of Gosora with UNSTABLE.
 
-If anything seems suspect, then feel free to bring up an alternative, although I'd rather not get hung up on the little details, if it's something which is purely a matter of opinion.
-
-Also, please don't push new features, particularly ones which will require a great effort from other maintainers in the long term, particularly if it has fairly minor benefits to the ecosystem as a whole, unless you are willing to maintain it.
+If something seems to be strange, then feel free to bring up an alternative for it, although I'd rather not get hung up on the little details, if it's something which is purely a matter of opinion.
 
 # Coding Standards
 

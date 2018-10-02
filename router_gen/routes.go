@@ -170,7 +170,7 @@ func buildPanelRoutes() {
 		Action("panel.PagesDeleteSubmit", "/panel/pages/delete/submit/", "extraData").Before("AdminOnly"),
 
 		View("panel.Themes", "/panel/themes/"),
-		Action("routePanelThemesSetDefault", "/panel/themes/default/", "extraData"),
+		Action("panel.ThemesSetDefault", "/panel/themes/default/", "extraData"),
 		View("panel.ThemesMenus", "/panel/themes/menus/"),
 		View("panel.ThemesMenusEdit", "/panel/themes/menus/edit/", "extraData"),
 		View("panel.ThemesMenuItemEdit", "/panel/themes/menus/item/edit/", "extraData"),

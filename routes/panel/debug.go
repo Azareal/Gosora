@@ -42,5 +42,5 @@ func Debug(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	runtime.ReadMemStats(&memStats)
 
 	pi := common.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats}
-	return panelRenderTemplate("panel_debug", w, r, user, &pi)
+	return renderTemplate("panel_debug", w, r, user, &pi)
 }

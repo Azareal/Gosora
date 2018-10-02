@@ -9,13 +9,10 @@ import "./common"
 
 // nolint
 type Stmts struct {
-	isThemeDefault *sql.Stmt
 	forumEntryExists *sql.Stmt
 	groupEntryExists *sql.Stmt
 	getForumTopics *sql.Stmt
 	addForumPermsToForum *sql.Stmt
-	addTheme *sql.Stmt
-	updateTheme *sql.Stmt
 	updateEmail *sql.Stmt
 	setTempGroup *sql.Stmt
 	bumpSync *sql.Stmt
@@ -35,14 +32,6 @@ type Stmts struct {
 func _gen_mssql() (err error) {
 	common.DebugLog("Building the generated statements")
 	
-	common.DebugLog("Preparing isThemeDefault statement.")
-	stmts.isThemeDefault, err = db.Prepare("SELECT [default] FROM [themes] WHERE [uname] = ?1")
-	if err != nil {
-		log.Print("Error in isThemeDefault statement.")
-		log.Print("Bad Query: ","SELECT [default] FROM [themes] WHERE [uname] = ?1")
-		return err
-	}
-		
 	common.DebugLog("Preparing forumEntryExists statement.")
 	stmts.forumEntryExists, err = db.Prepare("SELECT [fid] FROM [forums] WHERE [name] = '' ORDER BY fid ASC OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY")
 	if err != nil {
@@ -72,22 +61,6 @@ func _gen_mssql() (err error) {
 	if err != nil {
 		log.Print("Error in addForumPermsToForum statement.")
 		log.Print("Bad Query: ","INSERT INTO [forums_permissions] ([gid],[fid],[preset],[permissions]) VALUES (?,?,?,?)")
-		return err
-	}
-		
-	common.DebugLog("Preparing addTheme statement.")
-	stmts.addTheme, err = db.Prepare("INSERT INTO [themes] ([uname],[default]) VALUES (?,?)")
-	if err != nil {
-		log.Print("Error in addTheme statement.")
-		log.Print("Bad Query: ","INSERT INTO [themes] ([uname],[default]) VALUES (?,?)")
-		return err
-	}
-		
-	common.DebugLog("Preparing updateTheme statement.")
-	stmts.updateTheme, err = db.Prepare("UPDATE [themes] SET [default] = ? WHERE [uname] = ?")
-	if err != nil {
-		log.Print("Error in updateTheme statement.")
-		log.Print("Bad Query: ","UPDATE [themes] SET [default] = ? WHERE [uname] = ?")
 		return err
 	}
 		

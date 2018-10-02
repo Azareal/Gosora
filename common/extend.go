@@ -171,8 +171,8 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_panel_users":             nil,
 	"pre_render_panel_edit_user":         nil,
 	"pre_render_panel_groups":            nil,
-	"pre_render_panel_edit_group":        nil,
-	"pre_render_panel_edit_group_perms":  nil,
+	"pre_render_panel_group_edit":        nil,
+	"pre_render_panel_group_edit_perms":  nil,
 	"pre_render_panel_themes":            nil,
 	"pre_render_panel_modlogs":           nil,
 

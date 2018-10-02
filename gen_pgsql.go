@@ -10,8 +10,6 @@ import "./common"
 // nolint
 type Stmts struct {
 	addForumPermsToForum *sql.Stmt
-	addTheme *sql.Stmt
-	updateTheme *sql.Stmt
 	updateEmail *sql.Stmt
 	setTempGroup *sql.Stmt
 	bumpSync *sql.Stmt
@@ -34,20 +32,6 @@ func _gen_pgsql() (err error) {
 	stmts.addForumPermsToForum, err = db.Prepare("INSERT INTO \"forums_permissions\"(\"gid\",\"fid\",\"preset\",\"permissions\") VALUES (?,?,?,?)")
 	if err != nil {
 		log.Print("Error in addForumPermsToForum statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing addTheme statement.")
-	stmts.addTheme, err = db.Prepare("INSERT INTO \"themes\"(\"uname\",\"default\") VALUES (?,?)")
-	if err != nil {
-		log.Print("Error in addTheme statement.")
-		return err
-	}
-		
-	common.DebugLog("Preparing updateTheme statement.")
-	stmts.updateTheme, err = db.Prepare("UPDATE \"themes\" SET `default` = ? WHERE `uname` = ?")
-	if err != nil {
-		log.Print("Error in updateTheme statement.")
 		return err
 	}
 		

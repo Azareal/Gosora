@@ -9,7 +9,6 @@ import (
 	"../../common"
 )
 
-//routePanelWordFilter
 func WordFilters(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "word_filters", "word-filters")
 	if ferr != nil {
@@ -25,10 +24,9 @@ func WordFilters(w http.ResponseWriter, r *http.Request, user common.User) commo
 	}
 
 	pi := common.PanelPage{basePage, tList, filterList}
-	return panelRenderTemplate("panel_word_filters", w, r, user, &pi)
+	return renderTemplate("panel_word_filters", w, r, user, &pi)
 }
 
-//routePanelWordFiltersCreateSubmit
 func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -53,11 +51,10 @@ func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user common
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	return panelSuccessRedirect("/panel/settings/word-filters/", w, r, isJs)
+	return successRedirect("/panel/settings/word-filters/", w, r, isJs)
 }
 
 // TODO: Implement this as a non-JS fallback
-//routePanelWordFiltersEdit
 func WordFiltersEdit(w http.ResponseWriter, r *http.Request, user common.User, wfid string) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "edit_word_filter", "word-filters")
 	if ferr != nil {
@@ -69,10 +66,9 @@ func WordFiltersEdit(w http.ResponseWriter, r *http.Request, user common.User, w
 	_ = wfid
 
 	pi := common.PanelPage{basePage, tList, nil}
-	return panelRenderTemplate("panel_word_filters_edit", w, r, user, &pi)
+	return renderTemplate("panel_word_filters_edit", w, r, user, &pi)
 }
 
-//routePanelWordFiltersEditSubmit
 func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, wfid string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -106,7 +102,6 @@ func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	return nil
 }
 
-//routePanelWordFiltersDeleteSubmit
 func WordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, wfid string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {

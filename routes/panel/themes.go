@@ -32,7 +32,34 @@ func Themes(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	}
 
 	pi := common.PanelThemesPage{basePage, pThemeList, vThemeList}
-	return panelRenderTemplate("panel_themes", w, r, user, &pi)
+	return renderTemplate("panel_themes", w, r, user, &pi)
+}
+
+//routePanelThemesSetDefault
+func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ManageThemes {
+		return common.NoPermissions(w, r, user)
+	}
+
+	theme, ok := common.Themes[uname]
+	if !ok {
+		return common.LocalError("The theme isn't registered in the system", w, r, user)
+	}
+	if theme.Disabled {
+		return common.LocalError("You must not enable this theme", w, r, user)
+	}
+
+	err := common.UpdateDefaultTheme(theme)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	http.Redirect(w, r, "/panel/themes/", http.StatusSeeOther)
+	return nil
 }
 
 //routePanelThemesMenus
@@ -59,7 +86,7 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user common.User) commo
 	}
 
 	pi := common.PanelMenuListPage{basePage, menuList}
-	return panelRenderTemplate("panel_themes_menus", w, r, user, &pi)
+	return renderTemplate("panel_themes_menus", w, r, user, &pi)
 }
 
 //routePanelThemesMenusEdit
@@ -107,7 +134,7 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	pi := common.PanelMenuPage{basePage, mid, menuList}
-	return panelRenderTemplate("panel_themes_menus_items", w, r, user, &pi)
+	return renderTemplate("panel_themes_menus_items", w, r, user, &pi)
 }
 
 //routePanelThemesMenuItemEdit
@@ -134,7 +161,7 @@ func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user common.User
 	}
 
 	pi := common.PanelMenuItemPage{basePage, menuItem}
-	return panelRenderTemplate("panel_themes_menus_item_edit", w, r, user, &pi)
+	return renderTemplate("panel_themes_menus_item_edit", w, r, user, &pi)
 }
 
 func themesMenuItemSetters(r *http.Request, menuItem common.MenuItem) common.MenuItem {
@@ -212,7 +239,7 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user commo
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
-	return panelSuccessRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
+	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
 }
 
 //routePanelThemesMenuItemCreateSubmit
@@ -241,7 +268,7 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user com
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
-	return panelSuccessRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
+	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
 }
 
 //routePanelThemesMenuItemDeleteSubmit
@@ -271,7 +298,7 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user com
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
-	return panelSuccessRedirect("/panel/themes/menus/", w, r, isJs)
+	return successRedirect("/panel/themes/menus/", w, r, isJs)
 }
 
 //routePanelThemesMenuItemOrderSubmit
@@ -309,5 +336,5 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user comm
 	}
 	menuHold.UpdateOrder(updateMap)
 
-	return panelSuccessRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, isJs)
+	return successRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, isJs)
 }

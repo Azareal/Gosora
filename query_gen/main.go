@@ -258,8 +258,6 @@ func writeSelects(adapter qgen.Adapter) error {
 
 	//build.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()
 
-	build.Select("isThemeDefault").Table("themes").Columns("default").Where("uname = ?").Parse()
-
 	build.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
 
 	build.Select("groupEntryExists").Table("users_groups").Columns("gid").Where("name = ''").Orderby("gid ASC").Limit("0,1").Parse()
@@ -282,15 +280,11 @@ func writeInserts(adapter qgen.Adapter) error {
 
 	build.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
 
-	build.Insert("addTheme").Table("themes").Columns("uname, default").Fields("?,?").Parse()
-
 	return nil
 }
 
 func writeUpdates(adapter qgen.Adapter) error {
 	build := adapter.Builder()
-
-	build.Update("updateTheme").Table("themes").Set("default = ?").Where("uname = ?").Parse()
 
 	build.Update("updateEmail").Table("emails").Set("email = ?, uid = ?, validated = ?, token = ?").Where("email = ?").Parse()
 

@@ -25,7 +25,7 @@ func Users(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 
 	pageList := common.Paginate(basePage.Stats.Users, perPage, 5)
 	pi := common.PanelUserPage{basePage, users, common.Paginator{pageList, page, lastPage}}
-	return panelRenderTemplate("panel_users", w, r, user, &pi)
+	return renderTemplate("panel_users", w, r, user, &pi)
 }
 
 func UsersEdit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {

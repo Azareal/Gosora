@@ -46,7 +46,7 @@ func Forums(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	}
 
 	pi := common.PanelPage{basePage, forumList, nil}
-	return panelRenderTemplate("panel_forums", w, r, user, &pi)
+	return renderTemplate("panel_forums", w, r, user, &pi)
 }
 
 func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -233,7 +233,7 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 	// ? Should we redirect to the forum editor instead?
-	return panelSuccessRedirect("/panel/forums/", w, r, isJs)
+	return successRedirect("/panel/forums/", w, r, isJs)
 }
 
 func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
@@ -269,7 +269,7 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
 	}
 
-	return panelSuccessRedirect("/panel/forums/edit/"+strconv.Itoa(fid)+"?updated=1", w, r, isJs)
+	return successRedirect("/panel/forums/edit/"+strconv.Itoa(fid)+"?updated=1", w, r, isJs)
 }
 
 // A helper function for the Advanced portion of the Forum Perms Editor
@@ -412,5 +412,5 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c
 		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
 	}
 
-	return panelSuccessRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid)+"?updated=1", w, r, isJs)
+	return successRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid)+"?updated=1", w, r, isJs)
 }

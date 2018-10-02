@@ -2,8 +2,8 @@
 package common
 
 import (
-	//"fmt"
 	"bytes"
+	"database/sql"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -15,6 +15,8 @@ import (
 	"strings"
 	"text/template"
 )
+
+var ErrNoDefaultTheme = errors.New("The default theme isn't registered in the system")
 
 type Theme struct {
 	Path string // Redirect this file to another folder
@@ -147,7 +149,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(CustomPagePage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(CustomPagePage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -156,7 +157,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(TopicPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(TopicPage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -165,7 +165,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(TopicListPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(TopicListPage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -174,7 +173,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(ForumPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(ForumPage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -183,7 +181,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(ForumsPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(ForumsPage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -192,7 +189,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(ProfilePage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(ProfilePage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -201,7 +197,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(CreateTopicPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(CreateTopicPage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -210,7 +205,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(IPSearchPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(IPSearchPage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -219,7 +213,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(AccountDashPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(AccountDashPage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -228,7 +221,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(ErrorPage, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(ErrorPage, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -237,7 +229,6 @@ func (theme *Theme) MapTemplates() {
 			case *func(Page, io.Writer) error:
 				switch sTmplPtr := sourceTmplPtr.(type) {
 				case *func(Page, io.Writer) error:
-					//overridenTemplates[themeTmpl.Name] = d_tmpl_ptr
 					overridenTemplates[themeTmpl.Name] = true
 					*dTmplPtr = *sTmplPtr
 				default:
@@ -250,6 +241,56 @@ func (theme *Theme) MapTemplates() {
 			}
 		}
 	}
+}
+
+func (theme *Theme) setActive(active bool) error {
+	var sink bool
+	err := themeStmts.isThemeDefault.QueryRow(theme.Name).Scan(&sink)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	hasTheme := err != sql.ErrNoRows
+	if hasTheme {
+		_, err = themeStmts.updateTheme.Exec(active, theme.Name)
+	} else {
+		_, err = themeStmts.addTheme.Exec(theme.Name, active)
+	}
+	if err != nil {
+		return err
+	}
+
+	// TODO: Think about what we want to do for multi-server configurations
+	log.Printf("Setting theme '%s' as the default theme", theme.Name)
+	theme.Active = active
+	return nil
+}
+
+func UpdateDefaultTheme(theme *Theme) error {
+	ChangeDefaultThemeMutex.Lock()
+	defer ChangeDefaultThemeMutex.Unlock()
+
+	err := theme.setActive(true)
+	if err != nil {
+		return err
+	}
+
+	defaultTheme := DefaultThemeBox.Load().(string)
+	dtheme, ok := Themes[defaultTheme]
+	if !ok {
+		return ErrNoDefaultTheme
+	}
+
+	err = dtheme.setActive(false)
+	if err != nil {
+		return err
+	}
+
+	DefaultThemeBox.Store(theme.Name)
+	ResetTemplateOverrides()
+	theme.MapTemplates()
+
+	return nil
 }
 
 func (theme Theme) HasDock(name string) bool {

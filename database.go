@@ -99,8 +99,9 @@ func InitDatabase() (err error) {
 	}
 
 	log.Print("Loading the themes.")
+	err = common.Themes.LoadActiveStatus()
 	if err != nil {
-		return errors.WithStack(common.Themes.LoadActiveStatus())
+		return errors.WithStack(err)
 	}
 	return nil
 }

@@ -2,9 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -167,69 +165,4 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 
 	pi := common.PanelDashboardPage{&common.BasePanelPage{header, stats, "dashboard", common.ReportForumID}, gridElements}
 	return panelRenderTemplate("panel_dashboard", w, r, user, &pi)
-}
-
-func routePanelThemesSetDefault(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
-	_, ferr := common.SimplePanelUserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
-	if !user.Perms.ManageThemes {
-		return common.NoPermissions(w, r, user)
-	}
-
-	theme, ok := common.Themes[uname]
-	if !ok {
-		return common.LocalError("The theme isn't registered in the system", w, r, user)
-	}
-	if theme.Disabled {
-		return common.LocalError("You must not enable this theme", w, r, user)
-	}
-
-	var isDefault bool
-	err := stmts.isThemeDefault.QueryRow(uname).Scan(&isDefault)
-	if err != nil && err != ErrNoRows {
-		return common.InternalError(err, w, r)
-	}
-
-	hasTheme := err != ErrNoRows
-	if hasTheme {
-		if isDefault {
-			return common.LocalError("The theme is already active", w, r, user)
-		}
-		_, err = stmts.updateTheme.Exec(1, uname)
-	} else {
-		_, err = stmts.addTheme.Exec(uname, 1)
-	}
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// TODO: Make this less racey
-	// TODO: Move this to common
-	common.ChangeDefaultThemeMutex.Lock()
-	defaultTheme := common.DefaultThemeBox.Load().(string)
-	_, err = stmts.updateTheme.Exec(0, defaultTheme)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	log.Printf("Setting theme '%s' as the default theme", theme.Name)
-	theme.Active = true
-	common.Themes[uname] = theme
-
-	dTheme, ok := common.Themes[defaultTheme]
-	if !ok {
-		return common.InternalError(errors.New("The default theme is missing"), w, r)
-	}
-	dTheme.Active = false
-	common.Themes[defaultTheme] = dTheme
-
-	common.DefaultThemeBox.Store(uname)
-	common.ResetTemplateOverrides()
-	theme.MapTemplates()
-	common.ChangeDefaultThemeMutex.Unlock()
-
-	http.Redirect(w, r, "/panel/themes/", http.StatusSeeOther)
-	return nil
 }

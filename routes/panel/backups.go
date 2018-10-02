@@ -51,5 +51,5 @@ func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL
 	}
 
 	pi := common.PanelBackupPage{basePage, backupList}
-	return panelRenderTemplate("panel_backups", w, r, user, &pi)
+	return renderTemplate("panel_backups", w, r, user, &pi)
 }

@@ -61,7 +61,7 @@ var RouteMap = map[string]interface{}{
 	"panel.PagesEditSubmit": panel.PagesEditSubmit,
 	"panel.PagesDeleteSubmit": panel.PagesDeleteSubmit,
 	"panel.Themes": panel.Themes,
-	"routePanelThemesSetDefault": routePanelThemesSetDefault,
+	"panel.ThemesSetDefault": panel.ThemesSetDefault,
 	"panel.ThemesMenus": panel.ThemesMenus,
 	"panel.ThemesMenusEdit": panel.ThemesMenusEdit,
 	"panel.ThemesMenuItemEdit": panel.ThemesMenuItemEdit,
@@ -192,7 +192,7 @@ var routeMapEnum = map[string]int{
 	"panel.PagesEditSubmit": 35,
 	"panel.PagesDeleteSubmit": 36,
 	"panel.Themes": 37,
-	"routePanelThemesSetDefault": 38,
+	"panel.ThemesSetDefault": 38,
 	"panel.ThemesMenus": 39,
 	"panel.ThemesMenusEdit": 40,
 	"panel.ThemesMenuItemEdit": 41,
@@ -321,7 +321,7 @@ var reverseRouteMapEnum = map[int]string{
 	35: "panel.PagesEditSubmit",
 	36: "panel.PagesDeleteSubmit",
 	37: "panel.Themes",
-	38: "routePanelThemesSetDefault",
+	38: "panel.ThemesSetDefault",
 	39: "panel.ThemesMenus",
 	40: "panel.ThemesMenusEdit",
 	41: "panel.ThemesMenuItemEdit",
@@ -1184,7 +1184,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					}
 					
 					counters.RouteViewCounter.Bump(38)
-					err = routePanelThemesSetDefault(w,req,user,extraData)
+					err = panel.ThemesSetDefault(w,req,user,extraData)
 				case "/panel/themes/menus/":
 					counters.RouteViewCounter.Bump(39)
 					err = panel.ThemesMenus(w,req,user)

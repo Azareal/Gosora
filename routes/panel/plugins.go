@@ -24,7 +24,7 @@ func Plugins(w http.ResponseWriter, r *http.Request, user common.User) common.Ro
 	}
 
 	pi := common.PanelPage{basePage, pluginList, nil}
-	return panelRenderTemplate("panel_plugins", w, r, user, &pi)
+	return renderTemplate("panel_plugins", w, r, user, &pi)
 }
 
 //routePanelPluginsActivate
