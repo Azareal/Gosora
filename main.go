@@ -29,7 +29,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var version = common.Version{Major: 0, Minor: 2, Patch: 0, Tag: "dev"}
 var router *GenRouter
 var logWriter = io.MultiWriter(os.Stderr)
 
@@ -224,7 +223,7 @@ func main() {
 	}
 	logWriter = io.MultiWriter(os.Stderr, f)
 	log.SetOutput(logWriter)
-	log.Print("Running Gosora v" + version.String())
+	log.Print("Running Gosora v" + common.SoftwareVersion.String())
 	fmt.Println("")
 	common.StartTime = time.Now()
 

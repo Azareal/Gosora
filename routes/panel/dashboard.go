@@ -1,4 +1,4 @@
-package main
+package panel
 
 import (
 	"database/sql"
@@ -6,31 +6,63 @@ import (
 	"net/http"
 	"strconv"
 
-	"./common"
+	"../../common"
+	"../../query_gen/lib"
 	"github.com/Azareal/gopsutil/mem"
+	"github.com/pkg/errors"
 )
 
-// We're trying to reduce the amount of boilerplate in here, so I added these two functions, they might wind up circulating outside this file in the future
-func panelSuccessRedirect(dest string, w http.ResponseWriter, r *http.Request, isJs bool) common.RouteError {
-	if !isJs {
-		http.Redirect(w, r, dest, http.StatusSeeOther)
-	} else {
-		w.Write(successJSONBytes)
-	}
-	return nil
-}
-func panelRenderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, user common.User, pi interface{}) common.RouteError {
-	if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, pi) {
-		return nil
-	}
-	err := common.Templates.ExecuteTemplate(w, tmplName+".html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+type dashStmts struct {
+	todaysPostCount         *sql.Stmt
+	todaysTopicCount        *sql.Stmt
+	todaysTopicCountByForum *sql.Stmt
+	todaysNewUserCount      *sql.Stmt
 }
 
-func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+// TODO: Stop hard-coding these queries
+func dashMySQLStmts() (stmts dashStmts, err error) {
+	db := qgen.Builder.GetConn()
+
+	var prepareStmt = func(table string, ext string) *sql.Stmt {
+		if err != nil {
+			return nil
+		}
+		stmt, ierr := db.Prepare("select count(*) from " + table + " where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() " + ext)
+		err = errors.WithStack(ierr)
+		return stmt
+	}
+
+	stmts.todaysPostCount = prepareStmt("replies", "")
+	stmts.todaysTopicCount = prepareStmt("topics", "")
+	stmts.todaysNewUserCount = prepareStmt("users", "")
+	stmts.todaysTopicCountByForum = prepareStmt("topics", " and parentID = ?")
+
+	return stmts, err
+}
+
+// TODO: Stop hard-coding these queries
+func dashMSSQLStmts() (stmts dashStmts, err error) {
+	db := qgen.Builder.GetConn()
+
+	var prepareStmt = func(table string, ext string) *sql.Stmt {
+		if err != nil {
+			return nil
+		}
+		stmt, ierr := db.Prepare("select count(*) from " + table + " where createdAt >= DATEADD(DAY, -1, GETUTCDATE())" + ext)
+		err = errors.WithStack(ierr)
+		return stmt
+	}
+
+	stmts.todaysPostCount = prepareStmt("replies", "")
+	stmts.todaysTopicCount = prepareStmt("topics", "")
+	stmts.todaysNewUserCount = prepareStmt("users", "")
+	stmts.todaysTopicCountByForum = prepareStmt("topics", " and parentID = ?")
+
+	return stmts, err
+}
+
+//routePanelDashboard
+func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	header, stats, ferr := common.PanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -91,10 +123,23 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 	var intErr error
 	var extractStat = func(stmt *sql.Stmt, args ...interface{}) (stat int) {
 		err := stmt.QueryRow(args...).Scan(&stat)
-		if err != nil && err != ErrNoRows {
+		if err != nil && err != sql.ErrNoRows {
 			intErr = err
 		}
 		return stat
+	}
+
+	var stmts dashStmts
+	switch qgen.Builder.GetAdapter().GetName() {
+	case "mysql":
+		stmts, err = dashMySQLStmts()
+	case "mssql":
+		stmts, err = dashMSSQLStmts()
+	default:
+		return common.InternalError(errors.New("Unknown database adapter on dashboard"), w, r)
+	}
+	if err != nil {
+		return common.InternalError(err, w, r)
 	}
 
 	var postCount = extractStat(stmts.todaysPostCount)
@@ -120,7 +165,7 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 	var gridElements = []common.GridElement{
 		// TODO: Implement a check for new versions of Gosora
 		//common.GridElement{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
-		common.GridElement{"dash-version", "v" + version.String(), 0, "grid_istat", "", "", ""},
+		common.GridElement{"dash-version", "v" + common.SoftwareVersion.String(), 0, "grid_istat", "", "", ""},
 
 		common.GridElement{"dash-cpu", "CPU: " + cpustr, 1, "grid_istat " + cpuColour, "", "", "The global CPU usage of this server"},
 		common.GridElement{"dash-ram", "RAM: " + ramstr, 2, "grid_istat " + ramColour, "", "", "The global RAM usage of this server"},
@@ -164,5 +209,5 @@ func routePanelDashboard(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pi := common.PanelDashboardPage{&common.BasePanelPage{header, stats, "dashboard", common.ReportForumID}, gridElements}
-	return panelRenderTemplate("panel_dashboard", w, r, user, &pi)
+	return renderTemplate("panel_dashboard", w, r, user, &pi)
 }

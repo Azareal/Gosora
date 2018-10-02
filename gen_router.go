@@ -101,7 +101,7 @@ var RouteMap = map[string]interface{}{
 	"panel.LogsRegs": panel.LogsRegs,
 	"panel.LogsMod": panel.LogsMod,
 	"panel.Debug": panel.Debug,
-	"routePanelDashboard": routePanelDashboard,
+	"panel.Dashboard": panel.Dashboard,
 	"routes.AccountEdit": routes.AccountEdit,
 	"routes.AccountEditPassword": routes.AccountEditPassword,
 	"routes.AccountEditPasswordSubmit": routes.AccountEditPasswordSubmit,
@@ -232,7 +232,7 @@ var routeMapEnum = map[string]int{
 	"panel.LogsRegs": 75,
 	"panel.LogsMod": 76,
 	"panel.Debug": 77,
-	"routePanelDashboard": 78,
+	"panel.Dashboard": 78,
 	"routes.AccountEdit": 79,
 	"routes.AccountEditPassword": 80,
 	"routes.AccountEditPasswordSubmit": 81,
@@ -361,7 +361,7 @@ var reverseRouteMapEnum = map[int]string{
 	75: "panel.LogsRegs",
 	76: "panel.LogsMod",
 	77: "panel.Debug",
-	78: "routePanelDashboard",
+	78: "panel.Dashboard",
 	79: "routes.AccountEdit",
 	80: "routes.AccountEditPassword",
 	81: "routes.AccountEditPasswordSubmit",
@@ -1442,7 +1442,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					err = panel.Debug(w,req,user)
 				default:
 					counters.RouteViewCounter.Bump(78)
-					err = routePanelDashboard(w,req,user)
+					err = panel.Dashboard(w,req,user)
 			}
 		case "/user":
 			switch(req.URL.Path) {

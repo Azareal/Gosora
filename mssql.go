@@ -10,7 +10,6 @@ package main
 
 import (
 	"database/sql"
-	"log"
 	"net/url"
 
 	"./common"
@@ -74,7 +73,7 @@ func initMSSQL() (err error) {
 
 	// TODO: Is there a less noisy way of doing this for tests?
 	/*log.Print("Preparing getActivityFeedByWatcher statement.")
-	stmts.getActivityFeedByWatcherStmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM [activity_stream_matches] INNER JOIN [activity_stream] ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE [watcher] = ? ORDER BY activity_stream.asid DESC OFFSET 0 ROWS FETCH NEXT 8 ROWS ONLY")
+	stmts.getActivityFeedByWatcherStmt, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID FROM [activity_stream_matches] INNER JOIN [activity_stream] ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE [watcher] = ? ORDER BY activity_stream.asid DESC OFFSET 0 ROWS FETCH NEXT 16 ROWS ONLY")
 	if err != nil {
 		return err
 	}
@@ -84,31 +83,7 @@ func initMSSQL() (err error) {
 	if err != nil {
 		return err
 	}
-
-	log.Print("Preparing todaysPostCount statement.")
-	stmts.todaysPostCountStmt, err = db.Prepare("select count(*) from replies where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
-	if err != nil {
-		return err
-	}
-
-	log.Print("Preparing todaysTopicCount statement.")
-	stmts.todaysTopicCountStmt, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
-	if err != nil {
-		return err
-	}*/
-
-	log.Print("Preparing todaysTopicCountByForum statement.")
-	// TODO: Stop hard-coding this query
-	stmts.todaysTopicCountByForum, err = db.Prepare("select count(*) from topics where createdAt >= DATEADD(DAY, -1, GETUTCDATE()) and parentID = ?")
-	if err != nil {
-		return err
-	}
-
-	/*log.Print("Preparing todaysNewUserCount statement.")
-	stmts.todaysNewUserCountStmt, err = db.Prepare("select count(*) from users where createdAt >= DATEADD(DAY, -1, GETUTCDATE())")
-	if err != nil {
-		return err
-	}*/
+	*/
 
 	return nil
 }

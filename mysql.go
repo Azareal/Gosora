@@ -64,30 +64,5 @@ func initMySQL() (err error) {
 		return errors.WithStack(err)
 	}
 
-	log.Print("Preparing todaysPostCount statement.")
-	stmts.todaysPostCount, err = db.Prepare("select count(*) from replies where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	log.Print("Preparing todaysTopicCount statement.")
-	stmts.todaysTopicCount, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	log.Print("Preparing todaysTopicCountByForum statement.")
-	// TODO: Stop hard-coding this query
-	stmts.todaysTopicCountByForum, err = db.Prepare("select count(*) from topics where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() and parentID = ?")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	log.Print("Preparing todaysNewUserCount statement.")
-	stmts.todaysNewUserCount, err = db.Prepare("select count(*) from users where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp()")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	return nil
 }

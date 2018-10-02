@@ -142,7 +142,7 @@ func buildAccountRoutes() {
 func buildPanelRoutes() {
 	panelGroup := newRouteGroup("/panel/").Before("SuperModOnly")
 	panelGroup.Routes(
-		View("routePanelDashboard", "/panel/"),
+		View("panel.Dashboard", "/panel/"),
 		View("panel.Forums", "/panel/forums/"),
 		Action("panel.ForumsCreateSubmit", "/panel/forums/create/"),
 		Action("panel.ForumsDelete", "/panel/forums/delete/", "extraData"),

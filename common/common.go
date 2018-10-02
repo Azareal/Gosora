@@ -9,6 +9,8 @@ import (
 	"../query_gen/lib"
 )
 
+var SoftwareVersion = Version{Major: 0, Minor: 2, Patch: 0, Tag: "dev"}
+
 // nolint I don't want to write comments for each of these o.o
 const Hour int = 60 * 60
 const Day int = Hour * 24
