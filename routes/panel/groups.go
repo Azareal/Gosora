@@ -223,7 +223,7 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 
 	gname := r.FormValue("group-name")
 	if gname == "" {
-		return common.LocalError("The group name can't be left blank.", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_need_name"), w, r, user)
 	}
 	gtag := r.FormValue("group-tag")
 	rank := r.FormValue("group-type")
@@ -242,30 +242,30 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 		originalRank = "Member"
 	}
 
-	if rank != originalRank {
+	if rank != originalRank && originalRank != "Guest" {
 		if !user.Perms.EditGroupGlobalPerms {
-			return common.LocalError("You need the EditGroupGlobalPerms permission to change the group type.", w, r, user)
+			return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_group_type"), w, r, user)
 		}
 
 		switch rank {
 		case "Admin":
 			if !user.Perms.EditGroupAdmin {
-				return common.LocalError("You need the EditGroupAdmin permission to designate this group as an admin group.", w, r, user)
+				return common.LocalError(common.GetErrorPhrase("panel_groups_edit_cannot_designate_admin"), w, r, user)
 			}
 			err = group.ChangeRank(true, true, false)
 		case "Mod":
 			if !user.Perms.EditGroupSuperMod {
-				return common.LocalError("You need the EditGroupSuperMod permission to designate this group as a super-mod group.", w, r, user)
+				return common.LocalError(common.GetErrorPhrase("panel_groups_edit_cannot_designate_supermod"), w, r, user)
 			}
 			err = group.ChangeRank(false, true, false)
 		case "Banned":
 			err = group.ChangeRank(false, false, true)
 		case "Guest":
-			return common.LocalError("You can't designate a group as a guest group.", w, r, user)
+			return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_be_guest"), w, r, user)
 		case "Member":
 			err = group.ChangeRank(false, false, false)
 		default:
-			return common.LocalError("Invalid group type.", w, r, user)
+			return common.LocalError(common.GetErrorPhrase("panel_groups_invalid_group_type"), w, r, user)
 		}
 		if err != nil {
 			return common.InternalError(err, w, r)
@@ -348,7 +348,7 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User
 
 	groupName := r.PostFormValue("group-name")
 	if groupName == "" {
-		return common.LocalError("You need a name for this group!", w, r, user)
+		return common.LocalError(common.GetErrorPhrase("panel_groups_need_name"), w, r, user)
 	}
 	groupTag := r.PostFormValue("group-tag")
 
@@ -357,13 +357,13 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User
 		groupType := r.PostFormValue("group-type")
 		if groupType == "Admin" {
 			if !user.Perms.EditGroupAdmin {
-				return common.LocalError("You need the EditGroupAdmin permission to create admin groups", w, r, user)
+				return common.LocalError(common.GetErrorPhrase("panel_groups_create_cannot_designate_admin"), w, r, user)
 			}
 			isAdmin = true
 			isMod = true
 		} else if groupType == "Mod" {
 			if !user.Perms.EditGroupSuperMod {
-				return common.LocalError("You need the EditGroupSuperMod permission to create admin groups", w, r, user)
+				return common.LocalError(common.GetErrorPhrase("panel_groups_create_cannot_designate_supermod"), w, r, user)
 			}
 			isMod = true
 		} else if groupType == "Banned" {

@@ -98,8 +98,16 @@
 		"register_username_too_long_prefix":"The username is too long, max: ",
 		"register_email_fail":"We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.",
 
+		"panel_groups_need_name":"The group name can't be left blank.",
 		"panel_groups_cannot_edit_admin":"You need the EditGroupAdmin permission to edit an admin group.",
-		"panel_groups_cannot_edit_supermod":"You need the EditGroupSuperMod permission to edit a super-mod group."
+		"panel_groups_cannot_edit_supermod":"You need the EditGroupSuperMod permission to edit a super-mod group.",
+		"panel_groups_cannot_edit_group_type":"You need the EditGroupGlobalPerms permission to change the group type.",
+		"panel_groups_edit_cannot_designate_admin":"You need the EditGroupAdmin permission to designate this group as an admin group.",
+		"panel_groups_edit_cannot_designate_supermod":"You need the EditGroupSuperMod permission to designate this group as a super-mod group.",
+		"panel_groups_create_cannot_designate_admin":"You need the EditGroupAdmin permission to create admin groups",
+		"panel_groups_create_cannot_designate_supermod":"You need the EditGroupSuperMod permission to create super-mod groups",
+		"panel_groups_cannot_be_guest":"You can't designate a group as a guest group.",
+		"panel_groups_invalid_group_type":"Invalid group type."
 	},
 
 	"PageTitles": {
