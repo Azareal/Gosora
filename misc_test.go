@@ -51,7 +51,7 @@ func TestUserStore(t *testing.T) {
 	userStoreTest(t, 2)
 	common.Users, err = common.NewDefaultUserStore(nil)
 	expectNilErr(t, err)
-	userStoreTest(t, 3)
+	userStoreTest(t, 4)
 }
 func userStoreTest(t *testing.T, newUserID int) {
 	ucache := common.Users.GetCache()
@@ -81,14 +81,26 @@ func userStoreTest(t *testing.T, newUserID int) {
 	user, err := common.Users.Get(1)
 	recordMustExist(t, err, "Couldn't find UID #1")
 
-	expect(t, user.ID == 1, fmt.Sprintf("user.ID should be 1. Got '%d' instead.", user.ID))
-	expect(t, user.Name == "Admin", fmt.Sprintf("user.Name should be 'Admin', not '%s'", user.Name))
-	expect(t, user.Group == 1, "Admin should be in group 1")
-	expect(t, user.IsSuperAdmin, "Admin should be a super admin")
-	expect(t, user.IsAdmin, "Admin should be an admin")
-	expect(t, user.IsSuperMod, "Admin should be a super mod")
-	expect(t, user.IsMod, "Admin should be a mod")
-	expect(t, !user.IsBanned, "Admin should not be banned")
+	var expectW = func(cond bool, expec bool, prefix string, suffix string) {
+		midfix := "should not be"
+		if expec {
+			midfix = "should be"
+		}
+		expect(t, cond, prefix+" "+midfix+" "+suffix)
+	}
+
+	// TODO: Add email checks too? Do them seperately?
+	var expectUser = func(user *common.User, uid int, name string, group int, super bool, admin bool, mod bool, banned bool) {
+		expect(t, user.ID == uid, fmt.Sprintf("user.ID should be %d. Got '%d' instead.", uid, user.ID))
+		expect(t, user.Name == name, fmt.Sprintf("user.Name should be '%s', not '%s'", name, user.Name))
+		expectW(user.Group == group, true, user.Name, "in group"+strconv.Itoa(group))
+		expectW(user.IsSuperAdmin == super, super, user.Name, "a super admin")
+		expectW(user.IsAdmin == admin, admin, user.Name, "an admin")
+		expectW(user.IsSuperMod == mod, mod, user.Name, "a super mod")
+		expectW(user.IsMod == mod, mod, user.Name, "a mod")
+		expectW(user.IsBanned == banned, banned, user.Name, "banned")
+	}
+	expectUser(user, 1, "Admin", 1, true, true, true, false)
 
 	_, err = common.Users.Get(newUserID)
 	recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't exist", newUserID))
@@ -152,22 +164,15 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectIntToBeX(t, common.Users.GlobalCount(), 1, "The number of users should be one, not %d")
 
 	var awaitingActivation = 5
+	// TODO: Write tests for the registration validators
 	uid, err := common.Users.Create("Sam", "ReallyBadPassword", "sam@localhost.loc", awaitingActivation, false)
 	expectNilErr(t, err)
-	expect(t, uid == newUserID, fmt.Sprintf("The UID of the new user should be %d", newUserID))
+	expect(t, uid == newUserID, fmt.Sprintf("The UID of the new user should be %d not %d", newUserID, uid))
 	expect(t, common.Users.Exists(newUserID), fmt.Sprintf("UID #%d should exist", newUserID))
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	expect(t, user.ID == newUserID, fmt.Sprintf("The UID of the user record should be %d", newUserID))
-
-	expect(t, user.Name == "Sam", "The user should be named Sam")
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
-	expect(t, !user.IsMod, "Sam should not be a mod")
-	expect(t, !user.IsBanned, "Sam should not be banned")
-	expectIntToBeX(t, user.Group, 5, "Sam should be in group 5")
+	expectUser(user, newUserID, "Sam", 5, false, false, false, false)
 
 	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
@@ -189,15 +194,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-
-	expect(t, user.ID == newUserID, fmt.Sprintf("The UID of the user record should be %d, not %d", newUserID, user.ID))
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
-	expect(t, !user.IsMod, "Sam should not be a mod")
-	expect(t, !user.IsBanned, "Sam should not be banned")
-
-	expect(t, user.Group == common.Config.DefaultGroup, fmt.Sprintf("Sam should be in group %d, not %d", common.Config.DefaultGroup, user.Group))
+	expectUser(user, newUserID, "Sam", common.Config.DefaultGroup, false, false, false, false)
 
 	// Permanent ban
 	duration, _ := time.ParseDuration("0")
@@ -215,15 +212,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-
-	expect(t, user.ID == newUserID, fmt.Sprintf("The UID of the user record should be %d", newUserID))
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
-	expect(t, !user.IsMod, "Sam should not be a mod")
-	expect(t, user.IsBanned, "Sam should be banned")
-
-	expectIntToBeX(t, user.Group, common.BanGroup, "Sam should be in group %d")
+	expectUser(user, newUserID, "Sam", common.BanGroup, false, false, false, true)
 
 	// TODO: Do tests against the scheduled updates table and the task system to make sure the ban exists there and gets revoked when it should
 
@@ -239,15 +228,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	expectIntToBeX(t, user.ID, newUserID, "The UID of the user record should be %d")
-
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
-	expect(t, !user.IsMod, "Sam should not be a mod")
-	expect(t, !user.IsBanned, "Sam should not be banned")
-
-	expectIntToBeX(t, user.Group, common.Config.DefaultGroup, "Sam should be back in group %d")
+	expectUser(user, newUserID, "Sam", common.Config.DefaultGroup, false, false, false, false)
 
 	var reportsForumID = 1 // TODO: Use the constant in common?
 	var generalForumID = 2
@@ -262,15 +243,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	expectIntToBeX(t, user.ID, newUserID, "The UID of the user record should be %d")
 	var user2 *common.User = common.BlankUser()
 	*user2 = *user
-
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, user.IsAdmin, "Sam should be an admin")
-	expect(t, user.IsSuperMod, "Sam should be a super mod")
-	expect(t, user.IsMod, "Sam should be a mod")
-	expect(t, !user.IsBanned, "Sam should not be banned")
+	expectUser(user, newUserID, "Sam", 1, false, true, true, false)
 
 	_, ferr := common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
 	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
@@ -285,15 +260,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	expectIntToBeX(t, user.ID, newUserID, "The UID of the user record should be %d")
 	user2 = common.BlankUser()
 	*user2 = *user
-
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, user.IsSuperMod, "Sam should be a super mod")
-	expect(t, user.IsMod, "Sam should be a mod")
-	expect(t, !user.IsBanned, "Sam should not be banned")
+	expectUser(user, newUserID, "Sam", 2, false, false, true, false)
 
 	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
 	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
@@ -308,15 +277,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	expectIntToBeX(t, user.ID, newUserID, "The UID of the user record should be %d")
 	user2 = common.BlankUser()
 	*user2 = *user
-
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
-	expect(t, !user.IsMod, "Sam should not be a mod")
-	expect(t, !user.IsBanned, "Sam should not be banned")
+	expectUser(user, newUserID, "Sam", 3, false, false, false, false)
 
 	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
 	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
@@ -332,15 +295,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	expectIntToBeX(t, user.ID, newUserID, "The UID of the user record should be %d")
 	user2 = common.BlankUser()
 	*user2 = *user
-
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
-	expect(t, !user.IsMod, "Sam should not be a mod")
-	expect(t, user.IsBanned, "Sam should be banned")
+	expectUser(user, newUserID, "Sam", 4, false, false, false, true)
 
 	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
 	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
@@ -355,15 +312,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	expectIntToBeX(t, user.ID, newUserID, "The UID of the user record should be %d")
 	user2 = common.BlankUser()
 	*user2 = *user
-
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
-	expect(t, !user.IsMod, "Sam should not be a mod")
-	expect(t, !user.IsBanned, "Sam should not be banned")
+	expectUser(user, newUserID, "Sam", 5, false, false, false, false)
 
 	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
 	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
@@ -378,15 +329,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	user, err = common.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	expectIntToBeX(t, user.ID, newUserID, "The UID of the user record should be %d")
 	user2 = common.BlankUser()
 	*user2 = *user
-
-	expect(t, !user.IsSuperAdmin, "Sam should not be a super admin")
-	expect(t, !user.IsAdmin, "Sam should not be an admin")
-	expect(t, !user.IsSuperMod, "Sam should not be a super mod")
-	expect(t, !user.IsMod, "Sam should not be a mod")
-	expect(t, !user.IsBanned, "Sam should not be banned")
+	expectUser(user, newUserID, "Sam", 6, false, false, false, false)
 
 	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
 	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
@@ -411,6 +356,22 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	_, err = common.Users.Get(newUserID)
 	recordMustNotExist(t, err, "UID #%d shouldn't exist", newUserID)
+
+	// And a unicode test, even though I doubt it'll fail
+	uid, err = common.Users.Create("サム", "😀😀😀", "sam@localhost.loc", awaitingActivation, false)
+	expectNilErr(t, err)
+	expect(t, uid == newUserID+1, fmt.Sprintf("The UID of the new user should be %d", newUserID+1))
+	expect(t, common.Users.Exists(newUserID+1), fmt.Sprintf("UID #%d should exist", newUserID+1))
+
+	user, err = common.Users.Get(newUserID + 1)
+	recordMustExist(t, err, "Couldn't find UID #%d", newUserID+1)
+	expectUser(user, newUserID+1, "サム", 5, false, false, false, false)
+
+	err = user.Delete()
+	expectNilErr(t, err)
+	expect(t, !common.Users.Exists(newUserID+1), fmt.Sprintf("UID #%d should no longer exist", newUserID+1))
+
+	// TODO: Add unicode login tests somewhere? Probably with the rest of the auth tests
 
 	// TODO: Add tests for the Cache* methods
 }
@@ -501,7 +462,6 @@ func TestPermsMiddleware(t *testing.T) {
 	//dummyResponseRecorder = httptest.NewRecorder()
 	//bytesBuffer = bytes.NewBuffer([]byte(""))
 	//dummyRequest = httptest.NewRequest("", "/panel/backups/", bytesBuffer)
-
 }
 
 func TestTopicStore(t *testing.T) {
@@ -530,7 +490,6 @@ func topicStoreTest(t *testing.T) {
 
 	_, err = common.Topics.Get(-1)
 	recordMustNotExist(t, err, "TID #-1 shouldn't exist")
-
 	_, err = common.Topics.Get(0)
 	recordMustNotExist(t, err, "TID #0 shouldn't exist")
 
@@ -545,7 +504,6 @@ func topicStoreTest(t *testing.T) {
 
 	ok := common.Topics.Exists(-1)
 	expect(t, !ok, "TID #-1 shouldn't exist")
-
 	ok = common.Topics.Exists(0)
 	expect(t, !ok, "TID #0 shouldn't exist")
 
@@ -571,7 +529,6 @@ func TestForumStore(t *testing.T) {
 
 	_, err := common.Forums.Get(-1)
 	recordMustNotExist(t, err, "FID #-1 shouldn't exist")
-
 	_, err = common.Forums.Get(0)
 	recordMustNotExist(t, err, "FID #0 shouldn't exist")
 
@@ -1031,6 +988,7 @@ func TestSlugs(t *testing.T) {
 	msgList = addMEPair(msgList, "é", "é")
 	msgList = addMEPair(msgList, "-é-", "é")
 	msgList = addMEPair(msgList, "-你好-", "untitled")
+	msgList = addMEPair(msgList, "-こにちは-", "untitled")
 
 	for _, item := range msgList {
 		t.Log("Testing string '" + item.Msg + "'")
@@ -1096,6 +1054,7 @@ func TestAuth(t *testing.T) {
 	expectNilErr(t, err)
 	expect(t, admin.Session == session, "Sessions should match")
 
+	// TODO: Create a user with a unicode password and see if we can login as them
 	// TODO: Tests for SessionCheck, GetCookies, and ForceLogout
 }
 

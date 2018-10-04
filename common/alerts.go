@@ -58,6 +58,11 @@ func init() {
 "{x}{created a new topic}{topic}"
 */
 
+// TODO: See if we can json.Marshal instead?
+func escapeTextInJson(in string) string {
+	return strings.Replace(in, "/", "\\/", -1)
+}
+
 func BuildAlert(asid int, event string, elementType string, actorID int, targetUserID int, elementID int, user User /* The current user */) (string, error) {
 	var targetUser *User
 
@@ -75,7 +80,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 	}*/
 
 	if event == "friend_invite" {
-		return `{"msg":"You received a friend invite from {0}","sub":["` + actor.Name + `"],"path":"` + actor.Link + `","avatar":"` + strings.Replace(actor.Avatar, "/", "\\/", -1) + `","asid":"` + strconv.Itoa(asid) + `"}`, nil
+		return buildAlertString("You received a friend invite from {0}", []string{actor.Name}, actor.Link, actor.Avatar, asid), nil
 	}
 
 	var act, postAct, url, area string
@@ -152,8 +157,19 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 	case "reply":
 		act = "replied to"
 	}
+	return buildAlertString("{0} "+startFrag+act+postAct+" {1}"+endFrag, []string{actor.Name, area}, url, actor.Avatar, asid), nil
+}
 
-	return `{"msg":"{0} ` + startFrag + act + postAct + ` {1}` + endFrag + `","sub":["` + actor.Name + `","` + area + `"],"path":"` + url + `","avatar":"` + actor.Avatar + `","asid":"` + strconv.Itoa(asid) + `"}`, nil
+func buildAlertString(msg string, sub []string, path string, avatar string, asid int) string {
+	var substring string
+	for _, item := range sub {
+		substring += "\"" + escapeTextInJson(item) + "\","
+	}
+	if len(substring) > 0 {
+		substring = substring[:len(substring)-1]
+	}
+
+	return `{"msg":"` + escapeTextInJson(msg) + `","sub":["` + substring + `"],"path":"` + escapeTextInJson(path) + `","avatar":"` + escapeTextInJson(avatar) + `","asid":"` + strconv.Itoa(asid) + `"}`
 }
 
 func AddActivityAndNotifyAll(actor int, targetUser int, event string, elementType string, elementID int) error {
