@@ -51,7 +51,7 @@ func TestUserStore(t *testing.T) {
 	userStoreTest(t, 2)
 	common.Users, err = common.NewDefaultUserStore(nil)
 	expectNilErr(t, err)
-	userStoreTest(t, 4)
+	userStoreTest(t, 5)
 }
 func userStoreTest(t *testing.T, newUserID int) {
 	ucache := common.Users.GetCache()
@@ -236,109 +236,53 @@ func userStoreTest(t *testing.T, newUserID int) {
 	bytesBuffer := bytes.NewBuffer([]byte(""))
 	dummyRequest1 := httptest.NewRequest("", "/forum/"+strconv.Itoa(reportsForumID), bytesBuffer)
 	dummyRequest2 := httptest.NewRequest("", "/forum/"+strconv.Itoa(generalForumID), bytesBuffer)
+	var user2 *common.User
 
-	err = user.ChangeGroup(1)
-	expectNilErr(t, err)
-	expect(t, user.Group == common.Config.DefaultGroup, "Someone's mutated this pointer elsewhere")
+	var changeGroupTest = func(oldGroup int, newGroup int) {
+		err = user.ChangeGroup(newGroup)
+		expectNilErr(t, err)
+		// ! I don't think ChangeGroup should be changing the value of user... Investigate this.
+		expect(t, oldGroup == user.Group, "Someone's mutated this pointer elsewhere")
 
-	user, err = common.Users.Get(newUserID)
-	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	var user2 *common.User = common.BlankUser()
-	*user2 = *user
+		user, err = common.Users.Get(newUserID)
+		recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
+		user2 = common.BlankUser()
+		*user2 = *user
+	}
+
+	var changeGroupTest2 = func(rank string, firstShouldBe bool, secondShouldBe bool) {
+		_, ferr := common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
+		expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
+		expect(t, user.Perms.ViewTopic == firstShouldBe, rank+" should be able to access the reports forum")
+		_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest2, user2, generalForumID)
+		expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
+		expect(t, user2.Perms.ViewTopic == secondShouldBe, "Sam should be able to access the general forum")
+	}
+
+	changeGroupTest(common.Config.DefaultGroup, 1)
 	expectUser(user, newUserID, "Sam", 1, false, true, true, false)
+	changeGroupTest2("Admins", true, true)
 
-	_, ferr := common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, user.Perms.ViewTopic, "Admins should be able to access the reports forum")
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest2, user2, generalForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, user2.Perms.ViewTopic, "Sam should be able to access the general forum")
-
-	err = user.ChangeGroup(2)
-	expectNilErr(t, err)
-	expect(t, user.Group == 1, "Someone's mutated this pointer elsewhere")
-
-	user, err = common.Users.Get(newUserID)
-	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	user2 = common.BlankUser()
-	*user2 = *user
+	changeGroupTest(1, 2)
 	expectUser(user, newUserID, "Sam", 2, false, false, true, false)
+	changeGroupTest2("Mods", true, true)
 
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, user.Perms.ViewTopic, "Mods should be able to access the reports forum")
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest2, user2, generalForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, user2.Perms.ViewTopic, "Sam should be able to access the general forum")
-
-	err = user.ChangeGroup(3)
-	expectNilErr(t, err)
-	expect(t, user.Group == 2, "Someone's mutated this pointer elsewhere")
-
-	user, err = common.Users.Get(newUserID)
-	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	user2 = common.BlankUser()
-	*user2 = *user
+	changeGroupTest(2, 3)
 	expectUser(user, newUserID, "Sam", 3, false, false, false, false)
-
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, !user.Perms.ViewTopic, "Members shouldn't be able to access the reports forum")
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest2, user2, generalForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, user2.Perms.ViewTopic, "Sam should be able to access the general forum")
+	changeGroupTest2("Members", false, true)
 	expect(t, user.Perms.ViewTopic != user2.Perms.ViewTopic, "user.Perms.ViewTopic and user2.Perms.ViewTopic should never match")
 
-	err = user.ChangeGroup(4)
-	expectNilErr(t, err)
-	expect(t, user.Group == 3, "Someone's mutated this pointer elsewhere")
-
-	user, err = common.Users.Get(newUserID)
-	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	user2 = common.BlankUser()
-	*user2 = *user
+	changeGroupTest(3, 4)
 	expectUser(user, newUserID, "Sam", 4, false, false, false, true)
+	changeGroupTest2("Members", false, true)
 
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, !user.Perms.ViewTopic, "Members shouldn't be able to access the reports forum")
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest2, user2, generalForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, user2.Perms.ViewTopic, "Sam should be able to access the general forum")
-
-	err = user.ChangeGroup(5)
-	expectNilErr(t, err)
-	expect(t, user.Group == 4, "Someone's mutated this pointer elsewhere")
-
-	user, err = common.Users.Get(newUserID)
-	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	user2 = common.BlankUser()
-	*user2 = *user
+	changeGroupTest(4, 5)
 	expectUser(user, newUserID, "Sam", 5, false, false, false, false)
+	changeGroupTest2("Members", false, true)
 
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, !user.Perms.ViewTopic, "Members shouldn't be able to access the reports forum")
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest2, user2, generalForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, user2.Perms.ViewTopic, "Sam should be able to access the general forum")
-
-	err = user.ChangeGroup(6)
-	expectNilErr(t, err)
-	expect(t, user.Group == 5, "Someone's mutated this pointer elsewhere")
-
-	user, err = common.Users.Get(newUserID)
-	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
-	user2 = common.BlankUser()
-	*user2 = *user
+	changeGroupTest(5, 6)
 	expectUser(user, newUserID, "Sam", 6, false, false, false, false)
-
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, !user.Perms.ViewTopic, "Members shouldn't be able to access the reports forum")
-	_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest2, user2, generalForumID)
-	expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-	expect(t, user2.Perms.ViewTopic, "Sam should be able to access the general forum")
+	changeGroupTest2("Members", false, true)
 
 	err = user.ChangeGroup(common.Config.DefaultGroup)
 	expectNilErr(t, err)
@@ -370,6 +314,20 @@ func userStoreTest(t *testing.T, newUserID int) {
 	err = user.Delete()
 	expectNilErr(t, err)
 	expect(t, !common.Users.Exists(newUserID+1), fmt.Sprintf("UID #%d should no longer exist", newUserID+1))
+
+	// MySQL utf8mb4 username test
+	uid, err = common.Users.Create("😀😀😀", "😀😀😀", "sam@localhost.loc", awaitingActivation, false)
+	expectNilErr(t, err)
+	expect(t, uid == newUserID+2, fmt.Sprintf("The UID of the new user should be %d", newUserID+2))
+	expect(t, common.Users.Exists(newUserID+2), fmt.Sprintf("UID #%d should exist", newUserID+2))
+
+	user, err = common.Users.Get(newUserID + 2)
+	recordMustExist(t, err, "Couldn't find UID #%d", newUserID+1)
+	expectUser(user, newUserID+2, "😀😀😀", 5, false, false, false, false)
+
+	err = user.Delete()
+	expectNilErr(t, err)
+	expect(t, !common.Users.Exists(newUserID+2), fmt.Sprintf("UID #%d should no longer exist", newUserID+2))
 
 	// TODO: Add unicode login tests somewhere? Probably with the rest of the auth tests
 
