@@ -330,7 +330,6 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expect(t, !common.Users.Exists(newUserID+2), fmt.Sprintf("UID #%d should no longer exist", newUserID+2))
 
 	// TODO: Add unicode login tests somewhere? Probably with the rest of the auth tests
-
 	// TODO: Add tests for the Cache* methods
 }
 
@@ -1068,8 +1067,57 @@ func addMETri(msgList []METri, args ...string) []METri {
 	return append(msgList, METri{"", args[0], args[1]})
 }
 
+type CountTest struct {
+	Name    string
+	Msg     string
+	Expects int
+}
+
+type CountTestList struct {
+	Items []CountTest
+}
+
+func (tlist *CountTestList) Add(name string, msg string, expects int) {
+	tlist.Items = append(tlist.Items, CountTest{name, msg, expects})
+}
+
+//WordCount(input string) (count int)
+func TestWordCount(t *testing.T) {
+	var msgList = &CountTestList{nil}
+
+	msgList.Add("blank", "", 0)
+	msgList.Add("single-letter", "h", 1)
+	msgList.Add("single-kana", "お", 1)
+	msgList.Add("single-letter-words", "h h", 2)
+	msgList.Add("two-letter", "h", 1)
+	msgList.Add("two-kana", "おは", 1)
+	msgList.Add("two-letter-words", "hh hh", 2)
+	msgList.Add("", "h,h", 2)
+	msgList.Add("", "h,,h", 2)
+	msgList.Add("", "h, h", 2)
+	msgList.Add("", "  h, h", 2)
+	msgList.Add("", "h, h  ", 2)
+	msgList.Add("", "  h, h  ", 2)
+	msgList.Add("", "h,  h", 2)
+	msgList.Add("", "h\nh", 2)
+	msgList.Add("", "お,お", 2)
+	msgList.Add("", "お、お", 2)
+	msgList.Add("", "お\nお", 2)
+
+	for _, item := range msgList.Items {
+		res := common.WordCount(item.Msg)
+		if res != item.Expects {
+			if item.Name != "" {
+				t.Error("Name: ", item.Name)
+			}
+			t.Error("Testing string '" + item.Msg + "'")
+			t.Error("Bad output:", res)
+			t.Error("Expected:", item.Expects)
+		}
+	}
+}
+
 func TestPreparser(t *testing.T) {
-	var res string
 	var msgList []METri
 
 	// Note: The open tag is evaluated without knowledge of the close tag for efficiency and simplicity, so the parser autofills the associated close tag when it finds an open tag without a partner
@@ -1155,7 +1203,7 @@ func TestPreparser(t *testing.T) {
 	// TODO: Do a test with invalid UTF-8 input
 
 	for _, item := range msgList {
-		res = common.PreparseMessage(item.Msg)
+		res := common.PreparseMessage(item.Msg)
 		if res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)
@@ -1169,7 +1217,6 @@ func TestPreparser(t *testing.T) {
 }
 
 func TestParser(t *testing.T) {
-	var res string
 	var msgList []METri
 
 	msgList = addMETri(msgList, "//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
@@ -1192,7 +1239,7 @@ func TestParser(t *testing.T) {
 	msgList = addMETri(msgList, "@-1", "<span style='color: red;'>[Invalid Profile]</span>1")
 
 	for _, item := range msgList {
-		res = common.ParseMessage(item.Msg, 1, "forums")
+		res := common.ParseMessage(item.Msg, 1, "forums")
 		if res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)

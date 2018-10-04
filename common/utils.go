@@ -363,7 +363,7 @@ func Stripslashes(text string) string {
 	return strings.Replace(text, "\\", "", -1)
 }
 
-// TODO: Write a test for this
+// The word counter might run into problems with some languages where words aren't as obviously demarcated, I would advise turning it off in those cases, or if it becomes annoying in general, really.
 func WordCount(input string) (count int) {
 	input = strings.TrimSpace(input)
 	if input == "" {
