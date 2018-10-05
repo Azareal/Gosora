@@ -60,6 +60,7 @@ func init() {
 
 // TODO: See if we can json.Marshal instead?
 func escapeTextInJson(in string) string {
+	in = strings.Replace(in, "\"", "\\\"", -1)
 	return strings.Replace(in, "/", "\\/", -1)
 }
 
@@ -72,7 +73,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 	}
 
 	/*if elementType != "forum" {
-		targetUser, err = users.Get(targetUser_id)
+		targetUser, err = users.Get(targetUserID)
 		if err != nil {
 			LocalErrorJS("Unable to find the target user",w,r)
 			return
@@ -80,38 +81,37 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 	}*/
 
 	if event == "friend_invite" {
-		return buildAlertString("You received a friend invite from {0}", []string{actor.Name}, actor.Link, actor.Avatar, asid), nil
+		return buildAlertString(GetTmplPhrase("alerts_new_friend_invite"), []string{actor.Name}, actor.Link, actor.Avatar, asid), nil
 	}
 
-	var act, postAct, url, area string
-	var startFrag, endFrag string
-	switch elementType {
-	case "forum":
+	// Not that many events for us to handle in a forum
+	if elementType == "forum" {
 		if event == "reply" {
-			act = "created a new topic"
 			topic, err := Topics.Get(elementID)
 			if err != nil {
 				DebugLogf("Unable to find linked topic %d", elementID)
-				return "", errors.New("Unable to find the linked topic")
+				return "", errors.New(GetErrorPhrase("alerts_no_linked_topic"))
 			}
-			url = topic.Link
-			area = topic.Title
 			// Store the forum ID in the targetUser column instead of making a new one? o.O
 			// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
-		} else {
-			act = "did something in a forum"
+			return buildAlertString(GetTmplPhrase("alerts_forum_new_topic"), []string{actor.Name, topic.Title}, topic.Link, actor.Avatar, asid), nil
 		}
+		return buildAlertString(GetTmplPhrase("alerts_forum_unknown_action"), []string{actor.Name}, "", actor.Avatar, asid), nil
+	}
+
+	var url, area string
+	var phraseName = "alerts_" + elementType
+	switch elementType {
 	case "topic":
 		topic, err := Topics.Get(elementID)
 		if err != nil {
 			DebugLogf("Unable to find linked topic %d", elementID)
-			return "", errors.New("Unable to find the linked topic")
+			return "", errors.New(GetErrorPhrase("alerts_no_linked_topic"))
 		}
 		url = topic.Link
 		area = topic.Title
-
 		if targetUserID == user.ID {
-			postAct = " your topic"
+			phraseName += "_own"
 		}
 	case "user":
 		targetUser, err = Users.Get(elementID)
@@ -120,8 +120,10 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 			return "", errors.New("Unable to find the target user")
 		}
 		area = targetUser.Name
-		endFrag = "'s profile"
 		url = targetUser.Link
+		if targetUserID == user.ID {
+			phraseName += "_own"
+		}
 	case "post":
 		topic, err := TopicByReplyID(elementID)
 		if err != nil {
@@ -130,7 +132,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 		url = topic.Link
 		area = topic.Title
 		if targetUserID == user.ID {
-			postAct = " your post in"
+			phraseName += "_own"
 		}
 	default:
 		return "", errors.New("Invalid elementType")
@@ -138,26 +140,14 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 
 	switch event {
 	case "like":
-		if elementType == "user" {
-			act = "likes"
-			endFrag = ""
-			if targetUser.ID == user.ID {
-				area = "you"
-			}
-		} else {
-			act = "liked"
-		}
+		phraseName += "_like"
 	case "mention":
-		if elementType == "user" {
-			act = "mentioned you on"
-		} else {
-			act = "mentioned you in"
-			postAct = ""
-		}
+		phraseName += "_mention"
 	case "reply":
-		act = "replied to"
+		phraseName += "_reply"
 	}
-	return buildAlertString("{0} "+startFrag+act+postAct+" {1}"+endFrag, []string{actor.Name, area}, url, actor.Avatar, asid), nil
+
+	return buildAlertString(GetTmplPhrase(phraseName), []string{actor.Name, area}, url, actor.Avatar, asid), nil
 }
 
 func buildAlertString(msg string, sub []string, path string, avatar string, asid int) string {
@@ -169,7 +159,7 @@ func buildAlertString(msg string, sub []string, path string, avatar string, asid
 		substring = substring[:len(substring)-1]
 	}
 
-	return `{"msg":"` + escapeTextInJson(msg) + `","sub":["` + substring + `"],"path":"` + escapeTextInJson(path) + `","avatar":"` + escapeTextInJson(avatar) + `","asid":"` + strconv.Itoa(asid) + `"}`
+	return `{"msg":"` + escapeTextInJson(msg) + `","sub":[` + substring + `],"path":"` + escapeTextInJson(path) + `","avatar":"` + escapeTextInJson(avatar) + `","asid":"` + strconv.Itoa(asid) + `"}`
 }
 
 func AddActivityAndNotifyAll(actor int, targetUser int, event string, elementType string, elementID int) error {
