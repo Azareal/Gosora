@@ -43,21 +43,6 @@ func init() {
 	})
 }
 
-// These notes are for me, don't worry about it too much ^_^
-/*
-"You received a friend invite from {user}"
-"{x}{mentioned you on}{user}{'s profile}"
-"{x}{mentioned you in}{topic}"
-"{x}{likes}{you}"
-"{x}{liked}{your topic}{topic}"
-"{x}{liked}{your post on}{user}{'s profile}" todo
-"{x}{liked}{your post in}{topic}"
-"{x}{replied to}{your post in}{topic}" todo
-"{x}{replied to}{topic}"
-"{x}{replied to}{your topic}{topic}"
-"{x}{created a new topic}{topic}"
-*/
-
 // TODO: See if we can json.Marshal instead?
 func escapeTextInJson(in string) string {
 	in = strings.Replace(in, "\"", "\\\"", -1)

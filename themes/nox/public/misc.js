@@ -3,9 +3,11 @@
 (() => {
 	addInitHook("after_update_alert_list", () => {
 		if(alertCount==0) {
-			$(".alerts").html("No new alerts")
+			$(".alerts").html("No new alerts");
+			$(".user_box").removeClass("has_alerts");
 		} else {
-			$(".alerts").html(alertCount + " new alerts")
+			$(".alerts").html(alertCount + " new alerts");
+			$(".user_box").addClass("has_alerts");
 		}
 	})
 })();
