@@ -690,10 +690,8 @@ func TestProfileReplyStore(t *testing.T) {
 
 	_, err := common.Prstore.Get(-1)
 	recordMustNotExist(t, err, "PRID #-1 shouldn't exist")
-
 	_, err = common.Prstore.Get(0)
 	recordMustNotExist(t, err, "PRID #0 shouldn't exist")
-
 	_, err = common.Prstore.Get(1)
 	recordMustNotExist(t, err, "PRID #1 shouldn't exist")
 
@@ -704,11 +702,11 @@ func TestProfileReplyStore(t *testing.T) {
 
 	var profileID = 1
 	prid, err := common.Prstore.Create(profileID, "Haha", 1, "::1")
-	expect(t, err == nil, "Unable to create a profile reply")
+	expectNilErr(t, err)
 	expect(t, prid == 1, "The first profile reply should have an ID of 1")
 
 	profileReply, err := common.Prstore.Get(1)
-	expect(t, err == nil, "PRID #1 should exist")
+	expectNilErr(t, err)
 	expect(t, profileReply.ID == 1, fmt.Sprintf("The profile reply should have an ID of 1 not %d", profileReply.ID))
 	expect(t, profileReply.ParentID == 1, fmt.Sprintf("The parent ID of the profile reply should be 1 not %d", profileReply.ParentID))
 	expect(t, profileReply.Content == "Haha", fmt.Sprintf("The profile reply's contents should be 'Haha' not '%s'", profileReply.Content))

@@ -319,8 +319,8 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"parsed_content", "text", 0, false, false, ""},
 			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
 			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"lastEdit", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"lastEditBy", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"lastEdit", "int", 0, false, false, "0"},
+			qgen.DBTableColumn{"lastEditBy", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 		},
 		[]qgen.DBTableKey{

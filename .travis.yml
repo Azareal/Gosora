@@ -23,4 +23,4 @@ script: ./run-linux-tests
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 addons:
-  mariadb: '10.0'
+  mariadb: '10.1'
