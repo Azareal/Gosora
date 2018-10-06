@@ -54,7 +54,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 
 	actor, err := Users.Get(actorID)
 	if err != nil {
-		return "", errors.New("Unable to find the actor")
+		return "", errors.New(GetErrorPhrase("alerts_no_actor"))
 	}
 
 	/*if elementType != "forum" {
@@ -66,7 +66,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 	}*/
 
 	if event == "friend_invite" {
-		return buildAlertString(GetTmplPhrase("alerts_new_friend_invite"), []string{actor.Name}, actor.Link, actor.Avatar, asid), nil
+		return buildAlertString(GetTmplPhrase("alerts.new_friend_invite"), []string{actor.Name}, actor.Link, actor.Avatar, asid), nil
 	}
 
 	// Not that many events for us to handle in a forum
@@ -79,13 +79,13 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 			}
 			// Store the forum ID in the targetUser column instead of making a new one? o.O
 			// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
-			return buildAlertString(GetTmplPhrase("alerts_forum_new_topic"), []string{actor.Name, topic.Title}, topic.Link, actor.Avatar, asid), nil
+			return buildAlertString(GetTmplPhrase("alerts.forum_new_topic"), []string{actor.Name, topic.Title}, topic.Link, actor.Avatar, asid), nil
 		}
-		return buildAlertString(GetTmplPhrase("alerts_forum_unknown_action"), []string{actor.Name}, "", actor.Avatar, asid), nil
+		return buildAlertString(GetTmplPhrase("alerts.forum_unknown_action"), []string{actor.Name}, "", actor.Avatar, asid), nil
 	}
 
 	var url, area string
-	var phraseName = "alerts_" + elementType
+	var phraseName = "alerts." + elementType
 	switch elementType {
 	case "topic":
 		topic, err := Topics.Get(elementID)
@@ -102,7 +102,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 		targetUser, err = Users.Get(elementID)
 		if err != nil {
 			DebugLogf("Unable to find target user %d", elementID)
-			return "", errors.New("Unable to find the target user")
+			return "", errors.New(GetErrorPhrase("alerts_no_target_user"))
 		}
 		area = targetUser.Name
 		url = targetUser.Link
@@ -112,7 +112,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 	case "post":
 		topic, err := TopicByReplyID(elementID)
 		if err != nil {
-			return "", errors.New("Unable to find the linked reply or parent topic")
+			return "", errors.New(GetErrorPhrase("alerts_no_linked_topic_by_reply"))
 		}
 		url = topic.Link
 		area = topic.Title
@@ -120,7 +120,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 			phraseName += "_own"
 		}
 	default:
-		return "", errors.New("Invalid elementType")
+		return "", errors.New(GetErrorPhrase("alerts_invalid_elementtype"))
 	}
 
 	switch event {
@@ -193,7 +193,6 @@ func NotifyWatchers(asid int64) error {
 	if EnableWebsockets {
 		go notifyWatchers(asid)
 	}
-
 	return nil
 }
 

@@ -37,7 +37,7 @@ func createAdmin() error {
 	}
 
 	// Build the admin user query
-	adminUserStmt, err := qgen.Builder.SimpleInsert("users", "name, password, salt, email, group, is_super_admin, active, createdAt, lastActiveAt, message, last_ip", "'Admin',?,?,'admin@localhost',1,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'','127.0.0.1'")
+	adminUserStmt, err := qgen.Builder.SimpleInsert("users", "name, password, salt, email, group, is_super_admin, active, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt, message, last_ip", "'Admin',?,?,'admin@localhost',1,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),'','127.0.0.1'")
 	if err != nil {
 		return err
 	}

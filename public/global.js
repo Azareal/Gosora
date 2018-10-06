@@ -81,7 +81,7 @@ function updateAlertList(menuAlerts) {
 		j++;
 	}
 
-	if(outList == "") outList = "<div class='alertItem'>You don't have any alerts</div>";
+	if(outList == "") outList = "<div class='alertItem'>"+phraseBox["alerts"]["alerts.no_alerts"]+"</div>";
 	alertListNode.innerHTML = outList;
 
 	if(alertCount != 0) {
@@ -489,7 +489,6 @@ function mainInit(){
 		$(".submit_edit").click(function(event)
 		{
 			event.preventDefault();
-			//console.log("running .submit_edit event");
 			var outData = {isJs: "1"}
 			var blockParent = $(this).closest('.editable_parent');
 			blockParent.find('.editable_block').each(function() {
@@ -569,8 +568,9 @@ function mainInit(){
 		var fileList = this.files;
 		// Truncate the number of files to 5
 		let files = [];
-		for(var i = 0; i < fileList.length && i < 5; i++)
+		for(var i = 0; i < fileList.length && i < 5; i++) {
 			files[i] = fileList[i];
+		}
 
 		// Iterate over the files
 		let totalSize = 0;

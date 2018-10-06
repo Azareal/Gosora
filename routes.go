@@ -163,7 +163,7 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 		phrases = make(map[string]string)
 		for _, positive := range positives {
 			// ! Constrain it to topic and status phrases for now
-			if !strings.HasPrefix(positive, "topic") && !strings.HasPrefix(positive, "status") {
+			if !strings.HasPrefix(positive, "topic") && !strings.HasPrefix(positive, "status") && !strings.HasPrefix(positive, "alerts") {
 				return common.PreErrorJS("Not implemented!", w, r)
 			}
 			pPhrases, ok := common.GetTmplPhrasesByPrefix(positive)
@@ -176,7 +176,7 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 		}
 	} else {
 		// ! Constrain it to topic and status phrases for now
-		if !strings.HasPrefix(positives[0], "topic") && !strings.HasPrefix(positives[0], "status") {
+		if !strings.HasPrefix(positives[0], "topic") && !strings.HasPrefix(positives[0], "status") && !strings.HasPrefix(positives[0], "alerts") {
 			return common.PreErrorJS("Not implemented!", w, r)
 		}
 		pPhrases, ok := common.GetTmplPhrasesByPrefix(positives[0])

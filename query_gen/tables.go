@@ -204,12 +204,19 @@ func createTables(adapter qgen.Adapter) error {
 			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			qgen.DBTableColumn{"is_closed", "boolean", 0, false, false, "0"},
 			qgen.DBTableColumn{"sticky", "boolean", 0, false, false, "0"},
+			// TODO: Add an index for this
 			qgen.DBTableColumn{"parentID", "int", 0, false, false, "2"},
 			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 			qgen.DBTableColumn{"postCount", "int", 0, false, false, "1"},
 			qgen.DBTableColumn{"likeCount", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"words", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"views", "int", 0, false, false, "0"},
+			//qgen.DBTableColumn{"dailyViews", "int", 0, false, false, "0"},
+			//qgen.DBTableColumn{"weeklyViews", "int", 0, false, false, "0"},
+			//qgen.DBTableColumn{"monthlyViews", "int", 0, false, false, "0"},
+			// ? - A little hacky, maybe we could do something less likely to bite us with huge numbers of topics?
+			// TODO: Add an index for this?
+			//qgen.DBTableColumn{"lastMonth", "datetime", 0, false, false, ""},
 			qgen.DBTableColumn{"css_class", "varchar", 100, false, false, "''"},
 			qgen.DBTableColumn{"poll", "int", 0, false, false, "0"},
 			qgen.DBTableColumn{"data", "varchar", 200, false, false, "''"},
@@ -435,7 +442,7 @@ func createTables(adapter qgen.Adapter) error {
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"miid", "int", 0, false, true, ""},
 			qgen.DBTableColumn{"mid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"name", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"name", "varchar", 200, false, false, "''"},
 			qgen.DBTableColumn{"htmlID", "varchar", 200, false, false, "''"},
 			qgen.DBTableColumn{"cssClass", "varchar", 200, false, false, "''"},
 			qgen.DBTableColumn{"position", "varchar", 100, false, false, ""},
@@ -589,6 +596,13 @@ func createTables(adapter qgen.Adapter) error {
 		},
 		[]qgen.DBTableKey{},
 	)
+
+	/*qgen.Install.CreateTable("updates", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"dbVersion", "int", 0, false, false, "0"},
+		},
+		[]qgen.DBTableKey{},
+	)*/
 
 	return nil
 }

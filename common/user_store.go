@@ -58,7 +58,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 		getByName:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Where("name = ?").Prepare(),
 		getOffset:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Orderby("uid ASC").Limit("?,?").Prepare(),
 		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
-		register:       acc.SimpleInsert("users", "name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt", "?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP()"), // TODO: Implement user_count on users_groups here
+		register:       acc.Insert("users").Columns("name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
 		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
 		userCount:      acc.SimpleCount("users", "", ""),
 	}, acc.FirstError()

@@ -92,7 +92,7 @@ function DoNothingButPassBack(item) {
 }
 
 function fetchPhrases() {
-	fetch("/api/phrases/?query=status,topic_list")
+	fetch("/api/phrases/?query=status,topic_list,alerts")
 		.then((resp) => resp.json())
 		.then((data) => {
 			console.log("loaded phrase endpoint data");
