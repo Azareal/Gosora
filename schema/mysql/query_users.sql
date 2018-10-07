@@ -6,7 +6,7 @@ CREATE TABLE `users` (
 	`group` int not null,
 	`active` boolean DEFAULT 0 not null,
 	`is_super_admin` boolean DEFAULT 0 not null,
-	`createdAt` datetime not null,
+	`createdAt` datetime DEFAULT UTC_TIMESTAMP() not null,
 	`lastActiveAt` datetime not null,
 	`session` varchar(200) DEFAULT '' not null,
 	`last_ip` varchar(200) DEFAULT '0.0.0.0.0' not null,

@@ -3,7 +3,7 @@ CREATE TABLE `topics` (
 	`title` varchar(100) not null,
 	`content` text not null,
 	`parsed_content` text not null,
-	`createdAt` datetime not null,
+	`createdAt` datetime DEFAULT UTC_TIMESTAMP() not null,
 	`lastReplyAt` datetime not null,
 	`lastReplyBy` int not null,
 	`createdBy` int not null,

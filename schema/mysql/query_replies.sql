@@ -3,7 +3,7 @@ CREATE TABLE `replies` (
 	`tid` int not null,
 	`content` text not null,
 	`parsed_content` text not null,
-	`createdAt` datetime not null,
+	`createdAt` datetime DEFAULT UTC_TIMESTAMP() not null,
 	`createdBy` int not null,
 	`lastEdit` int DEFAULT 0 not null,
 	`lastEditBy` int DEFAULT 0 not null,
