@@ -9,6 +9,6 @@ CREATE TABLE `users_2fa_keys` (
 	`scratch6` varchar(50) not null,
 	`scratch7` varchar(50) not null,
 	`scratch8` varchar(50) not null,
-	`createdAt` datetime DEFAULT UTC_TIMESTAMP() not null,
+	`createdAt` datetime not null,
 	primary key(`uid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;

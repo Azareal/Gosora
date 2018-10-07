@@ -141,9 +141,10 @@ func (adapter *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColum
 	// Make it easier to support Cassandra in the future
 	if column.Type == "createdAt" {
 		column.Type = "datetime"
-		if column.Default == "" {
+		// MySQL doesn't support this x.x
+		/*if column.Default == "" {
 			column.Default = "UTC_TIMESTAMP()"
-		}
+		}*/
 	} else if column.Type == "json" {
 		column.Type = "text"
 	}
@@ -154,9 +155,9 @@ func (adapter *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColum
 	// TODO: Exclude the other variants of text like mediumtext and longtext too
 	if column.Default != "" && column.Type != "text" {
 		end = " DEFAULT "
-		if column.Type == "datetime" && column.Default[len(column.Default)-1] == ')' {
+		/*if column.Type == "datetime" && column.Default[len(column.Default)-1] == ')' {
 			end += column.Default
-		} else if adapter.stringyType(column.Type) && column.Default != "''" {
+		} else */if adapter.stringyType(column.Type) && column.Default != "''" {
 			end += "'" + column.Default + "'"
 		} else {
 			end += column.Default

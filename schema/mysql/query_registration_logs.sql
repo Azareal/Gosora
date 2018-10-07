@@ -5,6 +5,6 @@ CREATE TABLE `registration_logs` (
 	`failureReason` varchar(100) not null,
 	`success` bool DEFAULT 0 not null,
 	`ipaddress` varchar(200) not null,
-	`doneAt` datetime DEFAULT UTC_TIMESTAMP() not null,
+	`doneAt` datetime not null,
 	primary key(`rlid`)
 );
