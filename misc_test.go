@@ -424,12 +424,12 @@ func TestTopicStore(t *testing.T) {
 	tcache := common.NewMemoryTopicCache(common.Config.TopicCacheCapacity)
 	common.Topics, err = common.NewDefaultTopicStore(tcache)
 	expectNilErr(t, err)
-	topicStoreTest(t)
+	topicStoreTest(t, 2)
 	common.Topics, err = common.NewDefaultTopicStore(nil)
 	expectNilErr(t, err)
-	topicStoreTest(t)
+	topicStoreTest(t, 3)
 }
-func topicStoreTest(t *testing.T) {
+func topicStoreTest(t *testing.T, newID int) {
 	var topic *common.Topic
 	var err error
 
@@ -448,15 +448,84 @@ func topicStoreTest(t *testing.T) {
 	expect(t, !ok, "TID #-1 shouldn't exist")
 	ok = common.Topics.Exists(0)
 	expect(t, !ok, "TID #0 shouldn't exist")
-
 	ok = common.Topics.Exists(1)
 	expect(t, ok, "TID #1 should exist")
 
 	count := common.Topics.GlobalCount()
-	if count <= 0 {
-		t.Error("The number of topics should be bigger than zero")
-		t.Error("count", count)
+	expect(t, count == 1, fmt.Sprintf("Global count for topics should be 1, not %d", count))
+
+	//Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error)
+	tid, err := common.Topics.Create(2, "Test Topic", "Topic Content", 1, "::1")
+	expectNilErr(t, err)
+	expect(t, tid == newID, fmt.Sprintf("TID for the new topic should be %d, not %d", newID, tid))
+	expect(t, common.Topics.Exists(newID), fmt.Sprintf("TID #%d should exist", newID))
+
+	count = common.Topics.GlobalCount()
+	expect(t, count == 2, fmt.Sprintf("Global count for topics should be 2, not %d", count))
+
+	var iFrag = func(cond bool) string {
+		if !cond {
+			return "n't"
+		}
+		return ""
 	}
+
+	var testTopic = func(tid int, title string, content string, createdBy int, ip string, parentID int, isClosed bool, sticky bool) {
+		topic, err = common.Topics.Get(tid)
+		recordMustExist(t, err, fmt.Sprintf("Couldn't find TID #%d", tid))
+		expect(t, topic.ID == tid, fmt.Sprintf("topic.ID does not match the requested TID. Got '%d' instead.", topic.ID))
+		expect(t, topic.GetID() == tid, fmt.Sprintf("topic.ID does not match the requested TID. Got '%d' instead.", topic.GetID()))
+		expect(t, topic.Title == title, fmt.Sprintf("The topic's name should be '%s', not %s", title, topic.Title))
+		expect(t, topic.Content == content, fmt.Sprintf("The topic's body should be '%s', not %s", content, topic.Content))
+		expect(t, topic.CreatedBy == createdBy, fmt.Sprintf("The topic's creator should be %d, not %d", createdBy, topic.CreatedBy))
+		expect(t, topic.IPAddress == ip, fmt.Sprintf("The topic's IP Address should be '%s', not %s", ip, topic.IPAddress))
+		expect(t, topic.ParentID == parentID, fmt.Sprintf("The topic's parent forum should be %d, not %d", parentID, topic.ParentID))
+		expect(t, topic.IsClosed == isClosed, fmt.Sprintf("This topic should%s be locked", iFrag(topic.IsClosed)))
+		expect(t, topic.Sticky == sticky, fmt.Sprintf("This topic should%s be sticky", iFrag(topic.Sticky)))
+		expect(t, topic.GetTable() == "topics", fmt.Sprintf("The topic's table should be 'topics', not %s", topic.GetTable()))
+	}
+
+	tcache := common.Topics.GetCache()
+	var shouldNotBeIn = func(tid int) {
+		if tcache != nil {
+			_, err = tcache.Get(tid)
+			recordMustNotExist(t, err, "Topic cache should be empty")
+		}
+	}
+	if tcache != nil {
+		_, err = tcache.Get(newID)
+		expectNilErr(t, err)
+	}
+
+	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, false, false)
+
+	expectNilErr(t, topic.Lock())
+	shouldNotBeIn(newID)
+	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, true, false)
+
+	expectNilErr(t, topic.Unlock())
+	shouldNotBeIn(newID)
+	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, false, false)
+
+	expectNilErr(t, topic.Stick())
+	shouldNotBeIn(newID)
+	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, false, true)
+
+	expectNilErr(t, topic.Unstick())
+	shouldNotBeIn(newID)
+	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, false, false)
+
+	expectNilErr(t, topic.MoveTo(1))
+	shouldNotBeIn(newID)
+	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 1, false, false)
+	// TODO: Add more tests for more *Topic methods
+
+	expectNilErr(t, topic.Delete())
+	shouldNotBeIn(newID)
+
+	_, err = common.Topics.Get(newID)
+	recordMustNotExist(t, err, fmt.Sprintf("TID #%d shouldn't exist", newID))
+	expect(t, !common.Topics.Exists(newID), fmt.Sprintf("TID #%d shouldn't exist", newID))
 
 	// TODO: Test topic creation and retrieving that created topic plus reload and inspecting the cache
 }
@@ -1060,7 +1129,6 @@ func (tlist *CountTestList) Add(name string, msg string, expects int) {
 	tlist.Items = append(tlist.Items, CountTest{name, msg, expects})
 }
 
-//WordCount(input string) (count int)
 func TestWordCount(t *testing.T) {
 	var msgList = &CountTestList{nil}
 
@@ -1079,9 +1147,13 @@ func TestWordCount(t *testing.T) {
 	msgList.Add("", "  h, h  ", 2)
 	msgList.Add("", "h,  h", 2)
 	msgList.Add("", "h\nh", 2)
+	msgList.Add("", "h\"h", 2)
+	msgList.Add("", "h[r]h", 3)
 	msgList.Add("", "お,お", 2)
 	msgList.Add("", "お、お", 2)
 	msgList.Add("", "お\nお", 2)
+	msgList.Add("", "お”お", 2)
+	msgList.Add("", "お「あ」お", 3)
 
 	for _, item := range msgList.Items {
 		res := common.WordCount(item.Msg)
