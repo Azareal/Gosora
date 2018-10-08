@@ -624,14 +624,10 @@ func TestGroupStore(t *testing.T) {
 	recordMustExist(t, err, "Couldn't find GID #1")
 	expect(t, group.ID == 1, fmt.Sprintf("group.ID doesn't not match the requested GID. Got '%d' instead.'", group.ID))
 
-	ok := common.Groups.Exists(-1)
-	expect(t, !ok, "GID #-1 shouldn't exist")
-
+	expect(t, !common.Groups.Exists(-1), "GID #-1 shouldn't exist")
 	// 0 aka Unknown, for system posts and other oddities
-	ok = common.Groups.Exists(0)
-	expect(t, ok, "GID #0 should exist")
-	ok = common.Groups.Exists(1)
-	expect(t, ok, "GID #1 should exist")
+	expect(t, common.Groups.Exists(0), "GID #0 should exist")
+	expect(t, common.Groups.Exists(1), "GID #1 should exist")
 
 	var isAdmin = true
 	var isMod = true
@@ -789,6 +785,43 @@ func TestProfileReplyStore(t *testing.T) {
 
 	// TODO: Test profileReply.SetBody() and profileReply.Creator()
 }
+
+func TestLogs(t *testing.T) {
+	if !gloinited {
+		gloinit()
+	}
+
+	gTests := func(store common.LogStore, phrase string) {
+		expect(t, store.GlobalCount() == 0, "There shouldn't be any "+phrase)
+		logs, err := store.GetOffset(0, 25)
+		expectNilErr(t, err)
+		expect(t, len(logs) == 0, "The log slice should be empty")
+	}
+	gTests(common.ModLogs, "modlogs")
+	gTests(common.AdminLogs, "adminlogs")
+
+	gTests2 := func(store common.LogStore, phrase string) {
+		err := store.Create("something", 0, "bumblefly", "::1", 1)
+		expectNilErr(t, err)
+		count := store.GlobalCount()
+		expect(t, count == 1, fmt.Sprintf("store.GlobalCount should return one, not %d", count))
+		logs, err := store.GetOffset(0, 25)
+		recordMustExist(t, err, "We should have at-least one "+phrase)
+		expect(t, len(logs) == 1, "The length of the log slice should be one")
+
+		log := logs[0]
+		expect(t, log.Action == "something", "log.Action is not something")
+		expect(t, log.ElementID == 0, "log.ElementID is not 0")
+		expect(t, log.ElementType == "bumblefly", "log.ElementType is not bumblefly")
+		expect(t, log.IPAddress == "::1", "log.IPAddress is not ::1")
+		expect(t, log.ActorID == 1, "log.ActorID is not 1")
+		// TODO: Add a test for log.DoneAt? Maybe throw in some dates and times which are clearly impossible but which may occur due to timezone bugs?
+	}
+	gTests2(common.ModLogs, "modlog")
+	gTests2(common.AdminLogs, "adminlog")
+}
+
+// TODO: Add tests for registration logs
 
 func TestPluginManager(t *testing.T) {
 	if !gloinited {
