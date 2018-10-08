@@ -389,7 +389,12 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User) commo
 		mfaSetup = true
 	}
 
-	pi := common.AccountDashPage{header, mfaSetup}
+	// Normalise the score so that the user sees their relative progress to the next level rather than showing them their total score
+	prevScore := common.GetLevelScore(user.Level)
+	currentScore := user.Score - prevScore
+	nextScore := common.GetLevelScore(user.Level+1) - prevScore
+
+	pi := common.AccountDashPage{header, mfaSetup, currentScore, nextScore, user.Level + 1}
 	if common.RunPreRenderHook("pre_render_account_own_edit", w, r, &user, &pi) {
 		return nil
 	}

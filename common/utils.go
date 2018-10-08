@@ -114,9 +114,8 @@ func RelativeTime(t time.Time) string {
 		return fmt.Sprintf("%d minutes ago", int(seconds/60))
 	case seconds < 7200:
 		return "an hour ago"
-	default:
-		return fmt.Sprintf("%d hours ago", int(seconds/60/60))
 	}
+	return fmt.Sprintf("%d hours ago", int(seconds/60/60))
 }
 
 // TODO: Write a test for this
@@ -192,9 +191,8 @@ func ConvertUnit(num int) (int, string) {
 		return num / 1000000, "M"
 	case num >= 1000:
 		return num / 1000, "K"
-	default:
-		return num, ""
 	}
+	return num, ""
 }
 
 // TODO: Write a test for this
@@ -212,9 +210,8 @@ func ConvertFriendlyUnit(num int) (int, string) {
 		return num / 1000000, " million"
 	case num >= 1000:
 		return num / 1000, " thousand"
-	default:
-		return num, ""
 	}
+	return num, ""
 }
 
 // TODO: Make slugs optional for certain languages across the entirety of Gosora?
@@ -369,6 +366,7 @@ func WordCount(input string) (count int) {
 	if input == "" {
 		return 0
 	}
+
 	var inSpace bool
 	for _, value := range input {
 		if unicode.IsSpace(value) || unicode.IsPunct(value) {
@@ -380,6 +378,7 @@ func WordCount(input string) (count int) {
 			inSpace = false
 		}
 	}
+
 	return count + 1
 }
 
@@ -407,21 +406,17 @@ func GetLevel(score int) (level int) {
 // TODO: Write a test for this
 func GetLevelScore(getLevel int) (score int) {
 	var base float64 = 25
-	var current, prev float64
-	var level int
-	expFactor := 2.8
+	var current float64
+	var expFactor = 2.8
 
-	for i := 1; ; i++ {
+	for i := 1; i <= getLevel; i++ {
 		_, bit := math.Modf(float64(i) / 10)
 		if bit == 0 {
 			expFactor += 0.1
 		}
-		current = base + math.Pow(float64(i), expFactor) + (prev / 3)
-		prev = current
-		level++
-		if level <= getLevel {
-			break
-		}
+		current = base + math.Pow(float64(i), expFactor) + (current / 3)
+		//fmt.Println("level: ", i)
+		//fmt.Println("current: ", current)
 	}
 	return int(math.Ceil(current))
 }

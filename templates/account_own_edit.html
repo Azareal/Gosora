@@ -21,7 +21,7 @@
 		</div>
 		<div id="dash_right" class="coldyn_item">
 			<div class="rowitem">{{if not .MFASetup}}<a href="/user/edit/mfa/setup/">{{lang "account_dash_2fa_setup"}}</a>{{else}}<a href="/user/edit/mfa/">{{lang "account_dash_2fa_manage"}}</a>{{end}} <span class="dash_security">{{lang "account_dash_security_notice"}}</span></div>
-			<div class="rowitem">{{lang "account_dash_next_level"}} <span class="account_soon">{{lang "account_coming_soon"}}</span></div>
+			<div class="rowitem">Level {{.CurrentUser.Level}}: [{{.CurrentScore}} / {{.NextScore}}] <span class="account_soon">{{lang "account_coming_soon"}}</span></div>
 		</div>
 		</div>
 	</main>

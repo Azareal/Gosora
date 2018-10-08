@@ -130,6 +130,8 @@ type ProfilePage struct {
 	*Header
 	ItemList     []ReplyUser
 	ProfileOwner User
+	CurrentScore int
+	NextScore    int
 }
 
 type CreateTopicPage struct {
@@ -152,7 +154,10 @@ type EmailListPage struct {
 
 type AccountDashPage struct {
 	*Header
-	MFASetup bool
+	MFASetup     bool
+	CurrentScore int
+	NextScore    int
+	NextLevel    int
 }
 
 type PanelStats struct {

@@ -116,7 +116,12 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 		return common.InternalError(err, w, r)
 	}
 
-	ppage := common.ProfilePage{header, replyList, *puser}
+	// Normalise the score so that the user sees their relative progress to the next level rather than showing them their total score
+	prevScore := common.GetLevelScore(puser.Level)
+	currentScore := puser.Score - prevScore
+	nextScore := common.GetLevelScore(puser.Level+1) - prevScore
+
+	ppage := common.ProfilePage{header, replyList, *puser, currentScore, nextScore}
 	if common.RunPreRenderHook("pre_render_profile", w, r, &user, &ppage) {
 		return nil
 	}

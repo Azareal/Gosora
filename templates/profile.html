@@ -13,6 +13,9 @@
 			</div>
 		</div>
 		<div class="passiveBlock">
+			<div class="rowitem passive">
+				<a class="profile_menu_item">Level {{.ProfileOwner.Level}}: [{{.CurrentScore}} / {{.NextScore}}]</a>
+			</div>
 			{{if not .CurrentUser.Loggedin}}<div class="rowitem passive">
 				<a class="profile_menu_item">{{lang "profile_login_for_options"}}</a>
 			</div>{{else}}

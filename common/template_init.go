@@ -214,7 +214,7 @@ func CompileTemplates() error {
 
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "User 526"
-	ppage := ProfilePage{header, replyList, user}
+	ppage := ProfilePage{header, replyList, user, 0, 0} // TODO: Use the score from user to generate the currentScore and nextScore
 	profileTmpl, err := compile("profile", "common.ProfilePage", ppage)
 	if err != nil {
 		return err
