@@ -713,17 +713,19 @@ func TestReplyStore(t *testing.T) {
 
 	_, err := common.Rstore.Get(-1)
 	recordMustNotExist(t, err, "RID #-1 shouldn't exist")
-
 	_, err = common.Rstore.Get(0)
 	recordMustNotExist(t, err, "RID #0 shouldn't exist")
 
-	reply, err := common.Rstore.Get(1)
-	expectNilErr(t, err)
-	expect(t, reply.ID == 1, fmt.Sprintf("RID #1 has the wrong ID. It should be 1 not %d", reply.ID))
-	expect(t, reply.ParentID == 1, fmt.Sprintf("The parent topic of RID #1 should be 1 not %d", reply.ParentID))
-	expect(t, reply.CreatedBy == 1, fmt.Sprintf("The creator of RID #1 should be 1 not %d", reply.CreatedBy))
-	expect(t, reply.Content == "A reply!", fmt.Sprintf("The contents of RID #1 should be 'A reply!' not %s", reply.Content))
-	expect(t, reply.IPAddress == "::1", fmt.Sprintf("The IPAddress of RID#1 should be '::1' not %s", reply.IPAddress))
+	var replyTest = func(rid int, parentID int, createdBy int, content string, ip string) {
+		reply, err := common.Rstore.Get(rid)
+		expectNilErr(t, err)
+		expect(t, reply.ID == rid, fmt.Sprintf("RID #%d has the wrong ID. It should be %d not %d", rid, rid, reply.ID))
+		expect(t, reply.ParentID == parentID, fmt.Sprintf("The parent topic of RID #%d should be %d not %d", rid, parentID, reply.ParentID))
+		expect(t, reply.CreatedBy == createdBy, fmt.Sprintf("The creator of RID #%d should be %d not %d", rid, createdBy, reply.CreatedBy))
+		expect(t, reply.Content == content, fmt.Sprintf("The contents of RID #%d should be '%s' not %s", rid, content, reply.Content))
+		expect(t, reply.IPAddress == ip, fmt.Sprintf("The IPAddress of RID#%d should be '%s' not %s", rid, ip, reply.IPAddress))
+	}
+	replyTest(1, 1, 1, "A reply!", "::1")
 
 	_, err = common.Rstore.Get(2)
 	recordMustNotExist(t, err, "RID #2 shouldn't exist")
@@ -732,17 +734,28 @@ func TestReplyStore(t *testing.T) {
 	//Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error)
 	topic, err := common.Topics.Get(1)
 	expectNilErr(t, err)
+	expect(t, topic.PostCount == 1, fmt.Sprintf("TID #1's post count should be one, not %d", topic.PostCount))
 	rid, err := common.Rstore.Create(topic, "Fofofo", "::1", 1)
 	expectNilErr(t, err)
 	expect(t, rid == 2, fmt.Sprintf("The next reply ID should be 2 not %d", rid))
+	expect(t, topic.PostCount == 1, fmt.Sprintf("The old TID #1 in memory's post count should be one, not %d", topic.PostCount))
+	// TODO: Test the reply count on the topic
 
-	reply, err = common.Rstore.Get(2)
+	replyTest(2, 1, 1, "Fofofo", "::1")
+
+	topic, err = common.Topics.Get(1)
 	expectNilErr(t, err)
-	expect(t, reply.ID == 2, fmt.Sprintf("RID #2 has the wrong ID. It should be 2 not %d", reply.ID))
-	expect(t, reply.ParentID == 1, fmt.Sprintf("The parent topic of RID #2 should be 1 not %d", reply.ParentID))
-	expect(t, reply.CreatedBy == 1, fmt.Sprintf("The creator of RID #2 should be 1 not %d", reply.CreatedBy))
-	expect(t, reply.Content == "Fofofo", fmt.Sprintf("The contents of RID #2 should be 'Fofofo' not %s", reply.Content))
-	expect(t, reply.IPAddress == "::1", fmt.Sprintf("The IPAddress of RID #2 should be '::1' not %s", reply.IPAddress))
+	expect(t, topic.PostCount == 2, fmt.Sprintf("TID #1's post count should be two, not %d", topic.PostCount))
+
+	err = topic.CreateActionReply("destroy", "::1", 1)
+	expectNilErr(t, err)
+	expect(t, topic.PostCount == 2, fmt.Sprintf("The old TID #1 in memory's post count should be two, not %d", topic.PostCount))
+	replyTest(3, 1, 1, "", "::1")
+	// TODO: Check the actionType field of the reply, this might not be loaded by TopicStore, maybe we should add it there?
+
+	topic, err = common.Topics.Get(1)
+	expectNilErr(t, err)
+	expect(t, topic.PostCount == 3, fmt.Sprintf("TID #1's post count should be three, not %d", topic.PostCount))
 }
 
 func TestProfileReplyStore(t *testing.T) {

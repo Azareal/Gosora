@@ -841,7 +841,7 @@ func addTopicAction(action string, topic *common.Topic, user common.User) error 
 	if err != nil {
 		return err
 	}
-	return topic.CreateActionReply(action, user.LastIP, user)
+	return topic.CreateActionReply(action, user.LastIP, user.ID)
 }
 
 // TODO: Refactor this

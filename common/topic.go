@@ -310,12 +310,12 @@ func (topic *Topic) SetPoll(pollID int) error {
 }
 
 // TODO: Have this go through the ReplyStore?
-func (topic *Topic) CreateActionReply(action string, ipaddress string, user User) (err error) {
-	_, err = topicStmts.createActionReply.Exec(topic.ID, action, ipaddress, user.ID)
+func (topic *Topic) CreateActionReply(action string, ipaddress string, uid int) (err error) {
+	_, err = topicStmts.createActionReply.Exec(topic.ID, action, ipaddress, uid)
 	if err != nil {
 		return err
 	}
-	_, err = topicStmts.addRepliesToTopic.Exec(1, user.ID, topic.ID)
+	_, err = topicStmts.addRepliesToTopic.Exec(1, uid, topic.ID)
 	topic.cacheRemove()
 	// ? - Update the last topic cache for the parent forum?
 	return err
