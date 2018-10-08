@@ -1017,31 +1017,31 @@ func TestWordFilters(t *testing.T) {
 
 func TestSlugs(t *testing.T) {
 	var res string
-	var msgList []MEPair
+	var msgList = &MEPairList{nil}
 	common.Config.BuildSlugs = true // Flip this switch, otherwise all the tests will fail
 
-	msgList = addMEPair(msgList, "Unknown", "unknown")
-	msgList = addMEPair(msgList, "Unknown2", "unknown2")
-	msgList = addMEPair(msgList, "Unknown ", "unknown")
-	msgList = addMEPair(msgList, "Unknown 2", "unknown-2")
-	msgList = addMEPair(msgList, "Unknown  2", "unknown-2")
-	msgList = addMEPair(msgList, "Admin Alice", "admin-alice")
-	msgList = addMEPair(msgList, "Admin_Alice", "adminalice")
-	msgList = addMEPair(msgList, "Admin_Alice-", "adminalice")
-	msgList = addMEPair(msgList, "-Admin_Alice-", "adminalice")
-	msgList = addMEPair(msgList, "-Admin@Alice-", "adminalice")
-	msgList = addMEPair(msgList, "-Admin😀Alice-", "adminalice")
-	msgList = addMEPair(msgList, "u", "u")
-	msgList = addMEPair(msgList, "", "untitled")
-	msgList = addMEPair(msgList, " ", "untitled")
-	msgList = addMEPair(msgList, "-", "untitled")
-	msgList = addMEPair(msgList, "--", "untitled")
-	msgList = addMEPair(msgList, "é", "é")
-	msgList = addMEPair(msgList, "-é-", "é")
-	msgList = addMEPair(msgList, "-你好-", "untitled")
-	msgList = addMEPair(msgList, "-こにちは-", "untitled")
+	msgList.Add("Unknown", "unknown")
+	msgList.Add("Unknown2", "unknown2")
+	msgList.Add("Unknown ", "unknown")
+	msgList.Add("Unknown 2", "unknown-2")
+	msgList.Add("Unknown  2", "unknown-2")
+	msgList.Add("Admin Alice", "admin-alice")
+	msgList.Add("Admin_Alice", "adminalice")
+	msgList.Add("Admin_Alice-", "adminalice")
+	msgList.Add("-Admin_Alice-", "adminalice")
+	msgList.Add("-Admin@Alice-", "adminalice")
+	msgList.Add("-Admin😀Alice-", "adminalice")
+	msgList.Add("u", "u")
+	msgList.Add("", "untitled")
+	msgList.Add(" ", "untitled")
+	msgList.Add("-", "untitled")
+	msgList.Add("--", "untitled")
+	msgList.Add("é", "é")
+	msgList.Add("-é-", "é")
+	msgList.Add("-你好-", "untitled")
+	msgList.Add("-こにちは-", "untitled")
 
-	for _, item := range msgList {
+	for _, item := range msgList.Items {
 		t.Log("Testing string '" + item.Msg + "'")
 		res = common.NameToSlug(item.Msg)
 		if res != item.Expects {
@@ -1151,14 +1151,19 @@ type METri struct {
 	Expects string
 }
 
-func addMETri(msgList []METri, args ...string) []METri {
+type METriList struct {
+	Items []METri
+}
+
+func (tlist *METriList) Add(args ...string) {
 	if len(args) < 2 {
 		panic("need 2 or more args")
 	}
 	if len(args) > 2 {
-		return append(msgList, METri{args[0], args[1], args[2]})
+		tlist.Items = append(tlist.Items, METri{args[0], args[1], args[2]})
+	} else {
+		tlist.Items = append(tlist.Items, METri{"", args[0], args[1]})
 	}
-	return append(msgList, METri{"", args[0], args[1]})
 }
 
 type CountTest struct {
@@ -1215,91 +1220,91 @@ func TestWordCount(t *testing.T) {
 }
 
 func TestPreparser(t *testing.T) {
-	var msgList []METri
+	var msgList = &METriList{nil}
 
 	// Note: The open tag is evaluated without knowledge of the close tag for efficiency and simplicity, so the parser autofills the associated close tag when it finds an open tag without a partner
-	msgList = addMETri(msgList, "", "")
-	msgList = addMETri(msgList, " ", "")
-	msgList = addMETri(msgList, " hi", "hi")
-	msgList = addMETri(msgList, "hi ", "hi")
-	msgList = addMETri(msgList, "hi", "hi")
-	msgList = addMETri(msgList, ":grinning:", "😀")
-	msgList = addMETri(msgList, "😀", "😀")
-	msgList = addMETri(msgList, "&nbsp;", "")
-	msgList = addMETri(msgList, "<p>", "")
-	msgList = addMETri(msgList, "</p>", "")
-	msgList = addMETri(msgList, "<p></p>", "")
+	msgList.Add("", "")
+	msgList.Add(" ", "")
+	msgList.Add(" hi", "hi")
+	msgList.Add("hi ", "hi")
+	msgList.Add("hi", "hi")
+	msgList.Add(":grinning:", "😀")
+	msgList.Add("😀", "😀")
+	msgList.Add("&nbsp;", "")
+	msgList.Add("<p>", "")
+	msgList.Add("</p>", "")
+	msgList.Add("<p></p>", "")
 
-	msgList = addMETri(msgList, "<", "&lt;")
-	msgList = addMETri(msgList, ">", "&gt;")
-	msgList = addMETri(msgList, "<meow>", "&lt;meow&gt;")
-	msgList = addMETri(msgList, "&lt;", "&amp;lt;")
-	msgList = addMETri(msgList, "&", "&amp;")
+	msgList.Add("<", "&lt;")
+	msgList.Add(">", "&gt;")
+	msgList.Add("<meow>", "&lt;meow&gt;")
+	msgList.Add("&lt;", "&amp;lt;")
+	msgList.Add("&", "&amp;")
 
 	// Note: strings.TrimSpace strips newlines, if there's nothing before or after them
-	msgList = addMETri(msgList, "<br>", "")
-	msgList = addMETri(msgList, "<br />", "")
-	msgList = addMETri(msgList, "\\n", "\n", "")
-	msgList = addMETri(msgList, "\\n\\n", "\n\n", "")
-	msgList = addMETri(msgList, "\\n\\n\\n", "\n\n\n", "")
-	msgList = addMETri(msgList, "\\r\\n", "\r\n", "") // Windows style line ending
-	msgList = addMETri(msgList, "\\n\\r", "\n\r", "")
+	msgList.Add("<br>", "")
+	msgList.Add("<br />", "")
+	msgList.Add("\\n", "\n", "")
+	msgList.Add("\\n\\n", "\n\n", "")
+	msgList.Add("\\n\\n\\n", "\n\n\n", "")
+	msgList.Add("\\r\\n", "\r\n", "") // Windows style line ending
+	msgList.Add("\\n\\r", "\n\r", "")
 
-	msgList = addMETri(msgList, "ho<br>ho", "ho\n\nho")
-	msgList = addMETri(msgList, "ho<br />ho", "ho\n\nho")
-	msgList = addMETri(msgList, "ho\\nho", "ho\nho", "ho\nho")
-	msgList = addMETri(msgList, "ho\\n\\nho", "ho\n\nho", "ho\n\nho")
-	//msgList = addMETri(msgList, "ho\\n\\n\\n\\nho", "ho\n\n\n\nho", "ho\n\n\nho")
-	msgList = addMETri(msgList, "ho\\r\\nho", "ho\r\nho", "ho\nho") // Windows style line ending
-	msgList = addMETri(msgList, "ho\\n\\rho", "ho\n\rho", "ho\nho")
+	msgList.Add("ho<br>ho", "ho\n\nho")
+	msgList.Add("ho<br />ho", "ho\n\nho")
+	msgList.Add("ho\\nho", "ho\nho", "ho\nho")
+	msgList.Add("ho\\n\\nho", "ho\n\nho", "ho\n\nho")
+	//msgList.Add("ho\\n\\n\\n\\nho", "ho\n\n\n\nho", "ho\n\n\nho")
+	msgList.Add("ho\\r\\nho", "ho\r\nho", "ho\nho") // Windows style line ending
+	msgList.Add("ho\\n\\rho", "ho\n\rho", "ho\nho")
 
-	msgList = addMETri(msgList, "<b></b>", "<strong></strong>")
-	msgList = addMETri(msgList, "<b>hi</b>", "<strong>hi</strong>")
-	msgList = addMETri(msgList, "<s>hi</s>", "<del>hi</del>")
-	msgList = addMETri(msgList, "<del>hi</del>", "<del>hi</del>")
-	msgList = addMETri(msgList, "<u>hi</u>", "<u>hi</u>")
-	msgList = addMETri(msgList, "<em>hi</em>", "<em>hi</em>")
-	msgList = addMETri(msgList, "<i>hi</i>", "<em>hi</em>")
-	msgList = addMETri(msgList, "<strong>hi</strong>", "<strong>hi</strong>")
-	msgList = addMETri(msgList, "<b><i>hi</i></b>", "<strong><em>hi</em></strong>")
-	msgList = addMETri(msgList, "<strong><em>hi</em></strong>", "<strong><em>hi</em></strong>")
-	msgList = addMETri(msgList, "<b><i><b>hi</b></i></b>", "<strong><em><strong>hi</strong></em></strong>")
-	msgList = addMETri(msgList, "<strong><em><strong>hi</strong></em></strong>", "<strong><em><strong>hi</strong></em></strong>")
-	msgList = addMETri(msgList, "<div>hi</div>", "&lt;div&gt;hi&lt;/div&gt;")
-	msgList = addMETri(msgList, "<span>hi</span>", "hi") // This is stripped since the editor (Trumbowyg) likes blasting useless spans
-	msgList = addMETri(msgList, "<span   >hi</span>", "hi")
-	msgList = addMETri(msgList, "<span style='background-color: yellow;'>hi</span>", "hi")
-	msgList = addMETri(msgList, "<span style='background-color: yellow;'>>hi</span>", "&gt;hi")
-	msgList = addMETri(msgList, "<b>hi", "<strong>hi</strong>")
-	msgList = addMETri(msgList, "hi</b>", "hi&lt;/b&gt;")
-	msgList = addMETri(msgList, "</b>", "&lt;/b&gt;")
-	msgList = addMETri(msgList, "</del>", "&lt;/del&gt;")
-	msgList = addMETri(msgList, "</strong>", "&lt;/strong&gt;")
-	msgList = addMETri(msgList, "<b>", "<strong></strong>")
-	msgList = addMETri(msgList, "<span style='background-color: yellow;'>hi", "hi")
-	msgList = addMETri(msgList, "hi</span>", "hi")
-	msgList = addMETri(msgList, "</span>", "")
-	msgList = addMETri(msgList, "<span></span>", "")
-	msgList = addMETri(msgList, "<span   ></span>", "")
-	msgList = addMETri(msgList, "<></>", "&lt;&gt;&lt;/&gt;")
-	msgList = addMETri(msgList, "</><>", "&lt;/&gt;&lt;&gt;")
-	msgList = addMETri(msgList, "<>", "&lt;&gt;")
-	msgList = addMETri(msgList, "</>", "&lt;/&gt;")
-	msgList = addMETri(msgList, "@", "@")
-	msgList = addMETri(msgList, "@Admin", "@1")
-	msgList = addMETri(msgList, "@Bah", "@Bah")
-	msgList = addMETri(msgList, " @Admin", "@1")
-	msgList = addMETri(msgList, "\n@Admin", "@1")
-	msgList = addMETri(msgList, "@Admin\n", "@1")
-	msgList = addMETri(msgList, "@Admin\ndd", "@1\ndd")
-	msgList = addMETri(msgList, "d@Admin", "d@Admin")
-	//msgList = addMETri(msgList, "byte 0", string([]byte{0}), "")
-	msgList = addMETri(msgList, "byte 'a'", string([]byte{'a'}), "a")
-	//msgList = addMETri(msgList, "byte 255", string([]byte{255}), "")
-	//msgList = addMETri(msgList, "rune 0", string([]rune{0}), "")
+	msgList.Add("<b></b>", "<strong></strong>")
+	msgList.Add("<b>hi</b>", "<strong>hi</strong>")
+	msgList.Add("<s>hi</s>", "<del>hi</del>")
+	msgList.Add("<del>hi</del>", "<del>hi</del>")
+	msgList.Add("<u>hi</u>", "<u>hi</u>")
+	msgList.Add("<em>hi</em>", "<em>hi</em>")
+	msgList.Add("<i>hi</i>", "<em>hi</em>")
+	msgList.Add("<strong>hi</strong>", "<strong>hi</strong>")
+	msgList.Add("<b><i>hi</i></b>", "<strong><em>hi</em></strong>")
+	msgList.Add("<strong><em>hi</em></strong>", "<strong><em>hi</em></strong>")
+	msgList.Add("<b><i><b>hi</b></i></b>", "<strong><em><strong>hi</strong></em></strong>")
+	msgList.Add("<strong><em><strong>hi</strong></em></strong>", "<strong><em><strong>hi</strong></em></strong>")
+	msgList.Add("<div>hi</div>", "&lt;div&gt;hi&lt;/div&gt;")
+	msgList.Add("<span>hi</span>", "hi") // This is stripped since the editor (Trumbowyg) likes blasting useless spans
+	msgList.Add("<span   >hi</span>", "hi")
+	msgList.Add("<span style='background-color: yellow;'>hi</span>", "hi")
+	msgList.Add("<span style='background-color: yellow;'>>hi</span>", "&gt;hi")
+	msgList.Add("<b>hi", "<strong>hi</strong>")
+	msgList.Add("hi</b>", "hi&lt;/b&gt;")
+	msgList.Add("</b>", "&lt;/b&gt;")
+	msgList.Add("</del>", "&lt;/del&gt;")
+	msgList.Add("</strong>", "&lt;/strong&gt;")
+	msgList.Add("<b>", "<strong></strong>")
+	msgList.Add("<span style='background-color: yellow;'>hi", "hi")
+	msgList.Add("hi</span>", "hi")
+	msgList.Add("</span>", "")
+	msgList.Add("<span></span>", "")
+	msgList.Add("<span   ></span>", "")
+	msgList.Add("<></>", "&lt;&gt;&lt;/&gt;")
+	msgList.Add("</><>", "&lt;/&gt;&lt;&gt;")
+	msgList.Add("<>", "&lt;&gt;")
+	msgList.Add("</>", "&lt;/&gt;")
+	msgList.Add("@", "@")
+	msgList.Add("@Admin", "@1")
+	msgList.Add("@Bah", "@Bah")
+	msgList.Add(" @Admin", "@1")
+	msgList.Add("\n@Admin", "@1")
+	msgList.Add("@Admin\n", "@1")
+	msgList.Add("@Admin\ndd", "@1\ndd")
+	msgList.Add("d@Admin", "d@Admin")
+	//msgList.Add("byte 0", string([]byte{0}), "")
+	msgList.Add("byte 'a'", string([]byte{'a'}), "a")
+	//msgList.Add("byte 255", string([]byte{255}), "")
+	//msgList.Add("rune 0", string([]rune{0}), "")
 	// TODO: Do a test with invalid UTF-8 input
 
-	for _, item := range msgList {
+	for _, item := range msgList.Items {
 		res := common.PreparseMessage(item.Msg)
 		if res != item.Expects {
 			if item.Name != "" {
@@ -1314,28 +1319,28 @@ func TestPreparser(t *testing.T) {
 }
 
 func TestParser(t *testing.T) {
-	var msgList []METri
+	var msgList = &METriList{nil}
 
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "https://github.com/Azareal/Gosora", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "http://github.com/Azareal/Gosora", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br>")
-	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora", "<br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "\n//github.com/Azareal/Gosora\n", "<br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br>")
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "//github.com/Azareal/Gosora\n\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br><br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMETri(msgList, "//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
-	msgList = addMETri(msgList, "//"+common.Site.URL+"\n", "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br>")
-	msgList = addMETri(msgList, "//"+common.Site.URL+"\n//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br><a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
+	msgList.Add("//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList.Add("https://github.com/Azareal/Gosora", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
+	msgList.Add("http://github.com/Azareal/Gosora", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
+	msgList.Add("//github.com/Azareal/Gosora\n", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br>")
+	msgList.Add("\n//github.com/Azareal/Gosora", "<br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList.Add("\n//github.com/Azareal/Gosora\n", "<br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br>")
+	msgList.Add("//github.com/Azareal/Gosora\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList.Add("//github.com/Azareal/Gosora\n\n//github.com/Azareal/Gosora", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a><br><br><a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList.Add("//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
+	msgList.Add("//"+common.Site.URL+"\n", "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br>")
+	msgList.Add("//"+common.Site.URL+"\n//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br><a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
 
-	msgList = addMETri(msgList, "#tid-1", "<a href='/topic/1'>#tid-1</a>")
-	msgList = addMETri(msgList, "https://github.com/Azareal/Gosora/#tid-1", "<a href='https://github.com/Azareal/Gosora/#tid-1'>https://github.com/Azareal/Gosora/#tid-1</a>")
-	msgList = addMETri(msgList, "#fid-1", "<a href='/forum/1'>#fid-1</a>")
-	msgList = addMETri(msgList, "@1", "<a href='/user/admin.1' class='mention'>@Admin</a>")
-	msgList = addMETri(msgList, "@0", "<span style='color: red;'>[Invalid Profile]</span>")
-	msgList = addMETri(msgList, "@-1", "<span style='color: red;'>[Invalid Profile]</span>1")
+	msgList.Add("#tid-1", "<a href='/topic/1'>#tid-1</a>")
+	msgList.Add("https://github.com/Azareal/Gosora/#tid-1", "<a href='https://github.com/Azareal/Gosora/#tid-1'>https://github.com/Azareal/Gosora/#tid-1</a>")
+	msgList.Add("#fid-1", "<a href='/forum/1'>#fid-1</a>")
+	msgList.Add("@1", "<a href='/user/admin.1' class='mention'>@Admin</a>")
+	msgList.Add("@0", "<span style='color: red;'>[Invalid Profile]</span>")
+	msgList.Add("@-1", "<span style='color: red;'>[Invalid Profile]</span>1")
 
-	for _, item := range msgList {
+	for _, item := range msgList.Items {
 		res := common.ParseMessage(item.Msg, 1, "forums")
 		if res != item.Expects {
 			if item.Name != "" {

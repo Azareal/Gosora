@@ -10,8 +10,12 @@ type MEPair struct {
 	Expects string
 }
 
-func addMEPair(msgList []MEPair, msg string, expects string) []MEPair {
-	return append(msgList, MEPair{msg, expects})
+type MEPairList struct {
+	Items []MEPair
+}
+
+func (tlist *MEPairList) Add(msg string, expects string) {
+	tlist.Items = append(tlist.Items, MEPair{msg, expects})
 }
 
 func TestBBCodeRender(t *testing.T) {
@@ -22,47 +26,47 @@ func TestBBCodeRender(t *testing.T) {
 	}
 
 	var res string
-	var msgList []MEPair
-	msgList = addMEPair(msgList, "", "")
-	msgList = addMEPair(msgList, " ", " ")
-	msgList = addMEPair(msgList, "  ", "  ")
-	msgList = addMEPair(msgList, "   ", "   ")
-	msgList = addMEPair(msgList, "[b]", "<b></b>")
-	msgList = addMEPair(msgList, "[b][/b]", "<b></b>")
-	msgList = addMEPair(msgList, "hi", "hi")
-	msgList = addMEPair(msgList, "😀", "😀")
-	msgList = addMEPair(msgList, "[b]😀[/b]", "<b>😀</b>")
-	msgList = addMEPair(msgList, "[b]😀😀😀[/b]", "<b>😀😀😀</b>")
-	msgList = addMEPair(msgList, "[b]hi[/b]", "<b>hi</b>")
-	msgList = addMEPair(msgList, "[u]hi[/u]", "<u>hi</u>")
-	msgList = addMEPair(msgList, "[i]hi[/i]", "<i>hi</i>")
-	msgList = addMEPair(msgList, "[s]hi[/s]", "<s>hi</s>")
-	msgList = addMEPair(msgList, "[c]hi[/c]", "[c]hi[/c]")
+	var msgList = &MEPairList{nil}
+	msgList.Add("", "")
+	msgList.Add(" ", " ")
+	msgList.Add("  ", "  ")
+	msgList.Add("   ", "   ")
+	msgList.Add("[b]", "<b></b>")
+	msgList.Add("[b][/b]", "<b></b>")
+	msgList.Add("hi", "hi")
+	msgList.Add("😀", "😀")
+	msgList.Add("[b]😀[/b]", "<b>😀</b>")
+	msgList.Add("[b]😀😀😀[/b]", "<b>😀😀😀</b>")
+	msgList.Add("[b]hi[/b]", "<b>hi</b>")
+	msgList.Add("[u]hi[/u]", "<u>hi</u>")
+	msgList.Add("[i]hi[/i]", "<i>hi</i>")
+	msgList.Add("[s]hi[/s]", "<s>hi</s>")
+	msgList.Add("[c]hi[/c]", "[c]hi[/c]")
 	if !testing.Short() {
-		//msgList = addMEPair(msgList, "[b]hi[/i]", "[b]hi[/i]")
-		//msgList = addMEPair(msgList, "[/b]hi[b]", "[/b]hi[b]")
-		//msgList = addMEPair(msgList, "[/b]hi[/b]", "[/b]hi[/b]")
-		//msgList = addMEPair(msgList, "[b][b]hi[/b]", "<b>hi</b>")
-		//msgList = addMEPair(msgList, "[b][b]hi", "[b][b]hi")
-		//msgList = addMEPair(msgList, "[b][b][b]hi", "[b][b][b]hi")
-		//msgList = addMEPair(msgList, "[/b]hi", "[/b]hi")
+		//msgList.Add("[b]hi[/i]", "[b]hi[/i]")
+		//msgList.Add("[/b]hi[b]", "[/b]hi[b]")
+		//msgList.Add("[/b]hi[/b]", "[/b]hi[/b]")
+		//msgList.Add("[b][b]hi[/b]", "<b>hi</b>")
+		//msgList.Add("[b][b]hi", "[b][b]hi")
+		//msgList.Add("[b][b][b]hi", "[b][b][b]hi")
+		//msgList.Add("[/b]hi", "[/b]hi")
 	}
-	msgList = addMEPair(msgList, "[code]hi[/code]", "<span class='codequotes'>hi</span>")
-	msgList = addMEPair(msgList, "[code][b]hi[/b][/code]", "<span class='codequotes'>[b]hi[/b]</span>")
-	msgList = addMEPair(msgList, "[code][b]hi[/code][/b]", "<span class='codequotes'>[b]hi</span>[/b]")
-	msgList = addMEPair(msgList, "[quote]hi[/quote]", "<span class='postQuote'>hi</span>")
-	msgList = addMEPair(msgList, "[quote][b]hi[/b][/quote]", "<span class='postQuote'><b>hi</b></span>")
-	msgList = addMEPair(msgList, "[quote][b]h[/b][/quote]", "<span class='postQuote'><b>h</b></span>")
-	msgList = addMEPair(msgList, "[quote][b][/b][/quote]", "<span class='postQuote'><b></b></span>")
-	msgList = addMEPair(msgList, "[url][/url]", "<a href=''></a>")
-	msgList = addMEPair(msgList, "[url]https://github.com/Azareal/Gosora[/url]", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
-	msgList = addMEPair(msgList, "[url]http://github.com/Azareal/Gosora[/url]", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
-	msgList = addMEPair(msgList, "[url]//github.com/Azareal/Gosora[/url]", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList = addMEPair(msgList, "-你好-", "-你好-")
-	msgList = addMEPair(msgList, "[i]-你好-[/i]", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
+	msgList.Add("[code]hi[/code]", "<span class='codequotes'>hi</span>")
+	msgList.Add("[code][b]hi[/b][/code]", "<span class='codequotes'>[b]hi[/b]</span>")
+	msgList.Add("[code][b]hi[/code][/b]", "<span class='codequotes'>[b]hi</span>[/b]")
+	msgList.Add("[quote]hi[/quote]", "<span class='postQuote'>hi</span>")
+	msgList.Add("[quote][b]hi[/b][/quote]", "<span class='postQuote'><b>hi</b></span>")
+	msgList.Add("[quote][b]h[/b][/quote]", "<span class='postQuote'><b>h</b></span>")
+	msgList.Add("[quote][b][/b][/quote]", "<span class='postQuote'><b></b></span>")
+	msgList.Add("[url][/url]", "<a href=''></a>")
+	msgList.Add("[url]https://github.com/Azareal/Gosora[/url]", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
+	msgList.Add("[url]http://github.com/Azareal/Gosora[/url]", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
+	msgList.Add("[url]//github.com/Azareal/Gosora[/url]", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	msgList.Add("-你好-", "-你好-")
+	msgList.Add("[i]-你好-[/i]", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
 	t.Log("Testing bbcodeFullParse")
-	for _, item := range msgList {
+	for _, item := range msgList.Items {
 		res = bbcodeFullParse(item.Msg)
 		if res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")
@@ -211,70 +215,70 @@ func TestMarkdownRender(t *testing.T) {
 	}
 
 	var res string
-	var msgList []MEPair
+	var msgList = &MEPairList{nil}
 	// TODO: Fix more of these odd cases
-	msgList = addMEPair(msgList, "", "")
-	msgList = addMEPair(msgList, " ", " ")
-	msgList = addMEPair(msgList, "  ", "  ")
-	msgList = addMEPair(msgList, "   ", "   ")
-	msgList = addMEPair(msgList, "\t", "\t")
-	msgList = addMEPair(msgList, "\n", "\n")
-	msgList = addMEPair(msgList, "*", "*")
-	//msgList = addMEPair(msgList, "**", "<i></i>")
-	msgList = addMEPair(msgList, "h", "h")
-	msgList = addMEPair(msgList, "hi", "hi")
-	msgList = addMEPair(msgList, "**h**", "<b>h</b>")
-	msgList = addMEPair(msgList, "**hi**", "<b>hi</b>")
-	msgList = addMEPair(msgList, "_h_", "<u>h</u>")
-	msgList = addMEPair(msgList, "_hi_", "<u>hi</u>")
-	msgList = addMEPair(msgList, "*h*", "<i>h</i>")
-	msgList = addMEPair(msgList, "*hi*", "<i>hi</i>")
-	msgList = addMEPair(msgList, "~h~", "<s>h</s>")
-	msgList = addMEPair(msgList, "~hi~", "<s>hi</s>")
-	msgList = addMEPair(msgList, "*hi**", "<i>hi</i>*")
-	msgList = addMEPair(msgList, "**hi***", "<b>hi</b>*")
-	//msgList = addMEPair(msgList, "**hi*", "*<i>hi</i>")
-	msgList = addMEPair(msgList, "***hi***", "<b><i>hi</i></b>")
-	msgList = addMEPair(msgList, "***h***", "<b><i>h</i></b>")
-	msgList = addMEPair(msgList, "\\***h**\\*", "*<b>h</b>*")
-	msgList = addMEPair(msgList, "\\*\\**h*\\*\\*", "**<i>h</i>**")
-	msgList = addMEPair(msgList, "\\*hi\\*", "*hi*")
-	msgList = addMEPair(msgList, "d\\*hi\\*", "d*hi*")
-	msgList = addMEPair(msgList, "\\*hi\\*d", "*hi*d")
-	msgList = addMEPair(msgList, "d\\*hi\\*d", "d*hi*d")
-	msgList = addMEPair(msgList, "\\", "\\")
-	msgList = addMEPair(msgList, "\\\\", "\\\\")
-	msgList = addMEPair(msgList, "\\d", "\\d")
-	msgList = addMEPair(msgList, "\\\\d", "\\\\d")
-	msgList = addMEPair(msgList, "\\\\\\d", "\\\\\\d")
-	msgList = addMEPair(msgList, "d\\", "d\\")
-	msgList = addMEPair(msgList, "\\d\\", "\\d\\")
-	msgList = addMEPair(msgList, "*_hi_*", "<i><u>hi</u></i>")
-	msgList = addMEPair(msgList, "*~hi~*", "<i><s>hi</s></i>")
-	//msgList = addMEPair(msgList, "~*hi*~", "<s><i>hi</i></s>")
-	//msgList = addMEPair(msgList, "~ *hi* ~", "<s> <i>hi</i> </s>")
-	msgList = addMEPair(msgList, "_~hi~_", "<u><s>hi</s></u>")
-	msgList = addMEPair(msgList, "***~hi~***", "<b><i><s>hi</s></i></b>")
-	msgList = addMEPair(msgList, "**", "**")
-	msgList = addMEPair(msgList, "***", "***")
-	msgList = addMEPair(msgList, "****", "****")
-	msgList = addMEPair(msgList, "*****", "*****")
-	msgList = addMEPair(msgList, "******", "******")
-	msgList = addMEPair(msgList, "*******", "*******")
-	msgList = addMEPair(msgList, "~~", "~~")
-	msgList = addMEPair(msgList, "~~~", "~~~")
-	msgList = addMEPair(msgList, "~~~~", "~~~~")
-	msgList = addMEPair(msgList, "~~~~~", "~~~~~")
-	msgList = addMEPair(msgList, "__", "__")
-	msgList = addMEPair(msgList, "___", "___")
-	msgList = addMEPair(msgList, "_ _", "<u> </u>")
-	msgList = addMEPair(msgList, "* *", "<i> </i>")
-	msgList = addMEPair(msgList, "** **", "<b> </b>")
-	msgList = addMEPair(msgList, "*** ***", "<b><i> </i></b>")
-	msgList = addMEPair(msgList, "-你好-", "-你好-")
-	msgList = addMEPair(msgList, "*-你好-*", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
+	msgList.Add("", "")
+	msgList.Add(" ", " ")
+	msgList.Add("  ", "  ")
+	msgList.Add("   ", "   ")
+	msgList.Add("\t", "\t")
+	msgList.Add("\n", "\n")
+	msgList.Add("*", "*")
+	//msgList.Add("**", "<i></i>")
+	msgList.Add("h", "h")
+	msgList.Add("hi", "hi")
+	msgList.Add("**h**", "<b>h</b>")
+	msgList.Add("**hi**", "<b>hi</b>")
+	msgList.Add("_h_", "<u>h</u>")
+	msgList.Add("_hi_", "<u>hi</u>")
+	msgList.Add("*h*", "<i>h</i>")
+	msgList.Add("*hi*", "<i>hi</i>")
+	msgList.Add("~h~", "<s>h</s>")
+	msgList.Add("~hi~", "<s>hi</s>")
+	msgList.Add("*hi**", "<i>hi</i>*")
+	msgList.Add("**hi***", "<b>hi</b>*")
+	//msgList.Add("**hi*", "*<i>hi</i>")
+	msgList.Add("***hi***", "<b><i>hi</i></b>")
+	msgList.Add("***h***", "<b><i>h</i></b>")
+	msgList.Add("\\***h**\\*", "*<b>h</b>*")
+	msgList.Add("\\*\\**h*\\*\\*", "**<i>h</i>**")
+	msgList.Add("\\*hi\\*", "*hi*")
+	msgList.Add("d\\*hi\\*", "d*hi*")
+	msgList.Add("\\*hi\\*d", "*hi*d")
+	msgList.Add("d\\*hi\\*d", "d*hi*d")
+	msgList.Add("\\", "\\")
+	msgList.Add("\\\\", "\\\\")
+	msgList.Add("\\d", "\\d")
+	msgList.Add("\\\\d", "\\\\d")
+	msgList.Add("\\\\\\d", "\\\\\\d")
+	msgList.Add("d\\", "d\\")
+	msgList.Add("\\d\\", "\\d\\")
+	msgList.Add("*_hi_*", "<i><u>hi</u></i>")
+	msgList.Add("*~hi~*", "<i><s>hi</s></i>")
+	//msgList.Add("~*hi*~", "<s><i>hi</i></s>")
+	//msgList.Add("~ *hi* ~", "<s> <i>hi</i> </s>")
+	msgList.Add("_~hi~_", "<u><s>hi</s></u>")
+	msgList.Add("***~hi~***", "<b><i><s>hi</s></i></b>")
+	msgList.Add("**", "**")
+	msgList.Add("***", "***")
+	msgList.Add("****", "****")
+	msgList.Add("*****", "*****")
+	msgList.Add("******", "******")
+	msgList.Add("*******", "*******")
+	msgList.Add("~~", "~~")
+	msgList.Add("~~~", "~~~")
+	msgList.Add("~~~~", "~~~~")
+	msgList.Add("~~~~~", "~~~~~")
+	msgList.Add("__", "__")
+	msgList.Add("___", "___")
+	msgList.Add("_ _", "<u> </u>")
+	msgList.Add("* *", "<i> </i>")
+	msgList.Add("** **", "<b> </b>")
+	msgList.Add("*** ***", "<b><i> </i></b>")
+	msgList.Add("-你好-", "-你好-")
+	msgList.Add("*-你好-*", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
-	for _, item := range msgList {
+	for _, item := range msgList.Items {
 		res = markdownParse(item.Msg)
 		if res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")
@@ -284,7 +288,7 @@ func TestMarkdownRender(t *testing.T) {
 		}
 	}
 
-	/*for _, item := range msgList {
+	/*for _, item := range msgList.Items {
 		res = markdownParse("\n" + item.Msg)
 		if res != "\n"+item.Expects {
 			t.Error("Testing string '\n" + item.Msg + "'")
@@ -294,7 +298,7 @@ func TestMarkdownRender(t *testing.T) {
 		}
 	}
 
-	for _, item := range msgList {
+	for _, item := range msgList.Items {
 		res = markdownParse("\t" + item.Msg)
 		if res != "\t"+item.Expects {
 			t.Error("Testing string '\t" + item.Msg + "'")
@@ -304,7 +308,7 @@ func TestMarkdownRender(t *testing.T) {
 		}
 	}*/
 
-	for _, item := range msgList {
+	for _, item := range msgList.Items {
 		res = markdownParse("d" + item.Msg)
 		if res != "d"+item.Expects {
 			t.Error("Testing string 'd" + item.Msg + "'")
