@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -139,6 +140,14 @@ func LoadLangPack(name string) error {
 func SaveLangPack(langPack *LanguagePack) error {
 	_ = langPack
 	return nil
+}
+
+func GetLevelPhrase(level int) string {
+	levelPhrases := currentLangPack.Load().(*LanguagePack).Levels
+	if len(levelPhrases.Levels) > 0 && level < len(levelPhrases.Levels) {
+		return strings.Replace(levelPhrases.Levels[level], "{0}", strconv.Itoa(level), -1)
+	}
+	return strings.Replace(levelPhrases.Level, "{0}", strconv.Itoa(level), -1)
 }
 
 // TODO: Merge these two maps?

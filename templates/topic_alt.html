@@ -37,7 +37,7 @@
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<div class="user_meta">
 				<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
-				{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
+				{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{level .Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
 			</div>
 		</div>
 		<div id="poll_voter_{{.Poll.ID}}" class="content_container poll_voter">
@@ -68,7 +68,7 @@
 			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 			<div class="user_meta">
 				<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
-				{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
+				{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{level .Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
 			</div>
 		</div>
 		<div class="content_container">
@@ -109,7 +109,7 @@
 		<div class="avatar_item" style="background-image: url({{.CurrentUser.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 		<div class="user_meta">
 			<a href="{{.CurrentUser.Link}}" class="the_name" rel="author">{{.CurrentUser.Name}}</a>
-			{{if .CurrentUser.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.CurrentUser.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.CurrentUser.Level}}</div><div class="tag_post"></div></div>{{end}}
+			{{if .CurrentUser.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.CurrentUser.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{level .CurrentUser.Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 	</div>
 	<div class="rowblock topic_reply_form quick_create_form"  aria-label="{{lang "topic.reply_aria"}}">

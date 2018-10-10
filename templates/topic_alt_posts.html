@@ -3,7 +3,7 @@
 		<div class="avatar_item" style="background-image: url({{.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
 		<div class="user_meta">
 			<a href="{{.UserLink}}" class="the_name" rel="author">{{.CreatedByName}}</a>
-			{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{lang "topic.level_prefix"}}{{.Level}}</div><div class="tag_post"></div></div>{{end}}
+			{{if .Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{level .Level}}</div><div class="tag_post"></div></div>{{end}}
 		</div>
 	</div>
 	<div class="content_container"{{if .ActionType}} style="margin-left: 0px;"{{end}}>

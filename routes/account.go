@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"regexp"
@@ -759,5 +760,39 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user co
 	}
 	http.Redirect(w, r, "/user/edit/email/?verified=1", http.StatusSeeOther)
 
+	return nil
+}
+
+func LevelList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	header, ferr := common.UserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	header.Title = "Level Progress"
+
+	var fScores = common.GetLevels(20)
+	var levels = make([]common.LevelListItem, len(fScores))
+	for i, fScore := range fScores {
+		var status string
+		if user.Level > i {
+			status = "complete"
+		} else if user.Level < i {
+			status = "future"
+		} else {
+			status = "inprogress"
+		}
+		iScore := int(math.Ceil(fScore))
+		perc := int(math.Ceil((fScore / float64(user.Score)) * 100))
+		levels[i] = common.LevelListItem{i, iScore, status, perc * 2}
+	}
+
+	pi := common.LevelListPage{header, levels[1:]}
+	if common.RunPreRenderHook("pre_render_level_list", w, r, &user, &pi) {
+		return nil
+	}
+	err := common.Templates.ExecuteTemplate(w, "level_list.html", pi)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
 	return nil
 }

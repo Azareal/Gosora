@@ -511,6 +511,14 @@ func InitTemplates() error {
 		return GetTmplPhrase(phraseName)
 	}
 
+	fmap["level"] = func(levelInt interface{}) interface{} {
+		level, ok := levelInt.(int)
+		if !ok {
+			panic("levelInt is not an integer")
+		}
+		return GetLevelPhrase(level)
+	}
+
 	fmap["scope"] = func(name interface{}) interface{} {
 		return ""
 	}

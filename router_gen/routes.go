@@ -48,6 +48,7 @@ func buildUserRoutes() {
 	userGroup := newRouteGroup("/user/")
 	userGroup.Routes(
 		View("routes.ViewProfile", "/user/").LitBefore("req.URL.Path += extraData"),
+
 		MemberView("routes.AccountEdit", "/user/edit/"),
 		MemberView("routes.AccountEditPassword", "/user/edit/password/"),
 		Action("routes.AccountEditPasswordSubmit", "/user/edit/password/submit/"), // TODO: Full test this
@@ -59,6 +60,8 @@ func buildUserRoutes() {
 		Action("routes.AccountEditMFADisableSubmit", "/user/edit/mfa/disable/submit/"),
 		MemberView("routes.AccountEditEmail", "/user/edit/email/"),
 		Action("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData"),
+
+		MemberView("routes.LevelList", "/user/levels/"),
 	)
 	addRouteGroup(userGroup)
 

@@ -1,0 +1,17 @@
+{{template "header.html" . }}
+<main>
+	<div class="rowblock rowhead">
+		<div class="rowitem"><h1>{{.Title}}</h1></div>
+	</div>
+	{{range .Levels}}
+	<div class="rowblock">
+		<div class="rowitem passive rowmsg level_{{.Status}}">
+			<div>{{level .Level}}</div>
+			<div class="progressWrap"{{if eq .Status "inprogress"}} style="width: {{.Percentage}}%;"{{end}}>
+				<div>Score: {{.Score}}</div>
+			</div>
+		</div>
+	</div>
+	{{end}}
+</main>
+{{template "footer.html" . }}

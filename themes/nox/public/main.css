@@ -55,7 +55,9 @@ li a {
 	padding-bottom: 21px;
 	color: #dddddd;
 }
-.menu_alerts .alert_bell, .menu_alerts .alert_counter, .menu_alerts:not(.selectedAlert) .alertList {
+.menu_alerts .alert_bell,
+.menu_alerts .alert_counter,
+.menu_alerts:not(.selectedAlert) .alertList {
 	display: none;
 }
 .alertList {
@@ -69,6 +71,11 @@ li a {
 	right: 0px;
 	padding-left: 16px;
 	padding-right: 16px;
+}
+.alertItem {
+	padding: 10px;
+	padding-left: 8px;
+	padding-right: 8px;
 }
 .alertItem.withAvatar {
 	background: none !important;
@@ -851,6 +858,44 @@ input[type=checkbox]:checked + label .sel {
 }
 .footer .widget, #poweredByHolder {
 	background-color: #444444;
+}
+
+.level_complete, .level_future, .level_inprogress {
+	display: flex;
+}
+.level_complete {
+	background-color: rgb(68, 93, 68) !important;
+	width: 100%;
+}
+.level_future {
+	background-color: rgb(88, 68, 68) !important;
+	width: 100%;
+}
+.progressWrap {
+	display: flex;
+	margin-left: auto;
+}
+/* CSS behaves in stupid ways, so we need to be very specific about this */
+.rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem.level_inprogress:not(.post_item) {
+	padding: 0px;
+}
+.level_inprogress > div {
+	display: flex;
+	padding-top: 12px;
+	padding-bottom: 12px;
+	padding-left: 12px;
+	border-radius: 3px;
+	width: 100%;
+	background-color: rgb(68, 93, 68) !important;
+}
+.level_inprogress .progressWrap {
+	width: 100%;
+	padding-left: 0px;
+	padding-right: 12px;
+	background-color: rgb(68, 68, 68) !important;
+}
+.level_inprogress .progressWrap div {
+	margin-left: auto;
 }
 
 @media(max-width: 600px) {

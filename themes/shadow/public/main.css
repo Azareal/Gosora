@@ -316,9 +316,6 @@ a {
 .flag_label:before {
 	content: "{{index .Phrases "topic.flag_button_text"}}";
 }
-.level_label:before {
-	content: "{{index .Phrases "topic.level"}}";
-}
 
 .like_count_label, .like_count {
 	display: none;

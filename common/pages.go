@@ -160,6 +160,18 @@ type AccountDashPage struct {
 	NextLevel    int
 }
 
+type LevelListItem struct {
+	Level      int
+	Score      int
+	Status     string
+	Percentage int // 0 to 200 to fit with the CSS logic
+}
+
+type LevelListPage struct {
+	*Header
+	Levels []LevelListItem
+}
+
 type PanelStats struct {
 	Users       int
 	Groups      int

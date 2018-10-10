@@ -85,6 +85,7 @@ func NewCTemplateSet() *CTemplateSet {
 			"divide":   true,
 			"dock":     true,
 			"lang":     true,
+			"level":    true,
 			"scope":    true,
 		},
 	}
@@ -713,6 +714,19 @@ ArgLoop:
 
 			c.langIndexToName = append(c.langIndexToName, leftParam)
 			out = "w.Write(phrases[" + strconv.Itoa(len(c.langIndexToName)-1) + "])\n"
+			literal = true
+			break ArgLoop
+		case "level":
+			var leftParam string
+			// TODO: Implement level literals
+			leftOperand := node.Args[pos+1].String()
+			if len(leftOperand) == 0 {
+				panic("The leftoperand for function level cannot be left blank")
+			}
+
+			leftParam, _ = c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
+			// TODO: Refactor this
+			out = "w.Write([]byte(common.GetLevelPhrase(" + leftParam + ")))\n"
 			literal = true
 			break ArgLoop
 		case "scope":

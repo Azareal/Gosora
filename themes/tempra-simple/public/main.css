@@ -707,6 +707,9 @@ button.username {
 	color: #505050;
 	opacity: 0.85;
 }
+.level_hideable {
+	display: none;
+}
 
 .controls {
 	margin-top: 23px;

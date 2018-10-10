@@ -12,10 +12,12 @@
 				<span class="profileName" title="{{.ProfileOwner.Name}}">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username" title="{{.ProfileOwner.Tag}}">{{.ProfileOwner.Tag}}</span>{{end}}
 			</div>
 		</div>
-		<div class="passiveBlock">
+		<div class="levelBlock">
 			<div class="rowitem passive">
-				<a class="profile_menu_item">Level {{.ProfileOwner.Level}}: [{{.CurrentScore}} / {{.NextScore}}]</a>
+				<a class="profile_menu_item">{{level .ProfileOwner.Level}}: [{{.CurrentScore}} / {{.NextScore}}]</a>
 			</div>
+		</div>
+		<div class="passiveBlock">
 			{{if not .CurrentUser.Loggedin}}<div class="rowitem passive">
 				<a class="profile_menu_item">{{lang "profile_login_for_options"}}</a>
 			</div>{{else}}
