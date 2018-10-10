@@ -142,6 +142,7 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_account_own_edit_mfa":       nil,
 	"pre_render_account_own_edit_mfa_setup": nil,
 	"pre_render_account_own_edit_email":     nil,
+	"pre_render_level_list":                 nil,
 	"pre_render_login":                      nil,
 	"pre_render_login_mfa_verify":           nil,
 	"pre_render_register":                   nil,

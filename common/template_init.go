@@ -508,7 +508,7 @@ func InitTemplates() error {
 			panic("phraseNameInt is not a string")
 		}
 		// TODO: Log non-existent phrases?
-		return GetTmplPhrase(phraseName)
+		return template.HTML(GetTmplPhrase(phraseName))
 	}
 
 	fmap["level"] = func(levelInt interface{}) interface{} {
@@ -516,7 +516,7 @@ func InitTemplates() error {
 		if !ok {
 			panic("levelInt is not an integer")
 		}
-		return GetLevelPhrase(level)
+		return template.HTML(GetLevelPhrase(level))
 	}
 
 	fmap["scope"] = func(name interface{}) interface{} {

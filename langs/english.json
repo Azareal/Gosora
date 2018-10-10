@@ -448,6 +448,7 @@
 		"account_dash_2fa_setup":"Setup your two-factor authentication.",
 		"account_dash_2fa_manage":"Remove or manage your two-factor authentication.",
 		"account_dash_security_notice":"Security",
+		"account_username_save":"Save",
 		"account_avatar_select":"Select",
 		"account_avatar_update_button":"Upload",
 

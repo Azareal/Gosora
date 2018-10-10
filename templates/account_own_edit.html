@@ -9,12 +9,12 @@
 				<span id="dash_username">
 					<form id="dash_username_form" action="/user/edit/username/submit/?session={{.CurrentUser.Session}}" method="post"></form>
 					<input form="dash_username_form" name="account-new-username" value="{{.CurrentUser.Name}}" />
-					<button form="dash_username_form" class="formbutton">Save</button>
+					<button form="dash_username_form" class="formbutton">{{lang "account_username_save"}}</button>
 				</span>
 				<img src="{{.CurrentUser.Avatar}}" height="128px" />
 				<span id="dash_avatar_buttons">
 					<input form="avatar_form" id="select_avatar" name="account-avatar" type="file" required style="display: none;" />
-					<label for="select_avatar" class="formbutton">Select</label>
+					<label for="select_avatar" class="formbutton">{{lang "account_avatar_select"}}</label>
 					<button form="avatar_form" name="account-button" class="formbutton">{{lang "account_avatar_update_button"}}</button>
 				</span>
 			</div>

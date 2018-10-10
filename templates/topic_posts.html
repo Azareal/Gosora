@@ -24,7 +24,7 @@
 
 		<a class="username hide_on_micro like_count">{{.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="{{lang "topic.post_like_count_tooltip"}}"></a>
 
-		{{if .Tag}}<a class="username hide_on_micro user_tag">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level" aria-label="{{lang "topic.post_level_aria"}}">{{.Level}}</a><a class="username hide_on_micro level_label" style="float:right;" title="{{lang "topic.post_level_tooltip"}}"></a>{{end}}
+		{{if .Tag}}<a class="username hide_on_micro user_tag">{{.Tag}}</a>{{else}}<a class="username hide_on_micro level" aria-label="{{lang "topic.post_level_aria"}}" title="{{lang "topic.post_level_tooltip"}}">{{.Level}}</a><a class="username hide_on_micro level_label" title="{{lang "topic.post_level_tooltip"}}"></a>{{end}}
 
 		</span>
 	</article>

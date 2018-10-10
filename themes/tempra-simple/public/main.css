@@ -706,6 +706,7 @@ button.username {
 .level_label {
 	color: #505050;
 	opacity: 0.85;
+	float: right;
 }
 .level_hideable {
 	display: none;
