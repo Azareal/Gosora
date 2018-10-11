@@ -884,6 +884,14 @@ textarea {
 	background-color: hsl(81, 60%, 95%);
 }
 
+.level_complete, .level_future, .level_inprogress {
+	display: flex;
+}
+.progressWrap {
+	margin-left: auto;
+	width: auto !important;
+}
+
 @element .topic_left .rowtopic and (min-width: 160px) {
 	$this, $this span, $this + .parent_forum {
 		float: left;

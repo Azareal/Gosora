@@ -911,10 +911,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 #profile_right_lane {
 	width: calc(100% - 245px);
 }
-#profile_right_lane .rowitem {
-	margin-top: 5px;
-}
-#profile_right_lane .colstack_item .formrow.real_first_child, #profile_right_lane .colstack_item .formrow:first-child {
+#profile_right_lane .rowitem,
+#profile_right_lane .colstack_item .formrow.real_first_child,
+#profile_right_lane .colstack_item .formrow:first-child {
 	margin-top: 5px;
 }
 .simple .user_tag {
@@ -931,7 +930,6 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	display: flex;
 	flex-direction: row;
 }
-
 .ip_search_block input {
 	background-color: var(--input-background-color);
 	border: 1px solid var(--input-border-color);
@@ -941,16 +939,22 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	padding: 4px;
 	padding-bottom: 3px;
 }
-
 .ip_search_input {
 	font-size: 15px;
 	width: 100%;
 	margin-left: 0px;
 }
-
 .ip_search_search {
 	font-size: 14px;
 	margin-left: 8px;
+}
+
+.level_complete, .level_future, .level_inprogress {
+	display: flex;
+}
+.progressWrap {
+	margin-left: auto;
+	width: auto !important;
 }
 
 .colstack_grid {

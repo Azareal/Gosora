@@ -951,4 +951,15 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	margin-top: -5px;
 }
 
+.level_complete, .level_future, .level_inprogress {
+	display: flex;
+}
+#profile_left_pane .level_hideable, .levelBit .level_hideable {
+	display: inline;
+}
+.progressWrap {
+	margin-left: auto;
+	width: auto !important;
+}
+
 {{template "media.partial.css" }}

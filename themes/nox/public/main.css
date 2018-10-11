@@ -876,8 +876,9 @@ input[type=checkbox]:checked + label .sel {
 	margin-left: auto;
 }
 /* CSS behaves in stupid ways, so we need to be very specific about this */
-.rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem.level_inprogress:not(.post_item) {
-	padding: 0px;
+.rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem.level_inprogress:not(.post_item),
+.coldyn_item .rowitem.level_inprogress {
+	padding: 0px !important;
 }
 .level_inprogress > div {
 	display: flex;
@@ -887,6 +888,9 @@ input[type=checkbox]:checked + label .sel {
 	border-radius: 3px;
 	width: 100%;
 	background-color: rgb(68, 93, 68) !important;
+}
+.level_inprogress .levelBit {
+	display: inline;
 }
 .level_inprogress .progressWrap {
 	width: 100%;
