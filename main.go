@@ -93,7 +93,7 @@ func afterDBInit() (err error) {
 	}
 	fmt.Printf("menuHold: %+v\n", menuHold)
 	var b bytes.Buffer
-	menuHold.Build(&b, &common.GuestUser)
+	menuHold.Build(&b, &common.GuestUser, "/")
 	fmt.Println("menuHold output: ", string(b.Bytes()))
 
 	log.Print("Initialising the authentication system")

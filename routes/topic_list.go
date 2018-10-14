@@ -15,6 +15,7 @@ func TopicList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	}
 	header.Title = common.GetTitlePhrase("topics")
 	header.Zone = "topics"
+	header.Path = "/topics/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
 
 	group, err := common.Groups.Get(user.Group)
@@ -62,6 +63,7 @@ func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 	header.Title = common.GetTitlePhrase("topics")
 	header.Zone = "topics"
+	header.Path = "/topics/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
 
 	group, err := common.Groups.Get(user.Group)

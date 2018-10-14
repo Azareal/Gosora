@@ -362,6 +362,7 @@ func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request,
 		return nil, ferr
 	}
 	header.Title = common.GetTitlePhrase(titlePhrase)
+	header.Path = "/user/edit/"
 	header.AddSheet(header.Theme.Name + "/account.css")
 	header.AddScript("account.js")
 	return header, nil
@@ -394,8 +395,9 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User) commo
 	prevScore := common.GetLevelScore(user.Level)
 	currentScore := user.Score - prevScore
 	nextScore := common.GetLevelScore(user.Level+1) - prevScore
+	perc := int(math.Ceil((float64(nextScore) / float64(currentScore)) * 100))
 
-	pi := common.AccountDashPage{header, mfaSetup, currentScore, nextScore, user.Level + 1}
+	pi := common.AccountDashPage{header, mfaSetup, currentScore, nextScore, user.Level + 1, perc * 2}
 	if common.RunPreRenderHook("pre_render_account_own_edit", w, r, &user, &pi) {
 		return nil
 	}

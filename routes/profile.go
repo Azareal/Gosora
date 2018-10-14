@@ -27,6 +27,7 @@ func init() {
 	})
 }
 
+// TODO: Remove the View part of the name?
 func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	header, ferr := common.UserCheck(w, r, &user)
 	if ferr != nil {
@@ -68,6 +69,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 	}
 	// TODO: Add a phrase for this title
 	header.Title = puser.Name + "'s Profile"
+	header.Path = common.BuildProfileURL(common.NameToSlug(puser.Name), puser.ID)
 
 	// Get the replies..
 	rows, err := profileStmts.getReplies.Query(puser.ID)

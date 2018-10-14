@@ -29,7 +29,7 @@
 			<nav class="nav">
 				<div class="move_left">
 				<div class="move_right">
-				<ul>{{/** TODO: Have the theme control whether the long or short form of the name is used **/}}
+				<ul class="zone_{{.Header.Zone}}">{{/** TODO: Have the theme control whether the long or short form of the name is used **/}}
 					<li id="menu_overview" class="menu_left"><a href="/" rel="home">{{if eq .Header.Theme.Name "nox"}}{{.Header.Site.Name}}{{else}}{{.Header.Site.ShortName}}{{end}}</a></li>
 					{{dock "topMenu" .Header }}
 					<li class="menu_left menu_hamburger" title="{{lang "menu_hamburger_tooltip"}}"><a></a></li>

@@ -24,6 +24,7 @@ type Header struct {
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
 	CurrentUser User // TODO: Deprecate CurrentUser on the page structs and use a pointer here
 	Zone        string
+	Path        string
 	MetaDesc    string
 	Writer      http.ResponseWriter
 	ExtData     ExtData
@@ -158,6 +159,7 @@ type AccountDashPage struct {
 	CurrentScore int
 	NextScore    int
 	NextLevel    int
+	Percentage   int
 }
 
 type LevelListItem struct {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strconv"
+	"strings"
 
 	"../query_gen/lib"
 )
@@ -19,9 +20,15 @@ type MenuListHolder struct {
 	Variations map[int]menuTmpl // 0 = Guest Menu, 1 = Member Menu, 2 = Super Mod Menu, 3 = Admin Menu
 }
 
+type menuPath struct {
+	Path  string
+	Index int
+}
+
 type menuTmpl struct {
 	RenderBuffer    [][]byte
 	VariableIndices []int
+	PathMappings    []menuPath
 }
 
 type MenuItem struct {
@@ -135,11 +142,8 @@ func (hold *MenuListHolder) Preparse() error {
 	}
 
 	var addVariation = func(index int, callback func(mitem MenuItem) bool) {
-		renderBuffer, variableIndices := hold.Scan(tmpls, callback)
-		hold.Variations[index] = menuTmpl{renderBuffer, variableIndices}
-		//fmt.Print("renderBuffer: ")
-		//menuDumpSlice(renderBuffer)
-		//fmt.Printf("\nvariableIndices: %+v\n", variableIndices)
+		renderBuffer, variableIndices, pathList := hold.Scan(tmpls, callback)
+		hold.Variations[index] = menuTmpl{renderBuffer, variableIndices, pathList}
 	}
 
 	// Guest Menu
@@ -202,15 +206,11 @@ func skipUntilCharsExist(tmplData []byte, i int, expects []byte) (newI int, hasI
 func skipAllUntilCharsExist(tmplData []byte, i int, expects []byte) (newI int, hasIt bool) {
 	j := i
 	expectIndex := 0
-	//fmt.Printf("tmplData: %+v\n", string(tmplData))
 	for ; j < len(tmplData) && expectIndex < len(expects); j++ {
-		//fmt.Println("j: ", j)
-		//fmt.Println("tmplData[j]: ", string(tmplData[j])+" ")
 		if tmplData[j] == expects[expectIndex] {
 			//fmt.Printf("expects[expectIndex]: %+v - %d\n", string(expects[expectIndex]), expectIndex)
 			expectIndex++
 			if len(expects) <= expectIndex {
-				//fmt.Println("breaking")
 				break
 			}
 		} else {
@@ -226,8 +226,6 @@ func skipAllUntilCharsExist(tmplData []byte, i int, expects []byte) (newI int, h
 			expectIndex = 0
 		}
 	}
-	//fmt.Println("len(expects): ", len(expects))
-	//fmt.Println("expectIndex: ", expectIndex)
 	return j, len(expects) == expectIndex
 }
 
@@ -254,19 +252,16 @@ func menuDumpSlice(outerSlice [][]byte) {
 }
 
 func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTmpl) {
-	//fmt.Println("tmplData: ", string(tmplData))
 	var textBuffer, variableBuffer [][]byte
 	var renderList []menuRenderItem
 	var subBuffer []byte
 
 	// ? We only support simple properties on MenuItem right now
 	var addVariable = func(name []byte) {
-		//fmt.Println("appending subBuffer: ", string(subBuffer))
 		// TODO: Check if the subBuffer has any items or is empty
 		textBuffer = append(textBuffer, subBuffer)
 		subBuffer = nil
 
-		//fmt.Println("adding variable: ", string(name))
 		variableBuffer = append(variableBuffer, name)
 		renderList = append(renderList, menuRenderItem{0, len(textBuffer) - 1})
 		renderList = append(renderList, menuRenderItem{1, len(variableBuffer) - 1})
@@ -277,10 +272,8 @@ func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTm
 	for i := 0; i < len(tmplData); i++ {
 		char := tmplData[i]
 		if char == '{' {
-			//fmt.Println("found open fence")
 			dotIndex, hasDot := skipUntilIfExists(tmplData, i, '.')
 			if !hasDot {
-				//fmt.Println("no dot, assumed template function style")
 				// Template function style
 				langIndex, hasChars := skipUntilCharsExist(tmplData, i+1, []byte("lang"))
 				if hasChars {
@@ -302,7 +295,6 @@ func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTm
 			}
 			fenceIndex, hasFence := skipUntilIfExists(tmplData, dotIndex, '}')
 			if !hasFence {
-				//fmt.Println("no end fence")
 				break
 			}
 			addVariable(tmplData[dotIndex:fenceIndex])
@@ -317,25 +309,21 @@ func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTm
 		renderList = append(renderList, menuRenderItem{0, len(textBuffer) - 1})
 	}
 
-	//fmt.Println("name: ", name)
-	//fmt.Print("textBuffer: ")
-	//menuDumpSlice(textBuffer)
-	//fmt.Print("\nvariableBuffer: ")
-	//menuDumpSlice(variableBuffer)
-	//fmt.Printf("\nrenderList: %+v\n", renderList)
 	return MenuTmpl{name, textBuffer, variableBuffer, renderList}
 }
 
-func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mitem MenuItem) bool) (renderBuffer [][]byte, variableIndices []int) {
+func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mitem MenuItem) bool) (renderBuffer [][]byte, variableIndices []int, pathList []menuPath) {
 	for _, mitem := range hold.List {
 		// Do we want this item in this variation of the menu?
 		if !showItem(mitem) {
 			continue
 		}
 		renderBuffer, variableIndices = hold.ScanItem(menuTmpls, mitem, renderBuffer, variableIndices)
+		pathList = append(pathList, menuPath{mitem.Path, len(renderBuffer) - 1})
 	}
+
 	// TODO: Need more coalescing in the renderBuffer
-	return renderBuffer, variableIndices
+	return renderBuffer, variableIndices, pathList
 }
 
 // Note: This doesn't do a visibility check like hold.Scan() does
@@ -345,7 +333,6 @@ func (hold *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuIt
 		menuTmpl = menuTmpls["menu_item"]
 	}
 
-	//fmt.Println("menuTmpl: ", menuTmpl)
 	for _, renderItem := range menuTmpl.RenderList {
 		if renderItem.Type == 0 {
 			renderBuffer = append(renderBuffer, menuTmpl.TextBuffer[renderItem.Index])
@@ -353,72 +340,70 @@ func (hold *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuIt
 		}
 
 		variable := menuTmpl.VariableBuffer[renderItem.Index]
-		//fmt.Println("initial variable: ", string(variable))
 		dotAt, hasDot := skipUntilIfExists(variable, 0, '.')
 		if !hasDot {
-			//fmt.Println("no dot")
 			continue
 		}
 
 		if bytes.Equal(variable[:dotAt], []byte("lang")) {
-			//fmt.Println("lang: ", string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))
 			renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))))
-		} else {
-			var renderItem []byte
-			switch string(variable) {
-			case ".ID":
-				renderItem = []byte(strconv.Itoa(mitem.ID))
-			case ".Name":
-				renderItem = []byte(mitem.Name)
-			case ".HTMLID":
-				renderItem = []byte(mitem.HTMLID)
-			case ".CSSClass":
-				renderItem = []byte(mitem.CSSClass)
-			case ".Position":
-				renderItem = []byte(mitem.Position)
-			case ".Path":
-				renderItem = []byte(mitem.Path)
-			case ".Aria":
-				renderItem = []byte(mitem.Aria)
-			case ".Tooltip":
-				renderItem = []byte(mitem.Tooltip)
-			}
+			continue
+		}
 
-			_, hasInnerVar := skipUntilIfExists(renderItem, 0, '{')
-			if hasInnerVar {
-				//fmt.Println("inner var: ", string(renderItem))
-				dotAt, hasDot := skipUntilIfExists(renderItem, 0, '.')
-				endFence, hasEndFence := skipUntilIfExists(renderItem, dotAt, '}')
-				if !hasDot || !hasEndFence || (endFence-dotAt) <= 1 {
-					renderBuffer = append(renderBuffer, renderItem)
-					variableIndices = append(variableIndices, len(renderBuffer)-1)
-					continue
-				}
+		var renderItem []byte
+		switch string(variable) {
+		case ".ID":
+			renderItem = []byte(strconv.Itoa(mitem.ID))
+		case ".Name":
+			renderItem = []byte(mitem.Name)
+		case ".HTMLID":
+			renderItem = []byte(mitem.HTMLID)
+		case ".CSSClass":
+			renderItem = []byte(mitem.CSSClass)
+		case ".Position":
+			renderItem = []byte(mitem.Position)
+		case ".Path":
+			renderItem = []byte(mitem.Path)
+		case ".Aria":
+			renderItem = []byte(mitem.Aria)
+		case ".Tooltip":
+			renderItem = []byte(mitem.Tooltip)
+		case ".CSSActive":
+			renderItem = []byte("{dyn.active}")
+		}
 
-				if bytes.Equal(renderItem[1:dotAt], []byte("lang")) {
-					//fmt.Println("lang var: ", string(renderItem[dotAt+1:endFence]))
-					renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(renderItem[dotAt+1:endFence]))))
-				} else {
-					//fmt.Println("other var: ", string(variable[:dotAt]))
-					if len(renderItem) > 0 {
-						renderBuffer = append(renderBuffer, renderItem)
-						variableIndices = append(variableIndices, len(renderBuffer)-1)
-					}
-				}
+		_, hasInnerVar := skipUntilIfExists(renderItem, 0, '{')
+		if hasInnerVar {
+			fmt.Println("inner var: ", string(renderItem))
+			dotAt, hasDot := skipUntilIfExists(renderItem, 0, '.')
+			endFence, hasEndFence := skipUntilIfExists(renderItem, dotAt, '}')
+			if !hasDot || !hasEndFence || (endFence-dotAt) <= 1 {
+				renderBuffer = append(renderBuffer, renderItem)
+				variableIndices = append(variableIndices, len(renderBuffer)-1)
 				continue
 			}
 
-			//fmt.Println("normal var: ", string(variable[:dotAt]))
-			if len(renderItem) > 0 {
-				renderBuffer = append(renderBuffer, renderItem)
+			if bytes.Equal(renderItem[1:dotAt], []byte("lang")) {
+				//fmt.Println("lang var: ", string(renderItem[dotAt+1:endFence]))
+				renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(renderItem[dotAt+1:endFence]))))
+			} else {
+				fmt.Println("other var: ", string(variable[:dotAt]))
+				if len(renderItem) > 0 {
+					renderBuffer = append(renderBuffer, renderItem)
+					variableIndices = append(variableIndices, len(renderBuffer)-1)
+				}
 			}
+			continue
+		}
+		if len(renderItem) > 0 {
+			renderBuffer = append(renderBuffer, renderItem)
 		}
 	}
 	return renderBuffer, variableIndices
 }
 
 // TODO: Pre-render the lang stuff
-func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
+func (hold *MenuListHolder) Build(w io.Writer, user *User, pathPrefix string) error {
 	var mTmpl menuTmpl
 	if !user.Loggedin {
 		mTmpl = hold.Variations[0]
@@ -429,11 +414,12 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 	} else {
 		mTmpl = hold.Variations[1]
 	}
+	if pathPrefix == "" {
+		pathPrefix = Config.DefaultPath
+	}
 
 	if len(mTmpl.VariableIndices) == 0 {
-		//fmt.Println("no variable indices")
 		for _, renderItem := range mTmpl.RenderBuffer {
-			//fmt.Printf("renderItem: %+v\n", renderItem)
 			w.Write(renderItem)
 		}
 		return nil
@@ -442,17 +428,15 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 	var nearIndex = 0
 	for index, renderItem := range mTmpl.RenderBuffer {
 		if index != mTmpl.VariableIndices[nearIndex] {
-			//fmt.Println("wrote text: ", string(renderItem))
 			w.Write(renderItem)
 			continue
 		}
-
-		//fmt.Println("variable: ", string(renderItem))
 		variable := renderItem
 		// ? - I can probably remove this check now that I've kicked it upstream, or we could keep it here for safety's sake?
 		if len(variable) == 0 {
 			continue
 		}
+
 		prevIndex := 0
 		for i := 0; i < len(renderItem); i++ {
 			fenceStart, hasFence := skipUntilIfExists(variable, i, '{')
@@ -469,9 +453,9 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 			if !hasDot {
 				continue
 			}
-			//fmt.Println("checking me: ", string(variable[fenceStart+1:dotAt]))
-			if bytes.Equal(variable[fenceStart+1:dotAt], []byte("me")) {
-				//fmt.Println("maybe me variable")
+
+			switch string(variable[fenceStart+1 : dotAt]) {
+			case "me":
 				w.Write(variable[prevIndex:fenceStart])
 				switch string(variable[dotAt+1 : fenceEnd]) {
 				case "Link":
@@ -480,10 +464,31 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User) error {
 					w.Write([]byte(user.Session))
 				}
 				prevIndex = fenceEnd
+			// TODO: Optimise this
+			case "dyn":
+				w.Write(variable[prevIndex:fenceStart])
+				var pmi int
+				for ii, pathItem := range mTmpl.PathMappings {
+					pmi = ii
+					if pathItem.Index > index {
+						break
+					}
+				}
+
+				if len(mTmpl.PathMappings) != 0 {
+					path := mTmpl.PathMappings[pmi].Path
+					if path == "" || path == "/" {
+						path = Config.DefaultPath
+					}
+					if strings.HasPrefix(path, pathPrefix) {
+						w.Write([]byte(" menu_active"))
+					}
+				}
+
+				prevIndex = fenceEnd
 			}
 		}
-		//fmt.Println("prevIndex: ", prevIndex)
-		//fmt.Println("len(variable)-1: ", len(variable)-1)
+
 		w.Write(variable[prevIndex : len(variable)-1])
 		if len(mTmpl.VariableIndices) > (nearIndex + 1) {
 			nearIndex++

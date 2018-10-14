@@ -136,7 +136,7 @@ func BuildWidget(dock string, header *Header) (sbody string) {
 		// 1 = id for the default menu
 		mhold, err := Menus.Get(1)
 		if err == nil {
-			err := mhold.Build(header.Writer, &header.CurrentUser)
+			err := mhold.Build(header.Writer, &header.CurrentUser, header.Path)
 			if err != nil {
 				LogError(err)
 			}

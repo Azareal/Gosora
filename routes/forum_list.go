@@ -14,6 +14,7 @@ func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	}
 	header.Title = common.GetTitlePhrase("forums")
 	header.Zone = "forums"
+	header.Path = "/forums/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
 
 	var err error

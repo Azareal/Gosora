@@ -239,6 +239,14 @@ func GetTitlePhrase(name string) string {
 	return res
 }
 
+func GetTitlePhrasef(name string, params ...interface{}) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).PageTitles[name]
+	if !ok {
+		return getPhrasePlaceholder("title", name)
+	}
+	return fmt.Sprintf(res, params...)
+}
+
 func GetTmplPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).TmplPhrases[name]
 	if !ok {

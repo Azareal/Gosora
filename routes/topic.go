@@ -59,18 +59,17 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		return common.InternalError(err, w, r)
 	}
 	topic.ClassName = ""
-	//log.Printf("topic: %+v\n", topic)
 
 	header, ferr := common.ForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ViewTopic {
-		//log.Printf("user.Perms: %+v\n", user.Perms)
 		return common.NoPermissions(w, r, user)
 	}
 	header.Title = topic.Title
 	header.Zone = "view_topic"
+	header.Path = common.BuildTopicURL(common.NameToSlug(topic.Title), topic.ID)
 
 	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")
