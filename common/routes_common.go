@@ -151,23 +151,6 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 	stats.Themes = len(Themes)
 	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
 
-	// TODO: Remove this as it might be counter-productive
-	/*pusher, ok := w.(http.Pusher)
-	if ok {
-		pusher.Push("/static/"+theme.Name+"/main.css", nil)
-		pusher.Push("/static/"+theme.Name+"/panel.css", nil)
-		pusher.Push("/static/global.js", nil)
-		pusher.Push("/static/jquery-3.1.1.min.js", nil)
-		// TODO: Test these
-		for _, sheet := range header.Stylesheets {
-			pusher.Push("/static/"+sheet, nil)
-		}
-		for _, script := range header.Scripts {
-			pusher.Push("/static/"+script, nil)
-		}
-		// TODO: Push avatars?
-	}*/
-
 	return header, stats, nil
 }
 
@@ -252,12 +235,13 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 }
 
 func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
-	user, halt := Auth.SessionCheck(w, r)
+	userptr, halt := Auth.SessionCheck(w, r)
 	if halt {
-		return *user, false
+		return *userptr, false
 	}
 	var usercpy *User = BlankUser()
-	*usercpy = *user
+	*usercpy = *userptr
+	usercpy.InitPerms()
 
 	// TODO: WIP. Refactor this to eliminate the unnecessary query
 	// TODO: Better take proxies into consideration
@@ -284,7 +268,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		w.Header().Set("Content-Security-Policy", "upgrade-insecure-requests")
 	}
 
-	if user == &GuestUser {
+	if userptr == &GuestUser {
 		usercpy.LastIP = host
 		return *usercpy, true
 	}

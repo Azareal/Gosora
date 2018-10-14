@@ -50,7 +50,7 @@ li a {
 	color: rgb(221,221,221);
 	padding-top: 31px;
 }
-.menu_topics a {
+.menu_left.menu_active a {
 	border-bottom: 2px solid #777777;
 	padding-bottom: 21px;
 	color: #dddddd;
@@ -343,7 +343,6 @@ h2 {
 }
 .topic_list_title_block .optbox {
 	display: flex;
-	/*margin-left: auto;*/
 	font-size: 17px;
 	margin-top: 3.5px;
 	margin-right: 16px;
@@ -467,9 +466,9 @@ h2 {
 	display: flex;
 	flex-direction: column;
 }
-.topic_inner_left br, .topic_right_inside br, .topic_inner_right {
-	display: none;
-}
+.topic_inner_left br,
+.topic_right_inside br,
+.topic_inner_right,
 .topic_list:not(.topic_list_mostviewed) .topic_middle .viewCount,
 .topic_list_mostviewed .topic_middle .likeCount {
 	display: none;
@@ -517,7 +516,6 @@ input {
 	font-size: 16px;
 }
 input, select {
-	/*margin-left: 4px;*/
 	margin-left: 3px;
 	margin-bottom: 4px;
 }
@@ -642,10 +640,8 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 	background-color: #444444;
 	border-radius: 3px;
 	width: 150px;
-	display: flex;
-	flex-direction: column;
 }
-.user_meta {
+.userinfo, .user_meta {
 	display: flex;
 	flex-direction: column;
 }
@@ -706,12 +702,11 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 	color: #dddddd;
 	white-space: nowrap;
 }
-.post_item .action_button_left {
+.post_item .action_button_left, .post_item .action_button_right {
 	display: flex;
 }
 .post_item .action_button_right {
 	margin-left: auto;
-	display: flex;
 }
 .post_item .controls:not(.has_likes) .like_count {
 	display: none;
@@ -799,7 +794,7 @@ input[type=checkbox]:checked + label .sel {
 	content: "{{index .Phrases "topic.report_button_text"}}";
 }
 .like_count:after {
-	content: " likes";
+	content: "{{index .Phrases "topic.like_count_suffix"}}";
 }
 
 .topic_reply_container {
@@ -820,16 +815,16 @@ input[type=checkbox]:checked + label .sel {
 	margin-bottom: 10px;
 	padding: 16px;
 }
-.rowlist.bgavatars .bgsub {
+.rowlist.bgavatars .bgsub, .rowlist.bgavatars .rowTitle {
 	margin-left: auto;
 	margin-right: auto;
+}
+.rowlist.bgavatars .bgsub {
 	border-radius: 32px;
 	height: 64px;
 	width: 64px;
 }
 .rowlist.bgavatars .rowTitle {
-	margin-left: auto;
-	margin-right: auto;
 	font-size: 18px;
 	margin-top: 4px;
 }
@@ -860,7 +855,7 @@ input[type=checkbox]:checked + label .sel {
 	background-color: #444444;
 }
 
-.level_complete, .level_future, .level_inprogress {
+.level_complete, .level_future, .level_inprogress, .progressWrap {
 	display: flex;
 }
 .level_complete {
@@ -872,7 +867,6 @@ input[type=checkbox]:checked + label .sel {
 	width: 100%;
 }
 .progressWrap {
-	display: flex;
 	margin-left: auto;
 }
 /* CSS behaves in stupid ways, so we need to be very specific about this */
@@ -1020,7 +1014,7 @@ input[type=checkbox]:checked + label .sel {
 		color: rgb(226,226,226);
 		padding-top: 12px;
 	}
-	.menu_topics a {
+	.menu_left.menu_active a {
 		color: #cfcfcf;
 	}
 }
@@ -1043,7 +1037,7 @@ input[type=checkbox]:checked + label .sel {
 		font-size: 16px;
 		color: #cfcfcf;
 	}
-	.menu_topics a {
+	.menu_left.menu_active a {
 		color: #dddddd;
 	}
 }
@@ -1065,7 +1059,7 @@ input[type=checkbox]:checked + label .sel {
 		padding-top: 14px;
 		display: inline-block;
 	}
-	.menu_topics a {
+	.menu_left.menu_active a {
 		padding-bottom: 15px;
 		border: none;
 	}

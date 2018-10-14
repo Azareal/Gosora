@@ -125,6 +125,7 @@
 		"login_mfa_verify":"2FA Verify",
 		"register":"Registration",
 		"ip_search":"IP Search",
+		"profile": "%s's Profile",
 		"account":"My Account",
 		"account_password":"Edit Password",
 		"account_mfa":"Manage 2FA",
@@ -626,6 +627,7 @@
 		"profile_comments_report_aria":"Report Item",
 		"profile_comments_form_content":"Insert comment here",
 		"profile_comments_form_button":"Create Reply",
+		"profile_owner_tag":"Profile Owner",
 
 		"ip_search_head":"IP Search",
 		"ip_search_search_button":"Search",
