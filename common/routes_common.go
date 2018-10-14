@@ -241,7 +241,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	}
 	var usercpy *User = BlankUser()
 	*usercpy = *userptr
-	usercpy.InitPerms()
+	usercpy.Init() // TODO: Can we reduce the amount of work we do here?
 
 	// TODO: WIP. Refactor this to eliminate the unnecessary query
 	// TODO: Better take proxies into consideration

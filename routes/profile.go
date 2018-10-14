@@ -66,7 +66,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 		} else if err != nil {
 			return common.InternalError(err, w, r)
 		}
-		puser.InitPerms()
+		puser.Init()
 	}
 	header.Title = common.GetTitlePhrasef("profile", puser.Name)
 	header.Path = common.BuildProfileURL(common.NameToSlug(puser.Name), puser.ID)
