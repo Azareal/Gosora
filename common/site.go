@@ -82,6 +82,7 @@ type config struct {
 	ServerCount     int
 
 	DisableLiveTopicList bool
+	DisableJSAntispam    bool
 
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?
