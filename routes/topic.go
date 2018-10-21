@@ -186,7 +186,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 				likedQueryList = append(likedQueryList, replyItem.ID)
 			}
 
-			common.RunVhookNoreturn("topic_reply_row_assign", &tpage, &replyItem)
+			header.Hooks.VhookNoRet("topic_reply_row_assign", &tpage, &replyItem)
 			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
 			tpage.ItemList = append(tpage.ItemList, replyItem)
 		}
@@ -235,6 +235,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 // TODO: Add a permission to stop certain users from using custom avatars
 // ? - Log username changes and put restrictions on this?
 // TODO: Test this
+// TODO: Revamp this route
 func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
 	var fid int
 	var err error
@@ -256,13 +257,13 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 		return common.NoPermissions(w, r, user)
 	}
 	// TODO: Add a phrase for this
-	header.Title = "Create Topic"
+	header.Title = common.GetTitlePhrase("create_topic")
 	header.Zone = "create_topic"
 
 	// Lock this to the forum being linked?
 	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
 	var strictmode bool
-	common.RunVhookNoreturn("topic_create_pre_loop", w, r, fid, &header, &user, &strictmode)
+	header.Hooks.VhookNoRet("topic_create_pre_loop", w, r, fid, &header, &user, &strictmode)
 
 	// TODO: Re-add support for plugin_guilds
 	var forumList []common.Forum
@@ -295,11 +296,8 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 		if forum.Name != "" && forum.Active {
 			fcopy := forum.Copy()
 			// TODO: Abstract this
-			if common.Hooks["topic_create_frow_assign"] != nil {
-				// TODO: Add the skip feature to all the other row based hooks?
-				if common.RunHook("topic_create_frow_assign", &fcopy).(bool) {
-					continue
-				}
+			if header.Hooks.HookSkippable("topic_create_frow_assign", &fcopy) {
+				continue
 			}
 			forumList = append(forumList, fcopy)
 		}

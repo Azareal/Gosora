@@ -47,7 +47,7 @@ func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.
 			} else {
 				forum.LastTopicTime = ""
 			}
-			common.RunHook("forums_frow_assign", &forum)
+			header.Hooks.Hook("forums_frow_assign", &forum)
 			forumList = append(forumList, forum)
 		}
 	}

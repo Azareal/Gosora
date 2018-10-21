@@ -20,28 +20,29 @@ var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid 
 var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
 var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (header *Header, err RouteError) = userCheck
 
-func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, rerr RouteError) {
+func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *HeaderLite, rerr RouteError) {
+	header, rerr = SimpleUserCheck(w, r, user)
+	if rerr != nil {
+		return header, rerr
+	}
 	if !Forums.Exists(fid) {
 		return nil, PreError("The target forum doesn't exist.", w, r)
 	}
 
 	// Is there a better way of doing the skip AND the success flag on this hook like multiple returns?
-	if VhookSkippable["simple_forum_check_pre_perms"] != nil {
-		var skip bool
-		skip, rerr = RunVhookSkippable("simple_forum_check_pre_perms", w, r, user, &fid, &headerLite)
-		if skip || rerr != nil {
-			return headerLite, rerr
-		}
+	skip, rerr := header.Hooks.VhookSkippable("simple_forum_check_pre_perms", w, r, user, &fid, &header)
+	if skip || rerr != nil {
+		return header, rerr
 	}
 
 	fperms, err := FPStore.Get(fid, user.Group)
 	if err == ErrNoRows {
 		fperms = BlankForumPerms()
 	} else if err != nil {
-		return headerLite, InternalError(err, w, r)
+		return header, InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, user)
-	return headerLite, nil
+	return header, nil
 }
 
 func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *Header, rerr RouteError) {
@@ -53,12 +54,9 @@ func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int)
 		return header, NotFound(w, r, header)
 	}
 
-	if VhookSkippable["forum_check_pre_perms"] != nil {
-		var skip bool
-		skip, rerr = RunVhookSkippable("forum_check_pre_perms", w, r, user, &fid, &header)
-		if skip || rerr != nil {
-			return header, rerr
-		}
+	skip, rerr := header.Hooks.VhookSkippable("forum_check_pre_perms", w, r, user, &fid, &header)
+	if skip || rerr != nil {
+		return header, rerr
 	}
 
 	fperms, err := FPStore.Get(fid, user.Group)
@@ -99,7 +97,6 @@ func cascadeForumPerms(fperms *ForumPerms, user *User) {
 // TODO: Do a panel specific theme?
 func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, stats PanelStats, rerr RouteError) {
 	var theme = &Theme{Name: ""}
-
 	cookie, err := r.Cookie("current_theme")
 	if err == nil {
 		inTheme, ok := Themes[html.EscapeString(cookie.Value)]
@@ -117,6 +114,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 		Themes:      Themes,
 		Theme:       theme,
 		CurrentUser: *user,
+		Hooks:       GetHookTable(),
 		Zone:        "panel",
 		Writer:      w,
 	}
@@ -155,7 +153,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 }
 
 func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
-	return simpleUserCheck(w, r, user)
+	return SimpleUserCheck(w, r, user)
 }
 
 // SimpleUserCheck is back from the grave, yay :D
@@ -163,6 +161,7 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header
 	return &HeaderLite{
 		Site:     Site,
 		Settings: SettingBox.Load().(SettingMap),
+		Hooks:    GetHookTable(),
 	}, nil
 }
 
@@ -187,6 +186,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		Themes:      Themes,
 		Theme:       theme,
 		CurrentUser: *user, // ! Some things rely on this being a pointer downstream from this function
+		Hooks:       GetHookTable(),
 		Zone:        "frontend",
 		Writer:      w,
 	}

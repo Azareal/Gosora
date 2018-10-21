@@ -121,6 +121,7 @@
 		"page":"Page",
 		"topics":"All Topics",
 		"forums":"Forum List",
+		"create_topic":"Create Topic",
 		"login":"Login",
 		"login_mfa_verify":"2FA Verify",
 		"register":"Registration",

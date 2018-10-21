@@ -29,9 +29,9 @@ func SendValidationEmail(username string, email string, token string) bool {
 // TODO: Add support for TLS
 func SendEmail(email string, subject string, msg string) bool {
 	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
-	// TODO: Abstract this
-	if Vhooks["email_send_intercept"] != nil {
-		return Vhooks["email_send_intercept"](email, subject, msg).(bool)
+	ret, hasHook := GetHookTable().VhookNeedHook("email_send_intercept", email, subject, msg)
+	if hasHook {
+		return ret.(bool)
 	}
 	body := "Subject: " + subject + "\n\n" + msg + "\n"
 

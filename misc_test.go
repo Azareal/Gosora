@@ -967,14 +967,23 @@ func TestPluginManager(t *testing.T) {
 	expectNilErr(t, plugin.SetActive(false))
 
 	// Hook tests
-	expect(t, common.RunSshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it yet")
-	var handle = func(in string) (out string) {
+	expect(t, common.GetHookTable().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it yet")
+	handle := func(in string) (out string) {
 		return in + "hi"
 	}
 	plugin.AddHook("haha", handle)
-	expect(t, common.RunSshook("haha", "ho") == "hohi", "Sshook didn't give hohi")
+	expect(t, common.GetHookTable().Sshook("haha", "ho") == "hohi", "Sshook didn't give hohi")
 	plugin.RemoveHook("haha", handle)
-	expect(t, common.RunSshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
+	expect(t, common.GetHookTable().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
+
+	expect(t, common.GetHookTable().Hook("haha", "ho") == "ho", "Hook shouldn't have anything bound to it yet")
+	handle2 := func(inI interface{}) (out interface{}) {
+		return inI.(string) + "hi"
+	}
+	plugin.AddHook("hehe", handle2)
+	expect(t, common.GetHookTable().Hook("hehe", "ho").(string) == "hohi", "Hook didn't give hohi")
+	plugin.RemoveHook("hehe", handle2)
+	expect(t, common.GetHookTable().Hook("hehe", "ho").(string) == "ho", "Hook shouldn't have anything bound to it anymore")
 
 	// TODO: Add tests for more hook types
 }

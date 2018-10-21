@@ -5,6 +5,8 @@ import "testing"
 
 // go test -v
 
+// TODO: Write a test for Hello World?
+
 type MEPair struct {
 	Msg     string
 	Expects string

@@ -203,7 +203,7 @@ func PreparseMessage(msg string) string {
 	msg = strings.Replace(msg, "&nbsp;", "", -1)
 	msg = strings.Replace(msg, "\r", "", -1) // Windows artifact
 	//msg = strings.Replace(msg, "\n\n\n\n", "\n\n\n", -1)
-	msg = RunSshook("preparse_preassign", msg)
+	msg = GetHookTable().Sshook("preparse_preassign", msg)
 	// There are a few useful cases for having spaces, but I'd like to stop the WYSIWYG from inserting random lines here and there
 	msg = SanitiseBody(msg)
 
@@ -624,7 +624,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	}
 
 	msg = strings.Replace(msg, "\n", "<br>", -1)
-	msg = RunSshook("parse_assign", msg)
+	msg = GetHookTable().Sshook("parse_assign", msg)
 	return msg
 }
 

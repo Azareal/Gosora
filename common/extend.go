@@ -12,6 +12,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"sync"
 	"sync/atomic"
 
 	"../query_gen/lib"
@@ -48,40 +49,133 @@ var hookTableBox atomic.Value
 // TODO: Make the RunXHook functions methods on HookTable
 // TODO: Have plugins update hooks on a mutex guarded map and create a copy of that map in a serial global goroutine which gets thrown in the atomic.Value
 type HookTable struct {
-	Hooks          map[string][]func(interface{}) interface{}
-	Vhooks         map[string]func(...interface{}) interface{}
-	VhookSkippable map[string]func(...interface{}) (bool, RouteError)
-	Sshooks        map[string][]func(string) string
-	PreRenderHooks map[string][]func(http.ResponseWriter, *http.Request, *User, interface{}) bool
+	Hooks           map[string][]func(interface{}) interface{}
+	Vhooks          map[string]func(...interface{}) interface{}
+	VhookSkippable_ map[string]func(...interface{}) (bool, RouteError)
+	Sshooks         map[string][]func(string) string
+	PreRenderHooks  map[string][]func(http.ResponseWriter, *http.Request, *User, interface{}) bool
 
 	// For future use:
 	messageHooks map[string][]func(Message, PageInt, ...interface{}) interface{}
 }
 
 func init() {
-	hookTableBox.Store(new(HookTable))
+	RebuildHookTable()
+}
+
+// For extend.go use only, access this via GetHookTable() elsewhere
+var hookTable = &HookTable{
+	map[string][]func(interface{}) interface{}{
+		"forums_frow_assign":       nil,
+		"topic_create_frow_assign": nil,
+	},
+	map[string]func(...interface{}) interface{}{
+		"forum_trow_assign":       nil,
+		"topics_topic_row_assign": nil,
+		//"topics_user_row_assign": nil,
+		"topic_reply_row_assign": nil,
+		"create_group_preappend": nil, // What is this? Investigate!
+		"topic_create_pre_loop":  nil,
+	},
+	map[string]func(...interface{}) (bool, RouteError){
+		"simple_forum_check_pre_perms": nil,
+		"forum_check_pre_perms":        nil,
+	},
+	map[string][]func(string) string{
+		"preparse_preassign": nil,
+		"parse_assign":       nil,
+	},
+	nil,
+	nil,
+}
+var hookTableUpdateMutex sync.Mutex
+
+func RebuildHookTable() {
+	hookTableUpdateMutex.Lock()
+	defer hookTableUpdateMutex.Unlock()
+	unsafeRebuildHookTable()
+}
+
+func unsafeRebuildHookTable() {
+	ihookTable := new(HookTable)
+	*ihookTable = *hookTable
+	hookTableBox.Store(ihookTable)
+}
+
+func GetHookTable() *HookTable {
+	return hookTableBox.Load().(*HookTable)
 }
 
 // Hooks with a single argument. Is this redundant? Might be useful for inlining, as variadics aren't inlined? Are closures even inlined to begin with?
-var Hooks = map[string][]func(interface{}) interface{}{
-	"forums_frow_assign":       nil,
-	"topic_create_frow_assign": nil,
+func (table *HookTable) Hook(name string, data interface{}) interface{} {
+	hooks, ok := table.Hooks[name]
+	if ok {
+		for _, hook := range hooks {
+			data = hook(data)
+		}
+	}
+	return data
+}
+
+// To cover the case in routes/topic.go's CreateTopic route, we could probably obsolete this use and replace it
+func (table *HookTable) HookSkippable(name string, data interface{}) (skip bool) {
+	hooks, ok := table.Hooks[name]
+	if ok {
+		for _, hook := range hooks {
+			skip = hook(data).(bool)
+			if skip {
+				break
+			}
+		}
+	}
+	return skip
 }
 
 // Hooks with a variable number of arguments
-var Vhooks = map[string]func(...interface{}) interface{}{
-	"forum_trow_assign":       nil,
-	"topics_topic_row_assign": nil,
-	//"topics_user_row_assign": nil,
-	"topic_reply_row_assign": nil,
-	"create_group_preappend": nil, // What is this? Investigate!
-	"topic_create_pre_loop":  nil,
+// TODO: Use RunHook semantics to allow multiple lined up plugins / modules their turn?
+func (table *HookTable) Vhook(name string, data ...interface{}) interface{} {
+	hook := table.Vhooks[name]
+	if hook != nil {
+		return hook(data...)
+	}
+	return nil
+}
+
+func (table *HookTable) VhookNoRet(name string, data ...interface{}) {
+	hook := table.Vhooks[name]
+	if hook != nil {
+		_ = hook(data...)
+	}
+}
+
+// TODO: Find a better way of doing this
+func (table *HookTable) VhookNeedHook(name string, data ...interface{}) (ret interface{}, hasHook bool) {
+	hook := table.Vhooks[name]
+	if hook != nil {
+		return hook(data...), true
+	}
+	return nil, false
 }
 
 // Hooks with a variable number of arguments and return values for skipping the parent function and propagating an error upwards
-var VhookSkippable = map[string]func(...interface{}) (bool, RouteError){
-	"simple_forum_check_pre_perms": nil,
-	"forum_check_pre_perms":        nil,
+func (table *HookTable) VhookSkippable(name string, data ...interface{}) (bool, RouteError) {
+	hook := table.VhookSkippable_[name]
+	if hook != nil {
+		return hook(data...)
+	}
+	return false, nil
+}
+
+// Hooks which take in and spit out a string. This is usually used for parser components
+// Trying to get a teeny bit of type-safety where-ever possible, especially for such a critical set of hooks
+func (table *HookTable) Sshook(name string, data string) string {
+	ssHooks, ok := table.Sshooks[name]
+	if ok {
+		for _, hook := range ssHooks {
+			data = hook(data)
+		}
+	}
+	return data
 }
 
 //var vhookErrorable = map[string]func(...interface{}) (interface{}, RouteError){}
@@ -115,12 +209,6 @@ type PageInt interface {
 // Coming Soon:
 var messageHooks = map[string][]func(Message, PageInt, ...interface{}) interface{}{
 	"topic_reply_row_assign": nil,
-}
-
-// Hooks which take in and spit out a string. This is usually used for parser components
-var Sshooks = map[string][]func(string) string{
-	"preparse_preassign": nil,
-	"parse_assign":       nil,
 }
 
 // The hooks which run before the template is rendered for a route
@@ -317,87 +405,76 @@ func (plugins PluginList) Load() error {
 // ? - Is this racey?
 // TODO: Generate the cases in this switch
 func (plugin *Plugin) AddHook(name string, handler interface{}) {
+	hookTableUpdateMutex.Lock()
+	defer hookTableUpdateMutex.Unlock()
+
 	switch h := handler.(type) {
 	case func(interface{}) interface{}:
-		if len(Hooks[name]) == 0 {
-			var hookSlice []func(interface{}) interface{}
-			hookSlice = append(hookSlice, h)
-			Hooks[name] = hookSlice
-		} else {
-			Hooks[name] = append(Hooks[name], h)
+		if len(hookTable.Hooks[name]) == 0 {
+			hookTable.Hooks[name] = []func(interface{}) interface{}{}
 		}
-		plugin.Hooks[name] = len(Hooks[name]) - 1
+		hookTable.Hooks[name] = append(hookTable.Hooks[name], h)
+		plugin.Hooks[name] = len(hookTable.Hooks[name]) - 1
 	case func(string) string:
-		if len(Sshooks[name]) == 0 {
-			var hookSlice []func(string) string
-			hookSlice = append(hookSlice, h)
-			Sshooks[name] = hookSlice
-		} else {
-			Sshooks[name] = append(Sshooks[name], h)
+		if len(hookTable.Sshooks[name]) == 0 {
+			hookTable.Sshooks[name] = []func(string) string{}
 		}
-		plugin.Hooks[name] = len(Sshooks[name]) - 1
+		hookTable.Sshooks[name] = append(hookTable.Sshooks[name], h)
+		plugin.Hooks[name] = len(hookTable.Sshooks[name]) - 1
 	case func(http.ResponseWriter, *http.Request, *User, interface{}) bool:
 		if len(PreRenderHooks[name]) == 0 {
-			var hookSlice []func(http.ResponseWriter, *http.Request, *User, interface{}) bool
-			hookSlice = append(hookSlice, h)
-			PreRenderHooks[name] = hookSlice
-		} else {
-			PreRenderHooks[name] = append(PreRenderHooks[name], h)
+			PreRenderHooks[name] = []func(http.ResponseWriter, *http.Request, *User, interface{}) bool{}
 		}
+		PreRenderHooks[name] = append(PreRenderHooks[name], h)
 		plugin.Hooks[name] = len(PreRenderHooks[name]) - 1
 	case func() error: // ! We might want a more generic name, as we might use this signature for things other than tasks hooks
 		if len(taskHooks[name]) == 0 {
-			var hookSlice []func() error
-			hookSlice = append(hookSlice, h)
-			taskHooks[name] = hookSlice
-		} else {
-			taskHooks[name] = append(taskHooks[name], h)
+			taskHooks[name] = []func() error{}
 		}
+		taskHooks[name] = append(taskHooks[name], h)
 		plugin.Hooks[name] = len(taskHooks[name]) - 1
 	case func(...interface{}) interface{}:
-		Vhooks[name] = h
+		hookTable.Vhooks[name] = h
 		plugin.Hooks[name] = 0
 	case func(...interface{}) (bool, RouteError):
-		VhookSkippable[name] = h
+		hookTable.VhookSkippable_[name] = h
 		plugin.Hooks[name] = 0
 	default:
 		panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
 	}
+	// TODO: Do this once during plugin activation / deactivation rather than doing it for each hook
+	unsafeRebuildHookTable()
 }
 
 // ? - Is this racey?
 // TODO: Generate the cases in this switch
 func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
+	hookTableUpdateMutex.Lock()
+	defer hookTableUpdateMutex.Unlock()
+
+	key, ok := plugin.Hooks[name]
+	if !ok {
+		panic("handler not registered as hook")
+	}
+
 	switch handler.(type) {
 	case func(interface{}) interface{}:
-		key, ok := plugin.Hooks[name]
-		if !ok {
-			panic("handler not registered as hook")
-		}
-		hook := Hooks[name]
+		hook := hookTable.Hooks[name]
 		if len(hook) == 1 {
 			hook = []func(interface{}) interface{}{}
 		} else {
 			hook = append(hook[:key], hook[key+1:]...)
 		}
-		Hooks[name] = hook
+		hookTable.Hooks[name] = hook
 	case func(string) string:
-		key, ok := plugin.Hooks[name]
-		if !ok {
-			panic("handler not registered as hook")
-		}
-		hook := Sshooks[name]
+		hook := hookTable.Sshooks[name]
 		if len(hook) == 1 {
 			hook = []func(string) string{}
 		} else {
 			hook = append(hook[:key], hook[key+1:]...)
 		}
-		Sshooks[name] = hook
+		hookTable.Sshooks[name] = hook
 	case func(http.ResponseWriter, *http.Request, *User, interface{}) bool:
-		key, ok := plugin.Hooks[name]
-		if !ok {
-			panic("handler not registered as hook")
-		}
 		hook := PreRenderHooks[name]
 		if len(hook) == 1 {
 			hook = []func(http.ResponseWriter, *http.Request, *User, interface{}) bool{}
@@ -406,10 +483,6 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 		}
 		PreRenderHooks[name] = hook
 	case func() error:
-		key, ok := plugin.Hooks[name]
-		if !ok {
-			panic("handler not registered as hook")
-		}
 		hook := taskHooks[name]
 		if len(hook) == 1 {
 			hook = []func() error{}
@@ -418,13 +491,15 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 		}
 		taskHooks[name] = hook
 	case func(...interface{}) interface{}:
-		delete(Vhooks, name)
+		delete(hookTable.Vhooks, name)
 	case func(...interface{}) (bool, RouteError):
-		delete(VhookSkippable, name)
+		delete(hookTable.VhookSkippable_, name)
 	default:
 		panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
 	}
 	delete(plugin.Hooks, name)
+	// TODO: Do this once during plugin activation / deactivation rather than doing it for each hook
+	unsafeRebuildHookTable()
 }
 
 // TODO: Add a HasHook method to complete the AddHook, RemoveHook, etc. set?
@@ -450,55 +525,6 @@ func InitPlugins() {
 }
 
 // ? - Are the following functions racey?
-func RunHook(name string, data interface{}) interface{} {
-	hooks, ok := Hooks[name]
-	if ok {
-		for _, hook := range hooks {
-			data = hook(data)
-		}
-	}
-	return data
-}
-
-func RunHookNoreturn(name string, data interface{}) {
-	hooks, ok := Hooks[name]
-	if !ok {
-		return
-	}
-	for _, hook := range hooks {
-		_ = hook(data)
-	}
-}
-
-// TODO: Use RunHook semantics to allow multiple lined up plugins / modules their turn?
-func RunVhook(name string, data ...interface{}) interface{} {
-	hook := Vhooks[name]
-	if hook != nil {
-		return hook(data...)
-	}
-	return nil
-}
-
-func RunVhookSkippable(name string, data ...interface{}) (bool, RouteError) {
-	return VhookSkippable[name](data...)
-}
-
-func RunVhookNoreturn(name string, data ...interface{}) {
-	hook := Vhooks[name]
-	if hook != nil {
-		_ = hook(data...)
-	}
-}
-
-// TODO: Find a better way of doing this
-func RunVhookNeedHook(name string, data ...interface{}) (ret interface{}, hasHook bool) {
-	hook := Vhooks[name]
-	if hook != nil {
-		return hook(data...), true
-	}
-	return nil, false
-}
-
 func RunTaskHook(name string) error {
 	for _, hook := range taskHooks[name] {
 		err := hook()
@@ -507,17 +533,6 @@ func RunTaskHook(name string) error {
 		}
 	}
 	return nil
-}
-
-// Trying to get a teeny bit of type-safety where-ever possible, especially for such a critical set of hooks
-func RunSshook(name string, data string) string {
-	ssHooks, ok := Sshooks[name]
-	if ok {
-		for _, hook := range ssHooks {
-			data = hook(data)
-		}
-	}
-	return data
 }
 
 func RunPreRenderHook(name string, w http.ResponseWriter, r *http.Request, user *User, data interface{}) (halt bool) {

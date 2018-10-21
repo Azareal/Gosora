@@ -258,7 +258,7 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 		topicItem.RelativeLastReplyAt = RelativeTime(topicItem.LastReplyAt)
 
 		// TODO: Rename this Vhook to better reflect moving the topic list from /routes/ to /common/
-		RunVhook("topics_topic_row_assign", &topicItem, &forum)
+		GetHookTable().Vhook("topics_topic_row_assign", &topicItem, &forum)
 		topicList = append(topicList, &topicItem)
 		reqUserList[topicItem.CreatedBy] = true
 		reqUserList[topicItem.LastReplyBy] = true

@@ -81,7 +81,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, sfid st
 		topicItem.Link = common.BuildTopicURL(common.NameToSlug(topicItem.Title), topicItem.ID)
 		topicItem.RelativeLastReplyAt = common.RelativeTime(topicItem.LastReplyAt)
 
-		common.RunVhookNoreturn("forum_trow_assign", &topicItem, &forum)
+		header.Hooks.VhookNoRet("forum_trow_assign", &topicItem, &forum)
 		topicList = append(topicList, &topicItem)
 		reqUserList[topicItem.CreatedBy] = true
 		reqUserList[topicItem.LastReplyBy] = true

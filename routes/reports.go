@@ -10,7 +10,7 @@ import (
 )
 
 func ReportSubmit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
-	_, ferr := common.SimpleUserCheck(w, r, &user)
+	headerLite, ferr := common.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -67,7 +67,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user common.User, site
 		title = "Topic: " + topic.Title
 		content = topic.Content + "\n\nOriginal Post: #tid-" + strconv.Itoa(itemID)
 	} else {
-		_, hasHook := common.RunVhookNeedHook("report_preassign", &itemID, &itemType)
+		_, hasHook := headerLite.Hooks.VhookNeedHook("report_preassign", &itemID, &itemType)
 		if hasHook {
 			return nil
 		}

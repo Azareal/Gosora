@@ -23,6 +23,7 @@ type Header struct {
 	Theme       *Theme
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
 	CurrentUser User // TODO: Deprecate CurrentUser on the page structs and use a pointer here
+	Hooks       *HookTable
 	Zone        string
 	Path        string
 	MetaDesc    string
@@ -50,6 +51,7 @@ func (header *Header) AddNotice(name string) {
 type HeaderLite struct {
 	Site     *site
 	Settings SettingMap
+	Hooks    *HookTable
 	ExtData  ExtData
 }
 
