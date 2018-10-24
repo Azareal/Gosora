@@ -33,6 +33,9 @@
 	margin-top: 12px;
 	padding: 12px;
 }
+.levelBlock {
+	padding: 0px;
+}
 
 .colstack_right .colstack_head:not(:first-child) {
 	margin-top: 0px;

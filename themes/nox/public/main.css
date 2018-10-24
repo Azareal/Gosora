@@ -869,6 +869,9 @@ input[type=checkbox]:checked + label .sel {
 .progressWrap {
 	margin-left: auto;
 }
+.levelBit {
+	color: #dadada;
+}
 /* CSS behaves in stupid ways, so we need to be very specific about this */
 .rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem.level_inprogress:not(.post_item),
 .coldyn_item .rowitem.level_inprogress {
@@ -894,6 +897,7 @@ input[type=checkbox]:checked + label .sel {
 }
 .level_inprogress .progressWrap div {
 	margin-left: auto;
+	white-space: nowrap;
 }
 
 @media(max-width: 600px) {

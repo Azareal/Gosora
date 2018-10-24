@@ -272,7 +272,6 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		usercpy.LastIP = host
 		return *usercpy, true
 	}
-
 	if host != usercpy.LastIP {
 		err = usercpy.UpdateIP(host)
 		if err != nil {
