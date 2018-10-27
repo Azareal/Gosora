@@ -3,7 +3,6 @@ env:
     - CC_TEST_REPORTER_ID=38ad11f95f28b1d33c9c31467f9eb5eb4e336e4e0e36046c86a4f7ff6e4c3977
 language: go
 go:
-  - "1.10"
   - "1.11"
   - master
 before_install:
