@@ -190,7 +190,6 @@ func patch4(scanner *bufio.Scanner) error {
 		"routePanelDebug": "panel.Debug",
 		"routePanelAnalyticsViews": "panel.AnalyticsViews",
 		"routePanelAnalyticsRouteViews": "panel.AnalyticsRouteViews",
-		"routePanelAnalyticsRouteViews": "panel.AnalyticsRouteViews",
 		"routePanelAnalyticsAgentViews": "panel.AnalyticsAgentViews",
 		"routePanelAnalyticsForumViews": "panel.AnalyticsForumViews",
 		"routePanelAnalyticsSystemViews": "panel.AnalyticsSystemViews",
@@ -218,7 +217,7 @@ func patch4(scanner *bufio.Scanner) error {
 		"routePanelForumsEditPermsAdvanceSubmit": "panel.ForumsEditPermsAdvanceSubmit",
 		"routePanelBackups": "panel.Backups",
 	}
-	err = renameRoutes(routes)
+	err := renameRoutes(routes)
 	if err != nil {
 		return err
 	}
@@ -256,7 +255,7 @@ func patch5(scanner *bufio.Scanner) error {
 		"routes.AccountEditCritical": "routes.AccountEditPassword",
 		"routes.AccountEditCriticalSubmit": "routes.AccountEditPasswordSubmit",
 	}
-	err = renameRoutes(routes)
+	err := renameRoutes(routes)
 	if err != nil {
 		return err
 	}
@@ -349,7 +348,7 @@ func patch8(scanner *bufio.Scanner) error {
 		"routePanelGroupsEditSubmit":"panel.GroupsEditSubmit",
 		"routePanelGroupsEditPermsSubmit":"panel.GroupsEditPermsSubmit",
 		"routePanelGroupsCreateSubmit":"panel.GroupsCreateSubmit",
-		"routePanelThemes","panel.Themes",
+		"routePanelThemes":"panel.Themes",
 		"routePanelThemesSetDefault":"panel.ThemesSetDefault",
 		"routePanelThemesMenus":"panel.ThemesMenus",
 		"routePanelThemesMenusEdit":"panel.ThemesMenusEdit",
