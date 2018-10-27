@@ -62,6 +62,6 @@ Once you've done that, you just need to run `./Patcher` to apply the latest patc
 
 Dependencies are third party scripts and programs which Gosora relies on to function. The instructions here do not cover updating MySQL / MariaDB or Go.
 
-You can update themn by running `update-deps.bat` on Windows or `./update-deps-linux` on Linux.
+You can update them by running the `go get` command.
 
 You'll need to restart the server after you change a template or update Gosora, e.g. with `run.bat` or killing the process and running `./run-linux` or via `./pre-run-linux` followed by `service gosora restart`.

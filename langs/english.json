@@ -599,6 +599,13 @@
 		"topic.reply_add_poll_button":"Add Poll",
 		"topic.reply_add_file_button":"Add File",
 
+		"topic.action_topic_lock":"This topic was locked by <a href='%s'>%s</a>",
+		"topic.action_topic_unlock":"This topic was reopened by <a href='%s'>%s</a>",
+		"topic.action_topic_stick":"This topic was pinned by <a href='%s'>%s</a>",
+		"topic.action_topic_unstick":"This topic was unpinned by <a href='%s'>%s</a>",
+		"topic.action_topic_move":"This topic was moved by <a href='%s'>%s</a>",
+		"topic.action_topic_default":"%s has happened",
+
 		"topic.your_information":"Your information",
 
 		"paginator_less_than":"&lt;",
