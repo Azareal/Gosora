@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 // TODO: Link the usernames for successful registrations to the profiles

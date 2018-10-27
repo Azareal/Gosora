@@ -6,8 +6,8 @@ package main
 
 import "log"
 import "database/sql"
-import "./common"
-//import "./query_gen/lib"
+import "github.com/Azareal/Gosora/common"
+//import "github.com/Azareal/Gosora/query_gen"
 
 // nolint
 type Stmts struct {

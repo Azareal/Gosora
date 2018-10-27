@@ -10,8 +10,8 @@ import (
 	"runtime/debug"
 	"strconv"
 
-	"../common"
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 	_ "github.com/go-sql-driver/mysql"
 )
 

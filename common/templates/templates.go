@@ -87,6 +87,7 @@ func NewCTemplateSet() *CTemplateSet {
 			"lang":     true,
 			"level":    true,
 			"scope":    true,
+			"dyntmpl":  true,
 		},
 	}
 }
@@ -733,6 +734,42 @@ ArgLoop:
 			literal = true
 			break ArgLoop
 		case "dyntmpl":
+			var nameParam, pageParam, headParam string
+			// TODO: Implement string literals properly
+			// TODO: Should we check to see if pos+3 is within the bounds of the slice?
+			nameOperand := node.Args[pos+1].String()
+			pageOperand := node.Args[pos+2].String()
+			headOperand := node.Args[pos+3].String()
+
+			if len(nameOperand) == 0 || len(pageOperand) == 0 || len(headOperand) == 0 {
+				panic("None of the three operands for function dyntmpl can be left blank")
+			}
+			if nameOperand[0] == '"' {
+				nameParam = nameOperand
+			} else {
+				nameParam, _ = c.compileIfVarsub(nameOperand, varholder, templateName, holdreflect)
+			}
+			if pageOperand[0] == '"' {
+				panic("The page operand for function dyntmpl cannot be a string")
+			}
+			if headOperand[0] == '"' {
+				panic("The head operand for function dyntmpl cannot be a string")
+			}
+
+			pageParam, val3 := c.compileIfVarsub(pageOperand, varholder, templateName, holdreflect)
+			if !val3.IsValid() {
+				panic("val3 is invalid")
+			}
+			headParam, val4 := c.compileIfVarsub(headOperand, varholder, templateName, holdreflect)
+			if !val4.IsValid() {
+				panic("val4 is invalid")
+			}
+			val = val4
+
+			// TODO: Refactor this
+			// TODO: Call the template function directly rather than going through RunThemeTemplate to eliminate a round of indirection?
+			out = "{\nerr := common.RunThemeTemplate(" + headParam + ".Theme.Name," + nameParam + "," + pageParam + ",w)\n"
+			out += "if err != nil {\nreturn err\n}\n}\n"
 			literal = true
 			break ArgLoop
 		default:

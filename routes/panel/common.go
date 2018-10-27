@@ -3,7 +3,7 @@ package panel
 import (
 	"net/http"
 
-	"../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it

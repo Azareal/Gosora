@@ -12,8 +12,8 @@ import (
 	"database/sql"
 	"net/url"
 
-	"./common"
-	"./query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 	_ "github.com/denisenkom/go-mssqldb"
 )
 

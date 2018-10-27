@@ -226,10 +226,10 @@ import (
 	"os"
 	"net/http"
 
-	"./common"
-	"./common/counters"
-	"./routes"
-	"./routes/panel"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/routes"
+	"github.com/Azareal/Gosora/routes/panel"
 )
 
 var ErrNoRoute = errors.New("That route doesn't exist.")

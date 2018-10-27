@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 func Users(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

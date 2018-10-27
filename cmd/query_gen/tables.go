@@ -1,6 +1,6 @@
 package main
 
-import "./lib"
+import "github.com/Azareal/Gosora/query_gen"
 
 func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("users", "utf8mb4", "utf8mb4_general_ci",

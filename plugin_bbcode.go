@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"./common"
+	"github.com/Azareal/Gosora/common"
 )
 
 var bbcodeRandom *rand.Rand

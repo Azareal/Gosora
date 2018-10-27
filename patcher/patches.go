@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"strconv"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 func init() {
@@ -16,6 +16,7 @@ func init() {
 	addPatch(5, patch5)
 	addPatch(6, patch6)
 	addPatch(7, patch7)
+	addPatch(8, patch8)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -131,91 +132,29 @@ func patch0(scanner *bufio.Scanner) (err error) {
 }
 
 func patch1(scanner *bufio.Scanner) error {
-	// ! Don't reuse this function blindly, it doesn't escape apostrophes
-	var replaceTextWhere = func(replaceThis string, withThis string) error {
-		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	var routes = map[string]string{
+		"routeAccountEditCriticalSubmit": "routes.AccountEditCriticalSubmit",
+		"routeAccountEditAvatar": "routes.AccountEditAvatar",
+		"routeAccountEditAvatarSubmit": "routes.AccountEditAvatarSubmit",
+		"routeAccountEditUsername": "routes.AccountEditUsername",
+		"routeAccountEditUsernameSubmit": "routes.AccountEditUsernameSubmit",
 	}
-
-	err := replaceTextWhere("routeAccountEditCriticalSubmit", "routes.AccountEditCriticalSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeAccountEditAvatar", "routes.AccountEditAvatar")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeAccountEditAvatarSubmit", "routes.AccountEditAvatarSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeAccountEditUsername", "routes.AccountEditUsername")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeAccountEditUsernameSubmit", "routes.AccountEditUsernameSubmit")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return renameRoutes(routes)
 }
 
 func patch2(scanner *bufio.Scanner) error {
-	// ! Don't reuse this function blindly, it doesn't escape apostrophes
-	var replaceTextWhere = func(replaceThis string, withThis string) error {
-		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	var routes = map[string]string{
+		"routeLogout": "routes.AccountLogout",
+		"routeShowAttachment": "routes.ShowAttachment",
+		"routeChangeTheme": "routes.ChangeTheme",
+		"routeProfileReplyCreateSubmit": "routes.ProfileReplyCreateSubmit",
+		"routeLikeTopicSubmit": "routes.LikeTopicSubmit",
+		"routeReplyLikeSubmit": "routes.ReplyLikeSubmit",
+		"routeDynamic": "routes.DynamicRoute",
+		"routeUploads": "routes.UploadedFile",
+		"BadRoute": "routes.BadRoute",
 	}
-
-	err := replaceTextWhere("routeLogout", "routes.AccountLogout")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeShowAttachment", "routes.ShowAttachment")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeChangeTheme", "routes.ChangeTheme")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeProfileReplyCreateSubmit", "routes.ProfileReplyCreateSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeLikeTopicSubmit", "routes.LikeTopicSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeReplyLikeSubmit", "routes.ReplyLikeSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeDynamic", "routes.DynamicRoute")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeUploads", "routes.UploadedFile")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("BadRoute", "routes.BadRoute")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return renameRoutes(routes)
 }
 
 func patch3(scanner *bufio.Scanner) error {
@@ -241,187 +180,45 @@ func patch3(scanner *bufio.Scanner) error {
 }
 
 func patch4(scanner *bufio.Scanner) error {
-	// ! Don't reuse this function blindly, it doesn't escape apostrophes
-	var replaceTextWhere = func(replaceThis string, withThis string) error {
-		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	var routes = map[string]string{
+		"routeReportSubmit": "routes.ReportSubmit",
+		"routeAccountEditEmail": "routes.AccountEditEmail",
+		"routeAccountEditEmailTokenSubmit": "routes.AccountEditEmailTokenSubmit",
+		"routePanelLogsRegs": "panel.LogsRegs",
+		"routePanelLogsMod": "panel.LogsMod",
+		"routePanelLogsAdmin": "panel.LogsAdmin",
+		"routePanelDebug": "panel.Debug",
+		"routePanelAnalyticsViews": "panel.AnalyticsViews",
+		"routePanelAnalyticsRouteViews": "panel.AnalyticsRouteViews",
+		"routePanelAnalyticsRouteViews": "panel.AnalyticsRouteViews",
+		"routePanelAnalyticsAgentViews": "panel.AnalyticsAgentViews",
+		"routePanelAnalyticsForumViews": "panel.AnalyticsForumViews",
+		"routePanelAnalyticsSystemViews": "panel.AnalyticsSystemViews",
+		"routePanelAnalyticsLanguageViews": "panel.AnalyticsLanguageViews",
+		"routePanelAnalyticsReferrerViews": "panel.AnalyticsReferrerViews",
+		"routePanelAnalyticsTopics": "panel.AnalyticsTopics",
+		"routePanelAnalyticsPosts": "panel.AnalyticsPosts",
+		"routePanelAnalyticsForums": "panel.AnalyticsForums",
+		"routePanelAnalyticsRoutes": "panel.AnalyticsRoutes",
+		"routePanelAnalyticsAgents": "panel.AnalyticsAgents",
+		"routePanelAnalyticsSystems": "panel.AnalyticsSystems",
+		"routePanelAnalyticsLanguages": "panel.AnalyticsLanguages",
+		"routePanelAnalyticsReferrers": "panel.AnalyticsReferrers",
+		"routePanelSettings": "panel.Settings",
+		"routePanelSettingEdit": "panel.SettingEdit",
+		"routePanelSettingEditSubmit": "panel.SettingEditSubmit",
+		"routePanelForums": "panel.Forums",
+		"routePanelForumsCreateSubmit": "panel.ForumsCreateSubmit",
+		"routePanelForumsDelete": "panel.ForumsDelete",
+		"routePanelForumsDeleteSubmit": "panel.ForumsDeleteSubmit",
+		"routePanelForumsEdit": "panel.ForumsEdit",
+		"routePanelForumsEditSubmit": "panel.ForumsEditSubmit",
+		"routePanelForumsEditPermsSubmit": "panel.ForumsEditPermsSubmit",
+		"routePanelForumsEditPermsAdvance": "panel.ForumsEditPermsAdvance",
+		"routePanelForumsEditPermsAdvanceSubmit": "panel.ForumsEditPermsAdvanceSubmit",
+		"routePanelBackups": "panel.Backups",
 	}
-
-	err := replaceTextWhere("routeReportSubmit", "routes.ReportSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeAccountEditEmail", "routes.AccountEditEmail")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routeAccountEditEmailTokenSubmit", "routes.AccountEditEmailTokenSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelLogsRegs", "panel.LogsRegs")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelLogsMod", "panel.LogsMod")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelLogsAdmin", "panel.LogsAdmin")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelDebug", "panel.Debug")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsViews", "panel.AnalyticsViews")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsRouteViews", "panel.AnalyticsRouteViews")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsRouteViews", "panel.AnalyticsRouteViews")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsAgentViews", "panel.AnalyticsAgentViews")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsForumViews", "panel.AnalyticsForumViews")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsSystemViews", "panel.AnalyticsSystemViews")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsLanguageViews", "panel.AnalyticsLanguageViews")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsReferrerViews", "panel.AnalyticsReferrerViews")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsTopics", "panel.AnalyticsTopics")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsPosts", "panel.AnalyticsPosts")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsForums", "panel.AnalyticsForums")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsRoutes", "panel.AnalyticsRoutes")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsAgents", "panel.AnalyticsAgents")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsSystems", "panel.AnalyticsSystems")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsLanguages", "panel.AnalyticsLanguages")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelAnalyticsReferrers", "panel.AnalyticsReferrers")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelSettings", "panel.Settings")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelSettingEdit", "panel.SettingEdit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelSettingEditSubmit", "panel.SettingEditSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForums", "panel.Forums")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForumsCreateSubmit", "panel.ForumsCreateSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForumsDelete", "panel.ForumsDelete")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForumsDeleteSubmit", "panel.ForumsDeleteSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForumsEdit", "panel.ForumsEdit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForumsEditSubmit", "panel.ForumsEditSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForumsEditPermsSubmit", "panel.ForumsEditPermsSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForumsEditPermsAdvance", "panel.ForumsEditPermsAdvance")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelForumsEditPermsAdvanceSubmit", "panel.ForumsEditPermsAdvanceSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelBackups", "panel.Backups")
+	err = renameRoutes(routes)
 	if err != nil {
 		return err
 	}
@@ -452,32 +249,14 @@ func patch4(scanner *bufio.Scanner) error {
 }
 
 func patch5(scanner *bufio.Scanner) error {
-	// ! Don't reuse this function blindly, it doesn't escape apostrophes
-	var replaceTextWhere = func(replaceThis string, withThis string) error {
-		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	var routes = map[string]string{
+		"routePanelUsers": "panel.Users",
+		"routePanelUsersEdit": "panel.UsersEdit",
+		"routePanelUsersEditSubmit": "panel.UsersEditSubmit",
+		"routes.AccountEditCritical": "routes.AccountEditPassword",
+		"routes.AccountEditCriticalSubmit": "routes.AccountEditPasswordSubmit",
 	}
-
-	err := replaceTextWhere("routePanelUsers", "panel.Users")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelUsersEdit", "panel.UsersEdit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routePanelUsersEditSubmit", "panel.UsersEditSubmit")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routes.AccountEditCritical", "routes.AccountEditPassword")
-	if err != nil {
-		return err
-	}
-
-	err = replaceTextWhere("routes.AccountEditCriticalSubmit", "routes.AccountEditPasswordSubmit")
+	err = renameRoutes(routes)
 	if err != nil {
 		return err
 	}
@@ -529,6 +308,68 @@ func patch7(scanner *bufio.Scanner) error {
 		[]qgen.DBTableKey{
 			qgen.DBTableKey{"uid", "primary"},
 		},
+	))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func renameRoutes(routes map[string]string) error {
+	// ! Don't reuse this function blindly, it doesn't escape apostrophes
+	var replaceTextWhere = func(replaceThis string, withThis string) error {
+		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
+	}
+
+	for key, value := range routes {
+		err := replaceTextWhere(key,value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func patch8(scanner *bufio.Scanner) error {
+	var routes = map[string]string{
+		"routePanelWordFilter": "panel.WordFilters",
+		"routePanelWordFiltersCreateSubmit": "panel.WordFiltersCreateSubmit",
+		"routePanelWordFiltersEdit": "panel.WordFiltersEdit",
+		"routePanelWordFiltersEditSubmit": "panel.WordFiltersEditSubmit",
+		"routePanelWordFiltersDeleteSubmit": "panel.WordFiltersDeleteSubmit",
+		"routePanelPlugins": "panel.Plugins",
+		"routePanelPluginsActivate": "panel.PluginsActivate",
+		"routePanelPluginsDeactivate": "panel.PluginsDeactivate",
+		"routePanelPluginsInstall": "panel.PluginsInstall",
+		"routePanelGroups": "panel.Groups",
+		"routePanelGroupsEdit":"panel.GroupsEdit",
+		"routePanelGroupsEditPerms":"panel.GroupsEditPerms",
+		"routePanelGroupsEditSubmit":"panel.GroupsEditSubmit",
+		"routePanelGroupsEditPermsSubmit":"panel.GroupsEditPermsSubmit",
+		"routePanelGroupsCreateSubmit":"panel.GroupsCreateSubmit",
+		"routePanelThemes","panel.Themes",
+		"routePanelThemesSetDefault":"panel.ThemesSetDefault",
+		"routePanelThemesMenus":"panel.ThemesMenus",
+		"routePanelThemesMenusEdit":"panel.ThemesMenusEdit",
+		"routePanelThemesMenuItemEdit":"panel.ThemesMenuItemEdit",
+		"routePanelThemesMenuItemEditSubmit":"panel.ThemesMenuItemEditSubmit",
+		"routePanelThemesMenuItemCreateSubmit":"panel.ThemesMenuItemCreateSubmit",
+		"routePanelThemesMenuItemDeleteSubmit":"panel.ThemesMenuItemDeleteSubmit",
+		"routePanelThemesMenuItemOrderSubmit":"panel.ThemesMenuItemOrderSubmit",
+		"routePanelDashboard":"panel.Dashboard",
+	}
+	err := renameRoutes(routes)
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.CreateTable("updates", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"dbVersion", "int", 0, false, false, "0"},
+		},
+		[]qgen.DBTableKey{},
 	))
 	if err != nil {
 		return err

@@ -15,7 +15,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var ErrPluginNotInstallable = errors.New("This plugin is not installable")
@@ -218,7 +218,7 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_forum_list":   nil,
 	"pre_render_forum":        nil,
 	"pre_render_topic_list":   nil,
-	"pre_render_view_topic":   nil,
+	"pre_render_topic":        nil,
 	"pre_render_profile":      nil,
 	"pre_render_custom_page":  nil,
 	"pre_render_tmpl_page":    nil,

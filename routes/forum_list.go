@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

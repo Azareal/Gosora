@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"../common"
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 func PollVote(w http.ResponseWriter, r *http.Request, user common.User, sPollID string) common.RouteError {

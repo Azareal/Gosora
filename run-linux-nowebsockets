@@ -16,10 +16,10 @@ echo "Running the router generator"
 ./RouterGen
 
 echo "Building the query generator"
-cd ./query_gen
+cd ./cmd/query_gen
 go build -o QueryGen
-mv ./QueryGen ..
-cd ..
+mv ./QueryGen ../..
+cd ../..
 echo "Running the query generator"
 ./QueryGen
 

@@ -3,7 +3,7 @@ package common
 import (
 	"database/sql"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var Attachments AttachmentStore

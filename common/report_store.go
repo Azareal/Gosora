@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Make the default report forum ID configurable

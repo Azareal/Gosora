@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var FPStore ForumPermsStore

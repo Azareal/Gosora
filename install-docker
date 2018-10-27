@@ -1,7 +1,7 @@
 cd ./install
 go generate
-go build -o Install
-mv ./Install ..
+go build -o Installer
+mv ./Installer ..
 cd ..
 
-./Install --dbType=mysql --dbHost=localhost --dbUser=$MYSQL_USER --dbPassword=$MYSQL_PASSWORD --dbName=$MYSQL_DATABASE --shortSiteName=$SITE_SHORT_NAME --siteName=$SITE_NAME --siteURL=$SITE_URL --serverPort=$SERVER_PORT--secureServerPort=$SECURE_SERVER_PORT
+./Installer --dbType=mysql --dbHost=localhost --dbUser=$MYSQL_USER --dbPassword=$MYSQL_PASSWORD --dbName=$MYSQL_DATABASE --shortSiteName=$SITE_SHORT_NAME --siteName=$SITE_NAME --siteURL=$SITE_URL --serverPort=$SERVER_PORT--secureServerPort=$SECURE_SERVER_PORT

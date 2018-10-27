@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"./common"
+	"github.com/Azareal/Gosora/common"
 )
 
 // TODO: Support the new handler signatures created by our efforts to move the PreRoute middleware into the generated router

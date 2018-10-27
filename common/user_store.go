@@ -6,7 +6,7 @@ import (
 	"log"
 	"strconv"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 	"golang.org/x/crypto/bcrypt"
 )
 

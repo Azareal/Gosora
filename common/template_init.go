@@ -4,14 +4,15 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"math"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"./alerts"
-	"./templates"
+	"github.com/Azareal/Gosora/common/alerts"
+	"github.com/Azareal/Gosora/common/templates"
 )
 
 var Ctemplates []string
@@ -27,6 +28,7 @@ type CTmpl struct {
 	Imports    []string
 }
 
+// TODO: Refactor the template trees to not need these
 // TODO: Stop duplicating these bits of code
 // nolint
 func interpretedTopicTemplate(pi TopicPage, w io.Writer) error {
@@ -122,6 +124,15 @@ var Template_ip_search_handle = func(pi IPSearchPage, w io.Writer) error {
 	return Templates.ExecuteTemplate(w, mapping+".html", pi)
 }
 
+// nolint
+var Template_account_handle = func(pi AccountDashPage, w io.Writer) error {
+	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["account"]
+	if !ok {
+		mapping = "account"
+	}
+	return Templates.ExecuteTemplate(w, mapping+".html", pi)
+}
+
 func tmplInitUsers() (User, User, User) {
 	avatar, microAvatar := BuildAvatar(62, "")
 	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", "", "", 0, 0, 0, "0.0.0.0.0", 0}
@@ -171,8 +182,8 @@ func CompileTemplates() error {
 	c := tmpl.NewCTemplateSet()
 	c.SetConfig(config)
 	c.SetBaseImportMap(map[string]string{
-		"io":       "io",
-		"./common": "./common",
+		"io":                               "io",
+		"github.com/Azareal/Gosora/common": "github.com/Azareal/Gosora/common",
 	})
 	c.SetBuildTags("!no_templategen")
 
@@ -285,6 +296,18 @@ func CompileTemplates() error {
 		return err
 	}
 
+	mfaSetup := false
+	prevScore := GetLevelScore(header.CurrentUser.Level)
+	currentScore := header.CurrentUser.Score - prevScore
+	nextScore := GetLevelScore(header.CurrentUser.Level+1) - prevScore
+	perc := int(math.Ceil((float64(nextScore) / float64(currentScore)) * 100))
+
+	accountPage := AccountDashPage{header, "dashboard", "account_own_edit", mfaSetup, currentScore, nextScore, user.Level + 1, perc * 2}
+	accountTmpl, err := compile("account", "common.AccountDashPage", accountPage)
+	if err != nil {
+		return err
+	}
+
 	var wg sync.WaitGroup
 	var writeTemplate = func(name string, content string) {
 		log.Print("Writing template '" + name + "'")
@@ -327,6 +350,7 @@ func CompileTemplates() error {
 	writeTemplate("login", loginTmpl)
 	writeTemplate("register", registerTmpl)
 	writeTemplate("ip_search", ipSearchTmpl)
+	writeTemplate("account", accountTmpl)
 	writeTemplate("error", errorTmpl)
 	writeTemplateList(c, &wg, "./")
 	return nil
@@ -346,8 +370,8 @@ func CompileJSTemplates() error {
 	c := tmpl.NewCTemplateSet()
 	c.SetConfig(config)
 	c.SetBaseImportMap(map[string]string{
-		"io":               "io",
-		"../common/alerts": "../common/alerts",
+		"io": "io",
+		"github.com/Azareal/Gosora/common/alerts": "github.com/Azareal/Gosora/common/alerts",
 	})
 	c.SetBuildTags("!no_templategen")
 
@@ -364,8 +388,8 @@ func CompileJSTemplates() error {
 	}
 
 	c.SetBaseImportMap(map[string]string{
-		"io":        "io",
-		"../common": "../common",
+		"io":                               "io",
+		"github.com/Azareal/Gosora/common": "github.com/Azareal/Gosora/common",
 	})
 	// TODO: Fix the import loop so we don't have to use this hack anymore
 	c.SetBuildTags("!no_templategen,tmplgentopic")

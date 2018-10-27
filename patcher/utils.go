@@ -1,7 +1,7 @@
 package main
 
 import "database/sql"
-import "../query_gen/lib"
+import "github.com/Azareal/Gosora/query_gen"
 
 func execStmt(stmt *sql.Stmt, err error) error {
 	if err != nil {

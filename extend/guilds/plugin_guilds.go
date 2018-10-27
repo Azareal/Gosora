@@ -1,9 +1,8 @@
 package main
 
 import (
-	"./common"
-	"./extend/guilds/lib"
-	"./query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/extend/guilds/lib"
 )
 
 // TODO: Add a better way of splitting up giant plugins like this

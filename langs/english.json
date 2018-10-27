@@ -98,6 +98,7 @@
 		"register_username_too_long_prefix":"The username is too long, max: ",
 		"register_email_fail":"We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.",
 
+		"alerts_no_new_alerts":"No new alerts",
 		"alerts_no_actor":"Unable to find the actor",
 		"alerts_no_target_user":"Unable to find the target user",
 		"alerts_no_linked_topic":"Unable to find the linked topic",
@@ -132,6 +133,7 @@
 		"account_mfa":"Manage 2FA",
 		"account_mfa_setup":"Setup 2FA",
 		"account_email":"Email Manager",
+		"account_level_list":"Level Progress",
 
 		"panel_dashboard":"Control Panel Dashboard",
 		"panel_forums":"Forum Manager",

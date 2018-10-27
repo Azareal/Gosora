@@ -1,12 +1,17 @@
-package common
+/*
+*
+*	Gosora Common Resources
+*	Copyright Azareal 2018 - 2019
+*
+ */
+package common // import "github.com/Azareal/Gosora/common"
 
 import (
 	"database/sql"
 	"log"
 	"sync/atomic"
 	"time"
-
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var SoftwareVersion = Version{Major: 0, Minor: 2, Patch: 0, Tag: "dev"}

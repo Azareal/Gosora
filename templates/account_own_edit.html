@@ -1,8 +1,4 @@
-{{template "header.html" . }}
-<div id="account_dashboard" class="colstack account">
-	{{template "account_menu.html" . }}
-	<main class="colstack_right">
-		<form id="avatar_form" action="/user/edit/avatar/submit/?session={{.CurrentUser.Session}}" method="post" enctype="multipart/form-data"></form>
+<form id="avatar_form" action="/user/edit/avatar/submit/?session={{.CurrentUser.Session}}" method="post" enctype="multipart/form-data"></form>
 		<div class="coldyn_block">
 		<div id="dash_left" class="coldyn_item">
 			<div class="rowitem">
@@ -31,6 +27,3 @@
 			</div>
 		</div>
 		</div>
-	</main>
-</div>
-{{template "footer.html" . }}

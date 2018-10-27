@@ -40,9 +40,9 @@ go get -u github.com/fsnotify/fsnotify
 echo "Building the installer"
 cd ./install
 go generate
-go build -o Install
-mv ./Install ..
+go build -o Installer
+mv ./Installer ..
 cd ..
 
 echo "Running the installer"
-./Install
+./Installer

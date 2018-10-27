@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // This is also in reply.go

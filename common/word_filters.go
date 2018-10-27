@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"sync/atomic"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Move some features into methods on this?

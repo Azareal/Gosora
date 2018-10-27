@@ -11,7 +11,7 @@ import (
 	"errors"
 	"strings"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Add the watchdog goroutine

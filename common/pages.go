@@ -157,6 +157,8 @@ type EmailListPage struct {
 
 type AccountDashPage struct {
 	*Header
+	HTMLID       string
+	TmplName     string
 	MFASetup     bool
 	CurrentScore int
 	NextScore    int

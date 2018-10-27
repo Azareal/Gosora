@@ -1,5 +1,5 @@
 /* WIP Under Construction */
-package main
+package main // import "github.com/Azareal/Gosora/query_gen"
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"runtime/debug"
 	"strconv"
 
-	"./lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Make sure all the errors in this file propagate upwards properly

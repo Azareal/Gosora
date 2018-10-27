@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	"./common"
+	"github.com/Azareal/Gosora/common"
 	"github.com/pkg/errors"
 )
 

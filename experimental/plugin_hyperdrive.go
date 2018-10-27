@@ -4,7 +4,7 @@ package main
 import (
 	"sync/atomic"
 
-	"./common"
+	"github.com/Azareal/Gosora/common"
 )
 
 var hyperPageCache *HyperPageCache

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // ? - Can we avoid duplicating the items in this list in a bunch of places?

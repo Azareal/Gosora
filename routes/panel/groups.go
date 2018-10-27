@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
-// routePanelGroups
 func Groups(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "groups", "groups")
 	if ferr != nil {
@@ -62,7 +61,6 @@ func Groups(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	return renderTemplate("panel_groups", w, r, user, &pi)
 }
 
-//routePanelGroupsEdit
 func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "edit_group", "groups")
 	if ferr != nil {
@@ -111,7 +109,6 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid s
 	return renderTemplate("panel_group_edit", w, r, user, pi)
 }
 
-//routePanelGroupsEditPerms
 func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "edit_group", "groups")
 	if ferr != nil {
@@ -191,7 +188,6 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, s
 	return renderTemplate("panel_group_edit_perms", w, r, user, pi)
 }
 
-//routePanelGroupsEditSubmit
 func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -281,7 +277,6 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 	return nil
 }
 
-//routePanelGroupsEditPermsSubmit
 func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -336,7 +331,6 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	return nil
 }
 
-//routePanelGroupsCreateSubmit
 func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {

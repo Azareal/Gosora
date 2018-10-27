@@ -6,10 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
-//routePanelThemes
 func Themes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "themes", "themes")
 	if ferr != nil {
@@ -35,7 +34,6 @@ func Themes(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	return renderTemplate("panel_themes", w, r, user, &pi)
 }
 
-//routePanelThemesSetDefault
 func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -62,7 +60,6 @@ func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user common.User, 
 	return nil
 }
 
-//routePanelThemesMenus
 func ThemesMenus(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "themes_menus", "themes")
 	if ferr != nil {
@@ -89,7 +86,6 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user common.User) commo
 	return renderTemplate("panel_themes_menus", w, r, user, &pi)
 }
 
-//routePanelThemesMenusEdit
 func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user common.User, smid string) common.RouteError {
 	// TODO: Something like Menu #1 for the title?
 	basePage, ferr := buildBasePage(w, r, &user, "themes_menus_edit", "themes")
@@ -137,7 +133,6 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user common.User, s
 	return renderTemplate("panel_themes_menus_items", w, r, user, &pi)
 }
 
-//routePanelThemesMenuItemEdit
 func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
 	// TODO: Something like Menu #1 for the title?
 	basePage, ferr := buildBasePage(w, r, &user, "themes_menus_edit", "themes")
@@ -210,7 +205,6 @@ func themesMenuItemSetters(r *http.Request, menuItem common.MenuItem) common.Men
 	return menuItem
 }
 
-//routePanelThemesMenuItemEditSubmit
 func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -242,7 +236,6 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user commo
 	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
 }
 
-//routePanelThemesMenuItemCreateSubmit
 func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -271,7 +264,6 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user com
 	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
 }
 
-//routePanelThemesMenuItemDeleteSubmit
 func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -301,7 +293,6 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user com
 	return successRedirect("/panel/themes/menus/", w, r, isJs)
 }
 
-//routePanelThemesMenuItemOrderSubmit
 func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user common.User, smid string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {

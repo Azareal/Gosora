@@ -5,7 +5,7 @@ package main
 
 import "log"
 import "database/sql"
-import "./common"
+import "github.com/Azareal/Gosora/common"
 
 // nolint
 type Stmts struct {

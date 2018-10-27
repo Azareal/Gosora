@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL string) common.RouteError {

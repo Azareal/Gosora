@@ -94,8 +94,6 @@ func buildTopicRoutes() {
 }
 
 func buildReplyRoutes() {
-	//router.HandleFunc("/reply/edit/", routeReplyEdit) // No js fallback
-	//router.HandleFunc("/reply/delete/", routeReplyDelete) // No js confirmation page? We could have a confirmation modal for the JS case
 	replyGroup := newRouteGroup("/reply/")
 	replyGroup.Routes(
 		// TODO: Reduce this to 1MB for attachments for each file?
@@ -103,6 +101,8 @@ func buildReplyRoutes() {
 		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
 		Action("routes.ReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
 		Action("routes.ReplyLikeSubmit", "/reply/like/submit/", "extraData").Before("ParseForm"),
+		//MemberView("routes.ReplyEdit","/reply/edit/","extraData"), // No js fallback
+		//MemberView("routes.ReplyDelete","/reply/delete/","extraData"), // No js confirmation page? We could have a confirmation modal for the JS case
 	)
 	addRouteGroup(replyGroup)
 }

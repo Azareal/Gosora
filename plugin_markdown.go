@@ -1,10 +1,9 @@
 package main
 
-//import "fmt"
 import (
 	"strings"
 
-	"./common"
+	"github.com/Azareal/Gosora/common"
 )
 
 var markdownMaxDepth = 25 // How deep the parser will go when parsing Markdown strings

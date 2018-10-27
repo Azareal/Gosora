@@ -5,10 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
-//routePanelPlugins
 func Plugins(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "plugins", "plugins")
 	if ferr != nil {
@@ -27,7 +26,6 @@ func Plugins(w http.ResponseWriter, r *http.Request, user common.User) common.Ro
 	return renderTemplate("panel_plugins", w, r, user, &pi)
 }
 
-//routePanelPluginsActivate
 // TODO: Abstract more of the plugin activation / installation / deactivation logic, so we can test all that more reliably and easily
 func PluginsActivate(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
@@ -81,7 +79,6 @@ func PluginsActivate(w http.ResponseWriter, r *http.Request, user common.User, u
 	return nil
 }
 
-//routePanelPluginsDeactivate
 func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
@@ -116,7 +113,6 @@ func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user common.User,
 	return nil
 }
 
-//routePanelPluginsInstall
 func PluginsInstall(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {

@@ -16,8 +16,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../query_gen/lib"
-	"./gauth"
+	"github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/common/gauth"
 	//"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 )

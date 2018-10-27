@@ -1,10 +1,10 @@
 /*
 *
 *	Gosora Main File
-*	Copyright Azareal 2016 - 2018
+*	Copyright Azareal 2016 - 2019
 *
  */
-package main
+package main // import "github.com/Azareal/Gosora"
 
 import (
 	"bytes"
@@ -21,10 +21,10 @@ import (
 	"syscall"
 	"time"
 
-	"./common"
-	"./common/counters"
-	"./query_gen/lib"
-	"./routes"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/routes"
+	"github.com/Azareal/Gosora/query_gen"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 )

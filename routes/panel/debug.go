@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"../../common"
-	"../../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 func Debug(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

@@ -1,6 +1,6 @@
 package main
 
-import "./common"
+import "github.com/Azareal/Gosora/common"
 
 func init() {
 	common.Plugins.Add(&common.Plugin{UName: "heythere", Name: "Hey There", Author: "Azareal", URL: "https://github.com/Azareal", Init: initHeythere, Deactivate: deactivateHeythere})

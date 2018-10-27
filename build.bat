@@ -22,7 +22,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the installer
-go build ./install
+go build "./cmd/install"
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
@@ -36,7 +36,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the query generator
-go build ./query_gen
+go build "./cmd/query_gen"
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

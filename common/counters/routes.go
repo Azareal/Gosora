@@ -1,8 +1,8 @@
 package counters
 
 import "database/sql"
-import ".."
-import "../../query_gen/lib"
+import "github.com/Azareal/Gosora/common"
+import "github.com/Azareal/Gosora/query_gen"
 
 var RouteViewCounter *DefaultRouteViewCounter
 

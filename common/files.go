@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 
-	"../tmpl_client"
+	"github.com/Azareal/Gosora/tmpl_client"
 )
 
 type SFileList map[string]SFile

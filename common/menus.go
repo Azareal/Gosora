@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 type MenuItemList []MenuItem

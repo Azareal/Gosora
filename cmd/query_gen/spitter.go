@@ -1,7 +1,7 @@
 package main
 
 import "strings"
-import "./lib"
+import "github.com/Azareal/Gosora/query_gen"
 
 type PrimaryKeySpitter struct {
 	keys map[string]string

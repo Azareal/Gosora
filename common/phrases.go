@@ -276,6 +276,11 @@ func getPhrasePlaceholder(prefix string, suffix string) string {
 	return "{lang." + prefix + "[" + suffix + "]}"
 }
 
+// Please don't mutate *LanguagePack
+func GetCurrentLangPack() *LanguagePack {
+	return currentLangPack.Load().(*LanguagePack)
+}
+
 // ? - Use runtime reflection for updating phrases?
 // TODO: Implement these
 func AddPhrase() {

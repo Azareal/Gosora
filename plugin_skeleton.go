@@ -1,6 +1,6 @@
 package main
 
-import "./common"
+import "github.com/Azareal/Gosora/common"
 
 func init() {
 	/*

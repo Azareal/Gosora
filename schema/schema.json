@@ -1,6 +1,6 @@
 {
-	"DBVersion":"8",
+	"DBVersion":"9",
 	"DynamicFileVersion":"0",
-	"MinGoVersion":"1.10",
+	"MinGoVersion":"1.11",
 	"MinVersion":""
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Refactor the perms system

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 func BanUserSubmit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 	"github.com/go-sql-driver/mysql"
 )
 

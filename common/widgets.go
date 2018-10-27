@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var Docks WidgetDocks

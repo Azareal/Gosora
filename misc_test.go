@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"./common"
+	"github.com/Azareal/Gosora/common"
 )
 
 func recordMustExist(t *testing.T, err error, errmsg string, args ...interface{}) {

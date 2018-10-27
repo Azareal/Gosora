@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"./common"
+	"github.com/Azareal/Gosora/common"
 )
 
 // TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?

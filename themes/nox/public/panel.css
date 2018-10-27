@@ -19,11 +19,12 @@
 }
 
 .colstack_left {
-	width: 25%;
+	width: 200px;
 	padding-top: 12px;
 	padding-right: 24px;
 	padding-bottom: 24px;
 	padding-left: 24px;
+	background-color: #3e3e3e;
 }
 .colstack_left .colstack_head {
 	font-size: 19px;
@@ -47,7 +48,7 @@
 }
 
 .colstack_right {
-	background-color: #444444;
+	background-color: #333333;
 	width: 75%;
 	padding-top: 12px;
 	padding-right: 24px;
@@ -59,13 +60,9 @@
 }
 .colstack_right .colstack_head h1 {
 	font-size: 21px;
-	color: #BBBBBB;
 }
-.colstack_right .colstack_item.the_form {
-	background-color: #555555;
-}
-.colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem {
-	background-color: #555555;
+.colstack_right .colstack_item.the_form, .colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem {
+	background-color: #444444;
 }
 .rowitem {
 	display: flex;
@@ -79,7 +76,7 @@
 .grid_item {
 	border-radius: 3px;
 	color: rgb(190,190,190);
-	background-color: #555555;
+	background-color: #444444;
 	padding: 12px;
 }
 
@@ -87,10 +84,6 @@
 	margin-left: auto;
 }
 
-input, select, textarea {
-	background: rgb(107,107,107);
-	color: rgb(197,197,197);
-}
 .colstack_right input, .colstack_right select, .colstack_right textarea {
 	padding: 4px;
 	padding-bottom: 3px;
@@ -102,35 +95,12 @@ input, select, textarea {
 	padding-right: 6px;
 }
 
-input:focus, select:focus, textarea:focus {
-	outline: 1px solid rgb(137,137,137);
-	color: rgb(207,207,207);
-}
-/* ? - The background properties need to be redeclared for the new image or it won't work properly */
-input {
-	background-image: url(./fa-svg/pencil-alt-light.svg);
-	background-size: 12px;
-	background-repeat: no-repeat;
-	background-position: right 9px bottom 7px;
-    background-position-x: right 9px;
-}
-input::placeholder, textarea::placeholder {
-	color: rgb(167,167,167);
-	opacity: 1; /* Firefox fix */
-}
-button, .formbutton {
-	/*background: rgb(110,110,210);
-	color: rgb(250,250,250);*/
-}
 button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .profile_url {
 	background: rgb(100,100,200);
 }
 #panel_users .panel_tag:not(.panel_right_button) {
 	background: rgb(50,150,50);
 }
-/*.formlabel {
-	font-size: 17px;
-}*/
 .panel_right_button:not(.has_inner_button), #panel_users .panel_tag:not(.panel_right_button), #panel_users .profile_url {
 	margin-left: 2px;
 	padding: 5px;
@@ -149,13 +119,13 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 .delete_button:after {
 	content: "{{index .Phrases "panel_delete_button_text"}}";
 }
-#themeSelector select {
+/*#themeSelector select {
 	background: rgb(90,90,90);
     color: rgb(200,200,200);
-}
+}*/
 
 .colstack_graph_holder {
-	background-color: #555555;
+	background-color: #444444;
 	border-radius: 3px;
 	padding: 16px;
 	padding-bottom: 0px;
@@ -237,8 +207,4 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 
 #panel_debug .grid_stat:not(.grid_stat_head) {
 	margin-bottom: 5px;
-}
-
-.pageitem {
-	background-color: #555555;
 }

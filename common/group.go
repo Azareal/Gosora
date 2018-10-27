@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var blankGroup = Group{ID: 0, Name: ""}

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"../common"
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(common.Day)) // TODO: Make this a common.Config value

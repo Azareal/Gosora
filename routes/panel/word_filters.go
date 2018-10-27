@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 func WordFilters(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

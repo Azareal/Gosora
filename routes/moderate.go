@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 func IPSearch(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

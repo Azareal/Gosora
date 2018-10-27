@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"../../common"
-	"../../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/gopsutil/mem"
 	"github.com/pkg/errors"
 )
@@ -61,7 +61,6 @@ func dashMSSQLStmts() (stmts dashStmts, err error) {
 	return stmts, err
 }
 
-//routePanelDashboard
 func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "dashboard", "dashboard")
 	if ferr != nil {

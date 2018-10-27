@@ -11,7 +11,7 @@ import (
 	"log"
 	"time"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 type TaskStmts struct {

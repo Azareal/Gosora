@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../common"
-	"../common/counters"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/counters"
 )
 
 // TODO: De-duplicate the upload logic

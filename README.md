@@ -37,7 +37,7 @@ Other modern features like alerts, likes, advanced dashboard with live stats (CP
 
 # Requirements
 
-Go 1.10 or newer - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
+Go 1.11 or newer - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
 For Ubuntu, you can consult: https://tecadmin.net/install-go-on-ubuntu/
 You will also want to run `ln -s /usr/local/go/bin/go` (replace /usr/local with where ever you put Go), so that go becomes visible to other users.
@@ -135,7 +135,7 @@ These are the libraries and pieces of software which Gosora relies on to functio
 
 A few of these like Rez aren't currently in use, but are things we think we'll need in the very near future and want to have those things ready, so that we can quickly slot them in.
 
-* Go 1.10+
+* Go 1.11+
 
 * MariaDB (or any other MySQL compatible database engine). We'll allow other database engines in the future.
 

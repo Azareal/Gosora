@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 // TODO: Make this a static file somehow? Is it possible for us to put this file somewhere else?

@@ -1,4 +1,4 @@
-package guilds
+package guilds // import "github.com/Azareal/Gosora/extend/guilds/lib"
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../../../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it

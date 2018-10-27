@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"../common"
-	"../common/counters"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/counters"
 )
 
 func ReportSubmit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {

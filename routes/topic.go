@@ -13,9 +13,9 @@ import (
 	"strconv"
 	"strings"
 
-	"../common"
-	"../common/counters"
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 type TopicStmts struct {
@@ -218,16 +218,10 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 		}
 	}
 
-	if common.RunPreRenderHook("pre_render_view_topic", w, r, &user, &tpage) {
-		return nil
-	}
-	err = common.RunThemeTemplate(header.Theme.Name, "topic", tpage, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
+	rerr := renderTemplate("topic", w, r, header, tpage)
 	counters.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
 	counters.ForumViewCounter.Bump(topic.ParentID)
-	return nil
+	return rerr
 }
 
 // ? - Should we add a new permission or permission zone (like per-forum permissions) specifically for profile comment creation
@@ -304,15 +298,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 	}
 
 	ctpage := common.CreateTopicPage{header, forumList, fid}
-	if common.RunPreRenderHook("pre_render_create_topic", w, r, &user, &ctpage) {
-		return nil
-	}
-
-	err = common.RunThemeTemplate(header.Theme.Name, "create_topic", ctpage, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("create_topic", w, r, header, ctpage)
 }
 
 func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -877,7 +863,6 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 
 	score := 1
 	err = topic.Like(score, user.ID)
-	//log.Print("likeErr: ", err)
 	if err == common.ErrAlreadyLiked {
 		return common.LocalErrorJSQ("You already liked this", w, r, user, isJs)
 	} else if err != nil {

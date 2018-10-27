@@ -1,5 +1,5 @@
 /* WIP Under Construction */
-package qgen
+package qgen // import "github.com/Azareal/Gosora/query_gen"
 
 import (
 	"database/sql"

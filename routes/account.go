@@ -14,8 +14,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../common"
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -31,14 +31,7 @@ func AccountLogin(w http.ResponseWriter, r *http.Request, user common.User) comm
 	}
 	header.Title = common.GetTitlePhrase("login")
 	pi := common.Page{header, tList, nil}
-	if common.RunPreRenderHook("pre_render_login", w, r, &user, &pi) {
-		return nil
-	}
-	err := common.RunThemeTemplate(header.Theme.Name, "login", pi, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("login", w, r, header, pi)
 }
 
 // TODO: Log failed attempted logins?
@@ -203,14 +196,7 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 	header.Title = common.GetTitlePhrase("register")
 
 	pi := common.Page{header, tList, nil}
-	if common.RunPreRenderHook("pre_render_register", w, r, &user, &pi) {
-		return nil
-	}
-	err := common.RunThemeTemplate(header.Theme.Name, "register", pi, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("register", w, r, header, pi)
 }
 
 func isNumeric(data string) (numeric bool) {
@@ -399,15 +385,8 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User) commo
 	nextScore := common.GetLevelScore(user.Level+1) - prevScore
 	perc := int(math.Ceil((float64(nextScore) / float64(currentScore)) * 100))
 
-	pi := common.AccountDashPage{header, mfaSetup, currentScore, nextScore, user.Level + 1, perc * 2}
-	if common.RunPreRenderHook("pre_render_account_own_edit", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "account_own_edit.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	pi := common.AccountDashPage{header, "dashboard", "account_own_edit", mfaSetup, currentScore, nextScore, user.Level + 1, perc * 2}
+	return renderTemplate("account", w, r, header, pi)
 }
 
 func AccountEditPassword(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -417,14 +396,7 @@ func AccountEditPassword(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pi := common.Page{header, tList, nil}
-	if common.RunPreRenderHook("pre_render_account_own_edit_password", w, r, &user, &pi) {
-		return nil
-	}
-	err := common.Templates.ExecuteTemplate(w, "account_own_edit_password.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("account_own_edit_password", w, r, header, pi)
 }
 
 // TODO: Require re-authentication if the user hasn't logged in in a while
@@ -711,14 +683,7 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User) 
 	}
 
 	pi := common.EmailListPage{header, emails, nil}
-	if common.RunPreRenderHook("pre_render_account_own_edit_email", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "account_own_edit_email.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("account_own_edit_email", w, r, header, pi)
 }
 
 // TODO: Should we make this an AnonAction so someone can do this without being logged in?
@@ -763,7 +728,6 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user co
 		}
 	}
 	http.Redirect(w, r, "/user/edit/email/?verified=1", http.StatusSeeOther)
-
 	return nil
 }
 
@@ -772,7 +736,7 @@ func LevelList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = "Level Progress"
+	header.Title = common.GetTitlePhrase("account_level_list")
 
 	var fScores = common.GetLevels(20)
 	var levels = make([]common.LevelListItem, len(fScores))
@@ -791,12 +755,5 @@ func LevelList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	}
 
 	pi := common.LevelListPage{header, levels[1:]}
-	if common.RunPreRenderHook("pre_render_level_list", w, r, &user, &pi) {
-		return nil
-	}
-	err := common.Templates.ExecuteTemplate(w, "level_list.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("level_list", w, r, header, pi)
 }

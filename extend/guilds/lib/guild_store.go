@@ -1,7 +1,7 @@
 package guilds
 
 import "database/sql"
-import "../../../query_gen/lib"
+import "github.com/Azareal/Gosora/query_gen"
 
 var Gstore GuildStore
 

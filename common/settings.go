@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var SettingBox atomic.Value // An atomic value pointing to a SettingBox

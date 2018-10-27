@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"../../common"
-	"../../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Move this to another file, probably common/pages.go

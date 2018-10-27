@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"../common"
+	"github.com/Azareal/Gosora/common"
 )
 
 func TopicList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

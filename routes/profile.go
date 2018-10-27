@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"../common"
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 type ProfileStmts struct {

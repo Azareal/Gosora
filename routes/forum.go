@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"../common"
-	"../common/counters"
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 type ForumStmts struct {

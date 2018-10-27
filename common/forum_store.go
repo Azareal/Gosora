@@ -14,7 +14,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var forumCreateMutex sync.Mutex

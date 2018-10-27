@@ -142,13 +142,13 @@ go build ./router_gen
 
 router_gen.exe
 
-go build ./query_gen
+go build ./cmd/query_gen
 
 query_gen.exe
 
 go build -o gosora.exe
 
-go build ./install
+go build "./cmd/install"
 
 install.exe
 

@@ -1,7 +1,7 @@
 /*
 *
 * Gosora Alerts System
-* Copyright Azareal 2017 - 2018
+* Copyright Azareal 2017 - 2019
 *
  */
 package common
@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../query_gen/lib"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 type AlertStmts struct {
