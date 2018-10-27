@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/install/install"
+	"github.com/Azareal/Gosora/install"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
 	//"github.com/husobee/vestigo"
