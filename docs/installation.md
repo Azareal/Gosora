@@ -97,36 +97,10 @@ Linux is similar, however you might need to use cd and mv a bit more like in the
 
 You also need to substitute the `gosora.exe` bits for `./Gosora` on Linux. For more info, you might want to take a gander inside the `./run-linux` and `./install-linux` shell files to see how they're implemented.
 
-If you want to skip typing all the `go get`s, you can run `./update-deps.bat` (Windows) or `./update-deps-linux` to do that for you.
-
 ```bash
 git clone https://github.com/Azareal/Gosora
 
-go get -u github.com/go-sql-driver/mysql
-
-go get -u golang.org/x/crypto/bcrypt
-
-go get -u golang.org/x/crypto/argon2
-
-go get -u github.com/StackExchange/wmi
-
-go get -u github.com/Azareal/gopsutil
-
-go get -u github.com/gorilla/websocket
-
-go get -u gopkg.in/sourcemap.v1
-
-go get -u github.com/robertkrimen/otto
-
-go get -u github.com/esimov/caire
-
-go get -u github.com/lib/pq
-
-go get -u github.com/denisenkom/go-mssqldb
-
-go get -u github.com/fsnotify/fsnotify
-
-go get -u github.com/pkg/errors
+go get
 
 rm -f template_*.go
 

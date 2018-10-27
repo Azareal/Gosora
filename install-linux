@@ -1,41 +1,5 @@
-echo "Installing the MySQL Driver"
-go get -u github.com/go-sql-driver/mysql
-
-echo "Installing the PostgreSQL Driver"
-go get -u github.com/lib/pq
-
-echo "Installing the MSSQL Driver"
-go get -u github.com/denisenkom/go-mssqldb
-
-echo "Installing bcrypt"
-go get -u golang.org/x/crypto/bcrypt
-
-echo "Installing Argon2"
-go get -u golang.org/x/crypto/argon2
-
-echo "Installing gopsutil"
-go get -u github.com/Azareal/gopsutil
-
-echo "Installing Gorilla WebSockets"
-go get -u github.com/gorilla/websocket
-
-echo "Installing Sourcemap (dependency for OttoJS)"
-go get -u gopkg.in/sourcemap.v1
-
-echo "Installing OttoJS"
-go get -u github.com/robertkrimen/otto
-
-echo "Installing the Rez Image Resizer"
-go get -u github.com/bamiaux/rez
-
-echo "Installing Caire"
-go get -u github.com/esimov/caire
-
-echo "Installing some error helpers"
-go get -u github.com/pkg/errors
-
-echo "Installing fsnotify"
-go get -u github.com/fsnotify/fsnotify
+echo "Installing the dependencies"
+go get
 
 echo "Building the installer"
 cd ./install
