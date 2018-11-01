@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -53,7 +54,7 @@ func Overview(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("overview")
+	header.Title = phrases.GetTitlePhrase("overview")
 	header.Zone = "overview"
 
 	pi := common.Page{header, tList, nil}
@@ -72,7 +73,7 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, name s
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("page")
+	header.Title = phrases.GetTitlePhrase("page")
 	header.Zone = "custom_page"
 
 	name = common.SanitiseSingleLine(name)

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 type AlertStmts struct {
@@ -54,7 +55,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 
 	actor, err := Users.Get(actorID)
 	if err != nil {
-		return "", errors.New(GetErrorPhrase("alerts_no_actor"))
+		return "", errors.New(phrases.GetErrorPhrase("alerts_no_actor"))
 	}
 
 	/*if elementType != "forum" {
@@ -66,7 +67,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 	}*/
 
 	if event == "friend_invite" {
-		return buildAlertString(GetTmplPhrase("alerts.new_friend_invite"), []string{actor.Name}, actor.Link, actor.Avatar, asid), nil
+		return buildAlertString(phrases.GetTmplPhrase("alerts.new_friend_invite"), []string{actor.Name}, actor.Link, actor.Avatar, asid), nil
 	}
 
 	// Not that many events for us to handle in a forum
@@ -75,13 +76,13 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 			topic, err := Topics.Get(elementID)
 			if err != nil {
 				DebugLogf("Unable to find linked topic %d", elementID)
-				return "", errors.New(GetErrorPhrase("alerts_no_linked_topic"))
+				return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic"))
 			}
 			// Store the forum ID in the targetUser column instead of making a new one? o.O
 			// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
-			return buildAlertString(GetTmplPhrase("alerts.forum_new_topic"), []string{actor.Name, topic.Title}, topic.Link, actor.Avatar, asid), nil
+			return buildAlertString(phrases.GetTmplPhrase("alerts.forum_new_topic"), []string{actor.Name, topic.Title}, topic.Link, actor.Avatar, asid), nil
 		}
-		return buildAlertString(GetTmplPhrase("alerts.forum_unknown_action"), []string{actor.Name}, "", actor.Avatar, asid), nil
+		return buildAlertString(phrases.GetTmplPhrase("alerts.forum_unknown_action"), []string{actor.Name}, "", actor.Avatar, asid), nil
 	}
 
 	var url, area string
@@ -91,7 +92,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 		topic, err := Topics.Get(elementID)
 		if err != nil {
 			DebugLogf("Unable to find linked topic %d", elementID)
-			return "", errors.New(GetErrorPhrase("alerts_no_linked_topic"))
+			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic"))
 		}
 		url = topic.Link
 		area = topic.Title
@@ -102,7 +103,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 		targetUser, err = Users.Get(elementID)
 		if err != nil {
 			DebugLogf("Unable to find target user %d", elementID)
-			return "", errors.New(GetErrorPhrase("alerts_no_target_user"))
+			return "", errors.New(phrases.GetErrorPhrase("alerts_no_target_user"))
 		}
 		area = targetUser.Name
 		url = targetUser.Link
@@ -112,7 +113,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 	case "post":
 		topic, err := TopicByReplyID(elementID)
 		if err != nil {
-			return "", errors.New(GetErrorPhrase("alerts_no_linked_topic_by_reply"))
+			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic_by_reply"))
 		}
 		url = topic.Link
 		area = topic.Title
@@ -120,7 +121,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 			phraseName += "_own"
 		}
 	default:
-		return "", errors.New(GetErrorPhrase("alerts_invalid_elementtype"))
+		return "", errors.New(phrases.GetErrorPhrase("alerts_invalid_elementtype"))
 	}
 
 	switch event {
@@ -132,7 +133,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 		phraseName += "_reply"
 	}
 
-	return buildAlertString(GetTmplPhrase(phraseName), []string{actor.Name, area}, url, actor.Avatar, asid), nil
+	return buildAlertString(phrases.GetTmplPhrase(phraseName), []string{actor.Name, area}, url, actor.Avatar, asid), nil
 }
 
 func buildAlertString(msg string, sub []string, path string, avatar string, asid int) string {

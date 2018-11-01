@@ -23,6 +23,7 @@ import (
 
 	"github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/fsnotify/fsnotify"
@@ -56,7 +57,7 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = common.InitPhrases()
+	err = phrases.InitPhrases(common.Site.Language)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -229,7 +230,7 @@ func main() {
 
 	// TODO: Add a flag for enabling the profiler
 	if false {
-		f, err := os.Create("./logs/cpuprof.prof")
+		f, err := os.Create("./logs/cpu.prof")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -420,6 +421,14 @@ func main() {
 
 	// Start up the WebSocket ticks
 	common.WsHub.Start()
+
+	if false {
+		f, err := os.Create("./logs/cpu.prof")
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+	}
 
 	//if profiling {
 	//	pprof.StopCPUProfile()

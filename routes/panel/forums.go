@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 func Forums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -329,7 +330,7 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user common.
 	// TODO: Load the phrases in bulk for efficiency?
 	// TODO: Reduce the amount of code duplication between this and the group editor. Also, can we grind this down into one line or use a code generator to stay current more easily?
 	var addNameLangToggle = func(permStr string, perm bool) {
-		formattedPermList = append(formattedPermList, common.NameLangToggle{permStr, common.GetLocalPermPhrase(permStr), perm})
+		formattedPermList = append(formattedPermList, common.NameLangToggle{permStr, phrases.GetLocalPermPhrase(permStr), perm})
 	}
 	addNameLangToggle("ViewTopic", forumPerms.ViewTopic)
 	addNameLangToggle("LikeItem", forumPerms.LikeItem)

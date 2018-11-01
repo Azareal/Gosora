@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -22,7 +23,7 @@ func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	settingPhrases := common.GetAllSettingPhrases()
+	settingPhrases := phrases.GetAllSettingPhrases()
 
 	var settingList []*common.PanelSetting
 	for _, settingPtr := range settings {
@@ -44,7 +45,7 @@ func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		} else if setting.Type == "html-attribute" {
 			setting.Type = "textarea"
 		}
-		settingList = append(settingList, &common.PanelSetting{setting, common.GetSettingPhrase(setting.Name)})
+		settingList = append(settingList, &common.PanelSetting{setting, phrases.GetSettingPhrase(setting.Name)})
 	}
 
 	pi := common.PanelPage{basePage, tList, settingList}
@@ -69,12 +70,11 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname
 
 	var itemList []common.OptionLabel
 	if setting.Type == "list" {
-		llist := common.GetSettingPhrase(setting.Name + "_label")
+		llist := phrases.GetSettingPhrase(setting.Name + "_label")
 		conv, err := strconv.Atoi(setting.Content)
 		if err != nil {
 			return common.LocalError("The value of this setting couldn't be converted to an integer", w, r, user)
 		}
-		//fmt.Println("llist: ", llist)
 
 		for index, label := range strings.Split(llist, ",") {
 			itemList = append(itemList, common.OptionLabel{
@@ -87,7 +87,7 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname
 		setting.Type = "textarea"
 	}
 
-	pSetting := &common.PanelSetting{setting, common.GetSettingPhrase(setting.Name)}
+	pSetting := &common.PanelSetting{setting, phrases.GetSettingPhrase(setting.Name)}
 	pi := common.PanelSettingPage{basePage, itemList, pSetting}
 	return renderTemplate("panel_setting", w, r, user, &pi)
 }

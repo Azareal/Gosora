@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -68,7 +69,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 		}
 		puser.Init()
 	}
-	header.Title = common.GetTitlePhrasef("profile", puser.Name)
+	header.Title = phrases.GetTitlePhrasef("profile", puser.Name)
 	header.Path = common.BuildProfileURL(common.NameToSlug(puser.Name), puser.ID)
 
 	// Get the replies..
@@ -100,7 +101,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 		if group.Tag != "" {
 			replyTag = group.Tag
 		} else if puser.ID == replyCreatedBy {
-			replyTag = common.GetTmplPhrase("profile_owner_tag")
+			replyTag = phrases.GetTmplPhrase("profile_owner_tag")
 		} else {
 			replyTag = ""
 		}

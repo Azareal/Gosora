@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 type MenuItemList []MenuItem
@@ -346,7 +347,7 @@ func (hold *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuIt
 		}
 
 		if bytes.Equal(variable[:dotAt], []byte("lang")) {
-			renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))))
+			renderBuffer = append(renderBuffer, []byte(phrases.GetTmplPhrase(string(bytes.TrimPrefix(variable[dotAt:], []byte("."))))))
 			continue
 		}
 
@@ -385,7 +386,7 @@ func (hold *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuIt
 
 			if bytes.Equal(renderItem[1:dotAt], []byte("lang")) {
 				//fmt.Println("lang var: ", string(renderItem[dotAt+1:endFence]))
-				renderBuffer = append(renderBuffer, []byte(GetTmplPhrase(string(renderItem[dotAt+1:endFence]))))
+				renderBuffer = append(renderBuffer, []byte(phrases.GetTmplPhrase(string(renderItem[dotAt+1:endFence]))))
 			} else {
 				fmt.Println("other var: ", string(variable[:dotAt]))
 				if len(renderItem) > 0 {

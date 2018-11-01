@@ -10,7 +10,15 @@ import (
 	"time"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
+
+func miscinit(t *testing.T) {
+	err := gloinit()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func recordMustExist(t *testing.T, err error, errmsg string, args ...interface{}) {
 	if err == ErrNoRows {
@@ -33,12 +41,7 @@ func recordMustNotExist(t *testing.T, err error, errmsg string, args ...interfac
 }
 
 func TestUserStore(t *testing.T) {
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -344,12 +347,7 @@ func expect(t *testing.T, item bool, errmsg string) {
 }
 
 func TestPermsMiddleware(t *testing.T) {
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -410,12 +408,7 @@ func TestPermsMiddleware(t *testing.T) {
 }
 
 func TestTopicStore(t *testing.T) {
-	if !gloinited {
-		err := gloinit()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -531,9 +524,7 @@ func topicStoreTest(t *testing.T, newID int) {
 }
 
 func TestForumStore(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -593,9 +584,7 @@ func TestForumStore(t *testing.T) {
 
 // TODO: Implement this
 func TestForumPermsStore(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -603,9 +592,7 @@ func TestForumPermsStore(t *testing.T) {
 
 // TODO: Test the group permissions
 func TestGroupStore(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -704,9 +691,7 @@ func TestGroupStore(t *testing.T) {
 }
 
 func TestReplyStore(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -759,9 +744,7 @@ func TestReplyStore(t *testing.T) {
 }
 
 func TestProfileReplyStore(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -800,10 +783,7 @@ func TestProfileReplyStore(t *testing.T) {
 }
 
 func TestLogs(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
-
+	miscinit(t)
 	gTests := func(store common.LogStore, phrase string) {
 		expect(t, store.GlobalCount() == 0, "There shouldn't be any "+phrase)
 		logs, err := store.GetOffset(0, 25)
@@ -837,9 +817,7 @@ func TestLogs(t *testing.T) {
 // TODO: Add tests for registration logs
 
 func TestPluginManager(t *testing.T) {
-	if !gloinited {
-		gloinit()
-	}
+	miscinit(t)
 	if !common.PluginsInited {
 		common.InitPlugins()
 	}
@@ -989,10 +967,10 @@ func TestPluginManager(t *testing.T) {
 }
 
 func TestPhrases(t *testing.T) {
-	expect(t, common.GetGlobalPermPhrase("BanUsers") == "Can ban users", "Not the expected phrase")
-	expect(t, common.GetGlobalPermPhrase("NoSuchPerm") == "{lang.perms[NoSuchPerm]}", "Not the expected phrase")
-	expect(t, common.GetLocalPermPhrase("ViewTopic") == "Can view topics", "Not the expected phrase")
-	expect(t, common.GetLocalPermPhrase("NoSuchPerm") == "{lang.perms[NoSuchPerm]}", "Not the expected phrase")
+	expect(t, phrases.GetGlobalPermPhrase("BanUsers") == "Can ban users", "Not the expected phrase")
+	expect(t, phrases.GetGlobalPermPhrase("NoSuchPerm") == "{lang.perms[NoSuchPerm]}", "Not the expected phrase")
+	expect(t, phrases.GetLocalPermPhrase("ViewTopic") == "Can view topics", "Not the expected phrase")
+	expect(t, phrases.GetLocalPermPhrase("NoSuchPerm") == "{lang.perms[NoSuchPerm]}", "Not the expected phrase")
 
 	// TODO: Cover the other phrase types, also try switching between languages to see if anything strange happens
 }

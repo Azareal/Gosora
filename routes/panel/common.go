@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -37,7 +38,7 @@ func buildBasePage(w http.ResponseWriter, r *http.Request, user *common.User, ti
 	if ferr != nil {
 		return nil, ferr
 	}
-	header.Title = common.GetTitlePhrase("panel_" + titlePhrase)
+	header.Title = phrases.GetTitlePhrase("panel_" + titlePhrase)
 
 	return &common.BasePanelPage{header, stats, zone, common.ReportForumID}, nil
 }

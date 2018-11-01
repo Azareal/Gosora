@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // TODO: Allow resources in spots other than /static/ and possibly even external domains (e.g. CDNs)
@@ -44,7 +46,7 @@ func (header *Header) AddSheet(name string) {
 }
 
 func (header *Header) AddNotice(name string) {
-	header.NoticeList = append(header.NoticeList, GetNoticePhrase(name))
+	header.NoticeList = append(header.NoticeList, phrases.GetNoticePhrase(name))
 }
 
 // TODO: Add this to routes which don't use templates. E.g. Json APIs.

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 func Groups(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -72,7 +73,7 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid s
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return common.LocalError(common.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
 	group, err := common.Groups.Get(gid)
@@ -84,10 +85,10 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid s
 	}
 
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
 	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 
 	var rank string
@@ -120,7 +121,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, s
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return common.LocalError(common.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
 	group, err := common.Groups.Get(gid)
@@ -132,17 +133,17 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
 	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 
 	// TODO: Load the phrases in bulk for efficiency?
 	var localPerms []common.NameLangToggle
 
 	var addLocalPerm = func(permStr string, perm bool) {
-		localPerms = append(localPerms, common.NameLangToggle{permStr, common.GetLocalPermPhrase(permStr), perm})
+		localPerms = append(localPerms, common.NameLangToggle{permStr, phrases.GetLocalPermPhrase(permStr), perm})
 	}
 
 	addLocalPerm("ViewTopic", group.Perms.ViewTopic)
@@ -160,7 +161,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, s
 
 	var globalPerms []common.NameLangToggle
 	var addGlobalPerm = func(permStr string, perm bool) {
-		globalPerms = append(globalPerms, common.NameLangToggle{permStr, common.GetGlobalPermPhrase(permStr), perm})
+		globalPerms = append(globalPerms, common.NameLangToggle{permStr, phrases.GetGlobalPermPhrase(permStr), perm})
 	}
 
 	addGlobalPerm("BanUsers", group.Perms.BanUsers)
@@ -199,7 +200,7 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return common.LocalError(common.GetErrorPhrase("id_must_be_integer"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
 
 	group, err := common.Groups.Get(gid)
@@ -211,15 +212,15 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 	}
 
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
 	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 
 	gname := r.FormValue("group-name")
 	if gname == "" {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_need_name"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_need_name"), w, r, user)
 	}
 	gtag := r.FormValue("group-tag")
 	rank := r.FormValue("group-type")
@@ -240,28 +241,28 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, 
 
 	if rank != originalRank && originalRank != "Guest" {
 		if !user.Perms.EditGroupGlobalPerms {
-			return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_group_type"), w, r, user)
+			return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_group_type"), w, r, user)
 		}
 
 		switch rank {
 		case "Admin":
 			if !user.Perms.EditGroupAdmin {
-				return common.LocalError(common.GetErrorPhrase("panel_groups_edit_cannot_designate_admin"), w, r, user)
+				return common.LocalError(phrases.GetErrorPhrase("panel_groups_edit_cannot_designate_admin"), w, r, user)
 			}
 			err = group.ChangeRank(true, true, false)
 		case "Mod":
 			if !user.Perms.EditGroupSuperMod {
-				return common.LocalError(common.GetErrorPhrase("panel_groups_edit_cannot_designate_supermod"), w, r, user)
+				return common.LocalError(phrases.GetErrorPhrase("panel_groups_edit_cannot_designate_supermod"), w, r, user)
 			}
 			err = group.ChangeRank(false, true, false)
 		case "Banned":
 			err = group.ChangeRank(false, false, true)
 		case "Guest":
-			return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_be_guest"), w, r, user)
+			return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_be_guest"), w, r, user)
 		case "Member":
 			err = group.ChangeRank(false, false, false)
 		default:
-			return common.LocalError(common.GetErrorPhrase("panel_groups_invalid_group_type"), w, r, user)
+			return common.LocalError(phrases.GetErrorPhrase("panel_groups_invalid_group_type"), w, r, user)
 		}
 		if err != nil {
 			return common.InternalError(err, w, r)
@@ -288,7 +289,7 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.U
 
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return common.LocalError(common.GetErrorPhrase("id_must_be_integer"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
 
 	group, err := common.Groups.Get(gid)
@@ -300,10 +301,10 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
 	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 
 	var pmap = make(map[string]bool)
@@ -342,7 +343,7 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User
 
 	groupName := r.PostFormValue("group-name")
 	if groupName == "" {
-		return common.LocalError(common.GetErrorPhrase("panel_groups_need_name"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("panel_groups_need_name"), w, r, user)
 	}
 	groupTag := r.PostFormValue("group-tag")
 
@@ -351,13 +352,13 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User
 		groupType := r.PostFormValue("group-type")
 		if groupType == "Admin" {
 			if !user.Perms.EditGroupAdmin {
-				return common.LocalError(common.GetErrorPhrase("panel_groups_create_cannot_designate_admin"), w, r, user)
+				return common.LocalError(phrases.GetErrorPhrase("panel_groups_create_cannot_designate_admin"), w, r, user)
 			}
 			isAdmin = true
 			isMod = true
 		} else if groupType == "Mod" {
 			if !user.Perms.EditGroupSuperMod {
-				return common.LocalError(common.GetErrorPhrase("panel_groups_create_cannot_designate_supermod"), w, r, user)
+				return common.LocalError(phrases.GetErrorPhrase("panel_groups_create_cannot_designate_supermod"), w, r, user)
 			}
 			isMod = true
 		} else if groupType == "Banned" {

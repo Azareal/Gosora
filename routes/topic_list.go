@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 func TopicList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -13,7 +14,7 @@ func TopicList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("topics")
+	header.Title = phrases.GetTitlePhrase("topics")
 	header.Zone = "topics"
 	header.Path = "/topics/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
@@ -61,7 +62,7 @@ func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user common.Use
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("topics")
+	header.Title = phrases.GetTitlePhrase("topics")
 	header.Zone = "topics"
 	header.Path = "/topics/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)

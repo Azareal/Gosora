@@ -16,6 +16,7 @@ import (
 
 	"github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -29,7 +30,7 @@ func AccountLogin(w http.ResponseWriter, r *http.Request, user common.User) comm
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("login")
+	header.Title = phrases.GetTitlePhrase("login")
 	pi := common.Page{header, tList, nil}
 	return renderTemplate("login", w, r, header, pi)
 }
@@ -140,7 +141,7 @@ func AccountLoginMFAVerify(w http.ResponseWriter, r *http.Request, user common.U
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("login_mfa_verify")
+	header.Title = phrases.GetTitlePhrase("login_mfa_verify")
 
 	uid, provSession, signedSession, err := mfaGetCookies(r)
 	if err != nil {
@@ -193,7 +194,7 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) c
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
-	header.Title = common.GetTitlePhrase("register")
+	header.Title = phrases.GetTitlePhrase("register")
 
 	pi := common.Page{header, tList, nil}
 	return renderTemplate("register", w, r, header, pi)
@@ -224,14 +225,14 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	}
 
 	if r.PostFormValue("tos") != "0" {
-		regError(common.GetErrorPhrase("register_might_be_machine"), "trap-question")
+		regError(phrases.GetErrorPhrase("register_might_be_machine"), "trap-question")
 	}
 	if !common.Config.DisableJSAntispam {
 		h := sha256.New()
 		h.Write([]byte(common.JSTokenBox.Load().(string)))
 		h.Write([]byte(user.LastIP))
 		if r.PostFormValue("golden-watch") != hex.EncodeToString(h.Sum(nil)) {
-			regError(common.GetErrorPhrase("register_might_be_machine"), "js-antispam")
+			regError(phrases.GetErrorPhrase("register_might_be_machine"), "js-antispam")
 		}
 	}
 
@@ -239,21 +240,21 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 	// TODO: Add a dedicated function for validating emails
 	email := common.SanitiseSingleLine(r.PostFormValue("email"))
 	if username == "" {
-		regError(common.GetErrorPhrase("register_need_username"), "no-username")
+		regError(phrases.GetErrorPhrase("register_need_username"), "no-username")
 	}
 	if email == "" {
-		regError(common.GetErrorPhrase("register_need_email"), "no-email")
+		regError(phrases.GetErrorPhrase("register_need_email"), "no-email")
 	}
 
 	// This is so a numeric name won't interfere with mentioning a user by ID, there might be a better way of doing this like perhaps !@ to mean IDs and @ to mean usernames in the pre-parser
 	usernameBits := strings.Split(username, " ")
 	if isNumeric(usernameBits[0]) {
-		regError(common.GetErrorPhrase("register_first_word_numeric"), "numeric-name")
+		regError(phrases.GetErrorPhrase("register_first_word_numeric"), "numeric-name")
 	}
 
 	ok := common.HasSuspiciousEmail(email)
 	if ok {
-		regError(common.GetErrorPhrase("register_suspicious_email"), "suspicious-email")
+		regError(phrases.GetErrorPhrase("register_suspicious_email"), "suspicious-email")
 	}
 
 	password := r.PostFormValue("password")
@@ -265,7 +266,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		// Do the two inputted passwords match..?
 		confirmPassword := r.PostFormValue("confirm_password")
 		if password != confirmPassword {
-			regError(common.GetErrorPhrase("register_password_mismatch"), "password-mismatch")
+			regError(phrases.GetErrorPhrase("register_password_mismatch"), "password-mismatch")
 		}
 	}
 
@@ -298,14 +299,14 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 			if err != nil {
 				return common.InternalError(err, w, r)
 			}
-			return common.LocalError(common.GetErrorPhrase("register_username_unavailable"), w, r, user)
+			return common.LocalError(phrases.GetErrorPhrase("register_username_unavailable"), w, r, user)
 		} else if err == common.ErrLongUsername {
 			regLog.FailureReason += "username-too-long"
 			err = regLog.Commit()
 			if err != nil {
 				return common.InternalError(err, w, r)
 			}
-			return common.LocalError(common.GetErrorPhrase("register_username_too_long_prefix")+strconv.Itoa(common.Config.MaxUsernameLength), w, r, user)
+			return common.LocalError(phrases.GetErrorPhrase("register_username_too_long_prefix")+strconv.Itoa(common.Config.MaxUsernameLength), w, r, user)
 		}
 		regLog.FailureReason += "internal-error"
 		err2 := regLog.Commit()
@@ -329,7 +330,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		}
 
 		if !common.SendValidationEmail(username, email, token) {
-			return common.LocalError(common.GetErrorPhrase("register_email_fail"), w, r, user)
+			return common.LocalError(phrases.GetErrorPhrase("register_email_fail"), w, r, user)
 		}
 	}
 
@@ -349,7 +350,7 @@ func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request,
 	if ferr != nil {
 		return nil, ferr
 	}
-	header.Title = common.GetTitlePhrase(titlePhrase)
+	header.Title = phrases.GetTitlePhrase(titlePhrase)
 	header.Path = "/user/edit/"
 	header.AddSheet(header.Theme.Name + "/account.css")
 	header.AddScript("account.js")
@@ -389,6 +390,7 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User) commo
 	return renderTemplate("account", w, r, header, pi)
 }
 
+//edit_password
 func AccountEditPassword(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	header, ferr := accountEditHead("account_password", w, r, &user)
 	if ferr != nil {
@@ -736,7 +738,7 @@ func LevelList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("account_level_list")
+	header.Title = phrases.GetTitlePhrase("account_level_list")
 
 	var fScores = common.GetLevels(20)
 	var levels = make([]common.LevelListItem, len(fScores))

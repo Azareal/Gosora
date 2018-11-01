@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -12,7 +13,7 @@ func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("forums")
+	header.Title = phrases.GetTitlePhrase("forums")
 	header.Zone = "forums"
 	header.Path = "/forums/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)

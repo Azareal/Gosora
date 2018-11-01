@@ -16,6 +16,7 @@ import (
 	"unicode"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -157,21 +158,21 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 		return common.PreErrorJS("You haven't requested any phrases", w, r)
 	}
 
-	var phrases map[string]string
+	var plist map[string]string
 	// A little optimisation to avoid copying entries from one map to the other, if we don't have to mutate it
 	if len(positives) > 1 {
-		phrases = make(map[string]string)
+		plist = make(map[string]string)
 		for _, positive := range positives {
 			// ! Constrain it to topic and status phrases for now
 			if !strings.HasPrefix(positive, "topic") && !strings.HasPrefix(positive, "status") && !strings.HasPrefix(positive, "alerts") {
 				return common.PreErrorJS("Not implemented!", w, r)
 			}
-			pPhrases, ok := common.GetTmplPhrasesByPrefix(positive)
+			pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positive)
 			if !ok {
 				return common.PreErrorJS("No such prefix", w, r)
 			}
 			for name, phrase := range pPhrases {
-				phrases[name] = phrase
+				plist[name] = phrase
 			}
 		}
 	} else {
@@ -179,23 +180,23 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 		if !strings.HasPrefix(positives[0], "topic") && !strings.HasPrefix(positives[0], "status") && !strings.HasPrefix(positives[0], "alerts") {
 			return common.PreErrorJS("Not implemented!", w, r)
 		}
-		pPhrases, ok := common.GetTmplPhrasesByPrefix(positives[0])
+		pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positives[0])
 		if !ok {
 			return common.PreErrorJS("No such prefix", w, r)
 		}
-		phrases = pPhrases
+		plist = pPhrases
 	}
 
 	for _, negation := range negations {
-		for name, _ := range phrases {
+		for name, _ := range plist {
 			if strings.HasPrefix(name, negation) {
-				delete(phrases, name)
+				delete(plist, name)
 			}
 		}
 	}
 
 	// TODO: Cache the output of this, especially for things like topic, so we don't have to waste more time than we need on this
-	jsonBytes, err := json.Marshal(phrases)
+	jsonBytes, err := json.Marshal(plist)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

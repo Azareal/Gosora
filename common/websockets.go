@@ -21,6 +21,7 @@ import (
 	"github.com/Azareal/gopsutil/cpu"
 	"github.com/Azareal/gopsutil/mem"
 	"github.com/gorilla/websocket"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // TODO: Disable WebSockets on high load? Add a Control Panel interface for disabling it?
@@ -288,9 +289,9 @@ AdminStatLoop:
 			// nolint
 			// TODO: Use JSON for this to make things more portable and easier to convert to MessagePack, if need be?
 			if !noStatUpdates {
-				w.Write([]byte("set #dash-totonline <span>" + GetTmplPhrasef("panel_dashboard_online", totonline, totunit) + "</span>\r"))
-				w.Write([]byte("set #dash-gonline <span>" + GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit) + "</span>\r"))
-				w.Write([]byte("set #dash-uonline <span>" + GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit) + "</span>\r"))
+				w.Write([]byte("set #dash-totonline <span>" + phrases.GetTmplPhrasef("panel_dashboard_online", totonline, totunit) + "</span>\r"))
+				w.Write([]byte("set #dash-gonline <span>" + phrases.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit) + "</span>\r"))
+				w.Write([]byte("set #dash-uonline <span>" + phrases.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit) + "</span>\r"))
 				w.Write([]byte("set #dash-reqs <span>" + strconv.Itoa(reqCount) + " reqs / second</span>\r"))
 
 				w.Write([]byte("set-class #dash-totonline grid_item grid_stat " + onlineColour + "\r"))

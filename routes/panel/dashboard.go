@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/gopsutil/mem"
 	"github.com/pkg/errors"
@@ -142,18 +143,18 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.
 
 	// TODO: Allow for more complex phrase structures than just suffixes
 	var postCount = extractStat(stmts.todaysPostCount)
-	var postInterval = common.GetTmplPhrase("panel_dashboard_day_suffix")
+	var postInterval = phrases.GetTmplPhrase("panel_dashboard_day_suffix")
 	var postColour = greaterThanSwitch(postCount, 5, 25)
 
 	var topicCount = extractStat(stmts.todaysTopicCount)
-	var topicInterval = common.GetTmplPhrase("panel_dashboard_day_suffix")
+	var topicInterval = phrases.GetTmplPhrase("panel_dashboard_day_suffix")
 	var topicColour = greaterThanSwitch(topicCount, 0, 8)
 
 	var reportCount = extractStat(stmts.todaysTopicCountByForum, common.ReportForumID)
-	var reportInterval = common.GetTmplPhrase("panel_dashboard_week_suffix")
+	var reportInterval = phrases.GetTmplPhrase("panel_dashboard_week_suffix")
 
 	var newUserCount = extractStat(stmts.todaysNewUserCount)
-	var newUserInterval = common.GetTmplPhrase("panel_dashboard_week_suffix")
+	var newUserInterval = phrases.GetTmplPhrase("panel_dashboard_week_suffix")
 
 	// Did any of the extractStats fail?
 	if intErr != nil {
@@ -187,9 +188,9 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.
 		uonline, uunit := common.ConvertFriendlyUnit(uonline)
 		gonline, gunit := common.ConvertFriendlyUnit(gonline)
 
-		addElement(common.GridElement{"dash-totonline", common.GetTmplPhrasef("panel_dashboard_online", totonline, totunit), 3, "grid_stat " + onlineColour, "", "", "The number of people who are currently online"})
-		addElement(common.GridElement{"dash-gonline", common.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit), 4, "grid_stat " + onlineGuestsColour, "", "", "The number of guests who are currently online"})
-		addElement(common.GridElement{"dash-uonline", common.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit), 5, "grid_stat " + onlineUsersColour, "", "", "The number of logged-in users who are currently online"})
+		addElement(common.GridElement{"dash-totonline", phrases.GetTmplPhrasef("panel_dashboard_online", totonline, totunit), 3, "grid_stat " + onlineColour, "", "", "The number of people who are currently online"})
+		addElement(common.GridElement{"dash-gonline", phrases.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit), 4, "grid_stat " + onlineGuestsColour, "", "", "The number of guests who are currently online"})
+		addElement(common.GridElement{"dash-uonline", phrases.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit), 5, "grid_stat " + onlineUsersColour, "", "", "The number of logged-in users who are currently online"})
 		addElement(common.GridElement{"dash-reqs", strconv.Itoa(reqCount) + " reqs / second", 7, "grid_stat grid_end_group " + topicColour, "", "", "The number of requests over the last 24 hours"})
 	}
 

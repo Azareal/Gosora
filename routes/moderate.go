@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 func IPSearch(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -11,7 +12,7 @@ func IPSearch(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	if ferr != nil {
 		return ferr
 	}
-	header.Title = common.GetTitlePhrase("ip_search")
+	header.Title = phrases.GetTitlePhrase("ip_search")
 
 	// TODO: How should we handle the permissions if we extend this into an alt detector of sorts?
 	if !user.Perms.ViewIPs {

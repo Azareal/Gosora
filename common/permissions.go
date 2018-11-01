@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // TODO: Refactor the perms system
@@ -158,7 +159,7 @@ func StripInvalidPreset(preset string) string {
 
 // TODO: Move this into the phrase system?
 func PresetToLang(preset string) string {
-	phrases := GetAllPermPresets()
+	phrases := phrases.GetAllPermPresets()
 	phrase, ok := phrases[preset]
 	if !ok {
 		phrase = phrases["unknown"]

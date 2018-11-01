@@ -13,6 +13,7 @@ import (
 
 	"github.com/Azareal/Gosora/common/alerts"
 	"github.com/Azareal/Gosora/common/templates"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 var Ctemplates []string
@@ -532,7 +533,7 @@ func InitTemplates() error {
 			panic("phraseNameInt is not a string")
 		}
 		// TODO: Log non-existent phrases?
-		return template.HTML(GetTmplPhrase(phraseName))
+		return template.HTML(phrases.GetTmplPhrase(phraseName))
 	}
 
 	fmap["level"] = func(levelInt interface{}) interface{} {
@@ -540,7 +541,7 @@ func InitTemplates() error {
 		if !ok {
 			panic("levelInt is not an integer")
 		}
-		return template.HTML(GetLevelPhrase(level))
+		return template.HTML(phrases.GetLevelPhrase(level))
 	}
 
 	fmap["scope"] = func(name interface{}) interface{} {

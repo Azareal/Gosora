@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -227,7 +228,7 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.Use
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
-	friendlyAgent, ok := common.GetUserAgentPhrase(agent)
+	friendlyAgent, ok := phrases.GetUserAgentPhrase(agent)
 	if !ok {
 		friendlyAgent = agent
 	}
@@ -312,7 +313,7 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.Us
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
-	friendlySystem, ok := common.GetOSPhrase(system)
+	friendlySystem, ok := phrases.GetOSPhrase(system)
 	if !ok {
 		friendlySystem = system
 	}
@@ -352,7 +353,7 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user common.
 	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
-	friendlyLang, ok := common.GetHumanLangPhrase(lang)
+	friendlyLang, ok := phrases.GetHumanLangPhrase(lang)
 	if !ok {
 		friendlyLang = lang
 	}
@@ -584,7 +585,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 	// TODO: Sort this slice
 	var agentItems []common.PanelAnalyticsAgentsItem
 	for agent, count := range agentMap {
-		aAgent, ok := common.GetUserAgentPhrase(agent)
+		aAgent, ok := phrases.GetUserAgentPhrase(agent)
 		if !ok {
 			aAgent = agent
 		}
@@ -622,7 +623,7 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) 
 	// TODO: Sort this slice
 	var systemItems []common.PanelAnalyticsAgentsItem
 	for system, count := range osMap {
-		sSystem, ok := common.GetOSPhrase(system)
+		sSystem, ok := phrases.GetOSPhrase(system)
 		if !ok {
 			sSystem = system
 		}
@@ -661,7 +662,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User
 	// TODO: Sort this slice
 	var langItems []common.PanelAnalyticsAgentsItem
 	for lang, count := range langMap {
-		lLang, ok := common.GetHumanLangPhrase(lang)
+		lLang, ok := phrases.GetHumanLangPhrase(lang)
 		if !ok {
 			lLang = lang
 		}

@@ -15,6 +15,7 @@ import (
 
 	"github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -48,7 +49,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 
 	tid, err := strconv.Atoi(halves[1])
 	if err != nil {
-		return common.PreError(common.GetErrorPhrase("url_id_must_be_integer"), w, r)
+		return common.PreError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r)
 	}
 
 	// Get the topic...
@@ -162,22 +163,22 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 			if replyItem.ActionType != "" {
 				switch replyItem.ActionType {
 				case "lock":
-					replyItem.ActionType = common.GetTmplPhrasef("topic.action_topic_lock",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_lock",replyItem.UserLink,replyItem.CreatedByName)
 					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
 				case "unlock":
-					replyItem.ActionType = common.GetTmplPhrasef("topic.action_topic_unlock",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_unlock",replyItem.UserLink,replyItem.CreatedByName)
 					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
 				case "stick":
-					replyItem.ActionType = common.GetTmplPhrasef("topic.action_topic_stick",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_stick",replyItem.UserLink,replyItem.CreatedByName)
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "unstick":
-					replyItem.ActionType = common.GetTmplPhrasef("topic.action_topic_unstick",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_unstick",replyItem.UserLink,replyItem.CreatedByName)
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "move":
-					replyItem.ActionType = common.GetTmplPhrasef("topic.action_topic_move",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_move",replyItem.UserLink,replyItem.CreatedByName)
 				// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
 				default:
-					replyItem.ActionType = common.GetTmplPhrasef("topic.action_topic_default",replyItem.ActionType)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_default",replyItem.ActionType)
 					replyItem.ActionIcon = ""
 				}
 			}
@@ -237,7 +238,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 	if sfid != "" {
 		fid, err = strconv.Atoi(sfid)
 		if err != nil {
-			return common.LocalError(common.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+			return common.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 		}
 	}
 	if fid == 0 {
@@ -252,7 +253,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 		return common.NoPermissions(w, r, user)
 	}
 	// TODO: Add a phrase for this
-	header.Title = common.GetTitlePhrase("create_topic")
+	header.Title = phrases.GetTitlePhrase("create_topic")
 	header.Zone = "create_topic"
 
 	// Lock this to the forum being linked?
@@ -343,8 +344,8 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		var maxPollOptions = 10
 		var pollInputItems = make(map[int]string)
 		for key, values := range r.Form {
-			common.DebugDetail("key: ", key)
-			common.DebugDetailf("values: %+v\n", values)
+			//common.DebugDetail("key: ", key)
+			//common.DebugDetailf("values: %+v\n", values)
 			for _, value := range values {
 				if strings.HasPrefix(key, "pollinputitem[") {
 					halves := strings.Split(key, "[")
@@ -474,10 +475,9 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 // TODO: Disable stat updates in posts handled by plugin_guilds
 func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
 	isJs := (r.PostFormValue("js") == "1")
-
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreErrorJSQ(common.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
+		return common.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
 	}
 
 	topic, err := common.Topics.Get(tid)
@@ -593,74 +593,59 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 }
 
 func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
+	topic,rerr := topicActionPre(stid,"pin",w,r,user)
+	if rerr != nil {
+		return rerr
+	}
+	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
+		return common.NoPermissions(w, r, user)
+	}
+	return topicActionPost(topic.Stick(),"stick",w,r,topic,user)
+}
+
+func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.Request, user common.User) (*common.Topic, common.RouteError) {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreError(common.GetErrorPhrase("id_must_be_integer"), w, r)
+		return nil,common.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	topic, err := common.Topics.Get(tid)
 	if err == sql.ErrNoRows {
-		return common.PreError("The topic you tried to pin doesn't exist.", w, r)
+		return nil, common.PreError("The topic you tried to "+action+" doesn't exist.", w, r)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return nil, common.InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
 	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
-		return ferr
-	}
-	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
-		return common.NoPermissions(w, r, user)
+		return nil, ferr
 	}
 
-	err = topic.Stick()
+	return topic, nil
+}
+
+func topicActionPost(err error, action string,w http.ResponseWriter, r *http.Request, topic *common.Topic, user common.User) common.RouteError {
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-
-	err = addTopicAction("stick", topic, user)
+	err = addTopicAction(action, topic, user)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID), http.StatusSeeOther)
 	return nil
 }
 
 func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
-	tid, err := strconv.Atoi(stid)
-	if err != nil {
-		return common.PreError(common.GetErrorPhrase("id_must_be_integer"), w, r)
-	}
-
-	topic, err := common.Topics.Get(tid)
-	if err == sql.ErrNoRows {
-		return common.PreError("The topic you tried to unpin doesn't exist.", w, r)
-	} else if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if ferr != nil {
-		return ferr
+	topic,rerr := topicActionPre(stid,"unpin",w,r,user)
+	if rerr != nil {
+		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		return common.NoPermissions(w, r, user)
 	}
-
-	err = topic.Unstick()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	err = addTopicAction("unstick", topic, user)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
-	return nil
+	return topicActionPost(topic.Unstick(),"unstick",w,r,topic,user)
 }
 
 func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -722,39 +707,14 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) c
 }
 
 func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
-	tid, err := strconv.Atoi(stid)
-	if err != nil {
-		return common.PreError(common.GetErrorPhrase("id_must_be_integer"), w, r)
-	}
-
-	topic, err := common.Topics.Get(tid)
-	if err == sql.ErrNoRows {
-		return common.PreError("The topic you tried to unlock doesn't exist.", w, r)
-	} else if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
-	if ferr != nil {
-		return ferr
+	topic,rerr := topicActionPre(stid,"unlock",w,r,user)
+	if rerr != nil {
+		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
 		return common.NoPermissions(w, r, user)
 	}
-
-	err = topic.Unlock()
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	err = addTopicAction("unlock", topic, user)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
-	return nil
+	return topicActionPost(topic.Unlock(),"unlock",w,r,topic,user)
 }
 
 // ! JS only route
@@ -762,7 +722,7 @@ func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return common.PreErrorJS(common.GetErrorPhrase("id_must_be_integer"), w, r)
+		return common.PreErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	// TODO: Move this to some sort of middleware
@@ -833,7 +793,7 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	isJs := (r.PostFormValue("isJs") == "1")
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return common.PreErrorJSQ(common.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
+		return common.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
 	}
 
 	topic, err := common.Topics.Get(tid)

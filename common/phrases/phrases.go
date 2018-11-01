@@ -4,7 +4,7 @@
 * Copyright Azareal 2017 - 2019
 *
  */
-package common
+package phrases
 
 import (
 	"encoding/json"
@@ -61,7 +61,7 @@ type LanguagePack struct {
 var langPacks sync.Map                // nolint it is used
 var langTmplIndicesToNames [][]string // [tmplID][index]phraseName
 
-func InitPhrases() error {
+func InitPhrases(lang string) error {
 	log.Print("Loading the language packs")
 	err := filepath.Walk("./langs", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
@@ -122,9 +122,9 @@ func InitPhrases() error {
 		return errors.New("You don't have any language packs")
 	}
 
-	langPack, ok := langPacks.Load(Site.Language)
+	langPack, ok := langPacks.Load(lang)
 	if !ok {
-		return errors.New("Couldn't find the " + Site.Language + " language pack")
+		return errors.New("Couldn't find the " + lang + " language pack")
 	}
 	currentLangPack.Store(langPack)
 	return nil
@@ -154,14 +154,14 @@ func GetLevelPhrase(level int) string {
 func GetGlobalPermPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).GlobalPerms[name]
 	if !ok {
-		return getPhrasePlaceholder("perms", name)
+		return getPlaceholder("perms", name)
 	}
 	return res
 }
 func GetLocalPermPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).LocalPerms[name]
 	if !ok {
-		return getPhrasePlaceholder("perms", name)
+		return getPlaceholder("perms", name)
 	}
 	return res
 }
@@ -169,7 +169,7 @@ func GetLocalPermPhrase(name string) string {
 func GetSettingPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).SettingPhrases[name]
 	if !ok {
-		return getPhrasePlaceholder("settings", name)
+		return getPlaceholder("settings", name)
 	}
 	return res
 }
@@ -185,7 +185,7 @@ func GetAllPermPresets() map[string]string {
 func GetAccountPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).Accounts[name]
 	if !ok {
-		return getPhrasePlaceholder("account", name)
+		return getPlaceholder("account", name)
 	}
 	return res
 }
@@ -209,7 +209,7 @@ func GetOSPhrase(name string) (string, bool) {
 func GetHumanLangPhrase(name string) (string, bool) {
 	res, ok := currentLangPack.Load().(*LanguagePack).HumanLanguages[name]
 	if !ok {
-		return getPhrasePlaceholder("humanlang", name), false
+		return getPlaceholder("humanlang", name), false
 	}
 	return res, true
 }
@@ -218,7 +218,7 @@ func GetHumanLangPhrase(name string) (string, bool) {
 func GetErrorPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).Errors[name]
 	if !ok {
-		return getPhrasePlaceholder("error", name)
+		return getPlaceholder("error", name)
 	}
 	return res
 }
@@ -226,7 +226,7 @@ func GetErrorPhrase(name string) string {
 func GetNoticePhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).NoticePhrases[name]
 	if !ok {
-		return getPhrasePlaceholder("notices", name)
+		return getPlaceholder("notices", name)
 	}
 	return res
 }
@@ -234,7 +234,7 @@ func GetNoticePhrase(name string) string {
 func GetTitlePhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).PageTitles[name]
 	if !ok {
-		return getPhrasePlaceholder("title", name)
+		return getPlaceholder("title", name)
 	}
 	return res
 }
@@ -242,7 +242,7 @@ func GetTitlePhrase(name string) string {
 func GetTitlePhrasef(name string, params ...interface{}) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).PageTitles[name]
 	if !ok {
-		return getPhrasePlaceholder("title", name)
+		return getPlaceholder("title", name)
 	}
 	return fmt.Sprintf(res, params...)
 }
@@ -250,7 +250,7 @@ func GetTitlePhrasef(name string, params ...interface{}) string {
 func GetTmplPhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).TmplPhrases[name]
 	if !ok {
-		return getPhrasePlaceholder("tmpl", name)
+		return getPlaceholder("tmpl", name)
 	}
 	return res
 }
@@ -258,7 +258,7 @@ func GetTmplPhrase(name string) string {
 func GetTmplPhrasef(name string, params ...interface{}) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).TmplPhrases[name]
 	if !ok {
-		return getPhrasePlaceholder("tmpl", name)
+		return getPlaceholder("tmpl", name)
 	}
 	return fmt.Sprintf(res, params...)
 }
@@ -272,7 +272,7 @@ func GetTmplPhrasesByPrefix(prefix string) (phrases map[string]string, ok bool) 
 	return res, ok
 }
 
-func getPhrasePlaceholder(prefix string, suffix string) string {
+func getPlaceholder(prefix string, suffix string) string {
 	return "{lang." + prefix + "[" + suffix + "]}"
 }
 

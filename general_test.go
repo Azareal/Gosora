@@ -17,7 +17,6 @@ import (
 	"github.com/Azareal/Gosora/install"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
-	//"github.com/husobee/vestigo"
 )
 
 //var dbTest *sql.DB
@@ -111,12 +110,7 @@ func init() {
 
 // TODO: Swap out LocalError for a panic for this?
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
-	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
-		b.Fatal(err)
-	}
-
+	binit(b)
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -158,13 +152,8 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 }
 
 func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
-	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -218,12 +207,7 @@ func BenchmarkTopicAdminRouteParallelAltAlt(b *testing.B) {
 }
 
 func BenchmarkTopicGuestRouteParallel(b *testing.B) {
-	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
-		b.Fatal(err)
-	}
-
+	binit(b)
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = false
@@ -247,12 +231,7 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 }
 
 func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
-	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
-		b.Fatal(err)
-	}
-
+	binit(b)
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
 	common.Dev.DebugMode = true
@@ -276,13 +255,8 @@ func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 }
 
 func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
-	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -319,13 +293,8 @@ func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
 }
 
 func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
-	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -349,96 +318,60 @@ func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
 	common.Dev.SuperDebug = prev2
 }
 
-func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
-	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
-	}
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
+func obRoute(b *testing.B,path string) {
+	binit(b)
+	cfg := NewStashConfig()
 	common.Dev.DebugMode = false
 	common.Dev.SuperDebug = false
+	b.RunParallel(benchRoute(b,path))
+	cfg.Restore()
+}
 
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			listW := httptest.NewRecorder()
-			listReq := httptest.NewRequest("GET", "/topics/", bytes.NewReader(nil))
-			listReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
-			listReq.Header.Set("Host", "localhost")
-			listReq.Host = "localhost"
-			router.ServeHTTP(listW, listReq)
-			if listW.Code != 200 {
-				b.Log(listW.Body)
-				b.Fatal("HTTP Error!")
-			}
-		}
-	})
-
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
+	obRoute(b,"/topics/")
 }
 
 func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
-	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
-	}
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			listW := httptest.NewRecorder()
-			listReq := httptest.NewRequest("GET", "/forums/", bytes.NewReader(nil))
-			listReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
-			listReq.Header.Set("Host", "localhost")
-			listReq.Host = "localhost"
-			router.ServeHTTP(listW, listReq)
-			if listW.Code != 200 {
-				b.Log(listW.Body)
-				b.Fatal("HTTP Error!")
-			}
-		}
-	})
-
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+	obRoute(b,"/forums/")
 }
 
 func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
+	obRoute(b,"/forum/general.2")
+}
+
+func binit(b *testing.B) {
 	b.ReportAllocs()
 	err := gloinit()
 	if err != nil {
 		b.Fatal(err)
 	}
+}
 
-	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+type StashConfig struct {
+	prev bool
+	prev2 bool
+}
+
+func NewStashConfig() *StashConfig {
+	prev := common.Dev.DebugMode
+	prev2 := common.Dev.SuperDebug
+	return &StashConfig{prev,prev2}
+}
+
+func (cfg *StashConfig) Restore() {
+	common.Dev.DebugMode = cfg.prev
+	common.Dev.SuperDebug = cfg.prev2
+}
+
+func benchRoute(b *testing.B, path string) func(*testing.PB) {
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
 	if err != nil {
 		b.Fatal(err)
 	}
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
-
-	b.RunParallel(func(pb *testing.PB) {
+	return func(pb *testing.PB) {
 		for pb.Next() {
 			listW := httptest.NewRecorder()
-			listReq := httptest.NewRequest("GET", "/forum/general.2", bytes.NewReader(nil))
+			listReq := httptest.NewRequest("GET", path, bytes.NewReader(nil))
 			listReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
 			listReq.Header.Set("Host", "localhost")
 			listReq.Host = "localhost"
@@ -448,10 +381,11 @@ func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
 				b.Fatal("HTTP Error!")
 			}
 		}
-	})
+	}
+}
 
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+func BenchmarkProfileGuestRouteParallelWithRouter(b *testing.B) {
+	obRoute(b,"/profile/admin.1")
 }
 
 // TODO: Make these routes compatible with the changes to the router
@@ -459,7 +393,6 @@ func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
 func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 	b.ReportAllocs()
 	gloinit()
-
 	b.RunParallel(func(pb *testing.PB) {
 		admin, err := users.Get(1)
 		if err != nil {
@@ -473,9 +406,9 @@ func BenchmarkForumsAdminRouteParallel(b *testing.B) {
 
 		forumsW := httptest.NewRecorder()
 		forumsReq := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
-		forumsReq_admin := forums_req
-		forumsReq_admin.AddCookie(&adminUidCookie)
-		forumsReq_admin.AddCookie(&adminSessionCookie)
+		forumsReqAdmin := forums_req
+		forumsReqAdmin.AddCookie(&adminUidCookie)
+		forumsReqAdmin.AddCookie(&adminSessionCookie)
 		forumsHandler := http.HandlerFunc(route_forums)
 
 		for pb.Next() {

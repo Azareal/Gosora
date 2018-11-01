@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 func Themes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -73,7 +74,7 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user common.User) commo
 	for mid, list := range common.Menus.GetAllMap() {
 		var name = ""
 		if mid == 1 {
-			name = common.GetTmplPhrase("panel_themes_menus_main")
+			name = phrases.GetTmplPhrase("panel_themes_menus_main")
 		}
 		menuList = append(menuList, common.PanelMenuListItem{
 			Name:      name,
@@ -99,7 +100,7 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user common.User, s
 
 	mid, err := strconv.Atoi(smid)
 	if err != nil {
-		return common.LocalError(common.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
 	menuHold, err := common.Menus.Get(mid)
@@ -145,7 +146,7 @@ func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user common.User
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return common.LocalError(common.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return common.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
 	menuItem, err := common.Menus.ItemStore().Get(itemID)
@@ -217,7 +218,7 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user commo
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return common.LocalErrorJSQ(common.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return common.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
 	}
 
 	menuItem, err := common.Menus.ItemStore().Get(itemID)
@@ -252,7 +253,7 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user com
 	}
 	menuID, err := strconv.Atoi(smenuID)
 	if err != nil {
-		return common.LocalErrorJSQ(common.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return common.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
 	}
 
 	menuItem := common.MenuItem{MenuID: menuID}
@@ -276,7 +277,7 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user com
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return common.LocalErrorJSQ(common.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return common.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
 	}
 	menuItem, err := common.Menus.ItemStore().Get(itemID)
 	if err == sql.ErrNoRows {
@@ -305,7 +306,7 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user comm
 
 	mid, err := strconv.Atoi(smid)
 	if err != nil {
-		return common.LocalErrorJSQ(common.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return common.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
 	}
 	menuHold, err := common.Menus.Get(mid)
 	if err == sql.ErrNoRows {

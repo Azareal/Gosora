@@ -14,6 +14,8 @@ import (
 
 // TODO: Turn this file into a library
 var textOverlapList = make(map[string]int)
+// TODO: Stop hard-coding this here
+var langPkg = "github.com/Azareal/Gosora/common/phrases"
 
 type VarItem struct {
 	Name        string
@@ -177,6 +179,10 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	out += c.rootIterate(c.templateList[fname], varholder, holdreflect, fname)
 	c.TemplateFragmentCount[fname] = c.fragmentCursor[fname] + 1
 
+	if len(c.langIndexToName) > 0 {
+		c.importMap[langPkg] = langPkg
+	}
+
 	var importList string
 	for _, item := range c.importMap {
 		importList += "import \"" + item + "\"\n"
@@ -211,7 +217,7 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 			fout += "\tcommon.TmplPtrMap[\"o_" + fname + "\"] = Template_" + fname + "\n"
 		}
 		if len(c.langIndexToName) > 0 {
-			fout += "\t" + fname + "_tmpl_phrase_id = common.RegisterTmplPhraseNames([]string{\n"
+			fout += "\t" + fname + "_tmpl_phrase_id = phrases.RegisterTmplPhraseNames([]string{\n"
 			for _, name := range c.langIndexToName {
 				fout += "\t\t" + `"` + name + `"` + ",\n"
 			}
@@ -222,7 +228,7 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 
 	fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_vars " + expects + ", w io.Writer) error {\n"
 	if len(c.langIndexToName) > 0 {
-		fout += "var phrases = common.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
+		fout += "var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
 	}
 	fout += varString + out + "return nil\n}\n"
 
@@ -714,7 +720,7 @@ ArgLoop:
 			}
 
 			c.langIndexToName = append(c.langIndexToName, leftParam)
-			out = "w.Write(phrases[" + strconv.Itoa(len(c.langIndexToName)-1) + "])\n"
+			out = "w.Write(plist[" + strconv.Itoa(len(c.langIndexToName)-1) + "])\n"
 			literal = true
 			break ArgLoop
 		case "level":
@@ -727,8 +733,9 @@ ArgLoop:
 
 			leftParam, _ = c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
 			// TODO: Refactor this
-			out = "w.Write([]byte(common.GetLevelPhrase(" + leftParam + ")))\n"
+			out = "w.Write([]byte(phrases.GetLevelPhrase(" + leftParam + ")))\n"
 			literal = true
+			c.importMap[langPkg] = langPkg
 			break ArgLoop
 		case "scope":
 			literal = true
