@@ -49,46 +49,21 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	// Other options instead of io.Copy: io.CopyN(), w.Write(), http.ServeContent()
 }
 
-func Overview(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func Overview(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	header.Title = phrases.GetTitlePhrase("overview")
 	header.Zone = "overview"
-
 	pi := common.Page{header, tList, nil}
-	if common.RunPreRenderHook("pre_render_overview", w, r, &user, &pi) {
-		return nil
-	}
-	err := common.Templates.ExecuteTemplate(w, "overview.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("overview", w, r, header, pi)
 }
 
-func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, name string) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
-	header.Title = phrases.GetTitlePhrase("page")
+func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, name string) common.RouteError {
 	header.Zone = "custom_page"
-
 	name = common.SanitiseSingleLine(name)
 	page, err := common.Pages.GetByName(name)
 	if err == nil {
 		header.Title = page.Title
 		pi := common.CustomPagePage{header, page}
-		if common.RunPreRenderHook("pre_render_custom_page", w, r, &user, &pi) {
-			return nil
-		}
-		err := common.RunThemeTemplate(header.Theme.Name, "custom_page", pi, w)
-		if err != nil {
-			return common.InternalError(err, w, r)
-		}
-		return nil
+		return renderTemplate("custom_page", w, r, header, pi)
 	} else if err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
@@ -98,12 +73,12 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, name s
 		return common.NotFound(w, r, header)
 	}
 
+	header.Title = phrases.GetTitlePhrase("page")
 	pi := common.Page{header, tList, nil}
 	// TODO: Pass the page name to the pre-render hook?
 	if common.RunPreRenderHook("pre_render_tmpl_page", w, r, &user, &pi) {
 		return nil
 	}
-
 	err = common.Templates.ExecuteTemplate(w, "page_"+name+".html", pi)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -130,8 +105,6 @@ func init() {
 func ShowAttachment(w http.ResponseWriter, r *http.Request, user common.User, filename string) common.RouteError {
 	filename = common.Stripslashes(filename)
 	var ext = filepath.Ext("./attachs/" + filename)
-	//log.Print("ext ", ext)
-	//log.Print("filename ", filename)
 	if !common.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
 		return common.LocalError("Bad extension", w, r, user)
 	}

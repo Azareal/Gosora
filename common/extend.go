@@ -215,9 +215,9 @@ var messageHooks = map[string][]func(Message, PageInt, ...interface{}) interface
 var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User, interface{}) bool{
 	"pre_render": nil,
 
-	"pre_render_forum_list":   nil,
+	"pre_render_forums":       nil,
 	"pre_render_forum":        nil,
-	"pre_render_topic_list":   nil,
+	"pre_render_topics":       nil,
 	"pre_render_topic":        nil,
 	"pre_render_profile":      nil,
 	"pre_render_custom_page":  nil,

@@ -9,11 +9,7 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func TopicList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func TopicList(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	header.Title = phrases.GetTitlePhrase("topics")
 	header.Zone = "topics"
 	header.Path = "/topics/"
@@ -47,21 +43,10 @@ func TopicList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	}
 
 	pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, common.TopicListSort{"lastupdated", false}, paginator}
-	if common.RunPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.RunThemeTemplate(header.Theme.Name, "topics", pi, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("topics", w, r, header, pi)
 }
 
-func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	header.Title = phrases.GetTitlePhrase("topics")
 	header.Zone = "topics"
 	header.Path = "/topics/"
@@ -95,12 +80,5 @@ func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, common.TopicListSort{"mostviewed", false}, paginator}
-	if common.RunPreRenderHook("pre_render_topic_list", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.RunThemeTemplate(header.Theme.Name, "topics", pi, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("topics", w, r, header, pi)
 }

@@ -21,8 +21,6 @@ import (
 
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
-
-//var nList []string
 var successJSONBytes = []byte(`{"success":"1"}`)
 
 // TODO: Refactor this

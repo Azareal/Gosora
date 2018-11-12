@@ -5,6 +5,8 @@ import "strings"
 type RouteImpl struct {
 	Name      string
 	Path      string
+	Action    bool
+	NoHead    bool
 	Vars      []string
 	RunBefore []Runnable
 
@@ -70,24 +72,29 @@ func (route *RouteImpl) NoGzip() *RouteImpl {
 	}`)
 }
 
+func (route *RouteImpl) NoHeader() *RouteImpl {
+	route.NoHead = true
+	return route
+}
+
 func addRouteGroup(routeGroup *RouteGroup) {
 	routeGroups = append(routeGroups, routeGroup)
 }
 
 func blankRoute() *RouteImpl {
-	return &RouteImpl{"", "", []string{}, []Runnable{}, nil}
+	return &RouteImpl{"", "", false, false, []string{}, []Runnable{}, nil}
 }
 
-func route(fname string, path string, args ...string) *RouteImpl {
-	return &RouteImpl{fname, path, args, []Runnable{}, nil}
+func route(fname string, path string, action bool, special bool, args ...string) *RouteImpl {
+	return &RouteImpl{fname, path, action, special, args, []Runnable{}, nil}
 }
 
 func View(fname string, path string, args ...string) *RouteImpl {
-	return route(fname, path, args...)
+	return route(fname, path, false, false, args...)
 }
 
 func MemberView(fname string, path string, args ...string) *RouteImpl {
-	route := route(fname, path, args...)
+	route := route(fname, path, false, false, args...)
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
 		route.Before("MemberOnly")
 	}
@@ -95,7 +102,7 @@ func MemberView(fname string, path string, args ...string) *RouteImpl {
 }
 
 func ModView(fname string, path string, args ...string) *RouteImpl {
-	route := route(fname, path, args...)
+	route := route(fname, path, false, false, args...)
 	if !route.hasBefore("AdminOnly") {
 		route.Before("SuperModOnly")
 	}
@@ -103,7 +110,7 @@ func ModView(fname string, path string, args ...string) *RouteImpl {
 }
 
 func Action(fname string, path string, args ...string) *RouteImpl {
-	route := route(fname, path, args...)
+	route := route(fname, path, true, false, args...)
 	route.Before("NoSessionMismatch")
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
 		route.Before("MemberOnly")
@@ -112,11 +119,11 @@ func Action(fname string, path string, args ...string) *RouteImpl {
 }
 
 func AnonAction(fname string, path string, args ...string) *RouteImpl {
-	return route(fname, path, args...).Before("ParseForm")
+	return route(fname, path, true, false, args...).Before("ParseForm")
 }
 
 func Special(fname string, path string, args ...string) *RouteImpl {
-	return route(fname, path, args...).LitBefore("req.URL.Path += extraData")
+	return route(fname, path, false, true, args...).LitBefore("req.URL.Path += extraData")
 }
 
 // Make this it's own type to force the user to manipulate methods on it to set parameters
@@ -125,7 +132,7 @@ type uploadAction struct {
 }
 
 func UploadAction(fname string, path string, args ...string) *uploadAction {
-	route := route(fname, path, args...)
+	route := route(fname, path, true, false, args...)
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
 		route.Before("MemberOnly")
 	}
@@ -135,8 +142,7 @@ func UploadAction(fname string, path string, args ...string) *uploadAction {
 func (action *uploadAction) MaxSizeVar(varName string) *RouteImpl {
 	action.Route.LitBeforeMultiline(`err = common.HandleUploadRoute(w,req,user,` + varName + `)
 			if err != nil {
-				router.handleError(err,w,req,user)
-				return
+				return err
 			}`)
 	action.Route.Before("NoUploadSessionMismatch")
 	return action.Route

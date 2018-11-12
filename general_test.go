@@ -111,8 +111,7 @@ func init() {
 // TODO: Swap out LocalError for a panic for this?
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	binit(b)
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
+	cfg := NewStashConfig()
 	common.Dev.DebugMode = false
 	common.Dev.SuperDebug = false
 
@@ -128,27 +127,30 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			topicW := httptest.NewRecorder()
-			topicReqAdmin := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
-			topicReqAdmin.AddCookie(&adminUIDCookie)
-			topicReqAdmin.AddCookie(&adminSessionCookie)
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			reqAdmin.AddCookie(&adminUIDCookie)
+			reqAdmin.AddCookie(&adminSessionCookie)
 
 			// Deal with the session stuff, etc.
-			user, ok := common.PreRoute(topicW, topicReqAdmin)
+			user, ok := common.PreRoute(w, reqAdmin)
 			if !ok {
 				b.Fatal("Mysterious error!")
 			}
-			//topicW.Body.Reset()
-			routes.ViewTopic(topicW, topicReqAdmin, user, "1")
-			if topicW.Code != 200 {
-				b.Log(topicW.Body)
+			head, err := common.UserCheck(w, reqAdmin, &user)
+			if err != nil {
+				b.Fatal(err)
+			}
+			//w.Body.Reset()
+			routes.ViewTopic(w, reqAdmin, user, head, "1")
+			if w.Code != 200 {
+				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
 			}
 		}
 	})
 
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+	cfg.Restore()
 }
 
 func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
@@ -157,8 +159,7 @@ func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
+	cfg := NewStashConfig()
 	common.Dev.DebugMode = false
 	common.Dev.SuperDebug = false
 
@@ -169,29 +170,28 @@ func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
 	}
-	adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
-	adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			topicW := httptest.NewRecorder()
-			topicReqAdmin := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
-			topicReqAdmin.AddCookie(&adminUIDCookie)
-			topicReqAdmin.AddCookie(&adminSessionCookie)
-			topicReqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
-			topicReqAdmin.Header.Set("Host", "localhost")
-			topicReqAdmin.Host = "localhost"
-			//topicW.Body.Reset()
-			router.ServeHTTP(topicW, topicReqAdmin)
-			if topicW.Code != 200 {
-				b.Log(topicW.Body)
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			reqAdmin.AddCookie(&uidCookie)
+			reqAdmin.AddCookie(&sessionCookie)
+			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			reqAdmin.Header.Set("Host", "localhost")
+			reqAdmin.Host = "localhost"
+			//w.Body.Reset()
+			router.ServeHTTP(w, reqAdmin)
+			if w.Code != 200 {
+				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
 			}
 		}
 	})
 
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+	cfg.Restore()
 }
 
 func BenchmarkTopicAdminRouteParallelAlt(b *testing.B) {
@@ -208,50 +208,56 @@ func BenchmarkTopicAdminRouteParallelAltAlt(b *testing.B) {
 
 func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	binit(b)
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
+	cfg := NewStashConfig()
 	common.Dev.DebugMode = false
 	common.Dev.SuperDebug = false
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			topicW := httptest.NewRecorder()
-			topicReq := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
-			//topicW.Body.Reset()
-			routes.ViewTopic(topicW, topicReq, common.GuestUser, "1")
-			if topicW.Code != 200 {
-				b.Log(topicW.Body)
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			user := common.GuestUser
+
+			head, err := common.UserCheck(w, req, &user)
+			if err != nil {
+				b.Fatal(err)
+			}
+			//w.Body.Reset()
+			routes.ViewTopic(w, req, user, head, "1")
+			if w.Code != 200 {
+				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
 			}
 		}
 	})
-
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+	cfg.Restore()
 }
 
 func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 	binit(b)
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
+	cfg := NewStashConfig()
 	common.Dev.DebugMode = true
 	common.Dev.SuperDebug = false
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			topicW := httptest.NewRecorder()
-			topicReq := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
-			//topicW.Body.Reset()
-			routes.ViewTopic(topicW, topicReq, common.GuestUser, "1")
-			if topicW.Code != 200 {
-				b.Log(topicW.Body)
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			user := common.GuestUser
+
+			head, err := common.UserCheck(w, req, &user)
+			if err != nil {
+				b.Fatal(err)
+			}
+			//w.Body.Reset()
+			routes.ViewTopic(w, req, user, head, "1")
+			if w.Code != 200 {
+				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
 			}
 		}
 	})
-
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+	cfg.Restore()
 }
 
 func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
@@ -260,8 +266,7 @@ func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
+	cfg := NewStashConfig()
 	common.Dev.DebugMode = false
 	common.Dev.SuperDebug = false
 
@@ -273,23 +278,22 @@ func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			topicW := httptest.NewRecorder()
-			topicReq := httptest.NewRequest("GET", "/topic/hm.1", bytes.NewReader(nil))
-			topicReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
-			topicReq.Header.Set("Host", "localhost")
-			topicReq.Host = "localhost"
-			//topicW.Body.Reset()
-			router.ServeHTTP(topicW, topicReq)
-			if topicW.Code != 200 {
-				b.Log(topicW.Body)
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "/topic/hm.1", bytes.NewReader(nil))
+			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			req.Header.Set("Host", "localhost")
+			req.Host = "localhost"
+			//w.Body.Reset()
+			router.ServeHTTP(w, req)
+			if w.Code != 200 {
+				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
 			}
 		}
 	})
 
 	//defer pprof.StopCPUProfile()
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+	cfg.Restore()
 }
 
 func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
@@ -298,45 +302,42 @@ func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
+	cfg := NewStashConfig()
 	common.Dev.DebugMode = false
 	common.Dev.SuperDebug = false
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			badW := httptest.NewRecorder()
-			badReq := httptest.NewRequest("GET", "/garble/haa", bytes.NewReader(nil))
-			badReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
-			badReq.Header.Set("Host", "localhost")
-			badReq.Host = "localhost"
-			router.ServeHTTP(badW, badReq)
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "/garble/haa", bytes.NewReader(nil))
+			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			req.Header.Set("Host", "localhost")
+			req.Host = "localhost"
+			router.ServeHTTP(w, req)
 		}
 	})
-
-	common.Dev.DebugMode = prev
-	common.Dev.SuperDebug = prev2
+	cfg.Restore()
 }
 
-func obRoute(b *testing.B,path string) {
+func obRoute(b *testing.B, path string) {
 	binit(b)
 	cfg := NewStashConfig()
 	common.Dev.DebugMode = false
 	common.Dev.SuperDebug = false
-	b.RunParallel(benchRoute(b,path))
+	b.RunParallel(benchRoute(b, path))
 	cfg.Restore()
 }
 
 func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
-	obRoute(b,"/topics/")
+	obRoute(b, "/topics/")
 }
 
 func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
-	obRoute(b,"/forums/")
+	obRoute(b, "/forums/")
 }
 
 func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
-	obRoute(b,"/forum/general.2")
+	obRoute(b, "/forum/general.2")
 }
 
 func binit(b *testing.B) {
@@ -348,14 +349,14 @@ func binit(b *testing.B) {
 }
 
 type StashConfig struct {
-	prev bool
+	prev  bool
 	prev2 bool
 }
 
 func NewStashConfig() *StashConfig {
 	prev := common.Dev.DebugMode
 	prev2 := common.Dev.SuperDebug
-	return &StashConfig{prev,prev2}
+	return &StashConfig{prev, prev2}
 }
 
 func (cfg *StashConfig) Restore() {
@@ -385,7 +386,7 @@ func benchRoute(b *testing.B, path string) func(*testing.PB) {
 }
 
 func BenchmarkProfileGuestRouteParallelWithRouter(b *testing.B) {
-	obRoute(b,"/profile/admin.1")
+	obRoute(b, "/profile/admin.1")
 }
 
 // TODO: Make these routes compatible with the changes to the router

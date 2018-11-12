@@ -8,7 +8,7 @@ func routes() {
 	addRoute(View("routes.ViewForum", "/forum/", "extraData"))
 	addRoute(AnonAction("routes.ChangeTheme", "/theme/"))
 	addRoute(
-		View("routes.ShowAttachment", "/attachs/", "extraData").Before("ParseForm").NoGzip(),
+		View("routes.ShowAttachment", "/attachs/", "extraData").Before("ParseForm").NoGzip().NoHeader(),
 	)
 
 	apiGroup := newRouteGroup("/api/",
@@ -16,7 +16,7 @@ func routes() {
 		View("routeAPIPhrases", "/api/phrases/"), // TODO: Be careful with exposing the panel phrases here
 		View("routes.APIMe", "/api/me/"),
 		View("routeJSAntispam", "/api/watches/"),
-	)
+	).NoHeader()
 	addRouteGroup(apiGroup)
 
 	// TODO: Reduce the number of Befores. With a new method, perhaps?
@@ -143,7 +143,7 @@ func buildAccountRoutes() {
 }
 
 func buildPanelRoutes() {
-	panelGroup := newRouteGroup("/panel/").Before("SuperModOnly")
+	panelGroup := newRouteGroup("/panel/").Before("SuperModOnly").NoHeader()
 	panelGroup.Routes(
 		View("panel.Dashboard", "/panel/"),
 		View("panel.Forums", "/panel/forums/"),

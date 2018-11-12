@@ -56,8 +56,7 @@ func main() {
 				} else {
 					out += "\n" + indentor + "err = common." + runnable.Contents + "(w,req,user)\n" +
 						indentor + "if err != nil {\n" +
-						indentor + "\trouter.handleError(err,w,req,user)\n" +
-						indentor + "\treturn\n" +
+						indentor + "\treturn err\n" +
 						indentor + "}\n" + indentor
 				}
 			}
@@ -71,6 +70,13 @@ func main() {
 		out += "\n\t\tcase \"" + route.Path[0:end] + "\":"
 		out += runBefore(route.RunBefore, 4)
 		out += "\n\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+		if !route.Action && !route.NoHead {
+			out += "\n\t\t\thead, err := common.UserCheck(w,req,&user)"
+			out += "\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}"
+			vcpy := route.Vars
+			route.Vars = []string{"head"}
+			route.Vars = append(route.Vars, vcpy...)
+		}
 		out += "\n\t\t\terr = " + route.Name + "(w,req,user"
 		for _, item := range route.Vars {
 			out += "," + item
@@ -118,14 +124,20 @@ func main() {
 						out += `
 					err = common.` + runnable.Contents + `(w,req,user)
 					if err != nil {
-						router.handleError(err,w,req,user)
-						return
+						return err
 					}
 					`
 					}
 				}
 			}
 			out += "\n\t\t\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+			if !route.Action && !route.NoHead && !group.NoHead {
+				out += "\n\t\t\t\thead, err := common.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}"
+				vcpy := route.Vars
+				route.Vars = []string{"head"}
+				route.Vars = append(route.Vars, vcpy...)
+			}
 			out += "\n\t\t\t\t\terr = " + route.Name + "(w,req,user"
 			for _, item := range route.Vars {
 				out += "," + item
@@ -138,6 +150,13 @@ func main() {
 			out += "\n\t\t\t\tdefault:"
 			out += runBefore(defaultRoute.RunBefore, 4)
 			out += "\n\t\t\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
+			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
+				out += "\n\t\t\t\t\thead, err := common.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\t\tif err != nil {\n\t\t\t\t\t\treturn err\n\t\t\t\t\t}"
+				vcpy := defaultRoute.Vars
+				defaultRoute.Vars = []string{"head"}
+				defaultRoute.Vars = append(defaultRoute.Vars, vcpy...)
+			}
 			out += "\n\t\t\t\t\terr = " + defaultRoute.Name + "(w,req,user"
 			for _, item := range defaultRoute.Vars {
 				out += ", " + item
@@ -656,10 +675,15 @@ func (router *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}()
 		w = gzipResponseWriter{Writer: gz, ResponseWriter: w}
 	}
-	router.routeSwitch(w, req, user, prefix, extraData)
+
+	ferr := router.routeSwitch(w, req, user, prefix, extraData)
+	if ferr != nil {
+		router.handleError(ferr,w,req,user)
+	}
+	//common.StoppedServer("Profile end")
 }
 	
-func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user common.User, prefix string, extraData string) {
+func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user common.User, prefix string, extraData string) common.RouteError {
 	var err common.RouteError
 	switch(prefix) {` + out + `
 		/*case "/sitemaps": // TODO: Count these views
@@ -667,8 +691,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 			err = sitemapSwitch(w,req)*/
 		case "/uploads":
 			if extraData == "" {
-				common.NotFound(w,req,nil)
-				return		
+				return common.NotFound(w,req,nil)
 			}
 			gzw, ok := w.(gzipResponseWriter)
 			if ok {
@@ -680,28 +703,19 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			router.UploadHandler(w,req) // TODO: Count these views
-			return
+			return nil
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
 					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.RobotsTxt"}})
-					err = routes.RobotsTxt(w,req)
-					if err != nil {
-						router.handleError(err,w,req,user)
-					}
-					return
+					return routes.RobotsTxt(w,req)
 				/*case "sitemap.xml":
 					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.SitemapXml"}})
-					err = routes.SitemapXml(w,req)
-					if err != nil {
-						router.handleError(err,w,req,user)
-					}
-					return*/
+					return routes.SitemapXml(w,req)*/
 			}
-			common.NotFound(w,req,nil)
-			return
+			return common.NotFound(w,req,nil)
 		default:
 			// A fallback for the routes which haven't been converted to the new router yet or plugins
 			router.RLock()
@@ -711,11 +725,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 			if ok {
 				counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.DynamicRoute" }}) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
-				err = handle(w,req,user)
-				if err != nil {
-					router.handleError(err,w,req,user)
-				}
-				return
+				return handle(w,req,user)
 			}
 
 			lowerPath := strings.ToLower(req.URL.Path)
@@ -725,12 +735,9 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 				router.DumpRequest(req,"Bad Route")
 			}
 			counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.BadRoute" }})
-			common.NotFound(w,req,nil)
-			return
+			return common.NotFound(w,req,nil)
 	}
-	if err != nil {
-		router.handleError(err,w,req,user)
-	}
+	return err
 }
 `
 	var tmpl = template.Must(template.New("router").Parse(fileData))

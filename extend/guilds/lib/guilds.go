@@ -200,12 +200,7 @@ func RouteGuildList(w http.ResponseWriter, r *http.Request, user common.User) co
 }
 
 func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	// SEO URLs...
-	halves := strings.Split(r.URL.Path[len("/guild/"):], ".")
-	if len(halves) < 2 {
-		halves = append(halves, halves[0])
-	}
-	guildID, err := strconv.Atoi(halves[1])
+	_, guildID, err := routes.ParseSEOURL(r.URL.Path[len("/guild/"):])
 	if err != nil {
 		return common.PreError("Not a valid guild ID", w, r)
 	}
@@ -303,12 +298,7 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 		return ferr
 	}
 
-	// SEO URLs...
-	halves := strings.Split(r.URL.Path[len("/guild/members/"):], ".")
-	if len(halves) < 2 {
-		halves = append(halves, halves[0])
-	}
-	guildID, err := strconv.Atoi(halves[1])
+	_, guildID, err := routes.ParseSEOURL(r.URL.Path[len("/guild/members/"):])
 	if err != nil {
 		return common.PreError("Not a valid group ID", w, r)
 	}

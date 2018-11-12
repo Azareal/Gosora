@@ -3,7 +3,6 @@ package routes
 import (
 	"database/sql"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -29,11 +28,7 @@ func init() {
 }
 
 // TODO: Remove the View part of the name?
-func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	// TODO: Preload this?
 	header.AddSheet(header.Theme.Name + "/profile.css")
 
@@ -43,13 +38,8 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyLines, replyGroup int
 	var replyList []common.ReplyUser
 
-	// SEO URLs...
 	// TODO: Do a 301 if it's the wrong username? Do a canonical too?
-	halves := strings.Split(r.URL.Path[len("/user/"):], ".")
-	if len(halves) < 2 {
-		halves = append(halves, halves[0])
-	}
-	pid, err := strconv.Atoi(halves[1])
+	_, pid, err := ParseSEOURL(r.URL.Path[len("/user/"):])
 	if err != nil {
 		return common.LocalError("The provided UserID is not a valid number.", w, r, user)
 	}
@@ -125,13 +115,5 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User) commo
 	nextScore := common.GetLevelScore(puser.Level+1) - prevScore
 
 	ppage := common.ProfilePage{header, replyList, *puser, currentScore, nextScore}
-	if common.RunPreRenderHook("pre_render_profile", w, r, &user, &ppage) {
-		return nil
-	}
-
-	err = common.RunThemeTemplate(header.Theme.Name, "profile", ppage, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("profile", w, r, header, ppage)
 }

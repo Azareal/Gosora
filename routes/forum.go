@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -27,20 +27,14 @@ func init() {
 	})
 }
 
-func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
+func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, sfid string) common.RouteError {
 	page, _ := strconv.Atoi(r.FormValue("page"))
-
-	// SEO URLs...
-	halves := strings.Split(sfid, ".")
-	if len(halves) < 2 {
-		halves = append(halves, halves[0])
-	}
-	fid, err := strconv.Atoi(halves[1])
+	_, fid, err := ParseSEOURL(sfid)
 	if err != nil {
-		return common.PreError("The provided ForumID is not a valid number.", w, r)
+		return common.PreError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r)
 	}
 
-	header, ferr := common.ForumUserCheck(w, r, &user, fid)
+	ferr := common.ForumUserCheck(header, w, r, &user, fid)
 	if ferr != nil {
 		return ferr
 	}
@@ -114,13 +108,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, sfid st
 
 	pageList := common.Paginate(forum.TopicCount, common.Config.ItemsPerPage, 5)
 	pi := common.ForumPage{header, topicList, forum, common.Paginator{pageList, page, lastPage}}
-	if common.RunPreRenderHook("pre_render_forum", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.RunThemeTemplate(header.Theme.Name, "forum", pi, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
+	ferr = renderTemplate("forum", w, r, header, pi)
 	counters.ForumViewCounter.Bump(forum.ID)
-	return nil
+	return ferr
 }

@@ -15,18 +15,14 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
 
-func AccountLogin(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func AccountLogin(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
@@ -133,11 +129,7 @@ func mfaVerifySession(provSession string, signedSession string, uid int) bool {
 	return subtle.ConstantTimeCompare([]byte(signedSession), []byte(expected)) == 1
 }
 
-func AccountLoginMFAVerify(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func AccountLoginMFAVerify(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
@@ -186,16 +178,11 @@ func AccountLogout(w http.ResponseWriter, r *http.Request, user common.User) com
 	return nil
 }
 
-func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	if user.Loggedin {
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
 	header.Title = phrases.GetTitlePhrase("register")
-
 	pi := common.Page{header, tList, nil}
 	return renderTemplate("register", w, r, header, pi)
 }
@@ -345,23 +332,15 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 }
 
 // TODO: Figure a way of making this into middleware?
-func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request, user *common.User) (*common.Header, common.RouteError) {
-	header, ferr := common.UserCheck(w, r, user)
-	if ferr != nil {
-		return nil, ferr
-	}
+func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request, user *common.User, header *common.Header) {
 	header.Title = phrases.GetTitlePhrase(titlePhrase)
 	header.Path = "/user/edit/"
 	header.AddSheet(header.Theme.Name + "/account.css")
 	header.AddScript("account.js")
-	return header, nil
 }
 
-func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := accountEditHead("account", w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	accountEditHead("account", w, r, &user, header)
 
 	if r.FormValue("avatar_updated") == "1" {
 		header.AddNotice("account_avatar_updated")
@@ -391,12 +370,8 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User) commo
 }
 
 //edit_password
-func AccountEditPassword(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := accountEditHead("account_password", w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
-
+func AccountEditPassword(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	accountEditHead("account_password", w, r, &user, header)
 	pi := common.Page{header, tList, nil}
 	return renderTemplate("account_own_edit_password", w, r, header, pi)
 }
@@ -540,11 +515,8 @@ func AccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, user comm
 	return nil
 }
 
-func AccountEditMFA(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := accountEditHead("account_mfa", w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func AccountEditMFA(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	accountEditHead("account_mfa", w, r, &user, header)
 
 	mfaItem, err := common.MFAstore.Get(user.ID)
 	if err != sql.ErrNoRows && err != nil {
@@ -565,11 +537,8 @@ func AccountEditMFA(w http.ResponseWriter, r *http.Request, user common.User) co
 }
 
 // If not setup, generate a string, otherwise give an option to disable mfa given the right code
-func AccountEditMFASetup(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := accountEditHead("account_mfa_setup", w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func AccountEditMFASetup(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	accountEditHead("account_mfa_setup", w, r, &user, header)
 
 	// Flash an error if mfa is already setup
 	_, err := common.MFAstore.Get(user.ID)
@@ -657,11 +626,8 @@ func AccountEditMFADisableSubmit(w http.ResponseWriter, r *http.Request, user co
 	return nil
 }
 
-func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := accountEditHead("account_email", w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	accountEditHead("account_email", w, r, &user, header)
 	emails, err := common.Emails.GetEmailsByUser(&user)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -733,11 +699,7 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user co
 	return nil
 }
 
-func LevelList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func LevelList(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	header.Title = phrases.GetTitlePhrase("account_level_list")
 
 	var fScores = common.GetLevels(20)

@@ -7,13 +7,8 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func IPSearch(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func IPSearch(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	header.Title = phrases.GetTitlePhrase("ip_search")
-
 	// TODO: How should we handle the permissions if we extend this into an alt detector of sorts?
 	if !user.Perms.ViewIPs {
 		return common.NoPermissions(w, r, user)

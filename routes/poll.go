@@ -3,7 +3,6 @@ package routes
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -69,7 +68,7 @@ func PollVote(w http.ResponseWriter, r *http.Request, user common.User, sPollID 
 }
 
 func PollResults(w http.ResponseWriter, r *http.Request, user common.User, sPollID string) common.RouteError {
-	log.Print("in PollResults")
+	//log.Print("in PollResults")
 	pollID, err := strconv.Atoi(sPollID)
 	if err != nil {
 		return common.PreError("The provided PollID is not a valid number.", w, r)

@@ -37,17 +37,9 @@ func init() {
 	})
 }
 
-func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit string) common.RouteError {
+func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, urlBit string) common.RouteError {
 	page, _ := strconv.Atoi(r.FormValue("page"))
-
-	// SEO URLs...
-	// TODO: Make a shared function for this
-	halves := strings.Split(urlBit, ".")
-	if len(halves) < 2 {
-		halves = append(halves, halves[0])
-	}
-
-	tid, err := strconv.Atoi(halves[1])
+	_, tid, err := ParseSEOURL(urlBit)
 	if err != nil {
 		return common.PreError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r)
 	}
@@ -61,7 +53,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 	}
 	topic.ClassName = ""
 
-	header, ferr := common.ForumUserCheck(w, r, &user, topic.ParentID)
+	ferr := common.ForumUserCheck(header, w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -163,22 +155,22 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 			if replyItem.ActionType != "" {
 				switch replyItem.ActionType {
 				case "lock":
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_lock",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_lock", replyItem.UserLink, replyItem.CreatedByName)
 					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
 				case "unlock":
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_unlock",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_unlock", replyItem.UserLink, replyItem.CreatedByName)
 					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
 				case "stick":
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_stick",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_stick", replyItem.UserLink, replyItem.CreatedByName)
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "unstick":
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_unstick",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_unstick", replyItem.UserLink, replyItem.CreatedByName)
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "move":
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_move",replyItem.UserLink,replyItem.CreatedByName)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_move", replyItem.UserLink, replyItem.CreatedByName)
 				// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
 				default:
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_default",replyItem.ActionType)
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_default", replyItem.ActionType)
 					replyItem.ActionIcon = ""
 				}
 			}
@@ -232,7 +224,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, urlBit 
 // ? - Log username changes and put restrictions on this?
 // TODO: Test this
 // TODO: Revamp this route
-func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
+func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, sfid string) common.RouteError {
 	var fid int
 	var err error
 	if sfid != "" {
@@ -245,7 +237,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user common.User, sfid 
 		fid = common.Config.DefaultForum
 	}
 
-	header, ferr := common.ForumUserCheck(w, r, &user, fid)
+	ferr := common.ForumUserCheck(header, w, r, &user, fid)
 	if ferr != nil {
 		return ferr
 	}
@@ -593,20 +585,20 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 }
 
 func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
-	topic,rerr := topicActionPre(stid,"pin",w,r,user)
+	topic, rerr := topicActionPre(stid, "pin", w, r, user)
 	if rerr != nil {
 		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Stick(),"stick",w,r,topic,user)
+	return topicActionPost(topic.Stick(), "stick", w, r, topic, user)
 }
 
 func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.Request, user common.User) (*common.Topic, common.RouteError) {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return nil,common.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		return nil, common.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	topic, err := common.Topics.Get(tid)
@@ -625,7 +617,7 @@ func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.R
 	return topic, nil
 }
 
-func topicActionPost(err error, action string,w http.ResponseWriter, r *http.Request, topic *common.Topic, user common.User) common.RouteError {
+func topicActionPost(err error, action string, w http.ResponseWriter, r *http.Request, topic *common.Topic, user common.User) common.RouteError {
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -638,14 +630,14 @@ func topicActionPost(err error, action string,w http.ResponseWriter, r *http.Req
 }
 
 func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
-	topic,rerr := topicActionPre(stid,"unpin",w,r,user)
+	topic, rerr := topicActionPre(stid, "unpin", w, r, user)
 	if rerr != nil {
 		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Unstick(),"unstick",w,r,topic,user)
+	return topicActionPost(topic.Unstick(), "unstick", w, r, topic, user)
 }
 
 func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -707,14 +699,14 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) c
 }
 
 func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
-	topic,rerr := topicActionPre(stid,"unlock",w,r,user)
+	topic, rerr := topicActionPre(stid, "unlock", w, r, user)
 	if rerr != nil {
 		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Unlock(),"unlock",w,r,topic,user)
+	return topicActionPost(topic.Unlock(), "unlock", w, r, topic, user)
 }
 
 // ! JS only route

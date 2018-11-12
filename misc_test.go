@@ -247,10 +247,18 @@ func userStoreTest(t *testing.T, newUserID int) {
 	}
 
 	var changeGroupTest2 = func(rank string, firstShouldBe bool, secondShouldBe bool) {
-		_, ferr := common.ForumUserCheck(dummyResponseRecorder, dummyRequest1, user, reportsForumID)
+		head, err := common.UserCheck(dummyResponseRecorder, dummyRequest1, user)
+		if err != nil {
+			t.Fatal(err)
+		}
+		head2, err := common.UserCheck(dummyResponseRecorder, dummyRequest2, user2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ferr := common.ForumUserCheck(head, dummyResponseRecorder, dummyRequest1, user, reportsForumID)
 		expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
 		expect(t, user.Perms.ViewTopic == firstShouldBe, rank+" should be able to access the reports forum")
-		_, ferr = common.ForumUserCheck(dummyResponseRecorder, dummyRequest2, user2, generalForumID)
+		ferr = common.ForumUserCheck(head2, dummyResponseRecorder, dummyRequest2, user2, generalForumID)
 		expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
 		expect(t, user2.Perms.ViewTopic == secondShouldBe, "Sam should be able to access the general forum")
 	}

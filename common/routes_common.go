@@ -16,7 +16,7 @@ var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = preRoute
 var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*Header, PanelStats, RouteError) = panelUserCheck
 var SimplePanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, RouteError) = simplePanelUserCheck
 var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, err RouteError) = simpleForumUserCheck
-var ForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *Header, err RouteError) = forumUserCheck
+var ForumUserCheck func(header *Header, w http.ResponseWriter, r *http.Request, user *User, fid int) (err RouteError) = forumUserCheck
 var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
 var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (header *Header, err RouteError) = userCheck
 
@@ -45,29 +45,25 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	return header, nil
 }
 
-func forumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *Header, rerr RouteError) {
-	header, rerr = UserCheck(w, r, user)
-	if rerr != nil {
-		return header, rerr
-	}
+func forumUserCheck(header *Header, w http.ResponseWriter, r *http.Request, user *User, fid int) (rerr RouteError) {
 	if !Forums.Exists(fid) {
-		return header, NotFound(w, r, header)
+		return NotFound(w, r, header)
 	}
 
 	skip, rerr := header.Hooks.VhookSkippable("forum_check_pre_perms", w, r, user, &fid, &header)
 	if skip || rerr != nil {
-		return header, rerr
+		return rerr
 	}
 
 	fperms, err := FPStore.Get(fid, user.Group)
 	if err == ErrNoRows {
 		fperms = BlankForumPerms()
 	} else if err != nil {
-		return header, InternalError(err, w, r)
+		return InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, user)
 	header.CurrentUser = *user // TODO: Use a pointer instead for CurrentUser, so we don't have to do this
-	return header, rerr
+	return rerr
 }
 
 // TODO: Put this on the user instance? Do we really want forum specific logic in there? Maybe, a method which spits a new pointer with the same contents as user?
@@ -215,21 +211,6 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 			}
 		}
 	}
-
-	/*pusher, ok := w.(http.Pusher)
-	if ok {
-		pusher.Push("/static/"+theme.Name+"/main.css", nil)
-		pusher.Push("/static/global.js", nil)
-		pusher.Push("/static/jquery-3.1.1.min.js", nil)
-		// TODO: Test these
-		for _, sheet := range header.Stylesheets {
-			pusher.Push("/static/"+sheet, nil)
-		}
-		for _, script := range header.Scripts {
-			pusher.Push("/static/"+script, nil)
-		}
-		// TODO: Push avatars?
-	}*/
 
 	return header, nil
 }

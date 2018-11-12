@@ -4,6 +4,8 @@ type RouteGroup struct {
 	Path      string
 	RouteList []*RouteImpl
 	RunBefore []Runnable
+
+	NoHead bool
 }
 
 func newRouteGroup(path string, routes ...*RouteImpl) *RouteGroup {
@@ -33,6 +35,11 @@ func inStringList(needle string, list []string) bool {
 		}
 	}
 	return false
+}
+
+func (group *RouteGroup) NoHeader() *RouteGroup {
+	group.NoHead = true
+	return group
 }
 
 func (group *RouteGroup) Before(lines ...string) *RouteGroup {

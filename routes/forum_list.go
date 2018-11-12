@@ -8,11 +8,7 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
-	if ferr != nil {
-		return ferr
-	}
+func ForumList(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	header.Title = phrases.GetTitlePhrase("forums")
 	header.Zone = "forums"
 	header.Path = "/forums/"
@@ -54,12 +50,5 @@ func ForumList(w http.ResponseWriter, r *http.Request, user common.User) common.
 	}
 
 	pi := common.ForumsPage{header, forumList}
-	if common.RunPreRenderHook("pre_render_forum_list", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.RunThemeTemplate(header.Theme.Name, "forums", pi, w)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("forums", w, r, header, pi)
 }
