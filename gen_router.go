@@ -1912,11 +1912,7 @@ func (router *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, u
 					err = routes.PollVote(w,req,user,extraData)
 				case "/poll/results/":
 					counters.RouteViewCounter.Bump(114)
-				head, err := common.UserCheck(w,req,&user)
-				if err != nil {
-					return err
-				}
-					err = routes.PollResults(w,req,user,head,extraData)
+					err = routes.PollResults(w,req,user,extraData)
 			}
 		case "/accounts":
 			switch(req.URL.Path) {

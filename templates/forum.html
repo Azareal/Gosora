@@ -95,9 +95,10 @@
 			</div>
 		</div>
 		<div class="topic_middle">
-			<div class="topic_inner_middle rowsmall">
-				<span class="replyCount">{{.PostCount}}</span><br />
-				<span class="likeCount">{{.LikeCount}}</span>
+			<div class="topic_middle_inside rowsmall">
+				<span class="replyCount">{{.PostCount}}&nbsp;{{lang "topic_list.replies_suffix"}}</span>
+				<span class="likeCount">{{.LikeCount}}&nbsp;{{lang "topic_list.likes_suffix"}}</span>
+				<span class="viewCount">{{.ViewCount}}&nbsp;{{lang "topic_list.views_suffix"}}</span>
 			</div>
 		</div>
 		<div class="rowitem topic_right passive datarow">

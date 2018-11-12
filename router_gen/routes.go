@@ -122,7 +122,7 @@ func buildPollRoutes() {
 	pollGroup := newRouteGroup("/poll/")
 	pollGroup.Routes(
 		Action("routes.PollVote", "/poll/vote/", "extraData"),
-		View("routes.PollResults", "/poll/results/", "extraData"),
+		View("routes.PollResults", "/poll/results/", "extraData").NoHeader(),
 	)
 	addRouteGroup(pollGroup)
 }
