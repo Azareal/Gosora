@@ -78,18 +78,6 @@ func LoadSettings() error {
 	return nil
 }
 
-// nolint
-var ErrNotInteger = errors.New("You were supposed to enter an integer x.x")
-var ErrSettingNotInteger = errors.New("Only integers are allowed in this setting x.x")
-var ErrBadConstraintNotInteger = errors.New("Invalid contraint! The constraint field wasn't an integer!")
-var ErrBadSettingRange = errors.New("Only integers between a certain range are allowed in this setting")
-
-// To avoid leaking internal state to the user
-// TODO: We need to add some sort of DualError interface
-func SafeSettingError(err error) bool {
-	return err == ErrNotInteger || err == ErrSettingNotInteger || err == ErrBadConstraintNotInteger || err == ErrBadSettingRange || err == ErrNoRows
-}
-
 // TODO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
 func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string, constraint string) (err error) {
 	var ssBox = map[string]interface{}(sBox)
@@ -99,12 +87,12 @@ func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string,
 	case "int":
 		ssBox[sname], err = strconv.Atoi(scontent)
 		if err != nil {
-			return ErrNotInteger
+			return errors.New("You were supposed to enter an integer x.x")
 		}
 	case "int64":
 		ssBox[sname], err = strconv.ParseInt(scontent, 10, 64)
 		if err != nil {
-			return ErrNotInteger
+			return errors.New("You were supposed to enter an integer x.x")
 		}
 	case "list":
 		cons := strings.Split(constraint, "-")
@@ -115,16 +103,16 @@ func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string,
 		con1, err := strconv.Atoi(cons[0])
 		con2, err2 := strconv.Atoi(cons[1])
 		if err != nil || err2 != nil {
-			return ErrBadConstraintNotInteger
+			return errors.New("Invalid contraint! The constraint field wasn't an integer!")
 		}
 
 		value, err := strconv.Atoi(scontent)
 		if err != nil {
-			return ErrSettingNotInteger
+			return errors.New("Only integers are allowed in this setting x.x")
 		}
 
 		if value < con1 || value > con2 {
-			return ErrBadSettingRange
+			return errors.New("Only integers between a certain range are allowed in this setting")
 		}
 		ssBox[sname] = value
 	default:
@@ -157,10 +145,12 @@ func (sBox SettingMap) BypassGetAll() (settingList []*Setting, err error) {
 	return settingList, rows.Err()
 }
 
-func (sBox SettingMap) Update(name string, content string) error {
+func (sBox SettingMap) Update(name string, content string) RouteError {
 	setting, err := sBox.BypassGet(name)
 	if err == ErrNoRows {
-		return err
+		return FromError(err)
+	} else if err != nil {
+		return SysError(err.Error())
 	}
 
 	// TODO: Why is this here and not in a common function?
@@ -172,17 +162,20 @@ func (sBox SettingMap) Update(name string, content string) error {
 		}
 	}
 
+	err = sBox.ParseSetting(name, content, setting.Type, setting.Constraint)
+	if err != nil {
+		return FromError(err)
+	}
+
 	// TODO: Make this a method or function?
 	_, err = settingStmts.update.Exec(content, name)
 	if err != nil {
-		return err
+		return SysError(err.Error())
 	}
 
-	err = sBox.ParseSetting(name, content, setting.Type, setting.Constraint)
+	err = LoadSettings()
 	if err != nil {
-		return err
+		return SysError(err.Error())
 	}
-	// TODO: Do a reload instead?
-	SettingBox.Store(sBox)
 	return nil
 }

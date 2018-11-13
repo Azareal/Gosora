@@ -102,12 +102,9 @@ func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 	}
 
 	scontent := common.SanitiseBody(r.PostFormValue("setting-value"))
-	err := headerLite.Settings.Update(sname, scontent)
-	if err != nil {
-		if common.SafeSettingError(err) {
-			return common.LocalError(err.Error(), w, r, user)
-		}
-		return common.InternalError(err, w, r)
+	rerr := headerLite.Settings.Update(sname, scontent)
+	if rerr != nil {
+		return rerr
 	}
 
 	http.Redirect(w, r, "/panel/settings/", http.StatusSeeOther)

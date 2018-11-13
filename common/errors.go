@@ -31,15 +31,19 @@ var tList []interface{}
 type RouteError interface {
 	Type() string
 	Error() string
+	Cause() string
 	JSON() bool
 	Handled() bool
+
+	Wrap(string)
 }
 
 type RouteErrorImpl struct {
-	text    string
-	system  bool
-	json    bool
-	handled bool
+	userText string
+	sysText  string
+	system   bool
+	json     bool
+	handled  bool
 }
 
 func (err *RouteErrorImpl) Type() string {
@@ -51,7 +55,14 @@ func (err *RouteErrorImpl) Type() string {
 }
 
 func (err *RouteErrorImpl) Error() string {
-	return err.text
+	return err.userText
+}
+
+func (err *RouteErrorImpl) Cause() string {
+	if err.sysText == "" {
+		return err.Error()
+	}
+	return err.sysText
 }
 
 // Respond with JSON?
@@ -64,8 +75,30 @@ func (err *RouteErrorImpl) Handled() bool {
 	return err.handled
 }
 
+// Move the current error into the system error slot and add a new one to the user error slot to show the user
+func (err *RouteErrorImpl) Wrap(userErr string) {
+	err.sysText = err.userText
+	err.userText = userErr
+}
+
 func HandledRouteError() RouteError {
-	return &RouteErrorImpl{"", false, false, true}
+	return &RouteErrorImpl{"", "", false, false, true}
+}
+
+func Error(errmsg string) RouteError {
+	return &RouteErrorImpl{errmsg, "", false, false, false}
+}
+
+func FromError(err error) RouteError {
+	return &RouteErrorImpl{err.Error(), "", false, false, false}
+}
+
+func ErrorJSQ(errmsg string, isJs bool) RouteError {
+	return &RouteErrorImpl{errmsg, "", false, isJs, false}
+}
+
+func SysError(errmsg string) RouteError {
+	return &RouteErrorImpl{errmsg, errmsg, true, false, false}
 }
 
 // LogError logs internal handler errors which can't be handled with InternalError() as a wrapper for log.Fatal(), we might do more with it in the future.
