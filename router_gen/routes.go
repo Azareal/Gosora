@@ -1,13 +1,13 @@
 package main
 
 // TODO: How should we handle *HeaderLite and *Header?
-func routes() {
-	addRoute(View("routes.Overview", "/overview/"))
-	addRoute(View("routes.CustomPage", "/pages/", "extraData"))
-	addRoute(View("routes.ForumList", "/forums/" /*,"&forums"*/))
-	addRoute(View("routes.ViewForum", "/forum/", "extraData"))
-	addRoute(AnonAction("routes.ChangeTheme", "/theme/"))
-	addRoute(
+func routes(r *Router) {
+	r.Add(View("routes.Overview", "/overview/"))
+	r.Add(View("routes.CustomPage", "/pages/", "extraData"))
+	r.Add(View("routes.ForumList", "/forums/" /*,"&forums"*/))
+	r.Add(View("routes.ViewForum", "/forum/", "extraData"))
+	r.Add(AnonAction("routes.ChangeTheme", "/theme/"))
+	r.Add(
 		View("routes.ShowAttachment", "/attachs/", "extraData").Before("ParseForm").NoGzip().NoHeader(),
 	)
 
@@ -17,36 +17,36 @@ func routes() {
 		View("routes.APIMe", "/api/me/"),
 		View("routeJSAntispam", "/api/watches/"),
 	).NoHeader()
-	addRouteGroup(apiGroup)
+	r.AddGroup(apiGroup)
 
 	// TODO: Reduce the number of Befores. With a new method, perhaps?
 	reportGroup := newRouteGroup("/report/",
 		Action("routes.ReportSubmit", "/report/submit/", "extraData"),
 	).Before("NoBanned")
-	addRouteGroup(reportGroup)
+	r.AddGroup(reportGroup)
 
 	topicGroup := newRouteGroup("/topics/",
 		View("routes.TopicList", "/topics/"),
 		View("routes.TopicListMostViewed", "/topics/most-viewed/"),
 		MemberView("routes.CreateTopic", "/topics/create/", "extraData"),
 	)
-	addRouteGroup(topicGroup)
+	r.AddGroup(topicGroup)
 
-	buildPanelRoutes()
-	buildUserRoutes()
-	buildTopicRoutes()
-	buildReplyRoutes()
-	buildProfileReplyRoutes()
-	buildPollRoutes()
-	buildAccountRoutes()
+	r.AddGroup(panelRoutes())
+	r.AddGroup(userRoutes())
+	r.AddGroup(usersRoutes())
+	r.AddGroup(topicRoutes())
+	r.AddGroup(replyRoutes())
+	r.AddGroup(profileReplyRoutes())
+	r.AddGroup(pollRoutes())
+	r.AddGroup(accountRoutes())
 
-	addRoute(Special("common.RouteWebsockets", "/ws/"))
+	r.Add(Special("common.RouteWebsockets", "/ws/"))
 }
 
 // TODO: Test the email token route
-func buildUserRoutes() {
-	userGroup := newRouteGroup("/user/")
-	userGroup.Routes(
+func userRoutes() *RouteGroup {
+	return newRouteGroup("/user/").Routes(
 		View("routes.ViewProfile", "/user/").LitBefore("req.URL.Path += extraData"),
 
 		MemberView("routes.AccountEdit", "/user/edit/"),
@@ -63,22 +63,20 @@ func buildUserRoutes() {
 
 		MemberView("routes.LevelList", "/user/levels/"),
 	)
-	addRouteGroup(userGroup)
+}
 
+func usersRoutes() *RouteGroup {
 	// TODO: Auto test and manual test these routes
-	userGroup = newRouteGroup("/users/")
-	userGroup.Routes(
+	return newRouteGroup("/users/").Routes(
 		Action("routes.BanUserSubmit", "/users/ban/submit/", "extraData"),
 		Action("routes.UnbanUser", "/users/unban/", "extraData"),
 		Action("routes.ActivateUser", "/users/activate/", "extraData"),
 		MemberView("routes.IPSearch", "/users/ips/"), // TODO: .Perms("ViewIPs")?
 	)
-	addRouteGroup(userGroup)
 }
 
-func buildTopicRoutes() {
-	topicGroup := newRouteGroup("/topic/")
-	topicGroup.Routes(
+func topicRoutes() *RouteGroup {
+	return newRouteGroup("/topic/").Routes(
 		View("routes.ViewTopic", "/topic/", "extraData"),
 		UploadAction("routes.CreateTopicSubmit", "/topic/create/submit/").MaxSizeVar("int(common.Config.MaxRequestSize)"),
 		Action("routes.EditTopicSubmit", "/topic/edit/submit/", "extraData"),
@@ -90,12 +88,10 @@ func buildTopicRoutes() {
 		Action("routes.MoveTopicSubmit", "/topic/move/submit/", "extraData"),
 		Action("routes.LikeTopicSubmit", "/topic/like/submit/", "extraData").Before("ParseForm"),
 	)
-	addRouteGroup(topicGroup)
 }
 
-func buildReplyRoutes() {
-	replyGroup := newRouteGroup("/reply/")
-	replyGroup.Routes(
+func replyRoutes() *RouteGroup {
+	return newRouteGroup("/reply/").Routes(
 		// TODO: Reduce this to 1MB for attachments for each file?
 		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("int(common.Config.MaxRequestSize)"), // TODO: Rename the route so it's /reply/create/submit/
 		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
@@ -104,33 +100,27 @@ func buildReplyRoutes() {
 		//MemberView("routes.ReplyEdit","/reply/edit/","extraData"), // No js fallback
 		//MemberView("routes.ReplyDelete","/reply/delete/","extraData"), // No js confirmation page? We could have a confirmation modal for the JS case
 	)
-	addRouteGroup(replyGroup)
 }
 
 // TODO: Move these into /user/?
-func buildProfileReplyRoutes() {
-	pReplyGroup := newRouteGroup("/profile/")
-	pReplyGroup.Routes(
+func profileReplyRoutes() *RouteGroup {
+	return newRouteGroup("/profile/").Routes(
 		Action("routes.ProfileReplyCreateSubmit", "/profile/reply/create/"), // TODO: Add /submit/ to the end
 		Action("routes.ProfileReplyEditSubmit", "/profile/reply/edit/submit/", "extraData"),
 		Action("routes.ProfileReplyDeleteSubmit", "/profile/reply/delete/submit/", "extraData"),
 	)
-	addRouteGroup(pReplyGroup)
 }
 
-func buildPollRoutes() {
-	pollGroup := newRouteGroup("/poll/")
-	pollGroup.Routes(
+func pollRoutes() *RouteGroup {
+	return newRouteGroup("/poll/").Routes(
 		Action("routes.PollVote", "/poll/vote/", "extraData"),
 		View("routes.PollResults", "/poll/results/", "extraData").NoHeader(),
 	)
-	addRouteGroup(pollGroup)
 }
 
-func buildAccountRoutes() {
+func accountRoutes() *RouteGroup {
 	//router.HandleFunc("/accounts/list/", routeLogin) // Redirect /accounts/ and /user/ to here.. // Get a list of all of the accounts on the forum
-	accReplyGroup := newRouteGroup("/accounts/")
-	accReplyGroup.Routes(
+	return newRouteGroup("/accounts/").Routes(
 		View("routes.AccountLogin", "/accounts/login/"),
 		View("routes.AccountRegister", "/accounts/create/"),
 		Action("routes.AccountLogout", "/accounts/logout/"),
@@ -139,12 +129,10 @@ func buildAccountRoutes() {
 		AnonAction("routes.AccountLoginMFAVerifySubmit", "/accounts/mfa_verify/submit/"), // We have logic in here which filters out regular guests
 		AnonAction("routes.AccountRegisterSubmit", "/accounts/create/submit/"),
 	)
-	addRouteGroup(accReplyGroup)
 }
 
-func buildPanelRoutes() {
-	panelGroup := newRouteGroup("/panel/").Before("SuperModOnly").NoHeader()
-	panelGroup.Routes(
+func panelRoutes() *RouteGroup {
+	return newRouteGroup("/panel/").Before("SuperModOnly").NoHeader().Routes(
 		View("panel.Dashboard", "/panel/"),
 		View("panel.Forums", "/panel/forums/"),
 		Action("panel.ForumsCreateSubmit", "/panel/forums/create/"),
@@ -219,5 +207,4 @@ func buildPanelRoutes() {
 		View("panel.LogsMod", "/panel/logs/mod/"),
 		View("panel.Debug", "/panel/debug/").Before("AdminOnly"),
 	)
-	addRouteGroup(panelGroup)
 }

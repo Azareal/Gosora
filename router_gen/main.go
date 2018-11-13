@@ -9,9 +9,6 @@ import (
 	"text/template"
 )
 
-var routeList []*RouteImpl
-var routeGroups []*RouteGroup
-
 type TmplVars struct {
 	RouteList     []*RouteImpl
 	RouteGroups   []*RouteGroup
@@ -27,11 +24,12 @@ func main() {
 	log.Println("Generating the router...")
 
 	// Load all the routes...
-	routes()
+	r := &Router{}
+	routes(r)
 
 	var tmplVars = TmplVars{
-		RouteList:   routeList,
-		RouteGroups: routeGroups,
+		RouteList:   r.routeList,
+		RouteGroups: r.routeGroups,
 	}
 	var allRouteNames []string
 	var allRouteMap = make(map[string]int)
@@ -64,7 +62,7 @@ func main() {
 		return out
 	}
 
-	for _, route := range routeList {
+	for _, route := range r.routeList {
 		mapIt(route.Name)
 		var end = len(route.Path) - 1
 		out += "\n\t\tcase \"" + route.Path[0:end] + "\":"
@@ -84,7 +82,7 @@ func main() {
 		out += `)`
 	}
 
-	for _, group := range routeGroups {
+	for _, group := range r.routeGroups {
 		var end = len(group.Path) - 1
 		out += "\n\t\tcase \"" + group.Path[0:end] + "\":"
 		out += runBefore(group.RunBefore, 3)

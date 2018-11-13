@@ -18,10 +18,6 @@ type Runnable struct {
 	Literal  bool
 }
 
-func addRoute(route *RouteImpl) {
-	routeList = append(routeList, route)
-}
-
 func (route *RouteImpl) Before(items ...string) *RouteImpl {
 	for _, item := range items {
 		route.RunBefore = append(route.RunBefore, Runnable{item, false})
@@ -75,10 +71,6 @@ func (route *RouteImpl) NoGzip() *RouteImpl {
 func (route *RouteImpl) NoHeader() *RouteImpl {
 	route.NoHead = true
 	return route
-}
-
-func addRouteGroup(routeGroup *RouteGroup) {
-	routeGroups = append(routeGroups, routeGroup)
 }
 
 func blankRoute() *RouteImpl {
