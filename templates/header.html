@@ -42,7 +42,7 @@
 {{/** TODO: Make this a separate template and load it via the theme docks, here for now so we can rapidly prototype the Nox theme **/}}
 {{if eq .Header.Theme.Name "nox"}}
 <div class="user_box">
-	<img src="{{.CurrentUser.Avatar}}" />
+	<img src="{{.CurrentUser.MicroAvatar}}" />
 	<div class="option_box">
 		<a href="{{.CurrentUser.Link}}" class="username">{{.CurrentUser.Name}}</a>
 		<span class="alerts">{{lang "alerts_no_new_alerts"}}</span>

@@ -41,7 +41,7 @@
 	{{if .CurrentUser.Perms.CreateTopic}}
 	<div id="forum_topic_create_form" class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="{{lang "quick_topic.aria"}}">
 		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/" method="post"></form>
-		<img class="little_row_avatar" src="{{.CurrentUser.Avatar}}" height="64" alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}" />
+		<img class="little_row_avatar" src="{{.CurrentUser.MicroAvatar}}" height="64" alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}" />
 		<input form="quick_post_form" id="topic_board_input" name="topic-board" value="{{.Forum.ID}}" type="hidden">
 		<div class="main_form">
 			<div class="topic_meta">
@@ -80,7 +80,7 @@
 		{{range .ItemList}}<div class="topic_row{{if .Sticky}} topic_sticky{{else if .IsClosed}} topic_closed{{end}}" data-tid="{{.ID}}">
 		<div class="rowitem topic_left passive datarow">
 			<span class="selector"></span>
-			<a href="{{.Creator.Link}}"><img src="{{.Creator.Avatar}}" height="64" alt="{{.Creator.Name}}'s Avatar" title="{{.Creator.Name}}'s Avatar" /></a>
+			<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}" height="64" alt="{{.Creator.Name}}'s Avatar" title="{{.Creator.Name}}'s Avatar" /></a>
 			<span class="topic_inner_left">
 				<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement" title="{{.Title}}"><span>{{.Title}}</span></a>
 				<br /><a class="rowsmall starter" href="{{.Creator.Link}}" title="{{.Creator.Name}}">{{.Creator.Name}}</a>
@@ -103,7 +103,7 @@
 		</div>
 		<div class="rowitem topic_right passive datarow">
 			<div class="topic_right_inside">
-				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.Avatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
+				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
 				<span>
 					<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
 					<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>

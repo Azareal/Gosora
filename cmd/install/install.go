@@ -128,7 +128,7 @@ func main() {
 		"MinifyTemplates":true,
 		"BuildSlugs":true,
 		"ServerCount":1,
-		"Noavatar":"https://api.adorable.io/avatars/{width}/{id}@{site_url}.png",
+		"Noavatar":"https://api.adorable.io/avatars/{width}/{id}.png",
 		"ItemsPerPage":25
 	},
 	"Database": {
