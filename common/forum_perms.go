@@ -174,11 +174,8 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-	err = FPStore.Reload(fid)
-	if err != nil {
-		return err
-	}
-	return TopicList.RebuildPermTree()
+	return FPStore.Reload(fid)
+	//return TopicList.RebuildPermTree()
 }
 
 // TODO: FPStore.Reload?
@@ -193,11 +190,8 @@ func ReplaceForumPermsForGroup(gid int, presetSet map[int]string, permSets map[i
 	if err != nil {
 		return err
 	}
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-	return TopicList.RebuildPermTree()
+	return tx.Commit()
+	//return TopicList.RebuildPermTree()
 }
 
 func ReplaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string, permSets map[int]*ForumPerms) error {

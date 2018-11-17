@@ -1413,6 +1413,9 @@ textarea {
 	background-color: var(--element-background-color);
 	display: flex;
 }
+.elapsed {
+	display: none;
+}
 #poweredByHolder {
 	border-bottom: 2px solid var(--element-border-color);
 }

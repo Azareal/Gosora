@@ -289,10 +289,25 @@ func ResetTemplateOverrides() {
 	log.Print("All of the template overrides have been reset")
 }
 
+type GzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w GzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
 // NEW method of doing theme templates to allow one user to have a different theme to another. Under construction.
 // TODO: Generate the type switch instead of writing it by hand
 // TODO: Cut the number of types in half
 func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer) error {
+	// Unpack this to avoid an indirect call
+	gzw, ok := w.(GzipResponseWriter)
+	if ok {
+		w = gzw.Writer
+	}
+
 	var getTmpl = GetThemeTemplate(theme, template)
 	switch tmplO := getTmpl.(type) {
 	case *func(CustomPagePage, io.Writer) error:

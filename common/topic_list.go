@@ -3,7 +3,6 @@ package common
 import (
 	"strconv"
 	"sync"
-	"sync/atomic"
 
 	"github.com/Azareal/Gosora/query_gen"
 )
@@ -20,8 +19,6 @@ type TopicListInt interface {
 	GetListByCanSee(canSee []int, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
 	GetListByGroup(group *Group, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
 	GetList(page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-
-	RebuildPermTree() error
 }
 
 type DefaultTopicList struct {
@@ -31,7 +28,7 @@ type DefaultTopicList struct {
 	oddLock    sync.RWMutex
 	evenLock   sync.RWMutex
 
-	permTree atomic.Value // [string(canSee)]canSee
+	//permTree atomic.Value // [string(canSee)]canSee
 	//permTree map[string][]int // [string(canSee)]canSee
 }
 
@@ -44,11 +41,7 @@ func NewDefaultTopicList() (*DefaultTopicList, error) {
 		evenGroups: make(map[int]*TopicListHolder),
 	}
 
-	err := tList.RebuildPermTree()
-	if err != nil {
-		return nil, err
-	}
-	err = tList.Tick()
+	err := tList.Tick()
 	if err != nil {
 		return nil, err
 	}
@@ -70,19 +63,13 @@ func (tList *DefaultTopicList) Tick() error {
 		}
 	}
 
-	var canSeeHolders = make(map[string]*TopicListHolder)
-	for name, canSee := range tList.permTree.Load().(map[string][]int) {
-		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, "")
-		if err != nil {
-			return err
-		}
-		canSeeHolders[name] = &TopicListHolder{topicList, forumList, paginator}
-	}
-
 	allGroups, err := Groups.GetAll()
 	if err != nil {
 		return err
 	}
+
+	var gidToCanSee = make(map[int]string)
+	var permTree = make(map[string][]int) // [string(canSee)]canSee
 	for _, group := range allGroups {
 		// ? - Move the user count check to instance initialisation? Might require more book-keeping, particularly when a user moves into a zero user group
 		if group.UserCount == 0 && group.ID != GuestUser.Group {
@@ -92,7 +79,23 @@ func (tList *DefaultTopicList) Tick() error {
 		for i, item := range group.CanSee {
 			canSee[i] = byte(item)
 		}
-		addList(group.ID, canSeeHolders[string(canSee)])
+		var canSeeInt = make([]int, len(canSee))
+		copy(canSeeInt, group.CanSee)
+		sCanSee := string(canSee)
+		permTree[sCanSee] = canSeeInt
+		gidToCanSee[group.ID] = sCanSee
+	}
+
+	var canSeeHolders = make(map[string]*TopicListHolder)
+	for name, canSee := range permTree {
+		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, "")
+		if err != nil {
+			return err
+		}
+		canSeeHolders[name] = &TopicListHolder{topicList, forumList, paginator}
+	}
+	for gid, canSee := range gidToCanSee {
+		addList(gid, canSeeHolders[canSee])
 	}
 
 	tList.oddLock.Lock()
@@ -102,28 +105,6 @@ func (tList *DefaultTopicList) Tick() error {
 	tList.evenLock.Lock()
 	tList.evenGroups = evenLists
 	tList.evenLock.Unlock()
-
-	return nil
-}
-
-func (tList *DefaultTopicList) RebuildPermTree() error {
-	// TODO: Do something more efficient than this
-	allGroups, err := Groups.GetAll()
-	if err != nil {
-		return err
-	}
-
-	var permTree = make(map[string][]int) // [string(canSee)]canSee
-	for _, group := range allGroups {
-		var canSee = make([]byte, len(group.CanSee))
-		for i, item := range group.CanSee {
-			canSee[i] = byte(item)
-		}
-		var canSeeInt = make([]int, len(canSee))
-		copy(canSeeInt, group.CanSee)
-		permTree[string(canSee)] = canSeeInt
-	}
-	tList.permTree.Store(permTree)
 
 	return nil
 }

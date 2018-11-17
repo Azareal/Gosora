@@ -588,6 +588,9 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 .forum_list .forum_right span {
 	line-height: 19px;
 }
+.forum_list .forum_right span a {
+	white-space: nowrap;
+}
 .extra_little_row_avatar {
 	border-radius: 24px;
 	height: 36px;
@@ -837,9 +840,20 @@ input[type=checkbox]:checked + label .sel {
 	margin-right: 8px;
 }
 
-.footer .widget {
+.footer .widget, .elapsed {
 	padding: 12px;
 	border-bottom: 1px solid #555555;
+}
+.elapsed {
+	padding: 6px;
+	background: rgb(82,82,82);
+	border-radius: 3px;
+	font-size: 13.5px;
+	color: rgb(200,200,200);
+	margin-top: 1px;
+	margin-bottom: 4px;
+	padding-bottom: 2px;
+	padding-top: 3px;
 }
 #poweredByHolder {
 	display: flex;

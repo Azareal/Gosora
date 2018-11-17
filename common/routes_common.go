@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // nolint
@@ -115,6 +116,10 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 		Writer:      w,
 	}
 	// TODO: We should probably initialise header.ExtData
+	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
+	if user.IsAdmin {
+		header.StartedAt = time.Now()
+	}
 
 	header.AddSheet(theme.Name + "/panel.css")
 	if len(theme.Resources) > 0 {
@@ -192,6 +197,11 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	}
 	if user.Loggedin && !user.Active {
 		header.AddNotice("account_inactive")
+	}
+	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
+	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
+	if user.IsAdmin {
+		header.StartedAt = time.Now()
 	}
 
 	if len(theme.Resources) > 0 {

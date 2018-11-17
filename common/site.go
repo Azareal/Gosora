@@ -96,6 +96,7 @@ type devConfig struct {
 	TemplateDebug bool
 	Profiling     bool
 	TestDB        bool
+	NoFsnotify    bool // Super Experimental!
 }
 
 // configHolder is purely for having a big struct to unmarshal data into

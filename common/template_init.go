@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/Azareal/Gosora/common/alerts"
-	"github.com/Azareal/Gosora/common/templates"
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/Azareal/Gosora/common/templates"
 )
 
 var Ctemplates []string
@@ -162,15 +162,14 @@ func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Head
 		},
 	}
 
-	var header2 = &Header{Site: Site}
-	*header2 = *header
-	header2.CurrentUser = user2
+	buildHeader := func(user User) *Header {
+		var head = &Header{Site: Site}
+		*head = *header
+		head.CurrentUser = user
+		return head
+	}
 
-	var header3 = &Header{Site: Site}
-	*header3 = *header
-	header3.CurrentUser = user3
-
-	return header, header2, header3
+	return header, buildHeader(user2), buildHeader(user3)
 }
 
 // ? - Add template hooks?
@@ -525,6 +524,10 @@ func InitTemplates() error {
 
 	fmap["dock"] = func(dock interface{}, headerInt interface{}) interface{} {
 		return template.HTML(BuildWidget(dock.(string), headerInt.(*Header)))
+	}
+
+	fmap["elapsed"] = func(startedAtInt interface{}) interface{} {
+		return time.Since(startedAtInt.(time.Time)).String()
 	}
 
 	fmap["lang"] = func(phraseNameInt interface{}) interface{} {

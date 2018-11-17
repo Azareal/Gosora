@@ -14,6 +14,7 @@ import (
 
 // TODO: Turn this file into a library
 var textOverlapList = make(map[string]int)
+
 // TODO: Stop hard-coding this here
 var langPkg = "github.com/Azareal/Gosora/common/phrases"
 
@@ -86,6 +87,7 @@ func NewCTemplateSet() *CTemplateSet {
 			"multiply": true,
 			"divide":   true,
 			"dock":     true,
+			"elapsed":  true,
 			"lang":     true,
 			"level":    true,
 			"scope":    true,
@@ -626,6 +628,24 @@ func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, 
 
 func (c *CTemplateSet) compileIdentSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, val reflect.Value, literal bool) {
 	c.detail("in compileIdentSwitch")
+	var litString = func(inner string) {
+		out = "w.Write([]byte(" + inner + "))\n"
+		literal = true
+	}
+	var compOpMappings = map[string]string{
+		"le": "<=",
+		"lt": "<",
+		"gt": ">",
+		"ge": ">=",
+		"eq": "==",
+		"ne": "!=",
+	}
+	var mathOpMappings = map[string]string{
+		"add":      "+",
+		"subtract": "-",
+		"divide":   "/",
+		"multiply": "*",
+	}
 ArgLoop:
 	for pos := 0; pos < len(node.Args); pos++ {
 		id := node.Args[pos]
@@ -638,43 +658,21 @@ ArgLoop:
 			var rout string
 			pos, rout = c.compareJoin(varholder, holdreflect, templateName, pos, node, c.funcMap[id.String()].(string)) // TODO: Test this
 			out += rout
-		case "le": // TODO: Can we condense these comparison cases down into one?
-			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, "<=")
+		case "le", "lt", "gt", "ge", "eq", "ne":
+			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, compOpMappings[id.String()])
 			break ArgLoop
-		case "lt":
-			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, "<")
-			break ArgLoop
-		case "gt":
-			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, ">")
-			break ArgLoop
-		case "ge":
-			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, ">=")
-			break ArgLoop
-		case "eq":
-			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, "==")
-			break ArgLoop
-		case "ne":
-			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, "!=")
-			break ArgLoop
-		case "add":
-			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, "+")
+		case "add", "subtract", "divide", "multiply":
+			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, mathOpMappings[id.String()])
 			out += rout
 			val = rval
 			break ArgLoop
-		case "subtract":
-			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, "-")
-			out += rout
-			val = rval
-			break ArgLoop
-		case "divide":
-			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, "/")
-			out += rout
-			val = rval
-			break ArgLoop
-		case "multiply":
-			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, "*")
-			out += rout
-			val = rval
+		case "elapsed":
+			leftOperand := node.Args[pos+1].String()
+			leftParam, _ := c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
+			// TODO: Refactor this
+			// TODO: Validate that this is actually a time.Time
+			litString("time.Since(" + leftParam + ").String()")
+			c.importMap["time"] = "time"
 			break ArgLoop
 		case "dock":
 			var leftParam, rightParam string
@@ -701,40 +699,33 @@ ArgLoop:
 			val = val3
 
 			// TODO: Refactor this
-			out = "w.Write([]byte(common.BuildWidget(" + leftParam + "," + rightParam + ")))\n"
-			literal = true
+			litString("common.BuildWidget(" + leftParam + "," + rightParam + ")")
 			break ArgLoop
 		case "lang":
-			var leftParam string
 			// TODO: Implement string literals properly
 			leftOperand := node.Args[pos+1].String()
 			if len(leftOperand) == 0 {
 				panic("The left operand for the language string cannot be left blank")
 			}
-
-			if leftOperand[0] == '"' {
-				// ! Slightly crude but it does the job
-				leftParam = strings.Replace(leftOperand, "\"", "", -1)
-			} else {
+			if leftOperand[0] != '"' {
 				panic("Phrase names cannot be dynamic")
 			}
 
+			// ! Slightly crude but it does the job
+			leftParam := strings.Replace(leftOperand, "\"", "", -1)
 			c.langIndexToName = append(c.langIndexToName, leftParam)
-			out = "w.Write(plist[" + strconv.Itoa(len(c.langIndexToName)-1) + "])\n"
-			literal = true
+			litString("plist[" + strconv.Itoa(len(c.langIndexToName)-1) + "]")
 			break ArgLoop
 		case "level":
-			var leftParam string
 			// TODO: Implement level literals
 			leftOperand := node.Args[pos+1].String()
 			if len(leftOperand) == 0 {
 				panic("The leftoperand for function level cannot be left blank")
 			}
 
-			leftParam, _ = c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
+			leftParam, _ := c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
 			// TODO: Refactor this
-			out = "w.Write([]byte(phrases.GetLevelPhrase(" + leftParam + ")))\n"
-			literal = true
+			litString("phrases.GetLevelPhrase(" + leftParam + ")")
 			c.importMap[langPkg] = langPkg
 			break ArgLoop
 		case "scope":

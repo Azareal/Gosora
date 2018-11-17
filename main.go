@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/pprof"
 	"strings"
 	"syscall"
@@ -24,8 +25,8 @@ import (
 	"github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/routes"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 )
@@ -289,71 +290,73 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Print("Initialising the file watcher")
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer watcher.Close()
-
-	go func() {
-		var modifiedFileEvent = func(path string) error {
-			var pathBits = strings.Split(path, "\\")
-			if len(pathBits) == 0 {
-				return nil
-			}
-			if pathBits[0] == "themes" {
-				var themeName string
-				if len(pathBits) >= 2 {
-					themeName = pathBits[1]
-				}
-				if len(pathBits) >= 3 && pathBits[2] == "public" {
-					// TODO: Handle new themes freshly plopped into the folder?
-					theme, ok := common.Themes[themeName]
-					if ok {
-						return theme.LoadStaticFiles()
-					}
-				}
-			}
-			return nil
-		}
-
-		// TODO: Expand this to more types of files
-		var err error
-		for {
-			select {
-			case event := <-watcher.Events:
-				log.Println("event:", event)
-				// TODO: Handle file deletes (and renames more graciously by removing the old version of it)
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Println("modified file:", event.Name)
-					err = modifiedFileEvent(event.Name)
-				} else if event.Op&fsnotify.Create == fsnotify.Create {
-					log.Println("new file:", event.Name)
-					err = modifiedFileEvent(event.Name)
-				}
-				if err != nil {
-					common.LogError(err)
-				}
-			case err = <-watcher.Errors:
-				common.LogError(err)
-			}
-		}
-	}()
-
-	// TODO: Keep tabs on the (non-resource) theme stuff, and the langpacks
-	err = watcher.Add("./public")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = watcher.Add("./templates")
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, theme := range common.Themes {
-		err = watcher.Add("./themes/" + theme.Name + "/public")
+	if !common.Dev.NoFsnotify {
+		log.Print("Initialising the file watcher")
+		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
 			log.Fatal(err)
+		}
+		defer watcher.Close()
+
+		go func() {
+			var modifiedFileEvent = func(path string) error {
+				var pathBits = strings.Split(path, "\\")
+				if len(pathBits) == 0 {
+					return nil
+				}
+				if pathBits[0] == "themes" {
+					var themeName string
+					if len(pathBits) >= 2 {
+						themeName = pathBits[1]
+					}
+					if len(pathBits) >= 3 && pathBits[2] == "public" {
+						// TODO: Handle new themes freshly plopped into the folder?
+						theme, ok := common.Themes[themeName]
+						if ok {
+							return theme.LoadStaticFiles()
+						}
+					}
+				}
+				return nil
+			}
+
+			// TODO: Expand this to more types of files
+			var err error
+			for {
+				select {
+				case event := <-watcher.Events:
+					log.Println("event:", event)
+					// TODO: Handle file deletes (and renames more graciously by removing the old version of it)
+					if event.Op&fsnotify.Write == fsnotify.Write {
+						log.Println("modified file:", event.Name)
+						err = modifiedFileEvent(event.Name)
+					} else if event.Op&fsnotify.Create == fsnotify.Create {
+						log.Println("new file:", event.Name)
+						err = modifiedFileEvent(event.Name)
+					}
+					if err != nil {
+						common.LogError(err)
+					}
+				case err = <-watcher.Errors:
+					common.LogError(err)
+				}
+			}
+		}()
+
+		// TODO: Keep tabs on the (non-resource) theme stuff, and the langpacks
+		err = watcher.Add("./public")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = watcher.Add("./templates")
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, theme := range common.Themes {
+			err = watcher.Add("./themes/" + theme.Name + "/public")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 
@@ -437,6 +440,17 @@ func main() {
 	args := <-common.StopServerChan
 	if false {
 		pprof.StopCPUProfile()
+		f, err := os.Create("./logs/mem.prof")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		runtime.GC()
+		err = pprof.WriteHeapProfile(f)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	// Why did the server stop?
 	log.Fatal(args...)

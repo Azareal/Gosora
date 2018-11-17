@@ -108,6 +108,8 @@ func init() {
 	}
 }
 
+const benchTid = "1"
+
 // TODO: Swap out LocalError for a panic for this?
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	binit(b)
@@ -128,7 +130,7 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			w := httptest.NewRecorder()
-			reqAdmin := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			reqAdmin := httptest.NewRequest("get", "/topic/hm."+benchTid, bytes.NewReader(nil))
 			reqAdmin.AddCookie(&adminUIDCookie)
 			reqAdmin.AddCookie(&adminSessionCookie)
 
@@ -176,7 +178,7 @@ func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			w := httptest.NewRecorder()
-			reqAdmin := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			reqAdmin := httptest.NewRequest("get", "/topic/hm."+benchTid, bytes.NewReader(nil))
 			reqAdmin.AddCookie(&uidCookie)
 			reqAdmin.AddCookie(&sessionCookie)
 			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
@@ -215,7 +217,7 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			req := httptest.NewRequest("get", "/topic/hm."+benchTid, bytes.NewReader(nil))
 			user := common.GuestUser
 
 			head, err := common.UserCheck(w, req, &user)
@@ -242,7 +244,7 @@ func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest("get", "/topic/hm.1", bytes.NewReader(nil))
+			req := httptest.NewRequest("get", "/topic/hm."+benchTid, bytes.NewReader(nil))
 			user := common.GuestUser
 
 			head, err := common.UserCheck(w, req, &user)
@@ -255,65 +257,6 @@ func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
 			}
-		}
-	})
-	cfg.Restore()
-}
-
-func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
-	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
-	}
-	cfg := NewStashConfig()
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
-
-	/*f, err := os.Create("BenchmarkTopicGuestRouteParallelWithRouter.prof")
-	if err != nil {
-		b.Fatal(err)
-	}
-	pprof.StartCPUProfile(f)*/
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			w := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/topic/hm.1", bytes.NewReader(nil))
-			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
-			req.Header.Set("Host", "localhost")
-			req.Host = "localhost"
-			//w.Body.Reset()
-			router.ServeHTTP(w, req)
-			if w.Code != 200 {
-				b.Log(w.Body)
-				b.Fatal("HTTP Error!")
-			}
-		}
-	})
-
-	//defer pprof.StopCPUProfile()
-	cfg.Restore()
-}
-
-func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
-	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
-	}
-	cfg := NewStashConfig()
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			w := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/garble/haa", bytes.NewReader(nil))
-			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
-			req.Header.Set("Host", "localhost")
-			req.Host = "localhost"
-			router.ServeHTTP(w, req)
 		}
 	})
 	cfg.Restore()
@@ -338,6 +281,14 @@ func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkForumGuestRouteParallelWithRouter(b *testing.B) {
 	obRoute(b, "/forum/general.2")
+}
+
+func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/topic/hm."+benchTid)
+}
+
+func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/garble/haa")
 }
 
 func binit(b *testing.B) {

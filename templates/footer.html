@@ -9,6 +9,7 @@
 		<div id="poweredBy">
 			<a id="poweredByName" href="https://github.com/Azareal/Gosora">{{lang "footer_powered_by"}}</a><span id="poweredByDash"> - </span><span id="poweredByMaker">{{lang "footer_made_with_love"}}</span>
 		</div>
+		{{if .CurrentUser.IsAdmin}}<div class="elapsed">{{elapsed .Header.StartedAt}}</div>{{end}}
 		<form action="/theme/" method="post">
 			<div id="themeSelector" style="float: right;">
 				<select id="themeSelectorSelect" name="themeSelector" aria-label="{{lang "footer_theme_selector_aria"}}">

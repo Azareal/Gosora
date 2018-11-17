@@ -29,6 +29,7 @@ type Header struct {
 	Zone        string
 	Path        string
 	MetaDesc    string
+	StartedAt   time.Time
 	Writer      http.ResponseWriter
 	ExtData     ExtData
 }

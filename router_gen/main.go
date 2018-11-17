@@ -239,7 +239,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"errors"
-	"io"
 	"os"
 	"net/http"
 
@@ -316,15 +315,6 @@ func init() {
 	counters.SetReverseAgentMapEnum(reverseAgentMapEnum)
 	counters.SetOSMapEnum(osMapEnum)
 	counters.SetReverseOSMapEnum(reverseOSMapEnum)
-}
-
-type gzipResponseWriter struct {
-	io.Writer
-	http.ResponseWriter
-}
-
-func (w gzipResponseWriter) Write(b []byte) (int, error) {
-	return w.Writer.Write(b)
 }
 
 type WriterIntercept struct {
@@ -671,7 +661,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				gz.Close()
 			}
 		}()
-		w = gzipResponseWriter{Writer: gz, ResponseWriter: w}
+		w = common.GzipResponseWriter{Writer: gz, ResponseWriter: w}
 	}
 
 	ferr := r.routeSwitch(w, req, user, prefix, extraData)
@@ -691,7 +681,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			if extraData == "" {
 				return common.NotFound(w,req,nil)
 			}
-			gzw, ok := w.(gzipResponseWriter)
+			gzw, ok := w.(common.GzipResponseWriter)
 			if ok {
 				w = gzw.ResponseWriter
 				w.Header().Del("Content-Type")

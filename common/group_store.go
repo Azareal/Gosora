@@ -280,16 +280,8 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	mgs.groupCount++
 	mgs.Unlock()
 
-	err = FPStore.ReloadAll()
-	if err != nil {
-		return gid, err
-	}
-	err = TopicList.RebuildPermTree()
-	if err != nil {
-		return gid, err
-	}
-
-	return gid, nil
+	return gid, FPStore.ReloadAll()
+	//return gid, TopicList.RebuildPermTree()
 }
 
 func (mgs *MemoryGroupStore) GetAll() (results []*Group, err error) {

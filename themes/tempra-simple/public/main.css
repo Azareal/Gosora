@@ -856,6 +856,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	top: -2px;
 }
 
+.elapsed {
+	display: none;
+}
 #poweredByHolder {
 	border: 1px solid hsl(0, 0%, 80%);
 	margin-top: 12px;

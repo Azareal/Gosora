@@ -573,6 +573,9 @@ input, select, textarea {
 	margin-left: auto;
 	margin-right: auto;
 }
+.elapsed {
+	display: none;
+}
 #poweredByHolder {
     background-color: var(--main-block-color);
     padding: 10px;
