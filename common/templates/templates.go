@@ -2,6 +2,7 @@ package tmpl
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -41,8 +42,59 @@ type CTemplateConfig struct {
 }
 
 type OutBufferFrame struct {
-	Body string
-	Type string
+	Body         string
+	Type         string
+	TemplateName string
+}
+
+type CContext struct {
+	VarHolder    string
+	HoldReflect  reflect.Value
+	TemplateName string
+	OutBuf       *[]OutBufferFrame
+}
+
+func (con *CContext) Push(nType string, body string) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, nType, con.TemplateName})
+}
+
+func (con *CContext) GetLastType() string {
+	outBuf := *con.OutBuf
+	if len(outBuf) == 0 {
+		return ""
+	}
+	return outBuf[len(outBuf)-1].Type
+}
+
+func (con *CContext) GetLastBody() string {
+	outBuf := *con.OutBuf
+	if len(outBuf) == 0 {
+		return ""
+	}
+	return outBuf[len(outBuf)-1].Body
+}
+
+func (con *CContext) SetLastBody(newBody string) error {
+	outBuf := *con.OutBuf
+	if len(outBuf) == 0 {
+		return errors.New("outbuf is empty")
+	}
+	outBuf[len(outBuf)-1].Body = newBody
+	return nil
+}
+
+func (con *CContext) GetLastTemplate() string {
+	outBuf := *con.OutBuf
+	if len(outBuf) == 0 {
+		return ""
+	}
+	return outBuf[len(outBuf)-1].TemplateName
+}
+
+type Fragment struct {
+	Body         string
+	TemplateName string
+	Index        int
 }
 
 // nolint
@@ -55,6 +107,7 @@ type CTemplateSet struct {
 	Fragments             map[string]int
 	fragmentCursor        map[string]int
 	FragOut               string
+	fragBuf               []Fragment
 	varList               map[string]VarItem
 	localVars             map[string]map[string]VarItemReflect
 	hasDispInt            bool
@@ -244,9 +297,11 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	fout = strings.Replace(fout, `))
 w.Write([]byte(`, " + ", -1)
 	fout = strings.Replace(fout, "` + `", "", -1)
-	//spstr := "`([:space:]*)`"
-	//whitespaceWrites := regexp.MustCompile(`(?s)w.Write\(\[\]byte\(`+spstr+`\)\)`)
-	//fout = whitespaceWrites.ReplaceAllString(fout,"")
+
+	for _, frag := range c.fragBuf {
+		fragmentPrefix := frag.TemplateName + "_frags[" + strconv.Itoa(frag.Index) + "]"
+		c.FragOut += fragmentPrefix + " = []byte(`" + frag.Body + "`)\n"
+	}
 
 	if c.config.Debug {
 		for index, count := range c.stats {
@@ -257,17 +312,6 @@ w.Write([]byte(`, " + ", -1)
 	c.detail("Output!")
 	c.detail(fout)
 	return fout, nil
-}
-
-type CContext struct {
-	VarHolder    string
-	HoldReflect  reflect.Value
-	TemplateName string
-	OutBuf       *[]OutBufferFrame
-}
-
-func (con *CContext) Push(nType string, body string) {
-	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, nType})
 }
 
 func (c *CTemplateSet) rootIterate(tree *parse.Tree, con CContext) {
@@ -345,7 +389,7 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 		_, ok := c.Fragments[fragmentName]
 		if !ok {
 			c.Fragments[fragmentName] = len(node.Text)
-			c.FragOut += fragmentPrefix + " = []byte(`" + string(node.Text) + "`)\n"
+			c.fragBuf = append(c.fragBuf, Fragment{string(node.Text), con.TemplateName, c.fragmentCursor[con.TemplateName]})
 		}
 		c.fragmentCursor[con.TemplateName] = c.fragmentCursor[con.TemplateName] + 1
 		con.Push("text", "w.Write("+fragmentPrefix+")\n")
