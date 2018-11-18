@@ -2,7 +2,6 @@ package tmpl
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -39,56 +38,6 @@ type CTemplateConfig struct {
 	SkipTmplPtrMap bool
 	SkipInitBlock  bool
 	PackageName    string
-}
-
-type OutBufferFrame struct {
-	Body         string
-	Type         string
-	TemplateName string
-}
-
-type CContext struct {
-	VarHolder    string
-	HoldReflect  reflect.Value
-	TemplateName string
-	OutBuf       *[]OutBufferFrame
-}
-
-func (con *CContext) Push(nType string, body string) {
-	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, nType, con.TemplateName})
-}
-
-func (con *CContext) GetLastType() string {
-	outBuf := *con.OutBuf
-	if len(outBuf) == 0 {
-		return ""
-	}
-	return outBuf[len(outBuf)-1].Type
-}
-
-func (con *CContext) GetLastBody() string {
-	outBuf := *con.OutBuf
-	if len(outBuf) == 0 {
-		return ""
-	}
-	return outBuf[len(outBuf)-1].Body
-}
-
-func (con *CContext) SetLastBody(newBody string) error {
-	outBuf := *con.OutBuf
-	if len(outBuf) == 0 {
-		return errors.New("outbuf is empty")
-	}
-	outBuf[len(outBuf)-1].Body = newBody
-	return nil
-}
-
-func (con *CContext) GetLastTemplate() string {
-	outBuf := *con.OutBuf
-	if len(outBuf) == 0 {
-		return ""
-	}
-	return outBuf[len(outBuf)-1].TemplateName
 }
 
 type Fragment struct {
@@ -1106,7 +1055,7 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 }
 
 func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNode) {
-	c.detail("in compileSubTemplate")
+	c.debugCall("compileSubTemplate", pcon, node)
 	c.detail("Template Node: ", node.Name)
 
 	fname := strings.TrimSuffix(node.Name, filepath.Ext(node.Name))
