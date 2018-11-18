@@ -40,6 +40,11 @@ type CTemplateConfig struct {
 	PackageName    string
 }
 
+type OutBufferFrame struct {
+	Body string
+	Type string
+}
+
 // nolint
 type CTemplateSet struct {
 	templateList          map[string]*parse.Tree
@@ -76,16 +81,16 @@ func NewCTemplateSet() *CTemplateSet {
 			"and":      "&&",
 			"not":      "!",
 			"or":       "||",
-			"eq":       true,
-			"ge":       true,
-			"gt":       true,
-			"le":       true,
-			"lt":       true,
-			"ne":       true,
-			"add":      true,
-			"subtract": true,
-			"multiply": true,
-			"divide":   true,
+			"eq":       "==",
+			"ge":       ">=",
+			"gt":       ">",
+			"le":       "<=",
+			"lt":       "<",
+			"ne":       "!=",
+			"add":      "+",
+			"subtract": "-",
+			"multiply": "*",
+			"divide":   "/",
 			"dock":     true,
 			"elapsed":  true,
 			"lang":     true,
@@ -135,7 +140,6 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	c.localDispStructIndex = 0
 	c.stats = make(map[string]int)
 	c.expectsInt = expectsInt
-	holdreflect := reflect.ValueOf(expectsInt)
 
 	res, err := ioutil.ReadFile(fileDir + "overrides/" + name)
 	if err != nil {
@@ -160,13 +164,13 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	c.detail(name)
 
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
+	var outBuf []OutBufferFrame
+	con := CContext{VarHolder: "tmpl_" + fname + "_vars", HoldReflect: reflect.ValueOf(expectsInt), TemplateName: fname, OutBuf: &outBuf}
 	c.templateList = map[string]*parse.Tree{fname: tree}
-	varholder := "tmpl_" + fname + "_vars"
-
 	c.detail(c.templateList)
 	c.localVars = make(map[string]map[string]VarItemReflect)
 	c.localVars[fname] = make(map[string]VarItemReflect)
-	c.localVars[fname]["."] = VarItemReflect{".", varholder, holdreflect}
+	c.localVars[fname]["."] = VarItemReflect{".", con.VarHolder, con.HoldReflect}
 	if c.Fragments == nil {
 		c.Fragments = make(map[string]int)
 	}
@@ -178,7 +182,7 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 		c.TemplateFragmentCount = make(map[string]int)
 	}
 
-	out += c.rootIterate(c.templateList[fname], varholder, holdreflect, fname)
+	c.rootIterate(c.templateList[fname], con)
 	c.TemplateFragmentCount[fname] = c.fragmentCursor[fname] + 1
 
 	if len(c.langIndexToName) > 0 {
@@ -211,7 +215,6 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 
 		if !c.config.SkipHandles {
 			fout += "\tcommon.Template_" + fname + "_handle = Template_" + fname + "\n"
-
 			fout += "\tcommon.Ctemplates = append(common.Ctemplates,\"" + fname + "\")\n\tcommon.TmplPtrMap[\"" + fname + "\"] = &common.Template_" + fname + "_handle\n"
 		}
 
@@ -232,7 +235,11 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	if len(c.langIndexToName) > 0 {
 		fout += "var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
 	}
-	fout += varString + out + "return nil\n}\n"
+	fout += varString
+	for _, frame := range outBuf {
+		fout += frame.Body
+	}
+	fout += "return nil\n}\n"
 
 	fout = strings.Replace(fout, `))
 w.Write([]byte(`, " + ", -1)
@@ -252,7 +259,18 @@ w.Write([]byte(`, " + ", -1)
 	return fout, nil
 }
 
-func (c *CTemplateSet) rootIterate(tree *parse.Tree, varholder string, holdreflect reflect.Value, fname string) (out string) {
+type CContext struct {
+	VarHolder    string
+	HoldReflect  reflect.Value
+	TemplateName string
+	OutBuf       *[]OutBufferFrame
+}
+
+func (con *CContext) Push(nType string, body string) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, nType})
+}
+
+func (c *CTemplateSet) rootIterate(tree *parse.Tree, con CContext) {
 	c.detail(tree.Root)
 	treeLength := len(tree.Root.Nodes)
 	for index, node := range tree.Root.Nodes {
@@ -262,13 +280,12 @@ func (c *CTemplateSet) rootIterate(tree *parse.Tree, varholder string, holdrefle
 		if treeLength != (index + 1) {
 			c.nextNode = tree.Root.Nodes[index+1].Type()
 		}
-		out += c.compileSwitch(varholder, holdreflect, fname, node)
+		c.compileSwitch(con, node)
 	}
-	return out
 }
 
-func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value, templateName string, node parse.Node) (out string) {
-	c.detail("in compileSwitch")
+func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
+	c.dumpCall("compileSwitch", con, node)
 	switch node := node.(type) {
 	case *parse.ActionNode:
 		c.detail("Action Node")
@@ -276,7 +293,7 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 			break
 		}
 		for _, cmd := range node.Pipe.Cmds {
-			out += c.compileSubswitch(varholder, holdreflect, templateName, cmd)
+			c.compileSubSwitch(con, cmd)
 		}
 	case *parse.IfNode:
 		c.detail("If Node:")
@@ -285,64 +302,91 @@ func (c *CTemplateSet) compileSwitch(varholder string, holdreflect reflect.Value
 		for _, cmd := range node.Pipe.Cmds {
 			c.detail("If Node Bit:", cmd)
 			c.detail("Bit Type:", reflect.ValueOf(cmd).Type().Name())
-			expr += c.compileVarswitch(varholder, holdreflect, templateName, cmd)
-			c.detail("Expression Step:", c.compileVarswitch(varholder, holdreflect, templateName, cmd))
+			expr += c.compileExprSwitch(con, cmd)
+			c.detail("Expression Step:", c.compileExprSwitch(con, cmd))
 		}
 
 		c.detail("Expression:", expr)
 		c.previousNode = c.currentNode
 		c.currentNode = parse.NodeList
 		c.nextNode = -1
-		out = "if " + expr + " {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.List) + "}"
+		con.Push("startif", "if "+expr+" {\n")
+		c.compileSwitch(con, node.List)
 		if node.ElseList == nil {
 			c.detail("Selected Branch 1")
-			return out + "\n"
+			con.Push("endif", "}\n")
+		} else {
+			c.detail("Selected Branch 2")
+			con.Push("endif", "}")
+			con.Push("startelse", " else {\n")
+			c.compileSwitch(con, node.ElseList)
+			con.Push("endelse", "}\n")
 		}
-		c.detail("Selected Branch 2")
-		return out + " else {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.ElseList) + "}\n"
 	case *parse.ListNode:
 		c.detail("List Node")
 		for _, subnode := range node.Nodes {
-			out += c.compileSwitch(varholder, holdreflect, templateName, subnode)
+			c.compileSwitch(con, subnode)
 		}
 	case *parse.RangeNode:
-		return c.compileRangeNode(varholder, holdreflect, templateName, node)
+		c.compileRangeNode(con, node)
 	case *parse.TemplateNode:
-		return c.compileSubtemplate(varholder, holdreflect, node)
+		c.compileSubTemplate(con, node)
 	case *parse.TextNode:
 		c.previousNode = c.currentNode
 		c.currentNode = node.Type()
 		c.nextNode = 0
 		tmpText := bytes.TrimSpace(node.Text)
 		if len(tmpText) == 0 {
-			return ""
+			return
 		}
 
-		fragmentName := templateName + "_" + strconv.Itoa(c.fragmentCursor[templateName])
-		fragmentPrefix := templateName + "_frags[" + strconv.Itoa(c.fragmentCursor[templateName]) + "]"
+		fragmentName := con.TemplateName + "_" + strconv.Itoa(c.fragmentCursor[con.TemplateName])
+		fragmentPrefix := con.TemplateName + "_frags[" + strconv.Itoa(c.fragmentCursor[con.TemplateName]) + "]"
 		_, ok := c.Fragments[fragmentName]
 		if !ok {
 			c.Fragments[fragmentName] = len(node.Text)
 			c.FragOut += fragmentPrefix + " = []byte(`" + string(node.Text) + "`)\n"
 		}
-		c.fragmentCursor[templateName] = c.fragmentCursor[templateName] + 1
-		return "w.Write(" + fragmentPrefix + ")\n"
+		c.fragmentCursor[con.TemplateName] = c.fragmentCursor[con.TemplateName] + 1
+		con.Push("text", "w.Write("+fragmentPrefix+")\n")
 	default:
-		return c.unknownNode(node)
+		c.unknownNode(node)
 	}
-	return out
 }
 
-func (c *CTemplateSet) compileRangeNode(varholder string, holdreflect reflect.Value, templateName string, node *parse.RangeNode) (out string) {
-	c.detail("Range Node!")
-	c.detail(node.Pipe)
+func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
+	c.dumpCall("compileRangeNode", con, node)
+	c.detail("node.Pipe: ", node.Pipe)
+	var expr string
 	var outVal reflect.Value
 	for _, cmd := range node.Pipe.Cmds {
 		c.detail("Range Bit:", cmd)
-		out, outVal = c.compileReflectSwitch(varholder, holdreflect, templateName, cmd)
+		// ! This bit is slightly suspect, hm.
+		expr, outVal = c.compileReflectSwitch(con, cmd)
 	}
-	c.detail("Returned:", out)
+	c.detail("Expr:", expr)
 	c.detail("Range Kind Switch!")
+
+	var startIf = func(item reflect.Value, useCopy bool) {
+		con.Push("startif", "if len("+expr+") != 0 {\n")
+		con.Push("startloop", "for _, item := range "+expr+" {\n")
+		ccon := con
+		ccon.VarHolder = "item"
+		ccon.HoldReflect = item
+		c.compileSwitch(ccon, node.List)
+		con.Push("endloop", "}\n")
+		if node.ElseList != nil {
+			con.Push("endif", "}")
+			con.Push("startelse", " else {\n")
+			if !useCopy {
+				ccon = con
+			}
+			c.compileSwitch(ccon, node.ElseList)
+			con.Push("endelse", "}\n")
+		} else {
+			con.Push("endloop", "}\n")
+		}
+	}
 
 	switch outVal.Kind() {
 	case reflect.Map:
@@ -350,45 +394,34 @@ func (c *CTemplateSet) compileRangeNode(varholder string, holdreflect reflect.Va
 		for _, key := range outVal.MapKeys() {
 			item = outVal.MapIndex(key)
 		}
-
 		c.detail("Range item:", item)
 		if !item.IsValid() {
 			panic("item" + "^\n" + "Invalid map. Maybe, it doesn't have any entries for the template engine to analyse?")
 		}
-
-		out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n}"
-		if node.ElseList != nil {
-			out += " else {\n" + c.compileSwitch("item", item, templateName, node.ElseList) + "}\n"
-		}
+		startIf(item, true)
 	case reflect.Slice:
 		if outVal.Len() == 0 {
 			panic("The sample data needs at-least one or more elements for the slices. We're looking into removing this requirement at some point!")
 		}
-		item := outVal.Index(0)
-		out = "if len(" + out + ") != 0 {\nfor _, item := range " + out + " {\n" + c.compileSwitch("item", item, templateName, node.List) + "}\n}"
-		if node.ElseList != nil {
-			out += " else {\n" + c.compileSwitch(varholder, holdreflect, templateName, node.ElseList) + "}"
-		}
+		startIf(outVal.Index(0), false)
 	case reflect.Invalid:
-		return ""
+		return
 	}
-
-	return out + "\n"
 }
 
-func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
-	c.detail("in compileSubswitch")
+func (c *CTemplateSet) compileSubSwitch(con CContext, node *parse.CommandNode) {
+	c.dumpCall("compileSubSwitch", con, node)
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
 		c.detail("Field Node:", n.Ident)
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Variable declarations are coming soon! */
-		cur := holdreflect
+		cur := con.HoldReflect
 
-		var varbit string
+		var varBit string
 		if cur.Kind() == reflect.Interface {
 			cur = cur.Elem()
-			varbit += ".(" + cur.Type().Name() + ")"
+			varBit += ".(" + cur.Type().Name() + ")"
 		}
 
 		// ! Might not work so well for non-struct pointers
@@ -413,22 +446,22 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 
 			if !cur.IsValid() {
 				c.error("Debug Data:")
-				c.error("Holdreflect:", holdreflect)
-				c.error("Holdreflect.Kind():", holdreflect.Kind())
+				c.error("Holdreflect:", con.HoldReflect)
+				c.error("Holdreflect.Kind():", con.HoldReflect.Kind())
 				if !c.config.SuperDebug {
 					c.error("cur.Kind():", cur.Kind().String())
 				}
 				c.error("")
 				if !multiline {
-					panic(varholder + varbit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+					panic(con.VarHolder + varBit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 				}
-				panic(varbit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+				panic(varBit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 			}
 
-			c.detail("in-loop varbit: " + varbit)
+			c.detail("in-loop varBit: " + varBit)
 			if cur.Kind() == reflect.Map {
 				cur = cur.MapIndex(reflect.ValueOf(id))
-				varbit += "[\"" + id + "\"]"
+				varBit += "[\"" + id + "\"]"
 				cur = skipPointers(cur, id)
 
 				if cur.Kind() == reflect.Struct || cur.Kind() == reflect.Interface {
@@ -447,8 +480,8 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 						newVarByte = ":"
 						c.localDispStructIndex++
 					}
-					varholder = "disp" + dispStr
-					varbit = varholder + " " + newVarByte + "= " + varholder + varbit + "\n"
+					con.VarHolder = "disp" + dispStr
+					varBit = con.VarHolder + " " + newVarByte + "= " + con.VarHolder + varBit + "\n"
 					multiline = true
 				} else {
 					continue
@@ -456,65 +489,65 @@ func (c *CTemplateSet) compileSubswitch(varholder string, holdreflect reflect.Va
 			}
 			if cur.Kind() != reflect.Interface {
 				cur = cur.FieldByName(id)
-				varbit += "." + id
+				varBit += "." + id
 			}
 
 			// TODO: Handle deeply nested pointers mixed with interfaces mixed with pointers better
 			if cur.Kind() == reflect.Interface {
 				cur = cur.Elem()
-				varbit += ".("
+				varBit += ".("
 				// TODO: Surely, there's a better way of doing this?
 				if cur.Type().PkgPath() != "main" && cur.Type().PkgPath() != "" {
 					c.importMap["html/template"] = "html/template"
-					varbit += strings.TrimPrefix(cur.Type().PkgPath(), "html/") + "."
+					varBit += strings.TrimPrefix(cur.Type().PkgPath(), "html/") + "."
 				}
-				varbit += cur.Type().Name() + ")"
+				varBit += cur.Type().Name() + ")"
 			}
-			c.detail("End Cycle: ", varbit)
+			c.detail("End Cycle: ", varBit)
 		}
 
 		if multiline {
-			assSplit := strings.Split(varbit, "\n")
-			varbit = assSplit[len(assSplit)-1]
+			assSplit := strings.Split(varBit, "\n")
+			varBit = assSplit[len(assSplit)-1]
 			assSplit = assSplit[:len(assSplit)-1]
 			assLines = strings.Join(assSplit, "\n") + "\n"
 		}
-		varbit = varholder + varbit
-		out = c.compileVarsub(varbit, cur, assLines)
-
-		for _, varItem := range c.varList {
-			if strings.HasPrefix(out, varItem.Destination) {
-				out = strings.Replace(out, varItem.Destination, varItem.Name, 1)
+		c.compileVarSub(con, con.VarHolder+varBit, cur, assLines, func(in string) string {
+			for _, varItem := range c.varList {
+				if strings.HasPrefix(in, varItem.Destination) {
+					in = strings.Replace(in, varItem.Destination, varItem.Name, 1)
+				}
 			}
-		}
-		return out
+			return in
+		})
 	case *parse.DotNode:
 		c.detail("Dot Node:", node.String())
-		return c.compileVarsub(varholder, holdreflect, "")
+		c.compileVarSub(con, con.VarHolder, con.HoldReflect, "", nil)
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.VariableNode:
 		c.detail("Variable Node:", n.String())
 		c.detail(n.Ident)
-		varname, reflectVal := c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
-		return c.compileVarsub(varname, reflectVal, "")
+		varname, reflectVal := c.compileIfVarSub(con, n.String())
+		c.compileVarSub(con, varname, reflectVal, "", nil)
 	case *parse.StringNode:
-		return n.Quoted
+		con.Push("stringnode", n.Quoted)
 	case *parse.IdentifierNode:
 		c.detail("Identifier Node:", node)
 		c.detail("Identifier Node Args:", node.Args)
-		out, outval, lit := c.compileIdentSwitch(varholder, holdreflect, templateName, node)
+		out, outval, lit := c.compileIdentSwitch(con, node)
 		if lit {
-			return out
+			con.Push("identifier", out)
+			return
 		}
-		return c.compileVarsub(out, outval, "")
+		c.compileVarSub(con, out, outval, "", nil)
 	default:
-		return c.unknownNode(node)
+		c.unknownNode(node)
 	}
 }
 
-func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
-	c.detail("in compileVarswitch")
+func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) (out string) {
+	c.detail("in compileExprSwitch")
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
@@ -524,45 +557,44 @@ func (c *CTemplateSet) compileVarswitch(varholder string, holdreflect reflect.Va
 				fmt.Println("Field Bit:", id)
 			}
 		}
-
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
-		return c.compileBoolsub(n.String(), varholder, templateName, holdreflect)
+		return c.compileBoolSub(n.String(), con)
 	case *parse.ChainNode:
 		c.detail("Chain Node:", n.Node)
 		c.detail("Node Args:", node.Args)
 	case *parse.IdentifierNode:
 		c.detail("Identifier Node:", node)
 		c.detail("Node Args:", node.Args)
-		return c.compileIdentSwitchN(varholder, holdreflect, templateName, node)
+		return c.compileIdentSwitchN(con, node)
 	case *parse.DotNode:
-		return varholder
+		return con.VarHolder
 	case *parse.VariableNode:
 		c.detail("Variable Node:", n.String())
 		c.detail("Node Identifier:", n.Ident)
-		out, _ = c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
+		out, _ = c.compileIfVarSub(con, n.String())
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.PipeNode:
 		c.detail("Pipe Node!")
 		c.detail(n)
 		c.detail("Node Args:", node.Args)
-		out += c.compileIdentSwitchN(varholder, holdreflect, templateName, node)
+		out += c.compileIdentSwitchN(con, node)
 		c.detail("Out:", out)
 	default:
-		return c.unknownNode(firstWord)
+		c.unknownNode(firstWord)
 	}
 	return out
 }
 
-func (c *CTemplateSet) unknownNode(node parse.Node) (out string) {
+func (c *CTemplateSet) unknownNode(node parse.Node) {
 	fmt.Println("Unknown Kind:", reflect.ValueOf(node).Elem().Kind())
 	fmt.Println("Unknown Type:", reflect.ValueOf(node).Elem().Type().Name())
 	panic("I don't know what node this is! Grr...")
 }
 
-func (c *CTemplateSet) compileIdentSwitchN(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string) {
+func (c *CTemplateSet) compileIdentSwitchN(con CContext, node *parse.CommandNode) (out string) {
 	c.detail("in compileIdentSwitchN")
-	out, _, _ = c.compileIdentSwitch(varholder, holdreflect, templateName, node)
+	out, _, _ = c.compileIdentSwitch(con, node)
 	return out
 }
 
@@ -572,14 +604,14 @@ func (c *CTemplateSet) dumpSymbol(pos int, node *parse.CommandNode, symbol strin
 	c.detail("node.Args[pos + 2]", node.Args[pos+2])
 }
 
-func (c *CTemplateSet) compareFunc(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, compare string) (out string) {
+func (c *CTemplateSet) compareFunc(con CContext, pos int, node *parse.CommandNode, compare string) (out string) {
 	c.dumpSymbol(pos, node, compare)
-	return c.compileIfVarsubN(node.Args[pos+1].String(), varholder, templateName, holdreflect) + " " + compare + " " + c.compileIfVarsubN(node.Args[pos+2].String(), varholder, templateName, holdreflect)
+	return c.compileIfVarSubN(con, node.Args[pos+1].String()) + " " + compare + " " + c.compileIfVarSubN(con, node.Args[pos+2].String())
 }
 
-func (c *CTemplateSet) simpleMath(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, symbol string) (out string, val reflect.Value) {
-	leftParam, val2 := c.compileIfVarsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
-	rightParam, val3 := c.compileIfVarsub(node.Args[pos+2].String(), varholder, templateName, holdreflect)
+func (c *CTemplateSet) simpleMath(con CContext, pos int, node *parse.CommandNode, symbol string) (out string, val reflect.Value) {
+	leftParam, val2 := c.compileIfVarSub(con, node.Args[pos+1].String())
+	rightParam, val3 := c.compileIfVarSub(con, node.Args[pos+2].String())
 
 	if val2.IsValid() {
 		val = val2
@@ -594,7 +626,7 @@ func (c *CTemplateSet) simpleMath(varholder string, holdreflect reflect.Value, t
 	return leftParam + " " + symbol + " " + rightParam, val
 }
 
-func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, templateName string, pos int, node *parse.CommandNode, symbol string) (pos2 int, out string) {
+func (c *CTemplateSet) compareJoin(con CContext, pos int, node *parse.CommandNode, symbol string) (pos2 int, out string) {
 	c.detailf("Building %s function", symbol)
 	if pos == 0 {
 		fmt.Println("pos:", pos)
@@ -606,12 +638,12 @@ func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, 
 		panic(symbol + " is missing a right operand")
 	}
 
-	left := c.compileBoolsub(node.Args[pos-1].String(), varholder, templateName, holdreflect)
+	left := c.compileBoolSub(node.Args[pos-1].String(), con)
 	_, funcExists := c.funcMap[node.Args[pos+1].String()]
 
 	var right string
 	if !funcExists {
-		right = c.compileBoolsub(node.Args[pos+1].String(), varholder, templateName, holdreflect)
+		right = c.compileBoolSub(node.Args[pos+1].String(), con)
 	}
 	out = left + " " + symbol + " " + right
 
@@ -626,25 +658,11 @@ func (c *CTemplateSet) compareJoin(varholder string, holdreflect reflect.Value, 
 	return pos, out
 }
 
-func (c *CTemplateSet) compileIdentSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, val reflect.Value, literal bool) {
-	c.detail("in compileIdentSwitch")
+func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode) (out string, val reflect.Value, literal bool) {
+	c.dumpCall("compileIdentSwitch", con, node)
 	var litString = func(inner string) {
 		out = "w.Write([]byte(" + inner + "))\n"
 		literal = true
-	}
-	var compOpMappings = map[string]string{
-		"le": "<=",
-		"lt": "<",
-		"gt": ">",
-		"ge": ">=",
-		"eq": "==",
-		"ne": "!=",
-	}
-	var mathOpMappings = map[string]string{
-		"add":      "+",
-		"subtract": "-",
-		"divide":   "/",
-		"multiply": "*",
 	}
 ArgLoop:
 	for pos := 0; pos < len(node.Args); pos++ {
@@ -656,43 +674,40 @@ ArgLoop:
 			out += "!"
 		case "or", "and":
 			var rout string
-			pos, rout = c.compareJoin(varholder, holdreflect, templateName, pos, node, c.funcMap[id.String()].(string)) // TODO: Test this
+			pos, rout = c.compareJoin(con, pos, node, c.funcMap[id.String()].(string)) // TODO: Test this
 			out += rout
 		case "le", "lt", "gt", "ge", "eq", "ne":
-			out += c.compareFunc(varholder, holdreflect, templateName, pos, node, compOpMappings[id.String()])
+			out += c.compareFunc(con, pos, node, c.funcMap[id.String()].(string))
 			break ArgLoop
 		case "add", "subtract", "divide", "multiply":
-			rout, rval := c.simpleMath(varholder, holdreflect, templateName, pos, node, mathOpMappings[id.String()])
+			rout, rval := c.simpleMath(con, pos, node, c.funcMap[id.String()].(string))
 			out += rout
 			val = rval
 			break ArgLoop
 		case "elapsed":
 			leftOperand := node.Args[pos+1].String()
-			leftParam, _ := c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
+			leftParam, _ := c.compileIfVarSub(con, leftOperand)
 			// TODO: Refactor this
 			// TODO: Validate that this is actually a time.Time
 			litString("time.Since(" + leftParam + ").String()")
 			c.importMap["time"] = "time"
 			break ArgLoop
 		case "dock":
-			var leftParam, rightParam string
 			// TODO: Implement string literals properly
 			leftOperand := node.Args[pos+1].String()
 			rightOperand := node.Args[pos+2].String()
-
 			if len(leftOperand) == 0 || len(rightOperand) == 0 {
 				panic("The left or right operand for function dock cannot be left blank")
 			}
-			if leftOperand[0] == '"' {
-				leftParam = leftOperand
-			} else {
-				leftParam, _ = c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
+
+			leftParam := leftOperand
+			if leftOperand[0] != '"' {
+				leftParam, _ = c.compileIfVarSub(con, leftParam)
 			}
 			if rightOperand[0] == '"' {
 				panic("The right operand for function dock cannot be a string")
 			}
-
-			rightParam, val3 := c.compileIfVarsub(rightOperand, varholder, templateName, holdreflect)
+			rightParam, val3 := c.compileIfVarSub(con, rightOperand)
 			if !val3.IsValid() {
 				panic("val3 is invalid")
 			}
@@ -722,8 +737,7 @@ ArgLoop:
 			if len(leftOperand) == 0 {
 				panic("The leftoperand for function level cannot be left blank")
 			}
-
-			leftParam, _ := c.compileIfVarsub(leftOperand, varholder, templateName, holdreflect)
+			leftParam, _ := c.compileIfVarSub(con, leftOperand)
 			// TODO: Refactor this
 			litString("phrases.GetLevelPhrase(" + leftParam + ")")
 			c.importMap[langPkg] = langPkg
@@ -732,20 +746,18 @@ ArgLoop:
 			literal = true
 			break ArgLoop
 		case "dyntmpl":
-			var nameParam, pageParam, headParam string
+			var pageParam, headParam string
 			// TODO: Implement string literals properly
 			// TODO: Should we check to see if pos+3 is within the bounds of the slice?
 			nameOperand := node.Args[pos+1].String()
 			pageOperand := node.Args[pos+2].String()
 			headOperand := node.Args[pos+3].String()
-
 			if len(nameOperand) == 0 || len(pageOperand) == 0 || len(headOperand) == 0 {
 				panic("None of the three operands for function dyntmpl can be left blank")
 			}
-			if nameOperand[0] == '"' {
-				nameParam = nameOperand
-			} else {
-				nameParam, _ = c.compileIfVarsub(nameOperand, varholder, templateName, holdreflect)
+			nameParam := nameOperand
+			if nameOperand[0] != '"' {
+				nameParam, _ = c.compileIfVarSub(con, nameParam)
 			}
 			if pageOperand[0] == '"' {
 				panic("The page operand for function dyntmpl cannot be a string")
@@ -754,11 +766,11 @@ ArgLoop:
 				panic("The head operand for function dyntmpl cannot be a string")
 			}
 
-			pageParam, val3 := c.compileIfVarsub(pageOperand, varholder, templateName, holdreflect)
+			pageParam, val3 := c.compileIfVarSub(con, pageOperand)
 			if !val3.IsValid() {
 				panic("val3 is invalid")
 			}
-			headParam, val4 := c.compileIfVarsub(headOperand, varholder, templateName, holdreflect)
+			headParam, val4 := c.compileIfVarSub(con, headOperand)
 			if !val4.IsValid() {
 				panic("val4 is invalid")
 			}
@@ -778,13 +790,14 @@ ArgLoop:
 					continue
 				}
 			}
-			out += c.compileIfVarsubN(id.String(), varholder, templateName, holdreflect)
+			out += c.compileIfVarSubN(con, id.String())
 		}
 	}
+	c.retCall("compileIdentSwitch", out, val, literal)
 	return out, val, literal
 }
 
-func (c *CTemplateSet) compileReflectSwitch(varholder string, holdreflect reflect.Value, templateName string, node *parse.CommandNode) (out string, outVal reflect.Value) {
+func (c *CTemplateSet) compileReflectSwitch(con CContext, node *parse.CommandNode) (out string, outVal reflect.Value) {
 	c.detail("in compileReflectSwitch")
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
@@ -796,12 +809,12 @@ func (c *CTemplateSet) compileReflectSwitch(varholder string, holdreflect reflec
 			}
 		}
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
-		return c.compileIfVarsub(n.String(), varholder, templateName, holdreflect)
+		return c.compileIfVarSub(con, n.String())
 	case *parse.ChainNode:
 		c.detail("Chain Node:", n.Node)
 		c.detail("node.Args:", node.Args)
 	case *parse.DotNode:
-		return varholder, holdreflect
+		return con.VarHolder, con.HoldReflect
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	default:
@@ -810,25 +823,32 @@ func (c *CTemplateSet) compileReflectSwitch(varholder string, holdreflect reflec
 	return "", outVal
 }
 
-func (c *CTemplateSet) compileIfVarsubN(varname string, varholder string, templateName string, cur reflect.Value) (out string) {
-	c.detail("in compileIfVarsubN")
-	out, _ = c.compileIfVarsub(varname, varholder, templateName, cur)
+func (c *CTemplateSet) compileIfVarSubN(con CContext, varname string) (out string) {
+	c.dumpCall("compileIfVarSubN", con, varname)
+	out, _ = c.compileIfVarSub(con, varname)
 	return out
 }
 
-func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templateName string, cur reflect.Value) (out string, val reflect.Value) {
-	c.detail("in compileIfVarsub")
+func (c *CTemplateSet) compileIfVarSub(con CContext, varname string) (out string, val reflect.Value) {
+	c.dumpCall("compileIfVarSub", con, varname)
+	cur := con.HoldReflect
 	if varname[0] != '.' && varname[0] != '$' {
 		return varname, cur
 	}
 
+	var stepInterface = func() {
+		if cur.Kind() == reflect.Interface {
+			cur = cur.Elem()
+			out += ".(" + cur.Type().Name() + ")"
+		}
+	}
 	bits := strings.Split(varname, ".")
 	if varname[0] == '$' {
 		var res VarItemReflect
 		if varname[1] == '.' {
-			res = c.localVars[templateName]["."]
+			res = c.localVars[con.TemplateName]["."]
 		} else {
-			res = c.localVars[templateName][strings.TrimPrefix(bits[0], "$")]
+			res = c.localVars[con.TemplateName][strings.TrimPrefix(bits[0], "$")]
 		}
 		out += res.Destination
 		cur = res.Value
@@ -837,16 +857,16 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 			cur = cur.Elem()
 		}
 	} else {
-		out += varholder
-		if cur.Kind() == reflect.Interface {
-			cur = cur.Elem()
-			out += ".(" + cur.Type().Name() + ")"
-		}
+		out += con.VarHolder
+		stepInterface()
 	}
 	bits[0] = strings.TrimPrefix(bits[0], "$")
 
-	c.detail("Cur Kind:", cur.Kind())
-	c.detail("Cur Type:", cur.Type().Name())
+	var dumpKind = func(pre string) {
+		c.detail(pre+" Kind:", cur.Kind())
+		c.detail(pre+" Type:", cur.Type().Name())
+	}
+	dumpKind("Cur")
 	for _, bit := range bits {
 		c.detail("Variable Field:", bit)
 		if bit == "" {
@@ -865,31 +885,23 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 
 		cur = cur.FieldByName(bit)
 		out += "." + bit
-		if cur.Kind() == reflect.Interface {
-			cur = cur.Elem()
-			out += ".(" + cur.Type().Name() + ")"
-		}
+		stepInterface()
 		if !cur.IsValid() {
 			fmt.Println("cur: ", cur)
 			panic(out + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}
-		c.detail("Data Kind:", cur.Kind())
-		c.detail("Data Type:", cur.Type().Name())
+		dumpKind("Data")
 	}
 
 	c.detail("Out Value:", out)
-	c.detail("Out Kind:", cur.Kind())
-	c.detail("Out Type:", cur.Type().Name())
-
+	dumpKind("Out")
 	for _, varItem := range c.varList {
 		if strings.HasPrefix(out, varItem.Destination) {
 			out = strings.Replace(out, varItem.Destination, varItem.Name, 1)
 		}
 	}
-
 	c.detail("Out Value:", out)
-	c.detail("Out Kind:", cur.Kind())
-	c.detail("Out Type:", cur.Type().Name())
+	dumpKind("Out")
 
 	_, ok := c.stats[out]
 	if ok {
@@ -901,9 +913,9 @@ func (c *CTemplateSet) compileIfVarsub(varname string, varholder string, templat
 	return out, cur
 }
 
-func (c *CTemplateSet) compileBoolsub(varname string, varholder string, templateName string, val reflect.Value) string {
-	c.detail("in compileBoolsub")
-	out, val := c.compileIfVarsub(varname, varholder, templateName, val)
+func (c *CTemplateSet) compileBoolSub(varname string, con CContext) string {
+	c.detail("in compileBoolSub")
+	out, val := c.compileIfVarSub(con, varname)
 	// TODO: What if it's a pointer or an interface? I *think* we've got pointers handled somewhere, but not interfaces which we don't know the types of at compile time
 	switch val.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64:
@@ -915,21 +927,88 @@ func (c *CTemplateSet) compileBoolsub(varname string, varholder string, template
 		out = "len(" + out + ") != 0"
 	default:
 		fmt.Println("Variable Name:", varname)
-		fmt.Println("Variable Holder:", varholder)
-		fmt.Println("Variable Kind:", val.Kind())
+		fmt.Println("Variable Holder:", con.VarHolder)
+		fmt.Println("Variable Kind:", con.HoldReflect.Kind())
 		panic("I don't know what this variable's type is o.o\n")
 	}
 	return out
 }
 
-func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines string) (out string) {
-	c.detail("in compileVarsub")
+// For debugging the template generator
+func (c *CTemplateSet) debugParam(param interface{}, depth int) (pstr string) {
+	switch p := param.(type) {
+	case CContext:
+		return "con,"
+	case reflect.Value:
+		if p.Kind() == reflect.Ptr || p.Kind() == reflect.Interface {
+			for p.Kind() == reflect.Ptr || p.Kind() == reflect.Interface {
+				if p.Kind() == reflect.Ptr {
+					pstr += "*"
+				} else {
+					pstr += "£"
+				}
+				p = p.Elem()
+			}
+		}
+		kind := p.Kind().String()
+		if kind != "struct" {
+			pstr += kind
+		} else {
+			pstr += p.Type().Name()
+		}
+		return pstr + ","
+	case string:
+		return "\"" + p + "\","
+	case int:
+		return strconv.Itoa(p) + ","
+	case bool:
+		if p {
+			return "true,"
+		}
+		return "false,"
+	case func(string) string:
+		if p == nil {
+			return "nil,"
+		}
+		return "func(string) string),"
+	default:
+		return "?,"
+	}
+}
+func (c *CTemplateSet) dumpCall(name string, params ...interface{}) {
+	var pstr string
+	for _, param := range params {
+		pstr += c.debugParam(param, 0)
+	}
+	if len(pstr) > 0 {
+		pstr = pstr[:len(pstr)-1]
+	}
+	c.detail("called " + name + "(" + pstr + ")")
+}
+func (c *CTemplateSet) retCall(name string, params ...interface{}) {
+	var pstr string
+	for _, param := range params {
+		pstr += c.debugParam(param, 0)
+	}
+	if len(pstr) > 0 {
+		pstr = pstr[:len(pstr)-1]
+	}
+	c.detail("returned from " + name + " => (" + pstr + ")")
+}
+
+func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.Value, assLines string, onEnd func(string) string) {
+	c.dumpCall("compileVarSub", con, varname, val, assLines, onEnd)
+	if onEnd == nil {
+		onEnd = func(in string) string {
+			return in
+		}
+	}
 
 	// Is this a literal string?
 	if len(varname) != 0 && varname[0] == '"' {
-		return assLines + "w.Write([]byte(" + varname + "))\n"
+		con.Push("varsub", onEnd(assLines+"w.Write([]byte("+varname+"))\n"))
+		return
 	}
-
 	for _, varItem := range c.varList {
 		if strings.HasPrefix(varname, varItem.Destination) {
 			varname = strings.Replace(varname, varItem.Destination, varItem.Name, 1)
@@ -942,27 +1021,33 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines
 	} else {
 		c.stats[varname] = 1
 	}
-
 	if val.Kind() == reflect.Interface {
 		val = val.Elem()
+	}
+	if val.Kind() == reflect.Ptr {
+		for val.Kind() == reflect.Ptr {
+			val = val.Elem()
+			varname = "*" + varname
+		}
 	}
 
 	c.detail("varname: ", varname)
 	c.detail("assLines: ", assLines)
+	var base string
 	switch val.Kind() {
 	case reflect.Int:
 		c.importMap["strconv"] = "strconv"
-		out = "w.Write([]byte(strconv.Itoa(" + varname + ")))\n"
+		base = "w.Write([]byte(strconv.Itoa(" + varname + ")))\n"
 	case reflect.Bool:
-		out = "if " + varname + " {\nw.Write([]byte(\"true\"))} else {\nw.Write([]byte(\"false\"))\n}\n"
+		base = "if " + varname + " {\nw.Write([]byte(\"true\"))} else {\nw.Write([]byte(\"false\"))\n}\n"
 	case reflect.String:
 		if val.Type().Name() != "string" && !strings.HasPrefix(varname, "string(") {
 			varname = "string(" + varname + ")"
 		}
-		out = "w.Write([]byte(" + varname + "))\n"
+		base = "w.Write([]byte(" + varname + "))\n"
 	case reflect.Int64:
 		c.importMap["strconv"] = "strconv"
-		out = "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))\n"
+		base = "w.Write([]byte(strconv.FormatInt(" + varname + ", 10)))\n"
 	default:
 		if !val.IsValid() {
 			panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")
@@ -972,24 +1057,25 @@ func (c *CTemplateSet) compileVarsub(varname string, val reflect.Value, assLines
 		fmt.Println("Unknown Type:", val.Type().Name())
 		panic("-- I don't know what this variable's type is o.o\n")
 	}
-	c.detail("out: ", out)
-	return assLines + out
+	c.detail("base: ", base)
+	con.Push("varsub", onEnd(assLines+base))
 }
 
-func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflect.Value, node *parse.TemplateNode) (out string) {
-	c.detail("in compileSubtemplate")
+func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNode) {
+	c.detail("in compileSubTemplate")
 	c.detail("Template Node: ", node.Name)
 
 	fname := strings.TrimSuffix(node.Name, filepath.Ext(node.Name))
-	varholder := "tmpl_" + fname + "_vars"
-	var holdreflect reflect.Value
+	con := pcon
+	con.VarHolder = "tmpl_" + fname + "_vars"
+	con.TemplateName = fname
 	if node.Pipe != nil {
 		for _, cmd := range node.Pipe.Cmds {
 			firstWord := cmd.Args[0]
 			switch firstWord.(type) {
 			case *parse.DotNode:
-				varholder = pvarholder
-				holdreflect = pholdreflect
+				con.VarHolder = pcon.VarHolder
+				con.HoldReflect = pcon.HoldReflect
 			case *parse.NilNode:
 				panic("Nil is not a command x.x")
 			default:
@@ -1026,12 +1112,10 @@ func (c *CTemplateSet) compileSubtemplate(pvarholder string, pholdreflect reflec
 	c.detail("subtree.Root", subtree.Root)
 
 	c.localVars[fname] = make(map[string]VarItemReflect)
-	c.localVars[fname]["."] = VarItemReflect{".", varholder, holdreflect}
+	c.localVars[fname]["."] = VarItemReflect{".", con.VarHolder, con.HoldReflect}
 	c.fragmentCursor[fname] = 0
-
-	out += c.rootIterate(subtree, varholder, holdreflect, fname)
+	c.rootIterate(subtree, con)
 	c.TemplateFragmentCount[fname] = c.fragmentCursor[fname] + 1
-	return out
 }
 
 // TODO: Should we rethink the way the log methods work or their names?
