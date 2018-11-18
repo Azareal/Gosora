@@ -547,7 +547,7 @@ func (c *CTemplateSet) compileSubSwitch(con CContext, node *parse.CommandNode) {
 }
 
 func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) (out string) {
-	c.detail("in compileExprSwitch")
+	c.dumpCall("compileExprSwitch", con, node)
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
@@ -558,16 +558,16 @@ func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) 
 			}
 		}
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
-		return c.compileBoolSub(n.String(), con)
+		out = c.compileBoolSub(con, n.String())
 	case *parse.ChainNode:
 		c.detail("Chain Node:", n.Node)
 		c.detail("Node Args:", node.Args)
 	case *parse.IdentifierNode:
 		c.detail("Identifier Node:", node)
 		c.detail("Node Args:", node.Args)
-		return c.compileIdentSwitchN(con, node)
+		out = c.compileIdentSwitchN(con, node)
 	case *parse.DotNode:
-		return con.VarHolder
+		out = con.VarHolder
 	case *parse.VariableNode:
 		c.detail("Variable Node:", n.String())
 		c.detail("Node Identifier:", n.Ident)
@@ -579,10 +579,10 @@ func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) 
 		c.detail(n)
 		c.detail("Node Args:", node.Args)
 		out += c.compileIdentSwitchN(con, node)
-		c.detail("Out:", out)
 	default:
 		c.unknownNode(firstWord)
 	}
+	c.retCall("compileExprSwitch", out)
 	return out
 }
 
@@ -638,12 +638,12 @@ func (c *CTemplateSet) compareJoin(con CContext, pos int, node *parse.CommandNod
 		panic(symbol + " is missing a right operand")
 	}
 
-	left := c.compileBoolSub(node.Args[pos-1].String(), con)
+	left := c.compileBoolSub(con, node.Args[pos-1].String())
 	_, funcExists := c.funcMap[node.Args[pos+1].String()]
 
 	var right string
 	if !funcExists {
-		right = c.compileBoolSub(node.Args[pos+1].String(), con)
+		right = c.compileBoolSub(con, node.Args[pos+1].String())
 	}
 	out = left + " " + symbol + " " + right
 
@@ -798,7 +798,7 @@ ArgLoop:
 }
 
 func (c *CTemplateSet) compileReflectSwitch(con CContext, node *parse.CommandNode) (out string, outVal reflect.Value) {
-	c.detail("in compileReflectSwitch")
+	c.dumpCall("compileReflectSwitch", con, node)
 	firstWord := node.Args[0]
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
@@ -820,7 +820,7 @@ func (c *CTemplateSet) compileReflectSwitch(con CContext, node *parse.CommandNod
 	default:
 		//panic("I don't know what node this is")
 	}
-	return "", outVal
+	return out, outVal
 }
 
 func (c *CTemplateSet) compileIfVarSubN(con CContext, varname string) (out string) {
@@ -900,8 +900,6 @@ func (c *CTemplateSet) compileIfVarSub(con CContext, varname string) (out string
 			out = strings.Replace(out, varItem.Destination, varItem.Name, 1)
 		}
 	}
-	c.detail("Out Value:", out)
-	dumpKind("Out")
 
 	_, ok := c.stats[out]
 	if ok {
@@ -910,11 +908,12 @@ func (c *CTemplateSet) compileIfVarSub(con CContext, varname string) (out string
 		c.stats[out] = 1
 	}
 
+	c.retCall("compileIfVarSub", out, cur)
 	return out, cur
 }
 
-func (c *CTemplateSet) compileBoolSub(varname string, con CContext) string {
-	c.detail("in compileBoolSub")
+func (c *CTemplateSet) compileBoolSub(con CContext, varname string) string {
+	c.dumpCall("compileBoolSub", con, varname)
 	out, val := c.compileIfVarSub(con, varname)
 	// TODO: What if it's a pointer or an interface? I *think* we've got pointers handled somewhere, but not interfaces which we don't know the types of at compile time
 	switch val.Kind() {
@@ -931,6 +930,7 @@ func (c *CTemplateSet) compileBoolSub(varname string, con CContext) string {
 		fmt.Println("Variable Kind:", con.HoldReflect.Kind())
 		panic("I don't know what this variable's type is o.o\n")
 	}
+	c.retCall("compileBoolSub", out)
 	return out
 }
 
