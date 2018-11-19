@@ -1,14 +1,22 @@
 package tmpl
 
 import (
-	"errors"
 	"reflect"
 )
+
+type Fragment struct {
+	Body         string
+	TemplateName string
+	Index        int
+	Seen         bool
+}
 
 type OutBufferFrame struct {
 	Body         string
 	Type         string
 	TemplateName string
+	Extra        interface{}
+	Extra2       interface{}
 }
 
 type CContext struct {
@@ -18,39 +26,12 @@ type CContext struct {
 	OutBuf       *[]OutBufferFrame
 }
 
-func (con *CContext) Push(nType string, body string) {
-	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, nType, con.TemplateName})
+func (con *CContext) Push(nType string, body string) (index int) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, nType, con.TemplateName, nil, nil})
+	return len(*con.OutBuf) - 1
 }
 
-func (con *CContext) GetLastType() string {
-	outBuf := *con.OutBuf
-	if len(outBuf) == 0 {
-		return ""
-	}
-	return outBuf[len(outBuf)-1].Type
-}
-
-func (con *CContext) GetLastBody() string {
-	outBuf := *con.OutBuf
-	if len(outBuf) == 0 {
-		return ""
-	}
-	return outBuf[len(outBuf)-1].Body
-}
-
-func (con *CContext) SetLastBody(newBody string) error {
-	outBuf := *con.OutBuf
-	if len(outBuf) == 0 {
-		return errors.New("outbuf is empty")
-	}
-	outBuf[len(outBuf)-1].Body = newBody
-	return nil
-}
-
-func (con *CContext) GetLastTemplate() string {
-	outBuf := *con.OutBuf
-	if len(outBuf) == 0 {
-		return ""
-	}
-	return outBuf[len(outBuf)-1].TemplateName
+func (con *CContext) PushText(body string, fragIndex int, fragOutIndex int) (index int) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, "text", con.TemplateName, fragIndex, fragOutIndex})
+	return len(*con.OutBuf) - 1
 }

@@ -113,6 +113,7 @@ func (mts *DefaultTopicStore) Reload(id int) error {
 	} else {
 		_ = mts.cache.Remove(id)
 	}
+	TopicListThaw.Thaw()
 	return err
 }
 

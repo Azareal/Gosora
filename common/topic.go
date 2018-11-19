@@ -192,6 +192,7 @@ func (topic *Topic) cacheRemove() {
 	if tcache != nil {
 		tcache.Remove(topic.ID)
 	}
+	TopicListThaw.Thaw()
 }
 
 // TODO: Write a test for this
@@ -259,6 +260,7 @@ func (topic *Topic) Like(score int, uid int) (err error) {
 
 // TODO: Implement this
 func (topic *Topic) Unlike(uid int) error {
+	topic.cacheRemove()
 	return nil
 }
 

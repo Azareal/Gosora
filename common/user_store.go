@@ -60,7 +60,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
 		register:       acc.Insert("users").Columns("name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
 		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
-		userCount:      acc.SimpleCount("users", "", ""),
+		userCount:      acc.Count("users").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -244,6 +244,7 @@ func (mus *DefaultUserStore) Reload(id int) error {
 
 	user.Init()
 	_ = mus.cache.Set(user)
+	TopicListThaw.Thaw()
 	return nil
 }
 
@@ -270,12 +271,10 @@ func (mus *DefaultUserStore) Create(username string, password string, email stri
 	if err != ErrNoRows {
 		return 0, ErrAccountExists
 	}
-
 	salt, err := GenerateSafeString(SaltLength)
 	if err != nil {
 		return 0, err
 	}
-
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password+salt), bcrypt.DefaultCost)
 	if err != nil {
 		return 0, err

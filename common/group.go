@@ -58,7 +58,6 @@ func (group *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err err
 	if err != nil {
 		return err
 	}
-
 	Groups.Reload(group.ID)
 	return nil
 }
@@ -68,7 +67,6 @@ func (group *Group) Update(name string, tag string) (err error) {
 	if err != nil {
 		return err
 	}
-
 	Groups.Reload(group.ID)
 	return nil
 }
@@ -83,7 +81,7 @@ func (group *Group) UpdatePerms(perms map[string]bool) (err error) {
 	if err != nil {
 		return err
 	}
-	return RebuildGroupPermissions(group.ID)
+	return Groups.Reload(group.ID)
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the group

@@ -259,6 +259,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	common.TopicListThaw = common.NewSingleServerThaw()
 
 	err = InitDatabase()
 	if err != nil {

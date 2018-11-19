@@ -155,6 +155,7 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 		}
 		DebugDetailf("group.CanSee (length %d): %+v \n", len(group.CanSee), group.CanSee)
 	}
+	TopicListThaw.Thaw()
 	return nil
 }
 

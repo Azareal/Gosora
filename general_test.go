@@ -69,6 +69,7 @@ func gloinit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	common.TopicListThaw = common.NewSingleServerThaw()
 	common.SwitchToTestDB()
 
 	var ok bool

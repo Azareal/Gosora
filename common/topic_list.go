@@ -52,6 +52,12 @@ func NewDefaultTopicList() (*DefaultTopicList, error) {
 }
 
 func (tList *DefaultTopicList) Tick() error {
+	//fmt.Println("TopicList.Tick")
+	if !TopicListThaw.Thawed() {
+		return nil
+	}
+	//fmt.Println("building topic list")
+
 	var oddLists = make(map[int]*TopicListHolder)
 	var evenLists = make(map[int]*TopicListHolder)
 

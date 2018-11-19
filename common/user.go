@@ -181,6 +181,7 @@ func (user *User) CacheRemove() {
 	if ucache != nil {
 		ucache.Remove(user.ID)
 	}
+	TopicListThaw.Thaw()
 }
 
 func (user *User) Ban(duration time.Duration, issuedBy int) error {

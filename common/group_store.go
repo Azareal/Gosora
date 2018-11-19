@@ -90,6 +90,7 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 
 	DebugLog("Binding the Not Loggedin Group")
 	GuestPerms = mgs.dirtyGetUnsafe(6).Perms
+	TopicListThaw.Thaw()
 	return nil
 }
 
@@ -152,6 +153,7 @@ func (mgs *MemoryGroupStore) Reload(id int) error {
 	if err != nil {
 		LogError(err)
 	}
+	TopicListThaw.Thaw()
 	return nil
 }
 
@@ -280,6 +282,7 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	mgs.groupCount++
 	mgs.Unlock()
 
+	TopicListThaw.Thaw()
 	return gid, FPStore.ReloadAll()
 	//return gid, TopicList.RebuildPermTree()
 }
