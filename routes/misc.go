@@ -140,6 +140,21 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user common.User, fi
 		return common.LocalError("Unknown origin", w, r, user)
 	}
 
+	if !user.Loggedin {
+		w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(common.Year)))
+	} else {
+		guest := common.GuestUser
+		_, ferr := common.SimpleForumUserCheck(w, r, &guest, sectionID)
+		if ferr != nil {
+			return ferr
+		}
+		if guest.Perms.ViewTopic {
+			w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(common.Year)))
+		} else {
+			w.Header().Set("Cache-Control", "private")
+		}
+	}
+
 	// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
 	http.ServeFile(w, r, "./attachs/"+filename)
 	return nil

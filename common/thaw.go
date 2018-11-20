@@ -1,7 +1,6 @@
 package common
 
 import (
-	"sync"
 	"sync/atomic"
 )
 
@@ -41,7 +40,6 @@ func (thaw *SingleServerThaw) Thaw() {
 
 type DefaultThaw struct {
 	thawed int64
-	sync.Mutex
 }
 
 func NewDefaultThaw() *DefaultThaw {
@@ -52,8 +50,6 @@ func NewDefaultThaw() *DefaultThaw {
 
 // Decrement the thawed counter once a second until it goes cold
 func (thaw *DefaultThaw) Tick() error {
-	thaw.Lock()
-	defer thaw.Unlock()
 	prior := thaw.thawed
 	if prior > 0 {
 		atomic.StoreInt64(&thaw.thawed, prior-1)
