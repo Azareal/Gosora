@@ -12,9 +12,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/Azareal/Gosora/query_gen"
 )
+
+type Alert struct {
+	ASID         int
+	ActorID      int
+	TargetUserID int
+	Event        string
+	ElementType  string
+	ElementID    int
+
+	Actor *User
+}
 
 type AlertStmts struct {
 	addActivity      *sql.Stmt
@@ -50,81 +61,82 @@ func escapeTextInJson(in string) string {
 	return strings.Replace(in, "/", "\\/", -1)
 }
 
-func BuildAlert(asid int, event string, elementType string, actorID int, targetUserID int, elementID int, user User /* The current user */) (string, error) {
+func BuildAlert(alert Alert, user User /* The current user */) (out string, err error) {
 	var targetUser *User
-
-	actor, err := Users.Get(actorID)
-	if err != nil {
-		return "", errors.New(phrases.GetErrorPhrase("alerts_no_actor"))
+	if alert.Actor == nil {
+		alert.Actor, err = Users.Get(alert.ActorID)
+		if err != nil {
+			return "", errors.New(phrases.GetErrorPhrase("alerts_no_actor"))
+		}
 	}
 
-	/*if elementType != "forum" {
-		targetUser, err = users.Get(targetUserID)
+	/*if alert.ElementType != "forum" {
+		targetUser, err = users.Get(alert.TargetUserID)
 		if err != nil {
 			LocalErrorJS("Unable to find the target user",w,r)
 			return
 		}
 	}*/
 
-	if event == "friend_invite" {
-		return buildAlertString(phrases.GetTmplPhrase("alerts.new_friend_invite"), []string{actor.Name}, actor.Link, actor.Avatar, asid), nil
+	if alert.Event == "friend_invite" {
+		return buildAlertString(phrases.GetTmplPhrase("alerts.new_friend_invite"), []string{alert.Actor.Name}, alert.Actor.Link, alert.Actor.Avatar, alert.ASID), nil
 	}
 
 	// Not that many events for us to handle in a forum
-	if elementType == "forum" {
-		if event == "reply" {
-			topic, err := Topics.Get(elementID)
+	if alert.ElementType == "forum" {
+		if alert.Event == "reply" {
+			topic, err := Topics.Get(alert.ElementID)
 			if err != nil {
-				DebugLogf("Unable to find linked topic %d", elementID)
+				DebugLogf("Unable to find linked topic %d", alert.ElementID)
 				return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic"))
 			}
 			// Store the forum ID in the targetUser column instead of making a new one? o.O
 			// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
-			return buildAlertString(phrases.GetTmplPhrase("alerts.forum_new_topic"), []string{actor.Name, topic.Title}, topic.Link, actor.Avatar, asid), nil
+			return buildAlertString(phrases.GetTmplPhrase("alerts.forum_new_topic"), []string{alert.Actor.Name, topic.Title}, topic.Link, alert.Actor.Avatar, alert.ASID), nil
 		}
-		return buildAlertString(phrases.GetTmplPhrase("alerts.forum_unknown_action"), []string{actor.Name}, "", actor.Avatar, asid), nil
+		return buildAlertString(phrases.GetTmplPhrase("alerts.forum_unknown_action"), []string{alert.Actor.Name}, "", alert.Actor.Avatar, alert.ASID), nil
 	}
 
 	var url, area string
-	var phraseName = "alerts." + elementType
-	switch elementType {
+	var phraseName = "alerts." + alert.ElementType
+	switch alert.ElementType {
 	case "topic":
-		topic, err := Topics.Get(elementID)
+		topic, err := Topics.Get(alert.ElementID)
 		if err != nil {
-			DebugLogf("Unable to find linked topic %d", elementID)
+			DebugLogf("Unable to find linked topic %d", alert.ElementID)
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic"))
 		}
 		url = topic.Link
 		area = topic.Title
-		if targetUserID == user.ID {
+		if alert.TargetUserID == user.ID {
 			phraseName += "_own"
 		}
 	case "user":
-		targetUser, err = Users.Get(elementID)
+		targetUser, err = Users.Get(alert.ElementID)
 		if err != nil {
-			DebugLogf("Unable to find target user %d", elementID)
+			DebugLogf("Unable to find target user %d", alert.ElementID)
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_target_user"))
 		}
 		area = targetUser.Name
 		url = targetUser.Link
-		if targetUserID == user.ID {
+		if alert.TargetUserID == user.ID {
 			phraseName += "_own"
 		}
 	case "post":
-		topic, err := TopicByReplyID(elementID)
+		topic, err := TopicByReplyID(alert.ElementID)
 		if err != nil {
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic_by_reply"))
 		}
 		url = topic.Link
 		area = topic.Title
-		if targetUserID == user.ID {
+		if alert.TargetUserID == user.ID {
 			phraseName += "_own"
 		}
 	default:
 		return "", errors.New(phrases.GetErrorPhrase("alerts_invalid_elementtype"))
 	}
 
-	switch event {
+	switch alert.Event {
 	case "like":
 		phraseName += "_like"
 	case "mention":
@@ -133,7 +145,7 @@ func BuildAlert(asid int, event string, elementType string, actorID int, targetU
 		phraseName += "_reply"
 	}
 
-	return buildAlertString(phrases.GetTmplPhrase(phraseName), []string{actor.Name, area}, url, actor.Avatar, asid), nil
+	return buildAlertString(phrases.GetTmplPhrase(phraseName), []string{alert.Actor.Name, area}, url, alert.Actor.Avatar, alert.ASID), nil
 }
 
 func buildAlertString(msg string, sub []string, path string, avatar string, asid int) string {
@@ -160,22 +172,25 @@ func AddActivityAndNotifyAll(actor int, targetUser int, event string, elementTyp
 	return NotifyWatchers(lastID)
 }
 
-func AddActivityAndNotifyTarget(actor int, targetUser int, event string, elementType string, elementID int) error {
-	res, err := alertStmts.addActivity.Exec(actor, targetUser, event, elementType, elementID)
-	if err != nil {
-		return err
-	}
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-	err = NotifyOne(targetUser, lastID)
+func AddActivityAndNotifyTarget(alert Alert) error {
+	res, err := alertStmts.addActivity.Exec(alert.ActorID, alert.TargetUserID, alert.Event, alert.ElementType, alert.ElementID)
 	if err != nil {
 		return err
 	}
 
+	lastID, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	err = NotifyOne(alert.TargetUserID, lastID)
+	if err != nil {
+		return err
+	}
+	alert.ASID = int(lastID)
+
 	// Live alerts, if the target is online and WebSockets is enabled
-	_ = WsHub.pushAlert(targetUser, int(lastID), event, elementType, actor, targetUser, elementID)
+	_ = WsHub.pushAlert(alert.TargetUserID, alert)
 	return nil
 }
 
@@ -221,13 +236,12 @@ func notifyWatchers(asid int64) {
 		return
 	}
 
-	var actorID, targetUserID, elementID int
-	var event, elementType string
-	err = alertStmts.getActivityEntry.QueryRow(asid).Scan(&actorID, &targetUserID, &event, &elementType, &elementID)
+	var alert = Alert{ASID: int(asid)}
+	err = alertStmts.getActivityEntry.QueryRow(asid).Scan(&alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID)
 	if err != nil && err != ErrNoRows {
 		LogError(err)
 		return
 	}
 
-	_ = WsHub.pushAlerts(uids, int(asid), event, elementType, actorID, targetUserID, elementID)
+	_ = WsHub.pushAlerts(uids, alert)
 }

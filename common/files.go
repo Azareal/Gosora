@@ -147,6 +147,13 @@ func (list SFileList) JSTmplInit() error {
 				data[braceAt] = ' ' // Blank this one too
 			}
 		})
+		each(" = []byte(", func(index int) {
+			braceAt, hasEndBrace := skipUntilIfExists(data, index, ')')
+			// TODO: Make sure we don't go onto the next line in case someone misplaced a brace
+			if hasEndBrace {
+				data[braceAt] = ' ' // Blank it
+			}
+		})
 		each("w.Write(", func(index int) {
 			braceAt, hasEndBrace := skipUntilIfExists(data, index, ')')
 			// TODO: Make sure we don't go onto the next line in case someone misplaced a brace
@@ -185,6 +192,8 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, shortName+"_tmpl_phrase_id = RegisterTmplPhraseNames([]string{", "[")
 		data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let plist = tmplPhrases[\""+tmplName+"\"];")
 		//data = replace(data, "var phrases = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let phrases = tmplPhrases[\""+tmplName+"\"];\nconsole.log('tmplName:','"+tmplName+"')\nconsole.log('phrases:', phrases);")
+		data = replace(data, "var cached_var_", "let cached_var_")
+		data = replace(data, " = []byte(", " = ")
 		data = replace(data, "if ", "if(")
 		data = replace(data, "return nil", "return out")
 		data = replace(data, " )", ")")

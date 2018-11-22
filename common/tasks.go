@@ -96,9 +96,9 @@ func HandleExpiredScheduledGroups() error {
 // TODO: Does this even work?
 func HandleServerSync() error {
 	// We don't want to run any unnecessary queries when there is nothing to synchronise
-	/*if Config.ServerCount > 1 {
+	if Config.ServerCount == 1 {
 		return nil
-	}*/
+	}
 
 	var lastUpdate time.Time
 	err := taskStmts.getSync.QueryRow().Scan(&lastUpdate)

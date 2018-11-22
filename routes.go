@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -65,10 +66,8 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 			return nil
 		}
 
-		var msglist, event, elementType string
-		var asid, actorID, targetUserID, elementID int
+		var msglist string
 		var msgCount int
-
 		err = stmts.getActivityCountByWatcher.QueryRow(user.ID).Scan(&msgCount)
 		if err == ErrNoRows {
 			return common.PreErrorJS("Couldn't find the parent topic", w, r)
@@ -82,20 +81,41 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		}
 		defer rows.Close()
 
+		var actors []int
+		var alerts []common.Alert
 		for rows.Next() {
-			err = rows.Scan(&asid, &actorID, &targetUserID, &event, &elementType, &elementID)
+			var alert common.Alert
+			err = rows.Scan(&alert.ASID, &alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID)
 			if err != nil {
 				return common.InternalErrorJS(err, w, r)
 			}
-			res, err := common.BuildAlert(asid, event, elementType, actorID, targetUserID, elementID, user)
-			if err != nil {
-				return common.LocalErrorJS(err.Error(), w, r)
-			}
-			msglist += res + ","
+			alerts = append(alerts, alert)
+			actors = append(actors, alert.ActorID)
 		}
 		err = rows.Err()
 		if err != nil {
 			return common.InternalErrorJS(err, w, r)
+		}
+
+		// Might not want to error here, if the account was deleted properly, we might want to figure out how we should handle deletions in general
+		list, err := common.Users.BulkGetMap(actors)
+		if err != nil {
+			return common.InternalErrorJS(err, w, r)
+		}
+
+		var ok bool
+		for _, alert := range alerts {
+			alert.Actor, ok = list[alert.ActorID]
+			if !ok {
+				return common.InternalErrorJS(errors.New("No such actor"), w, r)
+			}
+
+			res, err := common.BuildAlert(alert, user)
+			if err != nil {
+				return common.LocalErrorJS(err.Error(), w, r)
+			}
+
+			msglist += res + ","
 		}
 
 		if len(msglist) != 0 {

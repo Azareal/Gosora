@@ -189,7 +189,10 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 		c.TemplateFragmentCount = make(map[string]int)
 	}
 
+	startIndex := con.StartTemplate("")
 	c.rootIterate(c.templateList[fname], con)
+	con.EndTemplate("")
+	c.afterTemplate(con, startIndex)
 	c.TemplateFragmentCount[fname] = c.fragmentCursor[fname] + 1
 
 	_, ok := c.FragOnce[fname]
@@ -280,6 +283,9 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 				skipBlock.Frags[frame.Extra.(int)] = skipBlock.LastCount
 			}
 			writeTextFrame(frame.TemplateName, frame.Extra.(int)-skip)
+		} else if frame.Type == "varsub" || frame.Type == "cvarsub" {
+			c.detail(frame.Type + " frame")
+			fout += "w.Write(" + frame.Body + ")\n"
 		} else {
 			c.detail(frame.Type + " frame")
 			fout += frame.Body
@@ -425,12 +431,24 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 
 	var startIf = func(item reflect.Value, useCopy bool) {
 		con.Push("startif", "if len("+expr+") != 0 {\n")
-		con.Push("startloop", "for _, item := range "+expr+" {\n")
+		startIndex := con.StartLoop("for _, item := range " + expr + " {\n")
 		ccon := con
-		ccon.VarHolder = "item"
+		var depth string
+		if ccon.VarHolder == "item" {
+			depth = strings.TrimPrefix(ccon.VarHolder, "item")
+			if depth != "" {
+				idepth, err := strconv.Atoi(depth)
+				if err != nil {
+					panic(err)
+				}
+				depth = strconv.Itoa(idepth + 1)
+			}
+		}
+		ccon.VarHolder = "item" + depth
 		ccon.HoldReflect = item
 		c.compileSwitch(ccon, node.List)
-		con.Push("endloop", "}\n")
+		con.EndLoop("}\n")
+		c.afterTemplate(con, startIndex)
 		if node.ElseList != nil {
 			con.Push("endif", "}")
 			con.Push("startelse", " else {\n")
@@ -440,7 +458,7 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 			c.compileSwitch(ccon, node.ElseList)
 			con.Push("endelse", "}\n")
 		} else {
-			con.Push("endloop", "}\n")
+			con.Push("endif", "}\n")
 		}
 	}
 
@@ -1098,10 +1116,10 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		base = "[]byte(strconv.Itoa(" + varname + "))"
 	case reflect.Bool:
 		con.Push("startif", "if "+varname+" {\n")
-		con.Push("varsub", "w.Write([]byte(\"true\"))")
+		con.Push("varsub", "[]byte(\"true\")")
 		con.Push("endif", "} ")
 		con.Push("startelse", "else {\n")
-		con.Push("varsub", "w.Write([]byte(\"false\"))")
+		con.Push("varsub", "[]byte(\"false\")")
 		con.Push("endelse", "}\n")
 		return
 	case reflect.String:
@@ -1121,7 +1139,6 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		fmt.Println("Unknown Type:", val.Type().Name())
 		panic("-- I don't know what this variable's type is o.o\n")
 	}
-	base = "w.Write(" + base + ")\n"
 	c.detail("base: ", base)
 	if assLines == "" {
 		con.Push("varsub", base)
@@ -1179,19 +1196,93 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	c.templateList[fname] = tree
 	subtree := c.templateList[fname]
 	c.detail("subtree.Root", subtree.Root)
-
 	c.localVars[fname] = make(map[string]VarItemReflect)
 	c.localVars[fname]["."] = VarItemReflect{".", con.VarHolder, con.HoldReflect}
 	c.fragmentCursor[fname] = 0
-	con.Push("starttemplate", "{\n")
+
+	var startBit, endBit string
+	if con.LoopDepth != 0 {
+		startBit = "{\n"
+		endBit = "}\n"
+	}
+	con.StartTemplate(startBit)
 	c.rootIterate(subtree, con)
-	con.Push("endtemplate", "}\n")
+	con.EndTemplate(endBit)
 	c.TemplateFragmentCount[fname] = c.fragmentCursor[fname] + 1
 
 	_, ok := c.FragOnce[fname]
 	if !ok {
 		c.FragOnce[fname] = true
 	}
+}
+
+func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {
+	c.dumpCall("afterTemplate", con, startIndex)
+	defer c.retCall("afterTemplate")
+
+	var loopDepth = 0
+	var outBuf = *con.OutBuf
+	var varcounts = make(map[string]int)
+	var loopStart = startIndex
+
+	if outBuf[startIndex].Type == "startloop" && (len(outBuf) > startIndex+1) {
+		loopStart++
+	}
+
+	// Exclude varsubs within loops for now
+	for i := loopStart; i < len(outBuf); i++ {
+		item := outBuf[i]
+		c.detail("item:", item)
+		if item.Type == "startloop" {
+			loopDepth++
+			c.detail("loopDepth:", loopDepth)
+		} else if item.Type == "endloop" {
+			loopDepth--
+			c.detail("loopDepth:", loopDepth)
+			if loopDepth == -1 {
+				break
+			}
+		} else if item.Type == "varsub" && loopDepth == 0 {
+			count := varcounts[item.Body]
+			varcounts[item.Body] = count + 1
+			c.detail("count " + strconv.Itoa(count) + " for " + item.Body)
+			c.detail("loopDepth:", loopDepth)
+		}
+	}
+
+	var varstr string
+	var i int
+	var varmap = make(map[string]int)
+	for name, count := range varcounts {
+		if count > 1 {
+			varstr += "var cached_var_" + strconv.Itoa(i) + " = " + name + "\n"
+			varmap[name] = i
+			i++
+		}
+	}
+
+	// Exclude varsubs within loops for now
+	loopDepth = 0
+	for i := loopStart; i < len(outBuf); i++ {
+		item := outBuf[i]
+		if item.Type == "startloop" {
+			loopDepth++
+		} else if item.Type == "endloop" {
+			loopDepth--
+			if loopDepth == -1 {
+				break
+			}
+		} else if item.Type == "varsub" && loopDepth == 0 {
+			index, ok := varmap[item.Body]
+			if ok {
+				item.Body = "cached_var_" + strconv.Itoa(index)
+				item.Type = "cvarsub"
+				outBuf[i] = item
+			}
+		}
+	}
+
+	con.AttachVars(varstr, startIndex)
 }
 
 // TODO: Should we rethink the way the log methods work or their names?

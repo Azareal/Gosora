@@ -340,21 +340,19 @@ func (hub *WsHubImpl) PushMessage(targetUser int, msg string) error {
 	return wsUser.WriteAll(msg)
 }
 
-func (hub *WsHubImpl) pushAlert(targetUser int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
+func (hub *WsHubImpl) pushAlert(targetUser int, alert Alert) error {
 	wsUser, err := hub.getUser(targetUser)
 	if err != nil {
 		return err
 	}
-
-	alert, err := BuildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
+	astr, err := BuildAlert(alert, *wsUser.User)
 	if err != nil {
 		return err
 	}
-
-	return wsUser.WriteAll(alert)
+	return wsUser.WriteAll(astr)
 }
 
-func (hub *WsHubImpl) pushAlerts(users []int, asid int, event string, elementType string, actorID int, targetUserID int, elementID int) error {
+func (hub *WsHubImpl) pushAlerts(users []int, alert Alert) error {
 	wsUsers, err := hub.getUsers(users)
 	if err != nil {
 		return err
@@ -365,8 +363,7 @@ func (hub *WsHubImpl) pushAlerts(users []int, asid int, event string, elementTyp
 		if wsUser == nil {
 			continue
 		}
-
-		alert, err := BuildAlert(asid, event, elementType, actorID, targetUserID, elementID, *wsUser.User)
+		alert, err := BuildAlert(alert, *wsUser.User)
 		if err != nil {
 			errs = append(errs, err)
 		}

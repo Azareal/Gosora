@@ -345,17 +345,18 @@ func TopicByReplyID(rid int) (*Topic, error) {
 
 // TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser
 // TODO: Load LastReplyAt everywhere in here?
-func GetTopicUser(tid int) (TopicUser, error) {
+func GetTopicUser(user *User, tid int) (tu TopicUser, err error) {
 	tcache := Topics.GetCache()
 	ucache := Users.GetCache()
 	if tcache != nil && ucache != nil {
 		topic, err := tcache.Get(tid)
 		if err == nil {
-			user, err := Users.Get(topic.CreatedBy)
-			if err != nil {
-				return TopicUser{ID: tid}, err
+			if topic.CreatedBy != user.ID {
+				user, err = Users.Get(topic.CreatedBy)
+				if err != nil {
+					return TopicUser{ID: tid}, err
+				}
 			}
-
 			// We might be better off just passing separate topic and user structs to the caller?
 			return copyTopicToTopicUser(topic, user), nil
 		} else if ucache.Length() < ucache.GetCapacity() {
@@ -363,16 +364,18 @@ func GetTopicUser(tid int) (TopicUser, error) {
 			if err != nil {
 				return TopicUser{ID: tid}, err
 			}
-			user, err := Users.Get(topic.CreatedBy)
-			if err != nil {
-				return TopicUser{ID: tid}, err
+			if topic.CreatedBy != user.ID {
+				user, err = Users.Get(topic.CreatedBy)
+				if err != nil {
+					return TopicUser{ID: tid}, err
+				}
 			}
 			return copyTopicToTopicUser(topic, user), nil
 		}
 	}
 
-	tu := TopicUser{ID: tid}
-	err := topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+	tu = TopicUser{ID: tid}
+	err = topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 	tu.Avatar, tu.MicroAvatar = BuildAvatar(tu.CreatedBy, tu.Avatar)
 	tu.Link = BuildTopicURL(NameToSlug(tu.Title), tu.ID)
 	tu.UserLink = BuildProfileURL(NameToSlug(tu.CreatedByName), tu.CreatedBy)

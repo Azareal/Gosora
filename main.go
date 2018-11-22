@@ -377,7 +377,7 @@ func main() {
 	go tickLoop(thumbChan, halfSecondTicker, secondTicker, fifteenMinuteTicker, hourTicker)
 
 	// Resource Management Goroutine
-	/*go func() {
+	go func() {
 		ucache := common.Users.GetCache()
 		tcache := common.Topics.GetCache()
 		if ucache == nil && tcache == nil {
@@ -393,17 +393,15 @@ func main() {
 				if ucache != nil {
 					ucap := ucache.GetCapacity()
 					if ucache.Length() <= ucap || common.Users.GlobalCount() <= ucap {
-						countNotDealloc = false
+						couldNotDealloc = false
 						continue
 					}
-					lastEvictedCount = ucache.DeallocOverflow(countNotDealloc)
-					countNotDealloc = (lastEvictedCount == 0)
-				} else {
-					countNotDealloc = false
+					lastEvictedCount = ucache.DeallocOverflow(couldNotDealloc)
+					couldNotDealloc = (lastEvictedCount == 0)
 				}
 			}
 		}
-	}()*/
+	}()
 
 	log.Print("Initialising the router")
 	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
