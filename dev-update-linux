@@ -9,9 +9,6 @@ git pull origin master
 git stash apply
 
 echo "Patching Gosora"
-cd ./patcher
 go generate
-go build -o Patcher
-mv ./Patcher ..
-cd ..
+go build -o Patcher "./patcher"
 ./Patcher

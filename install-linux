@@ -2,11 +2,7 @@ echo "Installing the dependencies"
 go get
 
 echo "Building the installer"
-cd ./install
-go generate
-go build -o Installer
-mv ./Installer ..
-cd ..
+go build -o Installer "./install"
 
 echo "Running the installer"
 ./Installer
