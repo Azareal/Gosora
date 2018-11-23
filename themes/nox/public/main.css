@@ -579,7 +579,7 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 	margin-left: auto;
 	margin-right: 8px;
 	padding-top: 2px;
-	width: 140px;
+	width: 155px;
 }
 .forum_list .forum_right img {
 	margin-right: 10px;
@@ -587,6 +587,8 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 }
 .forum_list .forum_right span {
 	line-height: 19px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .forum_list .forum_right span a {
 	white-space: nowrap;
