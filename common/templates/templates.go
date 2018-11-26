@@ -56,15 +56,13 @@ type CTemplateSet struct {
 	hasDispInt            bool
 	localDispStructIndex  int
 	langIndexToName       []string
+	guestOnly             bool
+	memberOnly            bool
 	stats                 map[string]int
-	previousNode          parse.NodeType
-	currentNode           parse.NodeType
-	nextNode              parse.NodeType
 	//tempVars map[string]string
 	config        CTemplateConfig
 	baseImportMap map[string]string
 	buildTags     string
-	expectsInt    interface{}
 }
 
 func NewCTemplateSet() *CTemplateSet {
@@ -126,10 +124,86 @@ type Skipper struct {
 	Index int
 }
 
+func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (stub string, gout string, mout string, err error) {
+	c.importMap = map[string]string{}
+	for index, item := range c.baseImportMap {
+		c.importMap[index] = item
+	}
+	if len(imports) > 0 {
+		for _, importItem := range imports {
+			c.importMap[importItem] = importItem
+		}
+	}
+	var importList string
+	for _, item := range c.importMap {
+		importList += "import \"" + item + "\"\n"
+	}
+
+	fname := strings.TrimSuffix(name, filepath.Ext(name))
+	c.importMap["github.com/Azareal/Gosora/common"] = "github.com/Azareal/Gosora/common"
+
+	stub = `package ` + c.config.PackageName + `
+` + importList + `
+`
+
+	if !c.config.SkipInitBlock {
+		stub += "// nolint\nfunc init() {\n"
+
+		if !c.config.SkipHandles {
+			stub += "\tcommon.Template_" + fname + "_handle = Template_" + fname + "\n"
+			stub += "\tcommon.Ctemplates = append(common.Ctemplates,\"" + fname + "\")\n\tcommon.TmplPtrMap[\"" + fname + "\"] = &common.Template_" + fname + "_handle\n"
+		}
+
+		if !c.config.SkipTmplPtrMap {
+			stub += "\tcommon.TmplPtrMap[\"o_" + fname + "\"] = Template_" + fname + "\n"
+		}
+
+		stub += "}\n\n"
+	}
+
+	stub += `
+// nolint
+func Template_` + fname + `(tmpl_` + fname + `_vars ` + expects + `, w io.Writer) error {
+	if tmpl_` + fname + `_vars.CurrentUser.Loggedin {
+		return Template_` + fname + `_member(tmpl_` + fname + `_vars, w)
+	}
+	return Template_` + fname + `_guest(tmpl_` + fname + `_vars, w)
+}`
+
+	c.fileDir = fileDir
+	content, err := c.loadTemplate(c.fileDir, name)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	c.guestOnly = true
+	gout, err = c.compile(name, content, expects, expectsInt, varList, imports...)
+	if err != nil {
+		return "", "", "", err
+	}
+	c.guestOnly = false
+
+	c.memberOnly = true
+	mout, err = c.compile(name, content, expects, expectsInt, varList, imports...)
+	c.memberOnly = false
+
+	return stub, gout, mout, err
+}
+
 func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
 	if c.config.Debug {
 		fmt.Println("Compiling template '" + name + "'")
 	}
+	c.fileDir = fileDir
+	content, err := c.loadTemplate(c.fileDir, name)
+	if err != nil {
+		return "", err
+	}
+
+	return c.compile(name, content, expects, expectsInt, varList, imports...)
+}
+
+func (c *CTemplateSet) compile(name string, content, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
 	c.importMap = map[string]string{}
 	for index, item := range c.baseImportMap {
 		c.importMap[index] = item
@@ -140,26 +214,10 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 		}
 	}
 
-	c.fileDir = fileDir
 	c.varList = varList
 	c.hasDispInt = false
 	c.localDispStructIndex = 0
 	c.stats = make(map[string]int)
-	c.expectsInt = expectsInt
-
-	res, err := ioutil.ReadFile(fileDir + "overrides/" + name)
-	if err != nil {
-		c.detail("override path: ", fileDir+"overrides/"+name)
-		c.detail("override err: ", err)
-		res, err = ioutil.ReadFile(fileDir + name)
-		if err != nil {
-			return "", err
-		}
-	}
-	content := string(res)
-	if c.config.Minify {
-		content = minify(content)
-	}
 
 	tree := parse.New(name, c.funcMap)
 	var treeSet = make(map[string]*parse.Tree)
@@ -170,8 +228,15 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	c.detail(name)
 
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
+	if c.guestOnly {
+		fname += "_guest"
+	} else if c.memberOnly {
+		fname += "_member"
+	}
+
 	var outBuf []OutBufferFrame
-	con := CContext{VarHolder: "tmpl_" + fname + "_vars", HoldReflect: reflect.ValueOf(expectsInt), TemplateName: fname, OutBuf: &outBuf}
+	var rootHold = "tmpl_" + fname + "_vars"
+	con := CContext{RootHolder: rootHold, VarHolder: rootHold, HoldReflect: reflect.ValueOf(expectsInt), TemplateName: fname, OutBuf: &outBuf}
 	c.templateList = map[string]*parse.Tree{fname: tree}
 	c.detail(c.templateList)
 	c.localVars = make(map[string]map[string]VarItemReflect)
@@ -264,6 +329,7 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 			c.detail("text frame:")
 			c.detail(frame)
 			oid := fid
+			c.detail("oid:", oid)
 			skipBlock, ok := skipped[frame.TemplateName]
 			if !ok {
 				skipBlock = &SkipBlock{make(map[int]int), 0, 0}
@@ -271,7 +337,10 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 			}
 			skip := skipBlock.LastCount
 			c.detailf("skipblock %+v\n", skipBlock)
+			//var count int
 			for len(outBuf) > fid+1 && outBuf[fid+1].Type == "text" && outBuf[fid+1].TemplateName == frame.TemplateName {
+				c.detail("pre fid:", fid)
+				//count++
 				next := outBuf[fid+1]
 				c.detail("next frame:", next)
 				c.detail("frame frag:", c.fragBuf[frame.Extra2.(int)])
@@ -279,13 +348,17 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 				c.fragBuf[frame.Extra2.(int)].Body += c.fragBuf[next.Extra2.(int)].Body
 				c.fragBuf[next.Extra2.(int)].Seen = true
 				fid++
-				skipBlock.LastCount += (fid - oid)
+				skipBlock.LastCount++
 				skipBlock.Frags[frame.Extra.(int)] = skipBlock.LastCount
+				c.detail("post fid:", fid)
 			}
 			writeTextFrame(frame.TemplateName, frame.Extra.(int)-skip)
 		} else if frame.Type == "varsub" || frame.Type == "cvarsub" {
 			c.detail(frame.Type + " frame")
 			fout += "w.Write(" + frame.Body + ")\n"
+		} else if frame.Type == "identifier" {
+			c.detailf(frame.Type+" frame:%+v\n", frame)
+			fout += frame.Body
 		} else {
 			c.detail(frame.Type + " frame")
 			fout += frame.Body
@@ -334,14 +407,8 @@ w.Write([]byte(`, " + ", -1)
 func (c *CTemplateSet) rootIterate(tree *parse.Tree, con CContext) {
 	c.dumpCall("rootIterate", tree, con)
 	c.detail(tree.Root)
-	treeLength := len(tree.Root.Nodes)
-	for index, node := range tree.Root.Nodes {
+	for _, node := range tree.Root.Nodes {
 		c.detail("Node:", node.String())
-		c.previousNode = c.currentNode
-		c.currentNode = node.Type()
-		if treeLength != (index + 1) {
-			c.nextNode = tree.Root.Nodes[index+1].Type()
-		}
 		c.compileSwitch(con, node)
 	}
 	c.retCall("rootIterate")
@@ -371,9 +438,54 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 		}
 
 		c.detail("Expression:", expr)
-		c.previousNode = c.currentNode
-		c.currentNode = parse.NodeList
-		c.nextNode = -1
+		// Simple member / guest optimisation for now
+		// TODO: Expand upon this
+		var inSlice = func(haystack []string, expr string) bool {
+			for _, needle := range haystack {
+				if needle == expr {
+					return true
+				}
+			}
+			return false
+		}
+		var userExprs = []string{
+			con.RootHolder + ".CurrentUser.Loggedin",
+			con.RootHolder + ".CurrentUser.IsSuperMod",
+			con.RootHolder + ".CurrentUser.IsAdmin",
+		}
+		var negUserExprs = []string{
+			"!" + con.RootHolder + ".CurrentUser.Loggedin",
+			"!" + con.RootHolder + ".CurrentUser.IsSuperMod",
+			"!" + con.RootHolder + ".CurrentUser.IsAdmin",
+		}
+		if c.guestOnly {
+			c.detail("optimising away member branch")
+			if inSlice(userExprs, expr) {
+				c.detail("positive conditional:", expr)
+				if node.ElseList != nil {
+					c.compileSwitch(con, node.ElseList)
+				}
+				return
+			} else if inSlice(negUserExprs, expr) {
+				c.detail("negative conditional:", expr)
+				c.compileSwitch(con, node.List)
+				return
+			}
+		} else if c.memberOnly {
+			c.detail("optimising away guest branch")
+			if (con.RootHolder + ".CurrentUser.Loggedin") == expr {
+				c.detail("positive conditional:", expr)
+				c.compileSwitch(con, node.List)
+				return
+			} else if ("!" + con.RootHolder + ".CurrentUser.Loggedin") == expr {
+				c.detail("negative conditional:", expr)
+				if node.ElseList != nil {
+					c.compileSwitch(con, node.ElseList)
+				}
+				return
+			}
+		}
+
 		con.Push("startif", "if "+expr+" {\n")
 		c.compileSwitch(con, node.List)
 		if node.ElseList == nil {
@@ -387,7 +499,7 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 			con.Push("endelse", "}\n")
 		}
 	case *parse.ListNode:
-		c.detail("List Node")
+		c.detailf("List Node: %+v\n", node)
 		for _, subnode := range node.Nodes {
 			c.compileSwitch(con, subnode)
 		}
@@ -396,14 +508,10 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 	case *parse.TemplateNode:
 		c.compileSubTemplate(con, node)
 	case *parse.TextNode:
-		c.previousNode = c.currentNode
-		c.currentNode = node.Type()
-		c.nextNode = 0
 		tmpText := bytes.TrimSpace(node.Text)
 		if len(tmpText) == 0 {
 			return
 		}
-
 		nodeText := string(node.Text)
 		fragIndex := c.fragmentCursor[con.TemplateName]
 		_, ok := c.FragOnce[con.TemplateName]
@@ -447,6 +555,10 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 		ccon.VarHolder = "item" + depth
 		ccon.HoldReflect = item
 		c.compileSwitch(ccon, node.List)
+		if con.LastBufIndex() == startIndex {
+			con.DiscardAndAfter(startIndex - 1)
+			return
+		}
 		con.EndLoop("}\n")
 		c.afterTemplate(con, startIndex)
 		if node.ElseList != nil {
@@ -1115,6 +1227,7 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		c.importMap["strconv"] = "strconv"
 		base = "[]byte(strconv.Itoa(" + varname + "))"
 	case reflect.Bool:
+		// TODO: Take c.guestOnly / c.memberOnly into account
 		con.Push("startif", "if "+varname+" {\n")
 		con.Push("varsub", "[]byte(\"true\")")
 		con.Push("endif", "} ")
@@ -1127,6 +1240,11 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 			varname = "string(" + varname + ")"
 		}
 		base = "[]byte(" + varname + ")"
+		// We don't to waste time on this conversion / w.Write call when guests don't have sessions
+		// TODO: Implement this properly
+		if c.guestOnly && base == "[]byte("+con.RootHolder+".CurrentUser.Session))" {
+			return
+		}
 	case reflect.Int64:
 		c.importMap["strconv"] = "strconv"
 		base = "[]byte(strconv.FormatInt(" + varname + ", 10))"
@@ -1151,7 +1269,26 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	c.dumpCall("compileSubTemplate", pcon, node)
 	c.detail("Template Node: ", node.Name)
 
+	// TODO: Cascade errors back up the tree to the caller?
+	content, err := c.loadTemplate(c.fileDir, node.Name)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tree := parse.New(node.Name, c.funcMap)
+	var treeSet = make(map[string]*parse.Tree)
+	tree, err = tree.Parse(content, "{{", "}}", treeSet, c.funcMap)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fname := strings.TrimSuffix(node.Name, filepath.Ext(node.Name))
+	if c.guestOnly {
+		fname += "_guest"
+	} else if c.memberOnly {
+		fname += "_member"
+	}
+
 	con := pcon
 	con.VarHolder = "tmpl_" + fname + "_vars"
 	con.TemplateName = fname
@@ -1169,28 +1306,6 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 				panic("")
 			}
 		}
-	}
-
-	// TODO: Cascade errors back up the tree to the caller?
-	res, err := ioutil.ReadFile(c.fileDir + "overrides/" + node.Name)
-	if err != nil {
-		c.detail("override path: ", c.fileDir+"overrides/"+node.Name)
-		c.detail("override err: ", err)
-		res, err = ioutil.ReadFile(c.fileDir + node.Name)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	content := string(res)
-	if c.config.Minify {
-		content = minify(content)
-	}
-
-	tree := parse.New(node.Name, c.funcMap)
-	var treeSet = make(map[string]*parse.Tree)
-	tree, err = tree.Parse(content, "{{", "}}", treeSet, c.funcMap)
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	c.templateList[fname] = tree
@@ -1214,6 +1329,23 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	if !ok {
 		c.FragOnce[fname] = true
 	}
+}
+
+func (c *CTemplateSet) loadTemplate(fileDir string, name string) (content string, err error) {
+	res, err := ioutil.ReadFile(c.fileDir + "overrides/" + name)
+	if err != nil {
+		c.detail("override path: ", c.fileDir+"overrides/"+name)
+		c.detail("override err: ", err)
+		res, err = ioutil.ReadFile(c.fileDir + name)
+		if err != nil {
+			return "", err
+		}
+	}
+	content = string(res)
+	if c.config.Minify {
+		content = minify(content)
+	}
+	return content, nil
 }
 
 func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {

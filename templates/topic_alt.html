@@ -15,10 +15,12 @@
 			<span class="topic_name_forum_sep hide_on_edit"> / </span>
 			<a href="{{.Forum.Link}}" class="topic_forum hide_on_edit">{{.Forum.Name}}</a>
 			{{/** TODO: Does this need to be guarded by a permission? It's only visible in edit mode anyway, which can't be triggered, if they don't have the permission **/}}
+			{{if .CurrentUser.Loggedin}}
 			{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 			{{if .CurrentUser.Perms.EditTopic}}
 			<input class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic.title_input_aria"}}" />
 			<button name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic.update_button"}}</button>
+			{{end}}
 			{{end}}
 			{{end}}
 			<span class="topic_view_count hide_on_edit">{{.Topic.ViewCount}}</span>
@@ -102,6 +104,7 @@
 	{{template "topic_alt_posts.html" . }}
 </div>
 
+{{if .CurrentUser.Loggedin}}
 {{if .CurrentUser.Perms.CreateReply}}
 {{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 <div class="rowblock topic_reply_container">
@@ -142,6 +145,7 @@
 		</div>
 	</div>
 </div>
+{{end}}
 {{end}}
 {{end}}
 

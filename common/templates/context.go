@@ -25,6 +25,7 @@ type OutBufferFrame struct {
 }
 
 type CContext struct {
+	RootHolder   string
 	VarHolder    string
 	HoldReflect  reflect.Value
 	TemplateName string
@@ -34,17 +35,17 @@ type CContext struct {
 
 func (con *CContext) Push(nType string, body string) (index int) {
 	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, nType, con.TemplateName, nil, nil})
-	return len(*con.OutBuf) - 1
+	return con.LastBufIndex()
 }
 
 func (con *CContext) PushText(body string, fragIndex int, fragOutIndex int) (index int) {
 	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, "text", con.TemplateName, fragIndex, fragOutIndex})
-	return len(*con.OutBuf) - 1
+	return con.LastBufIndex()
 }
 
 func (con *CContext) PushPhrase(body string, langIndex int) (index int) {
 	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, "lang", con.TemplateName, langIndex, nil})
-	return len(*con.OutBuf) - 1
+	return con.LastBufIndex()
 }
 
 func (con *CContext) StartLoop(body string) (index int) {
@@ -57,8 +58,7 @@ func (con *CContext) EndLoop(body string) (index int) {
 }
 
 func (con *CContext) StartTemplate(body string) (index int) {
-	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, "starttemplate", con.TemplateName, nil, nil})
-	return len(*con.OutBuf) - 1
+	return con.addFrame(body, "starttemplate", nil, nil)
 }
 
 func (con *CContext) EndTemplate(body string) (index int) {
@@ -73,4 +73,26 @@ func (con *CContext) AttachVars(vars string, index int) {
 	}
 	node.Body += vars
 	outBuf[index] = node
+}
+
+func (con *CContext) addFrame(body string, ftype string, extra1 interface{}, extra2 interface{}) (index int) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, ftype, con.TemplateName, extra1, extra2})
+	return con.LastBufIndex()
+}
+
+func (con *CContext) LastBufIndex() int {
+	return len(*con.OutBuf) - 1
+}
+
+func (con *CContext) DiscardAndAfter(index int) {
+	outBuf := *con.OutBuf
+	if len(outBuf) <= index {
+		return
+	}
+	if index == 0 {
+		outBuf = nil
+	} else {
+		outBuf = outBuf[:index]
+	}
+	*con.OutBuf = outBuf
 }

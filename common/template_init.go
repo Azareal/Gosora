@@ -43,6 +43,8 @@ func interpretedTopicTemplate(pi TopicPage, w io.Writer) error {
 // nolint
 var Template_topic_handle = interpretedTopicTemplate
 var Template_topic_alt_handle = interpretedTopicTemplate
+var Template_topic_alt_guest_handle = interpretedTopicTemplate
+var Template_topic_alt_member_handle = interpretedTopicTemplate
 
 // nolint
 var Template_topics_handle = func(pi TopicListPage, w io.Writer) error {
@@ -172,6 +174,12 @@ func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Head
 	return header, buildHeader(user2), buildHeader(user3)
 }
 
+type TmplLoggedin struct {
+	Stub   string
+	Guest  string
+	Member string
+}
+
 // ? - Add template hooks?
 func CompileTemplates() error {
 	var config tmpl.CTemplateConfig
@@ -210,15 +218,24 @@ func CompileTemplates() error {
 	var compile = func(name string, expects string, expectsInt interface{}) (tmpl string, err error) {
 		return c.Compile(name+".html", "templates/", expects, expectsInt, varList)
 	}
+	var compileByLoggedin = func(name string, expects string, expectsInt interface{}) (tmpl TmplLoggedin, err error) {
+		stub, guest, member, err := c.CompileByLoggedin(name+".html", "templates/", expects, expectsInt, varList)
+		return TmplLoggedin{stub, guest, member}, err
+	}
 
 	header.Title = "Topic Name"
 	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, 1, 1}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
-	topicIDTmpl, err := compile("topic", "common.TopicPage", tpage)
+	topicTmpl, err := compile("topic", "common.TopicPage", tpage)
 	if err != nil {
 		return err
 	}
-	topicIDAltTmpl, err := compile("topic_alt", "common.TopicPage", tpage)
+	/*topicAltTmpl, err := compile("topic_alt", "common.TopicPage", tpage)
+	if err != nil {
+		return err
+	}*/
+
+	topicAltTmpl, err := compileByLoggedin("topic_alt", "common.TopicPage", tpage)
 	if err != nil {
 		return err
 	}
@@ -309,17 +326,28 @@ func CompileTemplates() error {
 	}
 
 	var wg sync.WaitGroup
-	var writeTemplate = func(name string, content string) {
+	var writeTemplate = func(name string, content interface{}) {
 		log.Print("Writing template '" + name + "'")
-		if content == "" {
-			log.Fatal("No content body")
+
+		var writeTmpl = func(name string, content string) {
+			if content == "" {
+				log.Fatal("No content body for " + name)
+			}
+			err := writeFile("./template_"+name+".go", content)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		wg.Add(1)
 		go func() {
-			err := writeFile("./template_"+name+".go", content)
-			if err != nil {
-				log.Fatal(err)
+			switch content := content.(type) {
+			case string:
+				writeTmpl(name, content)
+			case TmplLoggedin:
+				writeTmpl(name, content.Stub)
+				writeTmpl(name+"_guest", content.Guest)
+				writeTmpl(name+"_member", content.Member)
 			}
 			wg.Done()
 		}()
@@ -341,8 +369,8 @@ func CompileTemplates() error {
 	}
 
 	log.Print("Writing the templates")
-	writeTemplate("topic", topicIDTmpl)
-	writeTemplate("topic_alt", topicIDAltTmpl)
+	writeTemplate("topic", topicTmpl)
+	writeTemplate("topic_alt", topicAltTmpl)
 	writeTemplate("profile", profileTmpl)
 	writeTemplate("forums", forumsTmpl)
 	writeTemplate("topics", topicListTmpl)
@@ -415,11 +443,11 @@ func CompileJSTemplates() error {
 	header.Title = "Topic Name"
 	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, 1, 1}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
-	topicIDTmpl, err := c.Compile("topic_posts.html", "templates/", "common.TopicPage", tpage, varList)
+	topicPostsTmpl, err := c.Compile("topic_posts.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err
 	}
-	topicIDAltTmpl, err := c.Compile("topic_alt_posts.html", "templates/", "common.TopicPage", tpage, varList)
+	topicAltPostsTmpl, err := c.Compile("topic_alt_posts.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
 		return err
 	}
@@ -443,8 +471,8 @@ func CompileJSTemplates() error {
 	}
 	writeTemplate("alert", alertTmpl)
 	writeTemplate("topics_topic", topicListItemTmpl)
-	writeTemplate("topic_posts", topicIDTmpl)
-	writeTemplate("topic_alt_posts", topicIDAltTmpl)
+	writeTemplate("topic_posts", topicPostsTmpl)
+	writeTemplate("topic_alt_posts", topicAltPostsTmpl)
 	writeTemplateList(c, &wg, dirPrefix)
 	return nil
 }
