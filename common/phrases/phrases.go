@@ -48,7 +48,8 @@ type LanguagePack struct {
 	UserAgents          map[string]string
 	OperatingSystems    map[string]string
 	HumanLanguages      map[string]string
-	Errors              map[string]string
+	Errors              map[string]string // Temp stand-in
+	ErrorsBytes         map[string][]byte
 	NoticePhrases       map[string]string
 	PageTitles          map[string]string
 	TmplPhrases         map[string]string
@@ -83,6 +84,11 @@ func InitPhrases(lang string) error {
 		err = json.Unmarshal(data, &langPack)
 		if err != nil {
 			return err
+		}
+
+		langPack.ErrorsBytes = make(map[string][]byte)
+		for name, phrase := range langPack.Errors {
+			langPack.ErrorsBytes[name] = []byte(phrase)
 		}
 
 		// [prefix][name]phrase
@@ -222,6 +228,13 @@ func GetErrorPhrase(name string) string {
 	}
 	return res
 }
+func GetErrorPhraseBytes(name string) []byte {
+	res, ok := currentLangPack.Load().(*LanguagePack).ErrorsBytes[name]
+	if !ok {
+		return getPlaceholderBytes("error", name)
+	}
+	return res
+}
 
 func GetNoticePhrase(name string) string {
 	res, ok := currentLangPack.Load().(*LanguagePack).NoticePhrases[name]
@@ -274,6 +287,9 @@ func GetTmplPhrasesByPrefix(prefix string) (phrases map[string]string, ok bool) 
 
 func getPlaceholder(prefix string, suffix string) string {
 	return "{lang." + prefix + "[" + suffix + "]}"
+}
+func getPlaceholderBytes(prefix string, suffix string) []byte {
+	return []byte("{lang." + prefix + "[" + suffix + "]}")
 }
 
 // Please don't mutate *LanguagePack

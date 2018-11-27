@@ -75,7 +75,7 @@
 		</div>
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
-			<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
+			{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.EditTopic}}<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>{{end}}{{end}}
 			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">
 				<div class="action_button_left">
 				{{if .CurrentUser.Loggedin}}
