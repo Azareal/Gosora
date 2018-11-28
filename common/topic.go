@@ -49,7 +49,7 @@ type TopicUser struct {
 	ID                  int
 	Link                string
 	Title               string
-	Content             string
+	Content             string // TODO: Avoid converting this to bytes in templates, particularly if it's long
 	CreatedBy           int
 	IsClosed            bool
 	Sticky              bool
@@ -74,7 +74,7 @@ type TopicUser struct {
 	Avatar        string
 	MicroAvatar   string
 	ContentLines  int
-	ContentHTML   string
+	ContentHTML   string // TODO: Avoid converting this to bytes in templates, particularly if it's long
 	Tag           string
 	URL           string
 	URLPrefix     string

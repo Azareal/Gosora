@@ -325,8 +325,8 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 
 	for fid := 0; len(outBuf) > fid; fid++ {
 		frame := outBuf[fid]
+		c.detail(frame.Type + " frame")
 		if frame.Type == "text" {
-			c.detail("text frame:")
 			c.detail(frame)
 			oid := fid
 			c.detail("oid:", oid)
@@ -354,13 +354,12 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 			}
 			writeTextFrame(frame.TemplateName, frame.Extra.(int)-skip)
 		} else if frame.Type == "varsub" || frame.Type == "cvarsub" {
-			c.detail(frame.Type + " frame")
 			fout += "w.Write(" + frame.Body + ")\n"
 		} else if frame.Type == "identifier" {
-			c.detailf(frame.Type+" frame:%+v\n", frame)
 			fout += frame.Body
+		} else if frame.Type == "lang" {
+			fout += "w.Write(plist[" + strconv.Itoa(frame.Extra.(int)) + "])\n"
 		} else {
-			c.detail(frame.Type + " frame")
 			fout += frame.Body
 		}
 	}
@@ -721,8 +720,10 @@ func (c *CTemplateSet) compileSubSwitch(con CContext, node *parse.CommandNode) {
 	case *parse.IdentifierNode:
 		c.detail("Identifier Node:", node)
 		c.detail("Identifier Node Args:", node.Args)
-		out, outval, lit := c.compileIdentSwitch(con, node)
-		if lit {
+		out, outval, lit, noident := c.compileIdentSwitch(con, node)
+		if noident {
+			return
+		} else if lit {
 			con.Push("identifier", out)
 			return
 		}
@@ -780,7 +781,7 @@ func (c *CTemplateSet) unknownNode(node parse.Node) {
 
 func (c *CTemplateSet) compileIdentSwitchN(con CContext, node *parse.CommandNode) (out string) {
 	c.detail("in compileIdentSwitchN")
-	out, _, _ = c.compileIdentSwitch(con, node)
+	out, _, _, _ = c.compileIdentSwitch(con, node)
 	return out
 }
 
@@ -844,7 +845,7 @@ func (c *CTemplateSet) compareJoin(con CContext, pos int, node *parse.CommandNod
 	return pos, out
 }
 
-func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode) (out string, val reflect.Value, literal bool) {
+func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode) (out string, val reflect.Value, literal bool, notident bool) {
 	c.dumpCall("compileIdentSwitch", con, node)
 	var litString = func(inner string, bytes bool) {
 		if !bytes {
@@ -916,7 +917,8 @@ ArgLoop:
 			// ! Slightly crude but it does the job
 			leftParam := strings.Replace(leftOperand, "\"", "", -1)
 			c.langIndexToName = append(c.langIndexToName, leftParam)
-			litString("plist["+strconv.Itoa(len(c.langIndexToName)-1)+"]", true)
+			notident = true
+			con.PushPhrase(len(c.langIndexToName) - 1)
 			break ArgLoop
 		case "level":
 			// TODO: Implement level literals
@@ -981,7 +983,7 @@ ArgLoop:
 		}
 	}
 	c.retCall("compileIdentSwitch", out, val, literal)
-	return out, val, literal
+	return out, val, literal, notident
 }
 
 func (c *CTemplateSet) compileReflectSwitch(con CContext, node *parse.CommandNode) (out string, outVal reflect.Value) {

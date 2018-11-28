@@ -8,7 +8,7 @@
 		<div class="rowitem forum_title">
 			<h1 itemprop="name">{{.Title}}</h1>
 		</div>
-		{{if ne .CurrentUser.ID 0}}
+		{{if .CurrentUser.Loggedin}}
 			<div class="optbox">
 				{{if .CurrentUser.Perms.CreateTopic}}
 				<div class="pre_opt auto_hide"></div>
@@ -22,7 +22,7 @@
 			<div style="clear: both;"></div>
 		{{end}}
 	</div>
-	{{if ne .CurrentUser.ID 0}}
+	{{if .CurrentUser.Loggedin}}
 	<div class="mod_floater auto_hide">
 		<form method="post">
 			<div class="mod_floater_head">
@@ -110,7 +110,7 @@
 				</span>
 			</div>
 		</div>
-		</div>{{else}}<div class="rowitem passive rowmsg">{{lang "forum_no_topics"}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">{{lang "forum_start_one"}}</a>{{end}}</div>{{end}}
+		</div>{{else}}<div class="rowitem passive rowmsg">{{lang "forum_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">{{lang "forum_start_one"}}</a>{{end}}{{end}}</div>{{end}}
 	</div>
 
 {{if gt .LastPage 1}}

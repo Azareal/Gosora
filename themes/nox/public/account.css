@@ -6,35 +6,7 @@
 #back {
 	padding: 0px;
 }
-
-.rowmenu {
-	margin-left: 16px;
-}
-.colstack_left {
-	width: 200px;
-	padding-top: 12px;
-	padding-right: 24px;
-	padding-bottom: 24px;
-	padding-left: 24px;
-	background-color: #3e3e3e;
-}
-.colstack_left .colstack_head {
-	font-size: 19px;
-	margin-bottom: 4px;
-}
-.colstack_left .colstack_head:not(:first-child) {
-	margin-top: 8px;
-}
-.colstack_left .colstack_head a {
-	color: rgb(210, 210, 210);
-}
-.rowmenu {
-	margin-bottom: 2px;
-	font-size: 17px;
-}
-.rowmenu a {
-	color: rgb(180, 180, 180);
-}
+{{template "acc_panel_common.css" }}
 
 .colstack_right {
 	background-color: #333333;

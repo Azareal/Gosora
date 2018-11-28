@@ -10,38 +10,16 @@
 .footer .widget, #poweredByHolder {
 	background-color: #393939;
 }
-.rowmenu {
-	margin-left: 16px;
-}
 .submenu a:before {
 	content: "-";
 	margin-right: 8px;
 }
 
-.colstack_left {
-	width: 200px;
-	padding-top: 12px;
-	padding-right: 24px;
-	padding-bottom: 24px;
-	padding-left: 24px;
-	background-color: #3e3e3e;
-}
+{{template "acc_panel_common.css" }}
 .colstack_left .colstack_head {
 	font-size: 19px;
-	margin-bottom: 4px;
-}
-.colstack_left .colstack_head:not(:first-child) {
-	margin-top: 8px;
-}
-.colstack_left .colstack_head a {
-	color: rgb(210, 210, 210);
-}
-.rowmenu {
-	margin-bottom: 2px;
-	font-size: 17px;
-}
-.rowmenu a {
-	color: rgb(180, 180, 180);
+	padding-top: 10px;
+	padding-bottom: 10px;
 }
 .menu_stats {
 	margin-left: 4px;

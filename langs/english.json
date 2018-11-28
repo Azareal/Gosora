@@ -637,6 +637,7 @@
 		"profile_comments_report_aria":"Report Item",
 		"profile_comments_form_content":"Insert comment here",
 		"profile_comments_form_button":"Create Reply",
+		"profile_comments_form_guest":"You need to login to comment on this profile.",
 		"profile_owner_tag":"Profile Owner",
 
 		"ip_search_head":"IP Search",

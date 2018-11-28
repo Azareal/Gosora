@@ -54,6 +54,8 @@ var Template_topics_handle = func(pi TopicListPage, w io.Writer) error {
 	}
 	return Templates.ExecuteTemplate(w, mapping+".html", pi)
 }
+var Template_topics_guest_handle = Template_topics_handle
+var Template_topics_member_handle = Template_topics_handle
 
 // nolint
 var Template_forum_handle = func(pi ForumPage, w io.Writer) error {
@@ -270,7 +272,11 @@ func CompileTemplates() error {
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
 	header2.Title = "Topic List"
 	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
-	topicListTmpl, err := compile("topics", "common.TopicListPage", topicListPage)
+	/*topicListTmpl, err := compile("topics", "common.TopicListPage", topicListPage)
+	if err != nil {
+		return err
+	}*/
+	topicListTmpl, err := compileByLoggedin("topics", "common.TopicListPage", topicListPage)
 	if err != nil {
 		return err
 	}

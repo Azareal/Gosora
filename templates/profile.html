@@ -18,7 +18,7 @@
 					<div class="levelBit">
 						<a>{{level .ProfileOwner.Level}}</a>
 					</div>
-					<div class="progressWrap" style="width: 40%;">
+					<div class="progressWrap"{{if ne .CurrentScore 0}} style="width: 40%"{{end}}>
 						<div>{{.CurrentScore}} / {{.NextScore}}</div>
 					</div>
 				</div>
@@ -87,6 +87,7 @@
 	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">{{template "profile_comments_row.html" . }}</div>
 
+{{if .CurrentUser.Loggedin}}
 {{if not .CurrentUser.IsBanned}}
 	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?session={{.CurrentUser.Session}}" method="post">
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
@@ -100,10 +101,16 @@
 		</div>
 	</form>
 {{end}}
+{{else}}
+	<div class="colstack_item" style="border-top: none;">
+		<div class="rowitem passive">{{lang "profile_comments_form_guest"}}</div>
+	</div>
+{{end}}
 </div>
 
 </div>
 
+{{if .CurrentUser.Loggedin}}
 {{/** Quick subpage switcher **/}}
 {{/** TODO: Stop inlining this **/}}
 <script type="text/javascript">
@@ -123,5 +130,6 @@ function handle_profile_hashbit() {
 if(window.location.hash) handle_profile_hashbit()
 window.addEventListener("hashchange", handle_profile_hashbit, false)
 </script>
+{{end}}
 
 {{template "footer.html" . }}

@@ -43,8 +43,8 @@ func (con *CContext) PushText(body string, fragIndex int, fragOutIndex int) (ind
 	return con.LastBufIndex()
 }
 
-func (con *CContext) PushPhrase(body string, langIndex int) (index int) {
-	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, "lang", con.TemplateName, langIndex, nil})
+func (con *CContext) PushPhrase(langIndex int) (index int) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{"", "lang", con.TemplateName, langIndex, nil})
 	return con.LastBufIndex()
 }
 

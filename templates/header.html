@@ -24,7 +24,7 @@
 	<body>
 		{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}
 		<div class="container">
-		<!--<div class="navrow">-->
+		{{/**<!--<div class="navrow">-->**/}}
 			<div class="left_of_nav">{{dock "leftOfNav" .Header }}</div>
 			<nav class="nav">
 				<div class="move_left">
@@ -50,7 +50,7 @@
 </div>
 {{end}}
 			</div>
-		<!--</div>-->
+		{{/**<!--</div>-->**/}}
 			<div class="midRow">
 				<div class="midLeft"></div>
 				<div id="back" class="zone_{{.Header.Zone}}{{if .Header.Widgets.RightSidebar}} shrink_main{{end}}">

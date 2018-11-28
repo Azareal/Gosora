@@ -8,11 +8,11 @@
 	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopic.Title)}}datarow {{end}}"itemprop="itemListElement" itemscope
       itemtype="http://schema.org/ListItem">
 		<span class="forum_left shift_left">
-			<a href="{{.Link}}" itemprop="item">{{.Name}}</a>
+			<a href="{{.Link}}" itemprop="item">{{.Name}}</a><br />
 		{{if .Desc}}
-			<br /><span class="rowsmall" itemprop="description">{{.Desc}}</span>
+			<span class="rowsmall" itemprop="description">{{.Desc}}</span>
 		{{else}}
-			<br /><span class="rowsmall forum_nodesc">{{lang "forums_no_description"}}</span>
+			<span class="rowsmall forum_nodesc">{{lang "forums_no_description"}}</span>
 		{{end}}
 		</span>
 		<span class="forum_right shift_right">

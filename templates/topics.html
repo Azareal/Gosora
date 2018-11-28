@@ -3,7 +3,7 @@
 
 <div class="rowblock rowhead topic_list_title_block{{if ne .CurrentUser.ID 0}} has_opt{{end}}">
 	<div class="rowitem topic_list_title"><h1 itemprop="name">{{lang "topics_head"}}</h1></div>
-	{{if ne .CurrentUser.ID 0}}
+	{{if .CurrentUser.Loggedin}}
 		<div class="optbox">
 		{{if .ForumList}}
 			<div class="opt filter_opt">
@@ -29,7 +29,7 @@
 	{{end}}
 </div>
 
-{{if ne .CurrentUser.ID 0}}
+{{if .CurrentUser.Loggedin}}
 {{/** TODO: Hide these from unauthorised users? **/}}
 <div class="mod_floater auto_hide">
 	<form method="post">
@@ -116,7 +116,7 @@
 	<div class="rowitem rowmsg"><a href="" class="more_topics"></a></div>
 </div>
 <div id="topic_list" class="rowblock topic_list topic_list_{{.Sort.SortBy}}" aria-label="{{lang "topics_list_aria"}}">
-	{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}</div>{{end}}
+	{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}{{end}}</div>{{end}}
 </div>
 
 {{if gt .LastPage 1}}
