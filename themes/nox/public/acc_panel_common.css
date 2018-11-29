@@ -1,0 +1,39 @@
+.colstack_left {
+	width: 200px;
+	padding-bottom: 6px;
+	background-color: rgb(62, 62, 62);
+}
+.colstack_left .colstack_head {
+	/*font-size: 19px;*/
+	font-size: 18px;
+	margin-bottom: 8px;
+	background-color: rgb(72, 72, 72);
+	/*padding-top: 10px;*/
+	padding-top: 9px;
+	padding-left: 18px;
+	padding-right: 24px;
+	/*padding-bottom: 10px;*/
+	padding-bottom: 9px;
+	margin-left: 0px;
+}
+.colstack_left .colstack_head:not(:first-child) {
+	margin-top: 14px;
+	font-size: 18px;
+	padding-top: 9px;
+	padding-bottom: 9px;
+}
+.colstack_left .colstack_head a {
+	color: rgb(210, 210, 210);
+}
+
+.rowmenu {
+	margin-left: 16px;
+	margin-bottom: 2px;
+	font-size: 17px;
+}
+.rowmenu a {
+	color: rgb(180, 180, 180);
+}
+.rowmenu .rowitem {
+	margin-bottom: 4px;
+}
