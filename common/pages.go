@@ -13,7 +13,8 @@ import (
 // TODO: Allow resources in spots other than /static/ and possibly even external domains (e.g. CDNs)
 // TODO: Preload Trumboyg on Cosora on the forum list
 type Header struct {
-	Title      string
+	Title string
+	//Title      []byte // Experimenting with []byte for increased efficiency, let's avoid converting too many things to []byte, as it involves a lot of extra boilerplate
 	NoticeList []string
 	Scripts    []string
 	//Preload []string
@@ -30,6 +31,7 @@ type Header struct {
 	Path        string
 	MetaDesc    string
 	StartedAt   time.Time
+	Elapsed1    string
 	Writer      http.ResponseWriter
 	ExtData     ExtData
 }
@@ -348,8 +350,9 @@ type PanelEditGroupPage struct {
 }
 
 type GroupForumPermPreset struct {
-	Group  *Group
-	Preset string
+	Group         *Group
+	Preset        string
+	DefaultPreset bool
 }
 
 type PanelEditForumPage struct {

@@ -234,6 +234,12 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	*usercpy = *userptr
 	usercpy.Init() // TODO: Can we reduce the amount of work we do here?
 
+	// TODO: Add a config setting to disable this header
+	// TODO: Have this header cover more things
+	if Site.EnableSsl {
+		w.Header().Set("Content-Security-Policy", "upgrade-insecure-requests")
+	}
+
 	// TODO: WIP. Refactor this to eliminate the unnecessary query
 	// TODO: Better take proxies into consideration
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -253,23 +259,14 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		}
 	}
 
-	// TODO: Add a config setting to disable this header
-	// TODO: Have this header cover more things
-	if Site.EnableSsl {
-		w.Header().Set("Content-Security-Policy", "upgrade-insecure-requests")
-	}
+	usercpy.LastIP = host
 
-	if userptr == &GuestUser {
-		usercpy.LastIP = host
-		return *usercpy, true
-	}
-	if host != usercpy.LastIP {
+	if usercpy.Loggedin && host != usercpy.LastIP {
 		err = usercpy.UpdateIP(host)
 		if err != nil {
 			InternalError(err, w, r)
 			return *usercpy, false
 		}
-		usercpy.LastIP = host
 	}
 
 	return *usercpy, true

@@ -49,32 +49,29 @@ type Guild struct {
 }
 
 type Page struct {
-	Title       string
-	CurrentUser common.User
-	Header      *common.Header
-	ItemList    []*common.TopicsRow
-	Forum       *common.Forum
-	Guild       *Guild
-	Page        int
-	LastPage    int
+	Title    string
+	Header   *common.Header
+	ItemList []*common.TopicsRow
+	Forum    *common.Forum
+	Guild    *Guild
+	Page     int
+	LastPage int
 }
 
 // ListPage is a page struct for constructing a list of every guild
 type ListPage struct {
-	Title       string
-	CurrentUser common.User
-	Header      *common.Header
-	GuildList   []*Guild
+	Title     string
+	Header    *common.Header
+	GuildList []*Guild
 }
 
 type MemberListPage struct {
-	Title       string
-	CurrentUser common.User
-	Header      *common.Header
-	ItemList    []Member
-	Guild       *Guild
-	Page        int
-	LastPage    int
+	Title    string
+	Header   *common.Header
+	ItemList []Member
+	Guild    *Guild
+	Page     int
+	LastPage int
 }
 
 // Member is a struct representing a specific member of a guild, not to be confused with the global User struct.
@@ -386,7 +383,7 @@ func PreRenderViewForum(w http.ResponseWriter, r *http.Request, user *common.Use
 		if guildData, ok := pi.Header.ExtData.Items["guilds_current_group"]; ok {
 			guildItem := guildData.(*Guild)
 
-			guildpi := Page{pi.Title, pi.CurrentUser, pi.Header, pi.ItemList, pi.Forum, guildItem, pi.Page, pi.LastPage}
+			guildpi := Page{pi.Title, pi.Header, pi.ItemList, pi.Forum, guildItem, pi.Page, pi.LastPage}
 			err := common.Templates.ExecuteTemplate(w, "guilds_view_guild.html", guildpi)
 			if err != nil {
 				common.LogError(err)

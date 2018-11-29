@@ -90,10 +90,13 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 			return err
 		}
 
+		DebugLog("gid: ", gid)
+		DebugLogf("perms: %+v\n", perms)
 		pperms, err := fps.parseForumPerm(perms)
 		if err != nil {
 			return err
 		}
+		DebugLogf("pperms: %+v\n", pperms)
 		forumPerms[gid] = pperms
 	}
 	DebugLogf("forumPerms: %+v\n", forumPerms)
@@ -139,6 +142,9 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 			}
 			forumPerm, ok = forumPerms[group.ID]
 			if !ok {
+				if group.Perms.ViewTopic {
+					group.CanSee = append(group.CanSee, fid)
+				}
 				continue
 			}
 

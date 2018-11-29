@@ -333,6 +333,10 @@ func (user *User) ChangeGroup(group int) (err error) {
 // ! Only updates the database not the *User for safety reasons
 func (user *User) UpdateIP(host string) error {
 	_, err := userStmts.updateLastIP.Exec(host, user.ID)
+	ucache := Users.GetCache()
+	if ucache != nil {
+		ucache.Remove(user.ID)
+	}
 	return err
 }
 
@@ -429,6 +433,9 @@ func (user *User) InitPerms() {
 		user.Perms = group.Perms
 		user.PluginPerms = group.PluginPerms
 	}
+	/*if len(group.CanSee) == 0 {
+		panic("should not be zero")
+	}*/
 
 	user.IsAdmin = user.IsSuperAdmin || group.IsAdmin
 	user.IsSuperMod = user.IsAdmin || group.IsMod

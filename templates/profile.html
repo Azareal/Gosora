@@ -71,10 +71,10 @@
 					<input name="ban-duration-months" type="number" value="0" min="0" />
 				</div>
 			</div>
-			<!--<div class="formrow">
+			{{/**<!--<div class="formrow">
 				<div class="formitem formlabel"><a>{{lang "profile_ban_user_reason"}}</a></div>
 				<div class="formitem"><textarea name="ban-reason" placeholder="A really horrible person" required></textarea></div>
-			</div>-->
+			</div>-->**/}}
 			<div class="formrow">
 				<div class="formitem"><button name="ban-button" class="formbutton form_middle_button">{{lang "profile_ban_user_button"}}</button></div>
 			</div>
@@ -82,9 +82,9 @@
 	</form>
 	{{end}}
 
-	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
+	{{if .ItemList}}<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
 		<div class="rowitem"><h1><a>{{lang "profile_comments_head"}}</a></h1></div>
-	</div>
+	</div>{{end}}
 	<div id="profile_comments" class="colstack_item hash_hide">{{template "profile_comments_row.html" . }}</div>
 
 {{if .CurrentUser.Loggedin}}

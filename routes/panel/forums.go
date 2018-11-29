@@ -124,7 +124,6 @@ func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User
 	if err != nil {
 		return common.LocalError("The provided Forum ID is not a valid number.", w, r, user)
 	}
-
 	err = common.Forums.Delete(fid)
 	if err == sql.ErrNoRows {
 		return common.LocalError("The forum you're trying to delete doesn't exist.", w, r, user)
@@ -176,7 +175,8 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 		} else if err != nil {
 			return common.InternalError(err, w, r)
 		}
-		gplist = append(gplist, common.GroupForumPermPreset{group, common.ForumPermsToGroupForumPreset(forumPerms)})
+		preset := common.ForumPermsToGroupForumPreset(forumPerms)
+		gplist = append(gplist, common.GroupForumPermPreset{group, preset, preset == "default"})
 	}
 
 	if r.FormValue("updated") == "1" {
