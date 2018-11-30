@@ -26,7 +26,7 @@ var successJSONBytes = []byte(`{"success":"1"}`)
 
 // TODO: Refactor this
 // TODO: Use the phrase system
-var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}]}`)
+var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}],"msgCount":0}`)
 
 // TODO: Refactor this endpoint
 func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

@@ -9,6 +9,7 @@ var hooks = {
 	"pre_init": [],
 	"start_init": [],
 	"end_init": [],
+	"after_phrases":[],
 	"after_add_alert":[],
 	"after_update_alert_list":[],
 };
@@ -32,8 +33,8 @@ function addHook(name, callback) {
 }
 
 // InitHooks are slightly special, as if they are run, then any adds after the initial run will run immediately, this is to deal with the async nature of script loads
-function runInitHook(name) {
-	runHook(name);
+function runInitHook(name, ...args) {
+	runHook(name,...args);
 	ranInitHooks[name] = true;
 }
 
@@ -121,6 +122,8 @@ function fetchPhrases() {
 				console.log("adding phrase prefix '"+prefix+"' to box");
 				phraseBox[prefix] = prefixes[prefix];
 			});
+
+			runInitHook("after_phrases");
 		});
 }
 

@@ -82,9 +82,9 @@
 	</form>
 	{{end}}
 
-	{{if .ItemList}}<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
+	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
 		<div class="rowitem"><h1><a>{{lang "profile_comments_head"}}</a></h1></div>
-	</div>{{end}}
+	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">{{template "profile_comments_row.html" . }}</div>
 
 {{if .CurrentUser.Loggedin}}

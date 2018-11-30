@@ -4,7 +4,7 @@ var alertMapping = {};
 var alertList = [];
 var alertCount = 0;
 var moreTopicCount = 0;
-var conn;
+var conn = false;
 var selectedTopics = [];
 var attachItemCallback = function(){}
 
@@ -92,7 +92,8 @@ function updateAlertList(menuAlerts) {
 	}
 
 	bindToAlerts();
-	runInitHook("after_update_alert_list");
+	console.log("alertCount:",alertCount)
+	runInitHook("after_update_alert_list", alertCount);
 }
 
 function setAlertError(menuAlerts,msg) {
@@ -117,6 +118,7 @@ function loadAlerts(menuAlerts) {
 			for(var i in data.msgs) {
 				addAlert(data.msgs[i]);
 			}
+			console.log("data.msgCount:",data.msgCount)
 			alertCount = data.msgCount;
 			updateAlertList(menuAlerts)
 		},
@@ -161,6 +163,7 @@ function wsAlertEvent(data) {
 	for (var i = 0; i < alertList.length; i++) alist += alertMapping[alertList[i]];
 	// TODO: Add support for other alert feeds like PM Alerts
 	var generalAlerts = document.getElementById("general_alerts");
+	// TODO: Make sure we update alertCount here
 	updateAlertList(generalAlerts, alist);
 }
 
@@ -198,10 +201,8 @@ function runWebSockets() {
 				return;
 			}
 
-			if ("msg" in data) {
-				// TODO: Fix the data race where the alert template hasn't been loaded yet
-				wsAlertEvent(data);
-			} else if("event" in data) {
+			if ("msg" in data) wsAlertEvent(data);
+			else if("event" in data) {
 				if(data.event == "dismiss-alert"){
 					Object.keys(alertMapping).forEach((key) => {
 						if(key==data.asid) {
@@ -286,17 +287,18 @@ function runWebSockets() {
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
 		loadScript("template_alert.js", () => {
 			console.log("Loaded template_alert.js");
-			$(document).ready(() => {
-				alertsInitted = true;
-				var alertMenuList = document.getElementsByClassName("menu_alerts");
-				for(var i = 0; i < alertMenuList.length; i++) {
-					loadAlerts(alertMenuList[i]);
-				}
+			addInitHook("after_phrases", () => {
+				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
+				$(document).ready(() => {
+					alertsInitted = true;
+					var alertMenuList = document.getElementsByClassName("menu_alerts");
+					for(var i = 0; i < alertMenuList.length; i++) {
+						loadAlerts(alertMenuList[i]);
+					}
+					if(window["WebSocket"]) runWebSockets();
+				});
 			});
 		});
-
-		if(window["WebSocket"]) runWebSockets();
-		else conn = false;
 
 		$(document).ready(mainInit);
 	});

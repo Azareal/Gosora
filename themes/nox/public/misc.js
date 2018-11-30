@@ -1,11 +1,14 @@
 "use strict";
 
 (() => {
-	addInitHook("after_update_alert_list", () => {
+	addInitHook("after_update_alert_list", (alertCount) => {
+		console.log("misc.js");
+		console.log("alertCount:",alertCount);
 		if(alertCount==0) {
-			$(".alerts").html("No new alerts");
+			$(".alerts").html(phraseBox["alerts"]["alerts.no_alerts_short"]);
 			$(".user_box").removeClass("has_alerts");
 		} else {
+			// TODO: Localise this
 			$(".alerts").html(alertCount + " new alerts");
 			$(".user_box").addClass("has_alerts");
 		}

@@ -349,6 +349,7 @@
 		"alerts.new_friend_invite":"You received a friend invite from {0}",
 
 		"alerts.no_alerts":"You don't have any alerts",
+		"alerts.no_alerts_short":"No new alerts",
 
 		"topics_click_topics_to_select":"Click the topics to select them",
 		"topics_new_topic":"New Topic",

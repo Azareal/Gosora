@@ -1,6 +1,6 @@
 {
 	"Name": "nox",
-	"FriendlyName": "Nox (WIP)",
+	"FriendlyName": "Nox (Incomplete)",
 	"Version": "0.0.1",
 	"Creator": "Azareal",
 	"URL": "github.com/Azareal/Gosora",
@@ -30,8 +30,7 @@
 		},
 		{
 			"Name":"nox/misc.js",
-			"Location":"global",
-			"Loggedin":true
+			"Location":"global"
 		}
 	]
 }
