@@ -396,6 +396,7 @@
 		"panel_perms_read_only":"Read Only",
 		"panel_perms_can_post":"Can Post",
 		"panel_perms_can_moderate":"Can Moderate",
+		"panel_perms_quasi_mod":"Partial Mod",
 		"panel_perms_custom":"Custom",
 		"panel_perms_default":"Default",
 

@@ -237,10 +237,10 @@ func ForumPermsToGroupForumPreset(fperms *ForumPerms) string {
 		return "can_moderate"
 	}
 	if fperms.EditTopic || fperms.DeleteTopic || fperms.EditReply || fperms.DeleteReply || fperms.PinTopic || fperms.CloseTopic || fperms.MoveTopic {
-		if !canPost {
-			return "custom"
-		}
-		return "quasi_mod"
+		//if !canPost {
+		return "custom"
+		//}
+		//return "quasi_mod"
 	}
 
 	if canPost {

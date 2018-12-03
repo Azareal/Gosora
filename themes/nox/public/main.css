@@ -906,6 +906,9 @@ input[type=checkbox]:checked + label .sel {
 .level_inprogress .levelBit {
 	display: inline;
 }
+.level_inprogress .levelBit a {
+	white-space: nowrap;
+}
 .level_inprogress .progressWrap {
 	width: 100%;
 	padding-left: 0px;

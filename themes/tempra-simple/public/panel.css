@@ -120,6 +120,10 @@
 	content: "{{index .Phrases "panel_perms_can_moderate" }}";
 	color: darkblue;
 }
+.perm_preset_quasi_mod:before {
+	content: "{{index .Phrases "panel_perms_quasi_mod" }}";
+	color: darkblue;
+}
 .perm_preset_custom:before {
 	content: "{{index .Phrases "panel_perms_custom" }}";
 	color: black;
