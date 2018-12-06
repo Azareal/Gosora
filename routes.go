@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -100,6 +101,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		// Might not want to error here, if the account was deleted properly, we might want to figure out how we should handle deletions in general
 		list, err := common.Users.BulkGetMap(actors)
 		if err != nil {
+			log.Print("actors:", actors)
 			return common.InternalErrorJS(err, w, r)
 		}
 

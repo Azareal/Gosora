@@ -3,7 +3,6 @@ package common
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"strconv"
 
 	"github.com/Azareal/Gosora/query_gen"
@@ -88,8 +87,12 @@ func (mus *DefaultUserStore) DirtyGet(id int) *User {
 func (mus *DefaultUserStore) Get(id int) (*User, error) {
 	user, err := mus.cache.Get(id)
 	if err == nil {
+		//log.Print("cached user")
+		//log.Print(string(debug.Stack()))
+		//log.Println("")
 		return user, nil
 	}
+	//log.Print("uncached user")
 
 	user = &User{ID: id, Loggedin: true}
 	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
@@ -206,19 +209,9 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 				sidList += strconv.Itoa(id) + ","
 			}
 		}
-
-		// We probably don't need this, but it might be useful in case of bugs in BulkCascadeGetMap
-		if sidList == "" {
-			// TODO: Bulk log this
-			if Dev.DebugMode {
-				log.Print("This data is sampled later in the BulkCascadeGetMap function, so it might miss the cached IDs")
-				log.Print("idCount", idCount)
-				log.Print("ids", ids)
-				log.Print("list", list)
-			}
-			return list, errors.New("We weren't able to find a user, but we don't know which one")
+		if sidList != "" {
+			sidList = sidList[0 : len(sidList)-1]
 		}
-		sidList = sidList[0 : len(sidList)-1]
 
 		err = errors.New("Unable to find the users with the following IDs: " + sidList)
 	}
