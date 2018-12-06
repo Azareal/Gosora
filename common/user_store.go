@@ -211,9 +211,8 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 		}
 		if sidList != "" {
 			sidList = sidList[0 : len(sidList)-1]
+			err = errors.New("Unable to find the users with the following IDs: " + sidList)
 		}
-
-		err = errors.New("Unable to find the users with the following IDs: " + sidList)
 	}
 
 	return list, err
