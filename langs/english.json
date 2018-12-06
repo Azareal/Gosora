@@ -505,6 +505,7 @@
 
 		"topic_list.create_topic_tooltip":"Create Topic",
 		"topic_list.create_topic_aria":"Create a topic",
+		"topic_list.moderate":"Moderate",
 		"topic_list.moderate_tooltip":"Moderate",
 		"topic_list.moderate_aria":"Moderate Posts",
 		"topic_list.what_to_do":"What do you want to do with these {0} topics?",
@@ -765,6 +766,7 @@
 		"panel_group_extended_permissions":"Extended Permissions",
 
 		"panel_word_filters_head":"Word Filters",
+		"panel_word_filters_to":"...to...",
 		"panel_word_filters_edit_button_aria":"Edit Word Filter",
 		"panel_word_filters_update_button":"Update",
 		"panel_word_filters_delete_button_aria":"Delete Word Filter",

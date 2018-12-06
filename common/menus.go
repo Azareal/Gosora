@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 type MenuItemList []MenuItem
@@ -375,7 +375,7 @@ func (hold *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuIt
 
 		_, hasInnerVar := skipUntilIfExists(renderItem, 0, '{')
 		if hasInnerVar {
-			fmt.Println("inner var: ", string(renderItem))
+			DebugLog("inner var: ", string(renderItem))
 			dotAt, hasDot := skipUntilIfExists(renderItem, 0, '.')
 			endFence, hasEndFence := skipUntilIfExists(renderItem, dotAt, '}')
 			if !hasDot || !hasEndFence || (endFence-dotAt) <= 1 {

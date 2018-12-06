@@ -51,11 +51,20 @@
 	grid-gap: 8px;
 	grid-template-columns: repeat(3, 1fr);
 }
+.rowlist.bgavatars, .micro_grid {
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
 .grid_item {
 	border-radius: 3px;
 	color: rgb(190,190,190);
-	background-color: #444444;
+	background-color: rgb(68,68,68);
 	padding: 12px;
+}
+.stat_green {
+	background-color: rgb(68,88,68);
+}
+.stat_red {
+	background-color: rgb(88,68,68);
 }
 
 .to_right, .panel_buttons, .panel_floater {
@@ -68,10 +77,6 @@
 	padding-left: 6px;
 	padding-right: 6px;
 }
-.colstack_right input {
-	padding-left: 6px;
-	padding-right: 6px;
-}
 
 button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .profile_url {
 	background: rgb(100,100,200);
@@ -79,7 +84,10 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 #panel_users .panel_tag:not(.panel_right_button) {
 	background: rgb(50,150,50);
 }
-.panel_right_button:not(.has_inner_button), #panel_users .panel_tag:not(.panel_right_button), #panel_users .profile_url {
+.panel_right_button:not(.has_inner_button),
+.panel_right_button button,
+#panel_users .panel_tag:not(.panel_right_button),
+#panel_users .profile_url {
 	margin-left: 2px;
 	padding: 5px;
 	padding-left: 6px;
@@ -92,10 +100,10 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 	border-radius: 3px;
 }
 .edit_button:after {
-	content: "{{index .Phrases "panel_edit_button_text"}}";
+	content: "{{lang "panel_edit_button_text" . }}";
 }
 .delete_button:after {
-	content: "{{index .Phrases "panel_delete_button_text"}}";
+	content: "{{lang "panel_delete_button_text" . }}";
 }
 /*#themeSelector select {
 	background: rgb(90,90,90);
@@ -129,6 +137,42 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 	height: 80px;
 }
 
+.micro_grid .to_right, .micro_grid .panel_buttons {
+	margin-left: 0px;
+}
+#panel_settings .panel_upshift {
+	margin-bottom: 12px;
+}
+#panel_settings .to_right {
+	white-space: nowrap;
+	margin-top: auto;
+	padding-top: 10px;
+	background-color: #555555;
+	border-radius: 5px;
+	padding-left: 5px;
+	padding: 12px;
+}
+#panel_settings.rowlist.bgavatars.micro_grid, .micro_grid {
+	grid-gap: 24px;
+    grid-row-gap: 16px;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+#panel_word_filters {
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+#panel_word_filters .filters_find {
+	margin-bottom: 1px;
+}
+#panel_word_filters .itemSeparator:before {
+	content: "{{lang "panel_word_filters_to" . }}";
+	font-size: 17px;
+	margin-bottom: 1px;
+}
+#panel_word_filters .panel_buttons {
+	margin-top: 14px;
+}
+
 #panel_users .rowitem .to_right {
 	order: 0;
 	margin-right: auto;
@@ -143,31 +187,31 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 }
 
 .perm_preset_no_access:before {
-	content: "{{index .Phrases "panel_perms_no_access" }}";
+	content: "{{lang "panel_perms_no_access" . }}";
 	/*color: hsl(0,100%,20%);*/
 }
 /*.perm_preset_read_only:before, .perm_preset_can_post:before {
 	color: hsl(120,100%,20%);
 }*/
 .perm_preset_read_only:before {
-	content: "{{index .Phrases "panel_perms_read_only" }}";
+	content: "{{lang "panel_perms_read_only" . }}";
 }
 .perm_preset_can_post:before {
-	content: "{{index .Phrases "panel_perms_can_post" }}";
+	content: "{{lang "panel_perms_can_post" . }}";
 }
 .perm_preset_can_moderate:before {
-	content: "{{index .Phrases "panel_perms_can_moderate" }}";
+	content: "{{lang "panel_perms_can_moderate" . }}";
 	/*color: hsl(240,100%,20%);*/
 }
 .perm_preset_quasi_mod:before {
-	content: "{{index .Phrases "panel_perms_quasi_mod" }}";
+	content: "{{lang "panel_perms_quasi_mod" . }}";
 }
 .perm_preset_custom:before {
-	content: "{{index .Phrases "panel_perms_custom" }}";
+	content: "{{lang "panel_perms_custom" . }}";
 	/*color: hsl(0,0%,20%);*/
 }
 .perm_preset_default:before {
-	content: "{{index .Phrases "panel_perms_default" }}";
+	content: "{{lang "panel_perms_default" . }}";
 }
 
 .panel_submitrow {
@@ -183,11 +227,14 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 	margin-right: auto;
 }
 
-.has_inner_button button {
+/*.has_inner_button button {
 	margin-right: 8px;
-}
+}*/
 #forum_quick_perms .formitem, #forum_quick_perms .panel_floater {
 	display: flex;
+}
+#forum_quick_perms .edit_fields {
+	margin-left: 4px;
 }
 
 .panel_plugin_meta {

@@ -145,6 +145,9 @@
 	padding-bottom: 3px;
 }
 
+#panel_settings .panel_compactrow {
+	padding-left: 10px;
+}
 #panel_word_filters .itemSeparator:before {
 	content: " || ";
 	padding-left: 2px;

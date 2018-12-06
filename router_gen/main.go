@@ -325,9 +325,10 @@ func NewWriterIntercept(w http.ResponseWriter) *WriterIntercept {
 	return &WriterIntercept{w}
 }
 
+var wiMaxAge = "max-age=" + strconv.Itoa(int(common.Day))
 func (writ *WriterIntercept) WriteHeader(code int) {
 	if code == 200 {
-		writ.ResponseWriter.Header().Set("Cache-Control", "max-age=" + strconv.Itoa(int(common.Day)))
+		writ.ResponseWriter.Header().Set("Cache-Control", wiMaxAge)
 		writ.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
 	}
 	writ.ResponseWriter.WriteHeader(code)
@@ -426,7 +427,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if common.Site.EnableSsl {
 			s = "s"
 		}
-		dest := "http"+s+"://" + req.Host + req.URL.Path
+		dest := "http"+s+"://" + common.Site.Host + req.URL.Path
 		if len(req.URL.RawQuery) > 0 {
 			dest += "?" + req.URL.RawQuery
 		}

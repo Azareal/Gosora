@@ -19,6 +19,7 @@ func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		return common.NoPermissions(w, r, user)
 	}
 
+	// TODO: What if the list gets too long? How should we structure this?
 	settings, err := basePage.Settings.BypassGetAll()
 	if err != nil {
 		return common.InternalError(err, w, r)

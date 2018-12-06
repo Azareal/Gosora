@@ -15,7 +15,7 @@ func Users(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	}
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	perPage := 10
+	perPage := 15
 	offset, page, lastPage := common.PageOffset(basePage.Stats.Users, page, perPage)
 
 	users, err := common.Users.GetOffset(offset, perPage)

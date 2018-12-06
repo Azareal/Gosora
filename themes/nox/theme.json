@@ -6,6 +6,7 @@
 	"URL": "github.com/Azareal/Gosora",
 	"Tag": "WIP",
 	"Docks":["topMenu","rightSidebar","footer"],
+	"GridLists":true,
 	"MapTmplToDock": {
 		"rightOfNav": {
 			"File": "./templates/userDock.html"

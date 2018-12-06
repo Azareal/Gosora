@@ -2,6 +2,7 @@
 	width: 200px;
 	padding-bottom: 6px;
 	background-color: rgb(62, 62, 62);
+	/*border-left: 4px solid rgb(82, 82, 82);*/
 }
 .colstack_left .colstack_head {
 	/*font-size: 19px;*/
@@ -27,7 +28,7 @@
 }
 
 .rowmenu {
-	margin-left: 16px;
+	margin-left: 18px;
 	margin-bottom: 2px;
 	font-size: 17px;
 }

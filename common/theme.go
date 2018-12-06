@@ -32,6 +32,7 @@ type Theme struct {
 	Disabled          bool
 	HideFromThemes    bool
 	BgAvatars         bool // For profiles, at the moment
+	GridLists         bool // User Manager
 	ForkOf            string
 	Tag               string
 	URL               string
@@ -77,6 +78,24 @@ type ThemeMapTmplToDock struct {
 // TODO: It might be unsafe to call the template parsing functions with fsnotify, do something more concurrent
 func (theme *Theme) LoadStaticFiles() error {
 	theme.ResourceTemplates = template.New("")
+	fmap := make(map[string]interface{})
+	fmap["lang"] = func(phraseNameInt interface{}, tmplInt interface{}) interface{} {
+		phraseName, ok := phraseNameInt.(string)
+		if !ok {
+			panic("phraseNameInt is not a string")
+		}
+		tmpl, ok := tmplInt.(CSSData)
+		if !ok {
+			panic("tmplInt is not a CSSData")
+		}
+		phrase, ok := tmpl.Phrases[phraseName]
+		if !ok {
+			// TODO: XSS? Only server admins should have access to theme files anyway, but think about it
+			return "{lang." + phraseName + "}"
+		}
+		return phrase
+	}
+	theme.ResourceTemplates.Funcs(fmap)
 	template.Must(theme.ResourceTemplates.ParseGlob("./themes/" + theme.Name + "/public/*.css"))
 
 	// It should be safe for us to load the files for all the themes in memory, as-long as the admin hasn't setup a ridiculous number of themes
@@ -106,6 +125,7 @@ func (theme *Theme) AddThemeStaticFiles() error {
 			var b bytes.Buffer
 			var pieces = strings.Split(path, "/")
 			var filename = pieces[len(pieces)-1]
+			// TODO: Prepare resource templates for each loaded langpack?
 			err = theme.ResourceTemplates.ExecuteTemplate(&b, filename, CSSData{Phrases: phraseMap})
 			if err != nil {
 				return err

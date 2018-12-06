@@ -61,7 +61,7 @@ License: MIT
 
       for (i = 0; i < link.length; i++) {
         // Test if the link is not read yet, and has rel=stylesheet
-        if (link[i].getAttribute('data-eqcss-read') === null && link[i].rel === 'stylesheet') {
+        if (link[i].getAttribute('data-eqcss-read') === null && link[i].rel === 'stylesheet' && link[i].getAttribute("href").endsWith("main.css")) {
           // retrieve the file content with AJAX and process it
           if (link[i].href) {
             (function() {

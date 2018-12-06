@@ -20,9 +20,10 @@ func Pages(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 		basePage.AddNotice("panel_page_deleted")
 	}
 
+	// TODO: Test the pagination here
 	pageCount := common.Pages.GlobalCount()
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	perPage := 10
+	perPage := 15
 	offset, page, lastPage := common.PageOffset(pageCount, page, perPage)
 
 	cPages, err := common.Pages.GetOffset(offset, perPage)

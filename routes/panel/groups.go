@@ -16,7 +16,7 @@ func Groups(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	}
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	perPage := 9
+	perPage := 15
 	offset, page, lastPage := common.PageOffset(basePage.Stats.Groups, page, perPage)
 
 	// Skip the 'Unknown' group

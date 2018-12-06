@@ -18,6 +18,7 @@ func WordFilters(w http.ResponseWriter, r *http.Request, user common.User) commo
 		return common.NoPermissions(w, r, user)
 	}
 
+	// TODO: What if this list gets too long?
 	filterList, err := common.WordFilters.GetAll()
 	if err != nil {
 		return common.InternalError(err, w, r)
