@@ -377,6 +377,7 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 			c.detail("invisible")
 			continue
 		}
+		// TODO: What if the same template is invoked in multiple spots in a template?
 		skipBlock := skipped[frag.TemplateName]
 		skip := skipBlock.Frags[skipBlock.ClosestFragSkip]
 		_, ok := skipBlock.Frags[frag.Index]
@@ -385,7 +386,11 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 		}
 		c.detailf("skipblock %+v\n", skipBlock)
 		c.detail("skipping ", skip)
-		writeFrag(frag.TemplateName, frag.Index-skip, frag.Body)
+		index := frag.Index - skip
+		if index < 0 {
+			index = 0
+		}
+		writeFrag(frag.TemplateName, index, frag.Body)
 	}
 
 	fout = strings.Replace(fout, `))

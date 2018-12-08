@@ -366,10 +366,10 @@ h2 {
 	content: "{{lang "topic_list.moderate" . }}";
 }
 
-.filter_opt {
+.filter_opt, .dummy_opt {
 	margin-right: auto;
 }
-.filter_opt_label {
+.filter_opt.opt a.filter_opt_label {
 	font-size: 18px;
 	margin-left: 5px;
 }
@@ -1011,7 +1011,7 @@ input[type=checkbox]:checked + label .sel {
 		margin-right: 0px;
 		width: auto;
 		flex-direction: row;
-		margin-bottom: 12px;
+		margin-bottom: 8px;
 		padding: 18px;
 		padding-bottom: 14px;
 	}
@@ -1024,6 +1024,18 @@ input[type=checkbox]:checked + label .sel {
 	.user_meta {
 		margin-left: 10px;
 		margin-top: -4px;
+	}
+}
+
+@media(max-width: 460px) {
+	.topic_list_title, .filter_opt_sep {
+		display: none;
+	}
+	.topic_list_title_block .create_topic_opt a:before {
+		content: "{{lang "quick_topic.create_topic_button_short" . }}";
+	}
+	.topic_list_title_block .mod_opt a:before {
+		content: "{{lang "topic_list.moderate_short" . }}";
 	}
 }
 

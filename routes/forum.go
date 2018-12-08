@@ -42,6 +42,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, header 
 		return common.NoPermissions(w, r, user)
 	}
 	header.Zone = "view_forum"
+	header.Path = "/forums/"
 
 	// TODO: Fix this double-check
 	forum, err := common.Forums.Get(fid)

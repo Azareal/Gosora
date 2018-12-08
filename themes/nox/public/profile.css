@@ -86,3 +86,16 @@
 .footer .widget, .sidebar {
 	display: none;
 }
+
+@media(max-width: 500px) {
+	.colstack {
+		display: block;
+	}
+	#profile_left_lane {
+		margin-right: 0px;
+		margin-bottom: 12px;
+	}
+	.topBlock, .levelBlock, .passiveBlock {
+		width: auto;
+	}
+}

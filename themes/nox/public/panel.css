@@ -261,3 +261,11 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 #panel_debug .grid_stat:not(.grid_stat_head) {
 	margin-bottom: 5px;
 }
+
+@media (max-width: 1000px) {
+	#panel_settings.rowlist.bgavatars.micro_grid, .micro_grid {
+		grid-gap: 12px;
+		grid-row-gap: 4px;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	}
+}

@@ -38,3 +38,12 @@
 .rowmenu .rowitem {
 	margin-bottom: 4px;
 }
+
+@media (max-width: 420px) {
+	.colstack {
+		display: block;
+	}
+	.colstack_left, .colstack_right {
+		width: auto !important;
+	}
+}
