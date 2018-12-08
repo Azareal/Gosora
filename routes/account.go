@@ -147,7 +147,7 @@ func AccountLoginMFAVerify(w http.ResponseWriter, r *http.Request, user common.U
 	if common.RunPreRenderHook("pre_render_login_mfa_verify", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.RunThemeTemplate(header.Theme.Name, "login_mfa_verify", pi, w)
+	err = header.Theme.RunTmpl("login_mfa_verify", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

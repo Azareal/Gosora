@@ -967,7 +967,7 @@ ArgLoop:
 
 			// TODO: Refactor this
 			// TODO: Call the template function directly rather than going through RunThemeTemplate to eliminate a round of indirection?
-			out = "{\nerr := common.RunThemeTemplate(" + headParam + ".Theme.Name," + nameParam + "," + pageParam + ",w)\n"
+			out = "{\nerr := " + headParam + ".Theme.RunTmpl(" + nameParam + "," + pageParam + ",w)\n"
 			out += "if err != nil {\nreturn err\n}\n}\n"
 			literal = true
 			break ArgLoop

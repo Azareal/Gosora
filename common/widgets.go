@@ -186,7 +186,7 @@ func (widget *Widget) Build(hvars interface{}) (string, error) {
 	}
 
 	var header = hvars.(*Header)
-	err := RunThemeTemplate(header.Theme.Name, widget.Body, hvars, header.Writer)
+	err := header.Theme.RunTmpl(widget.Body, hvars, header.Writer)
 	return "", err
 }
 

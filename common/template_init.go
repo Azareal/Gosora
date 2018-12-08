@@ -587,7 +587,7 @@ func InitTemplates() error {
 
 	fmap["dyntmpl"] = func(nameInt interface{}, pageInt interface{}, headerInt interface{}) interface{} {
 		header := headerInt.(*Header)
-		err := RunThemeTemplate(header.Theme.Name, nameInt.(string), pageInt, header.Writer)
+		err := header.Theme.RunTmpl(nameInt.(string), pageInt, header.Writer)
 		if err != nil {
 			return err
 		}

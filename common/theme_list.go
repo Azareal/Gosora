@@ -23,6 +23,7 @@ var Themes ThemeList = make(map[string]*Theme) // ? Refactor this into a store?
 var DefaultThemeBox atomic.Value
 var ChangeDefaultThemeMutex sync.Mutex
 
+// TODO: Fallback to a random theme if this doesn't exist, so admins can remove themes they don't use
 // TODO: Use this when the default theme doesn't exist
 var fallbackTheme = "cosora"
 var overridenTemplates = make(map[string]bool) // ? What is this used for?
@@ -301,14 +302,14 @@ func (w GzipResponseWriter) Write(b []byte) (int, error) {
 // NEW method of doing theme templates to allow one user to have a different theme to another. Under construction.
 // TODO: Generate the type switch instead of writing it by hand
 // TODO: Cut the number of types in half
-func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer) error {
+func (theme *Theme) RunTmpl(template string, pi interface{}, w io.Writer) error {
 	// Unpack this to avoid an indirect call
 	gzw, ok := w.(GzipResponseWriter)
 	if ok {
 		w = gzw.Writer
 	}
 
-	var getTmpl = GetThemeTemplate(theme, template)
+	var getTmpl = theme.GetTmpl(template)
 	switch tmplO := getTmpl.(type) {
 	case *func(CustomPagePage, io.Writer) error:
 		var tmpl = *tmplO
@@ -366,7 +367,7 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer
 	case func(Page, io.Writer) error:
 		return tmplO(pi.(Page), w)
 	case nil, string:
-		mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap[template]
+		mapping, ok := theme.TemplatesMap[template]
 		if !ok {
 			mapping = template
 		}
@@ -392,10 +393,10 @@ func RunThemeTemplate(theme string, template string, pi interface{}, w io.Writer
 }
 
 // GetThemeTemplate attempts to get the template for a specific theme, otherwise it falls back on the default template pointer, which if absent will fallback onto the template interpreter
-func GetThemeTemplate(theme string, template string) interface{} {
+func (theme *Theme) GetTmpl(template string) interface{} {
 	// TODO: Figure out why we're getting a nil pointer here when transpiled templates are disabled, I would have assumed that we would just fall back to !ok on this
 	// Might have something to do with it being the theme's TmplPtr map, investigate.
-	tmpl, ok := Themes[theme].TmplPtr[template]
+	tmpl, ok := theme.TmplPtr[template]
 	if ok {
 		return tmpl
 	}

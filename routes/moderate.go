@@ -31,7 +31,7 @@ func IPSearch(w http.ResponseWriter, r *http.Request, user common.User, header *
 	if common.RunPreRenderHook("pre_render_ip_search", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.RunThemeTemplate(header.Theme.Name, "ip_search", pi, w)
+	err = header.Theme.RunTmpl("ip_search", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

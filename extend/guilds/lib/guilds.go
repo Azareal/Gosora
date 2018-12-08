@@ -189,7 +189,7 @@ func RouteGuildList(w http.ResponseWriter, r *http.Request, user common.User) co
 	}
 
 	pi := ListPage{"Guild List", user, header, guildList}
-	err = common.RunThemeTemplate(header.Theme.Name, "guilds_guild_list", pi, w)
+	err = header.Theme.RunTmpl("guilds_guild_list", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
