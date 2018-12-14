@@ -953,7 +953,6 @@ ArgLoop:
 			leftParam, _ := c.compileIfVarSub(con, leftOperand)
 			// TODO: Refactor this
 			litString(leftParam+".Format(\"2006-01-02 15:04:05\")", false)
-			c.importMap["time"] = "time"
 			break ArgLoop
 		case "scope":
 			literal = true
@@ -1277,7 +1276,6 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 	case reflect.Struct:
 		// TODO: Avoid clashing with other packages which have structs named Time
 		if val.Type().Name() == "Time" {
-			c.importMap["time"] = "time"
 			base = "[]byte(" + varname + ".String())"
 		} else {
 			if !val.IsValid() {
