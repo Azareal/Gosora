@@ -118,6 +118,49 @@ func RelativeTime(t time.Time) string {
 	return fmt.Sprintf("%d hours ago", int(seconds/60/60))
 }
 
+// TODO: Finish this faster and more localised version of RelativeTime
+/*
+// TODO: Write a test for this
+// ! Experimental
+func RelativeTimeBytes(t time.Time, lang int) []byte {
+	diff := time.Since(t)
+	hours := diff.Hours()
+	seconds := diff.Seconds()
+	weeks := int(hours / 24 / 7)
+	months := int(hours / 24 / 31)
+	switch {
+	case months > 3:
+		if t.Year() != time.Now().Year() {
+			return []byte(t.Format(phrases.RTime.MultiYear(lang)))
+		}
+		return []byte(t.Format(phrases.RTime.SingleYear(lang)))
+	case months > 1:
+		return phrases.RTime.Months(lang, months)
+	case months == 1:
+		return phrases.RTime.Month(lang)
+	case weeks > 1:
+		return phrases.RTime.Weeks(lang, weeks)
+	case int(hours/24) == 7:
+		return phrases.RTime.Week(lang)
+	case int(hours/24) == 1:
+		return phrases.RTime.Day(lang)
+	case int(hours/24) > 1:
+		return phrases.RTime.Days(lang, int(hours/24))
+	case seconds <= 1:
+		return phrases.RTime.Moment(lang)
+	case seconds < 60:
+		return phrases.RTime.Seconds(lang, int(seconds))
+	case seconds < 120:
+		return phrases.RTime.Minute(lang)
+	case seconds < 3600:
+		return phrases.RTime.Minutes(lang, int(seconds/60))
+	case seconds < 7200:
+		return phrases.RTime.Hour(lang)
+	}
+	return phrases.RTime.Hours(lang, int(seconds/60/60))
+}
+*/
+
 // TODO: Write a test for this
 func ConvertByteUnit(bytes float64) (float64, string) {
 	switch {

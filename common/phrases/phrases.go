@@ -108,7 +108,8 @@ func InitPhrases(lang string) error {
 			for index, phraseName := range phraseNames {
 				phrase, ok := langPack.TmplPhrases[phraseName]
 				if !ok {
-					log.Print("Couldn't find template phrase '" + phraseName + "'")
+					log.Printf("langPack.TmplPhrases: %+v\n", langPack.TmplPhrases)
+					panic("Couldn't find template phrase '" + phraseName + "'")
 				}
 				phraseSet[index] = []byte(phrase)
 			}

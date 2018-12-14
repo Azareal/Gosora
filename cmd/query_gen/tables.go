@@ -493,6 +493,22 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
+	// TODO: Implement this
+	/*
+		qgen.Install.CreateTable("login_logs", "", "",
+			[]qgen.DBTableColumn{
+				qgen.DBTableColumn{"lid", "int", 0, false, true, ""},
+				qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+				qgen.DBTableColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+				qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
+				qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
+			},
+			[]qgen.DBTableKey{
+				qgen.DBTableKey{"lid", "primary"},
+			},
+		)
+	*/
+
 	qgen.Install.CreateTable("moderation_logs", "", "",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"action", "varchar", 100, false, false, ""},

@@ -27,7 +27,7 @@
 			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
 			<span>
 				<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
-				<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
+				<span class="rowsmall lastReplyAt" title="{{abstime .LastReplyAt}}">{{.RelativeLastReplyAt}}</span>
 			</span>
 		</div>
 	</div>

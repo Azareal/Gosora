@@ -2,9 +2,9 @@
 	--header-border-color: hsl(0,0%,80%);
 	--element-border-color: hsl(0,0%,85%);
 	--element-background-color: white;
-	--replies-lang-string: "{{index .Phrases "topics_replies_suffix"}}";
-	--topics-lang-string: "{{index .Phrases "forums_topics_suffix"}}";
-	--likes-lang-string: "{{index .Phrases "topics_gap_likes_suffix"}}";
+	--replies-lang-string: "{{lang "topics_replies_suffix" . }}";
+	--topics-lang-string: "{{lang "forums.topics_suffix" . }}";
+	--likes-lang-string: "{{lang "topics_gap_likes_suffix" . }}";
 	--primary-link-color: hsl(0,0%,40%);
 	--primary-text-color: hsl(0,0%,20%);
 	--lightened-primary-text-color: hsl(0,0%,30%);
@@ -137,7 +137,7 @@ li {
 	left: -1px;
 }
 .alert_aftercounter:before {
-	content: "{{index .Phrases "menu_alerts"}}";
+	content: "{{lang "menu_alerts" . }}";
 	margin-left: 4px;
 }
 
@@ -401,7 +401,7 @@ h1, h3 {
     margin-right: 9px;
 }
 .topic_list_title_block .pre_opt:before {
-	content: "{{index .Phrases "topics_click_topics_to_select"}}";
+	content: "{{lang "topics_click_topics_to_select" . }}";
 	font-size: 14px;
 }
 .topic_list_title, .forum_title {
@@ -982,7 +982,7 @@ textarea {
 	content: "("
 }
 .topic_view_count:after {
-	content: "{{index .Phrases "topic.view_count_suffix"}})";
+	content: "{{lang "topic.view_count_suffix" . }})";
 }
 .postImage {
 	width: 100%;
@@ -1074,7 +1074,7 @@ textarea {
 	display: block;
 }
 .like_count:after {
-	content: "{{index .Phrases "topic.like_count_suffix"}}";
+	content: "{{lang "topic.like_count_suffix" . }}";
 	margin-right: 6px;
 }
 
@@ -1102,31 +1102,31 @@ textarea {
 }
 
 .add_like:before, .remove_like:before {
-	content: "{{index .Phrases "topic.plus_one"}}";
+	content: "{{lang "topic.plus_one" . }}";
 }
 .button_container .open_edit:after, .edit_item:after{
-	content: "{{index .Phrases "topic.edit_button_text"}}";
+	content: "{{lang "topic.edit_button_text" . }}";
 }
 .delete_item:after {
-	content: "{{index .Phrases "topic.delete_button_text"}}";
+	content: "{{lang "topic.delete_button_text" . }}";
 }
 .ip_item_button:after {
-	content: "{{index .Phrases "topic.ip_button_text"}}";
+	content: "{{lang "topic.ip_button_text" . }}";
 }
 .lock_item:after {
-	content: "{{index .Phrases "topic.lock_button_text"}}";
+	content: "{{lang "topic.lock_button_text" . }}";
 }
 .unlock_item:after {
-	content: "{{index .Phrases "topic.unlock_button_text"}}";
+	content: "{{lang "topic.unlock_button_text" . }}";
 }
 .pin_item:after {
-	content: "{{index .Phrases "topic.pin_button_text"}}";
+	content: "{{lang "topic.pin_button_text" . }}";
 }
 .unpin_item:after {
-	content: "{{index .Phrases "topic.unpin_button_text"}}";
+	content: "{{lang "topic.unpin_button_text" . }}";
 }
 .report_item:after {
-	content: "{{index .Phrases "topic.report_button_text"}}";
+	content: "{{lang "topic.report_button_text" .}}";
 }
 
 #ip_search_container .rowlist .rowitem {
@@ -1803,7 +1803,7 @@ textarea {
 		content: "";
 	}
 	.like_count:before {
-		content: "{{index .Phrases "topic.plus"}}";
+		content: "{{lang "topic.plus" . }}";
 		font-weight: normal;
 	}
 	.created_at {

@@ -16,9 +16,18 @@ import (
 	"github.com/Azareal/Gosora/common/templates"
 )
 
-var Ctemplates []string
+var Ctemplates []string // TODO: Use this to filter out top level templates we don't need
 var Templates = template.New("")
 var PrebuildTmplList []func(User, *Header) CTmpl
+
+func skipCTmpl(key string) bool {
+	for _, tmpl := range Ctemplates {
+		if strings.HasSuffix(key, "/"+tmpl+".html") {
+			return true
+		}
+	}
+	return false
+}
 
 type CTmpl struct {
 	Name       string
@@ -65,6 +74,8 @@ var Template_forum_handle = func(pi ForumPage, w io.Writer) error {
 	}
 	return Templates.ExecuteTemplate(w, mapping+".html", pi)
 }
+var Template_forum_guest_handle = Template_forum_handle
+var Template_forum_member_handle = Template_forum_handle
 
 // nolint
 var Template_forums_handle = func(pi ForumsPage, w io.Writer) error {
@@ -83,6 +94,8 @@ var Template_profile_handle = func(pi ProfilePage, w io.Writer) error {
 	}
 	return Templates.ExecuteTemplate(w, mapping+".html", pi)
 }
+var Template_profile_guest_handle = Template_profile_handle
+var Template_profile_member_handle = Template_profile_handle
 
 // nolint
 var Template_create_topic_handle = func(pi CreateTopicPage, w io.Writer) error {
@@ -245,7 +258,7 @@ func CompileTemplates() error {
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "User 526"
 	ppage := ProfilePage{header, replyList, user, 0, 0} // TODO: Use the score from user to generate the currentScore and nextScore
-	profileTmpl, err := compile("profile", "common.ProfilePage", ppage)
+	profileTmpl, err := compileByLoggedin("profile", "common.ProfilePage", ppage)
 	if err != nil {
 		return err
 	}
@@ -284,7 +297,7 @@ func CompileTemplates() error {
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	header.Title = "General Forum"
 	forumPage := ForumPage{header, topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
-	forumTmpl, err := compile("forum", "common.ForumPage", forumPage)
+	forumTmpl, err := compileByLoggedin("forum", "common.ForumPage", forumPage)
 	if err != nil {
 		return err
 	}
@@ -495,7 +508,21 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 			getterstr += "\treturn " + templateName + "_frags\n"
 		}
 		getterstr += "}\nreturn nil\n}\n"
-		out += "\n// nolint\nfunc init() {\n" + c.FragOut + "\n" + getterstr + "}\n"
+		out += "\n// nolint\nfunc init() {\n"
+		var bodyMap = make(map[string]string) //map[body]fragmentPrefix
+		for _, frag := range c.FragOut {
+			var fragmentPrefix string
+			front := frag.TmplName + "_frags[" + strconv.Itoa(frag.Index) + "]"
+			fp, ok := bodyMap[frag.Body]
+			if !ok {
+				fragmentPrefix = front + " = []byte(`" + frag.Body + "`)\n"
+				bodyMap[frag.Body] = front
+			} else {
+				fragmentPrefix = front + " = " + fp + "\n"
+			}
+			out += fragmentPrefix
+		}
+		out += "\n" + getterstr + "}\n"
 		err := writeFile(prefix+"template_list.go", out)
 		if err != nil {
 			log.Fatal(err)
@@ -573,12 +600,32 @@ func InitTemplates() error {
 		return template.HTML(phrases.GetTmplPhrase(phraseName))
 	}
 
+	// TODO: Implement this in the template generator too
+	fmap["langf"] = func(phraseNameInt interface{}, args ...interface{}) interface{} {
+		phraseName, ok := phraseNameInt.(string)
+		if !ok {
+			panic("phraseNameInt is not a string")
+		}
+		// TODO: Log non-existent phrases?
+		// TODO: Optimise TmplPhrasef so we don't use slow Sprintf there
+		return template.HTML(phrases.GetTmplPhrasef(phraseName, args...))
+	}
+
 	fmap["level"] = func(levelInt interface{}) interface{} {
 		level, ok := levelInt.(int)
 		if !ok {
 			panic("levelInt is not an integer")
 		}
 		return template.HTML(phrases.GetLevelPhrase(level))
+	}
+
+	fmap["abstime"] = func(timeInt interface{}) interface{} {
+		time, ok := timeInt.(time.Time)
+		if !ok {
+			panic("timeInt is not a time.Time")
+		}
+		//return time.String()
+		return time.Format("2006-01-02 15:04:05")
 	}
 
 	fmap["scope"] = func(name interface{}) interface{} {
@@ -606,6 +653,10 @@ func InitTemplates() error {
 	for index, path := range templateFiles {
 		path = strings.Replace(path, "\\", "/", -1)
 		log.Print("templateFile: ", path)
+		if skipCTmpl(path) {
+			log.Print("skipping")
+			continue
+		}
 		templateFileMap[path] = index
 	}
 
@@ -616,6 +667,10 @@ func InitTemplates() error {
 	for _, path := range overrideFiles {
 		path = strings.Replace(path, "\\", "/", -1)
 		log.Print("overrideFile: ", path)
+		if skipCTmpl(path) {
+			log.Print("skipping")
+			continue
+		}
 		index, ok := templateFileMap["templates/"+strings.TrimPrefix(path, "templates/overrides/")]
 		if !ok {
 			log.Print("not ok: templates/" + strings.TrimPrefix(path, "templates/overrides/"))

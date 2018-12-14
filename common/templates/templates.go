@@ -49,7 +49,7 @@ type CTemplateSet struct {
 	TemplateFragmentCount map[string]int
 	FragOnce              map[string]bool
 	fragmentCursor        map[string]int
-	FragOut               string
+	FragOut               []OutFrag
 	fragBuf               []Fragment
 	varList               map[string]VarItem
 	localVars             map[string]map[string]VarItemReflect
@@ -88,9 +88,11 @@ func NewCTemplateSet() *CTemplateSet {
 			"dock":     true,
 			"elapsed":  true,
 			"lang":     true,
-			"level":    true,
-			"scope":    true,
-			"dyntmpl":  true,
+			//"langf":true,
+			"level":   true,
+			"abstime": true,
+			"scope":   true,
+			"dyntmpl": true,
 		},
 	}
 }
@@ -122,6 +124,12 @@ type SkipBlock struct {
 type Skipper struct {
 	Count int
 	Index int
+}
+
+type OutFrag struct {
+	TmplName string
+	Index    int
+	Body     string
 }
 
 func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (stub string, gout string, mout string, err error) {
@@ -366,9 +374,8 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 	fout += "return nil\n}\n"
 
 	var writeFrag = func(tmplName string, index int, body string) {
-		fragmentPrefix := tmplName + "_frags[" + strconv.Itoa(index) + "]" + " = []byte(`" + body + "`)\n"
-		c.detail("writing ", fragmentPrefix)
-		c.FragOut += fragmentPrefix
+		//c.detail("writing ", fragmentPrefix)
+		c.FragOut = append(c.FragOut, OutFrag{tmplName, index, body})
 	}
 
 	for _, frag := range c.fragBuf {
@@ -925,6 +932,7 @@ ArgLoop:
 			notident = true
 			con.PushPhrase(len(c.langIndexToName) - 1)
 			break ArgLoop
+		// TODO: Implement langf
 		case "level":
 			// TODO: Implement level literals
 			leftOperand := node.Args[pos+1].String()
@@ -935,6 +943,17 @@ ArgLoop:
 			// TODO: Refactor this
 			litString("phrases.GetLevelPhrase("+leftParam+")", false)
 			c.importMap[langPkg] = langPkg
+			break ArgLoop
+		case "abstime":
+			// TODO: Implement level literals
+			leftOperand := node.Args[pos+1].String()
+			if len(leftOperand) == 0 {
+				panic("The leftoperand for function abstime cannot be left blank")
+			}
+			leftParam, _ := c.compileIfVarSub(con, leftOperand)
+			// TODO: Refactor this
+			litString(leftParam+".Format(\"2006-01-02 15:04:05\")", false)
+			c.importMap["time"] = "time"
 			break ArgLoop
 		case "scope":
 			literal = true
@@ -1255,6 +1274,19 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 	case reflect.Int64:
 		c.importMap["strconv"] = "strconv"
 		base = "[]byte(strconv.FormatInt(" + varname + ", 10))"
+	case reflect.Struct:
+		// TODO: Avoid clashing with other packages which have structs named Time
+		if val.Type().Name() == "Time" {
+			c.importMap["time"] = "time"
+			base = "[]byte(" + varname + ".String())"
+		} else {
+			if !val.IsValid() {
+				panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+			}
+			fmt.Println("Unknown Struct Name:", varname)
+			fmt.Println("Unknown Struct:", val.Type().Name())
+			panic("-- I don't know what this variable's type is o.o\n")
+		}
 	default:
 		if !val.IsValid() {
 			panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")

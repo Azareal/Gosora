@@ -44,6 +44,7 @@
 </div>
 
 <div id="profile_right_lane" class="colstack_right">
+	{{if .CurrentUser.Loggedin}}
 	{{if .CurrentUser.Perms.BanUsers}}
 	<!-- TODO: Inline the display: none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
@@ -80,6 +81,7 @@
 			</div>
 		</div>
 	</form>
+	{{end}}
 	{{end}}
 
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">

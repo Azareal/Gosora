@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/Azareal/Gosora/query_gen"
 )
@@ -55,10 +56,12 @@ func (store *SQLModLogStore) GlobalCount() (logCount int) {
 func buildLogList(rows *sql.Rows) (logs []LogItem, err error) {
 	for rows.Next() {
 		var log LogItem
-		err := rows.Scan(&log.Action, &log.ElementID, &log.ElementType, &log.IPAddress, &log.ActorID, &log.DoneAt)
+		var doneAt time.Time
+		err := rows.Scan(&log.Action, &log.ElementID, &log.ElementType, &log.IPAddress, &log.ActorID, &doneAt)
 		if err != nil {
 			return logs, err
 		}
+		log.DoneAt = doneAt.Format("2006-01-02 15:04:05")
 		logs = append(logs, log)
 	}
 	return logs, rows.Err()

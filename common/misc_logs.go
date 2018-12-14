@@ -1,7 +1,11 @@
 package common
 
-import "database/sql"
-import "github.com/Azareal/Gosora/query_gen"
+import (
+	"database/sql"
+	"time"
+
+	"github.com/Azareal/Gosora/query_gen"
+)
 
 var RegLogs RegLogStore
 
@@ -83,10 +87,12 @@ func (store *SQLRegLogStore) GetOffset(offset int, perPage int) (logs []RegLogIt
 
 	for rows.Next() {
 		var log RegLogItem
-		err := rows.Scan(&log.ID, &log.Username, &log.Email, &log.FailureReason, &log.Success, &log.IPAddress, &log.DoneAt)
+		var doneAt time.Time
+		err := rows.Scan(&log.ID, &log.Username, &log.Email, &log.FailureReason, &log.Success, &log.IPAddress, &doneAt)
 		if err != nil {
 			return logs, err
 		}
+		log.DoneAt = doneAt.Format("2006-01-02 15:04:05")
 		logs = append(logs, log)
 	}
 	return logs, rows.Err()

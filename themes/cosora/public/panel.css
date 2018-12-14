@@ -214,31 +214,31 @@
 	margin-right: 6px;
 }
 .perm_preset_no_access:before {
-	content: "{{index .Phrases "panel_perms_no_access" }}";
+	content: "{{lang "panel_perms_no_access" . }}";
 	color: hsl(0,100%,20%);
 }
 .perm_preset_read_only:before, .perm_preset_can_post:before {
 	color: hsl(120,100%,20%);
 }
 .perm_preset_read_only:before {
-	content: "{{index .Phrases "panel_perms_read_only" }}";
+	content: "{{lang "panel_perms_read_only" . }}";
 }
 .perm_preset_can_post:before {
-	content: "{{index .Phrases "panel_perms_can_post" }}";
+	content: "{{lang "panel_perms_can_post" . }}";
 }
 .perm_preset_can_moderate:before {
-	content: "{{index .Phrases "panel_perms_can_moderate" }}";
+	content: "{{lang "panel_perms_can_moderate" . }}";
 	color: hsl(240,100%,20%);
 }
 .perm_preset_quasi_mod:before {
-	content: "{{index .Phrases "panel_perms_quasi_mod" }}";
+	content: "{{lang "panel_perms_quasi_mod" . }}";
 }
 .perm_preset_custom:before {
-	content: "{{index .Phrases "panel_perms_custom" }}";
+	content: "{{lang "panel_perms_custom" . }}";
 	color: hsl(0,0%,20%);
 }
 .perm_preset_default:before {
-	content: "{{index .Phrases "panel_perms_default" }}";
+	content: "{{lang "panel_perms_default" . }}";
 }
 
 .panel_submitrow .rowitem {

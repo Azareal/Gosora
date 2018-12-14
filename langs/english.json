@@ -98,7 +98,6 @@
 		"register_username_too_long_prefix":"The username is too long, max: ",
 		"register_email_fail":"We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.",
 
-		"alerts_no_new_alerts":"No new alerts",
 		"alerts_no_actor":"Unable to find the actor",
 		"alerts_no_target_user":"Unable to find the target user",
 		"alerts_no_linked_topic":"Unable to find the linked topic",
@@ -356,7 +355,7 @@
 		"forum_locked":"Locked",
 		"topics_moderate":"Moderate",
 		"topics_replies_suffix":" replies",
-		"forums_topics_suffix":" topics",
+		"forums.topics_suffix":" topics",
 		"topics_gap_likes_suffix":" likes",
 		"topics_likes_suffix":"likes",
 		"topics_last":"Last",

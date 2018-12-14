@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"text/template"
 
@@ -50,6 +51,7 @@ type Theme struct {
 	RunOnDock     func(string) string           //(dock string) (sbody string)
 
 	// This variable should only be set and unset by the system, not the theme meta file
+	// TODO: Should we phase out Active and make the default theme store the primary source of truth?
 	Active bool
 }
 
@@ -95,6 +97,16 @@ func (theme *Theme) LoadStaticFiles() error {
 		}
 		return phrase
 	}
+	fmap["toArr"] = func(args ...interface{}) []interface{} {
+		return args
+	}
+	fmap["concat"] = func(args ...interface{}) interface{} {
+		var out string
+		for _, arg := range args {
+			out += arg.(string)
+		}
+		return out
+	}
 	theme.ResourceTemplates.Funcs(fmap)
 	template.Must(theme.ResourceTemplates.ParseGlob("./themes/" + theme.Name + "/public/*.css"))
 
@@ -128,6 +140,7 @@ func (theme *Theme) AddThemeStaticFiles() error {
 			// TODO: Prepare resource templates for each loaded langpack?
 			err = theme.ResourceTemplates.ExecuteTemplate(&b, filename, CSSData{Phrases: phraseMap})
 			if err != nil {
+				log.Print("Failed in adding static file '" + path + "' for default theme '" + theme.Name + "'")
 				return err
 			}
 			data = b.Bytes()
@@ -267,16 +280,16 @@ func (theme *Theme) MapTemplates() {
 
 func (theme *Theme) setActive(active bool) error {
 	var sink bool
-	err := themeStmts.isThemeDefault.QueryRow(theme.Name).Scan(&sink)
+	err := themeStmts.isDefault.QueryRow(theme.Name).Scan(&sink)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
 	hasTheme := err != sql.ErrNoRows
 	if hasTheme {
-		_, err = themeStmts.updateTheme.Exec(active, theme.Name)
+		_, err = themeStmts.update.Exec(active, theme.Name)
 	} else {
-		_, err = themeStmts.addTheme.Exec(theme.Name, active)
+		_, err = themeStmts.add.Exec(theme.Name, active)
 	}
 	if err != nil {
 		return err
@@ -330,4 +343,121 @@ func (theme Theme) BuildDock(dock string) (sbody string) {
 		return runOnDock(dock)
 	}
 	return ""
+}
+
+type GzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w GzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+// NEW method of doing theme templates to allow one user to have a different theme to another. Under construction.
+// TODO: Generate the type switch instead of writing it by hand
+// TODO: Cut the number of types in half
+func (theme *Theme) RunTmpl(template string, pi interface{}, w io.Writer) error {
+	// Unpack this to avoid an indirect call
+	gzw, ok := w.(GzipResponseWriter)
+	if ok {
+		w = gzw.Writer
+	}
+
+	var getTmpl = theme.GetTmpl(template)
+	switch tmplO := getTmpl.(type) {
+	case *func(CustomPagePage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(CustomPagePage), w)
+	case *func(TopicPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(TopicPage), w)
+	case *func(TopicListPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(TopicListPage), w)
+	case *func(ForumPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(ForumPage), w)
+	case *func(ForumsPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(ForumsPage), w)
+	case *func(ProfilePage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(ProfilePage), w)
+	case *func(CreateTopicPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(CreateTopicPage), w)
+	case *func(IPSearchPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(IPSearchPage), w)
+	case *func(AccountDashPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(AccountDashPage), w)
+	case *func(ErrorPage, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(ErrorPage), w)
+	case *func(Page, io.Writer) error:
+		var tmpl = *tmplO
+		return tmpl(pi.(Page), w)
+	case func(CustomPagePage, io.Writer) error:
+		return tmplO(pi.(CustomPagePage), w)
+	case func(TopicPage, io.Writer) error:
+		return tmplO(pi.(TopicPage), w)
+	case func(TopicListPage, io.Writer) error:
+		return tmplO(pi.(TopicListPage), w)
+	case func(ForumPage, io.Writer) error:
+		return tmplO(pi.(ForumPage), w)
+	case func(ForumsPage, io.Writer) error:
+		return tmplO(pi.(ForumsPage), w)
+	case func(ProfilePage, io.Writer) error:
+		return tmplO(pi.(ProfilePage), w)
+	case func(CreateTopicPage, io.Writer) error:
+		return tmplO(pi.(CreateTopicPage), w)
+	case func(IPSearchPage, io.Writer) error:
+		return tmplO(pi.(IPSearchPage), w)
+	case func(AccountDashPage, io.Writer) error:
+		return tmplO(pi.(AccountDashPage), w)
+	case func(ErrorPage, io.Writer) error:
+		return tmplO(pi.(ErrorPage), w)
+	case func(Page, io.Writer) error:
+		return tmplO(pi.(Page), w)
+	case nil, string:
+		mapping, ok := theme.TemplatesMap[template]
+		if !ok {
+			mapping = template
+		}
+		return Templates.ExecuteTemplate(w, mapping+".html", pi)
+	default:
+		log.Print("theme ", theme)
+		log.Print("template ", template)
+		log.Print("pi ", pi)
+		log.Print("tmplO ", tmplO)
+		log.Print("getTmpl ", getTmpl)
+
+		valueOf := reflect.ValueOf(tmplO)
+		log.Print("initial valueOf.Type()", valueOf.Type())
+		for valueOf.Kind() == reflect.Interface || valueOf.Kind() == reflect.Ptr {
+			valueOf = valueOf.Elem()
+			log.Print("valueOf.Elem().Type() ", valueOf.Type())
+		}
+		log.Print("deferenced valueOf.Type() ", valueOf.Type())
+		log.Print("valueOf.Kind() ", valueOf.Kind())
+
+		return errors.New("Unknown template type")
+	}
+}
+
+// GetTmpl attempts to get the template for a specific theme, otherwise it falls back on the default template pointer, which if absent will fallback onto the template interpreter
+func (theme *Theme) GetTmpl(template string) interface{} {
+	// TODO: Figure out why we're getting a nil pointer here when transpiled templates are disabled, I would have assumed that we would just fall back to !ok on this
+	// Might have something to do with it being the theme's TmplPtr map, investigate.
+	tmpl, ok := theme.TmplPtr[template]
+	if ok {
+		return tmpl
+	}
+	tmpl, ok = TmplPtrMap[template]
+	if ok {
+		return tmpl
+	}
+	return template
 }

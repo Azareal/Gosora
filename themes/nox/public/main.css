@@ -777,27 +777,13 @@ input[type=checkbox]:checked + label .sel {
 .button_container .open_edit:after, .edit_item:after {
 	content: "{{lang "topic.edit_button_text" . }}";
 }
-.delete_item:after {
-	content: "{{lang "topic.delete_button_text" . }}";
-}
 .ip_item_button:after {
 	content: "{{lang "topic.ip_button_text" . }}";
-}
-.lock_item:after {
-	content: "{{lang "topic.lock_button_text" . }}";
-}
-.unlock_item:after {
-	content: "{{lang "topic.unlock_button_text" . }}";
-}
-.pin_item:after {
-	content: "{{lang "topic.pin_button_text" . }}";
-}
-.unpin_item:after {
-	content: "{{lang "topic.unpin_button_text" . }}";
-}
-.report_item:after {
-	content: "{{lang "topic.report_button_text" . }}";
-}
+}{{$p := .}}
+{{range (toArr "delete" "lock" "unlock" "pin" "unpin" "report")}}
+.{{.}}_item:after {
+	content: "{{lang (concat "topic." . "_button_text") ($p) }}";
+}{{end}}
 .like_count:after {
 	content: "{{lang "topic.like_count_suffix" . }}";
 }

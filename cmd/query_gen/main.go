@@ -241,13 +241,14 @@ func seedTables(adapter qgen.Adapter) error {
 	return nil
 }
 
-func copyInsertMap(in map[string]interface{}) (out map[string]interface{}) {
+// ? - What is this for?
+/*func copyInsertMap(in map[string]interface{}) (out map[string]interface{}) {
 	out = make(map[string]interface{})
 	for col, value := range in {
 		out[col] = value
 	}
 	return out
-}
+}*/
 
 type LitStr string
 

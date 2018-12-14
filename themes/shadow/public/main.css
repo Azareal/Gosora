@@ -100,7 +100,7 @@ li {
 	font-size: 14px;
 }
 .alert_aftercounter:before {
-	content: "{{index .Phrases "menu_alerts"}}";
+	content: "{{lang "menu_alerts" . }}";
 }
 
 .menu_alerts .alertList, .hide_on_big, .show_on_mobile {
@@ -290,54 +290,30 @@ a {
 }
 
 .like_label:before {
-	content: "{{index .Phrases "topic.plus_one"}}";
-}
-.edit_label:before {
-	content: "{{index .Phrases "topic.edit_button_text"}}";
-}
-.trash_label:before {
-	content: "{{index .Phrases "topic.delete_button_text"}}";
-}
-.pin_label:before {
-	content: "{{index .Phrases "topic.pin_button_text"}}";
-}
-.lock_label:before {
-	content: "{{index .Phrases "topic.lock_button_text"}}";
-}
-.unlock_label:before {
-	content: "{{index .Phrases "topic.unlock_button_text"}}";
-}
-.unpin_label:before {
-	content: "{{index .Phrases "topic.unpin_button_text"}}";
-}
-.ip_label:before {
-	content: "{{index .Phrases "topic.ip_button_text"}}";
-}
-.flag_label:before {
-	content: "{{index .Phrases "topic.flag_button_text"}}";
-}
+	content: "{{lang "topic.plus_one" . }}";
+}{{$out := .}}
+{{range (toArr "edit" "delete" "pin" "lock" "unlock" "unpin" "ip" "flag")}}
+.{{.}}_label:before {
+	content: "{{lang (concat "topic." . "_button_text") ($out) }}";
+}{{end}}
 
 .like_count_label, .like_count {
 	display: none;
 }
 .like_count_label:before {
-	content: "{{index .Phrases "topics_likes_suffix"}}";
+	content: "{{lang "topics_likes_suffix" . }}";
 }
-.has_likes .like_count_label {
+.has_likes .like_count_label, .has_likes .like_count {
 	font-size: 12px;
 	display: block;
 	float: left;
 	line-height: 19px;
 }
 .has_likes .like_count {
-	font-size: 12px;
-	display: block;
-	float: left;
-	line-height: 19px;
 	margin-right: 2px;
 }
 .like_count:before {
-	content: "{{index .Phrases "pipe"}}";
+	content: "{{lang "pipe" . }}";
 	margin-right: 5px;
 }
 
@@ -695,21 +671,21 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 }
 
 .topic_list_title_block .pre_opt:before {
-	content: "{{index .Phrases "topics_click_topics_to_select"}}";
+	content: "{{lang "topics_click_topics_to_select" . }}";
 	font-size: 14px;
 }
 .create_topic_opt a:before {
-	content: "{{index .Phrases "topics_new_topic"}}";
+	content: "{{lang "topics_new_topic" . }}";
 	margin-left: 3px;
 }
 .locked_opt a:before {
-	content: "{{index .Phrases "forum_locked"}}";
+	content: "{{lang "forum_locked" . }}";
 }
 .mod_opt a {
 	margin-left: 4px;
 }
 .mod_opt a:after {
-	content: "{{index .Phrases "topics_moderate"}}";
+	content: "{{lang "topics_moderate" . }}";
 	padding-left: 1px;
 }
 .create_topic_opt {
@@ -835,10 +811,10 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	white-space: nowrap;
 }
 .topic_list .lastReplyAt:before {
-	content: "{{index .Phrases "topics_last"}}: ";
+	content: "{{lang "topics_last" . }}: ";
 }
 .topic_list .starter:before {
-	content: "{{index .Phrases "topics_starter"}}: ";
+	content: "{{lang "topics_starter" . }}: ";
 }
 .topic_middle {
 	display: none;
@@ -906,7 +882,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	font-weight: normal;
 }
 #profile_left_pane .report_item:after {
-	content: "{{index .Phrases "topic.report_button_text"}}";
+	content: "{{lang "topic.report_button_text" . }}";
 }
 #profile_left_lane .profileName {
 	font-size: 18px;

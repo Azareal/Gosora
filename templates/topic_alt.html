@@ -95,7 +95,7 @@
 				</div>
 				<div class="action_button_right">
 					<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.like_count_aria"}}">{{.Topic.LikeCount}}</a>
-					<a class="action_button created_at hide_on_mobile">{{.Topic.RelativeCreatedAt}}</a>
+					<a class="action_button created_at hide_on_mobile" title="{{abstime .Topic.CreatedAt}}">{{.Topic.RelativeCreatedAt}}</a>
 					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IPAddress}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.Topic.IPAddress}}</a>{{end}}
 				</div>
 			</div>

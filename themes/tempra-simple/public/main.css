@@ -469,10 +469,10 @@ input, select {
 	white-space: nowrap;
 }
 .topic_list .lastReplyAt:before {
-	content: "{{index .Phrases "topics_last"}}: ";
+	content: "{{lang "topics_last" . }}: ";
 }
 .topic_list .starter:before {
-	content: "{{index .Phrases "topics_starter"}}: ";
+	content: "{{lang "topics_starter" . }}: ";
 }
 
 @supports not (display: grid) {
@@ -682,7 +682,7 @@ button.username {
 .edit_label:before {
 	content: "🖊️";
 }
-.trash_label:before {
+.delete_label:before {
 	content: "🗑️";
 }
 .pin_label:before, .unpin_label:before {
@@ -802,22 +802,20 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	display: none;
 }
 
-.alert {
+/* TODO: Can we just set .alert on the alert_success and .alert_error ones? */
+.alert, .alert_success, .alert_error {
 	display: block;
 	padding: 5px;
 	margin-bottom: 10px;
+}
+.alert {
 	border: 1px solid hsl(0, 0%, 80%);
 }
 .alert_success {
-	display: block;
-	padding: 5px;
-	border: 1px solid A2FC00;
-	margin-bottom: 10px;
-	background-color: DAF7A6;
+	border: 1px solid #A2FC00;
+	background-color: #DAF7A6;
 }
 .alert_error {
-	display: block;
-	padding: 5px;
 	border: 1px solid #FF004B;
 	margin-bottom: 8px;
 	background-color: #FEB7CC;
@@ -920,7 +918,7 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	font-size: 18px;
 }
 #profile_left_lane .report_item:after {
-	content: "{{index .Phrases "topic.report_button_text"}}";
+	content: "{{lang "topic.report_button_text" . }}";
 }
 #profile_right_lane {
 	width: calc(100% - 245px);
