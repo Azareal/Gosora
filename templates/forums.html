@@ -19,7 +19,7 @@
 			{{if .LastReplyer.MicroAvatar}}<img class="extra_little_row_avatar" src="{{.LastReplyer.MicroAvatar}}" height=64 width=64 alt="{{.LastReplyer.Name}}'s Avatar" title="{{.LastReplyer.Name}}'s Avatar" />{{end}}
 			<span>
 				<a {{if .LastTopic.Link}}href="{{.LastTopic.Link}}"{{else}}class="forum_no_poster"{{end}}>{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}{{lang "forums_none"}}{{end}}</a>
-				{{if .LastTopicTime}}<br /><span class="rowsmall">{{.LastTopicTime}}</span>{{end}}
+				{{if .LastTopicTime}}<br /><span class="rowsmall" title="{{abstime .LastTopic.LastReplyAt}}">{{.LastTopicTime}}</span>{{end}}
 			</span>
 		</span>
 		<div style="clear: both;"></div>

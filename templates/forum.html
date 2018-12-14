@@ -58,9 +58,7 @@
 				</div>
 			</div>
 			<div class="formrow poll_content_row auto_hide">
-				<div class="formitem">
-					Poll stuff
-				</div>
+				<div class="formitem">Poll stuff</div>
 			</div>
 			<div class="formrow quick_button_row">
 				<div class="formitem">
@@ -107,7 +105,7 @@
 				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height="64" alt="{{.LastUser.Name}}'s Avatar" title="{{.LastUser.Name}}'s Avatar" /></a>
 				<span>
 					<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
-					<span class="rowsmall lastReplyAt">{{.RelativeLastReplyAt}}</span>
+					<span class="rowsmall lastReplyAt" title="{{abstime .LastReplyAt}}">{{.RelativeLastReplyAt}}</span>
 				</span>
 			</div>
 		</div>
