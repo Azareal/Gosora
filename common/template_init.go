@@ -509,18 +509,29 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 		}
 		getterstr += "}\nreturn nil\n}\n"
 		out += "\n// nolint\nfunc init() {\n"
-		var bodyMap = make(map[string]string) //map[body]fragmentPrefix
+		//var bodyMap = make(map[string]string) //map[body]fragmentPrefix
+		var tmpCount = 0
 		for _, frag := range c.FragOut {
-			var fragmentPrefix string
 			front := frag.TmplName + "_frags[" + strconv.Itoa(frag.Index) + "]"
-			fp, ok := bodyMap[frag.Body]
+			/*fp, ok := bodyMap[frag.Body]
 			if !ok {
-				fragmentPrefix = front + " = []byte(`" + frag.Body + "`)\n"
-				bodyMap[frag.Body] = front
-			} else {
-				fragmentPrefix = front + " = " + fp + "\n"
+				bodyMap[frag.Body] = front*/
+			var bits string
+			for _, char := range []byte(frag.Body) {
+				if char == '\'' {
+					bits += "'\\" + string(char) + "',"
+				} else {
+					bits += "'" + string(char) + "',"
+				}
 			}
-			out += fragmentPrefix
+			tmpStr := strconv.Itoa(tmpCount)
+			out += "arr_" + tmpStr + " := [...]byte{" + bits + "}\n"
+			out += front + " = arr_" + tmpStr + "[:]\n"
+			tmpCount++
+			//out += front + " = []byte(`" + frag.Body + "`)\n"
+			/*} else {
+				out += front + " = " + fp + "\n"
+			}*/
 		}
 		out += "\n" + getterstr + "}\n"
 		err := writeFile(prefix+"template_list.go", out)

@@ -425,6 +425,15 @@ func (c *CTemplateSet) rootIterate(tree *parse.Tree, con CContext) {
 	c.retCall("rootIterate")
 }
 
+var inSlice = func(haystack []string, expr string) bool {
+	for _, needle := range haystack {
+		if needle == expr {
+			return true
+		}
+	}
+	return false
+}
+
 func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 	c.dumpCall("compileSwitch", con, node)
 	defer c.retCall("compileSwitch")
@@ -451,14 +460,6 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 		c.detail("Expression:", expr)
 		// Simple member / guest optimisation for now
 		// TODO: Expand upon this
-		var inSlice = func(haystack []string, expr string) bool {
-			for _, needle := range haystack {
-				if needle == expr {
-					return true
-				}
-			}
-			return false
-		}
 		var userExprs = []string{
 			con.RootHolder + ".CurrentUser.Loggedin",
 			con.RootHolder + ".CurrentUser.IsSuperMod",
@@ -861,7 +862,7 @@ func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode)
 	c.dumpCall("compileIdentSwitch", con, node)
 	var litString = func(inner string, bytes bool) {
 		if !bytes {
-			inner = "[]byte(" + inner + ")"
+			inner = "StringToBytes(" + inner + ")"
 		}
 		out = "w.Write(" + inner + ")\n"
 		literal = true
@@ -1219,7 +1220,7 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 
 	// Is this a literal string?
 	if len(varname) != 0 && varname[0] == '"' {
-		con.Push("lvarsub", onEnd(assLines+"w.Write([]byte("+varname+"))\n"))
+		con.Push("lvarsub", onEnd(assLines+"w.Write(StringToBytes("+varname+"))\n"))
 		return
 	}
 	for _, varItem := range c.varList {
@@ -1250,9 +1251,44 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 	switch val.Kind() {
 	case reflect.Int:
 		c.importMap["strconv"] = "strconv"
-		base = "[]byte(strconv.Itoa(" + varname + "))"
+		base = "StringToBytes(strconv.Itoa(" + varname + "))"
 	case reflect.Bool:
-		// TODO: Take c.guestOnly / c.memberOnly into account
+		// TODO: Take c.memberOnly into account
+		// TODO: Make this a template fragment so more optimisations can be applied to this
+		// TODO: De-duplicate this logic
+		var userExprs = []string{
+			con.RootHolder + ".CurrentUser.Loggedin",
+			con.RootHolder + ".CurrentUser.IsSuperMod",
+			con.RootHolder + ".CurrentUser.IsAdmin",
+		}
+		var negUserExprs = []string{
+			"!" + con.RootHolder + ".CurrentUser.Loggedin",
+			"!" + con.RootHolder + ".CurrentUser.IsSuperMod",
+			"!" + con.RootHolder + ".CurrentUser.IsAdmin",
+		}
+		if c.guestOnly {
+			c.detail("optimising away member branch")
+			if inSlice(userExprs, varname) {
+				c.detail("positive conditional:", varname)
+				con.Push("varsub", "[]byte(\"false\")")
+				return
+			} else if inSlice(negUserExprs, varname) {
+				c.detail("negative conditional:", varname)
+				con.Push("varsub", "[]byte(\"true\")")
+				return
+			}
+		} else if c.memberOnly {
+			c.detail("optimising away guest branch")
+			if (con.RootHolder + ".CurrentUser.Loggedin") == varname {
+				c.detail("positive conditional:", varname)
+				con.Push("varsub", "[]byte(\"true\")")
+				return
+			} else if ("!" + con.RootHolder + ".CurrentUser.Loggedin") == varname {
+				c.detail("negative conditional:", varname)
+				con.Push("varsub", "[]byte(\"false\")")
+				return
+			}
+		}
 		con.Push("startif", "if "+varname+" {\n")
 		con.Push("varsub", "[]byte(\"true\")")
 		con.Push("endif", "} ")
@@ -1264,19 +1300,19 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		if val.Type().Name() != "string" && !strings.HasPrefix(varname, "string(") {
 			varname = "string(" + varname + ")"
 		}
-		base = "[]byte(" + varname + ")"
+		base = "StringToBytes(" + varname + ")"
 		// We don't to waste time on this conversion / w.Write call when guests don't have sessions
 		// TODO: Implement this properly
-		if c.guestOnly && base == "[]byte("+con.RootHolder+".CurrentUser.Session))" {
+		if c.guestOnly && base == "StringToBytes("+con.RootHolder+".CurrentUser.Session))" {
 			return
 		}
 	case reflect.Int64:
 		c.importMap["strconv"] = "strconv"
-		base = "[]byte(strconv.FormatInt(" + varname + ", 10))"
+		base = "StringToBytes(strconv.FormatInt(" + varname + ", 10))"
 	case reflect.Struct:
 		// TODO: Avoid clashing with other packages which have structs named Time
 		if val.Type().Name() == "Time" {
-			base = "[]byte(" + varname + ".String())"
+			base = "StringToBytes(" + varname + ".String())"
 		} else {
 			if !val.IsValid() {
 				panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")

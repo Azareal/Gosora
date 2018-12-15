@@ -288,9 +288,15 @@ func BenchmarkTopicGuestRouteParallelWithRouter(b *testing.B) {
 	obRoute(b, "/topic/hm."+benchTid)
 }
 
+func BenchmarkTopicGuestRouteParallelWithRouterAlt(b *testing.B) {
+	obRoute(b, "/topic/hm."+benchTid)
+}
+
 func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
 	obRoute(b, "/garble/haa")
 }
+
+// TODO: Alternate between member and guest to bust some CPU caches?
 
 func binit(b *testing.B) {
 	b.ReportAllocs()
