@@ -1,4 +1,5 @@
 {{template "header.html" . }}
+<link rel="canonical" href="//{{.Site.URL}}/topics/{{if eq .Sort.SortBy "mostviewed"}}most-viewed/{{end}}{{if gt .Page 1}}?page={{.Page}}{{end}}" />
 <main id="topicsItemList" itemscope itemtype="http://schema.org/ItemList">
 
 <div class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
