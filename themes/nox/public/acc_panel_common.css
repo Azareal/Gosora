@@ -39,6 +39,10 @@
 	margin-bottom: 4px;
 }
 
+.to_right {
+	margin-left: auto;
+}
+
 @media (max-width: 420px) {
 	.colstack {
 		display: block;

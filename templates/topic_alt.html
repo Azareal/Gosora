@@ -103,6 +103,9 @@
 	</article>
 	{{template "topic_alt_posts.html" . }}
 </div>
+{{if gt .LastPage 1}}
+{{template "paginator.html" . }}
+{{end}}
 
 {{if .CurrentUser.Loggedin}}
 {{if .CurrentUser.Perms.CreateReply}}

@@ -8,6 +8,7 @@ import (
 )
 
 var RegLogs RegLogStore
+var LoginLogs LoginLogStore
 
 type RegLogItem struct {
 	ID            int
@@ -89,6 +90,93 @@ func (store *SQLRegLogStore) GetOffset(offset int, perPage int) (logs []RegLogIt
 		var log RegLogItem
 		var doneAt time.Time
 		err := rows.Scan(&log.ID, &log.Username, &log.Email, &log.FailureReason, &log.Success, &log.IPAddress, &doneAt)
+		if err != nil {
+			return logs, err
+		}
+		log.DoneAt = doneAt.Format("2006-01-02 15:04:05")
+		logs = append(logs, log)
+	}
+	return logs, rows.Err()
+}
+
+type LoginLogItem struct {
+	ID        int
+	UID       int
+	Success   bool
+	IPAddress string
+	DoneAt    string
+}
+
+type LoginLogStmts struct {
+	update *sql.Stmt
+	create *sql.Stmt
+}
+
+var loginLogStmts LoginLogStmts
+
+func init() {
+	DbInits.Add(func(acc *qgen.Accumulator) error {
+		loginLogStmts = LoginLogStmts{
+			update: acc.Update("login_logs").Set("uid = ?, success = ?").Where("lid = ?").Prepare(),
+			create: acc.Insert("login_logs").Columns("uid, success, ipaddress, doneAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
+		}
+		return acc.FirstError()
+	})
+}
+
+// TODO: Reload this item in the store, probably doesn't matter right now, but it might when we start caching this stuff in memory
+// ! Retroactive updates of date are not permitted for integrity reasons
+func (log *LoginLogItem) Commit() error {
+	_, err := loginLogStmts.update.Exec(log.UID, log.Success, log.ID)
+	return err
+}
+
+func (log *LoginLogItem) Create() (id int, err error) {
+	res, err := loginLogStmts.create.Exec(log.UID, log.Success, log.IPAddress)
+	if err != nil {
+		return 0, err
+	}
+	id64, err := res.LastInsertId()
+	log.ID = int(id64)
+	return log.ID, err
+}
+
+type LoginLogStore interface {
+	GlobalCount() (logCount int)
+	GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error)
+}
+
+type SQLLoginLogStore struct {
+	count           *sql.Stmt
+	getOffsetByUser *sql.Stmt
+}
+
+func NewLoginLogStore(acc *qgen.Accumulator) (*SQLLoginLogStore, error) {
+	return &SQLLoginLogStore{
+		count:           acc.Count("login_logs").Prepare(),
+		getOffsetByUser: acc.Select("login_logs").Columns("lid, success, ipaddress, doneAt").Where("uid = ?").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+	}, acc.FirstError()
+}
+
+func (store *SQLLoginLogStore) GlobalCount() (logCount int) {
+	err := store.count.QueryRow().Scan(&logCount)
+	if err != nil {
+		LogError(err)
+	}
+	return logCount
+}
+
+func (store *SQLLoginLogStore) GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error) {
+	rows, err := store.getOffsetByUser.Query(uid, offset, perPage)
+	if err != nil {
+		return logs, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var log = LoginLogItem{UID: uid}
+		var doneAt time.Time
+		err := rows.Scan(&log.ID, &log.Success, &log.IPAddress, &doneAt)
 		if err != nil {
 			return logs, err
 		}

@@ -104,8 +104,7 @@ type TopicPage struct {
 	Topic    TopicUser
 	Forum    *Forum
 	Poll     Poll
-	Page     int
-	LastPage int
+	Paginator
 }
 
 type TopicListSort struct {
@@ -154,16 +153,26 @@ type IPSearchPage struct {
 	IP       string
 }
 
+type Account struct {
+	*Header
+	HTMLID   string
+	TmplName string
+	Inner    nobreak
+}
+
 type EmailListPage struct {
 	*Header
-	ItemList  []Email
-	Something interface{}
+	ItemList []Email
+}
+
+type AccountLoginsPage struct {
+	*Header
+	ItemList []LoginLogItem
+	Paginator
 }
 
 type AccountDashPage struct {
 	*Header
-	HTMLID       string
-	TmplName     string
 	MFASetup     bool
 	CurrentScore int
 	NextScore    int

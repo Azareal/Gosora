@@ -390,9 +390,9 @@ func (theme *Theme) RunTmpl(template string, pi interface{}, w io.Writer) error 
 	case *func(IPSearchPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(IPSearchPage), w)
-	case *func(AccountDashPage, io.Writer) error:
+	case *func(Account, io.Writer) error:
 		var tmpl = *tmplO
-		return tmpl(pi.(AccountDashPage), w)
+		return tmpl(pi.(Account), w)
 	case *func(ErrorPage, io.Writer) error:
 		var tmpl = *tmplO
 		return tmpl(pi.(ErrorPage), w)
@@ -415,8 +415,8 @@ func (theme *Theme) RunTmpl(template string, pi interface{}, w io.Writer) error 
 		return tmplO(pi.(CreateTopicPage), w)
 	case func(IPSearchPage, io.Writer) error:
 		return tmplO(pi.(IPSearchPage), w)
-	case func(AccountDashPage, io.Writer) error:
-		return tmplO(pi.(AccountDashPage), w)
+	case func(Account, io.Writer) error:
+		return tmplO(pi.(Account), w)
 	case func(ErrorPage, io.Writer) error:
 		return tmplO(pi.(ErrorPage), w)
 	case func(Page, io.Writer) error:

@@ -42,14 +42,31 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user common.User
 	username := common.SanitiseSingleLine(r.PostFormValue("username"))
 	uid, err, requiresExtraAuth := common.Auth.Authenticate(username, r.PostFormValue("password"))
 	if err != nil {
+		{
+			// TODO: uid is currently set to 0 as authenticate fetches the user by username and password. Get the actual uid, so we can alert the user of attempted logins? What if someone takes advantage of the response times to deduce if an account exists?
+			logItem := &common.LoginLogItem{UID: uid, Success: false, IPAddress: user.LastIP}
+			_, err := logItem.Create()
+			if err != nil {
+				return common.InternalError(err, w, r)
+			}
+		}
 		return common.LocalError(err.Error(), w, r, user)
 	}
+
+	// TODO: Take 2FA into account
+	logItem := &common.LoginLogItem{UID: uid, Success: true, IPAddress: user.LastIP}
+	_, err = logItem.Create()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
 	// TODO: Do we want to slacken this by only doing it when the IP changes?
 	if requiresExtraAuth {
 		provSession, signedSession, err := common.Auth.CreateProvisionalSession(uid)
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
+		// TODO: Use the login log ID in the provisional cookie?
 		common.Auth.SetProvisionalCookies(w, uid, provSession, signedSession)
 		http.Redirect(w, r, "/accounts/mfa_verify/", http.StatusSeeOther)
 		return nil
@@ -365,7 +382,7 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User, heade
 	nextScore := common.GetLevelScore(user.Level+1) - prevScore
 	perc := int(math.Ceil((float64(nextScore) / float64(currentScore)) * 100))
 
-	pi := common.AccountDashPage{header, "dashboard", "account_own_edit", mfaSetup, currentScore, nextScore, user.Level + 1, perc * 2}
+	pi := common.Account{header, "dashboard", "account_own_edit", common.AccountDashPage{header, mfaSetup, currentScore, nextScore, user.Level + 1, perc * 2}}
 	return renderTemplate("account", w, r, header, pi)
 }
 
@@ -526,14 +543,7 @@ func AccountEditMFA(w http.ResponseWriter, r *http.Request, user common.User, he
 	}
 
 	pi := common.Page{header, tList, mfaItem.Scratch}
-	if common.RunPreRenderHook("pre_render_account_own_edit_mfa", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "account_own_edit_mfa.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("account_own_edit_mfa", w, r, header, pi)
 }
 
 // If not setup, generate a string, otherwise give an option to disable mfa given the right code
@@ -555,14 +565,7 @@ func AccountEditMFASetup(w http.ResponseWriter, r *http.Request, user common.Use
 	}
 
 	pi := common.Page{header, tList, common.FriendlyGAuthSecret(code)}
-	if common.RunPreRenderHook("pre_render_account_own_edit_mfa_setup", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "account_own_edit_mfa_setup.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("account_own_edit_mfa_setup", w, r, header, pi)
 }
 
 // Form should bounce the random mfa secret back and the otp to be verified server-side to reduce the chances of a bug arising on the JS side which makes every code mismatch
@@ -650,8 +653,8 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user common.User, 
 		header.AddNotice("account_mail_verify_success")
 	}
 
-	pi := common.EmailListPage{header, emails, nil}
-	return renderTemplate("account_own_edit_email", w, r, header, pi)
+	pi := common.Account{header, "edit_emails", "account_own_edit_email", common.EmailListPage{header, emails}}
+	return renderTemplate("account", w, r, header, pi)
 }
 
 // TODO: Should we make this an AnonAction so someone can do this without being logged in?
@@ -697,6 +700,24 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user co
 	}
 	http.Redirect(w, r, "/user/edit/email/?verified=1", http.StatusSeeOther)
 	return nil
+}
+
+func AccountLogins(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	accountEditHead("account_logins", w, r, &user, header)
+
+	logCount := common.LoginLogs.GlobalCount()
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	perPage := 12
+	offset, page, lastPage := common.PageOffset(logCount, page, perPage)
+
+	logs, err := common.LoginLogs.GetOffset(user.ID, offset, perPage)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	pageList := common.Paginate(logCount, perPage, 5)
+	pi := common.Account{header, "logins", "account_logins", common.AccountLoginsPage{header, logs, common.Paginator{pageList, page, lastPage}}}
+	return renderTemplate("account", w, r, header, pi)
 }
 
 func LevelList(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {

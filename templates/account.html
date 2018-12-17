@@ -1,6 +1,6 @@
 {{template "header.html" . }}
 <div id="account_{{.HTMLID}}" class="colstack account">
 	{{template "account_menu.html" . }}
-	<main class="colstack_right">{{dyntmpl .TmplName . .Header}}</main>
+	<main class="colstack_right">{{dyntmpl .TmplName .Inner .Header}}</main>
 </div>
 {{template "footer.html" . }}

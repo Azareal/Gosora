@@ -1,22 +1,15 @@
-{{template "header.html" . }}
-<div id="account_edit_emails" class="colstack account">
-	{{template "account_menu.html" . }}
-	<main class="colstack_right">
-		<div class="colstack_item colstack_head rowhead">
-			<div class="rowitem"><h1>{{lang "account_email_head"}}</h1></div>
-		</div>
-		<div class="colstack_item rowlist">
-			<!-- TODO: Do we need this inline CSS? -->
-			{{range .ItemList}}
-			<div class="rowitem" style="font-weight: normal;">
-				<a style="text-transform: none;">{{.Email}}</a>
-				<span style="float: right" class="to_right">
-					<span class="username">{{if .Primary}}{{lang "account_email_primary"}}{{else}}{{lang "account_email_secondary"}}{{end}}</span>
-					{{if .Validated}}<span class="username" style="color: green;">{{lang "account_email_verified"}}</span>{{else}}<a class="username" style="color: crimson;">{{lang "account_email_resend_email"}}</a>{{end}}
-				</span>
-			</div>
-			{{end}}
-		</div>
-	</main>
+<div class="colstack_item colstack_head rowhead">
+	<div class="rowitem"><h1>{{lang "account_email_head"}}</h1></div>
 </div>
-{{template "footer.html" . }}
+<div class="colstack_item rowlist">
+	<!-- TODO: Do we need this inline CSS? -->
+	{{range .ItemList}}
+	<div class="rowitem">
+		<a>{{.Email}}</a>
+		<span class="to_right">
+			<span class="username">{{if .Primary}}{{lang "account_email_primary"}}{{else}}{{lang "account_email_secondary"}}{{end}}</span>
+			{{if .Validated}}<span class="username validated_email">{{lang "account_email_verified"}}</span>{{else}}<a class="username invalid_email">{{lang "account_email_resend_email"}}</a>{{end}}
+		</span>
+	</div>
+	{{end}}
+</div>

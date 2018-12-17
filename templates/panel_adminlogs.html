@@ -10,7 +10,7 @@
 			<div class="rowitem panel_compactrow">
 				<span style="float: left;">
 					<span>{{.Action}}</span>
-					{{if $.CurrentUser.Perms.ViewIPs}}<br /><small style="margin-left: 2px;font-size: 12px;">{{.IPAddress}}</small>{{end}}
+					{{if $.CurrentUser.Perms.ViewIPs}}<br /><small style="margin-left: 2px;font-size: 12px;" title="{{.IPAddress}}">{{.IPAddress}}</small>{{end}}
 				</span>
 				<span class="to_right">
 					<span style="font-size: 14px;" title="{{.DoneAt}}">{{.DoneAt}}</span>

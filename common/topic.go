@@ -102,6 +102,7 @@ type TopicsRow struct {
 	ViewCount           int64
 	PostCount           int
 	LikeCount           int
+	LastPage            int
 	ClassName           string
 	Data                string // Used for report metadata
 

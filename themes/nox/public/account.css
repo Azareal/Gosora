@@ -98,3 +98,13 @@
 #dash_right .rowitem:not(:last-child) {
 	margin-bottom: 8px;
 }
+
+.rowlist .rowitem {
+	display: flex;
+}
+.validated_email {
+	color: rgb(0, 170, 0);
+}
+.invalid_email {
+	color: crimson;
+}

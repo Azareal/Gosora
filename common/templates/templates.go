@@ -520,19 +520,23 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 	case *parse.TemplateNode:
 		c.compileSubTemplate(con, node)
 	case *parse.TextNode:
-		tmpText := bytes.TrimSpace(node.Text)
-		if len(tmpText) == 0 {
-			return
-		}
-		nodeText := string(node.Text)
-		fragIndex := c.fragmentCursor[con.TemplateName]
-		_, ok := c.FragOnce[con.TemplateName]
-		c.fragBuf = append(c.fragBuf, Fragment{nodeText, con.TemplateName, fragIndex, ok})
-		con.PushText(strconv.Itoa(fragIndex), fragIndex, len(c.fragBuf)-1)
-		c.fragmentCursor[con.TemplateName] = fragIndex + 1
+		c.addText(con, node.Text)
 	default:
 		c.unknownNode(node)
 	}
+}
+
+func (c *CTemplateSet) addText(con CContext, text []byte) {
+	tmpText := bytes.TrimSpace(text)
+	if len(tmpText) == 0 {
+		return
+	}
+	nodeText := string(text)
+	fragIndex := c.fragmentCursor[con.TemplateName]
+	_, ok := c.FragOnce[con.TemplateName]
+	c.fragBuf = append(c.fragBuf, Fragment{nodeText, con.TemplateName, fragIndex, ok})
+	con.PushText(strconv.Itoa(fragIndex), fragIndex, len(c.fragBuf)-1)
+	c.fragmentCursor[con.TemplateName] = fragIndex + 1
 }
 
 func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
@@ -1050,11 +1054,14 @@ func (c *CTemplateSet) compileIfVarSub(con CContext, varname string) (out string
 	}
 
 	var stepInterface = func() {
-		if cur.Kind() == reflect.Interface {
+		var nobreak = (cur.Type().Name() == "nobreak")
+		c.detailf("cur.Type().Name(): %+v\n", cur.Type().Name())
+		if cur.Kind() == reflect.Interface && !nobreak {
 			cur = cur.Elem()
 			out += ".(" + cur.Type().Name() + ")"
 		}
 	}
+
 	bits := strings.Split(varname, ".")
 	if varname[0] == '$' {
 		var res VarItemReflect
@@ -1270,30 +1277,30 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 			c.detail("optimising away member branch")
 			if inSlice(userExprs, varname) {
 				c.detail("positive conditional:", varname)
-				con.Push("varsub", "[]byte(\"false\")")
+				c.addText(con, []byte("false"))
 				return
 			} else if inSlice(negUserExprs, varname) {
 				c.detail("negative conditional:", varname)
-				con.Push("varsub", "[]byte(\"true\")")
+				c.addText(con, []byte("true"))
 				return
 			}
 		} else if c.memberOnly {
 			c.detail("optimising away guest branch")
 			if (con.RootHolder + ".CurrentUser.Loggedin") == varname {
 				c.detail("positive conditional:", varname)
-				con.Push("varsub", "[]byte(\"true\")")
+				c.addText(con, []byte("true"))
 				return
 			} else if ("!" + con.RootHolder + ".CurrentUser.Loggedin") == varname {
 				c.detail("negative conditional:", varname)
-				con.Push("varsub", "[]byte(\"false\")")
+				c.addText(con, []byte("false"))
 				return
 			}
 		}
 		con.Push("startif", "if "+varname+" {\n")
-		con.Push("varsub", "[]byte(\"true\")")
+		c.addText(con, []byte("true"))
 		con.Push("endif", "} ")
 		con.Push("startelse", "else {\n")
-		con.Push("varsub", "[]byte(\"false\")")
+		c.addText(con, []byte("false"))
 		con.Push("endelse", "}\n")
 		return
 	case reflect.String:

@@ -788,6 +788,9 @@ input[type=checkbox]:checked + label .sel {
 	content: "{{lang "topic.like_count_suffix" . }}";
 }
 
+.zone_view_topic .pageset {
+	margin-bottom: 14px;
+}
 .topic_reply_container {
 	display: flex;
 }

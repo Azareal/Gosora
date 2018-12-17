@@ -125,6 +125,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	common.LoginLogs, err = common.NewLoginLogStore(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	common.RegLogs, err = common.NewRegLogStore(acc)
 	if err != nil {
 		return errors.WithStack(err)

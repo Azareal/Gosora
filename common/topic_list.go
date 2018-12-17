@@ -243,6 +243,9 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 
 		//topicItem.RelativeCreatedAt = RelativeTime(topicItem.CreatedAt)
 		topicItem.RelativeLastReplyAt = RelativeTime(topicItem.LastReplyAt)
+		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
+		_, _, lastPage := PageOffset(topicItem.PostCount, 1, Config.ItemsPerPage)
+		topicItem.LastPage = lastPage
 
 		// TODO: Rename this Vhook to better reflect moving the topic list from /routes/ to /common/
 		GetHookTable().Vhook("topics_topic_row_assign", &topicItem, &forum)

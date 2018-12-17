@@ -67,7 +67,7 @@
 	background-color: rgb(88,68,68);
 }
 
-.to_right, .panel_buttons, .panel_floater {
+.panel_buttons, .panel_floater {
 	margin-left: auto;
 }
 

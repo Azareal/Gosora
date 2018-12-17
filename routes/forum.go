@@ -75,6 +75,9 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, header 
 
 		topicItem.Link = common.BuildTopicURL(common.NameToSlug(topicItem.Title), topicItem.ID)
 		topicItem.RelativeLastReplyAt = common.RelativeTime(topicItem.LastReplyAt)
+		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
+		_, _, lastPage := common.PageOffset(topicItem.PostCount, 1, common.Config.ItemsPerPage)
+		topicItem.LastPage = lastPage
 
 		header.Hooks.VhookNoRet("forum_trow_assign", &topicItem, &forum)
 		topicList = append(topicList, &topicItem)

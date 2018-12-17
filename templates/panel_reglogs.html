@@ -10,7 +10,7 @@
 			<div class="rowitem panel_compactrow">
 				<span{{if not .Success}} class="panel_registration_attempt"{{end}} style="float: left;">
 					<span>{{if not .Success}}{{lang "panel_logs_registration_attempt"}}: {{end}}{{.Username}} ({{lang "panel_logs_registration_email"}}: {{.Email}}){{if .ParsedReason}} ({{lang "panel_logs_registration_reason"}}: {{.ParsedReason}}){{end}}</span>
-					{{if $.CurrentUser.Perms.ViewIPs}}<br /><small style="margin-left: 2px;font-size: 12px;">{{.IPAddress}}</small>{{end}}
+					{{if $.CurrentUser.Perms.ViewIPs}}<br /><small style="margin-left: 2px;font-size: 12px;" title="{{.IPAddress}}">{{.IPAddress}}</small>{{end}}
 				</span>
 				<span class="to_right">
 					<span style="font-size: 14px;" title="{{.DoneAt}}">{{.DoneAt}}</span>

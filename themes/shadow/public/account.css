@@ -46,3 +46,10 @@
 .rowmenu .account_soon, .rowmenu .dash_security {
 	font-size: 11px;
 }
+
+.validated_email {
+	color: rgb(0, 170, 0);
+}
+.invalid_email {
+	color: crimson;
+}

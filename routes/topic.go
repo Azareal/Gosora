@@ -107,7 +107,8 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 
 	// Calculate the offset
 	offset, page, lastPage := common.PageOffset(topic.PostCount, page, common.Config.ItemsPerPage)
-	tpage := common.TopicPage{header, []common.ReplyUser{}, topic, forum, poll, page, lastPage}
+	pageList := common.Paginate(topic.PostCount, common.Config.ItemsPerPage, 5)
+	tpage := common.TopicPage{header, []common.ReplyUser{}, topic, forum, poll, common.Paginator{pageList, page, lastPage}}
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {

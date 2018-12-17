@@ -17,6 +17,7 @@ func init() {
 	addPatch(6, patch6)
 	addPatch(7, patch7)
 	addPatch(8, patch8)
+	addPatch(9, patch9)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -134,9 +135,9 @@ func patch0(scanner *bufio.Scanner) (err error) {
 func patch1(scanner *bufio.Scanner) error {
 	var routes = map[string]string{
 		"routeAccountEditCriticalSubmit": "routes.AccountEditCriticalSubmit",
-		"routeAccountEditAvatar": "routes.AccountEditAvatar",
-		"routeAccountEditAvatarSubmit": "routes.AccountEditAvatarSubmit",
-		"routeAccountEditUsername": "routes.AccountEditUsername",
+		"routeAccountEditAvatar":         "routes.AccountEditAvatar",
+		"routeAccountEditAvatarSubmit":   "routes.AccountEditAvatarSubmit",
+		"routeAccountEditUsername":       "routes.AccountEditUsername",
 		"routeAccountEditUsernameSubmit": "routes.AccountEditUsernameSubmit",
 	}
 	return renameRoutes(routes)
@@ -144,15 +145,15 @@ func patch1(scanner *bufio.Scanner) error {
 
 func patch2(scanner *bufio.Scanner) error {
 	var routes = map[string]string{
-		"routeLogout": "routes.AccountLogout",
-		"routeShowAttachment": "routes.ShowAttachment",
-		"routeChangeTheme": "routes.ChangeTheme",
+		"routeLogout":                   "routes.AccountLogout",
+		"routeShowAttachment":           "routes.ShowAttachment",
+		"routeChangeTheme":              "routes.ChangeTheme",
 		"routeProfileReplyCreateSubmit": "routes.ProfileReplyCreateSubmit",
-		"routeLikeTopicSubmit": "routes.LikeTopicSubmit",
-		"routeReplyLikeSubmit": "routes.ReplyLikeSubmit",
-		"routeDynamic": "routes.DynamicRoute",
-		"routeUploads": "routes.UploadedFile",
-		"BadRoute": "routes.BadRoute",
+		"routeLikeTopicSubmit":          "routes.LikeTopicSubmit",
+		"routeReplyLikeSubmit":          "routes.ReplyLikeSubmit",
+		"routeDynamic":                  "routes.DynamicRoute",
+		"routeUploads":                  "routes.UploadedFile",
+		"BadRoute":                      "routes.BadRoute",
 	}
 	return renameRoutes(routes)
 }
@@ -181,41 +182,41 @@ func patch3(scanner *bufio.Scanner) error {
 
 func patch4(scanner *bufio.Scanner) error {
 	var routes = map[string]string{
-		"routeReportSubmit": "routes.ReportSubmit",
-		"routeAccountEditEmail": "routes.AccountEditEmail",
-		"routeAccountEditEmailTokenSubmit": "routes.AccountEditEmailTokenSubmit",
-		"routePanelLogsRegs": "panel.LogsRegs",
-		"routePanelLogsMod": "panel.LogsMod",
-		"routePanelLogsAdmin": "panel.LogsAdmin",
-		"routePanelDebug": "panel.Debug",
-		"routePanelAnalyticsViews": "panel.AnalyticsViews",
-		"routePanelAnalyticsRouteViews": "panel.AnalyticsRouteViews",
-		"routePanelAnalyticsAgentViews": "panel.AnalyticsAgentViews",
-		"routePanelAnalyticsForumViews": "panel.AnalyticsForumViews",
-		"routePanelAnalyticsSystemViews": "panel.AnalyticsSystemViews",
-		"routePanelAnalyticsLanguageViews": "panel.AnalyticsLanguageViews",
-		"routePanelAnalyticsReferrerViews": "panel.AnalyticsReferrerViews",
-		"routePanelAnalyticsTopics": "panel.AnalyticsTopics",
-		"routePanelAnalyticsPosts": "panel.AnalyticsPosts",
-		"routePanelAnalyticsForums": "panel.AnalyticsForums",
-		"routePanelAnalyticsRoutes": "panel.AnalyticsRoutes",
-		"routePanelAnalyticsAgents": "panel.AnalyticsAgents",
-		"routePanelAnalyticsSystems": "panel.AnalyticsSystems",
-		"routePanelAnalyticsLanguages": "panel.AnalyticsLanguages",
-		"routePanelAnalyticsReferrers": "panel.AnalyticsReferrers",
-		"routePanelSettings": "panel.Settings",
-		"routePanelSettingEdit": "panel.SettingEdit",
-		"routePanelSettingEditSubmit": "panel.SettingEditSubmit",
-		"routePanelForums": "panel.Forums",
-		"routePanelForumsCreateSubmit": "panel.ForumsCreateSubmit",
-		"routePanelForumsDelete": "panel.ForumsDelete",
-		"routePanelForumsDeleteSubmit": "panel.ForumsDeleteSubmit",
-		"routePanelForumsEdit": "panel.ForumsEdit",
-		"routePanelForumsEditSubmit": "panel.ForumsEditSubmit",
-		"routePanelForumsEditPermsSubmit": "panel.ForumsEditPermsSubmit",
-		"routePanelForumsEditPermsAdvance": "panel.ForumsEditPermsAdvance",
+		"routeReportSubmit":                      "routes.ReportSubmit",
+		"routeAccountEditEmail":                  "routes.AccountEditEmail",
+		"routeAccountEditEmailTokenSubmit":       "routes.AccountEditEmailTokenSubmit",
+		"routePanelLogsRegs":                     "panel.LogsRegs",
+		"routePanelLogsMod":                      "panel.LogsMod",
+		"routePanelLogsAdmin":                    "panel.LogsAdmin",
+		"routePanelDebug":                        "panel.Debug",
+		"routePanelAnalyticsViews":               "panel.AnalyticsViews",
+		"routePanelAnalyticsRouteViews":          "panel.AnalyticsRouteViews",
+		"routePanelAnalyticsAgentViews":          "panel.AnalyticsAgentViews",
+		"routePanelAnalyticsForumViews":          "panel.AnalyticsForumViews",
+		"routePanelAnalyticsSystemViews":         "panel.AnalyticsSystemViews",
+		"routePanelAnalyticsLanguageViews":       "panel.AnalyticsLanguageViews",
+		"routePanelAnalyticsReferrerViews":       "panel.AnalyticsReferrerViews",
+		"routePanelAnalyticsTopics":              "panel.AnalyticsTopics",
+		"routePanelAnalyticsPosts":               "panel.AnalyticsPosts",
+		"routePanelAnalyticsForums":              "panel.AnalyticsForums",
+		"routePanelAnalyticsRoutes":              "panel.AnalyticsRoutes",
+		"routePanelAnalyticsAgents":              "panel.AnalyticsAgents",
+		"routePanelAnalyticsSystems":             "panel.AnalyticsSystems",
+		"routePanelAnalyticsLanguages":           "panel.AnalyticsLanguages",
+		"routePanelAnalyticsReferrers":           "panel.AnalyticsReferrers",
+		"routePanelSettings":                     "panel.Settings",
+		"routePanelSettingEdit":                  "panel.SettingEdit",
+		"routePanelSettingEditSubmit":            "panel.SettingEditSubmit",
+		"routePanelForums":                       "panel.Forums",
+		"routePanelForumsCreateSubmit":           "panel.ForumsCreateSubmit",
+		"routePanelForumsDelete":                 "panel.ForumsDelete",
+		"routePanelForumsDeleteSubmit":           "panel.ForumsDeleteSubmit",
+		"routePanelForumsEdit":                   "panel.ForumsEdit",
+		"routePanelForumsEditSubmit":             "panel.ForumsEditSubmit",
+		"routePanelForumsEditPermsSubmit":        "panel.ForumsEditPermsSubmit",
+		"routePanelForumsEditPermsAdvance":       "panel.ForumsEditPermsAdvance",
 		"routePanelForumsEditPermsAdvanceSubmit": "panel.ForumsEditPermsAdvanceSubmit",
-		"routePanelBackups": "panel.Backups",
+		"routePanelBackups":                      "panel.Backups",
 	}
 	err := renameRoutes(routes)
 	if err != nil {
@@ -249,10 +250,10 @@ func patch4(scanner *bufio.Scanner) error {
 
 func patch5(scanner *bufio.Scanner) error {
 	var routes = map[string]string{
-		"routePanelUsers": "panel.Users",
-		"routePanelUsersEdit": "panel.UsersEdit",
-		"routePanelUsersEditSubmit": "panel.UsersEditSubmit",
-		"routes.AccountEditCritical": "routes.AccountEditPassword",
+		"routePanelUsers":                  "panel.Users",
+		"routePanelUsersEdit":              "panel.UsersEdit",
+		"routePanelUsersEditSubmit":        "panel.UsersEditSubmit",
+		"routes.AccountEditCritical":       "routes.AccountEditPassword",
 		"routes.AccountEditCriticalSubmit": "routes.AccountEditPasswordSubmit",
 	}
 	err := renameRoutes(routes)
@@ -322,7 +323,7 @@ func renameRoutes(routes map[string]string) error {
 	}
 
 	for key, value := range routes {
-		err := replaceTextWhere(key,value)
+		err := replaceTextWhere(key, value)
 		if err != nil {
 			return err
 		}
@@ -333,42 +334,72 @@ func renameRoutes(routes map[string]string) error {
 
 func patch8(scanner *bufio.Scanner) error {
 	var routes = map[string]string{
-		"routePanelWordFilter": "panel.WordFilters",
-		"routePanelWordFiltersCreateSubmit": "panel.WordFiltersCreateSubmit",
-		"routePanelWordFiltersEdit": "panel.WordFiltersEdit",
-		"routePanelWordFiltersEditSubmit": "panel.WordFiltersEditSubmit",
-		"routePanelWordFiltersDeleteSubmit": "panel.WordFiltersDeleteSubmit",
-		"routePanelPlugins": "panel.Plugins",
-		"routePanelPluginsActivate": "panel.PluginsActivate",
-		"routePanelPluginsDeactivate": "panel.PluginsDeactivate",
-		"routePanelPluginsInstall": "panel.PluginsInstall",
-		"routePanelGroups": "panel.Groups",
-		"routePanelGroupsEdit":"panel.GroupsEdit",
-		"routePanelGroupsEditPerms":"panel.GroupsEditPerms",
-		"routePanelGroupsEditSubmit":"panel.GroupsEditSubmit",
-		"routePanelGroupsEditPermsSubmit":"panel.GroupsEditPermsSubmit",
-		"routePanelGroupsCreateSubmit":"panel.GroupsCreateSubmit",
-		"routePanelThemes":"panel.Themes",
-		"routePanelThemesSetDefault":"panel.ThemesSetDefault",
-		"routePanelThemesMenus":"panel.ThemesMenus",
-		"routePanelThemesMenusEdit":"panel.ThemesMenusEdit",
-		"routePanelThemesMenuItemEdit":"panel.ThemesMenuItemEdit",
-		"routePanelThemesMenuItemEditSubmit":"panel.ThemesMenuItemEditSubmit",
-		"routePanelThemesMenuItemCreateSubmit":"panel.ThemesMenuItemCreateSubmit",
-		"routePanelThemesMenuItemDeleteSubmit":"panel.ThemesMenuItemDeleteSubmit",
-		"routePanelThemesMenuItemOrderSubmit":"panel.ThemesMenuItemOrderSubmit",
-		"routePanelDashboard":"panel.Dashboard",
+		"routePanelWordFilter":                 "panel.WordFilters",
+		"routePanelWordFiltersCreateSubmit":    "panel.WordFiltersCreateSubmit",
+		"routePanelWordFiltersEdit":            "panel.WordFiltersEdit",
+		"routePanelWordFiltersEditSubmit":      "panel.WordFiltersEditSubmit",
+		"routePanelWordFiltersDeleteSubmit":    "panel.WordFiltersDeleteSubmit",
+		"routePanelPlugins":                    "panel.Plugins",
+		"routePanelPluginsActivate":            "panel.PluginsActivate",
+		"routePanelPluginsDeactivate":          "panel.PluginsDeactivate",
+		"routePanelPluginsInstall":             "panel.PluginsInstall",
+		"routePanelGroups":                     "panel.Groups",
+		"routePanelGroupsEdit":                 "panel.GroupsEdit",
+		"routePanelGroupsEditPerms":            "panel.GroupsEditPerms",
+		"routePanelGroupsEditSubmit":           "panel.GroupsEditSubmit",
+		"routePanelGroupsEditPermsSubmit":      "panel.GroupsEditPermsSubmit",
+		"routePanelGroupsCreateSubmit":         "panel.GroupsCreateSubmit",
+		"routePanelThemes":                     "panel.Themes",
+		"routePanelThemesSetDefault":           "panel.ThemesSetDefault",
+		"routePanelThemesMenus":                "panel.ThemesMenus",
+		"routePanelThemesMenusEdit":            "panel.ThemesMenusEdit",
+		"routePanelThemesMenuItemEdit":         "panel.ThemesMenuItemEdit",
+		"routePanelThemesMenuItemEditSubmit":   "panel.ThemesMenuItemEditSubmit",
+		"routePanelThemesMenuItemCreateSubmit": "panel.ThemesMenuItemCreateSubmit",
+		"routePanelThemesMenuItemDeleteSubmit": "panel.ThemesMenuItemDeleteSubmit",
+		"routePanelThemesMenuItemOrderSubmit":  "panel.ThemesMenuItemOrderSubmit",
+		"routePanelDashboard":                  "panel.Dashboard",
 	}
 	err := renameRoutes(routes)
 	if err != nil {
 		return err
 	}
 
+	err = execStmt(qgen.Builder.DropTable("updates"))
+	if err != nil {
+		return err
+	}
 	err = execStmt(qgen.Builder.CreateTable("updates", "", "",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"dbVersion", "int", 0, false, false, "0"},
 		},
 		[]qgen.DBTableKey{},
+	))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func patch9(scanner *bufio.Scanner) error {
+	// Table "updates" might not exist due to the installer, so drop it and remake it if so
+	err := patch8(scanner)
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.CreateTable("login_logs", "", "",
+		[]qgen.DBTableColumn{
+			qgen.DBTableColumn{"lid", "int", 0, false, true, ""},
+			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
+			qgen.DBTableColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
+			qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
+		},
+		[]qgen.DBTableKey{
+			qgen.DBTableKey{"lid", "primary"},
+		},
 	))
 	if err != nil {
 		return err

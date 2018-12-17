@@ -61,6 +61,8 @@ func userRoutes() *RouteGroup {
 		MemberView("routes.AccountEditEmail", "/user/edit/email/"),
 		Action("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData"),
 
+		MemberView("routes.AccountLogins", "/user/edit/logins/"),
+
 		MemberView("routes.LevelList", "/user/levels/"),
 		//MemberView("routes.LevelRankings", "/user/rankings/"),
 	)

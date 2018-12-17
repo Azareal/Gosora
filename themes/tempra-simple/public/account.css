@@ -49,3 +49,10 @@
 	font-size: 14px;
 	color: maroon;
 }
+
+.validated_email {
+	color: green;
+}
+.invalid_email {
+	color: crimson;
+}

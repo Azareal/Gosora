@@ -132,6 +132,7 @@
 		"account_mfa":"Manage 2FA",
 		"account_mfa_setup":"Setup 2FA",
 		"account_email":"Email Manager",
+		"account_logins":"Logins",
 		"account_level_list":"Level Progress",
 
 		"panel_dashboard":"Control Panel Dashboard",
@@ -447,6 +448,7 @@
 		"account_menu_email":"Email",
 		"account_menu_security":"Security",
 		"account_menu_notifications":"Notifications",
+		"account_menu_logins":"Logins",
 
 		"account_coming_soon":"Coming Soon",
 
@@ -479,6 +481,10 @@
 		"account_mfa_setup_explanation":"Type this secret into your Google Authenticator and type the code it gives you below. You will have to input codes provided by it for all future logins.",
 		"account_mfa_setup_verify":"Verify",
 		"account_mfa_setup_button":"Setup",
+
+		"account_logins_head":"Logins",
+		"account_logins_success":"Successful Login",
+		"account_logins_failure":"Failed Login",
 
 		"areyousure_head":"Are you sure?",
 		"areyousure_continue":"Continue",

@@ -4,7 +4,6 @@ import (
 	"html/template"
 	"io"
 	"log"
-	"math"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -85,6 +84,8 @@ var Template_forums_handle = func(pi ForumsPage, w io.Writer) error {
 	}
 	return Templates.ExecuteTemplate(w, mapping+".html", pi)
 }
+var Template_forums_guest_handle = Template_forums_handle
+var Template_forums_member_handle = Template_forums_handle
 
 // nolint
 var Template_profile_handle = func(pi ProfilePage, w io.Writer) error {
@@ -143,7 +144,7 @@ var Template_ip_search_handle = func(pi IPSearchPage, w io.Writer) error {
 }
 
 // nolint
-var Template_account_handle = func(pi AccountDashPage, w io.Writer) error {
+var Template_account_handle = func(pi Account, w io.Writer) error {
 	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["account"]
 	if !ok {
 		mapping = "account"
@@ -195,6 +196,8 @@ type TmplLoggedin struct {
 	Member string
 }
 
+type nobreak interface{}
+
 // ? - Add template hooks?
 func CompileTemplates() error {
 	var config tmpl.CTemplateConfig
@@ -239,7 +242,7 @@ func CompileTemplates() error {
 	}
 
 	header.Title = "Topic Name"
-	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, 1, 1}
+	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	topicTmpl, err := compile("topic", "common.TopicPage", tpage)
 	if err != nil {
@@ -276,13 +279,13 @@ func CompileTemplates() error {
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "Forum List"
 	forumsPage := ForumsPage{header, forumList}
-	forumsTmpl, err := compile("forums", "common.ForumsPage", forumsPage)
+	forumsTmpl, err := compileByLoggedin("forums", "common.ForumsPage", forumsPage)
 	if err != nil {
 		return err
 	}
 
 	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
 	header2.Title = "Topic List"
 	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
 	/*topicListTmpl, err := compile("topics", "common.TopicListPage", topicListPage)
@@ -332,14 +335,9 @@ func CompileTemplates() error {
 		return err
 	}
 
-	mfaSetup := false
-	prevScore := GetLevelScore(header.CurrentUser.Level)
-	currentScore := header.CurrentUser.Score - prevScore
-	nextScore := GetLevelScore(header.CurrentUser.Level+1) - prevScore
-	perc := int(math.Ceil((float64(nextScore) / float64(currentScore)) * 100))
-
-	accountPage := AccountDashPage{header, "dashboard", "account_own_edit", mfaSetup, currentScore, nextScore, user.Level + 1, perc * 2}
-	accountTmpl, err := compile("account", "common.AccountDashPage", accountPage)
+	var inter nobreak
+	accountPage := Account{header, "dashboard", "account_own_edit", inter}
+	accountTmpl, err := compile("account", "common.Account", accountPage)
 	if err != nil {
 		return err
 	}
@@ -441,7 +439,7 @@ func CompileJSTemplates() error {
 	// TODO: Fix the import loop so we don't have to use this hack anymore
 	c.SetBuildTags("!no_templategen,tmplgentopic")
 
-	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
+	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
 	topicListItemTmpl, err := c.Compile("topics_topic.html", "templates/", "*common.TopicsRow", topicsRow, varList)
 	if err != nil {
 		return err
@@ -460,7 +458,7 @@ func CompileJSTemplates() error {
 
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "Topic Name"
-	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, 1, 1}
+	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	topicPostsTmpl, err := c.Compile("topic_posts.html", "templates/", "common.TopicPage", tpage, varList)
 	if err != nil {
@@ -509,16 +507,16 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 		}
 		getterstr += "}\nreturn nil\n}\n"
 		out += "\n// nolint\nfunc init() {\n"
-		//var bodyMap = make(map[string]string) //map[body]fragmentPrefix
-		var tmplMap = make(map[string]map[string]string) // map[tmpl]map[body]fragmentPrefix
+		var bodyMap = make(map[string]string) //map[body]fragmentPrefix
+		//var tmplMap = make(map[string]map[string]string) // map[tmpl]map[body]fragmentPrefix
 		var tmpCount = 0
 		for _, frag := range c.FragOut {
 			front := frag.TmplName + "_frags[" + strconv.Itoa(frag.Index) + "]"
-			bodyMap, tok := tmplMap[frag.TmplName]
+			/*bodyMap, tok := tmplMap[frag.TmplName]
 			if !tok {
 				tmplMap[frag.TmplName] = make(map[string]string)
 				bodyMap = tmplMap[frag.TmplName]
-			}
+			}*/
 			fp, ok := bodyMap[frag.Body]
 			if !ok {
 				bodyMap[frag.Body] = front

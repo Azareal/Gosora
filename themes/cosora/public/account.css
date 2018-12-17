@@ -77,3 +77,10 @@
 #dash_right .rowitem:not(:last-child) {
 	margin-bottom: 8px;
 }
+
+.validated_email {
+	color: green;
+}
+.invalid_email {
+	color: crimson;
+}
