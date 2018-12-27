@@ -16,48 +16,46 @@ import (
 )
 
 type ReplyUser struct {
-	ID                int
-	ParentID          int
-	Content           string
-	ContentHtml       string
-	CreatedBy         int
-	UserLink          string
-	CreatedByName     string
-	Group             int
-	CreatedAt         time.Time
-	RelativeCreatedAt string
-	LastEdit          int
-	LastEditBy        int
-	Avatar            string
-	MicroAvatar       string
-	ClassName         string
-	ContentLines      int
-	Tag               string
-	URL               string
-	URLPrefix         string
-	URLName           string
-	Level             int
-	IPAddress         string
-	Liked             bool
-	LikeCount         int
-	ActionType        string
-	ActionIcon        string
+	ID            int
+	ParentID      int
+	Content       string
+	ContentHtml   string
+	CreatedBy     int
+	UserLink      string
+	CreatedByName string
+	Group         int
+	CreatedAt     time.Time
+	LastEdit      int
+	LastEditBy    int
+	Avatar        string
+	MicroAvatar   string
+	ClassName     string
+	ContentLines  int
+	Tag           string
+	URL           string
+	URLPrefix     string
+	URLName       string
+	Level         int
+	IPAddress     string
+	Liked         bool
+	LikeCount     int
+	ActionType    string
+	ActionIcon    string
 }
 
 type Reply struct {
-	ID                int
-	ParentID          int
-	Content           string
-	CreatedBy         int
-	Group             int
-	CreatedAt         time.Time
-	RelativeCreatedAt string
-	LastEdit          int
-	LastEditBy        int
-	ContentLines      int
-	IPAddress         string
-	Liked             bool
-	LikeCount         int
+	ID           int
+	ParentID     int
+	Content      string
+	CreatedBy    int
+	Group        int
+	CreatedAt    time.Time
+	LastEdit     int
+	LastEditBy   int
+	ContentLines int
+	IPAddress    string
+	Liked        bool
+	LikeCount    int
 }
 
 var ErrAlreadyLiked = errors.New("You already liked this!")

@@ -40,28 +40,41 @@ func (builder *accDeleteBuilder) Run(args ...interface{}) (int, error) {
 }
 
 type accUpdateBuilder struct {
-	table string
-	set   string
-	where string
-
+	up    *updatePrebuilder
 	build *Accumulator
 }
 
 func (update *accUpdateBuilder) Set(set string) *accUpdateBuilder {
-	update.set = set
+	update.up.set = set
 	return update
 }
 
 func (update *accUpdateBuilder) Where(where string) *accUpdateBuilder {
-	if update.where != "" {
-		update.where += " AND "
+	if update.up.where != "" {
+		update.up.where += " AND "
 	}
-	update.where += where
+	update.up.where += where
 	return update
 }
 
-func (update *accUpdateBuilder) Prepare() *sql.Stmt {
-	return update.build.SimpleUpdate(update.table, update.set, update.where)
+func (update *accUpdateBuilder) WhereQ(sel *selectPrebuilder) *accUpdateBuilder {
+	update.up.whereSubQuery = sel
+	return update
+}
+
+func (builder *accUpdateBuilder) Prepare() *sql.Stmt {
+	if builder.up.whereSubQuery != nil {
+		return builder.build.prepare(builder.build.adapter.SimpleUpdateSelect(builder.up))
+	}
+	return builder.build.prepare(builder.build.adapter.SimpleUpdate(builder.up))
+}
+
+func (builder *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
+	query, err := builder.build.adapter.SimpleUpdate(builder.up)
+	if err != nil {
+		return res, err
+	}
+	return builder.build.exec(query, args...)
 }
 
 type AccSelectBuilder struct {
@@ -77,17 +90,22 @@ type AccSelectBuilder struct {
 	build *Accumulator
 }
 
-func (selectItem *AccSelectBuilder) Columns(columns string) *AccSelectBuilder {
-	selectItem.columns = columns
-	return selectItem
+func (builder *AccSelectBuilder) Columns(columns string) *AccSelectBuilder {
+	builder.columns = columns
+	return builder
 }
 
-func (selectItem *AccSelectBuilder) Where(where string) *AccSelectBuilder {
-	if selectItem.where != "" {
-		selectItem.where += " AND "
+func (builder *AccSelectBuilder) Cols(columns string) *AccSelectBuilder {
+	builder.columns = columns
+	return builder
+}
+
+func (builder *AccSelectBuilder) Where(where string) *AccSelectBuilder {
+	if builder.where != "" {
+		builder.where += " AND "
 	}
-	selectItem.where += where
-	return selectItem
+	builder.where += where
+	return builder
 }
 
 // TODO: Don't implement the SQL at the accumulator level but the adapter level
@@ -115,28 +133,28 @@ func (selectItem *AccSelectBuilder) InQ(column string, subBuilder *AccSelectBuil
 	return selectItem
 }
 
-func (selectItem *AccSelectBuilder) DateCutoff(column string, quantity int, unit string) *AccSelectBuilder {
-	selectItem.dateCutoff = &dateCutoff{column, quantity, unit}
-	return selectItem
+func (builder *AccSelectBuilder) DateCutoff(column string, quantity int, unit string) *AccSelectBuilder {
+	builder.dateCutoff = &dateCutoff{column, quantity, unit}
+	return builder
 }
 
-func (selectItem *AccSelectBuilder) Orderby(orderby string) *AccSelectBuilder {
-	selectItem.orderby = orderby
-	return selectItem
+func (builder *AccSelectBuilder) Orderby(orderby string) *AccSelectBuilder {
+	builder.orderby = orderby
+	return builder
 }
 
-func (selectItem *AccSelectBuilder) Limit(limit string) *AccSelectBuilder {
-	selectItem.limit = limit
-	return selectItem
+func (builder *AccSelectBuilder) Limit(limit string) *AccSelectBuilder {
+	builder.limit = limit
+	return builder
 }
 
-func (selectItem *AccSelectBuilder) Prepare() *sql.Stmt {
+func (builder *AccSelectBuilder) Prepare() *sql.Stmt {
 	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
-	if selectItem.dateCutoff != nil || selectItem.inChain != nil {
-		selectBuilder := selectItem.build.GetAdapter().Builder().Select().FromAcc(selectItem)
-		return selectItem.build.prepare(selectItem.build.GetAdapter().ComplexSelect(selectBuilder))
+	if builder.dateCutoff != nil || builder.inChain != nil {
+		selectBuilder := builder.build.GetAdapter().Builder().Select().FromAcc(builder)
+		return builder.build.prepare(builder.build.GetAdapter().ComplexSelect(selectBuilder))
 	}
-	return selectItem.build.SimpleSelect(selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
+	return builder.build.SimpleSelect(builder.table, builder.columns, builder.where, builder.orderby, builder.limit)
 }
 
 func (builder *AccSelectBuilder) query() (string, error) {
@@ -145,15 +163,15 @@ func (builder *AccSelectBuilder) query() (string, error) {
 		selectBuilder := builder.build.GetAdapter().Builder().Select().FromAcc(builder)
 		return builder.build.GetAdapter().ComplexSelect(selectBuilder)
 	}
-	return builder.build.adapter.SimpleSelect("_builder", builder.table, builder.columns, builder.where, builder.orderby, builder.limit)
+	return builder.build.adapter.SimpleSelect("", builder.table, builder.columns, builder.where, builder.orderby, builder.limit)
 }
 
-func (selectItem *AccSelectBuilder) Query(args ...interface{}) (*sql.Rows, error) {
-	stmt := selectItem.Prepare()
+func (builder *AccSelectBuilder) Query(args ...interface{}) (*sql.Rows, error) {
+	stmt := builder.Prepare()
 	if stmt != nil {
 		return stmt.Query(args...)
 	}
-	return nil, selectItem.build.FirstError()
+	return nil, builder.build.FirstError()
 }
 
 type AccRowWrap struct {
@@ -245,7 +263,7 @@ func (insert *accInsertBuilder) Prepare() *sql.Stmt {
 }
 
 func (builder *accInsertBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
-	query, err := builder.build.adapter.SimpleInsert("_builder", builder.table, builder.columns, builder.fields)
+	query, err := builder.build.adapter.SimpleInsert("", builder.table, builder.columns, builder.fields)
 	if err != nil {
 		return res, err
 	}
@@ -253,7 +271,7 @@ func (builder *accInsertBuilder) Exec(args ...interface{}) (res sql.Result, err 
 }
 
 func (builder *accInsertBuilder) Run(args ...interface{}) (int, error) {
-	query, err := builder.build.adapter.SimpleInsert("_builder", builder.table, builder.columns, builder.fields)
+	query, err := builder.build.adapter.SimpleInsert("", builder.table, builder.columns, builder.fields)
 	if err != nil {
 		return 0, err
 	}
@@ -290,6 +308,15 @@ func (count *accCountBuilder) Limit(limit string) *accCountBuilder {
 // TODO: Add QueryRow for this and use it in statistics.go
 func (count *accCountBuilder) Prepare() *sql.Stmt {
 	return count.build.SimpleCount(count.table, count.where, count.limit)
+}
+
+func (count *accCountBuilder) Total() (total int, err error) {
+	stmt := count.Prepare()
+	if stmt == nil {
+		return 0, count.build.FirstError()
+	}
+	err = stmt.QueryRow().Scan(&total)
+	return total, err
 }
 
 // TODO: Add a Sum builder for summing viewchunks up into one number for the dashboard?

@@ -94,7 +94,7 @@ func (list SFileList) JSTmplInit() error {
 
 		preLen := len(data)
 		data = replace(data, string(data[spaceIndex:endBrace]), "")
-		data = replace(data, "))\n", "\n")
+		data = replace(data, "))\n", "  \n")
 		endBrace -= preLen - len(data) // Offset it as we've deleted portions
 		fmt.Println("new endBrace: ", endBrace)
 		fmt.Println("data: ", string(data))
@@ -130,58 +130,38 @@ func (list SFileList) JSTmplInit() error {
 			}
 		}
 		each("strconv.Itoa(", func(index int) {
-			braceAt, hasEndBrace := skipUntilIfExists(data, index, ')')
-			// TODO: Make sure we don't go onto the next line in case someone misplaced a brace
+			braceAt, hasEndBrace := skipUntilIfExistsOrLine(data, index, ')')
 			if hasEndBrace {
 				data[braceAt] = ' ' // Blank it
 			}
 		})
-		each("w.Write([]byte(", func(index int) {
-			braceAt, hasEndBrace := skipUntilIfExists(data, index, ')')
-			// TODO: Make sure we don't go onto the next line in case someone misplaced a brace
-			if hasEndBrace {
-				data[braceAt] = ' ' // Blank it
-			}
-			braceAt, hasEndBrace = skipUntilIfExists(data, braceAt, ')')
-			if hasEndBrace {
-				data[braceAt] = ' ' // Blank this one too
-			}
-		})
-		each(" = []byte(", func(index int) {
-			braceAt, hasEndBrace := skipUntilIfExists(data, index, ')')
-			// TODO: Make sure we don't go onto the next line in case someone misplaced a brace
+		each("[]byte(", func(index int) {
+			braceAt, hasEndBrace := skipUntilIfExistsOrLine(data, index, ')')
 			if hasEndBrace {
 				data[braceAt] = ' ' // Blank it
 			}
 		})
-		each("w.Write(StringToBytes(", func(index int) {
-			braceAt, hasEndBrace := skipUntilIfExists(data, index, ')')
-			// TODO: Make sure we don't go onto the next line in case someone misplaced a brace
-			if hasEndBrace {
-				data[braceAt] = ' ' // Blank it
-			}
-			braceAt, hasEndBrace = skipUntilIfExists(data, braceAt, ')')
-			if hasEndBrace {
-				data[braceAt] = ' ' // Blank this one too
-			}
-		})
-		each(" = StringToBytes(", func(index int) {
-			braceAt, hasEndBrace := skipUntilIfExists(data, index, ')')
-			// TODO: Make sure we don't go onto the next line in case someone misplaced a brace
+		each("StringToBytes(", func(index int) {
+			braceAt, hasEndBrace := skipUntilIfExistsOrLine(data, index, ')')
 			if hasEndBrace {
 				data[braceAt] = ' ' // Blank it
 			}
 		})
 		each("w.Write(", func(index int) {
-			braceAt, hasEndBrace := skipUntilIfExists(data, index, ')')
-			// TODO: Make sure we don't go onto the next line in case someone misplaced a brace
+			braceAt, hasEndBrace := skipUntilIfExistsOrLine(data, index, ')')
 			if hasEndBrace {
 				data[braceAt] = ' ' // Blank it
 			}
 		})
+		each("RelativeTime(", func(index int) {
+			braceAt, _ := skipUntilIfExistsOrLine(data, index, 10)
+			if data[braceAt-1] == ' ' {
+				data[braceAt-1] = ')' // Blank it
+			}
+		})
 		each("if ", func(index int) {
 			//fmt.Println("if index: ", index)
-			braceAt, hasBrace := skipUntilIfExists(data, index, '{')
+			braceAt, hasBrace := skipUntilIfExistsOrLine(data, index, '{')
 			if hasBrace {
 				if data[braceAt-1] != ' ' {
 					panic("couldn't find space before brace, found ' " + string(data[braceAt-1]) + "' instead")
@@ -210,10 +190,12 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, ", 10;", "")
 		data = replace(data, shortName+"_tmpl_phrase_id = RegisterTmplPhraseNames([]string{", "[")
 		data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let plist = tmplPhrases[\""+tmplName+"\"];")
-		//data = replace(data, "var phrases = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let phrases = tmplPhrases[\""+tmplName+"\"];\nconsole.log('tmplName:','"+tmplName+"')\nconsole.log('phrases:', phrases);")
 		data = replace(data, "var cached_var_", "let cached_var_")
-		data = replace(data, " = []byte(", " = ")
-		data = replace(data, " = StringToBytes(", " = ")
+		data = replace(data, "[]byte(", "")
+		data = replace(data, "StringToBytes(", "")
+		// TODO: Format dates properly on the client side
+		data = replace(data, ".Format(\"2006-01-02 15:04:05\"", "")
+		data = replace(data, ", 10", "")
 		data = replace(data, "if ", "if(")
 		data = replace(data, "return nil", "return out")
 		data = replace(data, " )", ")")

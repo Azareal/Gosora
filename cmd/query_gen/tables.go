@@ -2,82 +2,88 @@ package main
 
 import "github.com/Azareal/Gosora/query_gen"
 
-func createTables(adapter qgen.Adapter) error {
-	qgen.Install.CreateTable("users", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"name", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"password", "varchar", 100, false, false, ""},
+var mysqlPre = "utf8mb4"
+var mysqlCol = "utf8mb4_general_ci"
 
-			qgen.DBTableColumn{"salt", "varchar", 80, false, false, "''"},
-			qgen.DBTableColumn{"group", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"active", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"is_super_admin", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"lastActiveAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"session", "varchar", 200, false, false, "''"},
-			//qgen.DBTableColumn{"authToken", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"last_ip", "varchar", 200, false, false, "0.0.0.0.0"},
-			qgen.DBTableColumn{"email", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"avatar", "varchar", 100, false, false, "''"},
-			qgen.DBTableColumn{"message", "text", 0, false, false, "''"},
-			qgen.DBTableColumn{"url_prefix", "varchar", 20, false, false, "''"},
-			qgen.DBTableColumn{"url_name", "varchar", 100, false, false, "''"},
-			qgen.DBTableColumn{"level", "smallint", 0, false, false, "0"},
-			qgen.DBTableColumn{"score", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"posts", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"bigposts", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"megaposts", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"topics", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"liked", "int", 0, false, false, "0"},
+type tblColumn = qgen.DBTableColumn
+type tblKey = qgen.DBTableKey
+
+func createTables(adapter qgen.Adapter) error {
+	qgen.Install.CreateTable("users", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"uid", "int", 0, false, true, ""},
+			tblColumn{"name", "varchar", 100, false, false, ""},
+			tblColumn{"password", "varchar", 100, false, false, ""},
+
+			tblColumn{"salt", "varchar", 80, false, false, "''"},
+			tblColumn{"group", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"active", "boolean", 0, false, false, "0"},
+			tblColumn{"is_super_admin", "boolean", 0, false, false, "0"},
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+			tblColumn{"lastActiveAt", "datetime", 0, false, false, ""},
+			tblColumn{"session", "varchar", 200, false, false, "''"},
+			//tblColumn{"authToken", "varchar", 200, false, false, "''"},
+			tblColumn{"last_ip", "varchar", 200, false, false, "0.0.0.0.0"},
+			tblColumn{"email", "varchar", 200, false, false, "''"},
+			tblColumn{"avatar", "varchar", 100, false, false, "''"},
+			tblColumn{"message", "text", 0, false, false, "''"},
+			tblColumn{"url_prefix", "varchar", 20, false, false, "''"},
+			tblColumn{"url_name", "varchar", 100, false, false, "''"},
+			tblColumn{"level", "smallint", 0, false, false, "0"},
+			tblColumn{"score", "int", 0, false, false, "0"},
+			tblColumn{"posts", "int", 0, false, false, "0"},
+			tblColumn{"bigposts", "int", 0, false, false, "0"},
+			tblColumn{"megaposts", "int", 0, false, false, "0"},
+			tblColumn{"topics", "int", 0, false, false, "0"},
+			tblColumn{"liked", "int", 0, false, false, "0"},
 
 			// These two are to bound liked queries with little bits of information we know about the user to reduce the server load
-			qgen.DBTableColumn{"oldestItemLikedCreatedAt", "datetime", 0, false, false, ""}, // For internal use only, semantics may change
-			qgen.DBTableColumn{"lastLiked", "datetime", 0, false, false, ""},                // For internal use only, semantics may change
+			tblColumn{"oldestItemLikedCreatedAt", "datetime", 0, false, false, ""}, // For internal use only, semantics may change
+			tblColumn{"lastLiked", "datetime", 0, false, false, ""},                // For internal use only, semantics may change
 
-			//qgen.DBTableColumn{"penalty_count","int",0,false,false,"0"},
-			qgen.DBTableColumn{"temp_group", "int", 0, false, false, "0"}, // For temporary groups, set this to zero when a temporary group isn't in effect
+			//tblColumn{"penalty_count","int",0,false,false,"0"},
+			tblColumn{"temp_group", "int", 0, false, false, "0"}, // For temporary groups, set this to zero when a temporary group isn't in effect
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"uid", "primary"},
-			qgen.DBTableKey{"name", "unique"},
+		[]tblKey{
+			tblKey{"uid", "primary"},
+			tblKey{"name", "unique"},
 		},
 	)
 
-	qgen.Install.CreateTable("users_groups", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"gid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"name", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"permissions", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"plugin_perms", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"is_mod", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"is_admin", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"is_banned", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"user_count", "int", 0, false, false, "0"}, // TODO: Implement this
+	qgen.Install.CreateTable("users_groups", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"gid", "int", 0, false, true, ""},
+			tblColumn{"name", "varchar", 100, false, false, ""},
+			tblColumn{"permissions", "text", 0, false, false, ""},
+			tblColumn{"plugin_perms", "text", 0, false, false, ""},
+			tblColumn{"is_mod", "boolean", 0, false, false, "0"},
+			tblColumn{"is_admin", "boolean", 0, false, false, "0"},
+			tblColumn{"is_banned", "boolean", 0, false, false, "0"},
+			tblColumn{"user_count", "int", 0, false, false, "0"}, // TODO: Implement this
 
-			qgen.DBTableColumn{"tag", "varchar", 50, false, false, "''"},
+			tblColumn{"tag", "varchar", 50, false, false, "''"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"gid", "primary"},
+		[]tblKey{
+			tblKey{"gid", "primary"},
 		},
 	)
 
-	qgen.Install.CreateTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"secret", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"scratch1", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch2", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch3", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch4", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch5", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch6", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch7", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch8", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
+	qgen.Install.CreateTable("users_2fa_keys", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"uid", "int", 0, false, false, ""},
+			tblColumn{"secret", "varchar", 100, false, false, ""},
+			tblColumn{"scratch1", "varchar", 50, false, false, ""},
+			tblColumn{"scratch2", "varchar", 50, false, false, ""},
+			tblColumn{"scratch3", "varchar", 50, false, false, ""},
+			tblColumn{"scratch4", "varchar", 50, false, false, ""},
+			tblColumn{"scratch5", "varchar", 50, false, false, ""},
+			tblColumn{"scratch6", "varchar", 50, false, false, ""},
+			tblColumn{"scratch7", "varchar", 50, false, false, ""},
+			tblColumn{"scratch8", "varchar", 50, false, false, ""},
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"uid", "primary"},
+		[]tblKey{
+			tblKey{"uid", "primary"},
 		},
 	)
 
@@ -88,533 +94,534 @@ func createTables(adapter qgen.Adapter) error {
 	// TODO: Add a penalty type where a user is stopped from creating plugin_guilds social groups
 	// TODO: Shadow bans. We will probably have a CanShadowBan permission for this, as we *really* don't want people using this lightly.
 	/*qgen.Install.CreateTable("users_penalties","","",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uid","int",0,false,false,""},
-			qgen.DBTableColumn{"element_id","int",0,false,false,""},
-			qgen.DBTableColumn{"element_type","varchar",50,false,false,""}, //forum, profile?, and social_group. Leave blank for global.
-			qgen.DBTableColumn{"overrides","text",0,false,false,"{}"},
+		[]tblColumn{
+			tblColumn{"uid","int",0,false,false,""},
+			tblColumn{"element_id","int",0,false,false,""},
+			tblColumn{"element_type","varchar",50,false,false,""}, //forum, profile?, and social_group. Leave blank for global.
+			tblColumn{"overrides","text",0,false,false,"{}"},
 
-			qgen.DBTableColumn{"mod_queue","boolean",0,false,false,"0"},
-			qgen.DBTableColumn{"shadow_ban","boolean",0,false,false,"0"},
-			qgen.DBTableColumn{"no_avatar","boolean",0,false,false,"0"}, // Coming Soon. Should this be a perm override instead?
+			tblColumn{"mod_queue","boolean",0,false,false,"0"},
+			tblColumn{"shadow_ban","boolean",0,false,false,"0"},
+			tblColumn{"no_avatar","boolean",0,false,false,"0"}, // Coming Soon. Should this be a perm override instead?
 
 			// Do we *really* need rate-limit penalty types? Are we going to be allowing bots or something?
-			//qgen.DBTableColumn{"posts_per_hour","int",0,false,false,"0"},
-			//qgen.DBTableColumn{"topics_per_hour","int",0,false,false,"0"},
-			//qgen.DBTableColumn{"posts_count","int",0,false,false,"0"},
-			//qgen.DBTableColumn{"topic_count","int",0,false,false,"0"},
-			//qgen.DBTableColumn{"last_hour","int",0,false,false,"0"}, // UNIX Time, as we don't need to do anything too fancy here. When an hour has elapsed since that time, reset the hourly penalty counters.
+			//tblColumn{"posts_per_hour","int",0,false,false,"0"},
+			//tblColumn{"topics_per_hour","int",0,false,false,"0"},
+			//tblColumn{"posts_count","int",0,false,false,"0"},
+			//tblColumn{"topic_count","int",0,false,false,"0"},
+			//tblColumn{"last_hour","int",0,false,false,"0"}, // UNIX Time, as we don't need to do anything too fancy here. When an hour has elapsed since that time, reset the hourly penalty counters.
 
-			qgen.DBTableColumn{"issued_by","int",0,false,false,""},
-			qgen.DBTableColumn{"issued_at","createdAt",0,false,false,""},
-			qgen.DBTableColumn{"expires_at","datetime",0,false,false,""},
+			tblColumn{"issued_by","int",0,false,false,""},
+			tblColumn{"issued_at","createdAt",0,false,false,""},
+			tblColumn{"expires_at","datetime",0,false,false,""},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)*/
 
 	qgen.Install.CreateTable("users_groups_scheduler", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"set_group", "int", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"uid", "int", 0, false, false, ""},
+			tblColumn{"set_group", "int", 0, false, false, ""},
 
-			qgen.DBTableColumn{"issued_by", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"issued_at", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"revert_at", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"temporary", "boolean", 0, false, false, ""}, // special case for permanent bans to do the necessary bookkeeping, might be removed in the future
+			tblColumn{"issued_by", "int", 0, false, false, ""},
+			tblColumn{"issued_at", "createdAt", 0, false, false, ""},
+			tblColumn{"revert_at", "datetime", 0, false, false, ""},
+			tblColumn{"temporary", "boolean", 0, false, false, ""}, // special case for permanent bans to do the necessary bookkeeping, might be removed in the future
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"uid", "primary"},
+		[]tblKey{
+			tblKey{"uid", "primary"},
 		},
 	)
 
 	// TODO: Can we use a piece of software dedicated to persistent queues for this rather than relying on the database for it?
 	qgen.Install.CreateTable("users_avatar_queue", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+		[]tblColumn{
+			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"uid", "primary"},
+		[]tblKey{
+			tblKey{"uid", "primary"},
 		},
 	)
 
 	// TODO: Should we add a users prefix to this table to fit the "unofficial convention"?
 	qgen.Install.CreateTable("emails", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"email", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"validated", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"token", "varchar", 200, false, false, "''"},
+		[]tblColumn{
+			tblColumn{"email", "varchar", 200, false, false, ""},
+			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"validated", "boolean", 0, false, false, "0"},
+			tblColumn{"token", "varchar", 200, false, false, "''"},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	// TODO: Allow for patterns in domains, if the bots try to shake things up there?
 	/*
 		qgen.Install.CreateTable("email_domain_blacklist", "", "",
-			[]qgen.DBTableColumn{
-				qgen.DBTableColumn{"domain", "varchar", 200, false, false, ""},
-				qgen.DBTableColumn{"gtld", "boolean", 0, false, false, "0"},
+			[]tblColumn{
+				tblColumn{"domain", "varchar", 200, false, false, ""},
+				tblColumn{"gtld", "boolean", 0, false, false, "0"},
 			},
-			[]qgen.DBTableKey{
-				qgen.DBTableKey{"domain", "primary"},
+			[]tblKey{
+				tblKey{"domain", "primary"},
 			},
 		)
 	*/
 
-	qgen.Install.CreateTable("forums", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"fid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"name", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"desc", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"active", "boolean", 0, false, false, "1"},
-			qgen.DBTableColumn{"topicCount", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"preset", "varchar", 100, false, false, "''"},
-			qgen.DBTableColumn{"parentID", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"parentType", "varchar", 50, false, false, "''"},
-			qgen.DBTableColumn{"lastTopicID", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"lastReplyerID", "int", 0, false, false, "0"},
+	qgen.Install.CreateTable("forums", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"fid", "int", 0, false, true, ""},
+			tblColumn{"name", "varchar", 100, false, false, ""},
+			tblColumn{"desc", "varchar", 200, false, false, ""},
+			tblColumn{"active", "boolean", 0, false, false, "1"},
+			tblColumn{"topicCount", "int", 0, false, false, "0"},
+			tblColumn{"preset", "varchar", 100, false, false, "''"},
+			tblColumn{"parentID", "int", 0, false, false, "0"},
+			tblColumn{"parentType", "varchar", 50, false, false, "''"},
+			tblColumn{"lastTopicID", "int", 0, false, false, "0"},
+			tblColumn{"lastReplyerID", "int", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"fid", "primary"},
+		[]tblKey{
+			tblKey{"fid", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("forums_permissions", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"fid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"gid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"preset", "varchar", 100, false, false, "''"},
-			qgen.DBTableColumn{"permissions", "text", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"fid", "int", 0, false, false, ""},
+			tblColumn{"gid", "int", 0, false, false, ""},
+			tblColumn{"preset", "varchar", 100, false, false, "''"},
+			tblColumn{"permissions", "text", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{
+		[]tblKey{
 			// TODO: Test to see that the compound primary key works
-			qgen.DBTableKey{"fid,gid", "primary"},
+			tblKey{"fid,gid", "primary"},
 		},
 	)
 
-	qgen.Install.CreateTable("topics", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"tid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"title", "varchar", 100, false, false, ""}, // TODO: Increase the max length to 200?
-			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"parsed_content", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"lastReplyAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"lastReplyBy", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"is_closed", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"sticky", "boolean", 0, false, false, "0"},
+	qgen.Install.CreateTable("topics", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"tid", "int", 0, false, true, ""},
+			tblColumn{"title", "varchar", 100, false, false, ""}, // TODO: Increase the max length to 200?
+			tblColumn{"content", "text", 0, false, false, ""},
+			tblColumn{"parsed_content", "text", 0, false, false, ""},
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+			tblColumn{"lastReplyAt", "datetime", 0, false, false, ""},
+			tblColumn{"lastReplyBy", "int", 0, false, false, ""},
+			tblColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"is_closed", "boolean", 0, false, false, "0"},
+			tblColumn{"sticky", "boolean", 0, false, false, "0"},
 			// TODO: Add an index for this
-			qgen.DBTableColumn{"parentID", "int", 0, false, false, "2"},
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
-			qgen.DBTableColumn{"postCount", "int", 0, false, false, "1"},
-			qgen.DBTableColumn{"likeCount", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"words", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"views", "int", 0, false, false, "0"},
-			//qgen.DBTableColumn{"dailyViews", "int", 0, false, false, "0"},
-			//qgen.DBTableColumn{"weeklyViews", "int", 0, false, false, "0"},
-			//qgen.DBTableColumn{"monthlyViews", "int", 0, false, false, "0"},
+			tblColumn{"parentID", "int", 0, false, false, "2"},
+			tblColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+			tblColumn{"postCount", "int", 0, false, false, "1"},
+			tblColumn{"likeCount", "int", 0, false, false, "0"},
+			//tblColumn{"attachCount","int",0,false,false,"0"},
+			tblColumn{"words", "int", 0, false, false, "0"},
+			tblColumn{"views", "int", 0, false, false, "0"},
+			//tblColumn{"dailyViews", "int", 0, false, false, "0"},
+			//tblColumn{"weeklyViews", "int", 0, false, false, "0"},
+			//tblColumn{"monthlyViews", "int", 0, false, false, "0"},
 			// ? - A little hacky, maybe we could do something less likely to bite us with huge numbers of topics?
 			// TODO: Add an index for this?
-			//qgen.DBTableColumn{"lastMonth", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"css_class", "varchar", 100, false, false, "''"},
-			qgen.DBTableColumn{"poll", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"data", "varchar", 200, false, false, "''"},
+			//tblColumn{"lastMonth", "datetime", 0, false, false, ""},
+			tblColumn{"css_class", "varchar", 100, false, false, "''"},
+			tblColumn{"poll", "int", 0, false, false, "0"},
+			tblColumn{"data", "varchar", 200, false, false, "''"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"tid", "primary"},
-		},
-	)
-
-	qgen.Install.CreateTable("replies", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"rid", "int", 0, false, true, ""},  // TODO: Rename to replyID?
-			qgen.DBTableColumn{"tid", "int", 0, false, false, ""}, // TODO: Rename to topicID?
-			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"parsed_content", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"lastEdit", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"lastEditBy", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"lastUpdated", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
-			qgen.DBTableColumn{"likeCount", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"words", "int", 0, false, false, "1"}, // ? - replies has a default of 1 and topics has 0? why?
-			qgen.DBTableColumn{"actionType", "varchar", 20, false, false, "''"},
-			qgen.DBTableColumn{"poll", "int", 0, false, false, "0"},
-		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"rid", "primary"},
+		[]tblKey{
+			tblKey{"tid", "primary"},
 		},
 	)
 
-	qgen.Install.CreateTable("attachments", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"attachID", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"sectionID", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"sectionTable", "varchar", 200, false, false, "forums"},
-			qgen.DBTableColumn{"originID", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"originTable", "varchar", 200, false, false, "replies"},
-			qgen.DBTableColumn{"uploadedBy", "int", 0, false, false, ""}, // TODO; Make this a foreign key
-			qgen.DBTableColumn{"path", "varchar", 200, false, false, ""},
+	qgen.Install.CreateTable("replies", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"rid", "int", 0, false, true, ""},  // TODO: Rename to replyID?
+			tblColumn{"tid", "int", 0, false, false, ""}, // TODO: Rename to topicID?
+			tblColumn{"content", "text", 0, false, false, ""},
+			tblColumn{"parsed_content", "text", 0, false, false, ""},
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+			tblColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"lastEdit", "int", 0, false, false, "0"},
+			tblColumn{"lastEditBy", "int", 0, false, false, "0"},
+			tblColumn{"lastUpdated", "datetime", 0, false, false, ""},
+			tblColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+			tblColumn{"likeCount", "int", 0, false, false, "0"},
+			tblColumn{"words", "int", 0, false, false, "1"}, // ? - replies has a default of 1 and topics has 0? why?
+			tblColumn{"actionType", "varchar", 20, false, false, "''"},
+			tblColumn{"poll", "int", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"attachID", "primary"},
+		[]tblKey{
+			tblKey{"rid", "primary"},
 		},
 	)
 
-	qgen.Install.CreateTable("revisions", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"reviseID", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"contentID", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"contentType", "varchar", 100, false, false, "replies"},
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
+	qgen.Install.CreateTable("attachments", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"attachID", "int", 0, false, true, ""},
+			tblColumn{"sectionID", "int", 0, false, false, "0"},
+			tblColumn{"sectionTable", "varchar", 200, false, false, "forums"},
+			tblColumn{"originID", "int", 0, false, false, ""},
+			tblColumn{"originTable", "varchar", 200, false, false, "replies"},
+			tblColumn{"uploadedBy", "int", 0, false, false, ""}, // TODO; Make this a foreign key
+			tblColumn{"path", "varchar", 200, false, false, ""},
+		},
+		[]tblKey{
+			tblKey{"attachID", "primary"},
+		},
+	)
+
+	qgen.Install.CreateTable("revisions", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"reviseID", "int", 0, false, true, ""},
+			tblColumn{"content", "text", 0, false, false, ""},
+			tblColumn{"contentID", "int", 0, false, false, ""},
+			tblColumn{"contentType", "varchar", 100, false, false, "replies"},
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
 			// TODO: Add a createdBy column?
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"reviseID", "primary"},
+		[]tblKey{
+			tblKey{"reviseID", "primary"},
 		},
 	)
 
-	qgen.Install.CreateTable("polls", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"pollID", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"parentID", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"parentTable", "varchar", 100, false, false, "topics"}, // topics, replies
-			qgen.DBTableColumn{"type", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"options", "json", 0, false, false, ""},
-			qgen.DBTableColumn{"votes", "int", 0, false, false, "0"},
+	qgen.Install.CreateTable("polls", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"pollID", "int", 0, false, true, ""},
+			tblColumn{"parentID", "int", 0, false, false, "0"},
+			tblColumn{"parentTable", "varchar", 100, false, false, "topics"}, // topics, replies
+			tblColumn{"type", "int", 0, false, false, "0"},
+			tblColumn{"options", "json", 0, false, false, ""},
+			tblColumn{"votes", "int", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"pollID", "primary"},
+		[]tblKey{
+			tblKey{"pollID", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("polls_options", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"pollID", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"option", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"votes", "int", 0, false, false, "0"},
+		[]tblColumn{
+			tblColumn{"pollID", "int", 0, false, false, ""},
+			tblColumn{"option", "int", 0, false, false, "0"},
+			tblColumn{"votes", "int", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
-	qgen.Install.CreateTable("polls_votes", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"pollID", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"option", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"castAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+	qgen.Install.CreateTable("polls_votes", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"pollID", "int", 0, false, false, ""},
+			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"option", "int", 0, false, false, "0"},
+			tblColumn{"castAt", "createdAt", 0, false, false, ""},
+			tblColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
-	qgen.Install.CreateTable("users_replies", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"rid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"content", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"parsed_content", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"lastEdit", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"lastEditBy", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+	qgen.Install.CreateTable("users_replies", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"rid", "int", 0, false, true, ""},
+			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"content", "text", 0, false, false, ""},
+			tblColumn{"parsed_content", "text", 0, false, false, ""},
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+			tblColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"lastEdit", "int", 0, false, false, "0"},
+			tblColumn{"lastEditBy", "int", 0, false, false, "0"},
+			tblColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"rid", "primary"},
+		[]tblKey{
+			tblKey{"rid", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("likes", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"weight", "tinyint", 0, false, false, "1"},
-			qgen.DBTableColumn{"targetItem", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"targetType", "varchar", 50, false, false, "replies"},
-			qgen.DBTableColumn{"sentBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"recalc", "tinyint", 0, false, false, "0"},
+		[]tblColumn{
+			tblColumn{"weight", "tinyint", 0, false, false, "1"},
+			tblColumn{"targetItem", "int", 0, false, false, ""},
+			tblColumn{"targetType", "varchar", 50, false, false, "replies"},
+			tblColumn{"sentBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+			tblColumn{"recalc", "tinyint", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("activity_stream_matches", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"watcher", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"asid", "int", 0, false, false, ""},    // TODO: Make this a foreign key
+		[]tblColumn{
+			tblColumn{"watcher", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"asid", "int", 0, false, false, ""},    // TODO: Make this a foreign key
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("activity_stream", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"asid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"actor", "int", 0, false, false, ""},            /* the one doing the act */ // TODO: Make this a foreign key
-			qgen.DBTableColumn{"targetUser", "int", 0, false, false, ""},       /* the user who created the item the actor is acting on, some items like forums may lack a targetUser field */
-			qgen.DBTableColumn{"event", "varchar", 50, false, false, ""},       /* mention, like, reply (as in the act of replying to an item, not the reply item type, you can "reply" to a forum by making a topic in it), friend_invite */
-			qgen.DBTableColumn{"elementType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
-			qgen.DBTableColumn{"elementID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
+		[]tblColumn{
+			tblColumn{"asid", "int", 0, false, true, ""},
+			tblColumn{"actor", "int", 0, false, false, ""},            /* the one doing the act */ // TODO: Make this a foreign key
+			tblColumn{"targetUser", "int", 0, false, false, ""},       /* the user who created the item the actor is acting on, some items like forums may lack a targetUser field */
+			tblColumn{"event", "varchar", 50, false, false, ""},       /* mention, like, reply (as in the act of replying to an item, not the reply item type, you can "reply" to a forum by making a topic in it), friend_invite */
+			tblColumn{"elementType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
+			tblColumn{"elementID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"asid", "primary"},
+		[]tblKey{
+			tblKey{"asid", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("activity_subscriptions", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"user", "int", 0, false, false, ""},            // TODO: Make this a foreign key
-			qgen.DBTableColumn{"targetID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
-			qgen.DBTableColumn{"targetType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
-			qgen.DBTableColumn{"level", "int", 0, false, false, "0"},          /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
+		[]tblColumn{
+			tblColumn{"user", "int", 0, false, false, ""},            // TODO: Make this a foreign key
+			tblColumn{"targetID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
+			tblColumn{"targetType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
+			tblColumn{"level", "int", 0, false, false, "0"},          /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	/* Due to MySQL's design, we have to drop the unique keys for table settings, plugins, and themes down from 200 to 180 or it will error */
 	qgen.Install.CreateTable("settings", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"name", "varchar", 180, false, false, ""},
-			qgen.DBTableColumn{"content", "varchar", 250, false, false, ""},
-			qgen.DBTableColumn{"type", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"constraints", "varchar", 200, false, false, "''"},
+		[]tblColumn{
+			tblColumn{"name", "varchar", 180, false, false, ""},
+			tblColumn{"content", "varchar", 250, false, false, ""},
+			tblColumn{"type", "varchar", 50, false, false, ""},
+			tblColumn{"constraints", "varchar", 200, false, false, "''"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"name", "unique"},
+		[]tblKey{
+			tblKey{"name", "unique"},
 		},
 	)
 
 	qgen.Install.CreateTable("word_filters", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"wfid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"find", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"replacement", "varchar", 200, false, false, ""},
+		[]tblColumn{
+			tblColumn{"wfid", "int", 0, false, true, ""},
+			tblColumn{"find", "varchar", 200, false, false, ""},
+			tblColumn{"replacement", "varchar", 200, false, false, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"wfid", "primary"},
+		[]tblKey{
+			tblKey{"wfid", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("plugins", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uname", "varchar", 180, false, false, ""},
-			qgen.DBTableColumn{"active", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"installed", "boolean", 0, false, false, "0"},
+		[]tblColumn{
+			tblColumn{"uname", "varchar", 180, false, false, ""},
+			tblColumn{"active", "boolean", 0, false, false, "0"},
+			tblColumn{"installed", "boolean", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"uname", "unique"},
+		[]tblKey{
+			tblKey{"uname", "unique"},
 		},
 	)
 
 	qgen.Install.CreateTable("themes", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uname", "varchar", 180, false, false, ""},
-			qgen.DBTableColumn{"default", "boolean", 0, false, false, "0"},
+		[]tblColumn{
+			tblColumn{"uname", "varchar", 180, false, false, ""},
+			tblColumn{"default", "boolean", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"uname", "unique"},
+		[]tblKey{
+			tblKey{"uname", "unique"},
 		},
 	)
 
 	qgen.Install.CreateTable("widgets", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"position", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"side", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"type", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"active", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"location", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"data", "text", 0, false, false, "''"},
+		[]tblColumn{
+			tblColumn{"position", "int", 0, false, false, ""},
+			tblColumn{"side", "varchar", 100, false, false, ""},
+			tblColumn{"type", "varchar", 100, false, false, ""},
+			tblColumn{"active", "boolean", 0, false, false, "0"},
+			tblColumn{"location", "varchar", 100, false, false, ""},
+			tblColumn{"data", "text", 0, false, false, "''"},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("menus", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"mid", "int", 0, false, true, ""},
+		[]tblColumn{
+			tblColumn{"mid", "int", 0, false, true, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"mid", "primary"},
+		[]tblKey{
+			tblKey{"mid", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("menu_items", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"miid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"mid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"name", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"htmlID", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"cssClass", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"position", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"path", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"aria", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"tooltip", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"tmplName", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"order", "int", 0, false, false, "0"},
+		[]tblColumn{
+			tblColumn{"miid", "int", 0, false, true, ""},
+			tblColumn{"mid", "int", 0, false, false, ""},
+			tblColumn{"name", "varchar", 200, false, false, "''"},
+			tblColumn{"htmlID", "varchar", 200, false, false, "''"},
+			tblColumn{"cssClass", "varchar", 200, false, false, "''"},
+			tblColumn{"position", "varchar", 100, false, false, ""},
+			tblColumn{"path", "varchar", 200, false, false, "''"},
+			tblColumn{"aria", "varchar", 200, false, false, "''"},
+			tblColumn{"tooltip", "varchar", 200, false, false, "''"},
+			tblColumn{"tmplName", "varchar", 200, false, false, "''"},
+			tblColumn{"order", "int", 0, false, false, "0"},
 
-			qgen.DBTableColumn{"guestOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"memberOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"staffOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"adminOnly", "boolean", 0, false, false, "0"},
+			tblColumn{"guestOnly", "boolean", 0, false, false, "0"},
+			tblColumn{"memberOnly", "boolean", 0, false, false, "0"},
+			tblColumn{"staffOnly", "boolean", 0, false, false, "0"},
+			tblColumn{"adminOnly", "boolean", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"miid", "primary"},
+		[]tblKey{
+			tblKey{"miid", "primary"},
 		},
 	)
 
-	qgen.Install.CreateTable("pages", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"pid", "int", 0, false, true, ""},
-			//qgen.DBTableColumn{"path", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"name", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"title", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"body", "text", 0, false, false, ""},
+	qgen.Install.CreateTable("pages", mysqlPre, mysqlCol,
+		[]tblColumn{
+			tblColumn{"pid", "int", 0, false, true, ""},
+			//tblColumn{"path", "varchar", 200, false, false, ""},
+			tblColumn{"name", "varchar", 200, false, false, ""},
+			tblColumn{"title", "varchar", 200, false, false, ""},
+			tblColumn{"body", "text", 0, false, false, ""},
 			// TODO: Make this a table?
-			qgen.DBTableColumn{"allowedGroups", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"menuID", "int", 0, false, false, "-1"}, // simple sidebar menu
+			tblColumn{"allowedGroups", "text", 0, false, false, ""},
+			tblColumn{"menuID", "int", 0, false, false, "-1"}, // simple sidebar menu
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"pid", "primary"},
+		[]tblKey{
+			tblKey{"pid", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("registration_logs", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"rlid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"username", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"email", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"failureReason", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"rlid", "int", 0, false, true, ""},
+			tblColumn{"username", "varchar", 100, false, false, ""},
+			tblColumn{"email", "varchar", 100, false, false, ""},
+			tblColumn{"failureReason", "varchar", 100, false, false, ""},
+			tblColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
+			tblColumn{"doneAt", "createdAt", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"rlid", "primary"},
+		[]tblKey{
+			tblKey{"rlid", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("login_logs", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"lid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"lid", "int", 0, false, true, ""},
+			tblColumn{"uid", "int", 0, false, false, ""},
+			tblColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
+			tblColumn{"doneAt", "createdAt", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"lid", "primary"},
+		[]tblKey{
+			tblKey{"lid", "primary"},
 		},
 	)
 
 	qgen.Install.CreateTable("moderation_logs", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"action", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"elementID", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"elementType", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"doneAt", "datetime", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"action", "varchar", 100, false, false, ""},
+			tblColumn{"elementID", "int", 0, false, false, ""},
+			tblColumn{"elementType", "varchar", 100, false, false, ""},
+			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
+			tblColumn{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"doneAt", "datetime", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("administration_logs", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"action", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"elementID", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"elementType", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			qgen.DBTableColumn{"doneAt", "datetime", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"action", "varchar", 100, false, false, ""},
+			tblColumn{"elementID", "int", 0, false, false, ""},
+			tblColumn{"elementType", "varchar", 100, false, false, ""},
+			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
+			tblColumn{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"doneAt", "datetime", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("viewchunks", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"route", "varchar", 200, false, false, ""},
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+			tblColumn{"route", "varchar", 200, false, false, ""},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("viewchunks_agents", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"browser", "varchar", 200, false, false, ""}, // googlebot, firefox, opera, etc.
-			//qgen.DBTableColumn{"version","varchar",0,false,false,""}, // the version of the browser or bot
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+			tblColumn{"browser", "varchar", 200, false, false, ""}, // googlebot, firefox, opera, etc.
+			//tblColumn{"version","varchar",0,false,false,""}, // the version of the browser or bot
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("viewchunks_systems", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"system", "varchar", 200, false, false, ""}, // windows, android, unknown, etc.
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+			tblColumn{"system", "varchar", 200, false, false, ""}, // windows, android, unknown, etc.
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("viewchunks_langs", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"lang", "varchar", 200, false, false, ""}, // en, ru, etc.
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+			tblColumn{"lang", "varchar", 200, false, false, ""}, // en, ru, etc.
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("viewchunks_referrers", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"domain", "varchar", 200, false, false, ""},
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+			tblColumn{"domain", "varchar", 200, false, false, ""},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("viewchunks_forums", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
-			qgen.DBTableColumn{"forum", "int", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+			tblColumn{"forum", "int", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("topicchunks", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			// TODO: Add a column for the parent forum?
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("postchunks", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"count", "int", 0, false, false, "0"},
-			qgen.DBTableColumn{"createdAt", "datetime", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			// TODO: Add a column for the parent topic / profile?
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("sync", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"last_update", "datetime", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"last_update", "datetime", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	qgen.Install.CreateTable("updates", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"dbVersion", "int", 0, false, false, "0"},
+		[]tblColumn{
+			tblColumn{"dbVersion", "int", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	)
 
 	return nil

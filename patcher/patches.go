@@ -7,6 +7,9 @@ import (
 	"github.com/Azareal/Gosora/query_gen"
 )
 
+type tblColumn = qgen.DBTableColumn
+type tblKey = qgen.DBTableKey
+
 func init() {
 	addPatch(0, patch0)
 	addPatch(1, patch1)
@@ -18,6 +21,7 @@ func init() {
 	addPatch(7, patch7)
 	addPatch(8, patch8)
 	addPatch(9, patch9)
+	addPatch(10, patch10)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -32,11 +36,11 @@ func patch0(scanner *bufio.Scanner) (err error) {
 	}
 
 	err = execStmt(qgen.Builder.CreateTable("menus", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"mid", "int", 0, false, true, ""},
+		[]tblColumn{
+			tblColumn{"mid", "int", 0, false, true, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"mid", "primary"},
+		[]tblKey{
+			tblKey{"mid", "primary"},
 		},
 	))
 	if err != nil {
@@ -44,26 +48,26 @@ func patch0(scanner *bufio.Scanner) (err error) {
 	}
 
 	err = execStmt(qgen.Builder.CreateTable("menu_items", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"miid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"mid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"name", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"htmlID", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"cssClass", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"position", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"path", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"aria", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"tooltip", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"tmplName", "varchar", 200, false, false, "''"},
-			qgen.DBTableColumn{"order", "int", 0, false, false, "0"},
+		[]tblColumn{
+			tblColumn{"miid", "int", 0, false, true, ""},
+			tblColumn{"mid", "int", 0, false, false, ""},
+			tblColumn{"name", "varchar", 200, false, false, ""},
+			tblColumn{"htmlID", "varchar", 200, false, false, "''"},
+			tblColumn{"cssClass", "varchar", 200, false, false, "''"},
+			tblColumn{"position", "varchar", 100, false, false, ""},
+			tblColumn{"path", "varchar", 200, false, false, "''"},
+			tblColumn{"aria", "varchar", 200, false, false, "''"},
+			tblColumn{"tooltip", "varchar", 200, false, false, "''"},
+			tblColumn{"tmplName", "varchar", 200, false, false, "''"},
+			tblColumn{"order", "int", 0, false, false, "0"},
 
-			qgen.DBTableColumn{"guestOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"memberOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"staffOnly", "boolean", 0, false, false, "0"},
-			qgen.DBTableColumn{"adminOnly", "boolean", 0, false, false, "0"},
+			tblColumn{"guestOnly", "boolean", 0, false, false, "0"},
+			tblColumn{"memberOnly", "boolean", 0, false, false, "0"},
+			tblColumn{"staffOnly", "boolean", 0, false, false, "0"},
+			tblColumn{"adminOnly", "boolean", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"miid", "primary"},
+		[]tblKey{
+			tblKey{"miid", "primary"},
 		},
 	))
 	if err != nil {
@@ -159,25 +163,20 @@ func patch2(scanner *bufio.Scanner) error {
 }
 
 func patch3(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.CreateTable("registration_logs", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"rlid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"username", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"email", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"failureReason", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
+	return execStmt(qgen.Builder.CreateTable("registration_logs", "", "",
+		[]tblColumn{
+			tblColumn{"rlid", "int", 0, false, true, ""},
+			tblColumn{"username", "varchar", 100, false, false, ""},
+			tblColumn{"email", "varchar", 100, false, false, ""},
+			tblColumn{"failureReason", "varchar", 100, false, false, ""},
+			tblColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
+			tblColumn{"doneAt", "createdAt", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"rlid", "primary"},
+		[]tblKey{
+			tblKey{"rlid", "primary"},
 		},
 	))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func patch4(scanner *bufio.Scanner) error {
@@ -229,16 +228,16 @@ func patch4(scanner *bufio.Scanner) error {
 	}
 
 	err = execStmt(qgen.Builder.CreateTable("pages", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"pid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"name", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"title", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"body", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"allowedGroups", "text", 0, false, false, ""},
-			qgen.DBTableColumn{"menuID", "int", 0, false, false, "-1"},
+		[]tblColumn{
+			tblColumn{"pid", "int", 0, false, true, ""},
+			tblColumn{"name", "varchar", 200, false, false, ""},
+			tblColumn{"title", "varchar", 200, false, false, ""},
+			tblColumn{"body", "text", 0, false, false, ""},
+			tblColumn{"allowedGroups", "text", 0, false, false, ""},
+			tblColumn{"menuID", "int", 0, false, false, "-1"},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"pid", "primary"},
+		[]tblKey{
+			tblKey{"pid", "primary"},
 		},
 	))
 	if err != nil {
@@ -267,21 +266,21 @@ func patch5(scanner *bufio.Scanner) error {
 	}
 
 	err = execStmt(qgen.Builder.CreateTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"secret", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"scratch1", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch2", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch3", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch4", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch5", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch6", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch7", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"scratch8", "varchar", 50, false, false, ""},
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
+		[]tblColumn{
+			tblColumn{"uid", "int", 0, false, false, ""},
+			tblColumn{"secret", "varchar", 100, false, false, ""},
+			tblColumn{"scratch1", "varchar", 50, false, false, ""},
+			tblColumn{"scratch2", "varchar", 50, false, false, ""},
+			tblColumn{"scratch3", "varchar", 50, false, false, ""},
+			tblColumn{"scratch4", "varchar", 50, false, false, ""},
+			tblColumn{"scratch5", "varchar", 50, false, false, ""},
+			tblColumn{"scratch6", "varchar", 50, false, false, ""},
+			tblColumn{"scratch7", "varchar", 50, false, false, ""},
+			tblColumn{"scratch8", "varchar", 50, false, false, ""},
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"uid", "primary"},
+		[]tblKey{
+			tblKey{"uid", "primary"},
 		},
 	))
 	if err != nil {
@@ -292,28 +291,18 @@ func patch5(scanner *bufio.Scanner) error {
 }
 
 func patch6(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.SimpleInsert("settings", "name, content, type", "'rapid_loading','1','bool'"))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return execStmt(qgen.Builder.SimpleInsert("settings", "name, content, type", "'rapid_loading','1','bool'"))
 }
 
 func patch7(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.CreateTable("users_avatar_queue", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+	return execStmt(qgen.Builder.CreateTable("users_avatar_queue", "", "",
+		[]tblColumn{
+			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"uid", "primary"},
+		[]tblKey{
+			tblKey{"uid", "primary"},
 		},
 	))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func renameRoutes(routes map[string]string) error {
@@ -369,17 +358,12 @@ func patch8(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.CreateTable("updates", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"dbVersion", "int", 0, false, false, "0"},
+	return execStmt(qgen.Builder.CreateTable("updates", "", "",
+		[]tblColumn{
+			tblColumn{"dbVersion", "int", 0, false, false, "0"},
 		},
-		[]qgen.DBTableKey{},
+		[]tblKey{},
 	))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func patch9(scanner *bufio.Scanner) error {
@@ -389,21 +373,60 @@ func patch9(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.CreateTable("login_logs", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"lid", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			qgen.DBTableColumn{"ipaddress", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"doneAt", "createdAt", 0, false, false, ""},
+	return execStmt(qgen.Builder.CreateTable("login_logs", "", "",
+		[]tblColumn{
+			tblColumn{"lid", "int", 0, false, true, ""},
+			tblColumn{"uid", "int", 0, false, false, ""},
+			tblColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
+			tblColumn{"doneAt", "createdAt", 0, false, false, ""},
 		},
-		[]qgen.DBTableKey{
-			qgen.DBTableKey{"lid", "primary"},
+		[]tblKey{
+			tblKey{"lid", "primary"},
 		},
 	))
+}
+
+var acc = qgen.NewAcc
+var itoa = strconv.Itoa
+
+func patch10(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddColumn("topics", tblColumn{"attachCount", "int", 0, false, false, "0"}))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddColumn("topics", tblColumn{"lastReplyID", "int", 0, false, false, "0"}))
 	if err != nil {
 		return err
 	}
 
-	return nil
+	// We could probably do something more efficient, but as there shouldn't be too many sites right now, we can probably cheat a little, otherwise it'll take forever to get things done
+	err = acc().Select("topics").Cols("tid").EachInt(func(tid int) error {
+		stid := itoa(tid)
+
+		count, err := acc().Count("attachments").Where("originTable = 'topics' and originID = " + stid).Total()
+		if err != nil {
+			return err
+		}
+
+		var hasReply = false
+		err = acc().Select("replies").Cols("rid").Where("tid = " + stid).Orderby("rid DESC").Limit("1").EachInt(func(rid int) error {
+			hasReply = true
+			_, err := acc().Update("topics").Set("lastReplyID = ?, attachCount = ?").Where("tid = "+stid).Exec(rid, count)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+		if !hasReply {
+			_, err = acc().Update("topics").Set("attachCount = ?").Where("tid = " + stid).Exec(count)
+		}
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = acc().Insert("updates").Columns("dbVersion").Fields("0").Exec()
+	return err
 }

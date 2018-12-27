@@ -25,7 +25,7 @@ type TransactionBuilder struct {
 }
 
 func (build *TransactionBuilder) SimpleDelete(table string, where string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleDelete("_builder", table, where)
+	res, err := build.adapter.SimpleDelete("", table, where)
 	if err != nil {
 		return stmt, err
 	}
@@ -34,7 +34,7 @@ func (build *TransactionBuilder) SimpleDelete(table string, where string) (stmt 
 
 // Quick* versions refer to it being quick to type not the performance. For performance critical transactions, you might want to use the Simple* methods or the *Tx methods on the main builder. Alternate suggestions for names are welcome :)
 func (build *TransactionBuilder) QuickDelete(table string, where string) *transactionStmt {
-	res, err := build.adapter.SimpleDelete("_builder", table, where)
+	res, err := build.adapter.SimpleDelete("", table, where)
 	if err != nil {
 		return newTransactionStmt(nil, err)
 	}
@@ -49,7 +49,7 @@ func (build *TransactionBuilder) QuickDelete(table string, where string) *transa
 }
 
 func (build *TransactionBuilder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleInsert("_builder", table, columns, fields)
+	res, err := build.adapter.SimpleInsert("", table, columns, fields)
 	if err != nil {
 		return stmt, err
 	}
@@ -57,7 +57,7 @@ func (build *TransactionBuilder) SimpleInsert(table string, columns string, fiel
 }
 
 func (build *TransactionBuilder) QuickInsert(table string, where string) *transactionStmt {
-	res, err := build.adapter.SimpleDelete("_builder", table, where)
+	res, err := build.adapter.SimpleDelete("", table, where)
 	if err != nil {
 		return newTransactionStmt(nil, err)
 	}

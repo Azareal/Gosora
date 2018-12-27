@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -89,20 +90,29 @@ type SchemaFile struct {
 	MinVersion         string // TODO: Minimum version of Gosora to jump to this version, might be tricky as we don't store this in the schema file, maybe store it in the database
 }
 
-func patcher(scanner *bufio.Scanner) error {
+func loadSchema() (schemaFile SchemaFile, err error) {
 	fmt.Println("Loading the schema file")
 	data, err := ioutil.ReadFile("./schema/lastSchema.json")
 	if err != nil {
-		return err
+		return schemaFile, err
 	}
-
-	var schemaFile SchemaFile
 	err = json.Unmarshal(data, &schemaFile)
-	if err != nil {
-		return err
-	}
-	dbVersion, err := strconv.Atoi(schemaFile.DBVersion)
-	if err != nil {
+	return schemaFile, err
+}
+
+func patcher(scanner *bufio.Scanner) error {
+	var dbVersion int
+	err := qgen.NewAcc().Select("updates").Columns("dbVersion").QueryRow().Scan(&dbVersion)
+	if err == sql.ErrNoRows {
+		schemaFile, err := loadSchema()
+		if err != nil {
+			return err
+		}
+		dbVersion, err = strconv.Atoi(schemaFile.DBVersion)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
 		return err
 	}
 
@@ -113,11 +123,20 @@ func patcher(scanner *bufio.Scanner) error {
 	}
 
 	// Run the queued up patches
+	var patched int
 	for index, patch := range pslice {
 		if dbVersion > index {
 			continue
 		}
 		err := patch(scanner)
+		if err != nil {
+			return err
+		}
+		patched++
+	}
+
+	if patched > 0 {
+		_, err := qgen.NewAcc().Update("updates").Set("dbVersion = ?").Exec(len(pslice))
 		if err != nil {
 			return err
 		}

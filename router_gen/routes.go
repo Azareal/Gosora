@@ -89,7 +89,9 @@ func topicRoutes() *RouteGroup {
 		Action("routes.LockTopicSubmit", "/topic/lock/submit/").LitBefore("req.URL.Path += extraData"),
 		Action("routes.UnlockTopicSubmit", "/topic/unlock/submit/", "extraData"),
 		Action("routes.MoveTopicSubmit", "/topic/move/submit/", "extraData"),
-		Action("routes.LikeTopicSubmit", "/topic/like/submit/", "extraData").Before("ParseForm"),
+		Action("routes.LikeTopicSubmit", "/topic/like/submit/", "extraData"),
+		UploadAction("routes.AddAttachToTopicSubmit", "/topic/attach/add/submit/", "extraData").MaxSizeVar("int(common.Config.MaxRequestSize)"),
+		Action("routes.RemoveAttachFromTopicSubmit", "/topic/attach/remove/submit/", "extraData"),
 	)
 }
 
@@ -99,7 +101,7 @@ func replyRoutes() *RouteGroup {
 		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("int(common.Config.MaxRequestSize)"), // TODO: Rename the route so it's /reply/create/submit/
 		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
 		Action("routes.ReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
-		Action("routes.ReplyLikeSubmit", "/reply/like/submit/", "extraData").Before("ParseForm"),
+		Action("routes.ReplyLikeSubmit", "/reply/like/submit/", "extraData"),
 		//MemberView("routes.ReplyEdit","/reply/edit/","extraData"), // No js fallback
 		//MemberView("routes.ReplyDelete","/reply/delete/","extraData"), // No js confirmation page? We could have a confirmation modal for the JS case
 	)

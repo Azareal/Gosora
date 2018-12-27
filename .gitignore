@@ -21,7 +21,6 @@ out/*
 *.log
 .DS_Store
 .vscode/launch.json
-schema/lastSchema.json
 config/config.go
 QueryGen
 RouterGen

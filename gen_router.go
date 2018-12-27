@@ -128,6 +128,8 @@ var RouteMap = map[string]interface{}{
 	"routes.UnlockTopicSubmit": routes.UnlockTopicSubmit,
 	"routes.MoveTopicSubmit": routes.MoveTopicSubmit,
 	"routes.LikeTopicSubmit": routes.LikeTopicSubmit,
+	"routes.AddAttachToTopicSubmit": routes.AddAttachToTopicSubmit,
+	"routes.RemoveAttachFromTopicSubmit": routes.RemoveAttachFromTopicSubmit,
 	"routes.ViewTopic": routes.ViewTopic,
 	"routes.CreateReplySubmit": routes.CreateReplySubmit,
 	"routes.ReplyEditSubmit": routes.ReplyEditSubmit,
@@ -261,29 +263,31 @@ var routeMapEnum = map[string]int{
 	"routes.UnlockTopicSubmit": 103,
 	"routes.MoveTopicSubmit": 104,
 	"routes.LikeTopicSubmit": 105,
-	"routes.ViewTopic": 106,
-	"routes.CreateReplySubmit": 107,
-	"routes.ReplyEditSubmit": 108,
-	"routes.ReplyDeleteSubmit": 109,
-	"routes.ReplyLikeSubmit": 110,
-	"routes.ProfileReplyCreateSubmit": 111,
-	"routes.ProfileReplyEditSubmit": 112,
-	"routes.ProfileReplyDeleteSubmit": 113,
-	"routes.PollVote": 114,
-	"routes.PollResults": 115,
-	"routes.AccountLogin": 116,
-	"routes.AccountRegister": 117,
-	"routes.AccountLogout": 118,
-	"routes.AccountLoginSubmit": 119,
-	"routes.AccountLoginMFAVerify": 120,
-	"routes.AccountLoginMFAVerifySubmit": 121,
-	"routes.AccountRegisterSubmit": 122,
-	"routes.DynamicRoute": 123,
-	"routes.UploadedFile": 124,
-	"routes.StaticFile": 125,
-	"routes.RobotsTxt": 126,
-	"routes.SitemapXml": 127,
-	"routes.BadRoute": 128,
+	"routes.AddAttachToTopicSubmit": 106,
+	"routes.RemoveAttachFromTopicSubmit": 107,
+	"routes.ViewTopic": 108,
+	"routes.CreateReplySubmit": 109,
+	"routes.ReplyEditSubmit": 110,
+	"routes.ReplyDeleteSubmit": 111,
+	"routes.ReplyLikeSubmit": 112,
+	"routes.ProfileReplyCreateSubmit": 113,
+	"routes.ProfileReplyEditSubmit": 114,
+	"routes.ProfileReplyDeleteSubmit": 115,
+	"routes.PollVote": 116,
+	"routes.PollResults": 117,
+	"routes.AccountLogin": 118,
+	"routes.AccountRegister": 119,
+	"routes.AccountLogout": 120,
+	"routes.AccountLoginSubmit": 121,
+	"routes.AccountLoginMFAVerify": 122,
+	"routes.AccountLoginMFAVerifySubmit": 123,
+	"routes.AccountRegisterSubmit": 124,
+	"routes.DynamicRoute": 125,
+	"routes.UploadedFile": 126,
+	"routes.StaticFile": 127,
+	"routes.RobotsTxt": 128,
+	"routes.SitemapXml": 129,
+	"routes.BadRoute": 130,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routes.Overview",
@@ -392,29 +396,31 @@ var reverseRouteMapEnum = map[int]string{
 	103: "routes.UnlockTopicSubmit",
 	104: "routes.MoveTopicSubmit",
 	105: "routes.LikeTopicSubmit",
-	106: "routes.ViewTopic",
-	107: "routes.CreateReplySubmit",
-	108: "routes.ReplyEditSubmit",
-	109: "routes.ReplyDeleteSubmit",
-	110: "routes.ReplyLikeSubmit",
-	111: "routes.ProfileReplyCreateSubmit",
-	112: "routes.ProfileReplyEditSubmit",
-	113: "routes.ProfileReplyDeleteSubmit",
-	114: "routes.PollVote",
-	115: "routes.PollResults",
-	116: "routes.AccountLogin",
-	117: "routes.AccountRegister",
-	118: "routes.AccountLogout",
-	119: "routes.AccountLoginSubmit",
-	120: "routes.AccountLoginMFAVerify",
-	121: "routes.AccountLoginMFAVerifySubmit",
-	122: "routes.AccountRegisterSubmit",
-	123: "routes.DynamicRoute",
-	124: "routes.UploadedFile",
-	125: "routes.StaticFile",
-	126: "routes.RobotsTxt",
-	127: "routes.SitemapXml",
-	128: "routes.BadRoute",
+	106: "routes.AddAttachToTopicSubmit",
+	107: "routes.RemoveAttachFromTopicSubmit",
+	108: "routes.ViewTopic",
+	109: "routes.CreateReplySubmit",
+	110: "routes.ReplyEditSubmit",
+	111: "routes.ReplyDeleteSubmit",
+	112: "routes.ReplyLikeSubmit",
+	113: "routes.ProfileReplyCreateSubmit",
+	114: "routes.ProfileReplyEditSubmit",
+	115: "routes.ProfileReplyDeleteSubmit",
+	116: "routes.PollVote",
+	117: "routes.PollResults",
+	118: "routes.AccountLogin",
+	119: "routes.AccountRegister",
+	120: "routes.AccountLogout",
+	121: "routes.AccountLoginSubmit",
+	122: "routes.AccountLoginMFAVerify",
+	123: "routes.AccountLoginMFAVerifySubmit",
+	124: "routes.AccountRegisterSubmit",
+	125: "routes.DynamicRoute",
+	126: "routes.UploadedFile",
+	127: "routes.StaticFile",
+	128: "routes.RobotsTxt",
+	129: "routes.SitemapXml",
+	130: "routes.BadRoute",
 }
 var osMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -705,7 +711,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	counters.GlobalViewCounter.Bump()
 	
 	if prefix == "/static" {
-		counters.RouteViewCounter.Bump(125)
+		counters.RouteViewCounter.Bump(127)
 		req.URL.Path += extraData
 		routes.StaticFile(w, req)
 		return
@@ -1780,15 +1786,40 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					err = common.ParseForm(w,req,user)
+					counters.RouteViewCounter.Bump(105)
+					err = routes.LikeTopicSubmit(w,req,user,extraData)
+				case "/topic/attach/add/submit/":
+					err = common.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(105)
-					err = routes.LikeTopicSubmit(w,req,user,extraData)
-				default:
+					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
+					if err != nil {
+					return err
+					}
+					err = common.NoUploadSessionMismatch(w,req,user)
+					if err != nil {
+						return err
+					}
+					
 					counters.RouteViewCounter.Bump(106)
+					err = routes.AddAttachToTopicSubmit(w,req,user,extraData)
+				case "/topic/attach/remove/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						return err
+					}
+					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						return err
+					}
+					
+					counters.RouteViewCounter.Bump(107)
+					err = routes.RemoveAttachFromTopicSubmit(w,req,user,extraData)
+				default:
+					counters.RouteViewCounter.Bump(108)
 					head, err := common.UserCheck(w,req,&user)
 					if err != nil {
 						return err
@@ -1812,7 +1843,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(107)
+					counters.RouteViewCounter.Bump(109)
 					err = routes.CreateReplySubmit(w,req,user)
 				case "/reply/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1825,7 +1856,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(108)
+					counters.RouteViewCounter.Bump(110)
 					err = routes.ReplyEditSubmit(w,req,user,extraData)
 				case "/reply/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1838,7 +1869,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(109)
+					counters.RouteViewCounter.Bump(111)
 					err = routes.ReplyDeleteSubmit(w,req,user,extraData)
 				case "/reply/like/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1851,12 +1882,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					err = common.ParseForm(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					counters.RouteViewCounter.Bump(110)
+					counters.RouteViewCounter.Bump(112)
 					err = routes.ReplyLikeSubmit(w,req,user,extraData)
 			}
 		case "/profile":
@@ -1872,7 +1898,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(111)
+					counters.RouteViewCounter.Bump(113)
 					err = routes.ProfileReplyCreateSubmit(w,req,user)
 				case "/profile/reply/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1885,7 +1911,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(112)
+					counters.RouteViewCounter.Bump(114)
 					err = routes.ProfileReplyEditSubmit(w,req,user,extraData)
 				case "/profile/reply/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1898,7 +1924,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(113)
+					counters.RouteViewCounter.Bump(115)
 					err = routes.ProfileReplyDeleteSubmit(w,req,user,extraData)
 			}
 		case "/poll":
@@ -1914,23 +1940,23 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(114)
+					counters.RouteViewCounter.Bump(116)
 					err = routes.PollVote(w,req,user,extraData)
 				case "/poll/results/":
-					counters.RouteViewCounter.Bump(115)
+					counters.RouteViewCounter.Bump(117)
 					err = routes.PollResults(w,req,user,extraData)
 			}
 		case "/accounts":
 			switch(req.URL.Path) {
 				case "/accounts/login/":
-					counters.RouteViewCounter.Bump(116)
+					counters.RouteViewCounter.Bump(118)
 				head, err := common.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountLogin(w,req,user,head)
 				case "/accounts/create/":
-					counters.RouteViewCounter.Bump(117)
+					counters.RouteViewCounter.Bump(119)
 				head, err := common.UserCheck(w,req,&user)
 				if err != nil {
 					return err
@@ -1947,7 +1973,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(118)
+					counters.RouteViewCounter.Bump(120)
 					err = routes.AccountLogout(w,req,user)
 				case "/accounts/login/submit/":
 					err = common.ParseForm(w,req,user)
@@ -1955,10 +1981,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(119)
+					counters.RouteViewCounter.Bump(121)
 					err = routes.AccountLoginSubmit(w,req,user)
 				case "/accounts/mfa_verify/":
-					counters.RouteViewCounter.Bump(120)
+					counters.RouteViewCounter.Bump(122)
 				head, err := common.UserCheck(w,req,&user)
 				if err != nil {
 					return err
@@ -1970,7 +1996,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(121)
+					counters.RouteViewCounter.Bump(123)
 					err = routes.AccountLoginMFAVerifySubmit(w,req,user)
 				case "/accounts/create/submit/":
 					err = common.ParseForm(w,req,user)
@@ -1978,7 +2004,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(122)
+					counters.RouteViewCounter.Bump(124)
 					err = routes.AccountRegisterSubmit(w,req,user)
 			}
 		/*case "/sitemaps": // TODO: Count these views
@@ -1994,7 +2020,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				w.Header().Del("Content-Type")
 				w.Header().Del("Content-Encoding")
 			}
-			counters.RouteViewCounter.Bump(124)
+			counters.RouteViewCounter.Bump(126)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			r.UploadHandler(w,req) // TODO: Count these views
@@ -2004,10 +2030,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
-					counters.RouteViewCounter.Bump(126)
+					counters.RouteViewCounter.Bump(128)
 					return routes.RobotsTxt(w,req)
 				/*case "sitemap.xml":
-					counters.RouteViewCounter.Bump(127)
+					counters.RouteViewCounter.Bump(129)
 					return routes.SitemapXml(w,req)*/
 			}
 			return common.NotFound(w,req,nil)
@@ -2018,7 +2044,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			r.RUnlock()
 			
 			if ok {
-				counters.RouteViewCounter.Bump(123) // TODO: Be more specific about *which* dynamic route it is
+				counters.RouteViewCounter.Bump(125) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				return handle(w,req,user)
 			}
@@ -2029,7 +2055,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			} else {
 				r.DumpRequest(req,"Bad Route")
 			}
-			counters.RouteViewCounter.Bump(128)
+			counters.RouteViewCounter.Bump(130)
 			return common.NotFound(w,req,nil)
 	}
 	return err

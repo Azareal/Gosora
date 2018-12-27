@@ -190,6 +190,18 @@ func skipUntilIfExists(tmplData []byte, i int, expects byte) (newI int, hasIt bo
 	return j, false
 }
 
+func skipUntilIfExistsOrLine(tmplData []byte, i int, expects byte) (newI int, hasIt bool) {
+	j := i
+	for ; j < len(tmplData); j++ {
+		if tmplData[j] == 10 {
+			return j, false
+		} else if tmplData[j] == expects {
+			return j, true
+		}
+	}
+	return j, false
+}
+
 func skipUntilCharsExist(tmplData []byte, i int, expects []byte) (newI int, hasIt bool) {
 	j := i
 	expectIndex := 0

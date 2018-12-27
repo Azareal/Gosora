@@ -12,6 +12,8 @@ var hooks = {
 	"after_phrases":[],
 	"after_add_alert":[],
 	"after_update_alert_list":[],
+	"open_edit":[],
+	"close_edit":[],
 };
 var ranInitHooks = {}
 
@@ -130,7 +132,7 @@ function fetchPhrases() {
 (() => {
 	runInitHook("pre_iife");
 	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
-	if(loggedIn) {
+	if(loggedIn=="true") {
 		fetch("/api/me/")
 		.then((resp) => resp.json())
 		.then((data) => {

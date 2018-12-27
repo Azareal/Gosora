@@ -92,7 +92,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 		expect(t, cond, prefix+" "+midfix+" "+suffix)
 	}
 
-	// TODO: Add email checks too? Do them seperately?
+	// TODO: Add email checks too? Do them separately?
 	var expectUser = func(user *common.User, uid int, name string, group int, super bool, admin bool, mod bool, banned bool) {
 		expect(t, user.ID == uid, fmt.Sprintf("user.ID should be %d. Got '%d' instead.", uid, user.ID))
 		expect(t, user.Name == name, fmt.Sprintf("user.Name should be '%s', not '%s'", name, user.Name))

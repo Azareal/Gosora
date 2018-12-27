@@ -11,6 +11,7 @@ import (
 	"log"
 	"sync/atomic"
 	"time"
+
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -33,7 +34,7 @@ var TmplPtrMap = make(map[string]interface{})
 
 // Anti-spam token with rotated key
 var JSTokenBox atomic.Value              // TODO: Move this and some of these other globals somewhere else
-var SessionSigningKeyBox atomic.Value    // For MFA to avoid hitting the database unneccesarily
+var SessionSigningKeyBox atomic.Value    // For MFA to avoid hitting the database unneccessarily
 var OldSessionSigningKeyBox atomic.Value // Just in case we've signed with a key that's about to go stale so we don't annoy the user too much
 var IsDBDown int32 = 0                   // 0 = false, 1 = true. this is value which should be manipulated with package atomic for representing whether the database is down so we don't spam the log with lots of redundant errors
 

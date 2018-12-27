@@ -1006,8 +1006,6 @@ textarea {
 	padding-right: 42px;
 	padding-bottom: 18px;
 	height: min-content;
-	/*overflow: hidden;
-	text-overflow: ellipsis;*/
 }
 .user_meta {
 	display: flex;
@@ -1129,6 +1127,9 @@ textarea {
 	content: "{{lang "topic.report_button_text" .}}";
 }
 
+.attach_edit_bay {
+	display: none;
+}
 .zone_view_topic .pageset {
 	margin-bottom: 14px;
 }

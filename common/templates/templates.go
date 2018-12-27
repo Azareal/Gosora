@@ -91,6 +91,7 @@ func NewCTemplateSet() *CTemplateSet {
 			//"langf":true,
 			"level":   true,
 			"abstime": true,
+			"reltime": true,
 			"scope":   true,
 			"dyntmpl": true,
 		},
@@ -958,6 +959,16 @@ ArgLoop:
 			leftParam, _ := c.compileIfVarSub(con, leftOperand)
 			// TODO: Refactor this
 			litString(leftParam+".Format(\"2006-01-02 15:04:05\")", false)
+			break ArgLoop
+		case "reltime":
+			// TODO: Implement level literals
+			leftOperand := node.Args[pos+1].String()
+			if len(leftOperand) == 0 {
+				panic("The leftoperand for function reltime cannot be left blank")
+			}
+			leftParam, _ := c.compileIfVarSub(con, leftOperand)
+			// TODO: Refactor this
+			litString("common.RelativeTime("+leftParam+")", false)
 			break ArgLoop
 		case "scope":
 			literal = true

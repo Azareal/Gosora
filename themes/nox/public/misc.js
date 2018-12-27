@@ -12,7 +12,9 @@
 			$(".alerts").html(alertCount + " new alerts");
 			$(".user_box").addClass("has_alerts");
 		}
-	})
+	});
+	addHook("open_edit", () => $('.topic_block').addClass("edithead"));
+	addHook("close_edit", () => $('.topic_block').removeClass("edithead"));
 })();
 
 $(document).ready(() => {

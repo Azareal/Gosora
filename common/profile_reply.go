@@ -11,17 +11,16 @@ import (
 var profileReplyStmts ProfileReplyStmts
 
 type ProfileReply struct {
-	ID                int
-	ParentID          int
-	Content           string
-	CreatedBy         int
-	Group             int
-	CreatedAt         time.Time
-	RelativeCreatedAt string
-	LastEdit          int
-	LastEditBy        int
-	ContentLines      int
-	IPAddress         string
+	ID           int
+	ParentID     int
+	Content      string
+	CreatedBy    int
+	Group        int
+	CreatedAt    time.Time
+	LastEdit     int
+	LastEditBy   int
+	ContentLines int
+	IPAddress    string
 }
 
 type ProfileReplyStmts struct {

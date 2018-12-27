@@ -77,7 +77,26 @@
 		</div>
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
-			{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.EditTopic}}<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>{{end}}{{end}}
+			{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.EditTopic}}<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
+
+			{{if .Topic.Attachments}}<div class="show_on_edit attach_edit_bay" tid="{{.Topic.ID}}">
+				{{range .Topic.Attachments}}
+				<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
+					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&sectionType=forums" height="24" width="24" />{{end}}
+					<span class="attach_item_path" aid="{{.ID}}" fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
+					<button class="attach_item_select">Select</button>
+					<button class="attach_item_copy">Copy</button>
+				</div>
+				{{end}}
+				<div class="attach_item attach_item_buttons">
+					{{if .CurrentUser.Perms.UploadFiles}}
+					<input name="upload_files" id="upload_files_op" multiple type="file" style="display: none;" />
+					<label for="upload_files_op" class="formbutton add_file_button">Upload</label>{{end}}
+					<button class="attach_item_delete">Delete</button>
+				</div>
+			</div>{{end}}
+
+			{{end}}{{end}}
 			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">
 				<div class="action_button_left">
 				{{if .CurrentUser.Loggedin}}
@@ -97,7 +116,7 @@
 				</div>
 				<div class="action_button_right">
 					<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.like_count_aria"}}">{{.Topic.LikeCount}}</a>
-					<a class="action_button created_at hide_on_mobile" title="{{abstime .Topic.CreatedAt}}">{{.Topic.RelativeCreatedAt}}</a>
+					<a class="action_button created_at hide_on_mobile" title="{{abstime .Topic.CreatedAt}}">{{reltime .Topic.CreatedAt}}</a>
 					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IPAddress}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.Topic.IPAddress}}</a>{{end}}
 				</div>
 			</div>

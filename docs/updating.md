@@ -4,7 +4,7 @@ The update system is currently under development, but you can run `dev-update.ba
 
 If you run into any issues doing so, please open an issue: https://github.com/Azareal/Gosora/issues/new
 
-If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first have to create a copy of `./schema/schema.json` named `./schema/lastSchema.json`, and then, you'll overwrite the files with the new ones with `git pull origin master`.
+If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first want to save your changes with `git stash`, and then, you'll overwrite the files with the new ones with `git pull origin master`, and then, you can re-apply your custom changes with `git stash apply`
 
 After that, you'll need to run `go build ./patcher`.
 
@@ -16,14 +16,9 @@ The update system is currently under development, but you can run `dev-update-li
 
 If you run into any issues doing so, please open an issue: https://github.com/Azareal/Gosora/issues/new
 
-If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first have to create a copy of `./schema/schema.json` named `./schema/lastSchema.json`, and then, you'll overwrite the files with the new ones with `git pull origin master`.
+If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first want to save your changes with `git stash`, and then, you'll overwrite the files with the new ones with `git pull origin master`, and then, you'll re-apply your changes with `git stash apply`.
 
-After that, you'll need to run the following code block:
-```
-cd ./patcher
-go build -o Patcher
-mv ./Patcher ..
-```
+After that, you'll need to run `go build -o Patcher "./patcher"`
 
 Once you've done that, you just need to run `./Patcher` to apply the latest patches to the database, etc.
 
@@ -46,14 +41,9 @@ Replace that name and email with whatever you like. This name and email only app
 
 If you get an access denied error, then you might need to run `chown -R gosora /home/gosora` and `chgrp -R www-data /home/gosora` to fix the ownership of the files.
 
-If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first have to create a copy of `./schema/schema.json` named `./schema/lastSchema.json`, and then, you'll overwrite the files with the new ones with `git pull origin master`.
+If you want to manually patch Gosora rather than relying on the above scripts to do it, you'll first want to save your changes with `git stash`, and then, you'll overwrite the files with the new ones with `git pull origin master`, and then, you'll re-apply your changes with `git stash apply`.
 
-After that, you'll need to run:
-```
-cd ./patcher
-go build -o Patcher
-mv ./Patcher ..
-```
+After that, you'll need to run `go build -o Patcher "./patcher"`
 
 Once you've done that, you just need to run `./Patcher` to apply the latest patches to the database, etc.
 

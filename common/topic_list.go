@@ -211,7 +211,7 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 	}
 
 	// TODO: Prepare common qlist lengths to speed this up in common cases, prepared statements are prepared lazily anyway, so it probably doesn't matter if we do ten or so
-	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, parentID, views, postCount, likeCount", "parentID IN("+qlist+")", orderq, "?,?")
+	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, parentID, views, postCount, likeCount", "parentID IN("+qlist+")", orderq, "?,?")
 	if err != nil {
 		return nil, Paginator{nil, 1, 1}, err
 	}
@@ -230,7 +230,7 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 	for rows.Next() {
 		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
 		topicItem := TopicsRow{ID: 0}
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.IsClosed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.ParentID, &topicItem.ViewCount, &topicItem.PostCount, &topicItem.LikeCount)
+		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.IsClosed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.LastReplyID, &topicItem.ParentID, &topicItem.ViewCount, &topicItem.PostCount, &topicItem.LikeCount)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
 		}
@@ -241,8 +241,6 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 		topicItem.ForumName = forum.Name
 		topicItem.ForumLink = forum.Link
 
-		//topicItem.RelativeCreatedAt = RelativeTime(topicItem.CreatedAt)
-		topicItem.RelativeLastReplyAt = RelativeTime(topicItem.LastReplyAt)
 		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
 		_, _, lastPage := PageOffset(topicItem.PostCount, 1, Config.ItemsPerPage)
 		topicItem.LastPage = lastPage

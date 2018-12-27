@@ -40,5 +40,5 @@ func (store *SQLReplyStore) Create(topic *Topic, content string, ipaddress strin
 	if err != nil {
 		return 0, err
 	}
-	return int(lastID), topic.AddReply(uid)
+	return int(lastID), topic.AddReply(int(lastID), uid)
 }

@@ -110,7 +110,8 @@ type Adapter interface {
 	// TODO: Test this
 	AddColumn(name string, table string, column DBTableColumn) (string, error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
-	SimpleUpdate(name string, table string, set string, where string) (string, error)
+	SimpleUpdate(up *updatePrebuilder) (string, error)
+	SimpleUpdateSelect(up *updatePrebuilder) (string, error) // ! Experimental
 	SimpleDelete(name string, table string, where string) (string, error)
 	Purge(name string, table string) (string, error)
 	SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error)

@@ -30,6 +30,7 @@ var successJSONBytes = []byte(`{"success":"1"}`)
 var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}],"msgCount":0}`)
 
 // TODO: Refactor this endpoint
+// TODO: Move this into the routes package
 func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	w.Header().Set("Content-Type", "application/json")
@@ -44,6 +45,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	}
 
 	switch r.FormValue("module") {
+	// TODO: Split this into it's own function
 	case "dismiss-alert":
 		asid, err := strconv.Atoi(r.FormValue("asid"))
 		if err != nil {
@@ -61,6 +63,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		if common.EnableWebsockets && count > 0 {
 			_ = common.WsHub.PushMessage(user.ID, `{"event":"dismiss-alert","asid":`+strconv.Itoa(asid)+`}`)
 		}
+	// TODO: Split this into it's own function
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {
 			w.Write(phraseLoginAlerts)

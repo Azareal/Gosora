@@ -202,6 +202,7 @@ func ConvertByteInUnit(bytes float64, unit string) (count float64) {
 }
 
 // TODO: Write a test for this
+// TODO: Localise this?
 func FriendlyUnitToBytes(quantity int, unit string) (bytes int, err error) {
 	switch unit {
 	case "PB":
@@ -323,7 +324,7 @@ func WeakPassword(password string, username string, email string) error {
 		return errors.New("Your password needs to be at-least eight characters long")
 	}
 
-	if strings.Contains(lowPassword, "test") || /*strings.Contains(password,"123456") || */ strings.Contains(password, "123") || strings.Contains(lowPassword, "password") || strings.Contains(lowPassword, "qwerty") || strings.Contains(lowPassword, "fuck") || strings.Contains(lowPassword, "love") {
+	if strings.Contains(lowPassword, "test") || strings.Contains(password, "123") || strings.Contains(lowPassword, "password") || strings.Contains(lowPassword, "qwerty") || strings.Contains(lowPassword, "fuck") || strings.Contains(lowPassword, "love") {
 		return errors.New("You may not have 'test', '123', 'password', 'qwerty', 'love' or 'fuck' in your password")
 	}
 

@@ -83,21 +83,16 @@ func (adapter *MysqlAdapter) DbVersion() string {
 }
 
 func (adapter *MysqlAdapter) DropTable(name string, table string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 	querystr := "DROP TABLE IF EXISTS `" + table + "`;"
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	adapter.pushStatement(name, "drop-table", querystr)
 	return querystr, nil
 }
 
 func (adapter *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -133,6 +128,7 @@ func (adapter *MysqlAdapter) CreateTable(name string, table string, charset stri
 		querystr += " COLLATE " + collation
 	}
 
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	adapter.pushStatement(name, "create-table", querystr+";")
 	return querystr + ";", nil
 }
@@ -178,23 +174,18 @@ func (adapter *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColum
 // TODO: Support AFTER column
 // TODO: Test to make sure everything works here
 func (adapter *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 
 	column, size, end := adapter.parseColumn(column)
 	querystr := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + column.Name + "` " + column.Type + size + end + ";"
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	adapter.pushStatement(name, "add-column", querystr)
 	return querystr, nil
 }
 
 func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -218,6 +209,7 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 	}
 	querystr += ")"
 
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	adapter.pushStatement(name, "insert", querystr)
 	return querystr, nil
 }
@@ -239,9 +231,6 @@ func (adapter *MysqlAdapter) buildColumns(columns string) (querystr string) {
 
 // ! DEPRECATED
 func (adapter *MysqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -258,14 +247,12 @@ func (adapter *MysqlAdapter) SimpleReplace(name string, table string, columns st
 	}
 	querystr = querystr[0 : len(querystr)-1]
 
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	adapter.pushStatement(name, "replace", querystr+")")
 	return querystr + ")", nil
 }
 
 func (adapter *MysqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -305,23 +292,21 @@ func (adapter *MysqlAdapter) SimpleUpsert(name string, table string, columns str
 
 	querystr += insertColumns + setBit
 
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	adapter.pushStatement(name, "upsert", querystr)
 	return querystr, nil
 }
 
-func (adapter *MysqlAdapter) SimpleUpdate(name string, table string, set string, where string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
-	if table == "" {
+func (adapter *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
+	if up.table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	if set == "" {
+	if up.set == "" {
 		return "", errors.New("You need to set data in this update statement")
 	}
 
-	var querystr = "UPDATE `" + table + "` SET "
-	for _, item := range processSet(set) {
+	var querystr = "UPDATE `" + up.table + "` SET "
+	for _, item := range processSet(up.set) {
 		querystr += "`" + item.Column + "` ="
 		for _, token := range item.Expr {
 			switch token.Type {
@@ -337,20 +322,18 @@ func (adapter *MysqlAdapter) SimpleUpdate(name string, table string, set string,
 	}
 	querystr = querystr[0 : len(querystr)-1]
 
-	whereStr, err := adapter.buildWhere(where)
+	whereStr, err := adapter.buildWhere(up.where)
 	if err != nil {
 		return querystr, err
 	}
 	querystr += whereStr
 
-	adapter.pushStatement(name, "update", querystr)
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
+	adapter.pushStatement(up.name, "update", querystr)
 	return querystr, nil
 }
 
 func (adapter *MysqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -378,15 +361,13 @@ func (adapter *MysqlAdapter) SimpleDelete(name string, table string, where strin
 	}
 
 	querystr = strings.TrimSpace(querystr[0 : len(querystr)-4])
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	adapter.pushStatement(name, "delete", querystr)
 	return querystr, nil
 }
 
 // We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
 func (adapter *MysqlAdapter) Purge(name string, table string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -459,9 +440,6 @@ func (adapter *MysqlAdapter) buildOrderby(orderby string) (querystr string) {
 }
 
 func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -490,9 +468,6 @@ func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns str
 }
 
 func (adapter *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out string, err error) {
-	if preBuilder.name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if preBuilder.table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -531,9 +506,6 @@ func (adapter *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out st
 }
 
 func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -560,9 +532,6 @@ func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 s
 }
 
 func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -585,6 +554,37 @@ func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
+	return querystr, nil
+}
+
+func (adapter *MysqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) {
+	sel := up.whereSubQuery
+	whereStr, err := adapter.buildWhere(sel.where)
+	if err != nil {
+		return "", err
+	}
+
+	var setter string
+	for _, item := range processSet(up.set) {
+		setter += "`" + item.Column + "` ="
+		for _, token := range item.Expr {
+			switch token.Type {
+			case "function", "operator", "number", "substitute", "or":
+				setter += " " + token.Contents
+			case "column":
+				setter += " `" + token.Contents + "`"
+			case "string":
+				setter += " '" + token.Contents + "'"
+			}
+		}
+		setter += ","
+	}
+	setter = setter[0 : len(setter)-1]
+
+	var querystr = "UPDATE `" + up.table + "` SET " + setter + " WHERE (SELECT" + adapter.buildJoinColumns(sel.columns) + " FROM `" + sel.table + "`" + whereStr + adapter.buildOrderby(sel.orderby) + adapter.buildLimit(sel.limit) + ")"
+
+	querystr = strings.TrimSpace(querystr)
+	adapter.pushStatement(up.name, "update", querystr)
 	return querystr, nil
 }
 
@@ -692,9 +692,6 @@ func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, se
 }
 
 func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string, limit string) (querystr string, err error) {
-	if name == "" {
-		return "", errors.New("You need a name for this statement")
-	}
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -778,7 +775,7 @@ func _gen_mysql() (err error) {
 
 // Internal methods, not exposed in the interface
 func (adapter *MysqlAdapter) pushStatement(name string, stype string, querystr string) {
-	if name[0] == '_' {
+	if name == "" {
 		return
 	}
 	adapter.Buffer[name] = DBStmt{querystr, stype}

@@ -341,7 +341,7 @@ func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user User, maxFil
 		size, unit := ConvertByteUnit(float64(maxFileSize))
 		return CustomError("Your upload is too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, nil, user)
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, int64(maxFileSize))
+	r.Body = http.MaxBytesReader(w, r.Body, r.ContentLength)
 
 	err := r.ParseMultipartForm(int64(Megabyte))
 	if err != nil {

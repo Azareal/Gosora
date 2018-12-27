@@ -34,7 +34,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User, heade
 
 	var err error
 	var replyCreatedAt time.Time
-	var replyContent, replyCreatedByName, replyRelativeCreatedAt, replyAvatar, replyMicroAvatar, replyTag, replyClassName string
+	var replyContent, replyCreatedByName, replyAvatar, replyMicroAvatar, replyTag, replyClassName string
 	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyLines, replyGroup int
 	var replyList []common.ReplyUser
 
@@ -98,11 +98,9 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User, heade
 
 		replyLiked := false
 		replyLikeCount := 0
-		replyRelativeCreatedAt = common.RelativeTime(replyCreatedAt)
-
 		// TODO: Add a hook here
 
-		replyList = append(replyList, common.ReplyUser{rid, puser.ID, replyContent, common.ParseMessage(replyContent, 0, ""), replyCreatedBy, common.BuildProfileURL(common.NameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyRelativeCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyMicroAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
+		replyList = append(replyList, common.ReplyUser{rid, puser.ID, replyContent, common.ParseMessage(replyContent, 0, ""), replyCreatedBy, common.BuildProfileURL(common.NameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyMicroAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
 	}
 	err = rows.Err()
 	if err != nil {

@@ -11,22 +11,22 @@ type prebuilder struct {
 }
 
 func (build *prebuilder) Select(nlist ...string) *selectPrebuilder {
-	name := optString(nlist, "_builder")
+	name := optString(nlist, "")
 	return &selectPrebuilder{name, "", "", "", "", "", nil, nil, "", build.adapter}
 }
 
 func (build *prebuilder) Insert(nlist ...string) *insertPrebuilder {
-	name := optString(nlist, "_builder")
+	name := optString(nlist, "")
 	return &insertPrebuilder{name, "", "", "", build.adapter}
 }
 
 func (build *prebuilder) Update(nlist ...string) *updatePrebuilder {
-	name := optString(nlist, "_builder")
-	return &updatePrebuilder{name, "", "", "", build.adapter}
+	name := optString(nlist, "")
+	return &updatePrebuilder{name, "", "", "", nil, build.adapter}
 }
 
 func (build *prebuilder) Delete(nlist ...string) *deletePrebuilder {
-	name := optString(nlist, "_builder")
+	name := optString(nlist, "")
 	return &deletePrebuilder{name, "", "", build.adapter}
 }
 
@@ -60,12 +60,17 @@ func (delete *deletePrebuilder) Parse() {
 }
 
 type updatePrebuilder struct {
-	name  string
-	table string
-	set   string
-	where string
+	name          string
+	table         string
+	set           string
+	where         string
+	whereSubQuery *selectPrebuilder
 
 	build Adapter
+}
+
+func qUpdate(table string, set string, where string) *updatePrebuilder {
+	return &updatePrebuilder{table: table, set: set, where: where}
 }
 
 func (update *updatePrebuilder) Table(table string) *updatePrebuilder {
@@ -86,12 +91,17 @@ func (update *updatePrebuilder) Where(where string) *updatePrebuilder {
 	return update
 }
 
+func (update *updatePrebuilder) WhereQ(sel *selectPrebuilder) *updatePrebuilder {
+	update.whereSubQuery = sel
+	return update
+}
+
 func (update *updatePrebuilder) Text() (string, error) {
-	return update.build.SimpleUpdate(update.name, update.table, update.set, update.where)
+	return update.build.SimpleUpdate(update)
 }
 
 func (update *updatePrebuilder) Parse() {
-	update.build.SimpleUpdate(update.name, update.table, update.set, update.where)
+	update.build.SimpleUpdate(update)
 }
 
 type selectPrebuilder struct {
@@ -151,7 +161,7 @@ func (selectItem *selectPrebuilder) FromAcc(accBuilder *AccSelectBuilder) *selec
 
 	selectItem.dateCutoff = accBuilder.dateCutoff
 	if accBuilder.inChain != nil {
-		selectItem.inChain = &selectPrebuilder{"__builder", accBuilder.inChain.table, accBuilder.inChain.columns, accBuilder.inChain.where, accBuilder.inChain.orderby, accBuilder.inChain.limit, accBuilder.inChain.dateCutoff, nil, "", selectItem.build}
+		selectItem.inChain = &selectPrebuilder{"", accBuilder.inChain.table, accBuilder.inChain.columns, accBuilder.inChain.where, accBuilder.inChain.orderby, accBuilder.inChain.limit, accBuilder.inChain.dateCutoff, nil, "", selectItem.build}
 		selectItem.inColumn = accBuilder.inColumn
 	}
 	return selectItem

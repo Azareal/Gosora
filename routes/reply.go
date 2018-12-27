@@ -1,14 +1,8 @@
 package routes
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
-	"io"
-	"log"
 	"net/http"
-	"os"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -16,7 +10,6 @@ import (
 	"github.com/Azareal/Gosora/common/counters"
 )
 
-// TODO: De-duplicate the upload logic
 func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
@@ -45,70 +38,9 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 	// Handle the file attachments
 	// TODO: Stop duplicating this code
 	if user.Perms.UploadFiles {
-		files, ok := r.MultipartForm.File["upload_files"]
-		if ok {
-			if len(files) > 5 {
-				return common.LocalError("You can't attach more than five files", w, r, user)
-			}
-
-			for _, file := range files {
-				if file.Filename == "" {
-					continue
-				}
-				log.Print("file.Filename ", file.Filename)
-				extarr := strings.Split(file.Filename, ".")
-				if len(extarr) < 2 {
-					return common.LocalError("Bad file", w, r, user)
-				}
-				ext := extarr[len(extarr)-1]
-
-				// TODO: Can we do this without a regex?
-				reg, err := regexp.Compile("[^A-Za-z0-9]+")
-				if err != nil {
-					return common.LocalError("Bad file extension", w, r, user)
-				}
-				ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
-				if !common.AllowedFileExts.Contains(ext) {
-					return common.LocalError("You're not allowed to upload files with this extension", w, r, user)
-				}
-
-				infile, err := file.Open()
-				if err != nil {
-					return common.LocalError("Upload failed", w, r, user)
-				}
-				defer infile.Close()
-
-				hasher := sha256.New()
-				_, err = io.Copy(hasher, infile)
-				if err != nil {
-					return common.LocalError("Upload failed [Hashing Failed]", w, r, user)
-				}
-				infile.Close()
-
-				checksum := hex.EncodeToString(hasher.Sum(nil))
-				filename := checksum + "." + ext
-				outfile, err := os.Create("." + "/attachs/" + filename)
-				if err != nil {
-					return common.LocalError("Upload failed [File Creation Failed]", w, r, user)
-				}
-				defer outfile.Close()
-
-				infile, err = file.Open()
-				if err != nil {
-					return common.LocalError("Upload failed", w, r, user)
-				}
-				defer infile.Close()
-
-				_, err = io.Copy(outfile, infile)
-				if err != nil {
-					return common.LocalError("Upload failed [Copy Failed]", w, r, user)
-				}
-
-				err = common.Attachments.Add(topic.ParentID, "forums", tid, "replies", user.ID, filename)
-				if err != nil {
-					return common.InternalError(err, w, r)
-				}
-			}
+		_, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", tid, "replies")
+		if rerr != nil {
+			return rerr
 		}
 	}
 
@@ -127,8 +59,8 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		var maxPollOptions = 10
 		var pollInputItems = make(map[int]string)
 		for key, values := range r.Form {
-			common.DebugDetail("key: ", key)
-			common.DebugDetailf("values: %+v\n", values)
+			//common.DebugDetail("key: ", key)
+			//common.DebugDetailf("values: %+v\n", values)
 			for _, value := range values {
 				if strings.HasPrefix(key, "pollinputitem[") {
 					halves := strings.Split(key, "[")

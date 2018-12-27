@@ -8,10 +8,6 @@ if %errorlevel% neq 0 (
 )
 
 echo Updating Gosora
-cd schema
-del /Q lastSchema.json
-copy schema.json lastSchema.json
-cd ..
 git stash
 if %errorlevel% neq 0 (
 	pause

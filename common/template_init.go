@@ -226,11 +226,12 @@ func CompileTemplates() error {
 		PollOption{1, "Something"},
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 1, 0, 1, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false}
+	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach}
 	var replyList []ReplyUser
 	// TODO: Do we want the UID on this to be 0?
 	avatar, microAvatar = BuildAvatar(0, "")
-	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, RelativeTime(now), 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
 	var varList = make(map[string]tmpl.VarItem)
 	var compile = func(name string, expects string, expectsInt interface{}) (tmpl string, err error) {
@@ -285,7 +286,7 @@ func CompileTemplates() error {
 	}
 
 	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
 	header2.Title = "Topic List"
 	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
 	/*topicListTmpl, err := compile("topics", "common.TopicListPage", topicListPage)
@@ -439,7 +440,7 @@ func CompileJSTemplates() error {
 	// TODO: Fix the import loop so we don't have to use this hack anymore
 	c.SetBuildTags("!no_templategen,tmplgentopic")
 
-	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, "Date", user3.ID, 1, "", "127.0.0.1", 1, 0, 1, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
+	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
 	topicListItemTmpl, err := c.Compile("topics_topic.html", "templates/", "*common.TopicsRow", topicsRow, varList)
 	if err != nil {
 		return err
@@ -450,11 +451,12 @@ func CompileJSTemplates() error {
 		PollOption{1, "Something"},
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, RelativeTime(now), now, RelativeTime(now), 0, "", "127.0.0.1", 1, 0, 1, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false}
+	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach}
 	var replyList []ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")
-	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, RelativeTime(now), 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
 
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "Topic Name"
@@ -639,8 +641,15 @@ func InitTemplates() error {
 		if !ok {
 			panic("timeInt is not a time.Time")
 		}
-		//return time.String()
 		return time.Format("2006-01-02 15:04:05")
+	}
+
+	fmap["reltime"] = func(timeInt interface{}) interface{} {
+		time, ok := timeInt.(time.Time)
+		if !ok {
+			panic("timeInt is not a time.Time")
+		}
+		return RelativeTime(time)
 	}
 
 	fmap["scope"] = func(name interface{}) interface{} {

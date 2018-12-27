@@ -224,11 +224,8 @@ function runWebSockets() {
 
 							// TODO: Add support for other alert feeds like PM Alerts
 							var generalAlerts = document.getElementById("general_alerts");
-							if(alertList.length < 8) {
-								loadAlerts(generalAlerts);
-							} else {
-								updateAlertList(generalAlerts);
-							}
+							if(alertList.length < 8) loadAlerts(generalAlerts);
+							else updateAlertList(generalAlerts);
 						}
 					});
 				}
@@ -374,6 +371,7 @@ function mainInit(){
 		event.preventDefault();
 		$('.hide_on_edit').addClass("edit_opened");
 		$('.show_on_edit').addClass("edit_opened");
+		runHook("open_edit");
 	});
 
 	$(".topic_item .submit_edit").click(function(event){
@@ -388,6 +386,7 @@ function mainInit(){
 
 		$('.hide_on_edit').removeClass("edit_opened");
 		$('.show_on_edit').removeClass("edit_opened");
+		runHook("close_edit");
 
 		let formAction = this.form.getAttribute("action");
 		$.ajax({
@@ -566,74 +565,185 @@ function mainInit(){
 		$(".topic_create_form").hide();
 	});
 
-	function uploadFileHandler() {
-		var fileList = this.files;
-		// Truncate the number of files to 5
+	function uploadFileHandler(fileList,maxFiles = 5, step1 = () => {}, step2 = () => {}) {
 		let files = [];
 		for(var i = 0; i < fileList.length && i < 5; i++) {
 			files[i] = fileList[i];
 		}
 
-		// Iterate over the files
 		let totalSize = 0;
 		for(let i = 0; i < files.length; i++) {
 			console.log("files[" + i + "]",files[i]);
 			totalSize += files[i]["size"];
+		}
+		if(totalSize > me.Site.MaxRequestSize) {
+			throw("You can't upload this much at once, max: " + me.Site.MaxRequestSize);
+		}
 
+		for(let i = 0; i < files.length; i++) {
 			let reader = new FileReader();
-			reader.onload = function(e) {
-				var fileDock = document.getElementById("upload_file_dock");
-				var fileItem = document.createElement("label");
-				console.log("fileItem",fileItem);
-
-				if(!files[i]["name"].indexOf('.' > -1)) {
-					// TODO: Surely, there's a prettier and more elegant way of doing this?
-					alert("This file doesn't have an extension");
-					return;
-				}
-
-				var ext = files[i]["name"].split('.').pop();
-				fileItem.innerText = "." + ext;
-				fileItem.className = "formbutton uploadItem";
-				fileItem.style.backgroundImage = "url("+e.target.result+")";
-
-				fileDock.appendChild(fileItem);
+			reader.onload = (e) => {
+				let filename = files[i]["name"];
+				step1(e,filename)
 
 				let reader = new FileReader();
-				reader.onload = function(e) {
-					crypto.subtle.digest('SHA-256',e.target.result)
-						.then(function(hash) {
+				reader.onload = (e2) => {
+					crypto.subtle.digest('SHA-256',e2.target.result)
+						.then((hash) => {
 							const hashArray = Array.from(new Uint8Array(hash))
 							return hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('')
-						}).then(function(hash) {
-							console.log("hash",hash);
-							let content = document.getElementById("input_content")
-							console.log("content.value", content.value);
-							
-							let attachItem;
-							if(content.value == "") attachItem = "//" + window.location.host + "/attachs/" + hash + "." + ext;
-							else attachItem = "\r\n//" + window.location.host + "/attachs/" + hash + "." + ext;
-							content.value = content.value + attachItem;
-							console.log("content.value", content.value);
-						
-							// For custom / third party text editors
-							attachItemCallback(attachItem);
-						});
+						}).then(hash => step2(e,hash,filename));
 				}
 				reader.readAsArrayBuffer(files[i]);
 			}
 			reader.readAsDataURL(files[i]);
 		}
-		if(totalSize > me.Site.MaxRequestSize) {
+	}
+
+	// TODO: Surely, there's a prettier and more elegant way of doing this?
+	function getExt(filename) {
+		if(!filename.indexOf('.' > -1)) {
+			throw("This file doesn't have an extension");
+		}
+		return filename.split('.').pop();
+	}
+
+	// Attachment Manager
+	function uploadAttachHandler2() {
+		let fileDock = this.closest(".attach_edit_bay");
+		try {
+			uploadFileHandler(this.files, 5, () => {},
+			(e, hash, filename) => {
+				console.log("hash",hash);
+				
+				let formData = new FormData();
+				formData.append("session",me.User.Session);
+				for(let i = 0; i < this.files.length; i++) {
+					formData.append("upload_files",this.files[i]);
+				}
+
+				let req = new XMLHttpRequest();
+				req.addEventListener("load", () => {
+					let data = JSON.parse(req.responseText);
+					let fileItem = document.createElement("div");
+					let ext = getExt(filename);
+					// TODO: Check if this is actually an image, maybe push ImageFileExts to the client from the server in some sort of gen.js?
+					// TODO: Use client templates here
+					fileItem.className = "attach_item attach_image_holder";
+					fileItem.innerHTML = "<img src='"+e.target.result+"' height=24 width=24 /><span class='attach_item_path' aid='"+data[hash+"."+ext]+"' fullpath='//" + window.location.host + "/attachs/" + hash + "." + ext+"'>"+hash+"."+ext+"</span><button class='attach_item_select'>Select</button><button class='attach_item_copy'>Copy</button>";
+					fileDock.insertBefore(fileItem,fileDock.querySelector(".attach_item_buttons"));
+					
+					$(".attach_item_select").unbind("click");
+					$(".attach_item_copy").unbind("click");
+					bindAttachItems()
+				});
+				req.open("POST","//"+window.location.host+"/topic/attach/add/submit/"+fileDock.getAttribute("tid"));
+				req.send(formData);
+			});
+		} catch(e) {
 			// TODO: Use a notice instead
-			alert("You can't upload this much data at once, max: " + me.Site.MaxRequestSize);
+			alert(e);
+		}
+	}
+
+	// Quick Topic / Quick Reply
+	function uploadAttachHandler() {
+		try {
+			uploadFileHandler(this.files,5,(e,filename) => {
+				// TODO: Use client templates here
+				let fileDock = document.getElementById("upload_file_dock");
+				let fileItem = document.createElement("label");
+				console.log("fileItem",fileItem);
+
+				let ext = getExt(filename)
+				fileItem.innerText = "." + ext;
+				fileItem.className = "formbutton uploadItem";
+				// TODO: Check if this is actually an image
+				fileItem.style.backgroundImage = "url("+e.target.result+")";
+
+				fileDock.appendChild(fileItem);
+			},(e,hash, filename) => {
+				console.log("hash",hash);
+				let ext = getExt(filename)
+				let content = document.getElementById("input_content")
+				console.log("content.value", content.value);
+				
+				let attachItem;
+				if(content.value == "") attachItem = "//" + window.location.host + "/attachs/" + hash + "." + ext;
+				else attachItem = "\r\n//" + window.location.host + "/attachs/" + hash + "." + ext;
+				content.value = content.value + attachItem;
+				console.log("content.value", content.value);
+						
+				// For custom / third party text editors
+				attachItemCallback(attachItem);
+			});
+		} catch(e) {
+			// TODO: Use a notice instead
+			alert(e);
 		}
 	}
 
 	var uploadFiles = document.getElementById("upload_files");
 	if(uploadFiles != null) {
-		uploadFiles.addEventListener("change", uploadFileHandler, false);
+		uploadFiles.addEventListener("change", uploadAttachHandler, false);
 	}
+	var uploadFilesOp = document.getElementById("upload_files_op");
+	if(uploadFilesOp != null) {
+		uploadFilesOp.addEventListener("change", uploadAttachHandler2, false);
+	}
+
+	function copyToClipboard(str) {
+		const el = document.createElement('textarea');
+		el.value = str;
+		el.setAttribute('readonly', '');
+		el.style.position = 'absolute';
+		el.style.left = '-9999px';
+		document.body.appendChild(el);
+		el.select();
+		document.execCommand('copy');
+		document.body.removeChild(el);
+	}
+
+	function bindAttachItems() {
+		$(".attach_item_select").click(function(){
+			let hold = $(this).closest(".attach_item");
+			if(hold.hasClass("attach_item_selected")) {
+				hold.removeClass("attach_item_selected");
+			} else {
+				hold.addClass("attach_item_selected");
+			}
+		});
+		$(".attach_item_copy").click(function(){
+			let hold = $(this).closest(".attach_item");
+			let pathNode = hold.find(".attach_item_path");
+			copyToClipboard(pathNode.attr("fullPath"));
+		});
+	}
+	bindAttachItems();
+
+	$(".attach_item_delete").click(function(){
+		let formData = new URLSearchParams();
+		formData.append("session",me.User.Session);
+
+		let aidList = "";
+		let elems = document.getElementsByClassName("attach_item_selected");
+		if(elems == null) return;
+		
+		for(let i = 0; i < elems.length; i++) {
+			let pathNode = elems[i].querySelector(".attach_item_path");
+			console.log("pathNode",pathNode);
+			aidList += pathNode.getAttribute("aid") + ",";
+			elems[i].remove();
+		}
+		if(aidList.length > 0) aidList = aidList.slice(0, -1);
+		console.log("aidList",aidList)
+		formData.append("aids",aidList);
+		
+		let req = new XMLHttpRequest();
+		let fileDock = this.closest(".attach_edit_bay");
+		req.open("POST","//"+window.location.host+"/topic/attach/remove/submit/"+fileDock.getAttribute("tid"),true);
+		req.send(formData);
+	});
 	
 	$(".moderate_link").click((event) => {
 		event.preventDefault();
@@ -643,10 +753,11 @@ function mainInit(){
 			$(this).click(function(){
 				selectedTopics.push(parseInt($(this).attr("data-tid"),10));
 				if(selectedTopics.length==1) {
-					$(".mod_floater_head span").html("What do you want to do with this topic?");
+					var msg = "What do you want to do with this topic?";
 				} else {
-					$(".mod_floater_head span").html("What do you want to do with these "+selectedTopics.length+" topics?");
+					var msg = "What do you want to do with these "+selectedTopics.length+" topics?";
 				}
+				$(".mod_floater_head span").html(msg);
 				$(this).addClass("topic_selected");
 				$(".mod_floater").removeClass("auto_hide");
 			});
@@ -670,7 +781,6 @@ function mainInit(){
 			let selectNode = this.form.querySelector(".mod_floater_options");
 			let optionNode = selectNode.options[selectNode.selectedIndex];
 			let action = optionNode.getAttribute("val");
-			//console.log("action", action);
 
 			// Handle these specially
 			switch(action) {

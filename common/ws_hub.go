@@ -45,7 +45,7 @@ func (hub *WsHubImpl) Start() {
 	AddScheduledSecondTask(hub.Tick)
 }
 
-// This Tick is seperate from the admin one, as we want to process that in parallel with this due to the blocking calls to gopsutil
+// This Tick is separate from the admin one, as we want to process that in parallel with this due to the blocking calls to gopsutil
 func (hub *WsHubImpl) Tick() error {
 	// Don't waste CPU time if nothing has happened
 	// TODO: Get a topic list method which strips stickies?

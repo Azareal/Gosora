@@ -57,7 +57,7 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 	}
 	return &DefaultTopicStore{
 		cache:      cache,
-		get:        acc.Select("topics").Columns("title, content, createdBy, createdAt, lastReplyAt, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, poll, data").Where("tid = ?").Prepare(),
+		get:        acc.Select("topics").Columns("title, content, createdBy, createdAt, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
 		exists:     acc.Select("topics").Columns("tid").Where("tid = ?").Prepare(),
 		topicCount: acc.Count("topics").Prepare(),
 		create:     acc.Insert("topics").Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
@@ -71,7 +71,7 @@ func (mts *DefaultTopicStore) DirtyGet(id int) *Topic {
 	}
 
 	topic = &Topic{ID: id}
-	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.Poll, &topic.Data)
+	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	if err == nil {
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 		_ = mts.cache.Add(topic)
@@ -88,7 +88,7 @@ func (mts *DefaultTopicStore) Get(id int) (topic *Topic, err error) {
 	}
 
 	topic = &Topic{ID: id}
-	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.Poll, &topic.Data)
+	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	if err == nil {
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 		_ = mts.cache.Add(topic)
@@ -99,14 +99,14 @@ func (mts *DefaultTopicStore) Get(id int) (topic *Topic, err error) {
 // BypassGet will always bypass the cache and pull the topic directly from the database
 func (mts *DefaultTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.Poll, &topic.Data)
+	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 	return topic, err
 }
 
 func (mts *DefaultTopicStore) Reload(id int) error {
 	topic := &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.Poll, &topic.Data)
+	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	if err == nil {
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 		_ = mts.cache.Set(topic)

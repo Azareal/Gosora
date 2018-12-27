@@ -28,7 +28,7 @@
 			</div>
 			<div class="action_button_right">
 				<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.post_like_count_tooltip"}}">{{.LikeCount}}</a>
-				<a class="action_button created_at hide_on_mobile" title="{{abstime .CreatedAt}}">{{.RelativeCreatedAt}}</a>
+				<a class="action_button created_at hide_on_mobile" title="{{abstime .CreatedAt}}">{{reltime .CreatedAt}}</a>
 				{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.IPAddress}}</a>{{end}}{{end}}
 			</div>
 		</div>

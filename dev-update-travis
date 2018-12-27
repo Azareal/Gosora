@@ -1,4 +1,3 @@
 echo "Building the patcher"
-cp ./schema/schema.json ./schema/lastSchema.json
 go generate
 go build -o Patcher "./patcher"

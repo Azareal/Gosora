@@ -314,10 +314,27 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError
 }
 
 // NotFound is used when the requested page doesn't exist
-// ? - Add a JSQ and JS version of this?
+// ? - Add a JSQ version of this?
 // ? - Add a user parameter?
 func NotFound(w http.ResponseWriter, r *http.Request, header *Header) RouteError {
 	return CustomError(phrases.GetErrorPhrase("not_found_body"), 404, phrases.GetErrorPhrase("not_found_title"), w, r, header, GuestUser)
+}
+
+// ? - Add a user parameter?
+func NotFoundJS(w http.ResponseWriter, r *http.Request) RouteError {
+	w.WriteHeader(401)
+	writeJsonError(phrases.GetErrorPhrase("not_found_body"), w)
+	return HandledRouteError()
+}
+
+func NotFoundJSQ(w http.ResponseWriter, r *http.Request, header *Header, js bool) RouteError {
+	if js {
+		return NotFoundJS(w, r)
+	}
+	if header == nil {
+		header = DefaultHeader(w, GuestUser)
+	}
+	return NotFound(w, r, header)
 }
 
 // CustomError lets us make custom error types which aren't covered by the generic functions above
