@@ -207,6 +207,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
 			tblColumn{"lastReplyAt", "datetime", 0, false, false, ""},
 			tblColumn{"lastReplyBy", "int", 0, false, false, ""},
+			tblColumn{"lastReplyID", "int", 0, false, false, "0"},
 			tblColumn{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tblColumn{"is_closed", "boolean", 0, false, false, "0"},
 			tblColumn{"sticky", "boolean", 0, false, false, "0"},
@@ -215,7 +216,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 			tblColumn{"postCount", "int", 0, false, false, "1"},
 			tblColumn{"likeCount", "int", 0, false, false, "0"},
-			//tblColumn{"attachCount","int",0,false,false,"0"},
+			tblColumn{"attachCount", "int", 0, false, false, "0"},
 			tblColumn{"words", "int", 0, false, false, "0"},
 			tblColumn{"views", "int", 0, false, false, "0"},
 			//tblColumn{"dailyViews", "int", 0, false, false, "0"},
