@@ -376,6 +376,10 @@
 		"topic.report_button_text":"Report",
 		"topic.flag_button_text":"Flag",
 
+		"topic.select_button_text":"Select",
+		"topic.copy_button_text":"Copy",
+		"topic.upload_button_text":"Upload",
+
 		"panel_rank_admins":"Admins",
 		"panel_rank_mods":"Mods",
 		"panel_rank_banned":"Banned",

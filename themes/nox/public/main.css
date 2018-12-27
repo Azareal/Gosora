@@ -710,6 +710,23 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 	border-radius: 3px;
 	padding: 16px;
 }
+.user_content.in_edit {
+	padding: 0px;
+	background: none;
+}
+.user_content textarea {
+	resize: vertical;
+	height: 150px;
+	width: 100% !important;
+	padding: 16px;
+}
+.user_content.in_edit a {
+	display: flex;
+	background-color: #444444;
+	border-radius: 4px;
+	margin-top: 4px; /*8 without <br>*/
+	padding: 6px;
+}
 .post_item .button_container {
 	display: flex;
 	margin-top: 8px;
@@ -1014,10 +1031,7 @@ input[type=checkbox]:checked + label .sel {
 }
 
 @media(max-width: 500px) {
-	.sidebar {
-		display: none;
-	}
-	.topic_view_count {
+	.sidebar, .topic_view_count {
 		display: none;
 	}
 	

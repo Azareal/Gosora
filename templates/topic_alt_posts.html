@@ -11,7 +11,7 @@
 			<span class="action_icon" style="font-size: 18px;padding-right: 5px;" aria-hidden="true">{{.ActionIcon}}</span>
 			<span itemprop="text">{{.ActionType}}</span>
 		{{else}}
-		{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
+		<div class="edit_source auto_hide">{{.Content}}</div>
 		<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
 		<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
 			<div class="action_button_left">

@@ -587,7 +587,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 
 				// TODO: Reduce the amount of code duplication
 				if media.Type == "attach" {
-					addImage(media.URL + "?sectionID=" + strconv.Itoa(sectionID) + "&sectionType=" + sectionType)
+					addImage(media.URL + "?sectionID=" + strconv.Itoa(sectionID) + "&amp;sectionType=" + sectionType)
 					continue
 				} else if media.Type == "image" {
 					addImage(media.URL)

@@ -22,6 +22,7 @@ func init() {
 	addPatch(8, patch8)
 	addPatch(9, patch9)
 	addPatch(10, patch10)
+	addPatch(11, patch11)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -29,7 +30,6 @@ func patch0(scanner *bufio.Scanner) (err error) {
 	if err != nil {
 		return err
 	}
-
 	err = execStmt(qgen.Builder.DropTable("menu_items"))
 	if err != nil {
 		return err
@@ -400,7 +400,6 @@ func patch10(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	// We could probably do something more efficient, but as there shouldn't be too many sites right now, we can probably cheat a little, otherwise it'll take forever to get things done
 	err = acc().Select("topics").Cols("tid").EachInt(func(tid int) error {
 		stid := itoa(tid)
 
@@ -429,4 +428,42 @@ func patch10(scanner *bufio.Scanner) error {
 
 	_, err = acc().Insert("updates").Columns("dbVersion").Fields("0").Exec()
 	return err
+}
+
+func patch11(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddColumn("replies", tblColumn{"attachCount", "int", 0, false, false, "0"}))
+	if err != nil {
+		return err
+	}
+
+	// Attachments for replies got the topicID rather than the replyID for a while in error, so we want to separate these out
+	_, err = acc().Update("attachments").Set("originTable = 'freplies'").Where("originTable = 'replies'").Exec()
+	if err != nil {
+		return err
+	}
+
+	// We could probably do something more efficient, but as there shouldn't be too many sites right now, we can probably cheat a little, otherwise it'll take forever to get things done
+	return acc().Select("topics").Cols("tid").EachInt(func(tid int) error {
+		stid := itoa(tid)
+
+		count, err := acc().Count("attachments").Where("originTable = 'topics' and originID = " + stid).Total()
+		if err != nil {
+			return err
+		}
+
+		_, err = acc().Update("topics").Set("attachCount = ?").Where("tid = " + stid).Exec(count)
+		return err
+	})
+
+	/*return acc().Select("replies").Cols("rid").EachInt(func(rid int) error {
+		srid := itoa(rid)
+
+		count, err := acc().Count("attachments").Where("originTable = 'replies' and originID = " + srid).Total()
+		if err != nil {
+			return err
+		}
+
+		_, err = acc().Update("replies").Set("attachCount = ?").Where("rid = " + srid).Exec(count)
+		return err
+	})*/
 }

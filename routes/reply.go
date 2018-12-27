@@ -8,7 +8,25 @@ import (
 
 	"github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/query_gen"
 )
+
+type ReplyStmts struct {
+	updateAttachs *sql.Stmt
+}
+
+var replyStmts ReplyStmts
+
+// TODO: Move this statement somewhere else
+func init() {
+	common.DbInits.Add(func(acc *qgen.Accumulator) error {
+		replyStmts = ReplyStmts{
+			// TODO: Less race-y attachment count updates
+			updateAttachs: acc.Update("replies").Set("attachCount = ?").Where("rid = ?").Prepare(),
+		}
+		return acc.FirstError()
+	})
+}
 
 func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
@@ -35,15 +53,6 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		return common.NoPermissions(w, r, user)
 	}
 
-	// Handle the file attachments
-	// TODO: Stop duplicating this code
-	if user.Perms.UploadFiles {
-		_, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", tid, "replies")
-		if rerr != nil {
-			return rerr
-		}
-	}
-
 	content := common.PreparseMessage(r.PostFormValue("reply-content"))
 	// TODO: Fully parse the post and put that in the parsed column
 	rid, err := common.Rstore.Create(topic, content, user.LastIP, user.ID)
@@ -55,6 +64,16 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 	if err != nil {
 		return common.LocalError("Unable to load the reply", w, r, user)
 	}
+
+	// Handle the file attachments
+	// TODO: Stop duplicating this code
+	if user.Perms.UploadFiles {
+		_, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", rid, "replies")
+		if rerr != nil {
+			return rerr
+		}
+	}
+
 	if r.PostFormValue("has_poll") == "1" {
 		var maxPollOptions = 10
 		var pollInputItems = make(map[int]string)

@@ -82,17 +82,17 @@
 			{{if .Topic.Attachments}}<div class="show_on_edit attach_edit_bay" tid="{{.Topic.ID}}">
 				{{range .Topic.Attachments}}
 				<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
-					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&sectionType=forums" height="24" width="24" />{{end}}
+					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&sectionType=forums" height=24 width=24 />{{end}}
 					<span class="attach_item_path" aid="{{.ID}}" fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
-					<button class="attach_item_select">Select</button>
-					<button class="attach_item_copy">Copy</button>
+					<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>
+					<button class="attach_item_copy">{{lang "topic.copy_button_text"}}</button>
 				</div>
 				{{end}}
 				<div class="attach_item attach_item_buttons">
 					{{if .CurrentUser.Perms.UploadFiles}}
 					<input name="upload_files" id="upload_files_op" multiple type="file" style="display: none;" />
-					<label for="upload_files_op" class="formbutton add_file_button">Upload</label>{{end}}
-					<button class="attach_item_delete">Delete</button>
+					<label for="upload_files_op" class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
+					<button class="attach_item_delete">{{lang "topic.delete_button_text"}}</button>
 				</div>
 			</div>{{end}}
 

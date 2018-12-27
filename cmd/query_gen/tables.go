@@ -247,6 +247,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"lastUpdated", "datetime", 0, false, false, ""},
 			tblColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 			tblColumn{"likeCount", "int", 0, false, false, "0"},
+			tblColumn{"attachCount", "int", 0, false, false, "0"},
 			tblColumn{"words", "int", 0, false, false, "1"}, // ? - replies has a default of 1 and topics has 0? why?
 			tblColumn{"actionType", "varchar", 20, false, false, "''"},
 			tblColumn{"poll", "int", 0, false, false, "0"},

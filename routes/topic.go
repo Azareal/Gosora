@@ -599,6 +599,7 @@ func deleteAttachment(w http.ResponseWriter, r *http.Request, user common.User, 
 
 // TODO: Stop duplicating this code
 // TODO: Use a transaction here
+// TODO: Move this function to neutral ground
 func uploadAttachment(w http.ResponseWriter, r *http.Request, user common.User, sid int, sectionTable string, oid int, originTable string) (pathMap map[string]string, rerr common.RouteError) {
 	pathMap = make(map[string]string)
 	files, rerr := uploadFilesWithHash(w, r, user, "./attachs/")
@@ -619,13 +620,18 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, user common.User, 
 			pathMap[filename] = strconv.Itoa(aid)
 		}
 
-		switch sectionTable {
+		switch originTable {
 		case "topics":
-			_, err = topicStmts.updateAttachs.Exec(common.Attachments.CountInTopic(oid), oid)
+			_, err = topicStmts.updateAttachs.Exec(common.Attachments.CountIn(originTable,oid), oid)
 			if err != nil {
 				return nil, common.InternalError(err, w, r)
 			}
 			err = common.Topics.Reload(oid)
+			if err != nil {
+				return nil, common.InternalError(err, w, r)
+			}
+		case "replies":
+			_, err = replyStmts.updateAttachs.Exec(common.Attachments.CountIn(originTable,oid), oid)
 			if err != nil {
 				return nil, common.InternalError(err, w, r)
 			}

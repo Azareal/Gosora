@@ -10,6 +10,7 @@ CREATE TABLE `replies` (
 	`lastUpdated` datetime not null,
 	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
 	`likeCount` int DEFAULT 0 not null,
+	`attachCount` int DEFAULT 0 not null,
 	`words` int DEFAULT 1 not null,
 	`actionType` varchar(20) DEFAULT '' not null,
 	`poll` int DEFAULT 0 not null,

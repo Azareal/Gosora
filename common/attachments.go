@@ -26,31 +26,31 @@ type AttachmentStore interface {
 	MiniTopicGet(id int) (alist []*MiniAttachment, err error)
 	Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string) (int, error)
 	GlobalCount() int
-	CountInTopic(tid int) int
+	CountIn(originTable string, oid int) int
 	CountInPath(path string) int
 	Delete(aid int) error
 }
 
 type DefaultAttachmentStore struct {
-	get          *sql.Stmt
-	getByTopic   *sql.Stmt
-	add          *sql.Stmt
-	count        *sql.Stmt
-	countInTopic *sql.Stmt
-	countInPath  *sql.Stmt
-	delete       *sql.Stmt
+	get         *sql.Stmt
+	getByTopic  *sql.Stmt
+	add         *sql.Stmt
+	count       *sql.Stmt
+	countIn     *sql.Stmt
+	countInPath *sql.Stmt
+	delete      *sql.Stmt
 }
 
 func NewDefaultAttachmentStore() (*DefaultAttachmentStore, error) {
 	acc := qgen.NewAcc()
 	return &DefaultAttachmentStore{
-		get:          acc.Select("attachments").Columns("originID, sectionID, uploadedBy, path").Where("attachID = ?").Prepare(),
-		getByTopic:   acc.Select("attachments").Columns("attachID, sectionID, uploadedBy, path").Where("originTable = 'topics' AND originID = ?").Prepare(),
-		add:          acc.Insert("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Fields("?,?,?,?,?,?").Prepare(),
-		count:        acc.Count("attachments").Prepare(),
-		countInTopic: acc.Count("attachments").Where("originTable = 'topics' and originID = ?").Prepare(),
-		countInPath:  acc.Count("attachments").Where("path = ?").Prepare(),
-		delete:       acc.Delete("attachments").Where("attachID = ?").Prepare(),
+		get:         acc.Select("attachments").Columns("originID, sectionID, uploadedBy, path").Where("attachID = ?").Prepare(),
+		getByTopic:  acc.Select("attachments").Columns("attachID, sectionID, uploadedBy, path").Where("originTable = 'topics' AND originID = ?").Prepare(),
+		add:         acc.Insert("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Fields("?,?,?,?,?,?").Prepare(),
+		count:       acc.Count("attachments").Prepare(),
+		countIn:     acc.Count("attachments").Where("originTable = ? and originID = ?").Prepare(),
+		countInPath: acc.Count("attachments").Where("path = ?").Prepare(),
+		delete:      acc.Delete("attachments").Where("attachID = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -107,8 +107,8 @@ func (store *DefaultAttachmentStore) GlobalCount() (count int) {
 	return count
 }
 
-func (store *DefaultAttachmentStore) CountInTopic(tid int) (count int) {
-	err := store.countInTopic.QueryRow(tid).Scan(&count)
+func (store *DefaultAttachmentStore) CountIn(originTable string, oid int) (count int) {
+	err := store.countIn.QueryRow(originTable, oid).Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
