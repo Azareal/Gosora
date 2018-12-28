@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,17 +29,24 @@ func init() {
 	})
 }
 
+type JsonReply struct {
+	Content string
+}
+
 func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	// TODO: Use this
+	js := r.FormValue("js") == "1"
+
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
-		return common.PreError("Failed to convert the Topic ID", w, r)
+		return common.PreErrorJSQ("Failed to convert the Topic ID", w, r, js)
 	}
 
 	topic, err := common.Topics.Get(tid)
 	if err == sql.ErrNoRows {
-		return common.PreError("Couldn't find the parent topic", w, r)
+		return common.PreErrorJSQ("Couldn't find the parent topic", w, r, js)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// TODO: Add hooks to make use of headerLite
@@ -47,22 +55,22 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
-		return common.NoPermissions(w, r, user)
+		return common.NoPermissionsJSQ(w, r, user, js)
 	}
 	if topic.IsClosed && !user.Perms.CloseTopic {
-		return common.NoPermissions(w, r, user)
+		return common.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	content := common.PreparseMessage(r.PostFormValue("reply-content"))
 	// TODO: Fully parse the post and put that in the parsed column
 	rid, err := common.Rstore.Create(topic, content, user.LastIP, user.ID)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
 	reply, err := common.Rstore.Get(rid)
 	if err != nil {
-		return common.LocalError("Unable to load the reply", w, r, user)
+		return common.LocalErrorJSQ("Unable to load the reply", w, r, user, js)
 	}
 
 	// Handle the file attachments
@@ -84,13 +92,13 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 				if strings.HasPrefix(key, "pollinputitem[") {
 					halves := strings.Split(key, "[")
 					if len(halves) != 2 {
-						return common.LocalError("Malformed pollinputitem", w, r, user)
+						return common.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
 					}
 					halves[1] = strings.TrimSuffix(halves[1], "]")
 
 					index, err := strconv.Atoi(halves[1])
 					if err != nil {
-						return common.LocalError("Malformed pollinputitem", w, r, user)
+						return common.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
 					}
 
 					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
@@ -115,25 +123,35 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		pollType := 0 // Basic single choice
 		_, err := common.Polls.Create(reply, pollType, seqPollInputItems)
 		if err != nil {
-			return common.LocalError("Failed to add poll to reply", w, r, user) // TODO: Might need to be an internal error as it could leave phantom polls?
+			return common.LocalErrorJSQ("Failed to add poll to reply", w, r, user, js) // TODO: Might need to be an internal error as it could leave phantom polls?
 		}
 	}
 
 	err = common.Forums.UpdateLastTopic(tid, user.ID, topic.ParentID)
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
 	common.AddActivityAndNotifyAll(user.ID, topic.CreatedBy, "reply", "topic", tid)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, js)
 	}
-	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 
 	wcount := common.WordCount(content)
 	err = user.IncreasePostStats(wcount, false)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return common.InternalErrorJSQ(err, w, r, js)
+	}
+
+	if js {
+		outBytes, err := json.Marshal(JsonReply{common.ParseMessage(reply.Content, topic.ParentID, "forums")})
+		if err != nil {
+			return common.InternalErrorJSQ(err, w, r, js)
+		}
+		w.Write(outBytes)
+	} else {
+		// TODO: Send the user to the specific post on the page
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	}
 
 	counters.PostCounter.Bump()
@@ -143,25 +161,25 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 // TODO: Disable stat updates in posts handled by plugin_guilds
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return common.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
+		return common.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
 	}
 
 	reply, err := common.Rstore.Get(rid)
 	if err == sql.ErrNoRows {
-		return common.PreErrorJSQ("The target reply doesn't exist.", w, r, isJs)
+		return common.PreErrorJSQ("The target reply doesn't exist.", w, r, js)
 	} else if err != nil {
-		return common.InternalErrorJSQ(err, w, r, isJs)
+		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
 	topic, err := reply.Topic()
 	if err == sql.ErrNoRows {
-		return common.PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
+		return common.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
 	} else if err != nil {
-		return common.InternalErrorJSQ(err, w, r, isJs)
+		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// TODO: Add hooks to make use of headerLite
@@ -170,24 +188,37 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.EditReply {
-		return common.NoPermissionsJSQ(w, r, user, isJs)
+		return common.NoPermissionsJSQ(w, r, user, js)
 	}
 	if topic.IsClosed && !user.Perms.CloseTopic {
-		return common.NoPermissionsJSQ(w, r, user, isJs)
+		return common.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	err = reply.SetPost(r.PostFormValue("edit_item"))
 	if err == sql.ErrNoRows {
-		return common.PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
+		return common.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
 	} else if err != nil {
-		return common.InternalErrorJSQ(err, w, r, isJs)
+		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
-	if !isJs {
+	// TODO: Avoid the load to get this faster?
+	reply, err = common.Rstore.Get(rid)
+	if err == sql.ErrNoRows {
+		return common.PreErrorJSQ("The updated reply doesn't exist.", w, r, js)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, js)
+	}
+
+	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID)+"#reply-"+strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
-		w.Write(successJSONBytes)
+		outBytes, err := json.Marshal(JsonReply{common.ParseMessage(reply.Content, topic.ParentID, "forums")})
+		if err != nil {
+			return common.InternalErrorJSQ(err, w, r, js)
+		}
+		w.Write(outBytes)
 	}
+
 	return nil
 }
 

@@ -380,7 +380,7 @@ function mainInit(){
 		$(".topic_name").html(topicNameInput);
 		$(".topic_name").attr(topicNameInput);
 		let topicContentInput = $('.topic_content_input').val();
-		$(".topic_content").html(topicContentInput.replace("\n","<br><br>"));
+		$(".topic_content").html(quickParse(topicContentInput));
 		let topicStatusInput = $('.topic_status_input').val();
 		$(".topic_status_e:not(.open_edit)").html(topicStatusInput);
 
@@ -408,6 +408,20 @@ function mainInit(){
 		$(this).closest('.deletable_block').remove();
 	});
 
+	// Miniature implementation of the parser to avoid sending as much data back and forth
+	function quickParse(msg) {
+		msg = msg.replace(":)", "😀")
+		msg = msg.replace(":(", "😞")
+		msg = msg.replace(":D", "😃")
+		msg = msg.replace(":P", "😛")
+		msg = msg.replace(":O", "😲")
+		msg = msg.replace(":p", "😛")
+		msg = msg.replace(":o", "😲")
+		msg = msg.replace(";)", "😉")
+		msg = msg.replace("\n","<br>")
+		return msg
+	}
+
 	$(".edit_item").click(function(event){
 		event.preventDefault();
 		let blockParent = this.closest('.editable_parent');
@@ -418,18 +432,26 @@ function mainInit(){
 		if(srcNode!=null) source = srcNode.innerText;
 		else source = block.innerHTML;
 		// TODO: Add a client template for this
-		block.innerHTML = "<textarea style='width: 99%;' name='edit_item'>" + source + "</textarea><br /><a href='" + this.closest('a').getAttribute("href") + "'><button class='submit_edit' type='submit'>Update</button></a>";
+		block.innerHTML = "<textarea style='width: 99%;' name='edit_item'>" + source + "</textarea><br><a href='" + this.closest('a').getAttribute("href") + "'><button class='submit_edit' type='submit'>Update</button></a>";
 
 		$(".submit_edit").click(function(event){
 			event.preventDefault();
 			block.classList.remove("in_edit");
 			let newContent = block.querySelector('textarea').value;
-			block.innerHTML = newContent.replace("\n","<br><br>");
+			block.innerHTML = quickParse(newContent);
 			if(srcNode!=null) srcNode.innerText = newContent;
 
 			let formAction = this.closest('a').getAttribute("href");
 			// TODO: Bounce the parsed post back and set innerHTML to it?
-			$.ajax({ url: formAction, type: "POST", error: ajaxError, dataType: "json", data: { isJs: "1", edit_item: newContent }
+			$.ajax({
+				url: formAction,
+				type: "POST",
+				dataType: "json",
+				data: { js: "1", edit_item: newContent },
+				error: ajaxError,
+				success: (data,status,xhr) => {
+					if("Content" in data) block.innerHTML = data["Content"];
+				}
 			});
 		});
 	});
