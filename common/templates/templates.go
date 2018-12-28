@@ -612,10 +612,40 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 	}
 }
 
+// ! Temporary, we probably want something that is good with non-struct pointers too
+// For compileSubSwitch and compileSubTemplate
+func (c *CTemplateSet) skipStructPointers(cur reflect.Value, id string) reflect.Value {
+	if cur.Kind() == reflect.Ptr {
+		c.detail("Looping over pointer")
+		for cur.Kind() == reflect.Ptr {
+			cur = cur.Elem()
+		}
+		c.detail("Data Kind:", cur.Kind().String())
+		c.detail("Field Bit:", id)
+	}
+	return cur
+}
+
+// For compileSubSwitch and compileSubTemplate
+func (c *CTemplateSet) checkIfValid(cur reflect.Value, varHolder string, holdreflect reflect.Value, varBit string, multiline bool) {
+	if !cur.IsValid() {
+		c.critical("Debug Data:")
+		c.critical("Holdreflect:", holdreflect)
+		c.critical("Holdreflect.Kind():", holdreflect.Kind())
+		if !c.config.SuperDebug {
+			c.critical("cur.Kind():", cur.Kind().String())
+		}
+		c.critical("")
+		if !multiline {
+			panic(varHolder + varBit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+		}
+		panic(varBit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+	}
+}
+
 func (c *CTemplateSet) compileSubSwitch(con CContext, node *parse.CommandNode) {
 	c.dumpCall("compileSubSwitch", con, node)
-	firstWord := node.Args[0]
-	switch n := firstWord.(type) {
+	switch n := node.Args[0].(type) {
 	case *parse.FieldNode:
 		c.detail("Field Node:", n.Ident)
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Variable declarations are coming soon! */
@@ -627,45 +657,19 @@ func (c *CTemplateSet) compileSubSwitch(con CContext, node *parse.CommandNode) {
 			varBit += ".(" + cur.Type().Name() + ")"
 		}
 
-		// ! Might not work so well for non-struct pointers
-		skipPointers := func(cur reflect.Value, id string) reflect.Value {
-			if cur.Kind() == reflect.Ptr {
-				c.detail("Looping over pointer")
-				for cur.Kind() == reflect.Ptr {
-					cur = cur.Elem()
-				}
-				c.detail("Data Kind:", cur.Kind().String())
-				c.detail("Field Bit:", id)
-			}
-			return cur
-		}
-
 		var assLines string
 		var multiline = false
 		for _, id := range n.Ident {
 			c.detail("Data Kind:", cur.Kind().String())
 			c.detail("Field Bit:", id)
-			cur = skipPointers(cur, id)
-
-			if !cur.IsValid() {
-				c.error("Debug Data:")
-				c.error("Holdreflect:", con.HoldReflect)
-				c.error("Holdreflect.Kind():", con.HoldReflect.Kind())
-				if !c.config.SuperDebug {
-					c.error("cur.Kind():", cur.Kind().String())
-				}
-				c.error("")
-				if !multiline {
-					panic(con.VarHolder + varBit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
-				}
-				panic(varBit + "^\n" + "Invalid value. Maybe, it doesn't exist?")
-			}
+			cur = c.skipStructPointers(cur, id)
+			c.checkIfValid(cur, con.VarHolder, con.HoldReflect, varBit, multiline)
 
 			c.detail("in-loop varBit: " + varBit)
 			if cur.Kind() == reflect.Map {
 				cur = cur.MapIndex(reflect.ValueOf(id))
 				varBit += "[\"" + id + "\"]"
-				cur = skipPointers(cur, id)
+				cur = c.skipStructPointers(cur, id)
 
 				if cur.Kind() == reflect.Struct || cur.Kind() == reflect.Interface {
 					// TODO: Move the newVarByte declaration to the top level or to the if level, if a dispInt is only used in a particular if statement
@@ -1385,15 +1389,60 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	con.TemplateName = fname
 	if node.Pipe != nil {
 		for _, cmd := range node.Pipe.Cmds {
-			firstWord := cmd.Args[0]
-			switch firstWord.(type) {
+			switch p := cmd.Args[0].(type) {
+			case *parse.FieldNode:
+				// TODO: Incomplete but it should cover the basics
+				cur := pcon.HoldReflect
+
+				var varBit string
+				if cur.Kind() == reflect.Interface {
+					cur = cur.Elem()
+					varBit += ".(" + cur.Type().Name() + ")"
+				}
+
+				for _, id := range p.Ident {
+					c.detail("Data Kind:", cur.Kind().String())
+					c.detail("Field Bit:", id)
+					cur = c.skipStructPointers(cur, id)
+					c.checkIfValid(cur, pcon.VarHolder, pcon.HoldReflect, varBit, false)
+
+					if cur.Kind() != reflect.Interface {
+						cur = cur.FieldByName(id)
+						varBit += "." + id
+					}
+
+					// TODO: Handle deeply nested pointers mixed with interfaces mixed with pointers better
+					if cur.Kind() == reflect.Interface {
+						cur = cur.Elem()
+						varBit += ".("
+						// TODO: Surely, there's a better way of doing this?
+						if cur.Type().PkgPath() != "main" && cur.Type().PkgPath() != "" {
+							c.importMap["html/template"] = "html/template"
+							varBit += strings.TrimPrefix(cur.Type().PkgPath(), "html/") + "."
+						}
+						varBit += cur.Type().Name() + ")"
+					}
+				}
+				con.VarHolder = pcon.VarHolder + varBit
+				con.HoldReflect = cur
 			case *parse.DotNode:
 				con.VarHolder = pcon.VarHolder
 				con.HoldReflect = pcon.HoldReflect
 			case *parse.NilNode:
 				panic("Nil is not a command x.x")
 			default:
-				c.detail("Unknown Node: ", firstWord)
+				c.critical("Unknown Param Type:", p)
+				pvar := reflect.ValueOf(p)
+				c.critical("param kind:", pvar.Kind().String())
+				c.critical("param type:", pvar.Type().Name())
+				if pvar.Kind() == reflect.Ptr {
+					c.critical("Looping over pointer")
+					for pvar.Kind() == reflect.Ptr {
+						pvar = pvar.Elem()
+					}
+					c.critical("concrete kind:", pvar.Kind().String())
+					c.critical("concrete type:", pvar.Type().Name())
+				}
 				panic("")
 			}
 		}
@@ -1526,4 +1575,8 @@ func (c *CTemplateSet) error(args ...interface{}) {
 	if c.config.Debug {
 		log.Println(args...)
 	}
+}
+
+func (c *CTemplateSet) critical(args ...interface{}) {
+	log.Println(args...)
 }

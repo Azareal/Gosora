@@ -616,10 +616,22 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
+	// TODO: Avoid the load to get this faster?
+	topic, err = common.Topics.Get(topic.ID)
+	if err == sql.ErrNoRows {
+		return common.PreErrorJSQ("The updated topic doesn't exist.", w, r, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
 	if !isJs {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
-		_, _ = w.Write(successJSONBytes)
+		outBytes, err := json.Marshal(JsonReply{common.ParseMessage(topic.Content, topic.ParentID, "forums")})
+		if err != nil {
+			return common.InternalErrorJSQ(err, w, r, isJs)
+		}
+		w.Write(outBytes)
 	}
 	return nil
 }

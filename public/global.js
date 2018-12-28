@@ -388,17 +388,19 @@ function mainInit(){
 		$('.show_on_edit').removeClass("edit_opened");
 		runHook("close_edit");
 
-		let formAction = this.form.getAttribute("action");
 		$.ajax({
-			url: formAction,
+			url: this.form.getAttribute("action"),
 			type: "POST",
 			dataType: "json",
-			error: ajaxError,
 			data: {
 				topic_name: topicNameInput,
 				topic_status: topicStatusInput,
 				topic_content: topicContentInput,
-				topic_js: 1
+				js: 1
+			},
+			error: ajaxError,
+			success: (data,status,xhr) => {
+				if("Content" in data) $(".topic_content").html(data["Content"]);
 			}
 		});
 	});
