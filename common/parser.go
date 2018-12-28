@@ -868,7 +868,7 @@ func Paginate(count int, perPage int, maxPages int) []int {
 // TODO: Write tests for this
 func PageOffset(count int, page int, perPage int) (int, int, int) {
 	var offset int
-	lastPage := (count / perPage) + 1
+	lastPage := LastPage(count, perPage)
 	if page > 1 {
 		offset = (perPage * page) - perPage
 	} else if page == -1 {
@@ -883,4 +883,9 @@ func PageOffset(count int, page int, perPage int) (int, int, int) {
 		offset = 0
 	}
 	return offset, page, lastPage
+}
+
+// TODO: Write tests for this
+func LastPage(count int, perPage int) int {
+	return (count / perPage) + 1
 }

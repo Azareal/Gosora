@@ -13,7 +13,8 @@ import (
 )
 
 type ReplyStmts struct {
-	updateAttachs *sql.Stmt
+	updateAttachs     *sql.Stmt
+	createReplyPaging *sql.Stmt
 }
 
 var replyStmts ReplyStmts
@@ -23,7 +24,8 @@ func init() {
 	common.DbInits.Add(func(acc *qgen.Accumulator) error {
 		replyStmts = ReplyStmts{
 			// TODO: Less race-y attachment count updates
-			updateAttachs: acc.Update("replies").Set("attachCount = ?").Where("rid = ?").Prepare(),
+			updateAttachs:     acc.Update("replies").Set("attachCount = ?").Where("rid = ?").Prepare(),
+			createReplyPaging: acc.Select("replies").Cols("rid").Where("rid >= ? - 1 AND tid = ?").Orderby("rid ASC").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -143,15 +145,61 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
-	if js {
+	nTopic, err := common.Topics.Get(tid)
+	if err == sql.ErrNoRows {
+		return common.PreErrorJSQ("Couldn't find the parent topic", w, r, js)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, js)
+	}
+
+	page := common.LastPage(nTopic.PostCount, common.Config.ItemsPerPage)
+
+	rows, err := replyStmts.createReplyPaging.Query(reply.ID, topic.ID)
+	if err != nil && err != sql.ErrNoRows {
+		return common.InternalErrorJSQ(err, w, r, js)
+	}
+	defer rows.Close()
+
+	var rids []int
+	for rows.Next() {
+		var rid int
+		err := rows.Scan(&rid)
+		if err != nil {
+			return common.InternalErrorJSQ(err, w, r, js)
+		}
+		rids = append(rids, rid)
+	}
+	err = rows.Err()
+	if err != nil {
+		return common.InternalErrorJSQ(err, w, r, js)
+	}
+	if len(rids) == 0 {
+		return common.NotFoundJSQ(w, r, nil, js)
+	}
+
+	if page > 1 {
+		var offset int
+		if rids[0] == reply.ID {
+			offset = 1
+		} else if len(rids) == 2 && rids[1] == reply.ID {
+			offset = 2
+		}
+		page = common.LastPage(nTopic.PostCount-(len(rids)+offset), common.Config.ItemsPerPage)
+	}
+
+	prid, _ := strconv.Atoi(r.FormValue("prid"))
+	if js && (prid == 0 || rids[0] == prid) {
 		outBytes, err := json.Marshal(JsonReply{common.ParseMessage(reply.Content, topic.ParentID, "forums")})
 		if err != nil {
 			return common.InternalErrorJSQ(err, w, r, js)
 		}
 		w.Write(outBytes)
 	} else {
-		// TODO: Send the user to the specific post on the page
-		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+		var spage string
+		if page > 1 {
+			spage = "?page=" + strconv.Itoa(page)
+		}
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid)+spage+"#post-"+strconv.Itoa(reply.ID), http.StatusSeeOther)
 	}
 
 	counters.PostCounter.Bump()
