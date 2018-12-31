@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"runtime/debug"
 
 	"github.com/pkg/errors"
 
@@ -109,6 +110,7 @@ func init() {
 	}
 }
 
+const benchTidI = 1
 const benchTid = "1"
 
 // TODO: Swap out LocalError for a panic for this?
@@ -175,7 +177,7 @@ func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
 	}
 	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
 	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
-	path := "/topic/hm."+benchTid
+	path := "/topic/hm." + benchTid
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -229,8 +231,8 @@ func BenchmarkTopicGuestAdminRouteParallelWithRouter(b *testing.B) {
 	}
 	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
 	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
-	path := "/topic/hm."+benchTid
-	
+	path := "/topic/hm." + benchTid
+
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			w := httptest.NewRecorder()
@@ -246,18 +248,18 @@ func BenchmarkTopicGuestAdminRouteParallelWithRouter(b *testing.B) {
 				b.Fatal("HTTP Error!")
 			}
 
-{
-	w := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", path, bytes.NewReader(nil))
-			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
-			req.Header.Set("Host", "localhost")
-			req.Host = "localhost"
-			router.ServeHTTP(w, req)
-			if w.Code != 200 {
-				b.Log(w.Body)
-				b.Fatal("HTTP Error!")
+			{
+				w := httptest.NewRecorder()
+				req := httptest.NewRequest("GET", path, bytes.NewReader(nil))
+				req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+				req.Header.Set("Host", "localhost")
+				req.Host = "localhost"
+				router.ServeHTTP(w, req)
+				if w.Code != 200 {
+					b.Log(w.Body)
+					b.Fatal("HTTP Error!")
+				}
 			}
-}
 		}
 	})
 
@@ -426,6 +428,54 @@ func benchRouteNoError(b *testing.B, path string) func(*testing.PB) {
 
 func BenchmarkProfileGuestRouteParallelWithRouter(b *testing.B) {
 	obRoute(b, "/profile/admin.1")
+}
+
+func BenchmarkPopulateTopicWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	topic, err := common.Topics.Get(benchTidI)
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			for i := 0; i < 25; i++ {
+				_, err := common.Rstore.Create(topic, "hiii", "::1", 1)
+				if err != nil {
+					debug.PrintStack()
+					b.Fatal(err)
+				}
+			}
+		}
+	})
+}
+
+//var fullPage = false
+
+func BenchmarkTopicAdminFullPageRouteParallelWithRouter(b *testing.B) {
+	/*if !fullPage {
+		topic, err := common.Topics.Get(benchTidI)
+		panicIfErr(err)
+		for i := 0; i < 25; i++ {
+			_, err = common.Rstore.Create(topic, "hiii", "::1", 1)
+			panicIfErr(err)
+		}
+		fullPage = true
+	}*/
+	BenchmarkTopicAdminRouteParallel(b)
+}
+
+func BenchmarkTopicGuestFullPageRouteParallelWithRouter(b *testing.B) {
+	/*if !fullPage {
+		topic, err := common.Topics.Get(benchTidI)
+		panicIfErr(err)
+		for i := 0; i < 25; i++ {
+			_, err = common.Rstore.Create(topic, "hiii", "::1", 1)
+			panicIfErr(err)
+		}
+		fullPage = true
+	}*/
+	obRoute(b, "/topic/hm."+benchTid)
 }
 
 // TODO: Make these routes compatible with the changes to the router

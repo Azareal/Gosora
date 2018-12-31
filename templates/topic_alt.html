@@ -36,14 +36,7 @@
 	{{if .Poll.ID}}
 	<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
 	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
-		{{/** TODO: De-dupe userinfo with a common template **/}}
-		<div class="userinfo" aria-label="{{lang "topic.userinfo_aria"}}">
-			<div class="avatar_item" style="background-image: url({{.Topic.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
-			<div class="user_meta">
-				<a href="{{.Topic.UserLink}}" class="the_name" rel="author">{{.Topic.CreatedByName}}</a>
-				{{if .Topic.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.Topic.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{level .Topic.Level}}</div><div class="tag_post"></div></div>{{end}}
-			</div>
-		</div>
+		{{template "topic_alt_userinfo.html" .Topic }}
 		<div id="poll_voter_{{.Poll.ID}}" class="content_container poll_voter">
 			<div class="topic_content user_content">
 				{{range .Poll.QuickOptions}}
@@ -73,10 +66,10 @@
 			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
 			{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.EditTopic}}<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
 
-			{{if .Topic.Attachments}}<div class="show_on_edit attach_edit_bay" tid="{{.Topic.ID}}">
+			{{if .Topic.Attachments}}<div class="show_on_edit attach_edit_bay" type="topic" id="{{.Topic.ID}}">
 				{{range .Topic.Attachments}}
 				<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
-					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&sectionType=forums" height=24 width=24 />{{end}}
+					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&amp;sectionType=forums" height=24 width=24 />{{end}}
 					<span class="attach_item_path" aid="{{.ID}}" fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
 					<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>
 					<button class="attach_item_copy">{{lang "topic.copy_button_text"}}</button>

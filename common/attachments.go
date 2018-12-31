@@ -23,7 +23,8 @@ type MiniAttachment struct {
 
 type AttachmentStore interface {
 	Get(id int) (*MiniAttachment, error)
-	MiniTopicGet(id int) (alist []*MiniAttachment, err error)
+	MiniGetList(originTable string, originID int) (alist []*MiniAttachment, err error)
+	BulkMiniGetList(originTable string, ids []int) (amap map[int][]*MiniAttachment, err error)
 	Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string) (int, error)
 	GlobalCount() int
 	CountIn(originTable string, oid int) int
@@ -33,7 +34,7 @@ type AttachmentStore interface {
 
 type DefaultAttachmentStore struct {
 	get         *sql.Stmt
-	getByTopic  *sql.Stmt
+	getByObj    *sql.Stmt
 	add         *sql.Stmt
 	count       *sql.Stmt
 	countIn     *sql.Stmt
@@ -45,7 +46,7 @@ func NewDefaultAttachmentStore() (*DefaultAttachmentStore, error) {
 	acc := qgen.NewAcc()
 	return &DefaultAttachmentStore{
 		get:         acc.Select("attachments").Columns("originID, sectionID, uploadedBy, path").Where("attachID = ?").Prepare(),
-		getByTopic:  acc.Select("attachments").Columns("attachID, sectionID, uploadedBy, path").Where("originTable = 'topics' AND originID = ?").Prepare(),
+		getByObj:    acc.Select("attachments").Columns("attachID, sectionID, uploadedBy, path").Where("originTable = ? AND originID = ?").Prepare(),
 		add:         acc.Insert("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Fields("?,?,?,?,?,?").Prepare(),
 		count:       acc.Count("attachments").Prepare(),
 		countIn:     acc.Count("attachments").Where("originTable = ? and originID = ?").Prepare(),
@@ -54,12 +55,11 @@ func NewDefaultAttachmentStore() (*DefaultAttachmentStore, error) {
 	}, acc.FirstError()
 }
 
-// TODO: Make this more generic so we can use it for reply attachments too
-func (store *DefaultAttachmentStore) MiniTopicGet(id int) (alist []*MiniAttachment, err error) {
-	rows, err := store.getByTopic.Query(id)
+func (store *DefaultAttachmentStore) MiniGetList(originTable string, originID int) (alist []*MiniAttachment, err error) {
+	rows, err := store.getByObj.Query(originTable, originID)
 	defer rows.Close()
 	for rows.Next() {
-		attach := &MiniAttachment{OriginID: id}
+		attach := &MiniAttachment{OriginID: originID}
 		err := rows.Scan(&attach.ID, &attach.SectionID, &attach.UploadedBy, &attach.Path)
 		if err != nil {
 			return nil, err
@@ -73,6 +73,43 @@ func (store *DefaultAttachmentStore) MiniTopicGet(id int) (alist []*MiniAttachme
 		alist = append(alist, attach)
 	}
 	return alist, rows.Err()
+}
+
+func (store *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []int) (amap map[int][]*MiniAttachment, err error) {
+	if len(ids) == 0 {
+		return nil, sql.ErrNoRows
+	}
+	if len(ids) == 1 {
+		res, err := store.MiniGetList(originTable, ids[0])
+		return map[int][]*MiniAttachment{0: res}, err
+	}
+
+	amap = make(map[int][]*MiniAttachment)
+	var buffer []*MiniAttachment
+	var currentID int
+	rows, err := qgen.NewAcc().Select("attachments").Columns("attachID, sectionID, originID, uploadedBy, path").Where("originTable = ?").In("originID", ids).Orderby("originID ASC").Query(originTable)
+	defer rows.Close()
+	for rows.Next() {
+		attach := &MiniAttachment{}
+		err := rows.Scan(&attach.ID, &attach.SectionID, &attach.OriginID, &attach.UploadedBy, &attach.Path)
+		if err != nil {
+			return nil, err
+		}
+		extarr := strings.Split(attach.Path, ".")
+		if len(extarr) < 2 {
+			return nil, errors.New("corrupt attachment path")
+		}
+		attach.Ext = extarr[len(extarr)-1]
+		attach.Image = ImageFileExts.Contains(attach.Ext)
+		if attach.ID != currentID {
+			if len(buffer) > 0 {
+				amap[currentID] = buffer
+				buffer = nil
+			}
+		}
+		buffer = append(buffer, attach)
+	}
+	return amap, rows.Err()
 }
 
 func (store *DefaultAttachmentStore) Get(id int) (*MiniAttachment, error) {

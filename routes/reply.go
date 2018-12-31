@@ -3,12 +3,14 @@ package routes
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -330,6 +332,106 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
+	return nil
+}
+
+// TODO: Avoid uploading this again if the attachment already exists? They'll resolve to the same hash either way, but we could save on some IO / bandwidth here
+// TODO: Enforce the max request limit on all of this topic's attachments
+// TODO: Test this route
+func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
+	rid, err := strconv.Atoi(srid)
+	if err != nil {
+		return common.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+	}
+
+	reply, err := common.Rstore.Get(rid)
+	if err == sql.ErrNoRows {
+		return common.PreErrorJS("You can't attach to something which doesn't exist!", w, r)
+	} else if err != nil {
+		return common.InternalErrorJS(err, w, r)
+	}
+
+	topic, err := common.Topics.Get(reply.ParentID)
+	if err != nil {
+		return common.NotFoundJS(w, r)
+	}
+
+	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic || !user.Perms.EditReply || !user.Perms.UploadFiles {
+		return common.NoPermissionsJS(w, r, user)
+	}
+	if topic.IsClosed && !user.Perms.CloseTopic {
+		return common.NoPermissionsJS(w, r, user)
+	}
+
+	// Handle the file attachments
+	pathMap, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", rid, "replies")
+	if rerr != nil {
+		// TODO: This needs to be a JS error...
+		return rerr
+	}
+	if len(pathMap) == 0 {
+		return common.InternalErrorJS(errors.New("no paths for attachment add"), w, r)
+	}
+
+	var elemStr string
+	for path, aids := range pathMap {
+		elemStr += "\"" + path + "\":\"" + aids + "\","
+	}
+	if len(elemStr) > 1 {
+		elemStr = elemStr[:len(elemStr)-1]
+	}
+
+	w.Write([]byte(`{"success":"1","elems":[{` + elemStr + `}]}`))
+	return nil
+}
+
+// TODO: Reduce the amount of duplication between this and RemoveAttachFromTopicSubmit
+func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
+	rid, err := strconv.Atoi(srid)
+	if err != nil {
+		return common.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+	}
+
+	reply, err := common.Rstore.Get(rid)
+	if err == sql.ErrNoRows {
+		return common.PreErrorJS("You can't attach from something which doesn't exist!", w, r)
+	} else if err != nil {
+		return common.InternalErrorJS(err, w, r)
+	}
+
+	topic, err := common.Topics.Get(reply.ParentID)
+	if err != nil {
+		return common.NotFoundJS(w, r)
+	}
+
+	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic || !user.Perms.EditReply {
+		return common.NoPermissionsJS(w, r, user)
+	}
+	if topic.IsClosed && !user.Perms.CloseTopic {
+		return common.NoPermissionsJS(w, r, user)
+	}
+
+	for _, said := range strings.Split(r.PostFormValue("aids"), ",") {
+		aid, err := strconv.Atoi(said)
+		if err != nil {
+			return common.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		}
+		rerr := deleteAttachment(w, r, user, aid, true)
+		if rerr != nil {
+			// TODO: This needs to be a JS error...
+			return rerr
+		}
+	}
+
+	w.Write(successJSONBytes)
 	return nil
 }
 

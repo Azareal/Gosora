@@ -120,6 +120,21 @@ func (adapter *PgsqlAdapter) AddColumn(name string, table string, column DBTable
 	return "", nil
 }
 
+// TODO: Implement this
+// TODO: Test to make sure everything works here
+func (adapter *PgsqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if iname == "" {
+		return "", errors.New("You need a name for the index")
+	}
+	if colname == "" {
+		return "", errors.New("You need a name for the column")
+	}
+	return "", errors.New("not implemented")
+}
+
 // TODO: Test this
 // ! We need to get the last ID out of this somehow, maybe add returning to every query? Might require some sort of wrapper over the sql statements
 func (adapter *PgsqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {

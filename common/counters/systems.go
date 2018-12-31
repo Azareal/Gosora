@@ -1,8 +1,11 @@
 package counters
 
-import "database/sql"
-import "github.com/Azareal/Gosora/common"
-import "github.com/Azareal/Gosora/query_gen"
+import (
+	"database/sql"
+
+	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
+)
 
 var OSViewCounter *DefaultOSViewCounter
 

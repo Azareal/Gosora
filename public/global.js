@@ -427,6 +427,8 @@ function mainInit(){
 	$(".edit_item").click(function(event){
 		event.preventDefault();
 		let blockParent = this.closest('.editable_parent');
+		$(blockParent).find('.hide_on_edit').addClass("edit_opened");
+		$(blockParent).find('.show_on_edit').addClass("edit_opened");
 		let srcNode = blockParent.querySelector(".edit_source");
 		let block = blockParent.querySelector('.editable_block');
 		block.classList.add("in_edit");
@@ -438,6 +440,8 @@ function mainInit(){
 
 		$(".submit_edit").click(function(event){
 			event.preventDefault();
+			$(blockParent).find('.hide_on_edit').removeClass("edit_opened");
+			$(blockParent).find('.show_on_edit').removeClass("edit_opened");
 			block.classList.remove("in_edit");
 			let newContent = block.querySelector('textarea').value;
 			block.innerHTML = quickParse(newContent);
@@ -668,7 +672,7 @@ function mainInit(){
 					$(".attach_item_copy").unbind("click");
 					bindAttachItems()
 				});
-				req.open("POST","//"+window.location.host+"/topic/attach/add/submit/"+fileDock.getAttribute("tid"));
+				req.open("POST","//"+window.location.host+"/"+fileDock.getAttribute("type")+"/attach/add/submit/"+fileDock.getAttribute("id"));
 				req.send(formData);
 			});
 		} catch(e) {
@@ -714,13 +718,19 @@ function mainInit(){
 		}
 	}
 
-	var uploadFiles = document.getElementById("upload_files");
+	let uploadFiles = document.getElementById("upload_files");
 	if(uploadFiles != null) {
 		uploadFiles.addEventListener("change", uploadAttachHandler, false);
 	}
-	var uploadFilesOp = document.getElementById("upload_files_op");
+	let uploadFilesOp = document.getElementById("upload_files_op");
 	if(uploadFilesOp != null) {
 		uploadFilesOp.addEventListener("change", uploadAttachHandler2, false);
+	}
+	let uploadFilesPost = document.getElementsByClassName("upload_files_post");
+	if(uploadFilesPost != null) {
+		for(let i = 0; i < uploadFilesPost.length; i++) {
+			uploadFilesPost[i].addEventListener("change", uploadAttachHandler2, false);
+		}
 	}
 
 	function copyToClipboard(str) {
@@ -772,7 +782,7 @@ function mainInit(){
 		
 		let req = new XMLHttpRequest();
 		let fileDock = this.closest(".attach_edit_bay");
-		req.open("POST","//"+window.location.host+"/topic/attach/remove/submit/"+fileDock.getAttribute("tid"),true);
+		req.open("POST","//"+window.location.host+"/"+fileDock.getAttribute("type")+"/attach/remove/submit/"+fileDock.getAttribute("id"),true);
 		req.send(formData);
 	});
 	

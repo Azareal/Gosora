@@ -616,7 +616,7 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 }
 .topic_item .topic_forum {
 	font-size: 19px;
-	line-height: 31px;
+	line-height: 30px;
 	color: #cccccc;
 }
 .topic_view_count {

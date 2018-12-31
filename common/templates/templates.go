@@ -1120,6 +1120,10 @@ func (c *CTemplateSet) compileIfVarSub(con CContext, varname string) (out string
 
 		cur = cur.FieldByName(bit)
 		out += "." + bit
+		if !cur.IsValid() {
+			fmt.Println("cur: ", cur)
+			panic(out + "^\n" + "Invalid value. Maybe, it doesn't exist?")
+		}
 		stepInterface()
 		if !cur.IsValid() {
 			fmt.Println("cur: ", cur)

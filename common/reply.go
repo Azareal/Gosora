@@ -39,8 +39,11 @@ type ReplyUser struct {
 	IPAddress     string
 	Liked         bool
 	LikeCount     int
+	AttachCount   int
 	ActionType    string
 	ActionIcon    string
+
+	Attachments []*MiniAttachment
 }
 
 type Reply struct {

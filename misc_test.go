@@ -749,6 +749,10 @@ func TestReplyStore(t *testing.T) {
 	topic, err = common.Topics.Get(1)
 	expectNilErr(t, err)
 	expect(t, topic.PostCount == 3, fmt.Sprintf("TID #1's post count should be three, not %d", topic.PostCount))
+
+	rid, err = common.Rstore.Create(topic, "hiii", "::1", 1)
+	expectNilErr(t, err)
+	replyTest(rid, topic.ID, 1, "hiii", "::1")
 }
 
 func TestProfileReplyStore(t *testing.T) {

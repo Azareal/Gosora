@@ -104,6 +104,8 @@ func replyRoutes() *RouteGroup {
 		Action("routes.ReplyLikeSubmit", "/reply/like/submit/", "extraData"),
 		//MemberView("routes.ReplyEdit","/reply/edit/","extraData"), // No js fallback
 		//MemberView("routes.ReplyDelete","/reply/delete/","extraData"), // No js confirmation page? We could have a confirmation modal for the JS case
+		UploadAction("routes.AddAttachToReplySubmit", "/reply/attach/add/submit/", "extraData").MaxSizeVar("int(common.Config.MaxRequestSize)"),
+		Action("routes.RemoveAttachFromReplySubmit", "/reply/attach/remove/submit/", "extraData"),
 	)
 }
 

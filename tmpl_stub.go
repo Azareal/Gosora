@@ -23,3 +23,12 @@ func StringToBytes(s string) (bytes []byte) {
 	runtime.KeepAlive(&s)
 	return bytes
 }
+
+func BytesToString(bytes []byte) (s string) {
+	slice := (*reflect.SliceHeader)(unsafe.Pointer(&bytes))
+	str := (*reflect.StringHeader)(unsafe.Pointer(&s))
+	str.Data = slice.Data
+	str.Len = slice.Len
+	runtime.KeepAlive(&bytes)
+	return s
+}

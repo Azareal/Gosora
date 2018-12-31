@@ -110,6 +110,15 @@ func writeStatements(adapter qgen.Adapter) error {
 }
 
 func seedTables(adapter qgen.Adapter) error {
+	qgen.Install.AddIndex("topics", "parentID", "parentID")
+	qgen.Install.AddIndex("replies", "tid", "tid")
+	qgen.Install.AddIndex("polls", "parentID", "parentID")
+	qgen.Install.AddIndex("likes", "targetItem", "targetItem")
+	qgen.Install.AddIndex("emails", "uid", "uid")
+	qgen.Install.AddIndex("attachments", "originID", "originID")
+	qgen.Install.AddIndex("attachments", "path", "path")
+	qgen.Install.AddIndex("activity_stream_matches", "watcher", "watcher")
+
 	qgen.Install.SimpleInsert("sync", "last_update", "UTC_TIMESTAMP()")
 	qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
 	qgen.Install.SimpleInsert("settings", "name, content, type", "'bigpost_min_words','250','int'")

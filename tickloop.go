@@ -45,7 +45,13 @@ func runHook(name string) {
 	}
 }
 
-func tickLoop(thumbChan chan bool, halfSecondTicker *time.Ticker, secondTicker *time.Ticker, fifteenMinuteTicker *time.Ticker, hourTicker *time.Ticker) {
+func tickLoop(thumbChan chan bool) {
+	// TODO: Write tests for these
+	// Run this goroutine once every half second
+	halfSecondTicker := time.NewTicker(time.Second / 2)
+	secondTicker := time.NewTicker(time.Second)
+	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
+	hourTicker := time.NewTicker(time.Hour)
 	for {
 		select {
 		case <-halfSecondTicker.C:

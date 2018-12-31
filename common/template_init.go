@@ -231,7 +231,7 @@ func CompileTemplates() error {
 	var replyList []ReplyUser
 	// TODO: Do we want the UID on this to be 0?
 	avatar, microAvatar = BuildAvatar(0, "")
-	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, 1, "", "", miniAttach})
 
 	var varList = make(map[string]tmpl.VarItem)
 	var compile = func(name string, expects string, expectsInt interface{}) (tmpl string, err error) {
@@ -456,7 +456,7 @@ func CompileJSTemplates() error {
 	var replyList []ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")
-	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, "", ""})
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, 1, "", "", miniAttach})
 
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "Topic Name"

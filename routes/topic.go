@@ -32,7 +32,7 @@ var topicStmts TopicStmts
 func init() {
 	common.DbInits.Add(func(acc *qgen.Accumulator) error {
 		topicStmts = TopicStmts{
-			getReplies:    acc.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?"),
+			getReplies:    acc.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.attachCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?"),
 			getLikedTopic: acc.Select("likes").Columns("targetItem").Where("sentBy = ? && targetItem = ? && targetType = 'topics'").Prepare(),
 			// TODO: Less race-y attachment count updates
 			updateAttachs: acc.Update("topics").Set("attachCount = ?").Where("tid = ?").Prepare(),
@@ -109,7 +109,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 	}
 
 	if topic.AttachCount > 0 {
-		attachs, err := common.Attachments.MiniTopicGet(topic.ID)
+		attachs, err := common.Attachments.MiniGetList("topics", topic.ID)
 		if err != nil {
 			// TODO: We might want to be a little permissive here in-case of a desync?
 			return common.InternalError(err, w, r)
@@ -124,8 +124,17 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {
-		var likedMap = make(map[int]int)
+		var likedMap map[int]int
+		if user.Liked > 0 {
+			likedMap = make(map[int]int)
+		}
 		var likedQueryList = []int{user.ID}
+
+		var attachMap map[int]int
+		if user.Perms.EditReply {
+			attachMap = make(map[int]int)
+		}
+		var attachQueryList = []int{}
 
 		rows, err := topicStmts.getReplies.Query(topic.ID, offset, common.Config.ItemsPerPage)
 		if err == sql.ErrNoRows {
@@ -138,7 +147,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 		// TODO: Factor the user fields out and embed a user struct instead
 		replyItem := common.ReplyUser{ClassName: ""}
 		for rows.Next() {
-			err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.ActionType)
+			err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.AttachCount, &replyItem.ActionType)
 			if err != nil {
 				return common.InternalError(err, w, r)
 			}
@@ -196,6 +205,10 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 				likedMap[replyItem.ID] = len(tpage.ItemList)
 				likedQueryList = append(likedQueryList, replyItem.ID)
 			}
+			if user.Perms.EditReply && replyItem.AttachCount > 0 {
+				attachMap[replyItem.ID] = len(tpage.ItemList)
+				attachQueryList = append(attachQueryList, replyItem.ID)
+			}
 
 			header.Hooks.VhookNoRet("topic_reply_row_assign", &tpage, &replyItem)
 			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
@@ -226,6 +239,16 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 			err = rows.Err()
 			if err != nil {
 				return common.InternalError(err, w, r)
+			}
+		}
+
+		if user.Perms.EditReply && len(attachQueryList) > 0 {
+			amap, err := common.Attachments.BulkMiniGetList("replies", attachQueryList)
+			if err != nil && err != sql.ErrNoRows {
+				return common.InternalError(err, w, r)
+			}
+			for id, attach := range amap {
+				tpage.ItemList[attachMap[id]].Attachments = attach
 			}
 		}
 	}

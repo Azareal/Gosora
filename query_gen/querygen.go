@@ -109,6 +109,7 @@ type Adapter interface {
 	// TODO: Some way to add indices and keys
 	// TODO: Test this
 	AddColumn(name string, table string, column DBTableColumn) (string, error)
+	AddIndex(name string, table string, iname string, colname string) (string, error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
 	SimpleUpdate(up *updatePrebuilder) (string, error)
 	SimpleUpdateSelect(up *updatePrebuilder) (string, error) // ! Experimental

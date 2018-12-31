@@ -54,7 +54,7 @@ func (install *installer) CreateTable(table string, charset string, collation st
 	if err != nil {
 		return err
 	}
-	res, err := install.adapter.CreateTable("_installer", table, charset, collation, columns, keys)
+	res, err := install.adapter.CreateTable("", table, charset, collation, columns, keys)
 	if err != nil {
 		return err
 	}
@@ -68,12 +68,30 @@ func (install *installer) CreateTable(table string, charset string, collation st
 }
 
 // TODO: Let plugins manipulate the parameters like in CreateTable
+func (install *installer) AddIndex(table string, iname string, colname string) error {
+	err := install.RunHook("AddIndexStart", table, iname, colname)
+	if err != nil {
+		return err
+	}
+	res, err := install.adapter.AddIndex("", table, iname, colname)
+	if err != nil {
+		return err
+	}
+	err = install.RunHook("AddIndexAfter", table, iname, colname)
+	if err != nil {
+		return err
+	}
+	install.instructions = append(install.instructions, DB_Install_Instruction{table, res, "index"})
+	return nil
+}
+
+// TODO: Let plugins manipulate the parameters like in CreateTable
 func (install *installer) SimpleInsert(table string, columns string, fields string) error {
 	err := install.RunHook("SimpleInsertStart", table, columns, fields)
 	if err != nil {
 		return err
 	}
-	res, err := install.adapter.SimpleInsert("_installer", table, columns, fields)
+	res, err := install.adapter.SimpleInsert("", table, columns, fields)
 	if err != nil {
 		return err
 	}

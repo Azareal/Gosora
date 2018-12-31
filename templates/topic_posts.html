@@ -8,6 +8,7 @@
 	<article {{scope "post"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="background-image: url({{.Avatar}}), url(/static/{{$.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
 		{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
 		<p class="editable_block user_content" itemprop="text" style="margin:0;padding:0;">{{.ContentHtml}}</p>
+		{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.EditReply}}<div class="auto_hide edit_source">{{.Content}}</div>{{end}}{{end}}
 
 		<span class="controls{{if .LikeCount}} has_likes{{end}}">
 

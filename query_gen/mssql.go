@@ -146,6 +146,21 @@ func (adapter *MssqlAdapter) AddColumn(name string, table string, column DBTable
 	return querystr, nil
 }
 
+// TODO: Implement this
+// TODO: Test to make sure everything works here
+func (adapter *MssqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if iname == "" {
+		return "", errors.New("You need a name for the index")
+	}
+	if colname == "" {
+		return "", errors.New("You need a name for the column")
+	}
+	return "", errors.New("not implemented")
+}
+
 func (adapter *MssqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
@@ -1134,7 +1149,7 @@ func _gen_mssql() (err error) {
 
 // Internal methods, not exposed in the interface
 func (adapter *MssqlAdapter) pushStatement(name string, stype string, querystr string) {
-	if name[0] == '_' {
+	if name == "" {
 		return
 	}
 	adapter.Buffer[name] = DBStmt{querystr, stype}

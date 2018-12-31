@@ -446,6 +446,13 @@ func (user *User) InitPerms() {
 	}
 }
 
+var guestAvatar GuestAvatar
+
+type GuestAvatar struct {
+	Normal string
+	Micro  string
+}
+
 func buildNoavatar(uid int, width int) string {
 	return strings.Replace(strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1), "{width}", strconv.Itoa(width), 1)
 }
@@ -463,6 +470,9 @@ func BuildAvatar(uid int, avatar string) (normalAvatar string, microAvatar strin
 			return normalAvatar, normalAvatar
 		}
 		return avatar, avatar
+	}
+	if uid == 0 {
+		return guestAvatar.Normal, guestAvatar.Micro
 	}
 	return buildNoavatar(uid, 200), buildNoavatar(uid, 48)
 }

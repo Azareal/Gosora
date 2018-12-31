@@ -129,6 +129,7 @@ func LoadConfig() error {
 
 func ProcessConfig() (err error) {
 	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
+	guestAvatar = GuestAvatar{buildNoavatar(0, 200), buildNoavatar(0, 48)}
 	Site.Host = Site.URL
 	if Site.Port != "80" && Site.Port != "443" {
 		Site.URL = strings.TrimSuffix(Site.URL, "/")

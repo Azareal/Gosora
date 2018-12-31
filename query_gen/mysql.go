@@ -185,6 +185,24 @@ func (adapter *MysqlAdapter) AddColumn(name string, table string, column DBTable
 	return querystr, nil
 }
 
+// TODO: Test to make sure everything works here
+func (adapter *MysqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if iname == "" {
+		return "", errors.New("You need a name for the index")
+	}
+	if colname == "" {
+		return "", errors.New("You need a name for the column")
+	}
+
+	querystr := "ALTER TABLE `" + table + "` ADD INDEX " + "`" + iname + "` (`" + colname + "`);"
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
+	adapter.pushStatement(name, "add-index", querystr)
+	return querystr, nil
+}
+
 func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")

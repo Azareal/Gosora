@@ -100,7 +100,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User, heade
 		replyLikeCount := 0
 		// TODO: Add a hook here
 
-		replyList = append(replyList, common.ReplyUser{rid, puser.ID, replyContent, common.ParseMessage(replyContent, 0, ""), replyCreatedBy, common.BuildProfileURL(common.NameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyMicroAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, "", ""})
+		replyList = append(replyList, common.ReplyUser{rid, puser.ID, replyContent, common.ParseMessage(replyContent, 0, ""), replyCreatedBy, common.BuildProfileURL(common.NameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyMicroAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, 0, "", "", nil})
 	}
 	err = rows.Err()
 	if err != nil {

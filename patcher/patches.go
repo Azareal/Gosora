@@ -23,6 +23,7 @@ func init() {
 	addPatch(9, patch9)
 	addPatch(10, patch10)
 	addPatch(11, patch11)
+	addPatch(12, patch12)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -466,4 +467,40 @@ func patch11(scanner *bufio.Scanner) error {
 		_, err = acc().Update("replies").Set("attachCount = ?").Where("rid = " + srid).Exec(count)
 		return err
 	})*/
+}
+
+func patch12(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddIndex("topics", "parentID", "parentID"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddIndex("replies", "tid", "tid"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddIndex("polls", "parentID", "parentID"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddIndex("likes", "targetItem", "targetItem"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddIndex("emails", "uid", "uid"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddIndex("attachments", "originID", "originID"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddIndex("attachments", "path", "path"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddIndex("activity_stream_matches", "watcher", "watcher"))
+	if err != nil {
+		return err
+	}
+	return nil
 }

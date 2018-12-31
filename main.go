@@ -371,14 +371,7 @@ func main() {
 	// TODO: Could we expand this to attachments and other things too?
 	thumbChan := make(chan bool)
 	go common.ThumbTask(thumbChan)
-
-	// TODO: Write tests for these
-	// Run this goroutine once every half second
-	halfSecondTicker := time.NewTicker(time.Second / 2)
-	secondTicker := time.NewTicker(time.Second)
-	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
-	hourTicker := time.NewTicker(time.Hour)
-	go tickLoop(thumbChan, halfSecondTicker, secondTicker, fifteenMinuteTicker, hourTicker)
+	go tickLoop(thumbChan)
 
 	// Resource Management Goroutine
 	go func() {
@@ -390,6 +383,7 @@ func main() {
 
 		var lastEvictedCount int
 		var couldNotDealloc bool
+		var secondTicker = time.NewTicker(time.Second)
 		for {
 			select {
 			case <-secondTicker.C:

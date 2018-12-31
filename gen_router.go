@@ -5,6 +5,7 @@ package main
 import (
 	"log"
 	"strings"
+	"bytes"
 	"strconv"
 	"compress/gzip"
 	"sync"
@@ -135,6 +136,8 @@ var RouteMap = map[string]interface{}{
 	"routes.ReplyEditSubmit": routes.ReplyEditSubmit,
 	"routes.ReplyDeleteSubmit": routes.ReplyDeleteSubmit,
 	"routes.ReplyLikeSubmit": routes.ReplyLikeSubmit,
+	"routes.AddAttachToReplySubmit": routes.AddAttachToReplySubmit,
+	"routes.RemoveAttachFromReplySubmit": routes.RemoveAttachFromReplySubmit,
 	"routes.ProfileReplyCreateSubmit": routes.ProfileReplyCreateSubmit,
 	"routes.ProfileReplyEditSubmit": routes.ProfileReplyEditSubmit,
 	"routes.ProfileReplyDeleteSubmit": routes.ProfileReplyDeleteSubmit,
@@ -270,24 +273,26 @@ var routeMapEnum = map[string]int{
 	"routes.ReplyEditSubmit": 110,
 	"routes.ReplyDeleteSubmit": 111,
 	"routes.ReplyLikeSubmit": 112,
-	"routes.ProfileReplyCreateSubmit": 113,
-	"routes.ProfileReplyEditSubmit": 114,
-	"routes.ProfileReplyDeleteSubmit": 115,
-	"routes.PollVote": 116,
-	"routes.PollResults": 117,
-	"routes.AccountLogin": 118,
-	"routes.AccountRegister": 119,
-	"routes.AccountLogout": 120,
-	"routes.AccountLoginSubmit": 121,
-	"routes.AccountLoginMFAVerify": 122,
-	"routes.AccountLoginMFAVerifySubmit": 123,
-	"routes.AccountRegisterSubmit": 124,
-	"routes.DynamicRoute": 125,
-	"routes.UploadedFile": 126,
-	"routes.StaticFile": 127,
-	"routes.RobotsTxt": 128,
-	"routes.SitemapXml": 129,
-	"routes.BadRoute": 130,
+	"routes.AddAttachToReplySubmit": 113,
+	"routes.RemoveAttachFromReplySubmit": 114,
+	"routes.ProfileReplyCreateSubmit": 115,
+	"routes.ProfileReplyEditSubmit": 116,
+	"routes.ProfileReplyDeleteSubmit": 117,
+	"routes.PollVote": 118,
+	"routes.PollResults": 119,
+	"routes.AccountLogin": 120,
+	"routes.AccountRegister": 121,
+	"routes.AccountLogout": 122,
+	"routes.AccountLoginSubmit": 123,
+	"routes.AccountLoginMFAVerify": 124,
+	"routes.AccountLoginMFAVerifySubmit": 125,
+	"routes.AccountRegisterSubmit": 126,
+	"routes.DynamicRoute": 127,
+	"routes.UploadedFile": 128,
+	"routes.StaticFile": 129,
+	"routes.RobotsTxt": 130,
+	"routes.SitemapXml": 131,
+	"routes.BadRoute": 132,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routes.Overview",
@@ -403,24 +408,26 @@ var reverseRouteMapEnum = map[int]string{
 	110: "routes.ReplyEditSubmit",
 	111: "routes.ReplyDeleteSubmit",
 	112: "routes.ReplyLikeSubmit",
-	113: "routes.ProfileReplyCreateSubmit",
-	114: "routes.ProfileReplyEditSubmit",
-	115: "routes.ProfileReplyDeleteSubmit",
-	116: "routes.PollVote",
-	117: "routes.PollResults",
-	118: "routes.AccountLogin",
-	119: "routes.AccountRegister",
-	120: "routes.AccountLogout",
-	121: "routes.AccountLoginSubmit",
-	122: "routes.AccountLoginMFAVerify",
-	123: "routes.AccountLoginMFAVerifySubmit",
-	124: "routes.AccountRegisterSubmit",
-	125: "routes.DynamicRoute",
-	126: "routes.UploadedFile",
-	127: "routes.StaticFile",
-	128: "routes.RobotsTxt",
-	129: "routes.SitemapXml",
-	130: "routes.BadRoute",
+	113: "routes.AddAttachToReplySubmit",
+	114: "routes.RemoveAttachFromReplySubmit",
+	115: "routes.ProfileReplyCreateSubmit",
+	116: "routes.ProfileReplyEditSubmit",
+	117: "routes.ProfileReplyDeleteSubmit",
+	118: "routes.PollVote",
+	119: "routes.PollResults",
+	120: "routes.AccountLogin",
+	121: "routes.AccountRegister",
+	122: "routes.AccountLogout",
+	123: "routes.AccountLoginSubmit",
+	124: "routes.AccountLoginMFAVerify",
+	125: "routes.AccountLoginMFAVerifySubmit",
+	126: "routes.AccountRegisterSubmit",
+	127: "routes.DynamicRoute",
+	128: "routes.UploadedFile",
+	129: "routes.StaticFile",
+	130: "routes.RobotsTxt",
+	131: "routes.SitemapXml",
+	132: "routes.BadRoute",
 }
 var osMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -500,33 +507,31 @@ var reverseAgentMapEnum = map[int]string{
 	27: "suspicious",
 	28: "zgrab",
 }
-var markToAgent = map[string]string{
-	"OPR":"opera",
-	"Chrome":"chrome",
-	"Firefox":"firefox",
-	"MSIE":"internetexplorer",
-	"Trident":"trident", // Hack to support IE11
-	"Edge":"edge",
-	"Lynx":"lynx", // There's a rare android variant of lynx which isn't covered by this
-	"SamsungBrowser":"samsung",
-	"UCBrowser":"ucbrowser",
-
-	"Google":"googlebot",
-	"Googlebot":"googlebot",
-	"yandex": "yandex", // from the URL
-	"DuckDuckBot":"duckduckgo",
-	"Baiduspider":"baidu",
-	"bingbot":"bing",
-	"BingPreview":"bing",
-	"SeznamBot":"seznambot",
-	"CloudFlare":"cloudflare", // Track alwayson specifically in case there are other bots?
-	"Uptimebot":"uptimebot",
-	"Slackbot":"slackbot",
-	"Discordbot":"discord",
-	"Twitterbot":"twitter",
-	"Discourse":"discourse",
-
-	"zgrab":"zgrab",
+var markToAgent = map[string]string{ 
+	"OPR": "opera",
+	"Chrome": "chrome",
+	"Firefox": "firefox",
+	"MSIE": "internetexplorer",
+	"Trident": "trident",
+	"Edge": "edge",
+	"Lynx": "lynx",
+	"SamsungBrowser": "samsung",
+	"UCBrowser": "ucbrowser",
+	"Google": "googlebot",
+	"Googlebot": "googlebot",
+	"yandex": "yandex",
+	"DuckDuckBot": "duckduckgo",
+	"Baiduspider": "baidu",
+	"bingbot": "bing",
+	"BingPreview": "bing",
+	"SeznamBot": "seznambot",
+	"CloudFlare": "cloudflare",
+	"Uptimebot": "uptimebot",
+	"Slackbot": "slackbot",
+	"Discordbot": "discord",
+	"Twitterbot": "twitter",
+	"Discourse": "discourse",
+	"zgrab": "zgrab",
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -711,7 +716,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	counters.GlobalViewCounter.Bump()
 	
 	if prefix == "/static" {
-		counters.RouteViewCounter.Bump(127)
+		counters.RouteViewCounter.Bump(129)
 		req.URL.Path += extraData
 		routes.StaticFile(w, req)
 		return
@@ -737,41 +742,48 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 			r.DumpRequest(req,"Blank UA: " + prepend)
 		}
-	} else {
-		var runeEquals = func(a []rune, b []rune) bool {
-			if len(a) != len(b) {
-				return false
-			}
-			for i, item := range a {
-				if item != b[i] {
-					return false
-				}
-			}
-			return true
-		}
-		
+	} else {		
 		// WIP UA Parser
-		var indices []int
 		var items []string
-		var buffer []rune
-		for index, item := range ua {
+		var buffer []byte
+		var os string
+		for _, item := range StringToBytes(ua) {
 			if (item > 64 && item < 91) || (item > 96 && item < 123) {
 				buffer = append(buffer, item)
-			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == '.' || item == '+' || (item == ':' && (runeEquals(buffer,[]rune("http")) || runeEquals(buffer,[]rune("rv")))) || item == ',' || item == '/' {
+			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == '.' || item == '+' || (item == ':' && bytes.Equal(buffer,[]byte("http"))) || item == ',' || item == '/' {
 				if len(buffer) != 0 {
-					items = append(items, string(buffer))
-					indices = append(indices, index - 1)
+					if len(buffer) > 2 {
+						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
+						switch(BytesToString(buffer)) {
+						case "Windows":
+							os = "windows"
+						case "Linux":
+							os = "linux"
+						case "Mac":
+							os = "mac"
+						case "iPhone":
+							os = "iphone"
+						case "Android":
+							os = "android"
+						case "like":
+							// Skip this word
+						default:
+							items = append(items, string(buffer))
+						}
+					}
 					buffer = buffer[:0]
 				}
 			} else {
 				// TODO: Test this
 				items = items[:0]
-				indices = indices[:0]
 				r.SuspiciousRequest(req,"Illegal char in UA")
 				r.requestLogger.Print("UA Buffer: ", buffer)
 				r.requestLogger.Print("UA Buffer String: ", string(buffer))
 				break
 			}
+		}
+		if os == "" {
+			os = "unknown"
 		}
 
 		// Iterate over this in reverse as the real UA tends to be on the right side
@@ -789,24 +801,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			r.requestLogger.Print("parsed agent: ", agent)
 		}
 
-		var os string
-		for _, mark := range items {
-			switch(mark) {
-			case "Windows":
-				os = "windows"
-			case "Linux":
-				os = "linux"
-			case "Mac":
-				os = "mac"
-			case "iPhone":
-				os = "iphone"
-			case "Android":
-				os = "android"
-			}
-		}
-		if os == "" {
-			os = "unknown"
-		}
 		if common.Dev.SuperDebug {
 			r.requestLogger.Print("os: ", os)
 			r.requestLogger.Printf("items: %+v\n",items)
@@ -1884,6 +1878,36 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					
 					counters.RouteViewCounter.Bump(112)
 					err = routes.ReplyLikeSubmit(w,req,user,extraData)
+				case "/reply/attach/add/submit/":
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						return err
+					}
+					
+					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
+					if err != nil {
+					return err
+					}
+					err = common.NoUploadSessionMismatch(w,req,user)
+					if err != nil {
+						return err
+					}
+					
+					counters.RouteViewCounter.Bump(113)
+					err = routes.AddAttachToReplySubmit(w,req,user,extraData)
+				case "/reply/attach/remove/submit/":
+					err = common.NoSessionMismatch(w,req,user)
+					if err != nil {
+						return err
+					}
+					
+					err = common.MemberOnly(w,req,user)
+					if err != nil {
+						return err
+					}
+					
+					counters.RouteViewCounter.Bump(114)
+					err = routes.RemoveAttachFromReplySubmit(w,req,user,extraData)
 			}
 		case "/profile":
 			switch(req.URL.Path) {
@@ -1898,7 +1922,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(113)
+					counters.RouteViewCounter.Bump(115)
 					err = routes.ProfileReplyCreateSubmit(w,req,user)
 				case "/profile/reply/edit/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1911,7 +1935,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(114)
+					counters.RouteViewCounter.Bump(116)
 					err = routes.ProfileReplyEditSubmit(w,req,user,extraData)
 				case "/profile/reply/delete/submit/":
 					err = common.NoSessionMismatch(w,req,user)
@@ -1924,7 +1948,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(115)
+					counters.RouteViewCounter.Bump(117)
 					err = routes.ProfileReplyDeleteSubmit(w,req,user,extraData)
 			}
 		case "/poll":
@@ -1940,23 +1964,23 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(116)
+					counters.RouteViewCounter.Bump(118)
 					err = routes.PollVote(w,req,user,extraData)
 				case "/poll/results/":
-					counters.RouteViewCounter.Bump(117)
+					counters.RouteViewCounter.Bump(119)
 					err = routes.PollResults(w,req,user,extraData)
 			}
 		case "/accounts":
 			switch(req.URL.Path) {
 				case "/accounts/login/":
-					counters.RouteViewCounter.Bump(118)
+					counters.RouteViewCounter.Bump(120)
 				head, err := common.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountLogin(w,req,user,head)
 				case "/accounts/create/":
-					counters.RouteViewCounter.Bump(119)
+					counters.RouteViewCounter.Bump(121)
 				head, err := common.UserCheck(w,req,&user)
 				if err != nil {
 					return err
@@ -1973,7 +1997,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(120)
+					counters.RouteViewCounter.Bump(122)
 					err = routes.AccountLogout(w,req,user)
 				case "/accounts/login/submit/":
 					err = common.ParseForm(w,req,user)
@@ -1981,10 +2005,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(121)
+					counters.RouteViewCounter.Bump(123)
 					err = routes.AccountLoginSubmit(w,req,user)
 				case "/accounts/mfa_verify/":
-					counters.RouteViewCounter.Bump(122)
+					counters.RouteViewCounter.Bump(124)
 				head, err := common.UserCheck(w,req,&user)
 				if err != nil {
 					return err
@@ -1996,7 +2020,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(123)
+					counters.RouteViewCounter.Bump(125)
 					err = routes.AccountLoginMFAVerifySubmit(w,req,user)
 				case "/accounts/create/submit/":
 					err = common.ParseForm(w,req,user)
@@ -2004,7 +2028,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
-					counters.RouteViewCounter.Bump(124)
+					counters.RouteViewCounter.Bump(126)
 					err = routes.AccountRegisterSubmit(w,req,user)
 			}
 		/*case "/sitemaps": // TODO: Count these views
@@ -2020,7 +2044,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				w.Header().Del("Content-Type")
 				w.Header().Del("Content-Encoding")
 			}
-			counters.RouteViewCounter.Bump(126)
+			counters.RouteViewCounter.Bump(128)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			r.UploadHandler(w,req) // TODO: Count these views
@@ -2030,10 +2054,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
-					counters.RouteViewCounter.Bump(128)
+					counters.RouteViewCounter.Bump(130)
 					return routes.RobotsTxt(w,req)
 				/*case "sitemap.xml":
-					counters.RouteViewCounter.Bump(129)
+					counters.RouteViewCounter.Bump(131)
 					return routes.SitemapXml(w,req)*/
 			}
 			return common.NotFound(w,req,nil)
@@ -2044,7 +2068,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			r.RUnlock()
 			
 			if ok {
-				counters.RouteViewCounter.Bump(125) // TODO: Be more specific about *which* dynamic route it is
+				counters.RouteViewCounter.Bump(127) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				return handle(w,req,user)
 			}
@@ -2055,7 +2079,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			} else {
 				r.DumpRequest(req,"Bad Route")
 			}
-			counters.RouteViewCounter.Bump(130)
+			counters.RouteViewCounter.Bump(132)
 			return common.NotFound(w,req,nil)
 	}
 	return err

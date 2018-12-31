@@ -1,3 +1,11 @@
+ALTER TABLE `topics` ADD INDEX `parentID` (`parentID`);;
+ALTER TABLE `replies` ADD INDEX `tid` (`tid`);;
+ALTER TABLE `polls` ADD INDEX `parentID` (`parentID`);;
+ALTER TABLE `likes` ADD INDEX `targetItem` (`targetItem`);;
+ALTER TABLE `emails` ADD INDEX `uid` (`uid`);;
+ALTER TABLE `attachments` ADD INDEX `originID` (`originID`);;
+ALTER TABLE `attachments` ADD INDEX `path` (`path`);;
+ALTER TABLE `activity_stream_matches` ADD INDEX `watcher` (`watcher`);;
 INSERT INTO `sync`(`last_update`) VALUES (UTC_TIMESTAMP());
 INSERT INTO `settings`(`name`,`content`,`type`,`constraints`) VALUES ('activation_type','1','list','1-3');
 INSERT INTO `settings`(`name`,`content`,`type`) VALUES ('bigpost_min_words','250','int');
