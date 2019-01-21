@@ -177,6 +177,12 @@ func panelRoutes() *RouteGroup {
 		Action("panel.ThemesMenuItemDeleteSubmit", "/panel/themes/menus/item/delete/submit/", "extraData"),
 		Action("panel.ThemesMenuItemOrderSubmit", "/panel/themes/menus/item/order/edit/submit/", "extraData"),
 
+		View("panel.ThemesWidgets", "/panel/themes/widgets/"),
+		//View("panel.ThemesWidgetsEdit", "/panel/themes/widgets/edit/", "extraData"),
+		Action("panel.ThemesWidgetsEditSubmit", "/panel/themes/widgets/edit/submit/", "extraData"),
+		Action("panel.ThemesWidgetsCreateSubmit", "/panel/themes/widgets/create/submit/"),
+		Action("panel.ThemesWidgetsDeleteSubmit", "/panel/themes/widgets/delete/submit/", "extraData"),
+
 		View("panel.Plugins", "/panel/plugins/"),
 		Action("panel.PluginsActivate", "/panel/plugins/activate/", "extraData"),
 		Action("panel.PluginsDeactivate", "/panel/plugins/deactivate/", "extraData"),

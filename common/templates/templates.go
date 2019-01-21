@@ -94,6 +94,7 @@ func NewCTemplateSet() *CTemplateSet {
 			"reltime": true,
 			"scope":   true,
 			"dyntmpl": true,
+			"index":   true,
 		},
 	}
 }

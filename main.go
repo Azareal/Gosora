@@ -4,6 +4,7 @@
 *	Copyright Azareal 2016 - 2019
 *
  */
+// Package main contains the main initialisation logic for Gosora
 package main // import "github.com/Azareal/Gosora"
 
 import (
@@ -78,6 +79,7 @@ func afterDBInit() (err error) {
 	}
 
 	log.Print("Initialising the widgets")
+	common.Widgets = common.NewDefaultWidgetStore()
 	err = common.InitWidgets()
 	if err != nil {
 		return errors.WithStack(err)

@@ -37,7 +37,9 @@ type LevelPhrases struct {
 
 // ! For the sake of thread safety, you must never modify a *LanguagePack directly, but to create a copy of it and overwrite the entry in the sync.Map
 type LanguagePack struct {
-	Name string
+	Name    string
+	IsoCode string
+
 	// Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
 	Levels              LevelPhrases
 	GlobalPerms         map[string]string

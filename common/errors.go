@@ -128,6 +128,7 @@ func LogWarning(err error, extra ...string) {
 func errorHeader(w http.ResponseWriter, user User, title string) *Header {
 	header := DefaultHeader(w, user)
 	header.Title = title
+	header.Zone = "error"
 	return header
 }
 
@@ -160,7 +161,7 @@ func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) RouteErr
 	return HandledRouteError()
 }
 
-// When the task system detects if the database is down, some database errors might lip by this
+// When the task system detects if the database is down, some database errors might slip by this
 func DatabaseError(w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
 	pi := ErrorPage{errorHeader(w, GuestUser, phrases.GetErrorPhrase("internal_error_title")), phrases.GetErrorPhrase("internal_error_body")}
@@ -285,10 +286,7 @@ func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bo
 // ? - Where is this used? Should we use it more?
 // LoginRequired is an error shown to the end-user when they try to access an area which requires them to login
 func LoginRequired(w http.ResponseWriter, r *http.Request, user User) RouteError {
-	w.WriteHeader(401)
-	pi := ErrorPage{errorHeader(w, user, phrases.GetErrorPhrase("no_permissions_title")), phrases.GetErrorPhrase("login_required_body")}
-	handleErrorTemplate(w, r, pi)
-	return HandledRouteError()
+	return CustomError(phrases.GetErrorPhrase("login_required_body"), 401, phrases.GetErrorPhrase("no_permissions_title"), w, r, nil, user)
 }
 
 // nolint
@@ -343,6 +341,7 @@ func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWri
 		header = DefaultHeader(w, user)
 	}
 	header.Title = errtitle
+	header.Zone = "error"
 	w.WriteHeader(errcode)
 	pi := ErrorPage{header, errmsg}
 	handleErrorTemplate(w, r, pi)

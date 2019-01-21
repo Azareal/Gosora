@@ -114,8 +114,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"issued_by","int",0,false,false,""},
 			tblColumn{"issued_at","createdAt",0,false,false,""},
 			tblColumn{"expires_at","datetime",0,false,false,""},
-		},
-		[]tblKey{},
+		}, nil,
 	)*/
 
 	qgen.Install.CreateTable("users_groups_scheduler", "", "",
@@ -150,8 +149,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tblColumn{"validated", "boolean", 0, false, false, "0"},
 			tblColumn{"token", "varchar", 200, false, false, "''"},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	// TODO: Allow for patterns in domains, if the bots try to shake things up there?
@@ -166,6 +164,19 @@ func createTables(adapter qgen.Adapter) error {
 			},
 		)
 	*/
+
+	// TODO: Implement password resets
+	/*qgen.Install.CreateTable("password_resets", "", "",
+		[]tblColumn{
+			tblColumn{"email", "varchar", 200, false, false, ""},
+			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"validated", "varchar", 200, false, false, ""}, // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
+			tblColumn{"token", "varchar", 200, false, false, ""},
+		},
+		[]tblKey{
+			tblKey{"email", "unique"},
+		},
+	)*/
 
 	qgen.Install.CreateTable("forums", mysqlPre, mysqlCol,
 		[]tblColumn{
@@ -305,8 +316,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"pollID", "int", 0, false, false, ""},
 			tblColumn{"option", "int", 0, false, false, "0"},
 			tblColumn{"votes", "int", 0, false, false, "0"},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("polls_votes", mysqlPre, mysqlCol,
@@ -316,8 +326,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"option", "int", 0, false, false, "0"},
 			tblColumn{"castAt", "createdAt", 0, false, false, ""},
 			tblColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("users_replies", mysqlPre, mysqlCol,
@@ -345,16 +354,14 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"sentBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
 			tblColumn{"recalc", "tinyint", 0, false, false, "0"},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("activity_stream_matches", "", "",
 		[]tblColumn{
 			tblColumn{"watcher", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tblColumn{"asid", "int", 0, false, false, ""},    // TODO: Make this a foreign key
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("activity_stream", "", "",
@@ -377,8 +384,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"targetID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
 			tblColumn{"targetType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
 			tblColumn{"level", "int", 0, false, false, "0"},          /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	/* Due to MySQL's design, we have to drop the unique keys for table settings, plugins, and themes down from 200 to 180 or it will error */
@@ -428,6 +434,7 @@ func createTables(adapter qgen.Adapter) error {
 
 	qgen.Install.CreateTable("widgets", "", "",
 		[]tblColumn{
+			tblColumn{"wid", "int", 0, false, true, ""},
 			tblColumn{"position", "int", 0, false, false, ""},
 			tblColumn{"side", "varchar", 100, false, false, ""},
 			tblColumn{"type", "varchar", 100, false, false, ""},
@@ -435,7 +442,9 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"location", "varchar", 100, false, false, ""},
 			tblColumn{"data", "text", 0, false, false, "''"},
 		},
-		[]tblKey{},
+		[]tblKey{
+			tblKey{"wid", "primary"},
+		},
 	)
 
 	qgen.Install.CreateTable("menus", "", "",
@@ -523,8 +532,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
 			tblColumn{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tblColumn{"doneAt", "datetime", 0, false, false, ""},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("administration_logs", "", "",
@@ -535,8 +543,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
 			tblColumn{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tblColumn{"doneAt", "datetime", 0, false, false, ""},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("viewchunks", "", "",
@@ -544,8 +551,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"count", "int", 0, false, false, "0"},
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			tblColumn{"route", "varchar", 200, false, false, ""},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("viewchunks_agents", "", "",
@@ -554,8 +560,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			tblColumn{"browser", "varchar", 200, false, false, ""}, // googlebot, firefox, opera, etc.
 			//tblColumn{"version","varchar",0,false,false,""}, // the version of the browser or bot
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("viewchunks_systems", "", "",
@@ -563,8 +568,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"count", "int", 0, false, false, "0"},
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			tblColumn{"system", "varchar", 200, false, false, ""}, // windows, android, unknown, etc.
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("viewchunks_langs", "", "",
@@ -572,8 +576,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"count", "int", 0, false, false, "0"},
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			tblColumn{"lang", "varchar", 200, false, false, ""}, // en, ru, etc.
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("viewchunks_referrers", "", "",
@@ -581,8 +584,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"count", "int", 0, false, false, "0"},
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			tblColumn{"domain", "varchar", 200, false, false, ""},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("viewchunks_forums", "", "",
@@ -590,8 +592,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"count", "int", 0, false, false, "0"},
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			tblColumn{"forum", "int", 0, false, false, ""},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("topicchunks", "", "",
@@ -599,8 +600,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"count", "int", 0, false, false, "0"},
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			// TODO: Add a column for the parent forum?
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("postchunks", "", "",
@@ -608,22 +608,19 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"count", "int", 0, false, false, "0"},
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 			// TODO: Add a column for the parent topic / profile?
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("sync", "", "",
 		[]tblColumn{
 			tblColumn{"last_update", "datetime", 0, false, false, ""},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	qgen.Install.CreateTable("updates", "", "",
 		[]tblColumn{
 			tblColumn{"dbVersion", "int", 0, false, false, "0"},
-		},
-		[]tblKey{},
+		}, nil,
 	)
 
 	return nil

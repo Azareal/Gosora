@@ -42,6 +42,9 @@
 .to_right {
 	margin-left: auto;
 }
+.bg_red {
+	background-color: rgb(88,68,68) !important;
+}
 
 @media (max-width: 420px) {
 	.colstack {

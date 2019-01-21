@@ -470,6 +470,11 @@ func CompileJSTemplates() error {
 	if err != nil {
 		return err
 	}
+	/*widget := &Widget{ID: 0}
+	panelWidgetsWidgetTmpl, err := c.Compile("panel_themes_widgets_widget.html", "templates/", "*common.Widget", widget, varList)
+	if err != nil {
+		return err
+	}*/
 
 	var dirPrefix = "./tmpl_client/"
 	var wg sync.WaitGroup
@@ -492,6 +497,7 @@ func CompileJSTemplates() error {
 	writeTemplate("topics_topic", topicListItemTmpl)
 	writeTemplate("topic_posts", topicPostsTmpl)
 	writeTemplate("topic_alt_posts", topicAltPostsTmpl)
+	//writeTemplate("panel_themes_widgets_widget", panelWidgetsWidgetTmpl)
 	writeTemplateList(c, &wg, dirPrefix)
 	return nil
 }

@@ -163,3 +163,19 @@
 	background-color: white;
 	border: 1px solid hsl(0,0%,85%);
 }
+
+#widgetTmpl {
+	display: none;
+}
+.widget_disabled {
+	display: none;
+}
+.bg_red .widget_disabled {
+	display: inline;
+}
+.wtypes .formrow {
+	display: none;
+}
+.wtype_about .w_about, .wtype_simple .w_simple, .wtype_wol .w_wol, .wtype_default .w_default {
+	display: block;
+}

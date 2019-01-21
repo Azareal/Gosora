@@ -113,7 +113,7 @@ func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset stri
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) AddColumn(name string, table string, column DBTableColumn) (string, error) {
+func (adapter *PgsqlAdapter) AddColumn(name string, table string, column DBTableColumn,key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}

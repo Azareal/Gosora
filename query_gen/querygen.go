@@ -108,7 +108,7 @@ type Adapter interface {
 	CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error)
 	// TODO: Some way to add indices and keys
 	// TODO: Test this
-	AddColumn(name string, table string, column DBTableColumn) (string, error)
+	AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error)
 	AddIndex(name string, table string, iname string, colname string) (string, error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
 	SimpleUpdate(up *updatePrebuilder) (string, error)

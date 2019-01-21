@@ -15,13 +15,14 @@ import (
 	"net/http"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/gopsutil/cpu"
 	"github.com/Azareal/gopsutil/mem"
 	"github.com/gorilla/websocket"
-	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // TODO: Disable WebSockets on high load? Add a Control Panel interface for disabling it?
@@ -97,6 +98,16 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 	return nil
 }
 
+// TODO: Copied from routes package for use in wsPageResponse, find a more elegant solution.
+func ParseSEOURL(urlBit string) (slug string, id int, err error) {
+	halves := strings.Split(urlBit, ".")
+	if len(halves) < 2 {
+		halves = append(halves, halves[0])
+	}
+	tid, err := strconv.Atoi(halves[1])
+	return halves[0], tid, err
+}
+
 // TODO: Use a map instead of a switch to make this more modular?
 func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 	if page == "/" {
@@ -104,14 +115,47 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 	}
 
 	DebugLog("Entering page " + page)
-	switch page {
+	switch {
 	// Live Topic List is an experimental feature
 	// TODO: Optimise this to reduce the amount of contention
-	case "/topics/":
+	case page == "/topics/":
 		topicListMutex.Lock()
 		topicListWatchers[wsUser] = true
 		topicListMutex.Unlock()
-	case "/panel/":
+	case strings.HasPrefix(page, "/topic/"):
+		//fmt.Println("entering topic prefix websockets zone")
+		_, tid, err := ParseSEOURL(page)
+		if err != nil {
+			return
+		}
+		topic, err := Topics.Get(tid)
+		if err != nil {
+			return
+		}
+		var usercpy *User = BlankUser()
+		*usercpy = *wsUser.User
+		usercpy.Init()
+
+		if !Forums.Exists(topic.ParentID) {
+			return
+		}
+
+		/*skip, rerr := header.Hooks.VhookSkippable("ws_topic_check_pre_perms", w, r, usercpy, &fid, &header)
+		if skip || rerr != nil {
+			return
+		}*/
+
+		fperms, err := FPStore.Get(topic.ParentID, usercpy.Group)
+		if err == ErrNoRows {
+			fperms = BlankForumPerms()
+		} else if err != nil {
+			return
+		}
+		cascadeForumPerms(fperms, usercpy)
+		if !usercpy.Perms.ViewTopic {
+			return
+		}
+	case page == "/panel/":
 		if !wsUser.User.IsSuperMod {
 			return
 		}
@@ -138,15 +182,19 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 		page = Config.DefaultPath
 	}
 
-	DebugLog("Leaving page " + page)
-	switch page {
-	case "/topics/":
+	if page != "" {
+		DebugLog("Leaving page " + page)
+	}
+	switch {
+	case page == "/topics/":
 		wsUser.FinalizePage("/topics/", func() {
 			topicListMutex.Lock()
 			delete(topicListWatchers, wsUser)
 			topicListMutex.Unlock()
 		})
-	case "/panel/":
+	case strings.HasPrefix(page, "/topic/"):
+		//fmt.Println("leaving topic prefix websockets zone")
+	case page == "/panel/":
 		adminStatsMutex.Lock()
 		delete(adminStatsWatchers, conn)
 		adminStatsMutex.Unlock()

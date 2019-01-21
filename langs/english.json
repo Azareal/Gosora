@@ -1,5 +1,6 @@
 {
 	"Name": "english",
+	"IsoCode":"en",
 	
 	"Levels": {
 		"Level": "<span class='level_hideable'>Level </span>{0}",
@@ -154,6 +155,7 @@
 		"panel_themes":"Theme Manager",
 		"panel_themes_menus":"Menu Manager",
 		"panel_themes_menus_edit":"Menu Editor",
+		"panel_themes_widgets":"Widget Manager",
 		"panel_backups":"Backups",
 		"panel_registration_logs":"Registration Logs",
 		"panel_mod_logs":"Mod Action Logs",
@@ -664,6 +666,10 @@
 		"footer_made_with_love":"Made with love by Azareal",
 		"footer_theme_selector_aria":"Change the site's appearance",
 
+		"widget.online_name":"Online Users",
+		"widget.online_none_online":"No one is online.",
+		"widget.online_some_online":"There are %d users online.",
+
 		"option_yes":"Yes",
 		"option_no":"No",
 
@@ -894,6 +900,23 @@
 		"panel_themes_menus_adminonly":"Admins",
 		"panel_themes_menus_edit_update_button":"Update",
 		"panel_themes_menus_create_button":"Create",
+
+		"panel_themes_widgets_head":"Widgets",
+		"panel_themes_widgets_disabled":"disabled",
+		"panel_themes_widgets_new":"New Widget",
+		"panel_themes_widgets_type":"Type",
+		"panel_themes_widgets_type_about":"About",
+		"panel_themes_widgets_type_simple":"Simple",
+		"panel_themes_widgets_type_wol":"Online Users",
+		"panel_themes_widgets_type_wol_context":"Online User Context",
+		"panel_themes_widgets_type_search_and_filter":"Search & Filter",
+		"panel_themes_widgets_enabled":"Enabled",
+		"panel_themes_widgets_location":"Location",
+		"panel_themes_widgets_name":"Name",
+		"panel_themes_widgets_body":"Body",
+		"panel_themes_widgets_raw_body":"Body",
+		"panel_themes_widgets_save":"Save",
+		"panel_themes_widgets_delete":"Delete",
 
 		"panel_settings_head":"Settings",
 		"panel_setting_head":"Edit Setting",

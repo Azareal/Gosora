@@ -94,8 +94,12 @@ function DoNothingButPassBack(item) {
 	return item;
 }
 
-function fetchPhrases() {
-	fetch("/api/phrases/?query=status,topic_list,alerts")
+function initPhrases() {
+	fetchPhrases("status,topic_list,alerts")
+}
+
+function fetchPhrases(plist) {
+	fetch("/api/phrases/?query="+plist)
 		.then((resp) => resp.json())
 		.then((data) => {
 			console.log("loaded phrase endpoint data");
@@ -103,9 +107,7 @@ function fetchPhrases() {
 			Object.keys(tmplInits).forEach((key) => {
 				let phrases = [];
 				let tmplInit = tmplInits[key];
-				for(let phraseName of tmplInit) {
-					phrases.push(data[phraseName]);
-				}
+				for(let phraseName of tmplInit) phrases.push(data[phraseName]);
 				console.log("Adding phrases");
 				console.log("key:",key);
 				console.log("phrases:",phrases);
@@ -115,9 +117,7 @@ function fetchPhrases() {
 			let prefixes = {};
 			Object.keys(data).forEach((key) => {
 				let prefix = key.split(".")[0];
-				if(prefixes[prefix]===undefined) {
-					prefixes[prefix] = {};
-				}
+				if(prefixes[prefix]===undefined) prefixes[prefix] = {};
 				prefixes[prefix][key] = data[key];
 			});
 			Object.keys(prefixes).forEach((prefix) => {
@@ -146,7 +146,7 @@ function fetchPhrases() {
 		loadScript("template_topics_topic.js", () => {
 			console.log("Loaded template_topics_topic.js");
 			toLoad--;
-			if(toLoad===0) fetchPhrases();
+			if(toLoad===0) initPhrases();
 		});
 	} else {
 		me = {User:{ID:0,Session:""},Site:{"MaxRequestSize":0}};

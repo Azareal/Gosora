@@ -23,8 +23,7 @@ function ajaxError(xhr,status,errstr) {
 	console.trace();
 }
 
-function postLink(event)
-{
+function postLink(event) {
 	event.preventDefault();
 	let formAction = $(event.target).closest('a').attr("href");
 	$.ajax({ url: formAction, type: "POST", dataType: "json", error: ajaxError, data: {js: "1"} });
@@ -115,9 +114,7 @@ function loadAlerts(menuAlerts) {
 			}
 			alertList = [];
 			alertMapping = {};
-			for(var i in data.msgs) {
-				addAlert(data.msgs[i]);
-			}
+			for(var i in data.msgs) addAlert(data.msgs[i]);
 			console.log("data.msgCount:",data.msgCount)
 			alertCount = data.msgCount;
 			updateAlertList(menuAlerts)
@@ -271,8 +268,13 @@ function runWebSockets() {
 			let msgblocks = SplitN(message," ",3);
 			if(msgblocks.length < 3) continue;
 			if(message.startsWith("set ")) {
+				let oldInnerHTML = document.querySelector(msgblocks[1]).innerHTML;
+				if(msgblocks[2]==oldInnerHTML) continue;
 				document.querySelector(msgblocks[1]).innerHTML = msgblocks[2];
 			} else if(message.startsWith("set-class ")) {
+				// Fix to stop the inspector from getting all jittery
+				let oldClassName = document.querySelector(msgblocks[1]).className;
+				if(msgblocks[2]==oldClassName) continue;
 				document.querySelector(msgblocks[1]).className = msgblocks[2];
 			}
 		}

@@ -103,6 +103,22 @@
     stroke: hsl(359,98%,43%) !important;
 }
 
+#widgetTmpl {
+	display: none;
+}
+.widget_disabled {
+	display: none;
+}
+.bg_red .widget_disabled {
+	display: inline;
+}
+.wtypes .formrow {
+	display: none;
+}
+.wtype_about .w_about, .wtype_simple .w_simple, .wtype_wol .w_wol, .wtype_default .w_default {
+	display: block;
+}
+
 .pageset {
 	margin-left: 0px;
 	margin-bottom: 0px;

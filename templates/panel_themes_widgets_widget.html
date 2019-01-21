@@ -1,0 +1,55 @@
+<div class="formrow">
+	<div class="formitem formlabel"><a>{{lang "panel_themes_widgets_type"}}</a></div>
+	<div class="formitem">
+		<select class="wtype_sel" name="wtype">
+			<option value="about"{{if eq .Type "about"}} selected{{end}}>{{lang "panel_themes_widgets_type_about"}}</option>
+			<option value="simple"{{if eq .Type "simple"}} selected{{end}}>{{lang "panel_themes_widgets_type_simple"}}</option>
+			<option value="wol"{{if eq .Type "wol"}} selected{{end}}>{{lang "panel_themes_widgets_type_wol"}}</option>
+			<!--<option value="wol_context"{{if eq .Type "wol_context"}} selected{{end}}>{{lang "panel_themes_widgets_type_wol_context"}}</option>-->
+			<!--<option value="search_and_filter"{{if eq .Type "search_and_filter"}} selected{{end}}>{{lang "panel_themes_widgets_type_search_and_filter"}}</option>-->
+		</select>
+	</div>
+</div>
+<div class="formrow">
+	<div class="formitem formlabel"><a>{{lang "panel_themes_widgets_enabled"}}</a></div>
+	<div class="formitem">
+		<select name="wenabled">
+			<option{{if .Enabled}} selected{{end}} value="1">{{lang "option_yes"}}</option>
+			<option{{if not .Enabled}} selected{{end}} value="0">{{lang "option_no"}}</option>
+		</select>
+	</div>
+</div>
+<div class="formrow">
+	<div class="formitem formlabel"><a>{{lang "panel_themes_widgets_location"}}</a></div>
+	<div class="formitem">
+		<input name="wlocation" value="{{.Location}}" />
+	</div>
+</div>
+<div class="wtypes wtype_{{.Type}}">
+<div class="formrow w_simple w_about">
+	<div class="formitem formlabel"><a>{{lang "panel_themes_widgets_name"}}</a></div>
+	<div class="formitem">
+		<input name="wname" value="{{index .Data "Name"}}" />
+	</div>
+</div>
+<div class="formrow w_simple w_about">
+	<div class="formitem formlabel"><a>{{lang "panel_themes_widgets_body"}}</a></div>
+	<div class="formitem">
+		<textarea name="wtext">{{index .Data "Text"}}</textarea>
+	</div>
+</div>
+<div class="formrow w_default">
+	<div class="formitem formlabel"><a>{{lang "panel_themes_widgets_raw_body"}}</a></div>
+	<div class="formitem">
+		<textarea name="wbody">{{.RawBody}}</textarea>
+	</div>
+</div>
+</div>
+<div class="formrow form_button_row">
+	<div class="formitem">
+		<button name="panel-button" class="formbutton widget_save">{{lang "panel_themes_widgets_save"}}</button>
+		<a href="/panel/themes/widgets/delete/submit/{{.ID}}">
+			<button name="panel-button" class="formbutton widget_delete">{{lang "panel_themes_widgets_delete"}}</button>
+		</a>
+	</div>
+</div>

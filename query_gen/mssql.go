@@ -135,7 +135,8 @@ func (adapter *MssqlAdapter) parseColumn(column DBTableColumn) (col DBTableColum
 }
 
 // TODO: Test this, not sure if some things work
-func (adapter *MssqlAdapter) AddColumn(name string, table string, column DBTableColumn) (string, error) {
+// TODO: Add support for keys
+func (adapter *MssqlAdapter) AddColumn(name string, table string, column DBTableColumn,key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}

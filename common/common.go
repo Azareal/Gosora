@@ -1,7 +1,7 @@
 /*
 *
 *	Gosora Common Resources
-*	Copyright Azareal 2018 - 2019
+*	Copyright Azareal 2018 - 2020
 *
  */
 package common // import "github.com/Azareal/Gosora/common"

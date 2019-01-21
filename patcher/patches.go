@@ -24,6 +24,7 @@ func init() {
 	addPatch(10, patch10)
 	addPatch(11, patch11)
 	addPatch(12, patch12)
+	addPatch(13, patch13)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -392,11 +393,11 @@ var acc = qgen.NewAcc
 var itoa = strconv.Itoa
 
 func patch10(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("topics", tblColumn{"attachCount", "int", 0, false, false, "0"}))
+	err := execStmt(qgen.Builder.AddColumn("topics", tblColumn{"attachCount", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.AddColumn("topics", tblColumn{"lastReplyID", "int", 0, false, false, "0"}))
+	err = execStmt(qgen.Builder.AddColumn("topics", tblColumn{"lastReplyID", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
@@ -432,7 +433,7 @@ func patch10(scanner *bufio.Scanner) error {
 }
 
 func patch11(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("replies", tblColumn{"attachCount", "int", 0, false, false, "0"}))
+	err := execStmt(qgen.Builder.AddColumn("replies", tblColumn{"attachCount", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
@@ -502,5 +503,14 @@ func patch12(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func patch13(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddColumn("widgets", tblColumn{"wid", "int", 0, false, true, ""}, &tblKey{"wid", "primary"}))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

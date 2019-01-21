@@ -2,6 +2,9 @@ package panel
 
 import (
 	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -329,4 +332,156 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user comm
 	menuHold.UpdateOrder(updateMap)
 
 	return successRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, isJs)
+}
+
+func ThemesWidgets(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "themes_widgets", "themes")
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ManageThemes {
+		return common.NoPermissions(w, r, user)
+	}
+	basePage.Header.AddScript("widgets.js")
+
+	var docks = make(map[string][]common.WidgetEdit)
+	for _, name := range common.GetDockList() {
+		var widgets []common.WidgetEdit
+		for _, widget := range common.GetDock(name) {
+			var data = make(map[string]string)
+			err := json.Unmarshal([]byte(widget.RawBody), &data)
+			if err != nil {
+				return common.InternalError(err, w, r)
+			}
+			widgets = append(widgets, common.WidgetEdit{widget, data})
+		}
+		docks[name] = widgets
+	}
+
+	pi := common.PanelWidgetListPage{basePage, docks, common.WidgetEdit{&common.Widget{ID: 0, Type: "simple"}, make(map[string]string)}}
+	return renderTemplate("panel_themes_widgets", w, r, user, &pi)
+}
+
+func widgetsParseInputs(r *http.Request, widget *common.Widget) (*common.WidgetEdit, error) {
+	var data = make(map[string]string)
+	widget.Enabled = (r.FormValue("wenabled") == "1")
+	widget.Location = r.FormValue("wlocation")
+	if widget.Location == "" {
+		return nil, errors.New("You need to specify a location for this widget.")
+	}
+	widget.Side = r.FormValue("wside")
+	if !common.HasDock(widget.Side) {
+		return nil, errors.New("The widget dock you specified doesn't exist.")
+	}
+
+	var wtype = r.FormValue("wtype")
+	switch wtype {
+	case "simple", "about":
+		data["Name"] = r.FormValue("wname")
+		if data["Name"] == "" {
+			return nil, errors.New("You need to specify a title for this widget.")
+		}
+		data["Text"] = r.FormValue("wtext")
+		if data["Text"] == "" {
+			return nil, errors.New("You need to fill in the body for this widget.")
+		}
+		widget.Type = wtype // ? - Are we sure we should be directly assigning user provided data even if it's validated?
+	case "wol", "search_and_filter":
+		widget.Type = wtype // ? - Are we sure we should be directly assigning user provided data even if it's validated?
+	default:
+		return nil, errors.New("Unknown widget type")
+	}
+
+	return &common.WidgetEdit{widget, data}, nil
+}
+
+// ThemesWidgetsEditSubmit is an action which is triggered when someone sends an update request for a widget
+func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, swid string) common.RouteError {
+	fmt.Println("in ThemesWidgetsEditSubmit")
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	isJs := (r.PostFormValue("js") == "1")
+	if !user.Perms.ManageThemes {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+
+	wid, err := strconv.Atoi(swid)
+	if err != nil {
+		return common.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+	}
+
+	widget, err := common.Widgets.Get(wid)
+	if err == sql.ErrNoRows {
+		return common.NotFoundJSQ(w, r, nil, isJs)
+	} else if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	ewidget, err := widgetsParseInputs(r, widget.Copy())
+	if err != nil {
+		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
+	}
+
+	err = ewidget.Commit()
+	if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	return successRedirect("/panel/themes/widgets/", w, r, isJs)
+}
+
+// ThemesWidgetsCreateSubmit is an action which is triggered when someone sends a create request for a widget
+func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	fmt.Println("in ThemesWidgetsCreateSubmit")
+	isJs := (r.PostFormValue("js") == "1")
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ManageThemes {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+
+	ewidget, err := widgetsParseInputs(r, &common.Widget{})
+	if err != nil {
+		return common.LocalErrorJSQ(err.Error(), w, r, user, isJs)
+	}
+
+	err = ewidget.Create()
+	if err != nil {
+		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	return successRedirect("/panel/themes/widgets/", w, r, isJs)
+}
+
+func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, swid string) common.RouteError {
+	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	isJs := (r.PostFormValue("js") == "1")
+	if !user.Perms.ManageThemes {
+		return common.NoPermissionsJSQ(w, r, user, isJs)
+	}
+
+	wid, err := strconv.Atoi(swid)
+	if err != nil {
+		return common.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+	}
+	widget, err := common.Widgets.Get(wid)
+	if err == sql.ErrNoRows {
+		return common.NotFound(w, r, nil)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	err = widget.Delete()
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	return successRedirect("/panel/themes/widgets/", w, r, isJs)
 }

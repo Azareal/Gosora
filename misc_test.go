@@ -750,6 +750,7 @@ func TestReplyStore(t *testing.T) {
 	expectNilErr(t, err)
 	expect(t, topic.PostCount == 3, fmt.Sprintf("TID #1's post count should be three, not %d", topic.PostCount))
 
+	// TODO: Expand upon this
 	rid, err = common.Rstore.Create(topic, "hiii", "::1", 1)
 	expectNilErr(t, err)
 	replyTest(rid, topic.ID, 1, "hiii", "::1")
@@ -1014,6 +1015,7 @@ func TestWordFilters(t *testing.T) {
 	// TODO: Add deletion tests
 }
 
+// TODO: Expand upon the valid characters which can go in URLs?
 func TestSlugs(t *testing.T) {
 	var res string
 	var msgList = &MEPairList{nil}
@@ -1048,6 +1050,64 @@ func TestSlugs(t *testing.T) {
 			t.Error("Expected:", item.Expects)
 		}
 	}
+}
+
+func TestWidgets(t *testing.T) {
+	_, err := common.Widgets.Get(1)
+	recordMustNotExist(t, err, "There shouldn't be any widgets by default")
+	widgets := common.Docks.RightSidebar
+	expect(t, len(widgets) == 0, fmt.Sprintf("RightSidebar should have 0 items, not %d", len(widgets)))
+
+	widget := &common.Widget{Position: 0, Side: "rightSidebar", Type: "simple", Enabled: true, Location: "global"}
+	ewidget := &common.WidgetEdit{widget, map[string]string{"Name": "Test", "Text": "Testing"}}
+	err = ewidget.Create()
+	expectNilErr(t, err)
+
+	// TODO: Do a test for the widget body
+	widget2, err := common.Widgets.Get(1)
+	expectNilErr(t, err)
+	expect(t, widget2.Position == widget.Position, "wrong position")
+	expect(t, widget2.Side == widget.Side, "wrong side")
+	expect(t, widget2.Type == widget.Type, "wrong type")
+	expect(t, widget2.Enabled, "not enabled")
+	expect(t, widget2.Location == widget.Location, "wrong location")
+
+	widgets = common.Docks.RightSidebar
+	expect(t, len(widgets) == 1, fmt.Sprintf("RightSidebar should have 1 item, not %d", len(widgets)))
+	expect(t, widgets[0].Position == widget.Position, "wrong position")
+	expect(t, widgets[0].Side == widget.Side, "wrong side")
+	expect(t, widgets[0].Type == widget.Type, "wrong type")
+	expect(t, widgets[0].Enabled, "not enabled")
+	expect(t, widgets[0].Location == widget.Location, "wrong location")
+
+	widget2.Enabled = false
+	ewidget = &common.WidgetEdit{widget2, map[string]string{"Name": "Test", "Text": "Testing"}}
+	err = ewidget.Commit()
+	expectNilErr(t, err)
+
+	widget2, err = common.Widgets.Get(1)
+	expectNilErr(t, err)
+	expect(t, widget2.Position == widget.Position, "wrong position")
+	expect(t, widget2.Side == widget.Side, "wrong side")
+	expect(t, widget2.Type == widget.Type, "wrong type")
+	expect(t, !widget2.Enabled, "not enabled")
+	expect(t, widget2.Location == widget.Location, "wrong location")
+
+	widgets = common.Docks.RightSidebar
+	expect(t, len(widgets) == 1, fmt.Sprintf("RightSidebar should have 1 item, not %d", len(widgets)))
+	expect(t, widgets[0].Position == widget.Position, "wrong position")
+	expect(t, widgets[0].Side == widget.Side, "wrong side")
+	expect(t, widgets[0].Type == widget.Type, "wrong type")
+	expect(t, !widgets[0].Enabled, "not enabled")
+	expect(t, widgets[0].Location == widget.Location, "wrong location")
+
+	err = widget2.Delete()
+	expectNilErr(t, err)
+
+	_, err = common.Widgets.Get(1)
+	recordMustNotExist(t, err, "There shouldn't be any widgets anymore")
+	widgets = common.Docks.RightSidebar
+	expect(t, len(widgets) == 0, fmt.Sprintf("RightSidebar should have 0 items, not %d", len(widgets)))
 }
 
 func TestAuth(t *testing.T) {

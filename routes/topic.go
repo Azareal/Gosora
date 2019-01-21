@@ -64,7 +64,6 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 		return common.NoPermissions(w, r, user)
 	}
 	header.Title = topic.Title
-	header.Zone = "view_topic"
 	header.Path = common.BuildTopicURL(common.NameToSlug(topic.Title), topic.ID)
 
 	// TODO: Cache ContentHTML when possible?
@@ -253,6 +252,9 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 		}
 	}
 
+	header.Zone = "view_topic"
+	header.ZoneID = topic.ID
+	header.ZoneData = topic
 	rerr := renderTemplate("topic", w, r, header, tpage)
 	counters.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
 	counters.ForumViewCounter.Bump(topic.ParentID)

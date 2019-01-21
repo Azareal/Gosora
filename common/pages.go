@@ -28,6 +28,8 @@ type Header struct {
 	CurrentUser User // TODO: Deprecate CurrentUser on the page structs and use a pointer here
 	Hooks       *HookTable
 	Zone        string
+	ZoneID      int
+	ZoneData    interface{}
 	Path        string
 	MetaDesc    string
 	StartedAt   time.Time
@@ -326,6 +328,12 @@ type PanelMenuListPage struct {
 	ItemList []PanelMenuListItem
 }
 
+type PanelWidgetListPage struct {
+	*BasePanelPage
+	Docks       map[string][]WidgetEdit
+	BlankWidget WidgetEdit
+}
+
 type PanelMenuPage struct {
 	*BasePanelPage
 	MenuID   int
@@ -462,4 +470,7 @@ type AreYouSure struct {
 // TODO: Write a test for this
 func DefaultHeader(w http.ResponseWriter, user User) *Header {
 	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: user, Writer: w}
+}
+func SimpleDefaultHeader(w http.ResponseWriter) *Header {
+	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: GuestUser, Writer: w}
 }

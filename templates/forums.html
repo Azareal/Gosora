@@ -5,7 +5,7 @@
 	<div class="rowitem"><h1 itemprop="name">{{lang "forums_head"}}</h1></div>
 </div>
 <div class="rowblock forum_list">
-	{{range .ItemList}}<div class="rowitem {{if (.Desc) or (.LastTopic.Title)}}datarow {{end}}"itemprop="itemListElement" itemscope
+	{{range .ItemList}}<div id="forum_{{.ID}}" class="rowitem{{if (.Desc) or (.LastTopic.Title)}} datarow{{end}}" itemprop="itemListElement" itemscope
       itemtype="http://schema.org/ListItem">
 		<span class="forum_left shift_left">
 			<a href="{{.Link}}" itemprop="item">{{.Name}}</a><br />

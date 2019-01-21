@@ -251,22 +251,34 @@ func (hub *WsHubImpl) getUsers(uids []int) (wsUsers []*WSUser, err error) {
 	if len(uids) == 0 {
 		return nil, errWsNouser
 	}
-	hub.evenUserLock.RLock()
-	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
-	for _, uid := range uids {
-		wsUsers = append(wsUsers, hub.evenOnlineUsers[uid])
+	var appender = func(lock *sync.RWMutex, users map[int]*WSUser) {
+		lock.RLock()
+		defer lock.RUnlock()
+		// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
+		for _, uid := range uids {
+			wsUsers = append(wsUsers, users[uid])
+		}
 	}
-	hub.evenUserLock.RUnlock()
-	hub.oddUserLock.RLock()
-	// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
-	for _, uid := range uids {
-		wsUsers = append(wsUsers, hub.oddOnlineUsers[uid])
-	}
-	hub.oddUserLock.RUnlock()
+	appender(&hub.evenUserLock, hub.evenOnlineUsers)
+	appender(&hub.oddUserLock, hub.oddOnlineUsers)
 	if len(wsUsers) == 0 {
 		return nil, errWsNouser
 	}
 	return wsUsers, nil
+}
+
+// For Widget WOL, please avoid using this as it might wind up being really long and slow without the right safeguards
+func (hub *WsHubImpl) AllUsers() (users []*User) {
+	var appender = func(lock *sync.RWMutex, userMap map[int]*WSUser) {
+		lock.RLock()
+		defer lock.RUnlock()
+		for _, user := range userMap {
+			users = append(users, user.User)
+		}
+	}
+	appender(&hub.evenUserLock, hub.evenOnlineUsers)
+	appender(&hub.oddUserLock, hub.oddOnlineUsers)
+	return users
 }
 
 func (hub *WsHubImpl) removeUser(uid int) {

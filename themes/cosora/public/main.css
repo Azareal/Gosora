@@ -236,11 +236,15 @@ ul {
 .rowhead:not(:first-child), .opthead:not(:first-child), .colstack_head:not(:first-child) {
 	margin-top: 8px;
 }
-.rowhead h1, .opthead h1, .colstack_head h1 {
+.rowhead h1, .opthead h1, .colstack_head h1,
+.rowhead h2, .opthead h2, .colstack_head h2 {
 	font-size: 19px;
 	font-weight: normal;
 	color: var(--lightened-primary-text-color);
 	display: inline-block;
+}
+.rowhead h2, .opthead h2, .colstack_head h2 {
+	font-size: 17px;
 }
 .colstack_head a h1 {
 	color: var(--primary-link-color);
@@ -251,7 +255,7 @@ ul {
 .colstack_head h1 {
 	font-size: 18px;
 }
-h1, h3 {
+h1, h2, h3 {
 	-webkit-margin-before: 0;
 	-webkit-margin-after: 0;
 	margin-block-start: 0;
@@ -534,7 +538,12 @@ input[type=checkbox]:checked + label .sel {
 .pollinput:not(:only-child):not(:first-child) {
 	margin-bottom: 5px;
 }
-.auto_hide, .show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened, .link_select:not(.link_opened) {
+.auto_hide,
+.show_on_edit:not(.edit_opened),
+.hide_on_edit.edit_opened,
+.show_on_block_edit:not(.edit_opened),
+.hide_on_block_edit.edit_opened,
+.link_select:not(.link_opened) {
 	display: none;
 }
 

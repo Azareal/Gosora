@@ -1,0 +1,12 @@
+<div class="rowblock rowhead widget_online">
+	<div class="rowitem"><h1>{{.Name}}</h1></div>
+</div>
+<div class="rowblock rowlist bgavatars not_grid widget_online">
+	{{if lt .UserCount 30}}
+	{{range .Users}}<div class="rowitem" style="background-image: url('{{.Avatar}}');">
+		<img src="{{.Avatar}}" class="bgsub" alt="{{.Name}}'s Avatar" />
+		<a class="rowTitle" href="{{.Link}}">{{.Name}}</a>
+	</div>
+	{{else}}<div class="rowitem rowmsg">{{lang "widget.online_none_online"}}</div>{{end}}
+	{{else}}<div class="rowitem rowmsg">{{langf "widget.online_some_online" .UserCount}}</div>{{end}}
+</div>

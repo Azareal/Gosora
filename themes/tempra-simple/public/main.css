@@ -249,7 +249,8 @@ li a {
 	margin-top: -3px;
 	margin-bottom: -2px;
 }
-.rowhead h1, .colstack_head h1 {
+.rowhead h1, .colstack_head h1,
+.rowhead h2, .colstack_head h2 {
 	-webkit-margin-before: 0;
 	-webkit-margin-after: 0;
 	margin-block-start: 0;
@@ -743,7 +744,14 @@ button.username {
 .mention {
 	font-weight: bold;
 }
-.show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened, .auto_hide, .hide_on_big, .show_on_mobile, .link_select:not(.link_opened) {
+.show_on_edit:not(.edit_opened),
+.hide_on_edit.edit_opened,
+.show_on_block_edit:not(.edit_opened),
+.hide_on_block_edit.edit_opened,
+.auto_hide,
+.hide_on_big,
+.show_on_mobile,
+.link_select:not(.link_opened) {
 	display: none;
 }
 

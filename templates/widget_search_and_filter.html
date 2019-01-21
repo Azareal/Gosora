@@ -1,0 +1,7 @@
+<div class="search widget_search">
+	<input name="widget_search" placeholder="Search" />
+</div>
+<div class="rowblock filter_list widget_filter">
+{{range .Forums}}	<div class="rowitem filter_item" data-fid="{{.ID}}">{{.Name}}</div>
+{{end}}
+</div>

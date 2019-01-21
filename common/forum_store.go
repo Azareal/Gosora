@@ -1,7 +1,7 @@
 /*
 *
 *	Gosora Forum Store
-* 	Copyright Azareal 2017 - 2018
+* 	Copyright Azareal 2017 - 2019
 *
  */
 package common

@@ -38,7 +38,9 @@ Always use strict mode.
 
 Don't worry about ES5, we're targetting modern browsers. If we decide to backport code to older browsers, then we'll transpile the files.
 
-Please don't use await. It incurs too much of a cognitive overhead as to where and when you can use it.
+Please don't use await. It incurs too much of a cognitive overhead as to where and when you can use it. We can't use it everywhere quite yet, which means that we really should be using it nowhere.
+
+Please don't abuse `const` just to shave off a few nanoseconds. Even in the Go server where I care about performance the most, I don't use const everywhere, only in about five spots in thirty thousand lines and I don't use it for performance at all there.
 
 To keep consistency with Go code, variables must be camelCase.
 

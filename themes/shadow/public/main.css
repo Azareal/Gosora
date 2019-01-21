@@ -179,16 +179,18 @@ a {
 	margin-top: 8px;
 	padding: 12px;
 }
-.rowitem h1 {
+.rowitem h1, .rowitem h2 {
 	font-size: 16px;
-	font-weight: normal;
+	display: inline;
+}
+h1, h2, h3 {
 	-webkit-margin-before: 0;
 	-webkit-margin-after: 0;
 	margin-block-start: 0;
 	margin-block-end: 0;
 	margin-top: 0px;
 	margin-bottom: 0px;
-	display: inline;
+	font-weight: normal;
 }
 .rowsmall {
 	font-size: 12px;
@@ -208,7 +210,13 @@ a {
 	float: left;
 	width: calc(70% - 24px);
 }
-.colstack_left:empty, .colstack_right:empty, .show_on_edit:not(.edit_opened), .hide_on_edit.edit_opened, .link_select:not(.link_opened) {
+.colstack_left:empty,
+.colstack_right:empty,
+.show_on_edit:not(.edit_opened),
+.hide_on_edit.edit_opened,
+.show_on_block_edit:not(.edit_opened),
+.hide_on_block_edit.edit_opened,
+.link_select:not(.link_opened) {
 	display: none;
 }
 

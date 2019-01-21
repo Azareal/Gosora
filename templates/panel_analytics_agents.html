@@ -6,14 +6,7 @@
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">
 					<a>{{lang "panel_statistics_user_agents_head"}}</a>
-					<select class="timeRangeSelector to_right" name="timeRange">
-						<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>{{lang "panel_statistics_time_range_one_month"}}</option>
-						<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>{{lang "panel_statistics_time_range_one_week"}}</option>
-						<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>{{lang "panel_statistics_time_range_two_days"}}</option>
-						<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>{{lang "panel_statistics_time_range_one_day"}}</option>
-						<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_twelve_hours"}}</option>
-						<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_six_hours"}}</option>
-					</select>
+					{{template "panel_analytics_time_range.html" . }}
 				</div>
 			</div>
 		</form>

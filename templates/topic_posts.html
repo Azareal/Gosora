@@ -13,15 +13,15 @@
 		<span class="controls{{if .LikeCount}} has_likes{{end}}">
 
 		<a href="{{.UserLink}}" class="username real_username" rel="author">{{.CreatedByName}}</a>&nbsp;&nbsp;
-		{{if $.CurrentUser.Perms.LikeItem}}{{if .Liked}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_like_tooltip"}}" aria-label="{{lang "topic.post_like_aria"}}" style="color:#202020;"><button class="username like_label remove_like"></button></a>{{else}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_unlike_tooltip"}}" aria-label="{{lang "topic.post_unlike_aria"}}" style="color:#202020;"><button class="username like_label add_like"></button></a>{{end}}{{end}}
+		{{if $.CurrentUser.Perms.LikeItem}}{{if .Liked}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_like_tooltip"}}" aria-label="{{lang "topic.post_like_aria"}}"><button class="username like_label remove_like"></button></a>{{else}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_unlike_tooltip"}}" aria-label="{{lang "topic.post_unlike_aria"}}"><button class="username like_label add_like"></button></a>{{end}}{{end}}
 
 		{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
 		{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_edit_tooltip"}}" aria-label="{{lang "topic.post_edit_aria"}}"><button class="username edit_item edit_label"></button></a>{{end}}
 		{{end}}
 
 		{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.post_delete_tooltip"}}" aria-label="{{lang "topic.post_delete_aria"}}"><button class="username delete_item delete_label"></button></a>{{end}}
-		{{if $.CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.IPAddress}}' style="font-weight:normal;" title="{{lang "topic.post_ip_tooltip"}}" aria-label="The poster's IP is {{.IPAddress}}"><button class="username ip_label"></button></a>{{end}}
-		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=reply" class="mod_button report_item" title="{{lang "topic.post_flag_tooltip"}}" aria-label="{{lang "topic.post_flag_aria"}}" rel="nofollow"><button class="username report_item flag_label"></button></a>
+		{{if $.CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.IPAddress}}' title="{{lang "topic.post_ip_tooltip"}}" aria-label="The poster's IP is {{.IPAddress}}"><button class="username ip_label"></button></a>{{end}}
+		<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&amp;type=reply" class="mod_button report_item" title="{{lang "topic.post_flag_tooltip"}}" aria-label="{{lang "topic.post_flag_aria"}}" rel="nofollow"><button class="username report_item flag_label"></button></a>
 
 		<a class="username hide_on_micro like_count">{{.LikeCount}}</a><a class="username hide_on_micro like_count_label" title="{{lang "topic.post_like_count_tooltip"}}"></a>
 

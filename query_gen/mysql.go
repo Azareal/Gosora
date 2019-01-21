@@ -173,13 +173,23 @@ func (adapter *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColum
 
 // TODO: Support AFTER column
 // TODO: Test to make sure everything works here
-func (adapter *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn) (string, error) {
+func (adapter *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 
 	column, size, end := adapter.parseColumn(column)
-	querystr := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + column.Name + "` " + column.Type + size + end + ";"
+	querystr := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + column.Name + "` " + column.Type + size + end
+
+	if key != nil {
+		querystr += " " + key.Type
+		if key.Type != "unique" {
+			querystr += " key"
+		} else if key.Type == "primary" {
+			querystr += " first"
+		}
+	}
+
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	adapter.pushStatement(name, "add-column", querystr)
 	return querystr, nil

@@ -36,11 +36,20 @@
 .colstack_right .colstack_head {
 	margin-bottom: 5px;
 }
+.colstack_right .colstack_head + .colstack_head:not(:first-child) {
+	margin-top: 5px;
+}
 .colstack_right .colstack_head h1 {
 	font-size: 21px;
 }
 .colstack_right .colstack_item.the_form, .colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem {
 	background-color: #444444;
+}
+.colstack_right .colstack_head.colstack_sub_head:not(:first-child) {
+	margin-top: 6px;
+}
+.colstack_head + .colstack_head.colstack_sub_head:not(:first-child) {
+	margin-top: 2px;
 }
 .rowitem {
 	display: flex;
@@ -256,6 +265,39 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 #panel_plugins .to_right .panel_right_button {
 	margin-top: auto;
 	margin-bottom: auto;
+}
+
+.widget_normal {
+	display: flex;
+	width: 100%;
+}
+.bg_red.in_edit.widget_item {
+	background-color: #444444 !important;
+}
+.widget_item .form_button_row .rowitem {
+	display: flex;
+}
+.widget_edit .form_button_row .formitem a {
+	display: inline;
+}
+.colstack_right .colstack_item.the_form, .colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem.widget_new {
+	padding-top: 12px;
+	padding-bottom: 12px;
+}
+#widgetTmpl {
+	display: none;
+}
+.widget_disabled {
+	display: none;
+}
+.bg_red .widget_disabled {
+	display: inline;
+}
+.wtypes .formrow {
+	display: none;
+}
+.wtype_about .w_about, .wtype_simple .w_simple, .wtype_wol .w_wol, .wtype_default .w_default {
+	display: block;
 }
 
 #panel_debug .grid_stat:not(.grid_stat_head) {

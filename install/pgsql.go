@@ -2,7 +2,7 @@
 *
 * Gosora PostgreSQL Interface
 * Under heavy development
-* Copyright Azareal 2017 - 2018
+* Copyright Azareal 2017 - 2019
 *
  */
 package install
