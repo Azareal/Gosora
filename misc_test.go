@@ -1055,7 +1055,7 @@ func TestSlugs(t *testing.T) {
 func TestWidgets(t *testing.T) {
 	_, err := common.Widgets.Get(1)
 	recordMustNotExist(t, err, "There shouldn't be any widgets by default")
-	widgets := common.Docks.RightSidebar
+	widgets := common.Docks.RightSidebar.Items
 	expect(t, len(widgets) == 0, fmt.Sprintf("RightSidebar should have 0 items, not %d", len(widgets)))
 
 	widget := &common.Widget{Position: 0, Side: "rightSidebar", Type: "simple", Enabled: true, Location: "global"}
@@ -1072,7 +1072,7 @@ func TestWidgets(t *testing.T) {
 	expect(t, widget2.Enabled, "not enabled")
 	expect(t, widget2.Location == widget.Location, "wrong location")
 
-	widgets = common.Docks.RightSidebar
+	widgets = common.Docks.RightSidebar.Items
 	expect(t, len(widgets) == 1, fmt.Sprintf("RightSidebar should have 1 item, not %d", len(widgets)))
 	expect(t, widgets[0].Position == widget.Position, "wrong position")
 	expect(t, widgets[0].Side == widget.Side, "wrong side")
@@ -1093,7 +1093,7 @@ func TestWidgets(t *testing.T) {
 	expect(t, !widget2.Enabled, "not enabled")
 	expect(t, widget2.Location == widget.Location, "wrong location")
 
-	widgets = common.Docks.RightSidebar
+	widgets = common.Docks.RightSidebar.Items
 	expect(t, len(widgets) == 1, fmt.Sprintf("RightSidebar should have 1 item, not %d", len(widgets)))
 	expect(t, widgets[0].Position == widget.Position, "wrong position")
 	expect(t, widgets[0].Side == widget.Side, "wrong side")
@@ -1106,7 +1106,7 @@ func TestWidgets(t *testing.T) {
 
 	_, err = common.Widgets.Get(1)
 	recordMustNotExist(t, err, "There shouldn't be any widgets anymore")
-	widgets = common.Docks.RightSidebar
+	widgets = common.Docks.RightSidebar.Items
 	expect(t, len(widgets) == 0, fmt.Sprintf("RightSidebar should have 0 items, not %d", len(widgets)))
 }
 
