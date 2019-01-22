@@ -25,6 +25,9 @@ func wolBuild(widget *Widget, hvars interface{}) (string, error) {
 	var users []*User
 	if ucount < 30 {
 		users = WsHub.AllUsers()
+		if len(users) >= 30 {
+			users = nil
+		}
 	}
 	wol := &wolUsers{hvars.(*Header), phrases.GetTmplPhrase("widget.online_name"), users, ucount}
 	err := wol.Header.Theme.RunTmpl("widget_online", wol, wol.Header.Writer)

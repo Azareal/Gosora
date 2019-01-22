@@ -34,6 +34,7 @@ var errWsNouser = errors.New("This user isn't connected via WebSockets")
 func init() {
 	adminStatsWatchers = make(map[*websocket.Conn]*WSUser)
 	topicListWatchers = make(map[*WSUser]bool)
+	topicWatchers = make(map[int]map[*WSUser]bool)
 }
 
 type WsTopicList struct {
@@ -122,6 +123,7 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		topicListMutex.Lock()
 		topicListWatchers[wsUser] = true
 		topicListMutex.Unlock()
+		// TODO: Evict from page when permissions change? Or check user perms every-time before sending data?
 	case strings.HasPrefix(page, "/topic/"):
 		//fmt.Println("entering topic prefix websockets zone")
 		_, tid, err := ParseSEOURL(page)
@@ -132,13 +134,12 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		if err != nil {
 			return
 		}
-		var usercpy *User = BlankUser()
-		*usercpy = *wsUser.User
-		usercpy.Init()
-
 		if !Forums.Exists(topic.ParentID) {
 			return
 		}
+		var usercpy *User = BlankUser()
+		*usercpy = *wsUser.User
+		usercpy.Init()
 
 		/*skip, rerr := header.Hooks.VhookSkippable("ws_topic_check_pre_perms", w, r, usercpy, &fid, &header)
 		if skip || rerr != nil {
@@ -155,6 +156,14 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		if !usercpy.Perms.ViewTopic {
 			return
 		}
+
+		topicMutex.Lock()
+		_, ok := topicWatchers[topic.ID]
+		if !ok {
+			topicWatchers[topic.ID] = make(map[*WSUser]bool)
+		}
+		topicWatchers[topic.ID][wsUser] = true
+		topicMutex.Unlock()
 	case page == "/panel/":
 		if !wsUser.User.IsSuperMod {
 			return
@@ -180,9 +189,7 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 	if page == "/" {
 		page = Config.DefaultPath
-	}
-
-	if page != "" {
+	} else if page != "" {
 		DebugLog("Leaving page " + page)
 	}
 	switch {
@@ -194,6 +201,26 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 		})
 	case strings.HasPrefix(page, "/topic/"):
 		//fmt.Println("leaving topic prefix websockets zone")
+		wsUser.FinalizePage(page, func() {
+			_, tid, err := ParseSEOURL(page)
+			if err != nil {
+				return
+			}
+			topicMutex.Lock()
+			defer topicMutex.Unlock()
+			topic, ok := topicWatchers[tid]
+			if !ok {
+				return
+			}
+			_, ok = topic[wsUser]
+			if !ok {
+				return
+			}
+			delete(topic, wsUser)
+			if len(topic) == 0 {
+				delete(topicWatchers, tid)
+			}
+		})
 	case page == "/panel/":
 		adminStatsMutex.Lock()
 		delete(adminStatsWatchers, conn)
@@ -209,6 +236,8 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 // TODO: Use odd-even sharding
 var topicListWatchers map[*WSUser]bool
 var topicListMutex sync.RWMutex
+var topicWatchers map[int]map[*WSUser]bool // map[tid]watchers
+var topicMutex sync.RWMutex
 var adminStatsWatchers map[*websocket.Conn]*WSUser
 var adminStatsMutex sync.RWMutex
 

@@ -669,6 +669,7 @@
 		"widget.online_name":"Online Users",
 		"widget.online_none_online":"No one is online.",
 		"widget.online_some_online":"There are %d users online.",
+		"widget.online_view_topic_name":"In Topic",
 
 		"option_yes":"Yes",
 		"option_no":"No",

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -386,7 +385,7 @@ func widgetsParseInputs(r *http.Request, widget *common.Widget) (*common.WidgetE
 			return nil, errors.New("You need to fill in the body for this widget.")
 		}
 		widget.Type = wtype // ? - Are we sure we should be directly assigning user provided data even if it's validated?
-	case "wol", "search_and_filter":
+	case "wol", "wol_context", "search_and_filter":
 		widget.Type = wtype // ? - Are we sure we should be directly assigning user provided data even if it's validated?
 	default:
 		return nil, errors.New("Unknown widget type")
@@ -397,7 +396,7 @@ func widgetsParseInputs(r *http.Request, widget *common.Widget) (*common.WidgetE
 
 // ThemesWidgetsEditSubmit is an action which is triggered when someone sends an update request for a widget
 func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, swid string) common.RouteError {
-	fmt.Println("in ThemesWidgetsEditSubmit")
+	//fmt.Println("in ThemesWidgetsEditSubmit")
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -434,7 +433,7 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user common
 
 // ThemesWidgetsCreateSubmit is an action which is triggered when someone sends a create request for a widget
 func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	fmt.Println("in ThemesWidgetsCreateSubmit")
+	//fmt.Println("in ThemesWidgetsCreateSubmit")
 	isJs := (r.PostFormValue("js") == "1")
 	_, ferr := common.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
