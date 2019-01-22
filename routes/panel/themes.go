@@ -345,6 +345,9 @@ func ThemesWidgets(w http.ResponseWriter, r *http.Request, user common.User) com
 
 	var docks = make(map[string][]common.WidgetEdit)
 	for _, name := range common.GetDockList() {
+		if name == "leftOfNav" || name == "rightOfNav" {
+			continue
+		}
 		var widgets []common.WidgetEdit
 		for _, widget := range common.GetDock(name) {
 			var data = make(map[string]string)
