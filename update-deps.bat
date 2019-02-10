@@ -7,5 +7,7 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+go get -u github.com/mailru/easyjson/...
+
 echo The dependencies were successfully updated
 pause

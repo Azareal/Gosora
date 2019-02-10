@@ -1,5 +1,6 @@
 echo "Updating the dependencies"
 go get
+go get -u github.com/mailru/easyjson/...
 
 echo "Updating Gosora"
 git stash

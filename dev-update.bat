@@ -7,6 +7,8 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+go get -u github.com/mailru/easyjson/...
+
 echo Updating Gosora
 git stash
 if %errorlevel% neq 0 (

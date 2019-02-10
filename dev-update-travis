@@ -1,3 +1,4 @@
 echo "Building the patcher"
 go generate
+go get -u github.com/mailru/easyjson/...
 go build -o Patcher "./patcher"
