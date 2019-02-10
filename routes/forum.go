@@ -2,7 +2,6 @@ package routes
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -114,7 +113,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, header 
 
 	// TODO: Reduce the amount of boilerplate here
 	if r.FormValue("js") == "1" {
-		outBytes, err := json.Marshal(wsTopicList(topicList, lastPage))
+		outBytes, err := wsTopicList(topicList, lastPage).MarshalJSON()
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}

@@ -25,6 +25,7 @@ func startTick() (abort bool) {
 	if err != nil {
 		// TODO: There's a bit of a race here, but it doesn't matter if this error appears multiple times in the logs as it's capped at three times, we just want to cut it down 99% of the time
 		if isDBDown == 0 {
+			db.SetConnMaxLifetime(time.Second) // Drop all the connections and start over
 			common.LogWarning(err)
 			common.LogWarning(errors.New("The database is down"))
 		}
@@ -34,6 +35,8 @@ func startTick() (abort bool) {
 	if isDBDown == 1 {
 		log.Print("The database is back")
 	}
+	//db.SetConnMaxLifetime(time.Second * 60 * 5) // Make this infinite as the temporary lifetime change will purge the stale connections?
+	db.SetConnMaxLifetime(-1)
 	atomic.StoreInt32(&common.IsDBDown, 0)
 	return false
 }

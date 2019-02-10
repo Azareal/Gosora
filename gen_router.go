@@ -486,7 +486,8 @@ var agentMapEnum = map[string]int{
 	"blank": 25,
 	"malformed": 26,
 	"suspicious": 27,
-	"zgrab": 28,
+	"semrush": 28,
+	"zgrab": 29,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -517,7 +518,8 @@ var reverseAgentMapEnum = map[int]string{
 	25: "blank",
 	26: "malformed",
 	27: "suspicious",
-	28: "zgrab",
+	28: "semrush",
+	29: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -543,6 +545,7 @@ var markToAgent = map[string]string{
 	"Discordbot": "discord",
 	"Twitterbot": "twitter",
 	"Discourse": "discourse",
+	"SemrushBot": "semrush",
 	"zgrab": "zgrab",
 }
 /*var agentRank = map[string]int{
@@ -762,7 +765,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		for _, item := range StringToBytes(ua) {
 			if (item > 64 && item < 91) || (item > 96 && item < 123) {
 				buffer = append(buffer, item)
-			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == '.' || item == '+' || (item == ':' && bytes.Equal(buffer,[]byte("http"))) || item == ',' || item == '/' {
+			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == '.' || item == '+' || item == '~' || (item == ':' && bytes.Equal(buffer,[]byte("http"))) || item == ',' || item == '/' {
 				if len(buffer) != 0 {
 					if len(buffer) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
@@ -777,8 +780,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 							os = "iphone"
 						case "Android":
 							os = "android"
-						case "like":
-							// Skip this word
+						case "like","compatible":
+							// Skip these words
 						default:
 							items = append(items, string(buffer))
 						}

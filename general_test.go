@@ -350,10 +350,6 @@ func BenchmarkTopicsGuestJSRouteParallelWithRouter(b *testing.B) {
 	obRoute(b, "/topics/?js=1")
 }
 
-func BenchmarkTopicsGuestEJSRouteParallelWithRouter(b *testing.B) {
-	obRoute(b, "/topics/?ejs=1")
-}
-
 func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {
 	obRoute(b, "/forums/")
 }
