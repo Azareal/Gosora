@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -27,6 +28,7 @@ func init() {
 	})
 }
 
+// TODO: Retire this in favour of an alias for /topics/?
 func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, sfid string) common.RouteError {
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, fid, err := ParseSEOURL(sfid)
@@ -41,7 +43,6 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, header 
 	if !user.Perms.ViewTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	header.Zone = "view_forum"
 	header.Path = "/forums/"
 
 	// TODO: Fix this double-check
@@ -107,6 +108,18 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, header 
 	for _, topicItem := range topicList {
 		topicItem.Creator = userList[topicItem.CreatedBy]
 		topicItem.LastUser = userList[topicItem.LastReplyBy]
+	}
+	header.Zone = "view_forum"
+	header.ZoneID = forum.ID
+
+	// TODO: Reduce the amount of boilerplate here
+	if r.FormValue("js") == "1" {
+		outBytes, err := json.Marshal(wsTopicList(topicList, lastPage))
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		w.Write(outBytes)
+		return nil
 	}
 
 	pageList := common.Paginate(forum.TopicCount, common.Config.ItemsPerPage, 5)

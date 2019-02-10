@@ -33,7 +33,7 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, user common.User) common.R
 
 	pageList := common.Paginate(logCount, perPage, 5)
 	pi := common.PanelRegLogsPage{basePage, llist, common.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_reglogs", w, r, user, &pi)
+	return renderTemplate("panel_reglogs", w, r, basePage.Header, &pi)
 }
 
 // TODO: Log errors when something really screwy is going on?
@@ -125,7 +125,7 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user common.User) common.Ro
 
 	pageList := common.Paginate(logCount, perPage, 5)
 	pi := common.PanelLogsPage{basePage, llist, common.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_modlogs", w, r, user, &pi)
+	return renderTemplate("panel_modlogs", w, r, basePage.Header, &pi)
 }
 
 func LogsAdmin(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -152,5 +152,5 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user common.User) common.
 
 	pageList := common.Paginate(logCount, perPage, 5)
 	pi := common.PanelLogsPage{basePage, llist, common.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_adminlogs", w, r, user, &pi)
+	return renderTemplate("panel_adminlogs", w, r, basePage.Header, &pi)
 }

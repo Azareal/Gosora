@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
-	"runtime/debug"
 
 	"github.com/pkg/errors"
 
@@ -66,6 +66,10 @@ func gloinit() (err error) {
 		return errors.WithStack(err)
 	}
 
+	err = common.InitTemplates()
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	common.Themes, err = common.NewThemeList()
 	if err != nil {
 		return errors.WithStack(err)
@@ -340,6 +344,14 @@ func obRouteNoError(b *testing.B, path string) {
 
 func BenchmarkTopicsGuestRouteParallelWithRouter(b *testing.B) {
 	obRoute(b, "/topics/")
+}
+
+func BenchmarkTopicsGuestJSRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/topics/?js=1")
+}
+
+func BenchmarkTopicsGuestEJSRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/topics/?ejs=1")
 }
 
 func BenchmarkForumsGuestRouteParallelWithRouter(b *testing.B) {

@@ -890,6 +890,13 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	text-decoration: none;
 }
 
+.sidebar .rowhead:not(:first-child) {
+	margin-top: 12px;
+}
+.widget_search {
+	margin-bottom: 8px;
+}
+
 #profile_comments .rowitem {
 	background-repeat: no-repeat, repeat-y;
 	background-size: 128px;

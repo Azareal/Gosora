@@ -7,13 +7,13 @@ func init() {
 }
 
 // init_heythere is separate from init() as we don't want the plugin to run if the plugin is disabled
-func initHeythere() error {
-	common.Plugins["heythere"].AddHook("topic_reply_row_assign", heythereReply)
+func initHeythere(plugin *common.Plugin) error {
+	plugin.AddHook("topic_reply_row_assign", heythereReply)
 	return nil
 }
 
-func deactivateHeythere() {
-	common.Plugins["heythere"].RemoveHook("topic_reply_row_assign", heythereReply)
+func deactivateHeythere(plugin *common.Plugin) {
+	plugin.RemoveHook("topic_reply_row_assign", heythereReply)
 }
 
 func heythereReply(data ...interface{}) interface{} {

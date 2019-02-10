@@ -1,7 +1,11 @@
 package main
 
-import "strconv"
-import "testing"
+import (
+	"strconv"
+	"testing"
+
+	"github.com/Azareal/Gosora/common"
+)
 
 // go test -v
 
@@ -22,7 +26,7 @@ func (tlist *MEPairList) Add(msg string, expects string) {
 
 func TestBBCodeRender(t *testing.T) {
 	//t.Skip()
-	err := initBbcode()
+	err := initBbcode(common.Plugins["bbcode"])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +215,7 @@ func TestBBCodeRender(t *testing.T) {
 
 func TestMarkdownRender(t *testing.T) {
 	//t.Skip()
-	err := initMarkdown()
+	err := initMarkdown(common.Plugins["markdown"])
 	if err != nil {
 		t.Fatal(err)
 	}

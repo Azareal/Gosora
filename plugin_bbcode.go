@@ -28,8 +28,8 @@ func init() {
 	common.Plugins.Add(&common.Plugin{UName: "bbcode", Name: "BBCode", Author: "Azareal", URL: "https://github.com/Azareal", Init: initBbcode, Deactivate: deactivateBbcode})
 }
 
-func initBbcode() error {
-	common.Plugins["bbcode"].AddHook("parse_assign", bbcodeFullParse)
+func initBbcode(plugin *common.Plugin) error {
+	plugin.AddHook("parse_assign", bbcodeFullParse)
 
 	bbcodeInvalidNumber = []byte("<span style='color: red;'>[Invalid Number]</span>")
 	bbcodeNoNegative = []byte("<span style='color: red;'>[No Negative Numbers]</span>")
@@ -49,8 +49,8 @@ func initBbcode() error {
 	return nil
 }
 
-func deactivateBbcode() {
-	common.Plugins["bbcode"].RemoveHook("parse_assign", bbcodeFullParse)
+func deactivateBbcode(plugin *common.Plugin) {
+	plugin.RemoveHook("parse_assign", bbcodeFullParse)
 }
 
 func bbcodeRegexParse(msg string) string {

@@ -1,0 +1,15 @@
+{{template "header.html" . }}
+<div class="colstack panel_stack">
+{{template "panel_menu.html" . }}
+	<main class="colstack_right">
+		<div class="colstack_item colstack_head">
+			<div class="rowitem"><h1>{{lang "areyousure_head"}}</h1></div>
+		</div>
+		<div class="colstack_item">
+			<div class="rowitem passive rowmsg">{{.Something.Message}}<br /><br />
+				<a class="username" href="{{.Something.URL}}?session={{.CurrentUser.Session}}">{{lang "areyousure_continue"}}</a>
+			</div>
+		</div>
+	</main>
+</div>
+{{template "footer.html" . }}

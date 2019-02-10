@@ -23,7 +23,7 @@ func Plugins(w http.ResponseWriter, r *http.Request, user common.User) common.Ro
 	}
 
 	pi := common.PanelPage{basePage, pluginList, nil}
-	return renderTemplate("panel_plugins", w, r, user, &pi)
+	return renderTemplate("panel_plugins", w, r, basePage.Header, &pi)
 }
 
 // TODO: Abstract more of the plugin activation / installation / deactivation logic, so we can test all that more reliably and easily
@@ -51,7 +51,7 @@ func PluginsActivate(w http.ResponseWriter, r *http.Request, user common.User, u
 	}
 
 	if plugin.Activate != nil {
-		err = plugin.Activate()
+		err = plugin.Activate(plugin)
 		if err != nil {
 			return common.LocalError(err.Error(), w, r, user)
 		}
@@ -70,7 +70,7 @@ func PluginsActivate(w http.ResponseWriter, r *http.Request, user common.User, u
 	}
 
 	log.Printf("Activating plugin '%s'", plugin.Name)
-	err = plugin.Init()
+	err = plugin.Init(plugin)
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
@@ -106,7 +106,7 @@ func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user common.User,
 		return common.InternalError(err, w, r)
 	}
 	if plugin.Deactivate != nil {
-		plugin.Deactivate()
+		plugin.Deactivate(plugin)
 	}
 
 	http.Redirect(w, r, "/panel/plugins/", http.StatusSeeOther)
@@ -143,14 +143,14 @@ func PluginsInstall(w http.ResponseWriter, r *http.Request, user common.User, un
 	}
 
 	if plugin.Install != nil {
-		err = plugin.Install()
+		err = plugin.Install(plugin)
 		if err != nil {
 			return common.LocalError(err.Error(), w, r, user)
 		}
 	}
 
 	if plugin.Activate != nil {
-		err = plugin.Activate()
+		err = plugin.Activate(plugin)
 		if err != nil {
 			return common.LocalError(err.Error(), w, r, user)
 		}
@@ -170,7 +170,7 @@ func PluginsInstall(w http.ResponseWriter, r *http.Request, user common.User, un
 	}
 
 	log.Printf("Installing plugin '%s'", plugin.Name)
-	err = plugin.Init()
+	err = plugin.Init(plugin)
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}

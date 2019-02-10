@@ -59,7 +59,7 @@ func Groups(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 
 	pageList := common.Paginate(basePage.Stats.Groups, perPage, 5)
 	pi := common.PanelGroupPage{basePage, groupList, common.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_groups", w, r, user, &pi)
+	return renderTemplate("panel_groups", w, r, basePage.Header, &pi)
 }
 
 func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
@@ -107,7 +107,7 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user common.User, sgid s
 	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
 
 	pi := common.PanelEditGroupPage{basePage, group.ID, group.Name, group.Tag, rank, disableRank}
-	return renderTemplate("panel_group_edit", w, r, user, pi)
+	return renderTemplate("panel_group_edit", w, r, basePage.Header, pi)
 }
 
 func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {
@@ -186,7 +186,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user common.User, s
 	addGlobalPerm("UploadFiles", group.Perms.UploadFiles)
 
 	pi := common.PanelEditGroupPermsPage{basePage, group.ID, group.Name, localPerms, globalPerms}
-	return renderTemplate("panel_group_edit_perms", w, r, user, pi)
+	return renderTemplate("panel_group_edit_perms", w, r, basePage.Header, pi)
 }
 
 func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sgid string) common.RouteError {

@@ -48,7 +48,7 @@ type NameTextPair struct {
 func preparseWidget(widget *Widget, wdata string) (err error) {
 	prebuildWidget := func(name string, data interface{}) (string, error) {
 		var b bytes.Buffer
-		err := Templates.ExecuteTemplate(&b, name+".html", data)
+		err := DefaultTemplates.ExecuteTemplate(&b, name+".html", data)
 		return string(b.Bytes()), err
 	}
 

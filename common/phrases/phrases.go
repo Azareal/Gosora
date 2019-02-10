@@ -1,7 +1,7 @@
 /*
 *
 * Gosora Phrase System
-* Copyright Azareal 2017 - 2019
+* Copyright Azareal 2017 - 2020
 *
  */
 package phrases

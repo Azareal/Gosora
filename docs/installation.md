@@ -126,6 +126,10 @@ go build "./cmd/install"
 
 install.exe
 
+go get github.com/mailru/easyjson/...
+
+easyjson -pkg common
+
 gosora.exe -build-templates
 
 gosora.exe

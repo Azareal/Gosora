@@ -40,19 +40,20 @@ type CSSData struct {
 func (list SFileList) JSTmplInit() error {
 	DebugLog("Initialising the client side templates")
 	var fragMap = make(map[string][][]byte)
-	fragMap["alert"] = tmpl.GetFrag("alert")
-	fragMap["topics_topic"] = tmpl.GetFrag("topics_topic")
-	fragMap["topic_posts"] = tmpl.GetFrag("topic_posts")
-	fragMap["topic_alt_posts"] = tmpl.GetFrag("topic_alt_posts")
+	var parseFrags = func(name string) {
+		fragMap[name] = tmpl.GetFrag(name)
+	}
+	parseFrags("alert")
+	parseFrags("forum")
+	parseFrags("topics_topic")
+	parseFrags("topic_posts")
+	parseFrags("topic_alt_posts")
+	parseFrags("paginator")
 	DebugLog("fragMap: ", fragMap)
 	return filepath.Walk("./tmpl_client", func(path string, f os.FileInfo, err error) error {
-		if f.IsDir() {
+		if f.IsDir() || strings.HasSuffix(path, "template_list.go") || strings.HasSuffix(path, "stub.go") {
 			return nil
 		}
-		if strings.HasSuffix(path, "template_list.go") || strings.HasSuffix(path, "stub.go") {
-			return nil
-		}
-
 		path = strings.Replace(path, "\\", "/", -1)
 		DebugLog("Processing client template " + path)
 		data, err := ioutil.ReadFile(path)
@@ -110,6 +111,10 @@ func (list SFileList) JSTmplInit() error {
 			}
 			return out + "]"
 		}*/
+		data = replace(data, `)
+	if !ok {
+		return errors.New("invalid page struct value")
+	}`, "*/tmpl_"+shortName+"_vars = tmpl_"+shortName+"_i")
 
 		// ? Can we just use a regex? I'm thinking of going more efficient, or just outright rolling wasm, this is a temp hack in a place where performance doesn't particularly matter
 		var each = func(phrase string, handle func(index int)) {
@@ -156,7 +161,7 @@ func (list SFileList) JSTmplInit() error {
 		each("RelativeTime(", func(index int) {
 			braceAt, _ := skipUntilIfExistsOrLine(data, index, 10)
 			if data[braceAt-1] == ' ' {
-				data[braceAt-1] = ')' // Blank it
+				data[braceAt-1] = ' ' // Blank it
 			}
 		})
 		each("if ", func(index int) {
@@ -191,8 +196,10 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, shortName+"_tmpl_phrase_id = RegisterTmplPhraseNames([]string{", "[")
 		data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let plist = tmplPhrases[\""+tmplName+"\"];")
 		data = replace(data, "var cached_var_", "let cached_var_")
+		data = replace(data, `tmpl_`+shortName+`_vars, ok := tmpl_`+shortName+`_i.`, `/*`)
 		data = replace(data, "[]byte(", "")
 		data = replace(data, "StringToBytes(", "")
+		data = replace(data, "RelativeTime(tmpl_"+shortName+"_vars.", "tmpl_"+shortName+"_vars.Relative")
 		// TODO: Format dates properly on the client side
 		data = replace(data, ".Format(\"2006-01-02 15:04:05\"", "")
 		data = replace(data, ", 10", "")
@@ -252,7 +259,6 @@ func (list SFileList) Init() error {
 		if err != nil {
 			return err
 		}
-
 		path = strings.TrimPrefix(path, "public/")
 		var ext = filepath.Ext("/public/" + path)
 		mimetype := mime.TypeByExtension(ext)

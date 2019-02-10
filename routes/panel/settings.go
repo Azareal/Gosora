@@ -50,7 +50,7 @@ func Settings(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	}
 
 	pi := common.PanelPage{basePage, tList, settingList}
-	return renderTemplate("panel_settings", w, r, user, &pi)
+	return renderTemplate("panel_settings", w, r, basePage.Header, &pi)
 }
 
 func SettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {
@@ -90,7 +90,7 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user common.User, sname
 
 	pSetting := &common.PanelSetting{setting, phrases.GetSettingPhrase(setting.Name)}
 	pi := common.PanelSettingPage{basePage, itemList, pSetting}
-	return renderTemplate("panel_setting", w, r, user, &pi)
+	return renderTemplate("panel_setting", w, r, basePage.Header, &pi)
 }
 
 func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sname string) common.RouteError {

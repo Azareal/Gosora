@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"database/sql"
 	"errors"
+	htmpl "html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -24,26 +25,28 @@ var ErrNoDefaultTheme = errors.New("The default theme isn't registered in the sy
 type Theme struct {
 	Path string // Redirect this file to another folder
 
-	Name              string
-	FriendlyName      string
-	Version           string
-	Creator           string
-	FullImage         string
-	MobileFriendly    bool
-	Disabled          bool
-	HideFromThemes    bool
-	BgAvatars         bool // For profiles, at the moment
-	GridLists         bool // User Manager
-	ForkOf            string
-	Tag               string
-	URL               string
-	Docks             []string // Allowed Values: leftSidebar, rightSidebar, footer
-	Settings          map[string]ThemeSetting
-	Templates         []TemplateMapping
-	TemplatesMap      map[string]string
-	TmplPtr           map[string]interface{}
-	Resources         []ThemeResource
-	ResourceTemplates *template.Template
+	Name               string
+	FriendlyName       string
+	Version            string
+	Creator            string
+	FullImage          string
+	MobileFriendly     bool
+	Disabled           bool
+	HideFromThemes     bool
+	BgAvatars          bool // For profiles, at the moment
+	GridLists          bool // User Manager
+	ForkOf             string
+	Tag                string
+	URL                string
+	Docks              []string // Allowed Values: leftSidebar, rightSidebar, footer
+	Settings           map[string]ThemeSetting
+	IntTmplHandle      *htmpl.Template
+	OverridenTemplates []string
+	Templates          []TemplateMapping
+	TemplatesMap       map[string]string
+	TmplPtr            map[string]interface{}
+	Resources          []ThemeResource
+	ResourceTemplates  *template.Template
 
 	// Dock intercepters
 	// TODO: Implement this
@@ -180,100 +183,22 @@ func (theme *Theme) MapTemplates() {
 				LogError(errors.New("The source template doesn't exist!"))
 			}
 
-			switch dTmplPtr := destTmplPtr.(type) {
-			case *func(CustomPagePage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(CustomPagePage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(TopicPage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(TopicPage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(TopicListPage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(TopicListPage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(ForumPage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(ForumPage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(ForumsPage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(ForumsPage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(ProfilePage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(ProfilePage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(CreateTopicPage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(CreateTopicPage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(IPSearchPage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(IPSearchPage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(AccountDashPage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(AccountDashPage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(ErrorPage, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(ErrorPage, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			case *func(Page, io.Writer) error:
-				switch sTmplPtr := sourceTmplPtr.(type) {
-				case *func(Page, io.Writer) error:
-					overridenTemplates[themeTmpl.Name] = true
-					*dTmplPtr = *sTmplPtr
-				default:
-					LogError(errors.New("The source and destination templates are incompatible"))
-				}
-			default:
+			dTmplPtr, ok := destTmplPtr.(*func(interface{}, io.Writer) error)
+			if !ok {
 				log.Print("themeTmpl.Name: ", themeTmpl.Name)
 				log.Print("themeTmpl.Source: ", themeTmpl.Source)
 				LogError(errors.New("Unknown destination template type!"))
+				return
 			}
+
+			sTmplPtr, ok := sourceTmplPtr.(*func(interface{}, io.Writer) error)
+			if !ok {
+				LogError(errors.New("The source and destination templates are incompatible"))
+				return
+			}
+
+			overridenTemplates[themeTmpl.Name] = true
+			*dTmplPtr = *sTmplPtr
 		}
 	}
 }
@@ -366,67 +291,17 @@ func (theme *Theme) RunTmpl(template string, pi interface{}, w io.Writer) error 
 
 	var getTmpl = theme.GetTmpl(template)
 	switch tmplO := getTmpl.(type) {
-	case *func(CustomPagePage, io.Writer) error:
+	case *func(interface{}, io.Writer) error:
 		var tmpl = *tmplO
-		return tmpl(pi.(CustomPagePage), w)
-	case *func(TopicPage, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(TopicPage), w)
-	case *func(TopicListPage, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(TopicListPage), w)
-	case *func(ForumPage, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(ForumPage), w)
-	case *func(ForumsPage, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(ForumsPage), w)
-	case *func(ProfilePage, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(ProfilePage), w)
-	case *func(CreateTopicPage, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(CreateTopicPage), w)
-	case *func(IPSearchPage, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(IPSearchPage), w)
-	case *func(Account, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(Account), w)
-	case *func(ErrorPage, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(ErrorPage), w)
-	case *func(Page, io.Writer) error:
-		var tmpl = *tmplO
-		return tmpl(pi.(Page), w)
-	case func(CustomPagePage, io.Writer) error:
-		return tmplO(pi.(CustomPagePage), w)
-	case func(TopicPage, io.Writer) error:
-		return tmplO(pi.(TopicPage), w)
-	case func(TopicListPage, io.Writer) error:
-		return tmplO(pi.(TopicListPage), w)
-	case func(ForumPage, io.Writer) error:
-		return tmplO(pi.(ForumPage), w)
-	case func(ForumsPage, io.Writer) error:
-		return tmplO(pi.(ForumsPage), w)
-	case func(ProfilePage, io.Writer) error:
-		return tmplO(pi.(ProfilePage), w)
-	case func(CreateTopicPage, io.Writer) error:
-		return tmplO(pi.(CreateTopicPage), w)
-	case func(IPSearchPage, io.Writer) error:
-		return tmplO(pi.(IPSearchPage), w)
-	case func(Account, io.Writer) error:
-		return tmplO(pi.(Account), w)
-	case func(ErrorPage, io.Writer) error:
-		return tmplO(pi.(ErrorPage), w)
-	case func(Page, io.Writer) error:
-		return tmplO(pi.(Page), w)
+		return tmpl(pi, w)
+	case func(interface{}, io.Writer) error:
+		return tmplO(pi, w)
 	case nil, string:
 		mapping, ok := theme.TemplatesMap[template]
 		if !ok {
 			mapping = template
 		}
-		return Templates.ExecuteTemplate(w, mapping+".html", pi)
+		return theme.IntTmplHandle.ExecuteTemplate(w, mapping+".html", pi)
 	default:
 		log.Print("theme ", theme)
 		log.Print("template ", template)

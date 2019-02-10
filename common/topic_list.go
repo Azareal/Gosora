@@ -16,9 +16,9 @@ type TopicListHolder struct {
 }
 
 type TopicListInt interface {
-	GetListByCanSee(canSee []int, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-	GetListByGroup(group *Group, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-	GetList(page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByCanSee(canSee []int, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByGroup(group *Group, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetList(page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
 }
 
 type DefaultTopicList struct {
@@ -94,7 +94,7 @@ func (tList *DefaultTopicList) Tick() error {
 
 	var canSeeHolders = make(map[string]*TopicListHolder)
 	for name, canSee := range permTree {
-		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, "")
+		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, "", nil)
 		if err != nil {
 			return err
 		}
@@ -115,12 +115,12 @@ func (tList *DefaultTopicList) Tick() error {
 	return nil
 }
 
-func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
 	if page == 0 {
 		page = 1
 	}
 	// TODO: Cache the first three pages not just the first along with all the topics on this beaten track
-	if page == 1 && orderby == "" {
+	if page == 1 && orderby == "" && len(filterIDs) == 0 {
 		var holder *TopicListHolder
 		var ok bool
 		if group.ID%2 == 0 {
@@ -139,10 +139,10 @@ func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby st
 
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
 	//log.Printf("deoptimising for %d on page %d\n", group.ID, page)
-	return tList.GetListByCanSee(group.CanSee, page, orderby)
+	return tList.GetListByCanSee(group.CanSee, page, orderby, filterIDs)
 }
 
-func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
 	// We need a list of the visible forums for Quick Topic
 	// ? - Would it be useful, if we could post in social groups from /topics/?
 	for _, fid := range canSee {
@@ -152,6 +152,26 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 			// TODO: Add a hook here for plugin_guilds
 			forumList = append(forumList, fcopy)
 		}
+	}
+
+	var inSlice = func(haystack []int, needle int) bool {
+		for _, item := range haystack {
+			if needle == item {
+				return true
+			}
+		}
+		return false
+	}
+
+	var filteredForums []Forum
+	if len(filterIDs) > 0 {
+		for _, forum := range forumList {
+			if inSlice(filterIDs, forum.ID) {
+				filteredForums = append(filteredForums, forum)
+			}
+		}
+	} else {
+		filteredForums = forumList
 	}
 
 	// ? - Should we be showing plugin_guilds posts on /topics/?
@@ -166,11 +186,31 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 }
 
 // TODO: Reduce the number of returns
-func (tList *DefaultTopicList) GetList(page int, orderby string) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
-	canSee, err := Forums.GetAllVisibleIDs()
+	cCanSee, err := Forums.GetAllVisibleIDs()
 	if err != nil {
 		return nil, nil, Paginator{nil, 1, 1}, err
+	}
+
+	var inSlice = func(haystack []int, needle int) bool {
+		for _, item := range haystack {
+			if needle == item {
+				return true
+			}
+		}
+		return false
+	}
+
+	var canSee []int
+	if len(filterIDs) > 0 {
+		for _, fid := range cCanSee {
+			if inSlice(filterIDs, fid) {
+				canSee = append(canSee, fid)
+			}
+		}
+	} else {
+		canSee = cCanSee
 	}
 
 	// We need a list of the visible forums for Quick Topic

@@ -17,6 +17,9 @@ go build -o QueryGen "./cmd/query_gen"
 echo "Running the query generator"
 ./QueryGen
 
+echo "Generating the JSON handlers"
+easyjson -pkg common
+
 echo "Building Gosora"
 go build -o Gosora
 

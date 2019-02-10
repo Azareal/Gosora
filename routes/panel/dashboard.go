@@ -209,5 +209,5 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user common.User) common.
 	}
 
 	pi := common.PanelDashboardPage{basePage, gridElements}
-	return renderTemplate("panel_dashboard", w, r, user, &pi)
+	return renderTemplate("panel_dashboard", w, r, basePage.Header, &pi)
 }

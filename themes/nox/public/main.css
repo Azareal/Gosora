@@ -156,6 +156,11 @@ li a {
 .sidebar {
 	width: 320px;
 }
+.widget_simple .rowitem {
+	line-height: 18px;
+	padding-top: 14px !important;
+	padding-bottom: 14px !important;
+}
 .the_form {
 	border-radius: 3px;
 	background-color: #444444;
@@ -193,6 +198,9 @@ li a {
 	margin-bottom: 5px;
 	padding: 4px;
 }
+.filter_item a {
+	color: #BBBBBB;
+}
 .colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem:not(:last-child) {
 	margin-bottom: 8px;
 }
@@ -213,6 +221,22 @@ h1, h2, h3, h4, h5 {
 	font-weight: normal;
 	white-space: nowrap;
 }
+
+/* new */
+.filter_list {
+    margin-top: 5px;
+    background-color: #444444;
+    margin-left: 12px;
+    border-radius: 3px;
+}
+.filter_item {
+	margin-left: 0px !important;
+}
+.filter_selected {
+	background-color: #555555 !important;
+    border-radius: 0px !important;
+}
+/* new end */
 
 @keyframes fadein {
 	from { opacity: 0; }
@@ -586,13 +610,19 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
     display: flex;
     margin-top: 8px;
 }
-
 .pageitem {
 	font-size: 17px;
 	border-radius: 3px;
 	background-color: #444444;
 	padding: 7px;
 	margin-right: 6px;
+}
+.pagefirst, .pagenext, .pageprev, .pagelast {
+	padding-top: 2px;
+    padding-bottom: 6px;
+}
+.pagefirst a, .pagenext a, .pageprev a, .pagelast a {
+	font-size: 22px;
 }
 
 #prevFloat, #nextFloat {
@@ -934,13 +964,15 @@ input[type=checkbox]:checked + label .sel {
 	margin-top: 4px;
 }
 .rowlist.bgavatars.not_grid .bgsub {
-	height: 36px;
-	width: 36px;
-	margin-left: 8px;
-	margin-right: 12px;
+	height: 28px;
+	width: 28px;
+	margin-left: 4px;
+	margin-right: 10px;
 }
 .rowlist.bgavatars.not_grid .rowTitle {
+	font-size: 17px;
 	margin-left: 0px;
+	margin-top: 0px;
 }
 
 .ip_search_block {

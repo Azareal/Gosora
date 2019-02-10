@@ -237,10 +237,11 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_ban":                        nil,
 	"pre_render_ip_search":                  nil,
 
-	"pre_render_panel_dashboard":    nil,
-	"pre_render_panel_forums":       nil,
-	"pre_render_panel_delete_forum": nil,
-	"pre_render_panel_edit_forum":   nil,
+	"pre_render_panel_dashboard":        nil,
+	"pre_render_panel_forums":           nil,
+	"pre_render_panel_delete_forum":     nil,
+	"pre_render_panel_forum_edit":       nil,
+	"pre_render_panel_forum_edit_perms": nil,
 
 	"pre_render_panel_analytics_views":          nil,
 	"pre_render_panel_analytics_routes":         nil,
@@ -258,7 +259,7 @@ var PreRenderHooks = map[string][]func(http.ResponseWriter, *http.Request, *User
 	"pre_render_panel_word_filters_edit": nil,
 	"pre_render_panel_plugins":           nil,
 	"pre_render_panel_users":             nil,
-	"pre_render_panel_edit_user":         nil,
+	"pre_render_panel_user_edit":         nil,
 	"pre_render_panel_groups":            nil,
 	"pre_render_panel_group_edit":        nil,
 	"pre_render_panel_group_edit_perms":  nil,
@@ -284,11 +285,11 @@ type Plugin struct {
 	Installable bool
 	Installed   bool
 
-	Init       func() error
-	Activate   func() error
-	Deactivate func() // TODO: We might want to let this return an error?
-	Install    func() error
-	Uninstall  func() error // TODO: I'm not sure uninstall is implemented
+	Init       func(plugin *Plugin) error
+	Activate   func(plugin *Plugin) error
+	Deactivate func(plugin *Plugin) // TODO: We might want to let this return an error?
+	Install    func(plugin *Plugin) error
+	Uninstall  func(plugin *Plugin) error // TODO: I'm not sure uninstall is implemented
 
 	Hooks map[string]int
 	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins
@@ -511,8 +512,8 @@ func InitPlugins() {
 		log.Printf("Added plugin '%s'", name)
 		if body.Active {
 			log.Printf("Initialised plugin '%s'", name)
-			if Plugins[name].Init != nil {
-				err := Plugins[name].Init()
+			if body.Init != nil {
+				err := body.Init(body)
 				if err != nil {
 					log.Print(err)
 				}

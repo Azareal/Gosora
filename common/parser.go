@@ -849,6 +849,7 @@ func CoerceIntString(data string) (res int, length int) {
 }
 
 // TODO: Write tests for this
+// Make sure we reflect changes to this in the JS port in /public/global.js
 func Paginate(count int, perPage int, maxPages int) []int {
 	if count < perPage {
 		return []int{1}
@@ -866,6 +867,7 @@ func Paginate(count int, perPage int, maxPages int) []int {
 }
 
 // TODO: Write tests for this
+// Make sure we reflect changes to this in the JS port in /public/global.js
 func PageOffset(count int, page int, perPage int) (int, int, int) {
 	var offset int
 	lastPage := LastPage(count, perPage)
@@ -886,6 +888,7 @@ func PageOffset(count int, page int, perPage int) (int, int, int) {
 }
 
 // TODO: Write tests for this
+// Make sure we reflect changes to this in the JS port in /public/global.js
 func LastPage(count int, perPage int) int {
 	return (count / perPage) + 1
 }

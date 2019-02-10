@@ -63,6 +63,11 @@ type CTemplateSet struct {
 	config        CTemplateConfig
 	baseImportMap map[string]string
 	buildTags     string
+
+	overridenTrack map[string]map[string]bool
+	overridenRoots map[string]map[string]bool
+	themeName      string
+	perThemeTmpls  map[string]bool
 }
 
 func NewCTemplateSet() *CTemplateSet {
@@ -70,7 +75,8 @@ func NewCTemplateSet() *CTemplateSet {
 		config: CTemplateConfig{
 			PackageName: "main",
 		},
-		baseImportMap: map[string]string{},
+		baseImportMap:  map[string]string{},
+		overridenRoots: map[string]map[string]bool{},
 		funcMap: map[string]interface{}{
 			"and":      "&&",
 			"not":      "!",
@@ -118,6 +124,22 @@ func (c *CTemplateSet) SetBuildTags(tags string) {
 	c.buildTags = tags
 }
 
+func (c *CTemplateSet) SetOverrideTrack(overriden map[string]map[string]bool) {
+	c.overridenTrack = overriden
+}
+
+func (c *CTemplateSet) GetOverridenRoots() map[string]map[string]bool {
+	return c.overridenRoots
+}
+
+func (c *CTemplateSet) SetThemeName(name string) {
+	c.themeName = name
+}
+
+func (c *CTemplateSet) SetPerThemeTmpls(perThemeTmpls map[string]bool) {
+	c.perThemeTmpls = perThemeTmpls
+}
+
 type SkipBlock struct {
 	Frags           map[int]int
 	LastCount       int
@@ -139,10 +161,8 @@ func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects st
 	for index, item := range c.baseImportMap {
 		c.importMap[index] = item
 	}
-	if len(imports) > 0 {
-		for _, importItem := range imports {
-			c.importMap[importItem] = importItem
-		}
+	for _, importItem := range imports {
+		c.importMap[importItem] = importItem
 	}
 	var importList string
 	for _, item := range c.importMap {
@@ -150,10 +170,18 @@ func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects st
 	}
 
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
+	if c.themeName != "" {
+		_, ok := c.perThemeTmpls[fname]
+		if !ok {
+			return "", "", "", nil
+		}
+		fname += "_" + c.themeName
+	}
 	c.importMap["github.com/Azareal/Gosora/common"] = "github.com/Azareal/Gosora/common"
 
 	stub = `package ` + c.config.PackageName + `
 ` + importList + `
+import "errors"
 `
 
 	if !c.config.SkipInitBlock {
@@ -171,13 +199,18 @@ func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects st
 		stub += "}\n\n"
 	}
 
+	// TODO: Try to remove this redundant interface cast
 	stub += `
 // nolint
-func Template_` + fname + `(tmpl_` + fname + `_vars ` + expects + `, w io.Writer) error {
-	if tmpl_` + fname + `_vars.CurrentUser.Loggedin {
-		return Template_` + fname + `_member(tmpl_` + fname + `_vars, w)
+func Template_` + fname + `(tmpl_` + fname + `_i interface{}, w io.Writer) error {
+	tmpl_` + fname + `_vars, ok := tmpl_` + fname + `_i.(` + expects + `)
+	if !ok {
+		return errors.New("invalid page struct value")
 	}
-	return Template_` + fname + `_guest(tmpl_` + fname + `_vars, w)
+	if tmpl_` + fname + `_vars.CurrentUser.Loggedin {
+		return Template_` + fname + `_member(tmpl_` + fname + `_i, w)
+	}
+	return Template_` + fname + `_guest(tmpl_` + fname + `_i, w)
 }`
 
 	c.fileDir = fileDir
@@ -213,15 +246,14 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	return c.compile(name, content, expects, expectsInt, varList, imports...)
 }
 
-func (c *CTemplateSet) compile(name string, content, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
+func (c *CTemplateSet) compile(name string, content string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
 	c.importMap = map[string]string{}
 	for index, item := range c.baseImportMap {
 		c.importMap[index] = item
 	}
-	if len(imports) > 0 {
-		for _, importItem := range imports {
-			c.importMap[importItem] = importItem
-		}
+	c.importMap["errors"] = "errors"
+	for _, importItem := range imports {
+		c.importMap[importItem] = importItem
 	}
 
 	c.varList = varList
@@ -238,6 +270,13 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 	c.detail(name)
 
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
+	if c.themeName != "" {
+		_, ok := c.perThemeTmpls[fname]
+		if !ok {
+			return "", nil
+		}
+		fname += "_" + c.themeName
+	}
 	if c.guestOnly {
 		fname += "_guest"
 	} else if c.memberOnly {
@@ -246,7 +285,14 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 
 	var outBuf []OutBufferFrame
 	var rootHold = "tmpl_" + fname + "_vars"
-	con := CContext{RootHolder: rootHold, VarHolder: rootHold, HoldReflect: reflect.ValueOf(expectsInt), TemplateName: fname, OutBuf: &outBuf}
+	con := CContext{
+		RootHolder:       rootHold,
+		VarHolder:        rootHold,
+		HoldReflect:      reflect.ValueOf(expectsInt),
+		RootTemplateName: fname,
+		TemplateName:     fname,
+		OutBuf:           &outBuf,
+	}
 	c.templateList = map[string]*parse.Tree{fname: tree}
 	c.detail(c.templateList)
 	c.localVars = make(map[string]map[string]VarItemReflect)
@@ -274,7 +320,6 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 	if !ok {
 		c.FragOnce[fname] = true
 	}
-
 	if len(c.langIndexToName) > 0 {
 		c.importMap[langPkg] = langPkg
 	}
@@ -319,7 +364,12 @@ func (c *CTemplateSet) compile(name string, content, expects string, expectsInt 
 		fout += "}\n\n"
 	}
 
-	fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_vars " + expects + ", w io.Writer) error {\n"
+	fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_i interface{}, w io.Writer) error {\n"
+	fout += `tmpl_` + fname + `_vars, ok := tmpl_` + fname + `_i.(` + expects + `)
+	if !ok {
+		return errors.New("invalid page struct value")
+	}
+`
 	if len(c.langIndexToName) > 0 {
 		fout += "var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
 	}
@@ -427,7 +477,7 @@ func (c *CTemplateSet) rootIterate(tree *parse.Tree, con CContext) {
 	c.retCall("rootIterate")
 }
 
-var inSlice = func(haystack []string, expr string) bool {
+func inSlice(haystack []string, expr string) bool {
 	for _, needle := range haystack {
 		if needle == expr {
 			return true
@@ -600,11 +650,15 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 		}
 		c.detail("Range item:", item)
 		if !item.IsValid() {
+			c.critical("expr:", expr)
+			c.critical("con.VarHolder", con.VarHolder)
 			panic("item" + "^\n" + "Invalid map. Maybe, it doesn't have any entries for the template engine to analyse?")
 		}
 		startIf(item, true)
 	case reflect.Slice:
 		if outVal.Len() == 0 {
+			c.critical("expr:", expr)
+			c.critical("con.VarHolder", con.VarHolder)
 			panic("The sample data needs at-least one or more elements for the slices. We're looking into removing this requirement at some point!")
 		}
 		startIf(outVal.Index(0), false)
@@ -1367,6 +1421,7 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 
 func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNode) {
 	c.dumpCall("compileSubTemplate", pcon, node)
+	defer c.retCall("compileSubTemplate")
 	c.detail("Template Node: ", node.Name)
 
 	// TODO: Cascade errors back up the tree to the caller?
@@ -1474,9 +1529,52 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	if !ok {
 		c.FragOnce[fname] = true
 	}
+
+	// map[string]map[string]bool
+	c.detail("overridenTrack loop")
+	c.detail("fname:", fname)
+	for themeName, track := range c.overridenTrack {
+		c.detail("themeName:", themeName)
+		c.detailf("track: %+v\n", track)
+		croot, ok := c.overridenRoots[themeName]
+		if !ok {
+			croot = make(map[string]bool)
+			c.overridenRoots[themeName] = croot
+		}
+		c.detailf("croot: %+v\n", croot)
+		for tmplName, _ := range track {
+			cname := tmplName
+			if c.guestOnly {
+				cname += "_guest"
+			} else if c.memberOnly {
+				cname += "_member"
+			}
+			c.detail("cname:", cname)
+			if fname == cname {
+				c.detail("match")
+				croot[strings.TrimSuffix(strings.TrimSuffix(con.RootTemplateName, "_guest"), "_member")] = true
+			} else {
+				c.detail("no match")
+			}
+		}
+	}
+	c.detailf("c.overridenRoots: %+v\n", c.overridenRoots)
 }
 
 func (c *CTemplateSet) loadTemplate(fileDir string, name string) (content string, err error) {
+	if c.themeName != "" {
+		c.detail("per-theme override: ", "./themes/"+c.themeName+"/overrides/"+name)
+		res, err := ioutil.ReadFile("./themes/" + c.themeName + "/overrides/" + name)
+		if err == nil {
+			content = string(res)
+			if c.config.Minify {
+				content = minify(content)
+			}
+			return content, nil
+		}
+		c.detail("override err: ", err)
+	}
+
 	res, err := ioutil.ReadFile(c.fileDir + "overrides/" + name)
 	if err != nil {
 		c.detail("override path: ", c.fileDir+"overrides/"+name)

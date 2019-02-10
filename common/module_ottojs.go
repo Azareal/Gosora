@@ -45,7 +45,7 @@ func (js *OttoPluginLang) AddPlugin(meta PluginMeta) (plugin *Plugin, err error)
 		return nil, err
 	}
 
-	var pluginInit = func() error {
+	var pluginInit = func(plugin *Plugin) error {
 		retValue, err := js.vm.Run(script)
 		if err != nil {
 			return err

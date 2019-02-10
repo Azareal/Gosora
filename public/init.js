@@ -90,12 +90,23 @@ function loadScript(name, callback) {
 		});
 }
 
+/*
+function loadTmpl(name,callback) {
+	let url = "/static/"+name
+	let worker = new Worker(url);
+}
+*/
+
 function DoNothingButPassBack(item) {
 	return item;
 }
 
+function RelativeTime(date) {
+	return date;
+}
+
 function initPhrases() {
-	fetchPhrases("status,topic_list,alerts")
+	fetchPhrases("status,topic_list,alerts,paginator")
 }
 
 function fetchPhrases(plist) {
@@ -131,6 +142,19 @@ function fetchPhrases(plist) {
 
 (() => {
 	runInitHook("pre_iife");
+	let toLoad = 2;
+	// TODO: Shunt this into loggedIn if there aren't any search and filter widgets?
+	loadScript("template_topics_topic.js", () => {
+		console.log("Loaded template_topics_topic.js");
+		toLoad--;
+		if(toLoad===0) initPhrases();
+	});
+	loadScript("template_paginator.js", () => {
+		console.log("Loaded template_paginator.js");
+		toLoad--;
+		if(toLoad===0) initPhrases();
+	});
+
 	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
 	if(loggedIn=="true") {
 		fetch("/api/me/")
@@ -140,13 +164,6 @@ function fetchPhrases(plist) {
 			console.log("data:",data);
 			me = data;
 			runInitHook("pre_init");
-		});
-		
-		let toLoad = 1;
-		loadScript("template_topics_topic.js", () => {
-			console.log("Loaded template_topics_topic.js");
-			toLoad--;
-			if(toLoad===0) initPhrases();
 		});
 	} else {
 		me = {User:{ID:0,Session:""},Site:{"MaxRequestSize":0}};

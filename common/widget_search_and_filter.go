@@ -3,16 +3,19 @@ package common
 import "errors"
 
 // TODO: Move this into it's own package to make neater and tidier
+type filterForum struct {
+	*Forum
+	Selected bool
+}
 type searchAndFilter struct {
 	*Header
-	Forums []*Forum
+	Forums []filterForum
 }
 
 func widgetSearchAndFilter(widget *Widget, hvars interface{}) (out string, err error) {
 	header := hvars.(*Header)
 	user := header.CurrentUser
-
-	var forums []*Forum
+	var forums []filterForum
 	var canSee []int
 	if user.IsSuperAdmin {
 		canSee, err = Forums.GetAllVisibleIDs()
@@ -31,7 +34,7 @@ func widgetSearchAndFilter(widget *Widget, hvars interface{}) (out string, err e
 	for _, fid := range canSee {
 		forum := Forums.DirtyGet(fid)
 		if forum.ParentID == 0 && forum.Name != "" && forum.Active {
-			forums = append(forums, forum)
+			forums = append(forums, filterForum{forum, (header.Zone == "view_forum" || header.Zone == "topics") && header.ZoneID == forum.ID})
 		}
 	}
 

@@ -40,6 +40,9 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Generating the JSON handlers
+easyjson -pkg common
+
 echo Building the executable
 go test
 if %errorlevel% neq 0 (

@@ -15,13 +15,13 @@ func init() {
 	common.PrebuildTmplList = append(common.PrebuildTmplList, guilds.PrebuildTmplList)
 }
 
-func initGuilds() (err error) {
-	common.Plugins["guilds"].AddHook("intercept_build_widgets", guilds.Widgets)
-	common.Plugins["guilds"].AddHook("trow_assign", guilds.TrowAssign)
-	common.Plugins["guilds"].AddHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
-	common.Plugins["guilds"].AddHook("pre_render_forum", guilds.PreRenderViewForum)
-	common.Plugins["guilds"].AddHook("simple_forum_check_pre_perms", guilds.ForumCheck)
-	common.Plugins["guilds"].AddHook("forum_check_pre_perms", guilds.ForumCheck)
+func initGuilds(plugin *common.Plugin) (err error) {
+	plugin.AddHook("intercept_build_widgets", guilds.Widgets)
+	plugin.AddHook("trow_assign", guilds.TrowAssign)
+	plugin.AddHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
+	plugin.AddHook("pre_render_forum", guilds.PreRenderViewForum)
+	plugin.AddHook("simple_forum_check_pre_perms", guilds.ForumCheck)
+	plugin.AddHook("forum_check_pre_perms", guilds.ForumCheck)
 	// TODO: Auto-grant this perm to admins upon installation?
 	common.RegisterPluginPerm("CreateGuild")
 	router.HandleFunc("/guilds/", guilds.RouteGuildList)
@@ -54,13 +54,13 @@ func initGuilds() (err error) {
 	return acc.FirstError()
 }
 
-func deactivateGuilds() {
-	common.Plugins["guilds"].RemoveHook("intercept_build_widgets", guilds.Widgets)
-	common.Plugins["guilds"].RemoveHook("trow_assign", guilds.TrowAssign)
-	common.Plugins["guilds"].RemoveHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
-	common.Plugins["guilds"].RemoveHook("pre_render_forum", guilds.PreRenderViewForum)
-	common.Plugins["guilds"].RemoveHook("simple_forum_check_pre_perms", guilds.ForumCheck)
-	common.Plugins["guilds"].RemoveHook("forum_check_pre_perms", guilds.ForumCheck)
+func deactivateGuilds(plugin *common.Plugin) {
+	plugin.RemoveHook("intercept_build_widgets", guilds.Widgets)
+	plugin.RemoveHook("trow_assign", guilds.TrowAssign)
+	plugin.RemoveHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
+	plugin.RemoveHook("pre_render_forum", guilds.PreRenderViewForum)
+	plugin.RemoveHook("simple_forum_check_pre_perms", guilds.ForumCheck)
+	plugin.RemoveHook("forum_check_pre_perms", guilds.ForumCheck)
 	common.DeregisterPluginPerm("CreateGuild")
 	_ = router.RemoveFunc("/guilds/")
 	_ = router.RemoveFunc("/guild/")
@@ -76,7 +76,7 @@ func deactivateGuilds() {
 }
 
 // TODO: Stop accessing the query builder directly and add a feature in Gosora which is more easily reversed, if an error comes up during the installation process
-func installGuilds() error {
+func installGuilds(plugin *common.Plugin) error {
 	guildTableStmt, err := qgen.Builder.CreateTable("guilds", "utf8mb4", "utf8mb4_general_ci",
 		[]qgen.DBTableColumn{
 			qgen.DBTableColumn{"guildID", "int", 0, false, true, ""},
@@ -125,6 +125,6 @@ func installGuilds() error {
 }
 
 // TO-DO; Implement an uninstallation system into Gosora. And a better installation system.
-func uninstallGuilds() error {
+func uninstallGuilds(plugin *common.Plugin) error {
 	return nil
 }

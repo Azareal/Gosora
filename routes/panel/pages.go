@@ -33,7 +33,7 @@ func Pages(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 
 	pageList := common.Paginate(pageCount, perPage, 5)
 	pi := common.PanelCustomPagesPage{basePage, cPages, common.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_pages", w, r, user, &pi)
+	return renderTemplate("panel_pages", w, r, basePage.Header, &pi)
 }
 
 func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -90,7 +90,7 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, user common.User, spid st
 	}
 
 	pi := common.PanelCustomPageEditPage{basePage, page}
-	return renderTemplate("panel_pages_edit", w, r, user, &pi)
+	return renderTemplate("panel_pages_edit", w, r, basePage.Header, &pi)
 }
 
 func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, spid string) common.RouteError {

@@ -63,6 +63,10 @@ func (build *Accumulator) prepare(res string, err error) *sql.Stmt {
 	return stmt
 }
 
+func (build *Accumulator) RawPrepare(res string) *sql.Stmt {
+	return build.prepare(res, nil)
+}
+
 func (build *Accumulator) query(query string, args ...interface{}) (rows *sql.Rows, err error) {
 	err = build.FirstError()
 	if err != nil {

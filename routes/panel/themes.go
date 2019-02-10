@@ -34,7 +34,7 @@ func Themes(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	}
 
 	pi := common.PanelThemesPage{basePage, pThemeList, vThemeList}
-	return renderTemplate("panel_themes", w, r, user, &pi)
+	return renderTemplate("panel_themes", w, r, basePage.Header, &pi)
 }
 
 func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user common.User, uname string) common.RouteError {
@@ -86,7 +86,7 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user common.User) commo
 	}
 
 	pi := common.PanelMenuListPage{basePage, menuList}
-	return renderTemplate("panel_themes_menus", w, r, user, &pi)
+	return renderTemplate("panel_themes_menus", w, r, basePage.Header, &pi)
 }
 
 func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user common.User, smid string) common.RouteError {
@@ -133,7 +133,7 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	pi := common.PanelMenuPage{basePage, mid, menuList}
-	return renderTemplate("panel_themes_menus_items", w, r, user, &pi)
+	return renderTemplate("panel_themes_menus_items", w, r, basePage.Header, &pi)
 }
 
 func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user common.User, sitemID string) common.RouteError {
@@ -159,7 +159,7 @@ func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user common.User
 	}
 
 	pi := common.PanelMenuItemPage{basePage, menuItem}
-	return renderTemplate("panel_themes_menus_item_edit", w, r, user, &pi)
+	return renderTemplate("panel_themes_menus_item_edit", w, r, basePage.Header, &pi)
 }
 
 func themesMenuItemSetters(r *http.Request, menuItem common.MenuItem) common.MenuItem {
@@ -361,7 +361,7 @@ func ThemesWidgets(w http.ResponseWriter, r *http.Request, user common.User) com
 	}
 
 	pi := common.PanelWidgetListPage{basePage, docks, common.WidgetEdit{&common.Widget{ID: 0, Type: "simple"}, make(map[string]string)}}
-	return renderTemplate("panel_themes_widgets", w, r, user, &pi)
+	return renderTemplate("panel_themes_widgets", w, r, basePage.Header, &pi)
 }
 
 func widgetsParseInputs(r *http.Request, widget *common.Widget) (*common.WidgetEdit, error) {

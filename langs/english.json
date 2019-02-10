@@ -537,7 +537,6 @@
 		"status.closed_tooltip":"Status: Closed",
 		"status.pinned_tooltip":"Status: Pinned",
 
-		"topics_head":"All Topics",
 		"topics_locked_tooltip":"You don't have the permissions needed to create a topic",
 		"topics_locked_aria":"You don't have the permissions needed to make a topic anywhere",
 		"topics_list_aria":"A list containing topics from every forum",
@@ -624,12 +623,16 @@
 
 		"topic.your_information":"Your information",
 
-		"paginator_less_than":"&lt;",
-		"paginator_greater_than":"&gt;",
-		"paginator_prev_page":"Prev",
-		"paginator_prev_page_aria":"Go to the previous page",
-		"paginator_next_page":"Next",
-		"paginator_next_page_aria":"Go to the next page",
+		"paginator.less_than":"&lt;",
+		"paginator.greater_than":"&gt;",
+		"paginator.first_page":"‹‹",
+		"paginator.first_page_aria":"Go to the first page",
+		"paginator.last_page":"››",
+		"paginator.last_page_aria":"Go to the last page",
+		"paginator.prev_page":"‹",
+		"paginator.prev_page_aria":"Go to the previous page",
+		"paginator.next_page":"›",
+		"paginator.next_page_aria":"Go to the next page",
 
 		"profile_login_for_options":"Login for options",
 		"profile_add_friend":"Add Friend",
@@ -754,6 +757,7 @@
 		"panel_forum_edit_button":"Edit",
 		"panel_forum_short_update_button":"Update",
 		"panel_forum_full_edit_button":"Full Edit",
+		"panel_forum_delete_are_you_sure":"Are you sure you want to delete the '%s' forum?",
 
 		"panel_groups_head":"Groups",
 		"panel_groups_rank_prefix":"Rank ",

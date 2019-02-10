@@ -67,7 +67,7 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, header
 	}
 
 	// ! Is this safe?
-	if common.Templates.Lookup("page_"+name+".html") == nil {
+	if common.DefaultTemplates.Lookup("page_"+name+".html") == nil {
 		return common.NotFound(w, r, header)
 	}
 
@@ -77,7 +77,7 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, header
 	if common.RunPreRenderHook("pre_render_tmpl_page", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.Templates.ExecuteTemplate(w, "page_"+name+".html", pi)
+	err = header.Theme.RunTmpl("page_"+name, pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

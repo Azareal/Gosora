@@ -4,11 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -136,6 +139,40 @@ func NewThemeList() (themes ThemeList, err error) {
 			}
 		}
 
+		theme.IntTmplHandle = DefaultTemplates
+		overrides, err := ioutil.ReadDir(theme.Path + "/overrides/")
+		if err != nil && !os.IsNotExist(err) {
+			return themes, err
+		}
+		if len(overrides) > 0 {
+			var overCount = 0
+			for _, override := range overrides {
+				if override.IsDir() {
+					continue
+				}
+				var ext = filepath.Ext(themePath + "/overrides/" + override.Name())
+				log.Print("attempting to add " + themePath + "/overrides/" + override.Name())
+				if ext != ".html" {
+					log.Print("not a html file")
+					continue
+				}
+				overCount++
+				theme.OverridenTemplates = append(theme.OverridenTemplates, strings.TrimSuffix(override.Name(), ext))
+				log.Print("succeeded")
+			}
+
+			localTmpls := template.New("")
+			err = loadTemplates(localTmpls, theme.Name)
+			if err != nil {
+				return themes, err
+			}
+			theme.IntTmplHandle = localTmpls
+			log.Printf("theme.OverridenTemplates: %+v\n", theme.OverridenTemplates)
+			log.Printf("theme.IntTmplHandle: %+v\n", theme.IntTmplHandle)
+		} else {
+			log.Print("no overrides for " + theme.Name)
+		}
+
 		// TODO: Bind the built template, or an interpreted one for any dock overrides this theme has
 
 		themes[theme.Name] = theme
@@ -218,88 +255,20 @@ func ResetTemplateOverrides() {
 		}
 
 		// Not really a pointer, more of a function handle, an artifact from one of the earlier versions of themes.go
-		switch oPtr := originPointer.(type) {
-		case func(CustomPagePage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(CustomPagePage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(TopicPage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(TopicPage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(TopicListPage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(TopicListPage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(ForumPage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(ForumPage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(ForumsPage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(ForumsPage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(ProfilePage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(ProfilePage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(CreateTopicPage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(CreateTopicPage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(IPSearchPage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(IPSearchPage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(AccountDashPage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(AccountDashPage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(ErrorPage, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(ErrorPage, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		case func(Page, io.Writer) error:
-			switch dPtr := destTmplPtr.(type) {
-			case *func(Page, io.Writer) error:
-				*dPtr = oPtr
-			default:
-				LogError(errors.New("The source and destination templates are incompatible"))
-			}
-		default:
+		oPtr, ok := originPointer.(func(interface{}, io.Writer) error)
+		if !ok {
 			log.Print("name: ", name)
 			LogError(errors.New("Unknown destination template type!"))
+			return
 		}
+
+		dPtr, ok := destTmplPtr.(*func(interface{}, io.Writer) error)
+		if !ok {
+			LogError(errors.New("The source and destination templates are incompatible"))
+			return
+		}
+
+		*dPtr = oPtr
 		log.Print("The template override was reset")
 	}
 	overridenTemplates = make(map[string]bool)
@@ -313,7 +282,7 @@ func CreateThemeTemplate(theme string, name string) {
 		if !ok {
 			mapping = name
 		}
-		return Templates.ExecuteTemplate(w, mapping+".html", pi)
+		return DefaultTemplates.ExecuteTemplate(w, mapping+".html", pi)
 	}
 }
 

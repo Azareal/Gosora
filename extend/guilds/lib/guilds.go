@@ -116,7 +116,7 @@ func CommonAreaWidgets(header *common.Header) {
 		common.WidgetMenuItem{"Create Guild", "/guild/create/", false},
 	}}
 
-	err := common.Templates.ExecuteTemplate(&b, "widget_menu.html", menu)
+	err := header.Theme.RunTmpl("widget_menu", pi, w)
 	if err != nil {
 		common.LogError(err)
 		return
@@ -232,7 +232,7 @@ func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user common.User) 
 	CommonAreaWidgets(header)
 
 	pi := common.Page{header, tList, nil}
-	err := common.Templates.ExecuteTemplate(w, "guilds_create_guild.html", pi)
+	err := header.Theme.RunTmpl("guilds_create_guild", pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -384,7 +384,7 @@ func PreRenderViewForum(w http.ResponseWriter, r *http.Request, user *common.Use
 			guildItem := guildData.(*Guild)
 
 			guildpi := Page{pi.Title, pi.Header, pi.ItemList, pi.Forum, guildItem, pi.Page, pi.LastPage}
-			err := common.Templates.ExecuteTemplate(w, "guilds_view_guild.html", guildpi)
+			err := header.Theme.RunTmpl("guilds_view_guild", guildpi, w)
 			if err != nil {
 				common.LogError(err)
 				return false

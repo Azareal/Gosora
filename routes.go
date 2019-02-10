@@ -1,7 +1,7 @@
 /*
 *
 *	Gosora Route Handlers
-*	Copyright Azareal 2016 - 2019
+*	Copyright Azareal 2016 - 2020
 *
  */
 package main
@@ -138,6 +138,13 @@ var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(common.Day))
 
 // TODO: Be careful with exposing the panel phrases here, maybe move them into a different namespace? We also need to educate the admin that phrases aren't necessarily secret
 // TODO: Move to the routes package
+var phraseWhitelist = []string{
+	"topic",
+	"status",
+	"alerts",
+	"paginator",
+}
+
 func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	h := w.Header()
@@ -148,7 +155,6 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 	if err != nil {
 		return common.PreErrorJS("Bad Form", w, r)
 	}
-
 	query := r.FormValue("query")
 	if query == "" {
 		return common.PreErrorJS("No query provided", w, r)
@@ -183,12 +189,20 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 
 	var plist map[string]string
 	// A little optimisation to avoid copying entries from one map to the other, if we don't have to mutate it
+	// TODO: Reduce the amount of duplication here
 	if len(positives) > 1 {
 		plist = make(map[string]string)
 		for _, positive := range positives {
-			// ! Constrain it to topic and status phrases for now
-			if !strings.HasPrefix(positive, "topic") && !strings.HasPrefix(positive, "status") && !strings.HasPrefix(positive, "alerts") {
-				return common.PreErrorJS("Not implemented!", w, r)
+			// ! Constrain it to a subset of phrases for now
+			var ok = false
+			for _, item := range phraseWhitelist {
+				if strings.HasPrefix(positive, item) {
+					ok = true
+					break
+				}
+			}
+			if !ok {
+				return common.PreErrorJS("Outside of phrase prefix whitelist", w, r)
 			}
 			pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positive)
 			if !ok {
@@ -199,9 +213,16 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 			}
 		}
 	} else {
-		// ! Constrain it to topic and status phrases for now
-		if !strings.HasPrefix(positives[0], "topic") && !strings.HasPrefix(positives[0], "status") && !strings.HasPrefix(positives[0], "alerts") {
-			return common.PreErrorJS("Not implemented!", w, r)
+		// ! Constrain it to a subset of phrases for now
+		var ok = false
+		for _, item := range phraseWhitelist {
+			if strings.HasPrefix(positives[0], item) {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return common.PreErrorJS("Outside of phrase prefix whitelist", w, r)
 		}
 		pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positives[0])
 		if !ok {

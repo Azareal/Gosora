@@ -22,8 +22,8 @@ func init() {
 	common.Plugins.Add(&common.Plugin{UName: "markdown", Name: "Markdown", Author: "Azareal", URL: "https://github.com/Azareal", Init: initMarkdown, Deactivate: deactivateMarkdown})
 }
 
-func initMarkdown() error {
-	common.Plugins["markdown"].AddHook("parse_assign", markdownParse)
+func initMarkdown(plugin *common.Plugin) error {
+	plugin.AddHook("parse_assign", markdownParse)
 
 	markdownUnclosedElement = []byte("<span style='color: red;'>[Unclosed Element]</span>")
 
@@ -38,8 +38,8 @@ func initMarkdown() error {
 	return nil
 }
 
-func deactivateMarkdown() {
-	common.Plugins["markdown"].RemoveHook("parse_assign", markdownParse)
+func deactivateMarkdown(plugin *common.Plugin) {
+	plugin.RemoveHook("parse_assign", markdownParse)
 }
 
 // An adapter for the parser, so that the parser can call itself recursively.

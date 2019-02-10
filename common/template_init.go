@@ -16,7 +16,10 @@ import (
 )
 
 var Ctemplates []string // TODO: Use this to filter out top level templates we don't need
-var Templates = template.New("")
+var DefaultTemplates = template.New("")
+var DefaultTemplateFuncMap map[string]interface{}
+
+//var Templates = template.New("")
 var PrebuildTmplList []func(User, *Header) CTmpl
 
 func skipCTmpl(key string) bool {
@@ -37,120 +40,52 @@ type CTmpl struct {
 	Imports    []string
 }
 
+func genIntTmpl(name string) func(pi interface{}, w io.Writer) error {
+	return func(pi interface{}, w io.Writer) error {
+		mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap[name]
+		if !ok {
+			mapping = name
+		}
+		return DefaultTemplates.ExecuteTemplate(w, mapping+".html", pi)
+	}
+}
+
 // TODO: Refactor the template trees to not need these
-// TODO: Stop duplicating these bits of code
 // nolint
-func interpretedTopicTemplate(pi TopicPage, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["topic"]
-	if !ok {
-		mapping = "topic"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
+var Template_topic_handle = genIntTmpl("topic")
+var Template_topic_guest_handle = Template_topic_handle
+var Template_topic_member_handle = Template_topic_handle
+var Template_topic_alt_handle = genIntTmpl("topic")
+var Template_topic_alt_guest_handle = Template_topic_alt_handle
+var Template_topic_alt_member_handle = Template_topic_alt_handle
 
 // nolint
-var Template_topic_handle = interpretedTopicTemplate
-var Template_topic_alt_handle = interpretedTopicTemplate
-var Template_topic_alt_guest_handle = interpretedTopicTemplate
-var Template_topic_alt_member_handle = interpretedTopicTemplate
-
-// nolint
-var Template_topics_handle = func(pi TopicListPage, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["topics"]
-	if !ok {
-		mapping = "topics"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
+var Template_topics_handle = genIntTmpl("topics")
 var Template_topics_guest_handle = Template_topics_handle
 var Template_topics_member_handle = Template_topics_handle
 
 // nolint
-var Template_forum_handle = func(pi ForumPage, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["forum"]
-	if !ok {
-		mapping = "forum"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
+var Template_forum_handle = genIntTmpl("forum")
 var Template_forum_guest_handle = Template_forum_handle
 var Template_forum_member_handle = Template_forum_handle
 
 // nolint
-var Template_forums_handle = func(pi ForumsPage, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["forums"]
-	if !ok {
-		mapping = "forums"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
+var Template_forums_handle = genIntTmpl("forums")
 var Template_forums_guest_handle = Template_forums_handle
 var Template_forums_member_handle = Template_forums_handle
 
 // nolint
-var Template_profile_handle = func(pi ProfilePage, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["profile"]
-	if !ok {
-		mapping = "profile"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
+var Template_profile_handle = genIntTmpl("profile")
 var Template_profile_guest_handle = Template_profile_handle
 var Template_profile_member_handle = Template_profile_handle
 
 // nolint
-var Template_create_topic_handle = func(pi CreateTopicPage, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["create_topic"]
-	if !ok {
-		mapping = "create_topic"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
-
-// nolint
-var Template_login_handle = func(pi Page, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["login"]
-	if !ok {
-		mapping = "login"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
-
-// nolint
-var Template_register_handle = func(pi Page, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["register"]
-	if !ok {
-		mapping = "register"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
-
-// nolint
-var Template_error_handle = func(pi ErrorPage, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["error"]
-	if !ok {
-		mapping = "error"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
-
-// nolint
-var Template_ip_search_handle = func(pi IPSearchPage, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["ip_search"]
-	if !ok {
-		mapping = "ip_search"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
-
-// nolint
-var Template_account_handle = func(pi Account, w io.Writer) error {
-	mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap["account"]
-	if !ok {
-		mapping = "account"
-	}
-	return Templates.ExecuteTemplate(w, mapping+".html", pi)
-}
+var Template_create_topic_handle = genIntTmpl("create_topic")
+var Template_login_handle = genIntTmpl("login")
+var Template_register_handle = genIntTmpl("register")
+var Template_error_handle = genIntTmpl("error")
+var Template_ip_search_handle = genIntTmpl("ip_search")
+var Template_account_handle = genIntTmpl("account")
 
 func tmplInitUsers() (User, User, User) {
 	avatar, microAvatar := BuildAvatar(62, "")
@@ -198,8 +133,36 @@ type TmplLoggedin struct {
 
 type nobreak interface{}
 
+type TItem struct {
+	Expects    string
+	ExpectsInt interface{}
+	LoggedIn   bool
+}
+
+type TItemHold map[string]TItem
+
+func (hold TItemHold) Add(name string, expects string, expectsInt interface{}) {
+	hold[name] = TItem{expects, expectsInt, true}
+}
+
+func (hold TItemHold) AddStd(name string, expects string, expectsInt interface{}) {
+	hold[name] = TItem{expects, expectsInt, false}
+}
+
 // ? - Add template hooks?
 func CompileTemplates() error {
+	log.Print("Compiling the templates")
+	// TODO: Implement per-theme template overrides here too
+	var overriden = make(map[string]map[string]bool)
+	for _, theme := range Themes {
+		overriden[theme.Name] = make(map[string]bool)
+		log.Printf("theme.OverridenTemplates: %+v\n", theme.OverridenTemplates)
+		for _, override := range theme.OverridenTemplates {
+			overriden[theme.Name][override] = true
+		}
+	}
+	log.Printf("overriden: %+v\n", overriden)
+
 	var config tmpl.CTemplateConfig
 	config.Minify = Config.MinifyTemplates
 	config.Debug = Dev.DebugMode
@@ -212,60 +175,47 @@ func CompileTemplates() error {
 		"github.com/Azareal/Gosora/common": "github.com/Azareal/Gosora/common",
 	})
 	c.SetBuildTags("!no_templategen")
+	c.SetOverrideTrack(overriden)
+	c.SetPerThemeTmpls(make(map[string]bool))
 
-	// Schemas to train the template compiler on what to expect
+	log.Print("Compiling the default templates")
+	var wg sync.WaitGroup
+	err := compileTemplates(&wg, c, "")
+	if err != nil {
+		return err
+	}
+	oroots := c.GetOverridenRoots()
+	log.Printf("oroots: %+v\n", oroots)
+
+	log.Print("Compiling the per-theme templates")
+	for theme, tmpls := range oroots {
+		c.SetThemeName(theme)
+		c.SetPerThemeTmpls(tmpls)
+		log.Print("theme: ", theme)
+		log.Printf("perThemeTmpls: %+v\n", tmpls)
+		err = compileTemplates(&wg, c, theme)
+		if err != nil {
+			return err
+		}
+	}
+	writeTemplateList(c, &wg, "./")
+	return nil
+}
+
+func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, out TItemHold) error {
 	// TODO: Add support for interface{}s
-	user, user2, user3 := tmplInitUsers()
-	header, header2, _ := tmplInitHeaders(user, user2, user3)
+	_, user2, user3 := tmplInitUsers()
 	now := time.Now()
 
-	log.Print("Compiling the templates")
-
-	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
-		PollOption{0, "Nothing"},
-		PollOption{1, "Something"},
-	}, VoteCount: 7}
-	avatar, microAvatar := BuildAvatar(62, "")
-	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach}
-	var replyList []ReplyUser
-	// TODO: Do we want the UID on this to be 0?
-	avatar, microAvatar = BuildAvatar(0, "")
-	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, 1, "", "", miniAttach})
-
-	var varList = make(map[string]tmpl.VarItem)
-	var compile = func(name string, expects string, expectsInt interface{}) (tmpl string, err error) {
-		return c.Compile(name+".html", "templates/", expects, expectsInt, varList)
+	// Convienience function to save a line here and there
+	var htitle = func(name string) *Header {
+		header.Title = name
+		return header
 	}
-	var compileByLoggedin = func(name string, expects string, expectsInt interface{}) (tmpl TmplLoggedin, err error) {
-		stub, guest, member, err := c.CompileByLoggedin(name+".html", "templates/", expects, expectsInt, varList)
-		return TmplLoggedin{stub, guest, member}, err
-	}
-
-	header.Title = "Topic Name"
-	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
-	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
-	topicTmpl, err := compile("topic", "common.TopicPage", tpage)
-	if err != nil {
-		return err
-	}
-	/*topicAltTmpl, err := compile("topic_alt", "common.TopicPage", tpage)
-	if err != nil {
-		return err
+	/*var htitle2 = func(name string) *Header {
+		header2.Title = name
+		return header2
 	}*/
-
-	topicAltTmpl, err := compileByLoggedin("topic_alt", "common.TopicPage", tpage)
-	if err != nil {
-		return err
-	}
-
-	varList = make(map[string]tmpl.VarItem)
-	header.Title = "User 526"
-	ppage := ProfilePage{header, replyList, user, 0, 0} // TODO: Use the score from user to generate the currentScore and nextScore
-	profileTmpl, err := compileByLoggedin("profile", "common.ProfilePage", ppage)
-	if err != nil {
-		return err
-	}
 
 	// TODO: Use a dummy forum list to avoid o(n) problems
 	var forumList []Forum
@@ -277,95 +227,100 @@ func CompileTemplates() error {
 		forumList = append(forumList, *forum)
 	}
 
-	varList = make(map[string]tmpl.VarItem)
-	header.Title = "Forum List"
-	forumsPage := ForumsPage{header, forumList}
-	forumsTmpl, err := compileByLoggedin("forums", "common.ForumsPage", forumsPage)
-	if err != nil {
-		return err
-	}
-
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"})
-	header2.Title = "Topic List"
-	topicListPage := TopicListPage{header, topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
-	/*topicListTmpl, err := compile("topics", "common.TopicListPage", topicListPage)
-	if err != nil {
-		return err
-	}*/
-	topicListTmpl, err := compileByLoggedin("topics", "common.TopicListPage", topicListPage)
-	if err != nil {
-		return err
-	}
+	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
+	out.Add("topics", "common.TopicListPage", topicListPage)
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
-	header.Title = "General Forum"
-	forumPage := ForumPage{header, topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
-	forumTmpl, err := compileByLoggedin("forum", "common.ForumPage", forumPage)
+	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
+	out.Add("forum", "common.ForumPage", forumPage)
+	out.Add("forums", "common.ForumsPage", ForumsPage{htitle("Forum List"), forumList})
+
+	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
+		PollOption{0, "Nothing"},
+		PollOption{1, "Something"},
+	}, VoteCount: 7}
+	avatar, microAvatar := BuildAvatar(62, "")
+	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach}
+	var replyList []ReplyUser
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, 1, "", "", miniAttach})
+	tpage := TopicPage{htitle("Topic Name"), replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
+	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
+	out.Add("topic", "common.TopicPage", tpage)
+	out.Add("topic_alt", "common.TopicPage", tpage)
+	return nil
+}
+
+func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string) error {
+	// Schemas to train the template compiler on what to expect
+	// TODO: Add support for interface{}s
+	user, user2, user3 := tmplInitUsers()
+	header, header2, _ := tmplInitHeaders(user, user2, user3)
+	now := time.Now()
+
+	/*poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
+		PollOption{0, "Nothing"},
+		PollOption{1, "Something"},
+	}, VoteCount: 7}*/
+	avatar, microAvatar := BuildAvatar(62, "")
+	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
+	var replyList []ReplyUser
+	//topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach}
+	// TODO: Do we want the UID on this to be 0?
+	avatar, microAvatar = BuildAvatar(0, "")
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, 1, "", "", miniAttach})
+
+	// Convienience function to save a line here and there
+	var htitle = func(name string) *Header {
+		header.Title = name
+		return header
+	}
+	tmpls := TItemHold(make(map[string]TItem))
+	err := compileCommons(c, header, header2, tmpls)
 	if err != nil {
 		return err
 	}
 
-	header.Title = "Login Page"
-	loginPage := Page{header, tList, nil}
-	loginTmpl, err := compile("login", "common.Page", loginPage)
-	if err != nil {
-		return err
-	}
+	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0} // TODO: Use the score from user to generate the currentScore and nextScore
+	tmpls.Add("profile", "common.ProfilePage", ppage)
 
-	header.Title = "Registration Page"
-	registerPage := Page{header, tList, "nananana"}
-	registerTmpl, err := compile("register", "common.Page", registerPage)
-	if err != nil {
-		return err
-	}
+	tmpls.AddStd("login", "common.Page", Page{htitle("Login Page"), tList, nil})
+	tmpls.AddStd("register", "common.Page", Page{htitle("Registration Page"), tList, "nananana"})
+	tmpls.AddStd("error", "common.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
-	header.Title = "Error"
-	errorPage := ErrorPage{header, "A problem has occurred in the system."}
-	errorTmpl, err := compile("error", "common.ErrorPage", errorPage)
-	if err != nil {
-		return err
-	}
-
-	var ipUserList = make(map[int]*User)
-	ipUserList[1] = &user2
-	header.Title = "IP Search"
-	ipSearchPage := IPSearchPage{header2, ipUserList, "::1"}
-	ipSearchTmpl, err := compile("ip_search", "common.IPSearchPage", ipSearchPage)
-	if err != nil {
-		return err
-	}
+	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: &user2}, "::1"}
+	tmpls.AddStd("ip_search", "common.IPSearchPage", ipSearchPage)
 
 	var inter nobreak
 	accountPage := Account{header, "dashboard", "account_own_edit", inter}
-	accountTmpl, err := compile("account", "common.Account", accountPage)
-	if err != nil {
-		return err
-	}
+	tmpls.AddStd("account", "common.Account", accountPage)
 
-	var wg sync.WaitGroup
 	var writeTemplate = func(name string, content interface{}) {
 		log.Print("Writing template '" + name + "'")
-
 		var writeTmpl = func(name string, content string) {
 			if content == "" {
-				log.Fatal("No content body for " + name)
+				return //log.Fatal("No content body for " + name)
 			}
 			err := writeFile("./template_"+name+".go", content)
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
-
 		wg.Add(1)
 		go func() {
+			tname := themeName
+			if tname != "" {
+				tname = "_" + tname
+			}
 			switch content := content.(type) {
 			case string:
-				writeTmpl(name, content)
+				writeTmpl(name+tname, content)
 			case TmplLoggedin:
-				writeTmpl(name, content.Stub)
-				writeTmpl(name+"_guest", content.Guest)
-				writeTmpl(name+"_member", content.Member)
+				writeTmpl(name+tname, content.Stub)
+				writeTmpl(name+tname+"_guest", content.Guest)
+				writeTmpl(name+tname+"_member", content.Member)
 			}
 			wg.Done()
 		}()
@@ -373,12 +328,12 @@ func CompileTemplates() error {
 
 	// Let plugins register their own templates
 	DebugLog("Registering the templates for the plugins")
-	config = c.GetConfig()
+	config := c.GetConfig()
 	config.SkipHandles = true
 	c.SetConfig(config)
 	for _, tmplfunc := range PrebuildTmplList {
 		tmplItem := tmplfunc(user, header)
-		varList = make(map[string]tmpl.VarItem)
+		varList := make(map[string]tmpl.VarItem)
 		compiledTmpl, err := c.Compile(tmplItem.Filename, tmplItem.Path, tmplItem.StructName, tmplItem.Data, varList, tmplItem.Imports...)
 		if err != nil {
 			return err
@@ -387,18 +342,30 @@ func CompileTemplates() error {
 	}
 
 	log.Print("Writing the templates")
-	writeTemplate("topic", topicTmpl)
-	writeTemplate("topic_alt", topicAltTmpl)
-	writeTemplate("profile", profileTmpl)
+	for name, titem := range tmpls {
+		log.Print("Writing " + name)
+		varList := make(map[string]tmpl.VarItem)
+		if titem.LoggedIn {
+			stub, guest, member, err := c.CompileByLoggedin(name+".html", "templates/", titem.Expects, titem.ExpectsInt, varList)
+			if err != nil {
+				return err
+			}
+			writeTemplate(name, TmplLoggedin{stub, guest, member})
+		} else {
+			tmpl, err := c.Compile(name+".html", "templates/", titem.Expects, titem.ExpectsInt, varList)
+			if err != nil {
+				return err
+			}
+			writeTemplate(name, tmpl)
+		}
+	}
+	/*writeTemplate("profile", profileTmpl)
 	writeTemplate("forums", forumsTmpl)
-	writeTemplate("topics", topicListTmpl)
-	writeTemplate("forum", forumTmpl)
 	writeTemplate("login", loginTmpl)
 	writeTemplate("register", registerTmpl)
 	writeTemplate("ip_search", ipSearchTmpl)
 	writeTemplate("account", accountTmpl)
-	writeTemplate("error", errorTmpl)
-	writeTemplateList(c, &wg, "./")
+	writeTemplate("error", errorTmpl)*/
 	return nil
 }
 
@@ -470,6 +437,15 @@ func CompileJSTemplates() error {
 	if err != nil {
 		return err
 	}
+
+	itemsPerPage := 25
+	_, page, lastPage := PageOffset(20, 1, itemsPerPage)
+	pageList := Paginate(20, itemsPerPage, 5)
+	paginatorTmpl, err := c.Compile("paginator.html", "templates/", "common.Paginator", Paginator{pageList, page, lastPage}, varList)
+	if err != nil {
+		return err
+	}
+
 	/*widget := &Widget{ID: 0}
 	panelWidgetsWidgetTmpl, err := c.Compile("panel_themes_widgets_widget.html", "templates/", "*common.Widget", widget, varList)
 	if err != nil {
@@ -481,9 +457,8 @@ func CompileJSTemplates() error {
 	var writeTemplate = func(name string, content string) {
 		log.Print("Writing template '" + name + "'")
 		if content == "" {
-			log.Fatal("No content body")
+			return //log.Fatal("No content body")
 		}
-
 		wg.Add(1)
 		go func() {
 			err := writeFile(dirPrefix+"template_"+name+".go", content)
@@ -494,59 +469,74 @@ func CompileJSTemplates() error {
 		}()
 	}
 	writeTemplate("alert", alertTmpl)
+	//writeTemplate("forum", forumTmpl)
 	writeTemplate("topics_topic", topicListItemTmpl)
 	writeTemplate("topic_posts", topicPostsTmpl)
 	writeTemplate("topic_alt_posts", topicAltPostsTmpl)
+	writeTemplate("paginator", paginatorTmpl)
 	//writeTemplate("panel_themes_widgets_widget", panelWidgetsWidgetTmpl)
 	writeTemplateList(c, &wg, dirPrefix)
 	return nil
+}
+
+func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) string {
+	pout := "\n// nolint\nfunc init() {\n"
+	var tFragCount = make(map[string]int)
+	var bodyMap = make(map[string]string) //map[body]fragmentPrefix
+	//var tmplMap = make(map[string]map[string]string) // map[tmpl]map[body]fragmentPrefix
+	var tmpCount = 0
+	for _, frag := range c.FragOut {
+		front := frag.TmplName + "_frags[" + strconv.Itoa(frag.Index) + "]"
+		/*bodyMap, tok := tmplMap[frag.TmplName]
+		if !tok {
+			tmplMap[frag.TmplName] = make(map[string]string)
+			bodyMap = tmplMap[frag.TmplName]
+		}*/
+		fp, ok := bodyMap[frag.Body]
+		if !ok {
+			bodyMap[frag.Body] = front
+			var bits string
+			for _, char := range []byte(frag.Body) {
+				if char == '\'' {
+					bits += "'\\" + string(char) + "',"
+				} else {
+					bits += "'" + string(char) + "',"
+				}
+			}
+			tmpStr := strconv.Itoa(tmpCount)
+			pout += "arr_" + tmpStr + " := [...]byte{" + bits + "}\n"
+			pout += front + " = arr_" + tmpStr + "[:]\n"
+			tmpCount++
+			//pout += front + " = []byte(`" + frag.Body + "`)\n"
+		} else {
+			pout += front + " = " + fp + "\n"
+		}
+
+		_, ok = tFragCount[frag.TmplName]
+		if !ok {
+			tFragCount[frag.TmplName] = 0
+		}
+		tFragCount[frag.TmplName]++
+	}
+
+	out := "package " + c.GetConfig().PackageName + "\n\n"
+	var getterstr = "\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n"
+	for templateName, count := range tFragCount {
+		out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
+		getterstr += "\tcase \"" + templateName + "\":\n"
+		getterstr += "\treturn " + templateName + "_frags\n"
+	}
+	getterstr += "}\nreturn nil\n}\n"
+	out += pout + "\n" + getterstr + "}\n"
+
+	return out
 }
 
 func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) {
 	log.Print("Writing template list")
 	wg.Add(1)
 	go func() {
-		out := "package " + c.GetConfig().PackageName + "\n\n"
-		var getterstr = "\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n"
-		for templateName, count := range c.TemplateFragmentCount {
-			out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
-			getterstr += "\tcase \"" + templateName + "\":\n"
-			getterstr += "\treturn " + templateName + "_frags\n"
-		}
-		getterstr += "}\nreturn nil\n}\n"
-		out += "\n// nolint\nfunc init() {\n"
-		var bodyMap = make(map[string]string) //map[body]fragmentPrefix
-		//var tmplMap = make(map[string]map[string]string) // map[tmpl]map[body]fragmentPrefix
-		var tmpCount = 0
-		for _, frag := range c.FragOut {
-			front := frag.TmplName + "_frags[" + strconv.Itoa(frag.Index) + "]"
-			/*bodyMap, tok := tmplMap[frag.TmplName]
-			if !tok {
-				tmplMap[frag.TmplName] = make(map[string]string)
-				bodyMap = tmplMap[frag.TmplName]
-			}*/
-			fp, ok := bodyMap[frag.Body]
-			if !ok {
-				bodyMap[frag.Body] = front
-				var bits string
-				for _, char := range []byte(frag.Body) {
-					if char == '\'' {
-						bits += "'\\" + string(char) + "',"
-					} else {
-						bits += "'" + string(char) + "',"
-					}
-				}
-				tmpStr := strconv.Itoa(tmpCount)
-				out += "arr_" + tmpStr + " := [...]byte{" + bits + "}\n"
-				out += front + " = arr_" + tmpStr + "[:]\n"
-				tmpCount++
-				//out += front + " = []byte(`" + frag.Body + "`)\n"
-			} else {
-				out += front + " = " + fp + "\n"
-			}
-		}
-		out += "\n" + getterstr + "}\n"
-		err := writeFile(prefix+"template_list.go", out)
+		err := writeFile(prefix+"template_list.go", getTemplateList(c, wg, prefix))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -579,8 +569,7 @@ func arithDuoToInt64(left interface{}, right interface{}) (leftInt int64, rightI
 	return arithToInt64(left), arithToInt64(right)
 }
 
-func InitTemplates() error {
-	DebugLog("Initialising the template system")
+func initDefaultTmplFuncMap() {
 	// TODO: Add support for floats
 	fmap := make(map[string]interface{})
 	fmap["add"] = func(left interface{}, right interface{}) interface{} {
@@ -671,9 +660,11 @@ func InitTemplates() error {
 		return ""
 	}
 
-	// The interpreted templates...
-	DebugLog("Loading the template files...")
-	Templates.Funcs(fmap)
+	DefaultTemplateFuncMap = fmap
+}
+
+func loadTemplates(tmpls *template.Template, themeName string) error {
+	tmpls.Funcs(DefaultTemplateFuncMap)
 	templateFiles, err := filepath.Glob("templates/*.html")
 	if err != nil {
 		return err
@@ -709,8 +700,39 @@ func InitTemplates() error {
 		}
 		templateFiles[index] = path
 	}
-	template.Must(Templates.ParseFiles(templateFiles...))
-	template.Must(Templates.ParseGlob("pages/*"))
 
+	if themeName != "" {
+		overrideFiles, err := filepath.Glob("./themes/" + themeName + "/overrides/*.html")
+		if err != nil {
+			return err
+		}
+		for _, path := range overrideFiles {
+			path = strings.Replace(path, "\\", "/", -1)
+			log.Print("overrideFile: ", path)
+			if skipCTmpl(path) {
+				log.Print("skipping")
+				continue
+			}
+			index, ok := templateFileMap["templates/"+strings.TrimPrefix(path, "themes/"+themeName+"/overrides/")]
+			if !ok {
+				log.Print("not ok: templates/" + strings.TrimPrefix(path, "themes/"+themeName+"/overrides/"))
+				templateFiles = append(templateFiles, path)
+				continue
+			}
+			templateFiles[index] = path
+		}
+	}
+
+	template.Must(tmpls.ParseFiles(templateFiles...))
+	template.Must(tmpls.ParseGlob("pages/*"))
 	return nil
+}
+
+func InitTemplates() error {
+	DebugLog("Initialising the template system")
+	initDefaultTmplFuncMap()
+
+	// The interpreted templates...
+	DebugLog("Loading the template files...")
+	return loadTemplates(DefaultTemplates, "")
 }

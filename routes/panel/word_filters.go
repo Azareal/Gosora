@@ -25,7 +25,7 @@ func WordFilters(w http.ResponseWriter, r *http.Request, user common.User) commo
 	}
 
 	pi := common.PanelPage{basePage, tList, filterList}
-	return renderTemplate("panel_word_filters", w, r, user, &pi)
+	return renderTemplate("panel_word_filters", w, r, basePage.Header, &pi)
 }
 
 func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -67,7 +67,7 @@ func WordFiltersEdit(w http.ResponseWriter, r *http.Request, user common.User, w
 	_ = wfid
 
 	pi := common.PanelPage{basePage, tList, nil}
-	return renderTemplate("panel_word_filters_edit", w, r, user, &pi)
+	return renderTemplate("panel_word_filters_edit", w, r, basePage.Header, &pi)
 }
 
 func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, wfid string) common.RouteError {

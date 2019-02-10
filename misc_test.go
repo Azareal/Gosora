@@ -861,7 +861,7 @@ func TestPluginManager(t *testing.T) {
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should exist in the database")
 	expect(t, plugin.Init != nil, "Plugin bbcode should have an init function")
-	expectNilErr(t, plugin.Init())
+	expectNilErr(t, plugin.Init(plugin))
 
 	expectNilErr(t, plugin.SetActive(true))
 	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
@@ -885,7 +885,7 @@ func TestPluginManager(t *testing.T) {
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
 	expect(t, plugin.Deactivate != nil, "Plugin bbcode should have an init function")
-	plugin.Deactivate() // Returns nothing
+	plugin.Deactivate(plugin) // Returns nothing
 
 	// Not installable, should not be mutated
 	expect(t, plugin.SetInstalled(true) == common.ErrPluginNotInstallable, "Plugin was set as installed despite not being installable")
@@ -949,12 +949,12 @@ func TestPluginManager(t *testing.T) {
 	expect(t, !hasPlugin, "Plugin markdown shouldn't exist in the database")
 
 	expectNilErr(t, plugin2.AddToDatabase(true, false))
-	expectNilErr(t, plugin2.Init())
+	expectNilErr(t, plugin2.Init(plugin2))
 	expectNilErr(t, plugin.SetActive(true))
-	expectNilErr(t, plugin.Init())
-	plugin2.Deactivate()
+	expectNilErr(t, plugin.Init(plugin))
+	plugin2.Deactivate(plugin2)
 	expectNilErr(t, plugin2.SetActive(false))
-	plugin.Deactivate()
+	plugin.Deactivate(plugin)
 	expectNilErr(t, plugin.SetActive(false))
 
 	// Hook tests

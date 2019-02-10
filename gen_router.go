@@ -587,7 +587,7 @@ type GenRouter struct {
 }
 
 func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
-	f, err := os.OpenFile("./logs/requests.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile("./logs/reqs-"+strconv.FormatInt(common.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		return nil, err
 	}

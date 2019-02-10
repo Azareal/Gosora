@@ -37,8 +37,10 @@ func init() {
 	topicWatchers = make(map[int]map[*WSUser]bool)
 }
 
+//easyjson:json
 type WsTopicList struct {
-	Topics []*WsTopicsRow
+	Topics   []*WsTopicsRow
+	LastPage int // Not for WebSockets, but for the JSON endpoint for /topics/ to keep the paginator functional
 }
 
 // TODO: How should we handle errors for this?

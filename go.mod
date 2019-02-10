@@ -10,6 +10,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.0
 	github.com/gorilla/websocket v1.4.0
 	github.com/lib/pq v1.0.0
+	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
 	github.com/oschwald/geoip2-golang v1.2.1
 	github.com/oschwald/maxminddb-golang v1.3.0 // indirect
 	github.com/pkg/errors v0.8.0

@@ -1415,6 +1415,12 @@ textarea {
 .pageitem:last-child {
 	border-right: 1px solid var(--element-border-color);
 }
+.pagefirst, .pagenext, .pageprev, .pagelast {
+	padding-top: 5px;
+}
+.pagefirst a, .pagenext a, .pageprev a, .pagelast a {
+	font-size: 18px;
+}
 
 /* TODO: Make widget_about's CSS less footer centric */
 .footerBit, .footer .widget {

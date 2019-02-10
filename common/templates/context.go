@@ -28,6 +28,7 @@ type CContext struct {
 	RootHolder   string
 	VarHolder    string
 	HoldReflect  reflect.Value
+	RootTemplateName string
 	TemplateName string
 	LoopDepth    int
 	OutBuf       *[]OutBufferFrame

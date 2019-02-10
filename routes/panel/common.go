@@ -21,12 +21,12 @@ func successRedirect(dest string, w http.ResponseWriter, r *http.Request, isJs b
 	return nil
 }
 
-func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, user common.User, pi interface{}) common.RouteError {
-	if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &user, pi) {
+func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *common.Header, pi interface{}) common.RouteError {
+	if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &header.CurrentUser, pi) {
 		return nil
 	}
 	// TODO: Prepend this with panel_?
-	err := common.Templates.ExecuteTemplate(w, tmplName+".html", pi)
+	err := header.Theme.RunTmpl(tmplName, pi, w)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}

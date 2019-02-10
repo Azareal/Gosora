@@ -47,7 +47,7 @@ func Forums(w http.ResponseWriter, r *http.Request, user common.User) common.Rou
 	}
 
 	pi := common.PanelPage{basePage, forumList, nil}
-	return renderTemplate("panel_forums", w, r, user, &pi)
+	return renderTemplate("panel_forums", w, r, basePage.Header, &pi)
 }
 
 func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -96,19 +96,14 @@ func ForumsDelete(w http.ResponseWriter, r *http.Request, user common.User, sfid
 		return common.InternalError(err, w, r)
 	}
 
-	// TODO: Make this a phrase
-	confirmMsg := "Are you sure you want to delete the '" + forum.Name + "' forum?"
+	confirmMsg := phrases.GetTmplPhrasef("panel_forum_delete_are_you_sure", forum.Name)
 	yousure := common.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
 	pi := common.PanelPage{basePage, tList, yousure}
 	if common.RunPreRenderHook("pre_render_panel_delete_forum", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.Templates.ExecuteTemplate(w, "are_you_sure.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("panel_are_you_sure", w, r, basePage.Header, &pi)
 }
 
 func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
@@ -184,15 +179,7 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user common.User, sfid s
 	}
 
 	pi := common.PanelEditForumPage{basePage, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
-	if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel_forum_edit.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	return nil
+	return renderTemplate("panel_forum_edit", w, r, basePage.Header, &pi)
 }
 
 func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
@@ -350,15 +337,7 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	pi := common.PanelEditForumGroupPage{basePage, forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
-	if common.RunPreRenderHook("pre_render_panel_edit_forum", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel_forum_edit_perms.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	return nil
+	return renderTemplate("panel_forum_edit_perms", w, r, basePage.Header, &pi)
 }
 
 func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user common.User, paramList string) common.RouteError {

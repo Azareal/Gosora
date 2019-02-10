@@ -47,9 +47,13 @@ func (hub *WsHubImpl) Start() {
 
 // This Tick is separate from the admin one, as we want to process that in parallel with this due to the blocking calls to gopsutil
 func (hub *WsHubImpl) Tick() error {
+	return wsTopicListTick(hub)
+}
+
+func wsTopicListTick(hub *WsHubImpl) error {
 	// Don't waste CPU time if nothing has happened
 	// TODO: Get a topic list method which strips stickies?
-	tList, _, _, err := TopicList.GetList(1, "")
+	tList, _, _, err := TopicList.GetList(1, "", nil)
 	if err != nil {
 		hub.lastTick = time.Now()
 		return err // TODO: Do we get ErrNoRows here?
@@ -117,7 +121,7 @@ func (hub *WsHubImpl) Tick() error {
 
 	var canSeeRenders = make(map[string][]byte)
 	for name, canSee := range canSeeMap {
-		topicList, forumList, _, err := TopicList.GetListByCanSee(canSee, 1, "")
+		topicList, forumList, _, err := TopicList.GetListByCanSee(canSee, 1, "", nil)
 		if err != nil {
 			return err // TODO: Do we get ErrNoRows here?
 		}
@@ -146,7 +150,7 @@ func (hub *WsHubImpl) Tick() error {
 			wsTopicList[i] = topicRow.WebSockets()
 		}
 
-		outBytes, err := json.Marshal(&WsTopicList{wsTopicList})
+		outBytes, err := json.Marshal(&WsTopicList{wsTopicList, 0})
 		if err != nil {
 			return err
 		}

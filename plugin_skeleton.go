@@ -31,9 +31,9 @@ func init() {
 	common.Plugins.Add(&common.Plugin{UName: "skeleton", Name: "Skeleton", Author: "Azareal", Init: initSkeleton, Activate: activateSkeleton, Deactivate: deactivateSkeleton})
 }
 
-func initSkeleton() error { return nil }
+func initSkeleton(plugin *common.Plugin) error { return nil }
 
 // Any errors encountered while trying to activate the plugin are reported back to the admin and the activation is aborted
-func activateSkeleton() error { return nil }
+func activateSkeleton(plugin *common.Plugin) error { return nil }
 
-func deactivateSkeleton() {}
+func deactivateSkeleton(plugin *common.Plugin) {}

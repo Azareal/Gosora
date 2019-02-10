@@ -303,6 +303,39 @@ function runWebSockets() {
 	});
 })();
 
+// TODO: Use these in .filter_item and pass back an item count from the backend to work with here
+// Ported from common/parser.go
+function PageOffset(count, page, perPage) {
+	let offset = 0;
+	let lastPage = LastPage(count, perPage)
+	if(page > 1) {
+		offset = (perPage * page) - perPage
+	} else if (page == -1) {
+		page = lastPage
+		offset = (perPage * page) - perPage
+	} else {
+		page = 1
+	}
+
+	// We don't want the offset to overflow the slices, if everything's in memory
+	if(offset >= (count - 1)) offset = 0;
+	return {Offset:offset, Page:page, LastPage:lastPage}
+}
+function LastPage(count, perPage) {
+	return (count / perPage) + 1
+}
+function Paginate(count, perPage, maxPages) {
+	if(count < perPage) return [1];
+	let page = 0;
+	let out = [];
+	for(let current = 0; current < count; current += perPage){
+		page++;
+		out.push(page);
+		if(out.length >= maxPages) break;
+	}
+	return out;
+}
+
 function mainInit(){
 	runInitHook("start_init");
 
@@ -343,9 +376,7 @@ function mainInit(){
 			error: ajaxError,
 			success: function (data, status, xhr) {
 				if("success" in data) {
-					if(data["success"] == "1") {
-						return;
-					}
+					if(data["success"] == "1") return;
 				}
 				// addNotice("Failed to add a like: {err}")
 				likeButton.classList.add("add_like");
@@ -368,6 +399,102 @@ function mainInit(){
 			linkSelect.addClass("link_opened");
 		}
 	});
+
+	function rebuildPaginator(lastPage) {
+		let urlParams = new URLSearchParams(window.location.search);
+		let page = urlParams.get('page');
+		if(page=="") page = 1;
+		let stopAtPage = lastPage;
+		if(stopAtPage>5) stopAtPage = 5;
+
+		let pageList = [];
+		for(let i = 0; i < stopAtPage;i++) pageList.push(i+1);
+		//$(".pageset").html(Template_paginator({PageList: pageList, Page: page, LastPage: lastPage}));
+		let ok = false;
+		$(".pageset").each(function(){
+			this.outerHTML = Template_paginator({PageList: pageList, Page: page, LastPage: lastPage});
+			ok = true;
+		});
+		if(!ok) {
+			$(Template_paginator({PageList: pageList, Page: page, LastPage: lastPage})).insertAfter("#topic_list");
+		}
+	}
+
+	function rebindPaginator() {
+		$(".pageitem a").unbind("click");
+		$(".pageitem a").click(function() {
+			event.preventDefault();
+			// TODO: Take mostviewed into account
+			let url = "//"+window.location.host+window.location.pathname;
+			let urlParams = new URLSearchParams(window.location.search);
+			urlParams.set("page",new URLSearchParams(this.getAttribute("href")).get("page"));
+			let q = "?";
+			for(let item of urlParams.entries()) q += item[0]+"="+item[1]+"&";
+			if(q.length>1) q = q.slice(0,-1);
+
+			// TODO: Try to de-duplicate some of these fetch calls
+			fetch(url+q+"&js=1", {credentials: "same-origin"})
+				.then((resp) => resp.json())
+				.then((data) => {
+					if(!"Topics" in data) throw("no Topics in data");
+					let topics = data["Topics"];
+
+					// TODO: Fix the data race where the function hasn't been loaded yet
+					let out = "";
+					for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
+					$(".topic_list").html(out);
+
+					let obj = {Title: document.title, Url: url+q};
+					history.pushState(obj, obj.Title, obj.Url);
+					rebuildPaginator(data.LastPage);
+					rebindPaginator();
+				}).catch((ex) => {
+					console.log("Unable to get script '"+url+q+"&js=1"+"'");
+					console.log("ex: ", ex);
+					console.trace();
+				});
+		});
+	}
+
+	// TODO: Render a headless topics.html instead of the individual topic rows and a bit of JS glue
+	$(".filter_item").click(function(event) {
+		if(!window.location.pathname.startsWith("/topics/")) return
+		event.preventDefault();
+		let that = this;
+		let fid = this.getAttribute("data-fid");
+		// TODO: Take mostviewed into account
+		let url = "//"+window.location.host+"/topics/?fids="+fid;
+
+		fetch(url+"&js=1", {credentials: "same-origin"})
+		.then((resp) => resp.json())
+		.then((data) => {
+			if(!"Topics" in data) throw("no Topics in data");
+			let topics = data["Topics"];
+			
+			// TODO: Fix the data race where the function hasn't been loaded yet
+			let out = "";
+			for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
+			$(".topic_list").html(out);
+
+			let obj = {Title: document.title, Url: url};
+			history.pushState(obj, obj.Title, obj.Url);
+			rebuildPaginator(data.LastPage)
+			rebindPaginator();
+
+			$(".filter_item").each(function(){
+				this.classList.remove("filter_selected");
+			});
+			that.classList.add("filter_selected");
+			$(".topic_list_title h1").text(that.innerText);
+		}).catch((ex) => {
+			console.log("Unable to get script '"+url+"&js=1"+"'");
+			console.log("ex: ", ex);
+			console.trace();
+		});
+	});
+
+	if (document.getElementById("topicsItemList")!==null) rebindPaginator();
+	if (document.getElementById("forumItemList")!==null) rebindPaginator();
 
 	$(".open_edit").click((event) => {
 		event.preventDefault();

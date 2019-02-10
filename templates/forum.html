@@ -1,7 +1,7 @@
 {{template "header.html" . }}
 
-{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="{{lang "paginator_prev_page_aria"}}" rel="prev" href="{{.Forum.Link}}?page={{subtract .Page 1}}">{{lang "paginator_less_than"}}</a></div>{{end}}
-{{if ne .LastPage .Page}}<div id="nextFloat" class="next_button"><a class="next_link" aria-label="{{lang "paginator_next_page_aria"}}" rel="next" href="{{.Forum.Link}}?page={{add .Page 1}}">{{lang "paginator_greater_than"}}</a></div>{{end}}
+{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="{{lang "paginator.prev_page_aria"}}" rel="prev" href="{{.Forum.Link}}?page={{subtract .Page 1}}">{{lang "paginator.less_than"}}</a></div>{{end}}
+{{if ne .LastPage .Page}}<div id="nextFloat" class="next_button"><a class="next_link" aria-label="{{lang "paginator.next_page_aria"}}" rel="next" href="{{.Forum.Link}}?page={{add .Page 1}}">{{lang "paginator.greater_than"}}</a></div>{{end}}
 <link rel="canonical" href="//{{.Site.URL}}{{.Forum.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}" />
 
 <main id="forumItemList" itemscope itemtype="http://schema.org/ItemList">
@@ -40,25 +40,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="formrow topic_content_row">
-				<div class="formitem">
-					<textarea form="quick_post_form" id="input_content" name="topic-content" placeholder="{{lang "quick_topic.content_placeholder"}}" required></textarea>
-				</div>
-			</div>
-			<div class="formrow poll_content_row auto_hide">
-				<div class="formitem">Poll stuff</div>
-			</div>
-			<div class="formrow quick_button_row">
-				<div class="formitem">
-					<button form="quick_post_form" name="topic-button" class="formbutton">{{lang "quick_topic.create_topic_button"}}</button>
-					<button form="quick_post_form" class="formbutton" id="add_poll_button">{{lang "quick_topic.add_poll_button"}}</button>
-					{{if .CurrentUser.Perms.UploadFiles}}
-					<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" style="display: none;" />
-					<label for="upload_files" class="formbutton add_file_button">{{lang "quick_topic.add_file_button"}}</label>
-					<div id="upload_file_dock"></div>{{end}}
-					<button class="formbutton close_form">{{lang "quick_topic.cancel_button"}}</button>
-				</div>
-			</div>
+			{{template "topics_quick_topic.html" . }}
 		</div>
 	</div>
 	{{end}}
@@ -100,9 +82,6 @@
 		</div>{{else}}<div class="rowitem passive rowmsg">{{lang "forum_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">{{lang "forum_start_one"}}</a>{{end}}{{end}}</div>{{end}}
 	</div>
 
-{{if gt .LastPage 1}}
 {{template "paginator.html" . }}
-{{end}}
-
 </main>
 {{template "footer.html" . }}

@@ -118,10 +118,10 @@ func LogWarning(err error, extra ...string) {
 	} else {
 		errmsg += err.Error()
 	}
-	stack := debug.Stack()
-	log.Print(errmsg+"\n", string(stack))
 	errorBufferMutex.Lock()
 	defer errorBufferMutex.Unlock()
+	stack := debug.Stack() // debug.Stack() can't be executed concurrently, so we'll guard this with a mutex too
+	log.Print(errmsg+"\n", string(stack))
 	errorBuffer = append(errorBuffer, ErrorItem{err, stack})
 }
 
@@ -304,7 +304,7 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError
 	if RunPreRenderHook("pre_render_security_error", w, r, &user, &pi) {
 		return nil
 	}
-	err := Templates.ExecuteTemplate(w, "error.html", pi)
+	err := pi.Header.Theme.RunTmpl("error", pi, w)
 	if err != nil {
 		LogError(err)
 	}

@@ -25,7 +25,7 @@ func Users(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 
 	pageList := common.Paginate(basePage.Stats.Users, perPage, 5)
 	pi := common.PanelUserPage{basePage, users, common.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_users", w, r, user, &pi)
+	return renderTemplate("panel_users", w, r, basePage.Header, &pi)
 }
 
 func UsersEdit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {
@@ -75,14 +75,7 @@ func UsersEdit(w http.ResponseWriter, r *http.Request, user common.User, suid st
 	}
 
 	pi := common.PanelPage{basePage, groupList, targetUser}
-	if common.RunPreRenderHook("pre_render_panel_edit_user", w, r, &user, &pi) {
-		return nil
-	}
-	err = common.Templates.ExecuteTemplate(w, "panel_user_edit.html", pi)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("panel_user_edit", w, r, basePage.Header, &pi)
 }
 
 func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, suid string) common.RouteError {

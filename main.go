@@ -19,6 +19,7 @@ import (
 	"os/signal"
 	"runtime"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -55,10 +56,6 @@ func afterDBInit() (err error) {
 		return errors.WithStack(err)
 	}
 
-	err = common.InitTemplates()
-	if err != nil {
-		return errors.WithStack(err)
-	}
 	err = phrases.InitPhrases(common.Site.Language)
 	if err != nil {
 		return errors.WithStack(err)
@@ -222,10 +219,11 @@ func main() {
 			return
 		}
 	}()*/
+	common.StartTime = time.Now()
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()
-	f, err := os.OpenFile("./logs/ops.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile("./logs/ops-"+strconv.FormatInt(common.StartTime.Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -233,7 +231,6 @@ func main() {
 	log.SetOutput(logWriter)
 	log.Print("Running Gosora v" + common.SoftwareVersion.String())
 	fmt.Println("")
-	common.StartTime = time.Now()
 
 	// TODO: Add a flag for enabling the profiler
 	if false {
@@ -261,6 +258,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = common.InitTemplates()
+	if err != nil {
+		log.Fatal(err)
+	}
 	common.Themes, err = common.NewThemeList()
 	if err != nil {
 		log.Fatal(err)
@@ -332,7 +333,6 @@ func main() {
 			for {
 				select {
 				case event := <-watcher.Events:
-					log.Println("event:", event)
 					// TODO: Handle file deletes (and renames more graciously by removing the old version of it)
 					if event.Op&fsnotify.Write == fsnotify.Write {
 						log.Println("modified file:", event.Name)
@@ -340,12 +340,15 @@ func main() {
 					} else if event.Op&fsnotify.Create == fsnotify.Create {
 						log.Println("new file:", event.Name)
 						err = modifiedFileEvent(event.Name)
+					} else {
+						log.Println("unknown event:", event)
+						err = nil
 					}
 					if err != nil {
 						common.LogError(err)
 					}
 				case err = <-watcher.Errors:
-					common.LogError(err)
+					common.LogWarning(err)
 				}
 			}
 		}()

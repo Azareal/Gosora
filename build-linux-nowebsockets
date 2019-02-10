@@ -20,6 +20,9 @@ cd ../..
 echo "Running the query generator"
 ./QueryGen
 
+echo "Generating the JSON handlers"
+easyjson -pkg common
+
 echo "Building Gosora"
 go generate
 go build -o Gosora -tags no_ws

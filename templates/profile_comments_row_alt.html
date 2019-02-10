@@ -1,0 +1,24 @@
+{{range .ItemList}}
+		<div class="rowitem passive deletable_block editable_parent comment {{.ClassName}}">
+			<div class="topRow">
+				<div class="userbit">
+					<img src="{{.MicroAvatar}}" alt="{{.CreatedByName}}'s Avatar" title="{{.CreatedByName}}'s Avatar" />
+					<span class="nameAndTitle">
+						<a href="{{.UserLink}}" class="real_username username">{{.CreatedByName}}</a>
+						{{if .Tag}}<a class="username hide_on_mobile user_tag" style="float: right;">{{.Tag}}</a>{{end}}
+					</span>
+				</div>
+				<span class="controls">
+					{{if $.CurrentUser.IsMod}}
+						<a href="/profile/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "profile_comments_edit_tooltip"}}" aria-label="{{lang "profile_comments_edit_aria"}}"><button class="username edit_item edit_label"></button></a>
+						<a href="/profile/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "profile_comments_delete_tooltip"}}" aria-label="{{lang "profile_comments_delete_aria"}}"><button class="username delete_item delete_label"></button></a>
+					{{end}}
+					<a class="mod_button" href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&type=user-reply"><button class="username report_item flag_label" title="{{lang "profile_comments_report_tooltip"}}" aria-label="{{lang "profile_comments_report_aria"}}"></button></a>
+				</span>
+			</div>
+			<div class="content_column">
+				<span class="editable_block user_content">{{.ContentHtml}}</span>
+			</div>
+		</div>
+		<div class="after_comment"></div>
+	{{end}}
