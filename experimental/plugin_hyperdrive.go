@@ -13,13 +13,13 @@ func init() {
 	common.Plugins.Add(&common.Plugin{UName: "hyperdrive", Name: "Hyperdrive", Author: "Azareal", Init: initHyperdrive, Deactivate: deactivateHyperdrive})
 }
 
-func initHyperdrive() error {
+func initHyperdrive(plugin *common.Plugin) error {
 	hyperPageCache = newHyperPageCache()
-	common.Plugins["hyperdrive"].AddHook("somewhere", deactivateHyperdrive)
+	plugin.AddHook("somewhere", deactivateHyperdrive)
 	return nil
 }
 
-func deactivateHyperdrive() {
+func deactivateHyperdrive(plugin *common.Plugin) {
 	hyperPageCache = nil
 }
 
