@@ -89,6 +89,14 @@ We will also want to setup a service:
 `systemctl daemon-reload`
 
 
+# Additional Configuration
+
+For things like HTTPS, you might also need to [modify your config.json](https://github.com/Azareal/Gosora/blob/master/docs/configuration.md) file after installing Gosora to get it working.
+
+You can get a free private key and certificate pair from Let's Encrypt or Cloudflare.
+If you're using Nginx or something else as a reverse-proxy in-front of Gosora, then you will have to consult their documentation for advice on setting HTTPS.
+
+
 # Advanced Installation
 
 This section explains how to set things up without running the batch or shell files. For Windows, you will likely have to open up cmd.exe (the app called Command Prompt in Win10) to run these commands inside or something similar, while with Linux you would likely use the Terminal or console.
