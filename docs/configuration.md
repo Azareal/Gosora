@@ -14,6 +14,8 @@ ShortName - A two or three letter abbreviation of your site's name. Intended for
 
 Name - The name of your site, as appears in the title, some theme headers and search engine search results.
 
+Email - The email address you want to show up in the From: field when Gosora sends emails. May be left blank, if emails are disabled.
+
 URL - The URL for your site. Please leave out the `http://` or `https://` and the `/` at the end.
 
 Port - The port you want Gosora to listen on. This will usually be 443 for HTTPS and 80 for HTTP. Gosora usually try to bind to both, if you're on HTTPS to redirect users from the HTTP site to the HTTPS one.
@@ -66,9 +68,18 @@ BuildSlugs - Whether you want the title appear in the URL. For instance: `/topic
 
 ServerCount - The number of instances you're running. This setting is currently experimental.
 
+DisableLiveTopicList - This switch allows you to disable the live topic list.
+
+DisableJSAntispam - This switch lets you disable the JS anti-spam feature. It may be useful if you primarily get users who for one reason or another have decided to disable JavaScript.
+
 NoAvatar - The default avatar to use for users when they don't have their own. The default for this may change in the near future to better utilise HTTP/2. Example: https://api.adorable.io/avatars/{width}/{id}.png
 
 ItemsPerPage - The number of posts, topics, etc. you want on each page.
+
+MaxTopicTitleLength - The maximum length that a topic can be. Please note that this measures the number of bytes and may differ from language to language with it being equal to a letter in English and being two bytes in others.
+
+MaxUsernameLength - The maximum length that a user's name can be. Please note that this measures the number of bytes and may differ from language to language with it being equal to a letter in English and being two bytes in others.
+
 
 # Database
 
