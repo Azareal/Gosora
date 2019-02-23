@@ -162,6 +162,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 			return nil
 		}
 
+		header.Title = phrases.GetTitlePhrase("topics_search")
 		pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, common.TopicListSort{torder, false}, paginator}
 		return renderTemplate("topics", w, r, header, pi)
 	}
