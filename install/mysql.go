@@ -1,7 +1,7 @@
 /*
 *
 * Gosora MySQL Interface
-* Copyright Azareal 2017 - 2019
+* Copyright Azareal 2017 - 2020
 *
  */
 package install
@@ -137,6 +137,7 @@ func (ins *MysqlInstaller) TableDefs() (err error) {
 		_, err = ins.db.Exec(string(data))
 		if err != nil {
 			fmt.Println("Failed query:", string(data))
+			panic("Failed query:", string(data))
 			return err
 		}
 	}

@@ -42,6 +42,8 @@ SMTPPassword - The password for the SMTP server.
 
 SMTPPort - The port for the SMTP server, usually 25.
 
+Search - The type of search system to use. Options: disabled, sql (default)
+
 MaxRequestSizeStr - The maximum size that a request made to Gosora can be. This includes uploads. Example: 5MB
 
 UserCache - The type of user cache you want to use. You can leave this blank to disable this feature or use `static` for a small in-memory cache.

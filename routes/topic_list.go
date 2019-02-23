@@ -69,7 +69,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 	var forumList []common.Forum
 	var paginator common.Paginator
 	q := r.FormValue("q")
-	if q != "" {
+	if q != "" && common.RepliesSearch != nil {
 		var canSee []int
 		if user.IsSuperAdmin {
 			canSee, err = common.Forums.GetAllVisibleIDs()

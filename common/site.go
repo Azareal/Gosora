@@ -72,6 +72,8 @@ type config struct {
 	SMTPPort     string
 	//SMTPEnableTLS bool
 
+	Search string
+
 	DefaultPath     string
 	DefaultGroup    int    // Should be a setting in the database
 	ActivationGroup int    // Should be a setting in the database

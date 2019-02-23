@@ -143,9 +143,11 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.RepliesSearch, err = common.NewSQLSearcher(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	if common.Config.Search == "" || common.Config.Search == "sql" {
+		common.RepliesSearch, err = common.NewSQLSearcher(acc)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 	common.Subscriptions, err = common.NewDefaultSubscriptionStore()
 	if err != nil {
