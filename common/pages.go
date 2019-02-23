@@ -32,10 +32,12 @@ type Header struct {
 	ZoneData    interface{}
 	Path        string
 	MetaDesc    string
-	StartedAt   time.Time
-	Elapsed1    string
-	Writer      http.ResponseWriter
-	ExtData     ExtData
+	//OGImage string
+	//OGDesc string
+	StartedAt time.Time
+	Elapsed1  string
+	Writer    http.ResponseWriter
+	ExtData   ExtData
 }
 
 func (header *Header) AddScript(name string) {
@@ -255,9 +257,14 @@ type PanelCustomPageEditPage struct {
 	Page *CustomPage
 }
 
-type PanelTimeGraph struct {
+/*type PanelTimeGraph struct {
 	Series []int64 // The counts on the left
 	Labels []int64 // unixtimes for the bottom, gets converted into 1:00, 2:00, etc. with JS
+}*/
+type PanelTimeGraph struct {
+	Series  [][]int64 // The counts on the left
+	Labels  []int64   // unixtimes for the bottom, gets converted into 1:00, 2:00, etc. with JS
+	Legends []string
 }
 
 type PanelAnalyticsItem struct {
@@ -267,9 +274,9 @@ type PanelAnalyticsItem struct {
 
 type PanelAnalyticsPage struct {
 	*BasePanelPage
-	PrimaryGraph PanelTimeGraph
-	ViewItems    []PanelAnalyticsItem
-	TimeRange    string
+	Graph     PanelTimeGraph
+	ViewItems []PanelAnalyticsItem
+	TimeRange string
 }
 
 type PanelAnalyticsRoutesItem struct {
@@ -297,18 +304,25 @@ type PanelAnalyticsAgentsPage struct {
 
 type PanelAnalyticsRoutePage struct {
 	*BasePanelPage
-	Route        string
-	PrimaryGraph PanelTimeGraph
-	ViewItems    []PanelAnalyticsItem
-	TimeRange    string
+	Route     string
+	Graph     PanelTimeGraph
+	ViewItems []PanelAnalyticsItem
+	TimeRange string
 }
 
 type PanelAnalyticsAgentPage struct {
 	*BasePanelPage
 	Agent         string
 	FriendlyAgent string
-	PrimaryGraph  PanelTimeGraph
+	Graph         PanelTimeGraph
 	TimeRange     string
+}
+
+type PanelAnalyticsDuoPage struct {
+	*BasePanelPage
+	ItemList  []PanelAnalyticsAgentsItem
+	Graph     PanelTimeGraph
+	TimeRange string
 }
 
 type PanelThemesPage struct {

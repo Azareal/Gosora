@@ -82,7 +82,7 @@ func (forum *Forum) Update(name string, desc string, active bool, preset string)
 	if err != nil {
 		return err
 	}
-	if forum.Preset != preset || preset == "custom" || preset == "" {
+	if forum.Preset != preset && preset != "custom" && preset != "" {
 		err = PermmapToQuery(PresetToPermmap(preset), forum.ID)
 		if err != nil {
 			return err

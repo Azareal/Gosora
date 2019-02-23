@@ -392,8 +392,7 @@ function mainInit(){
 
 	$(".link_label").click(function(event) {
 		event.preventDefault();
-		let forSelect = $(this).attr("data-for");
-		let linkSelect = $('#'+forSelect);
+		let linkSelect = $('#'+$(this).attr("data-for"));
 		if(!linkSelect.hasClass("link_opened")) {
 			event.stopPropagation();
 			linkSelect.addClass("link_opened");
@@ -415,9 +414,7 @@ function mainInit(){
 			this.outerHTML = Template_paginator({PageList: pageList, Page: page, LastPage: lastPage});
 			ok = true;
 		});
-		if(!ok) {
-			$(Template_paginator({PageList: pageList, Page: page, LastPage: lastPage})).insertAfter("#topic_list");
-		}
+		if(!ok) $(Template_paginator({PageList: pageList, Page: page, LastPage: lastPage})).insertAfter("#topic_list");
 	}
 
 	function rebindPaginator() {
@@ -495,6 +492,41 @@ function mainInit(){
 
 	if (document.getElementById("topicsItemList")!==null) rebindPaginator();
 	if (document.getElementById("forumItemList")!==null) rebindPaginator();
+
+	// TODO: Show a search button when JS is disabled?
+	$(".widget_search_input").keypress(function(e) {
+		if (e.keyCode != '13') return;
+		event.preventDefault();
+		// TODO: Take mostviewed into account
+		let url = "//"+window.location.host+window.location.pathname;
+		let urlParams = new URLSearchParams(window.location.search);
+		urlParams.set("q",this.value);
+		let q = "?";
+		for(let item of urlParams.entries()) q += item[0]+"="+item[1]+"&";
+		if(q.length>1) q = q.slice(0,-1);
+
+		// TODO: Try to de-duplicate some of these fetch calls
+		fetch(url+q+"&js=1", {credentials: "same-origin"})
+			.then((resp) => resp.json())
+			.then((data) => {
+				if(!"Topics" in data) throw("no Topics in data");
+				let topics = data["Topics"];
+
+				// TODO: Fix the data race where the function hasn't been loaded yet
+				let out = "";
+				for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
+				$(".topic_list").html(out);
+
+				let obj = {Title: document.title, Url: url+q};
+				history.pushState(obj, obj.Title, obj.Url);
+				rebuildPaginator(data.LastPage);
+				rebindPaginator();
+		}).catch((ex) => {
+			console.log("Unable to get script '"+url+q+"&js=1"+"'");
+			console.log("ex: ", ex);
+			console.trace();
+		});
+	});
 
 	$(".open_edit").click((event) => {
 		event.preventDefault();

@@ -10,34 +10,37 @@ func NewNullTopicCache() *NullTopicCache {
 }
 
 // nolint
-func (mts *NullTopicCache) Get(id int) (*Topic, error) {
+func (c *NullTopicCache) Get(id int) (*Topic, error) {
 	return nil, ErrNoRows
 }
-func (mts *NullTopicCache) GetUnsafe(id int) (*Topic, error) {
+func (c *NullTopicCache) GetUnsafe(id int) (*Topic, error) {
 	return nil, ErrNoRows
 }
-func (mts *NullTopicCache) Set(_ *Topic) error {
+func (c *NullTopicCache) BulkGet(ids []int) (list []*Topic) {
+	return make([]*Topic, len(ids))
+}
+func (c *NullTopicCache) Set(_ *Topic) error {
 	return nil
 }
-func (mts *NullTopicCache) Add(_ *Topic) error {
+func (c *NullTopicCache) Add(_ *Topic) error {
 	return nil
 }
-func (mts *NullTopicCache) AddUnsafe(_ *Topic) error {
+func (c *NullTopicCache) AddUnsafe(_ *Topic) error {
 	return nil
 }
-func (mts *NullTopicCache) Remove(id int) error {
+func (c *NullTopicCache) Remove(id int) error {
 	return nil
 }
-func (mts *NullTopicCache) RemoveUnsafe(id int) error {
+func (c *NullTopicCache) RemoveUnsafe(id int) error {
 	return nil
 }
-func (mts *NullTopicCache) Flush() {
+func (c *NullTopicCache) Flush() {
 }
-func (mts *NullTopicCache) Length() int {
+func (c *NullTopicCache) Length() int {
 	return 0
 }
-func (mts *NullTopicCache) SetCapacity(_ int) {
+func (c *NullTopicCache) SetCapacity(_ int) {
 }
-func (mts *NullTopicCache) GetCapacity() int {
+func (c *NullTopicCache) GetCapacity() int {
 	return 0
 }

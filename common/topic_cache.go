@@ -9,6 +9,7 @@ import (
 type TopicCache interface {
 	Get(id int) (*Topic, error)
 	GetUnsafe(id int) (*Topic, error)
+	BulkGet(ids []int) (list []*Topic)
 	Set(item *Topic) error
 	Add(item *Topic) error
 	AddUnsafe(item *Topic) error
@@ -55,6 +56,17 @@ func (mts *MemoryTopicCache) GetUnsafe(id int) (*Topic, error) {
 		return item, nil
 	}
 	return item, ErrNoRows
+}
+
+// BulkGet fetches multiple topics by their IDs. Indices without topics will be set to nil, so make sure you check for those, we might want to change this behaviour to make it less confusing.
+func (c *MemoryTopicCache) BulkGet(ids []int) (list []*Topic) {
+	list = make([]*Topic, len(ids))
+	c.RLock()
+	for i, id := range ids {
+		list[i] = c.items[id]
+	}
+	c.RUnlock()
+	return list
 }
 
 // Set overwrites the value of a topic in the cache, whether it's present or not. May return a capacity overflow error.

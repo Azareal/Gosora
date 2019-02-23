@@ -113,7 +113,7 @@ func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset stri
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) AddColumn(name string, table string, column DBTableColumn,key *DBTableKey) (string, error) {
+func (adapter *PgsqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -130,6 +130,18 @@ func (adapter *PgsqlAdapter) AddIndex(name string, table string, iname string, c
 		return "", errors.New("You need a name for the index")
 	}
 	if colname == "" {
+		return "", errors.New("You need a name for the column")
+	}
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+// TODO: Test to make sure everything works here
+func (adapter *PgsqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if column == "" {
 		return "", errors.New("You need a name for the column")
 	}
 	return "", errors.New("not implemented")

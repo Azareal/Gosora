@@ -2,7 +2,9 @@
 
 })*/
 
-function buildStatsChart(rawLabels, seriesData, timeRange) {
+// TODO: Fully localise this
+// TODO: Load rawLabels and seriesData dynamically rather than potentially fiddling with nonces for the CSP?
+function buildStatsChart(rawLabels, seriesData, timeRange, legendNames) {
 	let labels = [];
 	if(timeRange=="one-month") {
 		labels = ["today","01 days"];
@@ -28,12 +30,20 @@ function buildStatsChart(rawLabels, seriesData, timeRange) {
 		}
 	}
 	labels = labels.reverse()
-	seriesData = seriesData.reverse();
+	for(let i = 0; i < seriesData.length;i++) {
+		seriesData[i] = seriesData[i].reverse();
+	}
 
+	let config = {
+		height: '250px',
+	};
+	if(legendNames.length > 0) config.plugins = [
+		Chartist.plugins.legend({
+			legendNames: legendNames,
+		})
+    ];
 	Chartist.Line('.ct_chart', {
 		labels: labels,
-		series: [seriesData],
-	}, {
-		height: '250px',
-	});
+		series: seriesData,
+	}, config);
 }

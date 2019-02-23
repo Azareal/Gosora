@@ -14,5 +14,6 @@ CREATE TABLE `replies` (
 	`words` int DEFAULT 1 not null,
 	`actionType` varchar(20) DEFAULT '' not null,
 	`poll` int DEFAULT 0 not null,
-	primary key(`rid`)
+	primary key(`rid`),
+	fulltext key(`content`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;

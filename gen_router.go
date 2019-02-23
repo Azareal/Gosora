@@ -487,7 +487,8 @@ var agentMapEnum = map[string]int{
 	"malformed": 26,
 	"suspicious": 27,
 	"semrush": 28,
-	"zgrab": 29,
+	"dotbot": 29,
+	"zgrab": 30,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -519,7 +520,8 @@ var reverseAgentMapEnum = map[int]string{
 	26: "malformed",
 	27: "suspicious",
 	28: "semrush",
-	29: "zgrab",
+	29: "dotbot",
+	30: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -546,6 +548,7 @@ var markToAgent = map[string]string{
 	"Twitterbot": "twitter",
 	"Discourse": "discourse",
 	"SemrushBot": "semrush",
+	"DotBot": "dotbot",
 	"zgrab": "zgrab",
 }
 /*var agentRank = map[string]int{
@@ -641,7 +644,7 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Header '" + common.SanitiseSingleLine(key) + "': " + common.SanitiseSingleLine(vvalue) + "!!\n"
+			heads += "Header '" + common.SanitiseSingleLine(key) + "': " + common.SanitiseSingleLine(vvalue) + "!\n"
 		}
 	}
 
@@ -791,7 +794,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			} else {
 				// TODO: Test this
 				items = items[:0]
-				r.SuspiciousRequest(req,"Illegal char in UA")
+				r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(item))+" in UA")
 				r.requestLogger.Print("UA Buffer: ", buffer)
 				r.requestLogger.Print("UA Buffer String: ", string(buffer))
 				break
@@ -815,7 +818,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if common.Dev.SuperDebug {
 			r.requestLogger.Print("parsed agent: ", agent)
 		}
-
 		if common.Dev.SuperDebug {
 			r.requestLogger.Print("os: ", os)
 			r.requestLogger.Printf("items: %+v\n",items)
@@ -861,7 +863,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		lang = strings.TrimSpace(lang)
 		lLang := strings.Split(lang,"-")
 		common.DebugDetail("lLang:", lLang)
-		counters.LangViewCounter.Bump(lLang[0])
+		validCode := counters.LangViewCounter.Bump(lLang[0])
+		if !validCode {
+			r.DumpRequest(req,"Invalid ISO Code")
+		}
 	} else {
 		counters.LangViewCounter.Bump("none")
 	}

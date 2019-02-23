@@ -136,7 +136,7 @@ func (adapter *MssqlAdapter) parseColumn(column DBTableColumn) (col DBTableColum
 
 // TODO: Test this, not sure if some things work
 // TODO: Add support for keys
-func (adapter *MssqlAdapter) AddColumn(name string, table string, column DBTableColumn,key *DBTableKey) (string, error) {
+func (adapter *MssqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -157,6 +157,18 @@ func (adapter *MssqlAdapter) AddIndex(name string, table string, iname string, c
 		return "", errors.New("You need a name for the index")
 	}
 	if colname == "" {
+		return "", errors.New("You need a name for the column")
+	}
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+// TODO: Test to make sure everything works here
+func (adapter *MssqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if column == "" {
 		return "", errors.New("You need a name for the column")
 	}
 	return "", errors.New("not implemented")

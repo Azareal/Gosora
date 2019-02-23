@@ -8,7 +8,9 @@ package common // import "github.com/Azareal/Gosora/common"
 
 import (
 	"database/sql"
+	"io"
 	"log"
+	"os"
 	"sync/atomic"
 	"time"
 
@@ -111,6 +113,8 @@ func StoppedServer(msg ...interface{}) {
 }
 
 var StopServerChan = make(chan []interface{})
+
+var LogWriter = io.MultiWriter(os.Stderr)
 
 func DebugDetail(args ...interface{}) {
 	if Dev.SuperDebug {

@@ -191,6 +191,7 @@
 		"lynx":"Lynx",
 		
 		"semrush":"SemrushBot",
+		"dotbot":"DotBot",
 		"zgrab":"Zgrab Application Scanner",
 		"suspicious":"Suspicious",
 		"unknown":"Unknown",
@@ -829,6 +830,7 @@
 		"panel_statistics_topic_counts_head":"Topic Counts",
 		"panel_statistics_requests_head":"Requests",
 
+		"panel_statistics_time_range_three_months":"3 months",
 		"panel_statistics_time_range_one_month":"1 month",
 		"panel_statistics_time_range_one_week":"1 week",
 		"panel_statistics_time_range_two_days":"2 days",

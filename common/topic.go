@@ -146,6 +146,28 @@ func (row *TopicsRow) WebSockets() *WsTopicsRow {
 	return &WsTopicsRow{row.ID, row.Link, row.Title, row.CreatedBy, row.IsClosed, row.Sticky, row.CreatedAt, row.LastReplyAt, RelativeTime(row.LastReplyAt), row.LastReplyBy, row.LastReplyID, row.ParentID, row.ViewCount, row.PostCount, row.LikeCount, row.AttachCount, row.ClassName, row.Creator.WebSockets(), row.LastUser.WebSockets(), row.ForumName, row.ForumLink}
 }
 
+// TODO: Stop relying on so many struct types?
+// ! Not quite safe as Topic doesn't contain all the data needed to constructs a TopicsRow
+func (t *Topic) TopicsRow() *TopicsRow {
+	lastPage := 1
+	var creator *User = nil
+	contentLines := 1
+	var lastUser *User = nil
+	forumName := ""
+	forumLink := ""
+
+	return &TopicsRow{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IPAddress, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, lastPage, t.ClassName, t.Data, creator, "", contentLines, lastUser, forumName, forumLink}
+}
+
+// ! Not quite safe as Topic doesn't contain all the data needed to constructs a WsTopicsRow
+/*func (t *Topic) WsTopicsRows() *WsTopicsRow {
+	var creator *User = nil
+	var lastUser *User = nil
+	forumName := ""
+	forumLink := ""
+	return &WsTopicsRow{t.ID, t.Link, t.Title, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, RelativeTime(t.LastReplyAt), t.LastReplyBy, t.LastReplyID, t.ParentID, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, t.ClassName, creator, lastUser, forumName, forumLink}
+}*/
+
 type TopicStmts struct {
 	addReplies      *sql.Stmt
 	updateLastReply *sql.Stmt

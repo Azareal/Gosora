@@ -2,17 +2,17 @@
 *
 *	Query Generator Library
 *	WIP Under Construction
-*	Copyright Azareal 2017 - 2019
+*	Copyright Azareal 2017 - 2020
 *
  */
 package qgen
 
-//import "fmt"
 import (
 	"os"
 	"strings"
 )
 
+// TODO: Add support for numbers and strings?
 func processColumns(colstr string) (columns []DBColumn) {
 	if colstr == "" {
 		return columns

@@ -1,4 +1,5 @@
 <select class="timeRangeSelector to_right" name="timeRange">
+	<option val="three-months"{{if eq .TimeRange "three-months"}} selected{{end}}>{{lang "panel_statistics_time_range_three_months"}}</option>
 	<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>{{lang "panel_statistics_time_range_one_month"}}</option>
 	<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>{{lang "panel_statistics_time_range_one_week"}}</option>
 	<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>{{lang "panel_statistics_time_range_two_days"}}</option>

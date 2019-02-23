@@ -359,12 +359,9 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 			writeTemplate(name, tmpl)
 		}
 	}
-	/*writeTemplate("profile", profileTmpl)
-	writeTemplate("forums", forumsTmpl)
-	writeTemplate("login", loginTmpl)
+	/*writeTemplate("login", loginTmpl)
 	writeTemplate("register", registerTmpl)
 	writeTemplate("ip_search", ipSearchTmpl)
-	writeTemplate("account", accountTmpl)
 	writeTemplate("error", errorTmpl)*/
 	return nil
 }

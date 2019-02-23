@@ -149,19 +149,23 @@ func (counter *DefaultLangViewCounter) insertChunk(count int, id int) error {
 	return err
 }
 
-func (counter *DefaultLangViewCounter) Bump(langCode string) {
+func (counter *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {
+	validCode = true
 	id, ok := counter.codesToIndices[langCode]
 	if !ok {
 		// TODO: Tell the caller that the code's invalid
 		id = 0 // Unknown
+		validCode = false
 	}
 
 	// TODO: Test this check
 	common.DebugDetail("counter.buckets[", id, "]: ", counter.buckets[id])
 	if len(counter.buckets) <= id || id < 0 {
-		return
+		return validCode
 	}
 	counter.buckets[id].Lock()
 	counter.buckets[id].counter++
 	counter.buckets[id].Unlock()
+
+	return validCode
 }

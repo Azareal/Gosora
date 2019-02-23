@@ -25,6 +25,7 @@ func init() {
 	addPatch(11, patch11)
 	addPatch(12, patch12)
 	addPatch(13, patch13)
+	addPatch(14, patch14)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -508,6 +509,23 @@ func patch12(scanner *bufio.Scanner) error {
 
 func patch13(scanner *bufio.Scanner) error {
 	err := execStmt(qgen.Builder.AddColumn("widgets", tblColumn{"wid", "int", 0, false, true, ""}, &tblKey{"wid", "primary"}))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func patch14(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddKey("topics", "title", tblKey{"title", "fulltext"}))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddKey("topics", "content", tblKey{"content", "fulltext"}))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddKey("replies", "content", tblKey{"content", "fulltext"}))
 	if err != nil {
 		return err
 	}

@@ -10,41 +10,41 @@ func NewNullUserCache() *NullUserCache {
 }
 
 // nolint
-func (mus *NullUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
+func (c *NullUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
 	return 0
 }
-func (mus *NullUserCache) Get(id int) (*User, error) {
+func (c *NullUserCache) Get(id int) (*User, error) {
 	return nil, ErrNoRows
 }
-func (mus *NullUserCache) BulkGet(ids []int) (list []*User) {
+func (c *NullUserCache) BulkGet(ids []int) (list []*User) {
 	return make([]*User, len(ids))
 }
-func (mus *NullUserCache) GetUnsafe(id int) (*User, error) {
+func (c *NullUserCache) GetUnsafe(id int) (*User, error) {
 	return nil, ErrNoRows
 }
-func (mus *NullUserCache) Set(_ *User) error {
+func (c *NullUserCache) Set(_ *User) error {
 	return nil
 }
-func (mus *NullUserCache) Add(_ *User) error {
+func (c *NullUserCache) Add(_ *User) error {
 	return nil
 }
-func (mus *NullUserCache) AddUnsafe(_ *User) error {
+func (c *NullUserCache) AddUnsafe(_ *User) error {
 	return nil
 }
-func (mus *NullUserCache) Remove(id int) error {
+func (c *NullUserCache) Remove(id int) error {
 	return nil
 }
-func (mus *NullUserCache) RemoveUnsafe(id int) error {
+func (c *NullUserCache) RemoveUnsafe(id int) error {
 	return nil
 }
-func (mus *NullUserCache) BulkRemove(ids []int) {}
-func (mus *NullUserCache) Flush() {
+func (c *NullUserCache) BulkRemove(ids []int) {}
+func (c *NullUserCache) Flush() {
 }
-func (mus *NullUserCache) Length() int {
+func (c *NullUserCache) Length() int {
 	return 0
 }
-func (mus *NullUserCache) SetCapacity(_ int) {
+func (c *NullUserCache) SetCapacity(_ int) {
 }
-func (mus *NullUserCache) GetCapacity() int {
+func (c *NullUserCache) GetCapacity() int {
 	return 0
 }

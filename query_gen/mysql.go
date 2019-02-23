@@ -213,6 +213,22 @@ func (adapter *MysqlAdapter) AddIndex(name string, table string, iname string, c
 	return querystr, nil
 }
 
+// TODO: Test to make sure everything works here
+// Only supports FULLTEXT right now
+func (adapter *MysqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if key.Type != "fulltext" {
+		return "", errors.New("Only fulltext is supported by AddKey right now")
+	}
+	querystr := "ALTER TABLE `" + table + "` ADD FULLTEXT(`" + column + "`)"
+
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
+	adapter.pushStatement(name, "add-key", querystr)
+	return querystr, nil
+}
+
 func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
@@ -689,11 +705,23 @@ func (adapter *MysqlAdapter) buildLimit(limit string) (querystr string) {
 
 func (adapter *MysqlAdapter) buildJoinColumns(columns string) (querystr string) {
 	for _, column := range processColumns(columns) {
+		// TODO: Move the stirng and number logic to processColumns?
+		// TODO: Error if [0] doesn't exist
+		firstChar := column.Left[0]
+		if firstChar == '\'' {
+			column.Type = "string"
+		} else {
+			_, err := strconv.Atoi(string(firstChar))
+			if err == nil {
+				column.Type = "number"
+			}
+		}
+
 		// Escape the column names, just in case we've used a reserved keyword
 		var source = column.Left
 		if column.Table != "" {
 			source = "`" + column.Table + "`.`" + source + "`"
-		} else if column.Type != "function" {
+		} else if column.Type != "function" && column.Type != "number" && column.Type != "substitute" && column.Type != "string" {
 			source = "`" + source + "`"
 		}
 

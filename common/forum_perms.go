@@ -99,7 +99,6 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 	if err != nil {
 		return err
 	}
-
 	_, err = deleteForumPermsByForumTx.Exec(fid)
 	if err != nil {
 		return err
@@ -112,13 +111,12 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 
 	addForumPermsToForumAdminsTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
 		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 1", "", ""},
+		qgen.DBSelect{"users_groups", "gid, ?, '', ?", "is_admin = 1", "", ""},
 	)
 	if err != nil {
 		return err
 	}
-
-	_, err = addForumPermsToForumAdminsTx.Exec(fid, "", perms)
+	_, err = addForumPermsToForumAdminsTx.Exec(fid, perms)
 	if err != nil {
 		return err
 	}
@@ -130,12 +128,12 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 
 	addForumPermsToForumStaffTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
 		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 1", "", ""},
+		qgen.DBSelect{"users_groups", "gid, ?, '', ?", "is_admin = 0 AND is_mod = 1", "", ""},
 	)
 	if err != nil {
 		return err
 	}
-	_, err = addForumPermsToForumStaffTx.Exec(fid, "", perms)
+	_, err = addForumPermsToForumStaffTx.Exec(fid, perms)
 	if err != nil {
 		return err
 	}
@@ -147,12 +145,12 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 
 	addForumPermsToForumMembersTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
 		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
+		qgen.DBSelect{"users_groups", "gid, ?, '', ?", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
 	)
 	if err != nil {
 		return err
 	}
-	_, err = addForumPermsToForumMembersTx.Exec(fid, "", perms)
+	_, err = addForumPermsToForumMembersTx.Exec(fid, perms)
 	if err != nil {
 		return err
 	}

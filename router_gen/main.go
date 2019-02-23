@@ -222,6 +222,7 @@ func main() {
 		"malformed",
 		"suspicious",
 		"semrush",
+		"dotbot",
 		"zgrab",
 	}
 
@@ -257,6 +258,7 @@ func main() {
 		"Discourse",
 
 		"SemrushBot",
+		"DotBot",
 		"zgrab",
 	}
 
@@ -287,6 +289,7 @@ func main() {
 		"Discourse":   "discourse",
 
 		"SemrushBot": "semrush",
+		"DotBot":     "dotbot",
 		"zgrab":      "zgrab",
 	}
 
@@ -433,7 +436,7 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Header '" + common.SanitiseSingleLine(key) + "': " + common.SanitiseSingleLine(vvalue) + "!!\n"
+			heads += "Header '" + common.SanitiseSingleLine(key) + "': " + common.SanitiseSingleLine(vvalue) + "!\n"
 		}
 	}
 
@@ -583,7 +586,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			} else {
 				// TODO: Test this
 				items = items[:0]
-				r.SuspiciousRequest(req,"Illegal char in UA")
+				r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(item))+" in UA")
 				r.requestLogger.Print("UA Buffer: ", buffer)
 				r.requestLogger.Print("UA Buffer String: ", string(buffer))
 				break
@@ -607,7 +610,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if common.Dev.SuperDebug {
 			r.requestLogger.Print("parsed agent: ", agent)
 		}
-
 		if common.Dev.SuperDebug {
 			r.requestLogger.Print("os: ", os)
 			r.requestLogger.Printf("items: %+v\n",items)
@@ -653,7 +655,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		lang = strings.TrimSpace(lang)
 		lLang := strings.Split(lang,"-")
 		common.DebugDetail("lLang:", lLang)
-		counters.LangViewCounter.Bump(lLang[0])
+		validCode := counters.LangViewCounter.Bump(lLang[0])
+		if !validCode {
+			r.DumpRequest(req,"Invalid ISO Code")
+		}
 	} else {
 		counters.LangViewCounter.Bump("none")
 	}

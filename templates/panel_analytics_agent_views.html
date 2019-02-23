@@ -15,13 +15,5 @@
 		</div>
 	</main>
 </div>
-<script>
-let rawLabels = [{{range .PrimaryGraph.Labels}}
-{{.}},{{end}}
-];
-let seriesData = [{{range .PrimaryGraph.Series}}
-{{.}},{{end}}
-];
-buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}");
-</script>
+{{template "panel_analytics_script.html" . }}
 {{template "footer.html" . }}

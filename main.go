@@ -1,7 +1,7 @@
 /*
 *
 *	Gosora Main File
-*	Copyright Azareal 2016 - 2019
+*	Copyright Azareal 2016 - 2020
 *
  */
 // Package main contains the main initialisation logic for Gosora
@@ -34,7 +34,6 @@ import (
 )
 
 var router *GenRouter
-var logWriter = io.MultiWriter(os.Stderr)
 
 // TODO: Wrap the globals in here so we can pass pointers to them to subpackages
 var globs *Globs
@@ -144,6 +143,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	common.RepliesSearch, err = common.NewSQLSearcher(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	common.Subscriptions, err = common.NewDefaultSubscriptionStore()
 	if err != nil {
 		return errors.WithStack(err)
@@ -227,8 +230,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	logWriter = io.MultiWriter(os.Stderr, f)
-	log.SetOutput(logWriter)
+	common.LogWriter = io.MultiWriter(os.Stderr, f)
+	log.SetOutput(common.LogWriter)
 	log.Print("Running Gosora v" + common.SoftwareVersion.String())
 	fmt.Println("")
 

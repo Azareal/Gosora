@@ -9,6 +9,7 @@ package common
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/Azareal/Gosora/query_gen"
@@ -27,6 +28,7 @@ type TopicStore interface {
 	DirtyGet(id int) *Topic
 	Get(id int) (*Topic, error)
 	BypassGet(id int) (*Topic, error)
+	BulkGetMap(ids []int) (list map[int]*Topic, err error)
 	Exists(id int) bool
 	Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error)
 	AddLastTopic(item *Topic, fid int) error // unimplemented
@@ -57,7 +59,7 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 	}
 	return &DefaultTopicStore{
 		cache:      cache,
-		get:        acc.Select("topics").Columns("title, content, createdBy, createdAt, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
+		get:        acc.Select("topics").Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
 		exists:     acc.Select("topics").Columns("tid").Where("tid = ?").Prepare(),
 		topicCount: acc.Count("topics").Prepare(),
 		create:     acc.Insert("topics").Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
@@ -71,7 +73,7 @@ func (mts *DefaultTopicStore) DirtyGet(id int) *Topic {
 	}
 
 	topic = &Topic{ID: id}
-	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	if err == nil {
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 		_ = mts.cache.Add(topic)
@@ -88,7 +90,7 @@ func (mts *DefaultTopicStore) Get(id int) (topic *Topic, err error) {
 	}
 
 	topic = &Topic{ID: id}
-	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	if err == nil {
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 		_ = mts.cache.Add(topic)
@@ -99,14 +101,89 @@ func (mts *DefaultTopicStore) Get(id int) (topic *Topic, err error) {
 // BypassGet will always bypass the cache and pull the topic directly from the database
 func (mts *DefaultTopicStore) BypassGet(id int) (*Topic, error) {
 	topic := &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 	return topic, err
 }
 
+// TODO: Avoid duplicating much of this logic from user_store.go
+func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err error) {
+	var idCount = len(ids)
+	list = make(map[int]*Topic)
+	if idCount == 0 {
+		return list, nil
+	}
+
+	var stillHere []int
+	sliceList := s.cache.BulkGet(ids)
+	if len(sliceList) > 0 {
+		for i, sliceItem := range sliceList {
+			if sliceItem != nil {
+				list[sliceItem.ID] = sliceItem
+			} else {
+				stillHere = append(stillHere, ids[i])
+			}
+		}
+		ids = stillHere
+	}
+
+	// If every user is in the cache, then return immediately
+	if len(ids) == 0 {
+		return list, nil
+	} else if len(ids) == 1 {
+		topic, err := s.Get(ids[0])
+		if err != nil {
+			return list, err
+		}
+		list[topic.ID] = topic
+		return list, nil
+	}
+
+	// TODO: Add a function for the qlist stuff
+	var qlist string
+	var idList []interface{}
+	for _, id := range ids {
+		idList = append(idList, strconv.Itoa(id))
+		qlist += "?,"
+	}
+	qlist = qlist[0 : len(qlist)-1]
+
+	rows, err := qgen.NewAcc().Select("topics").Columns("tid, title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid IN(" + qlist + ")").Query(idList...)
+	if err != nil {
+		return list, err
+	}
+	for rows.Next() {
+		topic := &Topic{}
+		err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+		if err != nil {
+			return list, err
+		}
+		topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
+		s.cache.Set(topic)
+		list[topic.ID] = topic
+	}
+
+	// Did we miss any topics?
+	if idCount > len(list) {
+		var sidList string
+		for _, id := range ids {
+			_, ok := list[id]
+			if !ok {
+				sidList += strconv.Itoa(id) + ","
+			}
+		}
+		if sidList != "" {
+			sidList = sidList[0 : len(sidList)-1]
+			err = errors.New("Unable to find topics with the following IDs: " + sidList)
+		}
+	}
+
+	return list, err
+}
+
 func (mts *DefaultTopicStore) Reload(id int) error {
 	topic := &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	if err == nil {
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
 		_ = mts.cache.Set(topic)

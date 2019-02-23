@@ -30,6 +30,13 @@ func analyticsTimeRange(rawTimeRange string) (timeRange AnalyticsTimeRange, err 
 	timeRange.Range = "six-hours"
 
 	switch rawTimeRange {
+	// This might be pushing it, we might want to come up with a more efficient scheme for dealing with large timeframes like this
+	case "three-months":
+		timeRange.Quantity = 90
+		timeRange.Unit = "day"
+		timeRange.Slices = 30
+		timeRange.SliceWidth = 60 * 60 * 24 * 3
+		timeRange.Range = "three-months"
 	case "one-month":
 		timeRange.Quantity = 30
 		timeRange.Unit = "day"
@@ -59,7 +66,6 @@ func analyticsTimeRange(rawTimeRange string) (timeRange AnalyticsTimeRange, err 
 		timeRange.Slices = 24
 		timeRange.Range = "twelve-hours"
 	case "six-hours", "":
-		timeRange.Range = "six-hours"
 	default:
 		return timeRange, errors.New("Unknown time range")
 	}
@@ -89,7 +95,6 @@ func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64
 		if err != nil {
 			return viewMap, err
 		}
-
 		var unixCreatedAt = createdAt.Unix()
 		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
@@ -97,7 +102,6 @@ func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
 		}
-
 		for _, value := range labelList {
 			if unixCreatedAt > value {
 				viewMap[value] += count
@@ -113,7 +117,6 @@ func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *common.Use
 	if ferr != nil {
 		return nil, ferr
 	}
-
 	basePage.AddSheet("chartist/chartist.min.css")
 	basePage.AddScript("chartist/chartist.min.js")
 	basePage.AddScript("analytics.js")
@@ -125,7 +128,6 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) co
 	if ferr != nil {
 		return ferr
 	}
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -138,7 +140,6 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) co
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -150,7 +151,7 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) co
 		viewList = append(viewList, viewMap[value])
 		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
@@ -162,7 +163,6 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.Use
 	if ferr != nil {
 		return ferr
 	}
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -175,7 +175,6 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.Use
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -187,7 +186,7 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.Use
 		viewList = append(viewList, viewMap[value])
 		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
 	pi := common.PanelAnalyticsRoutePage{basePage, common.SanitiseSingleLine(route), graph, viewItems, timeRange.Range}
@@ -199,13 +198,11 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.Use
 	if ferr != nil {
 		return ferr
 	}
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
-
 	// ? Only allow valid agents? The problem with this is that agents wind up getting renamed and it would take a migration to get them all up to snuff
 	agent = common.SanitiseSingleLine(agent)
 
@@ -215,7 +212,6 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.Use
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -225,7 +221,7 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.Use
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
 	friendlyAgent, ok := phrases.GetUserAgentPhrase(agent)
@@ -259,7 +255,6 @@ func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user common.Use
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -269,7 +264,7 @@ func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user common.Use
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
 	forum, err := common.Forums.Get(fid)
@@ -286,7 +281,6 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.Us
 	if ferr != nil {
 		return ferr
 	}
-
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
@@ -300,7 +294,6 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.Us
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -310,7 +303,7 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.Us
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
 	friendlySystem, ok := phrases.GetOSPhrase(system)
@@ -350,7 +343,7 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user common.
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
 
 	friendlyLang, ok := phrases.GetHumanLangPhrase(lang)
@@ -379,7 +372,6 @@ func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -389,9 +381,8 @@ func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
-
 	pi := common.PanelAnalyticsAgentPage{basePage, common.SanitiseSingleLine(domain), "", graph, timeRange.Range}
 	return renderTemplate("panel_analytics_referrer_views", w, r, basePage.Header, &pi)
 }
@@ -412,7 +403,6 @@ func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) c
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -424,9 +414,8 @@ func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) c
 		viewList = append(viewList, viewMap[value])
 		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
-
 	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
 	return renderTemplate("panel_analytics_topics", w, r, basePage.Header, &pi)
 }
@@ -447,7 +436,6 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user common.User) co
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -459,12 +447,38 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user common.User) co
 		viewList = append(viewList, viewMap[value])
 		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
-	graph := common.PanelTimeGraph{Series: viewList, Labels: labelList}
+	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
-
 	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
 	return renderTemplate("panel_analytics_posts", w, r, basePage.Header, &pi)
 }
+
+/*func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64]int64) (map[int64]int64, error) {
+	defer rows.Close()
+	for rows.Next() {
+		var count int64
+		var createdAt time.Time
+		err := rows.Scan(&count, &createdAt)
+		if err != nil {
+			return viewMap, err
+		}
+
+		var unixCreatedAt = createdAt.Unix()
+		// TODO: Bulk log this
+		if common.Dev.SuperDebug {
+			log.Print("count: ", count)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				viewMap[value] += count
+				break
+			}
+		}
+	}
+	return viewMap, rows.Err()
+}*/
 
 func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
 	nameMap := make(map[string]int)
@@ -476,7 +490,6 @@ func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
 		if err != nil {
 			return nameMap, err
 		}
-
 		// TODO: Bulk log this
 		if common.Dev.SuperDebug {
 			log.Print("count: ", count)
@@ -485,6 +498,46 @@ func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
 		nameMap[name] += count
 	}
 	return nameMap, rows.Err()
+}
+
+func analyticsRowsToDuoMap(rows *sql.Rows, labelList []int64, viewMap map[int64]int64) (map[string]map[int64]int64, map[string]int, error) {
+	vMap := make(map[string]map[int64]int64)
+	nameMap := make(map[string]int)
+	defer rows.Close()
+	for rows.Next() {
+		var count int64
+		var name string
+		var createdAt time.Time
+		err := rows.Scan(&count, &name, &createdAt)
+		if err != nil {
+			return vMap, nameMap, err
+		}
+
+		// TODO: Bulk log this
+		var unixCreatedAt = createdAt.Unix()
+		if common.Dev.SuperDebug {
+			log.Print("count: ", count)
+			log.Print("name: ", name)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+		vvMap, ok := vMap[name]
+		if !ok {
+			vvMap = make(map[int64]int64)
+			for key, val := range viewMap {
+				vvMap[key] = val
+			}
+			vMap[name] = vvMap
+		}
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				vvMap[value] += count
+				break
+			}
+		}
+		nameMap[name] += int(count)
+	}
+	return vMap, nameMap, rows.Err()
 }
 
 func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -501,7 +554,6 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) c
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	forumMap, err := analyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -543,7 +595,6 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) c
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	routeMap, err := analyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -562,25 +613,77 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) c
 	return renderTemplate("panel_analytics_routes", w, r, basePage.Header, &pi)
 }
 
+type OVItem struct {
+	name    string
+	count   int
+	viewMap map[int64]int64
+}
+
+// Trialling multi-series charts
 func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	basePage.AddScript("chartist/chartist-plugin-legend.min.js")
+	basePage.AddSheet("chartist/chartist-plugin-legend.css")
+
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
+	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count, browser").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count, browser, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
-	agentMap, err := analyticsRowsToNameMap(rows)
+	vMap, agentMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+
+	// Order the map
+	var ovList []OVItem
+	for name, viewMap := range vMap {
+		var totcount int
+		for _, count := range viewMap {
+			totcount += int(count)
+		}
+		ovList = append(ovList, OVItem{name, totcount, viewMap})
+	}
+	// Use bubble sort for now as there shouldn't be too many items
+	for i := 0; i < len(ovList)-1; i++ {
+		for j := 0; j < len(ovList)-1; j++ {
+			if ovList[j].count > ovList[j+1].count {
+				temp := ovList[j]
+				ovList[j] = ovList[j+1]
+				ovList[j+1] = temp
+			}
+		}
+	}
+
+	var vList [][]int64
+	var legendList []string
+	var i int
+	for _, ovitem := range ovList {
+		var viewList []int64
+		for _, value := range revLabelList {
+			viewList = append(viewList, ovitem.viewMap[value])
+		}
+		vList = append(vList, viewList)
+		lName, ok := phrases.GetUserAgentPhrase(ovitem.name)
+		if !ok {
+			lName = ovitem.name
+		}
+		legendList = append(legendList, lName)
+		if i >= 6 {
+			break
+		}
+		i++
+	}
+	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	common.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Sort this slice
 	var agentItems []common.PanelAnalyticsAgentsItem
@@ -596,7 +699,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{basePage, agentItems, timeRange.Range}
+	pi := common.PanelAnalyticsDuoPage{basePage, agentItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_agents", w, r, basePage.Header, &pi)
 }
 
@@ -614,7 +717,6 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) 
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	osMap, err := analyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -652,7 +754,6 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	langMap, err := analyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -691,7 +792,6 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-
 	refMap, err := analyticsRowsToNameMap(rows)
 	if err != nil {
 		return common.InternalError(err, w, r)

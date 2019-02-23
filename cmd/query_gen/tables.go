@@ -242,6 +242,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 		[]tblKey{
 			tblKey{"tid", "primary"},
+			tblKey{"content", "fulltext"},
 		},
 	)
 
@@ -265,6 +266,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 		[]tblKey{
 			tblKey{"rid", "primary"},
+			tblKey{"content", "fulltext"},
 		},
 	)
 

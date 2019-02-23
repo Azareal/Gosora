@@ -132,7 +132,6 @@ func (store *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User
 		if err != nil {
 			return nil, err
 		}
-
 		user.Init()
 		store.cache.Set(user)
 		users = append(users, user)
@@ -176,25 +175,23 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 
 	// TODO: Add a function for the qlist stuff
 	var qlist string
-	var uidList []interface{}
+	var idList []interface{}
 	for _, id := range ids {
-		uidList = append(uidList, strconv.Itoa(id))
+		idList = append(idList, strconv.Itoa(id))
 		qlist += "?,"
 	}
 	qlist = qlist[0 : len(qlist)-1]
 
-	rows, err := qgen.NewAcc().Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(uidList...)
+	rows, err := qgen.NewAcc().Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(idList...)
 	if err != nil {
 		return list, err
 	}
-
 	for rows.Next() {
 		user := &User{Loggedin: true}
 		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
 		if err != nil {
 			return list, err
 		}
-
 		user.Init()
 		mus.cache.Set(user)
 		list[user.ID] = user
@@ -211,7 +208,7 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 		}
 		if sidList != "" {
 			sidList = sidList[0 : len(sidList)-1]
-			err = errors.New("Unable to find the users with the following IDs: " + sidList)
+			err = errors.New("Unable to find users with the following IDs: " + sidList)
 		}
 	}
 
@@ -233,7 +230,6 @@ func (mus *DefaultUserStore) Reload(id int) error {
 		mus.cache.Remove(id)
 		return err
 	}
-
 	user.Init()
 	_ = mus.cache.Set(user)
 	TopicListThaw.Thaw()
@@ -276,7 +272,6 @@ func (mus *DefaultUserStore) Create(username string, password string, email stri
 	if err != nil {
 		return 0, err
 	}
-
 	lastID, err := res.LastInsertId()
 	return int(lastID), err
 }

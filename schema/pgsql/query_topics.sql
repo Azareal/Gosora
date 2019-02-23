@@ -20,5 +20,6 @@ CREATE TABLE "topics" (
 	`css_class` varchar (100) DEFAULT '' not null,
 	`poll` int DEFAULT 0 not null,
 	`data` varchar (200) DEFAULT '' not null,
-	primary key(`tid`)
+	primary key(`tid`),
+	fulltext key(`content`)
 );

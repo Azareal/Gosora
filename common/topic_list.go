@@ -143,6 +143,7 @@ func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby st
 }
 
 func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+	// TODO: Optimise this by filtering canSee and then fetching the forums?
 	// We need a list of the visible forums for Quick Topic
 	// ? - Would it be useful, if we could post in social groups from /topics/?
 	for _, fid := range canSee {
@@ -269,27 +270,27 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 	var reqUserList = make(map[int]bool)
 	for rows.Next() {
 		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
-		topicItem := TopicsRow{ID: 0}
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.IsClosed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.LastReplyID, &topicItem.ParentID, &topicItem.ViewCount, &topicItem.PostCount, &topicItem.LikeCount)
+		topic := TopicsRow{ID: 0}
+		err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.IsClosed, &topic.Sticky, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyBy, &topic.LastReplyID, &topic.ParentID, &topic.ViewCount, &topic.PostCount, &topic.LikeCount)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
 		}
 
-		topicItem.Link = BuildTopicURL(NameToSlug(topicItem.Title), topicItem.ID)
+		topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
 		// TODO: Pass forum to something like topicItem.Forum and use that instead of these two properties? Could be more flexible.
-		forum := Forums.DirtyGet(topicItem.ParentID)
-		topicItem.ForumName = forum.Name
-		topicItem.ForumLink = forum.Link
+		forum := Forums.DirtyGet(topic.ParentID)
+		topic.ForumName = forum.Name
+		topic.ForumLink = forum.Link
 
 		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
-		_, _, lastPage := PageOffset(topicItem.PostCount, 1, Config.ItemsPerPage)
-		topicItem.LastPage = lastPage
+		_, _, lastPage := PageOffset(topic.PostCount, 1, Config.ItemsPerPage)
+		topic.LastPage = lastPage
 
 		// TODO: Rename this Vhook to better reflect moving the topic list from /routes/ to /common/
-		GetHookTable().Vhook("topics_topic_row_assign", &topicItem, &forum)
-		topicList = append(topicList, &topicItem)
-		reqUserList[topicItem.CreatedBy] = true
-		reqUserList[topicItem.LastReplyBy] = true
+		GetHookTable().Vhook("topics_topic_row_assign", &topic, &forum)
+		topicList = append(topicList, &topic)
+		reqUserList[topic.CreatedBy] = true
+		reqUserList[topic.LastReplyBy] = true
 	}
 	err = rows.Err()
 	if err != nil {
@@ -312,9 +313,9 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 
 	// Second pass to the add the user data
 	// TODO: Use a pointer to TopicsRow instead of TopicsRow itself?
-	for _, topicItem := range topicList {
-		topicItem.Creator = userList[topicItem.CreatedBy]
-		topicItem.LastUser = userList[topicItem.LastReplyBy]
+	for _, topic := range topicList {
+		topic.Creator = userList[topic.CreatedBy]
+		topic.LastUser = userList[topic.LastReplyBy]
 	}
 
 	pageList := Paginate(topicCount, Config.ItemsPerPage, 5)

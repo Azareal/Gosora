@@ -116,6 +116,10 @@ func (build *builder) AddIndex(table string, iname string, colname string) (stmt
 	return build.prepare(build.adapter.AddIndex("", table, iname, colname))
 }
 
+func (build *builder) AddKey(table string, column string, key DBTableKey) (stmt *sql.Stmt, err error) {
+	return build.prepare(build.adapter.AddKey("", table, column, key))
+}
+
 func (build *builder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
 	return build.prepare(build.adapter.SimpleInsert("", table, columns, fields))
 }

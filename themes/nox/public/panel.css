@@ -125,6 +125,7 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 	padding: 16px;
 	padding-bottom: 0px;
 	padding-left: 0px;
+	margin-bottom: 10px;
 }
 .colstack_graph_holder .ct-label {
 	color: rgb(195,195,195);
@@ -298,6 +299,10 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 }
 .wtype_about .w_about, .wtype_simple .w_simple, .wtype_wol .w_wol, .wtype_default .w_default {
 	display: block;
+}
+.wtext, .rwtext {
+	width: 100%;
+	height: 80px;
 }
 
 #panel_debug .grid_stat:not(.grid_stat_head) {
