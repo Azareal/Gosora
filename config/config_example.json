@@ -16,6 +16,7 @@
 		"SMTPUsername": "",
 		"SMTPPassword": "",
 		"SMTPPort": "25",
+		"Search":"disabled",
 
 		"MaxRequestSizeStr":"5MB",
 		"UserCache":"static",
