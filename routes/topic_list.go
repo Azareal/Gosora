@@ -20,16 +20,15 @@ func wsTopicList(topicList []*common.TopicsRow, lastPage int) *common.WsTopicLis
 }
 
 func TopicList(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
-	return TopicListCommon(w, r, user, header, "lastupdated")
+	return TopicListCommon(w, r, user, header, "lastupdated", "")
 }
 
 func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
-	return TopicListCommon(w, r, user, header, "mostviewed")
+	return TopicListCommon(w, r, user, header, "mostviewed", "most-viewed")
 }
 
 // TODO: Implement search
-func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, torder string) common.RouteError {
-	header.Title = phrases.GetTitlePhrase("topics")
+func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, torder string, tsorder string) common.RouteError {
 	header.Zone = "topics"
 	header.Path = "/topics/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
@@ -62,7 +61,6 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 		}
 	}
 
-	//(t *Topic) WsTopicsRows() *WsTopicsRow
 	// TODO: Allow multiple forums in searches
 	// TODO: Simplify this block after initially landing search
 	var topicList []*common.TopicsRow
@@ -169,9 +167,9 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 
 	// TODO: Pass a struct back rather than passing back so many variables
 	if user.IsSuperAdmin {
-		topicList, forumList, paginator, err = common.TopicList.GetList(page, "most-viewed", fids)
+		topicList, forumList, paginator, err = common.TopicList.GetList(page, tsorder, fids)
 	} else {
-		topicList, forumList, paginator, err = common.TopicList.GetListByGroup(group, page, "most-viewed", fids)
+		topicList, forumList, paginator, err = common.TopicList.GetListByGroup(group, page, tsorder, fids)
 	}
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -191,6 +189,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 		return nil
 	}
 
+	header.Title = phrases.GetTitlePhrase("topics")
 	pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, common.TopicListSort{torder, false}, paginator}
 	return renderTemplate("topics", w, r, header, pi)
 }
