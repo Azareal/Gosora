@@ -31,6 +31,7 @@ func init() {
 func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	// TODO: Preload this?
 	header.AddSheet(header.Theme.Name + "/profile.css")
+	header.LooseCSP = true
 
 	var err error
 	var replyCreatedAt time.Time

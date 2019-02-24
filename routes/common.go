@@ -21,6 +21,13 @@ func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 }
 
 func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *common.Header, pi interface{}) common.RouteError {
+	if header.MetaDesc != "" && header.OGDesc == "" {
+		header.OGDesc = header.MetaDesc
+	}
+	// TODO: Expand this to non-HTTPS requests too
+	if !header.LooseCSP && common.Site.EnableSsl {
+		w.Header().Set("Content-Security-Policy", "default-src https: 'unsafe-eval'; style-src https: 'unsafe-eval' 'unsafe-inline'; img-src https: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; upgrade-insecure-requests")
+	}
 	if header.CurrentUser.IsAdmin {
 		header.Elapsed1 = time.Since(header.StartedAt).String()
 	}

@@ -52,6 +52,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user common.User, header 
 		return common.InternalError(err, w, r)
 	}
 	header.Title = forum.Name
+	header.OGDesc = forum.Desc
 
 	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
 	offset, page, lastPage := common.PageOffset(forum.TopicCount, page, common.Config.ItemsPerPage)

@@ -70,6 +70,11 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 	topic.ContentHTML = common.ParseMessage(topic.Content, topic.ParentID, "forums")
 	topic.ContentLines = strings.Count(topic.Content, "\n")
 
+	header.OGDesc = topic.Content
+	if len(header.OGDesc) > 200 {
+		header.OGDesc = header.OGDesc[:197] + "..."
+	}
+
 	postGroup, err := common.Groups.Get(topic.Group)
 	if err != nil {
 		return common.InternalError(err, w, r)
@@ -123,6 +128,10 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {
+		var pFrag int
+		if strings.HasPrefix(r.URL.Fragment, "post-") {
+			pFrag, _ = strconv.Atoi(strings.TrimPrefix(r.URL.Fragment, "post-"))
+		}
 		var likedMap map[int]int
 		if user.Liked > 0 {
 			likedMap = make(map[int]int)
@@ -155,6 +164,13 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 			replyItem.ParentID = topic.ID
 			replyItem.ContentHtml = common.ParseMessage(replyItem.Content, topic.ParentID, "forums")
 			replyItem.ContentLines = strings.Count(replyItem.Content, "\n")
+
+			if replyItem.ID == pFrag {
+				header.OGDesc = replyItem.Content
+				if len(header.OGDesc) > 200 {
+					header.OGDesc = header.OGDesc[:197] + "..."
+				}
+			}
 
 			postGroup, err = common.Groups.Get(replyItem.Group)
 			if err != nil {

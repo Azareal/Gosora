@@ -153,6 +153,12 @@ li a {
 	width: 100%;
 }
 
+.alert {
+	border-radius: 3px;
+	background-color: #444444;
+	padding: 12px;
+}
+
 .sidebar {
 	width: 320px;
 }
@@ -160,6 +166,9 @@ li a {
 	line-height: 18px;
 	padding-top: 14px !important;
 	padding-bottom: 14px !important;
+}
+.widget_simple.rowhead .rowitem {
+	padding-bottom: 4px !important;
 }
 .the_form {
 	border-radius: 3px;

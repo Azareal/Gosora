@@ -33,7 +33,8 @@ type Header struct {
 	Path        string
 	MetaDesc    string
 	//OGImage string
-	//OGDesc string
+	OGDesc    string
+	LooseCSP  bool
 	StartedAt time.Time
 	Elapsed1  string
 	Writer    http.ResponseWriter

@@ -17,6 +17,7 @@
     				{{if not .HideFromThemes}}<option val="{{.Name}}"{{if eq $.Header.Theme.Name .Name}} selected{{end}}>{{.FriendlyName}}</option>{{end}}
 				{{end}}
 				</select>
+				<noscript><input type="submit" /></noscript>
 			</div>
 		</form>
 	</div>

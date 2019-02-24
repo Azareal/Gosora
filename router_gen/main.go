@@ -560,7 +560,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		for _, item := range StringToBytes(ua) {
 			if (item > 64 && item < 91) || (item > 96 && item < 123) {
 				buffer = append(buffer, item)
-			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == ':' || item == '.' || item == '+' || item == '~' || (item == ':' && bytes.Equal(buffer,[]byte("http"))) || item == ',' || item == '/' {
+			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == ':' || item == '.' || item == '+' || item == '~' || item == '@' || (item == ':' && bytes.Equal(buffer,[]byte("http"))) || item == ',' || item == '/' {
 				if len(buffer) != 0 {
 					if len(buffer) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
@@ -654,8 +654,9 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if lang != "" {
 		lang = strings.TrimSpace(lang)
 		lLang := strings.Split(lang,"-")
-		common.DebugDetail("lLang:", lLang)
-		validCode := counters.LangViewCounter.Bump(lLang[0])
+		llLang := strings.Split(strings.Split(lLang[0],";")[0],",")
+		common.DebugDetail("llLang:", llLang)
+		validCode := counters.LangViewCounter.Bump(llLang[0])
 		if !validCode {
 			r.DumpRequest(req,"Invalid ISO Code")
 		}

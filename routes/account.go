@@ -200,6 +200,7 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user common.User, h
 		return common.LocalError("You're already logged in.", w, r, user)
 	}
 	header.Title = phrases.GetTitlePhrase("register")
+	header.LooseCSP = true
 	pi := common.Page{header, tList, nil}
 	return renderTemplate("register", w, r, header, pi)
 }

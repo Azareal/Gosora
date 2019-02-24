@@ -26,4 +26,18 @@ $(document).ready(() => {
 		alerts.className += " selectedAlert";
 		document.getElementById("back").className += " alertActive"
 	});
+
+	// Move the alerts above the first header
+	let colSel = $(".colstack_right .colstack_head:first");
+	let colSelAlt = $(".colstack_right .colstack_item:first");
+	let colSelAltAlt = $(".colstack_right .coldyn_block:first");
+	if(colSel.length > 0) {
+		$('.alert').insertBefore(colSel);
+	} else if (colSelAlt.length > 0) {
+		$('.alert').insertBefore(colSelAlt);
+	} else if (colSelAltAlt.length > 0) {
+		$('.alert').insertBefore(colSelAltAlt);
+	} else {
+		$('.alert').insertAfter(".rowhead:first");
+	}
 });

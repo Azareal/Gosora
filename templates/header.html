@@ -18,6 +18,8 @@
 		<meta property="og:site_name" content="{{.Header.Site.Name}}">
 		<meta property="og:title" content="{{.Title}} | {{.Header.Site.Name}}">
 		<meta name="twitter:title" content="{{.Title}} | {{.Header.Site.Name}}" />
+		{{if .OGDesc}}<meta property="og:description" content="{{.OGDesc}}" />
+		<meta property="twitter:description" content="{{.OGDesc}}" />{{end}}
 	</head>
 	<body>
 		{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}
