@@ -234,7 +234,6 @@ function runWebSockets() {
 					console.log("empty topic list");
 					return;
 				}
-
 				// TODO: Fix the data race where the function hasn't been loaded yet
 				let renTopic = Template_topics_topic(topic);
 				$(".topic_row[data-tid='"+topic.ID+"']").addClass("ajax_topic_dupe");
@@ -318,7 +317,7 @@ function PageOffset(count, page, perPage) {
 	}
 
 	// We don't want the offset to overflow the slices, if everything's in memory
-	if(offset >= (count - 1)) offset = 0;
+	//if(offset >= (count - 1)) offset = 0;
 	return {Offset:offset, Page:page, LastPage:lastPage}
 }
 function LastPage(count, perPage) {
@@ -517,6 +516,8 @@ function mainInit(){
 				for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
 				$(".topic_list").html(out);
 
+				document.title = phraseBox["topic_list"]["topic_list.search_head"];
+				$(".topic_list_title h1").text(phraseBox["topic_list"]["topic_list.search_head"]);
 				let obj = {Title: document.title, Url: url+q};
 				history.pushState(obj, obj.Title, obj.Url);
 				rebuildPaginator(data.LastPage);
@@ -1042,6 +1043,17 @@ function mainInit(){
 		console.log("date: ", date);
 		let minutes = "0" + date.getMinutes();
 		let formattedTime = date.getHours() + ":" + minutes.substr(-2);
+		console.log("formattedTime:", formattedTime);
+		this.innerText = formattedTime;
+	});
+
+	$(".unix_to_date").each(function(){
+		// TODO: Localise this
+		let monthList = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+		let date = new Date(this.innerText * 1000);
+		console.log("date: ", date);
+		let day = "0" + date.getDate();
+		let formattedTime = monthList[date.getMonth()] + " " + day.substr(-2) + " " + date.getFullYear();
 		console.log("formattedTime:", formattedTime);
 		this.innerText = formattedTime;
 	});

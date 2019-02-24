@@ -10,6 +10,9 @@
 				</div>
 			</div>
 		</form>
+		<div id="panel_analytics_systems_chart" class="colstack_graph_holder">
+			<div class="ct_chart"></div>
+		</div>
 		<div id="panel_analytics_systems" class="colstack_item rowlist">
 			{{range .ItemList}}
 			<div class="rowitem panel_compactrow editable_parent">
@@ -20,4 +23,5 @@
 		</div>
 	</main>
 </div>
+{{template "panel_analytics_script.html" . }}
 {{template "footer.html" . }}

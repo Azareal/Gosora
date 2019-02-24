@@ -277,6 +277,8 @@ type PanelAnalyticsPage struct {
 	Graph     PanelTimeGraph
 	ViewItems []PanelAnalyticsItem
 	TimeRange string
+	Unit      string
+	TimeType  string
 }
 
 type PanelAnalyticsRoutesItem struct {
@@ -287,9 +289,11 @@ type PanelAnalyticsRoutesItem struct {
 type PanelAnalyticsRoutesPage struct {
 	*BasePanelPage
 	ItemList  []PanelAnalyticsRoutesItem
+	Graph     PanelTimeGraph
 	TimeRange string
 }
 
+// TODO: Rename the fields as this structure is being used in a generic way now
 type PanelAnalyticsAgentsItem struct {
 	Agent         string
 	FriendlyAgent string

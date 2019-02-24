@@ -31,6 +31,12 @@ func analyticsTimeRange(rawTimeRange string) (timeRange AnalyticsTimeRange, err 
 
 	switch rawTimeRange {
 	// This might be pushing it, we might want to come up with a more efficient scheme for dealing with large timeframes like this
+	case "one-year":
+		timeRange.Quantity = 12
+		timeRange.Unit = "month"
+		timeRange.Slices = 12
+		timeRange.SliceWidth = 60 * 60 * 24 * 30
+		timeRange.Range = "one-year"
 	case "three-months":
 		timeRange.Quantity = 90
 		timeRange.Unit = "day"
@@ -153,8 +159,11 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) co
 	}
 	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
-
-	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
+	var ttime string
+	if timeRange.Range == "six-hours" || timeRange.Range == "twelve-hours" || timeRange.Range == "one-day" {
+		ttime = "time"
+	}
+	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, ttime}
 	return renderTemplate("panel_analytics_views", w, r, basePage.Header, &pi)
 }
 
@@ -416,7 +425,7 @@ func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
-	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
+	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
 	return renderTemplate("panel_analytics_topics", w, r, basePage.Header, &pi)
 }
 
@@ -449,36 +458,9 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user common.User) co
 	}
 	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	common.DebugLogf("graph: %+v\n", graph)
-	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range}
+	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
 	return renderTemplate("panel_analytics_posts", w, r, basePage.Header, &pi)
 }
-
-/*func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64]int64) (map[int64]int64, error) {
-	defer rows.Close()
-	for rows.Next() {
-		var count int64
-		var createdAt time.Time
-		err := rows.Scan(&count, &createdAt)
-		if err != nil {
-			return viewMap, err
-		}
-
-		var unixCreatedAt = createdAt.Unix()
-		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
-			log.Print("count: ", count)
-			log.Print("createdAt: ", createdAt)
-			log.Print("unixCreatedAt: ", unixCreatedAt)
-		}
-		for _, value := range labelList {
-			if unixCreatedAt > value {
-				viewMap[value] += count
-				break
-			}
-		}
-	}
-	return viewMap, rows.Err()
-}*/
 
 func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
 	nameMap := make(map[string]int)
@@ -540,24 +522,96 @@ func analyticsRowsToDuoMap(rows *sql.Rows, labelList []int64, viewMap map[int64]
 	return vMap, nameMap, rows.Err()
 }
 
+type OVItem struct {
+	name    string
+	count   int
+	viewMap map[int64]int64
+}
+
+func analyticsVMapToOVList(vMap map[string]map[int64]int64) (ovList []OVItem) {
+	// Order the map
+	for name, viewMap := range vMap {
+		var totcount int
+		for _, count := range viewMap {
+			totcount += int(count)
+		}
+		ovList = append(ovList, OVItem{name, totcount, viewMap})
+	}
+
+	// Use bubble sort for now as there shouldn't be too many items
+	for i := 0; i < len(ovList)-1; i++ {
+		for j := 0; j < len(ovList)-1; j++ {
+			if ovList[j].count > ovList[j+1].count {
+				temp := ovList[j]
+				ovList[j] = ovList[j+1]
+				ovList[j+1] = temp
+			}
+		}
+	}
+
+	// Invert the direction
+	var tOVList []OVItem
+	for i := len(ovList) - 1; i >= 0; i-- {
+		tOVList = append(tOVList, ovList[i])
+	}
+	return tOVList
+}
+
 func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	basePage.AddScript("chartist/chartist-plugin-legend.min.js")
+	basePage.AddSheet("chartist/chartist-plugin-legend.css")
+
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
+	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count, forum").Where("forum != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count, forum, createdAt").Where("forum != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	forumMap, err := analyticsRowsToNameMap(rows)
+	vMap, forumMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	ovList := analyticsVMapToOVList(vMap)
+
+	var vList [][]int64
+	var legendList []string
+	var i int
+	for _, ovitem := range ovList {
+		var viewList []int64
+		for _, value := range revLabelList {
+			viewList = append(viewList, ovitem.viewMap[value])
+		}
+		vList = append(vList, viewList)
+		fid, err := strconv.Atoi(ovitem.name)
+		if err != nil {
+			return common.InternalError(err, w, r)
+		}
+		var lName string
+		forum, err := common.Forums.Get(fid)
+		if err == sql.ErrNoRows {
+			// TODO: Localise this
+			lName = "Deleted Forum"
+		} else if err != nil {
+			return common.InternalError(err, w, r)
+		} else {
+			lName = forum.Name
+		}
+		legendList = append(legendList, lName)
+		if i >= 6 {
+			break
+		}
+		i++
+	}
+	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	common.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Sort this slice
 	var forumItems []common.PanelAnalyticsAgentsItem
@@ -566,39 +620,68 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) c
 		if err != nil {
 			return common.InternalError(err, w, r)
 		}
+		var lName string
 		forum, err := common.Forums.Get(fid)
-		if err != nil {
+		if err == sql.ErrNoRows {
+			// TODO: Localise this
+			lName = "Deleted Forum"
+		} else if err != nil {
 			return common.InternalError(err, w, r)
+		} else {
+			lName = forum.Name
 		}
 		forumItems = append(forumItems, common.PanelAnalyticsAgentsItem{
 			Agent:         sfid,
-			FriendlyAgent: forum.Name,
+			FriendlyAgent: lName,
 			Count:         count,
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{basePage, forumItems, timeRange.Range}
+	pi := common.PanelAnalyticsDuoPage{basePage, forumItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_forums", w, r, basePage.Header, &pi)
 }
 
 func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	basePage.AddScript("chartist/chartist-plugin-legend.min.js")
+	basePage.AddSheet("chartist/chartist-plugin-legend.css")
+
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
+	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, route").Where("route != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, route, createdAt").Where("route != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	routeMap, err := analyticsRowsToNameMap(rows)
+	vMap, routeMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	ovList := analyticsVMapToOVList(vMap)
+
+	var vList [][]int64
+	var legendList []string
+	var i int
+	for _, ovitem := range ovList {
+		var viewList []int64
+		for _, value := range revLabelList {
+			viewList = append(viewList, ovitem.viewMap[value])
+		}
+		vList = append(vList, viewList)
+		legendList = append(legendList, ovitem.name)
+		if i >= 6 {
+			break
+		}
+		i++
+	}
+	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	common.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Sort this slice
 	var routeItems []common.PanelAnalyticsRoutesItem
@@ -609,14 +692,8 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) c
 		})
 	}
 
-	pi := common.PanelAnalyticsRoutesPage{basePage, routeItems, timeRange.Range}
+	pi := common.PanelAnalyticsRoutesPage{basePage, routeItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_routes", w, r, basePage.Header, &pi)
-}
-
-type OVItem struct {
-	name    string
-	count   int
-	viewMap map[int64]int64
 }
 
 // Trialling multi-series charts
@@ -642,26 +719,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
-
-	// Order the map
-	var ovList []OVItem
-	for name, viewMap := range vMap {
-		var totcount int
-		for _, count := range viewMap {
-			totcount += int(count)
-		}
-		ovList = append(ovList, OVItem{name, totcount, viewMap})
-	}
-	// Use bubble sort for now as there shouldn't be too many items
-	for i := 0; i < len(ovList)-1; i++ {
-		for j := 0; j < len(ovList)-1; j++ {
-			if ovList[j].count > ovList[j+1].count {
-				temp := ovList[j]
-				ovList[j] = ovList[j+1]
-				ovList[j+1] = temp
-			}
-		}
-	}
+	ovList := analyticsVMapToOVList(vMap)
 
 	var vList [][]int64
 	var legendList []string
@@ -704,23 +762,50 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 }
 
 func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	basePage.AddScript("chartist/chartist-plugin-legend.min.js")
+	basePage.AddSheet("chartist/chartist-plugin-legend.css")
+
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
+	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count, system").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count, system, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	osMap, err := analyticsRowsToNameMap(rows)
+	vMap, osMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	ovList := analyticsVMapToOVList(vMap)
+
+	var vList [][]int64
+	var legendList []string
+	var i int
+	for _, ovitem := range ovList {
+		var viewList []int64
+		for _, value := range revLabelList {
+			viewList = append(viewList, ovitem.viewMap[value])
+		}
+		vList = append(vList, viewList)
+		lName, ok := phrases.GetOSPhrase(ovitem.name)
+		if !ok {
+			lName = ovitem.name
+		}
+		legendList = append(legendList, lName)
+		if i >= 6 {
+			break
+		}
+		i++
+	}
+	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	common.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Sort this slice
 	var systemItems []common.PanelAnalyticsAgentsItem
@@ -736,28 +821,55 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) 
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{basePage, systemItems, timeRange.Range}
+	pi := common.PanelAnalyticsDuoPage{basePage, systemItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_systems", w, r, basePage.Header, &pi)
 }
 
 func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
+	basePage.AddScript("chartist/chartist-plugin-legend.min.js")
+	basePage.AddSheet("chartist/chartist-plugin-legend.css")
+
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
 		return common.LocalError(err.Error(), w, r, user)
 	}
+	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count, lang").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count, lang, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return common.InternalError(err, w, r)
 	}
-	langMap, err := analyticsRowsToNameMap(rows)
+	vMap, langMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	ovList := analyticsVMapToOVList(vMap)
+
+	var vList [][]int64
+	var legendList []string
+	var i int
+	for _, ovitem := range ovList {
+		var viewList []int64
+		for _, value := range revLabelList {
+			viewList = append(viewList, ovitem.viewMap[value])
+		}
+		vList = append(vList, viewList)
+		lName, ok := phrases.GetHumanLangPhrase(ovitem.name)
+		if !ok {
+			lName = ovitem.name
+		}
+		legendList = append(legendList, lName)
+		if i >= 6 {
+			break
+		}
+		i++
+	}
+	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	common.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Can we de-duplicate these analytics functions further?
 	// TODO: Sort this slice
@@ -774,7 +886,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{basePage, langItems, timeRange.Range}
+	pi := common.PanelAnalyticsDuoPage{basePage, langItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_langs", w, r, basePage.Header, &pi)
 }
 

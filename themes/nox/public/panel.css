@@ -87,6 +87,10 @@
 	padding-right: 6px;
 }
 
+#panel_users .rowitem {
+	padding-left: 4px;
+	padding-right: 4px;
+}
 button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .profile_url {
 	background: rgb(100,100,200);
 }

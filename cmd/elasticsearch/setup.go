@@ -175,32 +175,92 @@ type ESReply struct {
 }
 
 func setupData(client *elastic.Client) error {
-	err := qgen.NewAcc().Select("topics").Cols("tid, title, content, createdBy, ipaddress").Each(func(rows *sql.Rows) error {
-		var tid, createdBy int
-		var title, content, ip string
-		err := rows.Scan(&tid, &title, &content, &createdBy, &ip)
-		if err != nil {
-			return err
+	tcount := 4
+	errs := make(chan error)
+
+	go func() {
+		tin := make([]chan ESTopic, tcount)
+		tf := func(tin chan ESTopic) {
+			for {
+				topic, more := <-tin
+				if !more {
+					break
+				}
+				_, err := client.Index().Index("topics").Type("_doc").Id(strconv.Itoa(topic.ID)).BodyJson(topic).Do(context.Background())
+				if err != nil {
+					errs <- err
+				}
+			}
+		}
+		for i := 0; i < 4; i++ {
+			go tf(tin[i])
 		}
 
-		topic := ESTopic{tid, title, content, createdBy, ip}
-		_, err = client.Index().Index("topics").Type("_doc").Id(strconv.Itoa(tid)).BodyJson(topic).Do(context.Background())
-		return err
-	})
-	if err != nil {
-		return err
+		oi := 0
+		err := qgen.NewAcc().Select("topics").Cols("tid, title, content, createdBy, ipaddress").Each(func(rows *sql.Rows) error {
+			topic := ESTopic{}
+			err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.IPAddress)
+			if err != nil {
+				return err
+			}
+			tin[oi] <- topic
+			if oi < 3 {
+				oi++
+			}
+			return nil
+		})
+		for i := 0; i < 4; i++ {
+			close(tin[i])
+		}
+		errs <- err
+	}()
+
+	go func() {
+		rin := make([]chan ESReply, tcount)
+		rf := func(rin chan ESReply) {
+			for {
+				reply, more := <-rin
+				if !more {
+					break
+				}
+				_, err := client.Index().Index("replies").Type("_doc").Id(strconv.Itoa(reply.ID)).BodyJson(reply).Do(context.Background())
+				if err != nil {
+					errs <- err
+				}
+			}
+		}
+		for i := 0; i < 4; i++ {
+			rf(rin[i])
+		}
+		oi := 0
+		err := qgen.NewAcc().Select("replies").Cols("rid, tid, content, createdBy, ipaddress").Each(func(rows *sql.Rows) error {
+			reply := ESReply{}
+			err := rows.Scan(&reply.ID, &reply.TID, &reply.Content, &reply.CreatedBy, &reply.IPAddress)
+			if err != nil {
+				return err
+			}
+			rin[oi] <- reply
+			if oi < 3 {
+				oi++
+			}
+			return nil
+		})
+		for i := 0; i < 4; i++ {
+			close(rin[i])
+		}
+		errs <- err
+	}()
+
+	fin := 0
+	for {
+		err := <-errs
+		if err == nil {
+			fin++
+			if fin == 2 {
+				return nil
+			}
+		} else {
+			return err
+		}
 	}
-
-	return qgen.NewAcc().Select("replies").Cols("rid, tid, content, createdBy, ipaddress").Each(func(rows *sql.Rows) error {
-		var rid, tid, createdBy int
-		var content, ip string
-		err := rows.Scan(&rid, &tid, &content, &createdBy, &ip)
-		if err != nil {
-			return err
-		}
-
-		reply := ESReply{rid, tid, content, createdBy, ip}
-		_, err = client.Index().Index("replies").Type("_doc").Id(strconv.Itoa(rid)).BodyJson(reply).Do(context.Background())
-		return err
-	})
 }

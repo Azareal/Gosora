@@ -143,23 +143,34 @@ func (log *LoginLogItem) Create() (id int, err error) {
 
 type LoginLogStore interface {
 	GlobalCount() (logCount int)
+	Count(uid int) (logCount int)
 	GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error)
 }
 
 type SQLLoginLogStore struct {
 	count           *sql.Stmt
+	countForUser    *sql.Stmt
 	getOffsetByUser *sql.Stmt
 }
 
 func NewLoginLogStore(acc *qgen.Accumulator) (*SQLLoginLogStore, error) {
 	return &SQLLoginLogStore{
 		count:           acc.Count("login_logs").Prepare(),
+		countForUser:    acc.Count("login_logs").Where("uid = ?").Prepare(),
 		getOffsetByUser: acc.Select("login_logs").Columns("lid, success, ipaddress, doneAt").Where("uid = ?").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 
 func (store *SQLLoginLogStore) GlobalCount() (logCount int) {
 	err := store.count.QueryRow().Scan(&logCount)
+	if err != nil {
+		LogError(err)
+	}
+	return logCount
+}
+
+func (store *SQLLoginLogStore) Count(uid int) (logCount int) {
+	err := store.countForUser.QueryRow(uid).Scan(&logCount)
 	if err != nil {
 		LogError(err)
 	}

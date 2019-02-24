@@ -29,6 +29,7 @@ func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user common.Use
 
 // TODO: Implement search
 func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, torder string, tsorder string) common.RouteError {
+	header.Title = phrases.GetTitlePhrase("topics")
 	header.Zone = "topics"
 	header.Path = "/topics/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
@@ -189,7 +190,6 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 		return nil
 	}
 
-	header.Title = phrases.GetTitlePhrase("topics")
 	pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, common.TopicListSort{torder, false}, paginator}
 	return renderTemplate("topics", w, r, header, pi)
 }

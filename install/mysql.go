@@ -137,7 +137,6 @@ func (ins *MysqlInstaller) TableDefs() (err error) {
 		_, err = ins.db.Exec(string(data))
 		if err != nil {
 			fmt.Println("Failed query:", string(data))
-			panic("Failed query: " + string(data))
 			return err
 		}
 	}

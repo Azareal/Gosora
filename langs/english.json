@@ -518,6 +518,7 @@
 		"quick_topic.add_file_button":"Add File",
 		"quick_topic.cancel_button":"Cancel",
 
+		"topic_list.search_head":"Search Results",
 		"topic_list.create_topic_tooltip":"Create Topic",
 		"topic_list.create_topic_aria":"Create a topic",
 		"topic_list.moderate":"Moderate",
@@ -831,6 +832,7 @@
 		"panel_statistics_topic_counts_head":"Topic Counts",
 		"panel_statistics_requests_head":"Requests",
 
+		"panel_statistics_time_range_one_year":"1 year",
 		"panel_statistics_time_range_three_months":"3 months",
 		"panel_statistics_time_range_one_month":"1 month",
 		"panel_statistics_time_range_one_week":"1 week",

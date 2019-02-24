@@ -10,5 +10,5 @@ let seriesData = [{{range .Graph.Series}}[{{range .}}
 let legendNames = [{{range .Graph.Legends}}
 {{.}},{{end}}
 ];
-buildStatsChart(rawLabels, seriesData.reverse(), "{{.TimeRange}}",legendNames.reverse());
+buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames);
 </script>

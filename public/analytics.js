@@ -6,7 +6,21 @@
 // TODO: Load rawLabels and seriesData dynamically rather than potentially fiddling with nonces for the CSP?
 function buildStatsChart(rawLabels, seriesData, timeRange, legendNames) {
 	let labels = [];
-	if(timeRange=="one-month") {
+	if(timeRange=="one-year") {
+		labels = ["today","01 months"];
+		for(let i = 2; i < 12; i++) {
+			let label = "0" + i + " months";
+			if(label.length > "01 months".length) label = label.substr(1);
+			labels.push(label);
+		}
+	} else if(timeRange=="three-months") {
+		labels = ["today","01 days"];
+		for(let i = 2; i < 90; i = i + 3) {
+			let label = "0" + i + " days";
+			if(label.length > "01 days".length) label = label.substr(1);
+			labels.push(label);
+		}
+	} else if(timeRange=="one-month") {
 		labels = ["today","01 days"];
 		for(let i = 2; i < 30; i++) {
 			let label = "0" + i + " days";

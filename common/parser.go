@@ -880,10 +880,11 @@ func PageOffset(count int, page int, perPage int) (int, int, int) {
 		page = 1
 	}
 
+	// ? - This has been commented out as it created a bug in the user manager where the first user on a page wouldn't be accessible
 	// We don't want the offset to overflow the slices, if everything's in memory
-	if offset >= (count - 1) {
+	/*if offset >= (count - 1) {
 		offset = 0
-	}
+	}*/
 	return offset, page, lastPage
 }
 
