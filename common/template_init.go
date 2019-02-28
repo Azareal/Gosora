@@ -748,6 +748,10 @@ func initDefaultTmplFuncMap() {
 		return template.HTML(BuildWidget(dock.(string), headerInt.(*Header)))
 	}
 
+	fmap["hasWidgets"] = func(dock interface{}, headerInt interface{}) interface{} {
+		return HasWidgets(dock.(string), headerInt.(*Header))
+	}
+
 	fmap["elapsed"] = func(startedAtInt interface{}) interface{} {
 		return time.Since(startedAtInt.(time.Time)).String()
 	}

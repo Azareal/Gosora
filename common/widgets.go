@@ -137,6 +137,42 @@ func HasDock(dock string) bool {
 	return false
 }
 
+// TODO: Find a more optimimal way of doing this...
+func HasWidgets(dock string, header *Header) bool {
+	if !header.Theme.HasDock(dock) {
+		return false
+	}
+
+	// Let themes forcibly override this slot
+	sbody := header.Theme.BuildDock(dock)
+	if sbody != "" {
+		return true
+	}
+
+	var widgets []*Widget
+	switch dock {
+	case "leftOfNav":
+		widgets = Docks.LeftOfNav
+	case "rightOfNav":
+		widgets = Docks.RightOfNav
+	case "rightSidebar":
+		widgets = Docks.RightSidebar.Items
+	case "footer":
+		widgets = Docks.Footer.Items
+	}
+
+	wcount := 0
+	for _, widget := range widgets {
+		if !widget.Enabled {
+			continue
+		}
+		if widget.Allowed(header.Zone) {
+			wcount++
+		}
+	}
+	return wcount > 0
+}
+
 func BuildWidget(dock string, header *Header) (sbody string) {
 	var widgets []*Widget
 	if !header.Theme.HasDock(dock) {

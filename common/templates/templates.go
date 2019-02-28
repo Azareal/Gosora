@@ -85,22 +85,23 @@ func NewCTemplateSet(in string) *CTemplateSet {
 		baseImportMap:  map[string]string{},
 		overridenRoots: map[string]map[string]bool{},
 		funcMap: map[string]interface{}{
-			"and":      "&&",
-			"not":      "!",
-			"or":       "||",
-			"eq":       "==",
-			"ge":       ">=",
-			"gt":       ">",
-			"le":       "<=",
-			"lt":       "<",
-			"ne":       "!=",
-			"add":      "+",
-			"subtract": "-",
-			"multiply": "*",
-			"divide":   "/",
-			"dock":     true,
-			"elapsed":  true,
-			"lang":     true,
+			"and":        "&&",
+			"not":        "!",
+			"or":         "||",
+			"eq":         "==",
+			"ge":         ">=",
+			"gt":         ">",
+			"le":         "<=",
+			"lt":         "<",
+			"ne":         "!=",
+			"add":        "+",
+			"subtract":   "-",
+			"multiply":   "*",
+			"divide":     "/",
+			"dock":       true,
+			"hasWidgets": true,
+			"elapsed":    true,
+			"lang":       true,
 			//"langf":true,
 			"level":   true,
 			"abstime": true,
@@ -1039,6 +1040,30 @@ ArgLoop:
 
 			// TODO: Refactor this
 			litString("common.BuildWidget("+leftParam+","+rightParam+")", false)
+			break ArgLoop
+		case "hasWidgets":
+			// TODO: Implement string literals properly
+			leftOperand := node.Args[pos+1].String()
+			rightOperand := node.Args[pos+2].String()
+			if len(leftOperand) == 0 || len(rightOperand) == 0 {
+				panic("The left or right operand for function dock cannot be left blank")
+			}
+			leftParam := leftOperand
+			if leftOperand[0] != '"' {
+				leftParam, _ = c.compileIfVarSub(con, leftParam)
+			}
+			if rightOperand[0] == '"' {
+				panic("The right operand for function dock cannot be a string")
+			}
+			rightParam, val3 := c.compileIfVarSub(con, rightOperand)
+			if !val3.IsValid() {
+				panic("val3 is invalid")
+			}
+			val = val3
+
+			// TODO: Refactor this
+			out = "common.HasWidgets(" + leftParam + "," + rightParam + ")"
+			literal = true
 			break ArgLoop
 		case "lang":
 			// TODO: Implement string literals properly
