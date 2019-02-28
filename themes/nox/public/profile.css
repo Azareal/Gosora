@@ -1,3 +1,6 @@
+#main {
+	max-width: none;
+}
 #profile_left_lane {
 	margin-right: 24px;
 }

@@ -25,23 +25,25 @@ var ErrNoDefaultTheme = errors.New("The default theme isn't registered in the sy
 type Theme struct {
 	Path string // Redirect this file to another folder
 
-	Name               string
-	FriendlyName       string
-	Version            string
-	Creator            string
-	FullImage          string
-	MobileFriendly     bool
-	Disabled           bool
-	HideFromThemes     bool
-	BgAvatars          bool // For profiles, at the moment
-	GridLists          bool // User Manager
-	ForkOf             string
-	Tag                string
-	URL                string
-	Docks              []string // Allowed Values: leftSidebar, rightSidebar, footer
-	Settings           map[string]ThemeSetting
-	IntTmplHandle      *htmpl.Template
+	Name           string
+	FriendlyName   string
+	Version        string
+	Creator        string
+	FullImage      string
+	MobileFriendly bool
+	Disabled       bool
+	HideFromThemes bool
+	BgAvatars      bool // For profiles, at the moment
+	GridLists      bool // User Manager
+	ForkOf         string
+	Tag            string
+	URL            string
+	Docks          []string // Allowed Values: leftSidebar, rightSidebar, footer
+	Settings       map[string]ThemeSetting
+	IntTmplHandle  *htmpl.Template
+	// TODO: Do we really need both OverridenTemplates AND OverridenMap?
 	OverridenTemplates []string
+	OverridenMap       map[string]bool
 	Templates          []TemplateMapping
 	TemplatesMap       map[string]string
 	TmplPtr            map[string]interface{}
@@ -297,6 +299,7 @@ func (theme *Theme) RunTmpl(template string, pi interface{}, w io.Writer) error 
 	case func(interface{}, io.Writer) error:
 		return tmplO(pi, w)
 	case nil, string:
+		//fmt.Println("falling back to interpreted for " + template)
 		mapping, ok := theme.TemplatesMap[template]
 		if !ok {
 			mapping = template
@@ -327,6 +330,10 @@ func (theme *Theme) GetTmpl(template string) interface{} {
 	// TODO: Figure out why we're getting a nil pointer here when transpiled templates are disabled, I would have assumed that we would just fall back to !ok on this
 	// Might have something to do with it being the theme's TmplPtr map, investigate.
 	tmpl, ok := theme.TmplPtr[template]
+	if ok {
+		return tmpl
+	}
+	tmpl, ok = TmplPtrMap[template+"_"+theme.Name]
 	if ok {
 		return tmpl
 	}

@@ -150,6 +150,18 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 	stats.Themes = len(Themes)
 	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
 
+	var addPreScript = func(name string) {
+		var tname string
+		if theme.OverridenMap != nil {
+			_, ok := theme.OverridenMap[name+".html"]
+			if ok {
+				tname = "_" + theme.Name
+			}
+		}
+		header.AddPreScriptAsync("template_" + name + tname + ".js")
+	}
+	addPreScript("alert")
+
 	return header, stats, nil
 }
 
@@ -182,14 +194,15 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	}
 
 	header = &Header{
-		Site:        Site,
-		Settings:    SettingBox.Load().(SettingMap),
-		Themes:      Themes,
-		Theme:       theme,
-		CurrentUser: *user, // ! Some things rely on this being a pointer downstream from this function
-		Hooks:       GetHookTable(),
-		Zone:        "frontend",
-		Writer:      w,
+		Site:           Site,
+		Settings:       SettingBox.Load().(SettingMap),
+		Themes:         Themes,
+		Theme:          theme,
+		CurrentUser:    *user, // ! Some things rely on this being a pointer downstream from this function
+		Hooks:          GetHookTable(),
+		Zone:           "frontend",
+		Writer:         w,
+		GoogSiteVerify: header.Settings["google_site_verify"].(string),
 	}
 
 	if user.IsBanned {
@@ -221,6 +234,22 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 			}
 		}
 	}
+
+	var addPreScript = func(name string) {
+		var tname string
+		if theme.OverridenMap != nil {
+			//fmt.Printf("name %+v\n", name)
+			//fmt.Printf("theme.OverridenMap %+v\n", theme.OverridenMap)
+			_, ok := theme.OverridenMap[name+".html"]
+			if ok {
+				tname = "_" + theme.Name
+			}
+		}
+		header.AddPreScriptAsync("template_" + name + tname + ".js")
+	}
+	addPreScript("topics_topic")
+	addPreScript("paginator")
+	addPreScript("alert")
 
 	return header, nil
 }

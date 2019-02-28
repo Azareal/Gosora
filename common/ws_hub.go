@@ -38,6 +38,28 @@ func init() {
 }
 
 func (hub *WsHubImpl) Start() {
+	ticker := time.NewTicker(time.Minute * 5)
+	defer func() {
+		ticker.Stop()
+	}()
+
+	go func() {
+		for {
+			var item = func(lock *sync.RWMutex, userMap map[int]*WSUser) {
+				lock.RLock()
+				defer lock.RUnlock()
+				// TODO: Copy to temporary slice for less contention?
+				for _, user := range userMap {
+					user.Ping()
+				}
+			}
+			select {
+			case <-ticker.C:
+				item(&hub.evenUserLock, hub.evenOnlineUsers)
+				item(&hub.oddUserLock, hub.oddOnlineUsers)
+			}
+		}
+	}()
 	if Config.DisableLiveTopicList {
 		return
 	}
@@ -298,20 +320,21 @@ func (hub *WsHubImpl) removeUser(uid int) {
 }
 
 func (hub *WsHubImpl) AddConn(user User, conn *websocket.Conn) (*WSUser, error) {
-	// TODO: How should we handle user state changes if we're holding a pointer which never changes?
-	userptr, err := Users.Get(user.ID)
-	if err != nil && err != ErrStoreCapacityOverflow {
-		return nil, err
-	}
-
 	if user.ID == 0 {
 		wsUser := new(WSUser)
-		wsUser.User = userptr
+		wsUser.User = new(User)
+		*wsUser.User = user
 		wsUser.AddSocket(conn, "")
 		WsHub.GuestLock.Lock()
 		WsHub.OnlineGuests[wsUser] = true
 		WsHub.GuestLock.Unlock()
 		return wsUser, nil
+	}
+
+	// TODO: How should we handle user state changes if we're holding a pointer which never changes?
+	userptr, err := Users.Get(user.ID)
+	if err != nil && err != ErrStoreCapacityOverflow {
+		return nil, err
 	}
 
 	var mutex *sync.RWMutex

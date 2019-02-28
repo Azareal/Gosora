@@ -1,0 +1,9 @@
+.sidebar {
+    display: none;
+}
+.colline {
+	border-left: 1px solid hsl(0, 0%, 80%);
+	padding: 10px;
+	border-right: 1px solid hsl(0, 0%, 80%);
+	background-color: white;
+}

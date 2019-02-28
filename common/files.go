@@ -39,17 +39,6 @@ type CSSData struct {
 
 func (list SFileList) JSTmplInit() error {
 	DebugLog("Initialising the client side templates")
-	var fragMap = make(map[string][][]byte)
-	var parseFrags = func(name string) {
-		fragMap[name] = tmpl.GetFrag(name)
-	}
-	parseFrags("alert")
-	parseFrags("forum")
-	parseFrags("topics_topic")
-	parseFrags("topic_posts")
-	parseFrags("topic_alt_posts")
-	parseFrags("paginator")
-	DebugLog("fragMap: ", fragMap)
 	return filepath.Walk("./tmpl_client", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() || strings.HasSuffix(path, "template_list.go") || strings.HasSuffix(path, "stub.go") {
 			return nil
@@ -75,7 +64,7 @@ func (list SFileList) JSTmplInit() error {
 		}
 		data = data[startIndex-len([]byte("func init() {")):]
 		data = replace(data, "func ", "function ")
-		data = replace(data, "function init() {", "tmplInits[\""+tmplName+"\"] = ")
+		data = replace(data, "function init() {", "if(tmplInits===undefined) var tmplInits = {};\ntmplInits[\""+tmplName+"\"] = ")
 		data = replace(data, " error {\n", " {\nlet out = \"\"\n")
 		funcIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("function Template_"))
 		if !hasFunc {
@@ -220,18 +209,22 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, `=
 }`, "= []")
 
-		fragset, ok := fragMap[shortName]
-		if !ok {
-			DebugLog("tmplName: ", tmplName)
-			return errors.New("couldn't find template in fragmap")
+		fragset := tmpl.GetFrag(shortName)
+		if fragset != nil {
+			var sfrags = []byte("let " + shortName + "_frags = [];\n")
+			for _, frags := range fragset {
+				sfrags = append(sfrags, []byte(shortName+"_frags.push(`"+string(frags)+"`);\n")...)
+			}
+			data = append(sfrags, data...)
 		}
-
-		var sfrags = []byte("let " + shortName + "_frags = [];\n")
-		for _, frags := range fragset {
-			sfrags = append(sfrags, []byte(shortName+"_frags.push(`"+string(frags)+"`);\n")...)
-		}
-		data = append(sfrags, data...)
 		data = replace(data, "\n;", "\n")
+
+		for name, _ := range Themes {
+			if strings.HasSuffix(shortName, "_"+name) {
+				data = append(data, "\nlet Template_"+strings.TrimSuffix(shortName, "_"+name)+" = Template_"+shortName+";"...)
+				break
+			}
+		}
 
 		path = tmplName + ".js"
 		DebugLog("js path: ", path)

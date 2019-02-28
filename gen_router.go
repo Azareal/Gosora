@@ -862,11 +862,22 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if lang != "" {
 		lang = strings.TrimSpace(lang)
 		lLang := strings.Split(lang,"-")
-		llLang := strings.Split(strings.Split(lLang[0],";")[0],",")
-		common.DebugDetail("llLang:", llLang)
-		validCode := counters.LangViewCounter.Bump(llLang[0])
-		if !validCode {
-			r.DumpRequest(req,"Invalid ISO Code")
+		tLang := strings.Split(strings.Split(lLang[0],";")[0],",")
+		common.DebugDetail("tLang:", tLang)
+		var llLang string
+		for _, seg := range tLang {
+			if seg == "*" {
+				continue
+			}
+			llLang = seg
+		}
+		if llLang == "" {
+			counters.LangViewCounter.Bump("none")
+		} else {
+			validCode := counters.LangViewCounter.Bump(llLang)
+			if !validCode {
+				r.DumpRequest(req,"Invalid ISO Code")
+			}
 		}
 	} else {
 		counters.LangViewCounter.Bump("none")
@@ -2104,6 +2115,11 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				case "robots.txt":
 					counters.RouteViewCounter.Bump(134)
 					return routes.RobotsTxt(w,req)
+				case "favicon.ico":
+					req.URL.Path = "/static"+req.URL.Path+extraData
+					//log.Print("req.URL.Path: ",req.URL.Path)
+					routes.StaticFile(w,req)
+					return nil
 				/*case "sitemap.xml":
 					counters.RouteViewCounter.Bump(135)
 					return routes.SitemapXml(w,req)*/

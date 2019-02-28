@@ -5,6 +5,8 @@
 		<link href="/static/{{.Header.Theme.Name}}/main.css" rel="stylesheet" type="text/css">
 		{{range .Header.Stylesheets}}
 		<link href="/static/{{.}}" rel="stylesheet" type="text/css">{{end}}
+		{{range .Header.PreScriptsAsync}}
+		<script async type="text/javascript" src="/static/{{.}}"></script>{{end}}
 		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}" />
 		<script type="text/javascript" src="/static/init.js"></script>
 		<script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
@@ -20,6 +22,7 @@
 		<meta name="twitter:title" content="{{.Title}} | {{.Header.Site.Name}}" />
 		{{if .OGDesc}}<meta property="og:description" content="{{.OGDesc}}" />
 		<meta property="twitter:description" content="{{.OGDesc}}" />{{end}}
+		{{if .GoogSiteVerify}}<meta name="google-site-verification" content="{{.GoogSiteVerify}}" />{{end}}
 	</head>
 	<body>
 		{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}

@@ -45,7 +45,7 @@
 	</div>
 	{{end}}
 	{{end}}
-	<div id="forum_topic_list" class="rowblock topic_list" aria-label="{{lang "forum_list_aria"}}">
+	<div id="forum_topic_list" class="rowblock topic_list single_forum" aria-label="{{lang "forum_list_aria"}}">
 		{{range .ItemList}}<div class="topic_row{{if .Sticky}} topic_sticky{{else if .IsClosed}} topic_closed{{end}}" data-tid="{{.ID}}">
 		<div class="rowitem topic_left passive datarow">
 			<span class="selector"></span>

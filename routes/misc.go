@@ -19,7 +19,7 @@ var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(common.Day)) // TODO: Mak
 func StaticFile(w http.ResponseWriter, r *http.Request) {
 	file, ok := common.StaticFiles.Get(r.URL.Path)
 	if !ok {
-		common.DebugLogf("Failed to find '%s'", r.URL.Path)
+		common.DebugLogf("Failed to find '%s'", r.URL.Path) // TODO: Use MicroNotFound? Might be better than the unneccessary overhead of sprintf
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

@@ -51,6 +51,7 @@
 			<div class="rowitem"><h1><a>{{lang "profile_ban_user_head"}}</a></h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" method="post" style="display: none;">
+	<div class="the_form">
 		{{/** TODO: Put a JS duration calculator here instead of this text? **/}}
 		<div class="colline">{{lang "profile_ban_user_notice"}}</div>
 		<div class="colstack_item">
@@ -80,6 +81,7 @@
 				<div class="formitem"><button name="ban-button" class="formbutton form_middle_button">{{lang "profile_ban_user_button"}}</button></div>
 			</div>
 		</div>
+	</div>
 	</form>
 	{{end}}
 	{{end}}

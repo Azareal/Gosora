@@ -146,6 +146,7 @@ func NewThemeList() (themes ThemeList, err error) {
 		}
 		if len(overrides) > 0 {
 			var overCount = 0
+			theme.OverridenMap = make(map[string]bool)
 			for _, override := range overrides {
 				if override.IsDir() {
 					continue
@@ -157,7 +158,10 @@ func NewThemeList() (themes ThemeList, err error) {
 					continue
 				}
 				overCount++
-				theme.OverridenTemplates = append(theme.OverridenTemplates, strings.TrimSuffix(override.Name(), ext))
+				nosuf := strings.TrimSuffix(override.Name(), ext)
+				theme.OverridenTemplates = append(theme.OverridenTemplates, nosuf)
+				theme.OverridenMap[nosuf] = true
+				//theme.TmplPtr[nosuf] = TmplPtrMap["o_"+nosuf]
 				log.Print("succeeded")
 			}
 
@@ -247,7 +251,6 @@ func ResetTemplateOverrides() {
 			log.Print("The origin template doesn't exist!")
 			return
 		}
-
 		destTmplPtr, ok := TmplPtrMap[name]
 		if !ok {
 			log.Print("The destination template doesn't exist!")

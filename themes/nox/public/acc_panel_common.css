@@ -1,3 +1,6 @@
+#main {
+	max-width: none;
+}
 .colstack_left {
 	width: 200px;
 	padding-bottom: 6px;

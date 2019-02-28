@@ -21,7 +21,10 @@ func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 }
 
 func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *common.Header, pi interface{}) common.RouteError {
-	if header.MetaDesc != "" && header.OGDesc == "" {
+	if header.CurrentUser.Loggedin {
+		header.MetaDesc = ""
+		header.OGDesc = ""
+	} else if header.MetaDesc != "" && header.OGDesc == "" {
 		header.OGDesc = header.MetaDesc
 	}
 	// TODO: Expand this to non-HTTPS requests too

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	min "github.com/Azareal/Gosora/common/templates"
 )
 
 // TODO: Clean this file up
@@ -49,7 +51,11 @@ func preparseWidget(widget *Widget, wdata string) (err error) {
 	prebuildWidget := func(name string, data interface{}) (string, error) {
 		var b bytes.Buffer
 		err := DefaultTemplates.ExecuteTemplate(&b, name+".html", data)
-		return string(b.Bytes()), err
+		content := string(b.Bytes())
+		if Config.MinifyTemplates {
+			content = min.Minify(content)
+		}
+		return content, err
 	}
 
 	sbytes := []byte(wdata)

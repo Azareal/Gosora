@@ -168,6 +168,9 @@ li a {
 .rowmenu {
 	border: 1px solid hsl(0, 0%, 80%);
 }
+.rowmenu > div:not(:last-child) {
+	border-bottom: 1px solid hsl(0, 0%, 80%);
+}
 .rowsmall {
 	font-size: 12px;
 }

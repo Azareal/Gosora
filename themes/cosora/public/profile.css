@@ -1,0 +1,8 @@
+.colline {
+	border: 1px solid var(--element-border-color);
+	border-bottom: 2px solid var(--element-border-color);
+	background-color: var(--element-background-color);
+	padding: 8px;
+	margin-left: 16px;
+	margin-bottom: 12px;
+}

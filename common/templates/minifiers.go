@@ -6,7 +6,7 @@ import (
 )
 
 // TODO: Write unit tests for this
-func minify(data string) string {
+func Minify(data string) string {
 	data = strings.Replace(data, "\t", "", -1)
 	data = strings.Replace(data, "\v", "", -1)
 	data = strings.Replace(data, "\n", "", -1)
@@ -19,7 +19,7 @@ func minify(data string) string {
 // TODO: Handle CSS nested in <style> tags?
 // TODO: Write unit tests for this
 func minifyHTML(data string) string {
-	return minify(data)
+	return Minify(data)
 }
 
 // TODO: Have static files use this
@@ -27,7 +27,7 @@ func minifyHTML(data string) string {
 // TODO: Convert the rgb()s to hex codes?
 // TODO: Write unit tests for this
 func minifyCSS(data string) string {
-	return minify(data)
+	return Minify(data)
 }
 
 // TODO: Convert this to three character hex strings whenever possible?

@@ -283,8 +283,7 @@ function runWebSockets() {
 (() => {
 	addInitHook("pre_init", () => {
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
-		loadScript("template_alert.js", () => {
-			console.log("Loaded template_alert.js");
+		notifyOnScriptW("/static/template_alert", () => {}, () => {
 			addInitHook("after_phrases", () => {
 				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
 				$(document).ready(() => {
@@ -471,6 +470,7 @@ function mainInit(){
 			let out = "";
 			for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
 			$(".topic_list").html(out);
+			//$(".topic_list").addClass("single_forum");
 
 			let obj = {Title: document.title, Url: url};
 			history.pushState(obj, obj.Title, obj.Url);

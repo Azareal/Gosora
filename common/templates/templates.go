@@ -2,14 +2,15 @@ package tmpl
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
 	"text/template/parse"
+	"time"
 )
 
 // TODO: Turn this file into a library
@@ -42,23 +43,23 @@ type CTemplateConfig struct {
 
 // nolint
 type CTemplateSet struct {
-	templateList          map[string]*parse.Tree
-	fileDir               string
-	funcMap               map[string]interface{}
-	importMap             map[string]string
-	TemplateFragmentCount map[string]int
-	FragOnce              map[string]bool
-	fragmentCursor        map[string]int
-	FragOut               []OutFrag
-	fragBuf               []Fragment
-	varList               map[string]VarItem
-	localVars             map[string]map[string]VarItemReflect
-	hasDispInt            bool
-	localDispStructIndex  int
-	langIndexToName       []string
-	guestOnly             bool
-	memberOnly            bool
-	stats                 map[string]int
+	templateList map[string]*parse.Tree
+	fileDir      string
+	funcMap      map[string]interface{}
+	importMap    map[string]string
+	//templateFragmentCount map[string]int
+	fragOnce             map[string]bool
+	fragmentCursor       map[string]int
+	FragOut              []OutFrag
+	fragBuf              []Fragment
+	varList              map[string]VarItem
+	localVars            map[string]map[string]VarItemReflect
+	hasDispInt           bool
+	localDispStructIndex int
+	langIndexToName      []string
+	guestOnly            bool
+	memberOnly           bool
+	stats                map[string]int
 	//tempVars map[string]string
 	config        CTemplateConfig
 	baseImportMap map[string]string
@@ -68,9 +69,15 @@ type CTemplateSet struct {
 	overridenRoots map[string]map[string]bool
 	themeName      string
 	perThemeTmpls  map[string]bool
+
+	logger *log.Logger
 }
 
-func NewCTemplateSet() *CTemplateSet {
+func NewCTemplateSet(in string) *CTemplateSet {
+	f, err := os.OpenFile("./logs/tmpls-"+in+"-"+strconv.FormatInt(time.Now().Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		panic(err)
+	}
 	return &CTemplateSet{
 		config: CTemplateConfig{
 			PackageName: "main",
@@ -102,6 +109,7 @@ func NewCTemplateSet() *CTemplateSet {
 			"dyntmpl": true,
 			"index":   true,
 		},
+		logger: log.New(f, "", log.LstdFlags),
 	}
 }
 
@@ -138,6 +146,14 @@ func (c *CTemplateSet) SetThemeName(name string) {
 
 func (c *CTemplateSet) SetPerThemeTmpls(perThemeTmpls map[string]bool) {
 	c.perThemeTmpls = perThemeTmpls
+}
+
+func (c *CTemplateSet) ResetLogs(in string) {
+	f, err := os.OpenFile("./logs/tmpls-"+in+"-"+strconv.FormatInt(time.Now().Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		panic(err)
+	}
+	c.logger = log.New(f, "", log.LstdFlags)
 }
 
 type SkipBlock struct {
@@ -187,13 +203,15 @@ import "errors"
 	if !c.config.SkipInitBlock {
 		stub += "// nolint\nfunc init() {\n"
 
-		if !c.config.SkipHandles {
+		if !c.config.SkipHandles && c.themeName == "" {
 			stub += "\tcommon.Template_" + fname + "_handle = Template_" + fname + "\n"
-			stub += "\tcommon.Ctemplates = append(common.Ctemplates,\"" + fname + "\")\n\tcommon.TmplPtrMap[\"" + fname + "\"] = &common.Template_" + fname + "_handle\n"
+			stub += "\tcommon.Ctemplates = append(common.Ctemplates,\"" + fname + "\")\n"
 		}
 
 		if !c.config.SkipTmplPtrMap {
-			stub += "\tcommon.TmplPtrMap[\"o_" + fname + "\"] = Template_" + fname + "\n"
+			stub += "tmpl := Template_" + fname + "\n"
+			stub += "\tcommon.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
+			stub += "\tcommon.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
 		}
 
 		stub += "}\n\n"
@@ -216,6 +234,7 @@ func Template_` + fname + `(tmpl_` + fname + `_i interface{}, w io.Writer) error
 	c.fileDir = fileDir
 	content, err := c.loadTemplate(c.fileDir, name)
 	if err != nil {
+		c.detail("bailing out: ", err)
 		return "", "", "", err
 	}
 
@@ -235,11 +254,12 @@ func Template_` + fname + `(tmpl_` + fname + `_i interface{}, w io.Writer) error
 
 func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
 	if c.config.Debug {
-		fmt.Println("Compiling template '" + name + "'")
+		c.logger.Println("Compiling template '" + name + "'")
 	}
 	c.fileDir = fileDir
 	content, err := c.loadTemplate(c.fileDir, name)
 	if err != nil {
+		c.detail("bailing out: ", err)
 		return "", err
 	}
 
@@ -247,6 +267,8 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 }
 
 func (c *CTemplateSet) compile(name string, content string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
+	//c.dumpCall("compile", name, content, expects, expectsInt, varList, imports)
+	//c.detailf("c: %+v\n", c)
 	c.importMap = map[string]string{}
 	for index, item := range c.baseImportMap {
 		c.importMap[index] = item
@@ -273,6 +295,8 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	if c.themeName != "" {
 		_, ok := c.perThemeTmpls[fname]
 		if !ok {
+			c.detail("fname not in c.perThemeTmpls")
+			c.detail("c.perThemeTmpls", c.perThemeTmpls)
 			return "", nil
 		}
 		fname += "_" + c.themeName
@@ -282,6 +306,35 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	} else if c.memberOnly {
 		fname += "_member"
 	}
+
+	c.detail("root overridenTrack loop")
+	c.detail("fname:", fname)
+	for themeName, track := range c.overridenTrack {
+		c.detail("themeName:", themeName)
+		c.detailf("track: %+v\n", track)
+		croot, ok := c.overridenRoots[themeName]
+		if !ok {
+			croot = make(map[string]bool)
+			c.overridenRoots[themeName] = croot
+		}
+		c.detailf("croot: %+v\n", croot)
+		for tmplName, _ := range track {
+			cname := tmplName
+			if c.guestOnly {
+				cname += "_guest"
+			} else if c.memberOnly {
+				cname += "_member"
+			}
+			c.detail("cname:", cname)
+			if fname == cname {
+				c.detail("match")
+				croot[strings.TrimSuffix(strings.TrimSuffix(fname, "_guest"), "_member")] = true
+			} else {
+				c.detail("no match")
+			}
+		}
+	}
+	c.detailf("c.overridenRoots: %+v\n", c.overridenRoots)
 
 	var outBuf []OutBufferFrame
 	var rootHold = "tmpl_" + fname + "_vars"
@@ -298,27 +351,28 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	c.localVars = make(map[string]map[string]VarItemReflect)
 	c.localVars[fname] = make(map[string]VarItemReflect)
 	c.localVars[fname]["."] = VarItemReflect{".", con.VarHolder, con.HoldReflect}
-	if c.FragOnce == nil {
-		c.FragOnce = make(map[string]bool)
+	if c.fragOnce == nil {
+		c.fragOnce = make(map[string]bool)
 	}
 	c.fragmentCursor = map[string]int{fname: 0}
 	c.fragBuf = nil
 	c.langIndexToName = nil
 
 	// TODO: Is this the first template loaded in? We really should have some sort of constructor for CTemplateSet
-	if c.TemplateFragmentCount == nil {
-		c.TemplateFragmentCount = make(map[string]int)
-	}
+	//if c.templateFragmentCount == nil {
+	//	c.templateFragmentCount = make(map[string]int)
+	//}
+	//c.detailf("c: %+v\n", c)
 
 	startIndex := con.StartTemplate("")
 	c.rootIterate(c.templateList[fname], con)
 	con.EndTemplate("")
 	c.afterTemplate(con, startIndex)
-	c.TemplateFragmentCount[fname] = c.fragmentCursor[fname] + 1
+	//c.templateFragmentCount[fname] = c.fragmentCursor[fname] + 1
 
-	_, ok := c.FragOnce[fname]
+	_, ok := c.fragOnce[fname]
 	if !ok {
-		c.FragOnce[fname] = true
+		c.fragOnce[fname] = true
 	}
 	if len(c.langIndexToName) > 0 {
 		c.importMap[langPkg] = langPkg
@@ -346,13 +400,15 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 		}
 		fout += "// nolint\nfunc init() {\n"
 
-		if !c.config.SkipHandles {
+		if !c.config.SkipHandles && c.themeName == "" {
 			fout += "\tcommon.Template_" + fname + "_handle = Template_" + fname + "\n"
-			fout += "\tcommon.Ctemplates = append(common.Ctemplates,\"" + fname + "\")\n\tcommon.TmplPtrMap[\"" + fname + "\"] = &common.Template_" + fname + "_handle\n"
+			fout += "\tcommon.Ctemplates = append(common.Ctemplates,\"" + fname + "\")\n"
 		}
 
 		if !c.config.SkipTmplPtrMap {
-			fout += "\tcommon.TmplPtrMap[\"o_" + fname + "\"] = Template_" + fname + "\n"
+			fout += "tmpl := Template_" + fname + "\n"
+			fout += "\tcommon.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
+			fout += "\tcommon.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
 		}
 		if len(c.langIndexToName) > 0 {
 			fout += "\t" + fname + "_tmpl_phrase_id = phrases.RegisterTmplPhraseNames([]string{\n"
@@ -458,9 +514,9 @@ w.Write([]byte(`, " + ", -1)
 
 	if c.config.Debug {
 		for index, count := range c.stats {
-			fmt.Println(index+": ", strconv.Itoa(count))
+			c.logger.Println(index+": ", strconv.Itoa(count))
 		}
-		fmt.Println(" ")
+		c.logger.Println(" ")
 	}
 	c.detail("Output!")
 	c.detail(fout)
@@ -579,13 +635,15 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 }
 
 func (c *CTemplateSet) addText(con CContext, text []byte) {
+	c.dumpCall("addText", con, text)
 	tmpText := bytes.TrimSpace(text)
 	if len(tmpText) == 0 {
 		return
 	}
 	nodeText := string(text)
+	c.detail("con.TemplateName: ", con.TemplateName)
 	fragIndex := c.fragmentCursor[con.TemplateName]
-	_, ok := c.FragOnce[con.TemplateName]
+	_, ok := c.fragOnce[con.TemplateName]
 	c.fragBuf = append(c.fragBuf, Fragment{nodeText, con.TemplateName, fragIndex, ok})
 	con.PushText(strconv.Itoa(fragIndex), fragIndex, len(c.fragBuf)-1)
 	c.fragmentCursor[con.TemplateName] = fragIndex + 1
@@ -816,9 +874,9 @@ func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) 
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
 		if c.config.SuperDebug {
-			fmt.Println("Field Node:", n.Ident)
+			c.logger.Println("Field Node:", n.Ident)
 			for _, id := range n.Ident {
-				fmt.Println("Field Bit:", id)
+				c.logger.Println("Field Bit:", id)
 			}
 		}
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
@@ -851,8 +909,8 @@ func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) 
 }
 
 func (c *CTemplateSet) unknownNode(node parse.Node) {
-	fmt.Println("Unknown Kind:", reflect.ValueOf(node).Elem().Kind())
-	fmt.Println("Unknown Type:", reflect.ValueOf(node).Elem().Type().Name())
+	c.logger.Println("Unknown Kind:", reflect.ValueOf(node).Elem().Kind())
+	c.logger.Println("Unknown Type:", reflect.ValueOf(node).Elem().Type().Name())
 	panic("I don't know what node this is! Grr...")
 }
 
@@ -893,12 +951,12 @@ func (c *CTemplateSet) simpleMath(con CContext, pos int, node *parse.CommandNode
 func (c *CTemplateSet) compareJoin(con CContext, pos int, node *parse.CommandNode, symbol string) (pos2 int, out string) {
 	c.detailf("Building %s function", symbol)
 	if pos == 0 {
-		fmt.Println("pos:", pos)
+		c.logger.Println("pos:", pos)
 		panic(symbol + " is missing a left operand")
 	}
 	if len(node.Args) <= pos {
-		fmt.Println("post pos:", pos)
-		fmt.Println("len(node.Args):", len(node.Args))
+		c.logger.Println("post pos:", pos)
+		c.logger.Println("len(node.Args):", len(node.Args))
 		panic(symbol + " is missing a right operand")
 	}
 
@@ -1090,9 +1148,9 @@ func (c *CTemplateSet) compileReflectSwitch(con CContext, node *parse.CommandNod
 	switch n := firstWord.(type) {
 	case *parse.FieldNode:
 		if c.config.SuperDebug {
-			fmt.Println("Field Node:", n.Ident)
+			c.logger.Println("Field Node:", n.Ident)
 			for _, id := range n.Ident {
-				fmt.Println("Field Bit:", id)
+				c.logger.Println("Field Bit:", id)
 			}
 		}
 		/* Use reflect to determine if the field is for a method, otherwise assume it's a variable. Coming Soon. */
@@ -1176,12 +1234,12 @@ func (c *CTemplateSet) compileIfVarSub(con CContext, varname string) (out string
 		cur = cur.FieldByName(bit)
 		out += "." + bit
 		if !cur.IsValid() {
-			fmt.Println("cur: ", cur)
+			c.logger.Println("cur: ", cur)
 			panic(out + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}
 		stepInterface()
 		if !cur.IsValid() {
-			fmt.Println("cur: ", cur)
+			c.logger.Println("cur: ", cur)
 			panic(out + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}
 		dumpKind("Data")
@@ -1219,9 +1277,9 @@ func (c *CTemplateSet) compileBoolSub(con CContext, varname string) string {
 	case reflect.Slice, reflect.Map:
 		out = "len(" + out + ") != 0"
 	default:
-		fmt.Println("Variable Name:", varname)
-		fmt.Println("Variable Holder:", con.VarHolder)
-		fmt.Println("Variable Kind:", con.HoldReflect.Kind())
+		c.logger.Println("Variable Name:", varname)
+		c.logger.Println("Variable Holder:", con.VarHolder)
+		c.logger.Println("Variable Kind:", con.HoldReflect.Kind())
 		panic("I don't know what this variable's type is o.o\n")
 	}
 	c.retCall("compileBoolSub", out)
@@ -1398,17 +1456,17 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 			if !val.IsValid() {
 				panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 			}
-			fmt.Println("Unknown Struct Name:", varname)
-			fmt.Println("Unknown Struct:", val.Type().Name())
+			c.logger.Println("Unknown Struct Name:", varname)
+			c.logger.Println("Unknown Struct:", val.Type().Name())
 			panic("-- I don't know what this variable's type is o.o\n")
 		}
 	default:
 		if !val.IsValid() {
 			panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")
 		}
-		fmt.Println("Unknown Variable Name:", varname)
-		fmt.Println("Unknown Kind:", val.Kind())
-		fmt.Println("Unknown Type:", val.Type().Name())
+		c.logger.Println("Unknown Variable Name:", varname)
+		c.logger.Println("Unknown Kind:", val.Kind())
+		c.logger.Println("Unknown Type:", val.Type().Name())
 		panic("-- I don't know what this variable's type is o.o\n")
 	}
 	c.detail("base: ", base)
@@ -1427,17 +1485,25 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	// TODO: Cascade errors back up the tree to the caller?
 	content, err := c.loadTemplate(c.fileDir, node.Name)
 	if err != nil {
-		log.Fatal(err)
+		c.logger.Fatal(err)
 	}
 
 	tree := parse.New(node.Name, c.funcMap)
 	var treeSet = make(map[string]*parse.Tree)
 	tree, err = tree.Parse(content, "{{", "}}", treeSet, c.funcMap)
 	if err != nil {
-		log.Fatal(err)
+		c.logger.Fatal(err)
 	}
 
 	fname := strings.TrimSuffix(node.Name, filepath.Ext(node.Name))
+	if c.themeName != "" {
+		_, ok := c.perThemeTmpls[fname]
+		if !ok {
+			c.detail("fname not in c.perThemeTmpls")
+			c.detail("c.perThemeTmpls", c.perThemeTmpls)
+		}
+		fname += "_" + c.themeName
+	}
 	if c.guestOnly {
 		fname += "_guest"
 	} else if c.memberOnly {
@@ -1523,11 +1589,11 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	con.StartTemplate(startBit)
 	c.rootIterate(subtree, con)
 	con.EndTemplate(endBit)
-	c.TemplateFragmentCount[fname] = c.fragmentCursor[fname] + 1
+	//c.templateFragmentCount[fname] = c.fragmentCursor[fname] + 1
 
-	_, ok := c.FragOnce[fname]
+	_, ok := c.fragOnce[fname]
 	if !ok {
-		c.FragOnce[fname] = true
+		c.fragOnce[fname] = true
 	}
 
 	// map[string]map[string]bool
@@ -1562,13 +1628,16 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 }
 
 func (c *CTemplateSet) loadTemplate(fileDir string, name string) (content string, err error) {
+	c.dumpCall("loadTemplate", fileDir, name)
+
+	c.detail("c.themeName: ", c.themeName)
 	if c.themeName != "" {
 		c.detail("per-theme override: ", "./themes/"+c.themeName+"/overrides/"+name)
 		res, err := ioutil.ReadFile("./themes/" + c.themeName + "/overrides/" + name)
 		if err == nil {
 			content = string(res)
 			if c.config.Minify {
-				content = minify(content)
+				content = Minify(content)
 			}
 			return content, nil
 		}
@@ -1586,7 +1655,7 @@ func (c *CTemplateSet) loadTemplate(fileDir string, name string) (content string
 	}
 	content = string(res)
 	if c.config.Minify {
-		content = minify(content)
+		content = Minify(content)
 	}
 	return content, nil
 }
@@ -1664,22 +1733,22 @@ func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {
 
 func (c *CTemplateSet) detail(args ...interface{}) {
 	if c.config.SuperDebug {
-		log.Println(args...)
+		c.logger.Println(args...)
 	}
 }
 
 func (c *CTemplateSet) detailf(left string, args ...interface{}) {
 	if c.config.SuperDebug {
-		log.Printf(left, args...)
+		c.logger.Printf(left, args...)
 	}
 }
 
 func (c *CTemplateSet) error(args ...interface{}) {
 	if c.config.Debug {
-		log.Println(args...)
+		c.logger.Println(args...)
 	}
 }
 
 func (c *CTemplateSet) critical(args ...interface{}) {
-	log.Println(args...)
+	c.logger.Println(args...)
 }

@@ -15,8 +15,9 @@ import (
 type Header struct {
 	Title string
 	//Title      []byte // Experimenting with []byte for increased efficiency, let's avoid converting too many things to []byte, as it involves a lot of extra boilerplate
-	NoticeList []string
-	Scripts    []string
+	NoticeList      []string
+	Scripts         []string
+	PreScriptsAsync []string
 	//Preload []string
 	Stylesheets []string
 	Widgets     PageWidgets
@@ -33,16 +34,21 @@ type Header struct {
 	Path        string
 	MetaDesc    string
 	//OGImage string
-	OGDesc    string
-	LooseCSP  bool
-	StartedAt time.Time
-	Elapsed1  string
-	Writer    http.ResponseWriter
-	ExtData   ExtData
+	OGDesc         string
+	GoogSiteVerify string
+	LooseCSP       bool
+	StartedAt      time.Time
+	Elapsed1       string
+	Writer         http.ResponseWriter
+	ExtData        ExtData
 }
 
 func (header *Header) AddScript(name string) {
 	header.Scripts = append(header.Scripts, name)
+}
+
+func (header *Header) AddPreScriptAsync(name string) {
+	header.PreScriptsAsync = append(header.PreScriptsAsync, name)
 }
 
 /*func (header *Header) Preload(name string) {

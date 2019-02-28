@@ -102,14 +102,15 @@ func tmplInitUsers() (User, User, User) {
 
 func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Header) {
 	header := &Header{
-		Site:        Site,
-		Settings:    SettingBox.Load().(SettingMap),
-		Themes:      Themes,
-		Theme:       Themes[DefaultThemeBox.Load().(string)],
-		CurrentUser: user,
-		NoticeList:  []string{"test"},
-		Stylesheets: []string{"panel"},
-		Scripts:     []string{"whatever"},
+		Site:            Site,
+		Settings:        SettingBox.Load().(SettingMap),
+		Themes:          Themes,
+		Theme:           Themes[DefaultThemeBox.Load().(string)],
+		CurrentUser:     user,
+		NoticeList:      []string{"test"},
+		Stylesheets:     []string{"panel.css"},
+		Scripts:         []string{"whatever.js"},
+		PreScriptsAsync: []string{"whatever.js"},
 		Widgets: PageWidgets{
 			LeftSidebar: template.HTML("lalala"),
 		},
@@ -168,7 +169,7 @@ func CompileTemplates() error {
 	config.Debug = Dev.DebugMode
 	config.SuperDebug = Dev.TemplateDebug
 
-	c := tmpl.NewCTemplateSet()
+	c := tmpl.NewCTemplateSet("normal")
 	c.SetConfig(config)
 	c.SetBaseImportMap(map[string]string{
 		"io":                               "io",
@@ -189,6 +190,7 @@ func CompileTemplates() error {
 
 	log.Print("Compiling the per-theme templates")
 	for theme, tmpls := range oroots {
+		c.ResetLogs("normal-" + theme)
 		c.SetThemeName(theme)
 		c.SetPerThemeTmpls(tmpls)
 		log.Print("theme: ", theme)
@@ -366,7 +368,156 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	return nil
 }
 
+// ? - Add template hooks?
 func CompileJSTemplates() error {
+	log.Print("Compiling the JS templates")
+	// TODO: Implement per-theme template overrides here too
+	var overriden = make(map[string]map[string]bool)
+	for _, theme := range Themes {
+		overriden[theme.Name] = make(map[string]bool)
+		log.Printf("theme.OverridenTemplates: %+v\n", theme.OverridenTemplates)
+		for _, override := range theme.OverridenTemplates {
+			overriden[theme.Name][override] = true
+		}
+	}
+	log.Printf("overriden: %+v\n", overriden)
+
+	var config tmpl.CTemplateConfig
+	config.Minify = Config.MinifyTemplates
+	config.Debug = Dev.DebugMode
+	config.SuperDebug = Dev.TemplateDebug
+	config.SkipHandles = true
+	config.SkipTmplPtrMap = true
+	config.SkipInitBlock = false
+	config.PackageName = "tmpl"
+
+	c := tmpl.NewCTemplateSet("js")
+	c.SetConfig(config)
+	c.SetBuildTags("!no_templategen")
+	c.SetOverrideTrack(overriden)
+	c.SetPerThemeTmpls(make(map[string]bool))
+
+	log.Print("Compiling the default templates")
+	var wg sync.WaitGroup
+	err := compileJSTemplates(&wg, c, "")
+	if err != nil {
+		return err
+	}
+	oroots := c.GetOverridenRoots()
+	log.Printf("oroots: %+v\n", oroots)
+
+	log.Print("Compiling the per-theme templates")
+	for theme, tmpls := range oroots {
+		c.SetThemeName(theme)
+		c.SetPerThemeTmpls(tmpls)
+		log.Print("theme: ", theme)
+		log.Printf("perThemeTmpls: %+v\n", tmpls)
+		err = compileJSTemplates(&wg, c, theme)
+		if err != nil {
+			return err
+		}
+	}
+	var dirPrefix = "./tmpl_client/"
+	writeTemplateList(c, &wg, dirPrefix)
+	return nil
+}
+
+func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string) error {
+	user, user2, user3 := tmplInitUsers()
+	header, _, _ := tmplInitHeaders(user, user2, user3)
+	now := time.Now()
+	var varList = make(map[string]tmpl.VarItem)
+
+	c.SetBaseImportMap(map[string]string{
+		"io": "io",
+		"github.com/Azareal/Gosora/common/alerts": "github.com/Azareal/Gosora/common/alerts",
+	})
+
+	// TODO: Check what sort of path is sent exactly and use it here
+	alertItem := alerts.AlertItem{Avatar: "", ASID: 1, Path: "/", Message: "uh oh, something happened"}
+	alertTmpl, err := c.Compile("alert.html", "templates/", "alerts.AlertItem", alertItem, varList)
+	if err != nil {
+		return err
+	}
+
+	c.SetBaseImportMap(map[string]string{
+		"io":                               "io",
+		"github.com/Azareal/Gosora/common": "github.com/Azareal/Gosora/common",
+	})
+	// TODO: Fix the import loop so we don't have to use this hack anymore
+	c.SetBuildTags("!no_templategen,tmplgentopic")
+
+	tmpls := TItemHold(make(map[string]TItem))
+
+	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
+	tmpls.AddStd("topics_topic", "common.TopicsRow", topicsRow)
+
+	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
+		PollOption{0, "Nothing"},
+		PollOption{1, "Something"},
+	}, VoteCount: 7}
+	avatar, microAvatar := BuildAvatar(62, "")
+	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach}
+	var replyList []ReplyUser
+	// TODO: Do we really want the UID here to be zero?
+	avatar, microAvatar = BuildAvatar(0, "")
+	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, 1, "", "", miniAttach})
+
+	varList = make(map[string]tmpl.VarItem)
+	header.Title = "Topic Name"
+	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
+	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
+	tmpls.AddStd("topic_posts", "common.TopicPage", tpage)
+	tmpls.AddStd("topic_alt_posts", "common.TopicPage", tpage)
+
+	itemsPerPage := 25
+	_, page, lastPage := PageOffset(20, 1, itemsPerPage)
+	pageList := Paginate(20, itemsPerPage, 5)
+	tmpls.AddStd("paginator", "common.Paginator", Paginator{pageList, page, lastPage})
+
+	var dirPrefix = "./tmpl_client/"
+	var writeTemplate = func(name string, content string) {
+		log.Print("Writing template '" + name + "'")
+		if content == "" {
+			return //log.Fatal("No content body")
+		}
+		wg.Add(1)
+		go func() {
+			tname := themeName
+			if tname != "" {
+				tname = "_" + tname
+			}
+			err := writeFile(dirPrefix+"template_"+name+tname+".go", content)
+			if err != nil {
+				log.Fatal(err)
+			}
+			wg.Done()
+		}()
+	}
+
+	log.Print("Writing the templates")
+	for name, titem := range tmpls {
+		log.Print("Writing " + name)
+		varList := make(map[string]tmpl.VarItem)
+		tmpl, err := c.Compile(name+".html", "templates/", titem.Expects, titem.ExpectsInt, varList)
+		if err != nil {
+			return err
+		}
+		writeTemplate(name, tmpl)
+	}
+	writeTemplate("alert", alertTmpl)
+	/*//writeTemplate("forum", forumTmpl)
+	writeTemplate("topics_topic", topicListItemTmpl)
+	writeTemplate("topic_posts", topicPostsTmpl)
+	writeTemplate("topic_alt_posts", topicAltPostsTmpl)
+	writeTemplate("paginator", paginatorTmpl)
+	//writeTemplate("panel_themes_widgets_widget", panelWidgetsWidgetTmpl)
+	writeTemplateList(c, &wg, dirPrefix)*/
+	return nil
+}
+
+/*func CompileJSTemplates() error {
 	log.Print("Compiling the JS templates")
 	var config tmpl.CTemplateConfig
 	config.Minify = Config.MinifyTemplates
@@ -443,12 +594,6 @@ func CompileJSTemplates() error {
 		return err
 	}
 
-	/*widget := &Widget{ID: 0}
-	panelWidgetsWidgetTmpl, err := c.Compile("panel_themes_widgets_widget.html", "templates/", "*common.Widget", widget, varList)
-	if err != nil {
-		return err
-	}*/
-
 	var dirPrefix = "./tmpl_client/"
 	var wg sync.WaitGroup
 	var writeTemplate = func(name string, content string) {
@@ -474,9 +619,10 @@ func CompileJSTemplates() error {
 	//writeTemplate("panel_themes_widgets_widget", panelWidgetsWidgetTmpl)
 	writeTemplateList(c, &wg, dirPrefix)
 	return nil
-}
+}*/
 
 func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) string {
+	DebugLog("in getTemplateList")
 	pout := "\n// nolint\nfunc init() {\n"
 	var tFragCount = make(map[string]int)
 	var bodyMap = make(map[string]string) //map[body]fragmentPrefix
@@ -484,6 +630,8 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 	var tmpCount = 0
 	for _, frag := range c.FragOut {
 		front := frag.TmplName + "_frags[" + strconv.Itoa(frag.Index) + "]"
+		DebugLog("front: ", front)
+		DebugLog("frag.Body: ", frag.Body)
 		/*bodyMap, tok := tmplMap[frag.TmplName]
 		if !tok {
 			tmplMap[frag.TmplName] = make(map[string]string)
@@ -493,9 +641,12 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 		if !ok {
 			bodyMap[frag.Body] = front
 			var bits string
+			DebugLog("encoding frag.Body")
 			for _, char := range []byte(frag.Body) {
 				if char == '\'' {
 					bits += "'\\" + string(char) + "',"
+				} else if char < 32 {
+					bits += strconv.Itoa(int(char)) + ","
 				} else {
 					bits += "'" + string(char) + "',"
 				}
@@ -506,6 +657,7 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 			tmpCount++
 			//pout += front + " = []byte(`" + frag.Body + "`)\n"
 		} else {
+			DebugLog("encoding cached index " + fp)
 			pout += front + " = " + fp + "\n"
 		}
 

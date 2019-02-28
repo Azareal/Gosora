@@ -2,7 +2,7 @@
 
 var me = {};
 var phraseBox = {};
-var tmplInits = {};
+if(tmplInits===undefined) var tmplInits = {};
 var tmplPhrases = []; // [key] array of phrases indexed by order of use
 var hooks = {
 	"pre_iffe": [],
@@ -52,41 +52,101 @@ function len(item) {
 	return item.length;
 }
 
-const asyncGetScript = (source) => {
+function asyncGetScript(source) {
 	return new Promise((resolve, reject) => {
 		let script = document.createElement('script');
 		script.async = true;
 
-		const onloadHander = (haha, isAbort) => {
+		const onloadHandler = (e, isAbort) => {
 			if (isAbort || !script.readyState || /loaded|complete/.test(script.readyState)) {
 				script.onload = null;
 				script.onreadystatechange = null;
 				script = undefined;
 
-				isAbort ? reject(haha) : resolve();
+				isAbort ? reject(e) : resolve();
 			}
 		}
 
-		script.onerror = (haha) => {
-			reject(haha);
+		script.onerror = (e) => {
+			reject(e);
 		};
-		script.onload = onloadHander;
-		script.onreadystatechange = onloadHander;
+		script.onload = onloadHandler;
+		script.onreadystatechange = onloadHandler;
 		script.src = source;
 
 		const prior = document.getElementsByTagName('script')[0];
 		prior.parentNode.insertBefore(script, prior);
 	});
-};
+}
 
-function loadScript(name, callback) {
-	let url = "/static/"+name
+function notifyOnScript(source) {
+	return new Promise((resolve, reject) => {
+		let script = document.querySelectorAll('[src^="'+source+'"]')[0];
+		if(script===undefined) {
+			reject("no script found");
+			return;
+		}
+		if(!script.readyState) {
+			resolve();
+			return;
+		}
+
+		const onloadHandler = (e, isAbort) => {
+			if (isAbort || !script.readyState || /loaded|complete/.test(script.readyState)) {
+				script.onload = null;
+				script.onreadystatechange = null;
+				isAbort ? reject(e) : resolve();
+			}
+		}
+
+		script.onerror = (e) => {
+			reject(e);
+		};
+		script.onload = onloadHandler;
+		script.onreadystatechange = onloadHandler;
+		script.src = source;
+	});
+}
+
+function notifyOnScriptW(name, complete, success) {
+	notifyOnScript(name)
+		.then(() => {
+			console.log("Loaded " +name+".js");
+			complete();
+			if(success!==undefined) success();
+		}).catch((e) => {
+			console.log("Unable to get script name '"+name+"'");
+			console.log("e: ", e);
+			console.trace();
+			complete();
+		});
+}
+
+// TODO: Send data at load time so we don't have to rely on a fallback template here
+function loadScript(name, callback,fail) {
+	let fname = name;
+	let value = "; " + document.cookie;
+ 	let parts = value.split("; current_theme=");
+ 	if (parts.length == 2) fname += "_"+ parts.pop().split(";").shift();
+	
+	let url = "/static/"+fname+".js"
+	let iurl = "/static/"+name+".js"
 	asyncGetScript(url)
 		.then(callback)
-		.catch((haha) => {
+		.catch((e) => {
 			console.log("Unable to get script '"+url+"'");
-			console.log("haha: ", haha);
+			if(fname!=name) {
+				asyncGetScript(iurl)
+					.then(callback)
+					.catch((e) => {
+						console.log("Unable to get script '"+iurl+"'");
+						console.log("e: ", e);
+						console.trace();
+					});
+			}
+			console.log("e: ", e);
 			console.trace();
+			fail(e);
 		});
 }
 
@@ -106,6 +166,7 @@ function RelativeTime(date) {
 }
 
 function initPhrases() {
+	console.log("in initPhrases")
 	fetchPhrases("status,topic_list,alerts,paginator")
 }
 
@@ -144,13 +205,11 @@ function fetchPhrases(plist) {
 	runInitHook("pre_iife");
 	let toLoad = 2;
 	// TODO: Shunt this into loggedIn if there aren't any search and filter widgets?
-	loadScript("template_topics_topic.js", () => {
-		console.log("Loaded template_topics_topic.js");
+	notifyOnScriptW("/static/template_topics_topic", () => {
 		toLoad--;
 		if(toLoad===0) initPhrases();
 	});
-	loadScript("template_paginator.js", () => {
-		console.log("Loaded template_paginator.js");
+	notifyOnScriptW("/static/template_paginator", () => {
 		toLoad--;
 		if(toLoad===0) initPhrases();
 	});

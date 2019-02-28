@@ -165,6 +165,8 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 	border-radius: 5px;
 	padding-left: 5px;
 	padding: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 #panel_settings.rowlist.bgavatars.micro_grid, .micro_grid {
 	grid-gap: 24px;

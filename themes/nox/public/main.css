@@ -209,6 +209,8 @@ li a {
 }
 .filter_item a {
 	color: #BBBBBB;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 .colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem:not(:last-child) {
 	margin-bottom: 8px;
@@ -512,8 +514,9 @@ h2 {
 	text-overflow: ellipsis;
     overflow: hidden;
 }
-.topic_inner_left .parent_forum {
-	display: none; /* Comment this until we figure out how to make it work */
+.parent_forum_sep {
+	margin-left: 6px;
+	margin-right: 6px;
 }
 .topic_right_inside {
 	display: flex;
@@ -1176,6 +1179,9 @@ input[type=checkbox]:checked + label .sel {
 	.topic_list_title_block .mod_opt a:before {
 		content: "{{lang "topic_list.moderate_short" . }}";
 	}
+	.topic_inner_left .parent_forum, .parent_forum_sep {
+		display: none;
+	}
 }
 
 @media(max-width: 601px) {
@@ -1273,6 +1279,9 @@ input[type=checkbox]:checked + label .sel {
 @media(min-width: 751px) {
 	.menu_profile {
 		display: none;
+	}
+	#main {
+		max-width: calc(100% - 180px);
 	}
 }
 

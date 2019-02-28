@@ -26,6 +26,7 @@ func init() {
 	addPatch(12, patch12)
 	addPatch(13, patch13)
 	addPatch(14, patch14)
+	addPatch(15, patch15)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -531,4 +532,8 @@ func patch14(scanner *bufio.Scanner) error {
 	}
 
 	return nil
+}
+
+func patch15(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.SimpleInsert("settings", "name, content, type", "'google_site_verify','','html-attribute'"))
 }

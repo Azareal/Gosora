@@ -49,8 +49,10 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 	// TODO: Spit out a 500 instead of nil?
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		return nil
+		return LocalError("unable to upgrade", w, r, user)
 	}
+	defer conn.Close()
+
 	wsUser, err := WsHub.AddConn(user, conn)
 	if err != nil {
 		return nil
@@ -96,7 +98,6 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 			}*/
 		}
 	}
-	conn.Close()
 	DebugLog("Closing connection for user " + strconv.Itoa(user.ID))
 	return nil
 }

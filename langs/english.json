@@ -51,7 +51,8 @@
 		"bigpost_min_words":"Big Post Minimum Words",
 		"megapost_min_words":"Mega Post Minimum Words",
 		"meta_desc":"Meta Description",
-		"rapid_loading":"Rapid Loaded?"
+		"rapid_loading":"Rapid Loaded?",
+		"google_site_verify":"Google Site Verify"
 	},
 
 	"PermPresets": {

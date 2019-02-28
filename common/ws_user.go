@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -19,6 +20,20 @@ type WSUser struct {
 type WSUserSocket struct {
 	conn *websocket.Conn
 	Page string
+}
+
+func (wsUser *WSUser) Ping() error {
+	for _, socket := range wsUser.Sockets {
+		if socket == nil {
+			continue
+		}
+		socket.conn.SetWriteDeadline(time.Now().Add(time.Minute))
+		err := socket.conn.WriteMessage(websocket.PingMessage, nil)
+		if err != nil {
+			socket.conn.Close()
+		}
+	}
+	return nil
 }
 
 func (wsUser *WSUser) WriteAll(msg string) error {

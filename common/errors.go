@@ -311,6 +311,12 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError
 	return HandledRouteError()
 }
 
+func MicroNotFound(w http.ResponseWriter, r *http.Request) RouteError {
+	w.WriteHeader(404)
+	_, _ = w.Write([]byte("file not found"))
+	return HandledRouteError()
+}
+
 // NotFound is used when the requested page doesn't exist
 // ? - Add a JSQ version of this?
 // ? - Add a user parameter?
@@ -320,7 +326,7 @@ func NotFound(w http.ResponseWriter, r *http.Request, header *Header) RouteError
 
 // ? - Add a user parameter?
 func NotFoundJS(w http.ResponseWriter, r *http.Request) RouteError {
-	w.WriteHeader(401)
+	w.WriteHeader(404)
 	writeJsonError(phrases.GetErrorPhrase("not_found_body"), w)
 	return HandledRouteError()
 }
