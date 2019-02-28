@@ -263,6 +263,9 @@ h1, h2, h3 {
 	background-size: 128px;
 	padding-left: calc(128px + 12px);
 }
+.user_content {
+	word-break: break-word;
+}
 
 .controls {
 	width: 100%;

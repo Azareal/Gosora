@@ -781,6 +781,9 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 	border-radius: 3px;
 	padding: 16px;
 }
+.user_content {
+	word-break: break-word;
+}
 .user_content.in_edit {
 	padding: 0px;
 	background: none;
