@@ -1,5 +1,5 @@
 #main {
-	max-width: none;
+	max-width: none !important;
 }
 #profile_left_lane {
 	margin-right: 24px;

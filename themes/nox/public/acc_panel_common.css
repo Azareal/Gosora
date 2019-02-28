@@ -1,5 +1,5 @@
 #main {
-	max-width: none;
+	max-width: none !important;
 }
 .colstack_left {
 	width: 200px;
