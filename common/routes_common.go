@@ -194,16 +194,16 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	}
 
 	header = &Header{
-		Site:           Site,
-		Settings:       SettingBox.Load().(SettingMap),
-		Themes:         Themes,
-		Theme:          theme,
-		CurrentUser:    *user, // ! Some things rely on this being a pointer downstream from this function
-		Hooks:          GetHookTable(),
-		Zone:           "frontend",
-		Writer:         w,
-		GoogSiteVerify: header.Settings["google_site_verify"].(string),
+		Site:        Site,
+		Settings:    SettingBox.Load().(SettingMap),
+		Themes:      Themes,
+		Theme:       theme,
+		CurrentUser: *user, // ! Some things rely on this being a pointer downstream from this function
+		Hooks:       GetHookTable(),
+		Zone:        "frontend",
+		Writer:      w,
 	}
+	header.GoogSiteVerify = header.Settings["google_site_verify"].(string)
 
 	if user.IsBanned {
 		header.AddNotice("account_banned")
