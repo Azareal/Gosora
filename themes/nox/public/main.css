@@ -1283,7 +1283,7 @@ input[type=checkbox]:checked + label .sel {
 	.menu_profile {
 		display: none;
 	}
-	#main {
+	.shrink_main #main {
 		max-width: calc(100% - 180px);
 	}
 }
