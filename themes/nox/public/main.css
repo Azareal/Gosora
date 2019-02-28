@@ -159,7 +159,7 @@ li a {
 	padding: 12px;
 }
 
-.sidebar {
+.shrink_main .sidebar {
 	width: 320px;
 }
 .widget_simple .rowitem {
