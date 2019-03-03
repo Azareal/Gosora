@@ -54,19 +54,18 @@ func sendSendmail(data ...interface{}) interface{} {
 	sendmail := exec.Command("/usr/sbin/sendmail", "-t", "-i")
 	stdin, err := sendmail.StdinPipe()
 	if err != nil {
-		return false // Possibly disable the plugin and show an error to the admin on the dashboard? Plugin log file?
+		return err // Possibly disable the plugin and show an error to the admin on the dashboard? Plugin log file?
 	}
 
 	err = sendmail.Start()
 	if err != nil {
-		return false
+		return err
 	}
 	io.WriteString(stdin, msg)
 
 	err = stdin.Close()
 	if err != nil {
-		return false
+		return err
 	}
-
-	return sendmail.Wait() == nil
+	return sendmail.Wait()
 }

@@ -10,5 +10,7 @@ let seriesData = [{{range .Graph.Series}}[{{range .}}
 let legendNames = [{{range .Graph.Legends}}
 {{.}},{{end}}
 ];
-buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames);
+addInitHook("after_phrases", () => {
+	buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames);
+});
 </script>

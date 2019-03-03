@@ -321,6 +321,12 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 		return common.InternalError(err, w, r)
 	}
 
+	session, err := common.Auth.CreateSession(uid)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+	common.Auth.SetCookies(w, uid, session)
+
 	// Check if this user actually owns this email, if email activation is on, automatically flip their account to active when the email is validated. Validation is also useful for determining whether this user should receive any alerts, etc. via email
 	if common.Site.EnableEmails {
 		token, err := common.GenerateSafeString(80)
@@ -334,17 +340,13 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 			return common.InternalError(err, w, r)
 		}
 
-		if !common.SendValidationEmail(username, email, token) {
+		err = common.SendValidationEmail(username, email, token)
+		if err != nil {
+			common.LogWarning(err)
 			return common.LocalError(phrases.GetErrorPhrase("register_email_fail"), w, r, user)
 		}
 	}
 
-	session, err := common.Auth.CreateSession(uid)
-	if err != nil {
-		return common.InternalError(err, w, r)
-	}
-
-	common.Auth.SetCookies(w, uid, session)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
 }

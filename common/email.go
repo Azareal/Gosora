@@ -13,7 +13,7 @@ type Email struct {
 	Token     string
 }
 
-func SendValidationEmail(username string, email string, token string) bool {
+func SendValidationEmail(username string, email string, token string) error {
 	var schema = "http"
 	if Site.EnableSsl {
 		schema += "s"
@@ -27,49 +27,48 @@ func SendValidationEmail(username string, email string, token string) bool {
 
 // TODO: Refactor this
 // TODO: Add support for TLS
-func SendEmail(email string, subject string, msg string) bool {
+func SendEmail(email string, subject string, msg string) error {
 	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
 	ret, hasHook := GetHookTable().VhookNeedHook("email_send_intercept", email, subject, msg)
 	if hasHook {
-		return ret.(bool)
+		return ret.(error)
 	}
 	body := "Subject: " + subject + "\n\n" + msg + "\n"
 
 	con, err := smtp.Dial(Config.SMTPServer + ":" + Config.SMTPPort)
 	if err != nil {
-		return false
+		return err
 	}
 
 	if Config.SMTPUsername != "" {
 		auth := smtp.PlainAuth("", Config.SMTPUsername, Config.SMTPPassword, Config.SMTPServer)
 		err = con.Auth(auth)
 		if err != nil {
-			return false
+			return err
 		}
 	}
 
 	err = con.Mail(Site.Email)
 	if err != nil {
-		return false
+		return err
 	}
 	err = con.Rcpt(email)
 	if err != nil {
-		return false
+		return err
 	}
 
 	emailData, err := con.Data()
 	if err != nil {
-		return false
+		return err
 	}
 	_, err = fmt.Fprintf(emailData, body)
 	if err != nil {
-		return false
+		return err
 	}
 
 	err = emailData.Close()
 	if err != nil {
-		return false
+		return err
 	}
-
-	return con.Quit() == nil
+	return con.Quit()
 }
