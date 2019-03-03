@@ -42,15 +42,18 @@ func SendEmail(email string, subject string, msg string) (err error) {
 		}
 		conn, err := tls.Dial("tcp", Config.SMTPServer+":"+Config.SMTPPort, tlsconfig)
 		if err != nil {
+			LogWarning(err)
 			return err
 		}
 		c, err = smtp.NewClient(conn, Config.SMTPServer)
 		if err != nil {
+			LogWarning(err)
 			return err
 		}
 	} else {
 		c, err = smtp.Dial(Config.SMTPServer + ":" + Config.SMTPPort)
 		if err != nil {
+			LogWarning(err)
 			return err
 		}
 	}
@@ -59,31 +62,43 @@ func SendEmail(email string, subject string, msg string) (err error) {
 		auth := smtp.PlainAuth("", Config.SMTPUsername, Config.SMTPPassword, Config.SMTPServer)
 		err = c.Auth(auth)
 		if err != nil {
+			LogWarning(err)
 			return err
 		}
 	}
 
 	err = c.Mail(Site.Email)
 	if err != nil {
+		LogWarning(err)
 		return err
 	}
 	err = c.Rcpt(email)
 	if err != nil {
+		LogWarning(err)
 		return err
 	}
 
 	w, err := c.Data()
 	if err != nil {
+		LogWarning(err)
 		return err
 	}
 	_, err = w.Write([]byte(body))
 	if err != nil {
+		LogWarning(err)
 		return err
 	}
 
 	err = w.Close()
 	if err != nil {
+		LogWarning(err)
 		return err
 	}
-	return c.Quit()
+	err = c.Quit()
+	if err != nil {
+		LogWarning(err)
+		return err
+	}
+
+	return nil
 }
