@@ -219,6 +219,7 @@ func PreparseMessage(msg string) string {
 		'u': []string{""},
 		'b': []string{""},
 		'i': []string{""},
+		'g': []string{""}, // Quick and dirty fix for Grammarly
 	}
 	var buildLitMatch = func(tag string) func(*TagToAction, bool, int, []rune) (int, string) {
 		return func(action *TagToAction, open bool, _ int, _ []rune) (int, string) {
@@ -262,6 +263,26 @@ func PreparseMessage(msg string) string {
 		'u': []*TagToAction{&TagToAction{"", buildLitMatch("u"), 0, false}},
 		'b': []*TagToAction{&TagToAction{"", buildLitMatch("strong"), 0, false}},
 		'i': []*TagToAction{&TagToAction{"", buildLitMatch("em"), 0, false}},
+		'g': []*TagToAction{
+			&TagToAction{"", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {
+				if open {
+					act.Depth++
+					//fmt.Println("skipping attributes")
+					for ; i < len(runes); i++ {
+						if runes[i] == '&' && peekMatch(i, "gt;", runes) {
+							//fmt.Println("found tag exit")
+							return i + 3, " "
+						}
+					}
+					return -1, " "
+				}
+				if act.Depth <= 0 {
+					return -1, " "
+				}
+				act.Depth--
+				return -1, " "
+			}, 0, true},
+		},
 	}
 	// TODO: Implement a less literal parser
 	for i := 0; i < len(runes); i++ {
