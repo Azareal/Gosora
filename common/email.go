@@ -2,6 +2,8 @@ package common
 
 import (
 	"crypto/tls"
+	"fmt"
+	"net/mail"
 	"net/smtp"
 )
 
@@ -20,7 +22,7 @@ func SendValidationEmail(username string, email string, token string) error {
 	}
 
 	// TODO: Move these to the phrase system
-	subject := "Validate Your Email @ " + Site.Name
+	subject := "Validate Your Email - " + Site.Name
 	msg := "Dear " + username + ", following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + Site.URL + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
 	return SendEmail(email, subject, msg)
 }
@@ -32,7 +34,19 @@ func SendEmail(email string, subject string, msg string) (err error) {
 	if hasHook {
 		return ret.(error)
 	}
-	body := "Subject: " + subject + "\n\n" + msg + "\n"
+
+	from := mail.Address{"", Site.Email}
+	to := mail.Address{"", email}
+	headers := make(map[string]string)
+	headers["From"] = from.String()
+	headers["To"] = to.String()
+	headers["Subject"] = subject
+
+	body := ""
+	for k, v := range headers {
+		body += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	body += "\r\n" + msg
 
 	var c *smtp.Client
 	if Config.SMTPEnableTLS {
@@ -67,12 +81,12 @@ func SendEmail(email string, subject string, msg string) (err error) {
 		}
 	}
 
-	err = c.Mail(Site.Email)
+	err = c.Mail(from.Address)
 	if err != nil {
 		LogWarning(err)
 		return err
 	}
-	err = c.Rcpt(email)
+	err = c.Rcpt(to.Address)
 	if err != nil {
 		LogWarning(err)
 		return err
