@@ -143,6 +143,7 @@ var phraseWhitelist = []string{
 	"status",
 	"alerts",
 	"paginator",
+	"analytics",
 }
 
 func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {

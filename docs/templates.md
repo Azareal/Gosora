@@ -4,6 +4,8 @@ Gosora uses a subset of [Go Templates](https://golang.org/pkg/text/template/) wh
 
 The base templates are stored in `/templates/` and you can shadow them by placing modified duplicates in `/templates/overrides/`. The default themes all share the same set of templates present there.
 
+You can also override templates on a per-theme basis by navigating to `/themes/themeName/overrides` (replace themeName with the name of the theme) and placing the modified duplicates there.
+
 # Non-standard Extensions
 
 We also have a few non-standard extensions only available on certain pages or areas, but these shouldn't be relied on in favour of more general mechanisms.

@@ -213,6 +213,7 @@ func main() {
 		"seznambot",
 		"discord",
 		"twitter",
+		"facebook",
 		"cloudflare",
 		"uptimebot",
 		"slackbot",
@@ -255,6 +256,8 @@ func main() {
 		"Slackbot",
 		"Discordbot",
 		"Twitterbot",
+		"facebookexternalhit",
+		"Facebot",
 		"Discourse",
 
 		"SemrushBot",
@@ -273,20 +276,22 @@ func main() {
 		"SamsungBrowser": "samsung",
 		"UCBrowser":      "ucbrowser",
 
-		"Google":      "googlebot",
-		"Googlebot":   "googlebot",
-		"yandex":      "yandex", // from the URL
-		"DuckDuckBot": "duckduckgo",
-		"Baiduspider": "baidu",
-		"bingbot":     "bing",
-		"BingPreview": "bing",
-		"SeznamBot":   "seznambot",
-		"CloudFlare":  "cloudflare", // Track alwayson specifically in case there are other bots?
-		"Uptimebot":   "uptimebot",
-		"Slackbot":    "slackbot",
-		"Discordbot":  "discord",
-		"Twitterbot":  "twitter",
-		"Discourse":   "discourse",
+		"Google":              "googlebot",
+		"Googlebot":           "googlebot",
+		"yandex":              "yandex", // from the URL
+		"DuckDuckBot":         "duckduckgo",
+		"Baiduspider":         "baidu",
+		"bingbot":             "bing",
+		"BingPreview":         "bing",
+		"SeznamBot":           "seznambot",
+		"CloudFlare":          "cloudflare", // Track alwayson specifically in case there are other bots?
+		"Uptimebot":           "uptimebot",
+		"Slackbot":            "slackbot",
+		"Discordbot":          "discord",
+		"Twitterbot":          "twitter",
+		"facebookexternalhit": "facebook",
+		"Facebot":             "facebook",
+		"Discourse":           "discourse",
 
 		"SemrushBot": "semrush",
 		"DotBot":     "dotbot",
@@ -662,7 +667,9 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				continue
 			}
 			llLang = seg
+			break
 		}
+		common.DebugDetail("llLang:", llLang)
 		if llLang == "" {
 			counters.LangViewCounter.Bump("none")
 		} else {

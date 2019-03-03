@@ -167,7 +167,7 @@ function RelativeTime(date) {
 
 function initPhrases() {
 	console.log("in initPhrases")
-	fetchPhrases("status,topic_list,alerts,paginator")
+	fetchPhrases("status,topic_list,alerts,paginator,analytics")
 }
 
 function fetchPhrases(plist) {

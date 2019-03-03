@@ -386,6 +386,13 @@
 		"topic.copy_button_text":"Copy",
 		"topic.upload_button_text":"Upload",
 
+		"analytics.now": "now",
+		"analytics.today": "today",
+		"analytics.days": " days",
+		"analytics.days_short": "d",
+		"analytics.months": " months",
+		"analytics.months_short": "m",
+
 		"panel_rank_admins":"Admins",
 		"panel_rank_mods":"Mods",
 		"panel_rank_banned":"Banned",

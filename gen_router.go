@@ -478,17 +478,18 @@ var agentMapEnum = map[string]int{
 	"seznambot": 17,
 	"discord": 18,
 	"twitter": 19,
-	"cloudflare": 20,
-	"uptimebot": 21,
-	"slackbot": 22,
-	"discourse": 23,
-	"lynx": 24,
-	"blank": 25,
-	"malformed": 26,
-	"suspicious": 27,
-	"semrush": 28,
-	"dotbot": 29,
-	"zgrab": 30,
+	"facebook": 20,
+	"cloudflare": 21,
+	"uptimebot": 22,
+	"slackbot": 23,
+	"discourse": 24,
+	"lynx": 25,
+	"blank": 26,
+	"malformed": 27,
+	"suspicious": 28,
+	"semrush": 29,
+	"dotbot": 30,
+	"zgrab": 31,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -511,17 +512,18 @@ var reverseAgentMapEnum = map[int]string{
 	17: "seznambot",
 	18: "discord",
 	19: "twitter",
-	20: "cloudflare",
-	21: "uptimebot",
-	22: "slackbot",
-	23: "discourse",
-	24: "lynx",
-	25: "blank",
-	26: "malformed",
-	27: "suspicious",
-	28: "semrush",
-	29: "dotbot",
-	30: "zgrab",
+	20: "facebook",
+	21: "cloudflare",
+	22: "uptimebot",
+	23: "slackbot",
+	24: "discourse",
+	25: "lynx",
+	26: "blank",
+	27: "malformed",
+	28: "suspicious",
+	29: "semrush",
+	30: "dotbot",
+	31: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -546,6 +548,8 @@ var markToAgent = map[string]string{
 	"Slackbot": "slackbot",
 	"Discordbot": "discord",
 	"Twitterbot": "twitter",
+	"facebookexternalhit": "facebook",
+	"Facebot": "facebook",
 	"Discourse": "discourse",
 	"SemrushBot": "semrush",
 	"DotBot": "dotbot",
@@ -663,7 +667,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 		prepend += "\n"
 	}
 	r.DumpRequest(req,prepend+"Suspicious Request")
-	counters.AgentViewCounter.Bump(27)
+	counters.AgentViewCounter.Bump(28)
 }
 
 // TODO: Pass the default path or config struct to the router rather than accessing it via a package global
@@ -690,7 +694,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request")
-		counters.AgentViewCounter.Bump(26)
+		counters.AgentViewCounter.Bump(27)
 		return
 	}
 
@@ -752,7 +756,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
-		counters.AgentViewCounter.Bump(25)
+		counters.AgentViewCounter.Bump(26)
 		if common.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {
@@ -870,7 +874,9 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				continue
 			}
 			llLang = seg
+			break
 		}
+		common.DebugDetail("llLang:", llLang)
 		if llLang == "" {
 			counters.LangViewCounter.Bump("none")
 		} else {

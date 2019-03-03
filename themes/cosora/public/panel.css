@@ -198,6 +198,7 @@
 	float: none;
 	margin-top: auto;
 	padding-top: 14px;
+	word-break: break-all;
 }
 #panel_page_list textarea, #panel_page_edit textarea {
 	margin-top: 8px;
