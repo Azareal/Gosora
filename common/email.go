@@ -1,7 +1,7 @@
 package common
 
 import (
-	"fmt"
+	"crypto/tls"
 	"net/smtp"
 )
 
@@ -26,8 +26,7 @@ func SendValidationEmail(username string, email string, token string) error {
 }
 
 // TODO: Refactor this
-// TODO: Add support for TLS
-func SendEmail(email string, subject string, msg string) error {
+func SendEmail(email string, subject string, msg string) (err error) {
 	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
 	ret, hasHook := GetHookTable().VhookNeedHook("email_send_intercept", email, subject, msg)
 	if hasHook {
@@ -35,40 +34,56 @@ func SendEmail(email string, subject string, msg string) error {
 	}
 	body := "Subject: " + subject + "\n\n" + msg + "\n"
 
-	con, err := smtp.Dial(Config.SMTPServer + ":" + Config.SMTPPort)
-	if err != nil {
-		return err
-	}
-
-	if Config.SMTPUsername != "" {
-		auth := smtp.PlainAuth("", Config.SMTPUsername, Config.SMTPPassword, Config.SMTPServer)
-		err = con.Auth(auth)
+	var c *smtp.Client
+	if Config.SMTPEnableTLS {
+		tlsconfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         Config.SMTPServer,
+		}
+		conn, err := tls.Dial("tcp", Config.SMTPServer+":"+Config.SMTPPort, tlsconfig)
+		if err != nil {
+			return err
+		}
+		c, err = smtp.NewClient(conn, Config.SMTPServer)
+		if err != nil {
+			return err
+		}
+	} else {
+		c, err = smtp.Dial(Config.SMTPServer + ":" + Config.SMTPPort)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = con.Mail(Site.Email)
+	if Config.SMTPUsername != "" {
+		auth := smtp.PlainAuth("", Config.SMTPUsername, Config.SMTPPassword, Config.SMTPServer)
+		err = c.Auth(auth)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = c.Mail(Site.Email)
 	if err != nil {
 		return err
 	}
-	err = con.Rcpt(email)
+	err = c.Rcpt(email)
 	if err != nil {
 		return err
 	}
 
-	emailData, err := con.Data()
+	w, err := c.Data()
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(emailData, body)
+	_, err = w.Write([]byte(body))
 	if err != nil {
 		return err
 	}
 
-	err = emailData.Close()
+	err = w.Close()
 	if err != nil {
 		return err
 	}
-	return con.Quit()
+	return c.Quit()
 }

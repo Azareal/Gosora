@@ -66,11 +66,11 @@ type config struct {
 	TopicCache         string
 	TopicCacheCapacity int
 
-	SMTPServer   string
-	SMTPUsername string
-	SMTPPassword string
-	SMTPPort     string
-	//SMTPEnableTLS bool
+	SMTPServer    string
+	SMTPUsername  string
+	SMTPPassword  string
+	SMTPPort      string
+	SMTPEnableTLS bool
 
 	Search string
 
