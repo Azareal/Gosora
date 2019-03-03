@@ -342,7 +342,6 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user common.U
 
 		err = common.SendValidationEmail(username, email, token)
 		if err != nil {
-			common.LogWarning(err)
 			return common.LocalError(phrases.GetErrorPhrase("register_email_fail"), w, r, user)
 		}
 	}

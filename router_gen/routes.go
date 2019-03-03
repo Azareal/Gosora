@@ -59,7 +59,7 @@ func userRoutes() *RouteGroup {
 		Action("routes.AccountEditMFASetupSubmit", "/user/edit/mfa/setup/submit/"),
 		Action("routes.AccountEditMFADisableSubmit", "/user/edit/mfa/disable/submit/"),
 		MemberView("routes.AccountEditEmail", "/user/edit/email/"),
-		Action("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData"),
+		View("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData").NoHeader(),
 
 		MemberView("routes.AccountLogins", "/user/edit/logins/"),
 

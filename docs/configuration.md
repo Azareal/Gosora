@@ -40,7 +40,9 @@ SMTPUsername - The username for the SMTP server.
 
 SMTPPassword - The password for the SMTP server.
 
-SMTPPort - The port for the SMTP server, usually 25.
+SMTPPort - The port for the SMTP server, usually 25 or 465 for full TLS.
+
+SMTPEnableTLS - Enable TLS to fully encrypt the connection between Gosora and the SMTP server.
 
 Search - The type of search system to use. Options: disabled, sql (default)
 

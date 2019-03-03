@@ -1623,16 +1623,6 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				}
 					err = routes.AccountEditEmail(w,req,user,head)
 				case "/user/edit/token/":
-					err = common.NoSessionMismatch(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					err = common.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					counters.RouteViewCounter.Bump(93)
 					err = routes.AccountEditEmailTokenSubmit(w,req,user,extraData)
 				case "/user/edit/logins/":
