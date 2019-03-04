@@ -673,7 +673,7 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user co
 	targetEmail := common.Email{UserID: user.ID}
 	emails, err := common.Emails.GetEmailsByUser(&user)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return common.LocalError("You are not logged in", w, r, user)
 	}
 	for _, email := range emails {
 		if email.Token == token {

@@ -1,9 +1,6 @@
-:root {
-	--darkest-background: #222222;
-	--second-dark-background: #292929;
-	--third-dark-background: #333333;
-}
-
+{{$darkest_bg := "#222222"}}
+{{$second_dark_bg := "#292929"}}
+{{$third_dark_bg := "#333333"}}
 * {
 	box-sizing: border-box;
 }
@@ -11,7 +8,7 @@ body {
 	margin: 0px;
 	padding: 0px;
 	color: #AAAAAA;
-	background-color: var(--darkest-background);
+	background-color: {{$darkest_bg}};
 	font-family: "Segoe UI";
 }
 a {
@@ -20,7 +17,7 @@ a {
 }
 
 nav.nav {
-	background: var(--darkest-background);
+	background: {{$darkest_bg}};
 	width: calc(100% - 200px);
 	float: left;
 }
@@ -103,7 +100,7 @@ li a {
 .right_of_nav {
 	float: left;
 	width: 200px;
-	background-color: var(--darkest-background);
+	background-color: {{$darkest_bg}};
 	padding-top: 12px;
 	padding-bottom: 12px;
 	padding-right: 12px;
@@ -112,7 +109,7 @@ li a {
 	display: flex;
 	flex-direction: row;
 	border-radius: 3px;
-	background-color: var(--third-dark-background);
+	background-color: {{$third_dark_bg}};
 	padding-top: 11px;
 	padding-bottom: 11px;
 	padding-left: 12px;
@@ -143,7 +140,7 @@ li a {
 	clear: both;
 }
 #back {
-	background: var(--third-dark-background);
+	background: {{$third_dark_bg}};
 	padding: 24px;
 	padding-top: 12px;
 	clear: both;
@@ -1294,7 +1291,7 @@ input[type=checkbox]:checked + label .sel {
 
 @media(min-width: 1010px) {
 	.container {
-		background-color: var(--second-dark-background);
+		background-color: {{$second_dark_bg}};
 	}
 	#back, .footer {
 		width: 1000px;
