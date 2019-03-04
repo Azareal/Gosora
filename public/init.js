@@ -14,6 +14,7 @@ var hooks = {
 	"after_update_alert_list":[],
 	"open_edit":[],
 	"close_edit":[],
+	"edit_item_pre_bind":[],
 };
 var ranInitHooks = {}
 

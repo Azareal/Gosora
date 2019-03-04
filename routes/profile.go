@@ -31,7 +31,9 @@ func init() {
 func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
 	// TODO: Preload this?
 	header.AddSheet(header.Theme.Name + "/profile.css")
-	header.AddScript("profile_member.js")
+	if user.Loggedin {
+		header.AddScript("profile_member.js")
+	}
 
 	var err error
 	var replyCreatedAt time.Time

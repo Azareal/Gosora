@@ -33,6 +33,12 @@ $(document).ready(function(){
 			btns: [['viewHTML'],['strong','em','del'],['link'],['insertImage'],['removeformat']],
 			autogrow: true,
 		});
+		addHook("edit_item_pre_bind", () => {
+			$('.user_content textarea').trumbowyg({
+				btns: btnlist,
+				autogrow: true,
+			});
+		});
 	}
 
 	// TODO: Refactor this to use `each` less

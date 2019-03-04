@@ -599,6 +599,7 @@ function mainInit(){
 		else source = block.innerHTML;
 		// TODO: Add a client template for this
 		block.innerHTML = "<textarea style='width: 99%;' name='edit_item'>" + source + "</textarea><br><a href='" + this.closest('a').getAttribute("href") + "'><button class='submit_edit' type='submit'>Update</button></a>";
+		runHook("edit_item_pre_bind");
 
 		$(".submit_edit").click(function(event){
 			event.preventDefault();
