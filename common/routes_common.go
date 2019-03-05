@@ -153,7 +153,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 	var addPreScript = func(name string) {
 		var tname string
 		if theme.OverridenMap != nil {
-			_, ok := theme.OverridenMap[name+".html"]
+			_, ok := theme.OverridenMap[name]
 			if ok {
 				tname = "_" + theme.Name
 			}
@@ -240,11 +240,12 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		if theme.OverridenMap != nil {
 			//fmt.Printf("name %+v\n", name)
 			//fmt.Printf("theme.OverridenMap %+v\n", theme.OverridenMap)
-			_, ok := theme.OverridenMap[name+".html"]
+			_, ok := theme.OverridenMap[name]
 			if ok {
 				tname = "_" + theme.Name
 			}
 		}
+		//fmt.Printf("tname %+v\n", tname)
 		header.AddPreScriptAsync("template_" + name + tname + ".js")
 	}
 	addPreScript("topics_topic")

@@ -186,7 +186,13 @@ function runWebSockets() {
 	conn.onclose = () => {
 		conn = false;
 		console.log("The WebSockets connection was closed");
-		setTimeout(() => runWebSockets(), 60 * 1000);
+		setTimeout(() => {
+			var alertMenuList = document.getElementsByClassName("menu_alerts");
+			for(var i = 0; i < alertMenuList.length; i++) {
+				loadAlerts(alertMenuList[i]);
+			}
+			runWebSockets();
+		}, 60 * 1000);
 	}
 
 	conn.onmessage = (event) => {

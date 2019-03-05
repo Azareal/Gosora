@@ -99,6 +99,12 @@ You can get a free private key and certificate pair from Let's Encrypt or Cloudf
 If you're using Nginx or something else as a reverse-proxy in-front of Gosora, then you will have to consult their documentation for advice on setting HTTPS.
 
 
+For email, you will need a SMTP server (either provided by yourself or by a transactional mail provider who specialises in doing so)
+ You can setup it up via config.json with the Email setting and the ones starting with SMTP.
+
+It is also possible to send emails without SMTP with the experimental sendmail plugin, however there is a high chance of your emails ending up in the user's spam folder, if it arrives at all.
+
+
 # Advanced Installation
 
 This section explains how to set things up without running the batch or shell files. For Windows, you will likely have to open up cmd.exe (the app called Command Prompt in Win10) to run these commands inside or something similar, while with Linux you would likely use the Terminal or console.
