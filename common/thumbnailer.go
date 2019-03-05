@@ -31,6 +31,14 @@ func ThumbTask(thumbChan chan bool) {
 				_, _ = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
 				return nil
 			}
+			_, err = os.Stat("./uploads/avatar_" + strconv.Itoa(user.ID) + user.RawAvatar)
+			if os.IsNotExist(err) {
+				_, _ = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
+				return nil
+			} else if err != nil {
+				return errors.WithStack(err)
+			}
+
 			// This means it's an external image, they aren't currently implemented, but this is here for when they are
 			if user.RawAvatar[0] != '.' {
 				return nil

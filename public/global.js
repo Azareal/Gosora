@@ -173,6 +173,7 @@ function runWebSockets() {
 		console.log(err);
 	}
 
+	// TODO: Sync alerts, topic list, etc.
 	conn.onopen = () => {
 		console.log("The WebSockets connection was opened");
 		conn.send("page " + document.location.pathname + '\r');
@@ -185,6 +186,7 @@ function runWebSockets() {
 	conn.onclose = () => {
 		conn = false;
 		console.log("The WebSockets connection was closed");
+		setTimeout(() => runWebSockets(), 60 * 1000);
 	}
 
 	conn.onmessage = (event) => {

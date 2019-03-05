@@ -506,6 +506,23 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user common
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+
+	// Clean up the old avatar data, so we don't end up with too many dead files in /uploads/
+	if len(user.RawAvatar) > 2 {
+		if user.RawAvatar[0] == '.' && user.RawAvatar[1] == '.' {
+			err := os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_tmp" + user.RawAvatar[1:])
+			if err != nil && !os.IsNotExist(err) {
+				common.LogWarning(err)
+				return common.LocalError("Something went wrong", w, r, user)
+			}
+			err = os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_w48" + user.RawAvatar[1:])
+			if err != nil && !os.IsNotExist(err) {
+				common.LogWarning(err)
+				return common.LocalError("Something went wrong", w, r, user)
+			}
+		}
+	}
+
 	// TODO: Only schedule a resize if the avatar isn't tiny
 	err = user.ScheduleAvatarResize()
 	if err != nil {
