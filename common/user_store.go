@@ -186,6 +186,8 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 	if err != nil {
 		return list, err
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		user := &User{Loggedin: true}
 		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
@@ -195,6 +197,10 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 		user.Init()
 		mus.cache.Set(user)
 		list[user.ID] = user
+	}
+	err = rows.Err()
+	if err != nil {
+		return list, err
 	}
 
 	// Did we miss any users?

@@ -165,6 +165,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	common.PasswordResetter, err = common.NewDefaultPasswordResetter(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	// TODO: Let the admin choose other thumbnailers, maybe ones defined in plugins
 	common.Thumbnailer = common.NewCaireThumbnailer()
 

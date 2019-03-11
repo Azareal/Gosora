@@ -508,118 +508,11 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	}
 	writeTemplate("alert", alertTmpl)
 	/*//writeTemplate("forum", forumTmpl)
-	writeTemplate("topics_topic", topicListItemTmpl)
 	writeTemplate("topic_posts", topicPostsTmpl)
 	writeTemplate("topic_alt_posts", topicAltPostsTmpl)
-	writeTemplate("paginator", paginatorTmpl)
-	//writeTemplate("panel_themes_widgets_widget", panelWidgetsWidgetTmpl)
 	writeTemplateList(c, &wg, dirPrefix)*/
 	return nil
 }
-
-/*func CompileJSTemplates() error {
-	log.Print("Compiling the JS templates")
-	var config tmpl.CTemplateConfig
-	config.Minify = Config.MinifyTemplates
-	config.Debug = Dev.DebugMode
-	config.SuperDebug = Dev.TemplateDebug
-	config.SkipHandles = true
-	config.SkipTmplPtrMap = true
-	config.SkipInitBlock = false
-	config.PackageName = "tmpl"
-
-	c := tmpl.NewCTemplateSet()
-	c.SetConfig(config)
-	c.SetBaseImportMap(map[string]string{
-		"io": "io",
-		"github.com/Azareal/Gosora/common/alerts": "github.com/Azareal/Gosora/common/alerts",
-	})
-	c.SetBuildTags("!no_templategen")
-
-	user, user2, user3 := tmplInitUsers()
-	header, _, _ := tmplInitHeaders(user, user2, user3)
-	now := time.Now()
-	var varList = make(map[string]tmpl.VarItem)
-
-	// TODO: Check what sort of path is sent exactly and use it here
-	alertItem := alerts.AlertItem{Avatar: "", ASID: 1, Path: "/", Message: "uh oh, something happened"}
-	alertTmpl, err := c.Compile("alert.html", "templates/", "alerts.AlertItem", alertItem, varList)
-	if err != nil {
-		return err
-	}
-
-	c.SetBaseImportMap(map[string]string{
-		"io":                               "io",
-		"github.com/Azareal/Gosora/common": "github.com/Azareal/Gosora/common",
-	})
-	// TODO: Fix the import loop so we don't have to use this hack anymore
-	c.SetBuildTags("!no_templategen,tmplgentopic")
-
-	var topicsRow = &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 0, 1, "classname", "", &user2, "", 0, &user3, "General", "/forum/general.2"}
-	topicListItemTmpl, err := c.Compile("topics_topic.html", "templates/", "*common.TopicsRow", topicsRow, varList)
-	if err != nil {
-		return err
-	}
-
-	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
-		PollOption{0, "Nothing"},
-		PollOption{1, "Something"},
-	}, VoteCount: 7}
-	avatar, microAvatar := BuildAvatar(62, "")
-	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach}
-	var replyList []ReplyUser
-	// TODO: Do we really want the UID here to be zero?
-	avatar, microAvatar = BuildAvatar(0, "")
-	replyList = append(replyList, ReplyUser{0, 0, "Yo!", "Yo!", 0, "alice", "Alice", Config.DefaultGroup, now, 0, 0, avatar, microAvatar, "", 0, "", "", "", "", 0, "127.0.0.1", false, 1, 1, "", "", miniAttach})
-
-	varList = make(map[string]tmpl.VarItem)
-	header.Title = "Topic Name"
-	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
-	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
-	topicPostsTmpl, err := c.Compile("topic_posts.html", "templates/", "common.TopicPage", tpage, varList)
-	if err != nil {
-		return err
-	}
-	topicAltPostsTmpl, err := c.Compile("topic_alt_posts.html", "templates/", "common.TopicPage", tpage, varList)
-	if err != nil {
-		return err
-	}
-
-	itemsPerPage := 25
-	_, page, lastPage := PageOffset(20, 1, itemsPerPage)
-	pageList := Paginate(20, itemsPerPage, 5)
-	paginatorTmpl, err := c.Compile("paginator.html", "templates/", "common.Paginator", Paginator{pageList, page, lastPage}, varList)
-	if err != nil {
-		return err
-	}
-
-	var dirPrefix = "./tmpl_client/"
-	var wg sync.WaitGroup
-	var writeTemplate = func(name string, content string) {
-		log.Print("Writing template '" + name + "'")
-		if content == "" {
-			return //log.Fatal("No content body")
-		}
-		wg.Add(1)
-		go func() {
-			err := writeFile(dirPrefix+"template_"+name+".go", content)
-			if err != nil {
-				log.Fatal(err)
-			}
-			wg.Done()
-		}()
-	}
-	writeTemplate("alert", alertTmpl)
-	//writeTemplate("forum", forumTmpl)
-	writeTemplate("topics_topic", topicListItemTmpl)
-	writeTemplate("topic_posts", topicPostsTmpl)
-	writeTemplate("topic_alt_posts", topicAltPostsTmpl)
-	writeTemplate("paginator", paginatorTmpl)
-	//writeTemplate("panel_themes_widgets_widget", panelWidgetsWidgetTmpl)
-	writeTemplateList(c, &wg, dirPrefix)
-	return nil
-}*/
 
 func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) string {
 	DebugLog("in getTemplateList")

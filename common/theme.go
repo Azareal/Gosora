@@ -3,7 +3,9 @@ package common
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	htmpl "html/template"
 	"io"
@@ -157,7 +159,12 @@ func (theme *Theme) AddThemeStaticFiles() error {
 			return err
 		}
 
-		StaticFiles.Set("/static/"+theme.Name+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		// Get a checksum for CSPs and cache busting
+		hasher := sha256.New()
+		hasher.Write(data)
+		checksum := []byte(hex.EncodeToString(hasher.Sum(nil)))
+
+		StaticFiles.Set("/static/"+theme.Name+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLog("Added the '/" + theme.Name + path + "' static file for theme " + theme.Name + ".")
 		return nil

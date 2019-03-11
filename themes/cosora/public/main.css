@@ -1387,11 +1387,18 @@ textarea {
 .login_button_row {
 	display: flex;
 }
-.dont_have_account {
+.dont_have_account, .forgot_password {
 	color: var(--primary-link-color);
 	font-size: 12px;
-	margin-left: auto;
 	margin-top: 23px;
+}
+.dont_have_account {
+	margin-left: auto;
+}
+.dont_have_account:after {
+	content: "|";
+	margin-left: 5px;
+	margin-right: 5px;
 }
 
 /* TODO: Highlight the one we're currently on? */

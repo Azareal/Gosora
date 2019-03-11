@@ -27,6 +27,7 @@ func init() {
 	addPatch(13, patch13)
 	addPatch(14, patch14)
 	addPatch(15, patch15)
+	addPatch(16, patch16)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -536,4 +537,16 @@ func patch14(scanner *bufio.Scanner) error {
 
 func patch15(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.SimpleInsert("settings", "name, content, type", "'google_site_verify','','html-attribute'"))
+}
+
+func patch16(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.CreateTable("password_resets", "", "",
+		[]tblColumn{
+			tblColumn{"email", "varchar", 200, false, false, ""},
+			tblColumn{"uid", "int", 0, false, false, ""},             // TODO: Make this a foreign key
+			tblColumn{"validated", "varchar", 200, false, false, ""}, // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
+			tblColumn{"token", "varchar", 200, false, false, ""},
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+		}, nil,
+	))
 }

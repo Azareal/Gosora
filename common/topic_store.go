@@ -152,6 +152,8 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 	if err != nil {
 		return list, err
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		topic := &Topic{}
 		err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
@@ -161,6 +163,10 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
 		s.cache.Set(topic)
 		list[topic.ID] = topic
+	}
+	err = rows.Err()
+	if err != nil {
+		return list, err
 	}
 
 	// Did we miss any topics?

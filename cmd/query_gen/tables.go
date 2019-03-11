@@ -166,17 +166,15 @@ func createTables(adapter qgen.Adapter) error {
 	*/
 
 	// TODO: Implement password resets
-	/*qgen.Install.CreateTable("password_resets", "", "",
+	qgen.Install.CreateTable("password_resets", "", "",
 		[]tblColumn{
 			tblColumn{"email", "varchar", 200, false, false, ""},
-			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tblColumn{"uid", "int", 0, false, false, ""},             // TODO: Make this a foreign key
 			tblColumn{"validated", "varchar", 200, false, false, ""}, // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
 			tblColumn{"token", "varchar", 200, false, false, ""},
-		},
-		[]tblKey{
-			tblKey{"email", "unique"},
-		},
-	)*/
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+		}, nil,
+	)
 
 	qgen.Install.CreateTable("forums", mysqlPre, mysqlCol,
 		[]tblColumn{

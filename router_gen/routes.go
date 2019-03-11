@@ -65,6 +65,7 @@ func userRoutes() *RouteGroup {
 
 		MemberView("routes.LevelList", "/user/levels/"),
 		//MemberView("routes.LevelRankings", "/user/rankings/"),
+		//MemberView("routes.Alerts", "/user/alerts/"),
 	)
 }
 
@@ -135,8 +136,11 @@ func accountRoutes() *RouteGroup {
 		View("routes.AccountLoginMFAVerify", "/accounts/mfa_verify/"),
 		AnonAction("routes.AccountLoginMFAVerifySubmit", "/accounts/mfa_verify/submit/"), // We have logic in here which filters out regular guests
 		AnonAction("routes.AccountRegisterSubmit", "/accounts/create/submit/"),
-		//View("routes.AccountPasswordReset", "/accounts/password-reset/"),
-		//AnonAction("routes.AccountPasswordResetSubmit", "/accounts/password-reset/submit/"),
+
+		View("routes.AccountPasswordReset", "/accounts/password-reset/"),
+		AnonAction("routes.AccountPasswordResetSubmit", "/accounts/password-reset/submit/"),
+		View("routes.AccountPasswordResetToken", "/accounts/password-reset/token/"),
+		AnonAction("routes.AccountPasswordResetTokenSubmit", "/accounts/password-reset/token/submit/"),
 	)
 }
 

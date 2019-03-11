@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/Azareal/Gosora/common/phrases"
+	min "github.com/Azareal/Gosora/common/templates"
 )
 
 type wolUsers struct {
@@ -53,6 +54,10 @@ func wolTick(widget *Widget) error {
 	}
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(w.Result().Body)
-	widget.TickMask.Store(buf.String())
+	bs := buf.String()
+	if Config.MinifyTemplates {
+		bs = min.Minify(bs)
+	}
+	widget.TickMask.Store(bs)
 	return nil
 }

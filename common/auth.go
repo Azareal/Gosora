@@ -16,8 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/common/gauth"
+	"github.com/Azareal/Gosora/query_gen"
+
 	//"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -40,6 +41,7 @@ var ErrPasswordTooLong = errors.New("The password you selected is too long")
 var ErrWrongPassword = errors.New("That's not the correct password.")
 var ErrBadMFAToken = errors.New("I'm not sure where you got that from, but that's not a valid 2FA token")
 var ErrWrongMFAToken = errors.New("That 2FA token isn't correct")
+var ErrNoMFAToken = errors.New("This user doesn't have 2FA setup")
 var ErrSecretError = errors.New("There was a glitch in the system. Please contact your local administrator.")
 var ErrNoUserByName = errors.New("We couldn't find an account with that username.")
 var DefaultHashAlgo = "bcrypt" // Override this in the configuration file, not here
@@ -132,23 +134,25 @@ func (auth *DefaultAuth) ValidateMFAToken(mfaToken string, uid int) error {
 		LogError(err)
 		return ErrSecretError
 	}
-	if err != ErrNoRows {
-		ok, err := VerifyGAuthToken(mfaItem.Secret, mfaToken)
-		if err != nil {
-			return ErrBadMFAToken
-		}
-		if ok {
-			return nil
-		}
-		for i, scratch := range mfaItem.Scratch {
-			if subtle.ConstantTimeCompare([]byte(scratch), []byte(mfaToken)) == 1 {
-				err = mfaItem.BurnScratch(i)
-				if err != nil {
-					LogError(err)
-					return ErrSecretError
-				}
-				return nil
+	if err == ErrNoRows {
+		return ErrNoMFAToken
+	}
+
+	ok, err := VerifyGAuthToken(mfaItem.Secret, mfaToken)
+	if err != nil {
+		return ErrBadMFAToken
+	}
+	if ok {
+		return nil
+	}
+	for i, scratch := range mfaItem.Scratch {
+		if subtle.ConstantTimeCompare([]byte(scratch), []byte(mfaToken)) == 1 {
+			err = mfaItem.BurnScratch(i)
+			if err != nil {
+				LogError(err)
+				return ErrSecretError
 			}
+			return nil
 		}
 	}
 	return ErrWrongMFAToken

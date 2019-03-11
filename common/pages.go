@@ -203,6 +203,13 @@ type LevelListPage struct {
 	Levels []LevelListItem
 }
 
+type ResetPage struct {
+	*Header
+	UID   int
+	Token string
+	MFA   bool
+}
+
 type PanelStats struct {
 	Users       int
 	Groups      int

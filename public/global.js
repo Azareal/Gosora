@@ -30,6 +30,7 @@ function postLink(event) {
 }
 
 function bindToAlerts() {
+	$(".alertItem.withAvatar a").unbind("click");
 	$(".alertItem.withAvatar a").click(function(event) {
 		event.stopPropagation();
 		$.ajax({ url: "/api/?action=set&module=dismiss-alert", type: "POST", dataType: "json", error: ajaxError, data: { asid: $(this).attr("data-asid") } });

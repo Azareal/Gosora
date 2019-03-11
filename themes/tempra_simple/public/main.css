@@ -420,11 +420,26 @@ input, select {
 	border-color: hsl(0, 0%, 80%);
 }
 
-.dont_have_account {
-	color: #505050;
-	font-size: 12px;
-	font-weight: normal;
+.fall_opts {
 	float: right;
+	display: flex;
+}
+.dont_have_account, .forgot_password {
+	color: #505050;
+	font-size: 14px;
+	margin-top: 6px;
+	border-right: none !important;
+}
+.dont_have_account:after {
+	content: "|";
+	margin-left: 5px;
+	margin-right: 5px;
+}
+.dont_have_account {
+	padding-right: 0px;
+}
+.forgot_password {
+	padding-left: 0px;
 }
 
 .ip_search_block {

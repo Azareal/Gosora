@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"database/sql"
 	"encoding/hex"
+	"html"
 	"io"
 	"log"
 	"math"
@@ -424,7 +425,7 @@ func AccountEditPasswordSubmit(w http.ResponseWriter, r *http.Request, user comm
 	if newPassword != confirmPassword {
 		return common.LocalError("The two passwords don't match.", w, r, user)
 	}
-	common.SetPassword(user.ID, newPassword)
+	common.SetPassword(user.ID, newPassword) // TODO: Limited version of WeakPassword()
 
 	// Log the user out as a safety precaution
 	common.Auth.ForceLogout(user.ID)
@@ -693,7 +694,7 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user co
 		return common.LocalError("You are not logged in", w, r, user)
 	}
 	for _, email := range emails {
-		if email.Token == token {
+		if subtle.ConstantTimeCompare([]byte(email.Token), []byte(token)) == 1 {
 			targetEmail = email
 		}
 	}
@@ -760,4 +761,155 @@ func LevelList(w http.ResponseWriter, r *http.Request, user common.User, header 
 
 	pi := common.LevelListPage{header, levels[1:]}
 	return renderTemplate("level_list", w, r, header, pi)
+}
+
+func Alerts(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	return nil
+}
+
+func AccountPasswordReset(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	if user.Loggedin {
+		return common.LocalError("You're already logged in.", w, r, user)
+	}
+	if !common.Site.EnableEmails {
+		return common.LocalError(phrases.GetNoticePhrase("account_mail_disabled"), w, r, user)
+	}
+	if r.FormValue("email_sent") == "1" {
+		header.AddNotice("password_reset_email_sent")
+	}
+	header.Title = phrases.GetTitlePhrase("password_reset")
+	pi := common.Page{header, tList, nil}
+	return renderTemplate("password_reset", w, r, header, pi)
+}
+
+// TODO: Ratelimit this
+func AccountPasswordResetSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	if user.Loggedin {
+		return common.LocalError("You're already logged in.", w, r, user)
+	}
+	if !common.Site.EnableEmails {
+		return common.LocalError(phrases.GetNoticePhrase("account_mail_disabled"), w, r, user)
+	}
+
+	username := r.PostFormValue("username")
+	tuser, err := common.Users.GetByName(username)
+	if err == sql.ErrNoRows {
+		// Someone trying to stir up trouble?
+		http.Redirect(w, r, "/accounts/password-reset/?email_sent=1", http.StatusSeeOther)
+		return nil
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	token, err := common.GenerateSafeString(80)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// TODO: Move this query somewhere else
+	var disc string
+	err = qgen.NewAcc().Select("password_resets").Columns("createdAt").DateCutoff("createdAt", 1, "hour").QueryRow().Scan(&disc)
+	if err != nil && err != sql.ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	if err == nil {
+		return common.LocalError("You can only send a password reset email for a user once an hour", w, r, user)
+	}
+
+	err = common.PasswordResetter.Create(tuser.Email, tuser.ID, token)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	var schema string
+	if common.Site.EnableSsl {
+		schema = "s"
+	}
+
+	err = common.SendEmail(tuser.Email, phrases.GetTmplPhrase("password_reset_subject"), phrases.GetTmplPhrasef("password_reset_body", tuser.Name, "http"+schema+"://"+common.Site.URL+"/accounts/password-reset/token/?uid="+strconv.Itoa(tuser.ID)+"&token="+token))
+	if err != nil {
+		return common.LocalError(phrases.GetErrorPhrase("password_reset_email_fail"), w, r, user)
+	}
+
+	http.Redirect(w, r, "/accounts/password-reset/?email_sent=1", http.StatusSeeOther)
+	return nil
+}
+
+func AccountPasswordResetToken(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+	if user.Loggedin {
+		return common.LocalError("You're already logged in.", w, r, user)
+	}
+	// TODO: Find a way to flash this notice
+	/*if r.FormValue("token_verified") == "1" {
+		header.AddNotice("password_reset_token_token_verified")
+	}*/
+
+	token := r.FormValue("token")
+	uid, err := strconv.Atoi(r.FormValue("uid"))
+	if err != nil {
+		return common.LocalError("Invalid uid", w, r, user)
+	}
+
+	err = common.PasswordResetter.ValidateToken(uid, token)
+	if err == sql.ErrNoRows || err == common.ErrBadResetToken {
+		return common.LocalError("This reset token has expired.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	_, err = common.MFAstore.Get(uid)
+	if err != sql.ErrNoRows && err != nil {
+		return common.InternalError(err, w, r)
+	}
+	mfa := err != sql.ErrNoRows
+
+	header.Title = phrases.GetTitlePhrase("password_reset_token")
+	return renderTemplate("password_reset_token", w, r, header, common.ResetPage{header, uid, html.EscapeString(token), mfa})
+}
+
+func AccountPasswordResetTokenSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+	if user.Loggedin {
+		return common.LocalError("You're already logged in.", w, r, user)
+	}
+
+	token := r.FormValue("token")
+	uid, err := strconv.Atoi(r.FormValue("uid"))
+	if err != nil {
+		return common.LocalError("Invalid uid", w, r, user)
+	}
+	if !common.Users.Exists(uid) {
+		return common.LocalError("This reset token has expired.", w, r, user)
+	}
+
+	err = common.PasswordResetter.ValidateToken(uid, token)
+	if err == sql.ErrNoRows || err == common.ErrBadResetToken {
+		return common.LocalError("This reset token has expired.", w, r, user)
+	} else if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	mfaToken := r.PostFormValue("mfa_token")
+	err = common.Auth.ValidateMFAToken(mfaToken, uid)
+	if err != nil && err != common.ErrNoMFAToken {
+		return common.LocalError(err.Error(), w, r, user)
+	}
+
+	newPassword := r.PostFormValue("password")
+	confirmPassword := r.PostFormValue("confirm_password")
+	if newPassword != confirmPassword {
+		return common.LocalError("The two passwords don't match.", w, r, user)
+	}
+	common.SetPassword(uid, newPassword) // TODO: Limited version of WeakPassword()
+
+	err = common.PasswordResetter.FlushTokens(uid)
+	if err != nil {
+		return common.InternalError(err, w, r)
+	}
+
+	// Log the user out as a safety precaution
+	common.Auth.ForceLogout(uid)
+
+	//http.Redirect(w, r, "/accounts/password-reset/token/?token_verified=1", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }

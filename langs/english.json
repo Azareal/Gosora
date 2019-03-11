@@ -100,6 +100,8 @@
 		"register_username_too_long_prefix":"The username is too long, max: ",
 		"register_email_fail":"We were unable to send the email for you to confirm that this email address belongs to you. You may not have access to some functionality until you do so. Please ask an administrator for assistance.",
 
+		"password_reset_email_fail":"We were unable to send a password reset email to this user.",
+
 		"alerts_no_actor":"Unable to find the actor",
 		"alerts_no_target_user":"Unable to find the target user",
 		"alerts_no_linked_topic":"Unable to find the linked topic",
@@ -128,6 +130,8 @@
 		"login":"Login",
 		"login_mfa_verify":"2FA Verify",
 		"register":"Registration",
+		"password_reset":"Password Reset",
+		"password_reset_token":"Password Reset",
 		"ip_search":"IP Search",
 		"profile": "%s's Profile",
 		"account":"My Account",
@@ -305,6 +309,8 @@
 		"account_mail_disabled":"The mail system is currently disabled.",
 		"account_mail_verify_success":"Your email was successfully verified.",
 		"account_mfa_setup_success":"Two-factor authentication was successfully setup for your account.",
+		"password_reset_email_sent":"An email was sent to you. Please follow the steps within.",
+		"password_reset_token_token_verified":"Your password was successfully updated.",
 
 		"panel_forum_created":"The forum was successfully created.",
 		"panel_forum_deleted":"The forum was successfully deleted.",
@@ -446,6 +452,7 @@
 		"login_account_password":"Password",
 		"login_submit_button":"Login",
 		"login_no_account":"Don't have an account?",
+		"login_forgot_password":"Forgot your password?",
 
 		"login_mfa_verify_head":"2FA Verify",
 		"login_mfa_verify_explanation":"Please input the code from the authenticator app below.",
@@ -459,6 +466,18 @@
 		"register_account_confirm_password":"Confirm Password",
 		"register_account_anti_spam":"Ar​e y​ou a sp​am​bo​t?",
 		"register_submit_button":"Create Account",
+
+		"password_reset_head":"Password Reset",
+		"password_reset_username":"Account Name",
+		"password_reset_button":"Send Email",
+		"password_reset_subject":"Reset your email",
+		"password_reset_body":"Dear %s, someone has requested that your password be reset. If this was you, then please click on the following link to do so, otherwise disregard this email.\n\n %s",
+
+		"password_reset_token_head":"Password Reset",
+		"password_reset_token_password":"New Password",
+		"password_reset_token_confirm_password":"Confirm Password",
+		"password_reset_mfa_token":"2FA Token",
+		"password_reset_token_button":"Update Account",
 
 		"account_menu_head":"My Account",
 		"account_menu_password":"Password",

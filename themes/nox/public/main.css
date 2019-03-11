@@ -614,6 +614,16 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 .login_mfa_token_row .formlabel {
 	display: none;
 }
+.fall_opts {
+	display: flex;
+}
+.dont_have_account, .forgot_password {
+	margin-top: 12px;
+	margin-bottom: -8px;
+}
+.forgot_password {
+	margin-left: auto;
+}
 
 .pageset {
     display: flex;

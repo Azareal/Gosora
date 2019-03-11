@@ -154,6 +154,10 @@ var RouteMap = map[string]interface{}{
 	"routes.AccountLoginMFAVerify": routes.AccountLoginMFAVerify,
 	"routes.AccountLoginMFAVerifySubmit": routes.AccountLoginMFAVerifySubmit,
 	"routes.AccountRegisterSubmit": routes.AccountRegisterSubmit,
+	"routes.AccountPasswordReset": routes.AccountPasswordReset,
+	"routes.AccountPasswordResetSubmit": routes.AccountPasswordResetSubmit,
+	"routes.AccountPasswordResetToken": routes.AccountPasswordResetToken,
+	"routes.AccountPasswordResetTokenSubmit": routes.AccountPasswordResetTokenSubmit,
 	"routes.DynamicRoute": routes.DynamicRoute,
 	"routes.UploadedFile": routes.UploadedFile,
 	"routes.StaticFile": routes.StaticFile,
@@ -295,12 +299,16 @@ var routeMapEnum = map[string]int{
 	"routes.AccountLoginMFAVerify": 128,
 	"routes.AccountLoginMFAVerifySubmit": 129,
 	"routes.AccountRegisterSubmit": 130,
-	"routes.DynamicRoute": 131,
-	"routes.UploadedFile": 132,
-	"routes.StaticFile": 133,
-	"routes.RobotsTxt": 134,
-	"routes.SitemapXml": 135,
-	"routes.BadRoute": 136,
+	"routes.AccountPasswordReset": 131,
+	"routes.AccountPasswordResetSubmit": 132,
+	"routes.AccountPasswordResetToken": 133,
+	"routes.AccountPasswordResetTokenSubmit": 134,
+	"routes.DynamicRoute": 135,
+	"routes.UploadedFile": 136,
+	"routes.StaticFile": 137,
+	"routes.RobotsTxt": 138,
+	"routes.SitemapXml": 139,
+	"routes.BadRoute": 140,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routes.Overview",
@@ -434,12 +442,16 @@ var reverseRouteMapEnum = map[int]string{
 	128: "routes.AccountLoginMFAVerify",
 	129: "routes.AccountLoginMFAVerifySubmit",
 	130: "routes.AccountRegisterSubmit",
-	131: "routes.DynamicRoute",
-	132: "routes.UploadedFile",
-	133: "routes.StaticFile",
-	134: "routes.RobotsTxt",
-	135: "routes.SitemapXml",
-	136: "routes.BadRoute",
+	131: "routes.AccountPasswordReset",
+	132: "routes.AccountPasswordResetSubmit",
+	133: "routes.AccountPasswordResetToken",
+	134: "routes.AccountPasswordResetTokenSubmit",
+	135: "routes.DynamicRoute",
+	136: "routes.UploadedFile",
+	137: "routes.StaticFile",
+	138: "routes.RobotsTxt",
+	139: "routes.SitemapXml",
+	140: "routes.BadRoute",
 }
 var osMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -738,7 +750,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	counters.GlobalViewCounter.Bump()
 	
 	if prefix == "/static" {
-		counters.RouteViewCounter.Bump(133)
+		counters.RouteViewCounter.Bump(137)
 		req.URL.Path += extraData
 		routes.StaticFile(w, req)
 		return
@@ -2085,6 +2097,36 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					
 					counters.RouteViewCounter.Bump(130)
 					err = routes.AccountRegisterSubmit(w,req,user)
+				case "/accounts/password-reset/":
+					counters.RouteViewCounter.Bump(131)
+				head, err := common.UserCheck(w,req,&user)
+				if err != nil {
+					return err
+				}
+					err = routes.AccountPasswordReset(w,req,user,head)
+				case "/accounts/password-reset/submit/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						return err
+					}
+					
+					counters.RouteViewCounter.Bump(132)
+					err = routes.AccountPasswordResetSubmit(w,req,user)
+				case "/accounts/password-reset/token/":
+					counters.RouteViewCounter.Bump(133)
+				head, err := common.UserCheck(w,req,&user)
+				if err != nil {
+					return err
+				}
+					err = routes.AccountPasswordResetToken(w,req,user,head)
+				case "/accounts/password-reset/token/submit/":
+					err = common.ParseForm(w,req,user)
+					if err != nil {
+						return err
+					}
+					
+					counters.RouteViewCounter.Bump(134)
+					err = routes.AccountPasswordResetTokenSubmit(w,req,user)
 			}
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData
@@ -2099,7 +2141,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				w.Header().Del("Content-Type")
 				w.Header().Del("Content-Encoding")
 			}
-			counters.RouteViewCounter.Bump(132)
+			counters.RouteViewCounter.Bump(136)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			r.UploadHandler(w,req) // TODO: Count these views
@@ -2109,7 +2151,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
-					counters.RouteViewCounter.Bump(134)
+					counters.RouteViewCounter.Bump(138)
 					return routes.RobotsTxt(w,req)
 				case "favicon.ico":
 					req.URL.Path = "/static"+req.URL.Path+extraData
@@ -2117,7 +2159,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					routes.StaticFile(w,req)
 					return nil
 				/*case "sitemap.xml":
-					counters.RouteViewCounter.Bump(135)
+					counters.RouteViewCounter.Bump(139)
 					return routes.SitemapXml(w,req)*/
 			}
 			return common.NotFound(w,req,nil)
@@ -2128,7 +2170,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			r.RUnlock()
 			
 			if ok {
-				counters.RouteViewCounter.Bump(131) // TODO: Be more specific about *which* dynamic route it is
+				counters.RouteViewCounter.Bump(135) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				return handle(w,req,user)
 			}
@@ -2139,7 +2181,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			} else {
 				r.DumpRequest(req,"Bad Route")
 			}
-			counters.RouteViewCounter.Bump(136)
+			counters.RouteViewCounter.Bump(140)
 			return common.NotFound(w,req,nil)
 	}
 	return err

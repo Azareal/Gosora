@@ -1,9 +1,9 @@
 {
-	"Name": "tempra-simple",
+	"Name": "tempra_simple",
 	"FriendlyName": "Tempra Simple",
 	"Version": "0.1.0-dev",
 	"Creator": "Azareal",
-	"FullImage": "tempra-simple.png",
+	"FullImage": "tempra_simple.png",
 	"MobileFriendly": true,
 	"URL": "github.com/Azareal/Gosora",
 	"BgAvatars":true,
@@ -16,7 +16,7 @@
 	],
 	"Resources": [
 		{
-			"Name":"tempra-simple/misc.js",
+			"Name":"tempra_simple/misc.js",
 			"Location":"global"
 		}
 	]

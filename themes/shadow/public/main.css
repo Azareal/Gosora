@@ -346,11 +346,32 @@ h1, h2, h3 {
 	padding-bottom: 12px;
 }
 
+.login_button_row {
+	display: flex;
+}
+.login_button_row .formitem > * {
+	padding-top: 5px;
+}
+.fall_opts {
+	display: flex;
+}
 .dont_have_account {
-	color: #505050;
+	margin-left: auto;
+	padding-right: 0px;
+}
+.dont_have_account:after {
+	content: "|";
+	padding-left: 8px;
+	padding-right: 8px;
+}
+.forgot_password {
+	padding-left: 0px;
+}
+.formitem.dont_have_account, .formitem.forgot_password {
+	color: #909090;
 	font-size: 12px;
 	font-weight: normal;
-	float: right;
+	padding-top: 11px;
 }
 
 textarea {

@@ -3,6 +3,8 @@ package common
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -25,6 +27,7 @@ var staticFileMutex sync.RWMutex
 type SFile struct {
 	Data             []byte
 	GzipData         []byte
+	Sha256           []byte
 	Pos              int64
 	Length           int64
 	GzipLength       int64
@@ -234,7 +237,12 @@ func (list SFileList) JSTmplInit() error {
 			return err
 		}
 
-		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		// Get a checksum for CSPs and cache busting
+		hasher := sha256.New()
+		hasher.Write(data)
+		checksum := []byte(hex.EncodeToString(hasher.Sum(nil)))
+
+		list.Set("/static/"+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -256,6 +264,11 @@ func (list SFileList) Init() error {
 		var ext = filepath.Ext("/public/" + path)
 		mimetype := mime.TypeByExtension(ext)
 
+		// Get a checksum for CSPs and cache busting
+		hasher := sha256.New()
+		hasher.Write(data)
+		checksum := []byte(hex.EncodeToString(hasher.Sum(nil)))
+
 		// Avoid double-compressing images
 		var gzipData []byte
 		if mimetype != "image/jpeg" && mimetype != "image/png" && mimetype != "image/gif" {
@@ -274,7 +287,7 @@ func (list SFileList) Init() error {
 			}
 		}
 
-		list.Set("/static/"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
+		list.Set("/static/"+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -302,7 +315,12 @@ func (list SFileList) Add(path string, prefix string) error {
 		return err
 	}
 
-	list.Set("/static"+path, SFile{data, gzipData, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+	// Get a checksum for CSPs and cache busting
+	hasher := sha256.New()
+	hasher.Write(data)
+	checksum := []byte(hex.EncodeToString(hasher.Sum(nil)))
+
+	list.Set("/static"+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 	DebugLogf("Added the '%s' static file", path)
 	return nil
