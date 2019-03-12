@@ -177,7 +177,7 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.AgentViewCounter, err = counters.NewDefaultAgentViewCounter()
+	counters.AgentViewCounter, err = counters.NewDefaultAgentViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -519,13 +519,13 @@ func (adapter *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out st
 		return "", errors.New("No columns found for ComplexSelect")
 	}
 
-	var querystr = "SELECT "
+	var querystr = "SELECT " + adapter.buildJoinColumns(preBuilder.columns)
 
 	// Slice up the user friendly strings into something easier to process
-	for _, column := range strings.Split(strings.TrimSpace(preBuilder.columns), ",") {
+	/*for _, column := range strings.Split(strings.TrimSpace(preBuilder.columns), ",") {
 		querystr += "`" + strings.TrimSpace(column) + "`,"
 	}
-	querystr = querystr[0 : len(querystr)-1]
+	querystr = querystr[0 : len(querystr)-1]*/
 
 	var whereStr string
 	// TODO: Let callers have a Where() and a InQ()

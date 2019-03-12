@@ -15,6 +15,11 @@ func (build *prebuilder) Select(nlist ...string) *selectPrebuilder {
 	return &selectPrebuilder{name, "", "", "", "", "", nil, nil, "", build.adapter}
 }
 
+func (build *prebuilder) Count(nlist ...string) *selectPrebuilder {
+	name := optString(nlist, "")
+	return &selectPrebuilder{name, "", "COUNT(*)", "", "", "", nil, nil, "", build.adapter}
+}
+
 func (build *prebuilder) Insert(nlist ...string) *insertPrebuilder {
 	name := optString(nlist, "")
 	return &insertPrebuilder{name, "", "", "", build.adapter}
@@ -136,35 +141,50 @@ func (selectItem *selectPrebuilder) Where(where string) *selectPrebuilder {
 	return selectItem
 }
 
-func (selectItem *selectPrebuilder) InQ(subBuilder *selectPrebuilder) *selectPrebuilder {
-	selectItem.inChain = subBuilder
-	return selectItem
+func (b *selectPrebuilder) InQ(subBuilder *selectPrebuilder) *selectPrebuilder {
+	b.inChain = subBuilder
+	return b
 }
 
-func (selectItem *selectPrebuilder) Orderby(orderby string) *selectPrebuilder {
-	selectItem.orderby = orderby
-	return selectItem
+func (b *selectPrebuilder) Orderby(orderby string) *selectPrebuilder {
+	b.orderby = orderby
+	return b
 }
 
-func (selectItem *selectPrebuilder) Limit(limit string) *selectPrebuilder {
-	selectItem.limit = limit
-	return selectItem
+func (b *selectPrebuilder) Limit(limit string) *selectPrebuilder {
+	b.limit = limit
+	return b
 }
 
 // TODO: We probably want to avoid the double allocation of two builders somehow
-func (selectItem *selectPrebuilder) FromAcc(accBuilder *AccSelectBuilder) *selectPrebuilder {
-	selectItem.table = accBuilder.table
-	selectItem.columns = accBuilder.columns
-	selectItem.where = accBuilder.where
-	selectItem.orderby = accBuilder.orderby
-	selectItem.limit = accBuilder.limit
-
-	selectItem.dateCutoff = accBuilder.dateCutoff
-	if accBuilder.inChain != nil {
-		selectItem.inChain = &selectPrebuilder{"", accBuilder.inChain.table, accBuilder.inChain.columns, accBuilder.inChain.where, accBuilder.inChain.orderby, accBuilder.inChain.limit, accBuilder.inChain.dateCutoff, nil, "", selectItem.build}
-		selectItem.inColumn = accBuilder.inColumn
+func (b *selectPrebuilder) FromAcc(acc *AccSelectBuilder) *selectPrebuilder {
+	b.table = acc.table
+	if acc.columns != "" {
+		b.columns = acc.columns
 	}
-	return selectItem
+	b.where = acc.where
+	b.orderby = acc.orderby
+	b.limit = acc.limit
+
+	b.dateCutoff = acc.dateCutoff
+	if acc.inChain != nil {
+		b.inChain = &selectPrebuilder{"", acc.inChain.table, acc.inChain.columns, acc.inChain.where, acc.inChain.orderby, acc.inChain.limit, acc.inChain.dateCutoff, nil, "", b.build}
+		b.inColumn = acc.inColumn
+	}
+	return b
+}
+
+func (b *selectPrebuilder) FromCountAcc(acc *accCountBuilder) *selectPrebuilder {
+	b.table = acc.table
+	b.where = acc.where
+	b.limit = acc.limit
+
+	b.dateCutoff = acc.dateCutoff
+	if acc.inChain != nil {
+		b.inChain = &selectPrebuilder{"", acc.inChain.table, acc.inChain.columns, acc.inChain.where, acc.inChain.orderby, acc.inChain.limit, acc.inChain.dateCutoff, nil, "", b.build}
+		b.inColumn = acc.inColumn
+	}
+	return b
 }
 
 // TODO: Add support for dateCutoff
@@ -209,7 +229,7 @@ func (insert *insertPrebuilder) Parse() {
 	insert.build.SimpleInsert(insert.name, insert.table, insert.columns, insert.fields)
 }
 
-type countPrebuilder struct {
+/*type countPrebuilder struct {
 	name  string
 	table string
 	where string
@@ -242,7 +262,7 @@ func (count *countPrebuilder) Text() (string, error) {
 
 func (count *countPrebuilder) Parse() {
 	count.build.SimpleCount(count.name, count.table, count.where, count.limit)
-}
+}*/
 
 func optString(nlist []string, defaultStr string) string {
 	if len(nlist) == 0 {

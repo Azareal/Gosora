@@ -14,8 +14,7 @@ type DefaultAgentViewCounter struct {
 	insert       *sql.Stmt
 }
 
-func NewDefaultAgentViewCounter() (*DefaultAgentViewCounter, error) {
-	acc := qgen.NewAcc()
+func NewDefaultAgentViewCounter(acc *qgen.Accumulator) (*DefaultAgentViewCounter, error) {
 	var agentBuckets = make([]*RWMutexCounterBucket, len(agentMapEnum))
 	for bucketID, _ := range agentBuckets {
 		agentBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}

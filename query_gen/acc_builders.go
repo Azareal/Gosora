@@ -285,35 +285,49 @@ func (builder *accInsertBuilder) Run(args ...interface{}) (int, error) {
 }
 
 type accCountBuilder struct {
-	table string
-	where string
-	limit string
+	table      string
+	where      string
+	limit      string
+	dateCutoff *dateCutoff // We might want to do this in a slightly less hacky way
+	inChain    *AccSelectBuilder
+	inColumn   string
 
 	build *Accumulator
 }
 
-func (count *accCountBuilder) Where(where string) *accCountBuilder {
-	if count.where != "" {
-		count.where += " AND "
+func (b *accCountBuilder) Where(where string) *accCountBuilder {
+	if b.where != "" {
+		b.where += " AND "
 	}
-	count.where += where
-	return count
+	b.where += where
+	return b
 }
 
-func (count *accCountBuilder) Limit(limit string) *accCountBuilder {
-	count.limit = limit
-	return count
+func (b *accCountBuilder) Limit(limit string) *accCountBuilder {
+	b.limit = limit
+	return b
 }
 
-// TODO: Add QueryRow for this and use it in statistics.go
-func (count *accCountBuilder) Prepare() *sql.Stmt {
-	return count.build.SimpleCount(count.table, count.where, count.limit)
+func (b *accCountBuilder) DateCutoff(column string, quantity int, unit string) *accCountBuilder {
+	b.dateCutoff = &dateCutoff{column, quantity, unit}
+	return b
 }
 
-func (count *accCountBuilder) Total() (total int, err error) {
-	stmt := count.Prepare()
+// TODO: Fix this nasty hack
+func (b *accCountBuilder) Prepare() *sql.Stmt {
+	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
+	if b.dateCutoff != nil || b.inChain != nil {
+		selBuilder := b.build.GetAdapter().Builder().Count().FromCountAcc(b)
+		selBuilder.columns = "COUNT(*)"
+		return b.build.prepare(b.build.GetAdapter().ComplexSelect(selBuilder))
+	}
+	return b.build.SimpleCount(b.table, b.where, b.limit)
+}
+
+func (b *accCountBuilder) Total() (total int, err error) {
+	stmt := b.Prepare()
 	if stmt == nil {
-		return 0, count.build.FirstError()
+		return 0, b.build.FirstError()
 	}
 	err = stmt.QueryRow().Scan(&total)
 	return total, err

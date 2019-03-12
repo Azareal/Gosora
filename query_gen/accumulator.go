@@ -240,5 +240,5 @@ func (build *Accumulator) Insert(table string) *accInsertBuilder {
 }
 
 func (build *Accumulator) Count(table string) *accCountBuilder {
-	return &accCountBuilder{table, "", "", build}
+	return &accCountBuilder{table, "", "", nil, nil, "", build}
 }

@@ -806,7 +806,7 @@ func AccountPasswordResetSubmit(w http.ResponseWriter, r *http.Request, user com
 		return common.InternalError(err, w, r)
 	}
 
-	// TODO: Move this query somewhere else
+	// TODO: Move these queries somewhere else
 	var disc string
 	err = qgen.NewAcc().Select("password_resets").Columns("createdAt").DateCutoff("createdAt", 1, "hour").QueryRow().Scan(&disc)
 	if err != nil && err != sql.ErrNoRows {
@@ -814,6 +814,22 @@ func AccountPasswordResetSubmit(w http.ResponseWriter, r *http.Request, user com
 	}
 	if err == nil {
 		return common.LocalError("You can only send a password reset email for a user once an hour", w, r, user)
+	}
+
+	count, err := qgen.NewAcc().Count("password_resets").DateCutoff("createdAt", 6, "hour").Total()
+	if err != nil && err != sql.ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	if count >= 3 {
+		return common.LocalError("You can only send a password reset email for a user three times every six hours", w, r, user)
+	}
+
+	count, err = qgen.NewAcc().Count("password_resets").DateCutoff("createdAt", 12, "hour").Total()
+	if err != nil && err != sql.ErrNoRows {
+		return common.InternalError(err, w, r)
+	}
+	if count >= 4 {
+		return common.LocalError("You can only send a password reset email for a user four times every twelve hours", w, r, user)
 	}
 
 	err = common.PasswordResetter.Create(tuser.Email, tuser.ID, token)
