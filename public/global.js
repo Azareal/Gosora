@@ -8,6 +8,7 @@ var conn = false;
 var selectedTopics = [];
 var attachItemCallback = function(){}
 var baseTitle = document.title;
+var wsBackoff = false;
 
 // Topic move
 var forumToMoveTo = 0;
@@ -212,13 +213,16 @@ function runWebSockets() {
 	conn.onclose = () => {
 		conn = false;
 		console.log("The WebSockets connection was closed");
+		let backoff = 1000;
+		if(wsBackoff) backoff = 8000;
+		wsBackoff = true;
 		setTimeout(() => {
 			var alertMenuList = document.getElementsByClassName("menu_alerts");
 			for(var i = 0; i < alertMenuList.length; i++) {
 				loadAlerts(alertMenuList[i]);
 			}
 			runWebSockets();
-		}, 60 * 1000);
+		}, 60 * backoff);
 	}
 
 	conn.onmessage = (event) => {
