@@ -214,14 +214,14 @@ function fetchPhrases(plist) {
 	let toLoad = 2;
 	// TODO: Shunt this into loggedIn if there aren't any search and filter widgets?
 	notifyOnScriptW("template_topics_topic", () => {
-		if(!Template_topics_topic) throw("template function not found");
 		toLoad--;
 		if(toLoad===0) initPhrases();
+		if(!Template_topics_topic) throw("template function not found");
 	});
 	notifyOnScriptW("template_paginator", () => {
-		if(!Template_paginator) throw("template function not found");
 		toLoad--;
 		if(toLoad===0) initPhrases();
+		if(!Template_paginator) throw("template function not found");
 	});
 
 	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;

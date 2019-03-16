@@ -470,13 +470,25 @@ func main() {
 func startServer() {
 	// We might not need the timeouts, if we're behind a reverse-proxy like Nginx
 	var newServer = func(addr string, handler http.Handler) *http.Server {
+		rtime := common.Config.ReadTimeout
+		if rtime == 0 {
+			rtime = 5
+		}
+		wtime := common.Config.WriteTimeout
+		if wtime == 0 {
+			wtime = 10
+		}
+		itime := common.Config.IdleTimeout
+		if itime == 0 {
+			itime = 120
+		}
 		return &http.Server{
 			Addr:    addr,
 			Handler: handler,
 
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  120 * time.Second,
+			ReadTimeout:  time.Duration(rtime) * time.Second,
+			WriteTimeout: time.Duration(wtime) * time.Second,
+			IdleTimeout:  time.Duration(itime) * time.Second,
 
 			TLSConfig: &tls.Config{
 				PreferServerCipherSuites: true,

@@ -5,6 +5,7 @@
 // TODO: Fully localise this
 // TODO: Load rawLabels and seriesData dynamically rather than potentially fiddling with nonces for the CSP?
 function buildStatsChart(rawLabels, seriesData, timeRange, legendNames) {
+	console.log("buildStatsChart");
 	let labels = [];
 	let aphrases = phraseBox["analytics"];
 	if(timeRange=="one-year") {

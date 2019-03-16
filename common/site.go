@@ -91,6 +91,10 @@ type config struct {
 	ItemsPerPage        int    // ? - Move this into the settings table?
 	MaxTopicTitleLength int
 	MaxUsernameLength   int
+
+	ReadTimeout  int
+	WriteTimeout int
+	IdleTimeout  int
 }
 
 type devConfig struct {
@@ -99,7 +103,9 @@ type devConfig struct {
 	TemplateDebug bool
 	Profiling     bool
 	TestDB        bool
-	NoFsnotify    bool // Super Experimental!
+
+	NoFsnotify bool // Super Experimental!
+	FullReqLog bool
 }
 
 // configHolder is purely for having a big struct to unmarshal data into

@@ -709,6 +709,9 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		counters.AgentViewCounter.Bump(27)
 		return
 	}
+	if common.Dev.FullReqLog {
+		r.DumpRequest(req,"")
+	}
 
 	// TODO: Cover more suspicious strings and at a lower layer than this
 	for _, char := range req.URL.Path {
