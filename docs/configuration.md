@@ -84,6 +84,14 @@ MaxTopicTitleLength - The maximum length that a topic can be. Please note that t
 
 MaxUsernameLength - The maximum length that a user's name can be. Please note that this measures the number of bytes and may differ from language to language with it being equal to a letter in English and being two bytes in others.
 
+ReadTimeout - The number of seconds that we are allowed to take to fully read a request. Defaults to 5.
+
+WriteTimeout - The number of seconds that a route is allowed to run for before the request is automatically terminated. Defaults to 10.
+
+IdleTimeout - The number of seconds that a Keep-Alive connection will be kept open before being closed. You might to tweak this, if you use Cloudflare or similar. Defaults to 120.
+
+Related: https://support.cloudflare.com/hc/en-us/articles/212794707-General-Best-Practices-for-Load-Balancing-at-your-origin-with-Cloudflare
+
 
 # Database
 
@@ -117,6 +125,6 @@ DebugMode - Outputs a basic level of information about what Gosora is doing to h
 
 SuperDebug - Outputs a detailed level of information about what Gosora is doing to help ease debugging. Warning: This may cause severe slowdowns in Gosora.
 
-TemplateDebug - Output a detailed level of information about what Gosora is doing during the template transpilation step. Warning: Huge amounts of information will be dumped into the logs.
+TemplateDebug - Output a detailed level of information about what Gosora is doing during the template transpilation step. Warning: Large amounts of information will be dumped into the logs.
 
 NoFsnotify - Whether you want to disable the file watcher which automatically reloads assets whenever they change.

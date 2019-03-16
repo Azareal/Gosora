@@ -473,14 +473,20 @@ func startServer() {
 		rtime := common.Config.ReadTimeout
 		if rtime == 0 {
 			rtime = 5
+		} else if rtime == -1 {
+			rtime = 0
 		}
 		wtime := common.Config.WriteTimeout
 		if wtime == 0 {
 			wtime = 10
+		} else if wtime == -1 {
+			wtime = 0
 		}
 		itime := common.Config.IdleTimeout
 		if itime == 0 {
 			itime = 120
+		} else if itime == -1 {
+			itime = 0
 		}
 		return &http.Server{
 			Addr:    addr,

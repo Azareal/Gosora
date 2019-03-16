@@ -8,7 +8,7 @@ var conn = false;
 var selectedTopics = [];
 var attachItemCallback = function(){}
 var baseTitle = document.title;
-var wsBackoff = false;
+var wsBackoff = 0;
 
 // Topic move
 var forumToMoveTo = 0;
@@ -214,8 +214,11 @@ function runWebSockets() {
 		conn = false;
 		console.log("The WebSockets connection was closed");
 		let backoff = 1000;
-		if(wsBackoff) backoff = 8000;
-		wsBackoff = true;
+		if(wsBackoff < 0) wsBackoff = 0;
+		else if(wsBackoff > 12) backoff = 13000;
+		else if(wsBackoff > 5) backoff = 7000;
+		wsBackoff++;
+
 		setTimeout(() => {
 			var alertMenuList = document.getElementsByClassName("menu_alerts");
 			for(var i = 0; i < alertMenuList.length; i++) {
@@ -223,6 +226,11 @@ function runWebSockets() {
 			}
 			runWebSockets();
 		}, 60 * backoff);
+
+		if(wsBackoff > 0) {
+			if(wsBackoff <= 5) setTimeout(() => wsBackoff--, 60 * 4000);
+			else if(wsBackoff <= 12) setTimeout(() => wsBackoff--, 60 * 20000);
+		}
 	}
 
 	conn.onmessage = (event) => {
