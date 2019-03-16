@@ -81,23 +81,30 @@ function asyncGetScript(source) {
 }
 
 function notifyOnScript(source) {
+	source = "/static/"+source;
 	return new Promise((resolve, reject) => {
+		let ss = source.replace("/static/","");
+		try {
+			let ssp = ss.charAt(0).toUpperCase() + ss.slice(1)
+			console.log("ssp:",ssp)
+			if(window[ssp]) {
+				resolve();
+				return;
+			}
+		} catch(e) {}
+		
+		console.log("source:",source)
 		let script = document.querySelectorAll('[src^="'+source+'"]')[0];
+		console.log("script:",script);
 		if(script===undefined) {
 			reject("no script found");
 			return;
 		}
-		if(!script.readyState) {
-			resolve();
-			return;
-		}
 
-		const onloadHandler = (e, isAbort) => {
-			if (isAbort || !script.readyState || /loaded|complete/.test(script.readyState)) {
-				script.onload = null;
-				script.onreadystatechange = null;
-				isAbort ? reject(e) : resolve();
-			}
+		const onloadHandler = (e) => {
+			script.onload = null;
+			script.onreadystatechange = null;
+			resolve();
 		}
 
 		script.onerror = (e) => {
@@ -105,7 +112,6 @@ function notifyOnScript(source) {
 		};
 		script.onload = onloadHandler;
 		script.onreadystatechange = onloadHandler;
-		script.src = source;
 	});
 }
 
@@ -119,7 +125,7 @@ function notifyOnScriptW(name, complete, success) {
 			console.log("Unable to get script name '"+name+"'");
 			console.log("e: ", e);
 			console.trace();
-			complete();
+			complete(e);
 		});
 }
 
@@ -168,6 +174,7 @@ function RelativeTime(date) {
 
 function initPhrases() {
 	console.log("in initPhrases")
+	console.log("tmlInits:",tmplInits)
 	fetchPhrases("status,topic_list,alerts,paginator,analytics")
 }
 
@@ -206,11 +213,13 @@ function fetchPhrases(plist) {
 	runInitHook("pre_iife");
 	let toLoad = 2;
 	// TODO: Shunt this into loggedIn if there aren't any search and filter widgets?
-	notifyOnScriptW("/static/template_topics_topic", () => {
+	notifyOnScriptW("template_topics_topic", () => {
+		if(!Template_topics_topic) throw("template function not found");
 		toLoad--;
 		if(toLoad===0) initPhrases();
 	});
-	notifyOnScriptW("/static/template_paginator", () => {
+	notifyOnScriptW("template_paginator", () => {
+		if(!Template_paginator) throw("template function not found");
 		toLoad--;
 		if(toLoad===0) initPhrases();
 	});

@@ -7,6 +7,7 @@ var moreTopicCount = 0;
 var conn = false;
 var selectedTopics = [];
 var attachItemCallback = function(){}
+var baseTitle = document.title;
 
 // Topic move
 var forumToMoveTo = 0;
@@ -17,9 +18,7 @@ function ajaxError(xhr,status,errstr) {
 	console.log("xhr", xhr);
 	console.log("status", status);
 	console.log("errstr", errstr);
-	if(status=="parsererror") {
-		console.log("The server didn't respond with a valid JSON response");
-	}
+	if(status=="parsererror") console.log("The server didn't respond with a valid JSON response");
 	console.trace();
 }
 
@@ -30,19 +29,28 @@ function postLink(event) {
 }
 
 function bindToAlerts() {
+	console.log("bindToAlerts");
 	$(".alertItem.withAvatar a").unbind("click");
 	$(".alertItem.withAvatar a").click(function(event) {
 		event.stopPropagation();
-		$.ajax({ url: "/api/?action=set&module=dismiss-alert", type: "POST", dataType: "json", error: ajaxError, data: { asid: $(this).attr("data-asid") } });
+		event.preventDefault();
+		$.ajax({
+			url: "/api/?action=set&module=dismiss-alert",
+			type: "POST",
+			dataType: "json",
+			data: { asid: $(this).attr("data-asid") },
+			error: ajaxError,
+			success: () => {
+				window.location.href = this.getAttribute("href");
+			}
+		});
 	});
 }
 
 function addAlert(msg, notice = false) {
 	var mmsg = msg.msg;
 	if("sub" in msg) {
-		for(var i = 0; i < msg.sub.length; i++) {
-			mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
-		}
+		for(var i = 0; i < msg.sub.length; i++) mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
 	}
 
 	let aItem = Template_alert({
@@ -51,7 +59,10 @@ function addAlert(msg, notice = false) {
 		Avatar: msg.avatar || "",
 		Message: mmsg
 	})
-	alertMapping[msg.asid] = aItem;
+	//alertMapping[msg.asid] = aItem;
+	let div = document.createElement('div');
+	div.innerHTML = aItem.trim();
+	alertMapping[msg.asid] = div.firstChild;
 	alertList.push(msg.asid);
 
 	if(notice) {
@@ -74,21 +85,31 @@ function updateAlertList(menuAlerts) {
 	let alertCounterNode = menuAlerts.getElementsByClassName("alert_counter")[0];
 	alertCounterNode.textContent = "0";
 	
-	let outList = "";
+	alertListNode.innerHTML = "";
+	let any = false;
+	/*let outList = "";
 	let j = 0;
 	for(var i = 0; i < alertList.length && j < 8; i++) {
 		outList += alertMapping[alertList[i]];
 		j++;
+	}*/
+	let j = 0;
+	for(var i = 0; i < alertList.length && j < 8; i++) {
+		any = true;
+		alertListNode.appendChild(alertMapping[alertList[i]]);
+		//outList += alertMapping[alertList[i]];
+		j++;
 	}
-
-	if(outList == "") outList = "<div class='alertItem'>"+phraseBox["alerts"]["alerts.no_alerts"]+"</div>";
-	alertListNode.innerHTML = outList;
+	if(!any) alertListNode.innerHTML = "<div class='alertItem'>"+phraseBox["alerts"]["alerts.no_alerts"]+"</div>";
 
 	if(alertCount != 0) {
 		alertCounterNode.textContent = alertCount;
 		menuAlerts.classList.add("has_alerts");
+		let nTitle = "("+alertCount+") "+baseTitle;
+		if(document.title!=nTitle) document.title = nTitle;
 	} else {
 		menuAlerts.classList.remove("has_alerts");
+		if(document.title!=baseTitle) document.title = baseTitle;
 	}
 
 	bindToAlerts();
@@ -155,14 +176,20 @@ function SplitN(data,ch,n) {
 }
 
 function wsAlertEvent(data) {
+	console.log("wsAlertEvent:",data)
 	addAlert(data, true);
+	alertCount++;
 
-	var alist = "";
-	for (var i = 0; i < alertList.length; i++) alist += alertMapping[alertList[i]];
+	let aTmp = alertList;
+	alertList = [alertList[alertList.length-1]];
+	aTmp = aTmp.slice(0,-1);
+	for(let i = 0; i < aTmp.length; i++) alertList.push(aTmp[i]);
+	//var alist = "";
+	//for (var i = 0; i < alertList.length; i++) alist += alertMapping[alertList[i]];
 	// TODO: Add support for other alert feeds like PM Alerts
 	var generalAlerts = document.getElementById("general_alerts");
 	// TODO: Make sure we update alertCount here
-	updateAlertList(generalAlerts, alist);
+	updateAlertList(generalAlerts/*, alist*/);
 }
 
 function runWebSockets() {
@@ -179,9 +206,7 @@ function runWebSockets() {
 		console.log("The WebSockets connection was opened");
 		conn.send("page " + document.location.pathname + '\r');
 		// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
-		if(me.User.ID > 0) {
-			Notification.requestPermission();
-		}
+		if(me.User.ID > 0) Notification.requestPermission();
 	}
 
 	conn.onclose = () => {
@@ -291,8 +316,13 @@ function runWebSockets() {
 
 (() => {
 	addInitHook("pre_init", () => {
+		console.log("before notify on alert")
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
-		notifyOnScriptW("/static/template_alert", () => {}, () => {
+		notifyOnScriptW("template_alert", (e) => {
+			if(e!=undefined) console.log("failed alert? why?", e)
+		}, () => {
+			console.log("ha")
+			if(!Template_alert) throw("template function not found");
 			addInitHook("after_phrases", () => {
 				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
 				$(document).ready(() => {
@@ -438,10 +468,13 @@ function mainInit(){
 
 			// TODO: Try to de-duplicate some of these fetch calls
 			fetch(url+q+"&js=1", {credentials: "same-origin"})
-				.then((resp) => resp.json())
-				.then((data) => {
+				.then((resp) => {
+					if(!resp.ok) throw(url+q+"&js=1 failed to load");
+					return resp.json();
+				}).then((data) => {
 					if(!"Topics" in data) throw("no Topics in data");
 					let topics = data["Topics"];
+					console.log("ajax navigated to different page");
 
 					// TODO: Fix the data race where the function hasn't been loaded yet
 					let out = "";
@@ -470,10 +503,14 @@ function mainInit(){
 		let url = "//"+window.location.host+"/topics/?fids="+fid;
 
 		fetch(url+"&js=1", {credentials: "same-origin"})
-		.then((resp) => resp.json())
-		.then((data) => {
+		.then((resp) => {
+			if(!resp.ok) throw(url+"&js=1 failed to load");
+			return resp.json();
+		}).then((data) => {
+			console.log("data:",data);
 			if(!"Topics" in data) throw("no Topics in data");
 			let topics = data["Topics"];
+			console.log("ajax navigated to "+that.innerText);
 			
 			// TODO: Fix the data race where the function hasn't been loaded yet
 			let out = "";
@@ -481,6 +518,9 @@ function mainInit(){
 			$(".topic_list").html(out);
 			//$(".topic_list").addClass("single_forum");
 
+			baseTitle = that.innerText;
+			if(alertCount > 0) document.title = "("+alertCount+") "+baseTitle;
+			else document.title = baseTitle;
 			let obj = {Title: document.title, Url: url};
 			history.pushState(obj, obj.Title, obj.Url);
 			rebuildPaginator(data.LastPage)
@@ -515,18 +555,23 @@ function mainInit(){
 
 		// TODO: Try to de-duplicate some of these fetch calls
 		fetch(url+q+"&js=1", {credentials: "same-origin"})
-			.then((resp) => resp.json())
-			.then((data) => {
+			.then((resp) => {
+				if(!resp.ok) throw(url+q+"&js=1 failed to load");
+				return resp.json();
+			}).then((data) => {
 				if(!"Topics" in data) throw("no Topics in data");
 				let topics = data["Topics"];
+				console.log("ajax navigated to search page");
 
 				// TODO: Fix the data race where the function hasn't been loaded yet
 				let out = "";
 				for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
 				$(".topic_list").html(out);
 
-				document.title = phraseBox["topic_list"]["topic_list.search_head"];
+				baseTitle = phraseBox["topic_list"]["topic_list.search_head"];
 				$(".topic_list_title h1").text(phraseBox["topic_list"]["topic_list.search_head"]);
+				if(alertCount > 0) document.title = "("+alertCount+") "+baseTitle;
+				else document.title = baseTitle;
 				let obj = {Title: document.title, Url: url+q};
 				history.pushState(obj, obj.Title, obj.Url);
 				rebuildPaginator(data.LastPage);

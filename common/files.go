@@ -224,7 +224,7 @@ func (list SFileList) JSTmplInit() error {
 
 		for name, _ := range Themes {
 			if strings.HasSuffix(shortName, "_"+name) {
-				data = append(data, "\nlet Template_"+strings.TrimSuffix(shortName, "_"+name)+" = Template_"+shortName+";"...)
+				data = append(data, "\nvar Template_"+strings.TrimSuffix(shortName, "_"+name)+" = Template_"+shortName+";"...)
 				break
 			}
 		}

@@ -90,7 +90,7 @@
 		"id_must_be_integer": "The ID must be an integer.",
 		"url_id_must_be_integer": "The ID in the URL needs to be a valid integer.",
 
-		"register_might_be_machine":"You might be a machine.",
+		"register_might_be_machine":"Our algorithms have detected that you may be a machine. If not, please try to avoid acting so quickly.",
 		"register_need_username":"You didn't put in a username.",
 		"register_need_email":"You didn't put in an email.",
 		"register_first_word_numeric":"The first word of your name must not be purely numeric",
@@ -709,6 +709,7 @@
 		"option_no":"No",
 
 		"panel_menu_head":"Control Panel",
+		"panel_menu_aria":"The control panel menu",
 		"panel_menu_users":"Users",
 		"panel_menu_groups":"Groups",
 		"panel_menu_forums":"Forums",

@@ -63,6 +63,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		if common.EnableWebsockets && count > 0 {
 			_ = common.WsHub.PushMessage(user.ID, `{"event":"dismiss-alert","asid":`+strconv.Itoa(asid)+`}`)
 		}
+		w.Write(successJSONBytes)
 	// TODO: Split this into it's own function
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {

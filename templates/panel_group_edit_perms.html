@@ -1,16 +1,6 @@
 {{template "header.html" . }}
 <div class="colstack panel_stack">
-<nav class="colstack_left" aria-label="The control panel menu">
-	<div class="colstack_item colstack_head">
-		<div class="rowitem"><a href="/panel/groups/edit/{{.ID}}">{{lang "panel_group_menu_head"}}</a></div>
-	</div>
-	<div class="colstack_item rowmenu">
-		<div class="rowitem passive"><a href="/panel/groups/edit/{{.ID}}">{{lang "panel_group_menu_general"}}</a></div>
-		<div class="rowitem passive"><a>{{lang "panel_group_menu_promotions"}}</a></div>
-		<div class="rowitem passive"><a href="/panel/groups/edit/perms/{{.ID}}">{{lang "panel_group_menu_permissions"}}</a></div>
-	</div>
-{{template "panel_inner_menu.html" . }}
-</nav>
+{{template "panel_group_menu.html" . }}
 <main class="colstack_right">
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{.Name}}{{lang "panel_group_head_suffix"}}</h1></div>

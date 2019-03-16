@@ -778,8 +778,7 @@ func AccountPasswordReset(w http.ResponseWriter, r *http.Request, user common.Us
 		header.AddNotice("password_reset_email_sent")
 	}
 	header.Title = phrases.GetTitlePhrase("password_reset")
-	pi := common.Page{header, tList, nil}
-	return renderTemplate("password_reset", w, r, header, pi)
+	return renderTemplate("password_reset", w, r, header, common.Page{header, tList, nil})
 }
 
 // TODO: Ratelimit this
