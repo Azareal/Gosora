@@ -109,8 +109,9 @@ func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Head
 		CurrentUser:     user,
 		NoticeList:      []string{"test"},
 		Stylesheets:     []string{"panel.css"},
-		Scripts:         []string{"whatever.js"},
-		PreScriptsAsync: []string{"whatever.js"},
+		Scripts:         []HResource{HResource{"whatever.js", "d"}},
+		PreScriptsAsync: []HResource{HResource{"whatever.js", "d"}},
+		ScriptsAsync:    []HResource{HResource{"whatever.js", "d"}},
 		Widgets: PageWidgets{
 			LeftSidebar: template.HTML("lalala"),
 		},

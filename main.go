@@ -28,7 +28,6 @@ import (
 	"github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
-	"github.com/Azareal/Gosora/routes"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 )
@@ -181,15 +180,15 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.OSViewCounter, err = counters.NewDefaultOSViewCounter()
+	counters.OSViewCounter, err = counters.NewDefaultOSViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.LangViewCounter, err = counters.NewDefaultLangViewCounter()
+	counters.LangViewCounter, err = counters.NewDefaultLangViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.RouteViewCounter, err = counters.NewDefaultRouteViewCounter()
+	counters.RouteViewCounter, err = counters.NewDefaultRouteViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -472,7 +471,7 @@ func startServer() {
 	var newServer = func(addr string, handler http.Handler) *http.Server {
 		rtime := common.Config.ReadTimeout
 		if rtime == 0 {
-			rtime = 5
+			rtime = 8
 		} else if rtime == -1 {
 			rtime = 0
 		}
@@ -527,7 +526,7 @@ func startServer() {
 		// TODO: Redirect to port 443
 		go func() {
 			log.Print("Listening on port 80")
-			common.StoppedServer(newServer(":80", &routes.HTTPSRedirect{}).ListenAndServe())
+			common.StoppedServer(newServer(":80", &HTTPSRedirect{}).ListenAndServe())
 		}()
 	}
 	log.Printf("Listening on port %s", common.Site.Port)

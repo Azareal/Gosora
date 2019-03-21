@@ -96,12 +96,11 @@ var langCodes = []string{
 type DefaultLangViewCounter struct {
 	buckets        []*RWMutexCounterBucket //[OSID]count
 	codesToIndices map[string]int
-	insert         *sql.Stmt
+
+	insert *sql.Stmt
 }
 
-func NewDefaultLangViewCounter() (*DefaultLangViewCounter, error) {
-	acc := qgen.NewAcc()
-
+func NewDefaultLangViewCounter(acc *qgen.Accumulator) (*DefaultLangViewCounter, error) {
 	var langBuckets = make([]*RWMutexCounterBucket, len(langCodes))
 	for bucketID, _ := range langBuckets {
 		langBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}

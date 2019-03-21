@@ -708,6 +708,8 @@
 		"option_yes":"Yes",
 		"option_no":"No",
 
+		"panel_back_to_site":"Back to Site",
+		"panel_welcome":"Welcome ",
 		"panel_menu_head":"Control Panel",
 		"panel_menu_aria":"The control panel menu",
 		"panel_menu_users":"Users",

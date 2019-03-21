@@ -84,7 +84,7 @@ MaxTopicTitleLength - The maximum length that a topic can be. Please note that t
 
 MaxUsernameLength - The maximum length that a user's name can be. Please note that this measures the number of bytes and may differ from language to language with it being equal to a letter in English and being two bytes in others.
 
-ReadTimeout - The number of seconds that we are allowed to take to fully read a request. Defaults to 5.
+ReadTimeout - The number of seconds that we are allowed to take to fully read a request. Defaults to 8.
 
 WriteTimeout - The number of seconds that a route is allowed to run for before the request is automatically terminated. Defaults to 10.
 

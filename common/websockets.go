@@ -92,6 +92,12 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 					currentPage = string(msgblocks[1])
 					wsPageResponses(wsUser, conn, currentPage)
 				}
+			} else if bytes.HasPrefix(msg, []byte("resume ")) {
+				msgblocks := bytes.SplitN(msg, []byte(" "), 2)
+				if len(msgblocks) < 2 {
+					continue
+				}
+				//log.Print("resuming on " + string(msgblocks[1]))
 			}
 			/*if bytes.Equal(message,[]byte(`start-view`)) {
 			} else if bytes.Equal(message,[]byte(`end-view`)) {

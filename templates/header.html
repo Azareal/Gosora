@@ -6,13 +6,14 @@
 		{{range .Header.Stylesheets}}
 		<link href="/static/{{.}}" rel="stylesheet" type="text/css">{{end}}
 		{{range .Header.PreScriptsAsync}}
-		<script async type="text/javascript" src="/static/{{.}}"></script>{{end}}
+		<script async type="text/javascript" src="/static/{{.Name}}{{if .Hash}}?h={{.Hash}}{{end}}"></script>{{end}}
 		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}" />
 		<script type="text/javascript" src="/static/init.js"></script>
+		{{range .Header.ScriptsAsync}}
+		<script async type="text/javascript" src="/static/{{.Name}}{{if .Hash}}?h={{.Hash}}{{end}}"></script>{{end}}
 		<script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
 		{{range .Header.Scripts}}
-		<script type="text/javascript" src="/static/{{.}}"></script>{{end}}
-		<script type="text/javascript" src="/static/global.js"></script>
+		<script type="text/javascript" src="/static/{{.Name}}{{if .Hash}}?h={{.Hash}}{{end}}"></script>{{end}}
 		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
 		{{if .Header.MetaDesc}}<meta name="description" content="{{.Header.MetaDesc}}" />{{end}}
 		{{/** TODO: Have page / forum / topic level tags and descriptions below as-well **/}}

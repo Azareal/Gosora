@@ -164,6 +164,7 @@ var RouteMap = map[string]interface{}{
 	"routes.RobotsTxt": routes.RobotsTxt,
 	"routes.SitemapXml": routes.SitemapXml,
 	"routes.BadRoute": routes.BadRoute,
+	"routes.HTTPSRedirect": routes.HTTPSRedirect,
 }
 
 // ! NEVER RELY ON THESE REMAINING THE SAME BETWEEN COMMITS
@@ -309,6 +310,7 @@ var routeMapEnum = map[string]int{
 	"routes.RobotsTxt": 138,
 	"routes.SitemapXml": 139,
 	"routes.BadRoute": 140,
+	"routes.HTTPSRedirect": 141,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routes.Overview",
@@ -452,6 +454,7 @@ var reverseRouteMapEnum = map[int]string{
 	138: "routes.RobotsTxt",
 	139: "routes.SitemapXml",
 	140: "routes.BadRoute",
+	141: "routes.HTTPSRedirect",
 }
 var osMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -598,6 +601,17 @@ func (writ *WriterIntercept) WriteHeader(code int) {
 		writ.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
 	}
 	writ.ResponseWriter.WriteHeader(code)
+}
+
+// HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
+type HTTPSRedirect struct {
+}
+
+func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Connection", "close")
+	counters.RouteViewCounter.Bump(141)
+	dest := "https://" + req.Host + req.URL.String()
+	http.Redirect(w, req, dest, http.StatusTemporaryRedirect)
 }
 
 type GenRouter struct {

@@ -174,6 +174,7 @@ func main() {
 	mapIt("routes.RobotsTxt")
 	mapIt("routes.SitemapXml")
 	mapIt("routes.BadRoute")
+	mapIt("routes.HTTPSRedirect")
 	tmplVars.AllRouteNames = allRouteNames
 	tmplVars.AllRouteMap = allRouteMap
 
@@ -379,6 +380,17 @@ func (writ *WriterIntercept) WriteHeader(code int) {
 		writ.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
 	}
 	writ.ResponseWriter.WriteHeader(code)
+}
+
+// HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
+type HTTPSRedirect struct {
+}
+
+func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Connection", "close")
+	counters.RouteViewCounter.Bump({{ index .AllRouteMap "routes.HTTPSRedirect" }})
+	dest := "https://" + req.Host + req.URL.String()
+	http.Redirect(w, req, dest, http.StatusTemporaryRedirect)
 }
 
 type GenRouter struct {

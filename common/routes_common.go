@@ -131,7 +131,11 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 				if ext == "css" {
 					header.AddSheet(resource.Name)
 				} else if ext == "js" {
-					header.AddScript(resource.Name)
+					if resource.Async {
+						header.AddScriptAsync(resource.Name)
+					} else {
+						header.AddScript(resource.Name)
+					}
 				}
 			}
 		}
@@ -229,7 +233,11 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 				if ext == "css" {
 					header.AddSheet(resource.Name)
 				} else if ext == "js" {
-					header.AddScript(resource.Name)
+					if resource.Async {
+						header.AddScriptAsync(resource.Name)
+					} else {
+						header.AddScript(resource.Name)
+					}
 				}
 			}
 		}

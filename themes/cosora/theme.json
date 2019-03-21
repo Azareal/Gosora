@@ -29,7 +29,8 @@
 		},
 		{
 			"Name":"cosora/misc.js",
-			"Location":"global"
+			"Location":"global",
+			"Async":true
 		}
 	]
 }

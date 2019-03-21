@@ -12,8 +12,7 @@ type DefaultRouteViewCounter struct {
 	insert  *sql.Stmt
 }
 
-func NewDefaultRouteViewCounter() (*DefaultRouteViewCounter, error) {
-	acc := qgen.NewAcc()
+func NewDefaultRouteViewCounter(acc *qgen.Accumulator) (*DefaultRouteViewCounter, error) {
 	var routeBuckets = make([]*RWMutexCounterBucket, len(routeMapEnum))
 	for bucketID, _ := range routeBuckets {
 		routeBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}

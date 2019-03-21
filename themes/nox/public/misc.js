@@ -15,29 +15,24 @@
 	});
 	addHook("open_edit", () => $('.topic_block').addClass("edithead"));
 	addHook("close_edit", () => $('.topic_block').removeClass("edithead"));
-})();
 
-$(document).ready(() => {
-	$(".alerts").click((event) => {
-		event.stopPropagation();
-		var alerts = $(".menu_alerts")[0];
-		if($(alerts).hasClass("selectedAlert")) return;
-		if(!conn) loadAlerts(alerts);
-		alerts.className += " selectedAlert";
-		document.getElementById("back").className += " alertActive"
+	addInitHook("end_init", () => {
+		$(".alerts").click((event) => {
+			event.stopPropagation();
+			var alerts = $(".menu_alerts")[0];
+			if($(alerts).hasClass("selectedAlert")) return;
+			if(!conn) loadAlerts(alerts);
+			alerts.className += " selectedAlert";
+			document.getElementById("back").className += " alertActive"
+		});
+
+		// Move the alerts above the first header
+		let colSel = $(".colstack_right .colstack_head:first");
+		let colSelAlt = $(".colstack_right .colstack_item:first");
+		let colSelAltAlt = $(".colstack_right .coldyn_block:first");
+		if(colSel.length > 0) $('.alert').insertBefore(colSel);
+		else if (colSelAlt.length > 0) $('.alert').insertBefore(colSelAlt);
+		else if (colSelAltAlt.length > 0) $('.alert').insertBefore(colSelAltAlt);
+		else $('.alert').insertAfter(".rowhead:first");
 	});
-
-	// Move the alerts above the first header
-	let colSel = $(".colstack_right .colstack_head:first");
-	let colSelAlt = $(".colstack_right .colstack_item:first");
-	let colSelAltAlt = $(".colstack_right .coldyn_block:first");
-	if(colSel.length > 0) {
-		$('.alert').insertBefore(colSel);
-	} else if (colSelAlt.length > 0) {
-		$('.alert').insertBefore(colSelAlt);
-	} else if (colSelAltAlt.length > 0) {
-		$('.alert').insertBefore(colSelAltAlt);
-	} else {
-		$('.alert').insertAfter(".rowhead:first");
-	}
-});
+})();

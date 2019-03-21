@@ -10,14 +10,20 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
+type HResource struct {
+	Name string
+	Hash string
+}
+
 // TODO: Allow resources in spots other than /static/ and possibly even external domains (e.g. CDNs)
 // TODO: Preload Trumboyg on Cosora on the forum list
 type Header struct {
 	Title string
 	//Title      []byte // Experimenting with []byte for increased efficiency, let's avoid converting too many things to []byte, as it involves a lot of extra boilerplate
 	NoticeList      []string
-	Scripts         []string
-	PreScriptsAsync []string
+	Scripts         []HResource
+	PreScriptsAsync []HResource
+	ScriptsAsync    []HResource
 	//Preload []string
 	Stylesheets []string
 	Widgets     PageWidgets
@@ -44,11 +50,41 @@ type Header struct {
 }
 
 func (header *Header) AddScript(name string) {
-	header.Scripts = append(header.Scripts, name)
+	fname := "/static/" + name
+	var hash string
+	if fname[0] == '/' && fname[1] != '/' {
+		file, ok := StaticFiles.Get(fname)
+		if ok {
+			hash = file.Sha256
+		}
+	}
+	//log.Print("name:", name)
+	//log.Print("hash:", hash)
+	header.Scripts = append(header.Scripts, HResource{name, hash})
 }
 
 func (header *Header) AddPreScriptAsync(name string) {
-	header.PreScriptsAsync = append(header.PreScriptsAsync, name)
+	fname := "/static/" + name
+	var hash string
+	if fname[0] == '/' && fname[1] != '/' {
+		file, ok := StaticFiles.Get(fname)
+		if ok {
+			hash = file.Sha256
+		}
+	}
+	header.PreScriptsAsync = append(header.PreScriptsAsync, HResource{name, hash})
+}
+
+func (header *Header) AddScriptAsync(name string) {
+	fname := "/static/" + name
+	var hash string
+	if fname[0] == '/' && fname[1] != '/' {
+		file, ok := StaticFiles.Get(fname)
+		if ok {
+			hash = file.Sha256
+		}
+	}
+	header.ScriptsAsync = append(header.ScriptsAsync, HResource{name, hash})
 }
 
 /*func (header *Header) Preload(name string) {

@@ -2,6 +2,7 @@
 <div class="colstack panel_stack">
 {{template "panel_menu.html" . }}
 	<main id="panel_analytics_right" class="colstack_right">
+{{template "panel_before_head.html" . }}
 		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/route/{{.Route}}" method="get">
 			<div class="colstack_item colstack_head">
 				<div class="rowitem">

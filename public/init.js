@@ -4,7 +4,7 @@ var me = {};
 var phraseBox = {};
 if(tmplInits===undefined) var tmplInits = {};
 var tmplPhrases = []; // [key] array of phrases indexed by order of use
-var hooks = {
+var hooks = { // Shorten this list by binding the hooks just in time?
 	"pre_iffe": [],
 	"pre_init": [],
 	"start_init": [],
@@ -15,6 +15,7 @@ var hooks = {
 	"open_edit":[],
 	"close_edit":[],
 	"edit_item_pre_bind":[],
+	"analytics_loaded":[],
 };
 var ranInitHooks = {}
 

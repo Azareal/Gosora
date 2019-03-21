@@ -77,6 +77,7 @@ type ThemeResource struct {
 	Name     string
 	Location string
 	Loggedin bool // Only serve this resource to logged in users
+	Async    bool
 }
 
 type ThemeMapTmplToDock struct {
@@ -162,7 +163,7 @@ func (theme *Theme) AddThemeStaticFiles() error {
 		// Get a checksum for CSPs and cache busting
 		hasher := sha256.New()
 		hasher.Write(data)
-		checksum := []byte(hex.EncodeToString(hasher.Sum(nil)))
+		checksum := hex.EncodeToString(hasher.Sum(nil))
 
 		StaticFiles.Set("/static/"+theme.Name+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 

@@ -22,6 +22,7 @@ func successRedirect(dest string, w http.ResponseWriter, r *http.Request, isJs b
 }
 
 func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *common.Header, pi interface{}) common.RouteError {
+	header.AddScript("global.js")
 	if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &header.CurrentUser, pi) {
 		return nil
 	}

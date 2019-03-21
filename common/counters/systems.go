@@ -14,8 +14,7 @@ type DefaultOSViewCounter struct {
 	insert  *sql.Stmt
 }
 
-func NewDefaultOSViewCounter() (*DefaultOSViewCounter, error) {
-	acc := qgen.NewAcc()
+func NewDefaultOSViewCounter(acc *qgen.Accumulator) (*DefaultOSViewCounter, error) {
 	var osBuckets = make([]*RWMutexCounterBucket, len(osMapEnum))
 	for bucketID, _ := range osBuckets {
 		osBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}

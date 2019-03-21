@@ -29,8 +29,9 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, hea
 	}
 	// TODO: Expand this to non-HTTPS requests too
 	if !header.LooseCSP && common.Site.EnableSsl {
-		w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; upgrade-insecure-requests")
+		w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com;upgrade-insecure-requests")
 	}
+	header.AddScript("global.js")
 	if header.CurrentUser.IsAdmin {
 		header.Elapsed1 = time.Since(header.StartedAt).String()
 	}

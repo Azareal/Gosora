@@ -125,7 +125,7 @@ func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *common.Use
 	}
 	basePage.AddSheet("chartist/chartist.min.css")
 	basePage.AddScript("chartist/chartist.min.js")
-	basePage.AddScript("analytics.js")
+	basePage.AddScriptAsync("analytics.js")
 	return basePage, nil
 }
 

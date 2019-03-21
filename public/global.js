@@ -193,7 +193,7 @@ function wsAlertEvent(data) {
 	updateAlertList(generalAlerts/*, alist*/);
 }
 
-function runWebSockets() {
+function runWebSockets(resume = false) {
 	if(window.location.protocol == "https:") {
 		conn = new WebSocket("wss://" + document.location.host + "/ws/");
 	} else conn = new WebSocket("ws://" + document.location.host + "/ws/");
@@ -206,6 +206,7 @@ function runWebSockets() {
 	conn.onopen = () => {
 		console.log("The WebSockets connection was opened");
 		conn.send("page " + document.location.pathname + '\r');
+		if(resume) conn.send("resume " + Math.round((new Date()).getTime() / 1000) + '\r');
 		// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
 		if(me.User.ID > 0) Notification.requestPermission();
 	}
@@ -213,23 +214,22 @@ function runWebSockets() {
 	conn.onclose = () => {
 		conn = false;
 		console.log("The WebSockets connection was closed");
-		let backoff = 1000;
+		let backoff = 0.8;
 		if(wsBackoff < 0) wsBackoff = 0;
-		else if(wsBackoff > 12) backoff = 13000;
-		else if(wsBackoff > 5) backoff = 7000;
+		else if(wsBackoff > 12) backoff = 11;
+		else if(wsBackoff > 5) backoff = 5;
 		wsBackoff++;
 
 		setTimeout(() => {
 			var alertMenuList = document.getElementsByClassName("menu_alerts");
-			for(var i = 0; i < alertMenuList.length; i++) {
-				loadAlerts(alertMenuList[i]);
-			}
-			runWebSockets();
-		}, 60 * backoff);
+			for(var i = 0; i < alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
+			runWebSockets(true);
+		}, backoff * 60 * 1000);
 
 		if(wsBackoff > 0) {
-			if(wsBackoff <= 5) setTimeout(() => wsBackoff--, 60 * 4000);
-			else if(wsBackoff <= 12) setTimeout(() => wsBackoff--, 60 * 20000);
+			if(wsBackoff <= 5) setTimeout(() => wsBackoff--, 5.5 * 60 * 1000);
+			else if(wsBackoff <= 12) setTimeout(() => wsBackoff--, 11.5 * 60 * 1000);
+			else setTimeout(() => wsBackoff--, 20 * 60 * 1000);
 		}
 	}
 
@@ -333,16 +333,14 @@ function runWebSockets() {
 		notifyOnScriptW("template_alert", (e) => {
 			if(e!=undefined) console.log("failed alert? why?", e)
 		}, () => {
-			console.log("ha")
+			//console.log("ha")
 			if(!Template_alert) throw("template function not found");
 			addInitHook("after_phrases", () => {
 				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
 				$(document).ready(() => {
 					alertsInitted = true;
 					var alertMenuList = document.getElementsByClassName("menu_alerts");
-					for(var i = 0; i < alertMenuList.length; i++) {
-						loadAlerts(alertMenuList[i]);
-					}
+					for(var i = 0; i < alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
 					if(window["WebSocket"]) runWebSockets();
 				});
 			});

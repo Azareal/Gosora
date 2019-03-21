@@ -2,11 +2,13 @@ package tmpl
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"text/template/parse"
@@ -70,7 +72,8 @@ type CTemplateSet struct {
 	themeName      string
 	perThemeTmpls  map[string]bool
 
-	logger *log.Logger
+	logger  *log.Logger
+	loggerf *os.File
 }
 
 func NewCTemplateSet(in string) *CTemplateSet {
@@ -110,7 +113,8 @@ func NewCTemplateSet(in string) *CTemplateSet {
 			"dyntmpl": true,
 			"index":   true,
 		},
-		logger: log.New(f, "", log.LstdFlags),
+		logger:  log.New(f, "", log.LstdFlags),
+		loggerf: f,
 	}
 }
 
@@ -155,6 +159,7 @@ func (c *CTemplateSet) ResetLogs(in string) {
 		panic(err)
 	}
 	c.logger = log.New(f, "", log.LstdFlags)
+	c.loggerf = f
 }
 
 type SkipBlock struct {
@@ -268,6 +273,19 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 }
 
 func (c *CTemplateSet) compile(name string, content string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Println(r)
+			debug.PrintStack()
+			err := c.loggerf.Sync()
+			if err != nil {
+				fmt.Println(err)
+			}
+			log.Fatal("")
+			return
+		}
+	}()
 	//c.dumpCall("compile", name, content, expects, expectsInt, varList, imports)
 	//c.detailf("c: %+v\n", c)
 	c.importMap = map[string]string{}
@@ -1460,6 +1478,16 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		c.addText(con, []byte("false"))
 		con.Push("endelse", "}\n")
 		return
+	case reflect.Slice:
+		if val.Len() == 0 {
+			c.critical("varname:", varname)
+			panic("The sample data needs at-least one or more elements for the slices. We're looking into removing this requirement at some point!")
+		}
+		item := val.Index(0)
+		if item.Type().Name() != "uint8" { // uint8 == byte, complicated because it's a type alias
+			panic("unable to format " + item.Type().Name() + " as text")
+		}
+		base = varname
 	case reflect.String:
 		if val.Type().Name() != "string" && !strings.HasPrefix(varname, "string(") {
 			varname = "string(" + varname + ")"

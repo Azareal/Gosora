@@ -31,7 +31,8 @@
 		},
 		{
 			"Name":"nox/misc.js",
-			"Location":"global"
+			"Location":"global",
+			"Async":true
 		}
 	]
 }

@@ -27,7 +27,7 @@ var staticFileMutex sync.RWMutex
 type SFile struct {
 	Data             []byte
 	GzipData         []byte
-	Sha256           []byte
+	Sha256           string
 	Pos              int64
 	Length           int64
 	GzipLength       int64
@@ -240,7 +240,7 @@ func (list SFileList) JSTmplInit() error {
 		// Get a checksum for CSPs and cache busting
 		hasher := sha256.New()
 		hasher.Write(data)
-		checksum := []byte(hex.EncodeToString(hasher.Sum(nil)))
+		checksum := hex.EncodeToString(hasher.Sum(nil))
 
 		list.Set("/static/"+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
@@ -267,7 +267,7 @@ func (list SFileList) Init() error {
 		// Get a checksum for CSPs and cache busting
 		hasher := sha256.New()
 		hasher.Write(data)
-		checksum := []byte(hex.EncodeToString(hasher.Sum(nil)))
+		checksum := hex.EncodeToString(hasher.Sum(nil))
 
 		// Avoid double-compressing images
 		var gzipData []byte
@@ -318,7 +318,7 @@ func (list SFileList) Add(path string, prefix string) error {
 	// Get a checksum for CSPs and cache busting
 	hasher := sha256.New()
 	hasher.Write(data)
-	checksum := []byte(hex.EncodeToString(hasher.Sum(nil)))
+	checksum := hex.EncodeToString(hasher.Sum(nil))
 
 	list.Set("/static"+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 

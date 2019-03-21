@@ -60,3 +60,5 @@ function buildStatsChart(rawLabels, seriesData, timeRange, legendNames) {
 		series: seriesData,
 	}, config);
 }
+
+runInitHook("analytics_loaded");
