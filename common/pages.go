@@ -25,7 +25,7 @@ type Header struct {
 	PreScriptsAsync []HResource
 	ScriptsAsync    []HResource
 	//Preload []string
-	Stylesheets []string
+	Stylesheets []HResource
 	Widgets     PageWidgets
 	Site        *site
 	Settings    SettingMap
@@ -92,7 +92,15 @@ func (header *Header) AddScriptAsync(name string) {
 }*/
 
 func (header *Header) AddSheet(name string) {
-	header.Stylesheets = append(header.Stylesheets, name)
+	fname := "/static/" + name
+	var hash string
+	if fname[0] == '/' && fname[1] != '/' {
+		file, ok := StaticFiles.Get(fname)
+		if ok {
+			hash = file.Sha256
+		}
+	}
+	header.Stylesheets = append(header.Stylesheets, HResource{name, hash})
 }
 
 func (header *Header) AddNotice(name string) {

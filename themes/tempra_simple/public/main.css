@@ -155,6 +155,9 @@ li a {
 #main {
 	width: 100%;
 }
+main > *:last-child {
+	margin-bottom: 12px;
+}
 
 .rowblock {
 	border: 1px solid hsl(0, 0%, 80%);
@@ -541,6 +544,14 @@ input, select {
 	background-color: white;
 	padding: 10px;
 }
+/*blockquote {
+	background-color: #EEEEEE;
+	padding: 12px;
+	margin: 0px;
+}
+.staff_post blockquote {
+	background-color: rgba(255, 214, 255, 1);
+}*/
 
 .little_row_avatar {
 	display: none;
@@ -742,7 +753,7 @@ button.username {
 	background-color: rgb(255,245,245);
 }
 
-.postQuote {
+blockquote {
 	border: 1px solid hsl(0, 0%, 80%);
 	background: white;
 	padding: 5px;
@@ -967,8 +978,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 
 .pageset {
 	display: flex;
-	margin-bottom: 10px;
+	/*margin-bottom: 10px;*/
 	margin-top: 8px;
+	margin-bottom: 2px;
 }
 .pageitem {
 	background-color: white;

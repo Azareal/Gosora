@@ -356,7 +356,7 @@ func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request,
 	header.Title = phrases.GetTitlePhrase(titlePhrase)
 	header.Path = "/user/edit/"
 	header.AddSheet(header.Theme.Name + "/account.css")
-	header.AddScript("account.js")
+	header.AddScriptAsync("account.js")
 }
 
 func AccountEdit(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {

@@ -199,6 +199,7 @@ li a {
 	border-radius: 3px;
 	background-color: #444444;
 	padding: 16px;
+	/*padding: 18px;*/
 }
 .filter_item {
 	margin-bottom: 5px;
@@ -728,6 +729,19 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 .postImage {
 	width: 100%;
 	max-width: 320px;
+}
+blockquote {
+	background-color: #555555;
+	border-radius: 3px;
+	padding: 8px;
+	margin: 0px;
+	margin-bottom: 8px;
+}
+blockquote + br {
+	display: none;
+}
+blockquote:only-child {
+	margin-bottom: 0px;
 }
 .post_item {
 	display: flex;

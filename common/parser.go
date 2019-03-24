@@ -217,7 +217,7 @@ func PreparseMessage(msg string) string {
 		's': []string{"", "trong", "pan"},
 		'd': []string{"el"},
 		'u': []string{""},
-		'b': []string{""},
+		'b': []string{"", "lockquote"},
 		'i': []string{""},
 		'g': []string{""}, // Quick and dirty fix for Grammarly
 	}
@@ -261,7 +261,10 @@ func PreparseMessage(msg string) string {
 		},
 		'd': []*TagToAction{&TagToAction{"el", buildLitMatch("del"), 0, false}},
 		'u': []*TagToAction{&TagToAction{"", buildLitMatch("u"), 0, false}},
-		'b': []*TagToAction{&TagToAction{"", buildLitMatch("strong"), 0, false}},
+		'b': []*TagToAction{
+			&TagToAction{"", buildLitMatch("strong"), 0, false},
+			&TagToAction{"lockquote", buildLitMatch("blockquote"), 0, false},
+		},
 		'i': []*TagToAction{&TagToAction{"", buildLitMatch("em"), 0, false}},
 		'g': []*TagToAction{
 			&TagToAction{"", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {

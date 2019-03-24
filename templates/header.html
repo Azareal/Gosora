@@ -4,7 +4,7 @@
 		<title>{{.Title}} | {{.Header.Site.Name}}</title>
 		<link href="/static/{{.Header.Theme.Name}}/main.css" rel="stylesheet" type="text/css">
 		{{range .Header.Stylesheets}}
-		<link href="/static/{{.}}" rel="stylesheet" type="text/css">{{end}}
+		<link href="/static/{{.Name}}{{if .Hash}}?h={{.Hash}}{{end}}" rel="stylesheet" type="text/css">{{end}}
 		{{range .Header.PreScriptsAsync}}
 		<script async type="text/javascript" src="/static/{{.Name}}{{if .Hash}}?h={{.Hash}}{{end}}"></script>{{end}}
 		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}" />

@@ -997,6 +997,12 @@ textarea {
 	width: 100%;
 	max-width: 240px;
 }
+blockquote {
+	margin: 0px;
+	background-color: #EEEEEE;
+	padding: 12px;
+	margin-bottom: -3px;
+}
 .post_item {
 	display: flex;
 	margin-bottom: 16px;

@@ -1,7 +1,9 @@
-"use strict"
+"use strict";
 
-$(document).ready(function(){
+(() => {
+addInitHook("end_init", () => {
 	$("#dash_username input").click(function(){
 		$("#dash_username button").show();
 	});
 });
+})();

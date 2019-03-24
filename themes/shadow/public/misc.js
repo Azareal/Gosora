@@ -1,4 +1,5 @@
-$(document).ready(function(){
+(() => {
+addInitHook("end_init", () => {
 	// TODO: Run this when the image is loaded rather than when the document is ready?
 	$(".topic_list img").each(function(){
 		let aspectRatio = this.naturalHeight / this.naturalWidth;
@@ -11,3 +12,4 @@ $(document).ready(function(){
 		});
 	});
 });
+})();

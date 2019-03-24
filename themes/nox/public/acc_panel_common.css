@@ -32,14 +32,16 @@
 
 .rowmenu {
 	margin-left: 18px;
-	margin-bottom: 2px;
+	/*margin-bottom: 2px;*/
+	margin-bottom: 3px;
 	font-size: 17px;
 }
 .rowmenu a {
 	color: rgb(180, 180, 180);
 }
 .rowmenu .rowitem {
-	margin-bottom: 4px;
+	/*margin-bottom: 4px;*/
+	margin-bottom: 6px;
 }
 
 .to_right {

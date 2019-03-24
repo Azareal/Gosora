@@ -16,7 +16,8 @@
 	"Resources": [
 		{
 			"Name":"shadow/misc.js",
-			"Location":"global"
+			"Location":"global",
+			"Async":true
 		}
 	]
 }

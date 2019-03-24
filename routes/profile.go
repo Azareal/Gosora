@@ -32,7 +32,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user common.User, heade
 	// TODO: Preload this?
 	header.AddSheet(header.Theme.Name + "/profile.css")
 	if user.Loggedin {
-		header.AddScript("profile_member.js")
+		header.AddScriptAsync("profile_member.js")
 	}
 
 	var err error

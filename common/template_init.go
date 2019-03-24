@@ -108,7 +108,7 @@ func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Head
 		Theme:           Themes[DefaultThemeBox.Load().(string)],
 		CurrentUser:     user,
 		NoticeList:      []string{"test"},
-		Stylesheets:     []string{"panel.css"},
+		Stylesheets:     []HResource{HResource{"panel.css", "d"}},
 		Scripts:         []HResource{HResource{"whatever.js", "d"}},
 		PreScriptsAsync: []HResource{HResource{"whatever.js", "d"}},
 		ScriptsAsync:    []HResource{HResource{"whatever.js", "d"}},

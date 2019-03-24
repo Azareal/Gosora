@@ -60,7 +60,7 @@ func bbcodeRegexParse(msg string) string {
 	msg = bbcodeStrikethrough.ReplaceAllString(msg, "<s>$1</s>")
 	msg = bbcodeURL.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='nofollow'>$1$2//$3</i>")
 	msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='nofollow'>$4</i>")
-	msg = bbcodeQuotes.ReplaceAllString(msg, "<span class='postQuote'>$1</span>")
+	msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 	//msg = bbcodeCode.ReplaceAllString(msg,"<span class='codequotes'>$1</span>")
 	return msg
 }
@@ -197,7 +197,7 @@ func bbcodeParseWithoutCode(msg string) string {
 		msg = string(msgbytes)
 		msg = bbcodeURL.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$1$2//$3</i>")
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$4</i>")
-		msg = bbcodeQuotes.ReplaceAllString(msg, "<span class='postQuote'>$1</span>")
+		msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 		return bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
 	}
 	return string(msgbytes)
@@ -323,7 +323,7 @@ func bbcodeFullParse(msg string) string {
 
 		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$4</i>")
-		msg = bbcodeQuotes.ReplaceAllString(msg, "<span class='postQuote'>$1</span>")
+		msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 		msg = bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
 	} else {
 		msg = string(msgbytes[0 : len(msgbytes)-10])

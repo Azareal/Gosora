@@ -1,7 +1,7 @@
 @media(min-width: 881px) {
 	.shrink_main {
 		float: left;
-		width: calc(75% - 12px);
+		/*width: calc(75% - 12px);*/
 	}
 	.sidebar {
 		float: left;

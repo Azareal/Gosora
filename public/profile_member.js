@@ -12,7 +12,9 @@ function handle_profile_hashbit() {
 	$("." + hash_class).show();
 }
 
-$(document).ready(() => {
+(() => {
+addInitHook("end_init", () => {
 	if(window.location.hash) handle_profile_hashbit();
 	window.addEventListener("hashchange", handle_profile_hashbit, false);
 });
+})();
