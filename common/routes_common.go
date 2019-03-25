@@ -121,6 +121,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 		header.StartedAt = time.Now()
 	}
 
+	header.AddSheet(theme.Name + "/main.css")
 	header.AddSheet(theme.Name + "/panel.css")
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
@@ -221,6 +222,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		header.StartedAt = time.Now()
 	}
 
+	header.AddSheet(theme.Name + "/main.css")
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
 		for _, resource := range rlist {
