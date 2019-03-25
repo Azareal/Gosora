@@ -709,6 +709,9 @@ button.username {
 	font-size: 17px;
 }
 
+.quote_label:before {
+	content: "💬";
+}
 .edit_label:before {
 	content: "🖊️";
 }
@@ -760,7 +763,11 @@ blockquote {
 	margin: 0px;
 	display: inline-block;
 	width: 100%;
+	margin-top: 8px;
 	margin-bottom: 8px;
+}
+blockquote:first-child {
+	margin-top: 0px;
 }
 .level {
 	float: right;

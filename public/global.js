@@ -7,6 +7,7 @@ var moreTopicCount = 0;
 var conn = false;
 var selectedTopics = [];
 var attachItemCallback = function(){}
+var quoteItemCallback = function(){}
 var baseTitle = document.title;
 var wsBackoff = 0;
 
@@ -749,8 +750,7 @@ function mainInit(){
 		// Remove any handlers already attached to the submitter
 		$(".submit_edit").unbind("click");
 
-		$(".submit_edit").click(function(event)
-		{
+		$(".submit_edit").click(function(event) {
 			event.preventDefault();
 			var outData = {isJs: "1"}
 			var blockParent = $(this).closest('.editable_parent');
@@ -791,6 +791,23 @@ function mainInit(){
 				this.textContent = ip;
 			};
 		}
+	});
+
+	$(".quote_item").click(function(){
+		event.preventDefault();
+		event.stopPropagation();
+		let source = this.closest(".post_item").getElementsByClassName("edit_source")[0];
+		let content = document.getElementById("input_content")
+		console.log("content.value", content.value);
+
+		let item;
+		if(content.value == "") item = "<blockquote>" + source.innerHTML + "</blockquote>"
+		else item = "\r\n<blockquote>" + source.innerHTML + "</blockquote>";
+		content.value = content.value + item;
+		console.log("content.value", content.value);
+
+		// For custom / third party text editors
+		quoteItemCallback(source.innerHTML,item);
 	});
 
 	$(this).click(() => {
@@ -935,7 +952,7 @@ function mainInit(){
 				else attachItem = "\r\n//" + window.location.host + "/attachs/" + hash + "." + ext;
 				content.value = content.value + attachItem;
 				console.log("content.value", content.value);
-						
+				
 				// For custom / third party text editors
 				attachItemCallback(attachItem);
 			});
@@ -1021,7 +1038,7 @@ function mainInit(){
 			$(this).click(function(){
 				selectedTopics.push(parseInt($(this).attr("data-tid"),10));
 				if(selectedTopics.length==1) {
-					var msg = "What do you want to do with this topic?";
+					var msg = phraseBox["topic_list"]["topic_list.what_to_do_single"];
 				} else {
 					var msg = "What do you want to do with these "+selectedTopics.length+" topics?";
 				}

@@ -1001,7 +1001,11 @@ blockquote {
 	margin: 0px;
 	background-color: #EEEEEE;
 	padding: 12px;
+	margin-top: 12px;
 	margin-bottom: -3px;
+}
+blockquote:first-child {
+	margin-top: 0px;
 }
 .post_item {
 	display: flex;
@@ -1119,6 +1123,9 @@ blockquote {
 }
 .button_container .open_edit:after, .edit_item:after{
 	content: "{{lang "topic.edit_button_text" . }}";
+}
+.quote_item:after {
+	content: "{{lang "topic.quote_button_text" . }}";
 }
 .delete_item:after {
 	content: "{{lang "topic.delete_button_text" . }}";

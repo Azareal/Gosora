@@ -6,9 +6,10 @@
 			<span itemprop="text">{{.ActionType}}</span>
 		{{else}}
 		<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
-		{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.EditReply}}
+		{{if $.CurrentUser.Loggedin}}
 		<div class="edit_source auto_hide">{{.Content}}</div>
 
+		{{if $.CurrentUser.Perms.EditReply}}
 		{{if .Attachments}}<div class="show_on_edit show_on_block_edit attach_edit_bay" type="reply" id="{{.ID}}">
 				{{range .Attachments}}
 				<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
@@ -31,6 +32,7 @@
 			<div class="action_button_left">
 			{{if $.CurrentUser.Loggedin}}
 				{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
+				<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
 				{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
 				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}
 				{{end}}

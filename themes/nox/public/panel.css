@@ -41,6 +41,9 @@
 	margin-top: 16px;
 	font-size: 18px;
 }
+.above_right .left_bit a {
+	color: #bbbbbb;
+}
 .above_right .right_bit {
 	margin-left: auto;
 	display: flex;

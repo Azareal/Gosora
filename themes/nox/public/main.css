@@ -735,13 +735,18 @@ blockquote {
 	border-radius: 3px;
 	padding: 8px;
 	margin: 0px;
+	margin-top: 8px;
 	margin-bottom: 8px;
 }
 blockquote + br {
 	display: none;
 }
 blockquote:only-child {
+	margin-top: 0px;
 	margin-bottom: 0px;
+}
+blockquote:first-child {
+	margin-top: 0px;
 }
 .post_item {
 	display: flex;
@@ -903,7 +908,7 @@ input[type=checkbox]:checked + label .sel {
 .ip_item_button:after {
 	content: "{{lang "topic.ip_button_text" . }}";
 }{{$p := .}}
-{{range (toArr "delete" "lock" "unlock" "pin" "unpin" "report")}}
+{{range (toArr "quote" "delete" "lock" "unlock" "pin" "unpin" "report")}}
 .{{.}}_item:after {
 	content: "{{lang (concat "topic." . "_button_text") ($p) }}";
 }{{end}}

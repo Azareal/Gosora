@@ -64,8 +64,9 @@
 		{{template "topic_alt_userinfo.html" .Topic }}
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
-			{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.EditTopic}}<textarea name="topic_content" class="show_on_edit topic_content_input">{{.Topic.Content}}</textarea>
+			{{if .CurrentUser.Loggedin}}<textarea name="topic_content" class="show_on_edit topic_content_input edit_source">{{.Topic.Content}}</textarea>
 
+			{{if .CurrentUser.Perms.EditTopic}}
 			{{if .Topic.Attachments}}<div class="show_on_edit attach_edit_bay" type="topic" id="{{.Topic.ID}}">
 				{{range .Topic.Attachments}}
 				<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
@@ -88,6 +89,7 @@
 				<div class="action_button_left">
 				{{if .CurrentUser.Loggedin}}
 					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button like_item {{if .Topic.Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic.like_aria"}}" data-action="like"></a>{{end}}
+					<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
 					{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit" aria-label="{{lang "topic.edit_aria"}}" data-action="edit"></a>{{end}}
 					{{end}}

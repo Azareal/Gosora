@@ -6,8 +6,14 @@
 		console.log("af")
 		let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
 		if(loggedIn) {
+			if(navigator.userAgent.indexOf("Firefox") != -1) $.trumbowyg.svgPath = "/static/trumbowyg/ui/icons.svg";
+			
 			// Is there we way we can append instead? Maybe, an editor plugin?
 			attachItemCallback = function(attachItem) {
+				let currentContent = $('#input_content').trumbowyg('html');
+				$('#input_content').trumbowyg('html', currentContent);
+			}
+			quoteItemCallback = function() {
 				let currentContent = $('#input_content').trumbowyg('html');
 				$('#input_content').trumbowyg('html', currentContent);
 			}
@@ -15,7 +21,6 @@
 			$(".topic_name_row").click(function(){
 				$(".topic_create_form").addClass("selectedInput");
 			});
-			//$.trumbowyg.svgPath = false;
 
 			// TODO: Bind this to the viewport resize event
 			var btnlist = [];

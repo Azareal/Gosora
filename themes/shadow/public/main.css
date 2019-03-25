@@ -303,7 +303,7 @@ h1, h2, h3 {
 .like_label:before {
 	content: "{{lang "topic.plus_one" . }}";
 }{{$out := .}}
-{{range (toArr "edit" "delete" "pin" "lock" "unlock" "unpin" "ip" "flag")}}
+{{range (toArr "quote" "edit" "delete" "pin" "lock" "unlock" "unpin" "ip" "flag")}}
 .{{.}}_label:before {
 	content: "{{lang (concat "topic." . "_button_text") ($out) }}";
 }{{end}}
@@ -891,7 +891,11 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 blockquote {
 	background-color: rgb(71,71,71);
 	margin: 0px;
+	margin-top: 10px;
 	padding: 10px;
+}
+blockquote:first-child {
+	margin-top: 0px;
 }
 
 /* Profiles */
