@@ -219,6 +219,7 @@ func PreparseMessage(msg string) string {
 		'u': []string{""},
 		'b': []string{"", "lockquote"},
 		'i': []string{""},
+		//'p': []string{""},
 		'g': []string{""}, // Quick and dirty fix for Grammarly
 	}
 	var buildLitMatch = func(tag string) func(*TagToAction, bool, int, []rune) (int, string) {
@@ -266,6 +267,7 @@ func PreparseMessage(msg string) string {
 			&TagToAction{"lockquote", buildLitMatch("blockquote"), 0, false},
 		},
 		'i': []*TagToAction{&TagToAction{"", buildLitMatch("em"), 0, false}},
+		//'p': []*TagToAction{&TagToAction{"", buildLitMatch2("\n\n", ""), 0, false}},
 		'g': []*TagToAction{
 			&TagToAction{"", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {
 				if open {
@@ -290,7 +292,13 @@ func PreparseMessage(msg string) string {
 	// TODO: Implement a less literal parser
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
-		if char == '&' && peekMatch(i, "lt;", runes) {
+		// TODO: Make the slashes escapable too in case someone means to use a literaly slash, maybe as an example of how to escape elements?
+		if char == '\\' {
+			if peekMatch(i, "&lt;", runes) {
+				msg += "&"
+				i++
+			}
+		} else if char == '&' && peekMatch(i, "lt;", runes) {
 			var ok bool
 			i, ok = tryStepForward(i, 4, runes)
 			if !ok {

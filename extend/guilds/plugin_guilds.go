@@ -113,8 +113,7 @@ func installGuilds(plugin *common.Plugin) error {
 			qgen.DBTableColumn{"rank", "int", 0, false, false, "0"},  /* 0: Member. 1: Mod. 2: Admin. */
 			qgen.DBTableColumn{"posts", "int", 0, false, false, "0"}, /* Per-Group post count. Should we do some sort of score system? */
 			qgen.DBTableColumn{"joinedAt", "datetime", 0, false, false, ""},
-		},
-		[]qgen.DBTableKey{},
+		}, nil,
 	)
 	if err != nil {
 		return err
