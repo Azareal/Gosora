@@ -116,6 +116,10 @@ You also need to substitute the `gosora.exe` bits for `./Gosora` on Linux. For m
 ```bash
 git clone https://github.com/Azareal/Gosora
 
+go get -u github.com/mailru/easyjson/...
+
+easyjson -pkg common
+
 go get
 
 rm -f template_*.go

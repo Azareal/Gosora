@@ -1,4 +1,4 @@
 echo "Updating the dependencies"
-go get
-
 go get -u github.com/mailru/easyjson/...
+
+go get
