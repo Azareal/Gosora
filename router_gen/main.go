@@ -481,6 +481,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Redirect www. requests to the right place
 	if req.Host == "www." + common.Site.Host {
+		// TODO: Abstract the redirect logic?
 		w.Header().Set("Connection", "close")
 		var s string
 		if common.Site.EnableSsl {
@@ -495,7 +496,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Deflect malformed requests
-	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || req.Host != common.Site.Host {
+	shost := strings.Split(req.Host,":")
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || shost[0] != common.Site.Host || len(shost) > 2 {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request")
