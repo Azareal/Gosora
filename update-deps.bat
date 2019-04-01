@@ -7,6 +7,12 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+easyjson -pkg common
+if %errorlevel% neq 0 (
+	pause
+	exit /b %errorlevel%
+)
+
 go get
 if %errorlevel% neq 0 (
 	pause
