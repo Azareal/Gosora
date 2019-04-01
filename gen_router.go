@@ -696,19 +696,61 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 	counters.AgentViewCounter.Bump(28)
 }
 
+func isLocalHost(host string) bool {
+	return host=="localhost" || host=="127.0.0.1" || host=="::1"
+}
+
 // TODO: Pass the default path or config struct to the router rather than accessing it via a package global
 // TODO: SetDefaultPath
 // TODO: GetDefaultPath
 func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// Redirect www. requests to the right place
-	if req.Host == "www." + common.Site.Host {
+	var malformedRequest = func() {
+		w.WriteHeader(200) // 400
+		w.Write([]byte(""))
+		r.DumpRequest(req,"Malformed Request")
+		counters.AgentViewCounter.Bump(27)
+	}
+	
+	// Split the Host and Port string
+	var shost, sport string
+	if req.Host[0]=='[' {
+		spl := strings.Split(req.Host,"]")
+		if len(spl) > 2 {
+			malformedRequest()
+			return
+		}
+		shost = strings.TrimPrefix(spl[0],"[")
+		sport = strings.TrimPrefix(spl[1],":")
+	} else {
+		spl := strings.Split(req.Host,":")
+		if len(spl) > 2 {
+			malformedRequest()
+			return
+		}
+		shost = spl[0]
+		if len(shost)==2 {
+			sport = spl[1]
+		}
+	}
+	// TODO: Reject requests from non-local IPs, if the site host is set to localhost or a localhost IP
+	if common.Site.PortInt != 80 && common.Site.PortInt != 443 && sport != common.Site.Port {
+		malformedRequest()
+		return
+	}
+	
+	// Redirect www. and local IP requests to the right place
+	if shost == "www." + common.Site.Host || (common.Site.LocalHost && shost != common.Site.Host && isLocalHost(shost)) {
 		// TODO: Abstract the redirect logic?
 		w.Header().Set("Connection", "close")
 		var s string
 		if common.Site.EnableSsl {
 			s = "s"
 		}
-		dest := "http"+s+"://" + common.Site.Host + req.URL.Path
+		var p string
+		if common.Site.PortInt != 80 && common.Site.PortInt != 443 {
+			p = ":"+common.Site.Port
+		}
+		dest := "http"+s+"://" + common.Site.Host+p + req.URL.Path
 		if len(req.URL.RawQuery) > 0 {
 			dest += "?" + req.URL.RawQuery
 		}
@@ -717,12 +759,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Deflect malformed requests
-	shost := strings.Split(req.Host,":")
-	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || shost[0] != common.Site.Host || len(shost) > 2 {
-		w.WriteHeader(200) // 400
-		w.Write([]byte(""))
-		r.DumpRequest(req,"Malformed Request")
-		counters.AgentViewCounter.Bump(27)
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || shost != common.Site.Host {
+		malformedRequest()
 		return
 	}
 	if common.Dev.FullReqLog {

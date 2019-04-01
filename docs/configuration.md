@@ -18,7 +18,7 @@ Email - The email address you want to show up in the From: field when Gosora sen
 
 URL - The URL for your site. Please leave out the `http://` or `https://` and the `/` at the end.
 
-Port - The port you want Gosora to listen on. This will usually be 443 for HTTPS and 80 for HTTP. Gosora usually try to bind to both, if you're on HTTPS to redirect users from the HTTP site to the HTTPS one.
+Port - The port you want Gosora to listen on. This will usually be 443 for HTTPS and 80 for HTTP. Gosora will try to bind to both, if you're on HTTPS to redirect users from the HTTP site to the HTTPS one.
 
 EnableSsl - Determines whether HTTPS is enabled.
 

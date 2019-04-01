@@ -795,6 +795,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	port := url.Port()
 	query := url.Query()
 
+	// TODO: Treat 127.0.0.1 and [::1] as localhost too
 	var samesite = hostname == "localhost" || hostname == Site.URL
 	if samesite {
 		hostname = strings.Split(Site.URL, ":")[0]

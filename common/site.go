@@ -27,7 +27,9 @@ type site struct {
 	Email        string
 	URL          string
 	Host         string
+	LocalHost    bool // Used internally, do not modify as it will be overwritten
 	Port         string
+	PortInt      int // Alias for efficiency, do not modify, will be overwritten
 	EnableSsl    bool
 	EnableEmails bool
 	HasProxy     bool
@@ -81,7 +83,9 @@ type config struct {
 	DefaultForum    int    // The forum posts go in by default, this used to be covered by the Uncategorised Forum, but we want to replace it with a more robust solution. Make this a setting?
 	MinifyTemplates bool
 	BuildSlugs      bool // TODO: Make this a setting?
-	ServerCount     int
+
+	PrimaryServer bool
+	ServerCount   int
 
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool
@@ -140,7 +144,12 @@ func ProcessConfig() (err error) {
 	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
 	guestAvatar = GuestAvatar{buildNoavatar(0, 200), buildNoavatar(0, 48)}
 	Site.Host = Site.URL
-	if Site.Port != "80" && Site.Port != "443" {
+	Site.LocalHost = Site.Host == "localhost" || Site.Host == "127.0.0.1" || Site.Host == "::1"
+	Site.PortInt, err = strconv.Atoi(Site.Port)
+	if err != nil {
+		return errors.New("The port must be a valid integer")
+	}
+	if Site.PortInt != 80 && Site.PortInt != 443 {
 		Site.URL = strings.TrimSuffix(Site.URL, "/")
 		Site.URL = strings.TrimSuffix(Site.URL, "\\")
 		Site.URL = strings.TrimSuffix(Site.URL, ":")
