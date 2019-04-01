@@ -507,7 +507,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		shost = spl[0]
-		if len(shost)==2 {
+		if len(spl)==2 {
 			sport = spl[1]
 		}
 	}
