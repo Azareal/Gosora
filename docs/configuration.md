@@ -76,6 +76,10 @@ DisableLiveTopicList - This switch allows you to disable the live topic list.
 
 DisableJSAntispam - This switch lets you disable the JS anti-spam feature. It may be useful if you primarily get users who for one reason or another have decided to disable JavaScript.
 
+DisableServerPush - This switch lets you disable the HTTP/2 server push feature.
+
+EnableCDNPush - This switch lets you enable the HTTP/2 CDN Server Push feature. This operates by sending a Link header on every request and may also work with reverse-proxies like Nginx for doing HTTP/2 server pushes.
+
 NoAvatar - The default avatar to use for users when they don't have their own. The default for this may change in the near future to better utilise HTTP/2. Example: https://api.adorable.io/avatars/{width}/{id}.png
 
 ItemsPerPage - The number of posts, topics, etc. you want on each page.

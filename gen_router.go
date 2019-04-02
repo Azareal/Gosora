@@ -824,6 +824,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
+	var agent string
 	if ua == "" {
 		counters.AgentViewCounter.Bump(26)
 		if common.Dev.DebugMode {
@@ -878,7 +879,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		// Iterate over this in reverse as the real UA tends to be on the right side
-		var agent string
 		for i := len(items) - 1; i >= 0; i-- {
 			fAgent, ok := markToAgent[items[i]]
 			if ok {
@@ -974,6 +974,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		return
 	}
+	user.LastAgent = agent
 	if common.Dev.SuperDebug {
 		r.requestLogger.Print(
 			"after PreRoute\n" +

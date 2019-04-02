@@ -53,6 +53,7 @@ type User struct {
 	Score       int
 	Liked       int
 	LastIP      string // ! This part of the UserCache data might fall out of date
+	LastAgent   string // ! Temporary hack, don't use
 	TempGroup   int
 }
 

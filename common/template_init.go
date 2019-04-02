@@ -89,14 +89,14 @@ var Template_account_handle = genIntTmpl("account")
 
 func tmplInitUsers() (User, User, User) {
 	avatar, microAvatar := BuildAvatar(62, "")
-	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", "", "", 0, 0, 0, "0.0.0.0.0", 0}
+	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", "", "", 0, 0, 0, "0.0.0.0.0", "", 0}
 
 	// TODO: Do a more accurate level calculation for this?
 	avatar, microAvatar = BuildAvatar(1, "")
-	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", "", "", 58, 1000, 0, "127.0.0.1", 0}
+	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", "", "", 58, 1000, 0, "127.0.0.1", "", 0}
 
 	avatar, microAvatar = BuildAvatar(2, "")
-	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", "", "", 42, 900, 0, "::1", 0}
+	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", "", "", 42, 900, 0, "::1", "", 0}
 	return user, user2, user3
 }
 
@@ -108,10 +108,10 @@ func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Head
 		Theme:           Themes[DefaultThemeBox.Load().(string)],
 		CurrentUser:     user,
 		NoticeList:      []string{"test"},
-		Stylesheets:     []HResource{HResource{"panel.css", "d"}},
-		Scripts:         []HResource{HResource{"whatever.js", "d"}},
-		PreScriptsAsync: []HResource{HResource{"whatever.js", "d"}},
-		ScriptsAsync:    []HResource{HResource{"whatever.js", "d"}},
+		Stylesheets:     []string{"panel.css"},
+		Scripts:         []string{"whatever.js"},
+		PreScriptsAsync: []string{"whatever.js"},
+		ScriptsAsync:    []string{"whatever.js"},
 		Widgets: PageWidgets{
 			LeftSidebar: template.HTML("lalala"),
 		},

@@ -10,10 +10,10 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-type HResource struct {
+/*type HResource struct {
 	Name string
 	Hash string
-}
+}*/
 
 // TODO: Allow resources in spots other than /static/ and possibly even external domains (e.g. CDNs)
 // TODO: Preload Trumboyg on Cosora on the forum list
@@ -21,11 +21,11 @@ type Header struct {
 	Title string
 	//Title      []byte // Experimenting with []byte for increased efficiency, let's avoid converting too many things to []byte, as it involves a lot of extra boilerplate
 	NoticeList      []string
-	Scripts         []HResource
-	PreScriptsAsync []HResource
-	ScriptsAsync    []HResource
+	Scripts         []string
+	PreScriptsAsync []string
+	ScriptsAsync    []string
 	//Preload []string
-	Stylesheets []HResource
+	Stylesheets []string
 	Widgets     PageWidgets
 	Site        *site
 	Settings    SettingMap
@@ -51,40 +51,48 @@ type Header struct {
 
 func (header *Header) AddScript(name string) {
 	fname := "/static/" + name
-	var hash string
+	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
 		if ok {
-			hash = file.Sha256
+			oname = name + "?h=" + file.Sha256
 		}
 	}
-	//log.Print("name:", name)
-	//log.Print("hash:", hash)
-	header.Scripts = append(header.Scripts, HResource{name, hash})
+	if oname == "" {
+		oname = name
+	}
+	//log.Print("oname:", oname)
+	header.Scripts = append(header.Scripts, oname)
 }
 
 func (header *Header) AddPreScriptAsync(name string) {
 	fname := "/static/" + name
-	var hash string
+	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
 		if ok {
-			hash = file.Sha256
+			oname = name + "?h=" + file.Sha256
 		}
 	}
-	header.PreScriptsAsync = append(header.PreScriptsAsync, HResource{name, hash})
+	if oname == "" {
+		oname = name
+	}
+	header.PreScriptsAsync = append(header.PreScriptsAsync, oname)
 }
 
 func (header *Header) AddScriptAsync(name string) {
 	fname := "/static/" + name
-	var hash string
+	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
 		if ok {
-			hash = file.Sha256
+			oname = name + "?h=" + file.Sha256
 		}
 	}
-	header.ScriptsAsync = append(header.ScriptsAsync, HResource{name, hash})
+	if oname == "" {
+		oname = name
+	}
+	header.ScriptsAsync = append(header.ScriptsAsync, oname)
 }
 
 /*func (header *Header) Preload(name string) {
@@ -93,14 +101,17 @@ func (header *Header) AddScriptAsync(name string) {
 
 func (header *Header) AddSheet(name string) {
 	fname := "/static/" + name
-	var hash string
+	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
 		if ok {
-			hash = file.Sha256
+			oname = name + "?h=" + file.Sha256
 		}
 	}
-	header.Stylesheets = append(header.Stylesheets, HResource{name, hash})
+	if oname == "" {
+		oname = name
+	}
+	header.Stylesheets = append(header.Stylesheets, oname)
 }
 
 func (header *Header) AddNotice(name string) {
