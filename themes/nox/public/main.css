@@ -96,6 +96,37 @@ li a {
 	padding-top: 5px;
 	font-size: 16px;
 }
+.menu_hamburger > a:after {
+	content: "{{lang "menu_more" . }}";
+}
+.menu_hamburger, .more_menu, .menu_hide {
+	display: none;
+}
+.more_menu {
+	position: absolute;
+	background-color: #444444;
+	border: 1px solid #333333;
+	flex-direction: column;
+	list-style-type: none;
+	padding: 16px;
+	padding-top: 12px;
+	padding-bottom: 12px;
+	top: 70px;
+}
+.more_menu_selected {
+	display: flex !important;
+}
+.more_menu li a {
+	font-size: 17px;
+	padding-top: 0px !important;
+	padding-bottom: 0px !important;
+}
+.more_menu li a:not(:last-child) {
+	padding-bottom: 8px !important;
+}
+.more_menu .menu_active a {
+	border-bottom: none;
+}
 
 .right_of_nav {
 	float: left;
@@ -136,7 +167,7 @@ li a {
 	font-size: 12px;
 	line-height: 12px;
 }
-.container {
+#container {
 	clear: both;
 }
 #back {
@@ -1199,6 +1230,9 @@ input[type=checkbox]:checked + label .sel {
 }
 
 @media(max-width: 460px) {
+	ul {
+		background: #3f3f3f;
+	}
 	.topic_list_title, .filter_opt_sep {
 		display: none;
 	}
@@ -1281,6 +1315,9 @@ input[type=checkbox]:checked + label .sel {
 		padding-bottom: 15px;
 		border: none;
 	}
+	.more_menu {
+		top: 50px;
+	}
 
 	.right_of_nav {
 		width: auto;
@@ -1319,7 +1356,7 @@ input[type=checkbox]:checked + label .sel {
 }
 
 @media(min-width: 1010px) {
-	.container {
+	#container {
 		background-color: {{$second_dark_bg}};
 	}
 	#back, .footer {

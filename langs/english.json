@@ -334,6 +334,7 @@
 		"menu_logout":"Logout",
 		"menu_login":"Login",
 		"menu_register":"Register",
+		"menu_more":"More",
 
 		"alerts.forum_new_topic":"{0} created the topic {1}",
 		"alerts.forum_unknown_action":"{0} did something in a forum",

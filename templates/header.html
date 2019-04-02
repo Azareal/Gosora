@@ -26,13 +26,13 @@
 	</head>
 	<body>
 		{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}
-		<div class="container">
+		<div id="container" class="container">
 		{{/**<!--<div class="navrow">-->**/}}
 			<div class="left_of_nav">{{dock "leftOfNav" .Header }}</div>
 			<nav class="nav">
 				<div class="move_left">
 				<div class="move_right">
-				<ul class="zone_{{.Header.Zone}}">{{/** TODO: Have the theme control whether the long or short form of the name is used **/}}
+				<ul id="main_menu" class="zone_{{.Header.Zone}}">{{/** TODO: Have the theme control whether the long or short form of the name is used **/}}
 					<li id="menu_overview" class="menu_left"><a href="/" rel="home">{{if eq .Header.Theme.Name "nox"}}{{.Header.Site.Name}}{{else}}{{.Header.Site.ShortName}}{{end}}</a></li>
 					{{dock "topMenu" .Header }}
 					<li class="menu_left menu_hamburger" title="{{lang "menu_hamburger_tooltip"}}"><a></a></li>
