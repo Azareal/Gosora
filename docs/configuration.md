@@ -2,9 +2,17 @@
 
 For configuring the system, Gosora has a file called `config/config.json` which you can tweak to change various behaviours, it also has a few settings in the Setting Manager in the Control Panel.
 
-The configuration file has four categories you may be familiar with from poring through it's contents. Site, Config, Database and Dev.
+The configuration file has five categories you may be familiar with from poring through it's contents. Site, Config, Database, Dev and Plugin.
 
-Site is for critical settings, Config is for lower priority yet still important settings, Database contains the credentials for the database (you will be able to pass these via parameters to the binary in a future version), and Dev is for a few flags which help out with the development of Gosora.
+Site is for critical settings.
+
+Config is for lower priority yet still important settings.
+
+Database contains the credentials for the database (you will be able to pass these via parameters to the binary in a future version).
+
+Dev is for a few flags which help out with the development of Gosora.
+
+Plugin which you may not have run into is a category in which plugins can define their own custom configuration settings.
 
 An example of what the file might look like: https://github.com/Azareal/Gosora/blob/master/config/config_example.json
 

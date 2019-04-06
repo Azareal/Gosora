@@ -773,10 +773,18 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w = common.GzipResponseWriter{Writer: gz, ResponseWriter: w}
 	}
 
-	ferr := r.routeSwitch(w, req, user, prefix, extraData)
+	// TODO: Use the same hook table as downstream
+	hTbl := common.GetHookTable()
+	skip, ferr := hTbl.VhookSkippable("router_pre_route", w, req, user, prefix, extraData)
+	if skip || ferr != nil {
+		r.handleError(ferr,w,req,user)
+	}
+	ferr = r.routeSwitch(w, req, user, prefix, extraData)
 	if ferr != nil {
 		r.handleError(ferr,w,req,user)
 	}
+
+	hTbl.VhookNoRet("router_end", w, req, user, prefix, extraData)
 	//common.StoppedServer("Profile end")
 }
 	

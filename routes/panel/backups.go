@@ -21,20 +21,27 @@ func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL
 		backupURL = common.Stripslashes(backupURL)
 
 		var ext = filepath.Ext("./backups/" + backupURL)
-		if ext == ".sql" {
-			info, err := os.Stat("./backups/" + backupURL)
-			if err != nil {
-				return common.NotFound(w, r, basePage.Header)
-			}
-			// TODO: Change the served filename to gosora_backup_%timestamp%.sql, the time the file was generated, not when it was modified aka what the name of it should be
-			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.sql")
-			w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
-			w.Header().Set("Content-Type", "application/sql")
-			// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
-			http.ServeFile(w, r, "./backups/"+backupURL)
-			return nil
+		if ext != ".sql" && ext != ".zip" {
+			return common.NotFound(w, r, basePage.Header)
 		}
-		return common.NotFound(w, r, basePage.Header)
+		info, err := os.Stat("./backups/" + backupURL)
+		if err != nil {
+			return common.NotFound(w, r, basePage.Header)
+		}
+		w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
+
+		if ext == ".sql" {
+			// TODO: Change the served filename to gosora_backup_%timestamp%.sql, the time the 	file was generated, not when it was modified aka what the name of it should be
+			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.sql")
+			w.Header().Set("Content-Type", "application/sql")
+		} else {
+			// TODO: Change the served filename to gosora_backup_%timestamp%.zip, the time the 	file was generated, not when it was modified aka what the name of it should be
+			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.zip")
+			w.Header().Set("Content-Type", "application/zip")
+		}
+		// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
+		http.ServeFile(w, r, "./backups/"+backupURL)
+		return nil
 	}
 
 	var backupList []common.BackupItem

@@ -40,7 +40,6 @@ type JsonReply struct {
 func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
 	// TODO: Use this
 	js := r.FormValue("js") == "1"
-
 	tid, err := strconv.Atoi(r.PostFormValue("tid"))
 	if err != nil {
 		return common.PreErrorJSQ("Failed to convert the Topic ID", w, r, js)
@@ -54,7 +53,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -189,6 +188,12 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		page = common.LastPage(nTopic.PostCount-(len(rids)+offset), common.Config.ItemsPerPage)
 	}
 
+	counters.PostCounter.Bump()
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_reply", reply.ID)
+	if skip || rerr != nil {
+		return rerr
+	}
+
 	prid, _ := strconv.Atoi(r.FormValue("prid"))
 	if js && (prid == 0 || rids[0] == prid) {
 		outBytes, err := json.Marshal(JsonReply{common.ParseMessage(reply.Content, topic.ParentID, "forums")})
@@ -203,8 +208,6 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		}
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid)+spage+"#post-"+strconv.Itoa(reply.ID), http.StatusSeeOther)
 	}
-
-	counters.PostCounter.Bump()
 	return nil
 }
 

@@ -76,10 +76,17 @@ var hookTable = &HookTable{
 		"topic_reply_row_assign": nil,
 		"create_group_preappend": nil, // What is this? Investigate!
 		"topic_create_pre_loop":  nil,
+
+		"router_end": nil,
 	},
 	map[string]func(...interface{}) (bool, RouteError){
 		"simple_forum_check_pre_perms": nil,
 		"forum_check_pre_perms":        nil,
+
+		"action_end_create_topic": nil,
+		"action_end_create_reply": nil,
+
+		"router_pre_route": nil,
 	},
 	map[string][]func(string) string{
 		"preparse_preassign": nil,

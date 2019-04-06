@@ -21,6 +21,8 @@ var Config = new(config)
 // Dev holds build flags and other things which should only be modified during developers or to gather additional test data
 var Dev = new(devConfig)
 
+var PluginConfig = map[string]string{}
+
 type site struct {
 	ShortName    string
 	Name         string
@@ -120,6 +122,7 @@ type configHolder struct {
 	Config   *config
 	Database *dbConfig
 	Dev      *devConfig
+	Plugin   map[string]string
 }
 
 func LoadConfig() error {
@@ -138,6 +141,7 @@ func LoadConfig() error {
 	Config = config.Config
 	DbConfig = config.Database
 	Dev = config.Dev
+	PluginConfig = config.Plugin
 
 	return nil
 }

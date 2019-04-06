@@ -444,7 +444,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, fid)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, fid)
 	if ferr != nil {
 		return ferr
 	}
@@ -537,6 +537,11 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 
 	counters.PostCounter.Bump()
 	counters.TopicCounter.Bump()
+	// TODO: Pass more data to this hook?
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_topic", tid)
+	if skip || rerr != nil {
+		return rerr
+	}
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	return nil
 }
