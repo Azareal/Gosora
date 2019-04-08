@@ -57,7 +57,7 @@ body, #main {
 	padding-left: 8px;
 	padding-right: 8px;
 }
-.container {
+#container {
 	background-color: var(--element-background-color);
 }
 

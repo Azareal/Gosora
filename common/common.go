@@ -17,7 +17,7 @@ import (
 	"github.com/Azareal/Gosora/query_gen"
 )
 
-var SoftwareVersion = Version{Major: 0, Minor: 2, Patch: 0, Tag: ""}
+var SoftwareVersion = Version{Major: 0, Minor: 3, Patch: 0, Tag: "dev"}
 
 // nolint I don't want to write comments for each of these o.o
 const Hour int = 60 * 60

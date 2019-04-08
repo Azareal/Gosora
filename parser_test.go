@@ -85,6 +85,13 @@ func TestPreparser(t *testing.T) {
 	msgList.Add("<blockquote><b>hi</b></blockquote>", "<blockquote><strong>hi</strong></blockquote>")
 	msgList.Add("<blockquote><meow>hi</meow></blockquote>", "<blockquote>&lt;meow&gt;hi&lt;/meow&gt;</blockquote>")
 	msgList.Add("\\<blockquote>hi</blockquote>", "&lt;blockquote&gt;hi&lt;/blockquote&gt;")
+	//msgList.Add("\\\\<blockquote><meow>hi</meow></blockquote>", "\\<blockquote>&lt;meow&gt;hi&lt;/meow&gt;</blockquote>") // TODO: Double escapes should print a literal backslash
+	//msgList.Add("&lt;blockquote&gt;hi&lt;/blockquote&gt;", "&lt;blockquote&gt;hi&lt;/blockquote&gt;") // TODO: Stop double-entitising this
+	msgList.Add("\\<blockquote>hi</blockquote>\\<blockquote>hi</blockquote>", "&lt;blockquote&gt;hi&lt;/blockquote&gt;&lt;blockquote&gt;hi&lt;/blockquote&gt;")
+	msgList.Add("\\<a itemprop=\"author\">Admin</a>", "&lt;a itemprop=&#34;author&#34;&gt;Admin&lt;/a&gt;")
+	msgList.Add("<blockquote>\\<a itemprop=\"author\">Admin</a></blockquote>", "<blockquote>&lt;a itemprop=&#34;author&#34;&gt;Admin&lt;/a&gt;</blockquote>")
+	msgList.Add("\n<blockquote>\\<a itemprop=\"author\">Admin</a></blockquote>\n", "<blockquote>&lt;a itemprop=&#34;author&#34;&gt;Admin&lt;/a&gt;</blockquote>")
+	msgList.Add("tt\n<blockquote>\\<a itemprop=\"author\">Admin</a></blockquote>\ntt", "tt\n<blockquote>&lt;a itemprop=&#34;author&#34;&gt;Admin&lt;/a&gt;</blockquote>\ntt")
 	msgList.Add("@", "@")
 	msgList.Add("@Admin", "@1")
 	msgList.Add("@Bah", "@Bah")
@@ -93,6 +100,8 @@ func TestPreparser(t *testing.T) {
 	msgList.Add("@Admin\n", "@1")
 	msgList.Add("@Admin\ndd", "@1\ndd")
 	msgList.Add("d@Admin", "d@Admin")
+	msgList.Add("\\@Admin", "@Admin")
+	//msgList.Add("\\\\@Admin", "@1")
 	//msgList.Add("byte 0", string([]byte{0}), "")
 	msgList.Add("byte 'a'", string([]byte{'a'}), "a")
 	//msgList.Add("byte 255", string([]byte{255}), "")
