@@ -215,7 +215,6 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
 	js := (r.PostFormValue("js") == "1")
-
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return common.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
@@ -236,7 +235,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -262,6 +261,11 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_reply", reply.ID)
+	if skip || rerr != nil {
+		return rerr
+	}
+
 	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID)+"#reply-"+strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
@@ -279,7 +283,6 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 // TODO: Disable stat updates in posts handled by plugin_guilds
 func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, srid string) common.RouteError {
 	isJs := (r.PostFormValue("isJs") == "1")
-
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return common.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
@@ -300,7 +303,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -313,6 +316,11 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_delete_reply", reply.ID)
+	if skip || rerr != nil {
+		return rerr
+	}
+
 	//log.Printf("Reply #%d was deleted by common.User #%d", rid, user.ID)
 	if !isJs {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
@@ -320,6 +328,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 		w.Write(successJSONBytes)
 	}
 
+	// ? - What happens if an error fires after a redirect...?
 	replyCreator, err := common.Users.Get(reply.CreatedBy)
 	if err == nil {
 		wcount := common.WordCount(reply.Content)

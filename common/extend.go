@@ -85,6 +85,8 @@ var hookTable = &HookTable{
 
 		"action_end_create_topic": nil,
 		"action_end_create_reply": nil,
+		"action_end_edit_reply":   nil,
+		"action_end_delete_reply": nil,
 
 		"router_pre_route": nil,
 	},

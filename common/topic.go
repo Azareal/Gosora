@@ -366,6 +366,11 @@ func (topic *Topic) CreateActionReply(action string, ipaddress string, uid int) 
 	return err
 }
 
+// TODO: Test this
+func (topic *Topic) Author() (*User, error) {
+	return Users.Get(topic.CreatedBy)
+}
+
 func (topic *Topic) GetID() int {
 	return topic.ID
 }
