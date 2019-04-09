@@ -47,6 +47,7 @@ func TestPreparser(t *testing.T) {
 
 	msgList.Add("<b></b>", "<strong></strong>")
 	msgList.Add("<b>hi</b>", "<strong>hi</strong>")
+	msgList.Add("<b>h</b>", "<strong>h</strong>")
 	msgList.Add("<s>hi</s>", "<del>hi</del>")
 	msgList.Add("<del>hi</del>", "<del>hi</del>")
 	msgList.Add("<u>hi</u>", "<u>hi</u>")
@@ -75,6 +76,9 @@ func TestPreparser(t *testing.T) {
 	msgList.Add("<span   ></span>", "")
 	msgList.Add("<span><span></span></span>", "")
 	msgList.Add("<span><b></b></span>", "<strong></strong>")
+	msgList.Add("<h1>t</h1>", "<h2>t</h2>")
+	msgList.Add("<h2>t</h2>", "<h3>t</h3>")
+	msgList.Add("<h3>t</h3>", "<h4>t</h4>")
 	msgList.Add("<></>", "&lt;&gt;&lt;/&gt;")
 	msgList.Add("</><>", "&lt;/&gt;&lt;&gt;")
 	msgList.Add("<>", "&lt;&gt;")

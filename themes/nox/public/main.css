@@ -841,6 +841,23 @@ blockquote:first-child {
 .user_content {
 	word-break: break-word;
 }
+.user_content h2 {
+	font-size: 20px;
+}
+.user_content h3 {
+	font-size: 19px;
+}
+.user_content h2, .user_content h3 {
+	margin-top: 3px;
+	margin-bottom: 12px;
+	margin-left: 0px;
+}
+.user_content h2 + br, .user_content h3 + br {
+	display: none;
+}
+.user_content strong h2, .user_content strong h3 {
+	font-weight: bold;
+}
 .user_content.in_edit {
 	padding: 0px;
 	background: none;
