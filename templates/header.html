@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html{{if .Header.IsoCode}} lang="{{.Header.IsoCode}}"{{end}}>
 	<head>
 		<title>{{.Title}} | {{.Header.Site.Name}}</title>
 		{{range .Header.Stylesheets}}

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // nolint
@@ -114,6 +116,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 		Hooks:       GetHookTable(),
 		Zone:        "panel",
 		Writer:      w,
+		IsoCode:     phrases.GetLangPack().IsoCode,
 	}
 	// TODO: We should probably initialise header.ExtData
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
@@ -207,6 +210,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		Hooks:       GetHookTable(),
 		Zone:        "frontend",
 		Writer:      w,
+		IsoCode:     phrases.GetLangPack().IsoCode,
 	}
 	header.GoogSiteVerify = header.Settings["google_site_verify"].(string)
 

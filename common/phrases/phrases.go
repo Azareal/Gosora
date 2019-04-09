@@ -151,6 +151,10 @@ func SaveLangPack(langPack *LanguagePack) error {
 	return nil
 }
 
+func GetLangPack() *LanguagePack {
+	return currentLangPack.Load().(*LanguagePack)
+}
+
 func GetLevelPhrase(level int) string {
 	levelPhrases := currentLangPack.Load().(*LanguagePack).Levels
 	if len(levelPhrases.Levels) > 0 && level < len(levelPhrases.Levels) {

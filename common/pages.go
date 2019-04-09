@@ -42,6 +42,7 @@ type Header struct {
 	//OGImage string
 	OGDesc         string
 	GoogSiteVerify string
+	IsoCode        string
 	LooseCSP       bool
 	StartedAt      time.Time
 	Elapsed1       string
