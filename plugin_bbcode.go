@@ -18,7 +18,8 @@ var bbcodeMissingTag []byte
 var bbcodeBold *regexp.Regexp
 var bbcodeItalic *regexp.Regexp
 var bbcodeUnderline *regexp.Regexp
-var bbcodeStrikethrough *regexp.Regexp
+var bbcodeStrike *regexp.Regexp
+var bbcodeH1 *regexp.Regexp
 var bbcodeURL *regexp.Regexp
 var bbcodeURLLabel *regexp.Regexp
 var bbcodeQuotes *regexp.Regexp
@@ -38,7 +39,8 @@ func initBbcode(plugin *common.Plugin) error {
 	bbcodeBold = regexp.MustCompile(`(?s)\[b\](.*)\[/b\]`)
 	bbcodeItalic = regexp.MustCompile(`(?s)\[i\](.*)\[/i\]`)
 	bbcodeUnderline = regexp.MustCompile(`(?s)\[u\](.*)\[/u\]`)
-	bbcodeStrikethrough = regexp.MustCompile(`(?s)\[s\](.*)\[/s\]`)
+	bbcodeStrike = regexp.MustCompile(`(?s)\[s\](.*)\[/s\]`)
+	bbcodeH1 = regexp.MustCompile(`(?s)\[h1\](.*)\[/h1\]`)
 	urlpattern := `(http|https|ftp|mailto*)(:??)\/\/([\.a-zA-Z\/]+)`
 	bbcodeURL = regexp.MustCompile(`\[url\]` + urlpattern + `\[/url\]`)
 	bbcodeURLLabel = regexp.MustCompile(`(?s)\[url=` + urlpattern + `\](.*)\[/url\]`)
@@ -57,10 +59,11 @@ func bbcodeRegexParse(msg string) string {
 	msg = bbcodeBold.ReplaceAllString(msg, "<b>$1</b>")
 	msg = bbcodeItalic.ReplaceAllString(msg, "<i>$1</i>")
 	msg = bbcodeUnderline.ReplaceAllString(msg, "<u>$1</u>")
-	msg = bbcodeStrikethrough.ReplaceAllString(msg, "<s>$1</s>")
+	msg = bbcodeStrike.ReplaceAllString(msg, "<s>$1</s>")
 	msg = bbcodeURL.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='nofollow'>$1$2//$3</i>")
 	msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='nofollow'>$4</i>")
 	msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
+	msg = bbcodeH1.ReplaceAllString(msg, "<h2>$1</h2>")
 	//msg = bbcodeCode.ReplaceAllString(msg,"<span class='codequotes'>$1</span>")
 	return msg
 }
@@ -321,10 +324,12 @@ func bbcodeFullParse(msg string) string {
 			msg = string(msgbytes[0 : len(msgbytes)-10])
 		}
 
+		// TODO: Optimise these
 		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$4</i>")
 		msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 		msg = bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
+		msg = bbcodeH1.ReplaceAllString(msg, "<h2>$1</h2>")
 	} else {
 		msg = string(msgbytes[0 : len(msgbytes)-10])
 	}

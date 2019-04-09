@@ -48,6 +48,8 @@ func TestBBCodeRender(t *testing.T) {
 	msgList.Add("[i]hi[/i]", "<i>hi</i>")
 	msgList.Add("[s]hi[/s]", "<s>hi</s>")
 	msgList.Add("[c]hi[/c]", "[c]hi[/c]")
+	msgList.Add("[h1]hi", "[h1]hi")
+	msgList.Add("[h1]hi[/h1]", "<h2>hi</h2>")
 	if !testing.Short() {
 		//msgList.Add("[b]hi[/i]", "[b]hi[/i]")
 		//msgList.Add("[/b]hi[b]", "[/b]hi[b]")
@@ -250,6 +252,8 @@ func TestMarkdownRender(t *testing.T) {
 	msgList2.Add("#", "#")
 	msgList2.Add("#h", "<h2>h</h2>")
 	msgList2.Add("#hi", "<h2>hi</h2>")
+	msgList2.Add("# hi", "<h2>hi</h2>")
+	msgList2.Add("#      hi", "<h2>hi</h2>")
 	msgList.Add("\n#", "\n#")
 	msgList.Add("\n#h", "\n<h2>h</h2>")
 	msgList.Add("\n#hi", "\n<h2>hi</h2>")
