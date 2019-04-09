@@ -222,6 +222,7 @@ func TestMarkdownRender(t *testing.T) {
 
 	var res string
 	var msgList = &MEPairList{nil}
+	var msgList2 = &MEPairList{nil}
 	// TODO: Fix more of these odd cases
 	msgList.Add("", "")
 	msgList.Add(" ", " ")
@@ -230,6 +231,7 @@ func TestMarkdownRender(t *testing.T) {
 	msgList.Add("\t", "\t")
 	msgList.Add("\n", "\n")
 	msgList.Add("*", "*")
+	msgList.Add("`", "`")
 	//msgList.Add("**", "<i></i>")
 	msgList.Add("h", "h")
 	msgList.Add("hi", "hi")
@@ -241,6 +243,18 @@ func TestMarkdownRender(t *testing.T) {
 	msgList.Add("*hi*", "<i>hi</i>")
 	msgList.Add("~h~", "<s>h</s>")
 	msgList.Add("~hi~", "<s>hi</s>")
+	msgList.Add("`hi`", "<blockquote>hi</blockquote>")
+	// TODO: Hide the backslash after escaping the item
+	// TODO: Doesn't behave consistently with d in-front of it
+	msgList2.Add("\\`hi`", "\\`hi`")
+	msgList2.Add("#", "#")
+	msgList2.Add("#h", "<h2>h</h2>")
+	msgList2.Add("#hi", "<h2>hi</h2>")
+	msgList.Add("\n#", "\n#")
+	msgList.Add("\n#h", "\n<h2>h</h2>")
+	msgList.Add("\n#hi", "\n<h2>hi</h2>")
+	msgList.Add("\n#h\n", "\n<h2>h</h2>")
+	msgList.Add("\n#hi\n", "\n<h2>hi</h2>")
 	msgList.Add("*hi**", "<i>hi</i>*")
 	msgList.Add("**hi***", "<b>hi</b>*")
 	//msgList.Add("**hi*", "*<i>hi</i>")
@@ -285,6 +299,16 @@ func TestMarkdownRender(t *testing.T) {
 	msgList.Add("*-你好-*", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
 	for _, item := range msgList.Items {
+		res = markdownParse(item.Msg)
+		if res != item.Expects {
+			t.Error("Testing string '" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			//t.Error("Ouput in bytes:", []byte(res))
+			t.Error("Expected:", "'"+item.Expects+"'")
+		}
+	}
+
+	for _, item := range msgList2.Items {
 		res = markdownParse(item.Msg)
 		if res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")

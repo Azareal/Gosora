@@ -17,6 +17,10 @@ var markdownUnderlineTagOpen []byte
 var markdownUnderlineTagClose []byte
 var markdownStrikeTagOpen []byte
 var markdownStrikeTagClose []byte
+var markdownQuoteTagOpen []byte
+var markdownQuoteTagClose []byte
+var markdownH1TagOpen []byte
+var markdownH1TagClose []byte
 
 func init() {
 	common.Plugins.Add(&common.Plugin{UName: "markdown", Name: "Markdown", Author: "Azareal", URL: "https://github.com/Azareal", Init: initMarkdown, Deactivate: deactivateMarkdown})
@@ -35,6 +39,10 @@ func initMarkdown(plugin *common.Plugin) error {
 	markdownUnderlineTagClose = []byte("</u>")
 	markdownStrikeTagOpen = []byte("<s>")
 	markdownStrikeTagClose = []byte("</s>")
+	markdownQuoteTagOpen = []byte("<blockquote>")
+	markdownQuoteTagClose = []byte("</blockquote>")
+	markdownH1TagOpen = []byte("<h2>")
+	markdownH1TagClose = []byte("</h2>")
 	return nil
 }
 
@@ -60,67 +68,89 @@ func _markdownParse(msg string, n int) string {
 
 	var outbytes []byte
 	var lastElement int
+	var breaking = false
 	common.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
 
 	for index := 0; index < len(msg); index++ {
+		var simpleMatch = func(char byte, o []byte, c []byte) {
+			var startIndex = index
+			if (index + 1) >= len(msg) {
+				breaking = true
+				return
+			}
+
+			index++
+			index = markdownSkipUntilChar(msg, index, char)
+			if (index-(startIndex+1)) < 1 || index >= len(msg) {
+				breaking = true
+				return
+			}
+
+			sIndex := startIndex + 1
+			lIndex := index
+			index++
+
+			outbytes = append(outbytes, msg[lastElement:startIndex]...)
+			outbytes = append(outbytes, o...)
+			// TODO: Implement this without as many type conversions
+			outbytes = append(outbytes, []byte(_markdownParse(msg[sIndex:lIndex], n+1))...)
+			outbytes = append(outbytes, c...)
+
+			lastElement = index
+			index--
+		}
+
+		var startLine = func() {
+			var startIndex = index
+			if (index + 1) >= len(msg) /*|| (index + 2) >= len(msg)*/ {
+				breaking = true
+				return
+			}
+			index++
+
+			index = markdownSkipUntilNotChar(msg, index, 32)
+			if (index + 1) >= len(msg) {
+				breaking = true
+				return
+			}
+			//index++
+
+			index = markdownSkipUntilStrongSpace(msg, index)
+			sIndex := startIndex + 1
+			lIndex := index
+			index++
+
+			outbytes = append(outbytes, msg[lastElement:startIndex]...)
+			outbytes = append(outbytes, markdownH1TagOpen...)
+			// TODO: Implement this without as many type conversions
+			//fmt.Println("msg[sIndex:lIndex]:", string(msg[sIndex:lIndex]))
+			// TODO: Quick hack to eliminate trailing spaces...
+			outbytes = append(outbytes, []byte(strings.TrimSpace(_markdownParse(msg[sIndex:lIndex], n+1)))...)
+			outbytes = append(outbytes, markdownH1TagClose...)
+
+			lastElement = index
+			index--
+		}
+
 		switch msg[index] {
 		// TODO: Do something slightly less hacky for skipping URLs
 		case '/':
 			if len(msg) > (index+2) && msg[index+1] == '/' {
 				for ; index < len(msg) && msg[index] != ' '; index++ {
-
 				}
 				index--
 				continue
 			}
 		case '_':
-			var startIndex = index
-			if (index + 1) >= len(msg) {
+			simpleMatch('_', markdownUnderlineTagOpen, markdownUnderlineTagClose)
+			if breaking {
 				break
 			}
-
-			index++
-			index = markdownSkipUntilChar(msg, index, '_')
-			if (index-(startIndex+1)) < 1 || index >= len(msg) {
-				break
-			}
-
-			sIndex := startIndex + 1
-			lIndex := index
-			index++
-
-			outbytes = append(outbytes, msg[lastElement:startIndex]...)
-			outbytes = append(outbytes, markdownUnderlineTagOpen...)
-			// TODO: Implement this without as many type conversions
-			outbytes = append(outbytes, []byte(_markdownParse(msg[sIndex:lIndex], n+1))...)
-			outbytes = append(outbytes, markdownUnderlineTagClose...)
-
-			lastElement = index
-			index--
 		case '~':
-			var startIndex = index
-			if (index + 1) >= len(msg) {
+			simpleMatch('~', markdownStrikeTagOpen, markdownStrikeTagClose)
+			if breaking {
 				break
 			}
-
-			index++
-			index = markdownSkipUntilChar(msg, index, '~')
-			if (index-(startIndex+1)) < 1 || index >= len(msg) {
-				break
-			}
-
-			sIndex := startIndex + 1
-			lIndex := index
-			index++
-
-			outbytes = append(outbytes, msg[lastElement:startIndex]...)
-			outbytes = append(outbytes, markdownStrikeTagOpen...)
-			// TODO: Implement this without as many type conversions
-			outbytes = append(outbytes, []byte(_markdownParse(msg[sIndex:lIndex], n+1))...)
-			outbytes = append(outbytes, markdownStrikeTagClose...)
-
-			lastElement = index
-			index--
 		case '*':
 			var startIndex = index
 			var italic = true
@@ -148,28 +178,30 @@ func _markdownParse(msg string, n int) string {
 				break
 			}
 
+			var preBreak = func() {
+				outbytes = append(outbytes, msg[lastElement:startIndex]...)
+				lastElement = startIndex
+			}
+
 			sIndex := startIndex
 			lIndex := index
 			if bold && italic {
 				if (index + 3) >= len(msg) {
-					outbytes = append(outbytes, msg[lastElement:startIndex]...)
-					lastElement = startIndex
+					preBreak()
 					break
 				}
 				index += 3
 				sIndex += 3
 			} else if bold {
 				if (index + 2) >= len(msg) {
-					outbytes = append(outbytes, msg[lastElement:startIndex]...)
-					lastElement = startIndex
+					preBreak()
 					break
 				}
 				index += 2
 				sIndex += 2
 			} else {
 				if (index + 1) >= len(msg) {
-					outbytes = append(outbytes, msg[lastElement:startIndex]...)
-					lastElement = startIndex
+					preBreak()
 					break
 				}
 				index++
@@ -177,17 +209,13 @@ func _markdownParse(msg string, n int) string {
 			}
 
 			if lIndex <= sIndex {
-				outbytes = append(outbytes, msg[lastElement:startIndex]...)
-				lastElement = startIndex
+				preBreak()
 				break
 			}
-
 			if sIndex < 0 || lIndex < 0 {
-				outbytes = append(outbytes, msg[lastElement:startIndex]...)
-				lastElement = startIndex
+				preBreak()
 				break
 			}
-
 			outbytes = append(outbytes, msg[lastElement:startIndex]...)
 
 			if bold {
@@ -217,8 +245,33 @@ func _markdownParse(msg string, n int) string {
 					lastElement = index
 				}
 			}
-			//case '`':
-			//case 10: // newline
+		// TODO: Add a inline quote variant
+		case '`':
+			simpleMatch('`', markdownQuoteTagOpen, markdownQuoteTagClose)
+			if breaking {
+				break
+			}
+		case 10: // newline
+			if (index + 1) >= len(msg) {
+				break
+			}
+			index++
+
+			if msg[index] != '#' {
+				continue
+			}
+			startLine()
+			if breaking {
+				break
+			}
+		case '#':
+			if index != 0 {
+				continue
+			}
+			startLine()
+			if breaking {
+				break
+			}
 		}
 	}
 
@@ -249,6 +302,32 @@ func markdownSkipUntilChar(data string, index int, char byte) int {
 	for ; index < len(data); index++ {
 		if data[index] == char {
 			break
+		}
+	}
+	return index
+}
+
+func markdownSkipUntilNotChar(data string, index int, char byte) int {
+	for ; index < len(data); index++ {
+		if data[index] != char {
+			break
+		}
+	}
+	return index
+}
+
+func markdownSkipUntilStrongSpace(data string, index int) int {
+	var inSpace = false
+	for ; index < len(data); index++ {
+		if inSpace && data[index] == 32 {
+			index--
+			break
+		} else if data[index] == 32 {
+			inSpace = true
+		} else if data[index] < 32 {
+			break
+		} else {
+			inSpace = false
 		}
 	}
 	return index
