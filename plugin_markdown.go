@@ -29,7 +29,7 @@ func init() {
 func initMarkdown(plugin *common.Plugin) error {
 	plugin.AddHook("parse_assign", markdownParse)
 
-	markdownUnclosedElement = []byte("<span style='color: red;'>[Unclosed Element]</span>")
+	markdownUnclosedElement = []byte("<red>[Unclosed Element]</red>")
 
 	markdownBoldTagOpen = []byte("<b>")
 	markdownBoldTagClose = []byte("</b>")
@@ -63,7 +63,7 @@ func markdownParse(msg string) string {
 // Under Construction!
 func _markdownParse(msg string, n int) string {
 	if n > markdownMaxDepth {
-		return "<span style='color: red;'>[Markdown Error: Overflowed the max depth of 20]</span>"
+		return "<red>[Markdown Error: Overflowed the max depth of 20]</red>"
 	}
 
 	var outbytes []byte

@@ -689,6 +689,9 @@ button.username {
 .user_content strong h2, .user_content strong h3, .user_content strong h4 {
 	font-weight: bold;
 }
+red {
+	color: red;
+}
 
 .user_tag {
 	float: right;
@@ -858,6 +861,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	padding-top: 3px;
 	padding-bottom: 3px;
 	border: 1px solid hsl(0, 0%, 70%);
+}
+.poll_buttons > *:not(:first-child) {
+	margin-left: 5px;
 }
 .poll_results {
 	margin-left: auto;

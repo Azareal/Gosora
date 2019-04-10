@@ -88,7 +88,8 @@ var hookTable = &HookTable{
 		"action_end_edit_reply":   nil,
 		"action_end_delete_reply": nil,
 
-		"router_pre_route": nil,
+		"router_after_filters": nil,
+		"router_pre_route":     nil,
 	},
 	map[string][]func(string) string{
 		"preparse_preassign": nil,

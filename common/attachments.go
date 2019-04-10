@@ -81,7 +81,7 @@ func (store *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []i
 	}
 	if len(ids) == 1 {
 		res, err := store.MiniGetList(originTable, ids[0])
-		return map[int][]*MiniAttachment{0: res}, err
+		return map[int][]*MiniAttachment{ids[0]: res}, err
 	}
 
 	amap = make(map[int][]*MiniAttachment)

@@ -1170,13 +1170,24 @@ function mainInit(){
 	//id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide"
 	$(".poll_results_button").click(function(){
 		let pollID = $(this).attr("data-poll-id");
-		$("#poll_results_" + pollID + " .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
 		$("#poll_results_" + pollID).removeClass("auto_hide");
 		fetch("/poll/results/" + pollID, {
 			credentials: 'same-origin'
 		}).then((response) => response.text()).catch((error) => console.error("Error:",error)).then((rawData) => {
 			// TODO: Make sure the received data is actually a list of integers
 			let data = JSON.parse(rawData);
+
+			let allZero = true;
+			for(let i = 0; i < data.length; i++) {
+				if(data[i] != "0") allZero = false;
+			}
+			if(allZero) {
+				$("#poll_results_" + pollID + " .poll_no_results").removeClass("auto_hide");
+				console.log("all zero")
+				return;
+			}
+
+			$("#poll_results_" + pollID + " .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
 			console.log("rawData: ", rawData);
 			console.log("series: ", data);
 			Chartist.Pie('#poll_results_chart_' + pollID, {

@@ -521,10 +521,11 @@ input[type=checkbox] + label {
 	background-color: var(--element-background-color);
 }
 input[type=checkbox]:checked + label .sel {
-	display: inline-block;
+	display: block;
 	width: 5px;
 	height: 5px;
 	background: var(--element-border-color);
+	margin-top: -2px;
 }
 .poll_content_row {
 	padding-left: 20px;
@@ -544,7 +545,7 @@ input[type=checkbox]:checked + label .sel {
 .show_on_block_edit:not(.edit_opened),
 .hide_on_block_edit.edit_opened,
 .link_select:not(.link_opened) {
-	display: none;
+	display: none !important;
 }
 
 input[type=checkbox] + label.poll_option_label {
@@ -552,20 +553,22 @@ input[type=checkbox] + label.poll_option_label {
 	height: 18px;
 }
 input[type=checkbox]:checked + label.poll_option_label .sel {
-	display: inline-block;
+	display: block;
 	width: 10px;
 	height: 10px;
 	margin-left: 3px;
+	margin-top: 3px;
 	background: var(--element-border-color);
 }
-/*.poll_option {
-	margin-bottom: 3px;
-}*/
+.poll_option {
+	padding-bottom: 5px;
+	display: flex;
+}
 .poll_option_text {
-	display: inline-block;
-	margin-left: 3px;
+	display: block;
+	margin-left: 8px;
+	margin-top: 1px;
 	font-size: 15px;
-	/*font-weight: bold;*/
 	position: relative;
 	top: -1px;
 	color: var(--light-text-color);
@@ -586,6 +589,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 .topic_reply_form .pollinput {
 	margin-left: 16px;
 	margin-top: 4px;
+}
+.poll_results {
+	margin-left: 14px;
 }
 
 .formbutton {
@@ -1077,6 +1083,9 @@ blockquote:first-child {
 }
 .user_content strong h2, .user_content strong h3, .user_content strong h4 {
 	font-weight: bold;
+}
+red {
+	color: red;
 }
 .button_container {
 	margin-top: auto;

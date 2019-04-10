@@ -868,6 +868,9 @@ blockquote:first-child {
 	width: 100% !important;
 	padding: 16px;
 }
+red {
+	color: red;
+}
 .user_content.in_edit a {
 	display: flex;
 	background-color: #444444;
@@ -941,6 +944,9 @@ input[type=checkbox]:checked + label .sel {
 }
 .poll_buttons button {
 	margin-right: 8px;
+}
+.poll_results {
+	margin-left: 12px;
 }
 
 .ip_item {

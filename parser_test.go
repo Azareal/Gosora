@@ -143,11 +143,13 @@ func TestParser(t *testing.T) {
 	msgList.Add("//"+common.Site.URL+"\n//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br><a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
 
 	msgList.Add("#tid-1", "<a href='/topic/1'>#tid-1</a>")
+	msgList.Add("#tid-0", "<red>[Invalid Topic]</red>")
 	msgList.Add("https://"+url+"/#tid-1", "<a href='https://"+url+"/#tid-1'>https://"+url+"/#tid-1</a>")
 	msgList.Add("#fid-1", "<a href='/forum/1'>#fid-1</a>")
+	msgList.Add("#fid-0", "<red>[Invalid Forum]</red>")
 	msgList.Add("@1", "<a href='/user/admin.1' class='mention'>@Admin</a>")
-	msgList.Add("@0", "<span style='color: red;'>[Invalid Profile]</span>")
-	msgList.Add("@-1", "<span style='color: red;'>[Invalid Profile]</span>1")
+	msgList.Add("@0", "<red>[Invalid Profile]</red>")
+	msgList.Add("@-1", "<red>[Invalid Profile]</red>1")
 
 	for _, item := range msgList.Items {
 		res := common.ParseMessage(item.Msg, 1, "forums")

@@ -1,6 +1,5 @@
 {{template "header.html" . }}
 
-<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' method="post"></form>
 {{if gt .Page 1}}<link rel="prev" href="{{.Topic.Link}}?page={{subtract .Page 1}}" />
 <div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="{{lang "paginator.prev_page_aria"}}" rel="prev" href="{{.Topic.Link}}?page={{subtract .Page 1}}">{{lang "paginator.less_than"}}</a></div>{{end}}
 
@@ -9,9 +8,9 @@
 	<a class="next_link" aria-label="{{lang "paginator.next_page_aria"}}" rel="next" href="{{.Topic.Link}}?page={{add .Page 1}}">{{lang "paginator.greater_than"}}</a>
 </div>{{end}}
 
-<link rel="canonical" href="//{{.Site.URL}}{{.Topic.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}" />
+<main id="topicPage">
 
-<main>
+<link rel="canonical" href="//{{.Site.URL}}{{.Topic.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}" />
 
 <div  {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic.opening_post_aria"}}">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
@@ -20,6 +19,7 @@
 		{{/** TODO: Does this need to be guarded by a permission? It's only visible in edit mode anyway, which can't be triggered, if they don't have the permission **/}}
 		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 		{{if .CurrentUser.Perms.EditTopic}}
+		<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' method="post"></form>
 		<input form='edit_topic_form' class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic.title_input_aria"}}" />
 		<button form='edit_topic_form' name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic.update_button"}}</button>
 		{{end}}
@@ -27,29 +27,7 @@
 	</div>
 </div>
 {{if .Poll.ID}}
-<article class="rowblock post_container poll" aria-level="{{lang "topic.poll_aria"}}">
-	<div class="rowitem passive editable_parent post_item poll_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
-		<div class="topic_content user_content" style="margin:0;padding:0;">
-			{{range .Poll.QuickOptions}}
-			<div class="poll_option">
-				<input form="poll_{{$.Poll.ID}}_form" id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}" />
-				<label class="poll_option_label" for="poll_option_{{.ID}}">
-					<div class="sel"></div>
-				</label>
-				<span id="poll_option_text_{{.ID}}" class="poll_option_text">{{.Value}}</span>
-			</div>
-			{{end}}
-			<div class="poll_buttons">
-				<button form="poll_{{.Poll.ID}}_form" class="poll_vote_button">{{lang "topic.poll_vote"}}</button>
-				<button class="poll_results_button" data-poll-id="{{.Poll.ID}}">{{lang "topic.poll_results"}}</button>
-				<a href="#"><button class="poll_cancel_button">{{lang "topic.poll_cancel"}}</button></a>
-			</div>
-		</div>
-		<div id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide">
-			<div class="topic_content user_content"></div>
-		</div>
-	</div>
-</article>
+{{template "topic_poll.html" . }}
 {{end}}
 
 <article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="{{lang "topic.opening_post_aria"}}">

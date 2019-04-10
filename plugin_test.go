@@ -87,7 +87,7 @@ func TestBBCodeRender(t *testing.T) {
 	var expects string
 
 	msg = "[rand][/rand]"
-	expects = "<span style='color: red;'>[Invalid Number]</span>[rand][/rand]"
+	expects = "<red>[Invalid Number]</red>[rand][/rand]"
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	if res != expects {
@@ -96,7 +96,7 @@ func TestBBCodeRender(t *testing.T) {
 	}
 
 	msg = "[rand]-1[/rand]"
-	expects = "<span style='color: red;'>[No Negative Numbers]</span>[rand]-1[/rand]"
+	expects = "<red>[No Negative Numbers]</red>[rand]-1[/rand]"
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	if res != expects {
@@ -105,7 +105,7 @@ func TestBBCodeRender(t *testing.T) {
 	}
 
 	msg = "[rand]-01[/rand]"
-	expects = "<span style='color: red;'>[No Negative Numbers]</span>[rand]-01[/rand]"
+	expects = "<red>[No Negative Numbers]</red>[rand]-01[/rand]"
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	if res != expects {
@@ -114,7 +114,7 @@ func TestBBCodeRender(t *testing.T) {
 	}
 
 	msg = "[rand]NaN[/rand]"
-	expects = "<span style='color: red;'>[Invalid Number]</span>[rand]NaN[/rand]"
+	expects = "<red>[Invalid Number]</red>[rand]NaN[/rand]"
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	if res != expects {
@@ -123,7 +123,7 @@ func TestBBCodeRender(t *testing.T) {
 	}
 
 	msg = "[rand]Inf[/rand]"
-	expects = "<span style='color: red;'>[Invalid Number]</span>[rand]Inf[/rand]"
+	expects = "<red>[Invalid Number]</red>[rand]Inf[/rand]"
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	if res != expects {
@@ -132,7 +132,7 @@ func TestBBCodeRender(t *testing.T) {
 	}
 
 	msg = "[rand]+[/rand]"
-	expects = "<span style='color: red;'>[Invalid Number]</span>[rand]+[/rand]"
+	expects = "<red>[Invalid Number]</red>[rand]+[/rand]"
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	if res != expects {
@@ -141,7 +141,7 @@ func TestBBCodeRender(t *testing.T) {
 	}
 
 	msg = "[rand]1+1[/rand]"
-	expects = "<span style='color: red;'>[Invalid Number]</span>[rand]1+1[/rand]"
+	expects = "<red>[Invalid Number]</red>[rand]1+1[/rand]"
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	if res != expects {
@@ -191,7 +191,7 @@ func TestBBCodeRender(t *testing.T) {
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	_, err = strconv.Atoi(res)
-	if err != nil && res != "<span style='color: red;'>[Invalid Number]</span>[rand]18446744073709551615[/rand]" {
+	if err != nil && res != "<red>[Invalid Number]</red>[rand]18446744073709551615[/rand]" {
 		t.Error("Bad output:", "'"+res+"'")
 		t.Error("Expected a number between 0 and 18446744073709551615")
 	}
@@ -199,7 +199,7 @@ func TestBBCodeRender(t *testing.T) {
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
 	_, err = strconv.Atoi(res)
-	if err != nil && res != "<span style='color: red;'>[Invalid Number]</span>[rand]170141183460469231731687303715884105727[/rand]" {
+	if err != nil && res != "<red>[Invalid Number]</red>[rand]170141183460469231731687303715884105727[/rand]" {
 		t.Error("Bad output:", "'"+res+"'")
 		t.Error("Expected a number between 0 and 170141183460469231731687303715884105727")
 	}

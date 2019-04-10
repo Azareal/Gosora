@@ -571,11 +571,17 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
 	}
 
+	// TODO: Use the same hook table as downstream
+	hTbl := common.GetHookTable()
+	skip, ferr := hTbl.VhookSkippable("router_after_filters", w, req, prefix, extraData)
+	if skip || ferr != nil {
+		return
+	}
+
 	if prefix != "/ws" {
 		h := w.Header()
 		h.Set("X-Frame-Options", "deny")
 		h.Set("X-XSS-Protection", "1; mode=block") // TODO: Remove when we add a CSP? CSP's are horrendously glitchy things, tread with caution before removing
-		// TODO: Set the content policy header
 		h.Set("X-Content-Type-Options", "nosniff")
 	}
 	
@@ -773,9 +779,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w = common.GzipResponseWriter{Writer: gz, ResponseWriter: w}
 	}
 
-	// TODO: Use the same hook table as downstream
-	hTbl := common.GetHookTable()
-	skip, ferr := hTbl.VhookSkippable("router_pre_route", w, req, user, prefix, extraData)
+	skip, ferr = hTbl.VhookSkippable("router_pre_route", w, req, user, prefix, extraData)
 	if skip || ferr != nil {
 		r.handleError(ferr,w,req,user)
 	}

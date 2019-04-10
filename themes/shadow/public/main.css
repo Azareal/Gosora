@@ -280,6 +280,9 @@ h1, h2, h3, h4, h5 {
 .user_content strong h2, .user_content strong h3, .user_content strong h4 {
 	font-weight: bold;
 }
+red {
+	color: red;
+}
 
 .controls {
 	width: 100%;
@@ -681,6 +684,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	padding: 7px;
 	padding-bottom: 6px;
 	font-size: 13px;
+}
+.poll_buttons > *:not(:first-child) {
+	margin-left: 5px;
 }
 .poll_results {
 	margin-left: auto;

@@ -9,13 +9,14 @@ import (
 	"unicode/utf8"
 )
 
+// TODO: Somehow localise these?
 var SpaceGap = []byte("          ")
 var httpProtBytes = []byte("http://")
-var InvalidURL = []byte("<span style='color: red;'>[Invalid URL]</span>")
-var InvalidTopic = []byte("<span style='color: red;'>[Invalid Topic]</span>")
-var InvalidProfile = []byte("<span style='color: red;'>[Invalid Profile]</span>")
-var InvalidForum = []byte("<span style='color: red;'>[Invalid Forum]</span>")
-var unknownMedia = []byte("<span style='color: red;'>[Unknown Media]</span>")
+var InvalidURL = []byte("<red>[Invalid URL]</red>")
+var InvalidTopic = []byte("<red>[Invalid Topic]</red>")
+var InvalidProfile = []byte("<red>[Invalid Profile]</red>")
+var InvalidForum = []byte("<red>[Invalid Forum]</red>")
+var unknownMedia = []byte("<red>[Unknown Media]</red>")
 var URLOpen = []byte("<a href='")
 var URLOpen2 = []byte("'>")
 var bytesSinglequote = []byte("'")

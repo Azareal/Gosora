@@ -597,6 +597,7 @@
 		"topic.poll_vote":"Vote",
 		"topic.poll_results":"Results",
 		"topic.poll_cancel":"Cancel",
+		"topic.poll_no_results":"No one has voted yet.",
 		"topic.post_controls_aria":"Controls and Author Information",
 		"topic.unlike_tooltip":"Unlike",
 		"topic.unlike_aria":"Unlike this topic",

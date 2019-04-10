@@ -32,9 +32,9 @@ func init() {
 func initBbcode(plugin *common.Plugin) error {
 	plugin.AddHook("parse_assign", bbcodeFullParse)
 
-	bbcodeInvalidNumber = []byte("<span style='color: red;'>[Invalid Number]</span>")
-	bbcodeNoNegative = []byte("<span style='color: red;'>[No Negative Numbers]</span>")
-	bbcodeMissingTag = []byte("<span style='color: red;'>[Missing Tag]</span>")
+	bbcodeInvalidNumber = []byte("<red>[Invalid Number]</red>")
+	bbcodeNoNegative = []byte("<red>[No Negative Numbers]</red>")
+	bbcodeMissingTag = []byte("<red>[Missing Tag]</red>")
 
 	bbcodeBold = regexp.MustCompile(`(?s)\[b\](.*)\[/b\]`)
 	bbcodeItalic = regexp.MustCompile(`(?s)\[i\](.*)\[/i\]`)
