@@ -1083,6 +1083,7 @@ function mainInit(){
 						console.log("fid: " + fid);
 						forumToMoveTo = fid;
 
+						$("#mover_submit").unbind("click");
 						$("#mover_submit").click(function(event){
 							event.preventDefault();
 							bulkActionSender("move",selectedTopics,forumToMoveTo);

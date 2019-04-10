@@ -300,6 +300,10 @@ h1, h2, h3, h4, h5 {
 }
 .pane_row {
 	margin-top: 2px;
+	cursor: pointer;
+}
+.pane_selected {
+	font-weight: bold;
 }
 .pane_buttons {
 	margin-top: 8px;
