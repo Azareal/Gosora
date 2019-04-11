@@ -662,8 +662,10 @@ function mainInit(){
 		let source = "";
 		if(srcNode!=null) source = srcNode.innerText;
 		else source = block.innerHTML;
-		// TODO: Add a client template for this
-		block.innerHTML = "<textarea style='width: 99%;' name='edit_item'>" + source + "</textarea><br><a href='" + this.closest('a').getAttribute("href") + "'><button class='submit_edit' type='submit'>Update</button></a>";
+		block.innerHTML = Template_topic_c_edit_post({
+			Source: source,
+			Ref: this.closest('a').getAttribute("href")
+		})
 		runHook("edit_item_pre_bind");
 
 		$(".submit_edit").click(function(event){

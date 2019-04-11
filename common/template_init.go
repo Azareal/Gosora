@@ -477,6 +477,8 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	pageList := Paginate(20, itemsPerPage, 5)
 	tmpls.AddStd("paginator", "common.Paginator", Paginator{pageList, page, lastPage})
 
+	tmpls.AddStd("topic_c_edit_post", "common.TopicCEditPost", TopicCEditPost{Source: "", Ref: ""})
+
 	var dirPrefix = "./tmpl_client/"
 	var writeTemplate = func(name string, content string) {
 		log.Print("Writing template '" + name + "'")

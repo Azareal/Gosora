@@ -176,7 +176,7 @@ function RelativeTime(date) {
 function initPhrases() {
 	console.log("in initPhrases")
 	console.log("tmlInits:",tmplInits)
-	fetchPhrases("status,topic_list,alerts,paginator,analytics")
+	fetchPhrases("status,topic_list,topic,alerts,paginator,analytics") // TODO: Break this up?
 }
 
 function fetchPhrases(plist) {
@@ -223,6 +223,11 @@ function fetchPhrases(plist) {
 		toLoad--;
 		if(toLoad===0) initPhrases();
 		if(!Template_paginator) throw("template function not found");
+	});
+	notifyOnScriptW("template_topic_c_edit_post", () => {
+		toLoad--;
+		if(toLoad===0) initPhrases();
+		if(!Template_topic_c_edit_post) throw("template function not found");
 	});
 
 	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;

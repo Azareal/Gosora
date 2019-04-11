@@ -165,6 +165,11 @@ type CustomPagePage struct {
 	Page *CustomPage
 }
 
+type TopicCEditPost struct {
+	Source string
+	Ref    string
+}
+
 type TopicPage struct {
 	*Header
 	ItemList []ReplyUser
