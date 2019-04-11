@@ -368,7 +368,7 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user common.
 		return common.NotFoundJS(w, r)
 	}
 
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -387,6 +387,11 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user common.
 	}
 	if len(pathMap) == 0 {
 		return common.InternalErrorJS(errors.New("no paths for attachment add"), w, r)
+	}
+
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_add_attach_to_reply", reply.ID)
+	if skip || rerr != nil {
+		return rerr
 	}
 
 	var elemStr string
@@ -420,7 +425,7 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user co
 		return common.NotFoundJS(w, r)
 	}
 
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -441,6 +446,11 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user co
 			// TODO: This needs to be a JS error...
 			return rerr
 		}
+	}
+
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_remove_attach_from_reply", reply.ID)
+	if skip || rerr != nil {
+		return rerr
 	}
 
 	w.Write(successJSONBytes)

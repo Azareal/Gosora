@@ -83,10 +83,12 @@ var hookTable = &HookTable{
 		"simple_forum_check_pre_perms": nil,
 		"forum_check_pre_perms":        nil,
 
-		"action_end_create_topic": nil,
-		"action_end_create_reply": nil,
-		"action_end_edit_reply":   nil,
-		"action_end_delete_reply": nil,
+		"action_end_create_topic":             nil,
+		"action_end_create_reply":             nil,
+		"action_end_edit_reply":               nil,
+		"action_end_delete_reply":             nil,
+		"action_end_add_attach_to_reply":      nil,
+		"action_end_remove_attach_from_reply": nil,
 
 		"router_after_filters": nil,
 		"router_pre_route":     nil,

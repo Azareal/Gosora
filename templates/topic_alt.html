@@ -68,7 +68,7 @@
 			{{if .CurrentUser.Loggedin}}<textarea name="topic_content" class="show_on_edit topic_content_input edit_source">{{.Topic.Content}}</textarea>
 
 			{{if .CurrentUser.Perms.EditTopic}}
-			{{if .Topic.Attachments}}<div class="show_on_edit attach_edit_bay" type="topic" id="{{.Topic.ID}}">
+			<div class="show_on_edit attach_edit_bay" type="topic" id="{{.Topic.ID}}">
 				{{range .Topic.Attachments}}
 				<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
 					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&amp;sectionType=forums" height=24 width=24 />{{end}}
@@ -83,7 +83,7 @@
 					<label for="upload_files_op" class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
 					<button class="attach_item_delete">{{lang "topic.delete_button_text"}}</button>
 				</div>
-			</div>{{end}}
+			</div>
 
 			{{end}}{{end}}
 			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">

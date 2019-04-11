@@ -1076,9 +1076,7 @@ function mainInit(){
 					$("#mod_topic_mover .pane_row").click(function(){
 						modTopicMover.find(".pane_row").removeClass("pane_selected");
 						let fid = this.getAttribute("data-fid");
-						if (fid == null) {
-							return;
-						}
+						if (fid == null) return;
 						this.classList.add("pane_selected");
 						console.log("fid: " + fid);
 						forumToMoveTo = fid;

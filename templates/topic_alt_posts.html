@@ -10,7 +10,7 @@
 		<div class="edit_source auto_hide">{{.Content}}</div>
 
 		{{if $.CurrentUser.Perms.EditReply}}
-		{{if .Attachments}}<div class="show_on_edit show_on_block_edit attach_edit_bay" type="reply" id="{{.ID}}">
+		<div class="show_on_edit show_on_block_edit attach_edit_bay" type="reply" id="{{.ID}}">
 			{{range .Attachments}}
 			<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
 				{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&amp;sectionType=forums" height=24 width=24 />{{end}}
@@ -25,7 +25,7 @@
 				<label for="upload_files_post_{{.ID}}" class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
 				<button class="attach_item_delete">{{lang "topic.delete_button_text"}}</button>
 			</div>
-		</div>{{end}}
+		</div>
 		{{end}}{{end}}
 
 		<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
