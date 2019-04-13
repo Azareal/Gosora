@@ -6,5 +6,6 @@ CREATE TABLE "attachments" (
 	`originTable` varchar (200) DEFAULT 'replies' not null,
 	`uploadedBy` int not null,
 	`path` varchar (200) not null,
+	`extra` varchar (200) not null,
 	primary key(`attachID`)
 );

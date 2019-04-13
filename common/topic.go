@@ -251,7 +251,14 @@ func (topic *Topic) Unlock() (err error) {
 func (topic *Topic) MoveTo(destForum int) (err error) {
 	_, err = topicStmts.moveTo.Exec(destForum, topic.ID)
 	topic.cacheRemove()
-	return err
+	if err != nil {
+		return err
+	}
+	err = Attachments.MoveTo(destForum, topic.ID, "topics")
+	if err != nil {
+		return err
+	}
+	return Attachments.MoveToByExtra(destForum, "replies", strconv.Itoa(topic.ID))
 }
 
 // TODO: We might want more consistent terminology rather than using stick in some places and pin in others. If you don't understand the difference, there is none, they are one and the same.

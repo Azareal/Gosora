@@ -16,6 +16,7 @@ type MiniAttachment struct {
 	OriginID   int
 	UploadedBy int
 	Path       string
+	Extra      string
 
 	Image bool
 	Ext   string
@@ -25,7 +26,9 @@ type AttachmentStore interface {
 	Get(id int) (*MiniAttachment, error)
 	MiniGetList(originTable string, originID int) (alist []*MiniAttachment, err error)
 	BulkMiniGetList(originTable string, ids []int) (amap map[int][]*MiniAttachment, err error)
-	Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string) (int, error)
+	Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string, extra string) (int, error)
+	MoveTo(sectionID int, originID int, originTable string) error
+	MoveToByExtra(sectionID int, originTable string, extra string) error
 	GlobalCount() int
 	CountIn(originTable string, oid int) int
 	CountInPath(path string) int
@@ -39,18 +42,21 @@ type DefaultAttachmentStore struct {
 	count       *sql.Stmt
 	countIn     *sql.Stmt
 	countInPath *sql.Stmt
+	move        *sql.Stmt
+	moveByExtra *sql.Stmt
 	delete      *sql.Stmt
 }
 
-func NewDefaultAttachmentStore() (*DefaultAttachmentStore, error) {
-	acc := qgen.NewAcc()
+func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, error) {
 	return &DefaultAttachmentStore{
-		get:         acc.Select("attachments").Columns("originID, sectionID, uploadedBy, path").Where("attachID = ?").Prepare(),
-		getByObj:    acc.Select("attachments").Columns("attachID, sectionID, uploadedBy, path").Where("originTable = ? AND originID = ?").Prepare(),
-		add:         acc.Insert("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Fields("?,?,?,?,?,?").Prepare(),
+		get:         acc.Select("attachments").Columns("originID, sectionID, uploadedBy, path, extra").Where("attachID = ?").Prepare(),
+		getByObj:    acc.Select("attachments").Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable = ? AND originID = ?").Prepare(),
+		add:         acc.Insert("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path, extra").Fields("?,?,?,?,?,?,?").Prepare(),
 		count:       acc.Count("attachments").Prepare(),
 		countIn:     acc.Count("attachments").Where("originTable = ? and originID = ?").Prepare(),
 		countInPath: acc.Count("attachments").Where("path = ?").Prepare(),
+		move:        acc.Update("attachments").Set("sectionID = ?").Where("originID = ? AND originTable = ?").Prepare(),
+		moveByExtra: acc.Update("attachments").Set("sectionID = ?").Where("originTable = ? AND extra = ?").Prepare(),
 		delete:      acc.Delete("attachments").Where("attachID = ?").Prepare(),
 	}, acc.FirstError()
 }
@@ -60,7 +66,7 @@ func (store *DefaultAttachmentStore) MiniGetList(originTable string, originID in
 	defer rows.Close()
 	for rows.Next() {
 		attach := &MiniAttachment{OriginID: originID}
-		err := rows.Scan(&attach.ID, &attach.SectionID, &attach.UploadedBy, &attach.Path)
+		err := rows.Scan(&attach.ID, &attach.SectionID, &attach.UploadedBy, &attach.Path, &attach.Extra)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +120,7 @@ func (store *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []i
 
 func (store *DefaultAttachmentStore) Get(id int) (*MiniAttachment, error) {
 	attach := &MiniAttachment{ID: id}
-	err := store.get.QueryRow(id).Scan(&attach.OriginID, &attach.SectionID, &attach.UploadedBy, &attach.Path)
+	err := store.get.QueryRow(id).Scan(&attach.OriginID, &attach.SectionID, &attach.UploadedBy, &attach.Path, &attach.Extra)
 	if err != nil {
 		return nil, err
 	}
@@ -127,13 +133,23 @@ func (store *DefaultAttachmentStore) Get(id int) (*MiniAttachment, error) {
 	return attach, nil
 }
 
-func (store *DefaultAttachmentStore) Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string) (int, error) {
-	res, err := store.add.Exec(sectionID, sectionTable, originID, originTable, uploadedBy, path)
+func (store *DefaultAttachmentStore) Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string, extra string) (int, error) {
+	res, err := store.add.Exec(sectionID, sectionTable, originID, originTable, uploadedBy, path, extra)
 	if err != nil {
 		return 0, err
 	}
 	lid, err := res.LastInsertId()
 	return int(lid), err
+}
+
+func (store *DefaultAttachmentStore) MoveTo(sectionID int, originID int, originTable string) error {
+	_, err := store.move.Exec(sectionID, originID, originTable)
+	return err
+}
+
+func (store *DefaultAttachmentStore) MoveToByExtra(sectionID int, originTable string, extra string) error {
+	_, err := store.moveByExtra.Exec(sectionID, originTable, extra)
+	return err
 }
 
 func (store *DefaultAttachmentStore) GlobalCount() (count int) {

@@ -258,12 +258,18 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 		}
 
 		if user.Perms.EditReply && len(attachQueryList) > 0 {
+			//log.Printf("attachQueryList: %+v\n", attachQueryList)
 			amap, err := common.Attachments.BulkMiniGetList("replies", attachQueryList)
 			if err != nil && err != sql.ErrNoRows {
 				return common.InternalError(err, w, r)
 			}
+			//log.Printf("amap: %+v\n", amap)
+			//log.Printf("attachMap: %+v\n", attachMap)
 			for id, attach := range amap {
 				tpage.ItemList[attachMap[id]].Attachments = attach
+				/*for _, a := range attach {
+					log.Printf("a: %+v\n", a)
+				}*/
 			}
 		}
 	}
@@ -302,7 +308,7 @@ func AddAttachToTopicSubmit(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	// Handle the file attachments
-	pathMap, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", tid, "topics")
+	pathMap, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", tid, "topics", "")
 	if rerr != nil {
 		// TODO: This needs to be a JS error...
 		return rerr
@@ -529,7 +535,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 
 	// Handle the file attachments
 	if user.Perms.UploadFiles {
-		_, rerr := uploadAttachment(w, r, user, fid, "forums", tid, "topics")
+		_, rerr := uploadAttachment(w, r, user, fid, "forums", tid, "topics", "")
 		if rerr != nil {
 			return rerr
 		}

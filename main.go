@@ -152,7 +152,7 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Attachments, err = common.NewDefaultAttachmentStore()
+	common.Attachments, err = common.NewDefaultAttachmentStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}

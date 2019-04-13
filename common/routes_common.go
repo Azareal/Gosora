@@ -265,6 +265,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	addPreScript("topics_topic")
 	addPreScript("paginator")
 	addPreScript("alert")
+	addPreScript("topic_c_edit_post")
 
 	return header, nil
 }

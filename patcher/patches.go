@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"database/sql"
 	"strconv"
 
 	"github.com/Azareal/Gosora/query_gen"
@@ -28,6 +29,7 @@ func init() {
 	addPatch(14, patch14)
 	addPatch(15, patch15)
 	addPatch(16, patch16)
+	addPatch(17, patch17)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -549,4 +551,40 @@ func patch16(scanner *bufio.Scanner) error {
 			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
 		}, nil,
 	))
+}
+
+func patch17(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddColumn("attachments", tblColumn{"extra", "varchar", 200, false, false, ""}, nil))
+	if err != nil {
+		return err
+	}
+
+	err = acc().Select("topics").Cols("tid, parentID").Where("attachCount > 0").Each(func(rows *sql.Rows) error {
+		var tid, parentID int
+		err := rows.Scan(&tid, &parentID)
+		if err != nil {
+			return err
+		}
+		_, err = acc().Update("attachments").Set("sectionID = ?").Where("originTable = 'topics' AND originID = ?").Exec(parentID, tid)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	return acc().Select("replies").Cols("rid, tid").Where("attachCount > 0").Each(func(rows *sql.Rows) error {
+		var rid, tid, sectionID int
+		err := rows.Scan(&rid, &tid)
+		if err != nil {
+			return err
+		}
+
+		err = acc().Select("topics").Cols("parentID").Where("tid = ?").QueryRow(tid).Scan(&sectionID)
+		if err != nil {
+			return err
+		}
+
+		_, err = acc().Update("attachments").Set("sectionID = ?, extra = ?").Where("originTable = 'replies' AND originID = ?").Exec(sectionID, tid, rid)
+		return err
+	})
 }

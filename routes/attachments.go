@@ -117,7 +117,7 @@ func deleteAttachment(w http.ResponseWriter, r *http.Request, user common.User, 
 // TODO: Stop duplicating this code
 // TODO: Use a transaction here
 // TODO: Move this function to neutral ground
-func uploadAttachment(w http.ResponseWriter, r *http.Request, user common.User, sid int, sectionTable string, oid int, originTable string) (pathMap map[string]string, rerr common.RouteError) {
+func uploadAttachment(w http.ResponseWriter, r *http.Request, user common.User, sid int, sectionTable string, oid int, originTable string, extra string) (pathMap map[string]string, rerr common.RouteError) {
 	pathMap = make(map[string]string)
 	files, rerr := uploadFilesWithHash(w, r, user, "./attachs/")
 	if rerr != nil {
@@ -125,7 +125,7 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, user common.User, 
 	}
 
 	for _, filename := range files {
-		aid, err := common.Attachments.Add(sid, sectionTable, oid, originTable, user.ID, filename)
+		aid, err := common.Attachments.Add(sid, sectionTable, oid, originTable, user.ID, filename, extra)
 		if err != nil {
 			return nil, common.InternalError(err, w, r)
 		}

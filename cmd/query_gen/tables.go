@@ -277,7 +277,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"originTable", "varchar", 200, false, false, "replies"},
 			tblColumn{"uploadedBy", "int", 0, false, false, ""}, // TODO; Make this a foreign key
 			tblColumn{"path", "varchar", 200, false, false, ""},
-			//tblColumn{"extra", "varchar", 200, false, false, ""},
+			tblColumn{"extra", "varchar", 200, false, false, ""},
 		},
 		[]tblKey{
 			tblKey{"attachID", "primary"},

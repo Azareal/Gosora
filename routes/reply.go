@@ -79,7 +79,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 	// Handle the file attachments
 	// TODO: Stop duplicating this code
 	if user.Perms.UploadFiles {
-		_, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", rid, "replies")
+		_, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", rid, "replies", strconv.Itoa(topic.ID))
 		if rerr != nil {
 			return rerr
 		}
@@ -380,7 +380,7 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	// Handle the file attachments
-	pathMap, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", rid, "replies")
+	pathMap, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", rid, "replies", strconv.Itoa(topic.ID))
 	if rerr != nil {
 		// TODO: This needs to be a JS error...
 		return rerr
