@@ -483,10 +483,10 @@ func isLocalHost(host string) bool {
 // TODO: SetDefaultPath
 // TODO: GetDefaultPath
 func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	var malformedRequest = func() {
+	var malformedRequest = func(typ int) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
-		r.DumpRequest(req,"Malformed Request")
+		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
 		counters.AgentViewCounter.Bump({{.AllAgentMap.malformed}})
 	}
 	
@@ -495,7 +495,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Host[0]=='[' {
 		spl := strings.Split(req.Host,"]")
 		if len(spl) > 2 {
-			malformedRequest()
+			malformedRequest(0)
 			return
 		}
 		shost = strings.TrimPrefix(spl[0],"[")
@@ -503,7 +503,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	} else {
 		spl := strings.Split(req.Host,":")
 		if len(spl) > 2 {
-			malformedRequest()
+			malformedRequest(1)
 			return
 		}
 		shost = spl[0]
@@ -513,7 +513,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	// TODO: Reject requests from non-local IPs, if the site host is set to localhost or a localhost IP
 	if common.Site.PortInt != 80 && common.Site.PortInt != 443 && sport != common.Site.Port {
-		malformedRequest()
+		malformedRequest(2)
 		return
 	}
 	
@@ -538,8 +538,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Deflect malformed requests
-	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || shost != common.Site.Host {
-		malformedRequest()
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || (!common.Config.LooseHost && shost != common.Site.Host) {
+		malformedRequest(3)
 		return
 	}
 	if common.Dev.FullReqLog {

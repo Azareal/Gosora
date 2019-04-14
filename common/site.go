@@ -92,6 +92,7 @@ type config struct {
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool
 	//LooseCSP             bool
+	LooseHost         bool
 	DisableServerPush bool
 	EnableCDNPush     bool
 
