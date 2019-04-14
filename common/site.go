@@ -93,6 +93,7 @@ type config struct {
 	DisableJSAntispam    bool
 	//LooseCSP             bool
 	LooseHost         bool
+	LoosePort         bool
 	DisableServerPush bool
 	EnableCDNPush     bool
 

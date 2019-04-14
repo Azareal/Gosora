@@ -86,6 +86,8 @@ DisableJSAntispam - This switch lets you disable the JS anti-spam feature. It ma
 
 LooseHost - Disable host header checks in the router. May be useful when using a reverse-proxy like Nginx.
 
+LoosePort - Disable port match checks in the router. May be useful when using a revere-proxy like Nginx.
+
 DisableServerPush - This switch lets you disable the HTTP/2 server push feature.
 
 EnableCDNPush - This switch lets you enable the HTTP/2 CDN Server Push feature. This operates by sending a Link header on every request and may also work with reverse-proxies like Nginx for doing HTTP/2 server pushes.

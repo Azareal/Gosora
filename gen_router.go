@@ -733,7 +733,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	// TODO: Reject requests from non-local IPs, if the site host is set to localhost or a localhost IP
-	if common.Site.PortInt != 80 && common.Site.PortInt != 443 && sport != common.Site.Port {
+	if !common.Config.LoosePort && common.Site.PortInt != 80 && common.Site.PortInt != 443 && sport != common.Site.Port {
 		malformedRequest(2)
 		return
 	}
