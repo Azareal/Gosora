@@ -80,15 +80,15 @@ BuildSlugs - Whether you want the title appear in the URL. For instance: `/topic
 
 ServerCount - The number of instances you're running. This setting is currently experimental.
 
-DisableLiveTopicList - This switch allows you to disable the live topic list.
+DisableLiveTopicList - This switch allows you to disable the live topic list. Default: false
 
-DisableJSAntispam - This switch lets you disable the JS anti-spam feature. It may be useful if you primarily get users who for one reason or another have decided to disable JavaScript.
+DisableJSAntispam - This switch lets you disable the JS anti-spam feature. It may be useful if you primarily get users who for one reason or another have decided to disable JavaScript. Default: false
 
-LooseHost - Disable host header checks in the router. May be useful when using a reverse-proxy like Nginx.
+LooseHost - Disable host header checks in the router. May be useful when using a reverse-proxy like Nginx. Default: false
 
-LoosePort - Disable port match checks in the router. May be useful when using a revere-proxy like Nginx.
+LoosePort - Disable port match checks in the router. May be useful when using a revere-proxy like Nginx. Default: false
 
-DisableServerPush - This switch lets you disable the HTTP/2 server push feature.
+DisableServerPush - This switch lets you disable the HTTP/2 server push feature. Default: false
 
 EnableCDNPush - This switch lets you enable the HTTP/2 CDN Server Push feature. This operates by sending a Link header on every request and may also work with reverse-proxies like Nginx for doing HTTP/2 server pushes.
 
