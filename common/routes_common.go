@@ -265,7 +265,10 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	addPreScript("topics_topic")
 	addPreScript("paginator")
 	addPreScript("alert")
-	addPreScript("topic_c_edit_post")
+	if user.Loggedin {
+		addPreScript("topic_c_edit_post")
+		addPreScript("topic_c_attach_item")
+	}
 
 	return header, nil
 }

@@ -909,9 +909,13 @@ function mainInit(){
 					let fileItem = document.createElement("div");
 					let ext = getExt(filename);
 					// TODO: Check if this is actually an image, maybe push ImageFileExts to the client from the server in some sort of gen.js?
-					// TODO: Use client templates here
 					fileItem.className = "attach_item attach_image_holder";
-					fileItem.innerHTML = "<img src='"+e.target.result+"' height=24 width=24 /><span class='attach_item_path' aid='"+data[hash+"."+ext]+"' fullpath='//" + window.location.host + "/attachs/" + hash + "." + ext+"'>"+hash+"."+ext+"</span><button class='attach_item_select'>Select</button><button class='attach_item_copy'>Copy</button>";
+					fileItem.innerHTML = Template_topic_c_attach_item({
+						ID: data[hash+"."+ext],
+						ImgSrc: e.target.result,
+						Path: hash+"."+ext,
+						FullPath: "//" + window.location.host + "/attachs/" + hash + "." + ext,
+					});
 					fileDock.insertBefore(fileItem,fileDock.querySelector(".attach_item_buttons"));
 					
 					$(".attach_item_select").unbind("click");

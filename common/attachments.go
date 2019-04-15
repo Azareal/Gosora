@@ -107,13 +107,20 @@ func (store *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []i
 		}
 		attach.Ext = extarr[len(extarr)-1]
 		attach.Image = ImageFileExts.Contains(attach.Ext)
-		if attach.ID != currentID {
+		if currentID == 0 {
+			currentID = attach.OriginID
+		}
+		if attach.OriginID != currentID {
 			if len(buffer) > 0 {
 				amap[currentID] = buffer
+				currentID = attach.OriginID
 				buffer = nil
 			}
 		}
 		buffer = append(buffer, attach)
+	}
+	if len(buffer) > 0 {
+		amap[currentID] = buffer
 	}
 	return amap, rows.Err()
 }

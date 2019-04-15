@@ -169,6 +169,12 @@ type TopicCEditPost struct {
 	Source string
 	Ref    string
 }
+type TopicCAttachItem struct {
+	ID       int
+	ImgSrc   string
+	Path     string
+	FullPath string
+}
 
 type TopicPage struct {
 	*Header

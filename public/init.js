@@ -173,10 +173,14 @@ function RelativeTime(date) {
 	return date;
 }
 
-function initPhrases() {
+function initPhrases(loggedIn) {
 	console.log("in initPhrases")
 	console.log("tmlInits:",tmplInits)
-	fetchPhrases("status,topic_list,topic,alerts,paginator,analytics") // TODO: Break this up?
+	let e = "";
+	if(loggedIn) {
+		e = ",topic"
+	}
+	fetchPhrases("status,topic_list,alerts,paginator,analytics"+e) // TODO: Break this up?
 }
 
 function fetchPhrases(plist) {
@@ -212,26 +216,24 @@ function fetchPhrases(plist) {
 
 (() => {
 	runInitHook("pre_iife");
+	let loggedIn = document.head.querySelector("[property='x-loggedin']").content == "true";
+
 	let toLoad = 2;
 	// TODO: Shunt this into loggedIn if there aren't any search and filter widgets?
-	notifyOnScriptW("template_topics_topic", () => {
+	let q = (f) => {
 		toLoad--;
-		if(toLoad===0) initPhrases();
-		if(!Template_topics_topic) throw("template function not found");
-	});
-	notifyOnScriptW("template_paginator", () => {
-		toLoad--;
-		if(toLoad===0) initPhrases();
-		if(!Template_paginator) throw("template function not found");
-	});
-	notifyOnScriptW("template_topic_c_edit_post", () => {
-		toLoad--;
-		if(toLoad===0) initPhrases();
-		if(!Template_topic_c_edit_post) throw("template function not found");
-	});
+		if(toLoad===0) initPhrases(loggedIn);
+		if(f) throw("template function not found");
+	};
+	if(loggedIn) {
+		toLoad += 2;
+		notifyOnScriptW("template_topic_c_edit_post", () => q(!Template_topic_c_edit_post));
+		notifyOnScriptW("template_topic_c_attach_item", () => q(!Template_topic_c_attach_item));
+	}
+	notifyOnScriptW("template_topics_topic", () => q(!Template_topics_topic));
+	notifyOnScriptW("template_paginator", () => q(!Template_paginator));
 
-	let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
-	if(loggedIn=="true") {
+	if(loggedIn) {
 		fetch("/api/me/")
 		.then((resp) => resp.json())
 		.then((data) => {

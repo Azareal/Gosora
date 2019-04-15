@@ -479,6 +479,8 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	tmpls.AddStd("topic_c_edit_post", "common.TopicCEditPost", TopicCEditPost{Source: "", Ref: ""})
 
+	tmpls.AddStd("topic_c_attach_item", "common.TopicCAttachItem", TopicCAttachItem{ID: 1, ImgSrc: "", Path: "", FullPath: ""})
+
 	var dirPrefix = "./tmpl_client/"
 	var writeTemplate = func(name string, content string) {
 		log.Print("Writing template '" + name + "'")
