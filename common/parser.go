@@ -26,6 +26,8 @@ var URLClose = []byte("</a>")
 var imageOpen = []byte("<a href=\"")
 var imageOpen2 = []byte("\"><img src='")
 var imageClose = []byte("' class='postImage' /></a>")
+var attachOpen = []byte("<a download class='attach' href=\"")
+var attachClose = []byte("\">Attachment</a>")
 var urlPattern = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
 var urlReg *regexp.Regexp
 
@@ -631,6 +633,13 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				} else if media.Type == "image" {
 					addImage(media.URL)
 					continue
+				} else if media.Type == "aother" {
+					sb.Write(attachOpen)
+					sb.WriteString(media.URL + "?sectionID=" + strconv.Itoa(sectionID) + "&amp;sectionType=" + sectionType)
+					sb.Write(attachClose)
+					i += urlLen
+					lastItem = i
+					continue
 				} else if media.Type == "raw" {
 					sb.WriteString(media.Body)
 					i += urlLen
@@ -820,13 +829,23 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	pathFrags := strings.Split(path, "/")
 	if len(pathFrags) >= 2 {
 		if samesite && pathFrags[1] == "attachs" && (scheme == "http" || scheme == "https") {
-			media.Type = "attach"
 			var sport string
 			// ? - Assumes the sysadmin hasn't mixed up the two standard ports
 			if port != "443" && port != "80" {
 				sport = ":" + port
 			}
 			media.URL = scheme + "://" + hostname + sport + path
+			var extarr = strings.Split(path, ".")
+			if len(extarr) == 0 {
+				// TODO: Write a unit test for this
+				return media, false
+			}
+			var ext = extarr[len(extarr)-1]
+			if ImageFileExts.Contains(ext) {
+				media.Type = "attach"
+			} else {
+				media.Type = "aother"
+			}
 			return media, true
 		}
 	}

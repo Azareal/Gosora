@@ -860,11 +860,10 @@ function mainInit(){
 		}
 
 		for(let i = 0; i < files.length; i++) {
-			let reader = new FileReader();
-			reader.onload = (e) => {
-				let filename = files[i]["name"];
+			let filename = files[i]["name"];
+			let f = (e) => {
 				step1(e,filename)
-
+				
 				let reader = new FileReader();
 				reader.onload = (e2) => {
 					crypto.subtle.digest('SHA-256',e2.target.result)
@@ -874,8 +873,16 @@ function mainInit(){
 						}).then(hash => step2(e,hash,filename));
 				}
 				reader.readAsArrayBuffer(files[i]);
-			}
-			reader.readAsDataURL(files[i]);
+			};
+			
+			let ext = getExt(filename);
+			// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
+			let isImage = ["png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp"].includes(ext);
+			if(isImage) {
+				let reader = new FileReader();
+				reader.onload = f;
+				reader.readAsDataURL(files[i]);
+			} else f(null);
 		}
 	}
 
@@ -902,16 +909,17 @@ function mainInit(){
 				let req = new XMLHttpRequest();
 				req.addEventListener("load", () => {
 					let data = JSON.parse(req.responseText);
-					//console.log("hash:",hash);
 					//console.log("rdata:",data);
 					let fileItem = document.createElement("div");
 					let ext = getExt(filename);
-					//console.log("ext:",ext);
-					// TODO: Check if this is actually an image, maybe push ImageFileExts to the client from the server in some sort of gen.js?
-					fileItem.className = "attach_item attach_item_item attach_image_holder";
+					// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
+					let isImage = ["png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp"].includes(ext);
+					let c = "";
+					if(isImage) c = " attach_image_holder"
+					fileItem.className = "attach_item attach_item_item" + c;
 					fileItem.innerHTML = Template_topic_c_attach_item({
 						ID: data.elems[hash+"."+ext],
-						ImgSrc: e.target.result,
+						ImgSrc: isImage ? e.target.result : "",
 						Path: hash+"."+ext,
 						FullPath: "//" + window.location.host + "/attachs/" + hash + "." + ext,
 					});
@@ -932,7 +940,7 @@ function mainInit(){
 	// Quick Topic / Quick Reply
 	function uploadAttachHandler() {
 		try {
-			uploadFileHandler(this.files,5,(e,filename) => {
+			uploadFileHandler(this.files, 5, (e,filename) => {
 				// TODO: Use client templates here
 				let fileDock = document.getElementById("upload_file_dock");
 				let fileItem = document.createElement("label");

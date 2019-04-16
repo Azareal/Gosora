@@ -994,7 +994,7 @@ input[type=checkbox]:checked + label .sel {
 	margin-right: 8px;
 	border-radius: 4px;
 }
-.attach_image_holder span {
+.attach_item_item span {
 	margin-bottom: 4px;
 }
 .attach_edit_bay button {
@@ -1007,10 +1007,13 @@ input[type=checkbox]:checked + label .sel {
     padding: 8px;
     width: 100%;
 }
-.attach_image_holder span {
+.attach_item_item span {
 	margin-right: auto;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	width: 350px;
+}
+.attach_image_holder span {
 	width: 300px;
 }
 .attach_item button {

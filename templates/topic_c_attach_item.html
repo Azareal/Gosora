@@ -1,4 +1,4 @@
-<img src='{{.ImgSrc}}' height=24 width=24 />
+{{if .ImgSrc}}<img src='{{.ImgSrc}}' height=24 width=24 />{{end}}
 <span class='attach_item_path' aid='{{.ID}}' fullpath='{{.FullPath}}'>{{.Path}}</span>
 <button class='attach_item_select'>{{lang "topic.select_button_text"}}</button>
 <button class='attach_item_copy'>{{lang "topic.copy_button_text"}}</button>
