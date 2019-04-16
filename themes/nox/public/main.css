@@ -1016,6 +1016,9 @@ input[type=checkbox]:checked + label .sel {
 .attach_item button {
 	margin-top: -1px;
 }
+.post_item:not(.has_attachs) .attach_item_delete {
+	display: none;
+}
 
 .zone_view_topic .pageset {
 	margin-bottom: 14px;

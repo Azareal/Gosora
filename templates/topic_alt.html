@@ -61,7 +61,7 @@
 		</div>
 	</article>
 	{{end}}
-	<article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post" aria-label="{{lang "topic.opening_post_aria"}}">
+	<article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post{{if .Topic.Attachments}} has_attachs{{end}}" aria-label="{{lang "topic.opening_post_aria"}}">
 		{{template "topic_alt_userinfo.html" .Topic }}
 		<div class="content_container">
 			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
@@ -70,7 +70,7 @@
 			{{if .CurrentUser.Perms.EditTopic}}
 			<div class="show_on_edit attach_edit_bay" type="topic" id="{{.Topic.ID}}">
 				{{range .Topic.Attachments}}
-				<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
+				<div class="attach_item attach_item_item{{if .Image}} attach_image_holder{{end}}">
 					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&amp;sectionType=forums" height=24 width=24 />{{end}}
 					<span class="attach_item_path" aid="{{.ID}}" fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
 					<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>

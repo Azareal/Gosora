@@ -402,7 +402,7 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user common.
 		elemStr = elemStr[:len(elemStr)-1]
 	}
 
-	w.Write([]byte(`{"success":"1","elems":[{` + elemStr + `}]}`))
+	w.Write([]byte(`{"success":"1","elems":{` + elemStr + `}}`))
 	return nil
 }
 
@@ -436,7 +436,11 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user co
 		return common.NoPermissionsJS(w, r, user)
 	}
 
-	for _, said := range strings.Split(r.PostFormValue("aids"), ",") {
+	saids := strings.Split(r.PostFormValue("aids"), ",")
+	if len(saids) == 0 {
+		return common.LocalErrorJS("No aids provided", w, r)
+	}
+	for _, said := range saids {
 		aid, err := strconv.Atoi(said)
 		if err != nil {
 			return common.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)

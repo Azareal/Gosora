@@ -1,4 +1,4 @@
-{{range .ItemList}}<article {{scope "post"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item{{if .ActionType}} action_item{{end}}">
+{{range .ItemList}}<article {{scope "post"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item{{if .ActionType}} action_item{{end}}{{if .Attachments}} has_attachs{{end}}">
 	{{template "topic_alt_userinfo.html" . }}
 	<div class="content_container"{{if .ActionType}} style="margin-left: 0px;"{{end}}>
 		{{if .ActionType}}
@@ -12,7 +12,7 @@
 		{{if $.CurrentUser.Perms.EditReply}}
 		<div class="show_on_edit show_on_block_edit attach_edit_bay" type="reply" id="{{.ID}}">
 			{{range .Attachments}}
-			<div class="attach_item{{if .Image}} attach_image_holder{{end}}">
+			<div class="attach_item attach_item_item{{if .Image}} attach_image_holder{{end}}">
 				{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sectionID={{.SectionID}}&amp;sectionType=forums" height=24 width=24 />{{end}}
 				<span class="attach_item_path" aid="{{.ID}}" fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
 				<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>
