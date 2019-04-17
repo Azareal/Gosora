@@ -418,6 +418,9 @@ h2 {
 	height: 100px;
 	resize: vertical;
 }
+.uploadItem {
+	display: inline-block;
+}
 
 .more_topic_block_initial {
 	display: none;

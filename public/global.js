@@ -939,6 +939,7 @@ function mainInit(){
 			});
 		} catch(e) {
 			// TODO: Use a notice instead
+			console.log("e:",e);
 			alert(e);
 		}
 	}
@@ -952,11 +953,13 @@ function mainInit(){
 				let fileItem = document.createElement("label");
 				console.log("fileItem",fileItem);
 
-				let ext = getExt(filename)
+				let ext = getExt(filename);
+				// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
+				let isImage = ["png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp"].includes(ext);
 				fileItem.innerText = "." + ext;
 				fileItem.className = "formbutton uploadItem";
 				// TODO: Check if this is actually an image
-				fileItem.style.backgroundImage = "url("+e.target.result+")";
+				if(isImage) fileItem.style.backgroundImage = "url("+e.target.result+")";
 
 				fileDock.appendChild(fileItem);
 			},(e,hash, filename) => {
@@ -976,6 +979,7 @@ function mainInit(){
 			});
 		} catch(e) {
 			// TODO: Use a notice instead
+			console.log("e:",e);
 			alert(e);
 		}
 	}
