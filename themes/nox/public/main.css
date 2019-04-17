@@ -875,12 +875,15 @@ blockquote:first-child {
 red {
 	color: red;
 }
-.user_content.in_edit a {
+.update_buttons {
 	display: flex;
 	background-color: #444444;
 	border-radius: 4px;
 	margin-top: 4px; /*8 without <br>*/
 	padding: 6px;
+}
+.user_content.in_edit a {
+	margin-right: 8px;
 }
 .post_item .button_container {
 	display: flex;
@@ -974,10 +977,6 @@ input[type=checkbox]:checked + label .sel {
 	content: "{{lang "topic.like_count_suffix" . }}";
 }
 
-/*.attach_edit_bay {
-	display: flex;
-	flex-direction: row;
-}*/
 .attach_item {
 	display: flex;
 	background-color: #444444;
@@ -994,9 +993,6 @@ input[type=checkbox]:checked + label .sel {
 	margin-right: 8px;
 	border-radius: 4px;
 }
-.attach_item_item span {
-	margin-bottom: 4px;
-}
 .attach_edit_bay button {
 	margin-top: 8px;
 	margin-left: 8px;
@@ -1004,10 +1000,11 @@ input[type=checkbox]:checked + label .sel {
 
 /* New */
 .attach_item {
-    padding: 8px;
-    width: 100%;
+	padding: 8px;
+	width: 100%;
 }
 .attach_item_item span {
+	margin-bottom: 4px;
 	margin-right: auto;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -1019,7 +1016,8 @@ input[type=checkbox]:checked + label .sel {
 .attach_item button {
 	margin-top: -1px;
 }
-.post_item:not(.has_attachs) .attach_item_delete {
+.post_item:not(.has_attachs) .attach_item_buttons,
+.has_attachs .update_buttons .add_file_button {
 	display: none;
 }
 

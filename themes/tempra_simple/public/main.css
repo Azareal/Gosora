@@ -705,6 +705,9 @@ red {
 .staff_post {
 	background-color: #ffeaff;
 }
+.update_buttons .add_file_button {
+	display: none;
+}
 
 .mod_button {
 	margin-right: 4px;

@@ -283,6 +283,9 @@ h1, h2, h3, h4, h5 {
 red {
 	color: red;
 }
+.update_buttons .add_file_button {
+	display: none;
+}
 
 .controls {
 	width: 100%;

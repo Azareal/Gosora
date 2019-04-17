@@ -79,9 +79,9 @@
 				{{end}}
 				<div class="attach_item attach_item_buttons">
 					{{if .CurrentUser.Perms.UploadFiles}}
-					<input name="upload_files" id="upload_files_op" multiple type="file" style="display: none;" />
+					<input name="upload_files" id="upload_files_op" multiple type="file" class="auto_hide" />
 					<label for="upload_files_op" class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
-					<button class="attach_item_delete">{{lang "topic.delete_button_text"}}</button>
+					<button class="attach_item_delete formbutton">{{lang "topic.delete_button_text"}}</button>
 				</div>
 			</div>
 

@@ -1,2 +1,5 @@
 <textarea style='width: 99%;' name='edit_item'>{{.Source}}</textarea><br>
-<a href='{{.Ref}}'><button class='submit_edit' type='submit'>{{lang "topic.update_button"}}</button></a>
+<div class="update_buttons">
+	<a href='{{.Ref}}'><button class='submit_edit' type='submit'>{{lang "topic.update_button"}}</button></a>
+	<label for="upload_files_post_{{.ID}}" class="formbutton add_file_button">{{lang "topic.reply_add_file_button"}}</label>
+</div>

@@ -166,6 +166,7 @@ type CustomPagePage struct {
 }
 
 type TopicCEditPost struct {
+	ID     int
 	Source string
 	Ref    string
 }

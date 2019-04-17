@@ -595,9 +595,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 }
 
 .formbutton {
-	margin-top: 12px;
 	margin-left: auto;
 	margin-right: auto;
+	margin-top: 12px;
 }
 .quick_button_row .formitem {
 	display: flex;
@@ -1087,6 +1087,13 @@ blockquote:first-child {
 red {
 	color: red;
 }
+.update_buttons {
+	margin-top: -8px;
+	margin-bottom: 8px;
+}
+.update_buttons .add_file_button {
+	margin-left: 8px;
+}
 .button_container {
 	margin-top: auto;
 	display: flex;
@@ -1170,7 +1177,54 @@ red {
 }
 
 .attach_edit_bay {
+	margin-top: -4px;
+}
+.top_post .attach_edit_bay {
+	margin-top: 8px;
+}
+.attach_item {
+	display: flex;
+	margin-top: 4px;
+	margin-bottom: 8px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	padding: 8px;
+	padding-left: 0px;
+	width: 100%;
+}
+.attach_item img {
+	margin-right: 8px;
+	border-radius: 4px;
+}
+.attach_item_item {
+	background-color: #EEEEEE;
+	padding-left: 8px;
+}
+.attach_item_item span {
+	margin-bottom: 4px;
+	margin-right: auto;
+	padding-top: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: 350px;
+}
+.attach_image_holder span {
+	width: 300px;
+}
+.attach_item_buttons label, .attach_item_select, .attach_item_delete {
+	margin-left: 0px;
+	margin-right: 8px;
+	margin-top: 0px;
+}
+.post_item:not(.has_attachs) .attach_item_buttons,
+.has_attachs .update_buttons .add_file_button {
 	display: none;
+}
+.update_buttons a button {
+	margin-top: 0px;
+}
+.top_post .attach_item_buttons {
+	margin-top: -4px;
 }
 .zone_view_topic .pageset {
 	margin-bottom: 14px;

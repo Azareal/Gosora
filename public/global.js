@@ -653,16 +653,21 @@ function mainInit(){
 
 	$(".edit_item").click(function(event){
 		event.preventDefault();
+
 		let blockParent = this.closest('.editable_parent');
 		$(blockParent).find('.hide_on_edit').addClass("edit_opened");
 		$(blockParent).find('.show_on_edit').addClass("edit_opened");
+		$(blockParent).find('.hide_on_block_edit').addClass("edit_opened");
+		$(blockParent).find('.show_on_block_edit').addClass("edit_opened");
 		let srcNode = blockParent.querySelector(".edit_source");
 		let block = blockParent.querySelector('.editable_block');
 		block.classList.add("in_edit");
+
 		let source = "";
 		if(srcNode!=null) source = srcNode.innerText;
 		else source = block.innerHTML;
 		block.innerHTML = Template_topic_c_edit_post({
+			ID: blockParent.getAttribute("id").slice("post-".length),
 			Source: source,
 			Ref: this.closest('a').getAttribute("href")
 		})
@@ -672,6 +677,8 @@ function mainInit(){
 			event.preventDefault();
 			$(blockParent).find('.hide_on_edit').removeClass("edit_opened");
 			$(blockParent).find('.show_on_edit').removeClass("edit_opened");
+			$(blockParent).find('.hide_on_block_edit').removeClass("edit_opened");
+			$(blockParent).find('.show_on_block_edit').removeClass("edit_opened");
 			block.classList.remove("in_edit");
 			let newContent = block.querySelector('textarea').value;
 			block.innerHTML = quickParse(newContent);
@@ -716,8 +723,7 @@ function mainInit(){
 		});
 	});
 
-	$(".edit_fields").click(function(event)
-	{
+	$(".edit_fields").click(function(event) {
 		event.preventDefault();
 		if($(this).find("input").length !== 0) return;
 		//console.log("clicked .edit_fields");
