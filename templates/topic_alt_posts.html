@@ -1,8 +1,8 @@
 {{range .ItemList}}<article {{scope "post"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item{{if .ActionType}} action_item{{end}}{{if .Attachments}} has_attachs{{end}}">
 	{{template "topic_alt_userinfo.html" . }}
-	<div class="content_container"{{if .ActionType}} style="margin-left: 0px;"{{end}}>
+	<div class="content_container">
 		{{if .ActionType}}
-			<span class="action_icon" style="font-size: 18px;padding-right: 5px;" aria-hidden="true">{{.ActionIcon}}</span>
+			<span class="action_icon" aria-hidden="true">{{.ActionIcon}}</span>
 			<span itemprop="text">{{.ActionType}}</span>
 		{{else}}
 		<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
