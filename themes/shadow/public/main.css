@@ -253,6 +253,11 @@ h1, h2, h3, h4, h5 {
 	float: right;
 }
 
+.action_item .action_icon {
+	font-size: 18px;
+	padding-right: 5px;
+}
+
 /* TODO: Rewrite the closed topic header so that it looks more consistent with the rest of the theme */
 .topic_closed_head .topic_status_closed {
 	margin-bottom: -10px;

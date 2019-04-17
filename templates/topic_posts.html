@@ -1,7 +1,7 @@
 <div class="rowblock post_container" aria-label="{{lang "topic.current_page_aria"}}" style="overflow: hidden;">{{range .ItemList}}
 {{if .ActionType}}
 	<article {{scope "post_action"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item action_item">
-		<span class="action_icon" style="font-size: 18px;padding-right: 5px;">{{.ActionIcon}}</span>
+		<span class="action_icon">{{.ActionIcon}}</span>
 		<span itemprop="text">{{.ActionType}}</span>
 	</article>
 {{else}}

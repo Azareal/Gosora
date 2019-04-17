@@ -782,6 +782,10 @@ red {
 	text-align: center;
 	background-color: rgb(255,245,245);
 }
+.action_item .action_icon {
+	font-size: 18px;
+	padding-right: 5px;
+}
 
 blockquote {
 	border: 1px solid hsl(0, 0%, 80%);

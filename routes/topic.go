@@ -190,7 +190,8 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 			// We really shouldn't have inline HTML, we should do something about this...
 			if replyItem.ActionType != "" {
 				var action string
-				switch replyItem.ActionType {
+				aarr := strings.Split(replyItem.ActionType, "-")
+				switch aarr[0] {
 				case "lock":
 					action = "lock"
 					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
@@ -204,15 +205,25 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 					action = "unstick"
 					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
 				case "move":
-					action = "move"
+					if len(aarr) == 2 {
+						fid, _ := strconv.Atoi(aarr[1])
+						forum, err := common.Forums.Get(fid)
+						if err == nil {
+							replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_move_dest", forum.Link, forum.Name, replyItem.UserLink, replyItem.CreatedByName)
+						} else {
+							action = "move"
+						}
+					} else {
+						action = "move"
+					}
+					replyItem.ActionIcon = ""
+				default:
+					// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
+					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_default", replyItem.ActionType)
 					replyItem.ActionIcon = ""
 				}
 				if action != "" {
 					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_"+action, replyItem.UserLink, replyItem.CreatedByName)
-				} else {
-					// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_default", replyItem.ActionType)
-					replyItem.ActionIcon = ""
 				}
 			}
 
@@ -228,6 +239,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 			header.Hooks.VhookNoRet("topic_reply_row_assign", &tpage, &replyItem)
 			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
 			tpage.ItemList = append(tpage.ItemList, replyItem)
+			//log.Printf("r: %d-%d", replyItem.ID, len(tpage.ItemList)-1)
 		}
 		err = rows.Err()
 		if err != nil {
@@ -266,6 +278,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 			//log.Printf("amap: %+v\n", amap)
 			//log.Printf("attachMap: %+v\n", attachMap)
 			for id, attach := range amap {
+				//log.Print("id:", id)
 				tpage.ItemList[attachMap[id]].Attachments = attach
 				/*for _, a := range attach {
 					log.Printf("a: %+v\n", a)
@@ -929,8 +942,8 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 			return common.InternalErrorJS(err, w, r)
 		}
 
-		// TODO: Log more data so we can list the destination forum in the action post?
-		err = addTopicAction("move", topic, user)
+		// ? - Is there a better way of doing this?
+		err = addTopicAction("move-"+strconv.Itoa(fid), topic, user)
 		if err != nil {
 			return common.InternalErrorJS(err, w, r)
 		}

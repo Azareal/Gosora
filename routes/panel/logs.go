@@ -51,11 +51,13 @@ func handleUnknownTopic(topic *common.Topic, err error) *common.Topic {
 }
 
 // TODO: Move the log building logic into /common/ and it's own abstraction
+// TODO: Localise this
 func topicElementTypeAction(action string, elementType string, elementID int, actor *common.User, topic *common.Topic) (out string) {
 	if action == "delete" {
 		return fmt.Sprintf("Topic #%d was deleted by <a href='%s'>%s</a>", elementID, actor.Link, actor.Name)
 	}
-	switch action {
+	aarr := strings.Split(action, "-")
+	switch aarr[0] {
 	case "lock":
 		out = "<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>"
 	case "unlock":
@@ -65,6 +67,13 @@ func topicElementTypeAction(action string, elementType string, elementID int, ac
 	case "unstick":
 		out = "<a href='%s'>%s</a> was unpinned by <a href='%s'>%s</a>"
 	case "move":
+		if len(aarr) == 2 {
+			fid, _ := strconv.Atoi(aarr[1])
+			forum, err := common.Forums.Get(fid)
+			if err == nil {
+				return fmt.Sprintf("<a href='%s'>%s</a> was moved to <a href='%s'>%s</a> by <a href='%s'>%s</a>", topic.Link, topic.Title, forum.Link, forum.Name, actor.Link, actor.Name)
+			}
+		}
 		out = "<a href='%s'>%s</a> was moved by <a href='%s'>%s</a>" // TODO: Add where it was moved to, we'll have to change the source data for that, most likely? Investigate that and try to work this in
 	default:
 		return fmt.Sprintf("Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>", action, elementType, actor.Link, actor.Name)

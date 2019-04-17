@@ -656,6 +656,7 @@
 		"topic.action_topic_stick":"This topic was pinned by <a href='%s'>%s</a>",
 		"topic.action_topic_unstick":"This topic was unpinned by <a href='%s'>%s</a>",
 		"topic.action_topic_move":"This topic was moved by <a href='%s'>%s</a>",
+		"topic.action_topic_move_dest":"This topic was moved to <a href='%s'>%s</a> by <a href='%s'>%s</a>",
 		"topic.action_topic_default":"%s has happened",
 
 		"topic.your_information":"Your information",
