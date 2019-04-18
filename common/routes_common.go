@@ -95,18 +95,7 @@ func cascadeForumPerms(fperms *ForumPerms, user *User) {
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
 func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, stats PanelStats, rerr RouteError) {
-	var theme = &Theme{Name: ""}
-	cookie, err := r.Cookie("current_theme")
-	if err == nil {
-		inTheme, ok := Themes[html.EscapeString(cookie.Value)]
-		if ok && !theme.HideFromThemes {
-			theme = inTheme
-		}
-	}
-	if theme.Name == "" {
-		theme = Themes[DefaultThemeBox.Load().(string)]
-	}
-
+	theme := getTheme(r)
 	header = &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
@@ -186,8 +175,7 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header
 	}, nil
 }
 
-// TODO: Add the ability for admins to restrict certain themes to certain groups?
-func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
+func getTheme(r *http.Request) *Theme {
 	var theme = &Theme{Name: ""}
 
 	cookie, err := r.Cookie("current_theme")
@@ -201,6 +189,13 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		theme = Themes[DefaultThemeBox.Load().(string)]
 	}
 
+	return theme
+}
+
+// TODO: Add the ability for admins to restrict certain themes to certain groups?
+// ! Be careful about firing errors off here as CustomError uses this
+func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
+	theme := getTheme(r)
 	header = &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
@@ -220,13 +215,20 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	if user.Loggedin && !user.Active {
 		header.AddNotice("account_inactive")
 	}
+
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
 	if user.IsAdmin {
 		header.StartedAt = time.Now()
 	}
 
+	prepResources(user,header,theme)
+	return header, nil
+}
+
+func prepResources(user *User, header *Header, theme *Theme) {
 	header.AddSheet(theme.Name + "/main.css")
+
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
 		for _, resource := range rlist {
@@ -269,8 +271,6 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		addPreScript("topic_c_edit_post")
 		addPreScript("topic_c_attach_item")
 	}
-
-	return header, nil
 }
 
 func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {

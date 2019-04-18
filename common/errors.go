@@ -129,12 +129,14 @@ func errorHeader(w http.ResponseWriter, user User, title string) *Header {
 	header := DefaultHeader(w, user)
 	header.Title = title
 	header.Zone = "error"
+	prepResources(&user, header, header.Theme)
 	return header
 }
 
 // TODO: Dump the request?
 // InternalError is the main function for handling internal errors, while simultaneously printing out a page for the end-user to let them know that *something* has gone wrong
 // ? - Add a user parameter?
+// ! Do not call CustomError here or we might get an error loop
 func InternalError(err error, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
 	pi := ErrorPage{errorHeader(w, GuestUser, phrases.GetErrorPhrase("internal_error_title")), phrases.GetErrorPhrase("internal_error_body")}
@@ -188,6 +190,7 @@ func SilentInternalErrorXML(err error, w http.ResponseWriter, r *http.Request) R
 	return HandledRouteError()
 }
 
+// ! Do not call CustomError here otherwise we might get an error loop
 func PreError(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
 	w.WriteHeader(500)
 	pi := ErrorPage{errorHeader(w, GuestUser, phrases.GetErrorPhrase("error_title")), errmsg}
@@ -342,9 +345,12 @@ func NotFoundJSQ(w http.ResponseWriter, r *http.Request, header *Header, js bool
 }
 
 // CustomError lets us make custom error types which aren't covered by the generic functions above
-func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, header *Header, user User) RouteError {
+func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, header *Header, user User) (rerr RouteError) {
 	if header == nil {
-		header = DefaultHeader(w, user)
+		header, rerr = UserCheck(w, r, &user)
+		if rerr != nil {
+			header = errorHeader(w, user, errtitle)
+		}
 	}
 	header.Title = errtitle
 	header.Zone = "error"

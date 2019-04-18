@@ -51,7 +51,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user common.User, header 
 	// Get the topic...
 	topic, err := common.GetTopicUser(&user, tid)
 	if err == sql.ErrNoRows {
-		return common.NotFound(w, r, nil) // TODO: Can we add a simplified invocation of headerVars here? This is likely to be an extremely common NotFound
+		return common.NotFound(w, r, nil) // TODO: Can we add a simplified invocation of header here? This is likely to be an extremely common NotFound
 	} else if err != nil {
 		return common.InternalError(err, w, r)
 	}

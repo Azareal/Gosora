@@ -903,7 +903,24 @@
 		"panel_logs_registration_attempt":"Attempt",
 		"panel_logs_registration_email":"email",
 		"panel_logs_registration_reason":"reason",
+
 		"panel_logs_moderation_head":"Mod Action Logs",
+		"panel_logs_moderation_action_topic_stick":"<a href='%s'>%s</a> was pinned by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_topic_unstick":"<a href='%s'>%s</a> was unpinned by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_topic_lock":"<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_topic_unlock":"<a href='%s'>%s</a> was reopened by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_topic_delete":"Topic #%d was deleted by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_topic_move":"<a href='%s'>%s</a> was moved by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_topic_move_dest":"<a href='%s'>%s</a> was moved to <a href='%s'>%s</a> by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_topic_unknown":"Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_reply_delete":"A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_user_ban":"<a href='%s'>%s</a> was banned by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_user_unban":"<a href='%s'>%s</a> was unbanned by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_user_activate":"<a href='%s'>%s</a> was activated by <a href='%s'>%s</a>",
+		"panel_logs_moderation_action_unknown":"Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>",
+
+		"user_unknown":"Unknown",
+
 		"panel_logs_administration_head":"Admin Action Logs",
 
 		"panel_plugins_head":"Plugins",

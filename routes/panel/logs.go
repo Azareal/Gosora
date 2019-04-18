@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/common/phrases"
 )
 
 // TODO: Link the usernames for successful registrations to the profiles
@@ -37,46 +38,44 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, user common.User) common.R
 }
 
 // TODO: Log errors when something really screwy is going on?
+// TODO: Base the slugs on the localised usernames?
 func handleUnknownUser(user *common.User, err error) *common.User {
 	if err != nil {
-		return &common.User{Name: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
+		return &common.User{Name: phrases.GetTmplPhrase("user_unknown"), Link: common.BuildProfileURL("unknown", 0)}
 	}
 	return user
 }
 func handleUnknownTopic(topic *common.Topic, err error) *common.Topic {
 	if err != nil {
-		return &common.Topic{Title: "Unknown", Link: common.BuildProfileURL("unknown", 0)}
+		return &common.Topic{Title: phrases.GetTmplPhrase("user_unknown"), Link: common.BuildTopicURL("unknown", 0)}
 	}
 	return topic
 }
 
 // TODO: Move the log building logic into /common/ and it's own abstraction
-// TODO: Localise this
 func topicElementTypeAction(action string, elementType string, elementID int, actor *common.User, topic *common.Topic) (out string) {
 	if action == "delete" {
-		return fmt.Sprintf("Topic #%d was deleted by <a href='%s'>%s</a>", elementID, actor.Link, actor.Name)
+		return phrases.GetTmplPhrasef("panel_logs_moderation_action_topic_delete", elementID, actor.Link, actor.Name)
 	}
+	var tbit string
 	aarr := strings.Split(action, "-")
 	switch aarr[0] {
-	case "lock":
-		out = "<a href='%s'>%s</a> was locked by <a href='%s'>%s</a>"
-	case "unlock":
-		out = "<a href='%s'>%s</a> was reopened by <a href='%s'>%s</a>"
-	case "stick":
-		out = "<a href='%s'>%s</a> was pinned by <a href='%s'>%s</a>"
-	case "unstick":
-		out = "<a href='%s'>%s</a> was unpinned by <a href='%s'>%s</a>"
+	case "lock","unlock","stick","unstick":
+		tbit = aarr[0]
 	case "move":
 		if len(aarr) == 2 {
 			fid, _ := strconv.Atoi(aarr[1])
 			forum, err := common.Forums.Get(fid)
 			if err == nil {
-				return fmt.Sprintf("<a href='%s'>%s</a> was moved to <a href='%s'>%s</a> by <a href='%s'>%s</a>", topic.Link, topic.Title, forum.Link, forum.Name, actor.Link, actor.Name)
+				return phrases.GetTmplPhrasef("panel_logs_moderation_action_topic_move_dest", topic.Link, topic.Title, forum.Link, forum.Name, actor.Link, actor.Name)
 			}
 		}
-		out = "<a href='%s'>%s</a> was moved by <a href='%s'>%s</a>" // TODO: Add where it was moved to, we'll have to change the source data for that, most likely? Investigate that and try to work this in
+		tbit = "move"
 	default:
-		return fmt.Sprintf("Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>", action, elementType, actor.Link, actor.Name)
+		return phrases.GetTmplPhrasef("panel_logs_moderation_action_topic_unknown", action, elementType, actor.Link, actor.Name)
+	}
+	if tbit != "" {
+		return phrases.GetTmplPhrasef("panel_logs_moderation_action_topic_"+tbit, topic.Link, topic.Title, actor.Link, actor.Name)
 	}
 	return fmt.Sprintf(out, topic.Link, topic.Title, actor.Link, actor.Name)
 }
@@ -88,24 +87,16 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 		out = topicElementTypeAction(action, elementType, elementID, actor, topic)
 	case "user":
 		targetUser := handleUnknownUser(common.Users.Get(elementID))
-		switch action {
-		case "ban":
-			out = "<a href='%s'>%s</a> was banned by <a href='%s'>%s</a>"
-		case "unban":
-			out = "<a href='%s'>%s</a> was unbanned by <a href='%s'>%s</a>"
-		case "activate":
-			out = "<a href='%s'>%s</a> was activated by <a href='%s'>%s</a>"
-		}
-		out = fmt.Sprintf(out, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
+		out = phrases.GetTmplPhrasef("panel_logs_moderation_action_user_"+action, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
 	case "reply":
 		if action == "delete" {
 			topic := handleUnknownTopic(common.TopicByReplyID(elementID))
-			out = fmt.Sprintf("A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>", topic.Link, topic.Title, actor.Link, actor.Name)
+			out = phrases.GetTmplPhrasef("panel_logs_moderation_action_reply_delete", topic.Link, topic.Title, actor.Link, actor.Name)
 		}
 	}
 
 	if out == "" {
-		out = fmt.Sprintf("Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>", action, elementType, actor.Link, actor.Name)
+		out = phrases.GetTmplPhrasef("panel_logs_moderation_action_unknown", action, elementType, actor.Link, actor.Name)
 	}
 	return out
 }
