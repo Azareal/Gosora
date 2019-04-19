@@ -41,7 +41,7 @@ func routes(r *Router) {
 	r.AddGroup(pollRoutes())
 	r.AddGroup(accountRoutes())
 
-	r.Add(Special("common.RouteWebsockets", "/ws/"))
+	r.Add(Special("c.RouteWebsockets", "/ws/"))
 }
 
 // TODO: Test the email token route
@@ -52,7 +52,7 @@ func userRoutes() *RouteGroup {
 		MemberView("routes.AccountEdit", "/user/edit/"),
 		MemberView("routes.AccountEditPassword", "/user/edit/password/"),
 		Action("routes.AccountEditPasswordSubmit", "/user/edit/password/submit/"), // TODO: Full test this
-		UploadAction("routes.AccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("int(common.Config.MaxRequestSize)"),
+		UploadAction("routes.AccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("int(c.Config.MaxRequestSize)"),
 		Action("routes.AccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
 		MemberView("routes.AccountEditMFA", "/user/edit/mfa/"),
 		MemberView("routes.AccountEditMFASetup", "/user/edit/mfa/setup/"),
@@ -82,7 +82,7 @@ func usersRoutes() *RouteGroup {
 func topicRoutes() *RouteGroup {
 	return newRouteGroup("/topic/").Routes(
 		View("routes.ViewTopic", "/topic/", "extraData"),
-		UploadAction("routes.CreateTopicSubmit", "/topic/create/submit/").MaxSizeVar("int(common.Config.MaxRequestSize)"),
+		UploadAction("routes.CreateTopicSubmit", "/topic/create/submit/").MaxSizeVar("int(c.Config.MaxRequestSize)"),
 		Action("routes.EditTopicSubmit", "/topic/edit/submit/", "extraData"),
 		Action("routes.DeleteTopicSubmit", "/topic/delete/submit/").LitBefore("req.URL.Path += extraData"),
 		Action("routes.StickTopicSubmit", "/topic/stick/submit/", "extraData"),
@@ -91,7 +91,7 @@ func topicRoutes() *RouteGroup {
 		Action("routes.UnlockTopicSubmit", "/topic/unlock/submit/", "extraData"),
 		Action("routes.MoveTopicSubmit", "/topic/move/submit/", "extraData"),
 		Action("routes.LikeTopicSubmit", "/topic/like/submit/", "extraData"),
-		UploadAction("routes.AddAttachToTopicSubmit", "/topic/attach/add/submit/", "extraData").MaxSizeVar("int(common.Config.MaxRequestSize)"),
+		UploadAction("routes.AddAttachToTopicSubmit", "/topic/attach/add/submit/", "extraData").MaxSizeVar("int(c.Config.MaxRequestSize)"),
 		Action("routes.RemoveAttachFromTopicSubmit", "/topic/attach/remove/submit/", "extraData"),
 	)
 }
@@ -99,13 +99,13 @@ func topicRoutes() *RouteGroup {
 func replyRoutes() *RouteGroup {
 	return newRouteGroup("/reply/").Routes(
 		// TODO: Reduce this to 1MB for attachments for each file?
-		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("int(common.Config.MaxRequestSize)"), // TODO: Rename the route so it's /reply/create/submit/
+		UploadAction("routes.CreateReplySubmit", "/reply/create/").MaxSizeVar("int(c.Config.MaxRequestSize)"), // TODO: Rename the route so it's /reply/create/submit/
 		Action("routes.ReplyEditSubmit", "/reply/edit/submit/", "extraData"),
 		Action("routes.ReplyDeleteSubmit", "/reply/delete/submit/", "extraData"),
 		Action("routes.ReplyLikeSubmit", "/reply/like/submit/", "extraData"),
 		//MemberView("routes.ReplyEdit","/reply/edit/","extraData"), // No js fallback
 		//MemberView("routes.ReplyDelete","/reply/delete/","extraData"), // No js confirmation page? We could have a confirmation modal for the JS case
-		UploadAction("routes.AddAttachToReplySubmit", "/reply/attach/add/submit/", "extraData").MaxSizeVar("int(common.Config.MaxRequestSize)"),
+		UploadAction("routes.AddAttachToReplySubmit", "/reply/attach/add/submit/", "extraData").MaxSizeVar("int(c.Config.MaxRequestSize)"),
 		Action("routes.RemoveAttachFromReplySubmit", "/reply/attach/remove/submit/", "extraData"),
 	)
 }

@@ -14,7 +14,7 @@ import (
 	"os"
 	"net/http"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/routes/panel"
@@ -29,7 +29,7 @@ var RouteMap = map[string]interface{}{
 	"routes.ViewForum": routes.ViewForum,
 	"routes.ChangeTheme": routes.ChangeTheme,
 	"routes.ShowAttachment": routes.ShowAttachment,
-	"common.RouteWebsockets": common.RouteWebsockets,
+	"common.RouteWebsockets": c.RouteWebsockets,
 	"routeAPIPhrases": routeAPIPhrases,
 	"routes.APIMe": routes.APIMe,
 	"routeJSAntispam": routeJSAntispam,
@@ -594,7 +594,7 @@ func NewWriterIntercept(w http.ResponseWriter) *WriterIntercept {
 	return &WriterIntercept{w}
 }
 
-var wiMaxAge = "max-age=" + strconv.Itoa(int(common.Day))
+var wiMaxAge = "max-age=" + strconv.Itoa(int(c.Day))
 func (writ *WriterIntercept) WriteHeader(code int) {
 	if code == 200 {
 		writ.ResponseWriter.Header().Set("Cache-Control", wiMaxAge)
@@ -616,14 +616,14 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	extraRoutes map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError
+	extraRoutes map[string]func(http.ResponseWriter, *http.Request, c.User) c.RouteError
 	requestLogger *log.Logger
 	
 	sync.RWMutex
 }
 
 func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
-	f, err := os.OpenFile("./logs/reqs-"+strconv.FormatInt(common.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile("./logs/reqs-"+strconv.FormatInt(c.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -633,27 +633,27 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 			writ := NewWriterIntercept(w)
 			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,req)
 		},
-		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError),
+		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, c.User) c.RouteError),
 		requestLogger: log.New(f, "", log.LstdFlags),
 	}, nil
 }
 
-func (r *GenRouter) handleError(err common.RouteError, w http.ResponseWriter, req *http.Request, user common.User) {
+func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, user c.User) {
 	if err.Handled() {
 		return
 	}
 	
 	if err.Type() == "system" {
-		common.InternalErrorJSQ(err, w, req, err.JSON())
+		c.InternalErrorJSQ(err, w, req, err.JSON())
 		return
 	}
-	common.LocalErrorJSQ(err.Error(), w, req, user, err.JSON())
+	c.LocalErrorJSQ(err.Error(), w, req, user, err.JSON())
 }
 
 func (r *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (r *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, common.User) common.RouteError) {
+func (r *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, c.User) c.RouteError) {
 	r.Lock()
 	defer r.Unlock()
 	r.extraRoutes[pattern] = handle
@@ -674,17 +674,17 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Header '" + common.SanitiseSingleLine(key) + "': " + common.SanitiseSingleLine(vvalue) + "!\n"
+			heads += "Header '" + c.SanitiseSingleLine(key) + "': " + c.SanitiseSingleLine(vvalue) + "!\n"
 		}
 	}
 
 	r.requestLogger.Print(prepend + 
-		"\nUA: " + common.SanitiseSingleLine(req.UserAgent()) + "\n" +
-		"Method: " + common.SanitiseSingleLine(req.Method) + "\n" + heads + 
-		"req.Host: " + common.SanitiseSingleLine(req.Host) + "\n" + 
-		"req.URL.Path: " + common.SanitiseSingleLine(req.URL.Path) + "\n" + 
-		"req.URL.RawQuery: " + common.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
-		"req.Referer(): " + common.SanitiseSingleLine(req.Referer()) + "\n" + 
+		"\nUA: " + c.SanitiseSingleLine(req.UserAgent()) + "\n" +
+		"Method: " + c.SanitiseSingleLine(req.Method) + "\n" + heads + 
+		"req.Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
+		"req.URL.Path: " + c.SanitiseSingleLine(req.URL.Path) + "\n" + 
+		"req.URL.RawQuery: " + c.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
+		"req.Referer(): " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
 		"req.RemoteAddr: " + req.RemoteAddr + "\n")
 }
 
@@ -733,24 +733,24 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	// TODO: Reject requests from non-local IPs, if the site host is set to localhost or a localhost IP
-	if !common.Config.LoosePort && common.Site.PortInt != 80 && common.Site.PortInt != 443 && sport != common.Site.Port {
+	if !c.Config.LoosePort && c.Site.PortInt != 80 && c.Site.PortInt != 443 && sport != c.Site.Port {
 		malformedRequest(2)
 		return
 	}
 	
 	// Redirect www. and local IP requests to the right place
-	if shost == "www." + common.Site.Host || (common.Site.LocalHost && shost != common.Site.Host && isLocalHost(shost)) {
+	if shost == "www." + c.Site.Host || (c.Site.LocalHost && shost != c.Site.Host && isLocalHost(shost)) {
 		// TODO: Abstract the redirect logic?
 		w.Header().Set("Connection", "close")
 		var s string
-		if common.Site.EnableSsl {
+		if c.Site.EnableSsl {
 			s = "s"
 		}
 		var p string
-		if common.Site.PortInt != 80 && common.Site.PortInt != 443 {
-			p = ":"+common.Site.Port
+		if c.Site.PortInt != 80 && c.Site.PortInt != 443 {
+			p = ":"+c.Site.Port
 		}
-		dest := "http"+s+"://" + common.Site.Host+p + req.URL.Path
+		dest := "http"+s+"://" + c.Site.Host+p + req.URL.Path
 		if len(req.URL.RawQuery) > 0 {
 			dest += "?" + req.URL.RawQuery
 		}
@@ -759,11 +759,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Deflect malformed requests
-	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || (!common.Config.LooseHost && shost != common.Site.Host) {
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || (!c.Config.LooseHost && shost != c.Site.Host) {
 		malformedRequest(3)
 		return
 	}
-	if common.Dev.FullReqLog {
+	if c.Dev.FullReqLog {
 		r.DumpRequest(req,"")
 	}
 
@@ -782,7 +782,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Indirect the default route onto a different one
 	if req.URL.Path == "/" {
-		req.URL.Path = common.Config.DefaultPath
+		req.URL.Path = c.Config.DefaultPath
 	}
 	
 	var prefix, extraData string
@@ -793,7 +793,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// TODO: Use the same hook table as downstream
-	hTbl := common.GetHookTable()
+	hTbl := c.GetHookTable()
 	skip, ferr := hTbl.VhookSkippable("router_after_filters", w, req, prefix, extraData)
 	if skip || ferr != nil {
 		return
@@ -806,7 +806,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		h.Set("X-Content-Type-Options", "nosniff")
 	}
 	
-	if common.Dev.SuperDebug {
+	if c.Dev.SuperDebug {
 		r.DumpRequest(req,"before routes.StaticFile")
 	}
 	// Increment the request counter
@@ -818,11 +818,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		routes.StaticFile(w, req)
 		return
 	}
-	if atomic.LoadInt32(&common.IsDBDown) == 1 {
-		common.DatabaseError(w, req)
+	if atomic.LoadInt32(&c.IsDBDown) == 1 {
+		c.DatabaseError(w, req)
 		return
 	}
-	if common.Dev.SuperDebug {
+	if c.Dev.SuperDebug {
 		r.requestLogger.Print("before PreRoute")
 	}
 
@@ -833,7 +833,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var agent string
 	if ua == "" {
 		counters.AgentViewCounter.Bump(26)
-		if common.Dev.DebugMode {
+		if c.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {
 				prepend += strconv.Itoa(int(char)) + " "
@@ -894,10 +894,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 		}
-		if common.Dev.SuperDebug {
+		if c.Dev.SuperDebug {
 			r.requestLogger.Print("parsed agent: ", agent)
 		}
-		if common.Dev.SuperDebug {
+		if c.Dev.SuperDebug {
 			r.requestLogger.Print("os: ", os)
 			r.requestLogger.Printf("items: %+v\n",items)
 		}
@@ -923,7 +923,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		
 		if agent == "" {
 			counters.AgentViewCounter.Bump(0)
-			if common.Dev.DebugMode {
+			if c.Dev.DebugMode {
 				var prepend string
 				for _, char := range req.UserAgent() {
 					prepend += strconv.Itoa(int(char)) + " "
@@ -942,7 +942,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		lang = strings.TrimSpace(lang)
 		lLang := strings.Split(lang,"-")
 		tLang := strings.Split(strings.Split(lLang[0],";")[0],",")
-		common.DebugDetail("tLang:", tLang)
+		c.DebugDetail("tLang:", tLang)
 		var llLang string
 		for _, seg := range tLang {
 			if seg == "*" {
@@ -951,7 +951,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			llLang = seg
 			break
 		}
-		common.DebugDetail("llLang:", llLang)
+		c.DebugDetail("llLang:", llLang)
 		if llLang == "" {
 			counters.LangViewCounter.Bump("none")
 		} else {
@@ -970,18 +970,18 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		referrer = strings.TrimPrefix(strings.TrimPrefix(referrer,"http://"),"https://")
 		referrer = strings.Split(referrer,"/")[0]
 		portless := strings.Split(referrer,":")[0]
-		if portless != "localhost" && portless != "127.0.0.1" && portless != common.Site.Host {
+		if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
 			counters.ReferrerTracker.Bump(referrer)
 		}
 	}
 	
 	// Deal with the session stuff, etc.
-	user, ok := common.PreRoute(w, req)
+	user, ok := c.PreRoute(w, req)
 	if !ok {
 		return
 	}
 	user.LastAgent = agent
-	if common.Dev.SuperDebug {
+	if c.Dev.SuperDebug {
 		r.requestLogger.Print(
 			"after PreRoute\n" +
 			"routeMapEnum: ", routeMapEnum)
@@ -997,7 +997,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				gz.Close()
 			}
 		}()
-		w = common.GzipResponseWriter{Writer: gz, ResponseWriter: w}
+		w = c.GzipResponseWriter{Writer: gz, ResponseWriter: w}
 	}
 
 	skip, ferr = hTbl.VhookSkippable("router_pre_route", w, req, user, prefix, extraData)
@@ -1010,42 +1010,42 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	hTbl.VhookNoRet("router_end", w, req, user, prefix, extraData)
-	//common.StoppedServer("Profile end")
+	//c.StoppedServer("Profile end")
 }
 	
-func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user common.User, prefix string, extraData string) common.RouteError {
-	var err common.RouteError
+func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix string, extraData string) c.RouteError {
+	var err c.RouteError
 	switch(prefix) {
 		case "/overview":
 			counters.RouteViewCounter.Bump(0)
-			head, err := common.UserCheck(w,req,&user)
+			head, err := c.UserCheck(w,req,&user)
 			if err != nil {
 				return err
 			}
 			err = routes.Overview(w,req,user,head)
 		case "/pages":
 			counters.RouteViewCounter.Bump(1)
-			head, err := common.UserCheck(w,req,&user)
+			head, err := c.UserCheck(w,req,&user)
 			if err != nil {
 				return err
 			}
 			err = routes.CustomPage(w,req,user,head,extraData)
 		case "/forums":
 			counters.RouteViewCounter.Bump(2)
-			head, err := common.UserCheck(w,req,&user)
+			head, err := c.UserCheck(w,req,&user)
 			if err != nil {
 				return err
 			}
 			err = routes.ForumList(w,req,user,head)
 		case "/forum":
 			counters.RouteViewCounter.Bump(3)
-			head, err := common.UserCheck(w,req,&user)
+			head, err := c.UserCheck(w,req,&user)
 			if err != nil {
 				return err
 			}
 			err = routes.ViewForum(w,req,user,head,extraData)
 		case "/theme":
-				err = common.ParseForm(w,req,user)
+				err = c.ParseForm(w,req,user)
 				if err != nil {
 					return err
 				}
@@ -1053,12 +1053,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			counters.RouteViewCounter.Bump(4)
 			err = routes.ChangeTheme(w,req,user)
 		case "/attachs":
-				err = common.ParseForm(w,req,user)
+				err = c.ParseForm(w,req,user)
 				if err != nil {
 					return err
 				}
 				
-					gzw, ok := w.(common.GzipResponseWriter)
+					gzw, ok := w.(c.GzipResponseWriter)
 					if ok {
 					w = gzw.ResponseWriter
 					w.Header().Del("Content-Type")
@@ -1069,7 +1069,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		case "/ws":
 					req.URL.Path += extraData
 			counters.RouteViewCounter.Bump(6)
-			err = common.RouteWebsockets(w,req,user)
+			err = c.RouteWebsockets(w,req,user)
 		case "/api":
 			switch(req.URL.Path) {
 				case "/api/phrases/":
@@ -1086,19 +1086,19 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					err = routeAPI(w,req,user)
 			}
 		case "/report":
-			err = common.NoBanned(w,req,user)
+			err = c.NoBanned(w,req,user)
 			if err != nil {
 				return err
 			}
 			
 			switch(req.URL.Path) {
 				case "/report/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1110,33 +1110,33 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			switch(req.URL.Path) {
 				case "/topics/most-viewed/":
 					counters.RouteViewCounter.Bump(12)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.TopicListMostViewed(w,req,user,head)
 				case "/topics/create/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(13)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.CreateTopic(w,req,user,head,extraData)
 				default:
 					counters.RouteViewCounter.Bump(14)
-					head, err := common.UserCheck(w,req,&user)
+					head, err := c.UserCheck(w,req,&user)
 					if err != nil {
 						return err
 					}
 					err = routes.TopicList(w,req,user, head)
 			}
 		case "/panel":
-			err = common.SuperModOnly(w,req,user)
+			err = c.SuperModOnly(w,req,user)
 			if err != nil {
 				return err
 			}
@@ -1146,7 +1146,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(15)
 					err = panel.Forums(w,req,user)
 				case "/panel/forums/create/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1154,7 +1154,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(16)
 					err = panel.ForumsCreateSubmit(w,req,user)
 				case "/panel/forums/delete/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1162,7 +1162,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(17)
 					err = panel.ForumsDelete(w,req,user,extraData)
 				case "/panel/forums/delete/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1173,7 +1173,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(19)
 					err = panel.ForumsEdit(w,req,user,extraData)
 				case "/panel/forums/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1181,7 +1181,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(20)
 					err = panel.ForumsEditSubmit(w,req,user,extraData)
 				case "/panel/forums/edit/perms/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1192,7 +1192,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(22)
 					err = panel.ForumsEditPermsAdvance(w,req,user,extraData)
 				case "/panel/forums/edit/perms/adv/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1206,7 +1206,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(25)
 					err = panel.SettingEdit(w,req,user,extraData)
 				case "/panel/settings/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1217,7 +1217,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(27)
 					err = panel.WordFilters(w,req,user)
 				case "/panel/settings/word-filters/create/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1228,7 +1228,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(29)
 					err = panel.WordFiltersEdit(w,req,user,extraData)
 				case "/panel/settings/word-filters/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1236,7 +1236,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(30)
 					err = panel.WordFiltersEditSubmit(w,req,user,extraData)
 				case "/panel/settings/word-filters/delete/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1244,7 +1244,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(31)
 					err = panel.WordFiltersDeleteSubmit(w,req,user,extraData)
 				case "/panel/pages/":
-					err = common.AdminOnly(w,req,user)
+					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1252,12 +1252,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(32)
 					err = panel.Pages(w,req,user)
 				case "/panel/pages/create/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.AdminOnly(w,req,user)
+					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1265,7 +1265,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(33)
 					err = panel.PagesCreateSubmit(w,req,user)
 				case "/panel/pages/edit/":
-					err = common.AdminOnly(w,req,user)
+					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1273,12 +1273,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(34)
 					err = panel.PagesEdit(w,req,user,extraData)
 				case "/panel/pages/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.AdminOnly(w,req,user)
+					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1286,12 +1286,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(35)
 					err = panel.PagesEditSubmit(w,req,user,extraData)
 				case "/panel/pages/delete/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.AdminOnly(w,req,user)
+					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1302,7 +1302,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(37)
 					err = panel.Themes(w,req,user)
 				case "/panel/themes/default/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1319,7 +1319,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(41)
 					err = panel.ThemesMenuItemEdit(w,req,user,extraData)
 				case "/panel/themes/menus/item/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1327,7 +1327,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(42)
 					err = panel.ThemesMenuItemEditSubmit(w,req,user,extraData)
 				case "/panel/themes/menus/item/create/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1335,7 +1335,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(43)
 					err = panel.ThemesMenuItemCreateSubmit(w,req,user)
 				case "/panel/themes/menus/item/delete/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1343,7 +1343,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(44)
 					err = panel.ThemesMenuItemDeleteSubmit(w,req,user,extraData)
 				case "/panel/themes/menus/item/order/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1354,7 +1354,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(46)
 					err = panel.ThemesWidgets(w,req,user)
 				case "/panel/themes/widgets/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1362,7 +1362,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(47)
 					err = panel.ThemesWidgetsEditSubmit(w,req,user,extraData)
 				case "/panel/themes/widgets/create/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1370,7 +1370,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(48)
 					err = panel.ThemesWidgetsCreateSubmit(w,req,user)
 				case "/panel/themes/widgets/delete/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1381,7 +1381,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(50)
 					err = panel.Plugins(w,req,user)
 				case "/panel/plugins/activate/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1389,7 +1389,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(51)
 					err = panel.PluginsActivate(w,req,user,extraData)
 				case "/panel/plugins/deactivate/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1397,7 +1397,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(52)
 					err = panel.PluginsDeactivate(w,req,user,extraData)
 				case "/panel/plugins/install/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1411,7 +1411,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(55)
 					err = panel.UsersEdit(w,req,user,extraData)
 				case "/panel/users/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1419,7 +1419,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(56)
 					err = panel.UsersEditSubmit(w,req,user,extraData)
 				case "/panel/analytics/views/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1427,7 +1427,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(57)
 					err = panel.AnalyticsViews(w,req,user)
 				case "/panel/analytics/routes/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1435,7 +1435,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(58)
 					err = panel.AnalyticsRoutes(w,req,user)
 				case "/panel/analytics/agents/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1443,7 +1443,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(59)
 					err = panel.AnalyticsAgents(w,req,user)
 				case "/panel/analytics/systems/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1451,7 +1451,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(60)
 					err = panel.AnalyticsSystems(w,req,user)
 				case "/panel/analytics/langs/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1459,7 +1459,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(61)
 					err = panel.AnalyticsLanguages(w,req,user)
 				case "/panel/analytics/referrers/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1485,7 +1485,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(68)
 					err = panel.AnalyticsReferrerViews(w,req,user,extraData)
 				case "/panel/analytics/posts/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1493,7 +1493,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(69)
 					err = panel.AnalyticsPosts(w,req,user)
 				case "/panel/analytics/topics/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1501,7 +1501,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(70)
 					err = panel.AnalyticsTopics(w,req,user)
 				case "/panel/analytics/forums/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1518,7 +1518,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(74)
 					err = panel.GroupsEditPerms(w,req,user,extraData)
 				case "/panel/groups/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1526,7 +1526,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(75)
 					err = panel.GroupsEditSubmit(w,req,user,extraData)
 				case "/panel/groups/edit/perms/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1534,7 +1534,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(76)
 					err = panel.GroupsEditPermsSubmit(w,req,user,extraData)
 				case "/panel/groups/create/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1542,12 +1542,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(77)
 					err = panel.GroupsCreateSubmit(w,req,user)
 				case "/panel/backups/":
-					err = common.SuperAdminOnly(w,req,user)
+					err = c.SuperAdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					gzw, ok := w.(common.GzipResponseWriter)
+					gzw, ok := w.(c.GzipResponseWriter)
 					if ok {
 					w = gzw.ResponseWriter
 					w.Header().Del("Content-Type")
@@ -1562,7 +1562,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(80)
 					err = panel.LogsMod(w,req,user)
 				case "/panel/debug/":
-					err = common.AdminOnly(w,req,user)
+					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1576,36 +1576,36 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		case "/user":
 			switch(req.URL.Path) {
 				case "/user/edit/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(83)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountEdit(w,req,user,head)
 				case "/user/edit/password/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(84)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountEditPassword(w,req,user,head)
 				case "/user/edit/password/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1613,16 +1613,16 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(85)
 					err = routes.AccountEditPasswordSubmit(w,req,user)
 				case "/user/edit/avatar/submit/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
+					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
 					if err != nil {
 					return err
 					}
-					err = common.NoUploadSessionMismatch(w,req,user)
+					err = c.NoUploadSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1630,12 +1630,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(86)
 					err = routes.AccountEditAvatarSubmit(w,req,user)
 				case "/user/edit/username/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1643,36 +1643,36 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(87)
 					err = routes.AccountEditUsernameSubmit(w,req,user)
 				case "/user/edit/mfa/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(88)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountEditMFA(w,req,user,head)
 				case "/user/edit/mfa/setup/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(89)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountEditMFASetup(w,req,user,head)
 				case "/user/edit/mfa/setup/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1680,12 +1680,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(90)
 					err = routes.AccountEditMFASetupSubmit(w,req,user)
 				case "/user/edit/mfa/disable/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1693,13 +1693,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(91)
 					err = routes.AccountEditMFADisableSubmit(w,req,user)
 				case "/user/edit/email/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(92)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
@@ -1708,25 +1708,25 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(93)
 					err = routes.AccountEditEmailTokenSubmit(w,req,user,extraData)
 				case "/user/edit/logins/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(94)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountLogins(w,req,user,head)
 				case "/user/levels/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(95)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
@@ -1734,7 +1734,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				default:
 					req.URL.Path += extraData
 					counters.RouteViewCounter.Bump(96)
-					head, err := common.UserCheck(w,req,&user)
+					head, err := c.UserCheck(w,req,&user)
 					if err != nil {
 						return err
 					}
@@ -1743,12 +1743,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		case "/users":
 			switch(req.URL.Path) {
 				case "/users/ban/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1756,12 +1756,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(97)
 					err = routes.BanUserSubmit(w,req,user,extraData)
 				case "/users/unban/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1769,12 +1769,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(98)
 					err = routes.UnbanUser(w,req,user,extraData)
 				case "/users/activate/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1782,13 +1782,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(99)
 					err = routes.ActivateUser(w,req,user,extraData)
 				case "/users/ips/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
 					counters.RouteViewCounter.Bump(100)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
@@ -1797,16 +1797,16 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		case "/topic":
 			switch(req.URL.Path) {
 				case "/topic/create/submit/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
+					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
 					if err != nil {
 					return err
 					}
-					err = common.NoUploadSessionMismatch(w,req,user)
+					err = c.NoUploadSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1814,12 +1814,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(101)
 					err = routes.CreateTopicSubmit(w,req,user)
 				case "/topic/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1827,12 +1827,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(102)
 					err = routes.EditTopicSubmit(w,req,user,extraData)
 				case "/topic/delete/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1841,12 +1841,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(103)
 					err = routes.DeleteTopicSubmit(w,req,user)
 				case "/topic/stick/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1854,12 +1854,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(104)
 					err = routes.StickTopicSubmit(w,req,user,extraData)
 				case "/topic/unstick/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1867,12 +1867,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(105)
 					err = routes.UnstickTopicSubmit(w,req,user,extraData)
 				case "/topic/lock/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1881,12 +1881,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(106)
 					err = routes.LockTopicSubmit(w,req,user)
 				case "/topic/unlock/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1894,12 +1894,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(107)
 					err = routes.UnlockTopicSubmit(w,req,user,extraData)
 				case "/topic/move/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1907,12 +1907,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(108)
 					err = routes.MoveTopicSubmit(w,req,user,extraData)
 				case "/topic/like/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1920,16 +1920,16 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(109)
 					err = routes.LikeTopicSubmit(w,req,user,extraData)
 				case "/topic/attach/add/submit/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
+					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
 					if err != nil {
 					return err
 					}
-					err = common.NoUploadSessionMismatch(w,req,user)
+					err = c.NoUploadSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1937,12 +1937,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(110)
 					err = routes.AddAttachToTopicSubmit(w,req,user,extraData)
 				case "/topic/attach/remove/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1951,7 +1951,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					err = routes.RemoveAttachFromTopicSubmit(w,req,user,extraData)
 				default:
 					counters.RouteViewCounter.Bump(112)
-					head, err := common.UserCheck(w,req,&user)
+					head, err := c.UserCheck(w,req,&user)
 					if err != nil {
 						return err
 					}
@@ -1960,16 +1960,16 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		case "/reply":
 			switch(req.URL.Path) {
 				case "/reply/create/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
+					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
 					if err != nil {
 					return err
 					}
-					err = common.NoUploadSessionMismatch(w,req,user)
+					err = c.NoUploadSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1977,12 +1977,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(113)
 					err = routes.CreateReplySubmit(w,req,user)
 				case "/reply/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -1990,12 +1990,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(114)
 					err = routes.ReplyEditSubmit(w,req,user,extraData)
 				case "/reply/delete/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2003,12 +2003,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(115)
 					err = routes.ReplyDeleteSubmit(w,req,user,extraData)
 				case "/reply/like/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2016,16 +2016,16 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(116)
 					err = routes.ReplyLikeSubmit(w,req,user,extraData)
 				case "/reply/attach/add/submit/":
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.HandleUploadRoute(w,req,user,int(common.Config.MaxRequestSize))
+					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
 					if err != nil {
 					return err
 					}
-					err = common.NoUploadSessionMismatch(w,req,user)
+					err = c.NoUploadSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2033,12 +2033,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(117)
 					err = routes.AddAttachToReplySubmit(w,req,user,extraData)
 				case "/reply/attach/remove/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2049,12 +2049,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		case "/profile":
 			switch(req.URL.Path) {
 				case "/profile/reply/create/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2062,12 +2062,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(119)
 					err = routes.ProfileReplyCreateSubmit(w,req,user)
 				case "/profile/reply/edit/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2075,12 +2075,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(120)
 					err = routes.ProfileReplyEditSubmit(w,req,user,extraData)
 				case "/profile/reply/delete/submit/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2091,12 +2091,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		case "/poll":
 			switch(req.URL.Path) {
 				case "/poll/vote/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2111,25 +2111,25 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			switch(req.URL.Path) {
 				case "/accounts/login/":
 					counters.RouteViewCounter.Bump(124)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountLogin(w,req,user,head)
 				case "/accounts/create/":
 					counters.RouteViewCounter.Bump(125)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountRegister(w,req,user,head)
 				case "/accounts/logout/":
-					err = common.NoSessionMismatch(w,req,user)
+					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
-					err = common.MemberOnly(w,req,user)
+					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2137,7 +2137,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(126)
 					err = routes.AccountLogout(w,req,user)
 				case "/accounts/login/submit/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2146,13 +2146,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					err = routes.AccountLoginSubmit(w,req,user)
 				case "/accounts/mfa_verify/":
 					counters.RouteViewCounter.Bump(128)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountLoginMFAVerify(w,req,user,head)
 				case "/accounts/mfa_verify/submit/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2160,7 +2160,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(129)
 					err = routes.AccountLoginMFAVerifySubmit(w,req,user)
 				case "/accounts/create/submit/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2169,13 +2169,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					err = routes.AccountRegisterSubmit(w,req,user)
 				case "/accounts/password-reset/":
 					counters.RouteViewCounter.Bump(131)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountPasswordReset(w,req,user,head)
 				case "/accounts/password-reset/submit/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2184,13 +2184,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					err = routes.AccountPasswordResetSubmit(w,req,user)
 				case "/accounts/password-reset/token/":
 					counters.RouteViewCounter.Bump(133)
-				head, err := common.UserCheck(w,req,&user)
+				head, err := c.UserCheck(w,req,&user)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountPasswordResetToken(w,req,user,head)
 				case "/accounts/password-reset/token/submit/":
-					err = common.ParseForm(w,req,user)
+					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2203,9 +2203,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			err = sitemapSwitch(w,req)*/
 		case "/uploads":
 			if extraData == "" {
-				return common.NotFound(w,req,nil)
+				return c.NotFound(w,req,nil)
 			}
-			gzw, ok := w.(common.GzipResponseWriter)
+			gzw, ok := w.(c.GzipResponseWriter)
 			if ok {
 				w = gzw.ResponseWriter
 				w.Header().Del("Content-Type")
@@ -2232,7 +2232,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(139)
 					return routes.SitemapXml(w,req)*/
 			}
-			return common.NotFound(w,req,nil)
+			return c.NotFound(w,req,nil)
 		default:
 			// A fallback for dynamic routes, e.g. ones declared by plugins
 			r.RLock()
@@ -2252,7 +2252,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				r.DumpRequest(req,"Bad Route")
 			}
 			counters.RouteViewCounter.Bump(140)
-			return common.NotFound(w,req,nil)
+			return c.NotFound(w,req,nil)
 	}
 	return err
 }

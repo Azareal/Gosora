@@ -60,7 +60,7 @@ func (route *RouteImpl) hasBeforeItem(item string) bool {
 }
 
 func (route *RouteImpl) NoGzip() *RouteImpl {
-	return route.LitBeforeMultiline(`gzw, ok := w.(common.GzipResponseWriter)
+	return route.LitBeforeMultiline(`gzw, ok := w.(c.GzipResponseWriter)
 	if ok {
 		w = gzw.ResponseWriter
 		w.Header().Del("Content-Type")
@@ -132,7 +132,7 @@ func UploadAction(fname string, path string, args ...string) *uploadAction {
 }
 
 func (action *uploadAction) MaxSizeVar(varName string) *RouteImpl {
-	action.Route.LitBeforeMultiline(`err = common.HandleUploadRoute(w,req,user,` + varName + `)
+	action.Route.LitBeforeMultiline(`err = c.HandleUploadRoute(w,req,user,` + varName + `)
 			if err != nil {
 				return err
 			}`)

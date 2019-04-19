@@ -6,13 +6,14 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"text/template"
 )
 
 type TmplVars struct {
 	RouteList         []*RouteImpl
 	RouteGroups       []*RouteGroup
-	AllRouteNames     []string
+	AllRouteNames     []RouteName
 	AllRouteMap       map[string]int
 	AllAgentNames     []string
 	AllAgentMap       map[string]int
@@ -20,6 +21,11 @@ type TmplVars struct {
 	AllAgentMarks     map[string]string
 	AllOSNames        []string
 	AllOSMap          map[string]int
+}
+
+type RouteName struct {
+	Plain string
+	Short string
 }
 
 func main() {
@@ -33,12 +39,12 @@ func main() {
 		RouteList:   r.routeList,
 		RouteGroups: r.routeGroups,
 	}
-	var allRouteNames []string
+	var allRouteNames []RouteName
 	var allRouteMap = make(map[string]int)
 
 	var out string
 	var mapIt = func(name string) {
-		allRouteNames = append(allRouteNames, name)
+		allRouteNames = append(allRouteNames, RouteName{name, strings.Replace(name, "common.", "c.", -1)})
 		allRouteMap[name] = len(allRouteNames) - 1
 	}
 	var countToIndents = func(indent int) (indentor string) {
@@ -54,7 +60,7 @@ func main() {
 				if runnable.Literal {
 					out += "\n\t" + indentor + runnable.Contents
 				} else {
-					out += "\n" + indentor + "err = common." + runnable.Contents + "(w,req,user)\n" +
+					out += "\n" + indentor + "err = c." + runnable.Contents + "(w,req,user)\n" +
 						indentor + "if err != nil {\n" +
 						indentor + "\treturn err\n" +
 						indentor + "}\n" + indentor
@@ -71,7 +77,7 @@ func main() {
 		out += runBefore(route.RunBefore, 4)
 		out += "\n\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 		if !route.Action && !route.NoHead {
-			out += "\n\t\t\thead, err := common.UserCheck(w,req,&user)"
+			out += "\n\t\t\thead, err := c.UserCheck(w,req,&user)"
 			out += "\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}"
 			vcpy := route.Vars
 			route.Vars = []string{"head"}
@@ -122,7 +128,7 @@ func main() {
 						out += "\n\t\t\t\t\t" + runnable.Contents
 					} else {
 						out += `
-					err = common.` + runnable.Contents + `(w,req,user)
+					err = c.` + runnable.Contents + `(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -132,7 +138,7 @@ func main() {
 			}
 			out += "\n\t\t\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 			if !route.Action && !route.NoHead && !group.NoHead {
-				out += "\n\t\t\t\thead, err := common.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\thead, err := c.UserCheck(w,req,&user)"
 				out += "\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}"
 				vcpy := route.Vars
 				route.Vars = []string{"head"}
@@ -151,7 +157,7 @@ func main() {
 			out += runBefore(defaultRoute.RunBefore, 4)
 			out += "\n\t\t\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
 			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
-				out += "\n\t\t\t\t\thead, err := common.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\t\thead, err := c.UserCheck(w,req,&user)"
 				out += "\n\t\t\t\t\tif err != nil {\n\t\t\t\t\t\treturn err\n\t\t\t\t\t}"
 				vcpy := defaultRoute.Vars
 				defaultRoute.Vars = []string{"head"}
@@ -315,7 +321,7 @@ import (
 	"os"
 	"net/http"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/routes/panel"
@@ -324,15 +330,15 @@ import (
 var ErrNoRoute = errors.New("That route doesn't exist.")
 // TODO: What about the /uploads/ route? x.x
 var RouteMap = map[string]interface{}{ {{range .AllRouteNames}}
-	"{{.}}": {{.}},{{end}}
+	"{{.Plain}}": {{.Short}},{{end}}
 }
 
 // ! NEVER RELY ON THESE REMAINING THE SAME BETWEEN COMMITS
 var routeMapEnum = map[string]int{ {{range $index, $element := .AllRouteNames}}
-	"{{$element}}": {{$index}},{{end}}
+	"{{$element.Plain}}": {{$index}},{{end}}
 }
 var reverseRouteMapEnum = map[int]string{ {{range $index, $element := .AllRouteNames}}
-	{{$index}}: "{{$element}}",{{end}}
+	{{$index}}: "{{$element.Plain}}",{{end}}
 }
 var osMapEnum = map[string]int{ {{range $index, $element := .AllOSNames}}
 	"{{$element}}": {{$index}},{{end}}
@@ -373,7 +379,7 @@ func NewWriterIntercept(w http.ResponseWriter) *WriterIntercept {
 	return &WriterIntercept{w}
 }
 
-var wiMaxAge = "max-age=" + strconv.Itoa(int(common.Day))
+var wiMaxAge = "max-age=" + strconv.Itoa(int(c.Day))
 func (writ *WriterIntercept) WriteHeader(code int) {
 	if code == 200 {
 		writ.ResponseWriter.Header().Set("Cache-Control", wiMaxAge)
@@ -395,14 +401,14 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	extraRoutes map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError
+	extraRoutes map[string]func(http.ResponseWriter, *http.Request, c.User) c.RouteError
 	requestLogger *log.Logger
 	
 	sync.RWMutex
 }
 
 func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
-	f, err := os.OpenFile("./logs/reqs-"+strconv.FormatInt(common.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile("./logs/reqs-"+strconv.FormatInt(c.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -412,27 +418,27 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 			writ := NewWriterIntercept(w)
 			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,req)
 		},
-		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, common.User) common.RouteError),
+		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, c.User) c.RouteError),
 		requestLogger: log.New(f, "", log.LstdFlags),
 	}, nil
 }
 
-func (r *GenRouter) handleError(err common.RouteError, w http.ResponseWriter, req *http.Request, user common.User) {
+func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, user c.User) {
 	if err.Handled() {
 		return
 	}
 	
 	if err.Type() == "system" {
-		common.InternalErrorJSQ(err, w, req, err.JSON())
+		c.InternalErrorJSQ(err, w, req, err.JSON())
 		return
 	}
-	common.LocalErrorJSQ(err.Error(), w, req, user, err.JSON())
+	c.LocalErrorJSQ(err.Error(), w, req, user, err.JSON())
 }
 
 func (r *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (r *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, common.User) common.RouteError) {
+func (r *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, c.User) c.RouteError) {
 	r.Lock()
 	defer r.Unlock()
 	r.extraRoutes[pattern] = handle
@@ -453,17 +459,17 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Header '" + common.SanitiseSingleLine(key) + "': " + common.SanitiseSingleLine(vvalue) + "!\n"
+			heads += "Header '" + c.SanitiseSingleLine(key) + "': " + c.SanitiseSingleLine(vvalue) + "!\n"
 		}
 	}
 
 	r.requestLogger.Print(prepend + 
-		"\nUA: " + common.SanitiseSingleLine(req.UserAgent()) + "\n" +
-		"Method: " + common.SanitiseSingleLine(req.Method) + "\n" + heads + 
-		"req.Host: " + common.SanitiseSingleLine(req.Host) + "\n" + 
-		"req.URL.Path: " + common.SanitiseSingleLine(req.URL.Path) + "\n" + 
-		"req.URL.RawQuery: " + common.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
-		"req.Referer(): " + common.SanitiseSingleLine(req.Referer()) + "\n" + 
+		"\nUA: " + c.SanitiseSingleLine(req.UserAgent()) + "\n" +
+		"Method: " + c.SanitiseSingleLine(req.Method) + "\n" + heads + 
+		"req.Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
+		"req.URL.Path: " + c.SanitiseSingleLine(req.URL.Path) + "\n" + 
+		"req.URL.RawQuery: " + c.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
+		"req.Referer(): " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
 		"req.RemoteAddr: " + req.RemoteAddr + "\n")
 }
 
@@ -512,24 +518,24 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	// TODO: Reject requests from non-local IPs, if the site host is set to localhost or a localhost IP
-	if !common.Config.LoosePort && common.Site.PortInt != 80 && common.Site.PortInt != 443 && sport != common.Site.Port {
+	if !c.Config.LoosePort && c.Site.PortInt != 80 && c.Site.PortInt != 443 && sport != c.Site.Port {
 		malformedRequest(2)
 		return
 	}
 	
 	// Redirect www. and local IP requests to the right place
-	if shost == "www." + common.Site.Host || (common.Site.LocalHost && shost != common.Site.Host && isLocalHost(shost)) {
+	if shost == "www." + c.Site.Host || (c.Site.LocalHost && shost != c.Site.Host && isLocalHost(shost)) {
 		// TODO: Abstract the redirect logic?
 		w.Header().Set("Connection", "close")
 		var s string
-		if common.Site.EnableSsl {
+		if c.Site.EnableSsl {
 			s = "s"
 		}
 		var p string
-		if common.Site.PortInt != 80 && common.Site.PortInt != 443 {
-			p = ":"+common.Site.Port
+		if c.Site.PortInt != 80 && c.Site.PortInt != 443 {
+			p = ":"+c.Site.Port
 		}
-		dest := "http"+s+"://" + common.Site.Host+p + req.URL.Path
+		dest := "http"+s+"://" + c.Site.Host+p + req.URL.Path
 		if len(req.URL.RawQuery) > 0 {
 			dest += "?" + req.URL.RawQuery
 		}
@@ -538,11 +544,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Deflect malformed requests
-	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || (!common.Config.LooseHost && shost != common.Site.Host) {
+	if len(req.URL.Path) == 0 || req.URL.Path[0] != '/' || (!c.Config.LooseHost && shost != c.Site.Host) {
 		malformedRequest(3)
 		return
 	}
-	if common.Dev.FullReqLog {
+	if c.Dev.FullReqLog {
 		r.DumpRequest(req,"")
 	}
 
@@ -561,7 +567,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Indirect the default route onto a different one
 	if req.URL.Path == "/" {
-		req.URL.Path = common.Config.DefaultPath
+		req.URL.Path = c.Config.DefaultPath
 	}
 	
 	var prefix, extraData string
@@ -572,7 +578,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// TODO: Use the same hook table as downstream
-	hTbl := common.GetHookTable()
+	hTbl := c.GetHookTable()
 	skip, ferr := hTbl.VhookSkippable("router_after_filters", w, req, prefix, extraData)
 	if skip || ferr != nil {
 		return
@@ -585,7 +591,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		h.Set("X-Content-Type-Options", "nosniff")
 	}
 	
-	if common.Dev.SuperDebug {
+	if c.Dev.SuperDebug {
 		r.DumpRequest(req,"before routes.StaticFile")
 	}
 	// Increment the request counter
@@ -597,11 +603,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		routes.StaticFile(w, req)
 		return
 	}
-	if atomic.LoadInt32(&common.IsDBDown) == 1 {
-		common.DatabaseError(w, req)
+	if atomic.LoadInt32(&c.IsDBDown) == 1 {
+		c.DatabaseError(w, req)
 		return
 	}
-	if common.Dev.SuperDebug {
+	if c.Dev.SuperDebug {
 		r.requestLogger.Print("before PreRoute")
 	}
 
@@ -612,7 +618,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var agent string
 	if ua == "" {
 		counters.AgentViewCounter.Bump({{.AllAgentMap.blank}})
-		if common.Dev.DebugMode {
+		if c.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {
 				prepend += strconv.Itoa(int(char)) + " "
@@ -673,10 +679,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 		}
-		if common.Dev.SuperDebug {
+		if c.Dev.SuperDebug {
 			r.requestLogger.Print("parsed agent: ", agent)
 		}
-		if common.Dev.SuperDebug {
+		if c.Dev.SuperDebug {
 			r.requestLogger.Print("os: ", os)
 			r.requestLogger.Printf("items: %+v\n",items)
 		}
@@ -702,7 +708,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		
 		if agent == "" {
 			counters.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
-			if common.Dev.DebugMode {
+			if c.Dev.DebugMode {
 				var prepend string
 				for _, char := range req.UserAgent() {
 					prepend += strconv.Itoa(int(char)) + " "
@@ -721,7 +727,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		lang = strings.TrimSpace(lang)
 		lLang := strings.Split(lang,"-")
 		tLang := strings.Split(strings.Split(lLang[0],";")[0],",")
-		common.DebugDetail("tLang:", tLang)
+		c.DebugDetail("tLang:", tLang)
 		var llLang string
 		for _, seg := range tLang {
 			if seg == "*" {
@@ -730,7 +736,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			llLang = seg
 			break
 		}
-		common.DebugDetail("llLang:", llLang)
+		c.DebugDetail("llLang:", llLang)
 		if llLang == "" {
 			counters.LangViewCounter.Bump("none")
 		} else {
@@ -749,18 +755,18 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		referrer = strings.TrimPrefix(strings.TrimPrefix(referrer,"http://"),"https://")
 		referrer = strings.Split(referrer,"/")[0]
 		portless := strings.Split(referrer,":")[0]
-		if portless != "localhost" && portless != "127.0.0.1" && portless != common.Site.Host {
+		if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
 			counters.ReferrerTracker.Bump(referrer)
 		}
 	}
 	
 	// Deal with the session stuff, etc.
-	user, ok := common.PreRoute(w, req)
+	user, ok := c.PreRoute(w, req)
 	if !ok {
 		return
 	}
 	user.LastAgent = agent
-	if common.Dev.SuperDebug {
+	if c.Dev.SuperDebug {
 		r.requestLogger.Print(
 			"after PreRoute\n" +
 			"routeMapEnum: ", routeMapEnum)
@@ -776,7 +782,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				gz.Close()
 			}
 		}()
-		w = common.GzipResponseWriter{Writer: gz, ResponseWriter: w}
+		w = c.GzipResponseWriter{Writer: gz, ResponseWriter: w}
 	}
 
 	skip, ferr = hTbl.VhookSkippable("router_pre_route", w, req, user, prefix, extraData)
@@ -789,20 +795,20 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	hTbl.VhookNoRet("router_end", w, req, user, prefix, extraData)
-	//common.StoppedServer("Profile end")
+	//c.StoppedServer("Profile end")
 }
 	
-func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user common.User, prefix string, extraData string) common.RouteError {
-	var err common.RouteError
+func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix string, extraData string) c.RouteError {
+	var err c.RouteError
 	switch(prefix) {` + out + `
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData
 			err = sitemapSwitch(w,req)*/
 		case "/uploads":
 			if extraData == "" {
-				return common.NotFound(w,req,nil)
+				return c.NotFound(w,req,nil)
 			}
-			gzw, ok := w.(common.GzipResponseWriter)
+			gzw, ok := w.(c.GzipResponseWriter)
 			if ok {
 				w = gzw.ResponseWriter
 				w.Header().Del("Content-Type")
@@ -829,7 +835,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.SitemapXml"}})
 					return routes.SitemapXml(w,req)*/
 			}
-			return common.NotFound(w,req,nil)
+			return c.NotFound(w,req,nil)
 		default:
 			// A fallback for dynamic routes, e.g. ones declared by plugins
 			r.RLock()
@@ -849,7 +855,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				r.DumpRequest(req,"Bad Route")
 			}
 			counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.BadRoute" }})
-			return common.NotFound(w,req,nil)
+			return c.NotFound(w,req,nil)
 	}
 	return err
 }
