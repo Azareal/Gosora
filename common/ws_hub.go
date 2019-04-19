@@ -73,6 +73,11 @@ func (hub *WsHubImpl) Tick() error {
 }
 
 func wsTopicListTick(hub *WsHubImpl) error {
+	// Avoid hitting GetList when the topic list hasn't changed
+	if !TopicListThaw.Thawed() && hub.lastTopicList != nil {
+		return nil
+	}
+	
 	// Don't waste CPU time if nothing has happened
 	// TODO: Get a topic list method which strips stickies?
 	tList, _, _, err := TopicList.GetList(1, "", nil)
