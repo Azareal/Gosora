@@ -101,6 +101,10 @@ var hookTable = &HookTable{
 
 		"action_end_like_reply":nil,
 
+		"action_end_ban_user":nil,
+		"action_end_unban_user":nil,
+		"action_end_activate_user":nil,
+
 		"router_after_filters": nil,
 		"router_pre_route":     nil,
 
