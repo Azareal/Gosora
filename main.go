@@ -24,7 +24,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
@@ -45,131 +45,131 @@ type Globs struct {
 // TODO: Dynamically register these items to avoid maintaining as much code here?
 func afterDBInit() (err error) {
 	acc := qgen.NewAcc()
-	common.Rstore, err = common.NewSQLReplyStore(acc)
+	c.Rstore, err = c.NewSQLReplyStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Prstore, err = common.NewSQLProfileReplyStore(acc)
+	c.Prstore, err = c.NewSQLProfileReplyStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = phrases.InitPhrases(common.Site.Language)
+	err = phrases.InitPhrases(c.Site.Language)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the static files.")
-	err = common.Themes.LoadStaticFiles()
+	err = c.Themes.LoadStaticFiles()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = common.StaticFiles.Init()
+	err = c.StaticFiles.Init()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = common.StaticFiles.JSTmplInit()
+	err = c.StaticFiles.JSTmplInit()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the widgets")
-	common.Widgets = common.NewDefaultWidgetStore()
-	err = common.InitWidgets()
+	c.Widgets = c.NewDefaultWidgetStore()
+	err = c.InitWidgets()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the menu item list")
-	common.Menus = common.NewDefaultMenuStore()
-	err = common.Menus.Load(1) // 1 = the default menu
+	c.Menus = c.NewDefaultMenuStore()
+	err = c.Menus.Load(1) // 1 = the default menu
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	menuHold, err := common.Menus.Get(1)
+	menuHold, err := c.Menus.Get(1)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	fmt.Printf("menuHold: %+v\n", menuHold)
 	var b bytes.Buffer
-	menuHold.Build(&b, &common.GuestUser, "/")
+	menuHold.Build(&b, &c.GuestUser, "/")
 	fmt.Println("menuHold output: ", string(b.Bytes()))
 
 	log.Print("Initialising the authentication system")
-	common.Auth, err = common.NewDefaultAuth()
+	c.Auth, err = c.NewDefaultAuth()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the stores")
-	common.WordFilters, err = common.NewDefaultWordFilterStore(acc)
+	c.WordFilters, err = c.NewDefaultWordFilterStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.MFAstore, err = common.NewSQLMFAStore(acc)
+	c.MFAstore, err = c.NewSQLMFAStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Pages, err = common.NewDefaultPageStore(acc)
+	c.Pages, err = c.NewDefaultPageStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Reports, err = common.NewDefaultReportStore(acc)
+	c.Reports, err = c.NewDefaultReportStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Emails, err = common.NewDefaultEmailStore(acc)
+	c.Emails, err = c.NewDefaultEmailStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.LoginLogs, err = common.NewLoginLogStore(acc)
+	c.LoginLogs, err = c.NewLoginLogStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.RegLogs, err = common.NewRegLogStore(acc)
+	c.RegLogs, err = c.NewRegLogStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.ModLogs, err = common.NewModLogStore(acc)
+	c.ModLogs, err = c.NewModLogStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.AdminLogs, err = common.NewAdminLogStore(acc)
+	c.AdminLogs, err = c.NewAdminLogStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.IPSearch, err = common.NewDefaultIPSearcher()
+	c.IPSearch, err = c.NewDefaultIPSearcher()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if common.Config.Search == "" || common.Config.Search == "sql" {
-		common.RepliesSearch, err = common.NewSQLSearcher(acc)
+	if c.Config.Search == "" || c.Config.Search == "sql" {
+		c.RepliesSearch, err = c.NewSQLSearcher(acc)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
-	common.Subscriptions, err = common.NewDefaultSubscriptionStore()
+	c.Subscriptions, err = c.NewDefaultSubscriptionStore()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Attachments, err = common.NewDefaultAttachmentStore(acc)
+	c.Attachments, err = c.NewDefaultAttachmentStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Polls, err = common.NewDefaultPollStore(common.NewMemoryPollCache(100)) // TODO: Max number of polls held in cache, make this a config item
+	c.Polls, err = c.NewDefaultPollStore(c.NewMemoryPollCache(100)) // TODO: Max number of polls held in cache, make this a config item
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.TopicList, err = common.NewDefaultTopicList()
+	c.TopicList, err = c.NewDefaultTopicList()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.PasswordResetter, err = common.NewDefaultPasswordResetter(acc)
+	c.PasswordResetter, err = c.NewDefaultPasswordResetter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	// TODO: Let the admin choose other thumbnailers, maybe ones defined in plugins
-	common.Thumbnailer = common.NewCaireThumbnailer()
+	c.Thumbnailer = c.NewCaireThumbnailer()
 
 	log.Print("Initialising the view counters")
 	counters.GlobalViewCounter, err = counters.NewGlobalViewCounter(acc)
@@ -227,17 +227,17 @@ func main() {
 			return
 		}
 	}()*/
-	common.StartTime = time.Now()
+	c.StartTime = time.Now()
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()
-	f, err := os.OpenFile("./logs/ops-"+strconv.FormatInt(common.StartTime.Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile("./logs/ops-"+strconv.FormatInt(c.StartTime.Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
-	common.LogWriter = io.MultiWriter(os.Stderr, f)
-	log.SetOutput(common.LogWriter)
-	log.Print("Running Gosora v" + common.SoftwareVersion.String())
+	c.LogWriter = io.MultiWriter(os.Stderr, f)
+	log.SetOutput(c.LogWriter)
+	log.Print("Running Gosora v" + c.SoftwareVersion.String())
 	fmt.Println("")
 
 	// TODO: Add a flag for enabling the profiler
@@ -249,32 +249,32 @@ func main() {
 		pprof.StartCPUProfile(f)
 	}
 
-	jsToken, err := common.GenerateSafeString(80)
+	jsToken, err := c.GenerateSafeString(80)
 	if err != nil {
 		log.Fatal(err)
 	}
-	common.JSTokenBox.Store(jsToken)
+	c.JSTokenBox.Store(jsToken)
 
 	log.Print("Loading the configuration data")
-	err = common.LoadConfig()
+	err = c.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Print("Processing configuration data")
-	err = common.ProcessConfig()
+	err = c.ProcessConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = common.InitTemplates()
+	err = c.InitTemplates()
 	if err != nil {
 		log.Fatal(err)
 	}
-	common.Themes, err = common.NewThemeList()
+	c.Themes, err = c.NewThemeList()
 	if err != nil {
 		log.Fatal(err)
 	}
-	common.TopicListThaw = common.NewSingleServerThaw()
+	c.TopicListThaw = c.NewSingleServerThaw()
 
 	err = InitDatabase()
 	if err != nil {
@@ -285,11 +285,11 @@ func main() {
 	buildTemplates := flag.Bool("build-templates", false, "build the templates")
 	flag.Parse()
 	if *buildTemplates {
-		err = common.CompileTemplates()
+		err = c.CompileTemplates()
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = common.CompileJSTemplates()
+		err = c.CompileJSTemplates()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -301,12 +301,12 @@ func main() {
 		log.Fatalf("%+v", err)
 	}
 
-	err = common.VerifyConfig()
+	err = c.VerifyConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if !common.Dev.NoFsnotify {
+	if !c.Dev.NoFsnotify {
 		log.Print("Initialising the file watcher")
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
@@ -327,7 +327,7 @@ func main() {
 					}
 					if len(pathBits) >= 3 && pathBits[2] == "public" {
 						// TODO: Handle new themes freshly plopped into the folder?
-						theme, ok := common.Themes[themeName]
+						theme, ok := c.Themes[themeName]
 						if ok {
 							return theme.LoadStaticFiles()
 						}
@@ -353,10 +353,10 @@ func main() {
 						err = nil
 					}
 					if err != nil {
-						common.LogError(err)
+						c.LogError(err)
 					}
 				case err = <-watcher.Errors:
-					common.LogWarning(err)
+					c.LogWarning(err)
 				}
 			}
 		}()
@@ -370,7 +370,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		for _, theme := range common.Themes {
+		for _, theme := range c.Themes {
 			err = watcher.Add("./themes/" + theme.Name + "/public")
 			if err != nil {
 				log.Fatal(err)
@@ -383,13 +383,13 @@ func main() {
 	// Thumbnailer goroutine, we only want one image being thumbnailed at a time, otherwise they might wind up consuming all the CPU time and leave no resources left to service the actual requests
 	// TODO: Could we expand this to attachments and other things too?
 	thumbChan := make(chan bool)
-	go common.ThumbTask(thumbChan)
+	go c.ThumbTask(thumbChan)
 	go tickLoop(thumbChan)
 
 	// Resource Management Goroutine
 	go func() {
-		ucache := common.Users.GetCache()
-		tcache := common.Topics.GetCache()
+		ucache := c.Users.GetCache()
+		tcache := c.Topics.GetCache()
 		if ucache == nil && tcache == nil {
 			return
 		}
@@ -403,7 +403,7 @@ func main() {
 				// TODO: Add a LastRequested field to cached User structs to avoid evicting the same things which wind up getting loaded again anyway?
 				if ucache != nil {
 					ucap := ucache.GetCapacity()
-					if ucache.Length() <= ucap || common.Users.GlobalCount() <= ucap {
+					if ucache.Length() <= ucap || c.Users.GlobalCount() <= ucap {
 						couldNotDealloc = false
 						continue
 					}
@@ -421,19 +421,19 @@ func main() {
 	}
 
 	log.Print("Initialising the plugins")
-	common.InitPlugins()
+	c.InitPlugins()
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigs
 		// TODO: Gracefully shutdown the HTTP server
-		runTasks(common.ShutdownTasks)
-		common.StoppedServer("Received a signal to shutdown: ", sig)
+		runTasks(c.ShutdownTasks)
+		c.StoppedServer("Received a signal to shutdown: ", sig)
 	}()
 
 	// Start up the WebSocket ticks
-	common.WsHub.Start()
+	c.WsHub.Start()
 
 	if false {
 		f, err := os.Create("./logs/cpu.prof")
@@ -447,7 +447,7 @@ func main() {
 	//	pprof.StopCPUProfile()
 	//}
 	startServer()
-	args := <-common.StopServerChan
+	args := <-c.StopServerChan
 	if false {
 		pprof.StopCPUProfile()
 		f, err := os.Create("./logs/mem.prof")
@@ -469,19 +469,19 @@ func main() {
 func startServer() {
 	// We might not need the timeouts, if we're behind a reverse-proxy like Nginx
 	var newServer = func(addr string, handler http.Handler) *http.Server {
-		rtime := common.Config.ReadTimeout
+		rtime := c.Config.ReadTimeout
 		if rtime == 0 {
 			rtime = 8
 		} else if rtime == -1 {
 			rtime = 0
 		}
-		wtime := common.Config.WriteTimeout
+		wtime := c.Config.WriteTimeout
 		if wtime == 0 {
 			wtime = 10
 		} else if wtime == -1 {
 			wtime = 0
 		}
-		itime := common.Config.IdleTimeout
+		itime := c.Config.IdleTimeout
 		if itime == 0 {
 			itime = 120
 		} else if itime == -1 {
@@ -507,30 +507,30 @@ func startServer() {
 
 	// TODO: Let users run *both* HTTP and HTTPS
 	log.Print("Initialising the HTTP server")
-	if !common.Site.EnableSsl {
-		if common.Site.Port == "" {
-			common.Site.Port = "80"
+	if !c.Site.EnableSsl {
+		if c.Site.Port == "" {
+			c.Site.Port = "80"
 		}
-		log.Print("Listening on port " + common.Site.Port)
+		log.Print("Listening on port " + c.Site.Port)
 		go func() {
-			common.StoppedServer(newServer(":"+common.Site.Port, router).ListenAndServe())
+			c.StoppedServer(newServer(":"+c.Site.Port, router).ListenAndServe())
 		}()
 		return
 	}
 
-	if common.Site.Port == "" {
-		common.Site.Port = "443"
+	if c.Site.Port == "" {
+		c.Site.Port = "443"
 	}
-	if common.Site.Port == "80" || common.Site.Port == "443" {
+	if c.Site.Port == "80" || c.Site.Port == "443" {
 		// We should also run the server on port 80
 		// TODO: Redirect to port 443
 		go func() {
 			log.Print("Listening on port 80")
-			common.StoppedServer(newServer(":80", &HTTPSRedirect{}).ListenAndServe())
+			c.StoppedServer(newServer(":80", &HTTPSRedirect{}).ListenAndServe())
 		}()
 	}
-	log.Printf("Listening on port %s", common.Site.Port)
+	log.Printf("Listening on port %s", c.Site.Port)
 	go func() {
-		common.StoppedServer(newServer(":"+common.Site.Port, router).ListenAndServeTLS(common.Config.SslFullchain, common.Config.SslPrivkey))
+		c.StoppedServer(newServer(":"+c.Site.Port, router).ListenAndServeTLS(c.Config.SslFullchain, c.Config.SslPrivkey))
 	}()
 }

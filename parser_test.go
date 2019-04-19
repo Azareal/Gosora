@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
 func TestPreparser(t *testing.T) {
@@ -113,7 +113,7 @@ func TestPreparser(t *testing.T) {
 	// TODO: Do a test with invalid UTF-8 input
 
 	for _, item := range msgList.Items {
-		res := common.PreparseMessage(item.Msg)
+		res := c.PreparseMessage(item.Msg)
 		if res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)
@@ -138,9 +138,9 @@ func TestParser(t *testing.T) {
 	msgList.Add("\n//"+url+"\n", "<br><a href='//"+url+"'>//"+url+"</a><br>")
 	msgList.Add("//"+url+"\n//"+url, "<a href='//"+url+"'>//"+url+"</a><br><a href='//"+url+"'>//"+url+"</a>")
 	msgList.Add("//"+url+"\n\n//"+url, "<a href='//"+url+"'>//"+url+"</a><br><br><a href='//"+url+"'>//"+url+"</a>")
-	msgList.Add("//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
-	msgList.Add("//"+common.Site.URL+"\n", "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br>")
-	msgList.Add("//"+common.Site.URL+"\n//"+common.Site.URL, "<a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a><br><a href='//"+common.Site.URL+"'>//"+common.Site.URL+"</a>")
+	msgList.Add("//"+c.Site.URL, "<a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a>")
+	msgList.Add("//"+c.Site.URL+"\n", "<a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a><br>")
+	msgList.Add("//"+c.Site.URL+"\n//"+c.Site.URL, "<a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a><br><a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a>")
 
 	msgList.Add("#tid-1", "<a href='/topic/1'>#tid-1</a>")
 	msgList.Add("#tid-0", "<red>[Invalid Topic]</red>")
@@ -152,7 +152,7 @@ func TestParser(t *testing.T) {
 	msgList.Add("@-1", "<red>[Invalid Profile]</red>1")
 
 	for _, item := range msgList.Items {
-		res := common.ParseMessage(item.Msg, 1, "forums")
+		res := c.ParseMessage(item.Msg, 1, "forums")
 		if res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)

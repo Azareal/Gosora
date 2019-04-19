@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
-func Pages(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func Pages(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "pages", "pages")
 	if ferr != nil {
 		return ferr
@@ -21,54 +21,54 @@ func Pages(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	}
 
 	// TODO: Test the pagination here
-	pageCount := common.Pages.GlobalCount()
+	pageCount := c.Pages.GlobalCount()
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 15
-	offset, page, lastPage := common.PageOffset(pageCount, page, perPage)
+	offset, page, lastPage := c.PageOffset(pageCount, page, perPage)
 
-	cPages, err := common.Pages.GetOffset(offset, perPage)
+	cPages, err := c.Pages.GetOffset(offset, perPage)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
-	pageList := common.Paginate(pageCount, perPage, 5)
-	pi := common.PanelCustomPagesPage{basePage, cPages, common.Paginator{pageList, page, lastPage}}
+	pageList := c.Paginate(pageCount, perPage, 5)
+	pi := c.PanelCustomPagesPage{basePage, cPages, c.Paginator{pageList, page, lastPage}}
 	return renderTemplate("panel_pages", w, r, basePage.Header, &pi)
 }
 
-func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 
 	pname := r.PostFormValue("name")
 	if pname == "" {
-		return common.LocalError("No name was provided for this page", w, r, user)
+		return c.LocalError("No name was provided for this page", w, r, user)
 	}
 	ptitle := r.PostFormValue("title")
 	if ptitle == "" {
-		return common.LocalError("No title was provided for this page", w, r, user)
+		return c.LocalError("No title was provided for this page", w, r, user)
 	}
 	pbody := r.PostFormValue("body")
 	if pbody == "" {
-		return common.LocalError("No body was provided for this page", w, r, user)
+		return c.LocalError("No body was provided for this page", w, r, user)
 	}
 
-	page := common.BlankCustomPage()
+	page := c.BlankCustomPage()
 	page.Name = pname
 	page.Title = ptitle
 	page.Body = pbody
 	_, err := page.Create()
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/panel/pages/?created=1", http.StatusSeeOther)
 	return nil
 }
 
-func PagesEdit(w http.ResponseWriter, r *http.Request, user common.User, spid string) common.RouteError {
+func PagesEdit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "pages_edit", "pages")
 	if ferr != nil {
 		return ferr
@@ -79,74 +79,74 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, user common.User, spid st
 
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return common.LocalError("Page ID needs to be an integer", w, r, user)
+		return c.LocalError("Page ID needs to be an integer", w, r, user)
 	}
 
-	page, err := common.Pages.Get(pid)
+	page, err := c.Pages.Get(pid)
 	if err == sql.ErrNoRows {
-		return common.NotFound(w, r, basePage.Header)
+		return c.NotFound(w, r, basePage.Header)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
-	pi := common.PanelCustomPageEditPage{basePage, page}
+	pi := c.PanelCustomPageEditPage{basePage, page}
 	return renderTemplate("panel_pages_edit", w, r, basePage.Header, &pi)
 }
 
-func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, spid string) common.RouteError {
-	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return common.LocalError("Page ID needs to be an integer", w, r, user)
+		return c.LocalError("Page ID needs to be an integer", w, r, user)
 	}
 
 	pname := r.PostFormValue("name")
 	if pname == "" {
-		return common.LocalError("No name was provided for this page", w, r, user)
+		return c.LocalError("No name was provided for this page", w, r, user)
 	}
 	ptitle := r.PostFormValue("title")
 	if ptitle == "" {
-		return common.LocalError("No title was provided for this page", w, r, user)
+		return c.LocalError("No title was provided for this page", w, r, user)
 	}
 	pbody := r.PostFormValue("body")
 	if pbody == "" {
-		return common.LocalError("No body was provided for this page", w, r, user)
+		return c.LocalError("No body was provided for this page", w, r, user)
 	}
 
-	page, err := common.Pages.Get(pid)
+	page, err := c.Pages.Get(pid)
 	if err != nil {
-		return common.NotFound(w, r, nil)
+		return c.NotFound(w, r, nil)
 	}
 	page.Name = pname
 	page.Title = ptitle
 	page.Body = pbody
 	err = page.Commit()
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/panel/pages/?updated=1", http.StatusSeeOther)
 	return nil
 }
 
-func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User, spid string) common.RouteError {
-	_, ferr := common.SimplePanelUserCheck(w, r, &user)
+func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return common.LocalError("Page ID needs to be an integer", w, r, user)
+		return c.LocalError("Page ID needs to be an integer", w, r, user)
 	}
 
-	err = common.Pages.Delete(pid)
+	err = c.Pages.Delete(pid)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/panel/pages/?deleted=1", http.StatusSeeOther)

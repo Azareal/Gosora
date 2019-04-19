@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
 	_ "github.com/lib/pq"
 )
@@ -24,11 +24,11 @@ func init() {
 func initPgsql() (err error) {
 	// TODO: Investigate connect_timeout to see what it does exactly and whether it's relevant to us
 	var _dbpassword string
-	if common.DbConfig.Password != "" {
-		_dbpassword = " password='" + _escape_bit(common.DbConfig.Password) + "'"
+	if c.DbConfig.Password != "" {
+		_dbpassword = " password='" + _escape_bit(c.DbConfig.Password) + "'"
 	}
 	// TODO: Move this bit to the query gen lib
-	db, err = sql.Open("postgres", "host='"+_escape_bit(common.DbConfig.Host)+"' port='"+_escape_bit(common.DbConfig.Port)+"' user='"+_escape_bit(common.DbConfig.Username)+"' dbname='"+_escape_bit(common.DbConfig.Dbname)+"'"+_dbpassword+" sslmode='"+dbSslmode+"'")
+	db, err = sql.Open("postgres", "host='"+_escape_bit(c.DbConfig.Host)+"' port='"+_escape_bit(c.DbConfig.Port)+"' user='"+_escape_bit(c.DbConfig.Username)+"' dbname='"+_escape_bit(c.DbConfig.Dbname)+"'"+_dbpassword+" sslmode='"+dbSslmode+"'")
 	if err != nil {
 		return err
 	}

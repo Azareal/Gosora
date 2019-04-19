@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
 var bbcodeRandom *rand.Rand
@@ -26,10 +26,10 @@ var bbcodeQuotes *regexp.Regexp
 var bbcodeCode *regexp.Regexp
 
 func init() {
-	common.Plugins.Add(&common.Plugin{UName: "bbcode", Name: "BBCode", Author: "Azareal", URL: "https://github.com/Azareal", Init: initBbcode, Deactivate: deactivateBbcode})
+	c.Plugins.Add(&c.Plugin{UName: "bbcode", Name: "BBCode", Author: "Azareal", URL: "https://github.com/Azareal", Init: initBbcode, Deactivate: deactivateBbcode})
 }
 
-func initBbcode(plugin *common.Plugin) error {
+func initBbcode(plugin *c.Plugin) error {
 	plugin.AddHook("parse_assign", bbcodeFullParse)
 
 	bbcodeInvalidNumber = []byte("<red>[Invalid Number]</red>")
@@ -51,7 +51,7 @@ func initBbcode(plugin *common.Plugin) error {
 	return nil
 }
 
-func deactivateBbcode(plugin *common.Plugin) {
+func deactivateBbcode(plugin *c.Plugin) {
 	plugin.RemoveHook("parse_assign", bbcodeFullParse)
 }
 
@@ -212,7 +212,7 @@ func bbcodeFullParse(msg string) string {
 	var complexBbc bool
 
 	msgbytes := []byte(msg)
-	msgbytes = append(msgbytes, common.SpaceGap...)
+	msgbytes = append(msgbytes, c.SpaceGap...)
 	for i := 0; i < len(msgbytes); i++ {
 		if msgbytes[i] == '[' {
 			if msgbytes[i+2] != ']' {
@@ -293,7 +293,7 @@ func bbcodeFullParse(msg string) string {
 		if hasS {
 			msgbytes = append(bytes.TrimSpace(msgbytes), closeStrike...)
 		}
-		msgbytes = append(msgbytes, common.SpaceGap...)
+		msgbytes = append(msgbytes, c.SpaceGap...)
 	}
 
 	if complexBbc {
@@ -342,17 +342,17 @@ func bbcodeParseURL(i int, start int, lastTag int, msgbytes []byte, outbytes []b
 	start = i + 5
 	outbytes = append(outbytes, msgbytes[lastTag:i]...)
 	i = start
-	i += common.PartialURLStringLen(string(msgbytes[start:]))
+	i += c.PartialURLStringLen(string(msgbytes[start:]))
 	if !bytes.Equal(msgbytes[i:i+6], []byte("[/url]")) {
-		outbytes = append(outbytes, common.InvalidURL...)
+		outbytes = append(outbytes, c.InvalidURL...)
 		return i, start, lastTag, outbytes
 	}
 
-	outbytes = append(outbytes, common.URLOpen...)
+	outbytes = append(outbytes, c.URLOpen...)
 	outbytes = append(outbytes, msgbytes[start:i]...)
-	outbytes = append(outbytes, common.URLOpen2...)
+	outbytes = append(outbytes, c.URLOpen2...)
 	outbytes = append(outbytes, msgbytes[start:i]...)
-	outbytes = append(outbytes, common.URLClose...)
+	outbytes = append(outbytes, c.URLClose...)
 	i += 6
 	lastTag = i
 

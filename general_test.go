@@ -14,7 +14,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/install"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
@@ -50,39 +50,39 @@ func gloinit() (err error) {
 	}
 
 	// TODO: Make these configurable via flags to the go test command
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
-	common.Dev.TemplateDebug = false
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
+	c.Dev.TemplateDebug = false
 	qgen.LogPrepares = false
 	//nogrouplog = true
-	common.StartTime = time.Now()
+	c.StartTime = time.Now()
 
-	err = common.LoadConfig()
+	err = c.LoadConfig()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = common.ProcessConfig()
+	err = c.ProcessConfig()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = common.InitTemplates()
+	err = c.InitTemplates()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Themes, err = common.NewThemeList()
+	c.Themes, err = c.NewThemeList()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.TopicListThaw = common.NewSingleServerThaw()
-	common.SwitchToTestDB()
+	c.TopicListThaw = c.NewSingleServerThaw()
+	c.SwitchToTestDB()
 
 	var ok bool
 	installAdapter, ok = install.Lookup(dbAdapter)
 	if !ok {
 		return errors.WithStack(errors.New("We couldn't find the adapter '" + dbAdapter + "'"))
 	}
-	installAdapter.SetConfig(common.DbConfig.Host, common.DbConfig.Username, common.DbConfig.Password, common.DbConfig.Dbname, common.DbConfig.Port)
+	installAdapter.SetConfig(c.DbConfig.Host, c.DbConfig.Username, c.DbConfig.Password, c.DbConfig.Dbname, c.DbConfig.Port)
 
 	err = ResetTables()
 	if err != nil {
@@ -121,18 +121,18 @@ const benchTid = "1"
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 	binit(b)
 	cfg := NewStashConfig()
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
 
-	admin, err := common.Users.Get(1)
+	admin, err := c.Users.Get(1)
 	if err != nil {
 		b.Fatal(err)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
 	}
-	adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
-	adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
+	adminUIDCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	adminSessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -142,11 +142,11 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 			reqAdmin.AddCookie(&adminSessionCookie)
 
 			// Deal with the session stuff, etc.
-			user, ok := common.PreRoute(w, reqAdmin)
+			user, ok := c.PreRoute(w, reqAdmin)
 			if !ok {
 				b.Fatal("Mysterious error!")
 			}
-			head, err := common.UserCheck(w, reqAdmin, &user)
+			head, err := c.UserCheck(w, reqAdmin, &user)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -169,18 +169,18 @@ func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
 		b.Fatal(err)
 	}
 	cfg := NewStashConfig()
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
 
-	admin, err := common.Users.Get(1)
+	admin, err := c.Users.Get(1)
 	if err != nil {
 		b.Fatal(err)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
 	}
-	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
-	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
 	path := "/topic/hm." + benchTid
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -223,18 +223,18 @@ func BenchmarkTopicGuestAdminRouteParallelWithRouter(b *testing.B) {
 		b.Fatal(err)
 	}
 	cfg := NewStashConfig()
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
 
-	admin, err := common.Users.Get(1)
+	admin, err := c.Users.Get(1)
 	if err != nil {
 		b.Fatal(err)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
 	}
-	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: common.Year}
-	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: common.Year}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
 	path := "/topic/hm." + benchTid
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -273,16 +273,16 @@ func BenchmarkTopicGuestAdminRouteParallelWithRouter(b *testing.B) {
 func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	binit(b)
 	cfg := NewStashConfig()
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("get", "/topic/hm."+benchTid, bytes.NewReader(nil))
-			user := common.GuestUser
+			user := c.GuestUser
 
-			head, err := common.UserCheck(w, req, &user)
+			head, err := c.UserCheck(w, req, &user)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -300,16 +300,16 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 	binit(b)
 	cfg := NewStashConfig()
-	common.Dev.DebugMode = true
-	common.Dev.SuperDebug = false
+	c.Dev.DebugMode = true
+	c.Dev.SuperDebug = false
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("get", "/topic/hm."+benchTid, bytes.NewReader(nil))
-			user := common.GuestUser
+			user := c.GuestUser
 
-			head, err := common.UserCheck(w, req, &user)
+			head, err := c.UserCheck(w, req, &user)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -327,8 +327,8 @@ func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 func obRoute(b *testing.B, path string) {
 	binit(b)
 	cfg := NewStashConfig()
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
 	b.RunParallel(benchRoute(b, path))
 	cfg.Restore()
 }
@@ -336,8 +336,8 @@ func obRoute(b *testing.B, path string) {
 func obRouteNoError(b *testing.B, path string) {
 	binit(b)
 	cfg := NewStashConfig()
-	common.Dev.DebugMode = false
-	common.Dev.SuperDebug = false
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
 	b.RunParallel(benchRouteNoError(b, path))
 	cfg.Restore()
 }
@@ -386,14 +386,14 @@ type StashConfig struct {
 }
 
 func NewStashConfig() *StashConfig {
-	prev := common.Dev.DebugMode
-	prev2 := common.Dev.SuperDebug
+	prev := c.Dev.DebugMode
+	prev2 := c.Dev.SuperDebug
 	return &StashConfig{prev, prev2}
 }
 
 func (cfg *StashConfig) Restore() {
-	common.Dev.DebugMode = cfg.prev
-	common.Dev.SuperDebug = cfg.prev2
+	c.Dev.DebugMode = cfg.prev
+	c.Dev.SuperDebug = cfg.prev2
 }
 
 func benchRoute(b *testing.B, path string) func(*testing.PB) {
@@ -440,7 +440,7 @@ func BenchmarkProfileGuestRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkPopulateTopicWithRouter(b *testing.B) {
 	b.ReportAllocs()
-	topic, err := common.Topics.Get(benchTidI)
+	topic, err := c.Topics.Get(benchTidI)
 	if err != nil {
 		debug.PrintStack()
 		b.Fatal(err)
@@ -448,7 +448,7 @@ func BenchmarkPopulateTopicWithRouter(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			for i := 0; i < 25; i++ {
-				_, err := common.Rstore.Create(topic, "hiii", "::1", 1)
+				_, err := c.Rstore.Create(topic, "hiii", "::1", 1)
 				if err != nil {
 					debug.PrintStack()
 					b.Fatal(err)
@@ -462,10 +462,10 @@ func BenchmarkPopulateTopicWithRouter(b *testing.B) {
 
 func BenchmarkTopicAdminFullPageRouteParallelWithRouter(b *testing.B) {
 	/*if !fullPage {
-		topic, err := common.Topics.Get(benchTidI)
+		topic, err := c.Topics.Get(benchTidI)
 		panicIfErr(err)
 		for i := 0; i < 25; i++ {
-			_, err = common.Rstore.Create(topic, "hiii", "::1", 1)
+			_, err = c.Rstore.Create(topic, "hiii", "::1", 1)
 			panicIfErr(err)
 		}
 		fullPage = true
@@ -475,10 +475,10 @@ func BenchmarkTopicAdminFullPageRouteParallelWithRouter(b *testing.B) {
 
 func BenchmarkTopicGuestFullPageRouteParallelWithRouter(b *testing.B) {
 	/*if !fullPage {
-		topic, err := common.Topics.Get(benchTidI)
+		topic, err := c.Topics.Get(benchTidI)
 		panicIfErr(err)
 		for i := 0; i < 25; i++ {
-			_, err = common.Rstore.Create(topic, "hiii", "::1", 1)
+			_, err = c.Rstore.Create(topic, "hiii", "::1", 1)
 			panicIfErr(err)
 		}
 		fullPage = true
@@ -791,7 +791,7 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		var tu common.TopicUser
+		var tu c.TopicUser
 		for pb.Next() {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 			if err == ErrNoRows {
@@ -813,7 +813,7 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	}
 
 	b.RunParallel(func(pb *testing.PB) {
-		var tu common.TopicUser
+		var tu c.TopicUser
 
 		getTopicUser, err := qgen.Builder.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
 		if err != nil {
@@ -844,7 +844,7 @@ func BenchmarkUserGet(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var err error
 		for pb.Next() {
-			_, err = common.Users.Get(1)
+			_, err = c.Users.Get(1)
 			if err != nil {
 				b.Fatal(err)
 				return
@@ -864,7 +864,7 @@ func BenchmarkUserBypassGet(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var err error
 		for pb.Next() {
-			_, err = common.Users.BypassGet(1)
+			_, err = c.Users.BypassGet(1)
 			if err != nil {
 				b.Fatal(err)
 				return
@@ -875,7 +875,7 @@ func BenchmarkUserBypassGet(b *testing.B) {
 
 func BenchmarkQueriesSerial(b *testing.B) {
 	b.ReportAllocs()
-	var tu common.TopicUser
+	var tu c.TopicUser
 	b.Run("topic", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
@@ -907,7 +907,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 		}
 	})
 
-	var replyItem common.ReplyUser
+	var replyItem c.ReplyUser
 	var isSuperAdmin bool
 	var group int
 	b.Run("topic_replies_scan", func(b *testing.B) {
@@ -940,32 +940,32 @@ func BenchmarkParserSerial(b *testing.B) {
 	b.ReportAllocs()
 	b.Run("empty_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = common.ParseMessage("", 0, "")
+			_ = c.ParseMessage("", 0, "")
 		}
 	})
 	b.Run("short_post", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = common.ParseMessage("Hey everyone, how's it going?", 0, "")
+			_ = c.ParseMessage("Hey everyone, how's it going?", 0, "")
 		}
 	})
 	b.Run("one_smily", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = common.ParseMessage("Hey everyone, how's it going? :)", 0, "")
+			_ = c.ParseMessage("Hey everyone, how's it going? :)", 0, "")
 		}
 	})
 	b.Run("five_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = common.ParseMessage("Hey everyone, how's it going? :):):):):)", 0, "")
+			_ = c.ParseMessage("Hey everyone, how's it going? :):):):):)", 0, "")
 		}
 	})
 	b.Run("ten_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = common.ParseMessage("Hey everyone, how's it going? :):):):):):):):):):)", 0, "")
+			_ = c.ParseMessage("Hey everyone, how's it going? :):):):):):):):):):)", 0, "")
 		}
 	})
 	b.Run("twenty_smilies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = common.ParseMessage("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)", 0, "")
+			_ = c.ParseMessage("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)", 0, "")
 		}
 	})
 }
@@ -1118,7 +1118,7 @@ func BenchmarkBBCodePluginWithFullParserSerial(b *testing.B) {
 }
 
 func TestLevels(t *testing.T) {
-	levels := common.GetLevels(40)
+	levels := c.GetLevels(40)
 	for level, score := range levels {
 		sscore := strconv.FormatFloat(score, 'f', -1, 64)
 		t.Log("Level: " + strconv.Itoa(level) + " Score: " + sscore)

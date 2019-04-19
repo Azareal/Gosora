@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
 // TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?
@@ -14,22 +14,22 @@ func runTasks(tasks []func() error) {
 	for _, task := range tasks {
 		err := task()
 		if err != nil {
-			common.LogError(err)
+			c.LogError(err)
 		}
 	}
 }
 
 func startTick() (abort bool) {
-	var isDBDown = atomic.LoadInt32(&common.IsDBDown)
+	var isDBDown = atomic.LoadInt32(&c.IsDBDown)
 	err := db.Ping()
 	if err != nil {
 		// TODO: There's a bit of a race here, but it doesn't matter if this error appears multiple times in the logs as it's capped at three times, we just want to cut it down 99% of the time
 		if isDBDown == 0 {
 			db.SetConnMaxLifetime(time.Second) // Drop all the connections and start over
-			common.LogWarning(err)
-			common.LogWarning(errors.New("The database is down"))
+			c.LogWarning(err)
+			c.LogWarning(errors.New("The database is down"))
 		}
-		atomic.StoreInt32(&common.IsDBDown, 1)
+		atomic.StoreInt32(&c.IsDBDown, 1)
 		return true
 	}
 	if isDBDown == 1 {
@@ -37,14 +37,14 @@ func startTick() (abort bool) {
 	}
 	//db.SetConnMaxLifetime(time.Second * 60 * 5) // Make this infinite as the temporary lifetime change will purge the stale connections?
 	db.SetConnMaxLifetime(-1)
-	atomic.StoreInt32(&common.IsDBDown, 0)
+	atomic.StoreInt32(&c.IsDBDown, 0)
 	return false
 }
 
 func runHook(name string) {
-	err := common.RunTaskHook(name)
+	err := c.RunTaskHook(name)
 	if err != nil {
-		common.LogError(err, "Failed at task '"+name+"'")
+		c.LogError(err, "Failed at task '"+name+"'")
 	}
 }
 
@@ -62,7 +62,7 @@ func tickLoop(thumbChan chan bool) {
 				continue
 			}
 			runHook("before_half_second_tick")
-			runTasks(common.ScheduledHalfSecondTasks)
+			runTasks(c.ScheduledHalfSecondTasks)
 			runHook("after_half_second_tick")
 		case <-secondTicker.C:
 			if startTick() {
@@ -70,20 +70,20 @@ func tickLoop(thumbChan chan bool) {
 			}
 			runHook("before_second_tick")
 			go func() { thumbChan <- true }()
-			runTasks(common.ScheduledSecondTasks)
+			runTasks(c.ScheduledSecondTasks)
 
 			// TODO: Stop hard-coding this
-			err := common.HandleExpiredScheduledGroups()
+			err := c.HandleExpiredScheduledGroups()
 			if err != nil {
-				common.LogError(err)
+				c.LogError(err)
 			}
 
 			// TODO: Handle delayed moderation tasks
 
 			// Sync with the database, if there are any changes
-			err = common.HandleServerSync()
+			err = c.HandleServerSync()
 			if err != nil {
-				common.LogError(err)
+				c.LogError(err)
 			}
 
 			// TODO: Manage the TopicStore, UserStore, and ForumStore
@@ -96,7 +96,7 @@ func tickLoop(thumbChan chan bool) {
 				continue
 			}
 			runHook("before_fifteen_minute_tick")
-			runTasks(common.ScheduledFifteenMinuteTasks)
+			runTasks(c.ScheduledFifteenMinuteTasks)
 
 			// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 			// TODO: Publish scheduled posts.
@@ -107,20 +107,20 @@ func tickLoop(thumbChan chan bool) {
 			}
 			runHook("before_hour_tick")
 
-			jsToken, err := common.GenerateSafeString(80)
+			jsToken, err := c.GenerateSafeString(80)
 			if err != nil {
-				common.LogError(err)
+				c.LogError(err)
 			}
-			common.JSTokenBox.Store(jsToken)
+			c.JSTokenBox.Store(jsToken)
 
-			common.OldSessionSigningKeyBox.Store(common.SessionSigningKeyBox.Load().(string)) // TODO: We probably don't need this type conversion
-			sessionSigningKey, err := common.GenerateSafeString(80)
+			c.OldSessionSigningKeyBox.Store(c.SessionSigningKeyBox.Load().(string)) // TODO: We probably don't need this type conversion
+			sessionSigningKey, err := c.GenerateSafeString(80)
 			if err != nil {
-				common.LogError(err)
+				c.LogError(err)
 			}
-			common.SessionSigningKeyBox.Store(sessionSigningKey)
+			c.SessionSigningKeyBox.Store(sessionSigningKey)
 
-			runTasks(common.ScheduledHourTasks)
+			runTasks(c.ScheduledHourTasks)
 			runHook("after_hour_tick")
 		}
 
