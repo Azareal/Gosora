@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -20,7 +20,7 @@ var attachmentStmts AttachmentStmts
 
 // TODO: Abstract this with an attachment store
 func init() {
-	common.DbInits.Add(func(acc *qgen.Accumulator) error {
+	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		attachmentStmts = AttachmentStmts{
 			get: acc.Select("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path = ? AND sectionID = ? AND sectionTable = ?").Prepare(),
 		}
@@ -28,16 +28,16 @@ func init() {
 	})
 }
 
-func ShowAttachment(w http.ResponseWriter, r *http.Request, user common.User, filename string) common.RouteError {
-	filename = common.Stripslashes(filename)
+func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filename string) c.RouteError {
+	filename = c.Stripslashes(filename)
 	var ext = filepath.Ext("./attachs/" + filename)
-	if !common.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
-		return common.LocalError("Bad extension", w, r, user)
+	if !c.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
+		return c.LocalError("Bad extension", w, r, user)
 	}
 
 	sectionID, err := strconv.Atoi(r.FormValue("sectionID"))
 	if err != nil {
-		return common.LocalError("The sectionID is not an integer", w, r, user)
+		return c.LocalError("The sectionID is not an integer", w, r, user)
 	}
 	var sectionTable = r.FormValue("sectionType")
 
@@ -45,37 +45,37 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user common.User, fi
 	var originID, uploadedBy int
 	err = attachmentStmts.get.QueryRow(filename, sectionID, sectionTable).Scan(&sectionID, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
 	if err == sql.ErrNoRows {
-		return common.NotFound(w, r, nil)
+		return c.NotFound(w, r, nil)
 	} else if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	if sectionTable == "forums" {
-		_, ferr := common.SimpleForumUserCheck(w, r, &user, sectionID)
+		_, ferr := c.SimpleForumUserCheck(w, r, &user, sectionID)
 		if ferr != nil {
 			return ferr
 		}
 		if !user.Perms.ViewTopic {
-			return common.NoPermissions(w, r, user)
+			return c.NoPermissions(w, r, user)
 		}
 	} else {
-		return common.LocalError("Unknown section", w, r, user)
+		return c.LocalError("Unknown section", w, r, user)
 	}
 
 	if originTable != "topics" && originTable != "replies" {
-		return common.LocalError("Unknown origin", w, r, user)
+		return c.LocalError("Unknown origin", w, r, user)
 	}
 
 	if !user.Loggedin {
-		w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(common.Year)))
+		w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(c.Year)))
 	} else {
-		guest := common.GuestUser
-		_, ferr := common.SimpleForumUserCheck(w, r, &guest, sectionID)
+		guest := c.GuestUser
+		_, ferr := c.SimpleForumUserCheck(w, r, &guest, sectionID)
 		if ferr != nil {
 			return ferr
 		}
 		if guest.Perms.ViewTopic {
-			w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(common.Year)))
+			w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(c.Year)))
 		} else {
 			w.Header().Set("Cache-Control", "private")
 		}
@@ -87,27 +87,27 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user common.User, fi
 }
 
 // TODO: Add a table for the files and lock the file row when performing tasks related to the file
-func deleteAttachment(w http.ResponseWriter, r *http.Request, user common.User, aid int, js bool) common.RouteError {
-	attach, err := common.Attachments.Get(aid)
+func deleteAttachment(w http.ResponseWriter, r *http.Request, user c.User, aid int, js bool) c.RouteError {
+	attach, err := c.Attachments.Get(aid)
 	if err == sql.ErrNoRows {
-		return common.NotFoundJSQ(w, r, nil, js)
+		return c.NotFoundJSQ(w, r, nil, js)
 	} else if err != nil {
-		return common.InternalErrorJSQ(err, w, r, js)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	err = common.Attachments.Delete(aid)
+	err = c.Attachments.Delete(aid)
 	if err != nil {
-		return common.InternalErrorJSQ(err, w, r, js)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	count := common.Attachments.CountInPath(attach.Path)
+	count := c.Attachments.CountInPath(attach.Path)
 	if err != nil {
-		return common.InternalErrorJSQ(err, w, r, js)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	if count == 0 {
 		err := os.Remove("./attachs/" + attach.Path)
 		if err != nil {
-			return common.InternalErrorJSQ(err, w, r, js)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 	}
 
@@ -117,7 +117,7 @@ func deleteAttachment(w http.ResponseWriter, r *http.Request, user common.User, 
 // TODO: Stop duplicating this code
 // TODO: Use a transaction here
 // TODO: Move this function to neutral ground
-func uploadAttachment(w http.ResponseWriter, r *http.Request, user common.User, sid int, sectionTable string, oid int, originTable string, extra string) (pathMap map[string]string, rerr common.RouteError) {
+func uploadAttachment(w http.ResponseWriter, r *http.Request, user c.User, sid int, sectionTable string, oid int, originTable string, extra string) (pathMap map[string]string, rerr c.RouteError) {
 	pathMap = make(map[string]string)
 	files, rerr := uploadFilesWithHash(w, r, user, "./attachs/")
 	if rerr != nil {
@@ -125,9 +125,9 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, user common.User, 
 	}
 
 	for _, filename := range files {
-		aid, err := common.Attachments.Add(sid, sectionTable, oid, originTable, user.ID, filename, extra)
+		aid, err := c.Attachments.Add(sid, sectionTable, oid, originTable, user.ID, filename, extra)
 		if err != nil {
-			return nil, common.InternalError(err, w, r)
+			return nil, c.InternalError(err, w, r)
 		}
 
 		_, ok := pathMap[filename]
@@ -139,18 +139,18 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, user common.User, 
 
 		switch originTable {
 		case "topics":
-			_, err = topicStmts.updateAttachs.Exec(common.Attachments.CountIn(originTable, oid), oid)
+			_, err = topicStmts.updateAttachs.Exec(c.Attachments.CountIn(originTable, oid), oid)
 			if err != nil {
-				return nil, common.InternalError(err, w, r)
+				return nil, c.InternalError(err, w, r)
 			}
-			err = common.Topics.Reload(oid)
+			err = c.Topics.Reload(oid)
 			if err != nil {
-				return nil, common.InternalError(err, w, r)
+				return nil, c.InternalError(err, w, r)
 			}
 		case "replies":
-			_, err = replyStmts.updateAttachs.Exec(common.Attachments.CountIn(originTable, oid), oid)
+			_, err = replyStmts.updateAttachs.Exec(c.Attachments.CountIn(originTable, oid), oid)
 			if err != nil {
-				return nil, common.InternalError(err, w, r)
+				return nil, c.InternalError(err, w, r)
 			}
 		}
 	}

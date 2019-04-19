@@ -5,7 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -28,9 +28,9 @@ func NewDefaultTopicViewCounter() (*DefaultTopicViewCounter, error) {
 		evenTopics: make(map[int]*RWMutexCounterBucket),
 		update:     acc.Update("topics").Set("views = views + ?").Where("tid = ?").Prepare(),
 	}
-	common.AddScheduledFifteenMinuteTask(counter.Tick) // Who knows how many topics we have queued up, we probably don't want this running too frequently
-	//common.AddScheduledSecondTask(counter.Tick)
-	common.AddShutdownTask(counter.Tick)
+	c.AddScheduledFifteenMinuteTask(counter.Tick) // Who knows how many topics we have queued up, we probably don't want this running too frequently
+	//c.AddScheduledSecondTask(counter.Tick)
+	c.AddShutdownTask(counter.Tick)
 	return counter, acc.FirstError()
 }
 
@@ -82,14 +82,14 @@ func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) erro
 		return nil
 	}
 
-	common.DebugLogf("Inserting %d views into topic %d", count, topicID)
+	c.DebugLogf("Inserting %d views into topic %d", count, topicID)
 	_, err := counter.update.Exec(count, topicID)
 	if err != nil {
 		return err
 	}
 
 	// TODO: Add a way to disable this for extra speed ;)
-	tcache := common.Topics.GetCache()
+	tcache := c.Topics.GetCache()
 	if tcache != nil {
 		topic, err := tcache.Get(topicID)
 		if err != nil {

@@ -1,7 +1,7 @@
 package counters
 
 import "database/sql"
-import "github.com/Azareal/Gosora/common"
+import c "github.com/Azareal/Gosora/common"
 import "github.com/Azareal/Gosora/query_gen"
 
 var LangViewCounter *DefaultLangViewCounter
@@ -116,9 +116,9 @@ func NewDefaultLangViewCounter(acc *qgen.Accumulator) (*DefaultLangViewCounter, 
 		insert:         acc.Insert("viewchunks_langs").Columns("count, createdAt, lang").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 
-	common.AddScheduledFifteenMinuteTask(counter.Tick)
-	//common.AddScheduledSecondTask(counter.Tick)
-	common.AddShutdownTask(counter.Tick)
+	c.AddScheduledFifteenMinuteTask(counter.Tick)
+	//c.AddScheduledSecondTask(counter.Tick)
+	c.AddShutdownTask(counter.Tick)
 	return counter, acc.FirstError()
 }
 
@@ -143,7 +143,7 @@ func (counter *DefaultLangViewCounter) insertChunk(count int, id int) error {
 		return nil
 	}
 	var langCode = langCodes[id]
-	common.DebugLogf("Inserting a viewchunk with a count of %d for lang %s (%d)", count, langCode, id)
+	c.DebugLogf("Inserting a viewchunk with a count of %d for lang %s (%d)", count, langCode, id)
 	_, err := counter.insert.Exec(count, langCode)
 	return err
 }
@@ -158,7 +158,7 @@ func (counter *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {
 	}
 
 	// TODO: Test this check
-	common.DebugDetail("counter.buckets[", id, "]: ", counter.buckets[id])
+	c.DebugDetail("counter.buckets[", id, "]: ", counter.buckets[id])
 	if len(counter.buckets) <= id || id < 0 {
 		return validCode
 	}

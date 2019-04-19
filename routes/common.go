@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
 var successJSONBytes = []byte(`{"success":"1"}`)
@@ -21,9 +21,9 @@ func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 	return halves[0], tid, err
 }
 
-func doPush(w http.ResponseWriter, header *common.Header) {
+func doPush(w http.ResponseWriter, header *c.Header) {
 	//fmt.Println("in doPush")
-	if common.Config.EnableCDNPush {
+	if c.Config.EnableCDNPush {
 		// TODO: Faster string building...
 		var sbuf string
 		var push = func(in []string) {
@@ -46,9 +46,9 @@ func doPush(w http.ResponseWriter, header *common.Header) {
 			sbuf = sbuf[:len(sbuf)-1]
 			w.Header().Set("Link", sbuf)
 		}
-	} else if !common.Config.DisableServerPush {
+	} else if !c.Config.DisableServerPush {
 		//fmt.Println("push enabled")
-		gzw, ok := w.(common.GzipResponseWriter)
+		gzw, ok := w.(c.GzipResponseWriter)
 		if ok {
 			w = gzw.ResponseWriter
 		}
@@ -75,7 +75,7 @@ func doPush(w http.ResponseWriter, header *common.Header) {
 	}
 }
 
-func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *common.Header, pi interface{}) common.RouteError {
+func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
 	if header.CurrentUser.Loggedin {
 		header.MetaDesc = ""
 		header.OGDesc = ""
@@ -83,7 +83,7 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, hea
 		header.OGDesc = header.MetaDesc
 	}
 	// TODO: Expand this to non-HTTPS requests too
-	if !header.LooseCSP && common.Site.EnableSsl {
+	if !header.LooseCSP && c.Site.EnableSsl {
 		w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com;upgrade-insecure-requests")
 	}
 	header.AddScript("global.js")
@@ -98,12 +98,12 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, hea
 	if header.CurrentUser.IsAdmin {
 		header.Elapsed1 = time.Since(header.StartedAt).String()
 	}
-	if common.RunPreRenderHook("pre_render_"+tmplName, w, r, &header.CurrentUser, pi) {
+	if c.RunPreRenderHook("pre_render_"+tmplName, w, r, &header.CurrentUser, pi) {
 		return nil
 	}
 	err := header.Theme.RunTmpl(tmplName, pi, w)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	return nil
 }

@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
-func Debug(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "debug", "debug")
 	if ferr != nil {
 		return ferr
@@ -19,7 +19,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	goVersion := runtime.Version()
 	dbVersion := qgen.Builder.DbVersion()
 	var uptime string
-	upDuration := time.Since(common.StartTime)
+	upDuration := time.Since(c.StartTime)
 	hours := int(upDuration.Hours())
 	minutes := int(upDuration.Minutes())
 	if hours > 24 {
@@ -41,6 +41,6 @@ func Debug(w http.ResponseWriter, r *http.Request, user common.User) common.Rout
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
-	pi := common.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats}
+	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats}
 	return renderTemplate("panel_debug", w, r, basePage.Header, &pi)
 }

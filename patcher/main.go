@@ -11,7 +11,7 @@ import (
 	"runtime/debug"
 	"strconv"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -38,18 +38,18 @@ func main() {
 	}()
 
 	log.Print("Loading the configuration data")
-	err := common.LoadConfig()
+	err := c.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Print("Processing configuration data")
-	err = common.ProcessConfig()
+	err = c.ProcessConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if common.DbConfig.Adapter != "mysql" && common.DbConfig.Adapter != "" {
+	if c.DbConfig.Adapter != "mysql" && c.DbConfig.Adapter != "" {
 		log.Fatal("Only MySQL is supported for upgrades right now, please wait for a newer build of the patcher")
 	}
 
@@ -74,11 +74,11 @@ func pressAnyKey(scanner *bufio.Scanner) {
 
 func prepMySQL() error {
 	return qgen.Builder.Init("mysql", map[string]string{
-		"host":      common.DbConfig.Host,
-		"port":      common.DbConfig.Port,
-		"name":      common.DbConfig.Dbname,
-		"username":  common.DbConfig.Username,
-		"password":  common.DbConfig.Password,
+		"host":      c.DbConfig.Host,
+		"port":      c.DbConfig.Port,
+		"name":      c.DbConfig.Dbname,
+		"username":  c.DbConfig.Username,
+		"password":  c.DbConfig.Password,
 		"collation": "utf8mb4_general_ci",
 	})
 }

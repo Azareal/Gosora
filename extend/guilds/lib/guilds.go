@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -43,16 +43,16 @@ type Guild struct {
 	LastUpdateTime string
 
 	MainForumID int
-	MainForum   *common.Forum
-	Forums      []*common.Forum
-	ExtData     common.ExtData
+	MainForum   *c.Forum
+	Forums      []*c.Forum
+	ExtData     c.ExtData
 }
 
 type Page struct {
 	Title    string
-	Header   *common.Header
-	ItemList []*common.TopicsRow
-	Forum    *common.Forum
+	Header   *c.Header
+	ItemList []*c.TopicsRow
+	Forum    *c.Forum
 	Guild    *Guild
 	Page     int
 	LastPage int
@@ -61,13 +61,13 @@ type Page struct {
 // ListPage is a page struct for constructing a list of every guild
 type ListPage struct {
 	Title     string
-	Header    *common.Header
+	Header    *c.Header
 	GuildList []*Guild
 }
 
 type MemberListPage struct {
 	Title    string
-	Header   *common.Header
+	Header   *c.Header
 	ItemList []Member
 	Guild    *Guild
 	Page     int
@@ -83,15 +83,15 @@ type Member struct {
 	JoinedAt   string
 	Offline    bool // TODO: Need to track the online states of members when WebSockets are enabled
 
-	User common.User
+	User c.User
 }
 
-func PrebuildTmplList(user common.User, header *common.Header) common.CTmpl {
+func PrebuildTmplList(user c.User, header *c.Header) c.CTmpl {
 	var guildList = []*Guild{
 		&Guild{
 			ID:             1,
 			Name:           "lol",
-			Link:           BuildGuildURL(common.NameToSlug("lol"), 1),
+			Link:           BuildGuildURL(c.NameToSlug("lol"), 1),
 			Desc:           "A group for people who like to laugh",
 			Active:         true,
 			MemberCount:    1,
@@ -99,26 +99,26 @@ func PrebuildTmplList(user common.User, header *common.Header) common.CTmpl {
 			CreatedAt:      "date",
 			LastUpdateTime: "date",
 			MainForumID:    1,
-			MainForum:      common.Forums.DirtyGet(1),
-			Forums:         []*common.Forum{common.Forums.DirtyGet(1)},
+			MainForum:      c.Forums.DirtyGet(1),
+			Forums:         []*c.Forum{c.Forums.DirtyGet(1)},
 		},
 	}
 	listPage := ListPage{"Guild List", user, header, guildList}
-	return common.CTmpl{"guilds_guild_list", "guilds_guild_list.html", "templates/", "guilds.ListPage", listPage, []string{"./extend/guilds/lib"}}
+	return c.CTmpl{"guilds_guild_list", "guilds_guild_list.html", "templates/", "guilds.ListPage", listPage, []string{"./extend/guilds/lib"}}
 }
 
 // TODO: Do this properly via the widget system
 // TODO: REWRITE THIS
-func CommonAreaWidgets(header *common.Header) {
+func CommonAreaWidgets(header *c.Header) {
 	// TODO: Hot Groups? Featured Groups? Official Groups?
 	var b bytes.Buffer
-	var menu = common.WidgetMenu{"Guilds", []common.WidgetMenuItem{
-		common.WidgetMenuItem{"Create Guild", "/guild/create/", false},
+	var menu = c.WidgetMenu{"Guilds", []c.WidgetMenuItem{
+		c.WidgetMenuItem{"Create Guild", "/guild/create/", false},
 	}}
 
 	err := header.Theme.RunTmpl("widget_menu", pi, w)
 	if err != nil {
-		common.LogError(err)
+		c.LogError(err)
 		return
 	}
 
@@ -131,7 +131,7 @@ func CommonAreaWidgets(header *common.Header) {
 
 // TODO: Do this properly via the widget system
 // TODO: Make a better more customisable group widget system
-func GuildWidgets(header *common.Header, guildItem *Guild) (success bool) {
+func GuildWidgets(header *c.Header, guildItem *Guild) (success bool) {
 	return false // Disabled until the next commit
 
 	/*var b bytes.Buffer
@@ -142,7 +142,7 @@ func GuildWidgets(header *common.Header, guildItem *Guild) (success bool) {
 
 	err := templates.ExecuteTemplate(&b, "widget_menu.html", menu)
 	if err != nil {
-		common.LogError(err)
+		c.LogError(err)
 		return false
 	}
 
@@ -160,16 +160,16 @@ func GuildWidgets(header *common.Header, guildItem *Guild) (success bool) {
 	Custom Pages
 */
 
-func RouteGuildList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
+func RouteGuildList(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	header, ferr := c.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	CommonAreaWidgets(header)
 
 	rows, err := ListStmt.Query()
-	if err != nil && err != common.ErrNoRows {
-		return common.InternalError(err, w, r)
+	if err != nil && err != c.ErrNoRows {
+		return c.InternalError(err, w, r)
 	}
 	defer rows.Close()
 
@@ -178,37 +178,37 @@ func RouteGuildList(w http.ResponseWriter, r *http.Request, user common.User) co
 		guildItem := &Guild{ID: 0}
 		err := rows.Scan(&guildItem.ID, &guildItem.Name, &guildItem.Desc, &guildItem.Active, &guildItem.Privacy, &guildItem.Joinable, &guildItem.Owner, &guildItem.MemberCount, &guildItem.CreatedAt, &guildItem.LastUpdateTime)
 		if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
-		guildItem.Link = BuildGuildURL(common.NameToSlug(guildItem.Name), guildItem.ID)
+		guildItem.Link = BuildGuildURL(c.NameToSlug(guildItem.Name), guildItem.ID)
 		guildList = append(guildList, guildItem)
 	}
 	err = rows.Err()
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	pi := ListPage{"Guild List", user, header, guildList}
 	err = header.Theme.RunTmpl("guilds_guild_list", pi, w)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	return nil
 }
 
-func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	_, guildID, err := routes.ParseSEOURL(r.URL.Path[len("/guild/"):])
 	if err != nil {
-		return common.PreError("Not a valid guild ID", w, r)
+		return c.PreError("Not a valid guild ID", w, r)
 	}
 
 	guildItem, err := Gstore.Get(guildID)
 	if err != nil {
-		return common.LocalError("Bad guild", w, r, user)
+		return c.LocalError("Bad guild", w, r, user)
 	}
 	// TODO: Build and pass header
 	if !guildItem.Active {
-		return common.NotFound(w, r, nil)
+		return c.NotFound(w, r, nil)
 	}
 
 	return nil
@@ -219,36 +219,36 @@ func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user common.User) c
 	//return routeForum(w, r.WithContext(ctx), user, strconv.Itoa(guildItem.MainForumID))
 }
 
-func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
+func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	header, ferr := c.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	header.Title = "Create Guild"
 	// TODO: Add an approval queue mode for group creation
 	if !user.Loggedin || !user.PluginPerms["CreateGuild"] {
-		return common.NoPermissions(w, r, user)
+		return c.NoPermissions(w, r, user)
 	}
 	CommonAreaWidgets(header)
 
-	pi := common.Page{header, tList, nil}
+	pi := c.Page{header, tList, nil}
 	err := header.Theme.RunTmpl("guilds_create_guild", pi, w)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	return nil
 }
 
-func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Add an approval queue mode for group creation
 	if !user.Loggedin || !user.PluginPerms["CreateGuild"] {
-		return common.NoPermissions(w, r, user)
+		return c.NoPermissions(w, r, user)
 	}
 
 	var guildActive = true
-	var guildName = common.SanitiseSingleLine(r.PostFormValue("group_name"))
+	var guildName = c.SanitiseSingleLine(r.PostFormValue("group_name"))
 	// TODO: Allow Markdown / BBCode / Limited HTML in the description?
-	var guildDesc = common.SanitiseBody(r.PostFormValue("group_desc"))
+	var guildDesc = c.SanitiseBody(r.PostFormValue("group_desc"))
 	var gprivacy = r.PostFormValue("group_privacy")
 
 	var guildPrivacy int
@@ -264,53 +264,53 @@ func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user common.
 	}
 
 	// Create the backing forum
-	fid, err := common.Forums.Create(guildName, "", true, "")
+	fid, err := c.Forums.Create(guildName, "", true, "")
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	gid, err := Gstore.Create(guildName, guildDesc, guildActive, guildPrivacy, user.ID, fid)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	// Add the main backing forum to the forum list
 	err = AttachForum(gid, fid)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	_, err = AddMemberStmt.Exec(gid, user.ID, 2)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
-	http.Redirect(w, r, BuildGuildURL(common.NameToSlug(guildName), gid), http.StatusSeeOther)
+	http.Redirect(w, r, BuildGuildURL(c.NameToSlug(guildName), gid), http.StatusSeeOther)
 	return nil
 }
 
-func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
-	header, ferr := common.UserCheck(w, r, &user)
+func RouteMemberList(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	header, ferr := c.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 
 	_, guildID, err := routes.ParseSEOURL(r.URL.Path[len("/guild/members/"):])
 	if err != nil {
-		return common.PreError("Not a valid group ID", w, r)
+		return c.PreError("Not a valid group ID", w, r)
 	}
 
 	guildItem, err := Gstore.Get(guildID)
 	if err != nil {
-		return common.LocalError("Bad group", w, r, user)
+		return c.LocalError("Bad group", w, r, user)
 	}
-	guildItem.Link = BuildGuildURL(common.NameToSlug(guildItem.Name), guildItem.ID)
+	guildItem.Link = BuildGuildURL(c.NameToSlug(guildItem.Name), guildItem.ID)
 
 	GuildWidgets(header, guildItem)
 
 	rows, err := MemberListJoinStmt.Query(guildID)
-	if err != nil && err != common.ErrNoRows {
-		return common.InternalError(err, w, r)
+	if err != nil && err != c.ErrNoRows {
+		return c.InternalError(err, w, r)
 	}
 
 	var guildMembers []Member
@@ -318,11 +318,11 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 		guildMember := Member{PostCount: 0}
 		err := rows.Scan(&guildMember.User.ID, &guildMember.Rank, &guildMember.PostCount, &guildMember.JoinedAt, &guildMember.User.Name, &guildMember.User.RawAvatar)
 		if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
-		guildMember.Link = common.BuildProfileURL(common.NameToSlug(guildMember.User.Name), guildMember.User.ID)
-		guildMember.User.Avatar, guildMember.User.MicroAvatar = common.BuildAvatar(guildMember.User.ID, guildMember.User.RawAvatar)
-		guildMember.JoinedAt, _ = common.RelativeTimeFromString(guildMember.JoinedAt)
+		guildMember.Link = c.BuildProfileURL(c.NameToSlug(guildMember.User.Name), guildMember.User.ID)
+		guildMember.User.Avatar, guildMember.User.MicroAvatar = c.BuildAvatar(guildMember.User.ID, guildMember.User.RawAvatar)
+		guildMember.JoinedAt, _ = c.RelativeTimeFromString(guildMember.JoinedAt)
 		if guildItem.Owner == guildMember.User.ID {
 			guildMember.RankString = "Owner"
 		} else {
@@ -339,18 +339,18 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user common.User) c
 	}
 	err = rows.Err()
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	rows.Close()
 
 	pi := MemberListPage{"Guild Member List", user, header, guildMembers, guildItem, 0, 0}
 	// A plugin with plugins. Pluginception!
-	if common.RunPreRenderHook("pre_render_guilds_member_list", w, r, &user, &pi) {
+	if c.RunPreRenderHook("pre_render_guilds_member_list", w, r, &user, &pi) {
 		return nil
 	}
-	err = common.RunThemeTemplate(header.Theme.Name, "guilds_member_list", pi, w)
+	err = c.RunThemeTemplate(header.Theme.Name, "guilds_member_list", pi, w)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	return nil
 }
@@ -366,7 +366,7 @@ func UnattachForum(fid int) error {
 }
 
 func BuildGuildURL(slug string, id int) string {
-	if slug == "" || !common.Config.BuildSlugs {
+	if slug == "" || !c.Config.BuildSlugs {
 		return "/guild/" + strconv.Itoa(id)
 	}
 	return "/guild/" + slug + "." + strconv.Itoa(id)
@@ -377,8 +377,8 @@ func BuildGuildURL(slug string, id int) string {
 */
 
 // TODO: Prebuild this template
-func PreRenderViewForum(w http.ResponseWriter, r *http.Request, user *common.User, data interface{}) (halt bool) {
-	pi := data.(*common.ForumPage)
+func PreRenderViewForum(w http.ResponseWriter, r *http.Request, user *c.User, data interface{}) (halt bool) {
+	pi := data.(*c.ForumPage)
 	if pi.Header.ExtData.Items != nil {
 		if guildData, ok := pi.Header.ExtData.Items["guilds_current_group"]; ok {
 			guildItem := guildData.(*Guild)
@@ -386,7 +386,7 @@ func PreRenderViewForum(w http.ResponseWriter, r *http.Request, user *common.Use
 			guildpi := Page{pi.Title, pi.Header, pi.ItemList, pi.Forum, guildItem, pi.Page, pi.LastPage}
 			err := header.Theme.RunTmpl("guilds_view_guild", guildpi, w)
 			if err != nil {
-				common.LogError(err)
+				c.LogError(err)
 				return false
 			}
 			return true
@@ -396,10 +396,10 @@ func PreRenderViewForum(w http.ResponseWriter, r *http.Request, user *common.Use
 }
 
 func TrowAssign(args ...interface{}) interface{} {
-	var forum = args[1].(*common.Forum)
+	var forum = args[1].(*c.Forum)
 	if forum.ParentType == "guild" {
-		var topicItem = args[0].(*common.TopicsRow)
-		topicItem.ForumLink = "/guild/" + strings.TrimPrefix(topicItem.ForumLink, common.GetForumURLPrefix())
+		var topicItem = args[0].(*c.TopicsRow)
+		topicItem.ForumLink = "/guild/" + strings.TrimPrefix(topicItem.ForumLink, c.GetForumURLPrefix())
 	}
 	return nil
 }
@@ -407,7 +407,7 @@ func TrowAssign(args ...interface{}) interface{} {
 // TODO: It would be nice, if you could select one of the boards in the group from that drop-down rather than just the one you got linked from
 func TopicCreatePreLoop(args ...interface{}) interface{} {
 	var fid = args[2].(int)
-	if common.Forums.DirtyGet(fid).ParentType == "guild" {
+	if c.Forums.DirtyGet(fid).ParentType == "guild" {
 		var strictmode = args[5].(*bool)
 		*strictmode = true
 	}
@@ -417,10 +417,10 @@ func TopicCreatePreLoop(args ...interface{}) interface{} {
 // TODO: Add privacy options
 // TODO: Add support for multiple boards and add per-board simplified permissions
 // TODO: Take isJs into account for routes which expect JSON responses
-func ForumCheck(args ...interface{}) (skip bool, rerr common.RouteError) {
+func ForumCheck(args ...interface{}) (skip bool, rerr c.RouteError) {
 	var r = args[1].(*http.Request)
 	var fid = args[3].(*int)
-	var forum = common.Forums.DirtyGet(*fid)
+	var forum = c.Forums.DirtyGet(*fid)
 
 	if forum.ParentType == "guild" {
 		var err error
@@ -429,15 +429,15 @@ func ForumCheck(args ...interface{}) (skip bool, rerr common.RouteError) {
 		if !ok {
 			guildItem, err = Gstore.Get(forum.ParentID)
 			if err != nil {
-				return true, common.InternalError(errors.New("Unable to find the parent group for a forum"), w, r)
+				return true, c.InternalError(errors.New("Unable to find the parent group for a forum"), w, r)
 			}
 			if !guildItem.Active {
-				return true, common.NotFound(w, r, nil) // TODO: Can we pull header out of args?
+				return true, c.NotFound(w, r, nil) // TODO: Can we pull header out of args?
 			}
 			r = r.WithContext(context.WithValue(r.Context(), "guilds_current_group", guildItem))
 		}
 
-		var user = args[2].(*common.User)
+		var user = args[2].(*c.User)
 		var rank int
 		var posts int
 		var joinedAt string
@@ -446,32 +446,32 @@ func ForumCheck(args ...interface{}) (skip bool, rerr common.RouteError) {
 
 		// Clear the default group permissions
 		// TODO: Do this more efficiently, doing it quick and dirty for now to get this out quickly
-		common.OverrideForumPerms(&user.Perms, false)
+		c.OverrideForumPerms(&user.Perms, false)
 		user.Perms.ViewTopic = true
 
 		err = GetMemberStmt.QueryRow(guildItem.ID, user.ID).Scan(&rank, &posts, &joinedAt)
-		if err != nil && err != common.ErrNoRows {
-			return true, common.InternalError(err, w, r)
+		if err != nil && err != c.ErrNoRows {
+			return true, c.InternalError(err, w, r)
 		} else if err != nil {
 			// TODO: Should we let admins / guests into public groups?
-			return true, common.LocalError("You're not part of this group!", w, r, *user)
+			return true, c.LocalError("You're not part of this group!", w, r, *user)
 		}
 
 		// TODO: Implement bans properly by adding the Local Ban API in the next commit
 		// TODO: How does this even work? Refactor it along with the rest of this plugin!
 		if rank < 0 {
-			return true, common.LocalError("You've been banned from this group!", w, r, *user)
+			return true, c.LocalError("You've been banned from this group!", w, r, *user)
 		}
 
 		// Basic permissions for members, more complicated permissions coming in the next commit!
 		if guildItem.Owner == user.ID {
-			common.OverrideForumPerms(&user.Perms, true)
+			c.OverrideForumPerms(&user.Perms, true)
 		} else if rank == 0 {
 			user.Perms.LikeItem = true
 			user.Perms.CreateTopic = true
 			user.Perms.CreateReply = true
 		} else {
-			common.OverrideForumPerms(&user.Perms, true)
+			c.OverrideForumPerms(&user.Perms, true)
 		}
 		return true, nil
 	}
@@ -483,19 +483,19 @@ func ForumCheck(args ...interface{}) (skip bool, rerr common.RouteError) {
 
 func Widgets(args ...interface{}) interface{} {
 	var zone = args[0].(string)
-	var header = args[2].(*common.Header)
+	var header = args[2].(*c.Header)
 	var request = args[3].(*http.Request)
 
 	if zone != "view_forum" {
 		return false
 	}
 
-	var forum = args[1].(*common.Forum)
+	var forum = args[1].(*c.Forum)
 	if forum.ParentType == "guild" {
 		// This is why I hate using contexts, all the daisy chains and interface casts x.x
 		guildItem, ok := request.Context().Value("guilds_current_group").(*Guild)
 		if !ok {
-			common.LogError(errors.New("Unable to find a parent group in the context data"))
+			c.LogError(errors.New("Unable to find a parent group in the context data"))
 			return false
 		}
 

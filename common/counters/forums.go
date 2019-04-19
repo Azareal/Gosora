@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -28,9 +28,9 @@ func NewDefaultForumViewCounter() (*DefaultForumViewCounter, error) {
 		evenMap: make(map[int]*RWMutexCounterBucket),
 		insert:  acc.Insert("viewchunks_forums").Columns("count, createdAt, forum").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
-	common.AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
-	//common.AddScheduledSecondTask(counter.Tick)
-	common.AddShutdownTask(counter.Tick)
+	c.AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
+	//c.AddScheduledSecondTask(counter.Tick)
+	c.AddShutdownTask(counter.Tick)
 	return counter, acc.FirstError()
 }
 
@@ -78,7 +78,7 @@ func (counter *DefaultForumViewCounter) insertChunk(count int, forum int) error 
 	if count == 0 {
 		return nil
 	}
-	common.DebugLogf("Inserting a viewchunk with a count of %d for forum %d", count, forum)
+	c.DebugLogf("Inserting a viewchunk with a count of %d for forum %d", count, forum)
 	_, err := counter.insert.Exec(count, forum)
 	return err
 }

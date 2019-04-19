@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -23,9 +23,9 @@ func NewPostCounter() (*DefaultPostCounter, error) {
 		currentBucket: 0,
 		insert:        acc.Insert("postchunks").Columns("count, createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),
 	}
-	common.AddScheduledFifteenMinuteTask(counter.Tick)
-	//common.AddScheduledSecondTask(counter.Tick)
-	common.AddShutdownTask(counter.Tick)
+	c.AddScheduledFifteenMinuteTask(counter.Tick)
+	//c.AddScheduledSecondTask(counter.Tick)
+	c.AddShutdownTask(counter.Tick)
 	return counter, acc.FirstError()
 }
 
@@ -52,7 +52,7 @@ func (counter *DefaultPostCounter) insertChunk(count int64) error {
 	if count == 0 {
 		return nil
 	}
-	common.DebugLogf("Inserting a postchunk with a count of %d", count)
+	c.DebugLogf("Inserting a postchunk with a count of %d", count)
 	_, err := counter.insert.Exec(count)
 	return err
 }

@@ -7,37 +7,37 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func wsTopicList(topicList []*common.TopicsRow, lastPage int) *common.WsTopicList {
-	wsTopicList := make([]*common.WsTopicsRow, len(topicList))
+func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
+	wsTopicList := make([]*c.WsTopicsRow, len(topicList))
 	for i, topicRow := range topicList {
 		wsTopicList[i] = topicRow.WebSockets()
 	}
-	return &common.WsTopicList{wsTopicList, lastPage}
+	return &c.WsTopicList{wsTopicList, lastPage}
 }
 
-func TopicList(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+func TopicList(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	return TopicListCommon(w, r, user, header, "lastupdated", "")
 }
 
-func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	return TopicListCommon(w, r, user, header, "mostviewed", "most-viewed")
 }
 
 // TODO: Implement search
-func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, torder string, tsorder string) common.RouteError {
+func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header, torder string, tsorder string) c.RouteError {
 	header.Title = phrases.GetTitlePhrase("topics")
 	header.Zone = "topics"
 	header.Path = "/topics/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
 
-	group, err := common.Groups.Get(user.Group)
+	group, err := c.Groups.Get(user.Group)
 	if err != nil {
-		log.Printf("Group #%d doesn't exist despite being used by common.User #%d", user.Group, user.ID)
-		return common.LocalError("Something weird happened", w, r, user)
+		log.Printf("Group #%d doesn't exist despite being used by c.User #%d", user.Group, user.ID)
+		return c.LocalError("Something weird happened", w, r, user)
 	}
 
 	// Get the current page
@@ -48,14 +48,14 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 		for _, sfid := range strings.Split(sfids, ",") {
 			fid, err := strconv.Atoi(sfid)
 			if err != nil {
-				return common.LocalError("Invalid fid", w, r, user)
+				return c.LocalError("Invalid fid", w, r, user)
 			}
 			fids = append(fids, fid)
 		}
 		if len(fids) == 1 {
-			forum, err := common.Forums.Get(fids[0])
+			forum, err := c.Forums.Get(fids[0])
 			if err != nil {
-				return common.LocalError("Invalid fid forum", w, r, user)
+				return c.LocalError("Invalid fid forum", w, r, user)
 			}
 			header.Title = forum.Name
 			header.ZoneID = forum.ID
@@ -64,16 +64,16 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 
 	// TODO: Allow multiple forums in searches
 	// TODO: Simplify this block after initially landing search
-	var topicList []*common.TopicsRow
-	var forumList []common.Forum
-	var paginator common.Paginator
+	var topicList []*c.TopicsRow
+	var forumList []c.Forum
+	var paginator c.Paginator
 	q := r.FormValue("q")
-	if q != "" && common.RepliesSearch != nil {
+	if q != "" && c.RepliesSearch != nil {
 		var canSee []int
 		if user.IsSuperAdmin {
-			canSee, err = common.Forums.GetAllVisibleIDs()
+			canSee, err = c.Forums.GetAllVisibleIDs()
 			if err != nil {
-				return common.InternalError(err, w, r)
+				return c.InternalError(err, w, r)
 			}
 		} else {
 			canSee = group.CanSee
@@ -91,7 +91,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 			}
 			for _, fid := range fids {
 				if inSlice(canSee, fid) {
-					forum := common.Forums.DirtyGet(fid)
+					forum := c.Forums.DirtyGet(fid)
 					if forum.Name != "" && forum.Active && (forum.ParentType == "" || forum.ParentType == "forum") {
 						// TODO: Add a hook here for plugin_guilds?
 						cfids = append(cfids, fid)
@@ -102,16 +102,16 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 			cfids = canSee
 		}
 
-		tids, err := common.RepliesSearch.Query(q, cfids)
+		tids, err := c.RepliesSearch.Query(q, cfids)
 		if err != nil && err != sql.ErrNoRows {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
 		//fmt.Printf("tids %+v\n", tids)
 		// TODO: Handle the case where there aren't any items...
 		// TODO: Add a BulkGet method which returns a slice?
-		tMap, err := common.Topics.BulkGetMap(tids)
+		tMap, err := c.Topics.BulkGetMap(tids)
 		if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
 		var reqUserList = make(map[int]bool)
 		for _, topic := range tMap {
@@ -131,21 +131,21 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 
 		// TODO: What if a user is deleted via the Control Panel?
 		//fmt.Printf("idSlice %+v\n", idSlice)
-		userList, err := common.Users.BulkGetMap(idSlice)
+		userList, err := c.Users.BulkGetMap(idSlice)
 		if err != nil {
 			return nil // TODO: Implement this!
 		}
 
 		// TODO: De-dupe this logic in common/topic_list.go?
 		for _, topic := range topicList {
-			topic.Link = common.BuildTopicURL(common.NameToSlug(topic.Title), topic.ID)
+			topic.Link = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
 			// TODO: Pass forum to something like topic.Forum and use that instead of these two properties? Could be more flexible.
-			forum := common.Forums.DirtyGet(topic.ParentID)
+			forum := c.Forums.DirtyGet(topic.ParentID)
 			topic.ForumName = forum.Name
 			topic.ForumLink = forum.Link
 
 			// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
-			_, _, lastPage := common.PageOffset(topic.PostCount, 1, common.Config.ItemsPerPage)
+			_, _, lastPage := c.PageOffset(topic.PostCount, 1, c.Config.ItemsPerPage)
 			topic.LastPage = lastPage
 			topic.Creator = userList[topic.CreatedBy]
 			topic.LastUser = userList[topic.LastReplyBy]
@@ -155,41 +155,41 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user common.User, h
 		if r.FormValue("js") == "1" {
 			outBytes, err := wsTopicList(topicList, paginator.LastPage).MarshalJSON()
 			if err != nil {
-				return common.InternalError(err, w, r)
+				return c.InternalError(err, w, r)
 			}
 			w.Write(outBytes)
 			return nil
 		}
 
 		header.Title = phrases.GetTitlePhrase("topics_search")
-		pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, common.TopicListSort{torder, false}, paginator}
+		pi := c.TopicListPage{header, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, paginator}
 		return renderTemplate("topics", w, r, header, pi)
 	}
 
 	// TODO: Pass a struct back rather than passing back so many variables
 	if user.IsSuperAdmin {
-		topicList, forumList, paginator, err = common.TopicList.GetList(page, tsorder, fids)
+		topicList, forumList, paginator, err = c.TopicList.GetList(page, tsorder, fids)
 	} else {
-		topicList, forumList, paginator, err = common.TopicList.GetListByGroup(group, page, tsorder, fids)
+		topicList, forumList, paginator, err = c.TopicList.GetListByGroup(group, page, tsorder, fids)
 	}
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	// ! Need an inline error not a page level error
 	if len(topicList) == 0 {
-		return common.NotFound(w, r, header)
+		return c.NotFound(w, r, header)
 	}
 
 	// TODO: Reduce the amount of boilerplate here
 	if r.FormValue("js") == "1" {
 		outBytes, err := wsTopicList(topicList, paginator.LastPage).MarshalJSON()
 		if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
 		w.Write(outBytes)
 		return nil
 	}
 
-	pi := common.TopicListPage{header, topicList, forumList, common.Config.DefaultForum, common.TopicListSort{torder, false}, paginator}
+	pi := c.TopicListPage{header, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, paginator}
 	return renderTemplate("topics", w, r, header, pi)
 }

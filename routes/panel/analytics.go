@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
@@ -103,7 +103,7 @@ func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64
 		}
 		var unixCreatedAt = createdAt.Unix()
 		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
+		if c.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
@@ -118,7 +118,7 @@ func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64
 	return viewMap, rows.Err()
 }
 
-func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *common.User) (*common.BasePanelPage, common.RouteError) {
+func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *c.User) (*c.BasePanelPage, c.RouteError) {
 	basePage, ferr := buildBasePage(w, r, user, "analytics", "analytics")
 	if ferr != nil {
 		return nil, ferr
@@ -129,336 +129,336 @@ func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *common.Use
 	return basePage, nil
 }
 
-func AnalyticsViews(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsViews(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	common.DebugLog("in panel.AnalyticsViews")
+	c.DebugLog("in panel.AnalyticsViews")
 	// TODO: Add some sort of analytics store / iterator?
 	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
-	var viewItems []common.PanelAnalyticsItem
+	var viewItems []c.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
-		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
+		viewItems = append(viewItems, c.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
 	var ttime string
 	if timeRange.Range == "six-hours" || timeRange.Range == "twelve-hours" || timeRange.Range == "one-day" {
 		ttime = "time"
 	}
-	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, ttime}
+	pi := c.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, ttime}
 	return renderTemplate("panel_analytics_views", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user common.User, route string) common.RouteError {
+func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user c.User, route string) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	common.DebugLog("in panel.AnalyticsRouteViews")
+	c.DebugLog("in panel.AnalyticsRouteViews")
 	// TODO: Validate the route is valid
 	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(route)
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
-	var viewItems []common.PanelAnalyticsItem
+	var viewItems []c.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
-		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
+		viewItems = append(viewItems, c.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
 
-	pi := common.PanelAnalyticsRoutePage{basePage, common.SanitiseSingleLine(route), graph, viewItems, timeRange.Range}
+	pi := c.PanelAnalyticsRoutePage{basePage, c.SanitiseSingleLine(route), graph, viewItems, timeRange.Range}
 	return renderTemplate("panel_analytics_route_views", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user common.User, agent string) common.RouteError {
+func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user c.User, agent string) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 	// ? Only allow valid agents? The problem with this is that agents wind up getting renamed and it would take a migration to get them all up to snuff
-	agent = common.SanitiseSingleLine(agent)
+	agent = c.SanitiseSingleLine(agent)
 
-	common.DebugLog("in panel.AnalyticsAgentViews")
+	c.DebugLog("in panel.AnalyticsAgentViews")
 	// TODO: Verify the agent is valid
 	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count, createdAt").Where("browser = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(agent)
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
 
 	friendlyAgent, ok := phrases.GetUserAgentPhrase(agent)
 	if !ok {
 		friendlyAgent = agent
 	}
 
-	pi := common.PanelAnalyticsAgentPage{basePage, agent, friendlyAgent, graph, timeRange.Range}
+	pi := c.PanelAnalyticsAgentPage{basePage, agent, friendlyAgent, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_agent_views", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user common.User, sfid string) common.RouteError {
+func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return common.LocalError("Invalid integer", w, r, user)
+		return c.LocalError("Invalid integer", w, r, user)
 	}
 
-	common.DebugLog("in panel.AnalyticsForumViews")
+	c.DebugLog("in panel.AnalyticsForumViews")
 	// TODO: Verify the agent is valid
 	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count, createdAt").Where("forum = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(fid)
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
 
-	forum, err := common.Forums.Get(fid)
+	forum, err := c.Forums.Get(fid)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
-	pi := common.PanelAnalyticsAgentPage{basePage, sfid, forum.Name, graph, timeRange.Range}
+	pi := c.PanelAnalyticsAgentPage{basePage, sfid, forum.Name, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_forum_views", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user common.User, system string) common.RouteError {
+func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user c.User, system string) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
-	system = common.SanitiseSingleLine(system)
+	system = c.SanitiseSingleLine(system)
 
-	common.DebugLog("in panel.AnalyticsSystemViews")
+	c.DebugLog("in panel.AnalyticsSystemViews")
 	// TODO: Verify the OS name is valid
 	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count, createdAt").Where("system = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(system)
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
 
 	friendlySystem, ok := phrases.GetOSPhrase(system)
 	if !ok {
 		friendlySystem = system
 	}
 
-	pi := common.PanelAnalyticsAgentPage{basePage, system, friendlySystem, graph, timeRange.Range}
+	pi := c.PanelAnalyticsAgentPage{basePage, system, friendlySystem, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_system_views", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user common.User, lang string) common.RouteError {
+func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user c.User, lang string) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
-	lang = common.SanitiseSingleLine(lang)
+	lang = c.SanitiseSingleLine(lang)
 
-	common.DebugLog("in panel.AnalyticsLanguageViews")
+	c.DebugLog("in panel.AnalyticsLanguageViews")
 	// TODO: Verify the language code is valid
 	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count, createdAt").Where("lang = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(lang)
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
 
 	friendlyLang, ok := phrases.GetHumanLangPhrase(lang)
 	if !ok {
 		friendlyLang = lang
 	}
 
-	pi := common.PanelAnalyticsAgentPage{basePage, lang, friendlyLang, graph, timeRange.Range}
+	pi := c.PanelAnalyticsAgentPage{basePage, lang, friendlyLang, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_lang_views", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user common.User, domain string) common.RouteError {
+func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user c.User, domain string) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	common.DebugLog("in panel.AnalyticsReferrerViews")
+	c.DebugLog("in panel.AnalyticsReferrerViews")
 	// TODO: Verify the agent is valid
 	rows, err := qgen.NewAcc().Select("viewchunks_referrers").Columns("count, createdAt").Where("domain = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(domain)
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
-	pi := common.PanelAnalyticsAgentPage{basePage, common.SanitiseSingleLine(domain), "", graph, timeRange.Range}
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
+	pi := c.PanelAnalyticsAgentPage{basePage, c.SanitiseSingleLine(domain), "", graph, timeRange.Range}
 	return renderTemplate("panel_analytics_referrer_views", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	common.DebugLog("in panel.AnalyticsTopics")
+	c.DebugLog("in panel.AnalyticsTopics")
 	rows, err := qgen.NewAcc().Select("topicchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
-	var viewItems []common.PanelAnalyticsItem
+	var viewItems []c.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
-		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
+		viewItems = append(viewItems, c.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
-	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
+	pi := c.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
 	return renderTemplate("panel_analytics_topics", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	common.DebugLog("in panel.AnalyticsPosts")
+	c.DebugLog("in panel.AnalyticsPosts")
 	rows, err := qgen.NewAcc().Select("postchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	var viewList []int64
-	var viewItems []common.PanelAnalyticsItem
+	var viewItems []c.PanelAnalyticsItem
 	for _, value := range revLabelList {
 		viewList = append(viewList, viewMap[value])
-		viewItems = append(viewItems, common.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
+		viewItems = append(viewItems, c.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
 	}
-	graph := common.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
-	common.DebugLogf("graph: %+v\n", graph)
-	pi := common.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
+	pi := c.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
 	return renderTemplate("panel_analytics_posts", w, r, basePage.Header, &pi)
 }
 
@@ -473,7 +473,7 @@ func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
 			return nameMap, err
 		}
 		// TODO: Bulk log this
-		if common.Dev.SuperDebug {
+		if c.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("name: ", name)
 		}
@@ -497,7 +497,7 @@ func analyticsRowsToDuoMap(rows *sql.Rows, labelList []int64, viewMap map[int64]
 
 		// TODO: Bulk log this
 		var unixCreatedAt = createdAt.Unix()
-		if common.Dev.SuperDebug {
+		if c.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("name: ", name)
 			log.Print("createdAt: ", createdAt)
@@ -557,7 +557,7 @@ func analyticsVMapToOVList(vMap map[string]map[int64]int64) (ovList []OVItem) {
 	return tOVList
 }
 
-func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsForums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -567,17 +567,17 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) c
 
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count, forum, createdAt").Where("forum != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	vMap, forumMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	ovList := analyticsVMapToOVList(vMap)
 
@@ -592,15 +592,15 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) c
 		vList = append(vList, viewList)
 		fid, err := strconv.Atoi(ovitem.name)
 		if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
 		var lName string
-		forum, err := common.Forums.Get(fid)
+		forum, err := c.Forums.Get(fid)
 		if err == sql.ErrNoRows {
 			// TODO: Localise this
 			lName = "Deleted Forum"
 		} else if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		} else {
 			lName = forum.Name
 		}
@@ -610,38 +610,38 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user common.User) c
 		}
 		i++
 	}
-	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	c.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Sort this slice
-	var forumItems []common.PanelAnalyticsAgentsItem
+	var forumItems []c.PanelAnalyticsAgentsItem
 	for sfid, count := range forumMap {
 		fid, err := strconv.Atoi(sfid)
 		if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
 		var lName string
-		forum, err := common.Forums.Get(fid)
+		forum, err := c.Forums.Get(fid)
 		if err == sql.ErrNoRows {
 			// TODO: Localise this
 			lName = "Deleted Forum"
 		} else if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		} else {
 			lName = forum.Name
 		}
-		forumItems = append(forumItems, common.PanelAnalyticsAgentsItem{
+		forumItems = append(forumItems, c.PanelAnalyticsAgentsItem{
 			Agent:         sfid,
 			FriendlyAgent: lName,
 			Count:         count,
 		})
 	}
 
-	pi := common.PanelAnalyticsDuoPage{basePage, forumItems, graph, timeRange.Range}
+	pi := c.PanelAnalyticsDuoPage{basePage, forumItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_forums", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -651,17 +651,17 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) c
 
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, route, createdAt").Where("route != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	vMap, routeMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	ovList := analyticsVMapToOVList(vMap)
 
@@ -680,24 +680,24 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user common.User) c
 		}
 		i++
 	}
-	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	c.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Sort this slice
-	var routeItems []common.PanelAnalyticsRoutesItem
+	var routeItems []c.PanelAnalyticsRoutesItem
 	for route, count := range routeMap {
-		routeItems = append(routeItems, common.PanelAnalyticsRoutesItem{
+		routeItems = append(routeItems, c.PanelAnalyticsRoutesItem{
 			Route: route,
 			Count: count,
 		})
 	}
 
-	pi := common.PanelAnalyticsRoutesPage{basePage, routeItems, graph, timeRange.Range}
+	pi := c.PanelAnalyticsRoutesPage{basePage, routeItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_routes", w, r, basePage.Header, &pi)
 }
 
 // Trialling multi-series charts
-func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -707,17 +707,17 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count, browser, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	vMap, agentMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	ovList := analyticsVMapToOVList(vMap)
 
@@ -740,28 +740,28 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user common.User) c
 		}
 		i++
 	}
-	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	c.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Sort this slice
-	var agentItems []common.PanelAnalyticsAgentsItem
+	var agentItems []c.PanelAnalyticsAgentsItem
 	for agent, count := range agentMap {
 		aAgent, ok := phrases.GetUserAgentPhrase(agent)
 		if !ok {
 			aAgent = agent
 		}
-		agentItems = append(agentItems, common.PanelAnalyticsAgentsItem{
+		agentItems = append(agentItems, c.PanelAnalyticsAgentsItem{
 			Agent:         agent,
 			FriendlyAgent: aAgent,
 			Count:         count,
 		})
 	}
 
-	pi := common.PanelAnalyticsDuoPage{basePage, agentItems, graph, timeRange.Range}
+	pi := c.PanelAnalyticsDuoPage{basePage, agentItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_agents", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -771,17 +771,17 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) 
 
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count, system, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	vMap, osMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	ovList := analyticsVMapToOVList(vMap)
 
@@ -804,28 +804,28 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user common.User) 
 		}
 		i++
 	}
-	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	c.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Sort this slice
-	var systemItems []common.PanelAnalyticsAgentsItem
+	var systemItems []c.PanelAnalyticsAgentsItem
 	for system, count := range osMap {
 		sSystem, ok := phrases.GetOSPhrase(system)
 		if !ok {
 			sSystem = system
 		}
-		systemItems = append(systemItems, common.PanelAnalyticsAgentsItem{
+		systemItems = append(systemItems, c.PanelAnalyticsAgentsItem{
 			Agent:         system,
 			FriendlyAgent: sSystem,
 			Count:         count,
 		})
 	}
 
-	pi := common.PanelAnalyticsDuoPage{basePage, systemItems, graph, timeRange.Range}
+	pi := c.PanelAnalyticsDuoPage{basePage, systemItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_systems", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -835,17 +835,17 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User
 
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count, lang, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	vMap, langMap, err := analyticsRowsToDuoMap(rows, labelList, viewMap)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	ovList := analyticsVMapToOVList(vMap)
 
@@ -868,56 +868,56 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user common.User
 		}
 		i++
 	}
-	graph := common.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
-	common.DebugLogf("graph: %+v\n", graph)
+	graph := c.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	c.DebugLogf("graph: %+v\n", graph)
 
 	// TODO: Can we de-duplicate these analytics functions further?
 	// TODO: Sort this slice
-	var langItems []common.PanelAnalyticsAgentsItem
+	var langItems []c.PanelAnalyticsAgentsItem
 	for lang, count := range langMap {
 		lLang, ok := phrases.GetHumanLangPhrase(lang)
 		if !ok {
 			lLang = lang
 		}
-		langItems = append(langItems, common.PanelAnalyticsAgentsItem{
+		langItems = append(langItems, c.PanelAnalyticsAgentsItem{
 			Agent:         lang,
 			FriendlyAgent: lLang,
 			Count:         count,
 		})
 	}
 
-	pi := common.PanelAnalyticsDuoPage{basePage, langItems, graph, timeRange.Range}
+	pi := c.PanelAnalyticsDuoPage{basePage, langItems, graph, timeRange.Range}
 	return renderTemplate("panel_analytics_langs", w, r, basePage.Header, &pi)
 }
 
-func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
 		return ferr
 	}
 	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
 	if err != nil {
-		return common.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, user)
 	}
 
 	rows, err := qgen.NewAcc().Select("viewchunks_referrers").Columns("count, domain").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	refMap, err := analyticsRowsToNameMap(rows)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	// TODO: Sort this slice
-	var refItems []common.PanelAnalyticsAgentsItem
+	var refItems []c.PanelAnalyticsAgentsItem
 	for domain, count := range refMap {
-		refItems = append(refItems, common.PanelAnalyticsAgentsItem{
-			Agent: common.SanitiseSingleLine(domain),
+		refItems = append(refItems, c.PanelAnalyticsAgentsItem{
+			Agent: c.SanitiseSingleLine(domain),
 			Count: count,
 		})
 	}
 
-	pi := common.PanelAnalyticsAgentsPage{basePage, refItems, timeRange.Range}
+	pi := c.PanelAnalyticsAgentsPage{basePage, refItems, timeRange.Range}
 	return renderTemplate("panel_analytics_referrers", w, r, basePage.Header, &pi)
 }

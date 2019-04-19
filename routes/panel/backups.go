@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
-func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL string) common.RouteError {
+func Backups(w http.ResponseWriter, r *http.Request, user c.User, backupURL string) c.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "backups", "backups")
 	if ferr != nil {
 		return ferr
@@ -18,15 +18,15 @@ func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL
 
 	if backupURL != "" {
 		// We don't want them trying to break out of this directory, it shouldn't hurt since it's a super admin, but it's always good to practice good security hygiene, especially if this is one of many instances on a managed server not controlled by the superadmin/s
-		backupURL = common.Stripslashes(backupURL)
+		backupURL = c.Stripslashes(backupURL)
 
 		var ext = filepath.Ext("./backups/" + backupURL)
 		if ext != ".sql" && ext != ".zip" {
-			return common.NotFound(w, r, basePage.Header)
+			return c.NotFound(w, r, basePage.Header)
 		}
 		info, err := os.Stat("./backups/" + backupURL)
 		if err != nil {
-			return common.NotFound(w, r, basePage.Header)
+			return c.NotFound(w, r, basePage.Header)
 		}
 		w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
 
@@ -44,19 +44,19 @@ func Backups(w http.ResponseWriter, r *http.Request, user common.User, backupURL
 		return nil
 	}
 
-	var backupList []common.BackupItem
+	var backupList []c.BackupItem
 	backupFiles, err := ioutil.ReadDir("./backups")
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	for _, backupFile := range backupFiles {
 		var ext = filepath.Ext(backupFile.Name())
 		if ext != ".sql" {
 			continue
 		}
-		backupList = append(backupList, common.BackupItem{backupFile.Name(), backupFile.ModTime()})
+		backupList = append(backupList, c.BackupItem{backupFile.Name(), backupFile.ModTime()})
 	}
 
-	pi := common.PanelBackupPage{basePage, backupList}
+	pi := c.PanelBackupPage{basePage, backupList}
 	return renderTemplate("panel_backups", w, r, basePage.Header, &pi)
 }

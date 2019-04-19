@@ -9,17 +9,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(common.Day)) // TODO: Make this a common.Config value
+var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(c.Day)) // TODO: Make this a c.Config value
 
 // GET functions
 func StaticFile(w http.ResponseWriter, r *http.Request) {
-	file, ok := common.StaticFiles.Get(r.URL.Path)
+	file, ok := c.StaticFiles.Get(r.URL.Path)
 	if !ok {
-		common.DebugLogf("Failed to find '%s'", r.URL.Path) // TODO: Use MicroNotFound? Might be better than the unneccessary overhead of sprintf
+		c.DebugLogf("Failed to find '%s'", r.URL.Path) // TODO: Use MicroNotFound? Might be better than the unneccessary overhead of sprintf
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -47,56 +47,56 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	// Other options instead of io.Copy: io.CopyN(), w.Write(), http.ServeContent()
 }
 
-func Overview(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header) common.RouteError {
+func Overview(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	header.Title = phrases.GetTitlePhrase("overview")
 	header.Zone = "overview"
-	pi := common.Page{header, tList, nil}
+	pi := c.Page{header, tList, nil}
 	return renderTemplate("overview", w, r, header, pi)
 }
 
-func CustomPage(w http.ResponseWriter, r *http.Request, user common.User, header *common.Header, name string) common.RouteError {
+func CustomPage(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header, name string) c.RouteError {
 	header.Zone = "custom_page"
-	name = common.SanitiseSingleLine(name)
-	page, err := common.Pages.GetByName(name)
+	name = c.SanitiseSingleLine(name)
+	page, err := c.Pages.GetByName(name)
 	if err == nil {
 		header.Title = page.Title
-		pi := common.CustomPagePage{header, page}
+		pi := c.CustomPagePage{header, page}
 		return renderTemplate("custom_page", w, r, header, pi)
 	} else if err != sql.ErrNoRows {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 
 	// ! Is this safe?
-	if common.DefaultTemplates.Lookup("page_"+name+".html") == nil {
-		return common.NotFound(w, r, header)
+	if c.DefaultTemplates.Lookup("page_"+name+".html") == nil {
+		return c.NotFound(w, r, header)
 	}
 
 	header.Title = phrases.GetTitlePhrase("page")
-	pi := common.Page{header, tList, nil}
+	pi := c.Page{header, tList, nil}
 	// TODO: Pass the page name to the pre-render hook?
-	if common.RunPreRenderHook("pre_render_tmpl_page", w, r, &user, &pi) {
+	if c.RunPreRenderHook("pre_render_tmpl_page", w, r, &user, &pi) {
 		return nil
 	}
 	err = header.Theme.RunTmpl("page_"+name, pi, w)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	return nil
 }
 
 // TODO: Set the cookie domain
-func ChangeTheme(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func ChangeTheme(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	//headerLite, _ := SimpleUserCheck(w, r, &user)
 	// TODO: Rename isJs to something else, just in case we rewrite the JS side in WebAssembly?
 	isJs := (r.PostFormValue("isJs") == "1")
-	newTheme := common.SanitiseSingleLine(r.PostFormValue("newTheme"))
+	newTheme := c.SanitiseSingleLine(r.PostFormValue("newTheme"))
 
-	theme, ok := common.Themes[newTheme]
+	theme, ok := c.Themes[newTheme]
 	if !ok || theme.HideFromThemes {
-		return common.LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
+		return c.LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
 	}
 
-	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: int(common.Year)}
+	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: int(c.Year)}
 	http.SetCookie(w, &cookie)
 
 	if !isJs {
