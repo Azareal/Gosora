@@ -651,7 +651,7 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -687,6 +687,11 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		return common.PreErrorJSQ("The updated topic doesn't exist.", w, r, isJs)
 	} else if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_topic", topic.ID, &user)
+	if skip || rerr != nil {
+		return rerr
 	}
 
 	if !isJs {
@@ -736,7 +741,7 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 		}
 
 		// TODO: Add hooks to make use of headerLite
-		_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+		lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 		if ferr != nil {
 			return ferr
 		}
@@ -761,6 +766,12 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 			return common.InternalErrorJSQ(err,w,r,isJs)
 		}*/
 
+		// TODO: Do a bulk delete action hook?
+		skip, rerr := lite.Hooks.VhookSkippable("action_end_delete_topic", topic.ID, &user)
+		if skip || rerr != nil {
+			return rerr
+		}
+
 		log.Printf("Topic #%d was deleted by UserID #%d", tid, user.ID)
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -768,39 +779,39 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User)
 }
 
 func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
-	topic, rerr := topicActionPre(stid, "pin", w, r, user)
+	topic, lite,rerr := topicActionPre(stid, "pin", w, r, user)
 	if rerr != nil {
 		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Stick(), "stick", w, r, topic, user)
+	return topicActionPost(topic.Stick(), "stick", w, r, lite,topic, user)
 }
 
-func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.Request, user common.User) (*common.Topic, common.RouteError) {
+func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.Request, user common.User) (*common.Topic, *common.HeaderLite, common.RouteError) {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return nil, common.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		return nil, nil,common.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	topic, err := common.Topics.Get(tid)
 	if err == sql.ErrNoRows {
-		return nil, common.PreError("The topic you tried to "+action+" doesn't exist.", w, r)
+		return nil, nil,common.PreError("The topic you tried to "+action+" doesn't exist.", w, r)
 	} else if err != nil {
-		return nil, common.InternalError(err, w, r)
+		return nil, nil,common.InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
-		return nil, ferr
+		return nil, nil,ferr
 	}
 
-	return topic, nil
+	return topic, lite, nil
 }
 
-func topicActionPost(err error, action string, w http.ResponseWriter, r *http.Request, topic *common.Topic, user common.User) common.RouteError {
+func topicActionPost(err error, action string, w http.ResponseWriter, r *http.Request, lite *common.HeaderLite, topic *common.Topic, user common.User) common.RouteError {
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
@@ -808,19 +819,23 @@ func topicActionPost(err error, action string, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return common.InternalError(err, w, r)
 	}
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_"+action+"_topic", topic.ID, &user)
+	if skip || rerr != nil {
+		return rerr
+	}
 	http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID), http.StatusSeeOther)
 	return nil
 }
 
 func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
-	topic, rerr := topicActionPre(stid, "unpin", w, r, user)
+	topic, lite, rerr := topicActionPre(stid, "unpin", w, r, user)
 	if rerr != nil {
 		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Unstick(), "unstick", w, r, topic, user)
+	return topicActionPost(topic.Unstick(), "unstick", w, r, lite,topic, user)
 }
 
 func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
@@ -856,7 +871,7 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) c
 		}
 
 		// TODO: Add hooks to make use of headerLite
-		_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+		lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 		if ferr != nil {
 			return ferr
 		}
@@ -873,6 +888,12 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) c
 		if err != nil {
 			return common.InternalErrorJSQ(err, w, r, isJs)
 		}
+
+		// TODO: Do a bulk lock action hook?
+		skip, rerr := lite.Hooks.VhookSkippable("action_end_lock_topic", topic.ID, &user)
+		if skip || rerr != nil {
+			return rerr
+		}
 	}
 
 	if len(tids) == 1 {
@@ -882,14 +903,14 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User) c
 }
 
 func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, stid string) common.RouteError {
-	topic, rerr := topicActionPre(stid, "unlock", w, r, user)
+	topic, lite,rerr := topicActionPre(stid, "unlock", w, r, user)
 	if rerr != nil {
 		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
 		return common.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Unlock(), "unlock", w, r, topic, user)
+	return topicActionPost(topic.Unlock(), "unlock", w, r, lite,topic, user)
 }
 
 // ! JS only route
@@ -929,7 +950,7 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		if !user.Perms.ViewTopic || !user.Perms.MoveTopic {
 			return common.NoPermissionsJS(w, r, user)
 		}
-		_, ferr = common.SimpleForumUserCheck(w, r, &user, fid)
+		lite, ferr := common.SimpleForumUserCheck(w, r, &user, fid)
 		if ferr != nil {
 			return ferr
 		}
@@ -946,6 +967,12 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		err = addTopicAction("move-"+strconv.Itoa(fid), topic, user)
 		if err != nil {
 			return common.InternalErrorJS(err, w, r)
+		}
+
+		// TODO: Do a bulk move action hook?
+		skip, rerr := lite.Hooks.VhookSkippable("action_end_move_topic", topic.ID, &user)
+		if skip || rerr != nil {
+			return rerr
 		}
 	}
 
@@ -979,7 +1006,7 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -1010,6 +1037,11 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	err = common.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_topic", topic.ID, &user)
+	if skip || rerr != nil {
+		return rerr
 	}
 
 	if !isJs {

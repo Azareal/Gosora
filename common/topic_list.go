@@ -112,6 +112,9 @@ func (tList *DefaultTopicList) Tick() error {
 	tList.evenGroups = evenLists
 	tList.evenLock.Unlock()
 
+	hTbl := GetHookTable()
+	_, _ = hTbl.VhookSkippable("tasks_tick_topic_list", tList)
+
 	return nil
 }
 

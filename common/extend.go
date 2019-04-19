@@ -1,7 +1,7 @@
 /*
 *
 * Gosora Plugin System
-* Copyright Azareal 2016 - 2019
+* Copyright Azareal 2016 - 2020
 *
  */
 package common
@@ -84,14 +84,27 @@ var hookTable = &HookTable{
 		"forum_check_pre_perms":        nil,
 
 		"action_end_create_topic":             nil,
+		"action_end_edit_topic":nil,
+		"action_end_delete_topic":nil,
+		"action_end_lock_topic":nil,
+		"action_end_unlock_topic": nil,
+		"action_end_stick_topic": nil,
+		"action_end_unstick_topic": nil,
+		"action_end_move_topic": nil,
+		"action_end_like_topic":nil,
+
 		"action_end_create_reply":             nil,
 		"action_end_edit_reply":               nil,
 		"action_end_delete_reply":             nil,
 		"action_end_add_attach_to_reply":      nil,
 		"action_end_remove_attach_from_reply": nil,
 
+		"action_end_like_reply":nil,
+
 		"router_after_filters": nil,
 		"router_pre_route":     nil,
+
+		"tasks_tick_topic_list": nil,
 	},
 	map[string][]func(string) string{
 		"preparse_preassign": nil,

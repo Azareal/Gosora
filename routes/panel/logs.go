@@ -47,7 +47,7 @@ func handleUnknownUser(user *common.User, err error) *common.User {
 }
 func handleUnknownTopic(topic *common.Topic, err error) *common.Topic {
 	if err != nil {
-		return &common.Topic{Title: phrases.GetTmplPhrase("user_unknown"), Link: common.BuildTopicURL("unknown", 0)}
+		return &common.Topic{Title: phrases.GetTmplPhrase("topic_unknown"), Link: common.BuildTopicURL("unknown", 0)}
 	}
 	return topic
 }

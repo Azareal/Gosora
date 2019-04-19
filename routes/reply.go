@@ -189,7 +189,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user common.User)
 	}
 
 	counters.PostCounter.Bump()
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_reply", reply.ID)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_reply", reply.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -261,7 +261,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 		return common.InternalErrorJSQ(err, w, r, js)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_reply", reply.ID)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_reply", reply.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -316,7 +316,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user common.User,
 		return common.InternalErrorJSQ(err, w, r, isJs)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_delete_reply", reply.ID)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_delete_reply", reply.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -389,7 +389,7 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user common.
 		return common.InternalErrorJS(errors.New("no paths for attachment add"), w, r)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_add_attach_to_reply", reply.ID)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_add_attach_to_reply", reply.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -452,7 +452,7 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user co
 		}
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_remove_attach_from_reply", reply.ID)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_remove_attach_from_reply", reply.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -597,7 +597,7 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := common.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -627,6 +627,11 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user common.User, s
 	err = common.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return common.InternalErrorJSQ(err, w, r, isJs)
+	}
+
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_reply", reply.ID, &user)
+	if skip || rerr != nil {
+		return rerr
 	}
 
 	if !isJs {

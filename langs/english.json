@@ -920,6 +920,7 @@
 		"panel_logs_moderation_action_unknown":"Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>",
 
 		"user_unknown":"Unknown",
+		"topic_unknown":"Unknown",
 
 		"panel_logs_administration_head":"Admin Action Logs",
 
