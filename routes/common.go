@@ -21,14 +21,20 @@ func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 	return halves[0], tid, err
 }
 
+var slen1 = len("</static/>; rel=preload; as=script,")
+var slen2 = len("</static/>; rel=preload; as=style,")
+
 func doPush(w http.ResponseWriter, header *c.Header) {
 	//fmt.Println("in doPush")
 	if c.Config.EnableCDNPush {
-		// TODO: Faster string building...
-		var sbuf string
+		// TODO: Cache these in a sync.Pool?
+		var sb strings.Builder
 		var push = func(in []string) {
+			sb.Grow((slen1 + 5) * len(in))
 			for _, path := range in {
-				sbuf += "</static/" + path + ">; rel=preload; as=script,"
+				sb.WriteString("</static/")
+				sb.WriteString(path)
+				sb.WriteString(">; rel=preload; as=script,")
 			}
 		}
 		push(header.Scripts)
@@ -36,15 +42,18 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		push(header.ScriptsAsync)
 
 		if len(header.Stylesheets) > 0 {
+			sb.Grow((slen2 + 6) * len(header.Stylesheets))
 			for _, path := range header.Stylesheets {
-				sbuf += "</static/" + path + ">; rel=preload; as=style,"
+				sb.WriteString("</static/")
+				sb.WriteString(path)
+				sb.WriteString(">; rel=preload; as=style,")
 			}
 		}
 		// TODO: Push avatars?
 
-		if len(sbuf) > 0 {
-			sbuf = sbuf[:len(sbuf)-1]
-			w.Header().Set("Link", sbuf)
+		if sb.Len() > 0 {
+			sbuf := sb.String()
+			w.Header().Set("Link", sbuf[:len(sbuf)-1])
 		}
 	} else if !c.Config.DisableServerPush {
 		//fmt.Println("push enabled")

@@ -28,6 +28,7 @@ type SFile struct {
 	Data             []byte
 	GzipData         []byte
 	Sha256           string
+	OName string
 	Pos              int64
 	Length           int64
 	GzipLength       int64
@@ -242,7 +243,7 @@ func (list SFileList) JSTmplInit() error {
 		hasher.Write(data)
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 
-		list.Set("/static/"+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		list.Set("/static/"+path, SFile{data, gzipData, checksum,path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -287,7 +288,7 @@ func (list SFileList) Init() error {
 			}
 		}
 
-		list.Set("/static/"+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
+		list.Set("/static/"+path, SFile{data, gzipData, checksum,path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -320,7 +321,7 @@ func (list SFileList) Add(path string, prefix string) error {
 	hasher.Write(data)
 	checksum := hex.EncodeToString(hasher.Sum(nil))
 
-	list.Set("/static"+path, SFile{data, gzipData, checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+	list.Set("/static"+path, SFile{data, gzipData, checksum,path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 	DebugLogf("Added the '%s' static file", path)
 	return nil

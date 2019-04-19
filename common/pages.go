@@ -51,12 +51,13 @@ type Header struct {
 }
 
 func (header *Header) AddScript(name string) {
+	// TODO: Use a secondary static file map to avoid this concatenation?
 	fname := "/static/" + name
 	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
 		if ok {
-			oname = name + "?h=" + file.Sha256
+			oname = file.OName
 		}
 	}
 	if oname == "" {
@@ -72,7 +73,7 @@ func (header *Header) AddPreScriptAsync(name string) {
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
 		if ok {
-			oname = name + "?h=" + file.Sha256
+			oname = file.OName
 		}
 	}
 	if oname == "" {
@@ -87,7 +88,7 @@ func (header *Header) AddScriptAsync(name string) {
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
 		if ok {
-			oname = name + "?h=" + file.Sha256
+			oname = file.OName
 		}
 	}
 	if oname == "" {
@@ -106,7 +107,7 @@ func (header *Header) AddSheet(name string) {
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
 		if ok {
-			oname = name + "?h=" + file.Sha256
+			oname = file.OName
 		}
 	}
 	if oname == "" {
