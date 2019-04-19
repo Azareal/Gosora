@@ -41,7 +41,7 @@ func routes(r *Router) {
 	r.AddGroup(pollRoutes())
 	r.AddGroup(accountRoutes())
 
-	r.Add(Special("c.RouteWebsockets", "/ws/"))
+	r.Add(Special("common.RouteWebsockets", "/ws/"))
 }
 
 // TODO: Test the email token route

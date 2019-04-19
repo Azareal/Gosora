@@ -83,7 +83,7 @@ func main() {
 			route.Vars = []string{"head"}
 			route.Vars = append(route.Vars, vcpy...)
 		}
-		out += "\n\t\t\terr = " + route.Name + "(w,req,user"
+		out += "\n\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
 		for _, item := range route.Vars {
 			out += "," + item
 		}
@@ -144,7 +144,7 @@ func main() {
 				route.Vars = []string{"head"}
 				route.Vars = append(route.Vars, vcpy...)
 			}
-			out += "\n\t\t\t\t\terr = " + route.Name + "(w,req,user"
+			out += "\n\t\t\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
 			for _, item := range route.Vars {
 				out += "," + item
 			}
@@ -163,7 +163,7 @@ func main() {
 				defaultRoute.Vars = []string{"head"}
 				defaultRoute.Vars = append(defaultRoute.Vars, vcpy...)
 			}
-			out += "\n\t\t\t\t\terr = " + defaultRoute.Name + "(w,req,user"
+			out += "\n\t\t\t\t\terr = " + strings.Replace(defaultRoute.Name, "common.", "c.", -1) + "(w,req,user"
 			for _, item := range defaultRoute.Vars {
 				out += ", " + item
 			}

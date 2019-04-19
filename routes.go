@@ -17,7 +17,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
@@ -31,17 +31,17 @@ var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path
 
 // TODO: Refactor this endpoint
 // TODO: Move this into the routes package
-func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	w.Header().Set("Content-Type", "application/json")
 	err := r.ParseForm()
 	if err != nil {
-		return common.PreErrorJS("Bad Form", w, r)
+		return c.PreErrorJS("Bad Form", w, r)
 	}
 
 	action := r.FormValue("action")
 	if action != "get" && action != "set" {
-		return common.PreErrorJS("Invalid Action", w, r)
+		return c.PreErrorJS("Invalid Action", w, r)
 	}
 
 	switch r.FormValue("module") {
@@ -49,19 +49,19 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 	case "dismiss-alert":
 		asid, err := strconv.Atoi(r.FormValue("asid"))
 		if err != nil {
-			return common.PreErrorJS("Invalid asid", w, r)
+			return c.PreErrorJS("Invalid asid", w, r)
 		}
 		res, err := stmts.deleteActivityStreamMatch.Exec(user.ID, asid)
 		if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
 		count, err := res.RowsAffected()
 		if err != nil {
-			return common.InternalError(err, w, r)
+			return c.InternalError(err, w, r)
 		}
 		// Don't want to throw an internal error due to a socket closing
-		if common.EnableWebsockets && count > 0 {
-			_ = common.WsHub.PushMessage(user.ID, `{"event":"dismiss-alert","asid":`+strconv.Itoa(asid)+`}`)
+		if c.EnableWebsockets && count > 0 {
+			_ = c.WsHub.PushMessage(user.ID, `{"event":"dismiss-alert","asid":`+strconv.Itoa(asid)+`}`)
 		}
 		w.Write(successJSONBytes)
 	// TODO: Split this into it's own function
@@ -75,50 +75,50 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		var msgCount int
 		err = stmts.getActivityCountByWatcher.QueryRow(user.ID).Scan(&msgCount)
 		if err == ErrNoRows {
-			return common.PreErrorJS("Couldn't find the parent topic", w, r)
+			return c.PreErrorJS("Couldn't find the parent topic", w, r)
 		} else if err != nil {
-			return common.InternalErrorJS(err, w, r)
+			return c.InternalErrorJS(err, w, r)
 		}
 
 		rows, err := stmts.getActivityFeedByWatcher.Query(user.ID)
 		if err != nil {
-			return common.InternalErrorJS(err, w, r)
+			return c.InternalErrorJS(err, w, r)
 		}
 		defer rows.Close()
 
 		var actors []int
-		var alerts []common.Alert
+		var alerts []c.Alert
 		for rows.Next() {
-			var alert common.Alert
+			var alert c.Alert
 			err = rows.Scan(&alert.ASID, &alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID)
 			if err != nil {
-				return common.InternalErrorJS(err, w, r)
+				return c.InternalErrorJS(err, w, r)
 			}
 			alerts = append(alerts, alert)
 			actors = append(actors, alert.ActorID)
 		}
 		err = rows.Err()
 		if err != nil {
-			return common.InternalErrorJS(err, w, r)
+			return c.InternalErrorJS(err, w, r)
 		}
 
 		// Might not want to error here, if the account was deleted properly, we might want to figure out how we should handle deletions in general
-		list, err := common.Users.BulkGetMap(actors)
+		list, err := c.Users.BulkGetMap(actors)
 		if err != nil {
 			log.Print("actors:", actors)
-			return common.InternalErrorJS(err, w, r)
+			return c.InternalErrorJS(err, w, r)
 		}
 
 		var ok bool
 		for _, alert := range alerts {
 			alert.Actor, ok = list[alert.ActorID]
 			if !ok {
-				return common.InternalErrorJS(errors.New("No such actor"), w, r)
+				return c.InternalErrorJS(errors.New("No such actor"), w, r)
 			}
 
-			res, err := common.BuildAlert(alert, user)
+			res, err := c.BuildAlert(alert, user)
 			if err != nil {
-				return common.LocalErrorJS(err.Error(), w, r)
+				return c.LocalErrorJS(err.Error(), w, r)
 			}
 
 			msglist += res + ","
@@ -129,13 +129,13 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user common.User) common.R
 		}
 		_, _ = w.Write([]byte(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`))
 	default:
-		return common.PreErrorJS("Invalid Module", w, r)
+		return c.PreErrorJS("Invalid Module", w, r)
 	}
 	return nil
 }
 
 // TODO: Remove this line after we move routeAPIPhrases to the routes package
-var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(common.Day))
+var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(c.Day))
 
 // TODO: Be careful with exposing the panel phrases here, maybe move them into a different namespace? We also need to educate the admin that phrases aren't necessarily secret
 // TODO: Move to the routes package
@@ -147,7 +147,7 @@ var phraseWhitelist = []string{
 	"analytics",
 }
 
-func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	h := w.Header()
 	h.Set("Content-Type", "application/json")
@@ -155,11 +155,11 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 
 	err := r.ParseForm()
 	if err != nil {
-		return common.PreErrorJS("Bad Form", w, r)
+		return c.PreErrorJS("Bad Form", w, r)
 	}
 	query := r.FormValue("query")
 	if query == "" {
-		return common.PreErrorJS("No query provided", w, r)
+		return c.PreErrorJS("No query provided", w, r)
 	}
 
 	var negations []string
@@ -172,21 +172,21 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 			queryBit = strings.TrimPrefix(queryBit, "!")
 			for _, char := range queryBit {
 				if !unicode.IsLetter(char) && char != '-' && char != '_' {
-					return common.PreErrorJS("No symbols allowed, only - and _", w, r)
+					return c.PreErrorJS("No symbols allowed, only - and _", w, r)
 				}
 			}
 			negations = append(negations, queryBit)
 		} else {
 			for _, char := range queryBit {
 				if !unicode.IsLetter(char) && char != '-' && char != '_' {
-					return common.PreErrorJS("No symbols allowed, only - and _", w, r)
+					return c.PreErrorJS("No symbols allowed, only - and _", w, r)
 				}
 			}
 			positives = append(positives, queryBit)
 		}
 	}
 	if len(positives) == 0 {
-		return common.PreErrorJS("You haven't requested any phrases", w, r)
+		return c.PreErrorJS("You haven't requested any phrases", w, r)
 	}
 
 	var plist map[string]string
@@ -204,11 +204,11 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 				}
 			}
 			if !ok {
-				return common.PreErrorJS("Outside of phrase prefix whitelist", w, r)
+				return c.PreErrorJS("Outside of phrase prefix whitelist", w, r)
 			}
 			pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positive)
 			if !ok {
-				return common.PreErrorJS("No such prefix", w, r)
+				return c.PreErrorJS("No such prefix", w, r)
 			}
 			for name, phrase := range pPhrases {
 				plist[name] = phrase
@@ -224,11 +224,11 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 			}
 		}
 		if !ok {
-			return common.PreErrorJS("Outside of phrase prefix whitelist", w, r)
+			return c.PreErrorJS("Outside of phrase prefix whitelist", w, r)
 		}
 		pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positives[0])
 		if !ok {
-			return common.PreErrorJS("No such prefix", w, r)
+			return c.PreErrorJS("No such prefix", w, r)
 		}
 		plist = pPhrases
 	}
@@ -244,7 +244,7 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 	// TODO: Cache the output of this, especially for things like topic, so we don't have to waste more time than we need on this
 	jsonBytes, err := json.Marshal(plist)
 	if err != nil {
-		return common.InternalError(err, w, r)
+		return c.InternalError(err, w, r)
 	}
 	w.Write(jsonBytes)
 
@@ -253,9 +253,9 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user common.User) c
 
 // A dedicated function so we can shake things up every now and then to make the token harder to parse
 // TODO: Are we sure we want to do this by ID, just in case we reuse this and have multiple antispams on the page?
-func routeJSAntispam(w http.ResponseWriter, r *http.Request, user common.User) common.RouteError {
+func routeJSAntispam(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	h := sha256.New()
-	h.Write([]byte(common.JSTokenBox.Load().(string)))
+	h.Write([]byte(c.JSTokenBox.Load().(string)))
 	h.Write([]byte(user.LastIP))
 	jsToken := hex.EncodeToString(h.Sum(nil))
 
