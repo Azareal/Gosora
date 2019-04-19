@@ -49,6 +49,5 @@ func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 		}
 	}
 
-	pi := c.ForumsPage{header, forumList}
-	return renderTemplate("forums", w, r, header, pi)
+	return renderTemplate("forums", w, r, header, c.ForumsPage{header, forumList})
 }

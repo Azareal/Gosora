@@ -26,14 +26,5 @@ func IPSearch(w http.ResponseWriter, r *http.Request, user c.User, header *c.Hea
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
-	pi := c.IPSearchPage{header, userList, ip}
-	if c.RunPreRenderHook("pre_render_ip_search", w, r, &user, &pi) {
-		return nil
-	}
-	err = header.Theme.RunTmpl("ip_search", pi, w)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate("ip_search", w, r, header, c.IPSearchPage{header, userList, ip})
 }

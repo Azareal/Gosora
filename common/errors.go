@@ -129,7 +129,6 @@ func errorHeader(w http.ResponseWriter, user User, title string) *Header {
 	header := DefaultHeader(w, user)
 	header.Title = title
 	header.Zone = "error"
-	prepResources(&user, header, header.Theme)
 	return header
 }
 
@@ -304,10 +303,7 @@ func LoginRequiredJS(w http.ResponseWriter, r *http.Request, user User) RouteErr
 func SecurityError(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(403)
 	pi := ErrorPage{errorHeader(w, user, phrases.GetErrorPhrase("security_error_title")), phrases.GetErrorPhrase("security_error_body")}
-	if RunPreRenderHook("pre_render_security_error", w, r, &user, &pi) {
-		return nil
-	}
-	err := pi.Header.Theme.RunTmpl("error", pi, w)
+	err := RenderTemplateAlias("error", "security_error", w, r, pi.Header, pi)
 	if err != nil {
 		LogError(err)
 	}
@@ -381,12 +377,11 @@ func writeJsonError(errmsg string, w http.ResponseWriter) {
 }
 
 func handleErrorTemplate(w http.ResponseWriter, r *http.Request, pi ErrorPage) {
-	// TODO: What to do about this hook?
-	if RunPreRenderHook("pre_render_error", w, r, &pi.Header.CurrentUser, &pi) {
-		return
-	}
-	err := pi.Header.Theme.RunTmpl("error", pi, w)
+	err := RenderTemplateAlias("error", "error", w, r, pi.Header, pi)
 	if err != nil {
 		LogError(err)
 	}
 }
+
+// Alias of routes.renderTemplate
+var RenderTemplateAlias func(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, header *Header, pi interface{}) error

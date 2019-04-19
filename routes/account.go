@@ -28,8 +28,7 @@ func AccountLogin(w http.ResponseWriter, r *http.Request, user c.User, header *c
 		return c.LocalError("You're already logged in.", w, r, user)
 	}
 	header.Title = phrases.GetTitlePhrase("login")
-	pi := c.Page{header, tList, nil}
-	return renderTemplate("login", w, r, header, pi)
+	return renderTemplate("login", w, r, header, c.Page{header, tList, nil})
 }
 
 // TODO: Log failed attempted logins?
@@ -160,16 +159,8 @@ func AccountLoginMFAVerify(w http.ResponseWriter, r *http.Request, user c.User, 
 	if !mfaVerifySession(provSession, signedSession, uid) {
 		return c.LocalError("Invalid session", w, r, user)
 	}
-
-	pi := c.Page{header, tList, nil}
-	if c.RunPreRenderHook("pre_render_login_mfa_verify", w, r, &user, &pi) {
-		return nil
-	}
-	err = header.Theme.RunTmpl("login_mfa_verify", pi, w)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-	return nil
+	
+	return renderTemplate("login_mfa_verify", w, r, header, c.Page{header, tList, nil})
 }
 
 func AccountLoginMFAVerifySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -202,8 +193,7 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user c.User, header
 	}
 	header.Title = phrases.GetTitlePhrase("register")
 	header.LooseCSP = true
-	pi := c.Page{header, tList, nil}
-	return renderTemplate("register", w, r, header, pi)
+	return renderTemplate("register", w, r, header, c.Page{header, tList, nil})
 }
 
 func isNumeric(data string) (numeric bool) {
@@ -392,8 +382,7 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 //edit_password
 func AccountEditPassword(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	accountEditHead("account_password", w, r, &user, header)
-	pi := c.Page{header, tList, nil}
-	return renderTemplate("account_own_edit_password", w, r, header, pi)
+	return renderTemplate("account_own_edit_password", w, r, header, c.Page{header, tList, nil})
 }
 
 // TODO: Require re-authentication if the user hasn't logged in in a while
@@ -759,8 +748,7 @@ func LevelList(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 		levels[i] = c.LevelListItem{i, iScore, status, perc * 2}
 	}
 
-	pi := c.LevelListPage{header, levels[1:]}
-	return renderTemplate("level_list", w, r, header, pi)
+	return renderTemplate("level_list", w, r, header, c.LevelListPage{header, levels[1:]})
 }
 
 func Alerts(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {

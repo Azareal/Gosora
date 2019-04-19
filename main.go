@@ -27,6 +27,7 @@ import (
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
@@ -39,6 +40,11 @@ var globs *Globs
 
 type Globs struct {
 	stmts *Stmts
+}
+
+// Temporary alias for renderTemplate
+func init() {
+	c.RenderTemplateAlias = routes.RenderTemplate
 }
 
 // Experimenting with a new error package here to try to reduce the amount of debugging we have to do

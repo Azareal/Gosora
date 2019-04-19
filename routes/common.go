@@ -76,6 +76,20 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 }
 
 func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
+	return renderTemplate2(tmplName, tmplName, w, r, header, pi)
+}
+
+func renderTemplate2(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
+	err := renderTemplate3(tmplName, tmplName, w, r, header, pi)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	return nil
+}
+
+func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) error {
+	c.PrepResources(&header.CurrentUser, header, header.Theme)
+
 	if header.CurrentUser.Loggedin {
 		header.MetaDesc = ""
 		header.OGDesc = ""
@@ -98,12 +112,11 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, hea
 	if header.CurrentUser.IsAdmin {
 		header.Elapsed1 = time.Since(header.StartedAt).String()
 	}
-	if c.RunPreRenderHook("pre_render_"+tmplName, w, r, &header.CurrentUser, pi) {
+	if c.RunPreRenderHook("pre_render_"+hookName, w, r, &header.CurrentUser, pi) {
 		return nil
 	}
-	err := header.Theme.RunTmpl(tmplName, pi, w)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-	return nil
+	return header.Theme.RunTmpl(tmplName, pi, w)
 }
+
+// TODO: Rename renderTemplate to RenderTemplate instead of using this hack to avoid breaking things
+var RenderTemplate = renderTemplate3

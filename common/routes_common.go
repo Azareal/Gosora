@@ -222,11 +222,11 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		header.StartedAt = time.Now()
 	}
 
-	prepResources(user,header,theme)
+	//PrepResources(user,header,theme)
 	return header, nil
 }
 
-func prepResources(user *User, header *Header, theme *Theme) {
+func PrepResources(user *User, header *Header, theme *Theme) {
 	header.AddSheet(theme.Name + "/main.css")
 
 	if len(theme.Resources) > 0 {

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	c "github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/routes"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -189,11 +190,7 @@ func RouteGuildList(w http.ResponseWriter, r *http.Request, user c.User) c.Route
 	}
 
 	pi := ListPage{"Guild List", user, header, guildList}
-	err = header.Theme.RunTmpl("guilds_guild_list", pi, w)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-	return nil
+	return routes.RenderTemplate("guilds_guild_list", w, r, header, pi)
 }
 
 func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -231,12 +228,7 @@ func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user c.User) c.Rou
 	}
 	CommonAreaWidgets(header)
 
-	pi := c.Page{header, tList, nil}
-	err := header.Theme.RunTmpl("guilds_create_guild", pi, w)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-	return nil
+	return routes.RenderTemplate("guilds_create_guild", w, r, header, c.Page{header, tList, nil})
 }
 
 func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -384,7 +376,7 @@ func PreRenderViewForum(w http.ResponseWriter, r *http.Request, user *c.User, da
 			guildItem := guildData.(*Guild)
 
 			guildpi := Page{pi.Title, pi.Header, pi.ItemList, pi.Forum, guildItem, pi.Page, pi.LastPage}
-			err := header.Theme.RunTmpl("guilds_view_guild", guildpi, w)
+			err := routes.RenderTemplate("guilds_view_guild", w, r, header, guildpi)
 			if err != nil {
 				c.LogError(err)
 				return false

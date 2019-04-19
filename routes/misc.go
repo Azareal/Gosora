@@ -50,8 +50,7 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 func Overview(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	header.Title = phrases.GetTitlePhrase("overview")
 	header.Zone = "overview"
-	pi := c.Page{header, tList, nil}
-	return renderTemplate("overview", w, r, header, pi)
+	return renderTemplate("overview", w, r, header, c.Page{header, tList, nil})
 }
 
 func CustomPage(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header, name string) c.RouteError {
@@ -60,8 +59,7 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user c.User, header *c.H
 	page, err := c.Pages.GetByName(name)
 	if err == nil {
 		header.Title = page.Title
-		pi := c.CustomPagePage{header, page}
-		return renderTemplate("custom_page", w, r, header, pi)
+		return renderTemplate("custom_page", w, r, header, c.CustomPagePage{header, page})
 	} else if err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -72,16 +70,8 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user c.User, header *c.H
 	}
 
 	header.Title = phrases.GetTitlePhrase("page")
-	pi := c.Page{header, tList, nil}
 	// TODO: Pass the page name to the pre-render hook?
-	if c.RunPreRenderHook("pre_render_tmpl_page", w, r, &user, &pi) {
-		return nil
-	}
-	err = header.Theme.RunTmpl("page_"+name, pi, w)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-	return nil
+	return renderTemplate2("page_"+name, "tmpl_page", w, r, header, c.Page{header, tList, nil})
 }
 
 // TODO: Set the cookie domain
