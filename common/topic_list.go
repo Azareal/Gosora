@@ -1,6 +1,7 @@
 package common
 
 import (
+	//"log"
 	"strconv"
 	"sync"
 
@@ -179,14 +180,14 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 	}
 
 	// ? - Should we be showing plugin_guilds posts on /topics/?
-	argList, qlist := ForumListToArgQ(forumList)
+	argList, qlist := ForumListToArgQ(filteredForums)
 	if qlist == "" {
 		// We don't want to kill the page, so pass an empty slice and nil error
-		return topicList, forumList, Paginator{[]int{}, 1, 1}, nil
+		return topicList, filteredForums, Paginator{[]int{}, 1, 1}, nil
 	}
 
 	topicList, paginator, err = tList.getList(page, orderby, argList, qlist)
-	return topicList, forumList, paginator, err
+	return topicList, filteredForums, paginator, err
 }
 
 // TODO: Reduce the number of returns
@@ -241,6 +242,9 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 
 // TODO: Rename this to TopicListStore and pass back a TopicList instance holding the pagination data and topic list rather than passing them back one argument at a time
 func (tList *DefaultTopicList) getList(page int, orderby string, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
+	//log.Printf("argList: %+v\n",argList)
+	//log.Printf("qlist: %+v\n",qlist)
+	
 	topicCount, err := ArgQToTopicCount(argList, qlist)
 	if err != nil {
 		return nil, Paginator{nil, 1, 1}, err
@@ -338,6 +342,7 @@ func ForumListToArgQ(forums []Forum) (argList []interface{}, qlist string) {
 }
 
 // Internal. Don't rely on it.
+// TODO: Check the TopicCount field on the forums instead? Make sure it's in sync first.
 func ArgQToTopicCount(argList []interface{}, qlist string) (topicCount int, err error) {
 	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "parentID IN("+qlist+")", "")
 	if err != nil {
