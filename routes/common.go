@@ -70,6 +70,7 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		var push = func(in []string) {
 			for _, path := range in {
 				//fmt.Println("pushing /static/" + path)
+				// TODO: Avoid concatenating here
 				err := pusher.Push("/static/"+path, nil)
 				if err != nil {
 					break
@@ -96,20 +97,11 @@ func renderTemplate2(tmplName string, hookName string, w http.ResponseWriter, r 
 	return nil
 }
 
-func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) error {
-	c.PrepResources(&header.CurrentUser, header, header.Theme)
-
-	if header.CurrentUser.Loggedin {
-		header.MetaDesc = ""
-		header.OGDesc = ""
-	} else if header.MetaDesc != "" && header.OGDesc == "" {
-		header.OGDesc = header.MetaDesc
-	}
+func FootHeaders(w http.ResponseWriter, header *c.Header) {
 	// TODO: Expand this to non-HTTPS requests too
 	if !header.LooseCSP && c.Site.EnableSsl {
 		w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com;upgrade-insecure-requests")
 	}
-	header.AddScript("global.js")
 
 	// Server pushes can backfire on certain browsers, so we want to make sure it's only triggered for ones where it'll help
 	lastAgent := header.CurrentUser.LastAgent
@@ -117,7 +109,19 @@ func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r 
 	if lastAgent == "chrome" || lastAgent == "firefox" {
 		doPush(w, header)
 	}
+}
 
+func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) error {
+	c.PrepResources(&header.CurrentUser, header, header.Theme)
+	if header.CurrentUser.Loggedin {
+		header.MetaDesc = ""
+		header.OGDesc = ""
+	} else if header.MetaDesc != "" && header.OGDesc == "" {
+		header.OGDesc = header.MetaDesc
+	}
+	header.AddScript("global.js")
+
+	FootHeaders(w, header)
 	if header.CurrentUser.IsAdmin {
 		header.Elapsed1 = time.Since(header.StartedAt).String()
 	}

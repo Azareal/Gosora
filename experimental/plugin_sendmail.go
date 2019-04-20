@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
 /*
@@ -18,17 +18,17 @@ func init() {
 	if runtime.GOOS != "linux" {
 		return
 	}
-	common.Plugins.Add(&common.Plugin{UName: "sendmail", Name: "Sendmail", Author: "Azareal", URL: "http://github.com/Azareal", Tag: "Linux Only", Init: initSendmail, Activate: activateSendmail, Deactivate: deactivateSendmail})
+	c.Plugins.Add(&c.Plugin{UName: "sendmail", Name: "Sendmail", Author: "Azareal", URL: "http://github.com/Azareal", Tag: "Linux Only", Init: initSendmail, Activate: activateSendmail, Deactivate: deactivateSendmail})
 }
 
-func initSendmail(plugin *common.Plugin) error {
+func initSendmail(plugin *c.Plugin) error {
 	plugin.AddHook("email_send_intercept", sendSendmail)
 	return nil
 }
 
 // /usr/sbin/sendmail is only available on Linux
-func activateSendmail(plugin *common.Plugin) error {
-	if !common.Site.EnableEmails {
+func activateSendmail(plugin *c.Plugin) error {
+	if !c.Site.EnableEmails {
 		return errors.New("You have emails disabled in your configuration file")
 	}
 	if runtime.GOOS != "linux" {
@@ -37,7 +37,7 @@ func activateSendmail(plugin *common.Plugin) error {
 	return nil
 }
 
-func deactivateSendmail(plugin *common.Plugin) {
+func deactivateSendmail(plugin *c.Plugin) {
 	plugin.RemoveHook("email_send_intercept", sendSendmail)
 }
 
@@ -46,7 +46,7 @@ func sendSendmail(data ...interface{}) interface{} {
 	subject := data[1].(string)
 	body := data[2].(string)
 
-	msg := "From: " + common.Site.Email + "\n"
+	msg := "From: " + c.Site.Email + "\n"
 	msg += "To: " + to + "\n"
 	msg += "Subject: " + subject + "\n\n"
 	msg += body + "\n"

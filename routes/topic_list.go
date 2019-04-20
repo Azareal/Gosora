@@ -20,6 +20,10 @@ func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
 }
 
 func TopicList(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
+	skip, rerr := header.Hooks.VhookSkippable("route_topic_list_start", w, r, &user, header)
+	if skip || rerr != nil {
+		return rerr
+	}
 	return TopicListCommon(w, r, user, header, "lastupdated", "")
 }
 
@@ -106,7 +110,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 		if err != nil && err != sql.ErrNoRows {
 			return c.InternalError(err, w, r)
 		}
-		//fmt.Printf("tids %+v\n", tids)
+		//log.Printf("tids %+v\n", tids)
 		// TODO: Handle the case where there aren't any items...
 		// TODO: Add a BulkGet method which returns a slice?
 		tMap, err := c.Topics.BulkGetMap(tids)

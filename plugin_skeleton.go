@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Azareal/Gosora/common"
+import c "github.com/Azareal/Gosora/common"
 
 func init() {
 	/*
@@ -28,12 +28,12 @@ func init() {
 
 		That Uninstallation field which is currently unused is for not only deactivating this plugin, but for purging any data associated with it such a new tables or data produced by the end-user.
 	*/
-	common.Plugins.Add(&common.Plugin{UName: "skeleton", Name: "Skeleton", Author: "Azareal", Init: initSkeleton, Activate: activateSkeleton, Deactivate: deactivateSkeleton})
+	c.Plugins.Add(&c.Plugin{UName: "skeleton", Name: "Skeleton", Author: "Azareal", Init: initSkeleton, Activate: activateSkeleton, Deactivate: deactivateSkeleton})
 }
 
-func initSkeleton(plugin *common.Plugin) error { return nil }
+func initSkeleton(plugin *c.Plugin) error { return nil }
 
 // Any errors encountered while trying to activate the plugin are reported back to the admin and the activation is aborted
-func activateSkeleton(plugin *common.Plugin) error { return nil }
+func activateSkeleton(plugin *c.Plugin) error { return nil }
 
-func deactivateSkeleton(plugin *common.Plugin) {}
+func deactivateSkeleton(plugin *c.Plugin) {}

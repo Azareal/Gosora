@@ -1,19 +1,20 @@
 package main
 
+import c "github.com/Azareal/Gosora/common"
 import "github.com/oschwald/geoip2-golang"
 
-var geoip_db *geoip.DB
-var geoip_db_location string = "geoip_db.mmdb"
+var geoipDB *geoip.DB
+var geoipDBLocation = "geoip_db.mmdb"
 
 func init() {
-	plugins["geoip"] = NewPlugin("geoip","Geoip","Azareal","http://github.com/Azareal","","","",init_geoip,nil,deactivate_geoip,nil,nil)
+	c.Plugins.Add(&c.Plugin{UName: "geoip", Name: "Geoip", Author: "Azareal", Init: initGeoip, Deactivate: deactivateGeoip})
 }
 
-func init_geoip() (err error) {
-	geoip_db, err = geoip2.Open(geoip_db_location)
+func initGeoip(plugin *c.Plugin) (err error) {
+	geoipDB, err = geoip2.Open(geoipDBLocation)
 	return err
 }
 
-func deactivate_geoip() {
-	geoip_db.Close()
+func deactivateGeoip(plugin *c.Plugin) {
+	geoipDB.Close()
 }

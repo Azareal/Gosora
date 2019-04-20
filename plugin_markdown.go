@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
 var markdownMaxDepth = 25 // How deep the parser will go when parsing Markdown strings
@@ -23,10 +23,10 @@ var markdownH1TagOpen []byte
 var markdownH1TagClose []byte
 
 func init() {
-	common.Plugins.Add(&common.Plugin{UName: "markdown", Name: "Markdown", Author: "Azareal", URL: "https://github.com/Azareal", Init: initMarkdown, Deactivate: deactivateMarkdown})
+	c.Plugins.Add(&c.Plugin{UName: "markdown", Name: "Markdown", Author: "Azareal", URL: "https://github.com/Azareal", Init: initMarkdown, Deactivate: deactivateMarkdown})
 }
 
-func initMarkdown(plugin *common.Plugin) error {
+func initMarkdown(plugin *c.Plugin) error {
 	plugin.AddHook("parse_assign", markdownParse)
 
 	markdownUnclosedElement = []byte("<red>[Unclosed Element]</red>")
@@ -46,7 +46,7 @@ func initMarkdown(plugin *common.Plugin) error {
 	return nil
 }
 
-func deactivateMarkdown(plugin *common.Plugin) {
+func deactivateMarkdown(plugin *c.Plugin) {
 	plugin.RemoveHook("parse_assign", markdownParse)
 }
 
@@ -69,7 +69,7 @@ func _markdownParse(msg string, n int) string {
 	var outbytes []byte
 	var lastElement int
 	var breaking = false
-	common.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
+	c.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
 
 	for index := 0; index < len(msg); index++ {
 		var simpleMatch = func(char byte, o []byte, c []byte) {

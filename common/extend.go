@@ -83,6 +83,8 @@ var hookTable = &HookTable{
 		"simple_forum_check_pre_perms": nil,
 		"forum_check_pre_perms":        nil,
 
+		"route_topic_list_start": nil,
+
 		"action_end_create_topic":             nil,
 		"action_end_edit_topic":nil,
 		"action_end_delete_topic":nil,
