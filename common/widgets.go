@@ -349,7 +349,7 @@ func (schedule *WidgetScheduler) Tick() error {
 		if widget.TickFunc == nil {
 			continue
 		}
-		err := widget.TickFunc(widget.Copy())
+		err := widget.TickFunc(widget)
 		if err != nil {
 			return err
 		}

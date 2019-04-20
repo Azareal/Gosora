@@ -111,6 +111,7 @@ var hookTable = &HookTable{
 		"router_pre_route":     nil,
 
 		"tasks_tick_topic_list": nil,
+		"tasks_tick_widget_wol": nil,
 	},
 	map[string][]func(string) string{
 		"preparse_preassign": nil,

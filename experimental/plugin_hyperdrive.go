@@ -2,7 +2,7 @@
 package main
 
 import (
-	"log"
+	//"log"
 	"bytes"
 	"sync/atomic"
 	"net/http"
@@ -21,12 +21,14 @@ func init() {
 func initHdrive(plugin *c.Plugin) error {
 	hyperspace = newHyperspace()
 	plugin.AddHook("tasks_tick_topic_list",tickHdrive)
+	plugin.AddHook("tasks_tick_widget_wol",tickHdriveWol)
 	plugin.AddHook("route_topic_list_start",jumpHdrive)
 	return nil
 }
 
 func deactivateHdrive(plugin *c.Plugin) {
 	plugin.RemoveHook("tasks_tick_topic_list",tickHdrive)
+	plugin.RemoveHook("tasks_tick_widget_wol",tickHdriveWol)
 	plugin.RemoveHook("route_topic_list_start",jumpHdrive)
 	hyperspace = nil
 }
@@ -41,9 +43,14 @@ func newHyperspace() *Hyperspace {
 	return pageCache
 }
 
+func tickHdriveWol(args ...interface{}) (skip bool, rerr c.RouteError) {
+	c.DebugLog("docking at wol")
+	return tickHdrive(args)
+}
+
 // TODO: Find a better way of doing this
 func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
-	log.Print("Refueling...")
+	c.DebugLog("Refueling...")
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("get", "/topics/", bytes.NewReader(nil))
 	user := c.GuestUser
@@ -73,25 +80,26 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 func jumpHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	tList := hyperspace.topicList.Load().([]byte)
 	if len(tList) == 0 {
-		log.Print("no topiclist in hyperspace")
+		c.DebugLog("no topiclist in hyperspace")
 		return false, nil
 	}
 
 	// Avoid intercepting user requests as we only have guests in cache right now
 	user := args[2].(*c.User)
 	if user.ID != 0 {
-		log.Print("not guest")
+		c.DebugLog("not guest")
 		return false, nil
 	}
 	
 	// Avoid intercepting search requests and filters as we don't have those in cache
 	r := args[1].(*http.Request)
-	//log.Print("r.URL.Path:",r.URL.Path)
-	log.Print("r.URL.RawQuery:",r.URL.RawQuery)
+	//c.DebugLog("r.URL.Path:",r.URL.Path)
+	//c.DebugLog("r.URL.RawQuery:",r.URL.RawQuery)
 	if r.URL.RawQuery != "" {
 		return false, nil
 	}
-	log.Print("Successful jump")
+	//c.DebugLog
+	c.DebugLog("Successful jump")
 
 	w := args[0].(http.ResponseWriter)
 	header := args[3].(*c.Header)
