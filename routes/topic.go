@@ -557,7 +557,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	counters.PostCounter.Bump()
 	counters.TopicCounter.Bump()
 	// TODO: Pass more data to this hook?
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_topic", tid)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_topic", tid, &user)
 	if skip || rerr != nil {
 		return rerr
 	}

@@ -192,7 +192,7 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user c.User, header
 		return c.LocalError("You're already logged in.", w, r, user)
 	}
 	header.Title = phrases.GetTitlePhrase("register")
-	header.LooseCSP = true
+	header.AddScriptAsync("register.js")
 	return renderTemplate("register", w, r, header, c.Page{header, tList, nil})
 }
 

@@ -8,6 +8,7 @@ var hooks = { // Shorten this list by binding the hooks just in time?
 	"pre_iffe": [],
 	"pre_init": [],
 	"start_init": [],
+	"almost_end_init": [],
 	"end_init": [],
 	"after_phrases":[],
 	"after_add_alert":[],
@@ -33,6 +34,7 @@ function runHook(name, ...args) {
 }
 
 function addHook(name, callback) {
+	if(hooks[name]===undefined) hooks[name] = [];
 	hooks[name].push(callback);
 }
 

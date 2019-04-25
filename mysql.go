@@ -11,7 +11,7 @@ package main
 import (
 	"log"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
@@ -26,11 +26,11 @@ func init() {
 
 func initMySQL() (err error) {
 	err = qgen.Builder.Init("mysql", map[string]string{
-		"host":      common.DbConfig.Host,
-		"port":      common.DbConfig.Port,
-		"name":      common.DbConfig.Dbname,
-		"username":  common.DbConfig.Username,
-		"password":  common.DbConfig.Password,
+		"host":      c.DbConfig.Host,
+		"port":      c.DbConfig.Port,
+		"name":      c.DbConfig.Dbname,
+		"username":  c.DbConfig.Username,
+		"password":  c.DbConfig.Password,
 		"collation": dbCollation,
 	})
 	if err != nil {
@@ -41,6 +41,7 @@ func initMySQL() (err error) {
 	db = qgen.Builder.GetConn()
 	db.SetMaxOpenConns(64)
 	db.SetMaxIdleConns(32)
+	//db.SetConnMaxLifetime(time.Second * 60 * 5) // Just in case we accumulate some bad connections due to the MySQL driver being stupid
 
 	// Only hold connections open for five seconds to avoid accumulating a large number of stale connections
 	//db.SetConnMaxLifetime(5 * time.Second)
