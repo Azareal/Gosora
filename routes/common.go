@@ -120,6 +120,9 @@ func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r 
 		header.OGDesc = header.MetaDesc
 	}
 	header.AddScript("global.js")
+	if header.CurrentUser.Loggedin {
+		header.AddScriptAsync("member.js")
+	}
 
 	FootHeaders(w, header)
 	if header.CurrentUser.IsAdmin {
