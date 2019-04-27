@@ -10,6 +10,12 @@
 .submenu a {
 	margin-left: 8px;
 }
+/*.colstack_right .colstack_head .rowitem {
+	display: flex;
+}*/
+.colstack_right .colstack_head h1 + h2.hguide {
+	margin-left: auto;
+}
 
 .edit_button:before {
 	content: "{{lang "panel_edit_button_text" . }}";

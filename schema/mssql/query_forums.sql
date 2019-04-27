@@ -3,6 +3,7 @@ CREATE TABLE [forums] (
 	[name] nvarchar (100) not null,
 	[desc] nvarchar (200) not null,
 	[active] bit DEFAULT 1 not null,
+	[order] int DEFAULT 0 not null,
 	[topicCount] int DEFAULT 0 not null,
 	[preset] nvarchar (100) DEFAULT '' not null,
 	[parentID] int DEFAULT 0 not null,

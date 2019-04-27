@@ -4,20 +4,24 @@
 	<main class="colstack_right">
 {{template "panel_before_head.html" . }}
 		<div class="colstack_item colstack_head">
-			<div class="rowitem"><h1>{{lang "panel_themes_menus_items_head"}}</h1></div>
+			<div class="rowitem">
+				<h1>{{lang "panel_themes_menus_items_head"}}</h1>
+				<h2 class="hguide">{{lang "panel_hints_reorder"}}</h2>
+			</div>
 		</div>
 		<div id="panel_menu_item_holder" class="colstack_item rowlist">
 			{{range .ItemList}}
 			<div class="panel_menu_item rowitem panel_compactrow editable_parent" data-miid="{{.ID}}">
+				<span class="grip"></span>
 				<a href="/panel/themes/menus/item/edit/{{.ID}}" class="editable_block panel_upshift">{{.Name}}</a>
 				<span class="panel_buttons">
-				<a href="/panel/themes/menus/item/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="{{lang "panel_themes_menus_item_edit_button_aria"}}"></a>
-				<a href="/panel/themes/menus/item/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button delete_button" aria-label="{{lang "panel_themes_menus_item_delete_button_aria"}}"></a>
-			</span>
+					<a href="/panel/themes/menus/item/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="{{lang "panel_themes_menus_items_edit_button_aria"}}"></a>
+					<a href="/panel/themes/menus/item/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button delete_button" aria-label="{{lang "panel_themes_menus_items_delete_button_aria"}}"></a>
+				</span>
 			</div>{{end}}
 		</div>
 		<div class="colstack_item rowlist panel_submitrow">
-			<div class="rowitem"><button id="panel_menu_items_order_button" class="formbutton">{{lang "panel_themes_menus_edit_update_button"}}</button></div>
+			<div class="rowitem"><button id="panel_menu_items_order_button" class="formbutton">{{lang "panel_themes_menus_items_update_button"}}</button></div>
 		</div>
 		<div class="colstack_item colstack_head">
 			<div class="rowitem"><h1>{{lang "panel_themes_menus_create_head"}}</h1></div>
@@ -80,10 +84,8 @@
 // TODO: Move this into a JS file to reduce the number of possible problems
 var menuItems = {};
 let items = document.getElementsByClassName("panel_menu_item");
-for(let i = 0; item = items[i];i++) {
-	let miid = item.getAttribute("data-miid");
-	menuItems[i] = miid;
-}
+for(let i = 0; item = items[i]; i++) menuItems[i] = item.getAttribute("data-miid");
+
 Sortable.create(document.getElementById("panel_menu_item_holder"), {
 	sort: true,
 	onEnd: (evt) => {
@@ -92,11 +94,12 @@ Sortable.create(document.getElementById("panel_menu_item_holder"), {
 		let oldMiid = menuItems[evt.newIndex];
 		menuItems[evt.oldIndex] = oldMiid;
 		let newMiid = evt.item.getAttribute("data-miid");
-		console.log("newMiid: ", newMiid)
+		console.log("newMiid: ", newMiid);
 		menuItems[evt.newIndex] = newMiid;
-		console.log("post menuItems: ", menuItems)
+		console.log("post menuItems: ", menuItems);
 	}
 });
+
 document.getElementById("panel_menu_items_order_button").addEventListener("click", () => {
 	let req = new XMLHttpRequest();
 	if(!req) {
@@ -105,18 +108,13 @@ document.getElementById("panel_menu_items_order_button").addEventListener("click
 	}
 	req.onreadystatechange = () => {
 		try {
-			if(req.readyState!==XMLHttpRequest.DONE) {
-				return;
-			}
+			if(req.readyState!==XMLHttpRequest.DONE) return;
 			// TODO: Signal the error with a notice
 			if(req.status===200) {
 				let resp = JSON.parse(req.responseText);
 				console.log("resp: ", resp);
-				if(resp.success==1) {
-					// TODO: Have a successfully updated notice
-					console.log("success");
-					return;
-				}
+				// TODO: Have a successfully updated notice
+				if(resp.success==1) return;
 			}
 		} catch(ex) {
 			console.error("exception: ", ex)
@@ -127,12 +125,8 @@ document.getElementById("panel_menu_items_order_button").addEventListener("click
 	req.open("POST","/panel/themes/menus/item/order/edit/submit/{{.MenuID}}?session=" + encodeURIComponent(me.User.Session));
 	req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 	let items = "";
-	for(let i = 0; item = menuItems[i];i++) {
-		items += item+",";
-	}
-	if(items.length > 0) {
-		items = items.slice(0,-1);
-	}
+	for(let i = 0; item = menuItems[i];i++) items += item+",";
+	if(items.length > 0) items = items.slice(0,-1);
 	req.send("js=1&amp;items={"+items+"}");
 });
 </script>

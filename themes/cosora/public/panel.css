@@ -62,6 +62,12 @@
 	/*margin-top: -4px;*/
 	margin-bottom: 14px;
 }
+.colstack_right .colstack_head .rowitem {
+	display: flex;
+}
+.colstack_right .colstack_head h1 + h2.hguide {
+	margin-left: auto;
+}
 .footer {
 	margin-top: 0px;
 }

@@ -30,6 +30,17 @@ function noxMenuBind() {
 }
 
 (() => {
+	function moveAlerts() {
+		// Move the alerts above the first header
+		let colSel = $(".colstack_right .colstack_head:first");
+		let colSelAlt = $(".colstack_right .colstack_item:first");
+		let colSelAltAlt = $(".colstack_right .coldyn_block:first");
+		if(colSel.length > 0) $('.alert').insertBefore(colSel);
+		else if (colSelAlt.length > 0) $('.alert').insertBefore(colSelAlt);
+		else if (colSelAltAlt.length > 0) $('.alert').insertBefore(colSelAltAlt);
+		else $('.alert').insertAfter(".rowhead:first");
+	}
+	
 	addInitHook("after_update_alert_list", (alertCount) => {
 		console.log("misc.js");
 		console.log("alertCount:",alertCount);
@@ -57,15 +68,7 @@ function noxMenuBind() {
 
 		$(window).resize(() => noxMenuBind());
 		noxMenuBind();
-
-		// Move the alerts above the first header
-		let colSel = $(".colstack_right .colstack_head:first");
-		let colSelAlt = $(".colstack_right .colstack_item:first");
-		let colSelAltAlt = $(".colstack_right .coldyn_block:first");
-		if(colSel.length > 0) $('.alert').insertBefore(colSel);
-		else if (colSelAlt.length > 0) $('.alert').insertBefore(colSelAlt);
-		else if (colSelAltAlt.length > 0) $('.alert').insertBefore(colSelAltAlt);
-		else $('.alert').insertAfter(".rowhead:first");
+		moveAlerts();
 
 		$(".menu_hamburger").click(function() {
 			event.stopPropagation();
@@ -78,4 +81,6 @@ function noxMenuBind() {
 
 		$(document).click(() => $(".more_menu").removeClass("more_menu_selected"));
 	});
+
+	addInitHook("after_notice", moveAlerts);
 })();

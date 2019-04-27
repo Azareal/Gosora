@@ -35,6 +35,7 @@ func deactivateHdrive(plugin *c.Plugin) {
 
 type Hyperspace struct {
 	topicList atomic.Value
+	gzipTopicList atomic.Value
 }
 
 func newHyperspace() *Hyperspace {
@@ -48,10 +49,7 @@ func tickHdriveWol(args ...interface{}) (skip bool, rerr c.RouteError) {
 	return tickHdrive(args)
 }
 
-// TODO: Find a better way of doing this
-func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
-	c.DebugLog("Refueling...")
-	w := httptest.NewRecorder()
+func dummyReqHdrive() http.ResponseWriter {
 	req := httptest.NewRequest("get", "/topics/", bytes.NewReader(nil))
 	user := c.GuestUser
 
@@ -68,17 +66,48 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	}
 	if w.Code != 200 {
 		c.LogWarning(err)
+		return false, nil
 	}
+	return w
+}
 
+// TODO: Find a better way of doing this
+func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
+	c.DebugLog("Refueling...")
+
+	w := httptest.NewRecorder()
+	dummyReqHdrive(w)
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(w.Result().Body)
 	hyperspace.topicList.Store(buf.Bytes())
 
+	w = httptest.NewRecorder()
+	w.Header().Set("Content-Encoding", "gzip")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	gz := gzip.NewWriter(w)
+	w = c.GzipResponseWriter{Writer: gz, ResponseWriter: w}
+
+	dummyReqHdrive(w)
+	buf = new(bytes.Buffer)
+	buf.ReadFrom(w.Result().Body)
+	hyperspace.gzipTopicList.Store(buf.Bytes())
+
+	if w.Header().Get("Content-Encoding") == "gzip" {
+		gz.Close()
+	}
+	
 	return false, nil
 }
 
 func jumpHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
-	tList := hyperspace.topicList.Load().([]byte)
+	var tList []byte
+	w := args[0].(http.ResponseWriter)
+	_, ok := w.(c.GzipResponseWriter)
+	if ok {
+		tList = hyperspace.gzipTopicList.Load().([]byte)
+	} else {
+		tList = hyperspace.topicList.Load().([]byte)
+	}
 	if len(tList) == 0 {
 		c.DebugLog("no topiclist in hyperspace")
 		return false, nil
@@ -101,7 +130,6 @@ func jumpHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	//c.DebugLog
 	c.DebugLog("Successful jump")
 
-	w := args[0].(http.ResponseWriter)
 	header := args[3].(*c.Header)
 	routes.FootHeaders(w, header)
 	w.Write(tList)

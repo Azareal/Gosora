@@ -11,6 +11,9 @@
 .colstack_head .rowitem a h1 {
 	margin-right: 0px;
 }
+.rowitem h2.hguide {
+	font-size: 15px;
+}
 
 .rowlist .tag-mini {
 	font-size: 10px;

@@ -74,6 +74,7 @@ type CTemplateSet struct {
 
 	logger  *log.Logger
 	loggerf *os.File
+	lang string
 }
 
 func NewCTemplateSet(in string) *CTemplateSet {
@@ -112,9 +113,11 @@ func NewCTemplateSet(in string) *CTemplateSet {
 			"scope":   true,
 			"dyntmpl": true,
 			"index":   true,
+			"flush":   true,
 		},
 		logger:  log.New(f, "", log.LstdFlags),
 		loggerf: f,
+		lang:in,
 	}
 }
 
@@ -445,6 +448,16 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 		return errors.New("invalid page struct value")
 	}
 `
+	if c.lang == "normal" {
+		fout += `var iw http.ResponseWriter
+	gzw, ok := w.(common.GzipResponseWriter)
+	if ok {
+		iw = gzw.ResponseWriter
+	}
+	_ = iw
+`
+	}
+
 	if len(c.langIndexToName) > 0 {
 		fout += "var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
 	}
@@ -587,16 +600,7 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 		c.detail("Expression:", expr)
 		// Simple member / guest optimisation for now
 		// TODO: Expand upon this
-		var userExprs = []string{
-			con.RootHolder + ".CurrentUser.Loggedin",
-			con.RootHolder + ".CurrentUser.IsSuperMod",
-			con.RootHolder + ".CurrentUser.IsAdmin",
-		}
-		var negUserExprs = []string{
-			"!" + con.RootHolder + ".CurrentUser.Loggedin",
-			"!" + con.RootHolder + ".CurrentUser.IsSuperMod",
-			"!" + con.RootHolder + ".CurrentUser.IsAdmin",
-		}
+		userExprs, negUserExprs := buildUserExprs(con.RootHolder)
 		if c.guestOnly {
 			c.detail("optimising away member branch")
 			if inSlice(userExprs, expr) {
@@ -1170,6 +1174,16 @@ ArgLoop:
 			out += "if err != nil {\nreturn err\n}\n}\n"
 			literal = true
 			break ArgLoop
+		case "flush":
+			if c.lang == "js" {
+				continue
+			}
+			out = "if fl, ok := iw.(http.Flusher); ok {\n"
+			out += "fl.Flush()\n"
+			out += "}\n"
+			literal = true
+			c.importMap["net/http"] = "net/http"
+			break ArgLoop
 		default:
 			c.detail("Variable!")
 			if len(node.Args) > (pos + 1) {
@@ -1391,6 +1405,20 @@ func (c *CTemplateSet) retCall(name string, params ...interface{}) {
 	c.detail("returned from " + name + " => (" + pstr + ")")
 }
 
+func buildUserExprs(holder string) ([]string,[]string) {
+	var userExprs = []string{
+		holder + ".CurrentUser.Loggedin",
+		holder + ".CurrentUser.IsSuperMod",
+		holder + ".CurrentUser.IsAdmin",
+	}
+	var negUserExprs = []string{
+		"!" + holder + ".CurrentUser.Loggedin",
+		"!" + holder + ".CurrentUser.IsSuperMod",
+		"!" + holder + ".CurrentUser.IsAdmin",
+	}
+	return userExprs, negUserExprs
+}
+
 func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.Value, assLines string, onEnd func(string) string) {
 	c.dumpCall("compileVarSub", con, varname, val, assLines, onEnd)
 	defer c.retCall("compileVarSub")
@@ -1438,16 +1466,7 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		// TODO: Take c.memberOnly into account
 		// TODO: Make this a template fragment so more optimisations can be applied to this
 		// TODO: De-duplicate this logic
-		var userExprs = []string{
-			con.RootHolder + ".CurrentUser.Loggedin",
-			con.RootHolder + ".CurrentUser.IsSuperMod",
-			con.RootHolder + ".CurrentUser.IsAdmin",
-		}
-		var negUserExprs = []string{
-			"!" + con.RootHolder + ".CurrentUser.Loggedin",
-			"!" + con.RootHolder + ".CurrentUser.IsSuperMod",
-			"!" + con.RootHolder + ".CurrentUser.IsAdmin",
-		}
+		userExprs, negUserExprs := buildUserExprs(con.RootHolder)
 		if c.guestOnly {
 			c.detail("optimising away member branch")
 			if inSlice(userExprs, varname) {

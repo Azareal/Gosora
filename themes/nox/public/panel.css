@@ -79,6 +79,10 @@
 .colstack_right .colstack_head h1 {
 	font-size: 21px;
 }
+.colstack_right .colstack_head h1 + h2.hguide {
+	margin-left: auto;
+	font-size: 17px;
+}
 .colstack_right .colstack_item.the_form, .colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem {
 	background-color: #444444;
 }
@@ -290,6 +294,35 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 }
 #forum_quick_perms .edit_fields {
 	margin-left: 4px;
+}
+
+span.grip {
+	content: '....';
+	width: 20px;
+	display: inline-block;
+	overflow: hidden;
+	line-height: 5px;
+	padding: 3px 4px;
+	cursor: move;
+	vertical-align: middle;
+	margin-top: -16px;
+	margin-right: 12px;
+	font-size: 12px;
+	font-family: sans-serif;
+	letter-spacing: -3px;
+	color: #888888;
+	text-shadow: 1px 0 1px black;
+	margin-left: -12px;
+	height: 100%;
+	font-size: 40px;
+	margin-bottom: -4px;
+	line-height: 8px;
+}
+span.grip::after {
+	content: '... ... ... ... ... ... ...';
+}
+.forum_no_desc span.grip, .panel_menu_item span.grip {
+	height: 40px;
 }
 
 .panel_plugin_meta {

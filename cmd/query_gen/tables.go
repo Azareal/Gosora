@@ -182,6 +182,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"name", "varchar", 100, false, false, ""},
 			tblColumn{"desc", "varchar", 200, false, false, ""},
 			tblColumn{"active", "boolean", 0, false, false, "1"},
+			tblColumn{"order", "int", 0, false, false, "0"},
 			tblColumn{"topicCount", "int", 0, false, false, "0"},
 			tblColumn{"preset", "varchar", 100, false, false, "''"},
 			tblColumn{"parentID", "int", 0, false, false, "0"},
@@ -427,6 +428,7 @@ func createTables(adapter qgen.Adapter) error {
 		[]tblColumn{
 			tblColumn{"uname", "varchar", 180, false, false, ""},
 			tblColumn{"default", "boolean", 0, false, false, "0"},
+			//tblColumn{"profileUserVars", "text", 0, false, false, "''"},
 		},
 		[]tblKey{
 			tblKey{"uname", "unique"},

@@ -151,6 +151,7 @@ func panelRoutes() *RouteGroup {
 		Action("panel.ForumsCreateSubmit", "/panel/forums/create/"),
 		Action("panel.ForumsDelete", "/panel/forums/delete/", "extraData"),
 		Action("panel.ForumsDeleteSubmit", "/panel/forums/delete/submit/", "extraData"),
+		Action("panel.ForumsOrderSubmit", "/panel/forums/order/edit/submit/"),
 		View("panel.ForumsEdit", "/panel/forums/edit/", "extraData"),
 		Action("panel.ForumsEditSubmit", "/panel/forums/edit/submit/", "extraData"),
 		Action("panel.ForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "extraData"),

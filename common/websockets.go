@@ -33,8 +33,8 @@ var errWsNouser = errors.New("This user isn't connected via WebSockets")
 
 func init() {
 	adminStatsWatchers = make(map[*websocket.Conn]*WSUser)
-	topicListWatchers = make(map[*WSUser]bool)
-	topicWatchers = make(map[int]map[*WSUser]bool)
+	topicListWatchers = make(map[*WSUser]struct{})
+	topicWatchers = make(map[int]map[*WSUser]struct{})
 }
 
 //easyjson:json
@@ -130,7 +130,7 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 	// TODO: Optimise this to reduce the amount of contention
 	case page == "/topics/":
 		topicListMutex.Lock()
-		topicListWatchers[wsUser] = true
+		topicListWatchers[wsUser] = struct{}{}
 		topicListMutex.Unlock()
 		// TODO: Evict from page when permissions change? Or check user perms every-time before sending data?
 	case strings.HasPrefix(page, "/topic/"):
@@ -169,9 +169,9 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		topicMutex.Lock()
 		_, ok := topicWatchers[topic.ID]
 		if !ok {
-			topicWatchers[topic.ID] = make(map[*WSUser]bool)
+			topicWatchers[topic.ID] = make(map[*WSUser]struct{})
 		}
-		topicWatchers[topic.ID][wsUser] = true
+		topicWatchers[topic.ID][wsUser] = struct{}{}
 		topicMutex.Unlock()
 	case page == "/panel/":
 		if !wsUser.User.IsSuperMod {
@@ -243,9 +243,9 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 
 // TODO: Abstract this
 // TODO: Use odd-even sharding
-var topicListWatchers map[*WSUser]bool
+var topicListWatchers map[*WSUser]struct{}
 var topicListMutex sync.RWMutex
-var topicWatchers map[int]map[*WSUser]bool // map[tid]watchers
+var topicWatchers map[int]map[*WSUser]struct{} // map[tid]watchers
 var topicMutex sync.RWMutex
 var adminStatsWatchers map[*websocket.Conn]*WSUser
 var adminStatsMutex sync.RWMutex

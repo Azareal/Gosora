@@ -481,6 +481,8 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	tmpls.AddStd("topic_c_attach_item", "common.TopicCAttachItem", TopicCAttachItem{ID: 1, ImgSrc: "", Path: "", FullPath: ""})
 
+	tmpls.AddStd("notice", "string", "nonono")
+
 	var dirPrefix = "./tmpl_client/"
 	var writeTemplate = func(name string, content string) {
 		log.Print("Writing template '" + name + "'")
@@ -709,6 +711,10 @@ func initDefaultTmplFuncMap() {
 			return err
 		}
 		return ""
+	}
+
+	fmap["flush"] = func() interface{} {
+		return nil
 	}
 
 	DefaultTemplateFuncMap = fmap

@@ -1,7 +1,7 @@
 package common
 
-//import "fmt"
 import (
+	//"log"
 	"database/sql"
 	"errors"
 	"strconv"
@@ -28,6 +28,7 @@ type Forum struct {
 	Name       string
 	Desc       string
 	Active     bool
+	Order int
 	Preset     string
 	ParentID   int
 	ParentType string
@@ -135,8 +136,22 @@ func (sf SortForum) Len() int {
 func (sf SortForum) Swap(i, j int) {
 	sf[i], sf[j] = sf[j], sf[i]
 }
+/*func (sf SortForum) Less(i,j int) bool {
+	l := sf.less(i,j)
+	if l {
+		log.Printf("%s is less than %s. order: %d. id: %d.",sf[i].Name, sf[j].Name, sf[i].Order, sf[i].ID)
+	} else {
+		log.Printf("%s is not less than %s. order: %d. id: %d.",sf[i].Name, sf[j].Name, sf[i].Order, sf[i].ID)
+	}
+	return l
+}*/
 func (sf SortForum) Less(i, j int) bool {
-	return sf[i].ID < sf[j].ID
+	if sf[i].Order < sf[j].Order {
+		return true
+	} else if sf[i].Order == sf[j].Order {
+		return sf[i].ID < sf[j].ID
+	}
+	return false
 }
 
 // ! Don't use this outside of tests and possibly template_init.go

@@ -39,6 +39,7 @@ type LevelPhrases struct {
 type LanguagePack struct {
 	Name    string
 	IsoCode string
+	//LastUpdated string
 
 	// Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
 	Levels              LevelPhrases
@@ -69,6 +70,9 @@ func InitPhrases(lang string) error {
 	err := filepath.Walk("./langs", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
 			return nil
+		}
+		if err != nil {
+			return err
 		}
 
 		data, err := ioutil.ReadFile(path)

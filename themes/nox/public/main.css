@@ -358,6 +358,11 @@ h2 {
 	margin-bottom: 8px;
 	margin-left: 8px;
 }
+.rowhead h2, .colstack_head h2 {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+}
 
 .topic_create_form {
 	display: flex;

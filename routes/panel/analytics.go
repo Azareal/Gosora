@@ -22,7 +22,8 @@ type AnalyticsTimeRange struct {
 	Range      string
 }
 
-func analyticsTimeRange(rawTimeRange string) (timeRange AnalyticsTimeRange, err error) {
+func analyticsTimeRange(rawTimeRange string) (*AnalyticsTimeRange, error) {
+	timeRange := &AnalyticsTimeRange{}
 	timeRange.Quantity = 6
 	timeRange.Unit = "hour"
 	timeRange.Slices = 12
@@ -78,7 +79,7 @@ func analyticsTimeRange(rawTimeRange string) (timeRange AnalyticsTimeRange, err 
 	return timeRange, nil
 }
 
-func analyticsTimeRangeToLabelList(timeRange AnalyticsTimeRange) (revLabelList []int64, labelList []int64, viewMap map[int64]int64) {
+func analyticsTimeRangeToLabelList(timeRange *AnalyticsTimeRange) (revLabelList []int64, labelList []int64, viewMap map[int64]int64) {
 	viewMap = make(map[int64]int64)
 	var currentTime = time.Now().Unix()
 	for i := 1; i <= timeRange.Slices; i++ {

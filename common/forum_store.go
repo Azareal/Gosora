@@ -42,6 +42,7 @@ type ForumStore interface {
 	//GetChildren(parentID int, parentType string) ([]*Forum,error)
 	//GetFirstChild(parentID int, parentType string) (*Forum,error)
 	Create(forumName string, forumDesc string, active bool, preset string) (int, error)
+	UpdateOrder(updateMap map[int]int) error
 
 	GlobalCount() int
 }
@@ -66,6 +67,7 @@ type MemoryForumStore struct {
 	updateCache  *sql.Stmt
 	addTopics    *sql.Stmt
 	removeTopics *sql.Stmt
+	updateOrder *sql.Stmt
 }
 
 // NewMemoryForumStore gives you a new instance of MemoryForumStore
@@ -73,17 +75,19 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 	acc := qgen.NewAcc()
 	// TODO: Do a proper delete
 	return &MemoryForumStore{
-		get:          acc.Select("forums").Columns("name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
-		getAll:       acc.Select("forums").Columns("fid, name, desc, active, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("fid ASC").Prepare(),
+		get:          acc.Select("forums").Columns("name, desc, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
+		getAll:       acc.Select("forums").Columns("fid, name, desc, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
 		delete:       acc.Update("forums").Set("name= '', active = 0").Where("fid = ?").Prepare(),
 		create:       acc.Insert("forums").Columns("name, desc, active, preset").Fields("?,?,?,?").Prepare(),
 		count:        acc.Count("forums").Where("name != ''").Prepare(),
 		updateCache:  acc.Update("forums").Set("lastTopicID = ?, lastReplyerID = ?").Where("fid = ?").Prepare(),
 		addTopics:    acc.Update("forums").Set("topicCount = topicCount + ?").Where("fid = ?").Prepare(),
 		removeTopics: acc.Update("forums").Set("topicCount = topicCount - ?").Where("fid = ?").Prepare(),
+		updateOrder: acc.Update("forums").Set("order = ?").Where("fid = ?").Prepare(),
 	}, acc.FirstError()
 }
 
+// TODO: Rename to ReloadAll?
 // TODO: Add support for subforums
 func (mfs *MemoryForumStore) LoadForums() error {
 	var forumView []*Forum
@@ -103,7 +107,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 	var i = 0
 	for ; rows.Next(); i++ {
 		forum := &Forum{ID: 0, Active: true, Preset: "all"}
-		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 		if err != nil {
 			return err
 		}
@@ -161,7 +165,7 @@ func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 	fint, ok := mfs.forums.Load(id)
 	if !ok || fint.(*Forum).Name == "" {
 		var forum = &Forum{ID: id}
-		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 		if err != nil {
 			return forum, err
 		}
@@ -178,7 +182,7 @@ func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 
 func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 	var forum = &Forum{ID: id}
-	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +210,7 @@ func (mfs *MemoryForumStore) BulkGetCopy(ids []int) (forums []Forum, err error) 
 
 func (mfs *MemoryForumStore) Reload(id int) error {
 	var forum = &Forum{ID: id}
-	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 	if err != nil {
 		return err
 	}
@@ -346,6 +350,17 @@ func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active b
 	PermmapToQuery(PresetToPermmap(preset), fid)
 	forumCreateMutex.Unlock()
 	return fid, nil
+}
+
+// TODO: Make this atomic, maybe with a transaction?
+func (s *MemoryForumStore) UpdateOrder(updateMap map[int]int) error {
+	for fid, order := range updateMap {
+		_, err := s.updateOrder.Exec(order, fid)
+		if err != nil {
+			return err
+		}
+	}
+	return s.LoadForums()
 }
 
 // ! Might be slightly inaccurate, if the sync.Map is constantly shifting and churning, but it'll stabilise eventually. Also, slow. Don't use this on every request x.x

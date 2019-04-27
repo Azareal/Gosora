@@ -19,6 +19,8 @@ func Forums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
+	basePage.Header.AddScript("Sortable-1.4.0/Sortable.min.js")
+	basePage.Header.AddScriptAsync("panel_forums.js")
 
 	// TODO: Paginate this?
 	var forumList []interface{}
@@ -128,6 +130,31 @@ func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfi
 
 	http.Redirect(w, r, "/panel/forums/?deleted=1", http.StatusSeeOther)
 	return nil
+}
+
+func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	isJs := (r.PostFormValue("js") == "1")
+	if !user.Perms.ManageForums {
+		return c.NoPermissionsJSQ(w, r, user, isJs)
+	}
+	sitems := strings.TrimSuffix(strings.TrimPrefix(r.PostFormValue("items"), "{"), "}")
+	//fmt.Printf("sitems: %+v\n", sitems)
+
+	var updateMap = make(map[int]int)
+	for index, sfid := range strings.Split(sitems, ",") {
+		fid, err := strconv.Atoi(sfid)
+		if err != nil {
+			return c.LocalErrorJSQ("Invalid integer in forum list", w, r, user, isJs)
+		}
+		updateMap[fid] = index
+	}
+	c.Forums.UpdateOrder(updateMap)
+
+	return successRedirect("/panel/forums/", w, r, isJs)
 }
 
 func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
@@ -333,7 +360,7 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User,
 	addNameLangToggle("MoveTopic", forumPerms.MoveTopic)
 
 	if r.FormValue("updated") == "1" {
-		basePage.AddNotice("panel_forums_perms_updated")
+		basePage.AddNotice("panel_forum_perms_updated")
 	}
 
 	pi := c.PanelEditForumGroupPage{basePage, forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}

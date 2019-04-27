@@ -14,6 +14,14 @@ var wsBackoff = 0;
 // Topic move
 var forumToMoveTo = 0;
 
+function pushNotice(msg) {
+	let aBox = document.getElementsByClassName("alertbox")[0];
+	let div = document.createElement('div');
+	div.innerHTML = Template_notice(msg).trim();
+	aBox.appendChild(div);
+	runInitHook("after_notice");
+}
+
 // TODO: Write a friendlier error handler which uses a .notice or something, we could have a specialised one for alerts
 function ajaxError(xhr,status,errstr) {
 	console.log("The AJAX request failed");

@@ -158,6 +158,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 		header.AddPreScriptAsync("template_" + name + tname + ".js")
 	}
 	addPreScript("alert")
+	addPreScript("notice")
 
 	return header, stats, nil
 }
@@ -267,6 +268,7 @@ func PrepResources(user *User, header *Header, theme *Theme) {
 	addPreScript("topics_topic")
 	addPreScript("paginator")
 	addPreScript("alert")
+	addPreScript("notice")
 	if user.Loggedin {
 		addPreScript("topic_c_edit_post")
 		addPreScript("topic_c_attach_item")

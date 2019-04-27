@@ -7,7 +7,7 @@
 		{{range .Header.PreScriptsAsync}}
 		<script async type="text/javascript" src="/static/{{.}}"></script>{{end}}
 		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}" />
-		<script type="text/javascript" src="/static/init.js?i=3"></script>
+		<script type="text/javascript" src="/static/init.js?i=4"></script>
 		{{range .Header.ScriptsAsync}}
 		<script async type="text/javascript" src="/static/{{.}}"></script>{{end}}
 		<script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
@@ -25,7 +25,7 @@
 		{{if .GoogSiteVerify}}<meta name="google-site-verification" content="{{.GoogSiteVerify}}" />{{end}}
 	</head>
 	<body>
-		{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}
+		{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}{{flush}}
 		<div id="container" class="container">
 		{{/**<!--<div class="navrow">-->**/}}
 			<div class="left_of_nav">{{dock "leftOfNav" .Header }}</div>

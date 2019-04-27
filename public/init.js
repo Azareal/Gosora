@@ -28,9 +28,9 @@ function runHook(name, ...args) {
 	console.log("Running hook '"+name+"'");
 
 	let hook = hooks[name];
-	for (const index in hook) {
-		hook[index](...args);
-	}
+	let ret;
+	for (const index in hook) ret = hook[index](...args);
+	return ret;
 }
 
 function addHook(name, callback) {
@@ -40,15 +40,14 @@ function addHook(name, callback) {
 
 // InitHooks are slightly special, as if they are run, then any adds after the initial run will run immediately, this is to deal with the async nature of script loads
 function runInitHook(name, ...args) {
-	runHook(name,...args);
+	let ret = runHook(name,...args);
 	ranInitHooks[name] = true;
+	return ret;
 }
 
 function addInitHook(name, callback) {
 	addHook(name, callback);
-	if(name in ranInitHooks) {
-		callback();
-	}
+	if(name in ranInitHooks) callback();
 }
 
 // Temporary hack for templates
@@ -175,14 +174,14 @@ function RelativeTime(date) {
 	return date;
 }
 
-function initPhrases(loggedIn) {
+function initPhrases(loggedIn, panel = false) {
 	console.log("in initPhrases")
 	console.log("tmlInits:",tmplInits)
 	let e = "";
-	if(loggedIn) {
-		e = ",topic"
-	}
-	fetchPhrases("status,topic_list,alerts,paginator,analytics"+e) // TODO: Break this up?
+	if(loggedIn && !panel) e = ",topic_list,topic";
+	else if(panel) e = ",analytics,panel"; // TODO: Request phrases for just one section of the control panel?
+	else e = ",topic_list";
+	fetchPhrases("status,alerts,paginator"+e) // TODO: Break this up?
 }
 
 function fetchPhrases(plist) {
@@ -219,15 +218,18 @@ function fetchPhrases(plist) {
 (() => {
 	runInitHook("pre_iife");
 	let loggedIn = document.head.querySelector("[property='x-loggedin']").content == "true";
+	let panel = window.location.pathname.startsWith("/panel/");
 
-	if(!window.location.pathname.startsWith("/panel/")) {
-		let toLoad = 2;
-		// TODO: Shunt this into loggedIn if there aren't any search and filter widgets?
-		let q = (f) => {
-			toLoad--;
-			if(toLoad===0) initPhrases(loggedIn);
-			if(f) throw("template function not found");
-		};
+	let toLoad = 1;
+	// TODO: Shunt this into loggedIn if there aren't any search and filter widgets?
+	let q = (f) => {
+		toLoad--;
+		if(toLoad===0) initPhrases(loggedIn,panel);
+		if(f) throw("template function not found");
+	};
+
+	if(!panel) {
+		toLoad += 2;
 		if(loggedIn) {
 			toLoad += 2;
 			notifyOnScriptW("template_topic_c_edit_post", () => q(!Template_topic_c_edit_post));
@@ -235,9 +237,8 @@ function fetchPhrases(plist) {
 		}
 		notifyOnScriptW("template_topics_topic", () => q(!Template_topics_topic));
 		notifyOnScriptW("template_paginator", () => q(!Template_paginator));
-	} else {
-		initPhrases(false);
 	}
+	notifyOnScriptW("template_notice", () => q(!Template_notice));
 
 	if(loggedIn) {
 		fetch("/api/me/")

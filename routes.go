@@ -145,6 +145,8 @@ var phraseWhitelist = []string{
 	"alerts",
 	"paginator",
 	"analytics",
+
+	"panel", // We're going to handle this specially below as this is a security boundary
 }
 
 func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -199,13 +201,22 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 			var ok = false
 			for _, item := range phraseWhitelist {
 				if strings.HasPrefix(positive, item) {
-					ok = true
+					// TODO: Break this down into smaller security boundaries based on control panel sections?
+					if strings.HasPrefix(positive,"panel") {
+						if user.IsSuperMod {
+							ok = true
+							w.Header().Set("Cache-Control", "private")
+						}
+					} else {
+						ok = true
+					}
 					break
 				}
 			}
 			if !ok {
 				return c.PreErrorJS("Outside of phrase prefix whitelist", w, r)
 			}
+
 			pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positive)
 			if !ok {
 				return c.PreErrorJS("No such prefix", w, r)
@@ -219,13 +230,22 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		var ok = false
 		for _, item := range phraseWhitelist {
 			if strings.HasPrefix(positives[0], item) {
-				ok = true
+				// TODO: Break this down into smaller security boundaries based on control panel sections?
+				if strings.HasPrefix(positives[0],"panel") {
+					if user.IsSuperMod {
+						ok = true
+						w.Header().Set("Cache-Control", "private")
+					}
+				} else {
+					ok = true
+				}
 				break
 			}
 		}
 		if !ok {
 			return c.PreErrorJS("Outside of phrase prefix whitelist", w, r)
 		}
+
 		pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positives[0])
 		if !ok {
 			return c.PreErrorJS("No such prefix", w, r)
