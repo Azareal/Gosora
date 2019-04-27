@@ -233,7 +233,7 @@ func (list SFileList) JSTmplInit() error {
 		path = tmplName + ".js"
 		DebugLog("js path: ", path)
 		var ext = filepath.Ext("/tmpl_client/" + path)
-		gzipData, err := compressBytesGzip(data)
+		gzipData, err := CompressBytesGzip(data)
 		if err != nil {
 			return err
 		}
@@ -273,7 +273,7 @@ func (list SFileList) Init() error {
 		// Avoid double-compressing images
 		var gzipData []byte
 		if mimetype != "image/jpeg" && mimetype != "image/png" && mimetype != "image/gif" {
-			gzipData, err = compressBytesGzip(data)
+			gzipData, err = CompressBytesGzip(data)
 			if err != nil {
 				return err
 			}
@@ -311,7 +311,7 @@ func (list SFileList) Add(path string, prefix string) error {
 
 	var ext = filepath.Ext(path)
 	path = strings.TrimPrefix(path, prefix)
-	gzipData, err := compressBytesGzip(data)
+	gzipData, err := CompressBytesGzip(data)
 	if err != nil {
 		return err
 	}
@@ -340,7 +340,7 @@ func (list SFileList) Set(name string, data SFile) {
 	list[name] = data
 }
 
-func compressBytesGzip(in []byte) ([]byte, error) {
+func CompressBytesGzip(in []byte) ([]byte, error) {
 	var buff bytes.Buffer
 	gz, err := gzip.NewWriterLevel(&buff, gzip.BestCompression)
 	if err != nil {

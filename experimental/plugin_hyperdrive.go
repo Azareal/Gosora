@@ -49,52 +49,42 @@ func tickHdriveWol(args ...interface{}) (skip bool, rerr c.RouteError) {
 	return tickHdrive(args)
 }
 
-func dummyReqHdrive() http.ResponseWriter {
+// TODO: Find a better way of doing this
+func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
+	c.DebugLog("Refueling...")
+
+	// Avoid accidentally caching already cached content
+	hyperspace.topicList.Store([]byte(""))
+	hyperspace.gzipTopicList.Store([]byte(""))
+
+	w := httptest.NewRecorder()
 	req := httptest.NewRequest("get", "/topics/", bytes.NewReader(nil))
 	user := c.GuestUser
 
-	head, err := c.UserCheck(w, req, &user)
-	if err != nil {
-		c.LogWarning(err)
+	head, rerr := c.UserCheck(w, req, &user)
+	if rerr != nil {
 		return true, rerr
 	}
 			
 	rerr = routes.TopicList(w, req, user, head)
 	if rerr != nil {
-		c.LogWarning(err)
 		return true, rerr
 	}
 	if w.Code != 200 {
-		c.LogWarning(err)
+		c.LogWarning(errors.New("not 200 for topic list in hyperdrive"))
 		return false, nil
 	}
-	return w
-}
 
-// TODO: Find a better way of doing this
-func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
-	c.DebugLog("Refueling...")
-
-	w := httptest.NewRecorder()
-	dummyReqHdrive(w)
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(w.Result().Body)
 	hyperspace.topicList.Store(buf.Bytes())
 
-	w = httptest.NewRecorder()
-	w.Header().Set("Content-Encoding", "gzip")
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	gz := gzip.NewWriter(w)
-	w = c.GzipResponseWriter{Writer: gz, ResponseWriter: w}
-
-	dummyReqHdrive(w)
-	buf = new(bytes.Buffer)
-	buf.ReadFrom(w.Result().Body)
-	hyperspace.gzipTopicList.Store(buf.Bytes())
-
-	if w.Header().Get("Content-Encoding") == "gzip" {
-		gz.Close()
+	gbuf, err := c.CompressBytesGzip(buf.Bytes())
+	if err != nil {
+		c.LogWarning(err)
+		return false, nil
 	}
+	hyperspace.gzipTopicList.Store(gbuf)
 	
 	return false, nil
 }
@@ -127,12 +117,18 @@ func jumpHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	if r.URL.RawQuery != "" {
 		return false, nil
 	}
+	if r.FormValue("js") == "1" {
+		return false, nil
+	}
 	//c.DebugLog
 	c.DebugLog("Successful jump")
 
 	header := args[3].(*c.Header)
 	routes.FootHeaders(w, header)
 	w.Write(tList)
-	
+	if ok {
+		w.Header().Set("X-I","1")
+	}
+
 	return true, nil
 }

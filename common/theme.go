@@ -155,7 +155,7 @@ func (theme *Theme) AddThemeStaticFiles() error {
 		}
 
 		path = strings.TrimPrefix(path, "themes/"+theme.Name+"/public")
-		gzipData, err := compressBytesGzip(data)
+		gzipData, err := CompressBytesGzip(data)
 		if err != nil {
 			return err
 		}

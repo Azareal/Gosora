@@ -992,15 +992,16 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Disable Gzip when SSL is disabled for security reasons?
 	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
-		w.Header().Set("Content-Encoding", "gzip")
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		gz := gzip.NewWriter(w)
+		h := w.Header()
+		h.Set("Content-Encoding", "gzip")
+		h.Set("Content-Type", "text/html; charset=utf-8")
+		gzw := c.GzipResponseWriter{Writer: gzip.NewWriter(w), ResponseWriter: w}
 		defer func() {
-			if w.Header().Get("Content-Encoding") == "gzip" {
-				gz.Close()
+			if h.Get("Content-Encoding") == "gzip" && h.Get("X-I") == "" {
+				gzw.Writer.(*gzip.Writer).Close()
 			}
 		}()
-		w = c.GzipResponseWriter{Writer: gz, ResponseWriter: w}
+		w = gzw
 	}
 
 	skip, ferr = hTbl.VhookSkippable("router_pre_route", w, req, user, prefix, extraData)
