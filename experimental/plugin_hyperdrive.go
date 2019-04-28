@@ -28,6 +28,7 @@ func initHdrive(plugin *c.Plugin) error {
 	plugin.AddHook("tasks_tick_widget_wol",tickHdriveWol)
 	plugin.AddHook("route_topic_list_start",jumpHdriveTopicList)
 	plugin.AddHook("route_forum_list_start",jumpHdriveForumList)
+	tickHdrive()
 	return nil
 }
 
