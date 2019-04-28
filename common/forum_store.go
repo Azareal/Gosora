@@ -143,6 +143,7 @@ func (mfs *MemoryForumStore) rebuildView() {
 	})
 	sort.Sort(SortForum(forumView))
 	mfs.forumView.Store(forumView)
+	TopicListThaw.Thaw()
 }
 
 func (mfs *MemoryForumStore) DirtyGet(id int) *Forum {
@@ -190,7 +191,7 @@ func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 	forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
 	forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
 	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
-	TopicListThaw.Thaw()
+	//TopicListThaw.Thaw()
 
 	return forum, err
 }
@@ -219,7 +220,6 @@ func (mfs *MemoryForumStore) Reload(id int) error {
 	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
 
 	mfs.CacheSet(forum)
-	TopicListThaw.Thaw()
 	return nil
 }
 
@@ -290,7 +290,6 @@ func (mfs *MemoryForumStore) Delete(id int) error {
 	}
 	_, err := mfs.delete.Exec(id)
 	mfs.CacheDelete(id)
-	TopicListThaw.Thaw()
 	return err
 }
 

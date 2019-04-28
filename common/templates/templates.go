@@ -442,20 +442,22 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 		fout += "}\n\n"
 	}
 
+	if c.lang == "normal" {
 	fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_i interface{}, w io.Writer) error {\n"
 	fout += `tmpl_` + fname + `_vars, ok := tmpl_` + fname + `_i.(` + expects + `)
 	if !ok {
 		return errors.New("invalid page struct value")
 	}
 `
-	if c.lang == "normal" {
-		fout += `var iw http.ResponseWriter
+	fout += `var iw http.ResponseWriter
 	gzw, ok := w.(common.GzipResponseWriter)
 	if ok {
 		iw = gzw.ResponseWriter
 	}
 	_ = iw
 `
+	} else {
+		fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_vars interface{}, w io.Writer) error {\n"
 	}
 
 	if len(c.langIndexToName) > 0 {

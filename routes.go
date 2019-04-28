@@ -191,32 +191,50 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		return c.PreErrorJS("You haven't requested any phrases", w, r)
 	}
 
+	var etag string
+	_, ok := w.(c.GzipResponseWriter)
+	if ok {
+		etag = "\""+strconv.FormatInt(c.StartTime.Unix(), 10)+"-g\""
+	} else {
+		etag = "\""+strconv.FormatInt(c.StartTime.Unix(), 10)+"\""
+	}
+	
 	var plist map[string]string
+	var posLoop = func(positive string) c.RouteError {
+		// ! Constrain it to a subset of phrases for now
+		for _, item := range phraseWhitelist {
+			if strings.HasPrefix(positive, item) {
+				// TODO: Break this down into smaller security boundaries based on control panel sections?
+				if strings.HasPrefix(positive,"panel") {
+					w.Header().Set("Cache-Control", "private")
+					ok = user.IsSuperMod
+				} else {
+					ok = true
+					w.Header().Set("ETag", etag)
+					if match := r.Header.Get("If-None-Match"); match != "" {
+						if strings.Contains(match, etag) {
+							w.WriteHeader(http.StatusNotModified)
+							return nil
+						}
+					}
+				}
+				break
+			}
+		}
+		if !ok {
+			return c.PreErrorJS("Outside of phrase prefix whitelist", w, r)
+		}
+		return nil
+	}
+
 	// A little optimisation to avoid copying entries from one map to the other, if we don't have to mutate it
-	// TODO: Reduce the amount of duplication here
 	if len(positives) > 1 {
 		plist = make(map[string]string)
 		for _, positive := range positives {
-			// ! Constrain it to a subset of phrases for now
-			var ok = false
-			for _, item := range phraseWhitelist {
-				if strings.HasPrefix(positive, item) {
-					// TODO: Break this down into smaller security boundaries based on control panel sections?
-					if strings.HasPrefix(positive,"panel") {
-						if user.IsSuperMod {
-							ok = true
-							w.Header().Set("Cache-Control", "private")
-						}
-					} else {
-						ok = true
-					}
-					break
-				}
+			rerr := posLoop(positive)
+			if rerr != nil {
+				return rerr
 			}
-			if !ok {
-				return c.PreErrorJS("Outside of phrase prefix whitelist", w, r)
-			}
-
 			pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positive)
 			if !ok {
 				return c.PreErrorJS("No such prefix", w, r)
@@ -226,26 +244,10 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 			}
 		}
 	} else {
-		// ! Constrain it to a subset of phrases for now
-		var ok = false
-		for _, item := range phraseWhitelist {
-			if strings.HasPrefix(positives[0], item) {
-				// TODO: Break this down into smaller security boundaries based on control panel sections?
-				if strings.HasPrefix(positives[0],"panel") {
-					if user.IsSuperMod {
-						ok = true
-						w.Header().Set("Cache-Control", "private")
-					}
-				} else {
-					ok = true
-				}
-				break
-			}
+		rerr := posLoop(positives[0])
+		if rerr != nil {
+			return rerr
 		}
-		if !ok {
-			return c.PreErrorJS("Outside of phrase prefix whitelist", w, r)
-		}
-
 		pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positives[0])
 		if !ok {
 			return c.PreErrorJS("No such prefix", w, r)

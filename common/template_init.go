@@ -495,7 +495,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 			if tname != "" {
 				tname = "_" + tname
 			}
-			err := writeFile(dirPrefix+"template_"+name+tname+".go", content)
+			err := writeFile(dirPrefix+"template_"+name+tname+".jgo", content)
 			if err != nil {
 				log.Fatal(err)
 			}

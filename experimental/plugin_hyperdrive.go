@@ -5,6 +5,9 @@ import (
 	//"log"
 	"bytes"
 	"errors"
+	"strings"
+	"strconv"
+	"time"
 	"sync/atomic"
 	"net/http"
 	"net/http/httptest"
@@ -37,11 +40,14 @@ func deactivateHdrive(plugin *c.Plugin) {
 type Hyperspace struct {
 	topicList atomic.Value
 	gzipTopicList atomic.Value
+	lastTopicListUpdate atomic.Value
 }
 
 func newHyperspace() *Hyperspace {
 	pageCache := new(Hyperspace)
 	pageCache.topicList.Store([]byte(""))
+	pageCache.gzipTopicList.Store([]byte(""))
+	pageCache.lastTopicListUpdate.Store(int64(0))
 	return pageCache
 }
 
@@ -86,6 +92,7 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 		return false, nil
 	}
 	hyperspace.gzipTopicList.Store(gbuf)
+	hyperspace.lastTopicListUpdate.Store(time.Now().Unix())
 	
 	return false, nil
 }
@@ -128,12 +135,29 @@ func jumpHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	//c.DebugLog
 	c.DebugLog("Successful jump")
 
+	var etag string
+	lastUpdate := hyperspace.lastTopicListUpdate.Load().(int64)
+	c.DebugLog("lastUpdate:",lastUpdate)
+	if ok {
+		iw.Header().Set("X-I","1")
+		etag = "\""+strconv.FormatInt(lastUpdate, 10)+"-g\""
+	} else {
+		etag = "\""+strconv.FormatInt(lastUpdate, 10)+"\""
+	}
+
+	if lastUpdate != 0 {
+		iw.Header().Set("ETag", etag)
+		if match := r.Header.Get("If-None-Match"); match != "" {
+			if strings.Contains(match, etag) {
+				iw.WriteHeader(http.StatusNotModified)
+				return true, nil
+			}
+		}
+	}
+
 	header := args[3].(*c.Header)
 	routes.FootHeaders(w, header)
 	iw.Write(tList)
-	if ok {
-		w.Header().Set("X-I","1")
-	}
 
 	return true, nil
 }

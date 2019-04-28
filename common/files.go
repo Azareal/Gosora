@@ -55,7 +55,7 @@ func (list SFileList) JSTmplInit() error {
 		}
 
 		path = strings.TrimPrefix(path, "tmpl_client/")
-		tmplName := strings.TrimSuffix(path, ".go")
+		tmplName := strings.TrimSuffix(path, ".jgo")
 		shortName := strings.TrimPrefix(tmplName, "template_")
 
 		var replace = func(data []byte, replaceThis string, withThis string) []byte {
@@ -104,10 +104,6 @@ func (list SFileList) JSTmplInit() error {
 			}
 			return out + "]"
 		}*/
-		data = replace(data, `)
-	if !ok {
-		return errors.New("invalid page struct value")
-	}`, "*/tmpl_"+shortName+"_vars = tmpl_"+shortName+"_i")
 
 		// ? Can we just use a regex? I'm thinking of going more efficient, or just outright rolling wasm, this is a temp hack in a place where performance doesn't particularly matter
 		var each = func(phrase string, handle func(index int)) {

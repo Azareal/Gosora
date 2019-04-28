@@ -185,7 +185,7 @@ function initPhrases(loggedIn, panel = false) {
 }
 
 function fetchPhrases(plist) {
-	fetch("/api/phrases/?query="+plist)
+	fetch("/api/phrases/?query="+plist, {cache: "no-cache"})
 		.then((resp) => resp.json())
 		.then((data) => {
 			console.log("loaded phrase endpoint data");
