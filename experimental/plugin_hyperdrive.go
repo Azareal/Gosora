@@ -4,6 +4,7 @@ package main
 import (
 	//"log"
 	"bytes"
+	"errors"
 	"sync/atomic"
 	"net/http"
 	"net/http/httptest"
@@ -92,16 +93,20 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 func jumpHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	var tList []byte
 	w := args[0].(http.ResponseWriter)
-	_, ok := w.(c.GzipResponseWriter)
+	var iw http.ResponseWriter
+	gzw, ok := w.(c.GzipResponseWriter)
 	if ok {
 		tList = hyperspace.gzipTopicList.Load().([]byte)
+		iw = gzw.ResponseWriter
 	} else {
 		tList = hyperspace.topicList.Load().([]byte)
+		iw = w
 	}
 	if len(tList) == 0 {
 		c.DebugLog("no topiclist in hyperspace")
 		return false, nil
 	}
+	//c.DebugLog("tList: ", tList)
 
 	// Avoid intercepting user requests as we only have guests in cache right now
 	user := args[2].(*c.User)
@@ -125,7 +130,7 @@ func jumpHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 
 	header := args[3].(*c.Header)
 	routes.FootHeaders(w, header)
-	w.Write(tList)
+	iw.Write(tList)
 	if ok {
 		w.Header().Set("X-I","1")
 	}
