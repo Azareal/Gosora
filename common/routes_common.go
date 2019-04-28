@@ -219,9 +219,9 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
-	if user.IsAdmin {
+	//if user.IsAdmin {
 		header.StartedAt = time.Now()
-	}
+	//}
 
 	//PrepResources(user,header,theme)
 	return header, nil

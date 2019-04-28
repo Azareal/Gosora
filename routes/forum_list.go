@@ -9,6 +9,11 @@ import (
 )
 
 func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
+	skip, rerr := header.Hooks.VhookSkippable("route_forum_list_start", w, r, &user, header)
+	if skip || rerr != nil {
+		return rerr
+	}
+	
 	header.Title = phrases.GetTitlePhrase("forums")
 	header.Zone = "forums"
 	header.Path = "/forums/"
