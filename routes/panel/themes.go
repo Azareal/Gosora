@@ -99,6 +99,7 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid s
 		return c.NoPermissions(w, r, user)
 	}
 	basePage.Header.AddScript("Sortable-1.4.0/Sortable.min.js")
+	basePage.Header.AddScriptAsync("panel_menu_items.js")
 
 	mid, err := strconv.Atoi(smid)
 	if err != nil {

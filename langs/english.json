@@ -949,6 +949,7 @@
 		"panel_themes_menus_items_edit_button_aria":"Edit menu item",
 		"panel_themes_menus_items_delete_button_aria":"Delete menu item",
 		"panel_themes_menus_items_update_button":"Update Order",
+		"panel.themes_menus_items_order_updated":"The menu has been successfully updated",
 
 		"panel_themes_menus_edit_head":"Menu Editor",
 		"panel_themes_menus_create_head":"Create Menu Item",

@@ -92,6 +92,9 @@
 .colstack_head + .colstack_head.colstack_sub_head:not(:first-child) {
 	margin-top: 2px;
 }
+.alert {
+	margin-top: 18px;
+}
 .rowitem {
 	display: flex;
 }
