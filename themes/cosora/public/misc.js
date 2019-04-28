@@ -1,9 +1,20 @@
 "use strict";
 
 (() => {
-	console.log("bf")
+	function moveAlerts() {
+		// Move the alerts under the first header
+		let colSel = $(".colstack_right .colstack_head:first");
+		let colSelAlt = $(".colstack_right .colstack_item:first");
+		let colSelAltAlt = $(".colstack_right .coldyn_block:first");
+		if(colSel.length > 0) $('.alert').insertAfter(colSel);
+		else if (colSelAlt.length > 0) $('.alert').insertBefore(colSelAlt);
+		else if (colSelAltAlt.length > 0) $('.alert').insertBefore(colSelAltAlt);
+		else $('.alert').insertAfter(".rowhead:first");
+	}
+	
+	//console.log("bf")
 	addInitHook("end_init", () => {
-		console.log("af")
+		//console.log("af")
 		let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
 		if(loggedIn) {
 			if(navigator.userAgent.indexOf("Firefox") != -1) $.trumbowyg.svgPath = "/static/trumbowyg/ui/icons.svg";
@@ -103,15 +114,10 @@
 			document.getElementById("back").appendChild(buttonPane);
 		});
 
-		// Move the alerts under the first header
-		let colSel = $(".colstack_right .colstack_head:first");
-		let colSelAlt = $(".colstack_right .colstack_item:first");
-		let colSelAltAlt = $(".colstack_right .coldyn_block:first");
-		if(colSel.length > 0) $('.alert').insertAfter(colSel);
-		else if (colSelAlt.length > 0) $('.alert').insertBefore(colSelAlt);
-		else if (colSelAltAlt.length > 0) $('.alert').insertBefore(colSelAltAlt);
-		else $('.alert').insertAfter(".rowhead:first");
+		moveAlerts();
 	});
+
+	addInitHook("after_notice", moveAlerts);
 })();
 
 function newElement(etype, eclass) {
