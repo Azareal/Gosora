@@ -180,8 +180,8 @@ function initPhrases(loggedIn, panel = false) {
 	let e = "";
 	if(loggedIn && !panel) e = ",topic_list,topic";
 	else if(panel) e = ",analytics,panel"; // TODO: Request phrases for just one section of the control panel?
-	else e = ",topic_list";
-	fetchPhrases("status,alerts,paginator"+e) // TODO: Break this up?
+	else e = ",status,topic_list";
+	fetchPhrases("alerts,paginator"+e) // TODO: Break this up?
 }
 
 function fetchPhrases(plist) {

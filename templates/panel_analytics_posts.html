@@ -1,16 +1,15 @@
 {{template "header.html" . }}
 <div class="colstack panel_stack">
 {{template "panel_menu.html" . }}
-	<main id="panel_analytics_right" class="colstack_right">
+<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/posts/" method="get"></form>
+	<main id="panel_analytics_right" class="colstack_right analytics">
 {{template "panel_before_head.html" . }}
-		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/posts/" method="get">
-			<div class="colstack_item colstack_head">
-				<div class="rowitem">
-					<a>{{lang "panel_statistics_post_counts_head"}}</a>
-					{{template "panel_analytics_time_range.html" . }}
-				</div>
+		<div class="colstack_item colstack_head">
+			<div class="rowitem">
+				<h1>{{lang "panel_statistics_post_counts_head"}}</h1>
+				{{template "panel_analytics_time_range.html" . }}
 			</div>
-		</form>
+		</div>
 		<div id="panel_analytics_posts" class="colstack_graph_holder">
 			<div class="ct_chart" aria-label="{{lang "panel_statistics_post_counts_chart_aria"}}"></div>
 		</div>

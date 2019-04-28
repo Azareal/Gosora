@@ -304,6 +304,12 @@
 .timeRangeSelector {
 	margin-top: -5px;
 }
+.colstack_graph_holder + .rowlist {
+	margin-top: 8px;
+}
+.analytics .colstack_head h1 {
+	margin-top: 2px;
+}
 
 /* Experimental header tweaks */
 .colstack_head a {
