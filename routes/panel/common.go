@@ -21,6 +21,7 @@ func successRedirect(dest string, w http.ResponseWriter, r *http.Request, isJs b
 	return nil
 }
 
+// TODO: Prerender needs to handle dyntmpl templates better...
 func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
 	header.AddScript("global.js")
 	if c.RunPreRenderHook("pre_render_"+tmplName, w, r, &header.CurrentUser, pi) {

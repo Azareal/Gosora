@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/gopsutil/mem"
 	"github.com/pkg/errors"
@@ -18,25 +18,27 @@ type dashStmts struct {
 	todaysTopicCount        *sql.Stmt
 	todaysTopicCountByForum *sql.Stmt
 	todaysNewUserCount      *sql.Stmt
+	weeklyTopicCountByForum *sql.Stmt
 }
 
 // TODO: Stop hard-coding these queries
 func dashMySQLStmts() (stmts dashStmts, err error) {
 	db := qgen.Builder.GetConn()
 
-	var prepareStmt = func(table string, ext string) *sql.Stmt {
+	var prepareStmt = func(table string, ext string, dur string) *sql.Stmt {
 		if err != nil {
 			return nil
 		}
-		stmt, ierr := db.Prepare("select count(*) from " + table + " where createdAt BETWEEN (utc_timestamp() - interval 1 day) and utc_timestamp() " + ext)
+		stmt, ierr := db.Prepare("select count(*) from " + table + " where createdAt BETWEEN (utc_timestamp() - interval 1 "+dur+") and utc_timestamp() " + ext)
 		err = errors.WithStack(ierr)
 		return stmt
 	}
 
-	stmts.todaysPostCount = prepareStmt("replies", "")
-	stmts.todaysTopicCount = prepareStmt("topics", "")
-	stmts.todaysNewUserCount = prepareStmt("users", "")
-	stmts.todaysTopicCountByForum = prepareStmt("topics", " and parentID = ?")
+	stmts.todaysPostCount = prepareStmt("replies", "","day")
+	stmts.todaysTopicCount = prepareStmt("topics", "","day")
+	stmts.todaysNewUserCount = prepareStmt("users", "","day")
+	stmts.todaysTopicCountByForum = prepareStmt("topics", " and parentID = ?","day")
+	stmts.weeklyTopicCountByForum = prepareStmt("topics", " and parentID = ?","week")
 
 	return stmts, err
 }
@@ -45,22 +47,25 @@ func dashMySQLStmts() (stmts dashStmts, err error) {
 func dashMSSQLStmts() (stmts dashStmts, err error) {
 	db := qgen.Builder.GetConn()
 
-	var prepareStmt = func(table string, ext string) *sql.Stmt {
+	var prepareStmt = func(table string, ext string, dur string) *sql.Stmt {
 		if err != nil {
 			return nil
 		}
-		stmt, ierr := db.Prepare("select count(*) from " + table + " where createdAt >= DATEADD(DAY, -1, GETUTCDATE())" + ext)
+		stmt, ierr := db.Prepare("select count(*) from " + table + " where createdAt >= DATEADD("+dur+", -1, GETUTCDATE())" + ext)
 		err = errors.WithStack(ierr)
 		return stmt
 	}
 
-	stmts.todaysPostCount = prepareStmt("replies", "")
-	stmts.todaysTopicCount = prepareStmt("topics", "")
-	stmts.todaysNewUserCount = prepareStmt("users", "")
-	stmts.todaysTopicCountByForum = prepareStmt("topics", " and parentID = ?")
+	stmts.todaysPostCount = prepareStmt("replies", "","DAY")
+	stmts.todaysTopicCount = prepareStmt("topics", "","DAY")
+	stmts.todaysNewUserCount = prepareStmt("users", "","DAY")
+	stmts.todaysTopicCountByForum = prepareStmt("topics", " and parentID = ?","DAY")
+	stmts.weeklyTopicCountByForum = prepareStmt("topics", " and parentID = ?","WEEK")
 
 	return stmts, err
 }
+
+type GE = c.GridElement
 
 func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "dashboard", "dashboard")
@@ -143,18 +148,18 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 
 	// TODO: Allow for more complex phrase structures than just suffixes
 	var postCount = extractStat(stmts.todaysPostCount)
-	var postInterval = phrases.GetTmplPhrase("panel_dashboard_day_suffix")
+	var postInterval = p.GetTmplPhrase("panel_dashboard_day_suffix")
 	var postColour = greaterThanSwitch(postCount, 5, 25)
 
 	var topicCount = extractStat(stmts.todaysTopicCount)
-	var topicInterval = phrases.GetTmplPhrase("panel_dashboard_day_suffix")
+	var topicInterval = p.GetTmplPhrase("panel_dashboard_day_suffix")
 	var topicColour = greaterThanSwitch(topicCount, 0, 8)
 
-	var reportCount = extractStat(stmts.todaysTopicCountByForum, c.ReportForumID)
-	var reportInterval = phrases.GetTmplPhrase("panel_dashboard_week_suffix")
+	var reportCount = extractStat(stmts.weeklyTopicCountByForum, c.ReportForumID)
+	var reportInterval = p.GetTmplPhrase("panel_dashboard_week_suffix")
 
 	var newUserCount = extractStat(stmts.todaysNewUserCount)
-	var newUserInterval = phrases.GetTmplPhrase("panel_dashboard_week_suffix")
+	var newUserInterval = p.GetTmplPhrase("panel_dashboard_week_suffix")
 
 	// Did any of the extractStats fail?
 	if intErr != nil {
@@ -162,15 +167,15 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	}
 
 	// TODO: Localise these
-	var gridElements = []c.GridElement{
+	var gridElements = []GE{
 		// TODO: Implement a check for new versions of Gosora
-		//c.GridElement{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
-		c.GridElement{"dash-version", "v" + c.SoftwareVersion.String(), 0, "grid_istat", "", "", ""},
+		//GE{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
+		GE{"dash-version", "v" + c.SoftwareVersion.String(), 0, "grid_istat", "", "", ""},
 
-		c.GridElement{"dash-cpu", "CPU: " + cpustr, 1, "grid_istat " + cpuColour, "", "", "The global CPU usage of this server"},
-		c.GridElement{"dash-ram", "RAM: " + ramstr, 2, "grid_istat " + ramColour, "", "", "The global RAM usage of this server"},
+		GE{"dash-cpu", "CPU: " + cpustr, 1, "grid_istat " + cpuColour, "", "", p.GetTmplPhrase("panel_dashboard_cpu_desc")},
+		GE{"dash-ram", "RAM: " + ramstr, 2, "grid_istat " + ramColour, "", "", p.GetTmplPhrase("panel_dashboard_ram_desc")},
 	}
-	var addElement = func(element c.GridElement) {
+	var addElement = func(element GE) {
 		gridElements = append(gridElements, element)
 	}
 
@@ -178,7 +183,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		uonline := c.WsHub.UserCount()
 		gonline := c.WsHub.GuestCount()
 		totonline := uonline + gonline
-		reqCount := 0
+		//reqCount := 0
 
 		var onlineColour = greaterThanSwitch(totonline, 3, 10)
 		var onlineGuestsColour = greaterThanSwitch(gonline, 1, 10)
@@ -188,26 +193,25 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		uonline, uunit := c.ConvertFriendlyUnit(uonline)
 		gonline, gunit := c.ConvertFriendlyUnit(gonline)
 
-		addElement(c.GridElement{"dash-totonline", phrases.GetTmplPhrasef("panel_dashboard_online", totonline, totunit), 3, "grid_stat " + onlineColour, "", "", "The number of people who are currently online"})
-		addElement(c.GridElement{"dash-gonline", phrases.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit), 4, "grid_stat " + onlineGuestsColour, "", "", "The number of guests who are currently online"})
-		addElement(c.GridElement{"dash-uonline", phrases.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit), 5, "grid_stat " + onlineUsersColour, "", "", "The number of logged-in users who are currently online"})
-		addElement(c.GridElement{"dash-reqs", strconv.Itoa(reqCount) + " reqs / second", 7, "grid_stat grid_end_group " + topicColour, "", "", "The number of requests over the last 24 hours"})
+		addElement(GE{"dash-totonline", p.GetTmplPhrasef("panel_dashboard_online", totonline, totunit), 3, "grid_stat " + onlineColour, "", "", p.GetTmplPhrase("panel_dashboard_online_desc")})
+		addElement(GE{"dash-gonline", p.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit), 4, "grid_stat " + onlineGuestsColour, "", "", p.GetTmplPhrase("panel_dashboard_guests_online_desc")})
+		addElement(GE{"dash-uonline", p.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit), 5, "grid_stat " + onlineUsersColour, "", "", p.GetTmplPhrase("panel_dashboard_users_online_desc")})
+		//addElement(GE{"dash-reqs", strconv.Itoa(reqCount) + " reqs / second", 7, "grid_stat grid_end_group " + topicColour, "", "", "The number of requests over the last 24 hours"})
 	}
 
-	addElement(c.GridElement{"dash-postsperday", strconv.Itoa(postCount) + " posts" + postInterval, 6, "grid_stat " + postColour, "", "", "The number of new posts over the last 24 hours"})
-	addElement(c.GridElement{"dash-topicsperday", strconv.Itoa(topicCount) + " topics" + topicInterval, 7, "grid_stat " + topicColour, "", "", "The number of new topics over the last 24 hours"})
-	addElement(c.GridElement{"dash-totonlineperday", "20 online / day", 8, "grid_stat stat_disabled", "", "", "Coming Soon!" /*, "The people online over the last 24 hours"*/})
+	addElement(GE{"dash-postsperday", strconv.Itoa(postCount) + " posts" + postInterval, 6, "grid_stat " + postColour, "", "", "The number of new posts over the last 24 hours"})
+	addElement(GE{"dash-topicsperday", strconv.Itoa(topicCount) + " topics" + topicInterval, 7, "grid_stat " + topicColour, "", "", "The number of new topics over the last 24 hours"})
+	addElement(GE{"dash-totonlineperday", "?? online / day", 8, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*, "The people online over the last 24 hours"*/})
 
-	addElement(c.GridElement{"dash-searches", "8 searches / week", 9, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of searches over the last 7 days"*/})
-	addElement(c.GridElement{"dash-newusers", strconv.Itoa(newUserCount) + " new users" + newUserInterval, 10, "grid_stat", "", "", "The number of new users over the last 7 days"})
-	addElement(c.GridElement{"dash-reports", strconv.Itoa(reportCount) + " reports" + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days"})
+	addElement(GE{"dash-searches", "?? searches / week", 9, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The number of searches over the last 7 days"*/})
+	addElement(GE{"dash-newusers", strconv.Itoa(newUserCount) + " new users" + newUserInterval, 10, "grid_stat", "", "", "The number of new users over the last 7 days"})
+	addElement(GE{"dash-reports", strconv.Itoa(reportCount) + " reports" + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days"})
 
 	if false {
-		addElement(c.GridElement{"dash-minperuser", "2 minutes / user / week", 12, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
-		addElement(c.GridElement{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The number of unique visitors we've had over the last 7 days"*/})
-		addElement(c.GridElement{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", "Coming Soon!" /*"The average number of posts made by each active user over the past week"*/})
+		addElement(GE{"dash-minperuser", "2 minutes / user / week", 12, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
+		addElement(GE{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The number of unique visitors we've had over the last 7 days"*/})
+		addElement(GE{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The average number of posts made by each active user over the past week"*/})
 	}
 
-	pi := c.PanelDashboardPage{basePage, gridElements}
-	return renderTemplate("panel_dashboard", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right","panel_dashboard", gridElements})
 }

@@ -751,11 +751,17 @@
 		"panel_menu_debug":"Debug",
 
 		"panel_dashboard_head":"Dashboard",
+		"panel_dashboard_cpu_desc":"The global CPU usage of this server",
+		"panel_dashboard_ram_desc":"The global RAM usage of this server",
 		"panel_dashboard_online": "%d%s online",
+		"panel_dashboard_online_desc":"The number of people who are currently online",
 		"panel_dashboard_guests_online":"%d%s guests online",
+		"panel_dashboard_guests_online_desc":"The number of guests who are currently online",
 		"panel_dashboard_users_online":"%d%s users online",
+		"panel_dashboard_users_online_desc":"The number of logged-in users who are currently online",
 		"panel_dashboard_day_suffix":" / day",
 		"panel_dashboard_week_suffix":" / week",
+		"panel_dashboard_coming_soon":"Coming Soon!",
 
 		"panel_users_head":"Users",
 		"panel_users_profile":"Profile",

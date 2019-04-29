@@ -279,6 +279,14 @@ type ResetPage struct {
 	MFA   bool
 }
 
+/* WIP for dyntmpl */
+type Panel struct {
+	*BasePanelPage
+	HTMLID string
+	TmplName string
+	Inner    nobreak
+}
+
 type PanelStats struct {
 	Users       int
 	Groups      int

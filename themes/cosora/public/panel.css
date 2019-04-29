@@ -67,6 +67,7 @@
 }
 .colstack_right .colstack_head h1 + h2.hguide {
 	margin-left: auto;
+	color: var(--extra-lightened-primary-text-color);
 }
 .footer {
 	margin-top: 0px;
