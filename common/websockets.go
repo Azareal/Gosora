@@ -3,7 +3,7 @@
 /*
 *
 *	Gosora WebSocket Subsystem
-*	Copyright Azareal 2017 - 2019
+*	Copyright Azareal 2017 - 2020
 *
  */
 package common
@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/gopsutil/cpu"
 	"github.com/Azareal/gopsutil/mem"
 	"github.com/gorilla/websocket"
@@ -375,9 +375,9 @@ AdminStatLoop:
 			// nolint
 			// TODO: Use JSON for this to make things more portable and easier to convert to MessagePack, if need be?
 			if !noStatUpdates {
-				w.Write([]byte("set #dash-totonline <span>" + phrases.GetTmplPhrasef("panel_dashboard_online", totonline, totunit) + "</span>\r"))
-				w.Write([]byte("set #dash-gonline <span>" + phrases.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit) + "</span>\r"))
-				w.Write([]byte("set #dash-uonline <span>" + phrases.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit) + "</span>\r"))
+				w.Write([]byte("set #dash-totonline <span>" + p.GetTmplPhrasef("panel_dashboard_online", totonline, totunit) + "</span>\r"))
+				w.Write([]byte("set #dash-gonline <span>" + p.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit) + "</span>\r"))
+				w.Write([]byte("set #dash-uonline <span>" + p.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit) + "</span>\r"))
 				w.Write([]byte("set #dash-reqs <span>" + strconv.Itoa(reqCount) + " reqs / second</span>\r"))
 
 				w.Write([]byte("set-class #dash-totonline grid_item grid_stat " + onlineColour + "\r"))
@@ -386,11 +386,11 @@ AdminStatLoop:
 				//w.Write([]byte("set-class #dash-reqs grid_item grid_stat grid_end_group \r"))
 			}
 
-			w.Write([]byte("set #dash-cpu <span>CPU: " + cpustr + "%</span>\r"))
+			w.Write([]byte("set #dash-cpu <span>" + p.GetTmplPhrasef("panel_dashboard_cpu",cpustr) + "%</span>\r"))
 			w.Write([]byte("set-class #dash-cpu grid_item grid_istat " + cpuColour + "\r"))
 
 			if !noRAMUpdates {
-				w.Write([]byte("set #dash-ram <span>RAM: " + ramstr + "</span>\r"))
+				w.Write([]byte("set #dash-ram <span>" + p.GetTmplPhrasef("panel_dashboard_ram",ramstr) + "</span>\r"))
 				w.Write([]byte("set-class #dash-ram grid_item grid_istat " + ramColour + "\r"))
 			}
 

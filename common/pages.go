@@ -283,8 +283,22 @@ type ResetPage struct {
 type Panel struct {
 	*BasePanelPage
 	HTMLID string
+	ClassNames string
 	TmplName string
 	Inner    nobreak
+}
+type PanelAnalytics struct {
+	*BasePanelPage
+	FormAction string
+	TmplName string
+	Inner    nobreak
+}
+type PanelAnalyticsStd struct{
+	Graph     PanelTimeGraph
+	ViewItems []PanelAnalyticsItem
+	TimeRange string
+	Unit      string
+	TimeType  string
 }
 
 type PanelStats struct {

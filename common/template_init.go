@@ -301,7 +301,8 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	tmpls.AddStd("account", "common.Account", accountPage)
 
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}
-	tmpls.AddStd("panel", "common.Panel", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
+	tmpls.AddStd("panel", "common.Panel", Panel{basePage, "panel_dashboard_right","","panel_dashboard", inter})
+	//tmpls.AddStd("panel_analytics", "common.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
 
 	var writeTemplate = func(name string, content interface{}) {
 		log.Print("Writing template '" + name + "'")

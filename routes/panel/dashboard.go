@@ -172,8 +172,8 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		//GE{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
 		GE{"dash-version", "v" + c.SoftwareVersion.String(), 0, "grid_istat", "", "", ""},
 
-		GE{"dash-cpu", "CPU: " + cpustr, 1, "grid_istat " + cpuColour, "", "", p.GetTmplPhrase("panel_dashboard_cpu_desc")},
-		GE{"dash-ram", "RAM: " + ramstr, 2, "grid_istat " + ramColour, "", "", p.GetTmplPhrase("panel_dashboard_ram_desc")},
+		GE{"dash-cpu", p.GetTmplPhrasef("panel_dashboard_cpu",cpustr), 1, "grid_istat " + cpuColour, "", "", p.GetTmplPhrase("panel_dashboard_cpu_desc")},
+		GE{"dash-ram", p.GetTmplPhrasef("panel_dashboard_ram",ramstr), 2, "grid_istat " + ramColour, "", "", p.GetTmplPhrase("panel_dashboard_ram_desc")},
 	}
 	var addElement = func(element GE) {
 		gridElements = append(gridElements, element)
@@ -208,10 +208,10 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	addElement(GE{"dash-reports", strconv.Itoa(reportCount) + " reports" + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days"})
 
 	if false {
-		addElement(GE{"dash-minperuser", "2 minutes / user / week", 12, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
-		addElement(GE{"dash-visitorsperweek", "2 visitors / week", 13, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The number of unique visitors we've had over the last 7 days"*/})
-		addElement(GE{"dash-postsperuser", "5 posts / user / week", 14, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The average number of posts made by each active user over the past week"*/})
+		addElement(GE{"dash-minperuser", "?? minutes / user / week", 12, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The average number of number of minutes spent by each active user over the last 7 days"*/})
+		addElement(GE{"dash-visitorsperweek", "?? visitors / week", 13, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The number of unique visitors we've had over the last 7 days"*/})
+		addElement(GE{"dash-postsperuser", "?? posts / user / week", 14, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The average number of posts made by each active user over the past week"*/})
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right","panel_dashboard", gridElements})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right","","panel_dashboard", gridElements})
 }

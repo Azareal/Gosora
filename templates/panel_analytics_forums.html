@@ -1,15 +1,10 @@
-{{template "header.html" . }}
-<div class="colstack panel_stack">
-{{template "panel_menu.html" . }}
-<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/forums/" method="get"></form>
-	<main id="panel_analytics_right" class="colstack_right analytics">
-{{template "panel_before_head.html" . }}
 		<div class="colstack_item colstack_head">
 			<div class="rowitem">
 				<h1>{{lang "panel_statistics_forums_head"}}</h1>
 				{{template "panel_analytics_time_range.html" . }}
 			</div>
 		</div>
+		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/forums/" method="get"></form>
 		<div id="panel_analytics_forums_chart" class="colstack_graph_holder">
 			<div class="ct_chart"></div>
 		</div>
@@ -21,7 +16,4 @@
 			</div>
 			{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_forums_no_forums"}}</div>{{end}}
 		</div>
-	</main>
-</div>
 {{template "panel_analytics_script.html" . }}
-{{template "footer.html" . }}

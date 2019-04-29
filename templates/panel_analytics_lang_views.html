@@ -1,19 +1,11 @@
-{{template "header.html" . }}
-<div class="colstack panel_stack">
-{{template "panel_menu.html" . }}
-<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/lang/{{.Agent}}" method="get"></form>
-	<main id="panel_analytics_right" class="colstack_right analytics">
-{{template "panel_before_head.html" . }}
 		<div class="colstack_item colstack_head">
 			<div class="rowitem">
 				<h1>{{.FriendlyAgent}}{{lang "panel_statistics_views_head_suffix"}}</h1>
 				{{template "panel_analytics_time_range.html" . }}
 			</div>
 		</div>
+		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/lang/{{.Agent}}" method="get"></form>
 		<div id="panel_analytics_langs" class="colstack_graph_holder">
 			<div class="ct_chart"></div>
 		</div>
-	</main>
-</div>
 {{template "panel_analytics_script.html" . }}
-{{template "footer.html" . }}

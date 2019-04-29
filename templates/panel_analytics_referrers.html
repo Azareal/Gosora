@@ -1,15 +1,10 @@
-{{template "header.html" . }}
-<div class="colstack panel_stack">
-{{template "panel_menu.html" . }}
-<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/referrers/" method="get"></form>
-	<main id="panel_analytics_right" class="colstack_right analytics">
-{{template "panel_before_head.html" . }}
 		<div class="colstack_item colstack_head">
 			<div class="rowitem">
 				<h1>{{lang "panel_statistics_referrers_head"}}</h1>
 				{{template "panel_analytics_time_range.html" . }}
 			</div>
 		</div>
+		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/referrers/" method="get"></form>
 		<div id="panel_analytics_referrers" class="colstack_item rowlist">
 			{{range .ItemList}}
 			<div class="rowitem panel_compactrow editable_parent">
@@ -18,6 +13,3 @@
 			</div>
 			{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_referrers_no_referrers"}}</div>{{end}}
 		</div>
-	</main>
-</div>
-{{template "footer.html" . }}

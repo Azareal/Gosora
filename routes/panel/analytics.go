@@ -164,8 +164,9 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user c.User) c.Route
 	if timeRange.Range == "six-hours" || timeRange.Range == "twelve-hours" || timeRange.Range == "one-day" {
 		ttime = "time"
 	}
-	pi := c.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, ttime}
-	return renderTemplate("panel_analytics_views", w, r, basePage.Header, &pi)
+
+	pi := c.PanelAnalyticsStd{graph, viewItems, timeRange.Range, timeRange.Unit, ttime}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_views", pi})
 }
 
 func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user c.User, route string) c.RouteError {
@@ -200,7 +201,7 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user c.User, ro
 	c.DebugLogf("graph: %+v\n", graph)
 
 	pi := c.PanelAnalyticsRoutePage{basePage, c.SanitiseSingleLine(route), graph, viewItems, timeRange.Range}
-	return renderTemplate("panel_analytics_route_views", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_route_views", pi})
 }
 
 func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user c.User, agent string) c.RouteError {
@@ -240,7 +241,7 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user c.User, ag
 	}
 
 	pi := c.PanelAnalyticsAgentPage{basePage, agent, friendlyAgent, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_agent_views", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_agent_views", pi})
 }
 
 func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
@@ -283,7 +284,7 @@ func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user c.User, sf
 	}
 
 	pi := c.PanelAnalyticsAgentPage{basePage, sfid, forum.Name, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_forum_views", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_forum_views", pi})
 }
 
 func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user c.User, system string) c.RouteError {
@@ -322,7 +323,7 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user c.User, s
 	}
 
 	pi := c.PanelAnalyticsAgentPage{basePage, system, friendlySystem, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_system_views", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_system_views", pi})
 }
 
 func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user c.User, lang string) c.RouteError {
@@ -362,7 +363,7 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user c.User,
 	}
 
 	pi := c.PanelAnalyticsAgentPage{basePage, lang, friendlyLang, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_lang_views", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_lang_views", pi})
 }
 
 func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user c.User, domain string) c.RouteError {
@@ -394,7 +395,7 @@ func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user c.User,
 	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
 	pi := c.PanelAnalyticsAgentPage{basePage, c.SanitiseSingleLine(domain), "", graph, timeRange.Range}
-	return renderTemplate("panel_analytics_referrer_views", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_referrer_views", pi})
 }
 
 func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -426,8 +427,8 @@ func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
-	pi := c.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
-	return renderTemplate("panel_analytics_topics", w, r, basePage.Header, &pi)
+	pi := c.PanelAnalyticsStd{graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_topics", pi})
 }
 
 func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -459,8 +460,8 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user c.User) c.Route
 	}
 	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
-	pi := c.PanelAnalyticsPage{basePage, graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
-	return renderTemplate("panel_analytics_posts", w, r, basePage.Header, &pi)
+	pi := c.PanelAnalyticsStd{graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_posts", pi})
 }
 
 func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
@@ -504,6 +505,7 @@ func analyticsRowsToDuoMap(rows *sql.Rows, labelList []int64, viewMap map[int64]
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
 		}
+
 		vvMap, ok := vMap[name]
 		if !ok {
 			vvMap = make(map[int64]int64)
@@ -639,7 +641,7 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 
 	pi := c.PanelAnalyticsDuoPage{basePage, forumItems, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_forums", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_forums", pi})
 }
 
 func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -694,7 +696,7 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 
 	pi := c.PanelAnalyticsRoutesPage{basePage, routeItems, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_routes", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_routes", pi})
 }
 
 // Trialling multi-series charts
@@ -759,7 +761,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 
 	pi := c.PanelAnalyticsDuoPage{basePage, agentItems, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_agents", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_agents", pi})
 }
 
 func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -823,7 +825,7 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user c.User) c.Rou
 	}
 
 	pi := c.PanelAnalyticsDuoPage{basePage, systemItems, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_systems", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_systems", pi})
 }
 
 func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -888,7 +890,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	}
 
 	pi := c.PanelAnalyticsDuoPage{basePage, langItems, graph, timeRange.Range}
-	return renderTemplate("panel_analytics_langs", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_langs", pi})
 }
 
 func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -920,5 +922,5 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	}
 
 	pi := c.PanelAnalyticsAgentsPage{basePage, refItems, timeRange.Range}
-	return renderTemplate("panel_analytics_referrers", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_referrers", pi})
 }
